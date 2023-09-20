@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://dwfwmlo2bqdlu"]
+[gd_scene load_steps=9 format=3 uid="uid://dwfwmlo2bqdlu"]
 
 [ext_resource type="Texture2D" uid="uid://lxvsaw5yulpi" path="res://MCBlocksBlackOutline.png" id="1_u8svg"]
 [ext_resource type="Texture2D" uid="uid://c1cqsj0fys7n6" path="res://MCBlocksColorOutline.png" id="2_8g65f"]
 [ext_resource type="Script" path="res://TileMap.gd" id="3_x1nj4"]
 [ext_resource type="PackedScene" uid="uid://diqt3fxs57ahw" path="res://player.tscn" id="4_ldq5o"]
+[ext_resource type="Script" path="res://MainCamera.gd" id="5_i1x2m"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_l7t5v"]
 texture = ExtResource("1_u8svg")
@@ -140,7 +141,7 @@ sources/1 = SubResource("TileSetAtlasSource_dn0tg")
 [node name="Blocks" type="TileMap" parent="."]
 y_sort_enabled = true
 tile_set = SubResource("TileSet_tvv68")
-cell_quadrant_size = 24
+cell_quadrant_size = 12
 format = 2
 layer_0/y_sort_enabled = true
 layer_1/name = ""
@@ -153,6 +154,9 @@ layer_1/tile_data = PackedInt32Array()
 script = ExtResource("3_x1nj4")
 
 [node name="CharacterBody2D" parent="." instance=ExtResource("4_ldq5o")]
+scale = Vector2(0.5, 0.5)
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
 zoom = Vector2(2, 2)
+position_smoothing_enabled = true
+script = ExtResource("5_i1x2m")

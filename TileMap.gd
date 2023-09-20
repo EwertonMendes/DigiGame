@@ -35,4 +35,4 @@ func _process(delta):
 		var hoveredTile = Dic.get(str(tile))
 		
 		set_cell(1, tile, 0, tileTypes[hoveredTile["Type"]], 0)
-		#print(hoveredTile["Type"])
+		#print(selectedTile)
