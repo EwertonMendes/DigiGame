@@ -1,6 +1,6 @@
 # DigiGame
 
-##Screenshot 20-09-2023
+## Screenshot 20-09-2023
   Features:
     - Random terrain generation
     - Camera zoom with limits
