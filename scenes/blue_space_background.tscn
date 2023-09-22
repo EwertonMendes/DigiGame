@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3 uid="uid://celawaflf4raa"]
+
+[ext_resource type="Texture2D" uid="uid://bmrh8jcq0wkxq" path="res://assets/backgrounds/Nebula Blue.png" id="1_u27jd"]
+[ext_resource type="Texture2D" uid="uid://djfq7la3plc1h" path="res://assets/backgrounds/Stars-Big_1_1_PC.png" id="2_v36ei"]
+[ext_resource type="Texture2D" uid="uid://qkicoxspk4ml" path="res://assets/backgrounds/Stars Small_2.png" id="3_6h0nx"]
+
+[node name="Background" type="Node2D"]
+
+[node name="Blue Space" type="Sprite2D" parent="."]
+z_index = -10
+position = Vector2(600, 384)
+scale = Vector2(0.642578, 0.642578)
+texture = ExtResource("1_u27jd")
+
+[node name="BigStars" type="Sprite2D" parent="."]
+z_index = -9
+position = Vector2(616, 344)
+scale = Vector2(0.379883, 0.379883)
+texture = ExtResource("2_v36ei")
+
+[node name="SmallStars" type="Sprite2D" parent="."]
+z_index = -8
+position = Vector2(896, 248)
+scale = Vector2(0.379883, 0.379883)
+texture = ExtResource("3_6h0nx")

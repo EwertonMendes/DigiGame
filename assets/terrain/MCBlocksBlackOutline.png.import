@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://lxvsaw5yulpi"
-path="res://.godot/imported/MCBlocksBlackOutline.png-5758a1ff3d21938268fc744133d06cb5.ctex"
+path="res://.godot/imported/MCBlocksBlackOutline.png-92e5ec99389247750192d40bf36e6cff.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://MCBlocksBlackOutline.png"
-dest_files=["res://.godot/imported/MCBlocksBlackOutline.png-5758a1ff3d21938268fc744133d06cb5.ctex"]
+source_file="res://assets/terrain/MCBlocksBlackOutline.png"
+dest_files=["res://.godot/imported/MCBlocksBlackOutline.png-92e5ec99389247750192d40bf36e6cff.ctex"]
 
 [params]
 
