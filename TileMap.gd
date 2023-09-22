@@ -29,13 +29,11 @@ func _ready():
 				"type": tileType.type,
 				"position": str(Vector2(x,y))
 			}
-			#randi() % 3
 			set_cell(0, Vector2(x,y), 1, tileType.position, 0)
-
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	var tile = local_to_map(get_global_mouse_position())
+	var tile = local_to_map(get_global_mouse_position() + Vector2(0,7))
 	
 	for x in GridSizeX:
 		for y in GridSizeY:
@@ -43,7 +41,6 @@ func _process(delta):
 			
 	if Dic.has(str(tile)):
 		selectedTile = map_to_local(tile)
-		
 		var hoveredTile = Dic.get(str(tile))
 		var tileType = findTileByType(hoveredTile["type"])
 		set_cell(1, tile, 0, tileType.position, 0)
