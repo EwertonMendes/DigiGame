@@ -8,8 +8,8 @@
 
 [node name="Blue Space" type="Sprite2D" parent="."]
 z_index = -10
-position = Vector2(600, 384)
-scale = Vector2(0.642578, 0.642578)
+position = Vector2(608, 320)
+scale = Vector2(1.07129, 1.07129)
 texture = ExtResource("1_u27jd")
 
 [node name="BigStars" type="Sprite2D" parent="."]
