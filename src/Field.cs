@@ -4,78 +4,77 @@ using System.Collections.Generic;
 
 public partial class Field : TileMap
 {
-    private int GridSizeX = 30;
-    private int GridSizeY = 50;
-    private Dictionary<string, Dictionary<string, string>> Dic = new();
-    private Vector2 selectedTile;
+    private const int GridSizeX = 30;
+    private const int GridSizeY = 50;
+    private readonly Dictionary<Vector2I, Dictionary<string, string>> tileMapData = new();
+    public Vector2I selectedTile;
 
-    private List<Dictionary<string, object>> tileTypes = new List<Dictionary<string, object>>
+    private readonly List<TileType> tileTypes = new()
     {
-        new Dictionary<string, object>
-        {
-            {"type", "DIRT"},
-            {"position", new Vector2I(0, 0)}
-        },
-        new Dictionary<string, object>
-        {
-            {"type", "GRASS"},
-            {"position", new Vector2I(2, 0)}
-        },
-        new Dictionary<string, object>
-        {
-            {"type", "SNOW"},
-            {"position", new Vector2I(5, 0)}
-        }
+        new("DIRT", new Vector2I(0, 0)),
+        new("GRASS", new Vector2I(2, 0)),
+        new("SNOW", new Vector2I(5, 0))
     };
 
     public override void _Ready()
+    {
+        InitializeTileMap();
+    }
+
+    private void InitializeTileMap()
     {
         for (int x = 0; x < GridSizeX; x++)
         {
             for (int y = 0; y < GridSizeY; y++)
             {
-                var tileType = tileTypes[(int)GD.Randi() % tileTypes.Count];
-                Dic[new Vector2(x, y).ToString()] = new Dictionary<string, string>
+                var tileType = GetRandomTileType();
+                var position = new Vector2I(x, y);
+                tileMapData[position] = new Dictionary<string, string>
                 {
-                    {"type", (string)tileType["type"]},
-                    {"position", new Vector2(x, y).ToString()}
+                    {"type", tileType.Type},
+                    {"position", position.ToString()}
                 };
-                SetCell(0, new Vector2I(x, y), 1, (Vector2I)tileType["position"], 0);
+                SetCell(0, position, 1, tileType.Position, 0);
             }
         }
     }
 
     public override void _Process(double delta)
     {
+        UpdateTileMapOnHover();
+    }
+
+    private void UpdateTileMapOnHover()
+    {
         var mousePosition = (Vector2I)GetGlobalMousePosition();
-        var tile = (Vector2I) MapToLocal(mousePosition + new Vector2I(0, 7));
+        var tile = LocalToMap(mousePosition + new Vector2I(0, 7));
 
-        for (int x = 0; x < GridSizeX; x++)
-        {
-            for (int y = 0; y < GridSizeY; y++)
-            {
-                EraseCell(1, new Vector2I(x, y));
-            }
-        }
+        ClearHoveredTilesFromField();
 
-        if (Dic.ContainsKey(tile.ToString()))
+        if (tileMapData.TryGetValue(tile, out var hoveredTile))
         {
-            selectedTile = tile;
-            var hoveredTile = Dic[tile.ToString()];
-            var tileType = FindTileByType((string)hoveredTile["type"]);
-            SetCell(1, tile, 0, (Vector2I)tileType["position"], 0);
+            selectedTile = (Vector2I)MapToLocal(tile);
+            var tileType = FindTileByType(hoveredTile["type"]);
+            SetCell(1, tile, 0, tileType.Position, 0);
         }
     }
 
-    private Dictionary<string, object> FindTileByType(string type)
+    private void ClearHoveredTilesFromField()
     {
-        foreach (var tileType in tileTypes)
+        foreach (var position in tileMapData.Keys)
         {
-            if ((string)tileType["type"] == type)
-            {
-                return tileType;
-            }
+            EraseCell(1, position);
         }
-        return null;
+    }
+
+    private TileType FindTileByType(string type)
+    {
+        return tileTypes.Find(tileType => tileType.Type == type);
+    }
+
+    private TileType GetRandomTileType()
+    {
+        var rand = new Random();
+        return tileTypes[rand.Next(tileTypes.Count)];
     }
 }

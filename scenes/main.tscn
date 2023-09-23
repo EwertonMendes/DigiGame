@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://lxvsaw5yulpi" path="res://assets/terrain/MCBlocksBlackOutline.png" id="1_04bw1"]
 [ext_resource type="Texture2D" uid="uid://c1cqsj0fys7n6" path="res://assets/terrain/MCBlocksColorOutline.png" id="2_38sx1"]
-[ext_resource type="Script" path="res://src/TileMap.gd" id="3_okt5o"]
+[ext_resource type="Script" path="res://src/Field.cs" id="3_okt5o"]
 [ext_resource type="PackedScene" uid="uid://diqt3fxs57ahw" path="res://scenes/player.tscn" id="4_ldq5o"]
 [ext_resource type="Script" path="res://src/MainCamera.cs" id="5_1yn7g"]
 [ext_resource type="PackedScene" uid="uid://celawaflf4raa" path="res://scenes/blue_space_background.tscn" id="6_qt0ps"]
