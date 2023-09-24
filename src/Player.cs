@@ -31,21 +31,20 @@ public partial class Player : CharacterBody2D
 			if (eventMouseButton.IsReleased() && !IsDigimonPositionClicked())
 			{
 				isSelected = false;
-				return;
 			}
 
 			if (eventMouseButton.IsPressed() && isSelected)
 			{
 				MoveDigimonPosition();
 				isSelected = false;
-				return;
 			}
 
 			if (eventMouseButton.IsPressed() && IsDigimonPositionClicked())
 			{
 				isSelected = true;
-				return;
 			}
+			
+			EmitParticlesWhenSelected();
 		}
 	}
 
@@ -58,6 +57,12 @@ public partial class Player : CharacterBody2D
 	private void MoveDigimonPosition()
 	{
 		GlobalPosition = selectedTileCoords - PLAYER_POSITION_DEVIATION;
+	}
+
+	private void EmitParticlesWhenSelected()
+	{
+		var particles = GetNode<CpuParticles2D>("CPUParticles2D");
+		particles.Emitting = isSelected;
 	}
 
 }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://diqt3fxs57ahw"]
+[gd_scene load_steps=10 format=3 uid="uid://diqt3fxs57ahw"]
 
 [ext_resource type="Script" path="res://src/Player.cs" id="1_jtich"]
 [ext_resource type="Texture2D" uid="uid://ier4eoagmd8i" path="res://assets/characters/greymon.png" id="1_y5by8"]
@@ -139,6 +139,9 @@ _data = {
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3t5ud"]
 
+[sub_resource type="Gradient" id="Gradient_sk2os"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_jtich")
 
@@ -156,3 +159,17 @@ libraries = {
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, -10)
 shape = SubResource("RectangleShape2D_3t5ud")
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 32
+emission_shape = 3
+emission_rect_extents = Vector2(14, 1)
+direction = Vector2(0, -1)
+gravity = Vector2(0, -50)
+initial_velocity_min = 20.0
+initial_velocity_max = 20.0
+damping_max = 20.0
+scale_amount_min = 1.5
+scale_amount_max = 1.5
+color_ramp = SubResource("Gradient_sk2os")
