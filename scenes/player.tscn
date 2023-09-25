@@ -1,7 +1,10 @@
 [gd_scene load_steps=10 format=3 uid="uid://diqt3fxs57ahw"]
 
 [ext_resource type="Script" path="res://src/Player.cs" id="1_jtich"]
-[ext_resource type="Texture2D" uid="uid://ier4eoagmd8i" path="res://assets/characters/greymon.png" id="1_y5by8"]
+[ext_resource type="Script" path="res://src/MainCamera.cs" id="2_d14h3"]
+
+[sub_resource type="Gradient" id="Gradient_sk2os"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
 
 [sub_resource type="Animation" id="Animation_3dh2p"]
 resource_name = "Idle"
@@ -139,28 +142,21 @@ _data = {
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3t5ud"]
 
-[sub_resource type="Gradient" id="Gradient_sk2os"]
-colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
-
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_jtich")
 
+[node name="MainCamera" type="Camera2D" parent="."]
+scale = Vector2(0.5, 0.5)
+zoom = Vector2(2, 2)
+position_smoothing_enabled = true
+script = ExtResource("2_d14h3")
+
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(0, -31)
-texture = ExtResource("1_y5by8")
 flip_h = true
 hframes = 9
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-libraries = {
-"": SubResource("AnimationLibrary_ebgrj")
-}
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -10)
-shape = SubResource("RectangleShape2D_3t5ud")
-
-[node name="CPUParticles2D" type="CPUParticles2D" parent="."]
+[node name="CPUParticles2D" type="CPUParticles2D" parent="Sprite2D"]
 emitting = false
 amount = 32
 emission_shape = 3
@@ -173,3 +169,12 @@ damping_max = 20.0
 scale_amount_min = 1.5
 scale_amount_max = 1.5
 color_ramp = SubResource("Gradient_sk2os")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_ebgrj")
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -10)
+shape = SubResource("RectangleShape2D_3t5ud")

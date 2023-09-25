@@ -2,23 +2,21 @@ using Godot;
 
 public partial class Player : CharacterBody2D
 {
-	private readonly Vector2 PLAYER_POSITION_DEVIATION = new(0, 4);
-	private Vector2 initialTileCoords = new(48, 70);
-
+	public Vector2 PLAYER_POSITION_DEVIATION;
+	public Vector2 initialTileCoords;
 	private bool isSelected = false;
-
 	private Vector2 selectedTileCoords;
-
 
 	public override void _Ready()
 	{
-		GlobalPosition = initialTileCoords - PLAYER_POSITION_DEVIATION;
-		GetNode<AnimationPlayer>("AnimationPlayer").Play("walk_up");
+		GlobalPosition = initialTileCoords + PLAYER_POSITION_DEVIATION;
+		//GetNode<AnimationPlayer>("AnimationPlayer").Play("walk_up");
+
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
-		selectedTileCoords = (Vector2)GetNode("../Blocks").Get("selectedTile");
+		selectedTileCoords = GlobalVariables.SelectedTileCoords;
 	}
 
 	public override void _Input(InputEvent @event)
@@ -31,38 +29,52 @@ public partial class Player : CharacterBody2D
 			if (eventMouseButton.IsReleased() && !IsDigimonPositionClicked())
 			{
 				isSelected = false;
+				EmitParticlesWhenSelected();
+				return;
 			}
 
 			if (eventMouseButton.IsPressed() && isSelected)
 			{
-				MoveDigimonPosition();
 				isSelected = false;
+				MoveDigimonPosition();
+				EmitParticlesWhenSelected();
+				return;
 			}
 
 			if (eventMouseButton.IsPressed() && IsDigimonPositionClicked())
 			{
 				isSelected = true;
+				EmitParticlesWhenSelected();
+				MoveCameraToSelectedDigimon();
+				eventMouseButton.Position = new Vector2(0, 0);
+				return;
 			}
-			
-			EmitParticlesWhenSelected();
 		}
 	}
 
 	private bool IsDigimonPositionClicked()
 	{
-		var selectedTilePosition = (Vector2)GetNode("../Blocks").Get("selectedTile");
-		return selectedTilePosition == (GlobalPosition + PLAYER_POSITION_DEVIATION);
+		return selectedTileCoords == (GlobalPosition - PLAYER_POSITION_DEVIATION);
 	}
 
 	private void MoveDigimonPosition()
 	{
-		GlobalPosition = selectedTileCoords - PLAYER_POSITION_DEVIATION;
+		GlobalPosition = selectedTileCoords + PLAYER_POSITION_DEVIATION;
 	}
 
 	private void EmitParticlesWhenSelected()
 	{
-		var particles = GetNode<CpuParticles2D>("CPUParticles2D");
+		var particles = GetNode<Sprite2D>("Sprite2D").GetNode<CpuParticles2D>("CPUParticles2D");
+		particles.Position = ToLocal(GlobalPosition) + new Vector2(0, 10);
 		particles.Emitting = isSelected;
 	}
 
+	private void MoveCameraToSelectedDigimon()
+	{
+		var camera = GetNode<Camera2D>("MainCamera");
+
+		if (camera == null) return;
+
+		camera.MakeCurrent();
+	}
 }

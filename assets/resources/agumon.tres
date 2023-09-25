@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3 uid="uid://cdl0jnl3gx6m7"]
+
+[ext_resource type="Script" path="res://src/resources/Digimon.cs" id="1_1kade"]
+[ext_resource type="Texture2D" uid="uid://y54swmdy81fp" path="res://assets/characters/agumon.png" id="1_eldmm"]
+
+[resource]
+script = ExtResource("1_1kade")
+Texture = ExtResource("1_eldmm")
+InitialFrame = 0
+SpriteDeviation = Vector2(0, 20)
+InitialPosition = Vector2i(72, 70)
+Type = ""
+Name = "Agumon"
+Level = 1
+Hp = 100
+Mp = 100
+Attack = 10
+Defense = 10
+Age = 1
+Battles = 0
+Victories = 0
+Defeats = 0
