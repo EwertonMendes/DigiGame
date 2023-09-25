@@ -20,3 +20,13 @@
   </ul>
   
   ![20230921_230136](https://github.com/EwertonMendes/DigiGame/assets/33728924/8d2184eb-27ed-493d-bd3b-e4b74deae59a)
+
+## Screenshot 24-09-2023
+  ### Features:
+  <ul>
+    <li>Added particle effect when digimon is selected</li>
+    <li>Added support for multiple digimons on the field</li>
+  </ul>
+  
+  ![24092023](https://github.com/EwertonMendes/DigiGame/assets/33728924/ceff32fc-b124-461f-829b-f3ee8239af74)
+
