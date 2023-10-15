@@ -71,10 +71,10 @@ public partial class Player : CharacterBody2D
 
 	private void MoveCameraToSelectedDigimon()
 	{
-		var camera = GetNode<Camera2D>("MainCamera");
+		var camera = GetViewport().GetCamera2D();
 
 		if (camera == null) return;
 
-		camera.MakeCurrent();
+		camera.GlobalPosition = GlobalPosition;
 	}
 }
