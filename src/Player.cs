@@ -6,12 +6,13 @@ public partial class Player : CharacterBody2D
 	public Vector2 initialTileCoords;
 	private bool isSelected = false;
 	private Vector2 selectedTileCoords;
+	private AnimationPlayer animationPlayer;
 
 	public override void _Ready()
 	{
 		GlobalPosition = initialTileCoords + PLAYER_POSITION_DEVIATION;
-		//GetNode<AnimationPlayer>("AnimationPlayer").Play("walk_up");
-
+		animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
+		animationPlayer.Play("Idle");
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -29,6 +30,7 @@ public partial class Player : CharacterBody2D
 			if (eventMouseButton.IsReleased() && !IsDigimonPositionClicked())
 			{
 				isSelected = false;
+				animationPlayer.Play("Idle");
 				EmitParticlesWhenSelected();
 				return;
 			}
@@ -36,6 +38,7 @@ public partial class Player : CharacterBody2D
 			if (eventMouseButton.IsPressed() && isSelected)
 			{
 				isSelected = false;
+				animationPlayer.Play("Idle");
 				MoveDigimonPosition();
 				EmitParticlesWhenSelected();
 				return;
@@ -47,6 +50,7 @@ public partial class Player : CharacterBody2D
 				EmitParticlesWhenSelected();
 				MoveCameraToSelectedDigimon();
 				eventMouseButton.Position = new Vector2(0, 0);
+				animationPlayer.Play("walk_up");
 				return;
 			}
 		}
