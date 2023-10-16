@@ -5,6 +5,7 @@ public partial class MainCamera : Camera2D
     private float CAMERA_MOVEMENT_FORCE = 5f;
     private Vector2 MIN_ZOOM = new(1, 1);
     private Vector2 MAX_ZOOM = new(4, 4);
+    private Vector2 INITIAL_ZOOM = new(2, 2);
     private Vector2 ZOOM_FACTOR = new(0.25f, 0.25f);
 
     private void HandleZoom()
@@ -35,6 +36,6 @@ public partial class MainCamera : Camera2D
 
     public override void _Ready()
     {
-        Zoom = MIN_ZOOM;
+        Zoom = INITIAL_ZOOM;
     }
 }
