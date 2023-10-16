@@ -58,6 +58,7 @@ public partial class DigimonController : Node2D
 		var instanceNode = digimonInstance as Node2D;
 		Player digimonScriptInstance = (Player)instanceNode;
 		digimonScriptInstance.PLAYER_POSITION_DEVIATION = digimonResource.SpriteDeviation;
+		digimonScriptInstance.PARTICLES_POSITION_DEVIATION = digimonResource.ParticleDeviation;
 		digimonScriptInstance.initialTileCoords = digimonResource.InitialPosition;
 	}
 

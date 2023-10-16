@@ -8,6 +8,7 @@ script = ExtResource("2_2rf2f")
 Texture = ExtResource("1_y8hsk")
 InitialFrame = 3
 SpriteDeviation = Vector2(0, 13)
+ParticleDeviation = Vector2(0, 25)
 InitialPosition = Vector2i(48, 70)
 Type = ""
 Name = "Greymon"

@@ -3,6 +3,7 @@ using Godot;
 public partial class Player : CharacterBody2D
 {
 	public Vector2 PLAYER_POSITION_DEVIATION;
+	public Vector2 PARTICLES_POSITION_DEVIATION;
 	public Vector2 initialTileCoords;
 	private bool isSelected = false;
 	private Vector2 selectedTileCoords;
@@ -69,7 +70,7 @@ public partial class Player : CharacterBody2D
 	private void EmitParticlesWhenSelected()
 	{
 		var particles = GetNode<Sprite2D>("Sprite2D").GetNode<CpuParticles2D>("CPUParticles2D");
-		particles.Position = ToLocal(GlobalPosition) + new Vector2(0, 10);
+		particles.Position = ToLocal(GlobalPosition) + PARTICLES_POSITION_DEVIATION;
 		particles.Emitting = isSelected;
 	}
 

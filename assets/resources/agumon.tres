@@ -8,6 +8,7 @@ script = ExtResource("1_1kade")
 Texture = ExtResource("1_eldmm")
 InitialFrame = 0
 SpriteDeviation = Vector2(0, 20)
+ParticleDeviation = Vector2(0, 10)
 InitialPosition = Vector2i(72, 70)
 Type = ""
 Name = "Agumon"
