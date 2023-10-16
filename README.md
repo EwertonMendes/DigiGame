@@ -30,3 +30,17 @@
   
   ![24092023](https://github.com/EwertonMendes/DigiGame/assets/33728924/ceff32fc-b124-461f-829b-f3ee8239af74)
 
+  ## Screenshot 16-10-2023
+  ### Features:
+  <ul>
+    <li>Added animation for multiple digimon on selecting it</li>
+    <li>Fixed particle position offset</li>
+    <li>Fixed bug on selecting digimon</li>
+    <li>Made field smaller</li>
+    <li>Changed initial zoom</li>
+  </ul>
+
+https://github.com/EwertonMendes/DigiGame/assets/33728924/a2fd34f0-ace6-4bc6-a9ce-cc2f5f02b0eb
+
+
+
