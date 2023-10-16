@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 public partial class Field : TileMap
 {
-    private const int GridSizeX = 30;
-    private const int GridSizeY = 50;
+    private const int GridSizeX = 15;
+    private const int GridSizeY = 25;
     private readonly Dictionary<Vector2I, Dictionary<string, string>> tileMapData = new();
     public Vector2I selectedTile;
 
