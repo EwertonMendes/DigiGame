@@ -27,7 +27,7 @@ public partial class Player : CharacterBody2D
 
 		if (@event is InputEventMouseButton eventMouseButton && eventMouseButton.ButtonIndex == MouseButton.Left)
 		{
-			if (eventMouseButton.IsReleased() && !IsDigimonPositionClicked())
+			if (eventMouseButton.IsReleased() && !IsDigimonPositionClicked() && !isSelected)
 			{
 				isSelected = false;
 				animationPlayer.Play("Idle");
