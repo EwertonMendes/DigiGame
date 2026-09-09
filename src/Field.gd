@@ -6,11 +6,13 @@ const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const INVALID_GRID := Vector2i(-9999, -9999)
 const TERRAIN_DETAIL_ALPHA := 0.42
+const HOVER_AVAILABLE_FILL := Color(0.12, 0.92, 1.0, 0.20)
+const HOVER_AVAILABLE_OUTLINE := Color(0.28, 0.96, 1.0, 0.95)
+const HOVER_BLOCKED_FILL := Color(1.0, 0.12, 0.14, 0.24)
+const HOVER_BLOCKED_OUTLINE := Color(1.0, 0.28, 0.30, 0.98)
 
 # Kenney Isometric Landscape source tiles are 132x83 pixels. We sample only
-# the upper ground face and blend it over a solid biome-colored diamond. The
-# solid layer prevents transparent source edges from producing seams between
-# adjacent tactical cells while the source art still provides texture detail.
+# the upper ground face and blend it over a solid biome-colored diamond.
 const SOURCE_TOP_LEFT := Vector2(2.0, 32.0)
 const SOURCE_TOP_TOP := Vector2(66.0, 1.0)
 const SOURCE_TOP_RIGHT := Vector2(130.0, 32.0)
@@ -31,11 +33,17 @@ const TERRAIN_BASE_COLORS := {
 var tile_map_data: Dictionary = {}
 var selectedTile := Vector2i.ZERO
 
+# Static blockers live here instead of inside Player movement. Future scenery
+# (trees, cliffs, deep water, etc.) can register a reason per grid cell without
+# changing Digimon movement code. Dynamic blockers such as Digimon occupancy
+# are resolved through DigimonController in get_tile_block_reason().
+var _static_blocked_tiles: Dictionary = {}
 var _terrain_textures: Dictionary = {}
 var _map_center := Vector2.ZERO
 var _hover_fill: Polygon2D
 var _hover_outline: Line2D
 var _last_hovered_grid := INVALID_GRID
+var _last_hover_block_reason := ""
 
 
 func _ready() -> void:
@@ -130,7 +138,6 @@ func _create_terrain_tile(terrain_name: String, detail_value: float) -> Node2D:
 
 
 func _terrain_for_noise(biome_value: float, detail_value: float) -> String:
-	# Grass remains the visual baseline while noise creates broad readable patches.
 	if biome_value < -0.38:
 		return "earth"
 	if biome_value > 0.32 or (biome_value > 0.16 and detail_value > 0.48):
@@ -179,13 +186,11 @@ func get_camera_pan_bounds() -> Rect2:
 	var outline := _board_outline()
 	var min_point := outline[0]
 	var max_point := outline[0]
-
 	for point in outline:
 		min_point.x = minf(min_point.x, point.x)
 		min_point.y = minf(min_point.y, point.y)
 		max_point.x = maxf(max_point.x, point.x)
 		max_point.y = maxf(max_point.y, point.y)
-
 	return Rect2(min_point, max_point - min_point)
 
 
@@ -193,8 +198,53 @@ func select_tile_from_world(world_position: Vector2) -> bool:
 	var grid := world_to_grid(to_local(world_position))
 	if not _is_valid_grid(grid):
 		return false
-	_apply_selected_grid(grid)
+	_apply_selected_grid(grid, get_tile_block_reason(grid, _get_selected_digimon()))
 	return true
+
+
+func set_static_tile_blocked(grid: Vector2i, reason := "terrain_blocked") -> void:
+	if _is_valid_grid(grid):
+		_static_blocked_tiles[grid] = reason
+
+
+func clear_static_tile_blocker(grid: Vector2i) -> void:
+	_static_blocked_tiles.erase(grid)
+
+
+func get_tile_block_reason(grid: Vector2i, moving_digimon: Node = null) -> String:
+	if not _is_valid_grid(grid):
+		return "out_of_bounds"
+
+	if _static_blocked_tiles.has(grid):
+		return String(_static_blocked_tiles[grid])
+
+	if moving_digimon != null:
+		var controller := _get_digimon_controller()
+		if controller != null and controller.has_method("is_tile_occupied"):
+			var tile_world_position := grid_to_world(grid)
+			if bool(controller.call("is_tile_occupied", tile_world_position, moving_digimon)):
+				return "occupied"
+
+	return ""
+
+
+func can_digimon_move_to_world(tile_world_position: Vector2, moving_digimon: Node) -> bool:
+	var grid := world_to_grid(to_local(tile_world_position))
+	return get_tile_block_reason(grid, moving_digimon).is_empty()
+
+
+func _get_selected_digimon() -> Node:
+	var controller := _get_digimon_controller()
+	if controller != null and controller.has_method("get_selected_digimon"):
+		return controller.call("get_selected_digimon") as Node
+	return null
+
+
+func _get_digimon_controller() -> Node:
+	var main := get_tree().root.get_node_or_null("Main")
+	if main == null:
+		return null
+	return main.get_node_or_null("DigimonController")
 
 
 func _offset_polygon(points: PackedVector2Array, offset: Vector2) -> PackedVector2Array:
@@ -210,7 +260,7 @@ func _create_hover_indicator() -> void:
 	_hover_fill = Polygon2D.new()
 	_hover_fill.name = "HoverFill"
 	_hover_fill.polygon = diamond
-	_hover_fill.color = Color(0.12, 0.92, 1.0, 0.20)
+	_hover_fill.color = HOVER_AVAILABLE_FILL
 	_hover_fill.z_index = -40
 	_hover_fill.visible = false
 	add_child(_hover_fill)
@@ -221,7 +271,7 @@ func _create_hover_indicator() -> void:
 		diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]
 	])
 	_hover_outline.width = 2.0
-	_hover_outline.default_color = Color(0.28, 0.96, 1.0, 0.95)
+	_hover_outline.default_color = HOVER_AVAILABLE_OUTLINE
 	_hover_outline.z_index = -39
 	_hover_outline.visible = false
 	add_child(_hover_outline)
@@ -245,22 +295,27 @@ func _update_hover() -> void:
 
 	if not _is_valid_grid(grid):
 		_last_hovered_grid = INVALID_GRID
+		_last_hover_block_reason = ""
 		_hover_fill.visible = false
 		_hover_outline.visible = false
 		return
 
-	if grid == _last_hovered_grid:
+	var block_reason := get_tile_block_reason(grid, _get_selected_digimon())
+	if grid == _last_hovered_grid and block_reason == _last_hover_block_reason:
 		return
 
-	_apply_selected_grid(grid)
+	_apply_selected_grid(grid, block_reason)
 
 
-func _apply_selected_grid(grid: Vector2i) -> void:
+func _apply_selected_grid(grid: Vector2i, block_reason := "") -> void:
 	_last_hovered_grid = grid
+	_last_hover_block_reason = block_reason
 	var world_position := grid_to_world(grid)
 	selectedTile = Vector2i(int(round(world_position.x)), int(round(world_position.y)))
 	_hover_fill.position = world_position
 	_hover_outline.position = world_position
+	_hover_fill.color = HOVER_BLOCKED_FILL if not block_reason.is_empty() else HOVER_AVAILABLE_FILL
+	_hover_outline.default_color = HOVER_BLOCKED_OUTLINE if not block_reason.is_empty() else HOVER_AVAILABLE_OUTLINE
 	_hover_fill.visible = true
 	_hover_outline.visible = true
 
