@@ -4,7 +4,7 @@ const GRID_SIZE_X := 15
 const GRID_SIZE_Y := 25
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
-const TILE_ART_OFFSET_Y := 16.0
+const TILE_ART_OFFSET_Y := 5.0
 const TILE_SCALE := Vector2(0.5, 0.5)
 const INVALID_GRID := Vector2i(-9999, -9999)
 
@@ -18,6 +18,7 @@ var tile_map_data: Dictionary = {}
 var selectedTile := Vector2i.ZERO
 
 var _terrain_textures: Dictionary = {}
+var _terrain_material: ShaderMaterial
 var _map_center := Vector2.ZERO
 var _hover_fill: Polygon2D
 var _hover_outline: Line2D
@@ -27,6 +28,8 @@ var _last_hovered_grid := INVALID_GRID
 func _ready() -> void:
 	_map_center = _grid_to_raw(Vector2((GRID_SIZE_X - 1) * 0.5, (GRID_SIZE_Y - 1) * 0.5))
 	if not _load_terrain_textures():
+		return
+	if not _create_terrain_material():
 		return
 	_create_board_shadow()
 	_create_hover_indicator()
@@ -47,15 +50,25 @@ func _load_terrain_textures() -> bool:
 	return true
 
 
+func _create_terrain_material() -> bool:
+	var shader := load("res://shaders/terrain_top.gdshader") as Shader
+	if shader == null:
+		push_error("Could not load terrain top-face shader")
+		return false
+	_terrain_material = ShaderMaterial.new()
+	_terrain_material.shader = shader
+	return true
+
+
 func _generate_terrain() -> void:
 	var biome_noise := FastNoiseLite.new()
 	biome_noise.seed = 1701
-	biome_noise.frequency = 0.085
+	biome_noise.frequency = 0.070
 	biome_noise.fractal_octaves = 3
 
 	var detail_noise := FastNoiseLite.new()
 	detail_noise.seed = 4117
-	detail_noise.frequency = 0.19
+	detail_noise.frequency = 0.18
 	detail_noise.fractal_octaves = 2
 
 	for y in range(GRID_SIZE_Y):
@@ -74,6 +87,7 @@ func _generate_terrain() -> void:
 			var tile := Sprite2D.new()
 			tile.name = "Tile_%02d_%02d" % [x, y]
 			tile.texture = _terrain_textures[terrain_name]
+			tile.material = _terrain_material
 			tile.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			tile.scale = TILE_SCALE
 			tile.position = world_position + Vector2(0.0, TILE_ART_OFFSET_Y)
@@ -84,9 +98,10 @@ func _generate_terrain() -> void:
 
 
 func _terrain_for_noise(biome_value: float, detail_value: float) -> String:
-	if biome_value < -0.26:
+	// Keep grass as the visual baseline and use broad, readable biome patches.
+	if biome_value < -0.38:
 		return "earth"
-	if biome_value > 0.28 or (biome_value > 0.10 and detail_value > 0.42):
+	if biome_value > 0.32 or (biome_value > 0.16 and detail_value > 0.48):
 		return "lush_grass"
 	return "grass"
 
@@ -95,12 +110,12 @@ func _create_board_shadow() -> void:
 	var shadow := Polygon2D.new()
 	shadow.name = "BoardShadow"
 	shadow.polygon = PackedVector2Array([
-		grid_to_world(Vector2i(0, 0)) + Vector2(-TILE_WIDTH * 0.5, 22.0),
-		grid_to_world(Vector2i(GRID_SIZE_X - 1, 0)) + Vector2(0.0, 22.0),
-		grid_to_world(Vector2i(GRID_SIZE_X - 1, GRID_SIZE_Y - 1)) + Vector2(TILE_WIDTH * 0.5, 22.0),
-		grid_to_world(Vector2i(0, GRID_SIZE_Y - 1)) + Vector2(0.0, 22.0),
+		grid_to_world(Vector2i(0, 0)) + Vector2(-TILE_WIDTH * 0.5, 18.0),
+		grid_to_world(Vector2i(GRID_SIZE_X - 1, 0)) + Vector2(0.0, 18.0),
+		grid_to_world(Vector2i(GRID_SIZE_X - 1, GRID_SIZE_Y - 1)) + Vector2(TILE_WIDTH * 0.5, 18.0),
+		grid_to_world(Vector2i(0, GRID_SIZE_Y - 1)) + Vector2(0.0, 18.0),
 	])
-	shadow.color = Color(0.0, 0.035, 0.08, 0.66)
+	shadow.color = Color(0.0, 0.035, 0.08, 0.58)
 	shadow.z_index = -180
 	add_child(shadow)
 
@@ -116,7 +131,7 @@ func _create_hover_indicator() -> void:
 	_hover_fill = Polygon2D.new()
 	_hover_fill.name = "HoverFill"
 	_hover_fill.polygon = diamond
-	_hover_fill.color = Color(0.16, 0.94, 1.0, 0.22)
+	_hover_fill.color = Color(0.16, 0.94, 1.0, 0.18)
 	_hover_fill.z_index = -40
 	_hover_fill.visible = false
 	add_child(_hover_fill)
@@ -127,7 +142,7 @@ func _create_hover_indicator() -> void:
 		diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]
 	])
 	_hover_outline.width = 2.0
-	_hover_outline.default_color = Color(0.28, 0.96, 1.0, 0.9)
+	_hover_outline.default_color = Color(0.28, 0.96, 1.0, 0.92)
 	_hover_outline.z_index = -39
 	_hover_outline.visible = false
 	add_child(_hover_outline)
