@@ -40,7 +40,8 @@ func _physics_process(delta: float) -> void:
 
 	selected_tile_coords = GlobalVariables.SelectedTileCoords
 	if is_selected:
-		face_toward_world_position(get_global_mouse_position())
+		if not GlobalVariables.TouchInputActive:
+			face_toward_world_position(get_global_mouse_position())
 		_advance_selected_animation(delta)
 	else:
 		_selected_animation_time = 0.0
@@ -49,6 +50,12 @@ func _physics_process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if not _can_control() or not event is InputEventMouseButton:
+		return
+
+	# Touch presses can be mirrored as synthetic mouse clicks so ordinary UI
+	# Buttons remain touch-friendly. Native touch gameplay is handled by the
+	# camera; suppress the mirrored click so a finger cannot trigger both paths.
+	if GlobalVariables.TouchInputActive:
 		return
 
 	var mouse_event := event as InputEventMouseButton
@@ -63,13 +70,38 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if is_digimon_position_clicked():
-		is_selected = true
-		face_toward_world_position(get_global_mouse_position())
-		_selected_animation_time = 0.0
-		_selected_animation_frame = 0
-		_show_current_facing(true)
-		emit_particles_when_selected()
-		move_camera_to_selected_digimon()
+		_select_for_pointer(get_global_mouse_position())
+
+func handle_touch_tap(tile_world_position: Vector2, pointer_world_position: Vector2) -> bool:
+	if not _can_control():
+		return false
+
+	selected_tile_coords = Vector2i(
+		int(round(tile_world_position.x)),
+		int(round(tile_world_position.y))
+	)
+
+	if is_selected:
+		var destination := Vector2(selected_tile_coords) + PLAYER_POSITION_DEVIATION
+		face_toward_world_position(destination)
+		move_digimon_position()
+		_clear_selection()
+		return true
+
+	if is_digimon_position_clicked():
+		_select_for_pointer(pointer_world_position)
+		return true
+
+	return false
+
+func _select_for_pointer(pointer_world_position: Vector2) -> void:
+	is_selected = true
+	face_toward_world_position(pointer_world_position)
+	_selected_animation_time = 0.0
+	_selected_animation_frame = 0
+	_show_current_facing(true)
+	emit_particles_when_selected()
+	move_camera_to_selected_digimon()
 
 func _can_control() -> bool:
 	return is_player_controlled or GlobalVariables.DebugMode

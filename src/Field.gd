@@ -189,6 +189,14 @@ func get_camera_pan_bounds() -> Rect2:
 	return Rect2(min_point, max_point - min_point)
 
 
+func select_tile_from_world(world_position: Vector2) -> bool:
+	var grid := world_to_grid(to_local(world_position))
+	if not _is_valid_grid(grid):
+		return false
+	_apply_selected_grid(grid)
+	return true
+
+
 func _offset_polygon(points: PackedVector2Array, offset: Vector2) -> PackedVector2Array:
 	var result := PackedVector2Array()
 	for point in points:
@@ -229,6 +237,9 @@ func _tile_diamond(overscan := Vector2.ZERO) -> PackedVector2Array:
 
 
 func _update_hover() -> void:
+	if GlobalVariables.TouchInputActive:
+		return
+
 	var local_mouse := to_local(get_global_mouse_position())
 	var grid := world_to_grid(local_mouse)
 
@@ -241,6 +252,10 @@ func _update_hover() -> void:
 	if grid == _last_hovered_grid:
 		return
 
+	_apply_selected_grid(grid)
+
+
+func _apply_selected_grid(grid: Vector2i) -> void:
 	_last_hovered_grid = grid
 	var world_position := grid_to_world(grid)
 	selectedTile = Vector2i(int(round(world_position.x)), int(round(world_position.y)))
