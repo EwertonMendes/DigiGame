@@ -11,7 +11,7 @@ Koromon and Tanemon are prepared by `tools/fetch_enemy_assets.py` from the With 
 
 For those baby Digimon, extraction clears both edge-connected background blue and any remaining source-blue pixels trapped inside the sprite component. Koromon's source-facing convention is opposite Tanemon's, so its left/right assignments are explicitly swapped when the runtime sheet is built.
 
-Veemon uses the exact transparent 296x32 spritesheet supplied by the project owner in the latest September 9, 2026 correction pass, SHA-256 `45f0399371098105fe07afb6e3c1ed97172f02d1d25856036c90c9ad31ddb1c7`. The file is committed directly as `assets/characters/veemon.png` and is authoritative; `tools/fetch_enemy_assets.py` intentionally does not overwrite it.
+Veemon uses the latest transparent 296x32 spritesheet supplied by the project owner in the September 9, 2026 correction pass. The uploaded source SHA-256 is `45f0399371098105fe07afb6e3c1ed97172f02d1d25856036c90c9ad31ddb1c7`. The committed `assets/characters/veemon.png` is a lossless palette-PNG re-encoding with identical RGBA pixels and SHA-256 `b8b0cbd6d9d3303f7249d923498a68e35abfb94e310da37a2f0a026648ce746f`; `tools/fetch_enemy_assets.py` intentionally does not overwrite it.
 
 That Veemon file contains nine 32x32 cells separated by one transparent spacer column, so its width is 296 pixels rather than 288. It must **not** be sliced with `Sprite2D.hframes = 9`, because equal subdivision would cut at fractional boundaries and shift the visible sprite between frames. Veemon therefore uses the `spaced_9_32` runtime layout, which crops each exact 32x32 cell at a 33-pixel stride. The right-facing variants are horizontal mirrors of the corresponding supplied left-facing walk frames.
 
