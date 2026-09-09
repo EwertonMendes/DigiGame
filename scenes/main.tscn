@@ -2,10 +2,10 @@
 
 [ext_resource type="Texture2D" uid="uid://lxvsaw5yulpi" path="res://assets/terrain/MCBlocksBlackOutline.png" id="1_04bw1"]
 [ext_resource type="Texture2D" uid="uid://c1cqsj0fys7n6" path="res://assets/terrain/MCBlocksColorOutline.png" id="2_38sx1"]
-[ext_resource type="Script" path="res://src/Field.cs" id="3_okt5o"]
-[ext_resource type="Script" path="res://src/MainCamera.cs" id="5_1yn7g"]
+[ext_resource type="Script" path="res://src/Field.gd" id="3_okt5o"]
+[ext_resource type="Script" path="res://src/MainCamera.gd" id="5_1yn7g"]
 [ext_resource type="PackedScene" uid="uid://celawaflf4raa" path="res://scenes/blue_space_background.tscn" id="6_qt0ps"]
-[ext_resource type="Script" path="res://src/DigimonController.cs" id="7_jbl2r"]
+[ext_resource type="Script" path="res://src/DigimonController.gd" id="7_jbl2r"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_l7t5v"]
 texture = ExtResource("1_04bw1")
@@ -142,7 +142,7 @@ sources/1 = SubResource("TileSetAtlasSource_dn0tg")
 [node name="Blocks" type="TileMap" parent="."]
 y_sort_enabled = true
 tile_set = SubResource("TileSet_tvv68")
-cell_quadrant_size = 12
+rendering_quadrant_size = 12
 format = 2
 layer_0/y_sort_enabled = true
 layer_1/name = ""

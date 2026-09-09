@@ -1,23 +1,23 @@
 [gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3 uid="uid://w74vel1wtmjg"]
 
 [ext_resource type="Texture2D" uid="uid://ier4eoagmd8i" path="res://assets/characters/greymon.png" id="1_y8hsk"]
-[ext_resource type="Script" path="res://src/resources/Digimon.cs" id="2_2rf2f"]
+[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="2_2rf2f"]
 
 [resource]
 script = ExtResource("2_2rf2f")
-Texture = ExtResource("1_y8hsk")
-InitialFrame = 3
-SpriteDeviation = Vector2(0, 13)
-ParticleDeviation = Vector2(0, 25)
-InitialPosition = Vector2i(48, 70)
-Type = ""
-Name = "Greymon"
-Level = 1
-Hp = 200
-Mp = 200
-Attack = 20
-Defense = 20
-Age = 1
-Battles = 0
-Victories = 0
-Defeats = 0
+texture = ExtResource("1_y8hsk")
+initial_frame = 3
+sprite_deviation = Vector2(0, 13)
+particle_deviation = Vector2(0, 25)
+initial_position = Vector2i(48, 70)
+type = ""
+display_name = "Greymon"
+level = 1
+hp = 200
+mp = 200
+attack = 20
+defense = 20
+age = 1
+battles = 0
+victories = 0
+defeats = 0
