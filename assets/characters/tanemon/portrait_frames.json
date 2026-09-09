@@ -1,0 +1,13 @@
+{
+  "source": "Tanemon.webp",
+  "frame_width": 43,
+  "frame_height": 42,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "2e01779b8d72dad0844fb4ebc32f2d414a414ad925e2341ac6069564dc9ad9ed"
+}

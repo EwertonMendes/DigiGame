@@ -1,0 +1,13 @@
+{
+  "source": "Koromon.webp",
+  "frame_width": 40,
+  "frame_height": 31,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "5bcd1f8855da2fa51136c9884d058a16829fdccc27ef09ce5d17532e66f3c284"
+}
