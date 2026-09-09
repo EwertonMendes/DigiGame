@@ -62,12 +62,16 @@ jobs:
           mkdir -p build/web
           godot --headless --path . --export-release Web build/web/index.html
           test -s build/web/index.html && test -s build/web/index.wasm
-      - name: Install browser for smoke test
-        run: |
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-      - name: Run Web build in Chromium
+      - name: Prepare browser smoke test
         shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          google-chrome --version
+      - name: Run Web build in Chrome
+        shell: bash
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
         run: |
           set -euo pipefail
           python3 -m http.server 8000 --directory build/web >/tmp/digigame-http.log 2>&1 &
