@@ -75,10 +75,11 @@ func _layout_controls() -> void:
 	var touch_layout := ui_scale > 1.15 or DisplayServer.is_touchscreen_available()
 	touch_hint.visible = touch_layout
 	if touch_layout:
+		var hint_bottom := -(TOUCH_MARGIN_PX + TOUCH_BUTTON_SIZE_PX + 12.0) * ui_scale
 		touch_hint.offset_left = 14.0 * ui_scale
-		touch_hint.offset_right = 330.0 * ui_scale
-		touch_hint.offset_bottom = -14.0 * ui_scale
-		touch_hint.offset_top = touch_hint.offset_bottom - 36.0 * ui_scale
+		touch_hint.offset_right = minf(360.0 * ui_scale, viewport_size.x - 14.0 * ui_scale)
+		touch_hint.offset_bottom = hint_bottom
+		touch_hint.offset_top = hint_bottom - 36.0 * ui_scale
 		touch_hint.add_theme_font_size_override("font_size", int(round(14.0 * ui_scale)))
 		touch_hint.add_theme_constant_override("outline_size", int(round(4.0 * ui_scale)))
 
