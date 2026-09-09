@@ -76,7 +76,7 @@ func zoom_out() -> void:
 func reset_view() -> void:
 	_set_zoom_value(INITIAL_ZOOM)
 	if _has_pan_bounds:
-		global_position = _pan_bounds.get_center()
+		global_position = _pan_bounds.position + _pan_bounds.size * 0.5
 	_clamp_to_pan_bounds()
 
 
@@ -127,8 +127,6 @@ func _camera_axis_limits(
 	var min_center := min_edge + viewport_half - overscroll
 	var max_center := max_edge - viewport_half + overscroll
 
-	# When the whole board already fits in this axis, retain only a small amount
-	# of intentional free-look rather than allowing the player to lose the map.
 	if min_center > max_center:
 		var board_center := (min_edge + max_edge) * 0.5
 		return Vector2(board_center - overscroll, board_center + overscroll)
@@ -283,8 +281,8 @@ func _first_two_touch_positions() -> Array[Vector2]:
 	if indices.size() < 2:
 		return []
 	return [
-		_touch_positions[indices[0]] as Vector2,
-		_touch_positions[indices[1]] as Vector2,
+		Vector2(_touch_positions[indices[0]]),
+		Vector2(_touch_positions[indices[1]]),
 	]
 
 
@@ -302,10 +300,8 @@ func _handle_touch_tap(screen_position: Vector2) -> void:
 	if not bool(field.call("select_tile_from_world", world_position)):
 		return
 
-	var tile_world_position := Vector2(field.selectedTile)
+	var tile_world_position := Vector2(field.get("selectedTile"))
 
-	# When a Digimon is already selected, it owns the next tap (movement) even
-	# if the destination happens to overlap another unit.
 	for child in controller.get_children():
 		if child is CharacterBody2D and bool(child.get("is_selected")):
 			if child.has_method("handle_touch_tap"):
