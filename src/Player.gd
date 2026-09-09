@@ -1,11 +1,6 @@
 extends CharacterBody2D
 
-const DIRECTION_FRAME_BASE := {
-	"down_left": 0,
-	"down_right": 3,
-	"up_left": 6,
-	"up_right": 9,
-}
+const DIRECTION_FRAME_BASE := {"down_left": 0, "down_right": 3, "up_left": 6, "up_right": 9}
 const SELECTED_FRAME_DURATION := 0.15
 const FACING_DEADZONE := 5.0
 
@@ -13,13 +8,12 @@ var PLAYER_POSITION_DEVIATION := Vector2.ZERO
 var PARTICLES_POSITION_DEVIATION := Vector2.ZERO
 var initialTileCoords := Vector2.ZERO
 var initial_facing := "up_right"
-
+var is_player_controlled := true
 var is_selected := false
 var selected_tile_coords := Vector2i.ZERO
 var facing_direction := "up_right"
 var _selected_animation_time := 0.0
 var _selected_animation_frame := 0
-
 @onready var sprite: Sprite2D = get_node("Sprite2D") as Sprite2D
 
 func _ready() -> void:
@@ -28,6 +22,8 @@ func _ready() -> void:
 	_show_current_facing(false)
 
 func _physics_process(delta: float) -> void:
+	if not is_player_controlled:
+		return
 	selected_tile_coords = GlobalVariables.SelectedTileCoords
 	if is_selected:
 		face_toward_world_position(get_global_mouse_position())
@@ -38,13 +34,11 @@ func _physics_process(delta: float) -> void:
 		_show_current_facing(false)
 
 func _input(event: InputEvent) -> void:
-	if not event is InputEventMouseButton:
+	if not is_player_controlled or not event is InputEventMouseButton:
 		return
-
 	var mouse_event := event as InputEventMouseButton
 	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
 		return
-
 	if is_selected:
 		var destination := Vector2(selected_tile_coords) + PLAYER_POSITION_DEVIATION
 		face_toward_world_position(destination)
@@ -55,7 +49,6 @@ func _input(event: InputEvent) -> void:
 		_show_current_facing(false)
 		emit_particles_when_selected()
 		return
-
 	if is_digimon_position_clicked():
 		is_selected = true
 		face_toward_world_position(get_global_mouse_position())
@@ -67,59 +60,38 @@ func _input(event: InputEvent) -> void:
 
 func is_digimon_position_clicked() -> bool:
 	return Vector2(selected_tile_coords) == global_position - PLAYER_POSITION_DEVIATION
-
 func move_digimon_position() -> void:
 	global_position = Vector2(selected_tile_coords) + PLAYER_POSITION_DEVIATION
-
 func face_toward_world_position(target_position: Vector2) -> void:
 	var direction_vector := target_position - global_position
-	if direction_vector.length_squared() <= FACING_DEADZONE * FACING_DEADZONE:
-		return
-
+	if direction_vector.length_squared() <= FACING_DEADZONE * FACING_DEADZONE: return
 	var next_direction := _direction_from_vector(direction_vector)
-	if next_direction == facing_direction:
-		return
-
+	if next_direction == facing_direction: return
 	facing_direction = next_direction
 	_selected_animation_time = 0.0
 	_selected_animation_frame = 0
 	_show_current_facing(is_selected)
-
 func _direction_from_vector(direction_vector: Vector2) -> String:
 	var horizontal := "right" if direction_vector.x >= 0.0 else "left"
 	var vertical := "down" if direction_vector.y >= 0.0 else "up"
-
-	# The DS field art exposes four isometric diagonals. Near an exact screen
-	# axis, preserve the previous half of the facing direction to avoid jitter.
-	if absf(direction_vector.x) < FACING_DEADZONE:
-		horizontal = "right" if facing_direction.ends_with("right") else "left"
-	if absf(direction_vector.y) < FACING_DEADZONE:
-		vertical = "down" if facing_direction.begins_with("down") else "up"
-
+	if absf(direction_vector.x) < FACING_DEADZONE: horizontal = "right" if facing_direction.ends_with("right") else "left"
+	if absf(direction_vector.y) < FACING_DEADZONE: vertical = "down" if facing_direction.begins_with("down") else "up"
 	return "%s_%s" % [vertical, horizontal]
-
 func _advance_selected_animation(delta: float) -> void:
 	_selected_animation_time += delta
-	if _selected_animation_time < SELECTED_FRAME_DURATION:
-		return
+	if _selected_animation_time < SELECTED_FRAME_DURATION: return
 	_selected_animation_time = fmod(_selected_animation_time, SELECTED_FRAME_DURATION)
 	_selected_animation_frame = (_selected_animation_frame + 1) % 3
 	_show_current_facing(true)
-
 func _show_current_facing(animate: bool) -> void:
 	var base_frame: int = DIRECTION_FRAME_BASE.get(facing_direction, 9)
 	sprite.frame = base_frame + (_selected_animation_frame if animate else 0)
-
 func emit_particles_when_selected() -> void:
 	var particles := get_node("Sprite2D/CPUParticles2D") as CPUParticles2D
 	particles.position = to_local(global_position) + PARTICLES_POSITION_DEVIATION
 	particles.emitting = is_selected
-
 func move_camera_to_selected_digimon() -> void:
 	var camera := get_viewport().get_camera_2d()
-	if camera == null:
-		return
-	if camera.has_method("focus_on"):
-		camera.call("focus_on", global_position)
-	else:
-		camera.global_position = global_position
+	if camera == null: return
+	if camera.has_method("focus_on"): camera.call("focus_on", global_position)
+	else: camera.global_position = global_position
