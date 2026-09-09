@@ -1,5 +1,6 @@
 {
   "source": "Agumon.webp",
+  "source_path": "source/portrait.webp",
   "frame_width": 60,
   "frame_height": 75,
   "frame_count": 4,
