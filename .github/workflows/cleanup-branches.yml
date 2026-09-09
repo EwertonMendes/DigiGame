@@ -1,11 +1,6 @@
 name: Cleanup branches
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - '.github/workflows/cleanup-branches.yml'
   workflow_dispatch:
 
 permissions:
