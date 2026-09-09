@@ -69,6 +69,16 @@ try {
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'build/web-smoke.png', fullPage: true });
 
+  // Exercise the in-game debug toggle once. This is a Godot Control inside the canvas,
+  // not a DOM button, so Playwright clicks its fixed top-right screen position.
+  const debugX = finalLayout.viewportWidth - 82;
+  const debugY = 34;
+  await page.mouse.click(debugX, debugY, { button: 'left' });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'build/debug-mode-on.png', fullPage: true });
+  await page.mouse.click(debugX, debugY, { button: 'left' });
+  await page.waitForTimeout(300);
+
   await page.mouse.click(centerX, centerY, { button: 'left' });
   await page.waitForTimeout(400);
 
@@ -102,7 +112,8 @@ try {
 
   console.log(
     `DigiGame Web smoke test passed at ${desktopViewports.length} desktop viewport sizes, ` +
-    `including enemy-lineup render, four-direction Gabumon facing, persisted facing after movement, and camera drag.`
+    `including the debug toggle, enemy-lineup render, four-direction Gabumon facing, ` +
+    `persisted facing after movement, and camera drag.`
   );
 } finally {
   await browser.close();
