@@ -2,7 +2,10 @@ import { chromium } from 'playwright';
 
 const url = process.env.DIGIGAME_URL ?? 'http://127.0.0.1:8000';
 const runtimeErrors = [];
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  executablePath: process.env.CHROME_BIN ?? '/usr/bin/google-chrome',
+});
 
 const desktopViewports = [
   { width: 1280, height: 720 },
@@ -26,7 +29,6 @@ async function readLayout(page) {
 function assertViewportFill(layout) {
   const widthFill = layout.canvasWidth / layout.viewportWidth;
   const heightFill = layout.canvasHeight / layout.viewportHeight;
-
   if (widthFill < 0.98 || heightFill < 0.98) {
     throw new Error(
       `Godot canvas does not fill the browser viewport: ` +
@@ -38,7 +40,6 @@ function assertViewportFill(layout) {
 
 try {
   const page = await browser.newPage({ viewport: desktopViewports[0] });
-
   page.on('pageerror', error => runtimeErrors.push(`pageerror: ${error.message}`));
   page.on('console', message => {
     if (message.type() === 'error') runtimeErrors.push(`console: ${message.text()}`);
@@ -50,7 +51,6 @@ try {
     const canvas = document.querySelector('canvas');
     return canvas && canvas.width > 100 && canvas.height > 100;
   }, null, { timeout: 60000 });
-
   await page.waitForTimeout(5000);
 
   for (const viewport of desktopViewports) {
@@ -69,9 +69,6 @@ try {
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'build/web-smoke.png', fullPage: true });
 
-  // Gabumon starts on the center tile. Select him and sweep the mouse through
-  // all four isometric facing quadrants. The screenshots are retained for
-  // visual review while runtime errors fail the workflow automatically.
   await page.mouse.click(centerX, centerY, { button: 'left' });
   await page.waitForTimeout(400);
 
@@ -88,13 +85,10 @@ try {
     await page.screenshot({ path: `build/gabumon-facing-${name}.png`, fullPage: true });
   }
 
-  // Click the current target tile. Gabumon should move, deselect, and preserve
-  // the final facing direction instead of snapping back to a default pose.
   await page.mouse.click(centerX - 120, centerY + 70, { button: 'left' });
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'build/gabumon-facing-persisted.png', fullPage: true });
 
-  // Exercise the right-button drag gesture after the facing interaction.
   await page.mouse.move(centerX + 180, centerY + 110);
   await page.mouse.down({ button: 'right' });
   await page.mouse.move(centerX - 240, centerY - 150, { steps: 12 });
@@ -108,7 +102,7 @@ try {
 
   console.log(
     `DigiGame Web smoke test passed at ${desktopViewports.length} desktop viewport sizes, ` +
-    `including four-direction Gabumon facing, persisted facing after movement, and camera drag.`
+    `including enemy-lineup render, four-direction Gabumon facing, persisted facing after movement, and camera drag.`
   );
 } finally {
   await browser.close();
