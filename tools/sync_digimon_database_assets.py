@@ -2,9 +2,8 @@
 """Sync the canonical Digimon database and animated portraits used by DigiGame.
 
 The source data/portraits currently live in EwertonMendes/digimon-ng. DigiGame
-keeps the original animated WebP plus a deterministic PNG frame strip/metadata
-because Godot imports WebP as a Texture2D instead of playing animated WebP
-frames directly.
+keeps each original animated WebP under a Godot-ignored source directory plus a
+deterministic PNG frame strip/metadata used for runtime playback in Godot.
 """
 from __future__ import annotations
 
@@ -77,11 +76,23 @@ def move_existing_field_sheet(key: str) -> None:
 
 def build_portrait_assets(key: str, source_name: str) -> None:
     directory = Path("assets/characters") / key
-    directory.mkdir(parents=True, exist_ok=True)
+    source_directory = directory / "source"
+    source_directory.mkdir(parents=True, exist_ok=True)
+    (source_directory / ".gdignore").write_text(
+        "# Preserve source assets without importing them in Godot.\n",
+        encoding="utf-8",
+    )
 
     payload = fetch(f"{SOURCE_ROOT}/assets/digimons/{source_name}")
-    webp_path = directory / "portrait.webp"
-    webp_path.write_bytes(payload)
+    source_webp_path = source_directory / "portrait.webp"
+    source_webp_path.write_bytes(payload)
+
+    old_webp_path = directory / "portrait.webp"
+    if old_webp_path.exists():
+        old_webp_path.unlink()
+    old_webp_import = directory / "portrait.webp.import"
+    if old_webp_import.exists():
+        old_webp_import.unlink()
 
     with Image.open(io.BytesIO(payload)) as image:
         frame_count = getattr(image, "n_frames", 1)
@@ -107,6 +118,7 @@ def build_portrait_assets(key: str, source_name: str) -> None:
     strip.save(strip_path, format="PNG", optimize=True)
     metadata = {
         "source": source_name,
+        "source_path": "source/portrait.webp",
         "frame_width": width,
         "frame_height": height,
         "frame_count": len(frames),
