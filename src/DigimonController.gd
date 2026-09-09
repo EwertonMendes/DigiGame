@@ -1,6 +1,7 @@
 extends Node2D
 
 const BATTLE_SPRITE_SCALE := Vector2(1.0, 1.0)
+const DIRECTIONAL_FRAME_COUNT := 12
 
 var digimons_to_instantiate := ["agumon", "gabumon", "greymon"]
 
@@ -31,17 +32,15 @@ func create_digimon_instance() -> CharacterBody2D:
 
 func set_digimon_name_and_graphics(digimon_name: String, digimon_resource: Digimon, digimon_instance: CharacterBody2D) -> void:
 	var digimon_sprite := digimon_instance.get_node("Sprite2D") as Sprite2D
-	var animation_scene := load("res://scenes/animations/%s_animations.tscn" % digimon_name) as PackedScene
-	if animation_scene == null:
-		push_error("Could not load animation scene for %s" % digimon_name)
-		return
-	var animation_instance := animation_scene.instantiate() as AnimationPlayer
 
 	digimon_instance.name = digimon_name
 	digimon_sprite.texture = digimon_resource.texture
+	digimon_sprite.hframes = DIRECTIONAL_FRAME_COUNT
 	digimon_sprite.frame = digimon_resource.initial_frame
+	digimon_sprite.flip_h = false
+	digimon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	digimon_sprite.scale = BATTLE_SPRITE_SCALE
-	digimon_instance.add_child(animation_instance)
+	digimon_instance.set("initial_facing", digimon_resource.initial_facing)
 
 func set_digimon_initial_position(digimon_resource: Digimon, digimon_instance: CharacterBody2D) -> void:
 	digimon_instance.set("PLAYER_POSITION_DEVIATION", digimon_resource.sprite_deviation)

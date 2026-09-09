@@ -6,7 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 texture = ExtResource("2_texture")
-initial_frame = 0
+initial_frame = 9
+initial_facing = "up_right"
 sprite_deviation = Vector2(0, 20)
 particle_deviation = Vector2(0, 10)
 initial_position = Vector2i(0, 0)
