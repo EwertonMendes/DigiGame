@@ -6,6 +6,7 @@ const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const INVALID_GRID := Vector2i(-9999, -9999)
 const TERRAIN_DETAIL_ALPHA := 0.42
+const CAMERA_PAN_PADDING := Vector2(176.0, 112.0)
 
 # Kenney Isometric Landscape source tiles are 132x83 pixels. We sample only
 # the upper ground face and blend it over a solid biome-colored diamond. The
@@ -173,6 +174,23 @@ func _board_outline() -> PackedVector2Array:
 		grid_to_world(Vector2i(GRID_SIZE_X - 1, GRID_SIZE_Y - 1)) + Vector2(0.0, TILE_HEIGHT * 0.5),
 		grid_to_world(Vector2i(0, GRID_SIZE_Y - 1)) + Vector2(-TILE_WIDTH * 0.5, 0.0),
 	])
+
+
+func get_camera_pan_bounds() -> Rect2:
+	var outline := _board_outline()
+	var min_point := outline[0]
+	var max_point := outline[0]
+
+	for point in outline:
+		min_point.x = minf(min_point.x, point.x)
+		min_point.y = minf(min_point.y, point.y)
+		max_point.x = maxf(max_point.x, point.x)
+		max_point.y = maxf(max_point.y, point.y)
+
+	return Rect2(
+		min_point - CAMERA_PAN_PADDING,
+		(max_point - min_point) + CAMERA_PAN_PADDING * 2.0
+	)
 
 
 func _offset_polygon(points: PackedVector2Array, offset: Vector2) -> PackedVector2Array:
