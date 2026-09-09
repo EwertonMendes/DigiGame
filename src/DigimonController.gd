@@ -41,6 +41,7 @@ func set_digimon_name_and_graphics(digimon_name: String, digimon_resource: Digim
 	digimon_sprite.texture = digimon_resource.texture
 	digimon_sprite.frame = digimon_resource.initial_frame
 	digimon_sprite.scale = BATTLE_SPRITE_SCALE
+	digimon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	digimon_instance.add_child(animation_instance)
 
 func set_digimon_initial_position(digimon_resource: Digimon, digimon_instance: CharacterBody2D) -> void:
