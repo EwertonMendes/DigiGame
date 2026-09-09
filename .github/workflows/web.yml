@@ -35,6 +35,9 @@ jobs:
           python3 -m pip install --disable-pip-version-check Pillow==11.3.0
           python3 tools/fetch_cc0_assets.py
           python3 tools/fetch_character_assets.py
+          if [ -f tools/inspect_enemy_sprite_sources.py ]; then
+            python3 tools/inspect_enemy_sprite_sources.py
+          fi
 
       - name: Install Godot and export templates
         shell: bash
