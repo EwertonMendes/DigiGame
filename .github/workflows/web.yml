@@ -35,10 +35,16 @@ jobs:
           from pathlib import Path
           from PIL import Image
 
-          for path in sorted(Path("assets/characters").glob("*.png")):
+          for path in sorted(Path("assets/characters").rglob("*.png")):
               with Image.open(path) as image:
                   image.verify()
               print(f"validated PNG: {path}")
+
+          for path in sorted(Path("assets/characters").rglob("*.webp")):
+              with Image.open(path) as image:
+                  if getattr(image, "n_frames", 1) <= 1:
+                      raise RuntimeError(f"expected animated WebP: {path}")
+              print(f"validated animated WebP: {path}")
           PY
       - name: Install Godot and export templates
         shell: bash
@@ -92,7 +98,8 @@ jobs:
           path: |
             build/web
             build/*.png
-            assets/characters/*.png
+            assets/characters/**/*.png
+            assets/characters/**/*.webp
           if-no-files-found: error
           retention-days: 14
 
