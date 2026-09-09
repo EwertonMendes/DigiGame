@@ -34,6 +34,15 @@ jobs:
           python3 tools/fetch_cc0_assets.py
           python3 tools/fetch_character_assets.py
           python3 tools/fetch_enemy_assets.py
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          for path in sorted(Path("assets/characters").glob("*.png")):
+              with Image.open(path) as image:
+                  image.verify()
+              print(f"validated PNG: {path}")
+          PY
       - name: Install Godot and export templates
         shell: bash
         run: |
@@ -54,7 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           godot --headless --path . --import 2>&1 | tee /tmp/godot-import.log
-          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/godot-import.log; then exit 1; fi
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing .*assets/characters' /tmp/godot-import.log; then exit 1; fi
       - name: Export Web build
         shell: bash
         run: |
