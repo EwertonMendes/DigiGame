@@ -25,7 +25,7 @@ USER_AGENT = (
 )
 GABUMON_SHEET_ID = "41249"
 GABUMON_EXPECTED_SIZE = (412, 203)
-GABUMON_EXPECTED_SOURCE_SHA256 = ""
+GABUMON_EXPECTED_SOURCE_SHA256 = "746e0bda873f274568c8445fa90861d43348ecf2d98abdbf30b439a42e0c53cb"
 OUTPUT_PATH = Path("assets/characters/gabumon.png")
 BACKGROUND = (0, 128, 128)
 BACKGROUND_TOLERANCE = 40
@@ -95,7 +95,7 @@ def main() -> None:
     print(f"Gabumon source: {sheet_url}")
     print(f"Gabumon source SHA-256: {source_sha}")
 
-    if GABUMON_EXPECTED_SOURCE_SHA256 and source_sha != GABUMON_EXPECTED_SOURCE_SHA256:
+    if source_sha != GABUMON_EXPECTED_SOURCE_SHA256:
         raise RuntimeError(
             "Gabumon source integrity check failed: "
             f"expected {GABUMON_EXPECTED_SOURCE_SHA256}, got {source_sha}"
