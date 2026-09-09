@@ -98,7 +98,7 @@ func _generate_terrain() -> void:
 
 
 func _terrain_for_noise(biome_value: float, detail_value: float) -> String:
-	// Keep grass as the visual baseline and use broad, readable biome patches.
+	# Keep grass as the visual baseline and use broad, readable biome patches.
 	if biome_value < -0.38:
 		return "earth"
 	if biome_value > 0.32 or (biome_value > 0.16 and detail_value > 0.48):
