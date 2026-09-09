@@ -40,7 +40,8 @@ func _physics_process(delta: float) -> void:
 
 	selected_tile_coords = GlobalVariables.SelectedTileCoords
 	if is_selected:
-		face_toward_world_position(get_global_mouse_position())
+		if not GlobalVariables.TouchInputActive:
+			face_toward_world_position(get_global_mouse_position())
 		_advance_selected_animation(delta)
 	else:
 		_selected_animation_time = 0.0
