@@ -4,10 +4,11 @@
 [resource]
 script = ExtResource("1")
 texture = ExtResource("2")
-initial_frame = 3
+initial_frame = 0
 initial_facing = "down_left"
-sprite_hframes = 9
-sprite_layout = "legacy_9"
+sprite_hframes = 12
+sprite_vframes = 1
+sprite_layout = "directional_12"
 sprite_deviation = Vector2(0, 20)
 particle_deviation = Vector2(0, 8)
 initial_position = Vector2i(128, -96)
