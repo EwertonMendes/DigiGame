@@ -1,0 +1,25 @@
+name: Cleanup branches
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/cleanup-branches.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    name: Keep only master
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Delete all remote branches except master
+        run: python3 tools/cleanup_branches.py --keep master
