@@ -5,19 +5,27 @@ const GRID_SIZE_Y := 25
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const INVALID_GRID := Vector2i(-9999, -9999)
+const TERRAIN_DETAIL_ALPHA := 0.42
 
-# Kenney Isometric Landscape source tiles are 132x83 pixels. The upper ground
-# surface is a 132x64 diamond; sampling a slightly inset version removes the
-# source block outline so adjacent tactical cells read as one continuous field.
-const SOURCE_TOP_LEFT := Vector2(3.0, 32.0)
-const SOURCE_TOP_TOP := Vector2(66.0, 2.0)
-const SOURCE_TOP_RIGHT := Vector2(129.0, 32.0)
-const SOURCE_TOP_BOTTOM := Vector2(66.0, 62.0)
+# Kenney Isometric Landscape source tiles are 132x83 pixels. We sample only
+# the upper ground face and blend it over a solid biome-colored diamond. The
+# solid layer prevents transparent source edges from producing seams between
+# adjacent tactical cells while the source art still provides texture detail.
+const SOURCE_TOP_LEFT := Vector2(2.0, 32.0)
+const SOURCE_TOP_TOP := Vector2(66.0, 1.0)
+const SOURCE_TOP_RIGHT := Vector2(130.0, 32.0)
+const SOURCE_TOP_BOTTOM := Vector2(66.0, 63.0)
 
 const TERRAIN_PATHS := {
 	"earth": "res://assets/terrain/kenney/earth.png",
 	"grass": "res://assets/terrain/kenney/grass.png",
 	"lush_grass": "res://assets/terrain/kenney/lush_grass.png",
+}
+
+const TERRAIN_BASE_COLORS := {
+	"earth": Color(0.63, 0.39, 0.20, 1.0),
+	"grass": Color(0.42, 0.64, 0.16, 1.0),
+	"lush_grass": Color(0.50, 0.72, 0.18, 1.0),
 }
 
 var tile_map_data: Dictionary = {}
@@ -86,23 +94,39 @@ func _generate_terrain() -> void:
 	selectedTile = Vector2i(grid_to_world(Vector2i(GRID_SIZE_X / 2, GRID_SIZE_Y / 2)))
 
 
-func _create_terrain_tile(terrain_name: String, detail_value: float) -> Polygon2D:
-	var tile := Polygon2D.new()
-	tile.polygon = _tile_diamond()
-	tile.texture = _terrain_textures[terrain_name]
-	tile.uv = PackedVector2Array([
+func _create_terrain_tile(terrain_name: String, detail_value: float) -> Node2D:
+	var tile_root := Node2D.new()
+	var brightness := 0.99 + clampf(detail_value, -1.0, 1.0) * 0.025
+
+	var base := Polygon2D.new()
+	base.name = "Base"
+	base.polygon = _tile_diamond(Vector2(0.8, 0.4))
+	var base_color: Color = TERRAIN_BASE_COLORS[terrain_name]
+	base.color = Color(
+		base_color.r * brightness,
+		base_color.g * brightness,
+		base_color.b * brightness,
+		1.0
+	)
+	base.z_index = 0
+	tile_root.add_child(base)
+
+	var detail := Polygon2D.new()
+	detail.name = "KenneyDetail"
+	detail.polygon = _tile_diamond()
+	detail.texture = _terrain_textures[terrain_name]
+	detail.uv = PackedVector2Array([
 		SOURCE_TOP_LEFT,
 		SOURCE_TOP_TOP,
 		SOURCE_TOP_RIGHT,
 		SOURCE_TOP_BOTTOM,
 	])
-	tile.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	detail.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	detail.color = Color(1.0, 1.0, 1.0, TERRAIN_DETAIL_ALPHA)
+	detail.z_index = 1
+	tile_root.add_child(detail)
 
-	# A tiny brightness variation keeps broad regions organic without making the
-	# tactical grid noisy or changing the Kenney palette substantially.
-	var brightness := 0.99 + clampf(detail_value, -1.0, 1.0) * 0.02
-	tile.color = Color(brightness, brightness, brightness, 1.0)
-	return tile
+	return tile_root
 
 
 func _terrain_for_noise(biome_value: float, detail_value: float) -> String:
@@ -181,12 +205,12 @@ func _create_hover_indicator() -> void:
 	add_child(_hover_outline)
 
 
-func _tile_diamond() -> PackedVector2Array:
+func _tile_diamond(overscan := Vector2.ZERO) -> PackedVector2Array:
 	return PackedVector2Array([
-		Vector2(-TILE_WIDTH * 0.5, 0.0),
-		Vector2(0.0, -TILE_HEIGHT * 0.5),
-		Vector2(TILE_WIDTH * 0.5, 0.0),
-		Vector2(0.0, TILE_HEIGHT * 0.5),
+		Vector2(-TILE_WIDTH * 0.5 - overscan.x, 0.0),
+		Vector2(0.0, -TILE_HEIGHT * 0.5 - overscan.y),
+		Vector2(TILE_WIDTH * 0.5 + overscan.x, 0.0),
+		Vector2(0.0, TILE_HEIGHT * 0.5 + overscan.y),
 	])
 
 
