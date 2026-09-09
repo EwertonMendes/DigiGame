@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3 uid="uid://w74vel1wtmjg"]
 
 [ext_resource type="Texture2D" uid="uid://ier4eoagmd8i" path="res://assets/characters/greymon.png" id="1_y8hsk"]
-[ext_resource type="Script" path="res://src/resources/Digimon.cs" id="2_2rf2f"]
+[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="2_2rf2f"]
 
 [resource]
 script = ExtResource("2_2rf2f")
