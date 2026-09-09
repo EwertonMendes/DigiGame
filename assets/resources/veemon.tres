@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]
+[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/characters/veemon.png" id="2"]
+[resource]
+script = ExtResource("1")
+texture = ExtResource("2")
+initial_frame = 0
+initial_facing = "down_left"
+sprite_deviation = Vector2(0, 20)
+particle_deviation = Vector2(0, 8)
+initial_position = Vector2i(128, -96)
+type = "Free"
+display_name = "Veemon"
+level = 1
+hp = 100
+mp = 70
+attack = 10
+defense = 8
+age = 1
+battles = 0
+victories = 0
+defeats = 0

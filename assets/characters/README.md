@@ -1,24 +1,15 @@
 # Character Sprite Provenance
 
-DigiGame currently contains legacy prototype character art from commercial Digimon games. These sprites are **not** treated as open-source assets.
+DigiGame contains legacy prototype character art from commercial Digimon games. These sprites are **not** open-source assets.
 
-## Directional field sprites
+All runtime field sheets are stored directly in `assets/characters/` and use the same 12-frame directional layout: `down_left` (0-2), `down_right` (3-5), `up_left` (6-8), `up_right` (9-11).
 
-Agumon, Gabumon, and Greymon currently use official **Digimon World DS** field sprite sheets sourced through The Spriters Resource. The original full sheets are not committed by this workflow. `tools/fetch_character_assets.py` downloads the pinned/source-identified sheets during CI and creates normalized directional PNGs for the game.
+Agumon, Gabumon, and Greymon come from Digimon World DS sheets prepared by `tools/fetch_character_assets.py`. Koromon, Tanemon, and Veemon are prepared by `tools/fetch_enemy_assets.py` from the exact With the Will / Photobucket source images supplied for this prototype:
 
-Every generated runtime sheet contains 12 frames in this order:
+- Koromon: `002_Koromon.png`, SHA-256 `dac126e72b5b96ebd018aef0e79bb1baba4caa2b493e21309dca8d25de4a7595`.
+- Tanemon: `006_Tanemon.png`, SHA-256 `4f276334f6b6e5cb58348de9ad7e9cc00b9892929b37cc355fb2400a1124c44f`.
+- Veemon: `026_V-mon.png`, SHA-256 `dbb4df0d4047e7268a6be5a382b898235ec5f46256a66f15c9f626464fd77c7d`.
 
-1. `down_left` — 3 frames
-2. `down_right` — 3 frames
-3. `up_left` — 3 frames
-4. `up_right` — 3 frames
+The Photobucket images contain portraits, battle art, field sprites, a solid blue background, and watermark overlays. Extraction intentionally uses only clean field-sprite cells. Background is removed from the frame edges, then every sprite is bottom-centered in a fixed 32x32 cell so changing visible bounds cannot make animation frames jump. Where a source direction is partially obscured by watermarking, a clean pose is repeated or mirrored instead of retaining watermark pixels.
 
-The mapping follows extraction specs from `netraular/DigimonWorldSpriteManager`, pinned repository revision `06b3c4df09dc5eeaccee511d731f37947b1c8259`:
-
-- Agumon: The Spriters Resource sheet `48418`; extraction spec `009.extract.json`.
-- Gabumon: The Spriters Resource sheet `41249`; extraction spec `021.extract.json`.
-- Greymon: The Spriters Resource sheet `48406`; extraction spec `073.extract.json`.
-
-For source sheets whose spec only provides left-facing diagonals, the right-facing frames are mirrored exactly as declared by the extraction spec. Background removal is performed per frame using border-connected segmentation rather than a global color key, so transparent field sprites do not retain rectangular source backgrounds or erase similarly colored interior sprite pixels.
-
-Rights to Digimon and the official game artwork remain with their relevant Digimon/Bandai Namco rights holders. No free-content license is claimed. These assets are appropriate only for the current fan/prototype context; an original or properly licensed art pass should replace them before any commercial distribution.
+Rights to Digimon and the official game artwork remain with their relevant Digimon/Bandai Namco rights holders. No free-content license is claimed. These assets are suitable only for the current fan/prototype context and should be replaced by original or properly licensed artwork before commercial distribution.
