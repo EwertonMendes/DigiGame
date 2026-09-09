@@ -69,13 +69,32 @@ try {
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'build/web-smoke.png', fullPage: true });
 
-  // Gabumon starts on the center tile. Selecting it must trigger its animated
-  // selected state and camera focus without producing a browser/runtime error.
+  // Gabumon starts on the center tile. Select him and sweep the mouse through
+  // all four isometric facing quadrants. The screenshots are retained for
+  // visual review while runtime errors fail the workflow automatically.
   await page.mouse.click(centerX, centerY, { button: 'left' });
-  await page.waitForTimeout(700);
-  await page.screenshot({ path: 'build/gabumon-selected.png', fullPage: true });
+  await page.waitForTimeout(400);
 
-  // Exercise the same right-button drag gesture players use for camera panning.
+  const facingTargets = [
+    ['up-left', centerX - 220, centerY - 150],
+    ['up-right', centerX + 220, centerY - 150],
+    ['down-right', centerX + 220, centerY + 150],
+    ['down-left', centerX - 220, centerY + 150],
+  ];
+
+  for (const [name, x, y] of facingTargets) {
+    await page.mouse.move(x, y, { steps: 8 });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `build/gabumon-facing-${name}.png`, fullPage: true });
+  }
+
+  // Click the current target tile. Gabumon should move, deselect, and preserve
+  // the final facing direction instead of snapping back to a default pose.
+  await page.mouse.click(centerX - 120, centerY + 70, { button: 'left' });
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: 'build/gabumon-facing-persisted.png', fullPage: true });
+
+  // Exercise the right-button drag gesture after the facing interaction.
   await page.mouse.move(centerX + 180, centerY + 110);
   await page.mouse.down({ button: 'right' });
   await page.mouse.move(centerX - 240, centerY - 150, { steps: 12 });
@@ -89,7 +108,7 @@ try {
 
   console.log(
     `DigiGame Web smoke test passed at ${desktopViewports.length} desktop viewport sizes, ` +
-    `including Gabumon selection and right-button camera drag.`
+    `including four-direction Gabumon facing, persisted facing after movement, and camera drag.`
   );
 } finally {
   await browser.close();

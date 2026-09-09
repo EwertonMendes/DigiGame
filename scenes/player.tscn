@@ -11,9 +11,9 @@ colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
 script = ExtResource("1_jtich")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
 position = Vector2(0, -31)
-flip_h = true
-hframes = 9
+hframes = 12
 
 [node name="CPUParticles2D" type="CPUParticles2D" parent="Sprite2D"]
 emitting = false

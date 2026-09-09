@@ -96,9 +96,7 @@ jobs:
           name: digigame-web
           path: |
             build/web
-            build/web-smoke.png
-            build/gabumon-selected.png
-            build/camera-pan-smoke.png
+            build/*.png
           if-no-files-found: error
           retention-days: 14
 
