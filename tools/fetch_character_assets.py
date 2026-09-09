@@ -40,7 +40,7 @@ DIRECTION_ORDER = ("down_left", "down_right", "up_left", "up_right")
 CHARACTERS = {
     "agumon": {
         "sheet_id": "48418",
-        "expected_sha256": None,
+        "expected_sha256": "a3e23aac73c971158444bd24f87cf8da9925bc9c0721209c3458389b919fc5c0",
         "background": (0x74, 0xEC, 0x60),
         "tolerance": 40,
         "frame_size": (32, 32),
@@ -69,7 +69,7 @@ CHARACTERS = {
     },
     "greymon": {
         "sheet_id": "48406",
-        "expected_sha256": None,
+        "expected_sha256": "2b97f4124e646fec2191bcc1e347dde257202e21a8bef431d473fbd996f52cf4",
         "background": (0x00, 0x80, 0x80),
         "tolerance": 40,
         "frame_size": (32, 64),
