@@ -1,26 +1,18 @@
 #!/usr/bin/env python3
-"""Fetch and normalize the three With the Will / Photobucket enemy field sheets.
+"""Fetch and normalize Koromon and Tanemon field sheets.
 
 Runtime layout is always 12 x 32x32 frames:
   0..2 down_left, 3..5 down_right, 6..8 up_left, 9..11 up_right.
 
-The source images mix field sprites, portraits, shadows, watermarks, and labels.
-Only clean field poses are used. Background removal is border-connected, then
-only the largest connected sprite component is retained so detached watermark
-letters and stray scan lines cannot leak into runtime frames.
+The Photobucket sources mix field sprites, portraits, watermarks, labels, and a
+solid blue background. Only clean baby field poses are used. Background removal
+first clears edge-connected blue, then removes any remaining source-blue pixels
+inside the connected sprite component so no tiny blue islands survive.
 
-Koromon and Tanemon use a clean front-left and back-left pose plus horizontal
-mirroring for the opposite diagonals. Those clean poses are repeated across
-three animation slots because the alternate source animation cells are crossed
-by watermarks.
-
-Veemon uses the clean three-frame front-left field sequence. Its source drop
-shadow lives in the last four source rows, so that area is intentionally
-excluded before normalization. The back-left pose is clean and repeated; the
-right-facing variants are mirrored.
-
-Every frame is bottom-centered on a fixed 32x32 canvas, so visible bounds cannot
-cause animation jumping.
+Koromon's source-facing convention is opposite Tanemon's, so its left/right
+assignments are intentionally swapped after extraction. Both babies use clean
+front/back poses repeated across three animation slots because their alternate
+source cells are crossed by watermarks.
 """
 from __future__ import annotations
 
@@ -50,10 +42,6 @@ SOURCES = {
     "tanemon": (
         "https://i874.photobucket.com/albums/ab308/WtWSprites/Baby/006_Tanemon.png",
         "4f276334f6b6e5cb58348de9ad7e9cc00b9892929b37cc355fb2400a1124c44f",
-    ),
-    "veemon": (
-        "https://i874.photobucket.com/albums/ab308/WtWSprites/Child/026_V-mon.png",
-        "dbb4df0d4047e7268a6be5a382b898235ec5f46256a66f15c9f626464fd77c7d",
     ),
 }
 
@@ -138,7 +126,7 @@ def clean_background(frame: Image.Image, tolerance: int = 10) -> Image.Image:
 
 
 def keep_main_component(frame: Image.Image) -> Image.Image:
-    """Keep the connected Digimon body and discard detached text/lines."""
+    """Keep the connected Digimon body and discard detached text/scan lines."""
     rgba = frame.convert("RGBA")
     px = rgba.load()
     width, height = rgba.size
@@ -159,7 +147,6 @@ def keep_main_component(frame: Image.Image) -> Image.Image:
         start = remaining.pop()
         component = {start}
         queue = deque([start])
-
         while queue:
             x, y = queue.popleft()
             for neighbor in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
@@ -167,11 +154,9 @@ def keep_main_component(frame: Image.Image) -> Image.Image:
                     remaining.remove(neighbor)
                     component.add(neighbor)
                     queue.append(neighbor)
-
         components.append(component)
 
     main_component = max(components, key=len)
-
     for x, y in opaque - main_component:
         r, g, b, _ = px[x, y]
         px[x, y] = (r, g, b, 0)
@@ -179,8 +164,22 @@ def keep_main_component(frame: Image.Image) -> Image.Image:
     return rgba
 
 
+def remove_source_blue(frame: Image.Image, tolerance: int = 12) -> Image.Image:
+    """Remove blue pixels trapped inside sprite-shaped regions after flood fill."""
+    rgba = frame.convert("RGBA")
+    px = rgba.load()
+    for y in range(rgba.height):
+        for x in range(rgba.width):
+            r, g, b, a = px[x, y]
+            if a > 0 and distance((r, g, b), BG) <= tolerance:
+                px[x, y] = (r, g, b, 0)
+    return rgba
+
+
 def extract_pose(source: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
-    return keep_main_component(clean_background(source.crop(box)))
+    cleaned = clean_background(source.crop(box))
+    main = keep_main_component(cleaned)
+    return remove_source_blue(main)
 
 
 def normalize(frame: Image.Image) -> Image.Image:
@@ -195,49 +194,39 @@ def repeated(frame: Image.Image) -> list[Image.Image]:
 
 def compose(prepared: dict[str, list[Image.Image]]) -> Image.Image:
     output = Image.new("RGBA", (384, 32), (0, 0, 0, 0))
-
     for direction_index, direction in enumerate(ORDER):
         frames = prepared[direction]
         if len(frames) != 3:
             raise RuntimeError(f"{direction}: expected exactly 3 frames")
-
         for frame_index, frame in enumerate(frames):
             output.alpha_composite(
                 frame,
                 ((direction_index * 3 + frame_index) * 32, 0),
             )
-
     return output
 
 
 def baby_sheet(source: Image.Image, name: str) -> Image.Image:
     pose_boxes = BABY_POSES[name]
-
     front_left = normalize(extract_pose(source, pose_boxes["front_left"]))
     back_left = normalize(extract_pose(source, pose_boxes["back_left"]))
+
+    if name == "koromon":
+        # Koromon's extracted source pose points to screen-right despite the
+        # historical crop label. Swap the horizontal assignment explicitly.
+        return compose(
+            {
+                "down_left": repeated(ImageOps.mirror(front_left)),
+                "down_right": repeated(front_left),
+                "up_left": repeated(ImageOps.mirror(back_left)),
+                "up_right": repeated(back_left),
+            }
+        )
 
     return compose(
         {
             "down_left": repeated(front_left),
             "down_right": repeated(ImageOps.mirror(front_left)),
-            "up_left": repeated(back_left),
-            "up_right": repeated(ImageOps.mirror(back_left)),
-        }
-    )
-
-
-def veemon_sheet(source: Image.Image) -> Image.Image:
-    # y=220 deliberately excludes the source drop shadow under Veemon.
-    front_left = [
-        normalize(extract_pose(source, (x, 192, x + 30, 220)))
-        for x in (0, 30, 60)
-    ]
-    back_left = normalize(extract_pose(source, (0, 160, 30, 188)))
-
-    return compose(
-        {
-            "down_left": front_left,
-            "down_right": [ImageOps.mirror(frame) for frame in front_left],
             "up_left": repeated(back_left),
             "up_right": repeated(ImageOps.mirror(back_left)),
         }
@@ -252,6 +241,9 @@ def validate_sheet(name: str, sheet: Image.Image) -> None:
         frame = sheet.crop((frame_index * 32, 0, (frame_index + 1) * 32, 32))
         if frame.getbbox() is None:
             raise RuntimeError(f"{name}: frame {frame_index} is empty")
+        for r, g, b, a in frame.getdata():
+            if a > 0 and distance((r, g, b), BG) <= 12:
+                raise RuntimeError(f"{name}: source-blue pixel survived in frame {frame_index}")
 
 
 def main() -> None:
@@ -264,12 +256,7 @@ def main() -> None:
             raise RuntimeError(f"{name}: expected {expected_sha}, got {digest}")
 
         source = Image.open(io.BytesIO(payload)).convert("RGBA")
-        sheet = (
-            veemon_sheet(source)
-            if name == "veemon"
-            else baby_sheet(source, name)
-        )
-
+        sheet = baby_sheet(source, name)
         validate_sheet(name, sheet)
 
         path = Path(f"assets/characters/{name}.png")
