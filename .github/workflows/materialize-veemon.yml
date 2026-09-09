@@ -1,0 +1,64 @@
+name: Materialize Veemon PNG
+
+on:
+  push:
+    branches:
+      - fix/veemon-rendering
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: fix/veemon-rendering
+          fetch-depth: 0
+      - name: Build exact Veemon runtime PNG
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+          cat assets/characters/veemon.parts/* | base64 -d > /tmp/veemon6.png
+          python3 - <<'PY'
+          from PIL import Image, ImageOps
+
+          source = Image.open('/tmp/veemon6.png').convert('RGBA')
+          if source.size != (192, 32):
+              raise RuntimeError(f'unexpected source size: {source.size}')
+
+          frames = [source.crop((i * 32, 0, (i + 1) * 32, 32)) for i in range(6)]
+          runtime = Image.new('RGBA', (384, 32), (0, 0, 0, 0))
+          ordered = (
+              frames[3], frames[4], frames[5],
+              ImageOps.mirror(frames[3]), ImageOps.mirror(frames[4]), ImageOps.mirror(frames[5]),
+              frames[0], frames[1], frames[2],
+              ImageOps.mirror(frames[0]), ImageOps.mirror(frames[1]), ImageOps.mirror(frames[2]),
+          )
+          for index, frame in enumerate(ordered):
+              runtime.alpha_composite(frame, (index * 32, 0))
+
+          runtime.save('assets/characters/veemon.png', format='PNG', optimize=True)
+          with Image.open('assets/characters/veemon.png') as image:
+              image.verify()
+          with Image.open('assets/characters/veemon.png') as image:
+              if image.size != (384, 32):
+                  raise RuntimeError(f'unexpected runtime size: {image.size}')
+          print('Veemon runtime PNG validated: 384x32, 12 exact 32x32 frames')
+          PY
+      - name: Commit materialized PNG
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/characters/veemon.png
+          if git diff --cached --quiet; then
+            echo 'Veemon PNG already materialized.'
+            exit 0
+          fi
+          git commit -m 'fix: materialize valid Veemon runtime PNG'
+          git push origin HEAD:fix/veemon-rendering
