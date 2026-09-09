@@ -4,9 +4,15 @@ const GRID_SIZE_X := 15
 const GRID_SIZE_Y := 25
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
-const TILE_ART_OFFSET_Y := 5.0
-const TILE_SCALE := Vector2(0.5, 0.5)
 const INVALID_GRID := Vector2i(-9999, -9999)
+
+# Kenney Isometric Landscape source tiles are 132x83 pixels. The upper ground
+# surface is a 132x64 diamond; sampling a slightly inset version removes the
+# source block outline so adjacent tactical cells read as one continuous field.
+const SOURCE_TOP_LEFT := Vector2(3.0, 32.0)
+const SOURCE_TOP_TOP := Vector2(66.0, 2.0)
+const SOURCE_TOP_RIGHT := Vector2(129.0, 32.0)
+const SOURCE_TOP_BOTTOM := Vector2(66.0, 62.0)
 
 const TERRAIN_PATHS := {
 	"earth": "res://assets/terrain/kenney/earth.png",
@@ -18,7 +24,6 @@ var tile_map_data: Dictionary = {}
 var selectedTile := Vector2i.ZERO
 
 var _terrain_textures: Dictionary = {}
-var _terrain_material: ShaderMaterial
 var _map_center := Vector2.ZERO
 var _hover_fill: Polygon2D
 var _hover_outline: Line2D
@@ -29,9 +34,7 @@ func _ready() -> void:
 	_map_center = _grid_to_raw(Vector2((GRID_SIZE_X - 1) * 0.5, (GRID_SIZE_Y - 1) * 0.5))
 	if not _load_terrain_textures():
 		return
-	if not _create_terrain_material():
-		return
-	_create_board_shadow()
+	_create_board_foundation()
 	_create_hover_indicator()
 	_generate_terrain()
 
@@ -47,16 +50,6 @@ func _load_terrain_textures() -> bool:
 			push_error("Missing terrain texture: %s" % TERRAIN_PATHS[terrain_name])
 			return false
 		_terrain_textures[terrain_name] = texture
-	return true
-
-
-func _create_terrain_material() -> bool:
-	var shader := load("res://shaders/terrain_top.gdshader") as Shader
-	if shader == null:
-		push_error("Could not load terrain top-face shader")
-		return false
-	_terrain_material = ShaderMaterial.new()
-	_terrain_material.shader = shader
 	return true
 
 
@@ -84,21 +77,36 @@ func _generate_terrain() -> void:
 				"world_position": world_position,
 			}
 
-			var tile := Sprite2D.new()
+			var tile := _create_terrain_tile(terrain_name, detail_value)
 			tile.name = "Tile_%02d_%02d" % [x, y]
-			tile.texture = _terrain_textures[terrain_name]
-			tile.material = _terrain_material
-			tile.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-			tile.scale = TILE_SCALE
-			tile.position = world_position + Vector2(0.0, TILE_ART_OFFSET_Y)
+			tile.position = world_position
 			tile.z_index = -100 + x + y
 			add_child(tile)
 
 	selectedTile = Vector2i(grid_to_world(Vector2i(GRID_SIZE_X / 2, GRID_SIZE_Y / 2)))
 
 
+func _create_terrain_tile(terrain_name: String, detail_value: float) -> Polygon2D:
+	var tile := Polygon2D.new()
+	tile.polygon = _tile_diamond()
+	tile.texture = _terrain_textures[terrain_name]
+	tile.uv = PackedVector2Array([
+		SOURCE_TOP_LEFT,
+		SOURCE_TOP_TOP,
+		SOURCE_TOP_RIGHT,
+		SOURCE_TOP_BOTTOM,
+	])
+	tile.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+
+	# A tiny brightness variation keeps broad regions organic without making the
+	# tactical grid noisy or changing the Kenney palette substantially.
+	var brightness := 0.99 + clampf(detail_value, -1.0, 1.0) * 0.02
+	tile.color = Color(brightness, brightness, brightness, 1.0)
+	return tile
+
+
 func _terrain_for_noise(biome_value: float, detail_value: float) -> String:
-	# Keep grass as the visual baseline and use broad, readable biome patches.
+	# Grass remains the visual baseline while noise creates broad readable patches.
 	if biome_value < -0.38:
 		return "earth"
 	if biome_value > 0.32 or (biome_value > 0.16 and detail_value > 0.48):
@@ -106,32 +114,57 @@ func _terrain_for_noise(biome_value: float, detail_value: float) -> String:
 	return "grass"
 
 
-func _create_board_shadow() -> void:
+func _create_board_foundation() -> void:
+	var outline := _board_outline()
+
 	var shadow := Polygon2D.new()
 	shadow.name = "BoardShadow"
-	shadow.polygon = PackedVector2Array([
-		grid_to_world(Vector2i(0, 0)) + Vector2(-TILE_WIDTH * 0.5, 18.0),
-		grid_to_world(Vector2i(GRID_SIZE_X - 1, 0)) + Vector2(0.0, 18.0),
-		grid_to_world(Vector2i(GRID_SIZE_X - 1, GRID_SIZE_Y - 1)) + Vector2(TILE_WIDTH * 0.5, 18.0),
-		grid_to_world(Vector2i(0, GRID_SIZE_Y - 1)) + Vector2(0.0, 18.0),
-	])
-	shadow.color = Color(0.0, 0.035, 0.08, 0.58)
-	shadow.z_index = -180
+	shadow.polygon = _offset_polygon(outline, Vector2(0.0, 24.0))
+	shadow.color = Color(0.0, 0.012, 0.03, 0.72)
+	shadow.z_index = -190
 	add_child(shadow)
+
+	var base := Polygon2D.new()
+	base.name = "BoardBase"
+	base.polygon = _offset_polygon(outline, Vector2(0.0, 10.0))
+	base.color = Color(0.025, 0.075, 0.09, 1.0)
+	base.z_index = -180
+	add_child(base)
+
+	var rim := Line2D.new()
+	rim.name = "BoardRim"
+	rim.points = PackedVector2Array([
+		outline[0], outline[1], outline[2], outline[3], outline[0]
+	])
+	rim.width = 1.5
+	rim.default_color = Color(0.18, 0.72, 0.78, 0.36)
+	rim.z_index = -80
+	add_child(rim)
+
+
+func _board_outline() -> PackedVector2Array:
+	return PackedVector2Array([
+		grid_to_world(Vector2i(0, 0)) + Vector2(0.0, -TILE_HEIGHT * 0.5),
+		grid_to_world(Vector2i(GRID_SIZE_X - 1, 0)) + Vector2(TILE_WIDTH * 0.5, 0.0),
+		grid_to_world(Vector2i(GRID_SIZE_X - 1, GRID_SIZE_Y - 1)) + Vector2(0.0, TILE_HEIGHT * 0.5),
+		grid_to_world(Vector2i(0, GRID_SIZE_Y - 1)) + Vector2(-TILE_WIDTH * 0.5, 0.0),
+	])
+
+
+func _offset_polygon(points: PackedVector2Array, offset: Vector2) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	for point in points:
+		result.append(point + offset)
+	return result
 
 
 func _create_hover_indicator() -> void:
-	var diamond := PackedVector2Array([
-		Vector2(-TILE_WIDTH * 0.5, 0.0),
-		Vector2(0.0, -TILE_HEIGHT * 0.5),
-		Vector2(TILE_WIDTH * 0.5, 0.0),
-		Vector2(0.0, TILE_HEIGHT * 0.5),
-	])
+	var diamond := _tile_diamond()
 
 	_hover_fill = Polygon2D.new()
 	_hover_fill.name = "HoverFill"
 	_hover_fill.polygon = diamond
-	_hover_fill.color = Color(0.16, 0.94, 1.0, 0.18)
+	_hover_fill.color = Color(0.12, 0.92, 1.0, 0.20)
 	_hover_fill.z_index = -40
 	_hover_fill.visible = false
 	add_child(_hover_fill)
@@ -142,10 +175,19 @@ func _create_hover_indicator() -> void:
 		diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]
 	])
 	_hover_outline.width = 2.0
-	_hover_outline.default_color = Color(0.28, 0.96, 1.0, 0.92)
+	_hover_outline.default_color = Color(0.28, 0.96, 1.0, 0.95)
 	_hover_outline.z_index = -39
 	_hover_outline.visible = false
 	add_child(_hover_outline)
+
+
+func _tile_diamond() -> PackedVector2Array:
+	return PackedVector2Array([
+		Vector2(-TILE_WIDTH * 0.5, 0.0),
+		Vector2(0.0, -TILE_HEIGHT * 0.5),
+		Vector2(TILE_WIDTH * 0.5, 0.0),
+		Vector2(0.0, TILE_HEIGHT * 0.5),
+	])
 
 
 func _update_hover() -> void:
