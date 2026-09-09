@@ -1,0 +1,39 @@
+name: Fix portrait sources
+
+on:
+  push:
+    branches:
+      - feat/tile-blocking-digimon-hover-details
+    paths:
+      - '.github/workflows/fix-portrait-sources.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/tile-blocking-digimon-hover-details
+          fetch-depth: 0
+
+      - name: Regenerate portrait assets in Godot-safe layout
+        run: |
+          python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+          python3 tools/sync_digimon_database_assets.py
+
+      - name: Commit migrated assets
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add database assets/characters
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git commit -m "fix: keep animated WebP sources outside Godot import"
+          git push origin HEAD:feat/tile-blocking-digimon-hover-details
