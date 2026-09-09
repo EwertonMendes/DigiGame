@@ -1,16 +1,6 @@
 extends CharacterBody2D
 
 const DIRECTION_FRAME_BASE := {"down_left": 0, "down_right": 3, "up_left": 6, "up_right": 9}
-const LEGACY_9_FRAME_SEQUENCE := {
-	# Veemon's approved nine-frame strip is organized as three left-facing
-	# walking poses, three front-facing poses, and three right-facing poses.
-	# Keep each diagonal anchored to its own side instead of sweeping through
-	# the opposite-facing pose during the walk cycle.
-	"down_left": [3, 4, 3],
-	"down_right": [5, 4, 5],
-	"up_left": [0, 1, 2],
-	"up_right": [8, 7, 6],
-}
 const SELECTED_FRAME_DURATION := 0.15
 const FACING_DEADZONE := 5.0
 
@@ -18,7 +8,6 @@ var PLAYER_POSITION_DEVIATION := Vector2.ZERO
 var PARTICLES_POSITION_DEVIATION := Vector2.ZERO
 var initialTileCoords := Vector2.ZERO
 var initial_facing := "up_right"
-var sprite_layout := "directional_12"
 var is_player_controlled := true
 var is_selected := false
 var selected_tile_coords := Vector2i.ZERO
@@ -155,12 +144,6 @@ func _advance_selected_animation(delta: float) -> void:
 
 func _show_current_facing(animate: bool) -> void:
 	sprite.flip_h = false
-	if sprite_layout == "legacy_9":
-		var sequence: Array = LEGACY_9_FRAME_SEQUENCE.get(facing_direction, [3, 4, 3])
-		var frame_index := _selected_animation_frame if animate else 0
-		sprite.frame = int(sequence[frame_index])
-		return
-
 	var base_frame: int = DIRECTION_FRAME_BASE.get(facing_direction, 9)
 	sprite.frame = base_frame + (_selected_animation_frame if animate else 0)
 
