@@ -113,7 +113,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: artifact/web
+          path: artifact/build/web
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
