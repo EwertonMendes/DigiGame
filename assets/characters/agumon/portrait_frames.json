@@ -1,0 +1,14 @@
+{
+  "source": "Agumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 60,
+  "frame_height": 75,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "e923c310a5e4da363dbb6052e1b3f8a4738b090690d3d87e92e5b7fdb8fd1d10"
+}

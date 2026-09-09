@@ -1,0 +1,14 @@
+{
+  "source": "Gabumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "96aa94535d869b52d286d6504fce895b8e9e5ceb79871acb873de960da1d622f"
+}

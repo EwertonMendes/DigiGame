@@ -8,14 +8,9 @@ const VEEMON_SPACED_9_IDLE_FRAME := {
 	"up_right": 1,
 }
 const VEEMON_SPACED_9_WALK_SEQUENCE := {
-	# The supplied strip already contains the real Veemon poses. Keep the
-	# front-left and front-right cycles on their own side so the walk animation
-	# never sweeps from one facing direction into the opposite one.
 	"down_left": [3, 4, 3],
 	"down_right": [5, 4, 5],
 	"up_left": [0, 1, 2],
-	# The supplied strip has one rear-facing side sequence. Mirror only that
-	# sequence for the opposite rear diagonal instead of inventing new frames.
 	"up_right": [0, 1, 2],
 }
 const VEEMON_SPACED_9_FLIP_H := {
@@ -28,12 +23,14 @@ const VEEMON_SPACED_9_CELL_SIZE := 32
 const VEEMON_SPACED_9_CELL_STRIDE := 33
 const SELECTED_FRAME_DURATION := 0.15
 const FACING_DEADZONE := 5.0
+const HOVER_PADDING := 3.0
 
 var PLAYER_POSITION_DEVIATION := Vector2.ZERO
 var PARTICLES_POSITION_DEVIATION := Vector2.ZERO
 var initialTileCoords := Vector2.ZERO
 var initial_facing := "up_right"
 var sprite_layout := "directional_12"
+var digimon_key := ""
 var is_player_controlled := true
 var is_selected := false
 var selected_tile_coords := Vector2i.ZERO
@@ -42,10 +39,12 @@ var _selected_animation_time := 0.0
 var _selected_animation_frame := 0
 @onready var sprite: Sprite2D = get_node("Sprite2D") as Sprite2D
 
+
 func _ready() -> void:
 	global_position = Vector2(initialTileCoords) + PLAYER_POSITION_DEVIATION
 	facing_direction = initial_facing if DIRECTION_FRAME_BASE.has(initial_facing) else "up_right"
 	_show_current_facing(false)
+
 
 func _physics_process(delta: float) -> void:
 	if not _can_control():
@@ -63,13 +62,11 @@ func _physics_process(delta: float) -> void:
 		_selected_animation_frame = 0
 		_show_current_facing(false)
 
+
 func _input(event: InputEvent) -> void:
 	if not _can_control() or not event is InputEventMouseButton:
 		return
 
-	# Touch presses can be mirrored as synthetic mouse clicks so ordinary UI
-	# Buttons remain touch-friendly. Native touch gameplay is handled by the
-	# camera; suppress the mirrored click so a finger cannot trigger both paths.
 	if GlobalVariables.TouchInputActive:
 		return
 
@@ -80,12 +77,13 @@ func _input(event: InputEvent) -> void:
 	if is_selected:
 		var destination := Vector2(selected_tile_coords) + PLAYER_POSITION_DEVIATION
 		face_toward_world_position(destination)
-		move_digimon_position()
-		_clear_selection()
+		if move_digimon_position():
+			_clear_selection()
 		return
 
 	if is_digimon_position_clicked():
 		_select_for_pointer(get_global_mouse_position())
+
 
 func handle_touch_tap(tile_world_position: Vector2, pointer_world_position: Vector2) -> bool:
 	if not _can_control():
@@ -99,8 +97,8 @@ func handle_touch_tap(tile_world_position: Vector2, pointer_world_position: Vect
 	if is_selected:
 		var destination := Vector2(selected_tile_coords) + PLAYER_POSITION_DEVIATION
 		face_toward_world_position(destination)
-		move_digimon_position()
-		_clear_selection()
+		if move_digimon_position():
+			_clear_selection()
 		return true
 
 	if is_digimon_position_clicked():
@@ -108,6 +106,7 @@ func handle_touch_tap(tile_world_position: Vector2, pointer_world_position: Vect
 		return true
 
 	return false
+
 
 func _select_for_pointer(pointer_world_position: Vector2) -> void:
 	is_selected = true
@@ -118,8 +117,10 @@ func _select_for_pointer(pointer_world_position: Vector2) -> void:
 	emit_particles_when_selected()
 	move_camera_to_selected_digimon()
 
+
 func _can_control() -> bool:
 	return is_player_controlled or GlobalVariables.DebugMode
+
 
 func _clear_selection() -> void:
 	is_selected = false
@@ -128,11 +129,39 @@ func _clear_selection() -> void:
 	_show_current_facing(false)
 	emit_particles_when_selected()
 
-func is_digimon_position_clicked() -> bool:
-	return Vector2(selected_tile_coords) == global_position - PLAYER_POSITION_DEVIATION
 
-func move_digimon_position() -> void:
-	global_position = Vector2(selected_tile_coords) + PLAYER_POSITION_DEVIATION
+func is_digimon_position_clicked() -> bool:
+	return Vector2(selected_tile_coords) == get_tile_world_position()
+
+
+func get_tile_world_position() -> Vector2:
+	return global_position - PLAYER_POSITION_DEVIATION
+
+
+func move_digimon_position() -> bool:
+	var tile_world_position := Vector2(selected_tile_coords)
+	var field := _get_field()
+	if field != null and field.has_method("can_digimon_move_to_world"):
+		if not bool(field.call("can_digimon_move_to_world", tile_world_position, self)):
+			return false
+
+	global_position = tile_world_position + PLAYER_POSITION_DEVIATION
+	return true
+
+
+func is_pointer_over(world_position: Vector2) -> bool:
+	if sprite == null or sprite.texture == null:
+		return false
+	var local_pointer := sprite.to_local(world_position)
+	return sprite.get_rect().grow(HOVER_PADDING).has_point(local_pointer)
+
+
+func _get_field() -> Node:
+	var main := get_tree().root.get_node_or_null("Main")
+	if main == null:
+		return null
+	return main.get_node_or_null("Blocks")
+
 
 func face_toward_world_position(target_position: Vector2) -> void:
 	var direction_vector := target_position - global_position
@@ -148,6 +177,7 @@ func face_toward_world_position(target_position: Vector2) -> void:
 	_selected_animation_frame = 0
 	_show_current_facing(is_selected)
 
+
 func _direction_from_vector(direction_vector: Vector2) -> String:
 	var horizontal := "right" if direction_vector.x >= 0.0 else "left"
 	var vertical := "down" if direction_vector.y >= 0.0 else "up"
@@ -159,6 +189,7 @@ func _direction_from_vector(direction_vector: Vector2) -> String:
 
 	return "%s_%s" % [vertical, horizontal]
 
+
 func _advance_selected_animation(delta: float) -> void:
 	_selected_animation_time += delta
 	if _selected_animation_time < SELECTED_FRAME_DURATION:
@@ -167,6 +198,7 @@ func _advance_selected_animation(delta: float) -> void:
 	_selected_animation_time = fmod(_selected_animation_time, SELECTED_FRAME_DURATION)
 	_selected_animation_frame = (_selected_animation_frame + 1) % 3
 	_show_current_facing(true)
+
 
 func _show_current_facing(animate: bool) -> void:
 	if sprite_layout == "spaced_9_32":
@@ -178,10 +210,8 @@ func _show_current_facing(animate: bool) -> void:
 	var base_frame: int = DIRECTION_FRAME_BASE.get(facing_direction, 9)
 	sprite.frame = base_frame + (_selected_animation_frame if animate else 0)
 
+
 func _show_spaced_9_facing(animate: bool) -> void:
-	# Use the supplied 296x32 image byte-for-byte. It contains nine exact
-	# 32x32 cells separated by one transparent pixel, so hframes must not be
-	# used: 296 / 9 would cut the source artwork at the wrong boundaries.
 	var frame_index: int
 	if animate:
 		var sequence: Array = VEEMON_SPACED_9_WALK_SEQUENCE.get(facing_direction, [3, 4, 3])
@@ -202,10 +232,12 @@ func _show_spaced_9_facing(animate: bool) -> void:
 	)
 	sprite.flip_h = bool(VEEMON_SPACED_9_FLIP_H.get(facing_direction, false))
 
+
 func emit_particles_when_selected() -> void:
 	var particles := get_node("Sprite2D/CPUParticles2D") as CPUParticles2D
 	particles.position = to_local(global_position) + PARTICLES_POSITION_DEVIATION
 	particles.emitting = is_selected
+
 
 func move_camera_to_selected_digimon() -> void:
 	var camera := get_viewport().get_camera_2d()

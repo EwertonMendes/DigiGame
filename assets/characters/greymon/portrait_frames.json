@@ -1,0 +1,14 @@
+{
+  "source": "Greymon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "3eb4f496a34b4ea42449425aa7de0640804fc2dc5da0bdb9d687327b5dca9265"
+}

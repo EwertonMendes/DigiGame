@@ -1,0 +1,14 @@
+{
+  "source": "Veemon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "dc4256c4777c7e55bc7f2bd92a9445013f93ab7f6ee6f5d393b9b9015b202e03"
+}
