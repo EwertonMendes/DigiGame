@@ -57,5 +57,9 @@ func emit_particles_when_selected() -> void:
 
 func move_camera_to_selected_digimon() -> void:
 	var camera := get_viewport().get_camera_2d()
-	if camera != null:
+	if camera == null:
+		return
+	if camera.has_method("focus_on"):
+		camera.call("focus_on", global_position)
+	else:
 		camera.global_position = global_position

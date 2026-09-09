@@ -28,8 +28,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Fetch pinned CC0 assets
-        run: python3 tools/fetch_cc0_assets.py
+      - name: Fetch runtime assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+          python3 tools/fetch_cc0_assets.py
+          python3 tools/fetch_character_assets.py
 
       - name: Install Godot and export templates
         shell: bash
@@ -92,6 +97,8 @@ jobs:
           path: |
             build/web
             build/web-smoke.png
+            build/gabumon-selected.png
+            build/camera-pan-smoke.png
           if-no-files-found: error
           retention-days: 14
 

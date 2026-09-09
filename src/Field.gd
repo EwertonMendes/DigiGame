@@ -175,6 +175,20 @@ func _board_outline() -> PackedVector2Array:
 	])
 
 
+func get_camera_pan_bounds() -> Rect2:
+	var outline := _board_outline()
+	var min_point := outline[0]
+	var max_point := outline[0]
+
+	for point in outline:
+		min_point.x = minf(min_point.x, point.x)
+		min_point.y = minf(min_point.y, point.y)
+		max_point.x = maxf(max_point.x, point.x)
+		max_point.y = maxf(max_point.y, point.y)
+
+	return Rect2(min_point, max_point - min_point)
+
+
 func _offset_polygon(points: PackedVector2Array, offset: Vector2) -> PackedVector2Array:
 	var result := PackedVector2Array()
 	for point in points:

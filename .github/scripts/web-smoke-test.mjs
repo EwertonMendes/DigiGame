@@ -62,17 +62,34 @@ try {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(800);
   const finalLayout = await readLayout(page);
-  await page.mouse.move(finalLayout.viewportWidth * 0.5, finalLayout.viewportHeight * 0.5);
-  await page.waitForTimeout(1200);
+  const centerX = finalLayout.viewportWidth * 0.5;
+  const centerY = finalLayout.viewportHeight * 0.5;
+
+  await page.mouse.move(centerX, centerY);
+  await page.waitForTimeout(500);
   await page.screenshot({ path: 'build/web-smoke.png', fullPage: true });
+
+  // Gabumon starts on the center tile. Selecting it must trigger its animated
+  // selected state and camera focus without producing a browser/runtime error.
+  await page.mouse.click(centerX, centerY, { button: 'left' });
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: 'build/gabumon-selected.png', fullPage: true });
+
+  // Exercise the same right-button drag gesture players use for camera panning.
+  await page.mouse.move(centerX + 180, centerY + 110);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(centerX - 240, centerY - 150, { steps: 12 });
+  await page.mouse.up({ button: 'right' });
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'build/camera-pan-smoke.png', fullPage: true });
 
   if (runtimeErrors.length > 0) {
     throw new Error(`Browser runtime errors:\n${runtimeErrors.join('\n')}`);
   }
 
   console.log(
-    `DigiGame Web smoke test passed at ${desktopViewports.length} desktop viewport sizes ` +
-    `with a full-viewport canvas and no browser runtime errors.`
+    `DigiGame Web smoke test passed at ${desktopViewports.length} desktop viewport sizes, ` +
+    `including Gabumon selection and right-button camera drag.`
   );
 } finally {
   await browser.close();
