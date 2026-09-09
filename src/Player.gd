@@ -3,15 +3,26 @@ extends CharacterBody2D
 const DIRECTION_FRAME_BASE := {"down_left": 0, "down_right": 3, "up_left": 6, "up_right": 9}
 const VEEMON_SPACED_9_IDLE_FRAME := {
 	"down_left": 3,
-	"down_right": 3,
-	"up_left": 0,
-	"up_right": 0,
+	"down_right": 5,
+	"up_left": 1,
+	"up_right": 1,
 }
 const VEEMON_SPACED_9_WALK_SEQUENCE := {
+	# The supplied strip already contains the real Veemon poses. Keep the
+	# front-left and front-right cycles on their own side so the walk animation
+	# never sweeps from one facing direction into the opposite one.
 	"down_left": [3, 4, 3],
-	"down_right": [3, 4, 3],
-	"up_left": [1, 2, 1],
-	"up_right": [1, 2, 1],
+	"down_right": [5, 4, 5],
+	"up_left": [0, 1, 2],
+	# The supplied strip has one rear-facing side sequence. Mirror only that
+	# sequence for the opposite rear diagonal instead of inventing new frames.
+	"up_right": [0, 1, 2],
+}
+const VEEMON_SPACED_9_FLIP_H := {
+	"down_left": false,
+	"down_right": false,
+	"up_left": false,
+	"up_right": true,
 }
 const VEEMON_SPACED_9_CELL_SIZE := 32
 const VEEMON_SPACED_9_CELL_STRIDE := 33
@@ -168,10 +179,9 @@ func _show_current_facing(animate: bool) -> void:
 	sprite.frame = base_frame + (_selected_animation_frame if animate else 0)
 
 func _show_spaced_9_facing(animate: bool) -> void:
-	# The supplied 296x32 Veemon sheet contains nine exact 32x32 cells with a
-	# one-pixel transparent spacer between cells. Using Sprite2D.hframes would
-	# divide 296 by 9 and sample the wrong boundaries, which is what caused the
-	# previous apparent size/position jump. Crop the exact cell explicitly.
+	# Use the supplied 296x32 image byte-for-byte. It contains nine exact
+	# 32x32 cells separated by one transparent pixel, so hframes must not be
+	# used: 296 / 9 would cut the source artwork at the wrong boundaries.
 	var frame_index: int
 	if animate:
 		var sequence: Array = VEEMON_SPACED_9_WALK_SEQUENCE.get(facing_direction, [3, 4, 3])
@@ -190,7 +200,7 @@ func _show_spaced_9_facing(animate: bool) -> void:
 		VEEMON_SPACED_9_CELL_SIZE,
 		VEEMON_SPACED_9_CELL_SIZE
 	)
-	sprite.flip_h = facing_direction.ends_with("right")
+	sprite.flip_h = bool(VEEMON_SPACED_9_FLIP_H.get(facing_direction, false))
 
 func emit_particles_when_selected() -> void:
 	var particles := get_node("Sprite2D/CPUParticles2D") as CPUParticles2D
