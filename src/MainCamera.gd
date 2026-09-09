@@ -1,28 +1,35 @@
 extends Camera2D
 
-const CAMERA_MOVEMENT_FORCE := 5.0
-const MIN_ZOOM := Vector2(1.0, 1.0)
-const MAX_ZOOM := Vector2(4.0, 4.0)
-const INITIAL_ZOOM := Vector2(2.0, 2.0)
-const ZOOM_FACTOR := Vector2(0.25, 0.25)
+const CAMERA_MOVEMENT_FORCE := 1.75
+const MIN_ZOOM := 0.65
+const MAX_ZOOM := 1.80
+const INITIAL_ZOOM := 0.90
+const ZOOM_STEP := 0.10
+
 
 func _ready() -> void:
-	zoom = INITIAL_ZOOM
+	zoom = Vector2.ONE * INITIAL_ZOOM
+
 
 func _physics_process(_delta: float) -> void:
-	handle_zoom()
+	_handle_zoom()
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var mouse_motion := event as InputEventMouseMotion
 		if mouse_motion.button_mask & MOUSE_BUTTON_MASK_RIGHT:
-			position -= mouse_motion.relative * zoom / CAMERA_MOVEMENT_FORCE
+			position -= (mouse_motion.relative / zoom) / CAMERA_MOVEMENT_FORCE
 
-func handle_zoom() -> void:
-	var current_zoom := zoom
+
+func _handle_zoom() -> void:
+	var target_zoom := zoom.x
 	if Input.is_action_just_released("wheel_down"):
-		var next_zoom := current_zoom - ZOOM_FACTOR
-		zoom = Vector2(maxf(next_zoom.x, MIN_ZOOM.x), maxf(next_zoom.y, MIN_ZOOM.y))
+		target_zoom -= ZOOM_STEP
 	elif Input.is_action_just_released("wheel_up"):
-		var next_zoom := current_zoom + ZOOM_FACTOR
-		zoom = Vector2(minf(next_zoom.x, MAX_ZOOM.x), minf(next_zoom.y, MAX_ZOOM.y))
+		target_zoom += ZOOM_STEP
+	else:
+		return
+
+	target_zoom = clampf(target_zoom, MIN_ZOOM, MAX_ZOOM)
+	zoom = Vector2.ONE * target_zoom

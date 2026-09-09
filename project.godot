@@ -1,6 +1,5 @@
 ; Engine configuration file.
-; DigiGame is kept on a single GDScript code path so Web and desktop exports
-; execute the same gameplay logic.
+; DigiGame uses one GDScript runtime for both Web and desktop builds.
 
 config_version=5
 
@@ -16,10 +15,10 @@ GlobalVariables="*res://src/GlobalVariables.gd"
 
 [display]
 
-window/size/viewport_width=1152
-window/size/viewport_height=648
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
+window/stretch/aspect="expand"
 
 [input]
 
