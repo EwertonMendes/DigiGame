@@ -1,7 +1,6 @@
 extends Node2D
 
 const BATTLE_SPRITE_SCALE := Vector2(1.0, 1.0)
-const DIRECTIONAL_FRAME_COUNT := 12
 
 var player_digimons := ["agumon", "gabumon", "greymon"]
 var enemy_digimons := ["koromon", "tanemon", "veemon"]
@@ -35,12 +34,13 @@ func set_digimon_name_and_graphics(digimon_name: String, digimon_resource: Digim
 	var digimon_sprite := digimon_instance.get_node("Sprite2D") as Sprite2D
 	digimon_instance.name = digimon_name if player_controlled else "Enemy_%s" % digimon_name
 	digimon_sprite.texture = digimon_resource.texture
-	digimon_sprite.hframes = DIRECTIONAL_FRAME_COUNT
+	digimon_sprite.hframes = maxi(1, digimon_resource.sprite_hframes)
 	digimon_sprite.frame = digimon_resource.initial_frame
 	digimon_sprite.flip_h = false
 	digimon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	digimon_sprite.scale = BATTLE_SPRITE_SCALE
 	digimon_instance.set("initial_facing", digimon_resource.initial_facing)
+	digimon_instance.set("sprite_layout", digimon_resource.sprite_layout)
 	digimon_instance.set("is_player_controlled", player_controlled)
 
 func set_digimon_initial_position(digimon_resource: Digimon, digimon_instance: CharacterBody2D) -> void:
