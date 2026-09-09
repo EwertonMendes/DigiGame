@@ -1,6 +1,20 @@
 extends CharacterBody2D
 
 const DIRECTION_FRAME_BASE := {"down_left": 0, "down_right": 3, "up_left": 6, "up_right": 9}
+const VEEMON_SPACED_9_IDLE_FRAME := {
+	"down_left": 3,
+	"down_right": 3,
+	"up_left": 0,
+	"up_right": 0,
+}
+const VEEMON_SPACED_9_WALK_SEQUENCE := {
+	"down_left": [3, 4, 3],
+	"down_right": [3, 4, 3],
+	"up_left": [1, 2, 1],
+	"up_right": [1, 2, 1],
+}
+const VEEMON_SPACED_9_CELL_SIZE := 32
+const VEEMON_SPACED_9_CELL_STRIDE := 33
 const SELECTED_FRAME_DURATION := 0.15
 const FACING_DEADZONE := 5.0
 
@@ -8,6 +22,7 @@ var PLAYER_POSITION_DEVIATION := Vector2.ZERO
 var PARTICLES_POSITION_DEVIATION := Vector2.ZERO
 var initialTileCoords := Vector2.ZERO
 var initial_facing := "up_right"
+var sprite_layout := "directional_12"
 var is_player_controlled := true
 var is_selected := false
 var selected_tile_coords := Vector2i.ZERO
@@ -143,9 +158,39 @@ func _advance_selected_animation(delta: float) -> void:
 	_show_current_facing(true)
 
 func _show_current_facing(animate: bool) -> void:
+	if sprite_layout == "spaced_9_32":
+		_show_spaced_9_facing(animate)
+		return
+
+	sprite.region_enabled = false
 	sprite.flip_h = false
 	var base_frame: int = DIRECTION_FRAME_BASE.get(facing_direction, 9)
 	sprite.frame = base_frame + (_selected_animation_frame if animate else 0)
+
+func _show_spaced_9_facing(animate: bool) -> void:
+	# The supplied 296x32 Veemon sheet contains nine exact 32x32 cells with a
+	# one-pixel transparent spacer between cells. Using Sprite2D.hframes would
+	# divide 296 by 9 and sample the wrong boundaries, which is what caused the
+	# previous apparent size/position jump. Crop the exact cell explicitly.
+	var frame_index: int
+	if animate:
+		var sequence: Array = VEEMON_SPACED_9_WALK_SEQUENCE.get(facing_direction, [3, 4, 3])
+		frame_index = int(sequence[_selected_animation_frame])
+	else:
+		frame_index = int(VEEMON_SPACED_9_IDLE_FRAME.get(facing_direction, 3))
+
+	sprite.hframes = 1
+	sprite.vframes = 1
+	sprite.frame = 0
+	sprite.region_enabled = true
+	sprite.region_filter_clip_enabled = true
+	sprite.region_rect = Rect2(
+		frame_index * VEEMON_SPACED_9_CELL_STRIDE,
+		0,
+		VEEMON_SPACED_9_CELL_SIZE,
+		VEEMON_SPACED_9_CELL_SIZE
+	)
+	sprite.flip_h = facing_direction.ends_with("right")
 
 func emit_particles_when_selected() -> void:
 	var particles := get_node("Sprite2D/CPUParticles2D") as CPUParticles2D

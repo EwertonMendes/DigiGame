@@ -38,9 +38,11 @@ func set_digimon_name_and_graphics(digimon_name: String, digimon_resource: Digim
 	digimon_sprite.vframes = maxi(1, digimon_resource.sprite_vframes)
 	digimon_sprite.frame = digimon_resource.initial_frame
 	digimon_sprite.flip_h = false
+	digimon_sprite.region_enabled = false
 	digimon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	digimon_sprite.scale = BATTLE_SPRITE_SCALE
 	digimon_instance.set("initial_facing", digimon_resource.initial_facing)
+	digimon_instance.set("sprite_layout", digimon_resource.sprite_layout)
 	digimon_instance.set("is_player_controlled", player_controlled)
 
 func set_digimon_initial_position(digimon_resource: Digimon, digimon_instance: CharacterBody2D) -> void:
