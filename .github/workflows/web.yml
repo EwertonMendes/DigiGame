@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - master
-      - chore/web-playable
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
   pull_request:
     branches:
       - master
@@ -26,6 +28,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Fetch pinned CC0 assets
+        run: python3 tools/fetch_cc0_assets.py
+
       - name: Install Godot and export templates
         shell: bash
         run: |
@@ -46,7 +51,14 @@ jobs:
           godot --version
 
       - name: Import and validate project
-        run: godot --headless --path . --import
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --import 2>&1 | tee /tmp/godot-import.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/godot-import.log; then
+            echo 'Godot reported a script error during project import.' >&2
+            exit 1
+          fi
 
       - name: Export Web build
         shell: bash

@@ -1,5 +1,7 @@
 extends Node2D
 
+const BATTLE_SPRITE_SCALE := Vector2(1.0, 1.0)
+
 var digimons_to_instantiate := ["agumon", "greymon"]
 
 func _ready() -> void:
@@ -38,7 +40,8 @@ func set_digimon_name_and_graphics(digimon_name: String, digimon_resource: Digim
 	digimon_instance.name = digimon_name
 	digimon_sprite.texture = digimon_resource.texture
 	digimon_sprite.frame = digimon_resource.initial_frame
-	digimon_sprite.scale = Vector2(0.5, 0.5)
+	digimon_sprite.scale = BATTLE_SPRITE_SCALE
+	digimon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	digimon_instance.add_child(animation_instance)
 
 func set_digimon_initial_position(digimon_resource: Digimon, digimon_instance: CharacterBody2D) -> void:
