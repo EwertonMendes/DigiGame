@@ -36,16 +36,16 @@ func _init() -> void:
 	_require(training.train_mobility(agumon), "Mobility Training I should apply")
 	_require(calculator.get_mov(agumon, species) == int(species.get("MOV", 4)) + 1, "individual mobility training should modify final MOV")
 
-	var before_level := agumon.level
-	var required_xp := progression.exp_to_next_level(agumon, species)
+	var before_level: int = int(agumon.level)
+	var required_xp: int = int(progression.exp_to_next_level(agumon, species))
 	progression.add_experience(agumon, species, required_xp)
 	_require(agumon.level == before_level + 1, "XP should level the individual Digimon")
 
 	var evolutions = species.get("digiEvolutionSeedList", [])
 	if evolutions is Array and not evolutions.is_empty():
-		var target_seed := String(evolutions[0])
-		var old_id := agumon.id
-		var old_training := int(agumon.training.get("mov", 0))
+		var target_seed: String = String(evolutions[0])
+		var old_id: String = String(agumon.id)
+		var old_training: int = int(agumon.training.get("mov", 0))
 		# The database may require a higher level. Raise only for this domain check.
 		agumon.level = 99
 		if evolution.can_digivolve(agumon, target_seed, database, calculator):
