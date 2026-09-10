@@ -8,7 +8,8 @@ var _panel: Panel = null
 var _map_label: Label = null
 var _turn_label: Label = null
 var _objective_label: Label = null
-var _signal_line: ColorRect = null
+var _left_tick: ColorRect = null
+var _right_tick: ColorRect = null
 var _last_turn := -1
 var _last_viewport_size := Vector2.ZERO
 var _last_window_size := Vector2i.ZERO
@@ -44,8 +45,8 @@ func refresh() -> void:
 	var state: Dictionary = _controller.call("get_hud_state")
 	_panel.visible = true
 	var turn_number := int(state.get("turn_number", 1))
-	_map_label.text = "Digital Plains"
-	_turn_label.text = "Turn %d" % turn_number
+	_map_label.text = "DIGITAL PLAINS"
+	_turn_label.text = "TURN  %d" % turn_number
 	_objective_label.text = "Defeat all opponents"
 	if turn_number != _last_turn:
 		_last_turn = turn_number
@@ -55,24 +56,28 @@ func refresh() -> void:
 
 func _build_ui() -> void:
 	_panel = Panel.new()
-	_panel.name = "BattleContextBar"
+	_panel.name = "BattleContextRibbon"
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_panel.add_theme_stylebox_override("panel", UI.panel(UI.GOLD, 0.91, 0.20, 10, 3))
+	_panel.add_theme_stylebox_override("panel", UI.ribbon(UI.GOLD, 0.62))
 	add_child(_panel)
 
-	_map_label = _label("", 15, UI.TEXT)
+	_map_label = _label("", 13, UI.MUTED)
 	_panel.add_child(_map_label)
-	_turn_label = _label("", 16, UI.GOLD)
+	_turn_label = _label("", 14, UI.GOLD)
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_panel.add_child(_turn_label)
-	_objective_label = _label("", 15, UI.MUTED)
+	_objective_label = _label("", 13, UI.MUTED)
 	_objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_panel.add_child(_objective_label)
 
-	_signal_line = ColorRect.new()
-	_signal_line.color = UI.separator(UI.GOLD, 0.70)
-	_signal_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_panel.add_child(_signal_line)
+	_left_tick = ColorRect.new()
+	_left_tick.color = UI.GOLD
+	_left_tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(_left_tick)
+	_right_tick = ColorRect.new()
+	_right_tick.color = UI.separator(UI.GOLD, 0.42)
+	_right_tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(_right_tick)
 
 
 func _label(text_value: String, font_size: int, color: Color) -> Label:
@@ -91,50 +96,51 @@ func _layout() -> void:
 	if _panel == null:
 		return
 	var viewport_obj := get_viewport()
-	var logical := viewport_obj.get_visible_rect().size
 	var physical := UI.physical_window_size(viewport_obj)
 	var ui_scale := UI.ui_scale(viewport_obj)
-	_last_viewport_size = logical
+	_last_viewport_size = viewport_obj.get_visible_rect().size
 	_last_window_size = DisplayServer.window_get_size()
 	var compact := UI.is_compact(viewport_obj, 760.0)
 	var very_narrow := physical.x < 560.0
 	var margin := 10.0 if compact else 16.0
-	var width := minf(760.0, physical.x - margin * 2.0)
-	var height := 42.0 if compact else 46.0
+	var width := minf(690.0, physical.x - margin * 2.0)
+	var height := 38.0 if compact else 42.0
 	_panel.scale = Vector2.ONE * ui_scale
 	_panel.position = Vector2((physical.x - width) * 0.5 * ui_scale, margin * ui_scale)
 	_panel.size = Vector2(width, height)
-	_signal_line.position = Vector2(14.0, 0.0)
-	_signal_line.size = Vector2(54.0, 2.0)
+	_left_tick.position = Vector2(0.0, height - 2.0)
+	_left_tick.size = Vector2(minf(76.0, width * 0.18), 2.0)
+	_right_tick.position = Vector2(width - minf(46.0, width * 0.12), height - 2.0)
+	_right_tick.size = Vector2(minf(46.0, width * 0.12), 2.0)
 
 	if very_narrow:
 		_map_label.visible = false
 		_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		_turn_label.position = Vector2(14.0, 2.0)
-		_turn_label.size = Vector2(width * 0.38, height - 4.0)
-		_objective_label.position = Vector2(width * 0.38, 2.0)
-		_objective_label.size = Vector2(width * 0.62 - 14.0, height - 4.0)
-		_turn_label.add_theme_font_size_override("font_size", 15)
-		_objective_label.add_theme_font_size_override("font_size", 14)
+		_turn_label.position = Vector2(12.0, 0.0)
+		_turn_label.size = Vector2(width * 0.34, height - 2.0)
+		_objective_label.position = Vector2(width * 0.34, 0.0)
+		_objective_label.size = Vector2(width * 0.66 - 12.0, height - 2.0)
+		_turn_label.add_theme_font_size_override("font_size", 13)
+		_objective_label.add_theme_font_size_override("font_size", 12)
 	else:
 		_map_label.visible = true
 		_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		var third := width / 3.0
-		_map_label.position = Vector2(14.0, 2.0)
-		_map_label.size = Vector2(third - 14.0, height - 4.0)
-		_turn_label.position = Vector2(third, 2.0)
-		_turn_label.size = Vector2(third, height - 4.0)
-		_objective_label.position = Vector2(third * 2.0, 2.0)
-		_objective_label.size = Vector2(third - 14.0, height - 4.0)
-		_map_label.add_theme_font_size_override("font_size", 14 if compact else 15)
-		_turn_label.add_theme_font_size_override("font_size", 15 if compact else 16)
-		_objective_label.add_theme_font_size_override("font_size", 14 if compact else 15)
+		_map_label.position = Vector2(12.0, 0.0)
+		_map_label.size = Vector2(third - 12.0, height - 2.0)
+		_turn_label.position = Vector2(third, 0.0)
+		_turn_label.size = Vector2(third, height - 2.0)
+		_objective_label.position = Vector2(third * 2.0, 0.0)
+		_objective_label.size = Vector2(third - 12.0, height - 2.0)
+		_map_label.add_theme_font_size_override("font_size", 12 if compact else 13)
+		_turn_label.add_theme_font_size_override("font_size", 13 if compact else 14)
+		_objective_label.add_theme_font_size_override("font_size", 12 if compact else 13)
 
 
 func _pulse_turn() -> void:
 	if _turn_label == null:
 		return
-	_turn_label.modulate = Color(1.0, 1.0, 1.0, 0.45)
+	_turn_label.modulate = Color(1.0, 1.0, 1.0, 0.35)
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_turn_label, "modulate:a", 1.0, 0.16)
+	tween.tween_property(_turn_label, "modulate:a", 1.0, 0.18)
