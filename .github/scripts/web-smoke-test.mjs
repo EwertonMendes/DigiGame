@@ -22,7 +22,7 @@ const mobileViewports = [
 function watchRuntimeErrors(page, label) {
   page.on('pageerror', error => runtimeErrors.push(`${label} pageerror: ${error.message}`));
   page.on('console', message => {
-    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${message.text()}`));
+    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${message.text()}`);
   });
 }
 
