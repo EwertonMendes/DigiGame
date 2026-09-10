@@ -11,9 +11,8 @@ func _ready() -> void:
 	super._ready()
 	_ko_smoke_texture = _load_texture(KO_SMOKE_PATH)
 
-	# Do not rely on the inherited method-reference connection. Register a named
-	# handler owned by this runtime presentation class so action/impact/KO events
-	# are guaranteed to arrive in exported Web builds as well as native Godot.
+	# Register an explicit runtime handler owned by this class. This avoids the
+	# inherited method-reference connection silently missing exported combat FX.
 	if _battle_controller != null and _battle_controller.has_signal("combat_event"):
 		var inherited_handler := Callable(self, "_on_combat_event")
 		if _battle_controller.is_connected("combat_event", inherited_handler):
@@ -34,7 +33,10 @@ func _on_sequenced_combat_event(event: Dictionary) -> void:
 		"action_missed":
 			_present_miss(event)
 		"unit_knocked_out":
-			_queue_knockout(event)
+			_schedule_after_impact(
+				Callable(self, "_present_knockout").bind(event.duplicate(true)),
+				0.20
+			)
 
 
 func wait_for_current_impact() -> void:
