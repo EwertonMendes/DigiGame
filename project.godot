@@ -12,7 +12,6 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 [autoload]
 
 GlobalVariables="*res://src/GlobalVariables.gd"
-HoverPathInput="*res://src/HoverPathInput.gd"
 
 [display]
 
