@@ -4,6 +4,8 @@ const TOUCH_BUTTON_SIZE_PX := 56.0
 const TOUCH_CENTER_WIDTH_PX := 88.0
 const TOUCH_MARGIN_PX := 16.0
 const TOUCH_GAP_PX := 8.0
+const CYAN := Color(0.12, 0.88, 1.0, 1.0)
+const RED := Color(1.0, 0.30, 0.28, 1.0)
 
 @onready var debug_button: Button = $Root/DebugButton
 @onready var zoom_out_button: Button = $Root/ZoomOutButton
@@ -21,13 +23,45 @@ func _ready() -> void:
 	zoom_in_button.pressed.connect(_on_zoom_in_pressed)
 	center_button.pressed.connect(_on_center_pressed)
 	get_viewport().size_changed.connect(_layout_controls)
+	_style_controls()
 	_refresh_label()
 	call_deferred("_layout_controls")
 
+func _style_controls() -> void:
+	_style_button(center_button, CYAN)
+	_style_button(zoom_out_button, CYAN)
+	_style_button(zoom_in_button, CYAN)
+	_style_button(debug_button, RED)
+	for button in [center_button, zoom_out_button, zoom_in_button, debug_button]:
+		button.focus_mode = Control.FOCUS_NONE
+		button.add_theme_color_override("font_color", Color(0.90, 0.97, 1.0, 1.0))
+		button.add_theme_color_override("font_hover_color", Color.WHITE)
+	touch_hint.add_theme_color_override("font_color", Color(0.70, 0.86, 0.94, 0.92))
+
+func _style_button(button: Button, accent: Color) -> void:
+	button.add_theme_stylebox_override("normal", _button_style(accent, 0.12, 0.46))
+	button.add_theme_stylebox_override("hover", _button_style(accent, 0.24, 0.90))
+	button.add_theme_stylebox_override("pressed", _button_style(accent, 0.36, 1.0))
+
+func _button_style(accent: Color, alpha: float, border_alpha: float) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	var bg := Color(0.015, 0.05, 0.08, 0.90)
+	bg = bg.lerp(accent, alpha)
+	var border := accent
+	border.a = border_alpha
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 7
+	style.corner_radius_top_right = 7
+	style.corner_radius_bottom_left = 7
+	style.corner_radius_bottom_right = 7
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.32)
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(0.0, 2.0)
+	return style
+
 func _layout_controls() -> void:
-	# canvas_items stretching keeps the game world resolution stable, which can
-	# make a 56-unit Control physically tiny on a narrow phone. Convert desired
-	# CSS/window pixels back into canvas units so touch targets stay finger-sized.
 	var viewport_size := get_viewport().get_visible_rect().size
 	var window_size := Vector2(DisplayServer.window_get_size())
 	if window_size.x <= 0.0 or window_size.y <= 0.0:
@@ -100,4 +134,6 @@ func _on_center_pressed() -> void:
 		_camera.call("reset_view")
 
 func _refresh_label() -> void:
-	debug_button.text = "DEBUG: ON" if GlobalVariables.DebugMode else "DEBUG: OFF"
+	debug_button.text = "DEBUG  ON" if GlobalVariables.DebugMode else "DEBUG  OFF"
+	var accent := Color(1.0, 0.76, 0.16, 1.0) if GlobalVariables.DebugMode else RED
+	_style_button(debug_button, accent)
