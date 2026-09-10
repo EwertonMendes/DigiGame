@@ -279,7 +279,24 @@ try {
 
   await mobilePage.reload({ waitUntil: 'domcontentloaded' });
   await waitForGame(mobilePage);
-  await enterTestBattle(mobilePage);
+
+  // Use the on-screen TALK action for the actual mobile transition so the hub
+  // interaction path is covered without relying on a hardware keyboard.
+  const mobileDialogueOpened = mobilePage.waitForEvent('console', {
+    predicate: message => message.text().includes('[Hub] DIALOGUE_OPEN'),
+    timeout: 10000,
+  });
+  await mobilePage.touchscreen.tap(320, 776);
+  await mobileDialogueOpened;
+  await mobilePage.waitForTimeout(350);
+  await mobilePage.screenshot({ path: 'build/hub-mobile-dialog.png', fullPage: true });
+  const mobileBattleStarted = mobilePage.waitForEvent('console', {
+    predicate: message => message.text().includes('[Hub] START_TEST_BATTLE'),
+    timeout: 10000,
+  });
+  await mobilePage.keyboard.press('Enter');
+  await mobileBattleStarted;
+  await mobilePage.waitForTimeout(5000);
 
   let mobileLayout = await readLayout(mobilePage);
   let mobileCenter = {
@@ -336,8 +353,8 @@ try {
     `DigiGame Web smoke test passed at ${desktopViewports.length} desktop and ` +
     `${mobileViewports.length} mobile orientations, including notebook HUD coverage, ` +
     `attack targeting, technique menu, CT/enemy-AI progression, mouse, keyboard, ` +
-    `hub touch movement, touch tap, one-finger pan, pinch zoom, mobile zoom controls, ` +
-    `and responsive canvas checks.`
+    `hub touch movement and NPC interaction, touch tap, one-finger pan, pinch zoom, ` +
+    `mobile zoom controls, and responsive canvas checks.`
   );
 } finally {
   await browser.close();
