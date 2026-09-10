@@ -6,9 +6,11 @@ const ControllerScript = preload("res://src/battle/CombatDigimonRuntimeControlle
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 
+var _failed := false
 
-func _init() -> void:
-	call_deferred("_run")
+
+func _initialize() -> void:
+	_run()
 
 
 func _run() -> void:
@@ -23,9 +25,6 @@ func _run() -> void:
 	var controller := ControllerScript.new() as Node2D
 	controller.name = "DigimonController"
 	main.add_child(controller)
-
-	await process_frame
-	await process_frame
 
 	var greymon: Node = null
 	var enemy: Node = null
@@ -87,9 +86,6 @@ func _run() -> void:
 		return
 	print("tile-based Digimon selection regression passed")
 	quit(0)
-
-
-var _failed := false
 
 
 func _assert(condition: bool, message: String) -> void:
