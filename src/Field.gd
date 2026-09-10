@@ -1,5 +1,7 @@
 extends Node2D
 
+signal hovered_grid_changed(grid: Vector2i, block_reason: String)
+
 const GRID_SIZE_X := 15
 const GRID_SIZE_Y := 25
 const TILE_WIDTH := 64.0
@@ -10,6 +12,8 @@ const HOVER_AVAILABLE_FILL := Color(0.12, 0.92, 1.0, 0.20)
 const HOVER_AVAILABLE_OUTLINE := Color(0.28, 0.96, 1.0, 0.95)
 const HOVER_BLOCKED_FILL := Color(1.0, 0.12, 0.14, 0.24)
 const HOVER_BLOCKED_OUTLINE := Color(1.0, 0.28, 0.30, 0.98)
+const RANGE_FILL := Color(0.12, 0.72, 1.0, 0.13)
+const PATH_FILL := Color(1.0, 0.82, 0.18, 0.30)
 
 # Kenney Isometric Landscape source tiles are 132x83 pixels. We sample only
 # the upper ground face and blend it over a solid biome-colored diamond.
@@ -33,10 +37,10 @@ const TERRAIN_BASE_COLORS := {
 var tile_map_data: Dictionary = {}
 var selectedTile := Vector2i.ZERO
 
-# Static blockers live here instead of inside Player movement. Future scenery
-# (trees, cliffs, deep water, etc.) can register a reason per grid cell without
-# changing Digimon movement code. Dynamic blockers such as Digimon occupancy
-# are resolved through DigimonController in get_tile_block_reason().
+# Static blockers live here instead of inside character movement. Future
+# scenery can register trees, cliffs, water, etc. Dynamic occupancy stays in
+# DigimonController, while MovementSystem decides whether an occupant may be
+# crossed or used as a destination.
 var _static_blocked_tiles: Dictionary = {}
 var _terrain_textures: Dictionary = {}
 var _map_center := Vector2.ZERO
@@ -44,6 +48,12 @@ var _hover_fill: Polygon2D
 var _hover_outline: Line2D
 var _last_hovered_grid := INVALID_GRID
 var _last_hover_block_reason := ""
+var _movement_mode_active := false
+var _movement_origin := INVALID_GRID
+var _movement_actor: Node = null
+var _movement_reachable: Dictionary = {}
+var _range_indicators: Array[Node] = []
+var _path_indicators: Array[Node] = []
 
 
 func _ready() -> void:
@@ -198,7 +208,8 @@ func select_tile_from_world(world_position: Vector2) -> bool:
 	var grid := world_to_grid(to_local(world_position))
 	if not _is_valid_grid(grid):
 		return false
-	_apply_selected_grid(grid, get_tile_block_reason(grid, _get_selected_digimon()))
+	var moving_actor := _movement_actor if _movement_actor != null else _get_selected_digimon()
+	_apply_selected_grid(grid, _effective_block_reason(grid, moving_actor))
 	return true
 
 
@@ -211,12 +222,18 @@ func clear_static_tile_blocker(grid: Vector2i) -> void:
 	_static_blocked_tiles.erase(grid)
 
 
-func get_tile_block_reason(grid: Vector2i, moving_digimon: Node = null) -> String:
+func get_static_tile_block_reason(grid: Vector2i) -> String:
 	if not _is_valid_grid(grid):
 		return "out_of_bounds"
-
 	if _static_blocked_tiles.has(grid):
 		return String(_static_blocked_tiles[grid])
+	return ""
+
+
+func get_tile_block_reason(grid: Vector2i, moving_digimon: Node = null) -> String:
+	var static_reason := get_static_tile_block_reason(grid)
+	if not static_reason.is_empty():
+		return static_reason
 
 	if moving_digimon != null:
 		var controller := _get_digimon_controller()
@@ -224,13 +241,83 @@ func get_tile_block_reason(grid: Vector2i, moving_digimon: Node = null) -> Strin
 			var tile_world_position := grid_to_world(grid)
 			if bool(controller.call("is_tile_occupied", tile_world_position, moving_digimon)):
 				return "occupied"
-
 	return ""
+
+
+func get_movement_cost(grid: Vector2i, _moving_digimon: Node = null) -> int:
+	if not _is_valid_grid(grid):
+		return 999999
+	# All current terrain costs 1. MovementSystem already uses this hook, so mud,
+	# water, roads, flying movement, etc. can later change cost without touching
+	# turn flow or pathfinding.
+	return 1
+
+
+func get_tile_type(grid: Vector2i) -> String:
+	if not tile_map_data.has(grid):
+		return ""
+	return String(tile_map_data[grid].get("type", ""))
 
 
 func can_digimon_move_to_world(tile_world_position: Vector2, moving_digimon: Node) -> bool:
 	var grid := world_to_grid(to_local(tile_world_position))
 	return get_tile_block_reason(grid, moving_digimon).is_empty()
+
+
+func set_movement_range(reachable: Dictionary, origin: Vector2i, moving_actor: Node) -> void:
+	clear_movement_range()
+	_movement_mode_active = true
+	_movement_origin = origin
+	_movement_actor = moving_actor
+	_movement_reachable = reachable.duplicate()
+
+	for key in _movement_reachable.keys():
+		var grid := Vector2i(key)
+		var indicator := Polygon2D.new()
+		indicator.name = "MoveRange_%02d_%02d" % [grid.x, grid.y]
+		indicator.polygon = _tile_diamond(Vector2(-1.0, -0.5))
+		indicator.color = RANGE_FILL
+		indicator.position = grid_to_world(grid)
+		indicator.z_index = -36
+		add_child(indicator)
+		_range_indicators.append(indicator)
+
+	_last_hovered_grid = INVALID_GRID
+	_last_hover_block_reason = ""
+
+
+func clear_movement_range() -> void:
+	_free_indicators(_range_indicators)
+	_movement_reachable.clear()
+	_movement_mode_active = false
+	_movement_origin = INVALID_GRID
+	_movement_actor = null
+	_last_hovered_grid = INVALID_GRID
+	_last_hover_block_reason = ""
+
+
+func set_movement_path(path: Array[Vector2i]) -> void:
+	clear_movement_path()
+	for grid in path:
+		var indicator := Polygon2D.new()
+		indicator.name = "MovePath_%02d_%02d" % [grid.x, grid.y]
+		indicator.polygon = _tile_diamond(Vector2(-5.0, -2.5))
+		indicator.color = PATH_FILL
+		indicator.position = grid_to_world(grid)
+		indicator.z_index = -34
+		add_child(indicator)
+		_path_indicators.append(indicator)
+
+
+func clear_movement_path() -> void:
+	_free_indicators(_path_indicators)
+
+
+func _free_indicators(indicators: Array[Node]) -> void:
+	for indicator in indicators:
+		if is_instance_valid(indicator):
+			indicator.queue_free()
+	indicators.clear()
 
 
 func _get_selected_digimon() -> Node:
@@ -261,7 +348,7 @@ func _create_hover_indicator() -> void:
 	_hover_fill.name = "HoverFill"
 	_hover_fill.polygon = diamond
 	_hover_fill.color = HOVER_AVAILABLE_FILL
-	_hover_fill.z_index = -40
+	_hover_fill.z_index = -32
 	_hover_fill.visible = false
 	add_child(_hover_fill)
 
@@ -272,7 +359,7 @@ func _create_hover_indicator() -> void:
 	])
 	_hover_outline.width = 2.0
 	_hover_outline.default_color = HOVER_AVAILABLE_OUTLINE
-	_hover_outline.z_index = -39
+	_hover_outline.z_index = -31
 	_hover_outline.visible = false
 	add_child(_hover_outline)
 
@@ -292,19 +379,32 @@ func _update_hover() -> void:
 
 	var local_mouse := to_local(get_global_mouse_position())
 	var grid := world_to_grid(local_mouse)
-
 	if not _is_valid_grid(grid):
+		if _last_hovered_grid != INVALID_GRID:
+			hovered_grid_changed.emit(INVALID_GRID, "out_of_bounds")
 		_last_hovered_grid = INVALID_GRID
 		_last_hover_block_reason = ""
 		_hover_fill.visible = false
 		_hover_outline.visible = false
 		return
 
-	var block_reason := get_tile_block_reason(grid, _get_selected_digimon())
+	var moving_actor := _movement_actor if _movement_actor != null else _get_selected_digimon()
+	var block_reason := _effective_block_reason(grid, moving_actor)
 	if grid == _last_hovered_grid and block_reason == _last_hover_block_reason:
 		return
-
 	_apply_selected_grid(grid, block_reason)
+
+
+func _effective_block_reason(grid: Vector2i, moving_actor: Node) -> String:
+	var block_reason := get_tile_block_reason(grid, moving_actor)
+	if (
+		block_reason.is_empty()
+		and _movement_mode_active
+		and grid != _movement_origin
+		and not _movement_reachable.has(grid)
+	):
+		return "out_of_range"
+	return block_reason
 
 
 func _apply_selected_grid(grid: Vector2i, block_reason := "") -> void:
@@ -318,6 +418,7 @@ func _apply_selected_grid(grid: Vector2i, block_reason := "") -> void:
 	_hover_outline.default_color = HOVER_BLOCKED_OUTLINE if not block_reason.is_empty() else HOVER_AVAILABLE_OUTLINE
 	_hover_fill.visible = true
 	_hover_outline.visible = true
+	hovered_grid_changed.emit(grid, block_reason)
 
 
 func _is_valid_grid(grid: Vector2i) -> bool:
