@@ -31,6 +31,7 @@ jobs:
           python3 tools/fetch_cc0_assets.py
           python3 tools/fetch_character_assets.py
           python3 tools/fetch_enemy_assets.py
+          python3 tools/fetch_ui_fonts.py
           python3 - <<'PY'
           from pathlib import Path
           from PIL import Image
@@ -45,6 +46,14 @@ jobs:
                   if getattr(image, "n_frames", 1) <= 1:
                       raise RuntimeError(f"expected animated WebP: {path}")
               print(f"validated animated WebP: {path}")
+
+          for path in [
+              Path("assets/ui/fonts/Rajdhani-Regular.ttf"),
+              Path("assets/ui/fonts/Rajdhani-SemiBold.ttf"),
+          ]:
+              if not path.is_file() or path.stat().st_size < 1024:
+                  raise RuntimeError(f"missing UI font: {path}")
+              print(f"validated UI font: {path} ({path.stat().st_size} bytes)")
           PY
       - name: Install Godot and export templates
         shell: bash

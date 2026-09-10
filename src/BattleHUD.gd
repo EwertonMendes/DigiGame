@@ -2,10 +2,11 @@ extends Control
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const ICON_ROOT := "res://assets/ui/icons"
-const ACTION_GAP := 7.0
+const ACTION_GAP := 8.0
 
 var _controller: Node = null
 var _dock: Panel = null
+var _signal_line: ColorRect = null
 var _phase_label: Label = null
 var _mov_label: Label = null
 var _actor_label: Label = null
@@ -38,16 +39,16 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var viewport: Vector2 = get_viewport().get_visible_rect().size
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var window_size: Vector2i = DisplayServer.window_get_size()
-	if viewport != _last_viewport_size or window_size != _last_window_size:
+	if viewport_size != _last_viewport_size or window_size != _last_window_size:
 		_layout_dock()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
 		return
-	var key := event as InputEventKey
+	var key: InputEventKey = event as InputEventKey
 	if not key.pressed or key.echo or _controller == null:
 		return
 	if not bool(_cached_state.get("is_user_turn", false)):
@@ -71,31 +72,36 @@ func _build_ui() -> void:
 	_dock = Panel.new()
 	_dock.name = "ActionDock"
 	_dock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_dock.add_theme_stylebox_override("panel", UI.panel(UI.CYAN, 0.93, 0.42, 10, 10))
+	_dock.add_theme_stylebox_override("panel", UI.panel(UI.CYAN, 0.955, 0.52, 12, 13))
 	add_child(_dock)
 
+	_signal_line = ColorRect.new()
+	_signal_line.color = UI.CYAN
+	_signal_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dock.add_child(_signal_line)
+
 	_actor_label = Label.new()
-	_actor_label.add_theme_font_size_override("font_size", 9)
-	_actor_label.add_theme_color_override("font_color", UI.MUTED)
+	_actor_label.add_theme_color_override("font_color", UI.TEXT)
 	_actor_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_actor_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	UI.apply_heading_font(_actor_label)
 	_dock.add_child(_actor_label)
 
 	_phase_label = Label.new()
-	_phase_label.add_theme_font_size_override("font_size", 10)
-	_phase_label.add_theme_color_override("font_color", Color(0.72, 0.87, 0.95, 1.0))
+	_phase_label.add_theme_color_override("font_color", Color(0.76, 0.88, 0.94, 1.0))
 	_phase_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_phase_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_phase_label.clip_text = true
+	UI.apply_body_font(_phase_label)
 	_dock.add_child(_phase_label)
 
 	_mov_label = Label.new()
 	_mov_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mov_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_mov_label.add_theme_font_size_override("font_size", 9)
 	_mov_label.add_theme_color_override("font_color", UI.TEXT)
-	_mov_label.add_theme_stylebox_override("normal", UI.pill(UI.CYAN, 0.12))
+	_mov_label.add_theme_stylebox_override("normal", UI.pill(UI.CYAN, 0.15))
 	_mov_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UI.apply_heading_font(_mov_label)
 	_dock.add_child(_mov_label)
 
 	_move_button = _make_action_button("MOVE", "move.svg", UI.CYAN, "1", "Plan movement")
@@ -104,18 +110,18 @@ func _build_ui() -> void:
 	_defend_button = _make_action_button("DEFEND", "defend.svg", UI.BLUE, "4", "Defend and end this Digimon's turn")
 	_wait_button = _make_action_button("WAIT", "wait.svg", UI.GOLD, "5", "End this Digimon's turn")
 	_primary_buttons = [_move_button, _attack_button, _skill_button, _defend_button, _wait_button]
-	for button in _primary_buttons:
+	for button: Button in _primary_buttons:
 		_dock.add_child(button)
 
 	_confirm_move_button = _make_context_button("CONFIRM", "confirm.svg", UI.GREEN)
 	_undo_button = _make_context_button("UNDO", "undo.svg", UI.GOLD)
 	_cancel_button = _make_context_button("CANCEL", "cancel.svg", UI.RED)
-	for button in [_confirm_move_button, _undo_button, _cancel_button]:
+	for button: Button in [_confirm_move_button, _undo_button, _cancel_button]:
 		_dock.add_child(button)
 
 
 func _make_action_button(label_text: String, icon_name: String, accent: Color, shortcut: String, tooltip: String) -> Button:
-	var button := Button.new()
+	var button: Button = Button.new()
 	button.text = label_text
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.focus_mode = Control.FOCUS_NONE
@@ -123,16 +129,16 @@ func _make_action_button(label_text: String, icon_name: String, accent: Color, s
 	button.tooltip_text = "%s  [%s]" % [tooltip, shortcut]
 	button.icon = load("%s/%s" % [ICON_ROOT, icon_name]) as Texture2D
 	button.expand_icon = true
-	button.icon_max_width = 23
-	button.add_theme_font_size_override("font_size", 10)
+	button.icon_max_width = 28
+	UI.apply_heading_font(button)
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
-	button.add_theme_color_override("font_disabled_color", Color(0.45, 0.54, 0.60, 0.58))
+	button.add_theme_color_override("font_disabled_color", Color(0.50, 0.58, 0.64, 0.62))
 	button.add_theme_color_override("icon_normal_color", accent)
 	button.add_theme_color_override("icon_hover_color", accent.lightened(0.20))
 	button.add_theme_color_override("icon_pressed_color", Color.WHITE)
-	button.add_theme_color_override("icon_disabled_color", Color(0.43, 0.50, 0.54, 0.45))
+	button.add_theme_color_override("icon_disabled_color", Color(0.45, 0.52, 0.56, 0.48))
 	button.add_theme_stylebox_override("normal", UI.action_style(accent, "normal"))
 	button.add_theme_stylebox_override("hover", UI.action_style(accent, "hover"))
 	button.add_theme_stylebox_override("pressed", UI.action_style(accent, "pressed"))
@@ -145,15 +151,15 @@ func _make_action_button(label_text: String, icon_name: String, accent: Color, s
 
 
 func _make_context_button(label_text: String, icon_name: String, accent: Color) -> Button:
-	var button := Button.new()
+	var button: Button = Button.new()
 	button.text = label_text
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.icon = load("%s/%s" % [ICON_ROOT, icon_name]) as Texture2D
 	button.expand_icon = true
-	button.icon_max_width = 14
-	button.add_theme_font_size_override("font_size", 8)
+	button.icon_max_width = 16
+	UI.apply_heading_font(button)
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("icon_normal_color", accent)
 	button.add_theme_color_override("icon_hover_color", Color.WHITE)
@@ -186,21 +192,21 @@ func refresh_from_controller() -> void:
 	_cached_state = state
 	_dock.visible = true
 	var actor: Node = _controller.get("current_actor") as Node
-	var actor_key := ""
-	var player_team := true
+	var actor_key: String = ""
+	var player_team: bool = true
 	if actor != null:
 		actor_key = String(actor.get("digimon_key")).to_lower()
 		player_team = bool(actor.get("is_player_controlled"))
 
-	var actor_name := String(state.get("actor_name", "DIGIMON")).to_upper()
-	var level := int(state.get("level", 1))
-	_actor_label.text = "%s  //  LV %d" % [actor_name, level]
+	var actor_name: String = String(state.get("actor_name", "DIGIMON")).to_upper()
+	var level: int = int(state.get("level", 1))
+	_actor_label.text = "%s  •  LV %d" % [actor_name, level]
 	_phase_label.text = _phase_copy(state)
-	var planning := bool(state.get("is_planning_move", false))
-	_mov_label.text = "MOV %d LEFT" % int(state.get("move_remaining", 0)) if planning else "MOV %d" % int(state.get("mov", 4))
-	_mov_label.add_theme_stylebox_override("normal", UI.pill(UI.CYAN if player_team else UI.RED, 0.12))
+	var planning: bool = bool(state.get("is_planning_move", false))
+	_mov_label.text = "MOV  %d LEFT" % int(state.get("move_remaining", 0)) if planning else "MOV  %d" % int(state.get("mov", 4))
+	_mov_label.add_theme_stylebox_override("normal", UI.pill(UI.CYAN if player_team else UI.RED, 0.15))
 
-	var user_turn := bool(state.get("is_user_turn", false))
+	var user_turn: bool = bool(state.get("is_user_turn", false))
 	_move_button.disabled = not bool(state.get("can_move", false))
 	_attack_button.disabled = true
 	_skill_button.disabled = true
@@ -212,7 +218,8 @@ func refresh_from_controller() -> void:
 	_cancel_button.visible = bool(state.get("can_cancel", false))
 
 	_set_action_selected(_move_button, planning)
-	_dock.modulate = Color.WHITE if user_turn else Color(0.78, 0.84, 0.88, 0.72)
+	_dock.modulate = Color.WHITE if user_turn else Color(0.80, 0.86, 0.90, 0.76)
+	_signal_line.color = UI.CYAN if player_team else UI.RED
 
 	if actor_key != _last_actor_key:
 		_last_actor_key = actor_key
@@ -226,13 +233,13 @@ func _set_action_selected(button: Button, selected: bool) -> void:
 
 
 func _phase_copy(state: Dictionary) -> String:
-	var raw_phase := String(state.get("phase", ""))
+	var raw_phase: String = String(state.get("phase", ""))
 	if not bool(state.get("is_user_turn", false)):
-		return "OPPONENT TURN  •  WAITING FOR ACTION"
+		return "OPPONENT TURN  •  WAITING"
 	match raw_phase:
 		"Turn Start": return "PREPARING TURN"
 		"Choose an action": return "SELECT AN ACTION"
-		"Preview movement": return "POINT TO PREVIEW  •  TAP/CLICK TO LOCK  •  DRAG TO TRACE"
+		"Preview movement": return "POINT TO PREVIEW  •  CLICK/TAP TO LOCK  •  DRAG TO TRACE"
 		"Plan movement": return "TRACE A ROUTE  •  CONFIRM WHEN READY"
 		"Moving": return "FOLLOWING ROUTE"
 		"Choose a target": return "SELECT A TARGET"
@@ -252,63 +259,71 @@ func _layout_dock() -> void:
 	_last_window_size = DisplayServer.window_get_size()
 	var compact: bool = UI.is_compact(viewport_obj, 760.0)
 	var short_landscape: bool = compact and physical.x > physical.y and physical.y < 560.0
-	var side_margin: float = 10.0 if compact else 18.0
-	var width: float = minf(720.0, physical.x - side_margin * 2.0)
+	var laptop: bool = UI.is_laptop(viewport_obj)
+
+	var side_margin: float = 10.0 if compact else 20.0
+	var width: float = minf(860.0 if laptop else 820.0, physical.x - side_margin * 2.0)
 	if short_landscape:
 		width = minf(620.0, physical.x - 140.0)
-	var height: float = 92.0 if short_landscape else (102.0 if compact else 108.0)
+	var height: float = 92.0 if short_landscape else (104.0 if compact else (126.0 if laptop else 120.0))
 	var bottom_margin: float = 8.0 if compact else 14.0
 	_dock.scale = Vector2.ONE * ui_scale
 	_dock.position = Vector2((physical.x - width) * 0.5 * ui_scale, (physical.y - height - bottom_margin) * ui_scale)
 	_dock.size = Vector2(width, height)
+	_signal_line.position = Vector2(18.0, 0.0)
+	_signal_line.size = Vector2(126.0 if not compact else 84.0, 2.0)
 
-	var inner_x: float = 10.0
-	var action_y: float = 8.0 if short_landscape else 10.0
-	var action_h: float = 50.0 if short_landscape else (54.0 if compact else 58.0)
-	var action_width: float = (width - inner_x * 2.0 - ACTION_GAP * 4.0) / 5.0
+	var inner_x: float = 11.0 if compact else 13.0
+	var action_y: float = 8.0 if short_landscape else (10.0 if compact else 12.0)
+	var action_h: float = 50.0 if short_landscape else (55.0 if compact else (68.0 if laptop else 64.0))
+	var gap: float = 6.0 if compact else ACTION_GAP
+	var action_width: float = (width - inner_x * 2.0 - gap * 4.0) / 5.0
 	for index in range(_primary_buttons.size()):
 		var button: Button = _primary_buttons[index]
-		button.position = Vector2(inner_x + float(index) * (action_width + ACTION_GAP), action_y)
+		button.position = Vector2(inner_x + float(index) * (action_width + gap), action_y)
 		button.size = Vector2(action_width, action_h)
-		button.icon_max_width = 18 if short_landscape else (19 if compact else 23)
-		button.add_theme_font_size_override("font_size", 8 if compact else 10)
+		button.icon_max_width = 18 if short_landscape else (20 if compact else (30 if laptop else 28))
+		button.add_theme_font_size_override("font_size", 9 if compact else (14 if laptop else 13))
 
-	var bottom_y: float = action_y + action_h + 6.0
+	var bottom_y: float = action_y + action_h + (6.0 if compact else 9.0)
 	_actor_label.position = Vector2(inner_x, bottom_y)
-	_actor_label.size = Vector2(105.0 if compact else 150.0, 18.0 if short_landscape else 20.0)
-	_actor_label.add_theme_font_size_override("font_size", 7 if compact else 9)
-	_mov_label.size = Vector2(66.0 if compact else 78.0, 20.0 if short_landscape else 22.0)
-	_mov_label.position = Vector2(width - inner_x - _mov_label.size.x, bottom_y - 1.0)
+	_actor_label.size = Vector2(118.0 if compact else 190.0, 21.0)
+	_actor_label.add_theme_font_size_override("font_size", 8 if compact else (12 if laptop else 11))
+	_mov_label.size = Vector2(76.0 if compact else 96.0, 23.0 if compact else 27.0)
+	_mov_label.position = Vector2(width - inner_x - _mov_label.size.x, bottom_y - 2.0)
+	_mov_label.add_theme_font_size_override("font_size", 8 if compact else 11)
 
 	var context_buttons: Array[Button] = [_confirm_move_button, _undo_button, _cancel_button]
 	var visible_context: Array[Button] = []
-	for button in context_buttons:
+	for button: Button in context_buttons:
 		if button.visible:
 			visible_context.append(button)
-	var context_w: float = 58.0 if compact else 72.0
-	var context_gap: float = 5.0
+	var context_w: float = 62.0 if compact else 82.0
+	var context_gap: float = 6.0
 	var context_total: float = float(visible_context.size()) * context_w + maxf(0.0, float(visible_context.size() - 1)) * context_gap
-	var context_start: float = width - inner_x - _mov_label.size.x - 8.0 - context_total
+	var context_start: float = width - inner_x - _mov_label.size.x - 10.0 - context_total
 	for index in range(visible_context.size()):
 		var button: Button = visible_context[index]
-		button.position = Vector2(context_start + float(index) * (context_w + context_gap), bottom_y - 1.0)
-		button.size = Vector2(context_w, 20.0 if short_landscape else 22.0)
-		button.add_theme_font_size_override("font_size", 7 if compact else 8)
+		button.position = Vector2(context_start + float(index) * (context_w + context_gap), bottom_y - 2.0)
+		button.size = Vector2(context_w, 23.0 if compact else 27.0)
+		button.add_theme_font_size_override("font_size", 8 if compact else 10)
 
-	var phase_left: float = _actor_label.position.x + _actor_label.size.x + 8.0
-	var phase_right: float = context_start - 8.0 if not visible_context.is_empty() else _mov_label.position.x - 8.0
+	var phase_left: float = _actor_label.position.x + _actor_label.size.x + 10.0
+	var phase_right: float = context_start - 10.0 if not visible_context.is_empty() else _mov_label.position.x - 10.0
 	_phase_label.position = Vector2(phase_left, bottom_y)
-	_phase_label.size = Vector2(maxf(20.0, phase_right - phase_left), 18.0 if short_landscape else 20.0)
-	_phase_label.add_theme_font_size_override("font_size", 7 if short_landscape else (8 if compact else 10))
+	_phase_label.size = Vector2(maxf(20.0, phase_right - phase_left), 21.0)
+	_phase_label.add_theme_font_size_override("font_size", 8 if compact else (12 if laptop else 11))
 
 
 func _animate_actor_change() -> void:
+	if _dock == null:
+		return
+	var scale_value: float = UI.ui_scale(get_viewport())
 	_dock.modulate.a = 0.45
-	var ui_scale: float = UI.ui_scale(get_viewport())
-	_dock.position.y += 8.0 * ui_scale
-	var target_y: float = _dock.position.y - 8.0 * ui_scale
-	var target_alpha: float = 1.0 if bool(_cached_state.get("is_user_turn", false)) else 0.72
-	var tween := create_tween().set_parallel(true)
+	_dock.position.y += 8.0 * scale_value
+	var target_y: float = _dock.position.y - 8.0 * scale_value
+	var target_alpha: float = 1.0 if bool(_cached_state.get("is_user_turn", false)) else 0.76
+	var tween: Tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(_dock, "modulate:a", target_alpha, 0.18)
 	tween.tween_property(_dock, "position:y", target_y, 0.18)
@@ -318,10 +333,11 @@ func _on_action_hover(button: Button, entered: bool) -> void:
 	if button.disabled:
 		return
 	button.pivot_offset = button.size * 0.5
-	var tween := create_tween().set_parallel(true)
+	var base_y: float = 10.0 if UI.is_compact(get_viewport()) else 12.0
+	var tween: Tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(button, "scale", Vector2(1.025, 1.025) if entered else Vector2.ONE, 0.09)
-	tween.tween_property(button, "position:y", 8.0 if entered else 10.0, 0.09)
+	tween.tween_property(button, "position:y", base_y - 2.0 if entered else base_y, 0.09)
 
 
 func _on_action_pressed_visual(button: Button) -> void:
@@ -329,6 +345,6 @@ func _on_action_pressed_visual(button: Button) -> void:
 		return
 	button.pivot_offset = button.size * 0.5
 	button.scale = Vector2(0.98, 0.98)
-	var tween := create_tween()
+	var tween: Tween = create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(button, "scale", Vector2.ONE, 0.10)
