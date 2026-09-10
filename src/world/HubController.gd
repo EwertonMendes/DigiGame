@@ -349,10 +349,10 @@ func _build_mobile_controls() -> void:
 	_mobile_controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_mobile_controls.z_index = 20
 	_ui_root.add_child(_mobile_controls)
-	_add_touch_button("Up", "▲", Rect2(58.0, 0.0, 58.0, 58.0), "up")
-	_add_touch_button("Left", "◀", Rect2(0.0, 58.0, 58.0, 58.0), "left")
-	_add_touch_button("Down", "▼", Rect2(58.0, 116.0, 58.0, 58.0), "down")
-	_add_touch_button("Right", "▶", Rect2(116.0, 58.0, 58.0, 58.0), "right")
+	_add_touch_button("Up", "^", Rect2(58.0, 0.0, 58.0, 58.0), "up")
+	_add_touch_button("Left", "<", Rect2(0.0, 58.0, 58.0, 58.0), "left")
+	_add_touch_button("Down", "v", Rect2(58.0, 116.0, 58.0, 58.0), "down")
+	_add_touch_button("Right", ">", Rect2(116.0, 58.0, 58.0, 58.0), "right")
 	_mobile_talk_button = _dialog_button("TALK", UI.GOLD)
 	_mobile_talk_button.name = "Talk"
 	_mobile_talk_button.custom_minimum_size = Vector2(104.0, 64.0)
@@ -434,6 +434,7 @@ func _layout_ui() -> void:
 	_interaction_prompt.size = Vector2(prompt_width, 50.0)
 	var dialog_width := minf(660.0, physical.x - 28.0)
 	var dialog_height := 236.0 if portrait_mobile else 206.0
+	dialog_height = maxf(dialog_height, _dialog_panel.get_combined_minimum_size().y)
 	_dialog_panel.position = Vector2(
 		(physical.x - dialog_width) * 0.5 * ui_scale,
 		(physical.y - dialog_height - (14.0 if compact else 22.0)) * ui_scale
@@ -457,7 +458,7 @@ func _update_camera_zoom(camera: Camera2D) -> void:
 	var compact := UI.is_compact(viewport_obj, 760.0)
 	var zoom_value := 1.14
 	if compact and physical.y > physical.x:
-		zoom_value = 1.55
+		zoom_value = 1.85
 	elif compact:
 		zoom_value = 1.18
 	camera.zoom = Vector2.ONE * zoom_value
