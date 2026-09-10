@@ -49,7 +49,7 @@ func _build_ui() -> void:
 	_card = PanelContainer.new()
 	_card.name = "DigimonHoverCard"
 	_card.position = Vector2(18.0, 18.0)
-	_card.custom_minimum_size = Vector2(270.0, 342.0)
+	_card.custom_minimum_size = Vector2(270.0, 322.0)
 	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_card.visible = false
 	_card.add_theme_stylebox_override("panel", _card_style())
@@ -129,13 +129,6 @@ func _build_ui() -> void:
 	_rank_label.add_theme_font_size_override("font_size", 11)
 	_rank_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	identity.add_child(_rank_label)
-
-	var footer := Label.new()
-	footer.text = "FIELD UNIT  /  HOVER INSPECTION"
-	footer.add_theme_font_size_override("font_size", 9)
-	footer.add_theme_color_override("font_color", Color(0.42, 0.58, 0.68, 1.0))
-	footer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_child(footer)
 
 
 func _load_database() -> void:

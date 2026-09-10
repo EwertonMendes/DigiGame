@@ -195,14 +195,14 @@ func get_hud_state() -> Dictionary:
 
 func phase_name() -> String:
 	match phase:
-		Phase.TURN_START: return "Início do turno"
-		Phase.COMMAND: return "Escolha uma ação"
-		Phase.MOVE_SELECT: return "Escolha o destino"
-		Phase.MOVING: return "Movendo"
-		Phase.ACTION_SELECT: return "Escolha uma ação"
-		Phase.TARGET_SELECT: return "Escolha o alvo"
-		Phase.ACTION_RESOLVE: return "Resolvendo ação"
-		Phase.TURN_END: return "Fim do turno"
+		Phase.TURN_START: return "Turn Start"
+		Phase.COMMAND: return "Choose an action"
+		Phase.MOVE_SELECT: return "Choose a destination"
+		Phase.MOVING: return "Moving"
+		Phase.ACTION_SELECT: return "Choose an action"
+		Phase.TARGET_SELECT: return "Choose a target"
+		Phase.ACTION_RESOLVE: return "Resolving action"
+		Phase.TURN_END: return "Turn End"
 	return ""
 
 

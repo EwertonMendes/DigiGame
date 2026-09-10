@@ -158,11 +158,11 @@ func _build_ui() -> void:
 	buttons.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(buttons)
 
-	_move_button = _make_button("MOVER", CYAN)
-	_defend_button = _make_button("DEFENDER", GREEN)
-	_wait_button = _make_button("ESPERAR", BLUE)
-	_undo_button = _make_button("VOLTAR", GOLD)
-	_cancel_button = _make_button("CANCELAR", RED)
+	_move_button = _make_button("MOVE", CYAN)
+	_defend_button = _make_button("DEFEND", GREEN)
+	_wait_button = _make_button("WAIT", BLUE)
+	_undo_button = _make_button("UNDO", GOLD)
+	_cancel_button = _make_button("CANCEL", RED)
 	buttons.add_child(_move_button)
 	buttons.add_child(_defend_button)
 	buttons.add_child(_wait_button)
@@ -215,7 +215,7 @@ func refresh_from_controller() -> void:
 
 	_panel.visible = true
 	var actor_name := String(state.get("actor_name", ""))
-	_turn_label.text = actor_name.to_upper() if not actor_name.is_empty() else "PREPARANDO BATALHA"
+	_turn_label.text = actor_name.to_upper() if not actor_name.is_empty() else "PREPARING BATTLE"
 	_phase_label.text = _phase_copy(String(state.get("phase", "")), bool(state.get("is_user_turn", false)))
 	_mov_label.text = "MOV  %d" % int(state.get("mov", 4))
 	_team_label.text = "ALLY TURN" if player_team else "ENEMY TURN"
@@ -236,13 +236,15 @@ func refresh_from_controller() -> void:
 
 func _phase_copy(raw_phase: String, is_user_turn: bool) -> String:
 	if not is_user_turn:
-		return "Processando turno do oponente..."
+		return "Opponent's turn..."
 	match raw_phase:
-		"Escolha uma ação": return "Selecione uma ação para este Digimon"
-		"Escolha o destino": return "Escolha um tile dentro do alcance de movimento"
-		"Movendo": return "Executando rota tática..."
-		"Escolha o alvo": return "Selecione um alvo"
-		"Resolvendo ação": return "Resolvendo ação..."
+		"Turn Start": return "Starting turn..."
+		"Choose an action": return "Select an action for this Digimon"
+		"Choose a destination": return "Choose a tile within movement range"
+		"Moving": return "Following tactical route..."
+		"Choose a target": return "Select a target"
+		"Resolving action": return "Resolving action..."
+		"Turn End": return "Ending turn..."
 	return raw_phase
 
 
