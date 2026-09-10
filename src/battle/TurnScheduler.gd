@@ -98,7 +98,7 @@ func _next_simulated_actor(actors: Array[Node], simulated: Dictionary) -> Node:
 			var candidate_time := remaining / _initiative_rate(actor)
 			if candidate_time < delta_time:
 				delta_time = candidate_time
-		if not is_finite(delta_time):
+		if is_inf(delta_time) or is_nan(delta_time):
 			return null
 		for actor: Node in actors:
 			simulated[actor] = float(simulated.get(actor, 0.0)) + _initiative_rate(actor) * maxf(0.0, delta_time)
@@ -134,7 +134,9 @@ func _time_until_next_ready(actors: Array[Node]) -> float:
 		var candidate_time := remaining / _initiative_rate(actor)
 		if candidate_time < best_time:
 			best_time = candidate_time
-	return maxf(0.0, best_time if is_finite(best_time) else 0.0)
+	if is_inf(best_time) or is_nan(best_time):
+		return 0.0
+	return maxf(0.0, best_time)
 
 
 func _best_ready_actor(actors: Array[Node]) -> Node:
