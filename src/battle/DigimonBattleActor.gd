@@ -17,7 +17,7 @@ func bind_digimon_instance(instance: DigimonInstance, species: Dictionary, playe
 	battle_state = BattleDigimonScript.new(instance, "player" if player_controlled else "enemy")
 
 
-func get_instance_id() -> String:
+func get_digimon_instance_id() -> String:
 	return digimon_instance.id if digimon_instance != null else ""
 
 
