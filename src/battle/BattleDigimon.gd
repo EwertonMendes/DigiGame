@@ -105,12 +105,14 @@ func add_status(status_id: String, duration: int, source_id: String, definition:
 			statuses[index]["duration"] = maxi(1, duration)
 			statuses[index]["source_id"] = source_id
 			statuses[index]["definition"] = definition.duplicate(true)
+			statuses[index]["fresh"] = true
 			return
 	statuses.append({
 		"id": status_id,
 		"duration": maxi(1, duration),
 		"source_id": source_id,
 		"definition": definition.duplicate(true),
+		"fresh": true,
 	})
 
 
@@ -137,6 +139,9 @@ func get_statuses() -> Array[Dictionary]:
 func tick_status_durations() -> Array[String]:
 	var expired: Array[String] = []
 	for index in range(statuses.size() - 1, -1, -1):
+		if bool(statuses[index].get("fresh", false)):
+			statuses[index]["fresh"] = false
+			continue
 		statuses[index]["duration"] = int(statuses[index].get("duration", 1)) - 1
 		if int(statuses[index]["duration"]) > 0:
 			continue
