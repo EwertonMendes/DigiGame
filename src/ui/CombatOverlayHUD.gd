@@ -17,6 +17,7 @@ var _result_title: Label = null
 var _result_body: Label = null
 var _toast: Label = null
 var _toast_tween: Tween = null
+var _skill_panel_tween: Tween = null
 var _previous_focus: Control = null
 var _last_viewport_size := Vector2.ZERO
 var _last_window_size := Vector2i.ZERO
@@ -45,16 +46,23 @@ func _process(_delta: float) -> void:
 		_layout()
 
 
+# Horizontal navigation is a hierarchy action while a submenu is open. Both
+# directions intentionally return to the parent command: this keeps keyboard,
+# D-pad and analog navigation forgiving without affecting pointer/touch input.
+func _input(event: InputEvent) -> void:
+	if not _skill_panel.visible:
+		return
+	if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right") or event.is_action_pressed("ui_cancel"):
+		hide_skills()
+		get_viewport().set_input_as_handled()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not _skill_panel.visible:
 		return
-	if event.is_action_pressed("ui_cancel"):
-		hide_skills()
-		get_viewport().set_input_as_handled()
-		return
-	if event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down") or event.is_action_pressed("ui_focus_next"):
+	if event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down") or event.is_action_pressed("ui_focus_next") or event.is_action_pressed("ui_focus_prev"):
 		var owner := get_viewport().gui_get_focus_owner()
-		if owner == null or not owner.is_ancestor_of(_skill_list) and not _skill_list.is_ancestor_of(owner):
+		if not _is_skill_focus(owner):
 			_focus_first_skill()
 			get_viewport().set_input_as_handled()
 
@@ -69,19 +77,31 @@ func toggle_skills() -> void:
 func show_skills() -> void:
 	if _controller == null or not _controller.has_method("get_available_skills"):
 		return
-	_previous_focus = get_viewport().gui_get_focus_owner()
+
+	# Techniques is a child of the Skill command, so keyboard/controller users
+	# should always return to Skill when leaving it, even if it was opened by the
+	# numeric shortcut while another command happened to own focus.
+	var parent_focus := _skill_parent_focus()
+	_previous_focus = parent_focus if parent_focus != null else get_viewport().gui_get_focus_owner()
 	_rebuild_skill_list()
 	_skill_panel.visible = _skill_list.get_child_count() > 0
 	_layout()
 	if _skill_panel.visible:
+		_animate_skill_panel_in()
+		# Grab focus immediately and again after the frame. The second pass covers
+		# Godot layout/focus reconciliation after rebuilding dynamic children.
+		_focus_first_skill()
 		call_deferred("_focus_first_skill")
 
 
-func hide_skills() -> void:
+func hide_skills(restore_parent_focus: bool = true) -> void:
+	if _skill_panel_tween != null and _skill_panel_tween.is_valid():
+		_skill_panel_tween.kill()
 	_skill_panel.visible = false
+	_skill_panel.modulate.a = 1.0
 	if _controller != null and _controller.has_method("clear_action_recovery_preview"):
 		_controller.call("clear_action_recovery_preview")
-	if _previous_focus != null and is_instance_valid(_previous_focus) and _previous_focus.visible:
+	if restore_parent_focus and _previous_focus != null and is_instance_valid(_previous_focus) and _previous_focus.visible:
 		_previous_focus.grab_focus()
 	_previous_focus = null
 
@@ -96,8 +116,8 @@ func refresh() -> void:
 		_result_panel.visible = false
 	var preview: Dictionary = _controller.call("get_combat_preview") if _controller.has_method("get_combat_preview") else {}
 	_refresh_preview(preview)
-	if not bool(state.get("can_skill", false)) and not bool(state.get("is_targeting", false)):
-		_skill_panel.visible = false
+	if not bool(state.get("can_skill", false)) and not bool(state.get("is_targeting", false)) and _skill_panel.visible:
+		hide_skills(false)
 	_layout()
 
 
@@ -106,7 +126,8 @@ func _build_ui() -> void:
 	_skill_panel.name = "TechniqueMenu"
 	_skill_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_skill_panel.visible = false
-	_skill_panel.add_theme_stylebox_override("panel", UI.glass_panel(UI.GOLD, 0.82, 7))
+	_skill_panel.z_index = 20
+	_skill_panel.add_theme_stylebox_override("panel", UI.glass_panel(UI.GOLD, 0.88, 7))
 	add_child(_skill_panel)
 
 	var skill_title := Label.new()
@@ -118,7 +139,7 @@ func _build_ui() -> void:
 
 	var skill_hint := Label.new()
 	skill_hint.name = "Hint"
-	skill_hint.text = "D-pad / Arrows  •  A / Enter Select  •  B / Esc Back"
+	skill_hint.text = "↑ / ↓ Select   •   A / Enter Choose   •   ← / → / B Back"
 	skill_hint.add_theme_color_override("font_color", UI.SUBTLE)
 	skill_hint.clip_text = true
 	UI.apply_body_font(skill_hint)
@@ -178,8 +199,13 @@ func _label(text_value: String, size: int, color: Color) -> Label:
 
 
 func _rebuild_skill_list() -> void:
+	# Remove stale buttons from the container immediately. queue_free() alone
+	# keeps them in get_children() until the frame ends, which could make the old
+	# first button steal focus just as the rebuilt submenu opened.
 	for child in _skill_list.get_children():
+		_skill_list.remove_child(child)
 		child.queue_free()
+
 	var actions: Array[Dictionary] = _controller.call("get_available_skills")
 	for action: Dictionary in actions:
 		var button := Button.new()
@@ -225,8 +251,34 @@ func _focus_first_skill() -> void:
 				return
 
 
+func _is_skill_focus(owner: Control) -> bool:
+	return owner != null and _skill_list != null and _skill_list.is_ancestor_of(owner)
+
+
+func _skill_parent_focus() -> Control:
+	var parent := get_parent()
+	if parent == null:
+		return null
+	return parent.get_node_or_null("CommandRail/PrimaryActions/SkillAction") as Control
+
+
+func _animate_skill_panel_in() -> void:
+	if _skill_panel_tween != null and _skill_panel_tween.is_valid():
+		_skill_panel_tween.kill()
+	_skill_panel.pivot_offset = _skill_panel.size * 0.5
+	var target_scale := _skill_panel.scale
+	_skill_panel.modulate.a = 0.0
+	_skill_panel.scale = target_scale * 0.985
+	_skill_panel_tween = create_tween().set_parallel(true)
+	_skill_panel_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_skill_panel_tween.tween_property(_skill_panel, "modulate:a", 1.0, 0.14)
+	_skill_panel_tween.tween_property(_skill_panel, "scale", target_scale, 0.14)
+
+
 func _on_skill_pressed(skill_id: String) -> void:
-	hide_skills()
+	# Do not bounce focus back to Skill while transitioning from the submenu to
+	# battlefield targeting; the battle navigation layer takes over immediately.
+	hide_skills(false)
 	if _controller != null and _controller.has_method("begin_skill"):
 		_controller.call("begin_skill", skill_id)
 
