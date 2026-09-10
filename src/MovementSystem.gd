@@ -60,6 +60,62 @@ func find_path(
 	return reversed_path
 
 
+func get_path_cost(field: Node, moving_digimon: Node, path: Array[Vector2i]) -> int:
+	var total := 0
+	for grid in path:
+		total += _movement_cost(field, moving_digimon, grid)
+	return total
+
+
+func get_valid_next_steps(
+	field: Node,
+	controller: Node,
+	moving_digimon: Node,
+	origin: Vector2i,
+	path: Array[Vector2i],
+	movement_points: int
+) -> Dictionary:
+	var endpoint := origin if path.is_empty() else path[path.size() - 1]
+	var spent := get_path_cost(field, moving_digimon, path)
+	var options: Dictionary = {}
+	for offset in CARDINAL_NEIGHBORS:
+		var candidate := endpoint + offset
+		if candidate == origin:
+			options[candidate] = 0
+			continue
+		var previous_index := path.find(candidate)
+		if previous_index >= 0:
+			options[candidate] = _path_cost_through_index(field, moving_digimon, path, previous_index)
+			continue
+		if not _can_traverse(field, controller, moving_digimon, candidate):
+			continue
+		var next_cost := spent + _movement_cost(field, moving_digimon, candidate)
+		if next_cost <= movement_points:
+			options[candidate] = next_cost
+	return options
+
+
+func can_confirm_manual_path(
+	field: Node,
+	controller: Node,
+	moving_digimon: Node,
+	path: Array[Vector2i],
+	movement_points: int
+) -> bool:
+	if path.is_empty():
+		return false
+	if get_path_cost(field, moving_digimon, path) > movement_points:
+		return false
+	return _can_end_on(controller, field, moving_digimon, path[path.size() - 1])
+
+
+func _path_cost_through_index(field: Node, moving_digimon: Node, path: Array[Vector2i], index: int) -> int:
+	var total := 0
+	for path_index in range(index + 1):
+		total += _movement_cost(field, moving_digimon, path[path_index])
+	return total
+
+
 func _search(
 	field: Node,
 	controller: Node,
@@ -123,10 +179,6 @@ func _can_traverse(field: Node, controller: Node, moving_digimon: Node, grid: Ve
 	var occupant: Node = _occupant_at(controller, field, grid, moving_digimon)
 	if occupant == null:
 		return true
-
-	# Allies can be crossed but can never be the final destination. Enemies stop
-	# pathfinding completely, which also gives us the correct basis for future
-	# zones of control without changing the grid/path API.
 	return _same_team(occupant, moving_digimon)
 
 
