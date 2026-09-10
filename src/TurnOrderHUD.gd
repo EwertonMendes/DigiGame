@@ -11,7 +11,6 @@ const PANEL_BG := Color(0.012, 0.042, 0.072, 0.92)
 const DESKTOP_SLOTS := 7
 const COMPACT_SLOTS := 4
 const COMPACT_BREAKPOINT := 900.0
-const PHONE_BREAKPOINT := 520.0
 const PANEL_HEIGHT := 88.0
 
 var _controller: Node = null
@@ -264,14 +263,6 @@ func _is_compact() -> bool:
 	return viewport_size.x < COMPACT_BREAKPOINT or window_size.x < COMPACT_BREAKPOINT
 
 
-func _is_phone_portrait() -> bool:
-	var viewport_size := get_viewport().get_visible_rect().size
-	var window_size := DisplayServer.window_get_size()
-	var viewport_phone := viewport_size.x < PHONE_BREAKPOINT and viewport_size.y > viewport_size.x
-	var window_phone := window_size.x < PHONE_BREAKPOINT and window_size.y > window_size.x
-	return viewport_phone or window_phone
-
-
 func _card_size(current: bool, compact: bool) -> Vector2:
 	if current:
 		return Vector2(100.0 if compact else 126.0, 60.0)
@@ -285,15 +276,13 @@ func _layout_panel(entry_count: int, compact: bool, cards_width: float) -> void:
 	var panel_width := cards_width + 20.0
 	panel_width = minf(panel_width, maxf(300.0, viewport_size.x - 20.0))
 
-	var panel_y := 12.0
-	if _is_phone_portrait():
-		panel_y = 72.0
+	var panel_y := 72.0 if compact else 12.0
 	_panel.position = Vector2((viewport_size.x - panel_width) * 0.5, panel_y)
 	_panel.size = Vector2(panel_width, PANEL_HEIGHT)
 
 	_title.position = Vector2(10.0, 5.0)
 	_title.size = Vector2(panel_width * 0.58, 14.0)
-	_hint.visible = not _is_phone_portrait()
+	_hint.visible = not compact
 	_hint.position = Vector2(panel_width * 0.56, 5.0)
 	_hint.size = Vector2(panel_width * 0.40 - 10.0, 14.0)
 
