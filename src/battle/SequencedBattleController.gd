@@ -4,6 +4,42 @@ const PRESENTATION_FALLBACK_IMPACT_DELAY := 0.22
 const KO_RESOLVE_DELAY := 0.82
 
 
+func handle_world_tap(world_position: Vector2) -> bool:
+	# Movement is destination-driven now: once Move is active, the first valid
+	# tile click commits the route and immediately starts the movement. Undo stays
+	# available afterwards, so an accidental destination remains recoverable.
+	if (
+		not GlobalVariables.DebugMode
+		and phase == Phase.MOVE_SELECT
+		and current_actor != null
+		and not _input_locked
+		and _is_user_controlled(current_actor)
+		and _field != null
+		and _field.has_method("select_tile_from_world")
+	):
+		if not bool(_field.call("select_tile_from_world", world_position)):
+			return false
+		var grid := Vector2i(_field.call("world_to_grid", _field.to_local(world_position)))
+		var handled := _lock_move_destination(grid)
+		if handled and phase == Phase.MOVE_SELECT and not _planned_move_path.is_empty():
+			confirm_move_path()
+		return handled
+	return super.handle_world_tap(world_position)
+
+
+func _select_or_confirm_target(target: Node) -> bool:
+	# Attacks and techniques use one target click. Hover still provides a preview,
+	# while a valid click locks that preview and immediately executes the action.
+	if not _targeting_system.is_valid_target(_field, current_actor, target, _selected_action):
+		return false
+	_selected_target = target
+	_hover_target = null
+	_update_combat_preview(target, true)
+	_refresh_hud()
+	confirm_selected_action()
+	return true
+
+
 func _execute_selected_action() -> void:
 	var action: Dictionary = _selected_action.duplicate(true)
 	var target: Node = _selected_target
