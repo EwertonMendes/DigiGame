@@ -4,7 +4,6 @@ class_name TurnOrderHUD
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const PORTRAIT_ROOT := "res://assets/characters"
 const DESKTOP_SLOTS := 6
-const COMPACT_SLOTS := 5
 const COMPACT_BREAKPOINT := 760.0
 
 var _controller: Node = null
@@ -49,7 +48,8 @@ func refresh() -> void:
 		return
 
 	var compact := _is_compact()
-	var slot_count := COMPACT_SLOTS if compact else DESKTOP_SLOTS
+	var physical := UI.physical_window_size(get_viewport())
+	var slot_count := _compact_slot_count(physical.x) if compact else DESKTOP_SLOTS
 	var entries: Array = _controller.call("get_turn_preview", slot_count)
 	if entries.is_empty():
 		_panel.visible = false
@@ -233,6 +233,14 @@ func _on_viewport_size_changed() -> void:
 
 func _is_compact() -> bool:
 	return UI.is_compact(get_viewport(), COMPACT_BREAKPOINT)
+
+
+func _compact_slot_count(width: float) -> int:
+	if width < 260.0:
+		return 3
+	if width < 340.0:
+		return 4
+	return 5
 
 
 func _card_size(current: bool, compact: bool) -> Vector2:
