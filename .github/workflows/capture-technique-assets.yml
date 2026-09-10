@@ -1,4 +1,4 @@
-name: Capture technique VFX and audio assets
+name: Materialize technique VFX and audio assets
 
 on:
   push:
@@ -9,113 +9,35 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
-  capture:
+  materialize:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download pinned source archives
+      - name: Restore verified capture artifact
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p /tmp/digigame-assets
+          mkdir -p /tmp/capture /tmp/digigame-assets
+          curl -fL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/10169506645/zip" \
+            -o /tmp/technique-assets-capture.zip
+          echo 'a936a3b3be520fb301620a7080cb71627210c5e5935aa251183fb2d4f8768dce  /tmp/technique-assets-capture.zip' | sha256sum -c -
+          unzip -q /tmp/technique-assets-capture.zip -d /tmp/capture
 
-          curl -fL --retry 3 --retry-delay 2 -A 'Mozilla/5.0 DigiGame asset capture' \
-            'https://opengameart.org/sites/default/files/pixelart_spells_1.zip' \
-            -o /tmp/digigame-assets/pixel-art-spells.zip
-          curl -fL --retry 3 --retry-delay 2 -A 'Mozilla/5.0 DigiGame asset capture' \
-            'https://opengameart.org/sites/default/files/Nature%20Magic%20Effect.zip' \
-            -o /tmp/digigame-assets/nature-magic.zip
-
-          python3 - <<'PY'
-          import base64
-          import json
-          import re
-          from pathlib import Path
-          from urllib.parse import unquote, urlparse
-          import requests
-
-          OUT = Path('/tmp/digigame-assets')
-          UA = 'Mozilla/5.0 (X11; Linux x86_64) DigiGame/asset-capture'
-
-          def csrf_from(html: str) -> str:
-              for pattern in (
-                  r'<meta[^>]+name=["\']csrf_token["\'][^>]+value=["\']([^"\']+)',
-                  r'<meta[^>]+value=["\']([^"\']+)["\'][^>]+name=["\']csrf_token["\']',
-                  r'<input[^>]+name=["\']csrf_token["\'][^>]+value=["\']([^"\']+)',
-                  r'<input[^>]+value=["\']([^"\']+)["\'][^>]+name=["\']csrf_token["\']',
-              ):
-                  match = re.search(pattern, html, flags=re.I)
-                  if match:
-                      return match.group(1)
-              raise RuntimeError('itch.io CSRF token not found')
-
-          def download_free_itch(game_url: str, expected_filename: str, output: Path) -> None:
-              session = requests.Session()
-              session.headers.update({'User-Agent': UA})
-              page = session.get(game_url, timeout=30)
-              page.raise_for_status()
-              signed = session.post(
-                  game_url.rstrip('/') + '/download_url',
-                  data={'csrf_token': csrf_from(page.text), 'suggested_amount': '0'},
-                  headers={'Referer': game_url}, timeout=30,
-              )
-              signed.raise_for_status()
-              signed_url = signed.json().get('url', '')
-              if not signed_url:
-                  raise RuntimeError(f'no free download URL for {game_url}')
-              token = unquote(urlparse(signed_url).path.rsplit('/', 1)[-1])
-              payload = token.split('.', 1)[0]
-              payload += '=' * (-len(payload) % 4)
-              download_key_id = int(json.loads(base64.b64decode(payload).decode('utf-8'))['id'])
-              signed_page = session.get(signed_url, timeout=30)
-              signed_page.raise_for_status()
-              signed_csrf = csrf_from(signed_page.text)
-              upload_id = None
-              for match in re.finditer(r'data-upload_id=["\'](\d+)["\']', signed_page.text, flags=re.I):
-                  window = signed_page.text[max(0, match.start() - 1800):min(len(signed_page.text), match.end() + 1800)]
-                  if expected_filename.lower() in window.lower():
-                      upload_id = match.group(1)
-                      break
-              if upload_id is None:
-                  ids = re.findall(r'data-upload_id=["\'](\d+)["\']', signed_page.text, flags=re.I)
-                  if len(ids) != 1:
-                      raise RuntimeError(f'could not resolve {expected_filename}; upload ids={ids}')
-                  upload_id = ids[0]
-              resolver = session.post(
-                  game_url.rstrip('/') + f'/file/{upload_id}',
-                  data={'csrf_token': signed_csrf, 'download_key_id': str(download_key_id)},
-                  headers={'Referer': signed_url}, timeout=30,
-              )
-              resolver.raise_for_status()
-              cdn_url = resolver.json().get('url', '')
-              if not cdn_url:
-                  raise RuntimeError(f'no CDN URL returned for {expected_filename}')
-              with session.get(cdn_url, stream=True, timeout=60) as download:
-                  download.raise_for_status()
-                  with output.open('wb') as handle:
-                      for chunk in download.iter_content(256 * 1024):
-                          if chunk:
-                              handle.write(chunk)
-
-          download_free_itch(
-              'https://foozlecc.itch.io/pixel-magic-sprite-effects',
-              'Foozle_2DE0001_Pixel_Magic_Effects.zip',
-              OUT / 'foozle-pixel-magic.zip',
-          )
-          download_free_itch(
-              'https://nerijs.itch.io/pvfx-foundry',
-              'PVFX-Foundry-0.7.0.zip',
-              OUT / 'pvfx-foundry-0.7.0.zip',
-          )
-          PY
-
-          curl -fL --retry 3 --retry-delay 2 -A 'Mozilla/5.0 DigiGame asset capture' \
-            'https://sounds.spriters-resource.com/media/assets/397/400142.zip?updated=1755530283' \
-            -o /tmp/digigame-assets/digimon-world-ds-sfx.zip
+          cp /tmp/capture/zips/pixelart_spells.zip /tmp/digigame-assets/pixel-art-spells.zip
+          cp /tmp/capture/zips/foozle_pixel_magic.zip /tmp/digigame-assets/foozle-pixel-magic.zip
+          cp /tmp/capture/zips/pvfx_foundry.zip /tmp/digigame-assets/pvfx-foundry-0.7.0.zip
+          cp /tmp/capture/zips/nature_magic.zip /tmp/digigame-assets/nature-magic.zip
+          cp /tmp/capture/zips/digimon_world_ds_sfx.zip /tmp/digigame-assets/digimon-world-ds-sfx.zip
 
           cat > /tmp/digigame-assets/SHA256SUMS <<'SUMS'
           bf6e751559942aad40a50359ab5ae8f9750054546de0b21b4519d39904e163cb  pixel-art-spells.zip
@@ -144,7 +66,6 @@ jobs:
 
           python3 -m pip install --disable-pip-version-check Pillow==12.3.0
           python3 tools/build_vfx_library.py
-
           test "$(python3 - <<'PY'
           import json
           print(len(json.load(open('database/vfx-library.json'))['effects']))
