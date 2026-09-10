@@ -60,6 +60,24 @@ func get_movement_type() -> String:
 	return String(species_data.get("movementType", "ground"))
 
 
+func get_initiative() -> float:
+	return battle_state.initiative if battle_state != null else 0.0
+
+
+func set_initiative(value: float) -> void:
+	if battle_state != null:
+		battle_state.set_initiative(value)
+
+
+func consume_initiative(recovery_cost: float) -> void:
+	if battle_state != null:
+		battle_state.consume_initiative(recovery_cost)
+
+
+func is_available_for_turn() -> bool:
+	return battle_state != null and battle_state.current_hp > 0
+
+
 func get_instance_snapshot() -> Dictionary:
 	if digimon_instance == null:
 		return {}
@@ -69,4 +87,6 @@ func get_instance_snapshot() -> Dictionary:
 	snapshot["MOV"] = get_final_mov()
 	snapshot["movementType"] = get_movement_type()
 	snapshot["stats"] = _stat_calculator.get_all_stats(digimon_instance, species_data)
+	snapshot["battleSpeed"] = get_final_stat("speed")
+	snapshot["initiative"] = get_initiative()
 	return snapshot
