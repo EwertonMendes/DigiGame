@@ -67,6 +67,11 @@ jobs:
           set -euo pipefail
           godot --headless --path . --import 2>&1 | tee /tmp/godot-import.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing .*assets/characters' /tmp/godot-import.log; then exit 1; fi
+      - name: Validate Digimon species database
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/enrich_digimon_database.py --check
       - name: Export Web build
         shell: bash
         run: |
