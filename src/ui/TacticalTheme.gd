@@ -16,6 +16,37 @@ const BASE_SOFT := Color(0.014, 0.046, 0.078, 0.92)
 const DISABLED := Color(0.28, 0.36, 0.42, 1.0)
 
 
+static func ui_scale(viewport: Viewport) -> float:
+	if viewport == null:
+		return 1.0
+	var logical := viewport.get_visible_rect().size
+	var physical := Vector2(DisplayServer.window_get_size())
+	if physical.x <= 0.0 or physical.y <= 0.0:
+		return 1.0
+	return maxf(1.0, maxf(logical.x / physical.x, logical.y / physical.y))
+
+
+static func physical_window_size(viewport: Viewport) -> Vector2:
+	var physical := Vector2(DisplayServer.window_get_size())
+	if physical.x > 0.0 and physical.y > 0.0:
+		return physical
+	if viewport == null:
+		return Vector2(1280.0, 720.0)
+	return viewport.get_visible_rect().size
+
+
+static func is_compact(viewport: Viewport, breakpoint: float = 760.0) -> bool:
+	return physical_window_size(viewport).x < breakpoint
+
+
+static func px(viewport: Viewport, value: float) -> float:
+	return value * ui_scale(viewport)
+
+
+static func font_px(viewport: Viewport, value: float) -> int:
+	return maxi(1, int(round(value * ui_scale(viewport))))
+
+
 static func panel(accent: Color = CYAN, fill_alpha: float = 0.92, border_alpha: float = 0.48, radius: int = 10, shadow: int = 8) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	var bg := BASE
