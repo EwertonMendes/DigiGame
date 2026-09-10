@@ -81,7 +81,7 @@ offset_bottom = 62.0
 grow_horizontal = 0
 mouse_filter = 0
 theme_override_font_sizes/font_size = 16
-tooltip_text = "Allow enemy Digimon to be controlled on their tactical turn for testing."
+tooltip_text = "Free debug placement: select any Digimon and move it to any valid free tile without consuming or changing the tactical turn."
 toggle_mode = true
 text = "DEBUG: OFF"
 
