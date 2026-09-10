@@ -19,16 +19,16 @@ func _execute_selected_action() -> void:
 		cancel_current_action()
 		return
 
-	# Emit the attack first. BattlePresentationFX uses this event to start the
-	# lunge/cast/projectile and publishes the exact visual impact deadline.
+	# Presentation is always keyed by the persistent Digimon UUID. The renderer
+	# resolves that UUID back to the live battle actor before starting any tween.
 	_event_bus.emit_event("action_started", {
 		"actor_id": _instance_id(current_actor),
 		"target_id": _instance_id(target),
 		"action_id": String(action.get("id", "")),
 	})
 
-	# The important sequencing guarantee: HP, hit reaction, floating damage and
-	# KO state are not resolved until the attack animation/projectile reaches the target.
+	# HP and combat feedback are resolved only when the visual strike/projectile
+	# reaches the target. This keeps damage numbers and KO after the attack motion.
 	await _wait_for_presentation_impact()
 	if _battle_over or current_actor == null or target == null or not is_instance_valid(target):
 		return
@@ -97,8 +97,8 @@ func _execute_selected_action() -> void:
 	})
 	_clear_action_selection(false)
 
-	# Keep the battle in ACTION_RESOLVE until a defeated Digimon has actually
-	# finished disappearing. This also prevents the victory card from covering the KO.
+	# Keep ACTION_RESOLVE locked until the defeated actor has completed the
+	# dissolve. Victory/defeat therefore cannot cover a still-visible KO sprite.
 	if target_knocked_out:
 		await get_tree().create_timer(KO_RESOLVE_DELAY).timeout
 
@@ -158,8 +158,6 @@ func _handle_knockout(actor: Node) -> void:
 	actor.set("is_defending", false)
 	if actor.has_method("set_turn_active"):
 		actor.call("set_turn_active", false)
-	# Do not turn the defeated sprite into a translucent ghost. The presentation
-	# layer owns a complete KO animation and hides it after the dissolve.
 	var actor_id: String = _instance_id(actor)
 	_event_bus.emit_event("unit_knocked_out", {
 		"target_id": actor_id,
@@ -169,3 +167,27 @@ func _handle_knockout(actor: Node) -> void:
 	if not bool(actor.get("is_player_controlled")) and not _defeated_enemy_ids.has(actor_id):
 		_defeated_enemy_ids.append(actor_id)
 	turn_order_changed.emit()
+
+
+func _instance_id(actor: Node) -> String:
+	if actor == null or not is_instance_valid(actor):
+		return ""
+	if actor.has_method("get_digimon_instance_id"):
+		var persistent_id: String = String(actor.call("get_digimon_instance_id"))
+		if not persistent_id.is_empty():
+			return persistent_id
+	return str(actor.get_instance_id())
+
+
+func focus_actor_by_instance_id(instance_id: String) -> void:
+	if instance_id.is_empty():
+		return
+	for actor: Node in _turn_order:
+		if actor == null or not is_instance_valid(actor):
+			continue
+		if _instance_id(actor) != instance_id:
+			continue
+		var camera: Camera2D = get_viewport().get_camera_2d()
+		if camera != null and camera.has_method("focus_on"):
+			camera.call("focus_on", actor.global_position)
+		return
