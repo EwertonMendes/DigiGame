@@ -38,8 +38,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var viewport := get_viewport().get_visible_rect().size
-	var window_size := DisplayServer.window_get_size()
+	var viewport: Vector2 = get_viewport().get_visible_rect().size
+	var window_size: Vector2i = DisplayServer.window_get_size()
 	if viewport != _last_viewport_size or window_size != _last_window_size:
 		_layout_dock()
 
@@ -244,37 +244,40 @@ func _phase_copy(state: Dictionary) -> String:
 func _layout_dock() -> void:
 	if _dock == null:
 		return
-	var viewport_obj := get_viewport()
-	var logical := viewport_obj.get_visible_rect().size
-	var physical := UI.physical_window_size(viewport_obj)
-	var ui_scale := UI.ui_scale(viewport_obj)
+	var viewport_obj: Viewport = get_viewport()
+	var logical: Vector2 = viewport_obj.get_visible_rect().size
+	var physical: Vector2 = UI.physical_window_size(viewport_obj)
+	var ui_scale: float = UI.ui_scale(viewport_obj)
 	_last_viewport_size = logical
 	_last_window_size = DisplayServer.window_get_size()
-	var compact := physical.x < 760.0
-	var side_margin := 10.0 if compact else 18.0
-	var width := minf(720.0, physical.x - side_margin * 2.0)
-	var height := 102.0 if compact else 108.0
-	var bottom_margin := 8.0 if compact else 14.0
+	var compact: bool = UI.is_compact(viewport_obj, 760.0)
+	var short_landscape: bool = compact and physical.x > physical.y and physical.y < 560.0
+	var side_margin: float = 10.0 if compact else 18.0
+	var width: float = minf(720.0, physical.x - side_margin * 2.0)
+	if short_landscape:
+		width = minf(620.0, physical.x - 140.0)
+	var height: float = 92.0 if short_landscape else (102.0 if compact else 108.0)
+	var bottom_margin: float = 8.0 if compact else 14.0
 	_dock.scale = Vector2.ONE * ui_scale
 	_dock.position = Vector2((physical.x - width) * 0.5 * ui_scale, (physical.y - height - bottom_margin) * ui_scale)
 	_dock.size = Vector2(width, height)
 
-	var inner_x := 10.0
-	var action_y := 10.0
-	var action_h := 54.0 if compact else 58.0
-	var action_width := (width - inner_x * 2.0 - ACTION_GAP * 4.0) / 5.0
+	var inner_x: float = 10.0
+	var action_y: float = 8.0 if short_landscape else 10.0
+	var action_h: float = 50.0 if short_landscape else (54.0 if compact else 58.0)
+	var action_width: float = (width - inner_x * 2.0 - ACTION_GAP * 4.0) / 5.0
 	for index in range(_primary_buttons.size()):
-		var button := _primary_buttons[index]
+		var button: Button = _primary_buttons[index]
 		button.position = Vector2(inner_x + float(index) * (action_width + ACTION_GAP), action_y)
 		button.size = Vector2(action_width, action_h)
-		button.icon_max_width = 19 if compact else 23
+		button.icon_max_width = 18 if short_landscape else (19 if compact else 23)
 		button.add_theme_font_size_override("font_size", 8 if compact else 10)
 
-	var bottom_y := action_y + action_h + 7.0
+	var bottom_y: float = action_y + action_h + 6.0
 	_actor_label.position = Vector2(inner_x, bottom_y)
-	_actor_label.size = Vector2(105.0 if compact else 150.0, 20.0)
+	_actor_label.size = Vector2(105.0 if compact else 150.0, 18.0 if short_landscape else 20.0)
 	_actor_label.add_theme_font_size_override("font_size", 7 if compact else 9)
-	_mov_label.size = Vector2(66.0 if compact else 78.0, 22.0)
+	_mov_label.size = Vector2(66.0 if compact else 78.0, 20.0 if short_landscape else 22.0)
 	_mov_label.position = Vector2(width - inner_x - _mov_label.size.x, bottom_y - 1.0)
 
 	var context_buttons: Array[Button] = [_confirm_move_button, _undo_button, _cancel_button]
@@ -282,28 +285,29 @@ func _layout_dock() -> void:
 	for button in context_buttons:
 		if button.visible:
 			visible_context.append(button)
-	var context_w := 58.0 if compact else 72.0
-	var context_gap := 5.0
-	var context_total := float(visible_context.size()) * context_w + maxf(0.0, float(visible_context.size() - 1)) * context_gap
-	var context_start := width - inner_x - _mov_label.size.x - 8.0 - context_total
+	var context_w: float = 58.0 if compact else 72.0
+	var context_gap: float = 5.0
+	var context_total: float = float(visible_context.size()) * context_w + maxf(0.0, float(visible_context.size() - 1)) * context_gap
+	var context_start: float = width - inner_x - _mov_label.size.x - 8.0 - context_total
 	for index in range(visible_context.size()):
-		var button := visible_context[index]
+		var button: Button = visible_context[index]
 		button.position = Vector2(context_start + float(index) * (context_w + context_gap), bottom_y - 1.0)
-		button.size = Vector2(context_w, 22.0)
+		button.size = Vector2(context_w, 20.0 if short_landscape else 22.0)
 		button.add_theme_font_size_override("font_size", 7 if compact else 8)
 
-	var phase_left := _actor_label.position.x + _actor_label.size.x + 8.0
-	var phase_right := context_start - 8.0 if not visible_context.is_empty() else _mov_label.position.x - 8.0
+	var phase_left: float = _actor_label.position.x + _actor_label.size.x + 8.0
+	var phase_right: float = context_start - 8.0 if not visible_context.is_empty() else _mov_label.position.x - 8.0
 	_phase_label.position = Vector2(phase_left, bottom_y)
-	_phase_label.size = Vector2(maxf(20.0, phase_right - phase_left), 20.0)
-	_phase_label.add_theme_font_size_override("font_size", 8 if compact else 10)
+	_phase_label.size = Vector2(maxf(20.0, phase_right - phase_left), 18.0 if short_landscape else 20.0)
+	_phase_label.add_theme_font_size_override("font_size", 7 if short_landscape else (8 if compact else 10))
 
 
 func _animate_actor_change() -> void:
 	_dock.modulate.a = 0.45
-	_dock.position.y += 8.0 * UI.ui_scale(get_viewport())
-	var target_y := _dock.position.y - 8.0 * UI.ui_scale(get_viewport())
-	var target_alpha := 1.0 if bool(_cached_state.get("is_user_turn", false)) else 0.72
+	var ui_scale: float = UI.ui_scale(get_viewport())
+	_dock.position.y += 8.0 * ui_scale
+	var target_y: float = _dock.position.y - 8.0 * ui_scale
+	var target_alpha: float = 1.0 if bool(_cached_state.get("is_user_turn", false)) else 0.72
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(_dock, "modulate:a", target_alpha, 0.18)
