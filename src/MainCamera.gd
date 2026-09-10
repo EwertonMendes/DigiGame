@@ -84,11 +84,9 @@ func _refresh_pan_bounds() -> void:
 	var main := get_tree().root.get_node_or_null("Main")
 	if main == null:
 		return
-
 	var field := main.get_node_or_null("Blocks")
 	if field == null or not field.has_method("get_camera_pan_bounds"):
 		return
-
 	_pan_bounds = field.call("get_camera_pan_bounds")
 	_has_pan_bounds = true
 	_clamp_to_pan_bounds()
@@ -111,7 +109,6 @@ func _clamp_to_pan_bounds() -> void:
 		viewport_half_world.y,
 		PAN_OVERSCROLL.y
 	)
-
 	global_position = Vector2(
 		clampf(global_position.x, x_limits.x, x_limits.y),
 		clampf(global_position.y, y_limits.x, y_limits.y)
@@ -126,11 +123,9 @@ func _camera_axis_limits(
 ) -> Vector2:
 	var min_center := min_edge + viewport_half - overscroll
 	var max_center := max_edge - viewport_half + overscroll
-
 	if min_center > max_center:
 		var board_center := (min_edge + max_edge) * 0.5
 		return Vector2(board_center - overscroll, board_center + overscroll)
-
 	return Vector2(min_center, max_center)
 
 
@@ -144,7 +139,6 @@ func _handle_zoom() -> void:
 func _handle_keyboard_zoom(key_event: InputEventKey) -> void:
 	if not key_event.pressed or key_event.echo:
 		return
-
 	var physical_key := key_event.physical_keycode
 	if physical_key == KEY_EQUAL or physical_key == KEY_KP_ADD:
 		zoom_in()
@@ -167,10 +161,8 @@ func _handle_keyboard_pan(delta: float) -> void:
 		direction.y -= 1.0
 	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
 		direction.y += 1.0
-
 	if direction == Vector2.ZERO:
 		return
-
 	global_position += direction.normalized() * (KEYBOARD_PAN_SPEED * delta / zoom.x)
 	_clamp_to_pan_bounds()
 
@@ -196,17 +188,13 @@ func _handle_screen_touch(touch: InputEventScreenTouch) -> void:
 		and touch.index == _single_touch_index
 		and touch.position.distance_to(_single_touch_start) <= TOUCH_TAP_SLOP
 	)
-
 	_touch_positions.erase(touch.index)
-
 	if was_tap_candidate:
 		_handle_touch_tap(touch.position)
 		get_viewport().set_input_as_handled()
-
 	if _touch_positions.size() < 2:
 		_last_pinch_distance = 0.0
 		_last_pinch_center = Vector2.ZERO
-
 	if _touch_positions.is_empty():
 		_single_touch_index = -1
 		_single_touch_candidate = false
@@ -215,20 +203,16 @@ func _handle_screen_touch(touch: InputEventScreenTouch) -> void:
 
 func _handle_screen_drag(drag: InputEventScreenDrag) -> void:
 	_touch_positions[drag.index] = drag.position
-
 	if _touch_positions.size() >= 2:
 		_single_touch_candidate = false
 		_touch_gesture_had_multiple = true
 		_apply_multi_touch_gesture()
 		get_viewport().set_input_as_handled()
 		return
-
 	if drag.index != _single_touch_index:
 		return
-
 	if drag.position.distance_to(_single_touch_start) <= TOUCH_TAP_SLOP:
 		return
-
 	_single_touch_candidate = false
 	global_position -= drag.relative / zoom.x
 	_clamp_to_pan_bounds()
@@ -241,7 +225,6 @@ func _reset_pinch_reference() -> void:
 		_last_pinch_distance = 0.0
 		_last_pinch_center = Vector2.ZERO
 		return
-
 	var first: Vector2 = pair[0]
 	var second: Vector2 = pair[1]
 	_last_pinch_center = (first + second) * 0.5
@@ -252,24 +235,19 @@ func _apply_multi_touch_gesture() -> void:
 	var pair := _first_two_touch_positions()
 	if pair.size() < 2:
 		return
-
 	var first: Vector2 = pair[0]
 	var second: Vector2 = pair[1]
 	var center := (first + second) * 0.5
 	var distance := first.distance_to(second)
-
 	if _last_pinch_distance <= 0.0:
 		_last_pinch_center = center
 		_last_pinch_distance = distance
 		return
-
 	var center_delta := center - _last_pinch_center
 	global_position -= center_delta / zoom.x
-
 	if distance >= PINCH_MIN_DISTANCE and _last_pinch_distance >= PINCH_MIN_DISTANCE:
 		var pinch_factor := distance / _last_pinch_distance
 		_set_zoom_value(zoom.x * pinch_factor, center)
-
 	_last_pinch_center = center
 	_last_pinch_distance = distance
 	_clamp_to_pan_bounds()
@@ -290,24 +268,25 @@ func _handle_touch_tap(screen_position: Vector2) -> void:
 	var main := get_tree().root.get_node_or_null("Main")
 	if main == null:
 		return
+	var world_position := _screen_to_world(screen_position)
+	var battle := main.get_node_or_null("BattleController")
+	if battle != null and battle.has_method("handle_world_tap"):
+		battle.call("handle_world_tap", world_position)
+		return
 
+	# Legacy fallback for scenes without BattleController.
 	var field := main.get_node_or_null("Blocks")
 	var controller := main.get_node_or_null("DigimonController")
 	if field == null or controller == null or not field.has_method("select_tile_from_world"):
 		return
-
-	var world_position := _screen_to_world(screen_position)
 	if not bool(field.call("select_tile_from_world", world_position)):
 		return
-
 	var tile_world_position := Vector2(field.get("selectedTile"))
-
 	for child in controller.get_children():
 		if child is CharacterBody2D and bool(child.get("is_selected")):
 			if child.has_method("handle_touch_tap"):
 				child.call("handle_touch_tap", tile_world_position, world_position)
 			return
-
 	for child in controller.get_children():
 		if child is CharacterBody2D and child.has_method("handle_touch_tap"):
 			if bool(child.call("handle_touch_tap", tile_world_position, world_position)):
@@ -328,7 +307,6 @@ func _set_zoom_value(target_zoom: float, anchor_screen := Vector2(-1.0, -1.0)) -
 	var clamped_zoom := clampf(target_zoom, MIN_ZOOM, MAX_ZOOM)
 	if is_equal_approx(old_zoom, clamped_zoom):
 		return
-
 	if anchor_screen.x >= 0.0 and anchor_screen.y >= 0.0:
 		var viewport_center := get_viewport_rect().size * 0.5
 		var anchor_offset := anchor_screen - viewport_center
@@ -337,5 +315,4 @@ func _set_zoom_value(target_zoom: float, anchor_screen := Vector2(-1.0, -1.0)) -
 		global_position = world_anchor - anchor_offset / clamped_zoom
 	else:
 		zoom = Vector2.ONE * clamped_zoom
-
 	_clamp_to_pan_bounds()
