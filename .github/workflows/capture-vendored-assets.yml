@@ -6,15 +6,17 @@ on:
       - master
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   capture:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
       - name: Materialize current runtime assets
         shell: bash
         run: |
@@ -24,7 +26,28 @@ jobs:
           python3 tools/fetch_character_assets.py
           python3 tools/fetch_enemy_assets.py
           python3 tools/fetch_ui_fonts.py
-      - name: Upload runtime assets for vendoring
+      - name: Commit exact pinned runtime assets to the PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            assets/terrain/kenney/*.png \
+            assets/vfx/kenney/*.png \
+            assets/ui/fonts/*.ttf \
+            assets/characters/agumon.png \
+            assets/characters/gabumon.png \
+            assets/characters/greymon.png \
+            assets/characters/koromon.png \
+            assets/characters/tanemon.png
+          if git diff --cached --quiet; then
+            echo "Runtime assets are already vendored."
+            exit 0
+          fi
+          git commit -m "chore: vendor pinned runtime assets"
+          git push origin "HEAD:${{ github.head_ref }}"
+      - name: Upload runtime assets for verification
         uses: actions/upload-artifact@v4
         with:
           name: runtime-assets-to-vendor
