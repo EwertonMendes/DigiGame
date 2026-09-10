@@ -2,14 +2,24 @@ extends Control
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const ICON_ROOT := "res://assets/ui/icons"
-const ACTION_GAP := 8.0
+const PORTRAIT_ROOT := "res://assets/characters"
 
 var _controller: Node = null
 var _dock: Panel = null
 var _signal_line: ColorRect = null
+var _unit_block: HBoxContainer = null
+var _portrait_frame: Panel = null
+var _portrait: TextureRect = null
+var _identity_stack: VBoxContainer = null
+var _actor_label: Label = null
+var _hp_bar: ProgressBar = null
+var _sp_bar: ProgressBar = null
+var _hp_value: Label = null
+var _sp_value: Label = null
 var _phase_label: Label = null
 var _mov_label: Label = null
-var _actor_label: Label = null
+var _action_grid: GridContainer = null
+var _context_row: HBoxContainer = null
 var _move_button: Button = null
 var _attack_button: Button = null
 var _skill_button: Button = null
@@ -48,7 +58,7 @@ func _process(_delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
 		return
-	var key: InputEventKey = event as InputEventKey
+	var key := event as InputEventKey
 	if not key.pressed or key.echo or _controller == null:
 		return
 	if not bool(_cached_state.get("is_user_turn", false)):
@@ -72,23 +82,18 @@ func _build_ui() -> void:
 	_dock = Panel.new()
 	_dock.name = "ActionDock"
 	_dock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_dock.add_theme_stylebox_override("panel", UI.panel(UI.CYAN, 0.955, 0.52, 12, 13))
+	_dock.add_theme_stylebox_override("panel", UI.panel(UI.GOLD, 0.965, 0.28, 12, 4))
 	add_child(_dock)
 
 	_signal_line = ColorRect.new()
-	_signal_line.color = UI.CYAN
+	_signal_line.color = UI.GOLD
 	_signal_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dock.add_child(_signal_line)
 
-	_actor_label = Label.new()
-	_actor_label.add_theme_color_override("font_color", UI.TEXT)
-	_actor_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_actor_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	UI.apply_heading_font(_actor_label)
-	_dock.add_child(_actor_label)
+	_build_unit_summary()
 
 	_phase_label = Label.new()
-	_phase_label.add_theme_color_override("font_color", Color(0.76, 0.88, 0.94, 1.0))
+	_phase_label.add_theme_color_override("font_color", UI.MUTED)
 	_phase_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_phase_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_phase_label.clip_text = true
@@ -99,67 +104,187 @@ func _build_ui() -> void:
 	_mov_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mov_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_mov_label.add_theme_color_override("font_color", UI.TEXT)
-	_mov_label.add_theme_stylebox_override("normal", UI.pill(UI.CYAN, 0.15))
+	_mov_label.add_theme_stylebox_override("normal", UI.pill(UI.GOLD, 0.10))
 	_mov_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	UI.apply_heading_font(_mov_label)
 	_dock.add_child(_mov_label)
 
-	_move_button = _make_action_button("MOVE", "move.svg", UI.CYAN, "1", "Plan movement")
-	_attack_button = _make_action_button("ATTACK", "attack.svg", UI.RED, "2", "Basic attacks are coming with the battle system")
-	_skill_button = _make_action_button("SKILL", "skill.svg", UI.PURPLE, "3", "Digimon skills are coming with the battle system")
-	_defend_button = _make_action_button("DEFEND", "defend.svg", UI.BLUE, "4", "Defend and end this Digimon's turn")
-	_wait_button = _make_action_button("WAIT", "wait.svg", UI.GOLD, "5", "End this Digimon's turn")
+	_action_grid = GridContainer.new()
+	_action_grid.name = "PrimaryActions"
+	_action_grid.columns = 5
+	_action_grid.add_theme_constant_override("h_separation", 8)
+	_action_grid.add_theme_constant_override("v_separation", 8)
+	_action_grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dock.add_child(_action_grid)
+
+	_move_button = _make_action_button("Move", "move.svg", "1", "Plan movement")
+	_attack_button = _make_action_button("Attack", "attack.svg", "2", "Use a basic attack")
+	_skill_button = _make_action_button("Skill", "skill.svg", "3", "Choose a technique")
+	_defend_button = _make_action_button("Defend", "defend.svg", "4", "Defend and end this Digimon's turn")
+	_wait_button = _make_action_button("Wait", "wait.svg", "5", "End this Digimon's turn")
 	_primary_buttons = [_move_button, _attack_button, _skill_button, _defend_button, _wait_button]
 	for button: Button in _primary_buttons:
-		_dock.add_child(button)
+		_action_grid.add_child(button)
 
-	_confirm_move_button = _make_context_button("CONFIRM", "confirm.svg", UI.GREEN)
-	_undo_button = _make_context_button("UNDO", "undo.svg", UI.GOLD)
-	_cancel_button = _make_context_button("CANCEL", "cancel.svg", UI.RED)
-	for button: Button in [_confirm_move_button, _undo_button, _cancel_button]:
-		_dock.add_child(button)
+	_undo_button = _make_context_button("Undo move", "undo.svg", UI.GOLD)
+	_action_grid.add_child(_undo_button)
+
+	_context_row = HBoxContainer.new()
+	_context_row.name = "ContextActions"
+	_context_row.alignment = BoxContainer.ALIGNMENT_END
+	_context_row.add_theme_constant_override("separation", 8)
+	_context_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dock.add_child(_context_row)
+
+	_cancel_button = _make_context_button("Cancel", "cancel.svg", UI.RED)
+	_confirm_move_button = _make_context_button("Confirm", "confirm.svg", UI.GOLD)
+	_context_row.add_child(_cancel_button)
+	_context_row.add_child(_confirm_move_button)
 
 
-func _make_action_button(label_text: String, icon_name: String, accent: Color, shortcut: String, tooltip: String) -> Button:
-	var button: Button = Button.new()
+func _build_unit_summary() -> void:
+	_unit_block = HBoxContainer.new()
+	_unit_block.name = "ActiveUnit"
+	_unit_block.add_theme_constant_override("separation", 10)
+	_unit_block.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dock.add_child(_unit_block)
+
+	_portrait_frame = Panel.new()
+	_portrait_frame.custom_minimum_size = Vector2(58.0, 58.0)
+	_portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_portrait_frame.add_theme_stylebox_override("panel", UI.panel(UI.GOLD, 0.98, 0.34, 9, 0))
+	_unit_block.add_child(_portrait_frame)
+
+	_portrait = TextureRect.new()
+	_portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_portrait.offset_left = 5.0
+	_portrait.offset_top = 5.0
+	_portrait.offset_right = -5.0
+	_portrait.offset_bottom = -5.0
+	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_portrait_frame.add_child(_portrait)
+
+	_identity_stack = VBoxContainer.new()
+	_identity_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_identity_stack.add_theme_constant_override("separation", 3)
+	_identity_stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_unit_block.add_child(_identity_stack)
+
+	_actor_label = Label.new()
+	_actor_label.add_theme_color_override("font_color", UI.TEXT)
+	_actor_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_actor_label.clip_text = true
+	_actor_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UI.apply_heading_font(_actor_label)
+	_identity_stack.add_child(_actor_label)
+
+	var hp_row := _make_resource_row("HP", UI.GREEN)
+	_hp_bar = hp_row[0] as ProgressBar
+	_hp_value = hp_row[1] as Label
+	_identity_stack.add_child(hp_row[2] as Control)
+
+	var sp_row := _make_resource_row("SP", UI.BLUE)
+	_sp_bar = sp_row[0] as ProgressBar
+	_sp_value = sp_row[1] as Label
+	_identity_stack.add_child(sp_row[2] as Control)
+
+
+func _make_resource_row(caption: String, accent: Color) -> Array:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var label := Label.new()
+	label.text = caption
+	label.custom_minimum_size = Vector2(24.0, 0.0)
+	label.add_theme_color_override("font_color", accent)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UI.apply_heading_font(label)
+	row.add_child(label)
+
+	var bar := ProgressBar.new()
+	bar.min_value = 0.0
+	bar.max_value = 100.0
+	bar.value = 100.0
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(86.0, 8.0)
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var background := StyleBoxFlat.new()
+	background.bg_color = Color(0.14, 0.15, 0.16, 0.96)
+	background.corner_radius_top_left = 4
+	background.corner_radius_top_right = 4
+	background.corner_radius_bottom_left = 4
+	background.corner_radius_bottom_right = 4
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = accent
+	fill.corner_radius_top_left = 4
+	fill.corner_radius_top_right = 4
+	fill.corner_radius_bottom_left = 4
+	fill.corner_radius_bottom_right = 4
+	bar.add_theme_stylebox_override("background", background)
+	bar.add_theme_stylebox_override("fill", fill)
+	row.add_child(bar)
+
+	var value := Label.new()
+	value.text = "0/0"
+	value.custom_minimum_size = Vector2(70.0, 0.0)
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value.add_theme_color_override("font_color", UI.TEXT)
+	value.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UI.apply_body_font(value)
+	row.add_child(value)
+	return [bar, value, row]
+
+
+func _make_action_button(label_text: String, icon_name: String, shortcut: String, tooltip: String) -> Button:
+	var button := Button.new()
 	button.text = label_text
+	button.custom_minimum_size = Vector2(104.0, 52.0)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.tooltip_text = "%s  [%s]" % [tooltip, shortcut]
 	button.icon = load("%s/%s" % [ICON_ROOT, icon_name]) as Texture2D
 	button.expand_icon = true
-	button.icon_max_width = 28
+	button.icon_max_width = 22
 	UI.apply_heading_font(button)
+	button.add_theme_font_size_override("font_size", 15)
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
-	button.add_theme_color_override("font_disabled_color", Color(0.50, 0.58, 0.64, 0.62))
-	button.add_theme_color_override("icon_normal_color", accent)
-	button.add_theme_color_override("icon_hover_color", accent.lightened(0.20))
-	button.add_theme_color_override("icon_pressed_color", Color.WHITE)
-	button.add_theme_color_override("icon_disabled_color", Color(0.45, 0.52, 0.56, 0.48))
-	button.add_theme_stylebox_override("normal", UI.action_style(accent, "normal"))
-	button.add_theme_stylebox_override("hover", UI.action_style(accent, "hover"))
-	button.add_theme_stylebox_override("pressed", UI.action_style(accent, "pressed"))
-	button.add_theme_stylebox_override("disabled", UI.action_style(accent, "disabled"))
+	button.add_theme_color_override("font_disabled_color", Color(0.58, 0.59, 0.59, 0.55))
+	button.add_theme_color_override("icon_normal_color", Color(0.86, 0.86, 0.83, 1.0))
+	button.add_theme_color_override("icon_hover_color", UI.GOLD)
+	button.add_theme_color_override("icon_pressed_color", UI.GOLD)
+	button.add_theme_color_override("icon_disabled_color", Color(0.48, 0.49, 0.49, 0.46))
+	button.add_theme_stylebox_override("normal", UI.action_style(UI.GOLD, "normal"))
+	button.add_theme_stylebox_override("hover", UI.action_style(UI.GOLD, "hover"))
+	button.add_theme_stylebox_override("pressed", UI.action_style(UI.GOLD, "pressed"))
+	button.add_theme_stylebox_override("disabled", UI.action_style(UI.GOLD, "disabled"))
 	button.mouse_entered.connect(Callable(self, "_on_action_hover").bind(button, true))
 	button.mouse_exited.connect(Callable(self, "_on_action_hover").bind(button, false))
 	button.button_down.connect(Callable(self, "_on_action_pressed_visual").bind(button))
-	_accent_by_button[button] = accent
+	_accent_by_button[button] = UI.GOLD
 	return button
 
 
 func _make_context_button(label_text: String, icon_name: String, accent: Color) -> Button:
-	var button: Button = Button.new()
+	var button := Button.new()
 	button.text = label_text
+	button.custom_minimum_size = Vector2(112.0, 44.0)
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.icon = load("%s/%s" % [ICON_ROOT, icon_name]) as Texture2D
 	button.expand_icon = true
-	button.icon_max_width = 16
+	button.icon_max_width = 17
 	UI.apply_heading_font(button)
+	button.add_theme_font_size_override("font_size", 14)
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("icon_normal_color", accent)
 	button.add_theme_color_override("icon_hover_color", Color.WHITE)
@@ -191,160 +316,284 @@ func refresh_from_controller() -> void:
 	var state: Dictionary = _controller.call("get_hud_state")
 	_cached_state = state
 	_dock.visible = true
-	var actor: Node = _controller.get("current_actor") as Node
-	var actor_key: String = ""
-	var player_team: bool = true
+	var actor := _controller.get("current_actor") as Node
+	var actor_key := ""
+	var player_team := true
 	if actor != null:
 		actor_key = String(actor.get("digimon_key")).to_lower()
 		player_team = bool(actor.get("is_player_controlled"))
+	_update_unit_summary(actor, state)
 
-	var actor_name: String = String(state.get("actor_name", "DIGIMON")).to_upper()
-	var level: int = int(state.get("level", 1))
-	_actor_label.text = "%s  •  LV %d" % [actor_name, level]
+	var planning := bool(state.get("is_planning_move", false))
 	_phase_label.text = _phase_copy(state)
-	var planning: bool = bool(state.get("is_planning_move", false))
-	_mov_label.text = "MOV  %d LEFT" % int(state.get("move_remaining", 0)) if planning else "MOV  %d" % int(state.get("mov", 4))
-	_mov_label.add_theme_stylebox_override("normal", UI.pill(UI.CYAN if player_team else UI.RED, 0.15))
+	_mov_label.text = "%d MOV left" % int(state.get("move_remaining", 0)) if planning else "%d MOV" % int(state.get("mov", 4))
+	_mov_label.add_theme_stylebox_override("normal", UI.pill(UI.GOLD if player_team else UI.RED, 0.10))
 
-	var user_turn: bool = bool(state.get("is_user_turn", false))
 	_move_button.disabled = not bool(state.get("can_move", false))
-	_attack_button.disabled = true
-	_skill_button.disabled = true
+	_attack_button.disabled = not bool(state.get("can_attack", false)) if state.has("can_attack") else true
+	_skill_button.disabled = not bool(state.get("can_skill", false)) if state.has("can_skill") else true
 	_defend_button.disabled = not bool(state.get("can_defend", false))
 	_wait_button.disabled = not bool(state.get("can_wait", false))
-	_confirm_move_button.visible = planning and user_turn
 	_confirm_move_button.disabled = not bool(state.get("can_confirm_move", false))
 	_undo_button.visible = bool(state.get("can_undo", false))
-	_cancel_button.visible = bool(state.get("can_cancel", false))
+	_cancel_button.disabled = false
 
 	_set_action_selected(_move_button, planning)
-	_dock.modulate = Color.WHITE if user_turn else Color(0.80, 0.86, 0.90, 0.76)
-	_signal_line.color = UI.CYAN if player_team else UI.RED
+	_signal_line.color = UI.GOLD if player_team else UI.RED
+	_portrait_frame.add_theme_stylebox_override("panel", UI.panel(UI.GOLD if player_team else UI.RED, 0.98, 0.34, 9, 0))
+	_apply_interaction_mode(state)
 
 	if actor_key != _last_actor_key:
 		_last_actor_key = actor_key
+		_portrait.texture = _load_portrait(actor_key)
 		_animate_actor_change()
 	_layout_dock()
 
 
+func _update_unit_summary(actor: Node, state: Dictionary) -> void:
+	var actor_name := String(state.get("actor_name", "Digimon"))
+	var level := int(state.get("level", 1))
+	_actor_label.text = "%s  Lv. %d" % [actor_name, level]
+	if actor == null:
+		_hp_bar.max_value = 1
+		_hp_bar.value = 0
+		_sp_bar.max_value = 1
+		_sp_bar.value = 0
+		_hp_value.text = "—"
+		_sp_value.text = "—"
+		return
+
+	var max_hp := maxi(1, int(actor.call("get_final_stat", "hp"))) if actor.has_method("get_final_stat") else 1
+	var current_hp := max_hp
+	if actor.has_method("get_current_hp"):
+		current_hp = int(actor.call("get_current_hp"))
+	else:
+		var battle_state = actor.get("battle_state")
+		if battle_state != null:
+			current_hp = int(battle_state.get("current_hp"))
+
+	var max_sp := int(state.get("max_sp", 0))
+	if max_sp <= 0 and actor.has_method("get_final_stat"):
+		max_sp = int(actor.call("get_final_stat", "mp"))
+	max_sp = maxi(1, max_sp)
+	var current_sp := int(state.get("current_sp", max_sp))
+	_hp_bar.max_value = max_hp
+	_hp_bar.value = clampi(current_hp, 0, max_hp)
+	_sp_bar.max_value = max_sp
+	_sp_bar.value = clampi(current_sp, 0, max_sp)
+	_hp_value.text = "%d/%d" % [current_hp, max_hp]
+	_sp_value.text = "%d/%d" % [current_sp, max_sp]
+
+
+func _apply_interaction_mode(state: Dictionary) -> void:
+	var user_turn := bool(state.get("is_user_turn", false))
+	var planning := bool(state.get("is_planning_move", false))
+	var targeting := bool(state.get("is_targeting", false))
+	var battle_over := bool(state.get("battle_over", false))
+	var contextual := user_turn and (planning or targeting) and not battle_over
+	_action_grid.visible = user_turn and not contextual and not battle_over
+	_context_row.visible = contextual
+	_mov_label.visible = user_turn and not battle_over and not targeting
+	_phase_label.visible = contextual or not user_turn or battle_over or bool(state.get("can_undo", false))
+	_dock.modulate = Color.WHITE if user_turn else Color(0.90, 0.90, 0.88, 0.88)
+
+
 func _set_action_selected(button: Button, selected: bool) -> void:
-	var accent: Color = _accent_by_button.get(button, UI.CYAN)
+	var accent: Color = _accent_by_button.get(button, UI.GOLD)
 	button.add_theme_stylebox_override("normal", UI.action_style(accent, "selected" if selected else "normal"))
 
 
 func _phase_copy(state: Dictionary) -> String:
-	var raw_phase: String = String(state.get("phase", ""))
+	var raw_phase := String(state.get("phase", ""))
 	if not bool(state.get("is_user_turn", false)):
-		return "OPPONENT TURN  •  WAITING"
+		return "Opponent turn"
+	if bool(state.get("is_targeting", false)):
+		return "Choose a target"
 	match raw_phase:
-		"Turn Start": return "PREPARING TURN"
-		"Choose an action": return "SELECT AN ACTION"
-		"Preview movement": return "POINT TO PREVIEW  •  CLICK/TAP TO LOCK  •  DRAG TO TRACE"
-		"Plan movement": return "TRACE A ROUTE  •  CONFIRM WHEN READY"
-		"Moving": return "FOLLOWING ROUTE"
-		"Choose a target": return "SELECT A TARGET"
-		"Resolving action": return "RESOLVING ACTION"
-		"Turn End": return "ENDING TURN"
-	return raw_phase.to_upper()
+		"Turn Start": return "Preparing turn"
+		"Choose an action": return "Choose an action"
+		"Preview movement": return "Trace a route, then confirm"
+		"Plan movement": return "Trace a route, then confirm"
+		"Moving": return "Moving"
+		"Resolving action": return "Resolving action"
+		"Turn End": return "Ending turn"
+	return raw_phase
 
 
 func _layout_dock() -> void:
 	if _dock == null:
 		return
-	var viewport_obj: Viewport = get_viewport()
-	var logical: Vector2 = viewport_obj.get_visible_rect().size
-	var physical: Vector2 = UI.physical_window_size(viewport_obj)
-	var ui_scale: float = UI.ui_scale(viewport_obj)
+	var viewport_obj := get_viewport()
+	var logical := viewport_obj.get_visible_rect().size
+	var physical := UI.physical_window_size(viewport_obj)
+	var ui_scale := UI.ui_scale(viewport_obj)
 	_last_viewport_size = logical
 	_last_window_size = DisplayServer.window_get_size()
-	var compact: bool = UI.is_compact(viewport_obj, 760.0)
-	var short_landscape: bool = compact and physical.x > physical.y and physical.y < 560.0
-	var laptop: bool = UI.is_laptop(viewport_obj)
-
-	var side_margin: float = 10.0 if compact else 20.0
-	var width: float = minf(860.0 if laptop else 820.0, physical.x - side_margin * 2.0)
+	var compact := UI.is_compact(viewport_obj, 820.0)
+	var short_landscape := compact and physical.x >= 700.0 and physical.x > physical.y
+	var user_turn := bool(_cached_state.get("is_user_turn", false))
+	var contextual := _context_row.visible
+	var actions_visible := _action_grid.visible
+	var side_margin := 10.0 if compact else 18.0
+	var width := minf(1040.0, physical.x - side_margin * 2.0)
+	var height := 128.0
 	if short_landscape:
-		width = minf(620.0, physical.x - 140.0)
-	var height: float = 92.0 if short_landscape else (104.0 if compact else (126.0 if laptop else 120.0))
-	var bottom_margin: float = 8.0 if compact else 14.0
+		height = 110.0 if actions_visible else 88.0
+	elif compact:
+		height = 218.0 if actions_visible else (160.0 if contextual else 116.0)
+	elif not user_turn or contextual:
+		height = 90.0
+	var bottom_margin := 8.0 if compact else 14.0
 	_dock.scale = Vector2.ONE * ui_scale
 	_dock.position = Vector2((physical.x - width) * 0.5 * ui_scale, (physical.y - height - bottom_margin) * ui_scale)
 	_dock.size = Vector2(width, height)
-	_signal_line.position = Vector2(18.0, 0.0)
-	_signal_line.size = Vector2(126.0 if not compact else 84.0, 2.0)
+	_signal_line.position = Vector2(16.0, 0.0)
+	_signal_line.size = Vector2(72.0, 2.0)
 
-	var inner_x: float = 11.0 if compact else 13.0
-	var action_y: float = 8.0 if short_landscape else (10.0 if compact else 12.0)
-	var action_h: float = 50.0 if short_landscape else (55.0 if compact else (68.0 if laptop else 64.0))
-	var gap: float = 6.0 if compact else ACTION_GAP
-	var action_width: float = (width - inner_x * 2.0 - gap * 4.0) / 5.0
-	for index in range(_primary_buttons.size()):
-		var button: Button = _primary_buttons[index]
-		button.position = Vector2(inner_x + float(index) * (action_width + gap), action_y)
-		button.size = Vector2(action_width, action_h)
-		button.icon_max_width = 18 if short_landscape else (20 if compact else (30 if laptop else 28))
-		button.add_theme_font_size_override("font_size", 9 if compact else (14 if laptop else 13))
+	var pad := 12.0
+	_actor_label.add_theme_font_size_override("font_size", 17 if compact else 18)
+	_hp_value.add_theme_font_size_override("font_size", 14)
+	_sp_value.add_theme_font_size_override("font_size", 14)
+	for row in [_hp_bar.get_parent(), _sp_bar.get_parent()]:
+		var caption := (row as HBoxContainer).get_child(0) as Label
+		caption.add_theme_font_size_override("font_size", 14)
+	_phase_label.add_theme_font_size_override("font_size", 14 if compact else 15)
+	_mov_label.add_theme_font_size_override("font_size", 14)
+	_undo_button.text = "Undo" if compact else "Undo move"
 
-	var bottom_y: float = action_y + action_h + (6.0 if compact else 9.0)
-	_actor_label.position = Vector2(inner_x, bottom_y)
-	_actor_label.size = Vector2(118.0 if compact else 190.0, 21.0)
-	_actor_label.add_theme_font_size_override("font_size", 8 if compact else (12 if laptop else 11))
-	_mov_label.size = Vector2(76.0 if compact else 96.0, 23.0 if compact else 27.0)
-	_mov_label.position = Vector2(width - inner_x - _mov_label.size.x, bottom_y - 2.0)
-	_mov_label.add_theme_font_size_override("font_size", 8 if compact else 11)
+	if short_landscape:
+		_portrait_frame.custom_minimum_size = Vector2(50.0, 50.0)
+		var unit_width := minf(260.0, width * 0.34)
+		_unit_block.position = Vector2(pad, 12.0)
+		_unit_block.size = Vector2(unit_width, 58.0)
+		if actions_visible:
+			var action_x := unit_width + 24.0
+			_action_grid.columns = 6 if _undo_button.visible else 5
+			_action_grid.position = Vector2(action_x, 10.0)
+			_action_grid.size = Vector2(width - action_x - pad, 54.0)
+			for button: Button in _primary_buttons:
+				button.custom_minimum_size = Vector2(0.0, 48.0)
+			_undo_button.custom_minimum_size = Vector2(0.0, 48.0)
+			_phase_label.position = Vector2(action_x, 68.0)
+			_phase_label.size = Vector2(width - action_x - 110.0, 28.0)
+			_mov_label.position = Vector2(width - 98.0, 68.0)
+			_mov_label.size = Vector2(86.0, 27.0)
+		elif contextual:
+			_phase_label.position = Vector2(unit_width + 24.0, 12.0)
+			_phase_label.size = Vector2(maxf(100.0, width - unit_width - 290.0), 54.0)
+			_context_row.position = Vector2(width - 252.0, 14.0)
+			_context_row.size = Vector2(240.0, 48.0)
+			_mov_label.position = Vector2(unit_width + 24.0, 52.0)
+			_mov_label.size = Vector2(92.0, 27.0)
+		else:
+			_phase_label.position = Vector2(unit_width + 24.0, 14.0)
+			_phase_label.size = Vector2(width - unit_width - 36.0, 52.0)
+			_mov_label.visible = false
+	elif compact:
+		_portrait_frame.custom_minimum_size = Vector2(50.0, 50.0)
+		_unit_block.position = Vector2(pad, 10.0)
+		_unit_block.size = Vector2(width - pad * 2.0, 58.0)
+		if actions_visible:
+			_phase_label.position = Vector2(pad, 72.0)
+			_phase_label.size = Vector2(width - 116.0, 30.0)
+			_mov_label.position = Vector2(width - 98.0, 74.0)
+			_mov_label.size = Vector2(86.0, 27.0)
+			_action_grid.columns = 3
+			_action_grid.position = Vector2(pad, 108.0)
+			_action_grid.size = Vector2(width - pad * 2.0, 100.0)
+			for button: Button in _primary_buttons:
+				button.custom_minimum_size = Vector2(0.0, 46.0)
+			_undo_button.custom_minimum_size = Vector2(0.0, 46.0)
+		elif contextual:
+			_phase_label.position = Vector2(pad, 72.0)
+			_phase_label.size = Vector2(width - 116.0, 30.0)
+			_mov_label.position = Vector2(width - 98.0, 74.0)
+			_mov_label.size = Vector2(86.0, 27.0)
+			_context_row.position = Vector2(pad, 108.0)
+			_context_row.size = Vector2(width - pad * 2.0, 42.0)
+		else:
+			_phase_label.position = Vector2(pad, 72.0)
+			_phase_label.size = Vector2(width - pad * 2.0, 30.0)
+			_mov_label.visible = false
+	else:
+		_portrait_frame.custom_minimum_size = Vector2(58.0, 58.0)
+		var unit_width := minf(318.0, width * 0.34)
+		_unit_block.position = Vector2(pad, 14.0)
+		_unit_block.size = Vector2(unit_width, 64.0)
+		if actions_visible:
+			var action_x := unit_width + 26.0
+			_action_grid.columns = 6 if _undo_button.visible else 5
+			_action_grid.position = Vector2(action_x, 14.0)
+			_action_grid.size = Vector2(width - action_x - pad, 60.0)
+			for button: Button in _primary_buttons:
+				button.custom_minimum_size = Vector2(96.0, 52.0)
+			_undo_button.custom_minimum_size = Vector2(96.0, 52.0)
+			_phase_label.position = Vector2(action_x, 80.0)
+			_phase_label.size = Vector2(width - action_x - 110.0, 30.0)
+			_mov_label.position = Vector2(width - 100.0, 82.0)
+			_mov_label.size = Vector2(88.0, 27.0)
+		elif contextual:
+			_phase_label.position = Vector2(unit_width + 28.0, 16.0)
+			_phase_label.size = Vector2(maxf(120.0, width - unit_width - 300.0), 58.0)
+			_context_row.position = Vector2(width - 252.0, 18.0)
+			_context_row.size = Vector2(240.0, 52.0)
+			_mov_label.position = Vector2(unit_width + 28.0, 54.0)
+			_mov_label.size = Vector2(96.0, 27.0)
+		else:
+			_phase_label.position = Vector2(unit_width + 28.0, 16.0)
+			_phase_label.size = Vector2(width - unit_width - 40.0, 58.0)
+			_mov_label.visible = false
 
-	var context_buttons: Array[Button] = [_confirm_move_button, _undo_button, _cancel_button]
-	var visible_context: Array[Button] = []
-	for button: Button in context_buttons:
-		if button.visible:
-			visible_context.append(button)
-	var context_w: float = 62.0 if compact else 82.0
-	var context_gap: float = 6.0
-	var context_total: float = float(visible_context.size()) * context_w + maxf(0.0, float(visible_context.size() - 1)) * context_gap
-	var context_start: float = width - inner_x - _mov_label.size.x - 10.0 - context_total
-	for index in range(visible_context.size()):
-		var button: Button = visible_context[index]
-		button.position = Vector2(context_start + float(index) * (context_w + context_gap), bottom_y - 2.0)
-		button.size = Vector2(context_w, 23.0 if compact else 27.0)
-		button.add_theme_font_size_override("font_size", 8 if compact else 10)
+	_context_row.visible = contextual
+	_action_grid.visible = actions_visible
 
-	var phase_left: float = _actor_label.position.x + _actor_label.size.x + 10.0
-	var phase_right: float = context_start - 10.0 if not visible_context.is_empty() else _mov_label.position.x - 10.0
-	_phase_label.position = Vector2(phase_left, bottom_y)
-	_phase_label.size = Vector2(maxf(20.0, phase_right - phase_left), 21.0)
-	_phase_label.add_theme_font_size_override("font_size", 8 if compact else (12 if laptop else 11))
+
+func _load_portrait(digimon_key: String) -> Texture2D:
+	if digimon_key.is_empty():
+		return null
+	var metadata_path := "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, digimon_key]
+	var strip_path := "%s/%s/portrait_frames.png" % [PORTRAIT_ROOT, digimon_key]
+	if not FileAccess.file_exists(metadata_path) or not ResourceLoader.exists(strip_path):
+		return null
+	var metadata = JSON.parse_string(FileAccess.get_file_as_string(metadata_path))
+	if not metadata is Dictionary:
+		return null
+	var strip := load(strip_path) as Texture2D
+	if strip == null:
+		return null
+	var frame_width := float(metadata.get("frame_width", 0))
+	var frame_height := float(metadata.get("frame_height", 0))
+	if frame_width <= 0.0 or frame_height <= 0.0:
+		return null
+	var atlas := AtlasTexture.new()
+	atlas.atlas = strip
+	atlas.region = Rect2(0.0, 0.0, frame_width, frame_height)
+	return atlas
 
 
 func _animate_actor_change() -> void:
 	if _dock == null:
 		return
-	var scale_value: float = UI.ui_scale(get_viewport())
-	_dock.modulate.a = 0.45
-	_dock.position.y += 8.0 * scale_value
-	var target_y: float = _dock.position.y - 8.0 * scale_value
-	var target_alpha: float = 1.0 if bool(_cached_state.get("is_user_turn", false)) else 0.76
-	var tween: Tween = create_tween().set_parallel(true)
+	_dock.modulate.a = 0.62
+	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_dock, "modulate:a", target_alpha, 0.18)
-	tween.tween_property(_dock, "position:y", target_y, 0.18)
+	tween.tween_property(_dock, "modulate:a", 1.0 if bool(_cached_state.get("is_user_turn", false)) else 0.88, 0.16)
 
 
 func _on_action_hover(button: Button, entered: bool) -> void:
 	if button.disabled:
 		return
 	button.pivot_offset = button.size * 0.5
-	var base_y: float = 10.0 if UI.is_compact(get_viewport()) else 12.0
-	var tween: Tween = create_tween().set_parallel(true)
+	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(button, "scale", Vector2(1.025, 1.025) if entered else Vector2.ONE, 0.09)
-	tween.tween_property(button, "position:y", base_y - 2.0 if entered else base_y, 0.09)
+	tween.tween_property(button, "scale", Vector2(1.018, 1.018) if entered else Vector2.ONE, 0.09)
 
 
 func _on_action_pressed_visual(button: Button) -> void:
 	if button.disabled:
 		return
 	button.pivot_offset = button.size * 0.5
-	button.scale = Vector2(0.98, 0.98)
-	var tween: Tween = create_tween()
+	button.scale = Vector2(0.985, 0.985)
+	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(button, "scale", Vector2.ONE, 0.10)
