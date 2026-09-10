@@ -14,9 +14,8 @@ func _run() -> void:
 		return
 
 	var main: Node = packed.instantiate()
-	# Headless Control widgets exercise renderer-specific Button properties that
-	# are already covered by the browser smoke. Remove presentation-independent
-	# CanvasLayers before entering the tree so this probe measures battle FX only.
+	# Headless Control widgets exercise renderer-specific properties that are
+	# already covered by the browser smoke. This probe measures battle FX only.
 	for ui_path in ["DigimonInfoUI", "BattleUI", "DebugUI"]:
 		var ui_node: Node = main.get_node_or_null(ui_path)
 		if ui_node != null:
@@ -47,8 +46,6 @@ func _run() -> void:
 		_fail("could not find ally/enemy actors")
 		return
 
-	# Pick a clearly separated pair so the lunge assertion cannot be defeated by
-	# overlapping bootstrap positions in future encounter changes.
 	var attacker: Node = allies[0]
 	var target: Node = enemies[0]
 	var best_distance := -1.0
@@ -83,18 +80,20 @@ func _run() -> void:
 		return
 	var attack_origin: Vector2 = attacker_sprite.position
 	var main_children_before_attack: int = main.get_child_count()
-	battle.emit_signal("combat_event", {
-		"type": "action_started",
+	battle.call("_present_event", "action_started", {
 		"actor_id": attacker_id,
 		"target_id": target_id,
 		"action_id": "basic_attack",
 	})
 	await create_timer(0.12).timeout
+	if int(presentation.get("_presented_events_seen")) < 1:
+		_fail("controller did not reach the presentation service")
+		return
 	if attacker_sprite.position.distance_to(attack_origin) < 2.0:
-		_fail("combat_event did not visibly move the attacker sprite")
+		_fail("controller-driven presentation did not visibly move the attacker sprite")
 		return
 	if main.get_child_count() <= main_children_before_attack:
-		_fail("combat_event did not create a visible melee wind-up VFX node")
+		_fail("attack presentation did not create a visible wind-up VFX node")
 		return
 	await create_timer(0.42).timeout
 	if attacker_sprite.position.distance_to(attack_origin) > 1.5:
@@ -107,8 +106,7 @@ func _run() -> void:
 		return
 	var overlay_children_before: int = overlay_root.get_child_count()
 	var main_children_before_damage: int = main.get_child_count()
-	battle.emit_signal("combat_event", {
-		"type": "damage_applied",
+	battle.call("_present_event", "damage_applied", {
 		"actor_id": attacker_id,
 		"target_id": target_id,
 		"action_id": "basic_attack",
@@ -117,10 +115,10 @@ func _run() -> void:
 	})
 	await process_frame
 	if overlay_root.get_child_count() <= overlay_children_before:
-		_fail("damage event did not create floating damage text")
+		_fail("damage presentation did not create floating damage text")
 		return
 	if main.get_child_count() <= main_children_before_damage:
-		_fail("damage event did not create slash/spark/flare VFX")
+		_fail("damage presentation did not create slash/spark/flare VFX")
 		return
 
 	var damage_label: Control = overlay_root.get_child(overlay_root.get_child_count() - 1) as Control
@@ -131,18 +129,17 @@ func _run() -> void:
 		_fail("floating damage text is not anchored to the struck Digimon")
 		return
 
-	battle.emit_signal("combat_event", {
-		"type": "unit_knocked_out",
+	battle.call("_present_event", "unit_knocked_out", {
 		"target_id": target_id,
 		"target_name": "Presentation Probe",
 		"is_player": false,
 	})
-	await create_timer(0.96).timeout
+	await create_timer(1.05).timeout
 	if bool(target.get("visible")):
-		_fail("KO event did not remove the defeated Digimon from the field")
+		_fail("KO presentation did not remove the defeated Digimon from the field")
 		return
 
-	print("Combat presentation smoke passed: UUID resolution, combat_event wiring, melee lunge, Kenney VFX, target-anchored damage and KO removal.")
+	print("Combat presentation smoke passed: persistent UUID resolution, controller-driven melee lunge, Kenney VFX, target-anchored damage and KO removal.")
 	main.queue_free()
 	await process_frame
 	quit(0)
