@@ -1,6 +1,5 @@
 extends "res://src/BattleHUDDomain.gd"
 
-const UI = preload("res://src/ui/TacticalTheme.gd")
 const NAV_ICON_ROOT := "res://assets/ui/icons"
 
 
