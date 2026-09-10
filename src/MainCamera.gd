@@ -213,7 +213,15 @@ func _handle_screen_drag(drag: InputEventScreenDrag) -> void:
 		return
 	if drag.position.distance_to(_single_touch_start) <= TOUCH_TAP_SLOP:
 		return
+
 	_single_touch_candidate = false
+	var battle := _get_battle_controller()
+	if battle != null and battle.has_method("is_manual_path_input_active") and bool(battle.call("is_manual_path_input_active")):
+		if battle.has_method("handle_path_pointer_world"):
+			battle.call("handle_path_pointer_world", _screen_to_world(drag.position))
+		get_viewport().set_input_as_handled()
+		return
+
 	global_position -= drag.relative / zoom.x
 	_clamp_to_pan_bounds()
 	get_viewport().set_input_as_handled()
@@ -274,7 +282,6 @@ func _handle_touch_tap(screen_position: Vector2) -> void:
 		battle.call("handle_world_tap", world_position)
 		return
 
-	# Legacy fallback for scenes without BattleController.
 	var field := main.get_node_or_null("Blocks")
 	var controller := main.get_node_or_null("DigimonController")
 	if field == null or controller == null or not field.has_method("select_tile_from_world"):
@@ -291,6 +298,13 @@ func _handle_touch_tap(screen_position: Vector2) -> void:
 		if child is CharacterBody2D and child.has_method("handle_touch_tap"):
 			if bool(child.call("handle_touch_tap", tile_world_position, world_position)):
 				return
+
+
+func _get_battle_controller() -> Node:
+	var main := get_tree().root.get_node_or_null("Main")
+	if main == null:
+		return null
+	return main.get_node_or_null("BattleController")
 
 
 func _screen_to_world(screen_position: Vector2) -> Vector2:
