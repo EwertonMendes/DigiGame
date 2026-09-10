@@ -473,7 +473,7 @@ func _layout_dock() -> void:
 	if portrait_mobile:
 		var margin := 10.0
 		var status_w := physical.x - margin * 2.0
-		_status_panel.position = Vector2(margin * ui_scale, 104.0 * ui_scale)
+		_status_panel.position = Vector2(margin * ui_scale, 132.0 * ui_scale)
 		_status_panel.size = Vector2(status_w, 88.0)
 		_layout_status(Vector2(status_w, 88.0), true)
 
@@ -492,7 +492,7 @@ func _layout_dock() -> void:
 		_status_panel.size = Vector2(status_w, 78.0)
 		_layout_status(Vector2(status_w, 78.0), true)
 
-		var dock_w := status_w
+		var dock_w := minf(300.0, physical.x * 0.37)
 		var available_h := maxf(150.0, physical.y - 144.0)
 		var dock_h := minf(238.0, available_h)
 		if contextual:
@@ -501,7 +501,7 @@ func _layout_dock() -> void:
 			dock_h = 70.0
 		_dock.position = Vector2(margin * ui_scale, 140.0 * ui_scale)
 		_dock.size = Vector2(dock_w, dock_h)
-		_action_grid.columns = 1
+		_action_grid.columns = 2
 		_layout_command(Vector2(dock_w, dock_h), true, contextual, user_turn)
 	else:
 		var margin := 16.0
