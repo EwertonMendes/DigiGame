@@ -7,8 +7,14 @@ const TrainingScript = preload("res://src/digimon/DigimonTrainingService.gd")
 const ProgressionScript = preload("res://src/digimon/DigimonProgression.gd")
 const EvolutionScript = preload("res://src/digimon/DigimonEvolutionService.gd")
 
+var _failed := false
+
 
 func _init() -> void:
+	call_deferred("_run_validation")
+
+
+func _run_validation() -> void:
 	var database = DatabaseScript.new()
 	_require(database.load_default(), "species database should load")
 	_require(database.species_count() >= 400, "species database should contain the full catalogue")
@@ -22,6 +28,10 @@ func _init() -> void:
 	var agumon = factory.create_player_by_name("Agumon", 10, 200)
 	var second_agumon = factory.create_player_by_name("Agumon", 10, 100)
 	_require(agumon != null and second_agumon != null, "factory should create player instances")
+	if agumon == null or second_agumon == null:
+		_finish()
+		return
+
 	_require(not agumon.id.is_empty() and agumon.id != second_agumon.id, "each Digimon instance should have a unique UUID")
 	_require(agumon.species_seed == second_agumon.species_seed, "same species should share species seed")
 	_require(agumon.potential == 5, "200 percent scan should grant initial potential without changing species")
@@ -54,12 +64,17 @@ func _init() -> void:
 			_require(agumon.level == 1 and agumon.exp == 0, "Digivolution should reset level and EXP")
 			_require(int(agumon.training.get("mov", 0)) == old_training, "Digivolution should preserve individual training")
 
-	print("Digimon domain validation passed: %d species" % database.species_count())
-	quit(0)
+	if not _failed:
+		print("Digimon domain validation passed: %d species" % database.species_count())
+	_finish()
 
 
 func _require(condition: bool, message: String) -> void:
 	if condition:
 		return
+	_failed = true
 	push_error("DIGIMON DOMAIN VALIDATION FAILED: %s" % message)
-	quit(1)
+
+
+func _finish() -> void:
+	quit(1 if _failed else 0)
