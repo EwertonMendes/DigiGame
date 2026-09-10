@@ -1,0 +1,8 @@
+[
+  {"species": "Agumon", "skills": [{"skill": "pepper_breath", "level": 1}, {"skill": "guard_charge", "level": 12}]},
+  {"species": "Gabumon", "skills": [{"skill": "blue_blaster", "level": 1}, {"skill": "speed_charge", "level": 12}]},
+  {"species": "Greymon", "skills": [{"skill": "mega_flame", "level": 1}, {"skill": "guard_charge", "level": 10}]},
+  {"species": "Koromon", "skills": [{"skill": "bubbles", "level": 1}]},
+  {"species": "Tanemon", "skills": [{"skill": "adhesive_bubble", "level": 1}]},
+  {"species": "Veemon", "skills": [{"skill": "vee_headbutt", "level": 1}, {"skill": "speed_charge", "level": 12}]}
+]
