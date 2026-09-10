@@ -97,6 +97,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node .github/scripts/web-smoke-test.mjs
+          node .github/scripts/submenu-navigation-smoke.mjs
           node .github/scripts/combat-vfx-smoke.mjs
       - name: Upload playable Web artifact
         if: always()
