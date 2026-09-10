@@ -9,6 +9,7 @@ const browser = await chromium.launch({
 
 const desktopViewports = [
   { width: 1280, height: 720 },
+  { width: 1365, height: 685 },
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
@@ -116,6 +117,11 @@ try {
     await page.setViewportSize(viewport);
     await page.waitForTimeout(800);
     assertViewportFill(await readLayout(page));
+    if (viewport.width === 1365 && viewport.height === 685) {
+      await page.mouse.move(viewport.width * 0.5, viewport.height * 0.5);
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: 'build/laptop-1365x685.png', fullPage: true });
+    }
   }
 
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -163,7 +169,6 @@ try {
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'build/camera-pan-smoke.png', fullPage: true });
 
-  // Keyboard camera parity: +/- zoom and WASD/arrow panning must remain valid.
   await page.keyboard.press('Equal');
   await page.keyboard.down('KeyA');
   await page.waitForTimeout(250);
@@ -189,7 +194,6 @@ try {
 
   await mobilePage.screenshot({ path: 'build/mobile-portrait.png', fullPage: true });
 
-  // Touch-friendly on-screen + button must work without a mouse wheel.
   const beforeButtonZoom = await mobilePage.screenshot();
   await mobilePage.touchscreen.tap(
     mobileLayout.viewportWidth - 34,
@@ -202,14 +206,10 @@ try {
 
   const client = await mobilePage.context().newCDPSession(mobilePage);
 
-  // A normal touch tap at screen center selects Gabumon; a second tap remains
-  // available for movement. This specifically exercises native touch input,
-  // not Playwright mouse emulation.
   await mobilePage.touchscreen.tap(mobileCenter.x, mobileCenter.y);
   await mobilePage.waitForTimeout(450);
   await mobilePage.screenshot({ path: 'build/mobile-touch-select.png', fullPage: true });
 
-  // One-finger drag pans the board without requiring right-click.
   const beforeTouchPan = await mobilePage.screenshot();
   await dragOneFinger(
     client,
@@ -221,7 +221,6 @@ try {
   assertScreensDiffer(beforeTouchPan, afterTouchPan, 'One-finger touch pan');
   await mobilePage.screenshot({ path: 'build/mobile-touch-pan.png', fullPage: true });
 
-  // Two-finger pinch must zoom the game on real touch devices.
   const beforePinch = await mobilePage.screenshot();
   await pinch(client, mobileCenter, 42, 92);
   await mobilePage.waitForTimeout(600);
@@ -229,8 +228,6 @@ try {
   assertScreensDiffer(beforePinch, afterPinch, 'Pinch zoom');
   await mobilePage.screenshot({ path: 'build/mobile-pinch-zoom.png', fullPage: true });
 
-  // Recheck the opposite mobile orientation because the Web viewport uses the
-  // same responsive Godot canvas in portrait and landscape.
   await mobilePage.setViewportSize(mobileViewports[1]);
   await mobilePage.waitForTimeout(800);
   assertViewportFill(await readLayout(mobilePage));
@@ -242,8 +239,9 @@ try {
 
   console.log(
     `DigiGame Web smoke test passed at ${desktopViewports.length} desktop and ` +
-    `${mobileViewports.length} mobile orientations, including mouse, keyboard, ` +
-    `touch tap, one-finger pan, pinch zoom, mobile zoom controls, and responsive canvas checks.`
+    `${mobileViewports.length} mobile orientations, including notebook HUD coverage, ` +
+    `mouse, keyboard, touch tap, one-finger pan, pinch zoom, mobile zoom controls, ` +
+    `and responsive canvas checks.`
   );
 } finally {
   await browser.close();
