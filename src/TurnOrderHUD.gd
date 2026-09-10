@@ -15,6 +15,7 @@ var _cards: Control = null
 var _title: Label = null
 var _count_label: Label = null
 var _last_viewport_size := Vector2.ZERO
+var _last_window_size := Vector2i.ZERO
 var _last_signature := ""
 
 
@@ -29,7 +30,9 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
-	if viewport_size != _last_viewport_size:
+	var window_size := DisplayServer.window_get_size()
+	if viewport_size != _last_viewport_size or window_size != _last_window_size:
+		_last_signature = ""
 		refresh()
 
 
@@ -42,6 +45,7 @@ func refresh() -> void:
 	if _panel == null or _cards == null:
 		return
 	_last_viewport_size = get_viewport().get_visible_rect().size
+	_last_window_size = DisplayServer.window_get_size()
 	if _controller == null or not _controller.has_method("get_turn_preview"):
 		_panel.visible = false
 		return
@@ -142,29 +146,25 @@ func _create_turn_card(entry: Dictionary, compact: bool) -> Control:
 
 
 func _build_current_card(card: Panel, actor_name: String, digimon_key: String, speed: int, accent: Color, compact: bool) -> void:
-	var portrait_size := 44.0 if not compact else 38.0
+	var portrait_size := 38.0 if compact else 44.0
 	var portrait := _portrait_rect(digimon_key, Vector2(7.0, 8.0), Vector2(portrait_size, portrait_size), accent, true)
 	card.add_child(portrait)
-
 	var left := portrait_size + 13.0
 	var available := maxf(24.0, card.size.x - left - 5.0)
 	var now_label := _label("NOW", 8, UI.GOLD)
 	now_label.position = Vector2(left, 5.0)
 	now_label.size = Vector2(available, 12.0)
 	card.add_child(now_label)
-
 	if not compact:
 		var name_label := _label(_short_name(actor_name, 7), 9, UI.TEXT)
 		name_label.position = Vector2(left, 18.0)
 		name_label.size = Vector2(available, 16.0)
 		name_label.clip_text = true
 		card.add_child(name_label)
-
 	var speed_label := _label(str(speed), 9, accent.lightened(0.15))
-	speed_label.position = Vector2(left, 36.0 if not compact else 25.0)
+	speed_label.position = Vector2(left, 25.0 if compact else 36.0)
 	speed_label.size = Vector2(available, 14.0)
 	card.add_child(speed_label)
-
 	var marker := ColorRect.new()
 	marker.color = accent
 	marker.position = Vector2(-2.0, 12.0)
@@ -174,18 +174,16 @@ func _build_current_card(card: Panel, actor_name: String, digimon_key: String, s
 
 
 func _build_future_card(card: Panel, digimon_key: String, speed: int, slot: int, accent: Color, compact: bool) -> void:
-	var portrait_size := 34.0 if not compact else 30.0
+	var portrait_size := 30.0 if compact else 34.0
 	var portrait := _portrait_rect(digimon_key, Vector2(7.0, (card.size.y - portrait_size) * 0.5), Vector2(portrait_size, portrait_size), accent, false)
 	card.add_child(portrait)
-
 	var right_x := portrait_size + 13.0
 	var right_width := card.size.x - right_x - 5.0
 	var order_label := _label("%d" % slot, 10, UI.TEXT)
 	order_label.position = Vector2(right_x, 5.0)
 	order_label.size = Vector2(right_width, 14.0)
 	card.add_child(order_label)
-
-	var speed_label := _label("SPD %d" % speed if not compact else str(speed), 7 if compact else 8, UI.MUTED)
+	var speed_label := _label(str(speed) if compact else "SPD %d" % speed, 7 if compact else 8, UI.MUTED)
 	speed_label.position = Vector2(right_x, 22.0)
 	speed_label.size = Vector2(right_width, 13.0)
 	card.add_child(speed_label)
@@ -197,7 +195,6 @@ func _portrait_rect(digimon_key: String, position_value: Vector2, size_value: Ve
 	frame.size = size_value
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_theme_stylebox_override("panel", UI.panel(accent, 0.96, 0.72 if current else 0.28, 5, 0))
-
 	var portrait := TextureRect.new()
 	portrait.position = Vector2(2.0, 2.0)
 	portrait.size = size_value - Vector2(4.0, 4.0)
@@ -289,7 +286,7 @@ func _on_viewport_size_changed() -> void:
 
 
 func _is_compact() -> bool:
-	return get_viewport().get_visible_rect().size.x < COMPACT_BREAKPOINT
+	return UI.is_compact(get_viewport(), COMPACT_BREAKPOINT)
 
 
 func _card_size(current: bool, compact: bool) -> Vector2:
@@ -302,19 +299,23 @@ func _card_size(current: bool, compact: bool) -> Vector2:
 func _layout_panel(entry_count: int, compact: bool) -> void:
 	if _panel == null or _cards == null:
 		return
-	var viewport := get_viewport().get_visible_rect().size
+	var viewport_obj := get_viewport()
+	var physical := UI.physical_window_size(viewport_obj)
+	var ui_scale := UI.ui_scale(viewport_obj)
 	var width := COMPACT_WIDTH if compact else DESKTOP_WIDTH
 	var header_height := 40.0
 	var current_h := 58.0 if compact else 62.0
 	var future_h := 44.0 if compact else 48.0
-	var gaps := maxf(0.0, float(entry_count - 1)) * (5.0 if compact else 6.0)
+	var gap := 5.0 if compact else 6.0
+	var gaps := maxf(0.0, float(entry_count - 1)) * gap
 	var cards_height := current_h + maxf(0.0, float(entry_count - 1)) * future_h + gaps
 	var height := header_height + cards_height + 10.0
-	var bottom_guard := 104.0 if compact else 116.0
-	height = minf(height, viewport.y - 78.0 - bottom_guard)
-	_panel.position = Vector2(viewport.x - width - (8.0 if compact else 14.0), 74.0)
+	var top_px := 58.0 if compact else 74.0
+	var bottom_guard := 116.0 if compact else 124.0
+	height = minf(height, physical.y - top_px - bottom_guard)
+	_panel.scale = Vector2.ONE * ui_scale
+	_panel.position = Vector2((physical.x - width - (8.0 if compact else 14.0)) * ui_scale, top_px * ui_scale)
 	_panel.size = Vector2(width, height)
-
 	_title.position = Vector2(10.0, 8.0)
 	_title.size = Vector2(width - 36.0, 18.0)
 	_title.add_theme_font_size_override("font_size", 8 if compact else 10)
