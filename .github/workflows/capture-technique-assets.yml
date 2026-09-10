@@ -1,0 +1,187 @@
+name: Capture technique VFX and audio assets
+
+on:
+  push:
+    branches:
+      - feat/technique-vfx-audio-library
+    paths:
+      - .github/workflows/capture-technique-assets.yml
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download CC0 VFX packs and Digimon DS sound archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p capture/zips capture/extracted
+
+          curl -fL --retry 3 --retry-delay 2 \
+            -A 'Mozilla/5.0 DigiGame asset capture' \
+            'https://opengameart.org/sites/default/files/pixelart_spells_1.zip' \
+            -o capture/zips/pixelart_spells.zip
+
+          curl -fL --retry 3 --retry-delay 2 \
+            -A 'Mozilla/5.0 DigiGame asset capture' \
+            'https://opengameart.org/sites/default/files/Nature%20Magic%20Effect.zip' \
+            -o capture/zips/nature_magic.zip
+
+          python3 - <<'PY'
+          import base64
+          import json
+          import re
+          import sys
+          from pathlib import Path
+          from urllib.parse import unquote, urlparse
+
+          import requests
+
+          OUT = Path('capture/zips')
+          UA = 'Mozilla/5.0 (X11; Linux x86_64) DigiGame/asset-capture'
+
+          def csrf_from(html: str) -> str:
+              patterns = [
+                  r'<meta[^>]+name=["\']csrf_token["\'][^>]+value=["\']([^"\']+)',
+                  r'<meta[^>]+value=["\']([^"\']+)["\'][^>]+name=["\']csrf_token["\']',
+                  r'<input[^>]+name=["\']csrf_token["\'][^>]+value=["\']([^"\']+)',
+                  r'<input[^>]+value=["\']([^"\']+)["\'][^>]+name=["\']csrf_token["\']',
+              ]
+              for pattern in patterns:
+                  match = re.search(pattern, html, flags=re.I)
+                  if match:
+                      return match.group(1)
+              raise RuntimeError('itch.io CSRF token not found')
+
+          def itch_download(game_url: str, expected_filename: str, output: Path) -> None:
+              session = requests.Session()
+              session.headers.update({'User-Agent': UA})
+              page = session.get(game_url, timeout=30)
+              page.raise_for_status()
+              csrf = csrf_from(page.text)
+
+              signed_response = session.post(
+                  game_url.rstrip('/') + '/download_url',
+                  data={'csrf_token': csrf, 'suggested_amount': '0'},
+                  headers={'Referer': game_url},
+                  timeout=30,
+              )
+              signed_response.raise_for_status()
+              signed_url = signed_response.json().get('url', '')
+              if not signed_url:
+                  raise RuntimeError(f'itch.io returned no free download URL for {game_url}')
+
+              escaped_last = urlparse(signed_url).path.rsplit('/', 1)[-1]
+              download_key = unquote(escaped_last)
+              payload = download_key.split('.', 1)[0]
+              payload += '=' * (-len(payload) % 4)
+              key_data = json.loads(base64.b64decode(payload).decode('utf-8'))
+              key_id = int(key_data['id'])
+
+              signed_page = session.get(signed_url, timeout=30)
+              signed_page.raise_for_status()
+              signed_csrf = csrf_from(signed_page.text)
+
+              upload_id = None
+              for match in re.finditer(r'data-upload_id=["\'](\d+)["\']', signed_page.text, flags=re.I):
+                  start = max(0, match.start() - 1800)
+                  end = min(len(signed_page.text), match.end() + 1800)
+                  window = signed_page.text[start:end]
+                  if expected_filename.lower() in window.lower():
+                      upload_id = match.group(1)
+                      break
+              if upload_id is None:
+                  ids = re.findall(r'data-upload_id=["\'](\d+)["\']', signed_page.text, flags=re.I)
+                  if len(ids) == 1:
+                      upload_id = ids[0]
+                  else:
+                      raise RuntimeError(f'could not resolve upload {expected_filename}; found ids={ids}')
+
+              resolver = session.post(
+                  game_url.rstrip('/') + f'/file/{upload_id}',
+                  data={'csrf_token': signed_csrf, 'download_key_id': str(key_id)},
+                  headers={'Referer': signed_url},
+                  timeout=30,
+              )
+              resolver.raise_for_status()
+              cdn_url = resolver.json().get('url', '')
+              if not cdn_url:
+                  raise RuntimeError(f'itch.io file resolver returned no URL for {expected_filename}: {resolver.text[:500]}')
+
+              with session.get(cdn_url, stream=True, timeout=60) as download:
+                  download.raise_for_status()
+                  with output.open('wb') as fh:
+                      for chunk in download.iter_content(1024 * 256):
+                          if chunk:
+                              fh.write(chunk)
+              print(f'downloaded {expected_filename}: {output.stat().st_size} bytes')
+
+          itch_download(
+              'https://foozlecc.itch.io/pixel-magic-sprite-effects',
+              'Foozle_2DE0001_Pixel_Magic_Effects.zip',
+              OUT / 'foozle_pixel_magic.zip',
+          )
+          itch_download(
+              'https://nerijs.itch.io/pvfx-foundry',
+              'PVFX-Foundry-0.7.0.zip',
+              OUT / 'pvfx_foundry.zip',
+          )
+          PY
+
+          # The Sounds Resource currently exposes the Digimon World DS archive that
+          # was previously referenced for this prototype. Dawn/Dusk itself is not
+          # listed in its DS catalogue, so capture this archive and inspect it for
+          # suitable combat cues instead of silently inventing sound provenance.
+          downloaded=0
+          for url in \
+            'https://www.sounds-resource.com/download/400142/' \
+            'https://sounds.spriters-resource.com/download/400142/' \
+            'https://www.sounds-resource.com/ds_dsi/dgmnworldds/asset/400142/download/' \
+            'https://sounds.spriters-resource.com/ds_dsi/dgmnworldds/asset/400142/download/'
+          do
+            if curl -fL --retry 2 --retry-delay 2 \
+              -A 'Mozilla/5.0 DigiGame asset capture' \
+              "$url" -o capture/zips/digimon_world_ds_sfx.zip; then
+              if unzip -t capture/zips/digimon_world_ds_sfx.zip >/dev/null 2>&1; then
+                downloaded=1
+                echo "Downloaded Sounds Resource archive from $url"
+                break
+              fi
+            fi
+          done
+          if [ "$downloaded" -ne 1 ]; then
+            echo 'Could not download Digimon World DS SFX archive from known download endpoints.' >&2
+            exit 1
+          fi
+
+      - name: Extract captured archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p \
+            capture/extracted/pixel-art-spells \
+            capture/extracted/foozle-pixel-magic \
+            capture/extracted/pvfx-foundry \
+            capture/extracted/nature-magic \
+            capture/extracted/digimon-world-ds-sfx
+          unzip -q capture/zips/pixelart_spells.zip -d capture/extracted/pixel-art-spells
+          unzip -q capture/zips/foozle_pixel_magic.zip -d capture/extracted/foozle-pixel-magic
+          unzip -q capture/zips/pvfx_foundry.zip -d capture/extracted/pvfx-foundry
+          unzip -q capture/zips/nature_magic.zip -d capture/extracted/nature-magic
+          unzip -q capture/zips/digimon_world_ds_sfx.zip -d capture/extracted/digimon-world-ds-sfx
+          echo '=== Captured file inventory ==='
+          find capture/extracted -type f -printf '%p\t%s bytes\n' | sort | tee capture/inventory.txt
+
+      - name: Upload capture artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: technique-assets-capture
+          path: capture
+          retention-days: 3
+          compression-level: 0
