@@ -22,7 +22,7 @@ const mobileViewports = [
 function watchRuntimeErrors(page, label) {
   page.on('pageerror', error => runtimeErrors.push(`${label} pageerror: ${error.message}`));
   page.on('console', message => {
-    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${message.text()}`);
+    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${message.text()}`));
   });
 }
 
@@ -134,12 +134,15 @@ try {
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'build/web-smoke.png', fullPage: true });
 
-  const debugX = finalLayout.viewportWidth - 88;
-  const debugY = 38;
-  await page.mouse.click(debugX, debugY, { button: 'left' });
+  // Debug chrome is intentionally hidden during normal play. F3 is the stable
+  // test/developer entry point and reveals the compact Dev control while active.
+  const beforeDebug = await page.screenshot();
+  await page.keyboard.press('F3');
   await page.waitForTimeout(400);
+  const debugOn = await page.screenshot();
+  assertScreensDiffer(beforeDebug, debugOn, 'F3 debug mode toggle');
   await page.screenshot({ path: 'build/debug-mode-on.png', fullPage: true });
-  await page.mouse.click(debugX, debugY, { button: 'left' });
+  await page.keyboard.press('F3');
   await page.waitForTimeout(300);
 
   await page.mouse.click(centerX, centerY, { button: 'left' });
@@ -229,10 +232,12 @@ try {
 
   await mobilePage.screenshot({ path: 'build/mobile-portrait.png', fullPage: true });
 
+  // The responsive HUD reserves the bottom area for the action dock, so camera
+  // utility buttons sit above it instead of occupying the bottom-right corner.
   const beforeButtonZoom = await mobilePage.screenshot();
   await mobilePage.touchscreen.tap(
-    mobileLayout.viewportWidth - 34,
-    mobileLayout.viewportHeight - 44,
+    mobileLayout.viewportWidth - 30,
+    mobileLayout.viewportHeight - 256,
   );
   await mobilePage.waitForTimeout(500);
   const afterButtonZoom = await mobilePage.screenshot();
