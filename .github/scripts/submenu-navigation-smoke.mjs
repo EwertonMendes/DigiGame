@@ -6,6 +6,22 @@ const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN ?? '/usr/bin/google-chrome',
 });
 
+async function enterTestBattle(page) {
+  const dialogueOpened = page.waitForEvent('console', {
+    predicate: message => message.text().includes('[Hub] DIALOGUE_OPEN'),
+    timeout: 10000,
+  });
+  await page.keyboard.press('KeyE');
+  await dialogueOpened;
+  const battleStarted = page.waitForEvent('console', {
+    predicate: message => message.text().includes('[Hub] START_TEST_BATTLE'),
+    timeout: 10000,
+  });
+  await page.keyboard.press('Enter');
+  await battleStarted;
+  await page.waitForTimeout(5000);
+}
+
 function assertScreensDiffer(before, after, description) {
   if (before.equals(after)) {
     throw new Error(`${description} did not visibly change the rendered game.`);
@@ -30,6 +46,7 @@ try {
     if (message.type() === 'error') runtimeErrors.push(`console: ${message.text()}`);
   });
   await waitForGame(page);
+  await enterTestBattle(page);
 
   const commandMenu = await page.screenshot();
 
