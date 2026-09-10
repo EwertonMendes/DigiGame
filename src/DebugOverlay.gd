@@ -2,7 +2,7 @@ extends CanvasLayer
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const ICON_ROOT := "res://assets/ui/icons"
-const DESKTOP_BUTTON := 42.0
+const DESKTOP_BUTTON := 46.0
 const COMPACT_BUTTON := 40.0
 
 @onready var debug_button: Button = $Root/DebugButton
@@ -47,19 +47,21 @@ func _style_controls() -> void:
 	center_button.text = ""
 	center_button.icon = load("%s/center.svg" % ICON_ROOT) as Texture2D
 	center_button.expand_icon = true
-	center_button.icon_max_width = 19
-	zoom_out_button.text = "-"
+	center_button.icon_max_width = 21
+	zoom_out_button.text = "−"
 	zoom_in_button.text = "+"
 	for button: Button in [center_button, zoom_out_button, zoom_in_button, debug_button]:
 		button.focus_mode = Control.FOCUS_NONE
 		button.add_theme_color_override("font_color", UI.TEXT)
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		UI.apply_heading_font(button)
 	center_button.add_theme_color_override("icon_normal_color", UI.CYAN)
 	center_button.add_theme_color_override("icon_hover_color", Color.WHITE)
-	touch_hint.add_theme_color_override("font_color", Color(0.66, 0.82, 0.90, 0.82))
-	touch_hint.add_theme_color_override("font_outline_color", Color(0.0, 0.02, 0.04, 0.92))
+	touch_hint.add_theme_color_override("font_color", Color(0.72, 0.84, 0.90, 0.92))
+	touch_hint.add_theme_color_override("font_outline_color", Color(0.0, 0.02, 0.04, 0.94))
 	touch_hint.add_theme_constant_override("outline_size", 3)
+	UI.apply_body_font(touch_hint)
 
 
 func _style_button(button: Button, accent: Color) -> void:
@@ -77,25 +79,26 @@ func _layout_controls() -> void:
 	_last_window_size = DisplayServer.window_get_size()
 	var compact: bool = UI.is_compact(viewport_obj, 760.0)
 	var short_landscape: bool = compact and physical.x > physical.y and physical.y < 560.0
-	var button_size: float = COMPACT_BUTTON if compact else DESKTOP_BUTTON
+	var laptop: bool = UI.is_laptop(viewport_obj)
+	var button_size: float = COMPACT_BUTTON if compact else (48.0 if laptop else DESKTOP_BUTTON)
 	if short_landscape:
 		button_size = 36.0
-	var margin: float = 10.0 if compact else 14.0
-	var gap: float = 5.0
+	var margin: float = 10.0 if compact else 16.0
+	var gap: float = 6.0
 
-	var debug_width: float = 100.0 if compact else 112.0
-	var debug_height: float = 32.0 if compact else 34.0
+	var debug_width: float = 100.0 if compact else (126.0 if laptop else 120.0)
+	var debug_height: float = 32.0 if compact else 38.0
 	debug_button.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	debug_button.scale = Vector2.ONE * ui_scale
 	debug_button.position = Vector2((physical.x - debug_width - margin) * ui_scale, 10.0 * ui_scale)
 	debug_button.size = Vector2(debug_width, debug_height)
-	debug_button.add_theme_font_size_override("font_size", 9 if compact else 10)
+	debug_button.add_theme_font_size_override("font_size", 9 if compact else 12)
 
 	for button: Button in [center_button, zoom_out_button, zoom_in_button]:
 		button.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		button.scale = Vector2.ONE * ui_scale
 		button.size = Vector2(button_size, button_size)
-		button.add_theme_font_size_override("font_size", 17 if compact else 18)
+		button.add_theme_font_size_override("font_size", 17 if compact else 22)
 
 	var utility_y: float = physical.y - margin - button_size
 	var utility_right: float = physical.x - margin
@@ -116,14 +119,14 @@ func _layout_controls() -> void:
 	if touch_hint.visible:
 		touch_hint.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		touch_hint.scale = Vector2.ONE * ui_scale
-		var hint_width: float = minf(330.0, maxf(160.0, physical.x - 130.0))
-		var hint_y: float = physical.y - (145.0 if compact else 34.0)
+		var hint_width: float = minf(340.0, maxf(170.0, physical.x - 140.0))
+		var hint_y: float = physical.y - (145.0 if compact else 38.0)
 		if short_landscape:
 			hint_y = physical.y - 34.0
 			hint_width = minf(260.0, physical.x * 0.34)
 		touch_hint.position = Vector2(margin * ui_scale, hint_y * ui_scale)
-		touch_hint.size = Vector2(hint_width, 24.0)
-		touch_hint.add_theme_font_size_override("font_size", 8 if compact else 10)
+		touch_hint.size = Vector2(hint_width, 26.0)
+		touch_hint.add_theme_font_size_override("font_size", 9 if compact else 11)
 
 
 func _on_debug_toggled(enabled: bool) -> void:
