@@ -16,34 +16,37 @@ const BASE_SOFT := Color(0.014, 0.046, 0.078, 0.92)
 const DISABLED := Color(0.28, 0.36, 0.42, 1.0)
 
 
-static func ui_scale(viewport: Viewport) -> float:
+static func ui_scale(viewport) -> float:
 	if viewport == null:
 		return 1.0
-	var logical := viewport.get_visible_rect().size
-	var physical := Vector2(DisplayServer.window_get_size())
-	if physical.x <= 0.0 or physical.y <= 0.0:
+	var logical: Vector2 = viewport.get_visible_rect().size
+	var window_size: Vector2i = DisplayServer.window_get_size()
+	if window_size.x <= 0 or window_size.y <= 0:
 		return 1.0
-	return maxf(1.0, maxf(logical.x / physical.x, logical.y / physical.y))
+	var scale_x: float = logical.x / maxf(float(window_size.x), 1.0)
+	var scale_y: float = logical.y / maxf(float(window_size.y), 1.0)
+	return maxf(1.0, maxf(scale_x, scale_y))
 
 
-static func physical_window_size(viewport: Viewport) -> Vector2:
-	var physical := Vector2(DisplayServer.window_get_size())
-	if physical.x > 0.0 and physical.y > 0.0:
-		return physical
+static func physical_window_size(viewport) -> Vector2:
+	var window_size: Vector2i = DisplayServer.window_get_size()
+	if window_size.x > 0 and window_size.y > 0:
+		return Vector2(float(window_size.x), float(window_size.y))
 	if viewport == null:
 		return Vector2(1280.0, 720.0)
 	return viewport.get_visible_rect().size
 
 
-static func is_compact(viewport: Viewport, breakpoint: float = 760.0) -> bool:
-	return physical_window_size(viewport).x < breakpoint
+static func is_compact(viewport, breakpoint: float = 760.0) -> bool:
+	var physical: Vector2 = physical_window_size(viewport)
+	return physical.x < breakpoint
 
 
-static func px(viewport: Viewport, value: float) -> float:
+static func px(viewport, value: float) -> float:
 	return value * ui_scale(viewport)
 
 
-static func font_px(viewport: Viewport, value: float) -> int:
+static func font_px(viewport, value: float) -> int:
 	return maxi(1, int(round(value * ui_scale(viewport))))
 
 
