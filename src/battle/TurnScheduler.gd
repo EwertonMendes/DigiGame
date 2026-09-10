@@ -184,10 +184,10 @@ func _speed(actor: Node) -> int:
 
 
 func _stable_key(actor: Node) -> String:
-	if actor != null and actor.has_method("get_instance_id"):
-		var instance_id := String(actor.call("get_instance_id"))
-		if not instance_id.is_empty():
-			return instance_id
+	if actor != null and actor.has_method("get_digimon_instance_id"):
+		var digimon_id := String(actor.call("get_digimon_instance_id"))
+		if not digimon_id.is_empty():
+			return digimon_id
 	return String(actor.get_path()) if actor != null and is_instance_valid(actor) else ""
 
 
