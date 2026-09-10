@@ -71,14 +71,12 @@ func refresh() -> void:
 		if not raw_entry is Dictionary or raw_entry.is_empty():
 			continue
 		var entry := raw_entry as Dictionary
-		var card := _create_turn_card(entry, compact)
-		var current := bool(entry.get("is_current", false))
+		var card := _create_turn_node(entry, compact)
 		if compact:
-			card.position = Vector2(cursor, 7.0 if current else 11.0)
+			card.position = Vector2(cursor, 0.0)
 			cursor += card.size.x + 8.0
 		else:
-			var x_offset := 0.0 if current else 8.0
-			card.position = Vector2(x_offset, cursor)
+			card.position = Vector2((_node_size(bool(entry.get("is_current", false)), false).x - card.size.x) * 0.0, cursor)
 			cursor += card.size.y + 8.0
 		_cards.add_child(card)
 		_animate_card(card, index)
@@ -96,7 +94,7 @@ func _build_ui() -> void:
 	_panel.add_child(_title)
 
 	_spine = ColorRect.new()
-	_spine.color = UI.separator(UI.GOLD, 0.36)
+	_spine.color = UI.separator(UI.GOLD, 0.30)
 	_spine.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(_spine)
 
@@ -106,18 +104,15 @@ func _build_ui() -> void:
 	_panel.add_child(_cards)
 
 
-func _create_turn_card(entry: Dictionary, compact: bool) -> Button:
+func _create_turn_node(entry: Dictionary, compact: bool) -> Button:
 	var current := bool(entry.get("is_current", false))
 	var ally := bool(entry.get("is_player", false))
-	var accent := UI.BLUE if ally else UI.RED
-	if current:
-		accent = UI.GOLD
+	var accent := UI.GOLD if current else (UI.BLUE if ally else UI.RED)
 	var instance_id := String(entry.get("instance_id", ""))
 	var actor_name := String(entry.get("actor_name", "Digimon"))
 	var digimon_key := String(entry.get("digimon_key", ""))
 	var speed := int(entry.get("speed", 1))
-	var slot := int(entry.get("slot", 0))
-	var size_value := _card_size(current, compact)
+	var size_value := _node_size(current, compact)
 
 	var card := Button.new()
 	card.name = "TurnNode_%s" % instance_id
@@ -125,39 +120,78 @@ func _create_turn_card(entry: Dictionary, compact: bool) -> Button:
 	card.size = size_value
 	card.text = ""
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
-	card.focus_mode = Control.FOCUS_ALL
+	# The timeline remains mouse/touch clickable, but keyboard/D-pad arrows are
+	# reserved for the command UI and never wander into the turn preview.
+	card.focus_mode = Control.FOCUS_NONE
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	card.tooltip_text = "%s · Lv.%d · Speed %d%s" % [actor_name, int(entry.get("level", 1)), speed, " · Current turn" if current else ""]
-	card.icon = _load_portrait(digimon_key)
-	card.expand_icon = true
-	card.icon_max_width = 42 if current else 34
-	card.add_theme_color_override("icon_normal_color", Color.WHITE)
-	card.add_theme_color_override("icon_hover_color", Color.WHITE)
-	card.add_theme_color_override("icon_pressed_color", Color.WHITE)
-	card.add_theme_color_override("icon_focus_color", Color.WHITE)
-	card.add_theme_stylebox_override("normal", UI.turn_node_style(accent, current, "normal"))
-	card.add_theme_stylebox_override("hover", UI.turn_node_style(accent, current, "hover"))
-	card.add_theme_stylebox_override("pressed", UI.turn_node_style(accent, current, "pressed"))
-	card.add_theme_stylebox_override("focus", UI.focus_outline(accent, 13 if current else 11))
+	var empty := StyleBoxEmpty.new()
+	card.add_theme_stylebox_override("normal", empty)
+	card.add_theme_stylebox_override("hover", empty)
+	card.add_theme_stylebox_override("pressed", empty)
+	card.add_theme_stylebox_override("focus", empty)
 	card.pressed.connect(Callable(self, "_focus_actor").bind(instance_id))
 	card.mouse_entered.connect(Callable(self, "_on_card_mouse_entered").bind(card))
 	card.mouse_exited.connect(Callable(self, "_on_card_mouse_exited").bind(card))
-	card.focus_entered.connect(Callable(self, "_on_card_focus").bind(card, true))
-	card.focus_exited.connect(Callable(self, "_on_card_focus").bind(card, false))
 
-	var team_tick := ColorRect.new()
-	team_tick.color = accent
-	team_tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	team_tick.position = Vector2(-4.0, size_value.y * 0.5 - 8.0)
-	team_tick.size = Vector2(3.0, 16.0)
-	card.add_child(team_tick)
+	var avatar_side := _avatar_size(current, compact)
+	var avatar := Panel.new()
+	avatar.name = "Avatar"
+	avatar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	avatar.clip_contents = true
+	avatar.position = Vector2((size_value.x - avatar_side) * 0.5, 0.0)
+	avatar.size = Vector2(avatar_side, avatar_side)
+	avatar.add_theme_stylebox_override("panel", _avatar_style(accent, current))
+	card.add_child(avatar)
 
-	var order_label := _label("NOW" if current else str(slot), 10 if compact else 11, UI.GOLD if current else UI.MUTED)
-	order_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	order_label.position = Vector2(3.0, size_value.y - 17.0)
-	order_label.size = Vector2(size_value.x - 6.0, 14.0)
-	card.add_child(order_label)
+	var portrait := TextureRect.new()
+	var inset := 5.0 if current else 4.0
+	portrait.position = Vector2(inset, inset)
+	portrait.size = Vector2(avatar_side - inset * 2.0, avatar_side - inset * 2.0)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait.texture = _load_portrait(digimon_key)
+	avatar.add_child(portrait)
+
+	if current:
+		var now_label := _label("NOW", 10 if compact else 11, UI.TEXT)
+		now_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		now_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		now_label.position = Vector2((size_value.x - 48.0) * 0.5, avatar_side + 4.0)
+		now_label.size = Vector2(48.0, 18.0)
+		now_label.add_theme_stylebox_override("normal", _now_style())
+		card.add_child(now_label)
 	return card
+
+
+func _avatar_style(accent: Color, current: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(UI.GLASS.r, UI.GLASS.g, UI.GLASS.b, 0.90 if current else 0.72)
+	style.border_color = Color(accent.r, accent.g, accent.b, 0.96 if current else 0.62)
+	style.set_border_width_all(2 if current else 1)
+	var radius := 15 if current else 12
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.24)
+	style.shadow_size = 3 if current else 1
+	style.shadow_offset = Vector2(0.0, 2.0)
+	return style
+
+
+func _now_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(UI.GOLD.r, UI.GOLD.g, UI.GOLD.b, 0.88)
+	style.corner_radius_top_left = 9
+	style.corner_radius_top_right = 9
+	style.corner_radius_bottom_left = 9
+	style.corner_radius_bottom_right = 9
+	style.content_margin_left = 6.0
+	style.content_margin_right = 6.0
+	return style
 
 
 func _label(text_value: String, font_size: int, color: Color) -> Label:
@@ -195,16 +229,11 @@ func _load_portrait(digimon_key: String) -> Texture2D:
 
 
 func _on_card_mouse_entered(card: Control) -> void:
-	_animate_card_scale(card, Vector2(1.06, 1.06))
+	_animate_card_scale(card, Vector2(1.055, 1.055))
 
 
 func _on_card_mouse_exited(card: Control) -> void:
-	if card != get_viewport().gui_get_focus_owner():
-		_animate_card_scale(card, Vector2.ONE)
-
-
-func _on_card_focus(card: Control, focused: bool) -> void:
-	_animate_card_scale(card, Vector2(1.06, 1.06) if focused else Vector2.ONE)
+	_animate_card_scale(card, Vector2.ONE)
 
 
 func _animate_card_scale(card: Control, target: Vector2) -> void:
@@ -236,10 +265,16 @@ func _compact_slot_count(width: float) -> int:
 	return 5
 
 
-func _card_size(current: bool, compact: bool) -> Vector2:
+func _avatar_size(current: bool, compact: bool) -> float:
 	if compact:
-		return Vector2(58.0, 58.0) if current else Vector2(50.0, 50.0)
-	return Vector2(66.0, 66.0) if current else Vector2(54.0, 54.0)
+		return 52.0 if current else 44.0
+	return 58.0 if current else 46.0
+
+
+func _node_size(current: bool, compact: bool) -> Vector2:
+	if compact:
+		return Vector2(62.0, 76.0) if current else Vector2(52.0, 50.0)
+	return Vector2(70.0, 84.0) if current else Vector2(56.0, 52.0)
 
 
 func _layout_panel(entry_count: int, compact: bool) -> void:
@@ -250,36 +285,36 @@ func _layout_panel(entry_count: int, compact: bool) -> void:
 	var ui_scale := UI.ui_scale(viewport_obj)
 	if compact:
 		_title.visible = false
-		var current_w := 58.0
-		var future_w := 50.0
+		var current_w := 62.0
+		var future_w := 52.0
 		var cards_width := current_w + maxf(0.0, float(entry_count - 1)) * future_w + maxf(0.0, float(entry_count - 1)) * 8.0
 		var width := minf(physical.x - 20.0, cards_width)
-		var height := 66.0
+		var height := 78.0
 		_panel.scale = Vector2.ONE * ui_scale
-		_panel.position = Vector2((physical.x - width) * 0.5 * ui_scale, 58.0 * ui_scale)
+		_panel.position = Vector2((physical.x - width) * 0.5 * ui_scale, 56.0 * ui_scale)
 		_panel.size = Vector2(width, height)
 		_cards.position = Vector2(0.0, 0.0)
 		_cards.size = Vector2(width, height)
-		_spine.position = Vector2(8.0, 32.0)
-		_spine.size = Vector2(maxf(0.0, width - 16.0), 1.0)
+		_spine.position = Vector2(10.0, 25.0)
+		_spine.size = Vector2(maxf(0.0, width - 20.0), 2.0)
 	else:
 		_title.visible = true
-		var width := 74.0
-		var current_h := 66.0
-		var future_h := 54.0
+		var width := 78.0
+		var current_h := 84.0
+		var future_h := 52.0
 		var cards_height := current_h + maxf(0.0, float(entry_count - 1)) * future_h + maxf(0.0, float(entry_count - 1)) * 8.0
-		var height := minf(cards_height + 28.0, physical.y - 160.0)
-		var top := clampf((physical.y - height) * 0.5, 82.0, maxf(82.0, physical.y - height - 92.0))
+		var height := minf(cards_height + 28.0, physical.y - 154.0)
+		var top := clampf((physical.y - height) * 0.5, 78.0, maxf(78.0, physical.y - height - 86.0))
 		_panel.scale = Vector2.ONE * ui_scale
-		_panel.position = Vector2((physical.x - width - 18.0) * ui_scale, top * ui_scale)
+		_panel.position = Vector2((physical.x - width - 14.0) * ui_scale, top * ui_scale)
 		_panel.size = Vector2(width, height)
 		_title.position = Vector2(0.0, 0.0)
 		_title.size = Vector2(width, 20.0)
 		_title.add_theme_font_size_override("font_size", 11)
 		_cards.position = Vector2(4.0, 25.0)
-		_cards.size = Vector2(width - 4.0, maxf(0.0, height - 25.0))
-		_spine.position = Vector2(width * 0.5 - 1.0, 25.0)
-		_spine.size = Vector2(2.0, maxf(0.0, height - 31.0))
+		_cards.size = Vector2(width - 8.0, maxf(0.0, height - 25.0))
+		_spine.position = Vector2(width * 0.5 - 1.0, 26.0)
+		_spine.size = Vector2(2.0, maxf(0.0, height - 32.0))
 
 
 func _signature(entries: Array, compact: bool) -> String:
@@ -298,8 +333,10 @@ func _signature(entries: Array, compact: bool) -> String:
 
 func _animate_card(card: Control, index: int) -> void:
 	card.modulate.a = 0.0
-	card.position += Vector2(8.0, 0.0) if not _is_compact() else Vector2(0.0, -5.0)
-	var target := card.position - (Vector2(8.0, 0.0) if not _is_compact() else Vector2(0.0, -5.0))
+	var compact := _is_compact()
+	var offset := Vector2(0.0, -5.0) if compact else Vector2(6.0, 0.0)
+	card.position += offset
+	var target := card.position - offset
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_interval(minf(0.10, float(index) * 0.02))
