@@ -29,6 +29,7 @@ var _last_move_path: Array[Vector2i] = []
 var _has_moved := false
 var _input_locked := false
 var _mov_by_key: Dictionary = {}
+var _debug_actor: Node = null
 
 
 func _ready() -> void:
@@ -41,12 +42,15 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _input_locked or current_actor == null or not _is_user_controlled(current_actor):
-		return
-
 	if event is InputEventKey:
 		var key_event := event as InputEventKey
 		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_ESCAPE:
+			if GlobalVariables.DebugMode:
+				_clear_debug_selection()
+				get_viewport().set_input_as_handled()
+				return
+			if _input_locked or current_actor == null or not _is_user_controlled(current_actor):
+				return
 			if phase == Phase.MOVE_SELECT:
 				cancel_move_selection()
 				get_viewport().set_input_as_handled()
@@ -59,14 +63,35 @@ func _unhandled_input(event: InputEvent) -> void:
 	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
 		return
 
-	handle_world_tap(_pointer_world_position())
+	if GlobalVariables.DebugMode:
+		if _handle_debug_world_tap(_pointer_world_position()):
+			get_viewport().set_input_as_handled()
+		return
+
+	if _input_locked or current_actor == null or not _is_user_controlled(current_actor):
+		return
+
+	if handle_world_tap(_pointer_world_position()):
+		get_viewport().set_input_as_handled()
 
 
 func uses_tactical_input() -> bool:
 	return true
 
 
+func set_debug_mode(enabled: bool) -> void:
+	GlobalVariables.DebugMode = enabled
+	if not enabled:
+		_clear_debug_selection()
+	_refresh_hud()
+
+
 func handle_world_tap(world_position: Vector2) -> bool:
+	# Debug movement is deliberately independent from the tactical turn state.
+	# It never changes current_actor, phase, movement budget, or turn ownership.
+	if GlobalVariables.DebugMode:
+		return _handle_debug_world_tap(world_position)
+
 	if _input_locked or current_actor == null or not _is_user_controlled(current_actor):
 		return false
 	if _field == null or not _field.has_method("select_tile_from_world"):
@@ -91,6 +116,57 @@ func handle_world_tap(world_position: Vector2) -> bool:
 				_perform_move_to(grid)
 				return true
 	return false
+
+
+func _handle_debug_world_tap(world_position: Vector2) -> bool:
+	if _controller == null or _field == null:
+		return false
+
+	var hovered: Node = null
+	if _controller.has_method("get_digimon_under_pointer"):
+		hovered = _controller.call("get_digimon_under_pointer", world_position) as Node
+
+	# Clicking any Digimon selects it as the debug unit, regardless of team or turn.
+	if hovered != null:
+		_set_debug_actor(hovered)
+		return true
+
+	if _debug_actor == null or not is_instance_valid(_debug_actor):
+		_debug_actor = null
+		return false
+	if not _field.has_method("select_tile_from_world") or not bool(_field.call("select_tile_from_world", world_position)):
+		return false
+
+	var grid := Vector2i(_field.call("world_to_grid", _field.to_local(world_position)))
+	var target_world := Vector2(_field.call("grid_to_world", grid))
+	if _field.has_method("can_digimon_move_to_world"):
+		if not bool(_field.call("can_digimon_move_to_world", target_world, _debug_actor)):
+			return true
+
+	if _debug_actor.has_method("debug_relocate_to_grid"):
+		return bool(_debug_actor.call("debug_relocate_to_grid", grid, _field))
+
+	# Compatibility fallback for a battle unit that has not implemented the helper.
+	if _debug_actor.has_method("get_tile_world_position"):
+		var current_tile := Vector2(_debug_actor.call("get_tile_world_position"))
+		_debug_actor.global_position += target_world - current_tile
+		return true
+	return false
+
+
+func _set_debug_actor(actor: Node) -> void:
+	if _debug_actor == actor:
+		return
+	_clear_debug_selection()
+	_debug_actor = actor
+	if _debug_actor != null and _debug_actor.has_method("set_debug_selected"):
+		_debug_actor.call("set_debug_selected", true)
+
+
+func _clear_debug_selection() -> void:
+	if _debug_actor != null and is_instance_valid(_debug_actor) and _debug_actor.has_method("set_debug_selected"):
+		_debug_actor.call("set_debug_selected", false)
+	_debug_actor = null
 
 
 func begin_move_selection() -> void:
@@ -252,9 +328,8 @@ func _skip_enemy_placeholder_turn(actor: Node) -> void:
 	await get_tree().create_timer(ENEMY_PLACEHOLDER_TURN_SECONDS).timeout
 	if current_actor != actor or phase != Phase.COMMAND:
 		return
-	if GlobalVariables.DebugMode:
-		_refresh_hud()
-		return
+	# Debug mode is an independent sandbox overlay; it must never pause or take
+	# ownership of the actual tactical turn sequence.
 	_end_turn()
 
 
@@ -358,7 +433,9 @@ func _load_movement_database() -> void:
 
 
 func _is_user_controlled(actor: Node) -> bool:
-	return actor != null and (bool(actor.get("is_player_controlled")) or GlobalVariables.DebugMode)
+	# Tactical ownership never changes in debug mode. Debug movement is handled
+	# separately by _handle_debug_world_tap().
+	return actor != null and bool(actor.get("is_player_controlled"))
 
 
 func _sync_turn_highlight() -> void:
