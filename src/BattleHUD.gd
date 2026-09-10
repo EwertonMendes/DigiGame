@@ -21,6 +21,7 @@ var _primary_buttons: Array[Button] = []
 var _accent_by_button: Dictionary = {}
 var _last_actor_key := ""
 var _last_viewport_size := Vector2.ZERO
+var _last_window_size := Vector2i.ZERO
 var _cached_state: Dictionary = {}
 
 
@@ -38,7 +39,8 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	var viewport := get_viewport().get_visible_rect().size
-	if viewport != _last_viewport_size:
+	var window_size := DisplayServer.window_get_size()
+	if viewport != _last_viewport_size or window_size != _last_window_size:
 		_layout_dock()
 
 
@@ -226,7 +228,7 @@ func _set_action_selected(button: Button, selected: bool) -> void:
 func _phase_copy(state: Dictionary) -> String:
 	var raw_phase := String(state.get("phase", ""))
 	if not bool(state.get("is_user_turn", false)):
-		return "OPPONENT TURN  •  timeline advances only after actions resolve"
+		return "OPPONENT TURN  •  WAITING FOR ACTION"
 	match raw_phase:
 		"Turn Start": return "PREPARING TURN"
 		"Choose an action": return "SELECT AN ACTION"
@@ -242,31 +244,37 @@ func _phase_copy(state: Dictionary) -> String:
 func _layout_dock() -> void:
 	if _dock == null:
 		return
-	var viewport := get_viewport().get_visible_rect().size
-	_last_viewport_size = viewport
-	var compact := viewport.x < 760.0
+	var viewport_obj := get_viewport()
+	var logical := viewport_obj.get_visible_rect().size
+	var physical := UI.physical_window_size(viewport_obj)
+	var ui_scale := UI.ui_scale(viewport_obj)
+	_last_viewport_size = logical
+	_last_window_size = DisplayServer.window_get_size()
+	var compact := physical.x < 760.0
 	var side_margin := 10.0 if compact else 18.0
-	var width := minf(720.0, viewport.x - side_margin * 2.0)
+	var width := minf(720.0, physical.x - side_margin * 2.0)
 	var height := 102.0 if compact else 108.0
-	_dock.position = Vector2((viewport.x - width) * 0.5, viewport.y - height - (8.0 if compact else 14.0))
+	var bottom_margin := 8.0 if compact else 14.0
+	_dock.scale = Vector2.ONE * ui_scale
+	_dock.position = Vector2((physical.x - width) * 0.5 * ui_scale, (physical.y - height - bottom_margin) * ui_scale)
 	_dock.size = Vector2(width, height)
 
 	var inner_x := 10.0
 	var action_y := 10.0
-	var action_h := 58.0 if not compact else 54.0
+	var action_h := 54.0 if compact else 58.0
 	var action_width := (width - inner_x * 2.0 - ACTION_GAP * 4.0) / 5.0
 	for index in range(_primary_buttons.size()):
 		var button := _primary_buttons[index]
 		button.position = Vector2(inner_x + float(index) * (action_width + ACTION_GAP), action_y)
 		button.size = Vector2(action_width, action_h)
-		button.icon_max_width = 23 if not compact else 19
-		button.add_theme_font_size_override("font_size", 10 if not compact else 8)
+		button.icon_max_width = 19 if compact else 23
+		button.add_theme_font_size_override("font_size", 8 if compact else 10)
 
 	var bottom_y := action_y + action_h + 7.0
 	_actor_label.position = Vector2(inner_x, bottom_y)
-	_actor_label.size = Vector2(150.0 if not compact else 105.0, 20.0)
-	_actor_label.add_theme_font_size_override("font_size", 9 if not compact else 7)
-	_mov_label.size = Vector2(78.0 if not compact else 66.0, 22.0)
+	_actor_label.size = Vector2(105.0 if compact else 150.0, 20.0)
+	_actor_label.add_theme_font_size_override("font_size", 7 if compact else 9)
+	_mov_label.size = Vector2(66.0 if compact else 78.0, 22.0)
 	_mov_label.position = Vector2(width - inner_x - _mov_label.size.x, bottom_y - 1.0)
 
 	var context_buttons: Array[Button] = [_confirm_move_button, _undo_button, _cancel_button]
@@ -274,7 +282,7 @@ func _layout_dock() -> void:
 	for button in context_buttons:
 		if button.visible:
 			visible_context.append(button)
-	var context_w := 72.0 if not compact else 58.0
+	var context_w := 58.0 if compact else 72.0
 	var context_gap := 5.0
 	var context_total := float(visible_context.size()) * context_w + maxf(0.0, float(visible_context.size() - 1)) * context_gap
 	var context_start := width - inner_x - _mov_label.size.x - 8.0 - context_total
@@ -293,8 +301,8 @@ func _layout_dock() -> void:
 
 func _animate_actor_change() -> void:
 	_dock.modulate.a = 0.45
-	_dock.position.y += 8.0
-	var target_y := _dock.position.y - 8.0
+	_dock.position.y += 8.0 * UI.ui_scale(get_viewport())
+	var target_y := _dock.position.y - 8.0 * UI.ui_scale(get_viewport())
 	var target_alpha := 1.0 if bool(_cached_state.get("is_user_turn", false)) else 0.72
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -309,7 +317,7 @@ func _on_action_hover(button: Button, entered: bool) -> void:
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(button, "scale", Vector2(1.025, 1.025) if entered else Vector2.ONE, 0.09)
-	tween.tween_property(button, "position:y", button.position.y - 2.0 if entered else 10.0, 0.09)
+	tween.tween_property(button, "position:y", 8.0 if entered else 10.0, 0.09)
 
 
 func _on_action_pressed_visual(button: Button) -> void:
