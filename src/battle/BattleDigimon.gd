@@ -5,6 +5,8 @@ var instance: DigimonInstance
 var team: String = "player"
 var current_hp: int = 1
 var current_mp: int = 0
+var initiative: float = 0.0
+var last_recovery_cost: float = 100.0
 var temporary_modifiers: Dictionary = {
 	"hp": 0,
 	"mp": 0,
@@ -35,6 +37,15 @@ func get_mov(calculator, species: Dictionary) -> int:
 	if instance == null or calculator == null:
 		return 0
 	return clampi(int(calculator.get_mov(instance, species)) + int(temporary_modifiers.get("mov", 0)), 0, 8)
+
+
+func set_initiative(value: float) -> void:
+	initiative = value
+
+
+func consume_initiative(recovery_cost: float) -> void:
+	last_recovery_cost = maxf(0.0, recovery_cost)
+	initiative -= last_recovery_cost
 
 
 func commit_resources_to_instance() -> void:
