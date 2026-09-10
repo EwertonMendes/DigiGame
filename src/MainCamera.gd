@@ -186,14 +186,16 @@ func _handle_keyboard_zoom(key_event: InputEventKey) -> void:
 
 
 func _handle_keyboard_pan(delta: float) -> void:
+	# Arrow keys/D-pad belong exclusively to UI focus navigation. Camera panning
+	# stays on WASD, right-mouse drag and touch gestures.
 	var direction := Vector2.ZERO
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+	if Input.is_key_pressed(KEY_A):
 		direction.x -= 1.0
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+	if Input.is_key_pressed(KEY_D):
 		direction.x += 1.0
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+	if Input.is_key_pressed(KEY_W):
 		direction.y -= 1.0
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+	if Input.is_key_pressed(KEY_S):
 		direction.y += 1.0
 	if direction == Vector2.ZERO:
 		return
