@@ -91,7 +91,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/web
-          godot --headless --path . --export-release Web build/web/index.html
+          godot --headless --path . --export-release Web build/web/index.html 2>&1 | tee /tmp/godot-export.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing ' /tmp/godot-export.log; then exit 1; fi
           test -s build/web/index.html && test -s build/web/index.wasm
       - name: Prepare browser smoke test
         shell: bash
