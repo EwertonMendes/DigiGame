@@ -78,4 +78,20 @@ Enemy generation uses the same instance model. Encounter profiles (`wild`, `trai
 
 ## Battle state
 
-`BattleDigimon` wraps a persistent `DigimonInstance` with battle-only state such as current battle HP/MP, statuses, and temporary stat/MOV modifiers. Temporary effects never overwrite the species catalogue or permanent training.
+`BattleDigimon` wraps a persistent `DigimonInstance` with battle-only state such as current battle HP/MP, statuses, temporary stat/MOV modifiers, and CT initiative. Temporary effects never overwrite the species catalogue or permanent training.
+
+## Speed-based turn timeline
+
+Turns are scheduled by `TurnScheduler.gd`, not by scene order. Each battle actor charges CT toward a ready threshold of 100 using its current final SPD:
+
+`initiative rate = SPD ^ 0.5`
+
+The square-root curve deliberately compresses large SPD gaps so faster Digimon receive earlier and potentially more frequent turns without raw SPD scaling the turn count linearly.
+
+When nobody is ready, the scheduler advances virtual battle time only as far as necessary for the next actor to reach CT 100. Player decision time never advances the timeline, so combat remains fully turn-based.
+
+After acting, the current default recovery cost is 100 CT. The scheduler API already supports variable recovery costs, initiative delay/advance, and direct CT changes so future skills such as Haste, Slow, Delay, Quick, or heavy attacks can alter the visible timeline without replacing the scheduler.
+
+Ties are deterministic: higher accumulated CT wins first, then higher final SPD, then the actor's stable individual UUID.
+
+The Turn Order HUD shows the current actor plus a simulated preview of upcoming turns. This preview is read-only and uses the same scheduler rules as the real battle state. Desktop shows a longer queue, while compact/touch layouts show fewer slots. Timeline portraits can focus the camera without changing selection or turn ownership.
