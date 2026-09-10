@@ -10,6 +10,7 @@ const MAX_RECOVERY_COST := 300.0
 var _turn_scheduler = TurnSchedulerScript.new()
 var _pending_recovery_cost: float = DEFAULT_TURN_RECOVERY_COST
 var _preview_recovery_cost: float = DEFAULT_TURN_RECOVERY_COST
+var _battle_act_number: int = 0
 
 
 func _load_movement_database() -> void:
@@ -38,6 +39,7 @@ func _start_battle() -> void:
 
 	_turn_scheduler.reset(_turn_order)
 	_turn_index = -1
+	_battle_act_number = 0
 	_pending_recovery_cost = DEFAULT_TURN_RECOVERY_COST
 	_preview_recovery_cost = DEFAULT_TURN_RECOVERY_COST
 	_start_next_turn()
@@ -51,6 +53,7 @@ func _start_next_turn() -> void:
 	if next_actor == null:
 		return
 
+	_battle_act_number += 1
 	current_actor = next_actor
 	_turn_index = _turn_order.find(current_actor)
 	_pending_recovery_cost = DEFAULT_TURN_RECOVERY_COST
@@ -87,6 +90,7 @@ func _end_turn() -> void:
 
 func get_hud_state() -> Dictionary:
 	var state: Dictionary = super.get_hud_state()
+	state["turn_number"] = maxi(1, _battle_act_number)
 	if current_actor == null:
 		return state
 	if current_actor.has_method("get_display_name"):
