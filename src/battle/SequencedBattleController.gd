@@ -19,14 +19,16 @@ func _execute_selected_action() -> void:
 		cancel_current_action()
 		return
 
-	_event_bus.emit_event("action_started", {
+	var action_started_payload := {
 		"actor_id": _instance_id(current_actor),
 		"target_id": _instance_id(target),
 		"action_id": String(action.get("id", "")),
-	})
+	}
+	_event_bus.emit_event("action_started", action_started_payload)
+	_present_event("action_started", action_started_payload)
 
-	# Damage is resolved at the visual impact point, not when the command is
-	# confirmed. The presentation owns the wind-up/lunge/projectile timing.
+	# The presentation sets an exact impact deadline for the lunge/projectile.
+	# HP cannot change until that visual beat is reached.
 	await _wait_for_presentation_impact()
 	if _battle_over or current_actor == null or target == null or not is_instance_valid(target):
 		return
@@ -47,7 +49,7 @@ func _execute_selected_action() -> void:
 						critical = bool(action.get("canCrit", false)) and _battle_rng.roll_percent(float(preview.get("crit_chance", 0.0)))
 						var raw_damage: int = int(preview.get("critical_damage" if critical else "damage", 0))
 						applied_damage = int(target.call("take_damage", raw_damage)) if target.has_method("take_damage") else 0
-						_event_bus.emit_event("damage_applied", {
+						var damage_payload := {
 							"actor_id": _instance_id(current_actor),
 							"target_id": _instance_id(target),
 							"action_id": String(action.get("id", "")),
@@ -55,7 +57,9 @@ func _execute_selected_action() -> void:
 							"critical": critical,
 							"type_modifier": float(preview.get("type_modifier", 1.0)),
 							"element_modifier": float(preview.get("element_modifier", 1.0)),
-						})
+						}
+						_event_bus.emit_event("damage_applied", damage_payload)
+						_present_event("damage_applied", damage_payload)
 					"status":
 						var chance: float = float(effect.get("chance", 100.0))
 						if _battle_rng.roll_percent(chance):
@@ -69,11 +73,13 @@ func _execute_selected_action() -> void:
 								})
 								notify_speed_changed()
 	else:
-		_event_bus.emit_event("action_missed", {
+		var miss_payload := {
 			"actor_id": _instance_id(current_actor),
 			"target_id": _instance_id(target),
 			"action_id": String(action.get("id", "")),
-		})
+		}
+		_event_bus.emit_event("action_missed", miss_payload)
+		_present_event("action_missed", miss_payload)
 
 	var target_knocked_out: bool = not _actor_available(target)
 	if target_knocked_out:
@@ -95,9 +101,9 @@ func _execute_selected_action() -> void:
 	})
 	_clear_action_selection(false)
 
-	# Victory/defeat never opens over a defeated sprite. Presentation normally
-	# hides it via the dissolve; this fallback makes battlefield state independent
-	# from animation callbacks if a renderer/browser ever drops a tween.
+	# Victory/defeat never opens over a defeated sprite. The renderer normally
+	# completes a smoke/dissolve animation; this hard fallback guarantees board
+	# state even if a browser drops a tween/callback.
 	if target_knocked_out:
 		await get_tree().create_timer(KO_RESOLVE_DELAY).timeout
 		if is_instance_valid(target) and not _actor_available(target):
@@ -143,13 +149,27 @@ func _run_enemy_turn(actor: Node) -> void:
 	call_deferred("_end_turn")
 
 
-func _wait_for_presentation_impact() -> void:
+func _presentation_node() -> Node:
 	var main: Node = get_tree().root.get_node_or_null("Main")
-	if main != null:
-		var presentation: Node = main.get_node_or_null("BattlePresentationFX")
-		if presentation != null and presentation.has_method("wait_for_current_impact"):
-			await presentation.call("wait_for_current_impact")
-			return
+	if main == null:
+		return null
+	return main.get_node_or_null("BattlePresentationFX")
+
+
+func _present_event(event_type: String, payload: Dictionary) -> void:
+	var presentation: Node = _presentation_node()
+	if presentation == null or not presentation.has_method("present_event"):
+		return
+	var event: Dictionary = payload.duplicate(true)
+	event["type"] = event_type
+	presentation.call("present_event", event)
+
+
+func _wait_for_presentation_impact() -> void:
+	var presentation: Node = _presentation_node()
+	if presentation != null and presentation.has_method("wait_for_current_impact"):
+		await presentation.call("wait_for_current_impact")
+		return
 	await get_tree().create_timer(PRESENTATION_FALLBACK_IMPACT_DELAY).timeout
 
 
@@ -160,11 +180,13 @@ func _handle_knockout(actor: Node) -> void:
 	if actor.has_method("set_turn_active"):
 		actor.call("set_turn_active", false)
 	var actor_id: String = _instance_id(actor)
-	_event_bus.emit_event("unit_knocked_out", {
+	var ko_payload := {
 		"target_id": actor_id,
 		"target_name": _display_name(actor),
 		"is_player": bool(actor.get("is_player_controlled")),
-	})
+	}
+	_event_bus.emit_event("unit_knocked_out", ko_payload)
+	_present_event("unit_knocked_out", ko_payload)
 	if not bool(actor.get("is_player_controlled")) and not _defeated_enemy_ids.has(actor_id):
 		_defeated_enemy_ids.append(actor_id)
 	turn_order_changed.emit()
