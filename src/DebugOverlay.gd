@@ -33,8 +33,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var viewport_size := get_viewport().get_visible_rect().size
-	var window_size := DisplayServer.window_get_size()
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var window_size: Vector2i = DisplayServer.window_get_size()
 	if viewport_size != _last_viewport_size or window_size != _last_window_size:
 		_layout_controls()
 
@@ -50,7 +50,7 @@ func _style_controls() -> void:
 	center_button.icon_max_width = 19
 	zoom_out_button.text = "-"
 	zoom_in_button.text = "+"
-	for button in [center_button, zoom_out_button, zoom_in_button, debug_button]:
+	for button: Button in [center_button, zoom_out_button, zoom_in_button, debug_button]:
 		button.focus_mode = Control.FOCUS_NONE
 		button.add_theme_color_override("font_color", UI.TEXT)
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
@@ -69,51 +69,61 @@ func _style_button(button: Button, accent: Color) -> void:
 
 
 func _layout_controls() -> void:
-	var viewport_obj := get_viewport()
-	var logical := viewport_obj.get_visible_rect().size
-	var physical := UI.physical_window_size(viewport_obj)
-	var ui_scale := UI.ui_scale(viewport_obj)
+	var viewport_obj: Viewport = get_viewport()
+	var logical: Vector2 = viewport_obj.get_visible_rect().size
+	var physical: Vector2 = UI.physical_window_size(viewport_obj)
+	var ui_scale: float = UI.ui_scale(viewport_obj)
 	_last_viewport_size = logical
 	_last_window_size = DisplayServer.window_get_size()
-	var compact := physical.x < 760.0
-	var button_size := COMPACT_BUTTON if compact else DESKTOP_BUTTON
-	var margin := 10.0 if compact else 14.0
-	var gap := 5.0
+	var compact: bool = UI.is_compact(viewport_obj, 760.0)
+	var short_landscape: bool = compact and physical.x > physical.y and physical.y < 560.0
+	var button_size: float = COMPACT_BUTTON if compact else DESKTOP_BUTTON
+	if short_landscape:
+		button_size = 36.0
+	var margin: float = 10.0 if compact else 14.0
+	var gap: float = 5.0
 
-	var debug_width := 100.0 if compact else 112.0
-	var debug_height := 32.0 if compact else 34.0
+	var debug_width: float = 100.0 if compact else 112.0
+	var debug_height: float = 32.0 if compact else 34.0
 	debug_button.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	debug_button.scale = Vector2.ONE * ui_scale
 	debug_button.position = Vector2((physical.x - debug_width - margin) * ui_scale, 10.0 * ui_scale)
 	debug_button.size = Vector2(debug_width, debug_height)
 	debug_button.add_theme_font_size_override("font_size", 9 if compact else 10)
 
-	for button in [center_button, zoom_out_button, zoom_in_button]:
+	for button: Button in [center_button, zoom_out_button, zoom_in_button]:
 		button.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		button.scale = Vector2.ONE * ui_scale
 		button.size = Vector2(button_size, button_size)
-		button.add_theme_font_size_override("font_size", 18)
+		button.add_theme_font_size_override("font_size", 17 if compact else 18)
 
-	var utility_y := physical.y - margin - button_size
+	var utility_y: float = physical.y - margin - button_size
+	var utility_right: float = physical.x - margin
 	if compact:
 		utility_y = physical.y - 116.0 - margin - button_size
-	var zoom_in_x := physical.x - margin - button_size
-	var zoom_out_x := zoom_in_x - gap - button_size
-	var center_x := zoom_out_x - gap - button_size
+	if short_landscape:
+		utility_y = physical.y - 142.0
+		utility_right = physical.x - 112.0
+	var zoom_in_x: float = utility_right - button_size
+	var zoom_out_x: float = zoom_in_x - gap - button_size
+	var center_x: float = zoom_out_x - gap - button_size
 	zoom_in_button.position = Vector2(zoom_in_x * ui_scale, utility_y * ui_scale)
 	zoom_out_button.position = Vector2(zoom_out_x * ui_scale, utility_y * ui_scale)
 	center_button.position = Vector2(center_x * ui_scale, utility_y * ui_scale)
 
-	var touch_layout := compact or DisplayServer.is_touchscreen_available()
+	var touch_layout: bool = compact or DisplayServer.is_touchscreen_available()
 	touch_hint.visible = touch_layout or GlobalVariables.DebugMode
 	if touch_hint.visible:
 		touch_hint.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		touch_hint.scale = Vector2.ONE * ui_scale
-		var hint_width := minf(330.0, maxf(160.0, physical.x - 130.0))
-		var hint_y := physical.y - (145.0 if compact else 34.0)
+		var hint_width: float = minf(330.0, maxf(160.0, physical.x - 130.0))
+		var hint_y: float = physical.y - (145.0 if compact else 34.0)
+		if short_landscape:
+			hint_y = physical.y - 34.0
+			hint_width = minf(260.0, physical.x * 0.34)
 		touch_hint.position = Vector2(margin * ui_scale, hint_y * ui_scale)
 		touch_hint.size = Vector2(hint_width, 24.0)
-		touch_hint.add_theme_font_size_override("font_size", 9 if compact else 10)
+		touch_hint.add_theme_font_size_override("font_size", 8 if compact else 10)
 
 
 func _on_debug_toggled(enabled: bool) -> void:
@@ -142,7 +152,7 @@ func _on_center_pressed() -> void:
 
 func _refresh_label() -> void:
 	debug_button.text = "DEBUG  ON" if GlobalVariables.DebugMode else "DEBUG  OFF"
-	var accent := UI.GOLD if GlobalVariables.DebugMode else UI.RED
+	var accent: Color = UI.GOLD if GlobalVariables.DebugMode else UI.RED
 	_style_button(debug_button, accent)
 	if GlobalVariables.DebugMode:
 		touch_hint.text = "DEBUG • select any Digimon, then choose a free tile"
