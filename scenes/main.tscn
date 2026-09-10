@@ -1,13 +1,14 @@
-[gd_scene load_steps=9 format=3 uid="uid://dwfwmlo2bqdlu"]
+[gd_scene load_steps=10 format=3 uid="uid://dwfwmlo2bqdlu"]
 
 [ext_resource type="Script" path="res://src/battle/BattleFieldDomain.gd" id="1_field"]
 [ext_resource type="Script" path="res://src/MainCamera.gd" id="2_camera"]
 [ext_resource type="Script" path="res://src/battle/CombatDigimonRuntimeController.gd" id="3_digimon"]
 [ext_resource type="PackedScene" uid="uid://celawaflf4raa" path="res://scenes/blue_space_background.tscn" id="4_background"]
 [ext_resource type="Script" path="res://src/DebugOverlay.gd" id="5_debug"]
-[ext_resource type="Script" path="res://src/DigimonInfoPanel.gd" id="6_info"]
+[ext_resource type="Script" path="res://src/ui/CompactDigimonInfoPanel.gd" id="6_info"]
 [ext_resource type="Script" path="res://src/BattleControllerDomain.gd" id="7_battle"]
 [ext_resource type="Script" path="res://src/BattleHUDDomain.gd" id="8_hud"]
+[ext_resource type="Script" path="res://src/battle/BattlePresentationFX.gd" id="9_fx"]
 
 [node name="Main" type="Node2D"]
 
@@ -29,6 +30,9 @@ script = ExtResource("2_camera")
 
 [node name="BattleController" type="Node" parent="."]
 script = ExtResource("7_battle")
+
+[node name="BattlePresentationFX" type="Node" parent="."]
+script = ExtResource("9_fx")
 
 [node name="DigimonInfoUI" type="CanvasLayer" parent="."]
 layer = 90
