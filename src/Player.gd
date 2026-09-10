@@ -35,6 +35,7 @@ var sprite_layout := "directional_12"
 var digimon_key := ""
 var is_player_controlled := true
 var is_selected := false
+var is_debug_selected := false
 var is_turn_active := false
 var is_defending := false
 var selected_tile_coords := Vector2i.ZERO
@@ -60,7 +61,7 @@ func _physics_process(delta: float) -> void:
 		_advance_selected_animation(delta)
 		return
 
-	if is_selected:
+	if is_selected or is_debug_selected:
 		if not GlobalVariables.TouchInputActive:
 			face_toward_world_position(get_global_mouse_position())
 		_advance_selected_animation(delta)
@@ -119,7 +120,19 @@ func set_tactical_selected(selected: bool) -> void:
 	is_selected = selected
 	_selected_animation_time = 0.0
 	_selected_animation_frame = 0
-	_show_current_facing(selected)
+	_show_current_facing(is_selected or is_debug_selected)
+	emit_particles_when_selected()
+	_update_turn_indicator()
+
+
+func set_debug_selected(selected: bool) -> void:
+	if is_debug_selected == selected:
+		_update_turn_indicator()
+		return
+	is_debug_selected = selected
+	_selected_animation_time = 0.0
+	_selected_animation_frame = 0
+	_show_current_facing(is_selected or is_debug_selected)
 	emit_particles_when_selected()
 	_update_turn_indicator()
 
@@ -153,7 +166,24 @@ func move_along_grid_path(path: Array[Vector2i], field: Node) -> void:
 	_is_path_moving = false
 	_selected_animation_time = 0.0
 	_selected_animation_frame = 0
-	_show_current_facing(false)
+	_show_current_facing(is_selected or is_debug_selected)
+
+
+func debug_relocate_to_grid(grid: Vector2i, field: Node) -> bool:
+	if field == null or not field.has_method("grid_to_world"):
+		return false
+	var tile_world_position := Vector2(field.call("grid_to_world", grid))
+	if field.has_method("can_digimon_move_to_world"):
+		if not bool(field.call("can_digimon_move_to_world", tile_world_position, self)):
+			return false
+
+	var target_position := tile_world_position + PLAYER_POSITION_DEVIATION
+	face_toward_world_position(target_position)
+	global_position = target_position
+	_selected_animation_time = 0.0
+	_selected_animation_frame = 0
+	_show_current_facing(is_selected or is_debug_selected)
+	return true
 
 
 func _select_for_pointer(pointer_world_position: Vector2) -> void:
@@ -217,7 +247,7 @@ func face_toward_world_position(target_position: Vector2) -> void:
 	facing_direction = next_direction
 	_selected_animation_time = 0.0
 	_selected_animation_frame = 0
-	_show_current_facing(is_selected or _is_path_moving)
+	_show_current_facing(is_selected or is_debug_selected or _is_path_moving)
 
 
 func _direction_from_vector(direction_vector: Vector2) -> String:
@@ -276,9 +306,7 @@ func emit_particles_when_selected() -> void:
 	if particles == null:
 		return
 	particles.position = to_local(global_position) + PARTICLES_POSITION_DEVIATION
-	# Particles are now a secondary confirmation only. The persistent tactical
-	# marker communicates whose turn it is without visually obscuring sprites.
-	particles.emitting = is_selected
+	particles.emitting = is_selected or is_debug_selected
 
 
 func _create_turn_indicator() -> void:
@@ -291,7 +319,7 @@ func _create_turn_indicator() -> void:
 func _update_turn_indicator() -> void:
 	if _turn_indicator == null:
 		return
-	_turn_indicator.call("set_state", is_turn_active, is_selected, is_player_controlled)
+	_turn_indicator.call("set_state", is_turn_active, is_selected or is_debug_selected, is_player_controlled)
 
 
 func move_camera_to_selected_digimon() -> void:

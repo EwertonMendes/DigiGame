@@ -14,9 +14,11 @@ const RED := Color(1.0, 0.30, 0.28, 1.0)
 @onready var touch_hint: Label = $Root/TouchHint
 
 var _camera: Camera2D
+var _battle_controller: Node
 
 func _ready() -> void:
 	_camera = get_tree().root.get_node_or_null("Main/DigimonController/MainCamera") as Camera2D
+	_battle_controller = get_tree().root.get_node_or_null("Main/BattleController")
 	debug_button.button_pressed = GlobalVariables.DebugMode
 	debug_button.toggled.connect(_on_debug_toggled)
 	zoom_out_button.pressed.connect(_on_zoom_out_pressed)
@@ -111,14 +113,17 @@ func _layout_controls() -> void:
 	if touch_layout:
 		var hint_bottom := -(TOUCH_MARGIN_PX + TOUCH_BUTTON_SIZE_PX + 12.0) * ui_scale
 		touch_hint.offset_left = 14.0 * ui_scale
-		touch_hint.offset_right = minf(360.0 * ui_scale, viewport_size.x - 14.0 * ui_scale)
+		touch_hint.offset_right = minf(460.0 * ui_scale, viewport_size.x - 14.0 * ui_scale)
 		touch_hint.offset_bottom = hint_bottom
 		touch_hint.offset_top = hint_bottom - 36.0 * ui_scale
 		touch_hint.add_theme_font_size_override("font_size", int(round(14.0 * ui_scale)))
 		touch_hint.add_theme_constant_override("outline_size", int(round(4.0 * ui_scale)))
 
 func _on_debug_toggled(enabled: bool) -> void:
-	GlobalVariables.DebugMode = enabled
+	if _battle_controller != null and _battle_controller.has_method("set_debug_mode"):
+		_battle_controller.call("set_debug_mode", enabled)
+	else:
+		GlobalVariables.DebugMode = enabled
 	_refresh_label()
 
 func _on_zoom_out_pressed() -> void:
@@ -137,3 +142,7 @@ func _refresh_label() -> void:
 	debug_button.text = "DEBUG  ON" if GlobalVariables.DebugMode else "DEBUG  OFF"
 	var accent := Color(1.0, 0.76, 0.16, 1.0) if GlobalVariables.DebugMode else RED
 	_style_button(debug_button, accent)
+	if GlobalVariables.DebugMode:
+		touch_hint.text = "DEBUG: tap any Digimon, then tap a free tile to reposition"
+	else:
+		touch_hint.text = "Tap active Digimon/move • drag pan • pinch zoom"
