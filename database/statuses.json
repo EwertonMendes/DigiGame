@@ -1,0 +1,8 @@
+[
+  {"id": "guard", "name": "Guard", "duration": 1, "modifiers": {}, "damageTakenMultiplier": 0.65},
+  {"id": "def_up", "name": "DEF Up", "duration": 3, "modifiers": {"defPercent": 20}},
+  {"id": "speed_up", "name": "SPD Up", "duration": 3, "modifiers": {"speedPercent": 20}},
+  {"id": "speed_down", "name": "SPD Down", "duration": 3, "modifiers": {"speedPercent": -20}},
+  {"id": "burn", "name": "Burn", "duration": 3, "modifiers": {}, "turnDamagePercentMaxHp": 5},
+  {"id": "poison", "name": "Poison", "duration": 3, "modifiers": {}, "turnDamagePercentMaxHp": 7}
+]
