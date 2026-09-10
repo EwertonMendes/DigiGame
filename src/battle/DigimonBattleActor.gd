@@ -183,9 +183,13 @@ func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = 
 		var release_distance: float = clampf(8.0 + intensity * 1.5, 12.0, 19.0)
 		var recoil_position: Vector2 = origin - normalized * recoil_distance
 		var release_position: Vector2 = origin + normalized * release_distance
-		_attack_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		_attack_tween.tween_property(sprite, "position", recoil_position, RANGED_WINDUP_TIME)
-		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(0.92, 1.08), RANGED_WINDUP_TIME)
+
+		# Apply the charge pose immediately. Browsers/headless runners may batch the
+		# first tween frame, so making the wind-up pose explicit guarantees visible
+		# anticipation before the projectile is released.
+		sprite.position = recoil_position
+		sprite.scale = base_scale * Vector2(0.92, 1.08)
+		_attack_tween.tween_interval(RANGED_WINDUP_TIME)
 		_attack_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		_attack_tween.tween_property(sprite, "position", release_position, RANGED_RELEASE_TIME)
 		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.12, 0.90), RANGED_RELEASE_TIME)
@@ -200,9 +204,13 @@ func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = 
 		)
 		var windup_position: Vector2 = origin - normalized * windup_distance
 		var strike_position: Vector2 = origin + normalized * lunge_distance
-		_attack_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		_attack_tween.tween_property(sprite, "position", windup_position, ATTACK_WINDUP_TIME)
-		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(0.93, 1.08), ATTACK_WINDUP_TIME)
+
+		# Start in an unmistakable recoil pose, hold it briefly, then launch toward
+		# the target. This makes the hit readable even when Web rendering skips the
+		# first tween interpolation frame.
+		sprite.position = windup_position
+		sprite.scale = base_scale * Vector2(0.93, 1.08)
+		_attack_tween.tween_interval(ATTACK_WINDUP_TIME)
 		_attack_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
 		_attack_tween.tween_property(sprite, "position", strike_position, ATTACK_LUNGE_TIME)
 		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.18, 0.86), ATTACK_LUNGE_TIME)
