@@ -26,8 +26,15 @@ var _turn_order: Array[Node] = []
 var _turn_index := -1
 var _reachable_tiles: Dictionary = {}
 var _turn_start_grid := Vector2i.ZERO
+
+# Movement planning intentionally separates committed input from pointer preview.
+# _planned_move_path is the locked/manual prefix that will actually be confirmed.
+# _preview_move_path is transient and is freely replaced as the pointer changes tile.
 var _planned_move_path: Array[Vector2i] = []
-var _valid_next_steps: Dictionary = {}
+var _preview_move_path: Array[Vector2i] = []
+var _preview_destination := INVALID_GRID
+var _waypoints: Array[Vector2i] = []
+
 var _last_move_path: Array[Vector2i] = []
 var _has_moved := false
 var _input_locked := false
@@ -39,6 +46,8 @@ var _last_pointer_grid := INVALID_GRID
 func _ready() -> void:
 	_field = get_node_or_null("../Blocks")
 	_controller = get_node_or_null("../DigimonController")
+	if _field != null and _field.has_signal("hovered_grid_changed"):
+		_field.connect("hovered_grid_changed", Callable(self, "_on_field_hovered_grid_changed"))
 	_load_movement_database()
 	call_deferred("_start_battle")
 
@@ -70,8 +79,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 		return
 
-	# Touch input is routed by MainCamera so taps, path tracing, pan, and pinch
-	# have one gesture owner. Mouse path tracing is handled directly here.
+	# Touch input is routed by MainCamera so taps, route tracing, pan, and pinch
+	# have one deterministic gesture owner. Mouse drag tracing is handled here.
 	if GlobalVariables.TouchInputActive:
 		return
 
@@ -144,12 +153,13 @@ func handle_world_tap(world_position: Vector2) -> bool:
 				begin_move_selection()
 				return true
 		Phase.MOVE_SELECT:
-			_apply_manual_path_grid(grid)
-			return true
+			return _lock_move_destination(grid)
 	return false
 
 
 func handle_path_pointer_world(world_position: Vector2) -> bool:
+	# Explicit mouse/touch dragging edits the locked route. It is intentionally
+	# different from hover, which only previews and never mutates the plan.
 	if not is_manual_path_input_active() or _field == null:
 		return false
 	var grid := Vector2i(_field.call("world_to_grid", _field.to_local(world_position)))
@@ -158,18 +168,111 @@ func handle_path_pointer_world(world_position: Vector2) -> bool:
 	_last_pointer_grid = grid
 	if not bool(_field.call("select_tile_from_world", world_position)):
 		return false
-	return _apply_manual_path_grid(grid)
+	return _apply_manual_drag_grid(grid)
 
 
-func _apply_manual_path_grid(grid: Vector2i) -> bool:
+func _on_field_hovered_grid_changed(grid: Vector2i, block_reason: String) -> void:
+	if GlobalVariables.TouchInputActive or not is_manual_path_input_active():
+		return
+	if grid == INVALID_GRID or not block_reason.is_empty():
+		if _clear_preview_state():
+			_refresh_movement_plan_state()
+		return
+	_set_preview_destination(grid)
+
+
+func _set_preview_destination(grid: Vector2i) -> bool:
 	if not is_manual_path_input_active():
 		return false
 
+	var endpoint := _locked_endpoint()
+	if grid == endpoint or _planned_move_path.has(grid):
+		if _clear_preview_state():
+			_refresh_movement_plan_state()
+		return false
+
+	var remaining := _remaining_movement_after_locked_path()
+	if remaining <= 0:
+		if _clear_preview_state():
+			_refresh_movement_plan_state()
+		return false
+
+	var segment: Array[Vector2i] = _movement_system.find_path(
+		_field,
+		_controller,
+		current_actor,
+		endpoint,
+		grid,
+		remaining
+	)
+	if segment.is_empty():
+		if _clear_preview_state():
+			_refresh_movement_plan_state()
+		return false
+
+	if grid == _preview_destination and segment == _preview_move_path:
+		return false
+
+	_preview_destination = grid
+	_preview_move_path = segment
+	_refresh_movement_plan_state()
+	return true
+
+
+func _lock_move_destination(grid: Vector2i) -> bool:
+	if not is_manual_path_input_active():
+		return false
+
+	# Tapping/clicking the origin is a quick, touch-friendly way to reset the plan.
+	if grid == _turn_start_grid:
+		var changed := not _planned_move_path.is_empty() or not _preview_move_path.is_empty()
+		_planned_move_path.clear()
+		_waypoints.clear()
+		_clear_preview_state()
+		if changed:
+			_refresh_movement_plan_state()
+		return true
+
+	var endpoint := _locked_endpoint()
+	# A second click/tap on the already locked destination confirms immediately.
+	if grid == endpoint and not _planned_move_path.is_empty():
+		confirm_move_path()
+		return true
+
+	# Clicking an earlier locked tile deliberately truncates/backtracks the route.
+	var existing_index := _planned_move_path.find(grid)
+	if existing_index >= 0:
+		_planned_move_path.resize(existing_index + 1)
+		_trim_waypoints_to_locked_path()
+		_clear_preview_state()
+		_refresh_movement_plan_state()
+		return true
+
+	if _preview_destination != grid or _preview_move_path.is_empty():
+		_set_preview_destination(grid)
+	if _preview_destination != grid or _preview_move_path.is_empty():
+		return true
+
+	for step: Vector2i in _preview_move_path:
+		_planned_move_path.append(step)
+	if _waypoints.is_empty() or _waypoints[_waypoints.size() - 1] != grid:
+		_waypoints.append(grid)
+	_clear_preview_state()
+	_refresh_movement_plan_state()
+	return true
+
+
+func _apply_manual_drag_grid(grid: Vector2i) -> bool:
+	if not is_manual_path_input_active():
+		return false
+
+	_clear_preview_state()
 	if grid == _turn_start_grid:
 		if _planned_move_path.is_empty():
 			return false
 		_planned_move_path.clear()
-		_refresh_manual_path_state()
+		_waypoints.clear()
+		_refresh_movement_plan_state()
 		return true
 
 	var existing_index := _planned_move_path.find(grid)
@@ -177,22 +280,56 @@ func _apply_manual_path_grid(grid: Vector2i) -> bool:
 		if existing_index == _planned_move_path.size() - 1:
 			return false
 		_planned_move_path.resize(existing_index + 1)
-		_refresh_manual_path_state()
+		_trim_waypoints_to_locked_path()
+		_refresh_movement_plan_state()
 		return true
 
-	if not _valid_next_steps.has(grid):
+	var endpoint := _locked_endpoint()
+	var remaining := _remaining_movement_after_locked_path()
+	if remaining <= 0:
 		return false
 
-	_planned_move_path.append(grid)
-	_refresh_manual_path_state()
+	# Fast mouse/finger motion can skip visual tiles between input events. Fill
+	# that gap with a valid path segment instead of silently ignoring the drag.
+	var segment: Array[Vector2i] = _movement_system.find_path(
+		_field,
+		_controller,
+		current_actor,
+		endpoint,
+		grid,
+		remaining
+	)
+	if segment.is_empty():
+		return false
+
+	# If the generated segment touches our existing route, interpret it as
+	# natural backtracking instead of creating a loop in the locked path.
+	for step: Vector2i in segment:
+		var path_index := _planned_move_path.find(step)
+		if path_index >= 0:
+			_planned_move_path.resize(path_index + 1)
+			_trim_waypoints_to_locked_path()
+			_refresh_movement_plan_state()
+			return true
+
+	for step: Vector2i in segment:
+		_planned_move_path.append(step)
+	_refresh_movement_plan_state()
 	return true
 
 
 func remove_last_planned_step() -> void:
-	if not is_manual_path_input_active() or _planned_move_path.is_empty():
+	if not is_manual_path_input_active():
+		return
+	if not _preview_move_path.is_empty():
+		_clear_preview_state()
+		_refresh_movement_plan_state()
+		return
+	if _planned_move_path.is_empty():
 		return
 	_planned_move_path.pop_back()
-	_refresh_manual_path_state()
+	_trim_waypoints_to_locked_path()
+	_refresh_movement_plan_state()
 
 
 func confirm_move_path() -> bool:
@@ -216,7 +353,9 @@ func confirm_move_path() -> bool:
 	await current_actor.call("move_along_grid_path", path, _field)
 	_last_move_path = path.duplicate()
 	_planned_move_path.clear()
-	_valid_next_steps.clear()
+	_preview_move_path.clear()
+	_preview_destination = INVALID_GRID
+	_waypoints.clear()
 	_has_moved = true
 	_reachable_tiles.clear()
 	_input_locked = false
@@ -283,7 +422,9 @@ func begin_move_selection() -> void:
 
 	_turn_start_grid = _grid_for_actor(current_actor)
 	_planned_move_path.clear()
-	_valid_next_steps.clear()
+	_preview_move_path.clear()
+	_preview_destination = INVALID_GRID
+	_waypoints.clear()
 	_reachable_tiles = _movement_system.get_reachable_tiles(
 		_field,
 		_controller,
@@ -296,14 +437,16 @@ func begin_move_selection() -> void:
 		current_actor.call("set_tactical_selected", true)
 	if _field != null and _field.has_method("set_movement_range"):
 		_field.call("set_movement_range", _reachable_tiles, _turn_start_grid, current_actor)
-	_refresh_manual_path_state()
+	_refresh_movement_plan_state()
 
 
 func cancel_move_selection() -> void:
 	if phase != Phase.MOVE_SELECT or _input_locked:
 		return
 	_planned_move_path.clear()
-	_valid_next_steps.clear()
+	_preview_move_path.clear()
+	_preview_destination = INVALID_GRID
+	_waypoints.clear()
 	_reachable_tiles.clear()
 	_clear_manual_path_visuals()
 	if current_actor != null and current_actor.has_method("set_tactical_selected"):
@@ -312,24 +455,48 @@ func cancel_move_selection() -> void:
 	_refresh_hud()
 
 
-func _refresh_manual_path_state() -> void:
+func _refresh_movement_plan_state() -> void:
 	if phase != Phase.MOVE_SELECT or current_actor == null:
 		return
-	_valid_next_steps = _movement_system.get_valid_next_steps(
-		_field,
-		_controller,
-		current_actor,
-		_turn_start_grid,
-		_planned_move_path,
-		_movement_for(current_actor)
-	)
-	if _field != null:
-		if _field.has_method("set_movement_path"):
-			_field.call("set_movement_path", _planned_move_path)
-		if _field.has_method("set_movement_step_options"):
-			_field.call("set_movement_step_options", _valid_next_steps, _planned_move_path)
+	if _field != null and _field.has_method("set_movement_path"):
+		_field.call("set_movement_path", _display_move_path())
 	_last_pointer_grid = INVALID_GRID
 	_refresh_hud()
+
+
+func _display_move_path() -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for grid: Vector2i in _planned_move_path:
+		result.append(grid)
+	for grid: Vector2i in _preview_move_path:
+		result.append(grid)
+	return result
+
+
+func _locked_endpoint() -> Vector2i:
+	if _planned_move_path.is_empty():
+		return _turn_start_grid
+	return _planned_move_path[_planned_move_path.size() - 1]
+
+
+func _remaining_movement_after_locked_path() -> int:
+	var spent := _movement_system.get_path_cost(_field, current_actor, _planned_move_path)
+	return maxi(0, _movement_for(current_actor) - spent)
+
+
+func _clear_preview_state() -> bool:
+	var changed := not _preview_move_path.is_empty() or _preview_destination != INVALID_GRID
+	_preview_move_path.clear()
+	_preview_destination = INVALID_GRID
+	return changed
+
+
+func _trim_waypoints_to_locked_path() -> void:
+	while not _waypoints.is_empty():
+		var last_waypoint := _waypoints[_waypoints.size() - 1]
+		if _planned_move_path.has(last_waypoint):
+			break
+		_waypoints.pop_back()
 
 
 func _clear_manual_path_visuals() -> void:
@@ -396,7 +563,7 @@ func get_hud_state() -> Dictionary:
 	var total_mov := _movement_for(current_actor) if current_actor != null else DEFAULT_MOV
 	var move_spent := 0
 	if phase == Phase.MOVE_SELECT and current_actor != null:
-		move_spent = _movement_system.get_path_cost(_field, current_actor, _planned_move_path)
+		move_spent = _movement_system.get_path_cost(_field, current_actor, _display_move_path())
 	var can_confirm := (
 		user_turn
 		and phase == Phase.MOVE_SELECT
@@ -416,6 +583,9 @@ func get_hud_state() -> Dictionary:
 		"move_spent": move_spent,
 		"move_remaining": maxi(0, total_mov - move_spent),
 		"is_planning_move": phase == Phase.MOVE_SELECT,
+		"is_previewing_move": not _preview_move_path.is_empty(),
+		"has_locked_move_path": not _planned_move_path.is_empty(),
+		"waypoint_count": _waypoints.size(),
 		"is_user_turn": user_turn,
 		"can_move": user_turn and phase == Phase.COMMAND and not _has_moved and not _input_locked,
 		"can_confirm_move": can_confirm,
@@ -430,7 +600,7 @@ func phase_name() -> String:
 	match phase:
 		Phase.TURN_START: return "Turn Start"
 		Phase.COMMAND: return "Choose an action"
-		Phase.MOVE_SELECT: return "Plan movement"
+		Phase.MOVE_SELECT: return "Preview movement"
 		Phase.MOVING: return "Moving"
 		Phase.ACTION_SELECT: return "Choose an action"
 		Phase.TARGET_SELECT: return "Choose a target"
@@ -469,7 +639,9 @@ func _start_next_turn() -> void:
 	_has_moved = false
 	_last_move_path.clear()
 	_planned_move_path.clear()
-	_valid_next_steps.clear()
+	_preview_move_path.clear()
+	_preview_destination = INVALID_GRID
+	_waypoints.clear()
 	_reachable_tiles.clear()
 	_input_locked = false
 	current_actor.set("is_defending", false)
@@ -496,7 +668,9 @@ func _end_turn() -> void:
 	phase = Phase.TURN_END
 	_input_locked = true
 	_planned_move_path.clear()
-	_valid_next_steps.clear()
+	_preview_move_path.clear()
+	_preview_destination = INVALID_GRID
+	_waypoints.clear()
 	_clear_manual_path_visuals()
 	if current_actor.has_method("set_tactical_selected"):
 		current_actor.call("set_tactical_selected", false)
