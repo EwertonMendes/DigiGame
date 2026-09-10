@@ -11,13 +11,16 @@ const PANEL_BG := Color(0.012, 0.042, 0.072, 0.92)
 const DESKTOP_SLOTS := 7
 const COMPACT_SLOTS := 4
 const COMPACT_BREAKPOINT := 900.0
+const PHONE_BREAKPOINT := 520.0
 const PANEL_HEIGHT := 88.0
 
 var _controller: Node = null
 var _panel: Panel = null
-var _cards: HBoxContainer = null
+var _cards: Control = null
 var _title: Label = null
 var _hint: Label = null
+var _last_viewport_size := Vector2.ZERO
+var _last_window_size := Vector2i.ZERO
 
 
 func _ready() -> void:
@@ -25,7 +28,15 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	set_process(true)
 	call_deferred("refresh")
+
+
+func _process(_delta: float) -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	var window_size := DisplayServer.window_get_size()
+	if viewport_size != _last_viewport_size or window_size != _last_window_size:
+		refresh()
 
 
 func setup(controller: Node) -> void:
@@ -36,6 +47,8 @@ func setup(controller: Node) -> void:
 func refresh() -> void:
 	if _panel == null or _cards == null:
 		return
+	_last_viewport_size = get_viewport().get_visible_rect().size
+	_last_window_size = DisplayServer.window_get_size()
 	if _controller == null or not _controller.has_method("get_turn_preview"):
 		_panel.visible = false
 		return
@@ -51,10 +64,17 @@ func refresh() -> void:
 	for child in _cards.get_children():
 		child.queue_free()
 
+	var separation := 4.0 if compact else 6.0
+	var cursor_x := 0.0
 	for raw_entry in entries:
-		if raw_entry is Dictionary and not raw_entry.is_empty():
-			_cards.add_child(_create_turn_card(raw_entry, compact))
-	_layout_panel(entries.size(), compact)
+		if not raw_entry is Dictionary or raw_entry.is_empty():
+			continue
+		var card := _create_turn_card(raw_entry, compact)
+		card.position = Vector2(cursor_x, 0.0)
+		_cards.add_child(card)
+		cursor_x += card.size.x + separation
+
+	_layout_panel(entries.size(), compact, maxf(0.0, cursor_x - separation))
 
 
 func _build_ui() -> void:
@@ -79,8 +99,8 @@ func _build_ui() -> void:
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(_hint)
 
-	_cards = HBoxContainer.new()
-	_cards.alignment = BoxContainer.ALIGNMENT_CENTER
+	_cards = Control.new()
+	_cards.name = "Cards"
 	_cards.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(_cards)
 
@@ -239,7 +259,17 @@ func _on_viewport_size_changed() -> void:
 
 
 func _is_compact() -> bool:
-	return get_viewport().get_visible_rect().size.x < COMPACT_BREAKPOINT
+	var viewport_size := get_viewport().get_visible_rect().size
+	var window_size := DisplayServer.window_get_size()
+	return viewport_size.x < COMPACT_BREAKPOINT or window_size.x < COMPACT_BREAKPOINT
+
+
+func _is_phone_portrait() -> bool:
+	var viewport_size := get_viewport().get_visible_rect().size
+	var window_size := DisplayServer.window_get_size()
+	var viewport_phone := viewport_size.x < PHONE_BREAKPOINT and viewport_size.y > viewport_size.x
+	var window_phone := window_size.x < PHONE_BREAKPOINT and window_size.y > window_size.x
+	return viewport_phone or window_phone
 
 
 func _card_size(current: bool, compact: bool) -> Vector2:
@@ -248,33 +278,27 @@ func _card_size(current: bool, compact: bool) -> Vector2:
 	return Vector2(62.0 if compact else 72.0, 60.0)
 
 
-func _layout_panel(entry_count: int, compact: bool) -> void:
+func _layout_panel(entry_count: int, compact: bool, cards_width: float) -> void:
 	if _panel == null or _cards == null:
 		return
-	var current_width := 100.0 if compact else 126.0
-	var future_width := 62.0 if compact else 72.0
-	var separation := 4 if compact else 6
-	_cards.add_theme_constant_override("separation", separation)
-	var cards_width := current_width + future_width * float(maxi(0, entry_count - 1))
-	cards_width += float(separation * maxi(0, entry_count - 1))
-	var panel_width := cards_width + 20.0
 	var viewport_size := get_viewport().get_visible_rect().size
+	var panel_width := cards_width + 20.0
 	panel_width = minf(panel_width, maxf(300.0, viewport_size.x - 20.0))
 
 	var panel_y := 12.0
-	if compact and viewport_size.x < 520.0:
+	if _is_phone_portrait():
 		panel_y = 72.0
 	_panel.position = Vector2((viewport_size.x - panel_width) * 0.5, panel_y)
 	_panel.size = Vector2(panel_width, PANEL_HEIGHT)
 
 	_title.position = Vector2(10.0, 5.0)
 	_title.size = Vector2(panel_width * 0.58, 14.0)
-	_hint.visible = not (compact and viewport_size.x < 520.0)
+	_hint.visible = not _is_phone_portrait()
 	_hint.position = Vector2(panel_width * 0.56, 5.0)
 	_hint.size = Vector2(panel_width * 0.40 - 10.0, 14.0)
 
 	_cards.position = Vector2(10.0, 21.0)
-	_cards.size = Vector2(panel_width - 20.0, 60.0)
+	_cards.size = Vector2(cards_width, 60.0)
 
 
 func _panel_style() -> StyleBoxFlat:
