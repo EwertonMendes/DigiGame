@@ -32,6 +32,17 @@ const MOVEMENT_TYPE_OVERRIDES_BY_NAME := {
 	"whamon": "aquatic",
 	"gomamon": "amphibious",
 }
+# Bootstrap combat elements for species already playable in the prototype. The
+# database schema supports explicit element values and can be enriched species by
+# species later without changing combat code.
+const ELEMENT_OVERRIDES_BY_NAME := {
+	"agumon": "fire",
+	"gabumon": "fire",
+	"greymon": "fire",
+	"koromon": "fire",
+	"tanemon": "plant",
+	"veemon": "neutral",
+}
 
 var _species_by_seed: Dictionary = {}
 var _species_by_name: Dictionary = {}
@@ -99,11 +110,13 @@ func get_name_for_seed(seed: String) -> String:
 
 
 func get_base_stat(species: Dictionary, stat_key: String) -> int:
-	match stat_key:
+	var key := "mp" if stat_key.to_lower() == "sp" else stat_key.to_lower()
+	match key:
 		"hp": return maxi(1, int(species.get("hp", 1)))
-		"mp": return maxi(0, int(species.get("mp", 0)))
+		"mp": return maxi(0, int(species.get("sp", species.get("mp", 0))))
 		"atk": return maxi(1, int(species.get("atk", species.get("attack", 1))))
 		"def": return maxi(1, int(species.get("def", species.get("defense", 1))))
+		"int": return maxi(1, int(species.get("int", _derive_int(species))))
 		"speed": return maxi(1, int(species.get("speed", 1)))
 	return 0
 
@@ -118,11 +131,28 @@ func get_movement_type(species: Dictionary) -> String:
 
 func _normalize_species(raw_entry: Dictionary) -> Dictionary:
 	var species := raw_entry.duplicate(true)
+	var name_key := String(species.get("name", "")).to_lower()
 	if not species.has("MOV"):
 		species["MOV"] = _derive_mov(species)
 	if not species.has("movementType"):
 		species["movementType"] = _derive_movement_type(species)
+	if not species.has("int"):
+		species["int"] = _derive_int(species)
+	# Legacy database names are kept, while normalized aliases make combat code
+	# explicit: family = Beast/Dragon/etc, type = Vaccine/Data/Virus/Free.
+	if not species.has("family"):
+		species["family"] = String(species.get("species", "Unknown"))
+	if not species.has("type"):
+		species["type"] = String(species.get("attribute", "Free"))
+	if not species.has("element"):
+		species["element"] = String(ELEMENT_OVERRIDES_BY_NAME.get(name_key, "neutral"))
 	return species
+
+
+func _derive_int(species: Dictionary) -> int:
+	var atk := int(species.get("atk", species.get("attack", 1)))
+	var defense := int(species.get("def", species.get("defense", 1)))
+	return maxi(1, int(round((float(atk) + float(defense)) * 0.5)))
 
 
 func _derive_mov(species: Dictionary) -> int:
