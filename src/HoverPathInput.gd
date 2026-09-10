@@ -67,15 +67,15 @@ func _can_hover_extend_route(battle: Node, grid: Vector2i) -> bool:
 	# the player's plan. Clicking/tapping or deliberate dragging can still edit
 	# backwards using the existing manual-path controls.
 	var origin_variant = battle.get("_turn_start_grid")
-	if origin_variant is Vector2i and grid == Vector2i(origin_variant):
+	if typeof(origin_variant) == TYPE_VECTOR2I and grid == Vector2i(origin_variant):
 		return false
 
 	var path_variant = battle.get("_planned_move_path")
-	if path_variant is Array and path_variant.has(grid):
+	if typeof(path_variant) == TYPE_ARRAY and path_variant.has(grid):
 		return false
 
 	var steps_variant = battle.get("_valid_next_steps")
-	return steps_variant is Dictionary and steps_variant.has(grid)
+	return typeof(steps_variant) == TYPE_DICTIONARY and steps_variant.has(grid)
 
 
 func _reset_candidate() -> void:
