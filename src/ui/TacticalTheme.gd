@@ -39,7 +39,7 @@ static func physical_window_size(viewport: Viewport) -> Vector2:
 
 static func is_compact(viewport: Viewport, width_breakpoint: float = 760.0) -> bool:
 	var physical: Vector2 = physical_window_size(viewport)
-	return physical.x < width_breakpoint
+	return physical.x < width_breakpoint or physical.y < 560.0
 
 
 static func px(viewport: Viewport, value: float) -> float:
