@@ -1,7 +1,7 @@
 extends RefCounted
 class_name MovementSystem
 
-const CARDINAL_NEIGHBORS := [
+const CARDINAL_NEIGHBORS: Array[Vector2i] = [
 	Vector2i(1, 0),
 	Vector2i(-1, 0),
 	Vector2i(0, 1),
@@ -17,11 +17,12 @@ func get_reachable_tiles(
 	origin: Vector2i,
 	movement_points: int
 ) -> Dictionary:
-	var result := _search(field, controller, moving_digimon, origin, movement_points)
+	var result: Dictionary = _search(field, controller, moving_digimon, origin, movement_points)
 	var distances: Dictionary = result["distances"]
 	var reachable: Dictionary = {}
 
-	for grid in distances:
+	for raw_grid in distances:
+		var grid: Vector2i = raw_grid
 		if grid == origin:
 			continue
 		if _can_end_on(controller, field, moving_digimon, grid):
@@ -41,19 +42,19 @@ func find_path(
 	if destination == origin:
 		return []
 
-	var result := _search(field, controller, moving_digimon, origin, movement_points)
+	var result: Dictionary = _search(field, controller, moving_digimon, origin, movement_points)
 	var distances: Dictionary = result["distances"]
 	var previous: Dictionary = result["previous"]
 	if not distances.has(destination) or not _can_end_on(controller, field, moving_digimon, destination):
 		return []
 
 	var reversed_path: Array[Vector2i] = []
-	var cursor := destination
+	var cursor: Vector2i = destination
 	while cursor != origin:
 		reversed_path.append(cursor)
 		if not previous.has(cursor):
 			return []
-		cursor = previous[cursor]
+		cursor = Vector2i(previous[cursor])
 
 	reversed_path.reverse()
 	return reversed_path
@@ -71,23 +72,23 @@ func _search(
 	var frontier: Array[Vector2i] = [origin]
 
 	while not frontier.is_empty():
-		var current := _pop_lowest_cost(frontier, distances)
-		var current_cost := int(distances[current])
+		var current: Vector2i = _pop_lowest_cost(frontier, distances)
+		var current_cost: int = int(distances[current])
 
-		for offset in CARDINAL_NEIGHBORS:
-			var neighbor := current + offset
+		for offset: Vector2i in CARDINAL_NEIGHBORS:
+			var neighbor: Vector2i = current + offset
 			if not _can_traverse(field, controller, moving_digimon, neighbor):
 				continue
 
-			var step_cost := _movement_cost(field, moving_digimon, neighbor)
+			var step_cost: int = _movement_cost(field, moving_digimon, neighbor)
 			if step_cost <= 0:
 				continue
 
-			var next_cost := current_cost + step_cost
+			var next_cost: int = current_cost + step_cost
 			if next_cost > movement_points:
 				continue
 
-			var known_cost := int(distances.get(neighbor, INF))
+			var known_cost: int = int(distances.get(neighbor, INF))
 			if next_cost >= known_cost:
 				continue
 
@@ -103,10 +104,10 @@ func _search(
 
 
 func _pop_lowest_cost(frontier: Array[Vector2i], distances: Dictionary) -> Vector2i:
-	var best_index := 0
-	var best_cost := int(distances.get(frontier[0], INF))
+	var best_index: int = 0
+	var best_cost: int = int(distances.get(frontier[0], INF))
 	for index in range(1, frontier.size()):
-		var candidate_cost := int(distances.get(frontier[index], INF))
+		var candidate_cost: int = int(distances.get(frontier[index], INF))
 		if candidate_cost < best_cost:
 			best_index = index
 			best_cost = candidate_cost
@@ -119,7 +120,7 @@ func _can_traverse(field: Node, controller: Node, moving_digimon: Node, grid: Ve
 	if not String(field.call("get_static_tile_block_reason", grid)).is_empty():
 		return false
 
-	var occupant := _occupant_at(controller, field, grid, moving_digimon)
+	var occupant: Node = _occupant_at(controller, field, grid, moving_digimon)
 	if occupant == null:
 		return true
 
@@ -136,7 +137,7 @@ func _can_end_on(controller: Node, field: Node, moving_digimon: Node, grid: Vect
 func _occupant_at(controller: Node, field: Node, grid: Vector2i, ignored: Node) -> Node:
 	if controller == null or field == null or not controller.has_method("get_digimon_at_tile"):
 		return null
-	var world_position := Vector2(field.call("grid_to_world", grid))
+	var world_position: Vector2 = Vector2(field.call("grid_to_world", grid))
 	return controller.call("get_digimon_at_tile", world_position, ignored) as Node
 
 
