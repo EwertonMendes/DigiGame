@@ -1,5 +1,6 @@
 extends CharacterBody2D
 
+const TurnIndicatorScript = preload("res://src/TurnIndicator.gd")
 const DIRECTION_FRAME_BASE := {"down_left": 0, "down_right": 3, "up_left": 6, "up_right": 9}
 const VEEMON_SPACED_9_IDLE_FRAME := {
 	"down_left": 3,
@@ -41,12 +42,14 @@ var facing_direction := "up_right"
 var _selected_animation_time := 0.0
 var _selected_animation_frame := 0
 var _is_path_moving := false
+var _turn_indicator: Node2D
 @onready var sprite: Sprite2D = get_node("Sprite2D") as Sprite2D
 
 
 func _ready() -> void:
 	global_position = Vector2(initialTileCoords) + PLAYER_POSITION_DEVIATION
 	facing_direction = initial_facing if DIRECTION_FRAME_BASE.has(initial_facing) else "up_right"
+	_create_turn_indicator()
 	_show_current_facing(false)
 
 
@@ -69,9 +72,6 @@ func _physics_process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	# Tactical battles own pointer input through BattleController. Keeping this
-	# early return here avoids two independent movement systems reacting to the
-	# same click while preserving compatibility if this scene is reused alone.
 	var battle := _get_battle_controller()
 	if battle != null and battle.has_method("uses_tactical_input") and bool(battle.call("uses_tactical_input")):
 		return
@@ -114,12 +114,14 @@ func handle_touch_tap(tile_world_position: Vector2, pointer_world_position: Vect
 
 func set_tactical_selected(selected: bool) -> void:
 	if is_selected == selected:
+		_update_turn_indicator()
 		return
 	is_selected = selected
 	_selected_animation_time = 0.0
 	_selected_animation_frame = 0
 	_show_current_facing(selected)
 	emit_particles_when_selected()
+	_update_turn_indicator()
 
 
 func set_turn_active(active: bool) -> void:
@@ -128,6 +130,7 @@ func set_turn_active(active: bool) -> void:
 		set_tactical_selected(false)
 	else:
 		emit_particles_when_selected()
+		_update_turn_indicator()
 
 
 func move_along_grid_path(path: Array[Vector2i], field: Node) -> void:
@@ -269,9 +272,26 @@ func _show_spaced_9_facing(animate: bool) -> void:
 
 
 func emit_particles_when_selected() -> void:
-	var particles := get_node("Sprite2D/CPUParticles2D") as CPUParticles2D
+	var particles := get_node_or_null("Sprite2D/CPUParticles2D") as CPUParticles2D
+	if particles == null:
+		return
 	particles.position = to_local(global_position) + PARTICLES_POSITION_DEVIATION
-	particles.emitting = is_selected or is_turn_active
+	# Particles are now a secondary confirmation only. The persistent tactical
+	# marker communicates whose turn it is without visually obscuring sprites.
+	particles.emitting = is_selected
+
+
+func _create_turn_indicator() -> void:
+	_turn_indicator = TurnIndicatorScript.new()
+	_turn_indicator.name = "TurnIndicator"
+	add_child(_turn_indicator)
+	_update_turn_indicator()
+
+
+func _update_turn_indicator() -> void:
+	if _turn_indicator == null:
+		return
+	_turn_indicator.call("set_state", is_turn_active, is_selected, is_player_controlled)
 
 
 func move_camera_to_selected_digimon() -> void:
