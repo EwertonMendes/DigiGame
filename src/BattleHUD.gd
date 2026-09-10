@@ -96,18 +96,19 @@ func _make_button(label: String) -> Button:
 func _refresh_connections() -> void:
 	if _controller == null:
 		return
-	_move_button.pressed.connect(_controller.begin_move_selection)
-	_defend_button.pressed.connect(_controller.defend_current)
-	_wait_button.pressed.connect(_controller.wait_current)
-	_undo_button.pressed.connect(_controller.undo_move)
-	_cancel_button.pressed.connect(_controller.cancel_move_selection)
+	_move_button.pressed.connect(Callable(_controller, "begin_move_selection"))
+	_defend_button.pressed.connect(Callable(_controller, "defend_current"))
+	_wait_button.pressed.connect(Callable(_controller, "wait_current"))
+	_undo_button.pressed.connect(Callable(_controller, "undo_move"))
+	_cancel_button.pressed.connect(Callable(_controller, "cancel_move_selection"))
 
 
 func refresh_from_controller() -> void:
 	if _controller == null:
 		_controller = get_node_or_null("../../BattleController")
 	if _controller == null or not _controller.has_method("get_hud_state"):
-		_panel.visible = false if _panel != null else false
+		if _panel != null:
+			_panel.visible = false
 		return
 
 	var state: Dictionary = _controller.call("get_hud_state")
