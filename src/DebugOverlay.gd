@@ -56,7 +56,6 @@ func _style_controls() -> void:
 	center_button.text = ""
 	center_button.icon = load("%s/center.svg" % ICON_ROOT) as Texture2D
 	center_button.expand_icon = true
-	center_button.icon_max_width = 20
 	zoom_out_button.text = "−"
 	zoom_in_button.text = "+"
 	for button: Button in [center_button, zoom_out_button, zoom_in_button, debug_button]:

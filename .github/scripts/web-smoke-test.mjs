@@ -36,6 +36,26 @@ async function waitForGame(page) {
   await page.waitForTimeout(5000);
 }
 
+async function enterTestBattle(page, captureDialogue = false) {
+  const dialogueOpened = page.waitForEvent('console', {
+    predicate: message => message.text().includes('[Hub] DIALOGUE_OPEN'),
+    timeout: 10000,
+  });
+  await page.keyboard.press('KeyE');
+  await dialogueOpened;
+  await page.waitForTimeout(350);
+  if (captureDialogue) {
+    await page.screenshot({ path: 'build/hub-battle-dialog.png', fullPage: true });
+  }
+  const battleStarted = page.waitForEvent('console', {
+    predicate: message => message.text().includes('[Hub] START_TEST_BATTLE'),
+    timeout: 10000,
+  });
+  await page.keyboard.press('Enter');
+  await battleStarted;
+  await page.waitForTimeout(5000);
+}
+
 async function readLayout(page) {
   return page.evaluate(() => {
     const canvas = document.querySelector('canvas');
@@ -113,6 +133,19 @@ try {
   watchRuntimeErrors(page, 'desktop');
   await waitForGame(page);
 
+  const hubBaseline = await page.screenshot();
+  await page.keyboard.down('KeyA');
+  await page.waitForTimeout(350);
+  await page.keyboard.up('KeyA');
+  await page.waitForTimeout(300);
+  const hubMoved = await page.screenshot();
+  assertScreensDiffer(hubBaseline, hubMoved, 'Overworld player movement');
+  await page.screenshot({ path: 'build/hub-movement.png', fullPage: true });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await waitForGame(page);
+  await page.screenshot({ path: 'build/hub-smoke.png', fullPage: true });
+  await enterTestBattle(page, true);
+
   for (const viewport of desktopViewports) {
     await page.setViewportSize(viewport);
     await page.waitForTimeout(800);
@@ -185,6 +218,7 @@ try {
   const combatPage = await browser.newPage({ viewport: { width: 1365, height: 685 } });
   watchRuntimeErrors(combatPage, 'combat');
   await waitForGame(combatPage);
+  await enterTestBattle(combatPage);
   const combatBaseline = await combatPage.screenshot();
 
   await combatPage.keyboard.press('Digit2');
@@ -224,6 +258,29 @@ try {
   await waitForGame(mobilePage);
   assertViewportFill(await readLayout(mobilePage));
 
+  await mobilePage.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
+
+  // Hold the on-screen right direction long enough to verify that the hub's
+  // touch controls are both visible at their physical coordinates and wired
+  // into the same movement system used by keyboard input.
+  const client = await mobilePage.context().newCDPSession(mobilePage);
+  const hubTouchStarted = mobilePage.waitForEvent('console', {
+    predicate: message => message.text().includes(
+      '[Hub] TOUCH_MOVE direction=right pressed=true'
+    ),
+    timeout: 10000,
+  });
+  await dispatchTouch(client, 'touchStart', [{ x: 163, y: 739 }]);
+  await hubTouchStarted;
+  await mobilePage.waitForTimeout(450);
+  await dispatchTouch(client, 'touchEnd', []);
+  await mobilePage.waitForTimeout(300);
+  await mobilePage.screenshot({ path: 'build/hub-mobile-movement.png', fullPage: true });
+
+  await mobilePage.reload({ waitUntil: 'domcontentloaded' });
+  await waitForGame(mobilePage);
+  await enterTestBattle(mobilePage);
+
   let mobileLayout = await readLayout(mobilePage);
   let mobileCenter = {
     x: mobileLayout.viewportWidth * 0.5,
@@ -243,8 +300,6 @@ try {
   const afterButtonZoom = await mobilePage.screenshot();
   assertScreensDiffer(beforeButtonZoom, afterButtonZoom, 'Mobile zoom button');
   await mobilePage.screenshot({ path: 'build/mobile-zoom-button.png', fullPage: true });
-
-  const client = await mobilePage.context().newCDPSession(mobilePage);
 
   await mobilePage.touchscreen.tap(mobileCenter.x, mobileCenter.y);
   await mobilePage.waitForTimeout(450);
@@ -281,7 +336,8 @@ try {
     `DigiGame Web smoke test passed at ${desktopViewports.length} desktop and ` +
     `${mobileViewports.length} mobile orientations, including notebook HUD coverage, ` +
     `attack targeting, technique menu, CT/enemy-AI progression, mouse, keyboard, ` +
-    `touch tap, one-finger pan, pinch zoom, mobile zoom controls, and responsive canvas checks.`
+    `hub touch movement, touch tap, one-finger pan, pinch zoom, mobile zoom controls, ` +
+    `and responsive canvas checks.`
   );
 } finally {
   await browser.close();

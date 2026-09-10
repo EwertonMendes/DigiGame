@@ -248,7 +248,6 @@ func _make_action_button(label_text: String, icon_name: String, shortcut: String
 	button.tooltip_text = "%s  [%s]" % [tooltip, shortcut]
 	button.icon = load("%s/%s" % [ICON_ROOT, icon_name]) as Texture2D
 	button.expand_icon = true
-	button.icon_max_width = 22
 	UI.apply_heading_font(button)
 	button.add_theme_font_size_override("font_size", 16)
 	button.add_theme_color_override("font_color", UI.TEXT)
@@ -302,7 +301,6 @@ func _make_context_button(label_text: String, icon_name: String, accent: Color) 
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.icon = load("%s/%s" % [ICON_ROOT, icon_name]) as Texture2D
 	button.expand_icon = true
-	button.icon_max_width = 18
 	UI.apply_heading_font(button)
 	button.add_theme_font_size_override("font_size", 15)
 	button.add_theme_color_override("font_color", UI.TEXT)
@@ -601,10 +599,8 @@ func _layout_command(panel_size: Vector2, compact: bool, contextual: bool, user_
 		button_h = 47.0
 	for button: Button in _primary_buttons:
 		button.custom_minimum_size = Vector2(0.0, button_h)
-		button.icon_max_width = 19 if compact else 22
 		button.add_theme_font_size_override("font_size", 13 if compact else 16)
 	_undo_button.custom_minimum_size = Vector2(0.0, button_h)
-	_undo_button.icon_max_width = 18 if compact else 20
 	_undo_button.add_theme_font_size_override("font_size", 13 if compact else 15)
 	_nav_hint.position = Vector2(pad + 3.0, panel_size.y - nav_h - 3.0)
 	_nav_hint.size = Vector2(panel_size.x - pad * 2.0, nav_h)
