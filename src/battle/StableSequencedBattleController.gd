@@ -103,16 +103,52 @@ func keyboard_navigate_move(screen_direction: Vector2) -> bool:
 	if origin_grid == KEYBOARD_INVALID_GRID or (origin_grid != _turn_start_grid and not _reachable_tiles.has(origin_grid)):
 		origin_grid = _turn_start_grid
 
-	var candidate := _find_directional_grid(origin_grid, screen_direction)
-	if candidate == KEYBOARD_INVALID_GRID:
+	# Movement selection is a grid operation, not a generic screen-space nearest
+	# neighbour search. On our diamond projection, each keyboard direction maps
+	# to exactly one edge-connected isometric grid step. Repeating the same key
+	# therefore stays on one straight isometric axis and never hops between rows.
+	var step := keyboard_grid_step_for_direction(screen_direction)
+	if step == Vector2i.ZERO:
+		return false
+	var candidate := origin_grid + step
+
+	# The origin is always a valid cursor destination so players can walk the
+	# keyboard cursor back to where they started. Other destinations must be in
+	# the actual reachable set; blocked/out-of-range neighbours stop the cursor
+	# instead of making it jump to another lane behind the obstacle.
+	if candidate == _turn_start_grid:
+		_keyboard_move_grid = candidate
+		_planned_move_path.clear()
+		_waypoints.clear()
+		_clear_preview_state()
+		_refresh_movement_plan_state()
+		return true
+	if not _reachable_tiles.has(candidate):
 		return false
 
-	_keyboard_move_grid = candidate
 	_planned_move_path.clear()
 	_waypoints.clear()
 	_clear_preview_state()
 	_set_preview_destination(candidate)
+	if _preview_destination != candidate or _preview_move_path.is_empty():
+		return false
+	_keyboard_move_grid = candidate
 	return true
+
+
+# The board uses the classic 2:1 isometric projection:
+#   grid -X = screen up-left     grid -Y = screen up-right
+#   grid +Y = screen down-left   grid +X = screen down-right
+# Treat the four arrows/D-pad directions as the four edges of that diamond.
+# This is intentionally different from a Cartesian top/down/left/right map.
+func keyboard_grid_step_for_direction(screen_direction: Vector2) -> Vector2i:
+	if screen_direction.length_squared() <= 0.001:
+		return Vector2i.ZERO
+	var x := screen_direction.x
+	var y := screen_direction.y
+	if absf(x) > absf(y):
+		return Vector2i(0, -1) if x > 0.0 else Vector2i(0, 1)
+	return Vector2i(1, 0) if y > 0.0 else Vector2i(-1, 0)
 
 
 func keyboard_confirm_move() -> bool:
@@ -204,24 +240,6 @@ func _valid_keyboard_targets() -> Array[Node]:
 		if _targeting_system.is_valid_target(_field, current_actor, actor, _selected_action):
 			result.append(actor)
 	return result
-
-
-func _find_directional_grid(origin_grid: Vector2i, direction: Vector2) -> Vector2i:
-	if _field == null or not _field.has_method("grid_to_world"):
-		return KEYBOARD_INVALID_GRID
-	var origin_position := Vector2(_field.call("grid_to_world", origin_grid))
-	var best_grid := KEYBOARD_INVALID_GRID
-	var best_score := 1.0e20
-	for raw_grid in _reachable_tiles.keys():
-		var grid := Vector2i(raw_grid)
-		if grid == origin_grid:
-			continue
-		var candidate_position := Vector2(_field.call("grid_to_world", grid))
-		var score := _directional_score(candidate_position - origin_position, direction)
-		if score < best_score:
-			best_score = score
-			best_grid = grid
-	return best_grid
 
 
 func _find_directional_actor(origin_actor: Node, candidates: Array[Node], direction: Vector2) -> Node:
