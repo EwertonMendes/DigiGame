@@ -34,8 +34,8 @@ func _spawn_melee_windup(attacker: Node, target: Node, color: Color, intensity: 
 		angle - 0.42,
 		0.72
 	)
-	_spawn_directional_streak(start, finish, color, intensity, ATTACK_STREAK_TIME)
-	_spawn_charge_ring(start, color, intensity, false)
+	_cinematic_directional_streak(start, finish, color, intensity, ATTACK_STREAK_TIME)
+	_cinematic_charge_ring(start, color, intensity, false)
 
 
 func _spawn_charge_flash(attacker: Node, color: Color, intensity: float) -> void:
@@ -51,7 +51,7 @@ func _spawn_charge_flash(attacker: Node, color: Color, intensity: float) -> void
 		0.0,
 		0.34
 	)
-	_spawn_charge_ring(anchor, color, intensity, true)
+	_cinematic_charge_ring(anchor, color, intensity, true)
 
 
 func _spawn_projectile(
@@ -67,7 +67,7 @@ func _spawn_projectile(
 	var start: Vector2 = _actor_fx_anchor(attacker)
 	var finish: Vector2 = _actor_fx_anchor(target)
 	var travel_time: float = maxf(PROJECTILE_MIN_TIME, impact_delay - RANGED_CHARGE_TIME)
-	_spawn_directional_streak(start, finish, color, intensity * 0.82, travel_time + 0.08)
+	_cinematic_directional_streak(start, finish, color, intensity * 0.82, travel_time + 0.08)
 
 	# A larger luminous projectile sits on top of the compact base projectile.
 	# It is built from the same committed local CC0 textures, so there is no new
@@ -173,9 +173,9 @@ func _spawn_impact_vfx(
 		0.18
 	)
 
-	_spawn_impact_ring(anchor, impact_color, intensity, critical)
-	_spawn_impact_rays(anchor, impact_color, intensity, critical)
-	_spawn_screen_flash(impact_color, critical)
+	_cinematic_impact_ring(anchor, impact_color, intensity, critical)
+	_cinematic_impact_rays(anchor, impact_color, intensity, critical)
+	_cinematic_screen_flash(impact_color, critical)
 
 
 func _spawn_damage_text(target: Node, amount: int, critical: bool) -> void:
@@ -185,11 +185,11 @@ func _spawn_damage_text(target: Node, amount: int, critical: bool) -> void:
 	_spawn_floating_text(target, text_value, color, 46 if critical else 38)
 
 
-func _spawn_charge_ring(world_position: Vector2, color: Color, intensity: float, ranged: bool) -> void:
+func _cinematic_charge_ring(world_position: Vector2, color: Color, intensity: float, ranged: bool) -> void:
 	var parent_node: Node = get_parent()
 	if parent_node == null:
 		return
-	var ring: Line2D = _make_ring(15.0 + intensity * 1.4, 30, 3.0 + intensity * 0.30)
+	var ring: Line2D = _cinematic_make_ring(15.0 + intensity * 1.4, 30, 3.0 + intensity * 0.30)
 	ring.name = "AttackChargeRingFX"
 	ring.global_position = world_position
 	ring.default_color = Color(color.r, color.g, color.b, 0.80 if ranged else 0.62)
@@ -203,11 +203,11 @@ func _spawn_charge_ring(world_position: Vector2, color: Color, intensity: float,
 	tween.finished.connect(ring.queue_free, CONNECT_ONE_SHOT)
 
 
-func _spawn_impact_ring(world_position: Vector2, color: Color, intensity: float, critical: bool) -> void:
+func _cinematic_impact_ring(world_position: Vector2, color: Color, intensity: float, critical: bool) -> void:
 	var parent_node: Node = get_parent()
 	if parent_node == null:
 		return
-	var ring: Line2D = _make_ring(
+	var ring: Line2D = _cinematic_make_ring(
 		18.0 + intensity * 1.8,
 		36,
 		(6.5 if critical else 5.0) + intensity * 0.32
@@ -226,7 +226,7 @@ func _spawn_impact_ring(world_position: Vector2, color: Color, intensity: float,
 	tween.finished.connect(ring.queue_free, CONNECT_ONE_SHOT)
 
 
-func _spawn_impact_rays(world_position: Vector2, color: Color, intensity: float, critical: bool) -> void:
+func _cinematic_impact_rays(world_position: Vector2, color: Color, intensity: float, critical: bool) -> void:
 	var parent_node: Node = get_parent()
 	if parent_node == null:
 		return
@@ -252,7 +252,7 @@ func _spawn_impact_rays(world_position: Vector2, color: Color, intensity: float,
 		tween.finished.connect(ray.queue_free, CONNECT_ONE_SHOT)
 
 
-func _spawn_directional_streak(
+func _cinematic_directional_streak(
 	start: Vector2,
 	finish: Vector2,
 	color: Color,
@@ -283,7 +283,7 @@ func _spawn_directional_streak(
 	tween.finished.connect(streak.queue_free, CONNECT_ONE_SHOT)
 
 
-func _spawn_screen_flash(color: Color, critical: bool) -> void:
+func _cinematic_screen_flash(color: Color, critical: bool) -> void:
 	# Dedicated layer 89 keeps the flash over the battlefield but under the HUD,
 	# so impact feels global without washing out tactical information.
 	var flash_layer := CanvasLayer.new()
@@ -307,7 +307,7 @@ func _spawn_screen_flash(color: Color, critical: bool) -> void:
 	tween.finished.connect(flash_layer.queue_free, CONNECT_ONE_SHOT)
 
 
-func _make_ring(radius: float, segments: int, width: float) -> Line2D:
+func _cinematic_make_ring(radius: float, segments: int, width: float) -> Line2D:
 	var ring := Line2D.new()
 	ring.width = width
 	ring.antialiased = true
