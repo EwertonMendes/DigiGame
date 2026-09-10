@@ -9,6 +9,8 @@ var _map_label: Label = null
 var _turn_label: Label = null
 var _objective_label: Label = null
 var _last_turn := -1
+var _last_viewport_size := Vector2.ZERO
+var _last_window_size := Vector2i.ZERO
 
 
 func _ready() -> void:
@@ -16,7 +18,15 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
 	get_viewport().size_changed.connect(_layout)
+	set_process(true)
 	call_deferred("_layout")
+
+
+func _process(_delta: float) -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	var window_size := DisplayServer.window_get_size()
+	if viewport_size != _last_viewport_size or window_size != _last_window_size:
+		_layout()
 
 
 func setup(controller: Node) -> void:
@@ -33,7 +43,7 @@ func refresh() -> void:
 	var state: Dictionary = _controller.call("get_hud_state")
 	_panel.visible = true
 	var turn_number := int(state.get("turn_number", 1))
-	_map_label.text = "◆  DIGITAL PLAINS"
+	_map_label.text = "DIGITAL PLAINS"
 	_turn_label.text = "ACT %02d" % turn_number
 	_objective_label.text = "DEFEAT ALL OPPONENTS"
 	if turn_number != _last_turn:
@@ -80,12 +90,18 @@ func _label(text_value: String, font_size: int, color: Color) -> Label:
 func _layout() -> void:
 	if _panel == null:
 		return
-	var viewport := get_viewport().get_visible_rect().size
-	var compact := viewport.x < 760.0
-	var width := minf(620.0, viewport.x - (24.0 if compact else 330.0))
-	width = maxf(300.0, width)
+	var viewport_obj := get_viewport()
+	var logical := viewport_obj.get_visible_rect().size
+	var physical := UI.physical_window_size(viewport_obj)
+	var ui_scale := UI.ui_scale(viewport_obj)
+	_last_viewport_size = logical
+	_last_window_size = DisplayServer.window_get_size()
+	var compact := physical.x < 760.0
+	var width := minf(620.0, physical.x - 24.0)
+	width = maxf(280.0, width)
 	var height := 44.0 if compact else 48.0
-	_panel.position = Vector2((viewport.x - width) * 0.5, 12.0)
+	_panel.scale = Vector2.ONE * ui_scale
+	_panel.position = Vector2((physical.x - width) * 0.5 * ui_scale, 10.0 * ui_scale)
 	_panel.size = Vector2(width, height)
 
 	var third := width / 3.0
@@ -97,12 +113,14 @@ func _layout() -> void:
 	_objective_label.size = Vector2(third - 16.0, height - 8.0)
 
 	if compact:
-		_map_label.text = "◆  PLAINS"
+		_map_label.text = "PLAINS"
 		_objective_label.text = "DEFEAT OPPONENTS"
 		_map_label.add_theme_font_size_override("font_size", 9)
 		_turn_label.add_theme_font_size_override("font_size", 10)
 		_objective_label.add_theme_font_size_override("font_size", 8)
 	else:
+		_map_label.text = "DIGITAL PLAINS"
+		_objective_label.text = "DEFEAT ALL OPPONENTS"
 		_map_label.add_theme_font_size_override("font_size", 11)
 		_turn_label.add_theme_font_size_override("font_size", 12)
 		_objective_label.add_theme_font_size_override("font_size", 10)
