@@ -344,7 +344,7 @@ func _spawn_burst(color: Color, amount: int, velocity: float, lifetime: float, p
 	particles.amount = maxi(1, amount)
 	particles.lifetime = maxf(0.1, lifetime)
 	particles.one_shot = true
-	particles.explosiveness_ratio = 1.0
+	particles.explosiveness = 1.0
 	particles.direction = Vector2.UP
 	particles.spread = 180.0
 	particles.initial_velocity_min = velocity * 0.62
