@@ -142,12 +142,13 @@ func is_pointer_over(world_position: Vector2) -> bool:
 
 
 func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = false) -> void:
-	if target == null or not is_instance_valid(target) or not visible:
+	if target == null or not is_instance_valid(target) or not visible or sprite == null:
 		return
 	if _attack_tween != null and _attack_tween.is_valid():
 		_attack_tween.kill()
-	var origin: Vector2 = global_position
-	var direction: Vector2 = target.global_position - origin
+	var origin: Vector2 = sprite.position
+	var base_scale: Vector2 = sprite.scale
+	var direction: Vector2 = target.global_position - global_position
 	if direction.length_squared() < 1.0:
 		return
 	face_toward_world_position(target.global_position)
@@ -161,9 +162,11 @@ func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = 
 	_attack_tween = create_tween()
 	_attack_tween.set_trans(Tween.TRANS_QUAD)
 	_attack_tween.set_ease(Tween.EASE_IN)
-	_attack_tween.tween_property(self, "global_position", strike_position, ATTACK_LUNGE_TIME)
+	_attack_tween.tween_property(sprite, "position", strike_position, ATTACK_LUNGE_TIME)
+	_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.08, 0.94), ATTACK_LUNGE_TIME)
 	_attack_tween.set_ease(Tween.EASE_OUT)
-	_attack_tween.tween_property(self, "global_position", origin, ATTACK_RETURN_TIME)
+	_attack_tween.tween_property(sprite, "position", origin, ATTACK_RETURN_TIME)
+	_attack_tween.parallel().tween_property(sprite, "scale", base_scale, ATTACK_RETURN_TIME)
 
 
 func play_hit_reaction(source: Node, intensity: float = 4.0) -> void:
@@ -219,6 +222,8 @@ func play_knockout_animation() -> void:
 	if sprite == null:
 		visible = false
 		return
+	if _attack_tween != null and _attack_tween.is_valid():
+		_attack_tween.kill()
 	if _hit_tween != null and _hit_tween.is_valid():
 		_hit_tween.kill()
 	var base_position: Vector2 = sprite.position
