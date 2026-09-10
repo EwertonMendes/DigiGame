@@ -81,6 +81,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/enrich_digimon_database.py --check
+      - name: Validate combat data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/validate_combat_data.py
       - name: Export Web build
         shell: bash
         run: |
