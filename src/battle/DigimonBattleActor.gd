@@ -3,10 +3,19 @@ extends "res://src/Player.gd"
 const BattleDigimonScript = preload("res://src/battle/BattleDigimon.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 
+const ATTACK_LUNGE_TIME := 0.10
+const ATTACK_RETURN_TIME := 0.16
+const HIT_RECOIL_TIME := 0.055
+const HIT_RETURN_TIME := 0.13
+const FLOATING_TEXT_TIME := 0.72
+
 var digimon_instance: DigimonInstance = null
 var battle_state: BattleDigimon = null
 var species_data: Dictionary = {}
 var _stat_calculator = StatCalculatorScript.new()
+var _attack_tween: Tween = null
+var _hit_tween: Tween = null
+var _knockout_started := false
 
 
 func bind_digimon_instance(instance: DigimonInstance, species: Dictionary, player_controlled: bool) -> void:
@@ -124,6 +133,166 @@ func consume_initiative(recovery_cost: float) -> void:
 
 func is_available_for_turn() -> bool:
 	return battle_state != null and not battle_state.is_knocked_out()
+
+
+func is_pointer_over(world_position: Vector2) -> bool:
+	if not visible or not is_available_for_turn():
+		return false
+	return super.is_pointer_over(world_position)
+
+
+func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = false) -> void:
+	if target == null or not is_instance_valid(target) or not visible:
+		return
+	if _attack_tween != null and _attack_tween.is_valid():
+		_attack_tween.kill()
+	var origin := global_position
+	var direction := target.global_position - origin
+	if direction.length_squared() < 1.0:
+		return
+	face_toward_world_position(target.global_position)
+	var normalized := direction.normalized()
+	var lunge_distance: float
+	if ranged:
+		lunge_distance = clampf(8.0 + intensity * 1.25, 12.0, 18.0)
+	else:
+		lunge_distance = minf(direction.length() * 0.48, clampf(28.0 + intensity * 4.0, 34.0, 58.0))
+	var strike_position := origin + normalized * lunge_distance
+	_attack_tween = create_tween()
+	_attack_tween.set_trans(Tween.TRANS_QUAD)
+	_attack_tween.set_ease(Tween.EASE_IN)
+	_attack_tween.tween_property(self, "global_position", strike_position, ATTACK_LUNGE_TIME)
+	_attack_tween.set_ease(Tween.EASE_OUT)
+	_attack_tween.tween_property(self, "global_position", origin, ATTACK_RETURN_TIME)
+
+
+func play_hit_reaction(source: Node, intensity: float = 4.0) -> void:
+	if sprite == null or not visible:
+		return
+	if _hit_tween != null and _hit_tween.is_valid():
+		_hit_tween.kill()
+	var base_position := sprite.position
+	var base_scale := sprite.scale
+	var recoil_direction := Vector2.RIGHT
+	if source != null and is_instance_valid(source):
+		var delta := global_position - source.global_position
+		if delta.length_squared() > 1.0:
+			recoil_direction = delta.normalized()
+	var recoil := recoil_direction * clampf(3.0 + intensity * 0.65, 5.0, 9.0)
+	_hit_tween = create_tween()
+	_hit_tween.set_trans(Tween.TRANS_QUAD)
+	_hit_tween.set_ease(Tween.EASE_OUT)
+	_hit_tween.tween_property(sprite, "position", base_position + recoil, HIT_RECOIL_TIME)
+	_hit_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.08, 0.93), HIT_RECOIL_TIME)
+	_hit_tween.parallel().tween_property(sprite, "modulate", Color(1.0, 0.58, 0.52, 1.0), HIT_RECOIL_TIME)
+	_hit_tween.set_ease(Tween.EASE_IN_OUT)
+	_hit_tween.tween_property(sprite, "position", base_position, HIT_RETURN_TIME)
+	_hit_tween.parallel().tween_property(sprite, "scale", base_scale, HIT_RETURN_TIME)
+	_hit_tween.parallel().tween_property(sprite, "modulate", Color.WHITE, HIT_RETURN_TIME)
+
+
+func show_damage_number(amount: int, critical: bool = false) -> void:
+	var damage := maxi(0, amount)
+	var text := "CRIT  %d" % damage if critical else "%d" % damage
+	var color := Color(1.0, 0.82, 0.20, 1.0) if critical else Color(1.0, 0.96, 0.90, 1.0)
+	_spawn_floating_text(text, color, 31 if critical else 25)
+
+
+func show_miss_feedback() -> void:
+	_spawn_floating_text("MISS", Color(0.70, 0.90, 1.0, 1.0), 23)
+
+
+func emit_hit_particles(element_color: Color, critical: bool = false, intensity: float = 4.0) -> void:
+	var amount := 24 if critical else int(clampf(10.0 + intensity * 2.0, 14.0, 22.0))
+	_spawn_burst(element_color, amount, 78.0 + intensity * 10.0, 0.38, 2.1 if critical else 1.55)
+	if critical:
+		_spawn_burst(Color(1.0, 0.92, 0.48, 1.0), 12, 145.0, 0.28, 2.4)
+
+
+func play_knockout_animation() -> void:
+	if _knockout_started or not visible:
+		return
+	_knockout_started = true
+	set_tactical_selected(false)
+	set_debug_selected(false)
+	modulate = Color.WHITE
+	if sprite == null:
+		visible = false
+		return
+	if _hit_tween != null and _hit_tween.is_valid():
+		_hit_tween.kill()
+	var base_position := sprite.position
+	var base_scale := sprite.scale
+	var defeat_color := Color(0.30, 0.92, 1.0, 1.0) if is_player_controlled else Color(1.0, 0.34, 0.45, 1.0)
+	_spawn_burst(defeat_color, 30, 128.0, 0.58, 2.0)
+	_spawn_burst(Color(0.86, 0.96, 1.0, 1.0), 18, 88.0, 0.72, 1.35)
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "scale", base_scale * Vector2(1.13, 0.90), 0.09)
+	tween.parallel().tween_property(sprite, "modulate", Color(1.0, 0.68, 0.72, 1.0), 0.09)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(sprite, "scale", base_scale * 0.48, 0.42)
+	tween.parallel().tween_property(sprite, "position", base_position + Vector2(0.0, -18.0), 0.42)
+	tween.parallel().tween_property(self, "modulate:a", 0.0, 0.42)
+	await tween.finished
+	visible = false
+	modulate = Color.WHITE
+	sprite.position = base_position
+	sprite.scale = base_scale
+	sprite.modulate = Color.WHITE
+
+
+func _spawn_floating_text(text_value: String, color: Color, font_size: int) -> void:
+	if not visible:
+		return
+	var label := Label.new()
+	label.text = text_value
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.position = Vector2(-72.0, -88.0)
+	label.size = Vector2(144.0, 44.0)
+	label.z_index = 80
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.035, 0.96))
+	label.add_theme_constant_override("outline_size", 6)
+	add_child(label)
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "position:y", label.position.y - 38.0, FLOATING_TEXT_TIME)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.30).set_delay(0.38)
+	tween.tween_callback(label.queue_free)
+
+
+func _spawn_burst(color: Color, amount: int, velocity: float, lifetime: float, particle_scale: float) -> void:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	var particles := CPUParticles2D.new()
+	particles.amount = maxi(1, amount)
+	particles.lifetime = maxf(0.1, lifetime)
+	particles.one_shot = true
+	particles.explosiveness_ratio = 1.0
+	particles.direction = Vector2.UP
+	particles.spread = 180.0
+	particles.initial_velocity_min = velocity * 0.62
+	particles.initial_velocity_max = velocity
+	particles.gravity = Vector2(0.0, 145.0)
+	particles.angular_velocity_min = -220.0
+	particles.angular_velocity_max = 220.0
+	particles.scale_amount_min = particle_scale * 0.55
+	particles.scale_amount_max = particle_scale
+	particles.color = color
+	particles.z_index = 75
+	parent_node.add_child(particles)
+	particles.global_position = global_position + Vector2(0.0, -30.0)
+	particles.emitting = true
+	var cleanup_timer := get_tree().create_timer(particles.lifetime + 0.45)
+	cleanup_timer.timeout.connect(func():
+		if is_instance_valid(particles):
+			particles.queue_free()
+	)
 
 
 func get_instance_snapshot() -> Dictionary:
