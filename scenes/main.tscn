@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://src/ui/CompactDigimonInfoPanel.gd" id="6_info"]
 [ext_resource type="Script" path="res://src/battle/StableSequencedBattleController.gd" id="7_battle"]
 [ext_resource type="Script" path="res://src/BattleHUDDomain.gd" id="8_hud"]
-[ext_resource type="Script" path="res://src/battle/CinematicBattlePresentationFX.gd" id="9_fx"]
+[ext_resource type="Script" path="res://src/battle/TechniqueBattlePresentationFX.gd" id="9_fx"]
 
 [node name="Main" type="Node2D"]
 
