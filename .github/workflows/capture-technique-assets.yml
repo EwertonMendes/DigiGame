@@ -8,7 +8,7 @@ on:
       - .github/workflows/capture-technique-assets.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   capture:
@@ -17,21 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download CC0 VFX packs and Digimon DS sound archive
+      - name: Download pinned source archives
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p capture/zips capture/extracted capture/debug
+          mkdir -p /tmp/digigame-assets
 
-          curl -fL --retry 3 --retry-delay 2 \
-            -A 'Mozilla/5.0 DigiGame asset capture' \
+          curl -fL --retry 3 --retry-delay 2 -A 'Mozilla/5.0 DigiGame asset capture' \
             'https://opengameart.org/sites/default/files/pixelart_spells_1.zip' \
-            -o capture/zips/pixelart_spells.zip
-
-          curl -fL --retry 3 --retry-delay 2 \
-            -A 'Mozilla/5.0 DigiGame asset capture' \
+            -o /tmp/digigame-assets/pixel-art-spells.zip
+          curl -fL --retry 3 --retry-delay 2 -A 'Mozilla/5.0 DigiGame asset capture' \
             'https://opengameart.org/sites/default/files/Nature%20Magic%20Effect.zip' \
-            -o capture/zips/nature_magic.zip
+            -o /tmp/digigame-assets/nature-magic.zip
 
           python3 - <<'PY'
           import base64
@@ -39,187 +36,131 @@ jobs:
           import re
           from pathlib import Path
           from urllib.parse import unquote, urlparse
-
           import requests
 
-          OUT = Path('capture/zips')
-          DEBUG = Path('capture/debug')
+          OUT = Path('/tmp/digigame-assets')
           UA = 'Mozilla/5.0 (X11; Linux x86_64) DigiGame/asset-capture'
 
           def csrf_from(html: str) -> str:
-              patterns = [
+              for pattern in (
                   r'<meta[^>]+name=["\']csrf_token["\'][^>]+value=["\']([^"\']+)',
                   r'<meta[^>]+value=["\']([^"\']+)["\'][^>]+name=["\']csrf_token["\']',
                   r'<input[^>]+name=["\']csrf_token["\'][^>]+value=["\']([^"\']+)',
                   r'<input[^>]+value=["\']([^"\']+)["\'][^>]+name=["\']csrf_token["\']',
-              ]
-              for pattern in patterns:
+              ):
                   match = re.search(pattern, html, flags=re.I)
                   if match:
                       return match.group(1)
               raise RuntimeError('itch.io CSRF token not found')
 
-          def itch_download(game_url: str, expected_filename: str, output: Path) -> None:
+          def download_free_itch(game_url: str, expected_filename: str, output: Path) -> None:
               session = requests.Session()
               session.headers.update({'User-Agent': UA})
               page = session.get(game_url, timeout=30)
               page.raise_for_status()
-              csrf = csrf_from(page.text)
-
-              signed_response = session.post(
+              signed = session.post(
                   game_url.rstrip('/') + '/download_url',
-                  data={'csrf_token': csrf, 'suggested_amount': '0'},
-                  headers={'Referer': game_url},
-                  timeout=30,
+                  data={'csrf_token': csrf_from(page.text), 'suggested_amount': '0'},
+                  headers={'Referer': game_url}, timeout=30,
               )
-              signed_response.raise_for_status()
-              signed_url = signed_response.json().get('url', '')
+              signed.raise_for_status()
+              signed_url = signed.json().get('url', '')
               if not signed_url:
-                  raise RuntimeError(f'itch.io returned no free download URL for {game_url}')
-
-              escaped_last = urlparse(signed_url).path.rsplit('/', 1)[-1]
-              download_key = unquote(escaped_last)
-              payload = download_key.split('.', 1)[0]
+                  raise RuntimeError(f'no free download URL for {game_url}')
+              token = unquote(urlparse(signed_url).path.rsplit('/', 1)[-1])
+              payload = token.split('.', 1)[0]
               payload += '=' * (-len(payload) % 4)
-              key_data = json.loads(base64.b64decode(payload).decode('utf-8'))
-              key_id = int(key_data['id'])
-
+              download_key_id = int(json.loads(base64.b64decode(payload).decode('utf-8'))['id'])
               signed_page = session.get(signed_url, timeout=30)
               signed_page.raise_for_status()
               signed_csrf = csrf_from(signed_page.text)
-
               upload_id = None
               for match in re.finditer(r'data-upload_id=["\'](\d+)["\']', signed_page.text, flags=re.I):
-                  start = max(0, match.start() - 1800)
-                  end = min(len(signed_page.text), match.end() + 1800)
-                  if expected_filename.lower() in signed_page.text[start:end].lower():
+                  window = signed_page.text[max(0, match.start() - 1800):min(len(signed_page.text), match.end() + 1800)]
+                  if expected_filename.lower() in window.lower():
                       upload_id = match.group(1)
                       break
               if upload_id is None:
                   ids = re.findall(r'data-upload_id=["\'](\d+)["\']', signed_page.text, flags=re.I)
-                  if len(ids) == 1:
-                      upload_id = ids[0]
-                  else:
-                      raise RuntimeError(f'could not resolve upload {expected_filename}; found ids={ids}')
-
+                  if len(ids) != 1:
+                      raise RuntimeError(f'could not resolve {expected_filename}; upload ids={ids}')
+                  upload_id = ids[0]
               resolver = session.post(
                   game_url.rstrip('/') + f'/file/{upload_id}',
-                  data={'csrf_token': signed_csrf, 'download_key_id': str(key_id)},
-                  headers={'Referer': signed_url},
-                  timeout=30,
+                  data={'csrf_token': signed_csrf, 'download_key_id': str(download_key_id)},
+                  headers={'Referer': signed_url}, timeout=30,
               )
               resolver.raise_for_status()
               cdn_url = resolver.json().get('url', '')
               if not cdn_url:
-                  raise RuntimeError(f'itch.io file resolver returned no URL for {expected_filename}: {resolver.text[:500]}')
-
+                  raise RuntimeError(f'no CDN URL returned for {expected_filename}')
               with session.get(cdn_url, stream=True, timeout=60) as download:
                   download.raise_for_status()
-                  with output.open('wb') as fh:
-                      for chunk in download.iter_content(1024 * 256):
+                  with output.open('wb') as handle:
+                      for chunk in download.iter_content(256 * 1024):
                           if chunk:
-                              fh.write(chunk)
-              print(f'downloaded {expected_filename}: {output.stat().st_size} bytes')
+                              handle.write(chunk)
 
-          def download_sounds_resource_asset(asset_id: int, output: Path) -> bool:
-              base = 'https://sounds.spriters-resource.com'
-              asset_page = f'{base}/ds_dsi/dgmnworldds/asset/{asset_id}/'
-              session = requests.Session()
-              session.headers.update({
-                  'User-Agent': UA,
-                  'Referer': f'{base}/ds_dsi/dgmnworldds/',
-              })
-
-              candidates = []
-              try:
-                  page = session.get(asset_page, timeout=30)
-                  DEBUG.joinpath('sounds-resource-asset-page.html').write_text(page.text, encoding='utf-8')
-                  if page.ok:
-                      for href in re.findall(r'href=["\']([^"\']+)["\']', page.text, flags=re.I):
-                          if f'{asset_id}.zip' in href or '/media/assets/' in href:
-                              candidates.append(href if href.startswith('http') else base + href)
-              except requests.RequestException as exc:
-                  DEBUG.joinpath('sounds-resource-error.txt').write_text(str(exc), encoding='utf-8')
-
-              # Current VG Resource storage uses /media/assets/<bucket>/<asset>.zip.
-              # The HTML normally reveals the bucket. If bot protection hides it,
-              # probe the nearby numeric buckets without assuming an obsolete
-              # /download/<id>/ route.
-              for bucket in range(300, 431):
-                  candidates.append(f'{base}/media/assets/{bucket}/{asset_id}.zip')
-
-              seen = set()
-              for url in candidates:
-                  if url in seen:
-                      continue
-                  seen.add(url)
-                  try:
-                      response = session.get(url, stream=True, timeout=12)
-                  except requests.RequestException:
-                      continue
-                  if response.status_code != 200:
-                      response.close()
-                      continue
-                  prefix = next(response.iter_content(4), b'')
-                  if not prefix.startswith(b'PK'):
-                      response.close()
-                      continue
-                  with output.open('wb') as fh:
-                      fh.write(prefix)
-                      for chunk in response.iter_content(1024 * 256):
-                          if chunk:
-                              fh.write(chunk)
-                  response.close()
-                  print(f'downloaded Sounds Resource asset {asset_id} from {url}: {output.stat().st_size} bytes')
-                  DEBUG.joinpath('sounds-resource-resolved-url.txt').write_text(url + '\n', encoding='utf-8')
-                  return True
-              return False
-
-          itch_download(
+          download_free_itch(
               'https://foozlecc.itch.io/pixel-magic-sprite-effects',
               'Foozle_2DE0001_Pixel_Magic_Effects.zip',
-              OUT / 'foozle_pixel_magic.zip',
+              OUT / 'foozle-pixel-magic.zip',
           )
-          itch_download(
+          download_free_itch(
               'https://nerijs.itch.io/pvfx-foundry',
               'PVFX-Foundry-0.7.0.zip',
-              OUT / 'pvfx_foundry.zip',
+              OUT / 'pvfx-foundry-0.7.0.zip',
           )
-
-          if not download_sounds_resource_asset(400142, OUT / 'digimon_world_ds_sfx.zip'):
-              # Keep the VFX capture useful even if VG Resource changes storage.
-              DEBUG.joinpath('sounds-resource-not-found.txt').write_text(
-                  'Could not resolve asset 400142 in this run.\n', encoding='utf-8'
-              )
-              print('WARNING: Digimon World DS sound archive was not resolved; VFX capture will still be uploaded.')
           PY
 
-      - name: Extract captured archives
+          curl -fL --retry 3 --retry-delay 2 -A 'Mozilla/5.0 DigiGame asset capture' \
+            'https://sounds.spriters-resource.com/media/assets/397/400142.zip?updated=1755530283' \
+            -o /tmp/digigame-assets/digimon-world-ds-sfx.zip
+
+          cat > /tmp/digigame-assets/SHA256SUMS <<'SUMS'
+          bf6e751559942aad40a50359ab5ae8f9750054546de0b21b4519d39904e163cb  pixel-art-spells.zip
+          46f44a30d38b65d55ed1101ce8dc8907e31043958abaf9e2b1894508438815f8  nature-magic.zip
+          0c04ab8ee856988b55885a92305d5382459cc855b2a6361c417bb11606f41e9a  foozle-pixel-magic.zip
+          a2a26a2c162ff9d58037c921d6c568d7fa944cfb166e25eef68f908046c29add  pvfx-foundry-0.7.0.zip
+          990d8d9417351d154c8e35a014775419a9788e2c53c964b220703765e80d1ba4  digimon-world-ds-sfx.zip
+          SUMS
+          (cd /tmp/digigame-assets && sha256sum -c SHA256SUMS)
+
+      - name: Vendor sources and build runtime atlases
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p \
-            capture/extracted/pixel-art-spells \
-            capture/extracted/foozle-pixel-magic \
-            capture/extracted/pvfx-foundry \
-            capture/extracted/nature-magic \
-            capture/extracted/digimon-world-ds-sfx
-          unzip -q capture/zips/pixelart_spells.zip -d capture/extracted/pixel-art-spells
-          unzip -q capture/zips/foozle_pixel_magic.zip -d capture/extracted/foozle-pixel-magic
-          unzip -q capture/zips/pvfx_foundry.zip -d capture/extracted/pvfx-foundry
-          unzip -q capture/zips/nature_magic.zip -d capture/extracted/nature-magic
-          if [ -f capture/zips/digimon_world_ds_sfx.zip ]; then
-            unzip -q capture/zips/digimon_world_ds_sfx.zip -d capture/extracted/digimon-world-ds-sfx
-          fi
-          echo '=== Captured file inventory ==='
-          find capture/extracted -type f -printf '%p\t%s bytes\n' | sort | tee capture/inventory.txt
-          echo '=== Archive SHA-256 ==='
-          sha256sum capture/zips/* | sort | tee capture/archive-sha256.txt
+          mkdir -p vendor/vfx-source assets/audio/digimon-world-ds /tmp/digimon-sfx
+          cp /tmp/digigame-assets/pixel-art-spells.zip vendor/vfx-source/pixel-art-spells.zip
+          cp /tmp/digigame-assets/foozle-pixel-magic.zip vendor/vfx-source/foozle-pixel-magic.zip
+          cp /tmp/digigame-assets/pvfx-foundry-0.7.0.zip vendor/vfx-source/pvfx-foundry-0.7.0.zip
+          cp /tmp/digigame-assets/nature-magic.zip vendor/vfx-source/nature-magic.zip
 
-      - name: Upload capture artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: technique-assets-capture
-          path: capture
-          retention-days: 3
-          compression-level: 0
+          unzip -q /tmp/digigame-assets/digimon-world-ds-sfx.zip -d /tmp/digimon-sfx
+          cp '/tmp/digimon-sfx/Digimon World DS/053.wav' assets/audio/digimon-world-ds/normal-attack-whoosh.wav
+          cp '/tmp/digimon-sfx/Digimon World DS/031.wav' assets/audio/digimon-world-ds/normal-attack-impact.wav
+          cp '/tmp/digimon-sfx/Digimon World DS/043.wav' assets/audio/digimon-world-ds/technique-cast.wav
+          cp '/tmp/digimon-sfx/Digimon World DS/068.wav' assets/audio/digimon-world-ds/technique-impact.wav
+
+          python3 -m pip install --disable-pip-version-check Pillow==12.3.0
+          python3 tools/build_vfx_library.py
+
+          test "$(python3 - <<'PY'
+          import json
+          print(len(json.load(open('database/vfx-library.json'))['effects']))
+          PY
+          )" = '71'
+
+      - name: Commit materialized assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'DigiGame Asset Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add vendor/vfx-source assets/vfx/library/atlas assets/audio/digimon-world-ds database/vfx-library.json
+          if git diff --cached --quiet; then
+            echo 'No asset changes to commit.'
+            exit 0
+          fi
+          git commit -m 'chore: vendor technique VFX and battle SFX'
+          git push origin HEAD:feat/technique-vfx-audio-library
