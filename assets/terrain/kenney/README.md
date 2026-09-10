@@ -1,6 +1,6 @@
 # Kenney Isometric Landscape — Selected CC0 Assets
 
-This directory is populated by `tools/fetch_cc0_assets.py` during CI.
+The three runtime PNGs in this directory are **committed to the repository**. A clean checkout therefore has the terrain art locally and neither the game nor normal CI has to download it.
 
 Asset pack: **Isometric Landscape**  
 Author: **Kenney Vleugels / Kenney**  
@@ -10,14 +10,14 @@ License URL: https://creativecommons.org/publicdomain/zero/1.0/
 
 The pack's included license states that the graphics may be used in personal and commercial projects and that credit is appreciated but not mandatory.
 
-For reproducible remote builds, the selected files are downloaded from the public `ETdoFresh/kenney.nl` mirror pinned to commit:
+The committed files were materialized from the public `ETdoFresh/kenney.nl` mirror pinned to commit:
 
 `45df48c4d45f8716216b1a9e22df0b69cd9f5932`
 
-Selected source files for the first visual prototype:
+Selected source files:
 
 - `isometriclandscape/PNG/landscapeTiles_010.png` → `grass.png`
 - `isometriclandscape/PNG/landscapeTiles_014.png` → `earth.png`
 - `isometriclandscape/PNG/landscapeTiles_015.png` → `lush_grass.png`
 
-The fetch script verifies each downloaded file against its pinned Git blob SHA before writing it into this directory.
+`tools/fetch_cc0_assets.py` remains only as an optional provenance/reproduction tool. `tools/validate_runtime_assets.py` verifies the committed binaries against their pinned Git blob SHAs without network access.
