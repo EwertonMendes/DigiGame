@@ -18,6 +18,7 @@ var _phase_label: Label
 var _mov_label: Label
 var _team_label: Label
 var _move_button: Button
+var _confirm_move_button: Button
 var _defend_button: Button
 var _wait_button: Button
 var _undo_button: Button
@@ -138,7 +139,7 @@ func _build_ui() -> void:
 	meta_row.add_child(_phase_label)
 
 	_mov_label = Label.new()
-	_mov_label.custom_minimum_size = Vector2(82.0, 28.0)
+	_mov_label.custom_minimum_size = Vector2(100.0, 28.0)
 	_mov_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mov_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_mov_label.add_theme_font_size_override("font_size", 13)
@@ -159,11 +160,13 @@ func _build_ui() -> void:
 	center.add_child(buttons)
 
 	_move_button = _make_button("MOVE", CYAN)
+	_confirm_move_button = _make_button("CONFIRM", GREEN)
 	_defend_button = _make_button("DEFEND", GREEN)
 	_wait_button = _make_button("WAIT", BLUE)
 	_undo_button = _make_button("UNDO", GOLD)
 	_cancel_button = _make_button("CANCEL", RED)
 	buttons.add_child(_move_button)
+	buttons.add_child(_confirm_move_button)
 	buttons.add_child(_defend_button)
 	buttons.add_child(_wait_button)
 	buttons.add_child(_undo_button)
@@ -180,6 +183,7 @@ func _make_button(label: String, accent: Color) -> Button:
 	button.add_theme_color_override("font_color", TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.64, 0.70, 0.72))
 	button.add_theme_stylebox_override("normal", _button_style(accent, 0.16, 0.62))
 	button.add_theme_stylebox_override("hover", _button_style(accent, 0.28, 0.98))
 	button.add_theme_stylebox_override("pressed", _button_style(accent, 0.42, 1.0))
@@ -191,6 +195,7 @@ func _refresh_connections() -> void:
 	if _controller == null:
 		return
 	_move_button.pressed.connect(Callable(_controller, "begin_move_selection"))
+	_confirm_move_button.pressed.connect(Callable(_controller, "confirm_move_path"))
 	_defend_button.pressed.connect(Callable(_controller, "defend_current"))
 	_wait_button.pressed.connect(Callable(_controller, "wait_current"))
 	_undo_button.pressed.connect(Callable(_controller, "undo_move"))
@@ -216,13 +221,19 @@ func refresh_from_controller() -> void:
 	_panel.visible = true
 	var actor_name := String(state.get("actor_name", ""))
 	_turn_label.text = actor_name.to_upper() if not actor_name.is_empty() else "PREPARING BATTLE"
-	_phase_label.text = _phase_copy(String(state.get("phase", "")), bool(state.get("is_user_turn", false)))
-	_mov_label.text = "MOV  %d" % int(state.get("mov", 4))
+	_phase_label.text = _phase_copy(state)
+	var planning := bool(state.get("is_planning_move", false))
+	if planning:
+		_mov_label.text = "MOV LEFT  %d" % int(state.get("move_remaining", 0))
+	else:
+		_mov_label.text = "MOV  %d" % int(state.get("mov", 4))
 	_team_label.text = "ALLY TURN" if player_team else "ENEMY TURN"
 	_team_label.add_theme_color_override("font_color", Color(0.86, 0.98, 1.0) if player_team else Color(1.0, 0.88, 0.84))
 	_team_label.add_theme_stylebox_override("normal", _pill_style(CYAN if player_team else RED))
 
 	_move_button.visible = bool(state.get("can_move", false))
+	_confirm_move_button.visible = planning and bool(state.get("is_user_turn", false))
+	_confirm_move_button.disabled = not bool(state.get("can_confirm_move", false))
 	_defend_button.visible = bool(state.get("can_defend", false))
 	_wait_button.visible = bool(state.get("can_wait", false))
 	_undo_button.visible = bool(state.get("can_undo", false))
@@ -234,14 +245,15 @@ func refresh_from_controller() -> void:
 		_animate_actor_change()
 
 
-func _phase_copy(raw_phase: String, is_user_turn: bool) -> String:
-	if not is_user_turn:
+func _phase_copy(state: Dictionary) -> String:
+	var raw_phase := String(state.get("phase", ""))
+	if not bool(state.get("is_user_turn", false)):
 		return "Opponent's turn..."
 	match raw_phase:
 		"Turn Start": return "Starting turn..."
 		"Choose an action": return "Select an action for this Digimon"
-		"Choose a destination": return "Choose a tile within movement range"
-		"Moving": return "Following tactical route..."
+		"Plan movement": return "Trace the route tile by tile • tap or drag adjacent tiles"
+		"Moving": return "Following your tactical route..."
 		"Choose a target": return "Select a target"
 		"Resolving action": return "Resolving action..."
 		"Turn End": return "Ending turn..."

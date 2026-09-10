@@ -4,6 +4,7 @@ const MovementSystemScript = preload("res://src/MovementSystem.gd")
 const DATABASE_PATH := "res://database/base-digimon-list.json"
 const DEFAULT_MOV := 4
 const ENEMY_PLACEHOLDER_TURN_SECONDS := 0.45
+const INVALID_GRID := Vector2i(-9999, -9999)
 
 enum Phase {
 	TURN_START,
@@ -25,40 +26,64 @@ var _turn_order: Array[Node] = []
 var _turn_index := -1
 var _reachable_tiles: Dictionary = {}
 var _turn_start_grid := Vector2i.ZERO
+var _planned_move_path: Array[Vector2i] = []
+var _valid_next_steps: Dictionary = {}
 var _last_move_path: Array[Vector2i] = []
 var _has_moved := false
 var _input_locked := false
 var _mov_by_key: Dictionary = {}
 var _debug_actor: Node = null
+var _last_pointer_grid := INVALID_GRID
 
 
 func _ready() -> void:
 	_field = get_node_or_null("../Blocks")
 	_controller = get_node_or_null("../DigimonController")
 	_load_movement_database()
-	if _field != null and _field.has_signal("hovered_grid_changed"):
-		_field.connect("hovered_grid_changed", _on_hovered_grid_changed)
 	call_deferred("_start_battle")
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var key_event := event as InputEventKey
-		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_ESCAPE:
+		if not key_event.pressed or key_event.echo:
+			return
+
+		if key_event.keycode == KEY_ESCAPE:
 			if GlobalVariables.DebugMode:
 				_clear_debug_selection()
 				get_viewport().set_input_as_handled()
 				return
-			if _input_locked or current_actor == null or not _is_user_controlled(current_actor):
-				return
-			if phase == Phase.MOVE_SELECT:
+			if phase == Phase.MOVE_SELECT and not _input_locked:
 				cancel_move_selection()
 				get_viewport().set_input_as_handled()
 			return
 
-	if GlobalVariables.TouchInputActive or not event is InputEventMouseButton:
+		if phase == Phase.MOVE_SELECT and not _input_locked and _is_user_controlled(current_actor):
+			if key_event.keycode == KEY_BACKSPACE or key_event.keycode == KEY_DELETE:
+				remove_last_planned_step()
+				get_viewport().set_input_as_handled()
+				return
+			if key_event.keycode == KEY_ENTER or key_event.keycode == KEY_KP_ENTER:
+				confirm_move_path()
+				get_viewport().set_input_as_handled()
+				return
 		return
 
+	# Touch input is routed by MainCamera so taps, path tracing, pan, and pinch
+	# have one gesture owner. Mouse path tracing is handled directly here.
+	if GlobalVariables.TouchInputActive:
+		return
+
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if is_manual_path_input_active() and (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
+			if handle_path_pointer_world(_pointer_world_position()):
+				get_viewport().set_input_as_handled()
+		return
+
+	if not event is InputEventMouseButton:
+		return
 	var mouse_event := event as InputEventMouseButton
 	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
 		return
@@ -70,7 +95,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if _input_locked or current_actor == null or not _is_user_controlled(current_actor):
 		return
-
 	if handle_world_tap(_pointer_world_position()):
 		get_viewport().set_input_as_handled()
 
@@ -79,7 +103,19 @@ func uses_tactical_input() -> bool:
 	return true
 
 
+func is_manual_path_input_active() -> bool:
+	return (
+		not GlobalVariables.DebugMode
+		and phase == Phase.MOVE_SELECT
+		and not _input_locked
+		and current_actor != null
+		and _is_user_controlled(current_actor)
+	)
+
+
 func set_debug_mode(enabled: bool) -> void:
+	if enabled and phase == Phase.MOVE_SELECT and not _input_locked:
+		cancel_move_selection()
 	GlobalVariables.DebugMode = enabled
 	if not enabled:
 		_clear_debug_selection()
@@ -88,7 +124,6 @@ func set_debug_mode(enabled: bool) -> void:
 
 func handle_world_tap(world_position: Vector2) -> bool:
 	# Debug movement is deliberately independent from the tactical turn state.
-	# It never changes current_actor, phase, movement budget, or turn ownership.
 	if GlobalVariables.DebugMode:
 		return _handle_debug_world_tap(world_position)
 
@@ -109,13 +144,87 @@ func handle_world_tap(world_position: Vector2) -> bool:
 				begin_move_selection()
 				return true
 		Phase.MOVE_SELECT:
-			if grid == _turn_start_grid:
-				cancel_move_selection()
-				return true
-			if _reachable_tiles.has(grid):
-				_perform_move_to(grid)
-				return true
+			_apply_manual_path_grid(grid)
+			return true
 	return false
+
+
+func handle_path_pointer_world(world_position: Vector2) -> bool:
+	if not is_manual_path_input_active() or _field == null:
+		return false
+	var grid := Vector2i(_field.call("world_to_grid", _field.to_local(world_position)))
+	if grid == _last_pointer_grid:
+		return false
+	_last_pointer_grid = grid
+	if not bool(_field.call("select_tile_from_world", world_position)):
+		return false
+	return _apply_manual_path_grid(grid)
+
+
+func _apply_manual_path_grid(grid: Vector2i) -> bool:
+	if not is_manual_path_input_active():
+		return false
+
+	if grid == _turn_start_grid:
+		if _planned_move_path.is_empty():
+			return false
+		_planned_move_path.clear()
+		_refresh_manual_path_state()
+		return true
+
+	var existing_index := _planned_move_path.find(grid)
+	if existing_index >= 0:
+		if existing_index == _planned_move_path.size() - 1:
+			return false
+		_planned_move_path.resize(existing_index + 1)
+		_refresh_manual_path_state()
+		return true
+
+	if not _valid_next_steps.has(grid):
+		return false
+
+	_planned_move_path.append(grid)
+	_refresh_manual_path_state()
+	return true
+
+
+func remove_last_planned_step() -> void:
+	if not is_manual_path_input_active() or _planned_move_path.is_empty():
+		return
+	_planned_move_path.pop_back()
+	_refresh_manual_path_state()
+
+
+func confirm_move_path() -> bool:
+	if not is_manual_path_input_active():
+		return false
+	var movement_points := _movement_for(current_actor)
+	if not _movement_system.can_confirm_manual_path(
+		_field,
+		_controller,
+		current_actor,
+		_planned_move_path,
+		movement_points
+	):
+		return false
+
+	var path := _planned_move_path.duplicate()
+	_input_locked = true
+	phase = Phase.MOVING
+	_clear_manual_path_visuals()
+	_refresh_hud()
+	await current_actor.call("move_along_grid_path", path, _field)
+	_last_move_path = path.duplicate()
+	_planned_move_path.clear()
+	_valid_next_steps.clear()
+	_has_moved = true
+	_reachable_tiles.clear()
+	_input_locked = false
+	if current_actor.has_method("set_tactical_selected"):
+		current_actor.call("set_tactical_selected", false)
+	phase = Phase.ACTION_SELECT
+	_refresh_hud()
+	return true
 
 
 func _handle_debug_world_tap(world_position: Vector2) -> bool:
@@ -126,7 +235,6 @@ func _handle_debug_world_tap(world_position: Vector2) -> bool:
 	if _controller.has_method("get_digimon_under_pointer"):
 		hovered = _controller.call("get_digimon_under_pointer", world_position) as Node
 
-	# Clicking any Digimon selects it as the debug unit, regardless of team or turn.
 	if hovered != null:
 		_set_debug_actor(hovered)
 		return true
@@ -145,8 +253,6 @@ func _handle_debug_world_tap(world_position: Vector2) -> bool:
 
 	if _debug_actor.has_method("debug_relocate_to_grid"):
 		return bool(_debug_actor.call("debug_relocate_to_grid", grid, _field))
-
-	# Compatibility fallback for a battle unit that has not implemented the helper.
 	if _debug_actor.has_method("get_tile_world_position"):
 		var current_tile := Vector2(_debug_actor.call("get_tile_world_position"))
 		_debug_actor.global_position += target_world - current_tile
@@ -176,6 +282,8 @@ func begin_move_selection() -> void:
 		return
 
 	_turn_start_grid = _grid_for_actor(current_actor)
+	_planned_move_path.clear()
+	_valid_next_steps.clear()
 	_reachable_tiles = _movement_system.get_reachable_tiles(
 		_field,
 		_controller,
@@ -188,22 +296,51 @@ func begin_move_selection() -> void:
 		current_actor.call("set_tactical_selected", true)
 	if _field != null and _field.has_method("set_movement_range"):
 		_field.call("set_movement_range", _reachable_tiles, _turn_start_grid, current_actor)
-	_refresh_hud()
+	_refresh_manual_path_state()
 
 
 func cancel_move_selection() -> void:
 	if phase != Phase.MOVE_SELECT or _input_locked:
 		return
+	_planned_move_path.clear()
+	_valid_next_steps.clear()
 	_reachable_tiles.clear()
-	if _field != null:
-		if _field.has_method("clear_movement_range"):
-			_field.call("clear_movement_range")
-		if _field.has_method("clear_movement_path"):
-			_field.call("clear_movement_path")
+	_clear_manual_path_visuals()
 	if current_actor != null and current_actor.has_method("set_tactical_selected"):
 		current_actor.call("set_tactical_selected", false)
 	phase = Phase.COMMAND
 	_refresh_hud()
+
+
+func _refresh_manual_path_state() -> void:
+	if phase != Phase.MOVE_SELECT or current_actor == null:
+		return
+	_valid_next_steps = _movement_system.get_valid_next_steps(
+		_field,
+		_controller,
+		current_actor,
+		_turn_start_grid,
+		_planned_move_path,
+		_movement_for(current_actor)
+	)
+	if _field != null:
+		if _field.has_method("set_movement_path"):
+			_field.call("set_movement_path", _planned_move_path)
+		if _field.has_method("set_movement_step_options"):
+			_field.call("set_movement_step_options", _valid_next_steps, _planned_move_path)
+	_last_pointer_grid = INVALID_GRID
+	_refresh_hud()
+
+
+func _clear_manual_path_visuals() -> void:
+	if _field == null:
+		return
+	if _field.has_method("clear_movement_range"):
+		_field.call("clear_movement_range")
+	if _field.has_method("clear_movement_path"):
+		_field.call("clear_movement_path")
+	if _field.has_method("clear_movement_step_options"):
+		_field.call("clear_movement_step_options")
 
 
 func defend_current() -> void:
@@ -256,12 +393,32 @@ func get_hud_state() -> Dictionary:
 	if current_actor != null:
 		actor_name = String(current_actor.get("digimon_key")).capitalize()
 	var user_turn := current_actor != null and _is_user_controlled(current_actor)
+	var total_mov := _movement_for(current_actor) if current_actor != null else DEFAULT_MOV
+	var move_spent := 0
+	if phase == Phase.MOVE_SELECT and current_actor != null:
+		move_spent = _movement_system.get_path_cost(_field, current_actor, _planned_move_path)
+	var can_confirm := (
+		user_turn
+		and phase == Phase.MOVE_SELECT
+		and not _input_locked
+		and _movement_system.can_confirm_manual_path(
+			_field,
+			_controller,
+			current_actor,
+			_planned_move_path,
+			total_mov
+		)
+	)
 	return {
 		"actor_name": actor_name,
 		"phase": phase_name(),
-		"mov": _movement_for(current_actor) if current_actor != null else DEFAULT_MOV,
+		"mov": total_mov,
+		"move_spent": move_spent,
+		"move_remaining": maxi(0, total_mov - move_spent),
+		"is_planning_move": phase == Phase.MOVE_SELECT,
 		"is_user_turn": user_turn,
 		"can_move": user_turn and phase == Phase.COMMAND and not _has_moved and not _input_locked,
+		"can_confirm_move": can_confirm,
 		"can_defend": user_turn and (phase == Phase.COMMAND or phase == Phase.ACTION_SELECT) and not _input_locked,
 		"can_wait": user_turn and (phase == Phase.COMMAND or phase == Phase.ACTION_SELECT) and not _input_locked,
 		"can_undo": user_turn and phase == Phase.ACTION_SELECT and _has_moved and not _input_locked,
@@ -273,7 +430,7 @@ func phase_name() -> String:
 	match phase:
 		Phase.TURN_START: return "Turn Start"
 		Phase.COMMAND: return "Choose an action"
-		Phase.MOVE_SELECT: return "Choose a destination"
+		Phase.MOVE_SELECT: return "Plan movement"
 		Phase.MOVING: return "Moving"
 		Phase.ACTION_SELECT: return "Choose an action"
 		Phase.TARGET_SELECT: return "Choose a target"
@@ -311,6 +468,8 @@ func _start_next_turn() -> void:
 	phase = Phase.TURN_START
 	_has_moved = false
 	_last_move_path.clear()
+	_planned_move_path.clear()
+	_valid_next_steps.clear()
 	_reachable_tiles.clear()
 	_input_locked = false
 	current_actor.set("is_defending", false)
@@ -328,8 +487,6 @@ func _skip_enemy_placeholder_turn(actor: Node) -> void:
 	await get_tree().create_timer(ENEMY_PLACEHOLDER_TURN_SECONDS).timeout
 	if current_actor != actor or phase != Phase.COMMAND:
 		return
-	# Debug mode is an independent sandbox overlay; it must never pause or take
-	# ownership of the actual tactical turn sequence.
 	_end_turn()
 
 
@@ -338,68 +495,15 @@ func _end_turn() -> void:
 		return
 	phase = Phase.TURN_END
 	_input_locked = true
-	if _field != null:
-		if _field.has_method("clear_movement_range"):
-			_field.call("clear_movement_range")
-		if _field.has_method("clear_movement_path"):
-			_field.call("clear_movement_path")
+	_planned_move_path.clear()
+	_valid_next_steps.clear()
+	_clear_manual_path_visuals()
 	if current_actor.has_method("set_tactical_selected"):
 		current_actor.call("set_tactical_selected", false)
 	if current_actor.has_method("set_turn_active"):
 		current_actor.call("set_turn_active", false)
 	_refresh_hud()
 	call_deferred("_start_next_turn")
-
-
-func _perform_move_to(destination: Vector2i) -> void:
-	if _input_locked or phase != Phase.MOVE_SELECT or not _reachable_tiles.has(destination):
-		return
-	var path: Array[Vector2i] = _movement_system.find_path(
-		_field,
-		_controller,
-		current_actor,
-		_turn_start_grid,
-		destination,
-		_movement_for(current_actor)
-	)
-	if path.is_empty():
-		return
-
-	_input_locked = true
-	phase = Phase.MOVING
-	if _field != null:
-		_field.call("clear_movement_range")
-		_field.call("clear_movement_path")
-	_refresh_hud()
-	await current_actor.call("move_along_grid_path", path, _field)
-	_last_move_path = path.duplicate()
-	_has_moved = true
-	_reachable_tiles.clear()
-	_input_locked = false
-	if current_actor.has_method("set_tactical_selected"):
-		current_actor.call("set_tactical_selected", false)
-	phase = Phase.ACTION_SELECT
-	_refresh_hud()
-
-
-func _on_hovered_grid_changed(grid: Vector2i, block_reason: String) -> void:
-	if phase != Phase.MOVE_SELECT or current_actor == null or _input_locked or _field == null:
-		return
-	if not block_reason.is_empty() or not _reachable_tiles.has(grid):
-		if _field.has_method("clear_movement_path"):
-			_field.call("clear_movement_path")
-		return
-
-	var path: Array[Vector2i] = _movement_system.find_path(
-		_field,
-		_controller,
-		current_actor,
-		_turn_start_grid,
-		grid,
-		_movement_for(current_actor)
-	)
-	if _field.has_method("set_movement_path"):
-		_field.call("set_movement_path", path)
 
 
 func _grid_for_actor(actor: Node) -> Vector2i:
@@ -427,14 +531,10 @@ func _load_movement_database() -> void:
 		if not entry is Dictionary or not entry.has("name"):
 			continue
 		var key := String(entry["name"]).to_lower()
-		# The current database does not need MOV yet. As soon as that attribute is
-		# added, this controller starts using it; otherwise every Digimon gets 4.
 		_mov_by_key[key] = int(entry.get("MOV", DEFAULT_MOV))
 
 
 func _is_user_controlled(actor: Node) -> bool:
-	# Tactical ownership never changes in debug mode. Debug movement is handled
-	# separately by _handle_debug_world_tap().
 	return actor != null and bool(actor.get("is_player_controlled"))
 
 

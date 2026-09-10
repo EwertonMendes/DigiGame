@@ -61,8 +61,8 @@ func find_path(
 
 
 func get_path_cost(field: Node, moving_digimon: Node, path: Array[Vector2i]) -> int:
-	var total := 0
-	for grid in path:
+	var total: int = 0
+	for grid: Vector2i in path:
 		total += _movement_cost(field, moving_digimon, grid)
 	return total
 
@@ -75,21 +75,21 @@ func get_valid_next_steps(
 	path: Array[Vector2i],
 	movement_points: int
 ) -> Dictionary:
-	var endpoint := origin if path.is_empty() else path[path.size() - 1]
-	var spent := get_path_cost(field, moving_digimon, path)
+	var endpoint: Vector2i = origin if path.is_empty() else path[path.size() - 1]
+	var spent: int = get_path_cost(field, moving_digimon, path)
 	var options: Dictionary = {}
-	for offset in CARDINAL_NEIGHBORS:
-		var candidate := endpoint + offset
+	for offset: Vector2i in CARDINAL_NEIGHBORS:
+		var candidate: Vector2i = endpoint + offset
 		if candidate == origin:
 			options[candidate] = 0
 			continue
-		var previous_index := path.find(candidate)
+		var previous_index: int = path.find(candidate)
 		if previous_index >= 0:
 			options[candidate] = _path_cost_through_index(field, moving_digimon, path, previous_index)
 			continue
 		if not _can_traverse(field, controller, moving_digimon, candidate):
 			continue
-		var next_cost := spent + _movement_cost(field, moving_digimon, candidate)
+		var next_cost: int = spent + _movement_cost(field, moving_digimon, candidate)
 		if next_cost <= movement_points:
 			options[candidate] = next_cost
 	return options
@@ -110,7 +110,7 @@ func can_confirm_manual_path(
 
 
 func _path_cost_through_index(field: Node, moving_digimon: Node, path: Array[Vector2i], index: int) -> int:
-	var total := 0
+	var total: int = 0
 	for path_index in range(index + 1):
 		total += _movement_cost(field, moving_digimon, path[path_index])
 	return total
