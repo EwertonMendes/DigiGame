@@ -12,6 +12,7 @@ var _combat_overlay: Control = null
 func _ready() -> void:
 	super._ready()
 	_rewire_combat_controls()
+	_configure_end_turn_command()
 
 	_top_bar = BattleTopBarScript.new()
 	_top_bar.name = "BattleTopBar"
@@ -51,10 +52,12 @@ func _unhandled_input(event: InputEvent) -> void:
 func _rewire_combat_controls() -> void:
 	if _controller == null:
 		return
+	# Confirm is intentionally removed from normal battle interaction. Move and
+	# target choices execute on the first valid destination/target selection.
 	var old_confirm := Callable(_controller, "confirm_move_path")
 	if _confirm_move_button.pressed.is_connected(old_confirm):
 		_confirm_move_button.pressed.disconnect(old_confirm)
-	_confirm_move_button.pressed.connect(_on_confirm_context)
+	_confirm_move_button.visible = false
 
 	var old_cancel := Callable(_controller, "cancel_move_selection")
 	if _cancel_button.pressed.is_connected(old_cancel):
@@ -67,6 +70,14 @@ func _rewire_combat_controls() -> void:
 	_attack_button.mouse_exited.connect(_on_action_hover_exit)
 
 
+func _configure_end_turn_command() -> void:
+	_wait_button.text = "End Turn"
+	_wait_button.tooltip_text = "End this Digimon's turn  [5]"
+	var icon_path := "res://assets/ui/icons/end_turn.svg"
+	if ResourceLoader.exists(icon_path):
+		_wait_button.icon = load(icon_path) as Texture2D
+
+
 func _on_attack_pressed() -> void:
 	if _combat_overlay != null and _combat_overlay.has_method("hide_skills"):
 		_combat_overlay.call("hide_skills")
@@ -77,11 +88,6 @@ func _on_attack_pressed() -> void:
 func _on_skill_pressed() -> void:
 	if _combat_overlay != null and _combat_overlay.has_method("toggle_skills"):
 		_combat_overlay.call("toggle_skills")
-
-
-func _on_confirm_context() -> void:
-	if _controller != null and _controller.has_method("confirm_current_context"):
-		_controller.call("confirm_current_context")
 
 
 func _on_cancel_context() -> void:
@@ -116,10 +122,20 @@ func refresh_from_controller() -> void:
 		_defend_button.disabled = not bool(state.get("can_defend", false))
 		_wait_button.disabled = not bool(state.get("can_wait", false))
 		_move_button.disabled = not bool(state.get("can_move", false))
-		_confirm_move_button.visible = bool(state.get("is_user_turn", false)) and (planning or targeting)
-		_confirm_move_button.disabled = not (bool(state.get("can_confirm_move", false)) if planning else bool(state.get("can_confirm_action", false)))
+
+		# Context mode only needs a Back escape hatch now. A valid click/tap is the
+		# action itself, so there is no second Confirm affordance to click or focus.
+		_confirm_move_button.visible = false
+		_confirm_move_button.disabled = true
 		_cancel_button.visible = bool(state.get("is_user_turn", false)) and (planning or targeting)
 		_cancel_button.disabled = false
+		if planning:
+			_phase_label.text = "Choose a destination"
+			_nav_hint.text = "Esc / B  Back   •   Click / tap a tile to move"
+		elif targeting:
+			_phase_label.text = "Choose a target"
+			_nav_hint.text = "Esc / B  Back   •   Click / tap a target to act"
+
 		var selected_action = state.get("selected_action", {})
 		var selected_id := String(selected_action.get("id", "")) if selected_action is Dictionary else ""
 		_set_action_selected(_move_button, planning)
