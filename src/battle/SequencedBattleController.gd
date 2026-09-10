@@ -19,16 +19,14 @@ func _execute_selected_action() -> void:
 		cancel_current_action()
 		return
 
-	# Presentation is always keyed by the persistent Digimon UUID. The renderer
-	# resolves that UUID back to the live battle actor before starting any tween.
 	_event_bus.emit_event("action_started", {
 		"actor_id": _instance_id(current_actor),
 		"target_id": _instance_id(target),
 		"action_id": String(action.get("id", "")),
 	})
 
-	# HP and combat feedback are resolved only when the visual strike/projectile
-	# reaches the target. This keeps damage numbers and KO after the attack motion.
+	# Damage is resolved at the visual impact point, not when the command is
+	# confirmed. The presentation owns the wind-up/lunge/projectile timing.
 	await _wait_for_presentation_impact()
 	if _battle_over or current_actor == null or target == null or not is_instance_valid(target):
 		return
@@ -97,10 +95,13 @@ func _execute_selected_action() -> void:
 	})
 	_clear_action_selection(false)
 
-	# Keep ACTION_RESOLVE locked until the defeated actor has completed the
-	# dissolve. Victory/defeat therefore cannot cover a still-visible KO sprite.
+	# Victory/defeat never opens over a defeated sprite. Presentation normally
+	# hides it via the dissolve; this fallback makes battlefield state independent
+	# from animation callbacks if a renderer/browser ever drops a tween.
 	if target_knocked_out:
 		await get_tree().create_timer(KO_RESOLVE_DELAY).timeout
+		if is_instance_valid(target) and not _actor_available(target):
+			target.visible = false
 
 	_input_locked = false
 	turn_order_changed.emit()
