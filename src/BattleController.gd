@@ -59,7 +59,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
 		return
 
-	handle_world_tap(get_global_mouse_position())
+	handle_world_tap(_pointer_world_position())
 
 
 func uses_tactical_input() -> bool:
@@ -77,7 +77,9 @@ func handle_world_tap(world_position: Vector2) -> bool:
 	var grid := Vector2i(_field.call("world_to_grid", _field.to_local(world_position)))
 	match phase:
 		Phase.COMMAND:
-			var hovered := _controller.call("get_digimon_under_pointer", world_position) as Node if _controller != null and _controller.has_method("get_digimon_under_pointer") else null
+			var hovered: Node = null
+			if _controller != null and _controller.has_method("get_digimon_under_pointer"):
+				hovered = _controller.call("get_digimon_under_pointer", world_position) as Node
 			if hovered == current_actor:
 				begin_move_selection()
 				return true
@@ -373,6 +375,13 @@ func _focus_current_actor() -> void:
 	var camera := get_viewport().get_camera_2d()
 	if camera != null and camera.has_method("focus_on"):
 		camera.call("focus_on", current_actor.global_position)
+
+
+func _pointer_world_position() -> Vector2:
+	var camera := get_viewport().get_camera_2d()
+	if camera != null:
+		return camera.get_global_mouse_position()
+	return get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_mouse_position()
 
 
 func _refresh_hud() -> void:
