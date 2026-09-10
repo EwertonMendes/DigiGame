@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path . --script tools/test_tile_based_selection.gd 2>&1 | tee /tmp/tile-selection.log
+          godot --headless --path . tools/test_tile_based_selection.tscn --quit-after 5 2>&1 | tee /tmp/tile-selection.log
           grep -q 'tile-based Digimon selection regression passed' /tmp/tile-selection.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/tile-selection.log; then exit 1; fi
       - name: Validate Digimon species database
