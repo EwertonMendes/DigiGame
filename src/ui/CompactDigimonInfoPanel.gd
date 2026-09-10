@@ -48,7 +48,7 @@ func _layout_card() -> void:
 		width = physical.x - 20.0
 		height = 214.0
 		card_x = 10.0
-		card_y = 202.0
+		card_y = 230.0
 	elif compact:
 		width = minf(248.0, physical.x - 20.0)
 		height = 214.0
