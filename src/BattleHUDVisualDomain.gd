@@ -16,14 +16,15 @@ func _install_technique_navigation_hint() -> void:
 		return
 
 	# The font used by the battle HUD does not reliably contain Unicode arrow
-	# glyphs on every export target. Remove the text-only hint completely and
-	# render navigation directions as SVG assets instead, so browser/desktop/
-	# mobile builds all get the exact same shape.
+	# glyphs on every export target. Keep the legacy Hint node alive because the
+	# overlay's responsive layout still addresses it, but make it invisible and
+	# render navigation directions as SVG assets instead. This keeps browser,
+	# desktop and mobile exports visually deterministic without breaking layout.
 	var legacy_hint := technique_panel.get_node_or_null("Hint") as Label
 	if legacy_hint != null:
 		legacy_hint.text = ""
 		legacy_hint.visible = false
-		legacy_hint.queue_free()
+		legacy_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	if technique_panel.get_node_or_null("HintIcons") != null:
 		return
