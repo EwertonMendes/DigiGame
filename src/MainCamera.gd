@@ -20,10 +20,15 @@ var _single_touch_candidate := false
 var _touch_gesture_had_multiple := false
 var _last_pinch_center := Vector2.ZERO
 var _last_pinch_distance := 0.0
+var _shake_remaining := 0.0
+var _shake_duration := 0.0
+var _shake_strength := 0.0
+var _shake_rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
 	zoom = Vector2.ONE * INITIAL_ZOOM
+	_shake_rng.randomize()
 	get_viewport().size_changed.connect(_clamp_to_pan_bounds)
 	call_deferred("_refresh_pan_bounds")
 
@@ -31,6 +36,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_handle_zoom()
 	_handle_keyboard_pan(delta)
+	_update_shake(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -65,6 +71,19 @@ func focus_on(world_position: Vector2) -> void:
 	_clamp_to_pan_bounds()
 
 
+func shake(strength: float = 4.0, duration: float = 0.22) -> void:
+	var next_strength := clampf(strength, 0.0, 10.0)
+	var next_duration := clampf(duration, 0.05, 0.45)
+	if _shake_remaining > 0.0:
+		_shake_strength = maxf(_shake_strength, next_strength)
+		_shake_duration = maxf(_shake_duration, next_duration)
+		_shake_remaining = maxf(_shake_remaining, next_duration)
+	else:
+		_shake_strength = next_strength
+		_shake_duration = next_duration
+		_shake_remaining = next_duration
+
+
 func zoom_in() -> void:
 	_zoom_by_steps(1.0)
 
@@ -78,6 +97,21 @@ func reset_view() -> void:
 	if _has_pan_bounds:
 		global_position = _pan_bounds.position + _pan_bounds.size * 0.5
 	_clamp_to_pan_bounds()
+
+
+func _update_shake(delta: float) -> void:
+	if _shake_remaining <= 0.0 or _shake_duration <= 0.0:
+		offset = Vector2.ZERO
+		return
+	_shake_remaining = maxf(0.0, _shake_remaining - delta)
+	var envelope := clampf(_shake_remaining / _shake_duration, 0.0, 1.0)
+	envelope *= envelope
+	offset = Vector2(
+		_shake_rng.randf_range(-1.0, 1.0),
+		_shake_rng.randf_range(-1.0, 1.0)
+	) * _shake_strength * envelope
+	if _shake_remaining <= 0.0:
+		offset = Vector2.ZERO
 
 
 func _refresh_pan_bounds() -> void:
