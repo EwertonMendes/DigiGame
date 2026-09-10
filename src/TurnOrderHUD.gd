@@ -10,12 +10,14 @@ const MUTED := Color(0.58, 0.72, 0.82, 1.0)
 const PANEL_BG := Color(0.012, 0.042, 0.072, 0.92)
 const DESKTOP_SLOTS := 7
 const COMPACT_SLOTS := 4
-const COMPACT_BREAKPOINT := 760.0
+const COMPACT_BREAKPOINT := 900.0
+const PANEL_HEIGHT := 88.0
 
 var _controller: Node = null
-var _panel: PanelContainer = null
+var _panel: Panel = null
 var _cards: HBoxContainer = null
 var _title: Label = null
+var _hint: Label = null
 
 
 func _ready() -> void:
@@ -56,50 +58,31 @@ func refresh() -> void:
 
 
 func _build_ui() -> void:
-	_panel = PanelContainer.new()
+	_panel = Panel.new()
 	_panel.name = "TurnOrderPanel"
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_theme_stylebox_override("panel", _panel_style())
 	add_child(_panel)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 10)
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_panel.add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 6)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(root)
-
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 8)
-	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(header)
-
 	_title = Label.new()
 	_title.text = "TURN ORDER  //  SPEED TIMELINE"
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.add_theme_font_size_override("font_size", 10)
 	_title.add_theme_color_override("font_color", MUTED)
 	_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	header.add_child(_title)
+	_panel.add_child(_title)
 
-	var hint := Label.new()
-	hint.text = "HOVER / TAP TO FOCUS"
-	hint.add_theme_font_size_override("font_size", 9)
-	hint.add_theme_color_override("font_color", Color(0.50, 0.66, 0.76, 0.78))
-	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	header.add_child(hint)
+	_hint = Label.new()
+	_hint.text = "HOVER / TAP TO FOCUS"
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_hint.add_theme_font_size_override("font_size", 9)
+	_hint.add_theme_color_override("font_color", Color(0.50, 0.66, 0.76, 0.78))
+	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(_hint)
 
 	_cards = HBoxContainer.new()
-	_cards.add_theme_constant_override("separation", 6)
 	_cards.alignment = BoxContainer.ALIGNMENT_CENTER
 	_cards.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(_cards)
+	_panel.add_child(_cards)
 
 
 func _create_turn_card(entry: Dictionary, compact: bool) -> Control:
@@ -111,9 +94,11 @@ func _create_turn_card(entry: Dictionary, compact: bool) -> Control:
 	var digimon_key := String(entry.get("digimon_key", ""))
 	var speed := int(entry.get("speed", 1))
 	var slot := int(entry.get("slot", 0))
+	var card_size := _card_size(current, compact)
 
-	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(108.0 if current else (82.0 if compact else 92.0), 62.0)
+	var card := Panel.new()
+	card.custom_minimum_size = card_size
+	card.size = card_size
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	card.tooltip_text = "%s  •  SPD %d  •  %s" % [actor_name, speed, "Current turn" if current else "Upcoming turn"]
@@ -121,61 +106,83 @@ func _create_turn_card(entry: Dictionary, compact: bool) -> Control:
 	card.gui_input.connect(Callable(self, "_on_card_gui_input").bind(instance_id))
 	card.mouse_entered.connect(Callable(self, "_focus_actor").bind(instance_id))
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 6)
-	margin.add_theme_constant_override("margin_top", 5)
-	margin.add_theme_constant_override("margin_right", 6)
-	margin.add_theme_constant_override("margin_bottom", 5)
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(margin)
+	if current:
+		_build_current_card(card, actor_name, digimon_key, speed, accent, compact)
+	else:
+		_build_future_card(card, digimon_key, speed, slot, accent, compact)
+	return card
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 5)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(row)
 
-	var portrait_frame := PanelContainer.new()
-	portrait_frame.custom_minimum_size = Vector2(46.0 if current else 40.0, 46.0 if current else 40.0)
-	portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait_frame.add_theme_stylebox_override("panel", _portrait_style(accent, current))
-	row.add_child(portrait_frame)
+func _build_current_card(card: Panel, actor_name: String, digimon_key: String, speed: int, accent: Color, compact: bool) -> void:
+	var portrait_size := 42.0 if not compact else 38.0
+	var portrait := _portrait_rect(digimon_key, Vector2(6.0, 9.0), Vector2(portrait_size, portrait_size), accent, true)
+	card.add_child(portrait)
+
+	var left := portrait_size + 12.0
+	var available_width := card.size.x - left - 5.0
+	var now_label := _card_label("NOW", 9, GOLD)
+	now_label.position = Vector2(left, 5.0)
+	now_label.size = Vector2(available_width, 13.0)
+	card.add_child(now_label)
+
+	var name_label := _card_label(_short_name(actor_name, compact), 10 if compact else 11, TEXT)
+	name_label.position = Vector2(left, 18.0)
+	name_label.size = Vector2(available_width, 17.0)
+	name_label.clip_text = true
+	card.add_child(name_label)
+
+	var speed_label := _card_label("SPD %d" % speed, 9, accent.lightened(0.18))
+	speed_label.position = Vector2(left, 37.0)
+	speed_label.size = Vector2(available_width, 14.0)
+	card.add_child(speed_label)
+
+
+func _build_future_card(card: Panel, digimon_key: String, speed: int, slot: int, accent: Color, compact: bool) -> void:
+	var order_label := _card_label("#%d" % slot, 8, MUTED)
+	order_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	order_label.position = Vector2(2.0, 2.0)
+	order_label.size = Vector2(card.size.x - 4.0, 12.0)
+	card.add_child(order_label)
+
+	var portrait_size := 34.0 if compact else 36.0
+	var portrait_x := (card.size.x - portrait_size) * 0.5
+	var portrait := _portrait_rect(digimon_key, Vector2(portrait_x, 14.0), Vector2(portrait_size, portrait_size), accent, false)
+	card.add_child(portrait)
+
+	var speed_label := _card_label("SPD %d" % speed, 8, accent.lightened(0.18))
+	speed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	speed_label.position = Vector2(1.0, 48.0)
+	speed_label.size = Vector2(card.size.x - 2.0, 12.0)
+	speed_label.clip_text = true
+	card.add_child(speed_label)
+
+
+func _portrait_rect(digimon_key: String, position_value: Vector2, size_value: Vector2, accent: Color, current: bool) -> Panel:
+	var frame := Panel.new()
+	frame.position = position_value
+	frame.size = size_value
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_theme_stylebox_override("panel", _portrait_style(accent, current))
 
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = portrait_frame.custom_minimum_size - Vector2(4.0, 4.0)
+	portrait.position = Vector2(2.0, 2.0)
+	portrait.size = size_value - Vector2(4.0, 4.0)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	portrait.texture = _load_portrait(digimon_key)
-	portrait_frame.add_child(portrait)
+	frame.add_child(portrait)
+	return frame
 
-	var copy := VBoxContainer.new()
-	copy.add_theme_constant_override("separation", 0)
-	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(copy)
 
-	var order_label := Label.new()
-	order_label.text = "NOW" if current else "NEXT %d" % slot
-	order_label.add_theme_font_size_override("font_size", 9)
-	order_label.add_theme_color_override("font_color", GOLD if current else MUTED)
-	order_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	copy.add_child(order_label)
-
-	var name_label := Label.new()
-	name_label.text = _short_name(actor_name, compact and not current)
-	name_label.add_theme_font_size_override("font_size", 11 if current else 10)
-	name_label.add_theme_color_override("font_color", TEXT)
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	copy.add_child(name_label)
-
-	var speed_label := Label.new()
-	speed_label.text = "SPD %d" % speed
-	speed_label.add_theme_font_size_override("font_size", 9)
-	speed_label.add_theme_color_override("font_color", accent.lightened(0.18))
-	speed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	copy.add_child(speed_label)
-
-	return card
+func _card_label(text_value: String, font_size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text_value
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
 
 func _load_portrait(digimon_key: String) -> Texture2D:
@@ -203,9 +210,10 @@ func _load_portrait(digimon_key: String) -> Texture2D:
 
 func _short_name(actor_name: String, compact: bool) -> String:
 	var upper := actor_name.to_upper()
-	if not compact or upper.length() <= 7:
+	var limit := 6 if compact else 9
+	if upper.length() <= limit:
 		return upper
-	return upper.substr(0, 6) + "."
+	return upper.substr(0, maxi(1, limit - 1)) + "."
 
 
 func _on_card_gui_input(event: InputEvent, instance_id: String) -> void:
@@ -234,19 +242,39 @@ func _is_compact() -> bool:
 	return get_viewport().get_visible_rect().size.x < COMPACT_BREAKPOINT
 
 
+func _card_size(current: bool, compact: bool) -> Vector2:
+	if current:
+		return Vector2(100.0 if compact else 126.0, 60.0)
+	return Vector2(62.0 if compact else 72.0, 60.0)
+
+
 func _layout_panel(entry_count: int, compact: bool) -> void:
-	if _panel == null:
+	if _panel == null or _cards == null:
 		return
-	var current_width := 108.0
-	var future_width := 82.0 if compact else 92.0
-	var card_width := current_width + future_width * float(maxi(0, entry_count - 1))
-	var gap_width := 6.0 * float(maxi(0, entry_count - 1))
-	var panel_width := card_width + gap_width + 24.0
-	var viewport_width := get_viewport().get_visible_rect().size.x
-	panel_width = minf(panel_width, maxf(320.0, viewport_width - 28.0))
-	_panel.custom_minimum_size = Vector2(panel_width, 90.0)
-	_panel.size = Vector2(panel_width, 90.0)
-	_panel.position = Vector2((viewport_width - panel_width) * 0.5, 12.0)
+	var current_width := 100.0 if compact else 126.0
+	var future_width := 62.0 if compact else 72.0
+	var separation := 4 if compact else 6
+	_cards.add_theme_constant_override("separation", separation)
+	var cards_width := current_width + future_width * float(maxi(0, entry_count - 1))
+	cards_width += float(separation * maxi(0, entry_count - 1))
+	var panel_width := cards_width + 20.0
+	var viewport_size := get_viewport().get_visible_rect().size
+	panel_width = minf(panel_width, maxf(300.0, viewport_size.x - 20.0))
+
+	var panel_y := 12.0
+	if compact and viewport_size.x < 520.0:
+		panel_y = 72.0
+	_panel.position = Vector2((viewport_size.x - panel_width) * 0.5, panel_y)
+	_panel.size = Vector2(panel_width, PANEL_HEIGHT)
+
+	_title.position = Vector2(10.0, 5.0)
+	_title.size = Vector2(panel_width * 0.58, 14.0)
+	_hint.visible = not (compact and viewport_size.x < 520.0)
+	_hint.position = Vector2(panel_width * 0.56, 5.0)
+	_hint.size = Vector2(panel_width * 0.40 - 10.0, 14.0)
+
+	_cards.position = Vector2(10.0, 21.0)
+	_cards.size = Vector2(panel_width - 20.0, 60.0)
 
 
 func _panel_style() -> StyleBoxFlat:
