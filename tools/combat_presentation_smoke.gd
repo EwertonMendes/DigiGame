@@ -26,7 +26,7 @@ func _run() -> void:
 		return
 
 	# Stop the demo battle from progressing while this presentation probe drives
-	# actors directly. Any already scheduled enemy coroutine also sees this flag.
+	# the public combat_event signal. Any scheduled enemy coroutine sees this flag.
 	battle.set("_battle_over", true)
 
 	var attacker: Node = null
@@ -65,17 +65,18 @@ func _run() -> void:
 		return
 	var attack_origin: Vector2 = attacker_sprite.position
 	var main_children_before_attack: int = main.get_child_count()
-	presentation.call("_present_action_started", {
+	battle.emit_signal("combat_event", {
+		"type": "action_started",
 		"actor_id": attacker_id,
 		"target_id": target_id,
 		"action_id": "basic_attack",
 	})
 	await create_timer(0.12).timeout
 	if attacker_sprite.position.distance_to(attack_origin) < 2.0:
-		_fail("melee attack did not visibly move the attacker sprite")
+		_fail("combat_event did not visibly move the attacker sprite")
 		return
 	if main.get_child_count() <= main_children_before_attack:
-		_fail("melee attack did not create a visible wind-up VFX node")
+		_fail("combat_event did not create a visible melee wind-up VFX node")
 		return
 	await create_timer(0.42).timeout
 	if attacker_sprite.position.distance_to(attack_origin) > 1.5:
@@ -88,23 +89,20 @@ func _run() -> void:
 		return
 	var overlay_children_before: int = overlay_root.get_child_count()
 	var main_children_before_damage: int = main.get_child_count()
-	presentation.call("_present_damage", {
+	battle.emit_signal("combat_event", {
+		"type": "damage_applied",
 		"actor_id": attacker_id,
 		"target_id": target_id,
 		"action_id": "basic_attack",
 		"damage": 17,
 		"critical": false,
-	}, {
-		"element": "neutral",
-		"intensity": 4.0,
-		"ranged": false,
 	})
 	await process_frame
 	if overlay_root.get_child_count() <= overlay_children_before:
-		_fail("damage feedback did not create floating damage text")
+		_fail("damage event did not create floating damage text")
 		return
 	if main.get_child_count() <= main_children_before_damage:
-		_fail("damage impact did not create slash/spark/flare VFX")
+		_fail("damage event did not create slash/spark/flare VFX")
 		return
 
 	var damage_label: Control = overlay_root.get_child(overlay_root.get_child_count() - 1) as Control
@@ -115,13 +113,18 @@ func _run() -> void:
 		_fail("floating damage text is not anchored to the struck Digimon")
 		return
 
-	presentation.call("_present_knockout", {"target_id": target_id})
-	await create_timer(0.72).timeout
+	battle.emit_signal("combat_event", {
+		"type": "unit_knocked_out",
+		"target_id": target_id,
+		"target_name": "Presentation Probe",
+		"is_player": false,
+	})
+	await create_timer(0.96).timeout
 	if bool(target.get("visible")):
-		_fail("knockout animation did not remove the defeated Digimon from the field")
+		_fail("KO event did not remove the defeated Digimon from the field")
 		return
 
-	print("Combat presentation smoke passed: UUID resolution, melee lunge, VFX, target-anchored damage and KO removal.")
+	print("Combat presentation smoke passed: UUID resolution, combat_event wiring, melee lunge, Kenney VFX, target-anchored damage and KO removal.")
 	main.queue_free()
 	await process_frame
 	quit(0)
