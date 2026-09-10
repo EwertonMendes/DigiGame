@@ -15,8 +15,6 @@ const HOVER_BLOCKED_OUTLINE := Color(1.0, 0.28, 0.30, 0.98)
 const RANGE_FILL := Color(0.12, 0.72, 1.0, 0.13)
 const PATH_FILL := Color(1.0, 0.82, 0.18, 0.30)
 
-# Kenney Isometric Landscape source tiles are 132x83 pixels. We sample only
-# the upper ground face and blend it over a solid biome-colored diamond.
 const SOURCE_TOP_LEFT := Vector2(2.0, 32.0)
 const SOURCE_TOP_TOP := Vector2(66.0, 1.0)
 const SOURCE_TOP_RIGHT := Vector2(130.0, 32.0)
@@ -36,11 +34,6 @@ const TERRAIN_BASE_COLORS := {
 
 var tile_map_data: Dictionary = {}
 var selectedTile := Vector2i.ZERO
-
-# Static blockers live here instead of inside character movement. Future
-# scenery can register trees, cliffs, water, etc. Dynamic occupancy stays in
-# DigimonController, while MovementSystem decides whether an occupant may be
-# crossed or used as a destination.
 var _static_blocked_tiles: Dictionary = {}
 var _terrain_textures: Dictionary = {}
 var _map_center := Vector2.ZERO
@@ -52,6 +45,9 @@ var _movement_mode_active := false
 var _movement_origin := INVALID_GRID
 var _movement_actor: Node = null
 var _movement_reachable: Dictionary = {}
+var _movement_step_options: Dictionary = {}
+var _movement_path_tiles: Dictionary = {}
+var _manual_path_mode := false
 var _range_indicators: Array[Node] = []
 var _path_indicators: Array[Node] = []
 
@@ -247,9 +243,6 @@ func get_tile_block_reason(grid: Vector2i, moving_digimon: Node = null) -> Strin
 func get_movement_cost(grid: Vector2i, _moving_digimon: Node = null) -> int:
 	if not _is_valid_grid(grid):
 		return 999999
-	# All current terrain costs 1. MovementSystem already uses this hook, so mud,
-	# water, roads, flying movement, etc. can later change cost without touching
-	# turn flow or pathfinding.
 	return 1
 
 
@@ -289,9 +282,30 @@ func set_movement_range(reachable: Dictionary, origin: Vector2i, moving_actor: N
 func clear_movement_range() -> void:
 	_free_indicators(_range_indicators)
 	_movement_reachable.clear()
+	_movement_step_options.clear()
+	_movement_path_tiles.clear()
+	_manual_path_mode = false
 	_movement_mode_active = false
 	_movement_origin = INVALID_GRID
 	_movement_actor = null
+	_last_hovered_grid = INVALID_GRID
+	_last_hover_block_reason = ""
+
+
+func set_movement_step_options(options: Dictionary, path: Array[Vector2i]) -> void:
+	_movement_step_options = options.duplicate()
+	_movement_path_tiles.clear()
+	for grid in path:
+		_movement_path_tiles[grid] = true
+	_manual_path_mode = true
+	_last_hovered_grid = INVALID_GRID
+	_last_hover_block_reason = ""
+
+
+func clear_movement_step_options() -> void:
+	_movement_step_options.clear()
+	_movement_path_tiles.clear()
+	_manual_path_mode = false
 	_last_hovered_grid = INVALID_GRID
 	_last_hover_block_reason = ""
 
@@ -396,6 +410,20 @@ func _update_hover() -> void:
 
 
 func _effective_block_reason(grid: Vector2i, moving_actor: Node) -> String:
+	var static_reason := get_static_tile_block_reason(grid)
+	if not static_reason.is_empty():
+		return static_reason
+
+	if _movement_mode_active and _manual_path_mode:
+		if grid == _movement_origin or _movement_path_tiles.has(grid) or _movement_step_options.has(grid):
+			return ""
+		var occupied_reason := get_tile_block_reason(grid, moving_actor)
+		if not occupied_reason.is_empty():
+			return occupied_reason
+		if not _movement_reachable.has(grid):
+			return "out_of_range"
+		return "choose_adjacent_step"
+
 	var block_reason := get_tile_block_reason(grid, moving_actor)
 	if (
 		block_reason.is_empty()
