@@ -23,38 +23,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Fetch runtime assets
+      - name: Validate vendored runtime assets
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m pip install --disable-pip-version-check Pillow==11.3.0
-          python3 tools/fetch_cc0_assets.py
-          python3 tools/fetch_character_assets.py
-          python3 tools/fetch_enemy_assets.py
-          python3 tools/fetch_ui_fonts.py
-          python3 - <<'PY'
-          from pathlib import Path
-          from PIL import Image
-
-          for path in sorted(Path("assets/characters").rglob("*.png")):
-              with Image.open(path) as image:
-                  image.verify()
-              print(f"validated PNG: {path}")
-
-          for path in sorted(Path("assets/characters").rglob("*.webp")):
-              with Image.open(path) as image:
-                  if getattr(image, "n_frames", 1) <= 1:
-                      raise RuntimeError(f"expected animated WebP: {path}")
-              print(f"validated animated WebP: {path}")
-
-          for path in [
-              Path("assets/ui/fonts/Rajdhani-Regular.ttf"),
-              Path("assets/ui/fonts/Rajdhani-SemiBold.ttf"),
-          ]:
-              if not path.is_file() or path.stat().st_size < 1024:
-                  raise RuntimeError(f"missing UI font: {path}")
-              print(f"validated UI font: {path} ({path.stat().st_size} bytes)")
-          PY
+          python3 tools/validate_runtime_assets.py
       - name: Install Godot and export templates
         shell: bash
         run: |
@@ -110,6 +83,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node .github/scripts/web-smoke-test.mjs
+          node .github/scripts/combat-vfx-smoke.mjs
       - name: Upload playable Web artifact
         if: always()
         uses: actions/upload-artifact@v4

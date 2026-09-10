@@ -1,4 +1,4 @@
-extends "res://src/battle/BattlePresentationFX.gd"
+extends "res://src/battle/ReliableBattlePresentationFX.gd"
 
 
 func wait_for_current_impact() -> void:

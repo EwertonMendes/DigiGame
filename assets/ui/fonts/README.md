@@ -1,6 +1,6 @@
 # DigiGame UI fonts
 
-The battle HUD uses **Rajdhani** for its tactical display typography.
+The battle HUD uses **Rajdhani** for its tactical display typography. The exact TTF files used at runtime are **committed to the repository**, so a clean checkout can import and run the UI without fetching font assets from the internet.
 
 ## Provenance
 
@@ -17,10 +17,4 @@ The battle HUD uses **Rajdhani** for its tactical display typography.
   - `assets/ui/fonts/Rajdhani-SemiBold.ttf`
 - Attribution required: the OFL license/copyright notice is retained in `RAJDHANI-OFL.txt`.
 
-The TTF binaries are intentionally fetched rather than committed. Run:
-
-```bash
-python3 tools/fetch_ui_fonts.py
-```
-
-The GitHub Actions Web build runs the same fetcher before Godot import/export and verifies each downloaded binary against its pinned Git blob SHA.
+`tools/fetch_ui_fonts.py` remains only as an optional provenance/reproduction tool. Normal CI runs `tools/validate_runtime_assets.py`, which validates the committed font binaries by Git blob SHA using only the Python standard library.
