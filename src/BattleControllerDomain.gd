@@ -146,12 +146,15 @@ func _start_next_turn() -> void:
 	_sync_turn_highlight()
 	_focus_current_actor()
 
-	var status_events := _status_system.on_turn_start(current_actor)
-	for status_event: Dictionary in status_events:
-		var payload := status_event.duplicate()
-		payload["target_id"] = _instance_id(current_actor)
-		payload.erase("target")
-		_event_bus.emit_event("status_damage", payload)
+	var status_events_raw = _status_system.on_turn_start(current_actor)
+	if status_events_raw is Array:
+		for raw_status_event in status_events_raw:
+			if not raw_status_event is Dictionary:
+				continue
+			var payload: Dictionary = (raw_status_event as Dictionary).duplicate(true)
+			payload["target_id"] = _instance_id(current_actor)
+			payload.erase("target")
+			_event_bus.emit_event("status_damage", payload)
 	if not _actor_available(current_actor):
 		_handle_knockout(current_actor)
 		if not _check_battle_end():
@@ -211,12 +214,12 @@ func begin_move_selection() -> void:
 func confirm_move_path() -> bool:
 	if not is_manual_path_input_active():
 		return false
-	var movement_points := _movement_for(current_actor)
+	var movement_points: int = _movement_for(current_actor)
 	if not _movement_system.can_confirm_manual_path(_field, _controller, current_actor, _planned_move_path, movement_points):
 		return false
 
 	var path: Array[Vector2i] = _planned_move_path.duplicate()
-	var spent := _movement_system.get_path_cost(_field, current_actor, path)
+	var spent: int = _movement_system.get_path_cost(_field, current_actor, path)
 	_input_locked = true
 	phase = Phase.MOVING
 	_clear_manual_path_visuals()
@@ -286,7 +289,7 @@ func begin_basic_attack() -> bool:
 func begin_skill(skill_id: String) -> bool:
 	if not _can_act_now():
 		return false
-	var action := _action_database.get_action(skill_id)
+	var action: Dictionary = _action_database.get_action(skill_id)
 	if action.is_empty() or not _actor_knows_skill(current_actor, skill_id):
 		return false
 	if _current_sp(current_actor) < int(action.get("spCost", 0)):
@@ -403,8 +406,8 @@ func _update_combat_preview(target: Node, locked: bool) -> void:
 		_combat_preview.clear()
 		return
 	var damage_preview: Dictionary = _damage_calculator.preview(current_actor, target, _selected_action)
-	var current_hp := _current_hp(target)
-	var predicted_damage := int(damage_preview.get("damage", 0))
+	var current_hp: int = _current_hp(target)
+	var predicted_damage: int = int(damage_preview.get("damage", 0))
 	_combat_preview = damage_preview.duplicate(true)
 	_combat_preview.merge({
 		"valid": true,
@@ -424,13 +427,13 @@ func _update_combat_preview(target: Node, locked: bool) -> void:
 
 
 func _execute_selected_action() -> void:
-	var action := _selected_action.duplicate(true)
-	var target := _selected_target
+	var action: Dictionary = _selected_action.duplicate(true)
+	var target: Node = _selected_target
 	if action.is_empty() or target == null:
 		return
 	_input_locked = true
 	phase = Phase.ACTION_RESOLVE
-	var sp_cost := maxi(0, int(action.get("spCost", 0)))
+	var sp_cost: int = maxi(0, int(action.get("spCost", 0)))
 	if sp_cost > 0 and (not current_actor.has_method("spend_sp") or not bool(current_actor.call("spend_sp", sp_cost))):
 		_input_locked = false
 		cancel_current_action()
@@ -441,7 +444,7 @@ func _execute_selected_action() -> void:
 		"target_id": _instance_id(target),
 		"action_id": String(action.get("id", "")),
 	})
-	var hit := _battle_rng.roll_percent(float(action.get("accuracy", 100.0)))
+	var hit: bool = _battle_rng.roll_percent(float(action.get("accuracy", 100.0)))
 	var critical := false
 	var applied_damage := 0
 	if hit:
@@ -453,9 +456,9 @@ func _execute_selected_action() -> void:
 				var effect: Dictionary = raw_effect
 				match String(effect.get("type", "")):
 					"damage":
-						var preview := _damage_calculator.preview(current_actor, target, action)
+						var preview: Dictionary = _damage_calculator.preview(current_actor, target, action)
 						critical = bool(action.get("canCrit", false)) and _battle_rng.roll_percent(float(preview.get("crit_chance", 0.0)))
-						var raw_damage := int(preview.get("critical_damage" if critical else "damage", 0))
+						var raw_damage: int = int(preview.get("critical_damage" if critical else "damage", 0))
 						applied_damage = int(target.call("take_damage", raw_damage)) if target.has_method("take_damage") else 0
 						_event_bus.emit_event("damage_applied", {
 							"actor_id": _instance_id(current_actor),
@@ -467,10 +470,10 @@ func _execute_selected_action() -> void:
 							"element_modifier": float(preview.get("element_modifier", 1.0)),
 						})
 					"status":
-						var chance := float(effect.get("chance", 100.0))
+						var chance: float = float(effect.get("chance", 100.0))
 						if _battle_rng.roll_percent(chance):
-							var status_id := String(effect.get("status", ""))
-							var duration := int(effect.get("duration", -1))
+							var status_id: String = String(effect.get("status", ""))
+							var duration: int = int(effect.get("duration", -1))
 							if _status_system.apply(target, status_id, duration, _instance_id(current_actor)):
 								_event_bus.emit_event("status_applied", {
 									"actor_id": _instance_id(current_actor),
@@ -519,7 +522,7 @@ func _execute_selected_action() -> void:
 func _show_action_range() -> void:
 	if _field == null or not _field.has_method("set_action_range"):
 		return
-	var grids := _targeting_system.grids_in_range(_field, current_actor, _selected_action)
+	var grids: Array[Vector2i] = _targeting_system.grids_in_range(_field, current_actor, _selected_action)
 	_field.call("set_action_range", grids, "skill" if String(_selected_action.get("id", "")) != "basic_attack" else "attack")
 
 
@@ -571,15 +574,20 @@ func get_available_skills() -> Array[Dictionary]:
 		return result
 	var skill_ids: Array[String] = []
 	if current_actor.has_method("get_equipped_skill_ids"):
-		skill_ids = current_actor.call("get_equipped_skill_ids")
+		var raw_skill_ids = current_actor.call("get_equipped_skill_ids")
+		if raw_skill_ids is Array:
+			for raw_id in raw_skill_ids:
+				var skill_id := String(raw_id)
+				if not skill_id.is_empty() and not skill_ids.has(skill_id):
+					skill_ids.append(skill_id)
 	if skill_ids.is_empty():
-		var species_name := _display_name(current_actor)
-		var level := int(current_actor.call("get_level")) if current_actor.has_method("get_level") else 1
-		var fallback := _action_database.get_known_actions(species_name, level)
+		var species_name: String = _display_name(current_actor)
+		var level: int = int(current_actor.call("get_level")) if current_actor.has_method("get_level") else 1
+		var fallback: Array[Dictionary] = _action_database.get_known_actions(species_name, level)
 		for action: Dictionary in fallback:
 			skill_ids.append(String(action.get("id", "")))
 	for skill_id: String in skill_ids:
-		var action := _action_database.get_action(skill_id)
+		var action: Dictionary = _action_database.get_action(skill_id)
 		if action.is_empty():
 			continue
 		action["affordable"] = _current_sp(current_actor) >= int(action.get("spCost", 0))
@@ -598,7 +606,7 @@ func get_selected_action() -> Dictionary:
 func preview_skill_recovery(skill_id: String) -> void:
 	if _has_acted or current_actor == null:
 		return
-	var action := _action_database.get_action(skill_id)
+	var action: Dictionary = _action_database.get_action(skill_id)
 	if action.is_empty():
 		return
 	_preview_recovery_cost = clampf(_pending_recovery_cost + float(action.get("recoveryCost", 30.0)), MIN_RECOVERY_COST, MAX_RECOVERY_COST)
@@ -621,8 +629,8 @@ func _run_enemy_turn(actor: Node) -> void:
 	await get_tree().create_timer(0.38).timeout
 	if _battle_over or current_actor != actor or not _actor_available(actor):
 		return
-	var opponents := _alive_actors(true)
-	var actions := _enemy_actions(actor)
+	var opponents: Array[Node] = _alive_actors(true)
+	var actions: Array[Dictionary] = _enemy_actions(actor)
 	var choice: Dictionary = _battle_ai.choose_action(_field, actor, opponents, actions)
 	if choice.is_empty() and not _has_moved:
 		await _enemy_move_toward(actor, opponents)
@@ -630,7 +638,8 @@ func _run_enemy_turn(actor: Node) -> void:
 			return
 		choice = _battle_ai.choose_action(_field, actor, opponents, actions)
 	if not choice.is_empty():
-		_selected_action = (choice.get("action", {}) as Dictionary).duplicate(true)
+		var raw_action = choice.get("action", {})
+		_selected_action = (raw_action as Dictionary).duplicate(true) if raw_action is Dictionary else {}
 		_selected_target = choice.get("target") as Node
 		_preview_recovery_cost = _pending_recovery_cost + float(_selected_action.get("recoveryCost", 30.0))
 		_update_combat_preview(_selected_target, true)
@@ -646,16 +655,16 @@ func _run_enemy_turn(actor: Node) -> void:
 func _enemy_move_toward(actor: Node, opponents: Array[Node]) -> void:
 	if opponents.is_empty() or actor == null:
 		return
-	var origin := _grid_for_actor(actor)
+	var origin: Vector2i = _grid_for_actor(actor)
 	var reachable: Dictionary = _movement_system.get_reachable_tiles(_field, _controller, actor, origin, _movement_for(actor))
 	if reachable.is_empty():
 		return
-	var best_grid := origin
-	var best_score := _distance_to_nearest(origin, opponents)
+	var best_grid: Vector2i = origin
+	var best_score: int = _distance_to_nearest(origin, opponents)
 	var best_cost := 0
 	for raw_grid in reachable.keys():
 		var grid := Vector2i(raw_grid)
-		var score := _distance_to_nearest(grid, opponents)
+		var score: int = _distance_to_nearest(grid, opponents)
 		var cost := int(reachable[grid])
 		if score < best_score or (score == best_score and cost < best_cost):
 			best_grid = grid
@@ -663,7 +672,7 @@ func _enemy_move_toward(actor: Node, opponents: Array[Node]) -> void:
 			best_cost = cost
 	if best_grid == origin:
 		return
-	var path := _movement_system.find_path(_field, _controller, actor, origin, best_grid, _movement_for(actor))
+	var path: Array[Vector2i] = _movement_system.find_path(_field, _controller, actor, origin, best_grid, _movement_for(actor))
 	if path.is_empty():
 		return
 	_input_locked = true
@@ -672,14 +681,15 @@ func _enemy_move_toward(actor: Node, opponents: Array[Node]) -> void:
 	await actor.call("move_along_grid_path", path, _field)
 	_has_moved = true
 	_last_move_path = path.duplicate()
-	_movement_recovery_added = float(_movement_system.get_path_cost(_field, actor, path)) * _movement_recovery_per_point()
+	var movement_spent: int = _movement_system.get_path_cost(_field, actor, path)
+	_movement_recovery_added = float(movement_spent) * _movement_recovery_per_point()
 	_pending_recovery_cost += _movement_recovery_added
 	_preview_recovery_cost = _pending_recovery_cost
 	_input_locked = false
 	phase = Phase.COMMAND
 	_event_bus.emit_event("unit_moved", {
 		"actor_id": _instance_id(actor),
-		"movement_spent": _movement_system.get_path_cost(_field, actor, path),
+		"movement_spent": movement_spent,
 		"recovery_added": _movement_recovery_added,
 	})
 	turn_order_changed.emit()
@@ -688,16 +698,21 @@ func _enemy_move_toward(actor: Node, opponents: Array[Node]) -> void:
 func _distance_to_nearest(grid: Vector2i, actors: Array[Node]) -> int:
 	var best := 999999
 	for actor: Node in actors:
-		var target_grid := _grid_for_actor(actor)
+		var target_grid: Vector2i = _grid_for_actor(actor)
 		best = mini(best, absi(grid.x - target_grid.x) + absi(grid.y - target_grid.y))
 	return best
 
 
 func _enemy_actions(actor: Node) -> Array[Dictionary]:
 	var result: Array[Dictionary] = [_basic_attack_definition()]
-	var ids: Array[String] = actor.call("get_equipped_skill_ids") if actor != null and actor.has_method("get_equipped_skill_ids") else []
+	var ids: Array[String] = []
+	if actor != null and actor.has_method("get_equipped_skill_ids"):
+		var raw_ids = actor.call("get_equipped_skill_ids")
+		if raw_ids is Array:
+			for raw_id in raw_ids:
+				ids.append(String(raw_id))
 	for skill_id: String in ids:
-		var action := _action_database.get_action(skill_id)
+		var action: Dictionary = _action_database.get_action(skill_id)
 		if not action.is_empty() and _current_sp(actor) >= int(action.get("spCost", 0)):
 			result.append(action)
 	return result
@@ -707,20 +722,24 @@ func _actor_knows_skill(actor: Node, skill_id: String) -> bool:
 	if actor == null:
 		return false
 	if actor.has_method("get_equipped_skill_ids"):
-		return (actor.call("get_equipped_skill_ids") as Array).has(skill_id)
+		var raw_ids = actor.call("get_equipped_skill_ids")
+		return raw_ids is Array and (raw_ids as Array).has(skill_id)
 	return false
 
 
 func _end_turn() -> void:
 	if _battle_over or current_actor == null:
 		return
-	var expired := _status_system.on_turn_end(current_actor)
-	for status_id: String in expired:
-		_event_bus.emit_event("status_expired", {"target_id": _instance_id(current_actor), "status": status_id})
+	var expired_raw = _status_system.on_turn_end(current_actor)
+	if expired_raw is Array:
+		for raw_status_id in expired_raw:
+			var status_id := String(raw_status_id)
+			_event_bus.emit_event("status_expired", {"target_id": _instance_id(current_actor), "status": status_id})
 	if current_actor.has_method("get_statuses"):
 		notify_speed_changed()
-	if current_actor.get("battle_state") != null:
-		current_actor.get("battle_state").commit_resources_to_instance()
+	var battle_state = current_actor.get("battle_state")
+	if battle_state != null and battle_state.has_method("commit_resources_to_instance"):
+		battle_state.call("commit_resources_to_instance")
 	_turn_scheduler.consume_turn(current_actor, _pending_recovery_cost)
 	_pending_recovery_cost = _base_turn_recovery()
 	_preview_recovery_cost = _pending_recovery_cost
@@ -749,8 +768,8 @@ func _handle_knockout(actor: Node) -> void:
 func _check_battle_end() -> bool:
 	if _battle_over:
 		return true
-	var players := _alive_actors(true)
-	var enemies := _alive_actors(false)
+	var players: Array[Node] = _alive_actors(true)
+	var enemies: Array[Node] = _alive_actors(false)
 	if players.is_empty():
 		_finish_battle(false)
 		return true
@@ -787,7 +806,7 @@ func _build_battle_result(victory: bool) -> Dictionary:
 				continue
 			var species_raw = actor.get("species_data")
 			var species: Dictionary = species_raw if species_raw is Dictionary else {}
-			var level := int(actor.call("get_level")) if actor.has_method("get_level") else 1
+			var level: int = int(actor.call("get_level")) if actor.has_method("get_level") else 1
 			bits += maxi(1, int(species.get("bitFarmingRate", 5))) * maxi(1, level)
 			var species_name := String(species.get("name", "Unknown"))
 			var rank := String(species.get("rank", "Rookie"))
@@ -864,11 +883,11 @@ func get_turn_preview(total_slots: int = 7) -> Array[Dictionary]:
 		return result
 	if current_actor != null and is_instance_valid(current_actor):
 		result.append(_timeline_entry(current_actor, true, 0))
-		var upcoming := _turn_scheduler.preview_next_actors(_turn_order, current_actor, slots - 1, _preview_recovery_cost)
+		var upcoming: Array[Node] = _turn_scheduler.preview_next_actors(_turn_order, current_actor, slots - 1, _preview_recovery_cost)
 		for index in range(upcoming.size()):
 			result.append(_timeline_entry(upcoming[index], false, index + 1))
 		return result
-	var upcoming := _turn_scheduler.preview_next_actors(_turn_order, null, slots)
+	var upcoming: Array[Node] = _turn_scheduler.preview_next_actors(_turn_order, null, slots)
 	for index in range(upcoming.size()):
 		result.append(_timeline_entry(upcoming[index], false, index))
 	return result
@@ -921,8 +940,8 @@ func focus_actor_by_instance_id(instance_id: String) -> void:
 func _timeline_entry(actor: Node, is_current: bool, slot: int) -> Dictionary:
 	if actor == null or not is_instance_valid(actor):
 		return {}
-	var level := int(actor.call("get_level")) if actor.has_method("get_level") else 1
-	var speed := maxi(1, int(actor.call("get_final_stat", "speed"))) if actor.has_method("get_final_stat") else 1
+	var level: int = int(actor.call("get_level")) if actor.has_method("get_level") else 1
+	var speed: int = maxi(1, int(actor.call("get_final_stat", "speed"))) if actor.has_method("get_final_stat") else 1
 	return {
 		"slot": slot,
 		"is_current": is_current,
