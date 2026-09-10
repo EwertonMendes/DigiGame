@@ -393,8 +393,8 @@ func _apply_interaction_mode(state: Dictionary) -> void:
 	var contextual := user_turn and (planning or targeting) and not battle_over
 	_action_grid.visible = user_turn and not contextual and not battle_over
 	_context_row.visible = contextual
-	_mov_label.visible = user_turn and not battle_over
-	_phase_label.visible = not (_action_grid.visible and not bool(state.get("can_undo", false)))
+	_mov_label.visible = user_turn and not battle_over and not targeting
+	_phase_label.visible = contextual or not user_turn or battle_over or bool(state.get("can_undo", false))
 	_dock.modulate = Color.WHITE if user_turn else Color(0.90, 0.90, 0.88, 0.88)
 
 
@@ -430,14 +430,17 @@ func _layout_dock() -> void:
 	_last_viewport_size = logical
 	_last_window_size = DisplayServer.window_get_size()
 	var compact := UI.is_compact(viewport_obj, 820.0)
+	var short_landscape := compact and physical.x >= 700.0 and physical.x > physical.y
 	var user_turn := bool(_cached_state.get("is_user_turn", false))
 	var contextual := _context_row.visible
 	var actions_visible := _action_grid.visible
 	var side_margin := 10.0 if compact else 18.0
 	var width := minf(1040.0, physical.x - side_margin * 2.0)
 	var height := 128.0
-	if compact:
-		height = 188.0 if actions_visible else 116.0
+	if short_landscape:
+		height = 110.0 if actions_visible else 88.0
+	elif compact:
+		height = 218.0 if actions_visible else (160.0 if contextual else 116.0)
 	elif not user_turn or contextual:
 		height = 90.0
 	var bottom_margin := 8.0 if compact else 14.0
@@ -448,8 +451,7 @@ func _layout_dock() -> void:
 	_signal_line.size = Vector2(72.0, 2.0)
 
 	var pad := 12.0
-	var actor_font := 17 if compact else 18
-	_actor_label.add_theme_font_size_override("font_size", actor_font)
+	_actor_label.add_theme_font_size_override("font_size", 17 if compact else 18)
 	_hp_value.add_theme_font_size_override("font_size", 14)
 	_sp_value.add_theme_font_size_override("font_size", 14)
 	for row in [_hp_bar.get_parent(), _sp_bar.get_parent()]:
@@ -457,27 +459,62 @@ func _layout_dock() -> void:
 		caption.add_theme_font_size_override("font_size", 14)
 	_phase_label.add_theme_font_size_override("font_size", 14 if compact else 15)
 	_mov_label.add_theme_font_size_override("font_size", 14)
+	_undo_button.text = "Undo" if compact else "Undo move"
 
-	if compact:
+	if short_landscape:
+		_portrait_frame.custom_minimum_size = Vector2(50.0, 50.0)
+		var unit_width := minf(260.0, width * 0.34)
+		_unit_block.position = Vector2(pad, 12.0)
+		_unit_block.size = Vector2(unit_width, 58.0)
+		if actions_visible:
+			var action_x := unit_width + 24.0
+			_action_grid.columns = 6 if _undo_button.visible else 5
+			_action_grid.position = Vector2(action_x, 10.0)
+			_action_grid.size = Vector2(width - action_x - pad, 54.0)
+			for button: Button in _primary_buttons:
+				button.custom_minimum_size = Vector2(0.0, 48.0)
+			_undo_button.custom_minimum_size = Vector2(0.0, 48.0)
+			_phase_label.position = Vector2(action_x, 68.0)
+			_phase_label.size = Vector2(width - action_x - 110.0, 28.0)
+			_mov_label.position = Vector2(width - 98.0, 68.0)
+			_mov_label.size = Vector2(86.0, 27.0)
+		elif contextual:
+			_phase_label.position = Vector2(unit_width + 24.0, 12.0)
+			_phase_label.size = Vector2(maxf(100.0, width - unit_width - 290.0), 54.0)
+			_context_row.position = Vector2(width - 252.0, 14.0)
+			_context_row.size = Vector2(240.0, 48.0)
+			_mov_label.position = Vector2(unit_width + 24.0, 52.0)
+			_mov_label.size = Vector2(92.0, 27.0)
+		else:
+			_phase_label.position = Vector2(unit_width + 24.0, 14.0)
+			_phase_label.size = Vector2(width - unit_width - 36.0, 52.0)
+			_mov_label.visible = false
+	elif compact:
 		_portrait_frame.custom_minimum_size = Vector2(50.0, 50.0)
 		_unit_block.position = Vector2(pad, 10.0)
 		_unit_block.size = Vector2(width - pad * 2.0, 58.0)
-		_phase_label.position = Vector2(pad, 72.0)
-		_phase_label.size = Vector2(width - 116.0, 30.0)
-		_mov_label.position = Vector2(width - 98.0, 74.0)
-		_mov_label.size = Vector2(86.0, 27.0)
 		if actions_visible:
+			_phase_label.position = Vector2(pad, 72.0)
+			_phase_label.size = Vector2(width - 116.0, 30.0)
+			_mov_label.position = Vector2(width - 98.0, 74.0)
+			_mov_label.size = Vector2(86.0, 27.0)
 			_action_grid.columns = 3
 			_action_grid.position = Vector2(pad, 108.0)
-			_action_grid.size = Vector2(width - pad * 2.0, height - 118.0)
+			_action_grid.size = Vector2(width - pad * 2.0, 100.0)
 			for button: Button in _primary_buttons:
-				button.custom_minimum_size = Vector2(0.0, 52.0)
-			_undo_button.custom_minimum_size = Vector2(0.0, 52.0)
+				button.custom_minimum_size = Vector2(0.0, 46.0)
+			_undo_button.custom_minimum_size = Vector2(0.0, 46.0)
 		elif contextual:
-			_context_row.position = Vector2(pad, 68.0)
+			_phase_label.position = Vector2(pad, 72.0)
+			_phase_label.size = Vector2(width - 116.0, 30.0)
+			_mov_label.position = Vector2(width - 98.0, 74.0)
+			_mov_label.size = Vector2(86.0, 27.0)
+			_context_row.position = Vector2(pad, 108.0)
 			_context_row.size = Vector2(width - pad * 2.0, 42.0)
-			_phase_label.position = Vector2(pad, 68.0)
-			_phase_label.size = Vector2(maxf(80.0, width - 250.0), 42.0)
+		else:
+			_phase_label.position = Vector2(pad, 72.0)
+			_phase_label.size = Vector2(width - pad * 2.0, 30.0)
+			_mov_label.visible = false
 	else:
 		_portrait_frame.custom_minimum_size = Vector2(58.0, 58.0)
 		var unit_width := minf(318.0, width * 0.34)
@@ -488,6 +525,9 @@ func _layout_dock() -> void:
 			_action_grid.columns = 6 if _undo_button.visible else 5
 			_action_grid.position = Vector2(action_x, 14.0)
 			_action_grid.size = Vector2(width - action_x - pad, 60.0)
+			for button: Button in _primary_buttons:
+				button.custom_minimum_size = Vector2(96.0, 52.0)
+			_undo_button.custom_minimum_size = Vector2(96.0, 52.0)
 			_phase_label.position = Vector2(action_x, 80.0)
 			_phase_label.size = Vector2(width - action_x - 110.0, 30.0)
 			_mov_label.position = Vector2(width - 100.0, 82.0)
