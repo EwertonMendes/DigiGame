@@ -366,6 +366,7 @@ func _add_touch_button(node_name: String, text_value: String, rect: Rect2, direc
 	var button := _dialog_button(text_value, UI.CYAN)
 	button.name = node_name
 	button.custom_minimum_size = rect.size
+	button.add_theme_font_size_override("font_size", 22)
 	button.position = rect.position
 	button.size = rect.size
 	button.button_down.connect(Callable(self, "_set_touch_flag").bind(direction, true))
@@ -433,8 +434,9 @@ func _layout_ui() -> void:
 	)
 	_interaction_prompt.size = Vector2(prompt_width, 50.0)
 	var dialog_width := minf(660.0, physical.x - 28.0)
-	var dialog_height := 236.0 if portrait_mobile else 206.0
-	dialog_height = maxf(dialog_height, _dialog_panel.get_combined_minimum_size().y)
+	# Fixed physical heights avoid scale/minimum-size feedback from nested
+	# containers while leaving enough room for the wrapped mobile copy.
+	var dialog_height := 280.0 if portrait_mobile else 256.0
 	_dialog_panel.position = Vector2(
 		(physical.x - dialog_width) * 0.5 * ui_scale,
 		(physical.y - dialog_height - (14.0 if compact else 22.0)) * ui_scale
