@@ -1,0 +1,33 @@
+{
+  "turnRecovery": {
+    "base": 55.0,
+    "movementPerPoint": 4.0,
+    "basicAttack": 30.0,
+    "defend": 15.0
+  },
+  "damage": {
+    "basicAttackPower": 28,
+    "criticalChance": 5.0,
+    "criticalMultiplier": 1.5,
+    "minimumDamage": 1
+  },
+  "typeChart": {
+    "advantage": 1.35,
+    "disadvantage": 0.75,
+    "neutral": 1.0
+  },
+  "elementChart": {
+    "advantage": 1.25,
+    "resisted": 0.8,
+    "neutral": 1.0
+  },
+  "defend": {
+    "damageMultiplier": 0.65
+  },
+  "targeting": {
+    "basicAttackRange": 1
+  },
+  "status": {
+    "defaultDuration": 3
+  }
+}
