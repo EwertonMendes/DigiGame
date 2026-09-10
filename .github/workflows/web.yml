@@ -76,6 +76,13 @@ jobs:
           set -euo pipefail
           godot --headless --path . --import 2>&1 | tee /tmp/godot-import.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing .*assets/characters' /tmp/godot-import.log; then exit 1; fi
+      - name: Validate combat presentation runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --script tools/combat_presentation_smoke.gd 2>&1 | tee /tmp/combat-presentation.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Combat presentation smoke failed:' /tmp/combat-presentation.log; then exit 1; fi
+          grep -F 'Combat presentation smoke passed:' /tmp/combat-presentation.log
       - name: Validate Digimon species database
         shell: bash
         run: |
