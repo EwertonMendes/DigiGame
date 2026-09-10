@@ -134,7 +134,7 @@ cppcheck-cppcheck-build-dir/
 *.pydevproject
 *.launch
 
-# GCOV
+# GCOV coverage
 *.gcda
 *.gcno
 
