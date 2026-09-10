@@ -16,8 +16,12 @@ const BASE_SOFT: Color = Color(0.014, 0.046, 0.078, 0.92)
 const DISABLED: Color = Color(0.28, 0.36, 0.42, 1.0)
 
 
+static func uses_physical_touch_scale() -> bool:
+	return DisplayServer.is_touchscreen_available()
+
+
 static func ui_scale(viewport: Viewport) -> float:
-	if viewport == null:
+	if viewport == null or not uses_physical_touch_scale():
 		return 1.0
 	var logical: Vector2 = viewport.get_visible_rect().size
 	var window_size: Vector2i = DisplayServer.window_get_size()
@@ -29,11 +33,13 @@ static func ui_scale(viewport: Viewport) -> float:
 
 
 static func physical_window_size(viewport: Viewport) -> Vector2:
+	if viewport == null:
+		return Vector2(1280.0, 720.0)
+	if not uses_physical_touch_scale():
+		return viewport.get_visible_rect().size
 	var window_size: Vector2i = DisplayServer.window_get_size()
 	if window_size.x > 0 and window_size.y > 0:
 		return Vector2(float(window_size.x), float(window_size.y))
-	if viewport == null:
-		return Vector2(1280.0, 720.0)
 	return viewport.get_visible_rect().size
 
 
