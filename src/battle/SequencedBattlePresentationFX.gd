@@ -4,11 +4,37 @@ const KO_SMOKE_PATH := "res://assets/vfx/kenney/smoke_03.png"
 const KO_FLASH_DURATION := 0.34
 
 var _ko_smoke_texture: Texture2D = null
+var _sequenced_events_seen := 0
 
 
 func _ready() -> void:
 	super._ready()
 	_ko_smoke_texture = _load_texture(KO_SMOKE_PATH)
+
+	# Do not rely on the inherited method-reference connection. Register a named
+	# handler owned by this runtime presentation class so action/impact/KO events
+	# are guaranteed to arrive in exported Web builds as well as native Godot.
+	if _battle_controller != null and _battle_controller.has_signal("combat_event"):
+		var inherited_handler := Callable(self, "_on_combat_event")
+		if _battle_controller.is_connected("combat_event", inherited_handler):
+			_battle_controller.disconnect("combat_event", inherited_handler)
+		var sequenced_handler := Callable(self, "_on_sequenced_combat_event")
+		if not _battle_controller.is_connected("combat_event", sequenced_handler):
+			_battle_controller.connect("combat_event", sequenced_handler)
+
+
+func _on_sequenced_combat_event(event: Dictionary) -> void:
+	_sequenced_events_seen += 1
+	match String(event.get("type", "")):
+		"action_started":
+			_present_action_started(event)
+		"damage_applied":
+			var profile: Dictionary = _current_action_profile(event)
+			_present_damage(event, profile)
+		"action_missed":
+			_present_miss(event)
+		"unit_knocked_out":
+			_queue_knockout(event)
 
 
 func wait_for_current_impact() -> void:
@@ -47,9 +73,6 @@ func _present_knockout(event: Dictionary) -> void:
 		else Color(1.0, 0.34, 0.45, 1.0)
 	)
 
-	# The KO gets a readable VFX beat before the actor dissolves: expanding smoke,
-	# a bright flare and two sparks. These are real Kenney CC0 textures, not
-	# placeholder rectangles, and are intentionally large enough to read on mobile.
 	if _ko_smoke_texture != null:
 		_spawn_world_sprite(
 			_ko_smoke_texture,
