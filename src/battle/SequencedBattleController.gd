@@ -1,7 +1,7 @@
 extends "res://src/BattleControllerDomain.gd"
 
 const PRESENTATION_FALLBACK_IMPACT_DELAY := 0.22
-const KO_RESOLVE_DELAY := 0.62
+const KO_RESOLVE_DELAY := 0.82
 
 
 func _execute_selected_action() -> void:
