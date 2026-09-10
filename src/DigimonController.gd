@@ -64,7 +64,15 @@ func set_digimon_initial_position(digimon_resource: Digimon, digimon_instance: C
 	digimon_instance.set("initialTileCoords", digimon_resource.initial_position)
 
 
-func is_tile_occupied(tile_world_position: Vector2, ignored_digimon: Node = null) -> bool:
+func get_battle_digimons() -> Array[Node]:
+	var digimons: Array[Node] = []
+	for child in get_children():
+		if child is CharacterBody2D:
+			digimons.append(child)
+	return digimons
+
+
+func get_digimon_at_tile(tile_world_position: Vector2, ignored_digimon: Node = null) -> Node:
 	for child in get_children():
 		if child == ignored_digimon or not child is CharacterBody2D:
 			continue
@@ -72,8 +80,12 @@ func is_tile_occupied(tile_world_position: Vector2, ignored_digimon: Node = null
 			continue
 		var occupied_position := Vector2(child.call("get_tile_world_position"))
 		if occupied_position.distance_squared_to(tile_world_position) < 0.25:
-			return true
-	return false
+			return child
+	return null
+
+
+func is_tile_occupied(tile_world_position: Vector2, ignored_digimon: Node = null) -> bool:
+	return get_digimon_at_tile(tile_world_position, ignored_digimon) != null
 
 
 func get_selected_digimon() -> Node:
@@ -83,21 +95,24 @@ func get_selected_digimon() -> Node:
 	return null
 
 
+func get_digimon_under_pointer(world_position: Vector2) -> Node:
+	var hovered: CharacterBody2D = null
+	for child in get_children():
+		if not child is CharacterBody2D or not child.has_method("is_pointer_over"):
+			continue
+		if not bool(child.call("is_pointer_over", world_position)):
+			continue
+		if hovered == null or child.global_position.y >= hovered.global_position.y:
+			hovered = child
+	return hovered
+
+
 func _update_pointer_hover() -> void:
 	if GlobalVariables.TouchInputActive:
 		_set_hovered_digimon("")
 		return
 
-	var pointer := get_global_mouse_position()
-	var hovered: CharacterBody2D = null
-	for child in get_children():
-		if not child is CharacterBody2D or not child.has_method("is_pointer_over"):
-			continue
-		if not bool(child.call("is_pointer_over", pointer)):
-			continue
-		if hovered == null or child.global_position.y >= hovered.global_position.y:
-			hovered = child
-
+	var hovered := get_digimon_under_pointer(get_global_mouse_position())
 	var next_key := ""
 	if hovered != null:
 		next_key = String(hovered.get("digimon_key"))
