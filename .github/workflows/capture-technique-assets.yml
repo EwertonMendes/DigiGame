@@ -21,7 +21,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p capture/zips capture/extracted
+          mkdir -p capture/zips capture/extracted capture/debug
 
           curl -fL --retry 3 --retry-delay 2 \
             -A 'Mozilla/5.0 DigiGame asset capture' \
@@ -37,13 +37,13 @@ jobs:
           import base64
           import json
           import re
-          import sys
           from pathlib import Path
           from urllib.parse import unquote, urlparse
 
           import requests
 
           OUT = Path('capture/zips')
+          DEBUG = Path('capture/debug')
           UA = 'Mozilla/5.0 (X11; Linux x86_64) DigiGame/asset-capture'
 
           def csrf_from(html: str) -> str:
@@ -92,8 +92,7 @@ jobs:
               for match in re.finditer(r'data-upload_id=["\'](\d+)["\']', signed_page.text, flags=re.I):
                   start = max(0, match.start() - 1800)
                   end = min(len(signed_page.text), match.end() + 1800)
-                  window = signed_page.text[start:end]
-                  if expected_filename.lower() in window.lower():
+                  if expected_filename.lower() in signed_page.text[start:end].lower():
                       upload_id = match.group(1)
                       break
               if upload_id is None:
@@ -122,6 +121,60 @@ jobs:
                               fh.write(chunk)
               print(f'downloaded {expected_filename}: {output.stat().st_size} bytes')
 
+          def download_sounds_resource_asset(asset_id: int, output: Path) -> bool:
+              base = 'https://sounds.spriters-resource.com'
+              asset_page = f'{base}/ds_dsi/dgmnworldds/asset/{asset_id}/'
+              session = requests.Session()
+              session.headers.update({
+                  'User-Agent': UA,
+                  'Referer': f'{base}/ds_dsi/dgmnworldds/',
+              })
+
+              candidates = []
+              try:
+                  page = session.get(asset_page, timeout=30)
+                  DEBUG.joinpath('sounds-resource-asset-page.html').write_text(page.text, encoding='utf-8')
+                  if page.ok:
+                      for href in re.findall(r'href=["\']([^"\']+)["\']', page.text, flags=re.I):
+                          if f'{asset_id}.zip' in href or '/media/assets/' in href:
+                              candidates.append(href if href.startswith('http') else base + href)
+              except requests.RequestException as exc:
+                  DEBUG.joinpath('sounds-resource-error.txt').write_text(str(exc), encoding='utf-8')
+
+              # Current VG Resource storage uses /media/assets/<bucket>/<asset>.zip.
+              # The HTML normally reveals the bucket. If bot protection hides it,
+              # probe the nearby numeric buckets without assuming an obsolete
+              # /download/<id>/ route.
+              for bucket in range(300, 431):
+                  candidates.append(f'{base}/media/assets/{bucket}/{asset_id}.zip')
+
+              seen = set()
+              for url in candidates:
+                  if url in seen:
+                      continue
+                  seen.add(url)
+                  try:
+                      response = session.get(url, stream=True, timeout=12)
+                  except requests.RequestException:
+                      continue
+                  if response.status_code != 200:
+                      response.close()
+                      continue
+                  prefix = next(response.iter_content(4), b'')
+                  if not prefix.startswith(b'PK'):
+                      response.close()
+                      continue
+                  with output.open('wb') as fh:
+                      fh.write(prefix)
+                      for chunk in response.iter_content(1024 * 256):
+                          if chunk:
+                              fh.write(chunk)
+                  response.close()
+                  print(f'downloaded Sounds Resource asset {asset_id} from {url}: {output.stat().st_size} bytes')
+                  DEBUG.joinpath('sounds-resource-resolved-url.txt').write_text(url + '\n', encoding='utf-8')
+                  return True
+              return False
+
           itch_download(
               'https://foozlecc.itch.io/pixel-magic-sprite-effects',
               'Foozle_2DE0001_Pixel_Magic_Effects.zip',
@@ -132,33 +185,14 @@ jobs:
               'PVFX-Foundry-0.7.0.zip',
               OUT / 'pvfx_foundry.zip',
           )
-          PY
 
-          # The Sounds Resource currently exposes the Digimon World DS archive that
-          # was previously referenced for this prototype. Dawn/Dusk itself is not
-          # listed in its DS catalogue, so capture this archive and inspect it for
-          # suitable combat cues instead of silently inventing sound provenance.
-          downloaded=0
-          for url in \
-            'https://www.sounds-resource.com/download/400142/' \
-            'https://sounds.spriters-resource.com/download/400142/' \
-            'https://www.sounds-resource.com/ds_dsi/dgmnworldds/asset/400142/download/' \
-            'https://sounds.spriters-resource.com/ds_dsi/dgmnworldds/asset/400142/download/'
-          do
-            if curl -fL --retry 2 --retry-delay 2 \
-              -A 'Mozilla/5.0 DigiGame asset capture' \
-              "$url" -o capture/zips/digimon_world_ds_sfx.zip; then
-              if unzip -t capture/zips/digimon_world_ds_sfx.zip >/dev/null 2>&1; then
-                downloaded=1
-                echo "Downloaded Sounds Resource archive from $url"
-                break
-              fi
-            fi
-          done
-          if [ "$downloaded" -ne 1 ]; then
-            echo 'Could not download Digimon World DS SFX archive from known download endpoints.' >&2
-            exit 1
-          fi
+          if not download_sounds_resource_asset(400142, OUT / 'digimon_world_ds_sfx.zip'):
+              # Keep the VFX capture useful even if VG Resource changes storage.
+              DEBUG.joinpath('sounds-resource-not-found.txt').write_text(
+                  'Could not resolve asset 400142 in this run.\n', encoding='utf-8'
+              )
+              print('WARNING: Digimon World DS sound archive was not resolved; VFX capture will still be uploaded.')
+          PY
 
       - name: Extract captured archives
         shell: bash
@@ -174,9 +208,13 @@ jobs:
           unzip -q capture/zips/foozle_pixel_magic.zip -d capture/extracted/foozle-pixel-magic
           unzip -q capture/zips/pvfx_foundry.zip -d capture/extracted/pvfx-foundry
           unzip -q capture/zips/nature_magic.zip -d capture/extracted/nature-magic
-          unzip -q capture/zips/digimon_world_ds_sfx.zip -d capture/extracted/digimon-world-ds-sfx
+          if [ -f capture/zips/digimon_world_ds_sfx.zip ]; then
+            unzip -q capture/zips/digimon_world_ds_sfx.zip -d capture/extracted/digimon-world-ds-sfx
+          fi
           echo '=== Captured file inventory ==='
           find capture/extracted -type f -printf '%p\t%s bytes\n' | sort | tee capture/inventory.txt
+          echo '=== Archive SHA-256 ==='
+          sha256sum capture/zips/* | sort | tee capture/archive-sha256.txt
 
       - name: Upload capture artifact
         uses: actions/upload-artifact@v4
