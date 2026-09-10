@@ -1,4 +1,4 @@
-extends SceneTree
+extends Node2D
 
 const FieldScript = preload("res://src/battle/BattleFieldDomain.gd")
 const ControllerScript = preload("res://src/battle/CombatDigimonRuntimeController.gd")
@@ -9,23 +9,24 @@ const TILE_HALF_HEIGHT := 16.0
 var _failed := false
 
 
-func _initialize() -> void:
-	_run()
-
-
-func _run() -> void:
-	var main := Node2D.new()
-	main.name = "Main"
-	root.add_child(main)
-
+func _ready() -> void:
 	var field := FieldScript.new() as Node2D
 	field.name = "Blocks"
-	main.add_child(field)
+	add_child(field)
 
 	var controller := ControllerScript.new() as Node2D
 	controller.name = "DigimonController"
-	main.add_child(controller)
+	add_child(controller)
 
+	_run(field, controller)
+	if _failed:
+		get_tree().quit(1)
+		return
+	print("tile-based Digimon selection regression passed")
+	get_tree().quit(0)
+
+
+func _run(field: Node2D, controller: Node2D) -> void:
 	var greymon: Node = null
 	var enemy: Node = null
 	for actor: Node in controller.call("get_battle_digimons"):
@@ -37,7 +38,6 @@ func _run() -> void:
 	_assert(greymon != null, "Greymon test actor was not spawned")
 	_assert(enemy != null, "Koromon test actor was not spawned")
 	if greymon == null or enemy == null:
-		quit(1)
 		return
 
 	var enemy_tile_world := Vector2(enemy.call("get_tile_world_position"))
@@ -80,12 +80,6 @@ func _run() -> void:
 	for offset in [Vector2.ZERO, Vector2(0.0, 10.0), Vector2(18.0, 0.0), Vector2(-18.0, 0.0)]:
 		var resolved_greymon := controller.call("get_digimon_under_pointer", down_right_world + offset) as Node
 		_assert(resolved_greymon == greymon, "Greymon tile did not resolve to Greymon at offset %s" % offset)
-
-	if _failed:
-		quit(1)
-		return
-	print("tile-based Digimon selection regression passed")
-	quit(0)
 
 
 func _assert(condition: bool, message: String) -> void:
