@@ -3,10 +3,16 @@ extends "res://src/Player.gd"
 const BattleDigimonScript = preload("res://src/battle/BattleDigimon.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 
-const ATTACK_LUNGE_TIME := 0.10
-const ATTACK_RETURN_TIME := 0.16
-const HIT_RECOIL_TIME := 0.055
-const HIT_RETURN_TIME := 0.13
+const ATTACK_WINDUP_TIME := 0.085
+const ATTACK_LUNGE_TIME := 0.135
+const ATTACK_HOLD_TIME := 0.045
+const ATTACK_RETURN_TIME := 0.175
+const RANGED_WINDUP_TIME := 0.10
+const RANGED_RELEASE_TIME := 0.105
+const RANGED_RETURN_TIME := 0.13
+const HIT_RECOIL_TIME := 0.06
+const HIT_HOLD_TIME := 0.035
+const HIT_RETURN_TIME := 0.15
 const FLOATING_TEXT_TIME := 0.72
 
 var digimon_instance: DigimonInstance = null
@@ -141,32 +147,75 @@ func is_pointer_over(world_position: Vector2) -> bool:
 	return super.is_pointer_over(world_position)
 
 
+func get_combat_fx_anchor_world() -> Vector2:
+	if sprite == null:
+		return global_position + Vector2(0.0, -28.0)
+	var visual_height: float = _sprite_visual_height()
+	return sprite.global_position + Vector2(0.0, -maxf(12.0, visual_height * 0.18))
+
+
+func get_damage_number_anchor_world() -> Vector2:
+	if sprite == null:
+		return global_position + Vector2(0.0, -54.0)
+	var visual_height: float = _sprite_visual_height()
+	return sprite.global_position + Vector2(0.0, -maxf(44.0, visual_height * 0.62))
+
+
 func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = false) -> void:
 	if target == null or not is_instance_valid(target) or not visible or sprite == null:
 		return
 	if _attack_tween != null and _attack_tween.is_valid():
 		_attack_tween.kill()
+
 	var origin: Vector2 = sprite.position
 	var base_scale: Vector2 = sprite.scale
+	var base_z: int = sprite.z_index
 	var direction: Vector2 = target.global_position - global_position
 	if direction.length_squared() < 1.0:
 		return
 	face_toward_world_position(target.global_position)
 	var normalized: Vector2 = direction.normalized()
-	var lunge_distance: float
-	if ranged:
-		lunge_distance = clampf(8.0 + intensity * 1.25, 12.0, 18.0)
-	else:
-		lunge_distance = minf(direction.length() * 0.48, clampf(28.0 + intensity * 4.0, 34.0, 58.0))
-	var strike_position: Vector2 = origin + normalized * lunge_distance
+	sprite.z_index = maxi(base_z, 70)
+
 	_attack_tween = create_tween()
-	_attack_tween.set_trans(Tween.TRANS_QUAD)
-	_attack_tween.set_ease(Tween.EASE_IN)
-	_attack_tween.tween_property(sprite, "position", strike_position, ATTACK_LUNGE_TIME)
-	_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.08, 0.94), ATTACK_LUNGE_TIME)
-	_attack_tween.set_ease(Tween.EASE_OUT)
-	_attack_tween.tween_property(sprite, "position", origin, ATTACK_RETURN_TIME)
-	_attack_tween.parallel().tween_property(sprite, "scale", base_scale, ATTACK_RETURN_TIME)
+	if ranged:
+		var recoil_distance: float = clampf(5.0 + intensity * 0.9, 7.0, 12.0)
+		var release_distance: float = clampf(8.0 + intensity * 1.5, 12.0, 19.0)
+		var recoil_position: Vector2 = origin - normalized * recoil_distance
+		var release_position: Vector2 = origin + normalized * release_distance
+		_attack_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_attack_tween.tween_property(sprite, "position", recoil_position, RANGED_WINDUP_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(0.92, 1.08), RANGED_WINDUP_TIME)
+		_attack_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_attack_tween.tween_property(sprite, "position", release_position, RANGED_RELEASE_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.12, 0.90), RANGED_RELEASE_TIME)
+		_attack_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		_attack_tween.tween_property(sprite, "position", origin, RANGED_RETURN_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale, RANGED_RETURN_TIME)
+	else:
+		var windup_distance: float = clampf(5.0 + intensity, 8.0, 13.0)
+		var lunge_distance: float = minf(
+			direction.length() * 0.72,
+			clampf(46.0 + intensity * 6.0, 58.0, 86.0)
+		)
+		var windup_position: Vector2 = origin - normalized * windup_distance
+		var strike_position: Vector2 = origin + normalized * lunge_distance
+		_attack_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_attack_tween.tween_property(sprite, "position", windup_position, ATTACK_WINDUP_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(0.93, 1.08), ATTACK_WINDUP_TIME)
+		_attack_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+		_attack_tween.tween_property(sprite, "position", strike_position, ATTACK_LUNGE_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.18, 0.86), ATTACK_LUNGE_TIME)
+		_attack_tween.tween_interval(ATTACK_HOLD_TIME)
+		_attack_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_attack_tween.tween_property(sprite, "position", origin, ATTACK_RETURN_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale, ATTACK_RETURN_TIME)
+
+	await _attack_tween.finished
+	if sprite != null:
+		sprite.position = origin
+		sprite.scale = base_scale
+		sprite.z_index = base_z
 
 
 func play_hit_reaction(source: Node, intensity: float = 4.0) -> void:
@@ -181,20 +230,22 @@ func play_hit_reaction(source: Node, intensity: float = 4.0) -> void:
 		var delta: Vector2 = global_position - source.global_position
 		if delta.length_squared() > 1.0:
 			recoil_direction = delta.normalized()
-	var recoil: Vector2 = recoil_direction * clampf(3.0 + intensity * 0.65, 5.0, 9.0)
+	var recoil: Vector2 = recoil_direction * clampf(5.0 + intensity * 1.0, 8.0, 14.0)
 	_hit_tween = create_tween()
-	_hit_tween.set_trans(Tween.TRANS_QUAD)
-	_hit_tween.set_ease(Tween.EASE_OUT)
+	_hit_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 	_hit_tween.tween_property(sprite, "position", base_position + recoil, HIT_RECOIL_TIME)
-	_hit_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.08, 0.93), HIT_RECOIL_TIME)
-	_hit_tween.parallel().tween_property(sprite, "modulate", Color(1.0, 0.58, 0.52, 1.0), HIT_RECOIL_TIME)
-	_hit_tween.set_ease(Tween.EASE_IN_OUT)
+	_hit_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.13, 0.87), HIT_RECOIL_TIME)
+	_hit_tween.parallel().tween_property(sprite, "modulate", Color(1.0, 0.42, 0.36, 1.0), HIT_RECOIL_TIME)
+	_hit_tween.tween_interval(HIT_HOLD_TIME)
+	_hit_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_hit_tween.tween_property(sprite, "position", base_position, HIT_RETURN_TIME)
 	_hit_tween.parallel().tween_property(sprite, "scale", base_scale, HIT_RETURN_TIME)
 	_hit_tween.parallel().tween_property(sprite, "modulate", Color.WHITE, HIT_RETURN_TIME)
 
 
 func show_damage_number(amount: int, critical: bool = false) -> void:
+	# Compatibility fallback. BattlePresentationFX now owns the real screen-space
+	# floating damage so the number stays anchored to the struck Digimon.
 	var damage: int = maxi(0, amount)
 	var text: String = "CRIT  %d" % damage if critical else "%d" % damage
 	var color: Color = Color(1.0, 0.82, 0.20, 1.0) if critical else Color(1.0, 0.96, 0.90, 1.0)
@@ -245,6 +296,13 @@ func play_knockout_animation() -> void:
 	sprite.position = base_position
 	sprite.scale = base_scale
 	sprite.modulate = Color.WHITE
+
+
+func _sprite_visual_height() -> float:
+	if sprite == null:
+		return 48.0
+	var rect: Rect2 = sprite.get_rect()
+	return maxf(1.0, rect.size.y * absf(sprite.scale.y))
 
 
 func _spawn_floating_text(text_value: String, color: Color, font_size: int) -> void:
