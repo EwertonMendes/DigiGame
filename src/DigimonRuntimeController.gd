@@ -22,6 +22,7 @@ const ENEMY_ENCOUNTER := [
 var player_digimons := ["agumon", "gabumon", "greymon"]
 var enemy_digimons := ["koromon", "tanemon", "veemon"]
 var _hovered_digimon_key := ""
+var _hovered_actor: Node = null
 var _database = DatabaseScript.new()
 var _factory = null
 var _encounter_rng := RandomNumberGenerator.new()
@@ -183,6 +184,10 @@ func get_selected_digimon() -> Node:
 	return null
 
 
+func get_hovered_digimon() -> Node:
+	return _hovered_actor if _hovered_actor != null and is_instance_valid(_hovered_actor) else null
+
+
 func get_digimon_under_pointer(world_position: Vector2) -> Node:
 	var hovered: CharacterBody2D = null
 	for child in get_children():
@@ -197,17 +202,18 @@ func get_digimon_under_pointer(world_position: Vector2) -> Node:
 
 func _update_pointer_hover() -> void:
 	if GlobalVariables.TouchInputActive:
-		_set_hovered_digimon("")
+		_set_hovered_digimon("", null)
 		return
 	var hovered := get_digimon_under_pointer(get_global_mouse_position())
 	var next_key := ""
 	if hovered != null:
 		next_key = String(hovered.get("digimon_key"))
-	_set_hovered_digimon(next_key)
+	_set_hovered_digimon(next_key, hovered)
 
 
-func _set_hovered_digimon(digimon_key: String) -> void:
-	if digimon_key == _hovered_digimon_key:
+func _set_hovered_digimon(digimon_key: String, actor: Node) -> void:
+	if digimon_key == _hovered_digimon_key and actor == _hovered_actor:
 		return
 	_hovered_digimon_key = digimon_key
+	_hovered_actor = actor
 	hovered_digimon_changed.emit(digimon_key)
