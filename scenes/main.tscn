@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3 uid="uid://dwfwmlo2bqdlu"]
 
-[ext_resource type="Script" path="res://src/Field.gd" id="1_field"]
+[ext_resource type="Script" path="res://src/battle/BattleFieldDomain.gd" id="1_field"]
 [ext_resource type="Script" path="res://src/MainCamera.gd" id="2_camera"]
 [ext_resource type="Script" path="res://src/DigimonRuntimeController.gd" id="3_digimon"]
 [ext_resource type="PackedScene" uid="uid://celawaflf4raa" path="res://scenes/blue_space_background.tscn" id="4_background"]
