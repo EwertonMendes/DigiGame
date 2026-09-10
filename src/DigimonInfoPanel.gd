@@ -49,14 +49,14 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	var viewport_size := get_viewport().get_visible_rect().size
-	var window_size := DisplayServer.window_get_size()
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var window_size: Vector2i = DisplayServer.window_get_size()
 	if viewport_size != _last_viewport_size or window_size != _last_window_size:
 		_layout_card()
 	if not _card.visible or _frame_count <= 1 or _portrait_atlas == null:
 		return
 	_frame_elapsed += delta
-	var duration := _frame_duration_seconds()
+	var duration: float = _frame_duration_seconds()
 	while _frame_elapsed >= duration:
 		_frame_elapsed -= duration
 		_frame_index = (_frame_index + 1) % _frame_count
@@ -78,7 +78,7 @@ func _build_ui() -> void:
 	_eyebrow = _label("ACTIVE UNIT", 9, UI.MUTED)
 	_card.add_child(_eyebrow)
 
-	var portrait_frame := Panel.new()
+	var portrait_frame: Panel = Panel.new()
 	portrait_frame.name = "PortraitFrame"
 	portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	portrait_frame.add_theme_stylebox_override("panel", UI.panel(UI.CYAN, 0.94, 0.48, 7, 2))
@@ -116,7 +116,7 @@ func _build_ui() -> void:
 
 
 func _label(text_value: String, font_size: int, color: Color) -> Label:
-	var label := Label.new()
+	var label: Label = Label.new()
 	label.text = text_value
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
@@ -126,26 +126,26 @@ func _label(text_value: String, font_size: int, color: Color) -> Label:
 
 
 func _chip(text_value: String, accent: Color) -> Label:
-	var label := _label(text_value, 9, UI.TEXT)
+	var label: Label = _label(text_value, 9, UI.TEXT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_stylebox_override("normal", UI.pill(accent, 0.11))
 	return label
 
 
 func _progress(accent: Color) -> ProgressBar:
-	var bar := ProgressBar.new()
+	var bar: ProgressBar = ProgressBar.new()
 	bar.min_value = 0.0
 	bar.max_value = 100.0
 	bar.value = 100.0
 	bar.show_percentage = false
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var bg := StyleBoxFlat.new()
+	var bg: StyleBoxFlat = StyleBoxFlat.new()
 	bg.bg_color = Color(0.03, 0.08, 0.11, 0.88)
 	bg.corner_radius_top_left = 4
 	bg.corner_radius_top_right = 4
 	bg.corner_radius_bottom_left = 4
 	bg.corner_radius_bottom_right = 4
-	var fill := StyleBoxFlat.new()
+	var fill: StyleBoxFlat = StyleBoxFlat.new()
 	fill.bg_color = accent
 	fill.corner_radius_top_left = 4
 	fill.corner_radius_top_right = 4
@@ -162,7 +162,7 @@ func _on_hovered_digimon_changed(_digimon_key: String) -> void:
 
 func _refresh_context() -> void:
 	var actor: Node = null
-	var hovered := false
+	var hovered: bool = false
 	if _digimon_controller != null and _digimon_controller.has_method("get_hovered_digimon"):
 		actor = _digimon_controller.call("get_hovered_digimon") as Node
 		hovered = actor != null
@@ -175,33 +175,33 @@ func _refresh_context() -> void:
 
 	_current_actor = actor
 	_eyebrow.text = "FIELD INSPECT" if hovered else "ACTIVE UNIT"
-	var player_team := bool(actor.get("is_player_controlled"))
-	var accent := UI.CYAN if player_team else UI.RED
+	var player_team: bool = bool(actor.get("is_player_controlled"))
+	var accent: Color = UI.CYAN if player_team else UI.RED
 	_team_marker.color = accent
 	_card.add_theme_stylebox_override("panel", UI.panel(accent, 0.93, 0.48, 10, 9))
 
-	var actor_name := String(actor.get("digimon_key")).capitalize()
+	var actor_name: String = String(actor.get("digimon_key")).capitalize()
 	if actor.has_method("get_display_name"):
 		actor_name = String(actor.call("get_display_name"))
-	var level := int(actor.call("get_level")) if actor.has_method("get_level") else 1
+	var level: int = int(actor.call("get_level")) if actor.has_method("get_level") else 1
 	var raw_species = actor.get("species_data")
 	var species_data: Dictionary = raw_species if raw_species is Dictionary else {}
-	var rank := String(species_data.get("rank", "Unknown"))
-	var attribute := String(species_data.get("attribute", "Unknown"))
-	var species := String(species_data.get("species", ""))
+	var rank: String = String(species_data.get("rank", "Unknown"))
+	var attribute: String = String(species_data.get("attribute", "Unknown"))
+	var species: String = String(species_data.get("species", ""))
 
 	_name_label.text = actor_name.to_upper()
 	_level_label.text = "LV %d" % level
 	_rank_label.text = rank.to_upper()
-	var rank_accent := UI.rank_color(rank)
+	var rank_accent: Color = UI.rank_color(rank)
 	_rank_label.add_theme_stylebox_override("normal", UI.pill(rank_accent, 0.12))
 	_rank_label.add_theme_color_override("font_color", rank_accent.lightened(0.16))
 	_attribute_label.text = "%s%s" % [attribute.to_upper(), "  •  %s" % species.to_upper() if not species.is_empty() else ""]
 
-	var max_hp := maxi(1, int(actor.call("get_final_stat", "hp"))) if actor.has_method("get_final_stat") else 1
-	var max_sp := maxi(1, int(actor.call("get_final_stat", "mp"))) if actor.has_method("get_final_stat") else 1
-	var current_hp := max_hp
-	var current_sp := max_sp
+	var max_hp: int = maxi(1, int(actor.call("get_final_stat", "hp"))) if actor.has_method("get_final_stat") else 1
+	var max_sp: int = maxi(1, int(actor.call("get_final_stat", "mp"))) if actor.has_method("get_final_stat") else 1
+	var current_hp: int = max_hp
+	var current_sp: int = max_sp
 	var battle_state = actor.get("battle_state")
 	if battle_state != null:
 		current_hp = int(battle_state.get("current_hp"))
@@ -212,13 +212,13 @@ func _refresh_context() -> void:
 	_sp_bar.value = clampi(current_sp, 0, max_sp)
 	_hp_label.text = "HP   %d / %d" % [current_hp, max_hp]
 	_sp_label.text = "SP   %d / %d" % [current_sp, max_sp]
-	var mov := int(actor.call("get_final_mov")) if actor.has_method("get_final_mov") else 4
-	var speed := int(actor.call("get_final_stat", "speed")) if actor.has_method("get_final_stat") else 1
+	var mov: int = int(actor.call("get_final_mov")) if actor.has_method("get_final_mov") else 4
+	var speed: int = int(actor.call("get_final_stat", "speed")) if actor.has_method("get_final_stat") else 1
 	_mov_label.text = "MOV %d" % mov
 	_spd_label.text = "SPD %d" % speed
 
-	var actor_key := String(actor.get("digimon_key")).to_lower()
-	var actor_changed := actor_key != _current_key
+	var actor_key: String = String(actor.get("digimon_key")).to_lower()
+	var actor_changed: bool = actor_key != _current_key
 	if actor_changed:
 		_current_key = actor_key
 		_load_portrait_animation(actor_key)
@@ -274,19 +274,22 @@ func _apply_portrait_frame() -> void:
 func _layout_card() -> void:
 	if _card == null:
 		return
-	var viewport_obj := get_viewport()
-	var logical := viewport_obj.get_visible_rect().size
-	var physical := UI.physical_window_size(viewport_obj)
-	var ui_scale := UI.ui_scale(viewport_obj)
+	var viewport_obj: Viewport = get_viewport()
+	var logical: Vector2 = viewport_obj.get_visible_rect().size
+	var physical: Vector2 = UI.physical_window_size(viewport_obj)
+	var ui_scale: float = UI.ui_scale(viewport_obj)
 	_last_viewport_size = logical
 	_last_window_size = DisplayServer.window_get_size()
-	var compact := physical.x < COMPACT_BREAKPOINT
-	var right_rail_guard := 108.0 if compact else 148.0
-	var width := minf(304.0, physical.x - right_rail_guard - 16.0)
+	var compact: bool = UI.is_compact(viewport_obj, COMPACT_BREAKPOINT)
+	var short_landscape: bool = compact and physical.x > physical.y and physical.y < 560.0
+	var right_rail_guard: float = 108.0 if compact else 148.0
+	var width: float = minf(304.0, physical.x - right_rail_guard - 16.0)
+	if short_landscape:
+		width = minf(264.0, width)
 	width = maxf(204.0, width)
-	var height := 184.0 if compact else 222.0
-	var card_x := 8.0 if compact else 14.0
-	var card_y := 62.0 if compact else 74.0
+	var height: float = 174.0 if short_landscape else (184.0 if compact else 222.0)
+	var card_x: float = 8.0 if compact else 14.0
+	var card_y: float = 58.0 if short_landscape else (62.0 if compact else 74.0)
 	_card.scale = Vector2.ONE * ui_scale
 	_card.position = Vector2(card_x * ui_scale, card_y * ui_scale)
 	_card.size = Vector2(width, height)
@@ -296,17 +299,17 @@ func _layout_card() -> void:
 	_eyebrow.size = Vector2(width - 24.0, 16.0)
 
 	var portrait_frame := _card.get_node("PortraitFrame") as Panel
-	var portrait_size := Vector2(64.0, 64.0) if compact else Vector2(96.0, 100.0)
+	var portrait_size: Vector2 = Vector2(58.0, 58.0) if short_landscape else (Vector2(64.0, 64.0) if compact else Vector2(96.0, 100.0))
 	portrait_frame.position = Vector2(12.0, 28.0)
 	portrait_frame.size = portrait_size
 	_portrait.position = Vector2(3.0, 3.0)
 	_portrait.size = portrait_size - Vector2(6.0, 6.0)
 
-	var identity_x := portrait_frame.position.x + portrait_size.x + 10.0
-	var identity_w := width - identity_x - 10.0
+	var identity_x: float = portrait_frame.position.x + portrait_size.x + 10.0
+	var identity_w: float = width - identity_x - 10.0
 	_name_label.position = Vector2(identity_x, 28.0)
 	_name_label.size = Vector2(identity_w, 25.0)
-	_name_label.add_theme_font_size_override("font_size", 15 if compact else 20)
+	_name_label.add_theme_font_size_override("font_size", 14 if short_landscape else (15 if compact else 20))
 	_level_label.position = Vector2(identity_x, 51.0)
 	_level_label.size = Vector2(46.0, 18.0)
 	_level_label.add_theme_font_size_override("font_size", 8 if compact else 10)
@@ -317,9 +320,9 @@ func _layout_card() -> void:
 	_attribute_label.size = Vector2(identity_w, 18.0)
 	_attribute_label.add_theme_font_size_override("font_size", 7 if compact else 9)
 
-	var bars_y := 101.0 if compact else 137.0
-	var bar_left := 12.0
-	var bar_width := width - 24.0
+	var bars_y: float = 95.0 if short_landscape else (101.0 if compact else 137.0)
+	var bar_left: float = 12.0
+	var bar_width: float = width - 24.0
 	_hp_label.position = Vector2(bar_left, bars_y)
 	_hp_label.size = Vector2(bar_width, 14.0)
 	_hp_bar.position = Vector2(bar_left, bars_y + 14.0)
@@ -331,7 +334,7 @@ func _layout_card() -> void:
 	_hp_label.add_theme_font_size_override("font_size", 7 if compact else 9)
 	_sp_label.add_theme_font_size_override("font_size", 7 if compact else 9)
 
-	var chip_y := 157.0 if compact else height - 28.0
+	var chip_y: float = 147.0 if short_landscape else (157.0 if compact else height - 28.0)
 	_mov_label.position = Vector2(width - 126.0, chip_y)
 	_mov_label.size = Vector2(56.0, 20.0)
 	_spd_label.position = Vector2(width - 66.0, chip_y)
@@ -343,11 +346,12 @@ func _layout_card() -> void:
 func _animate_in() -> void:
 	if _card == null:
 		return
-	var ui_scale := UI.ui_scale(get_viewport())
+	var viewport_obj: Viewport = get_viewport()
+	var ui_scale: float = UI.ui_scale(viewport_obj)
 	_card.modulate = Color(1.0, 1.0, 1.0, 0.25)
 	_card.position.x -= 8.0 * ui_scale
-	var compact := UI.is_compact(get_viewport(), COMPACT_BREAKPOINT)
-	var target_x := (8.0 if compact else 14.0) * ui_scale
+	var compact: bool = UI.is_compact(viewport_obj, COMPACT_BREAKPOINT)
+	var target_x: float = (8.0 if compact else 14.0) * ui_scale
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(_card, "modulate:a", 1.0, 0.14)
