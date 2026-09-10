@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch pinned CC0 terrain assets required by DigiGame's clean CI build."""
+"""Fetch pinned CC0 terrain and combat VFX required by DigiGame's clean CI build."""
 
 from __future__ import annotations
 
@@ -7,17 +7,61 @@ import hashlib
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-MIRROR_COMMIT = "45df48c4d45f8716216b1a9e22df0b69cd9f5932"
-BASE_URL = (
+TERRAIN_MIRROR_COMMIT = "45df48c4d45f8716216b1a9e22df0b69cd9f5932"
+TERRAIN_BASE_URL = (
     "https://raw.githubusercontent.com/ETdoFresh/kenney.nl/"
-    f"{MIRROR_COMMIT}/isometriclandscape/PNG"
+    f"{TERRAIN_MIRROR_COMMIT}/isometriclandscape/PNG"
 )
-OUTPUT_DIR = Path("assets/terrain/kenney")
+
+# Kenney Particle Pack, packaged for Godot by Calinou. The upstream pack is CC0.
+# Pin the public mirror to one immutable commit so CI always receives identical bytes.
+VFX_MIRROR_COMMIT = "ab7086639ee73be31abd87feb21bf1402d4e8144"
+VFX_BASE_URL = (
+    "https://raw.githubusercontent.com/Calinou/kenney-particle-pack/"
+    f"{VFX_MIRROR_COMMIT}/addons/kenney_particle_pack"
+)
 
 ASSETS = (
-    ("landscapeTiles_010.png", "grass.png", "cb244de5ff52525b5afb7d8d64ce3180d0c32f54"),
-    ("landscapeTiles_014.png", "earth.png", "c7d48eea143016d148d46db5d1ffad8b234078fa"),
-    ("landscapeTiles_015.png", "lush_grass.png", "fd1e55397462fcb347f62e3763bbbc53ff666583"),
+    (
+        f"{TERRAIN_BASE_URL}/landscapeTiles_010.png",
+        Path("assets/terrain/kenney/grass.png"),
+        "cb244de5ff52525b5afb7d8d64ce3180d0c32f54",
+    ),
+    (
+        f"{TERRAIN_BASE_URL}/landscapeTiles_014.png",
+        Path("assets/terrain/kenney/earth.png"),
+        "c7d48eea143016d148d46db5d1ffad8b234078fa",
+    ),
+    (
+        f"{TERRAIN_BASE_URL}/landscapeTiles_015.png",
+        Path("assets/terrain/kenney/lush_grass.png"),
+        "fd1e55397462fcb347f62e3763bbbc53ff666583",
+    ),
+    (
+        f"{VFX_BASE_URL}/slash_03.png",
+        Path("assets/vfx/kenney/slash_03.png"),
+        "31f250ab448fcd8c767a4960c6fbc7105b326fa5",
+    ),
+    (
+        f"{VFX_BASE_URL}/spark_04.png",
+        Path("assets/vfx/kenney/spark_04.png"),
+        "6eaf328696ec8640571a69318b6211223c14224e",
+    ),
+    (
+        f"{VFX_BASE_URL}/magic_03.png",
+        Path("assets/vfx/kenney/magic_03.png"),
+        "47c4a22ff7b104ec9ab8926bd6e68d8709fe7b1a",
+    ),
+    (
+        f"{VFX_BASE_URL}/flare_01.png",
+        Path("assets/vfx/kenney/flare_01.png"),
+        "bd25bd874e47467e95d6623aa0364be1c619617a",
+    ),
+    (
+        f"{VFX_BASE_URL}/muzzle_01.png",
+        Path("assets/vfx/kenney/muzzle_01.png"),
+        "ce0324cf90254f4c84f61b1b05f3a166f0e00fc0",
+    ),
 )
 
 
@@ -33,10 +77,8 @@ def download(url: str) -> bytes:
 
 
 def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    for source_name, target_name, expected_sha in ASSETS:
-        target = OUTPUT_DIR / target_name
+    for url, target, expected_sha in ASSETS:
+        target.parent.mkdir(parents=True, exist_ok=True)
 
         if target.exists():
             existing = target.read_bytes()
@@ -44,13 +86,12 @@ def main() -> None:
                 print(f"OK (cached): {target}")
                 continue
 
-        url = f"{BASE_URL}/{source_name}"
         print(f"Fetching {url}")
         data = download(url)
         actual_sha = git_blob_sha(data)
         if actual_sha != expected_sha:
             raise RuntimeError(
-                f"Integrity check failed for {source_name}: "
+                f"Integrity check failed for {target.name}: "
                 f"expected Git blob {expected_sha}, got {actual_sha}"
             )
 
