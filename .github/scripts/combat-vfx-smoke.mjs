@@ -28,14 +28,22 @@ try {
   await waitForGame(page);
   const baseline = await page.screenshot();
 
-  // Register the waits before advancing turns so a fast Web build cannot race
-  // past the presentation event between key presses.
+  // Register all waits before advancing turns so a fast Web build cannot race
+  // past either the base cinematic layer or the data-driven technique layer.
   const startEvent = page.waitForEvent('console', {
     predicate: message => message.text().includes('[CombatFX] START'),
     timeout: 15000,
   });
   const impactEvent = page.waitForEvent('console', {
     predicate: message => message.text().includes('[CombatFX] IMPACT'),
+    timeout: 15000,
+  });
+  const presentationStartEvent = page.waitForEvent('console', {
+    predicate: message => message.text().includes('[CombatPresentation] phase=start'),
+    timeout: 15000,
+  });
+  const presentationImpactEvent = page.waitForEvent('console', {
+    predicate: message => message.text().includes('[CombatPresentation] phase=impact'),
     timeout: 15000,
   });
 
@@ -48,6 +56,7 @@ try {
   })();
 
   const startMessage = await startEvent;
+  const presentationStartMessage = await presentationStartEvent;
   await page.waitForTimeout(85);
   const windup = await page.screenshot();
   if (baseline.equals(windup)) {
@@ -56,6 +65,7 @@ try {
   await page.screenshot({ path: 'build/combat-vfx-windup.png', fullPage: true });
 
   const impactMessage = await impactEvent;
+  const presentationImpactMessage = await presentationImpactEvent;
   await page.waitForTimeout(45);
   await page.screenshot({ path: 'build/combat-vfx-impact.png', fullPage: true });
   keepAdvancing = false;
@@ -67,11 +77,20 @@ try {
   if (!impactMessage.text().includes('damage=')) {
     throw new Error(`CombatFX IMPACT log is missing damage: ${impactMessage.text()}`);
   }
+  if (!presentationStartMessage.text().includes('start_fx=') || !presentationStartMessage.text().includes('audio=true')) {
+    throw new Error(`Technique presentation did not start VFX/audio: ${presentationStartMessage.text()}`);
+  }
+  if (!presentationImpactMessage.text().includes('fx=') || !presentationImpactMessage.text().includes('audio=true')) {
+    throw new Error(`Technique presentation did not resolve impact VFX/audio: ${presentationImpactMessage.text()}`);
+  }
   if (runtimeErrors.length > 0) {
     throw new Error(`Combat VFX runtime errors:\n${runtimeErrors.join('\n')}`);
   }
 
-  console.log(`Combat VFX smoke passed: ${startMessage.text()} | ${impactMessage.text()}`);
+  console.log(
+    `Combat VFX smoke passed: ${startMessage.text()} | ${presentationStartMessage.text()} | ` +
+    `${impactMessage.text()} | ${presentationImpactMessage.text()}`
+  );
   await page.close();
 } finally {
   await browser.close();

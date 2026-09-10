@@ -1,0 +1,99 @@
+{
+  "schema": "digigame.combat-presentations/1",
+  "audioProfiles": {
+    "normal": {
+      "start": "res://assets/audio/digimon-world-ds/normal-attack-whoosh.wav",
+      "impact": "res://assets/audio/digimon-world-ds/normal-attack-impact.wav"
+    },
+    "technique": {
+      "start": "res://assets/audio/digimon-world-ds/technique-cast.wav",
+      "impact": "res://assets/audio/digimon-world-ds/technique-impact.wav"
+    }
+  },
+  "defaultTechniqueAudioProfile": "technique",
+  "actions": {
+    "basic_attack": {
+      "audioProfile": "normal",
+      "start": [
+        {"effect": "pvfx/crescent-slash", "anchor": "midpoint", "scale": 0.72, "tint": "element", "rotationDeg": -12}
+      ],
+      "impact": [
+        {"effect": "pvfx/pawl-snap", "anchor": "target", "scale": 0.76, "tint": "white"}
+      ]
+    },
+    "pepper_breath": {
+      "start": [{"effect": "pvfx/ember-jet", "anchor": "attacker", "scale": 0.68}],
+      "projectile": [{"effect": "pixel-spells/fireball", "scale": 2.35}],
+      "impact": [
+        {"effect": "foozle/explosion", "anchor": "target", "scale": 1.75},
+        {"effect": "pvfx/warm-explosion", "anchor": "target", "scale": 0.72}
+      ]
+    },
+    "blue_blaster": {
+      "start": [{"effect": "pvfx/focus-charge", "anchor": "attacker", "scale": 0.62, "tint": "element"}],
+      "projectile": [{"effect": "pixel-spells/arcane-bolt", "scale": 2.45, "tint": "element"}],
+      "impact": [
+        {"effect": "pvfx/spectral-bloom", "anchor": "target", "scale": 0.70, "tint": "element"},
+        {"effect": "pixel-spells/magic-sparks", "anchor": "target", "scale": 2.05, "tint": "element"}
+      ]
+    },
+    "mega_flame": {
+      "start": [{"effect": "foozle/molten-spear", "anchor": "attacker", "scale": 1.35}],
+      "projectile": [{"effect": "pixel-spells/firebomb", "scale": 2.75}],
+      "impact": [
+        {"effect": "pvfx/warm-explosion", "anchor": "target", "scale": 1.05},
+        {"effect": "pvfx/solar-shrapnel", "anchor": "target", "scale": 0.82}
+      ]
+    },
+    "bubbles": {
+      "start": [{"effect": "foozle/water", "anchor": "attacker", "scale": 1.20}],
+      "projectile": [{"effect": "pixel-spells/water-orb", "scale": 2.35}],
+      "impact": [
+        {"effect": "pixel-spells/splash", "anchor": "target", "scale": 2.35},
+        {"effect": "pvfx/splash-crown", "anchor": "target", "scale": 0.68}
+      ]
+    },
+    "adhesive_bubble": {
+      "start": [{"effect": "nature/vine-orb-trail", "anchor": "attacker", "scale": 0.52}],
+      "projectile": [{"effect": "pixel-spells/plant-missile", "scale": 2.45}],
+      "impact": [
+        {"effect": "pvfx/rootscript", "anchor": "target", "scale": 0.72},
+        {"effect": "nature/vine-crown", "anchor": "target", "scale": 0.48}
+      ]
+    },
+    "vee_headbutt": {
+      "start": [{"effect": "pvfx/focus-charge", "anchor": "attacker", "scale": 0.48, "tint": "white"}],
+      "impact": [
+        {"effect": "pvfx/pawl-snap", "anchor": "target", "scale": 0.88, "tint": "white"},
+        {"effect": "pvfx/landing-dust", "anchor": "target", "scale": 0.58}
+      ]
+    },
+    "guard_charge": {
+      "resolveOn": "status",
+      "start": [{"effect": "pixel-spells/pixelart-shield", "anchor": "attacker", "scale": 3.10, "tint": "element"}],
+      "impact": [
+        {"effect": "pvfx/arcane-parry", "anchor": "target", "scale": 0.74, "tint": "element"},
+        {"effect": "pvfx/venom-ward", "anchor": "target", "scale": 0.58, "tint": "element"}
+      ]
+    },
+    "speed_charge": {
+      "resolveOn": "status",
+      "start": [{"effect": "foozle/wind", "anchor": "attacker", "scale": 1.35, "tint": "element"}],
+      "impact": [
+        {"effect": "pvfx/focus-charge", "anchor": "target", "scale": 0.72, "tint": "element"},
+        {"effect": "pvfx/leaf-gust", "anchor": "target", "scale": 0.70, "tint": "element"}
+      ]
+    }
+  },
+  "elementFallbacks": {
+    "fire": {"projectile": [{"effect": "pixel-spells/fireball", "scale": 2.35}], "impact": [{"effect": "pvfx/warm-explosion", "anchor": "target", "scale": 0.74}]},
+    "water": {"projectile": [{"effect": "pixel-spells/water-orb", "scale": 2.30}], "impact": [{"effect": "pvfx/splash-crown", "anchor": "target", "scale": 0.66}]},
+    "plant": {"projectile": [{"effect": "pixel-spells/plant-missile", "scale": 2.35}], "impact": [{"effect": "pvfx/rootscript", "anchor": "target", "scale": 0.70}]},
+    "electric": {"projectile": [{"effect": "pixel-spells/arcane-bolt", "scale": 2.35, "tint": "element"}], "impact": [{"effect": "pvfx/electric-impact", "anchor": "target", "scale": 0.72}]},
+    "wind": {"projectile": [{"effect": "pixel-spells/wind-bolt", "scale": 2.35}], "impact": [{"effect": "pvfx/leaf-gust", "anchor": "target", "scale": 0.68}]},
+    "earth": {"projectile": [{"effect": "pixel-spells/rock-sling", "scale": 2.30}], "impact": [{"effect": "pvfx/earth-rupture", "anchor": "target", "scale": 0.72}]},
+    "light": {"projectile": [{"effect": "pixel-spells/bolt-of-purity", "scale": 2.30}], "impact": [{"effect": "pvfx/radiant-heal", "anchor": "target", "scale": 0.66}]},
+    "dark": {"projectile": [{"effect": "pixel-spells/darkness-bolt", "scale": 2.30}], "impact": [{"effect": "pvfx/void-implosion", "anchor": "target", "scale": 0.70}]},
+    "neutral": {"projectile": [{"effect": "pixel-spells/magic-orb", "scale": 2.25, "tint": "element"}], "impact": [{"effect": "pvfx/pawl-snap", "anchor": "target", "scale": 0.72, "tint": "element"}]}
+  }
+}
