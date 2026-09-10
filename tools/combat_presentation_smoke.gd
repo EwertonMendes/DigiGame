@@ -14,6 +14,13 @@ func _run() -> void:
 		return
 
 	var main: Node = packed.instantiate()
+	# Headless Control widgets exercise renderer-specific Button properties that
+	# are already covered by the browser smoke. Remove presentation-independent
+	# CanvasLayers before entering the tree so this probe measures battle FX only.
+	for ui_path in ["DigimonInfoUI", "BattleUI", "DebugUI"]:
+		var ui_node: Node = main.get_node_or_null(ui_path)
+		if ui_node != null:
+			ui_node.free()
 	root.add_child(main)
 	await process_frame
 	await process_frame
@@ -25,22 +32,33 @@ func _run() -> void:
 		_fail("main combat nodes are missing")
 		return
 
-	# Stop the demo battle from progressing while this presentation probe drives
-	# the public combat_event signal. Any scheduled enemy coroutine sees this flag.
 	battle.set("_battle_over", true)
 
-	var attacker: Node = null
-	var target: Node = null
+	var allies: Array[Node] = []
+	var enemies: Array[Node] = []
 	for child in controller.get_children():
 		if not child is CharacterBody2D:
 			continue
-		if bool(child.get("is_player_controlled")) and attacker == null:
-			attacker = child
-		elif not bool(child.get("is_player_controlled")) and target == null:
-			target = child
-	if attacker == null or target == null:
-		_fail("could not find one ally and one enemy actor")
+		if bool(child.get("is_player_controlled")):
+			allies.append(child)
+		else:
+			enemies.append(child)
+	if allies.is_empty() or enemies.is_empty():
+		_fail("could not find ally/enemy actors")
 		return
+
+	# Pick a clearly separated pair so the lunge assertion cannot be defeated by
+	# overlapping bootstrap positions in future encounter changes.
+	var attacker: Node = allies[0]
+	var target: Node = enemies[0]
+	var best_distance := -1.0
+	for ally: Node in allies:
+		for enemy: Node in enemies:
+			var distance: float = (ally as Node2D).global_position.distance_squared_to((enemy as Node2D).global_position)
+			if distance > best_distance:
+				best_distance = distance
+				attacker = ally
+				target = enemy
 
 	var attacker_id: String = String(attacker.call("get_digimon_instance_id"))
 	var target_id: String = String(target.call("get_digimon_instance_id"))
