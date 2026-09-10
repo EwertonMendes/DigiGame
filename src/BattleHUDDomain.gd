@@ -13,6 +13,7 @@ func _ready() -> void:
 	super._ready()
 	_rewire_combat_controls()
 	_configure_end_turn_command()
+	_remove_command_footer_hint()
 
 	_top_bar = BattleTopBarScript.new()
 	_top_bar.name = "BattleTopBar"
@@ -78,6 +79,14 @@ func _configure_end_turn_command() -> void:
 		_wait_button.icon = load(icon_path) as Texture2D
 
 
+func _remove_command_footer_hint() -> void:
+	# Navigation is discoverable from focus/highlight behavior itself. Keeping a
+	# permanent instruction sentence in the command rail only adds visual noise.
+	if _nav_hint != null:
+		_nav_hint.text = ""
+		_nav_hint.visible = false
+
+
 func _on_attack_pressed() -> void:
 	if _combat_overlay != null and _combat_overlay.has_method("hide_skills"):
 		_combat_overlay.call("hide_skills")
@@ -112,6 +121,7 @@ func _on_action_hover_exit() -> void:
 
 func refresh_from_controller() -> void:
 	super.refresh_from_controller()
+	_remove_command_footer_hint()
 	if _controller != null and _controller.has_method("get_hud_state"):
 		var state: Dictionary = _controller.call("get_hud_state")
 		_cached_state = state
@@ -131,10 +141,8 @@ func refresh_from_controller() -> void:
 		_cancel_button.disabled = false
 		if planning:
 			_phase_label.text = "Choose a destination"
-			_nav_hint.text = "Esc / B  Back   •   Click / tap a tile to move"
 		elif targeting:
 			_phase_label.text = "Choose a target"
-			_nav_hint.text = "Esc / B  Back   •   Click / tap a target to act"
 
 		var selected_action = state.get("selected_action", {})
 		var selected_id := String(selected_action.get("id", "")) if selected_action is Dictionary else ""
