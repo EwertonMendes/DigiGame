@@ -62,6 +62,11 @@ ASSETS = (
         Path("assets/vfx/kenney/muzzle_01.png"),
         "ce0324cf90254f4c84f61b1b05f3a166f0e00fc0",
     ),
+    (
+        f"{VFX_BASE_URL}/smoke_03.png",
+        Path("assets/vfx/kenney/smoke_03.png"),
+        "34cad39231026b6617f25e03e99c0b860258d010",
+    ),
 )
 
 
