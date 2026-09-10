@@ -1,0 +1,41 @@
+name: Capture vendored runtime assets
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Materialize current runtime assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+          python3 tools/fetch_cc0_assets.py
+          python3 tools/fetch_character_assets.py
+          python3 tools/fetch_enemy_assets.py
+          python3 tools/fetch_ui_fonts.py
+      - name: Upload runtime assets for vendoring
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-assets-to-vendor
+          path: |
+            assets/terrain/kenney/*.png
+            assets/vfx/kenney/*.png
+            assets/ui/fonts/*.ttf
+            assets/characters/agumon.png
+            assets/characters/gabumon.png
+            assets/characters/greymon.png
+            assets/characters/koromon.png
+            assets/characters/tanemon.png
+          if-no-files-found: error
+          retention-days: 1
