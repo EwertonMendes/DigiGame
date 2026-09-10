@@ -107,7 +107,7 @@ func _run() -> void:
 
 	var damage_label: Control = overlay_root.get_child(overlay_root.get_child_count() - 1) as Control
 	var expected_world: Vector2 = Vector2(target.call("get_damage_number_anchor_world"))
-	var expected_screen: Vector2 = get_viewport().get_canvas_transform() * expected_world
+	var expected_screen: Vector2 = root.get_canvas_transform() * expected_world
 	var actual_screen: Vector2 = damage_label.position + damage_label.size * 0.5
 	if actual_screen.distance_to(expected_screen) > 42.0:
 		_fail("floating damage text is not anchored to the struck Digimon")
