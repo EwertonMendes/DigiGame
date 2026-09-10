@@ -87,10 +87,14 @@ func _layout_controls() -> void:
 	_last_viewport_size = logical
 	_last_window_size = DisplayServer.window_get_size()
 	var compact := UI.is_compact(viewport_obj, 760.0)
+	var short_landscape := compact and physical.x >= 700.0 and physical.x > physical.y
 	var button_size := COMPACT_BUTTON if compact else DESKTOP_BUTTON
 	var margin := 10.0 if compact else 14.0
 	var gap := 6.0
 
+	# Debug is intentionally absent from normal play. F3 reveals/enables it;
+	# while enabled the small button remains available to turn it back off.
+	debug_button.visible = GlobalVariables.DebugMode
 	var debug_width := 66.0 if compact else 74.0
 	var debug_height := 34.0
 	debug_button.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -105,10 +109,9 @@ func _layout_controls() -> void:
 		button.size = Vector2(button_size, button_size)
 		button.add_theme_font_size_override("font_size", 20)
 
-	var utility_y := physical.y - margin - button_size
+	var dock_guard := 118.0 if short_landscape else (226.0 if compact else 0.0)
+	var utility_y := physical.y - dock_guard - margin - button_size
 	var utility_right := physical.x - margin
-	if compact:
-		utility_y = physical.y - 200.0 - margin - button_size
 	var zoom_in_x := utility_right - button_size
 	var zoom_out_x := zoom_in_x - gap - button_size
 	var center_x := zoom_out_x - gap - button_size
