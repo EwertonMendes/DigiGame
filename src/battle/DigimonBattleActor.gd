@@ -60,6 +60,54 @@ func get_movement_type() -> String:
 	return String(species_data.get("movementType", "ground"))
 
 
+func get_combat_type() -> String:
+	return String(species_data.get("type", species_data.get("attribute", "Free")))
+
+
+func get_combat_element() -> String:
+	return String(species_data.get("element", "neutral"))
+
+
+func get_family() -> String:
+	return String(species_data.get("family", species_data.get("species", "Unknown")))
+
+
+func get_current_hp() -> int:
+	return battle_state.current_hp if battle_state != null else 0
+
+
+func get_current_sp() -> int:
+	return battle_state.current_mp if battle_state != null else 0
+
+
+func spend_sp(amount: int) -> bool:
+	return battle_state != null and battle_state.spend_sp(amount)
+
+
+func take_damage(amount: int) -> int:
+	return battle_state.take_damage(amount) if battle_state != null else 0
+
+
+func heal(amount: int) -> int:
+	return battle_state.heal(amount, get_final_stat("hp")) if battle_state != null else 0
+
+
+func get_equipped_skill_ids() -> Array[String]:
+	if digimon_instance == null:
+		return []
+	return digimon_instance.equipped_skills.duplicate()
+
+
+func get_learned_skill_ids() -> Array[String]:
+	if digimon_instance == null:
+		return []
+	return digimon_instance.learned_skills.duplicate()
+
+
+func get_statuses() -> Array[Dictionary]:
+	return battle_state.get_statuses() if battle_state != null else []
+
+
 func get_initiative() -> float:
 	return battle_state.initiative if battle_state != null else 0.0
 
@@ -75,7 +123,7 @@ func consume_initiative(recovery_cost: float) -> void:
 
 
 func is_available_for_turn() -> bool:
-	return battle_state != null and battle_state.current_hp > 0
+	return battle_state != null and not battle_state.is_knocked_out()
 
 
 func get_instance_snapshot() -> Dictionary:
@@ -84,9 +132,15 @@ func get_instance_snapshot() -> Dictionary:
 	var snapshot := digimon_instance.to_dict()
 	snapshot["speciesName"] = String(species_data.get("name", ""))
 	snapshot["rank"] = String(species_data.get("rank", ""))
+	snapshot["type"] = get_combat_type()
+	snapshot["element"] = get_combat_element()
+	snapshot["family"] = get_family()
 	snapshot["MOV"] = get_final_mov()
 	snapshot["movementType"] = get_movement_type()
 	snapshot["stats"] = _stat_calculator.get_all_stats(digimon_instance, species_data)
 	snapshot["battleSpeed"] = get_final_stat("speed")
 	snapshot["initiative"] = get_initiative()
+	snapshot["currentHp"] = get_current_hp()
+	snapshot["currentSp"] = get_current_sp()
+	snapshot["statuses"] = get_statuses()
 	return snapshot
