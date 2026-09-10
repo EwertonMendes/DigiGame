@@ -146,18 +146,18 @@ func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = 
 		return
 	if _attack_tween != null and _attack_tween.is_valid():
 		_attack_tween.kill()
-	var origin := global_position
-	var direction := target.global_position - origin
+	var origin: Vector2 = global_position
+	var direction: Vector2 = target.global_position - origin
 	if direction.length_squared() < 1.0:
 		return
 	face_toward_world_position(target.global_position)
-	var normalized := direction.normalized()
+	var normalized: Vector2 = direction.normalized()
 	var lunge_distance: float
 	if ranged:
 		lunge_distance = clampf(8.0 + intensity * 1.25, 12.0, 18.0)
 	else:
 		lunge_distance = minf(direction.length() * 0.48, clampf(28.0 + intensity * 4.0, 34.0, 58.0))
-	var strike_position := origin + normalized * lunge_distance
+	var strike_position: Vector2 = origin + normalized * lunge_distance
 	_attack_tween = create_tween()
 	_attack_tween.set_trans(Tween.TRANS_QUAD)
 	_attack_tween.set_ease(Tween.EASE_IN)
@@ -171,14 +171,14 @@ func play_hit_reaction(source: Node, intensity: float = 4.0) -> void:
 		return
 	if _hit_tween != null and _hit_tween.is_valid():
 		_hit_tween.kill()
-	var base_position := sprite.position
-	var base_scale := sprite.scale
-	var recoil_direction := Vector2.RIGHT
+	var base_position: Vector2 = sprite.position
+	var base_scale: Vector2 = sprite.scale
+	var recoil_direction: Vector2 = Vector2.RIGHT
 	if source != null and is_instance_valid(source):
-		var delta := global_position - source.global_position
+		var delta: Vector2 = global_position - source.global_position
 		if delta.length_squared() > 1.0:
 			recoil_direction = delta.normalized()
-	var recoil := recoil_direction * clampf(3.0 + intensity * 0.65, 5.0, 9.0)
+	var recoil: Vector2 = recoil_direction * clampf(3.0 + intensity * 0.65, 5.0, 9.0)
 	_hit_tween = create_tween()
 	_hit_tween.set_trans(Tween.TRANS_QUAD)
 	_hit_tween.set_ease(Tween.EASE_OUT)
@@ -192,9 +192,9 @@ func play_hit_reaction(source: Node, intensity: float = 4.0) -> void:
 
 
 func show_damage_number(amount: int, critical: bool = false) -> void:
-	var damage := maxi(0, amount)
-	var text := "CRIT  %d" % damage if critical else "%d" % damage
-	var color := Color(1.0, 0.82, 0.20, 1.0) if critical else Color(1.0, 0.96, 0.90, 1.0)
+	var damage: int = maxi(0, amount)
+	var text: String = "CRIT  %d" % damage if critical else "%d" % damage
+	var color: Color = Color(1.0, 0.82, 0.20, 1.0) if critical else Color(1.0, 0.96, 0.90, 1.0)
 	_spawn_floating_text(text, color, 31 if critical else 25)
 
 
@@ -203,7 +203,7 @@ func show_miss_feedback() -> void:
 
 
 func emit_hit_particles(element_color: Color, critical: bool = false, intensity: float = 4.0) -> void:
-	var amount := 24 if critical else int(clampf(10.0 + intensity * 2.0, 14.0, 22.0))
+	var amount: int = 24 if critical else int(clampf(10.0 + intensity * 2.0, 14.0, 22.0))
 	_spawn_burst(element_color, amount, 78.0 + intensity * 10.0, 0.38, 2.1 if critical else 1.55)
 	if critical:
 		_spawn_burst(Color(1.0, 0.92, 0.48, 1.0), 12, 145.0, 0.28, 2.4)
@@ -221,12 +221,12 @@ func play_knockout_animation() -> void:
 		return
 	if _hit_tween != null and _hit_tween.is_valid():
 		_hit_tween.kill()
-	var base_position := sprite.position
-	var base_scale := sprite.scale
-	var defeat_color := Color(0.30, 0.92, 1.0, 1.0) if is_player_controlled else Color(1.0, 0.34, 0.45, 1.0)
+	var base_position: Vector2 = sprite.position
+	var base_scale: Vector2 = sprite.scale
+	var defeat_color: Color = Color(0.30, 0.92, 1.0, 1.0) if is_player_controlled else Color(1.0, 0.34, 0.45, 1.0)
 	_spawn_burst(defeat_color, 30, 128.0, 0.58, 2.0)
 	_spawn_burst(Color(0.86, 0.96, 1.0, 1.0), 18, 88.0, 0.72, 1.35)
-	var tween := create_tween()
+	var tween: Tween = create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(sprite, "scale", base_scale * Vector2(1.13, 0.90), 0.09)
 	tween.parallel().tween_property(sprite, "modulate", Color(1.0, 0.68, 0.72, 1.0), 0.09)
@@ -245,7 +245,7 @@ func play_knockout_animation() -> void:
 func _spawn_floating_text(text_value: String, color: Color, font_size: int) -> void:
 	if not visible:
 		return
-	var label := Label.new()
+	var label: Label = Label.new()
 	label.text = text_value
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -258,7 +258,7 @@ func _spawn_floating_text(text_value: String, color: Color, font_size: int) -> v
 	label.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.035, 0.96))
 	label.add_theme_constant_override("outline_size", 6)
 	add_child(label)
-	var tween := create_tween()
+	var tween: Tween = create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "position:y", label.position.y - 38.0, FLOATING_TEXT_TIME)
 	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.30).set_delay(0.38)
@@ -266,10 +266,10 @@ func _spawn_floating_text(text_value: String, color: Color, font_size: int) -> v
 
 
 func _spawn_burst(color: Color, amount: int, velocity: float, lifetime: float, particle_scale: float) -> void:
-	var parent_node := get_parent()
+	var parent_node: Node = get_parent()
 	if parent_node == null:
 		return
-	var particles := CPUParticles2D.new()
+	var particles: CPUParticles2D = CPUParticles2D.new()
 	particles.amount = maxi(1, amount)
 	particles.lifetime = maxf(0.1, lifetime)
 	particles.one_shot = true
@@ -288,7 +288,7 @@ func _spawn_burst(color: Color, amount: int, velocity: float, lifetime: float, p
 	parent_node.add_child(particles)
 	particles.global_position = global_position + Vector2(0.0, -30.0)
 	particles.emitting = true
-	var cleanup_timer := get_tree().create_timer(particles.lifetime + 0.45)
+	var cleanup_timer: SceneTreeTimer = get_tree().create_timer(particles.lifetime + 0.45)
 	cleanup_timer.timeout.connect(func():
 		if is_instance_valid(particles):
 			particles.queue_free()
