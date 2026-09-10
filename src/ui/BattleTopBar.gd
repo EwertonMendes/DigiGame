@@ -23,8 +23,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var viewport_size := get_viewport().get_visible_rect().size
-	var window_size := DisplayServer.window_get_size()
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var window_size: Vector2i = DisplayServer.window_get_size()
 	if viewport_size != _last_viewport_size or window_size != _last_window_size:
 		_layout()
 
@@ -42,7 +42,7 @@ func refresh() -> void:
 		return
 	var state: Dictionary = _controller.call("get_hud_state")
 	_panel.visible = true
-	var turn_number := int(state.get("turn_number", 1))
+	var turn_number: int = int(state.get("turn_number", 1))
 	_map_label.text = "DIGITAL PLAINS"
 	_turn_label.text = "ACT %02d" % turn_number
 	_objective_label.text = "DEFEAT ALL OPPONENTS"
@@ -68,7 +68,7 @@ func _build_ui() -> void:
 	_objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_panel.add_child(_objective_label)
 
-	var top_line := ColorRect.new()
+	var top_line: ColorRect = ColorRect.new()
 	top_line.name = "SignalLine"
 	top_line.color = UI.separator(UI.CYAN, 0.62)
 	top_line.position = Vector2(14.0, 0.0)
@@ -78,7 +78,7 @@ func _build_ui() -> void:
 
 
 func _label(text_value: String, font_size: int, color: Color) -> Label:
-	var label := Label.new()
+	var label: Label = Label.new()
 	label.text = text_value
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
@@ -90,27 +90,42 @@ func _label(text_value: String, font_size: int, color: Color) -> Label:
 func _layout() -> void:
 	if _panel == null:
 		return
-	var viewport_obj := get_viewport()
-	var logical := viewport_obj.get_visible_rect().size
-	var physical := UI.physical_window_size(viewport_obj)
-	var ui_scale := UI.ui_scale(viewport_obj)
+	var viewport_obj: Viewport = get_viewport()
+	var logical: Vector2 = viewport_obj.get_visible_rect().size
+	var physical: Vector2 = UI.physical_window_size(viewport_obj)
+	var ui_scale: float = UI.ui_scale(viewport_obj)
 	_last_viewport_size = logical
 	_last_window_size = DisplayServer.window_get_size()
-	var compact := physical.x < 760.0
-	var width := minf(620.0, physical.x - 24.0)
-	width = maxf(280.0, width)
-	var height := 44.0 if compact else 48.0
+	var compact: bool = UI.is_compact(viewport_obj, 760.0)
+	var very_narrow: bool = physical.x < 520.0
+	var debug_guard: float = 122.0 if compact else 0.0
+	var available_width: float = physical.x - 20.0 - debug_guard
+	var width: float = minf(620.0, available_width)
+	width = maxf(220.0, width)
+	var height: float = 44.0 if compact else 48.0
+	var panel_x: float = 10.0 if compact else (physical.x - width) * 0.5
+	if compact and not very_narrow:
+		panel_x = maxf(10.0, (physical.x - debug_guard - width) * 0.5)
 	_panel.scale = Vector2.ONE * ui_scale
-	_panel.position = Vector2((physical.x - width) * 0.5 * ui_scale, 10.0 * ui_scale)
+	_panel.position = Vector2(panel_x * ui_scale, 10.0 * ui_scale)
 	_panel.size = Vector2(width, height)
 
-	var third := width / 3.0
-	_map_label.position = Vector2(16.0, 4.0)
-	_map_label.size = Vector2(third - 12.0, height - 8.0)
-	_turn_label.position = Vector2(third, 4.0)
-	_turn_label.size = Vector2(third, height - 8.0)
-	_objective_label.position = Vector2(third * 2.0, 4.0)
-	_objective_label.size = Vector2(third - 16.0, height - 8.0)
+	if very_narrow:
+		_objective_label.visible = false
+		var half: float = width * 0.5
+		_map_label.position = Vector2(14.0, 4.0)
+		_map_label.size = Vector2(half - 16.0, height - 8.0)
+		_turn_label.position = Vector2(half, 4.0)
+		_turn_label.size = Vector2(half - 12.0, height - 8.0)
+	else:
+		_objective_label.visible = true
+		var third: float = width / 3.0
+		_map_label.position = Vector2(16.0, 4.0)
+		_map_label.size = Vector2(third - 12.0, height - 8.0)
+		_turn_label.position = Vector2(third, 4.0)
+		_turn_label.size = Vector2(third, height - 8.0)
+		_objective_label.position = Vector2(third * 2.0, 4.0)
+		_objective_label.size = Vector2(third - 16.0, height - 8.0)
 
 	if compact:
 		_map_label.text = "PLAINS"
@@ -131,7 +146,7 @@ func _pulse_turn() -> void:
 		return
 	_turn_label.modulate = Color(1.0, 1.0, 1.0, 0.35)
 	_turn_label.scale = Vector2(0.96, 0.96)
-	var tween := create_tween().set_parallel(true)
+	var tween: Tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(_turn_label, "modulate:a", 1.0, 0.18)
 	tween.tween_property(_turn_label, "scale", Vector2.ONE, 0.18)
