@@ -3,16 +3,19 @@ class_name DigimonFactory
 
 const InstanceScript = preload("res://src/digimon/DigimonInstance.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
-const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "speed"]
+const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
+const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
 
 var _database
 var _calculator = StatCalculatorScript.new()
+var _action_database = ActionDatabaseScript.new()
 var _rng := RandomNumberGenerator.new()
 
 
 func _init(database) -> void:
 	_database = database
 	_rng.randomize()
+	_action_database.load_default()
 
 
 func create_player_by_name(name: String, level: int = 1, scan_percent: int = 100) -> DigimonInstance:
@@ -71,8 +74,17 @@ func _create_instance(species: Dictionary, level: int, initial_potential: int, s
 	instance.potential = clampi(initial_potential, 0, DigimonInstance.MAX_POTENTIAL)
 	instance.origin = source
 	_randomize_aptitudes(instance)
+	_sync_level_skills(instance, species)
 	_calculator.refill_instance(instance, species)
 	return instance
+
+
+func _sync_level_skills(instance: DigimonInstance, species: Dictionary) -> void:
+	if instance == null:
+		return
+	var available: Array[Dictionary] = _action_database.get_known_actions(String(species.get("name", "")), instance.level)
+	for action: Dictionary in available:
+		instance.learn_skill(String(action.get("id", "")), true)
 
 
 func _randomize_aptitudes(instance: DigimonInstance) -> void:
@@ -97,9 +109,11 @@ func _apply_enemy_profile(instance: DigimonInstance, profile: String) -> void:
 			instance.training["def"] = 5
 		"elite":
 			instance.training["atk"] = 8
+			instance.training["int"] = 5
 			instance.training["speed"] = 8
 			instance.training["mov"] = 1
 		"boss":
 			instance.training["atk"] = 10
 			instance.training["def"] = 10
+			instance.training["int"] = 10
 			instance.training["mov"] = 1

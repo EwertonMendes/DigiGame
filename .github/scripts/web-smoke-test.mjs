@@ -176,6 +176,41 @@ try {
   await page.waitForTimeout(250);
   await page.screenshot({ path: 'build/keyboard-camera-smoke.png', fullPage: true });
 
+  // Isolated combat session: exercise the new action-state transitions without
+  // depending on world-space click coordinates. These shortcuts are the same
+  // commands exposed to keyboard players by BattleHUDDomain.
+  const combatPage = await browser.newPage({ viewport: { width: 1365, height: 685 } });
+  watchRuntimeErrors(combatPage, 'combat');
+  await waitForGame(combatPage);
+  const combatBaseline = await combatPage.screenshot();
+
+  await combatPage.keyboard.press('Digit2');
+  await combatPage.waitForTimeout(500);
+  const attackTargeting = await combatPage.screenshot();
+  assertScreensDiffer(combatBaseline, attackTargeting, 'Basic attack targeting mode');
+  await combatPage.screenshot({ path: 'build/combat-attack-targeting.png', fullPage: true });
+  await combatPage.keyboard.press('Escape');
+  await combatPage.waitForTimeout(350);
+
+  const beforeSkillMenu = await combatPage.screenshot();
+  await combatPage.keyboard.press('Digit3');
+  await combatPage.waitForTimeout(500);
+  const skillMenu = await combatPage.screenshot();
+  assertScreensDiffer(beforeSkillMenu, skillMenu, 'Technique menu');
+  await combatPage.screenshot({ path: 'build/combat-skill-menu.png', fullPage: true });
+  await combatPage.keyboard.press('Digit3');
+  await combatPage.waitForTimeout(350);
+
+  const beforeTurnProgression = await combatPage.screenshot();
+  await combatPage.keyboard.press('Digit5');
+  await combatPage.waitForTimeout(700);
+  await combatPage.keyboard.press('Digit5');
+  await combatPage.waitForTimeout(2200);
+  const afterTurnProgression = await combatPage.screenshot();
+  assertScreensDiffer(beforeTurnProgression, afterTurnProgression, 'CT turn progression and enemy AI');
+  await combatPage.screenshot({ path: 'build/combat-ai-turn.png', fullPage: true });
+  await combatPage.close();
+
   const mobilePage = await browser.newPage({
     viewport: mobileViewports[0],
     isMobile: true,
@@ -240,8 +275,8 @@ try {
   console.log(
     `DigiGame Web smoke test passed at ${desktopViewports.length} desktop and ` +
     `${mobileViewports.length} mobile orientations, including notebook HUD coverage, ` +
-    `mouse, keyboard, touch tap, one-finger pan, pinch zoom, mobile zoom controls, ` +
-    `and responsive canvas checks.`
+    `attack targeting, technique menu, CT/enemy-AI progression, mouse, keyboard, ` +
+    `touch tap, one-finger pan, pinch zoom, mobile zoom controls, and responsive canvas checks.`
   );
 } finally {
   await browser.close();
