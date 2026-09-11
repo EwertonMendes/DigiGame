@@ -6,11 +6,9 @@ func _build_escape_ui() -> void:
 	if _escape_result_return == null:
 		return
 	for connection: Dictionary in _escape_result_return.pressed.get_connections():
-		var callable_variant = connection.get("callable")
-		if callable_variant is Callable:
-			var callable := callable_variant as Callable
-			if callable.is_valid() and _escape_result_return.pressed.is_connected(callable):
-				_escape_result_return.pressed.disconnect(callable)
+		var existing_callable: Callable = connection.get("callable", Callable())
+		if existing_callable.is_valid() and _escape_result_return.pressed.is_connected(existing_callable):
+			_escape_result_return.pressed.disconnect(existing_callable)
 	_escape_result_return.pressed.connect(_return_to_terminal_commons)
 
 
