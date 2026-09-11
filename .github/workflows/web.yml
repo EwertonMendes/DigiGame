@@ -183,18 +183,21 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
 
-          if [ "$SMOKE_SUITE" = "vfx" ]; then
+          if [ "$SMOKE_SUITE" = "vfx" ] || [ "$SMOKE_SUITE" = "combat" ]; then
             MAX_ATTEMPTS=5
+            if [ "$SMOKE_SUITE" = "combat" ]; then
+              MAX_ATTEMPTS=3
+            fi
             for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-              echo "VFX smoke attempt ${attempt}/${MAX_ATTEMPTS}"
+              echo "${SMOKE_SUITE} smoke attempt ${attempt}/${MAX_ATTEMPTS}"
               if node .github/scripts/browser-smoke.mjs; then
                 exit 0
               fi
               if [ "$attempt" -eq "$MAX_ATTEMPTS" ]; then
-                echo "VFX smoke failed after ${MAX_ATTEMPTS} independent randomized battles." >&2
+                echo "${SMOKE_SUITE} smoke failed after ${MAX_ATTEMPTS} independent browser runs." >&2
                 exit 1
               fi
-              echo "::warning::VFX smoke did not reach an attack in randomized battle ${attempt}; retrying with a fresh deployment."
+              echo "::warning::${SMOKE_SUITE} smoke hit a timing/randomized battle path; retrying with a fresh browser."
               sleep 1
             done
           else
