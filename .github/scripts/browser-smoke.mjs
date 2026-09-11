@@ -77,8 +77,9 @@ async function enterTestBattle(page, captureDialogue = false) {
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
+  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
   await page.keyboard.press('Enter');
-  await Promise.all([battleStarted, battleReady]);
+  await Promise.all([battleStarted, battleReady, introReady]);
   await settleFrames(page, 4);
 }
 
@@ -153,8 +154,8 @@ async function pinch(client, center, startRadius, endRadius, steps = 8) {
   await dispatchTouch(client, 'touchEnd', []);
 }
 
-async function advanceUntilMarker(page, marker, attempts = 16, intervalMs = 275) {
-  const markerPromise = waitForConsole(page, marker, 15000);
+async function advanceUntilMarker(page, marker, attempts = 48, intervalMs = 320) {
+  const markerPromise = waitForConsole(page, marker, 30000);
   let stopped = false;
   const advance = (async () => {
     for (let attempt = 0; attempt < attempts && !stopped; attempt += 1) {
@@ -295,7 +296,7 @@ async function runCombatSuite() {
   await settleFrames(page, 2);
 
   const beforeTurnProgression = await page.screenshot();
-  await advanceUntilMarker(page, '[CombatFX] START', 14, 240);
+  await advanceUntilMarker(page, '[CombatFX] START', 48, 320);
   await settleFrames(page, 3);
   const afterTurnProgression = await page.screenshot();
   assertScreensDiffer(beforeTurnProgression, afterTurnProgression, 'CT turn progression and enemy AI');
@@ -333,8 +334,9 @@ async function runMobileSuite() {
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
+  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
   await page.keyboard.press('Enter');
-  await Promise.all([battleStarted, battleReady]);
+  await Promise.all([battleStarted, battleReady, introReady]);
   await settleFrames(page, 4);
 
   let layout = await readLayout(page);
@@ -384,16 +386,16 @@ async function runVfxSuite() {
   await enterTestBattle(page);
   const baseline = await page.screenshot();
 
-  const startEvent = waitForConsole(page, '[CombatFX] START');
-  const impactEvent = waitForConsole(page, '[CombatFX] IMPACT');
-  const presentationStartEvent = waitForConsole(page, '[CombatPresentation] phase=start');
-  const presentationImpactEvent = waitForConsole(page, '[CombatPresentation] phase=impact');
+  const startEvent = waitForConsole(page, '[CombatFX] START', 30000);
+  const impactEvent = waitForConsole(page, '[CombatFX] IMPACT', 30000);
+  const presentationStartEvent = waitForConsole(page, '[CombatPresentation] phase=start', 30000);
+  const presentationImpactEvent = waitForConsole(page, '[CombatPresentation] phase=impact', 30000);
 
   let keepAdvancing = true;
   const advanceTurns = (async () => {
-    for (let attempt = 0; attempt < 16 && keepAdvancing; attempt += 1) {
+    for (let attempt = 0; attempt < 48 && keepAdvancing; attempt += 1) {
       await page.keyboard.press('Digit5');
-      await page.waitForTimeout(240);
+      await page.waitForTimeout(320);
     }
   })();
 
