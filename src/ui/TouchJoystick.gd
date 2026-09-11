@@ -15,48 +15,60 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_NONE
 	custom_minimum_size = Vector2(148.0, 148.0)
+	set_process_input(true)
 	queue_redraw()
 
 
-func _gui_input(event: InputEvent) -> void:
+# Touch is captured at viewport-input level instead of relying on GUI hit
+# dispatch. In mobile Web exports Godot may synthesize mouse input from touch,
+# and relying only on _gui_input made held touches on the old controls fragile.
+# Claiming one finger explicitly also lets the player slide outside the visual
+# ring without losing movement until that same finger is released.
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree():
+		return
+
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
-			if _active_touch != -1:
+			if _active_touch != -1 or not _contains_viewport_point(touch.position):
 				return
 			_active_touch = touch.index
-			_update_from_global_position(touch.position)
-			accept_event()
+			_update_from_viewport_position(touch.position)
+			get_viewport().set_input_as_handled()
 			return
 		if touch.index == _active_touch:
 			_active_touch = -1
 			_set_direction(Vector2.ZERO)
-			accept_event()
+			get_viewport().set_input_as_handled()
 		return
 
 	if event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
-		if drag.index == _active_touch:
-			_update_from_global_position(drag.position)
-			accept_event()
-		return
+		if drag.index != _active_touch:
+			return
+		_update_from_viewport_position(drag.position)
+		get_viewport().set_input_as_handled()
 
-	# Mouse support keeps the control easy to exercise from desktop browsers and
-	# automated smoke tests without changing its touch-first behavior.
+
+func _gui_input(event: InputEvent) -> void:
+	# Mouse support keeps the joystick testable on desktop and remains useful for
+	# hybrid/touch-laptop browsers. ScreenTouch/ScreenDrag are handled in _input
+	# above so touch-to-mouse emulation can never swallow the joystick gesture.
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 		if button.button_index != MOUSE_BUTTON_LEFT:
 			return
 		_mouse_active = button.pressed
 		if _mouse_active:
-			_update_from_global_position(button.position)
+			_update_from_local_position(button.position)
 		else:
 			_set_direction(Vector2.ZERO)
 		accept_event()
 		return
 
 	if event is InputEventMouseMotion and _mouse_active:
-		_update_from_global_position((event as InputEventMouseMotion).position)
+		_update_from_local_position((event as InputEventMouseMotion).position)
 		accept_event()
 
 
@@ -70,8 +82,17 @@ func get_direction() -> Vector2:
 	return _direction
 
 
-func _update_from_global_position(global_pos: Vector2) -> void:
-	var local_pos := get_global_transform_with_canvas().affine_inverse() * global_pos
+func _contains_viewport_point(viewport_pos: Vector2) -> bool:
+	var local_pos := get_global_transform_with_canvas().affine_inverse() * viewport_pos
+	return Rect2(Vector2.ZERO, size).has_point(local_pos)
+
+
+func _update_from_viewport_position(viewport_pos: Vector2) -> void:
+	var local_pos := get_global_transform_with_canvas().affine_inverse() * viewport_pos
+	_update_from_local_position(local_pos)
+
+
+func _update_from_local_position(local_pos: Vector2) -> void:
 	var radius := maxf(1.0, minf(size.x, size.y) * 0.5)
 	var raw := (local_pos - size * 0.5) / radius
 	var length := raw.length()
