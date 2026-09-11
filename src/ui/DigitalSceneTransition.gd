@@ -85,7 +85,7 @@ func _build_overlay() -> void:
 
 	_status_stack = VBoxContainer.new()
 	_status_stack.name = "Status"
-	_status_stack.custom_minimum_size = Vector2(420.0, 116.0)
+	_status_stack.custom_minimum_size = Vector2(300.0, 116.0)
 	_status_stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	_status_stack.add_theme_constant_override("separation", 5)
 	_status_stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
