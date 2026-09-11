@@ -10,10 +10,9 @@ var _mobile_dialog_body: Label = null
 var _mobile_dialog_cancel: Button = null
 
 
-# Build the dialog without nested Containers calculating a very large wrapped
-# minimum height on portrait Web exports. The panel remains a PanelContainer so
-# the inherited controller contract is unchanged, while its direct child has no
-# content-driven minimum size and can be laid out safely inside the viewport.
+# Keep the battle prompt independent from content-driven Container minimum sizes.
+# The explicit layout below gives the Kenney frame a real safe area so buttons
+# never touch or cross the decorative border on desktop or mobile Web exports.
 func _build_dialog() -> void:
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.name = "BattleDialog"
@@ -33,15 +32,12 @@ func _build_dialog() -> void:
 	_mobile_dialog_title.name = "Title"
 	_mobile_dialog_content.add_child(_mobile_dialog_title)
 
-	# Keep the actionable copy to one explicit line. Wrapped Labels can report a
-	# content-driven minimum height before a mobile Web viewport has stabilized,
-	# which is what originally made this dialog overflow the phone screen.
 	_mobile_dialog_body = _label("START A TEST BATTLE?", 19, UI.TEXT)
 	_mobile_dialog_body.name = "Prompt"
 	_mobile_dialog_content.add_child(_mobile_dialog_body)
 
 	_mobile_dialog_cancel = _dialog_button("NOT NOW", UI.MUTED)
-	_mobile_dialog_cancel.name = "Cancel"
+	_mobile_dialog_cancel.name = "CancelBattleDialog"
 	_mobile_dialog_cancel.pressed.connect(_close_dialog)
 	_mobile_dialog_content.add_child(_mobile_dialog_cancel)
 
@@ -93,8 +89,6 @@ func _layout_ui() -> void:
 	var edge := 14.0
 	var bottom := 14.0
 
-	# Browser chrome and the OS gesture area can steal vertical space in landscape.
-	# Keep every interactive control away from the physical edge.
 	_mobile_controls.visible = touch_layout and not _dialog_open and not _transitioning
 	_mobile_controls.scale = Vector2.ONE * ui_scale
 	var joystick_side := 136.0 if landscape else 156.0
@@ -118,7 +112,6 @@ func _layout_ui() -> void:
 
 	_layout_mobile_dialog(physical, ui_scale, landscape, edge)
 
-	# The information card should not dominate a short landscape phone viewport.
 	if landscape and compact and _location_panel != null:
 		var location_width := minf(330.0, physical.x * 0.44)
 		_location_panel.position = Vector2(edge * ui_scale, 10.0 * ui_scale)
@@ -128,8 +121,9 @@ func _layout_ui() -> void:
 func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, edge: float) -> void:
 	if _dialog_panel == null or _mobile_dialog_content == null:
 		return
+
 	var dialog_width := minf(620.0 if landscape else 660.0, physical.x - edge * 2.0)
-	var desired_height := 156.0 if landscape else 168.0
+	var desired_height := 184.0 if landscape else 196.0
 	var dialog_height := minf(desired_height, physical.y - edge * 2.0)
 	_dialog_panel.scale = Vector2.ONE * ui_scale
 	_dialog_panel.position = Vector2(
@@ -138,30 +132,36 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	)
 	_dialog_panel.size = Vector2(dialog_width, dialog_height)
 
-	var pad := 18.0 if landscape else 16.0
+	var side_pad := 28.0 if landscape else 24.0
+	var top_pad := 20.0 if landscape else 22.0
 	_mobile_dialog_content.position = Vector2.ZERO
 	_mobile_dialog_content.size = Vector2(dialog_width, dialog_height)
-	_mobile_dialog_title.position = Vector2(pad, 12.0)
-	_mobile_dialog_title.size = Vector2(dialog_width - pad * 2.0, 20.0)
+
+	_mobile_dialog_title.position = Vector2(side_pad, top_pad)
+	_mobile_dialog_title.size = Vector2(dialog_width - side_pad * 2.0, 20.0)
 	_mobile_dialog_title.add_theme_font_size_override("font_size", 11 if landscape else 12)
 
-	_mobile_dialog_body.position = Vector2(pad, 34.0)
-	_mobile_dialog_body.size = Vector2(dialog_width - pad * 2.0, 30.0)
+	_mobile_dialog_body.position = Vector2(side_pad, top_pad + 30.0)
+	_mobile_dialog_body.size = Vector2(dialog_width - side_pad * 2.0, 32.0)
 	_mobile_dialog_body.add_theme_font_size_override("font_size", 17 if landscape else 19)
 
-	var actions_height := 48.0
-	var actions_y := dialog_height - pad - actions_height
-	var gap := 10.0
-	var available := dialog_width - pad * 2.0 - gap
-	var cancel_width := minf(150.0, available * 0.43)
-	var start_width := available - cancel_width
+	var button_height := 44.0
+	var bottom_pad := 28.0 if landscape else 30.0
+	var gap := 16.0
+	var group_width := minf(dialog_width - side_pad * 2.0, 520.0)
+	var cancel_width := minf(168.0, group_width * 0.36)
+	var start_width := group_width - cancel_width - gap
+	var actions_x := (dialog_width - group_width) * 0.5
+	var actions_y := dialog_height - bottom_pad - button_height
+
 	_mobile_dialog_cancel.custom_minimum_size = Vector2.ZERO
-	_mobile_dialog_cancel.position = Vector2(pad, actions_y)
-	_mobile_dialog_cancel.size = Vector2(cancel_width, actions_height)
+	_mobile_dialog_cancel.position = Vector2(actions_x, actions_y)
+	_mobile_dialog_cancel.size = Vector2(cancel_width, button_height)
 	_mobile_dialog_cancel.add_theme_font_size_override("font_size", 13 if landscape else 14)
+
 	_start_battle_button.custom_minimum_size = Vector2.ZERO
-	_start_battle_button.position = Vector2(pad + cancel_width + gap, actions_y)
-	_start_battle_button.size = Vector2(start_width, actions_height)
+	_start_battle_button.position = Vector2(actions_x + cancel_width + gap, actions_y)
+	_start_battle_button.size = Vector2(start_width, button_height)
 	_start_battle_button.add_theme_font_size_override("font_size", 13 if landscape else 14)
 
 
