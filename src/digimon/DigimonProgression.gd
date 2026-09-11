@@ -11,13 +11,20 @@ func max_level() -> int:
 
 
 func exp_to_next_level(instance: DigimonInstance, species: Dictionary) -> int:
-	if instance == null or instance.level >= max_level():
+	if instance == null:
 		return 0
+	return exp_to_next_level_for_level(instance.level, species)
+
+
+func exp_to_next_level_for_level(level: int, species: Dictionary) -> int:
+	if level >= max_level():
+		return 0
+	var safe_level := maxi(1, level)
 	var rank := String(species.get("rank", "Rookie"))
 	var rank_multiplier := _balance.experience_rank_multiplier("rankRequirementMultiplier", rank, 1.0)
 	var base := _balance.experience_number("base", 18.0)
 	var exponent := _balance.experience_number("exponent", 1.58)
-	return maxi(1, int(round(base * pow(float(instance.level), exponent) * rank_multiplier)))
+	return maxi(1, int(round(base * pow(float(safe_level), exponent) * rank_multiplier)))
 
 
 func add_experience(instance: DigimonInstance, species: Dictionary, amount: int) -> int:

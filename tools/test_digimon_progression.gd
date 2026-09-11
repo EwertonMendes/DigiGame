@@ -29,6 +29,14 @@ func _ready() -> void:
 	var level_result: Dictionary = progression.apply_experience(agumon, required)
 	assert(agumon.level == 2, "Exact level threshold must level up")
 	assert(int(level_result.get("levels_gained", 0)) == 1, "Progression result must report gained level")
+	assert(int(level_result.get("old_level", 0)) == 1 and int(level_result.get("new_level", 0)) == 2, "Progression result must preserve before/after levels for result UI")
+	assert(int(level_result.get("old_exp", -1)) == 0 and int(level_result.get("new_exp", -1)) == 0, "Progression result must preserve before/after XP for result UI")
+	var level_steps = level_result.get("level_steps", [])
+	assert(level_steps is Array and level_steps.size() == 1, "Exact threshold must expose one XP animation segment")
+	var first_step: Dictionary = level_steps[0] as Dictionary
+	assert(bool(first_step.get("leveled_up", false)), "XP animation segment must explicitly mark level-up boundaries")
+	assert(int(first_step.get("required", 0)) == required, "XP animation segment must use the canonical XP threshold")
+	assert(String(level_result.get("species_name", "")).to_lower() == "agumon", "Progression result must include display species metadata")
 
 	var rookie_enemy: DigimonInstance = factory.create_enemy_by_name("veemon", 5, "wild")
 	var enemy_species: Dictionary = database.get_by_seed(rookie_enemy.species_seed)
