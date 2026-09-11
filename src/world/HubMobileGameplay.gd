@@ -146,22 +146,21 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	_mobile_dialog_body.add_theme_font_size_override("font_size", 17 if landscape else 19)
 
 	var button_height := 44.0
-	var bottom_pad := 28.0 if landscape else 30.0
+	var bottom_pad := 36.0 if landscape else 38.0
 	var gap := 16.0
-	var group_width := minf(dialog_width - side_pad * 2.0, 520.0)
-	var cancel_width := minf(168.0, group_width * 0.36)
-	var start_width := group_width - cancel_width - gap
+	var group_width := minf(dialog_width - side_pad * 2.0, 500.0)
+	var button_width := (group_width - gap) * 0.5
 	var actions_x := (dialog_width - group_width) * 0.5
 	var actions_y := dialog_height - bottom_pad - button_height
 
 	_mobile_dialog_cancel.custom_minimum_size = Vector2.ZERO
 	_mobile_dialog_cancel.position = Vector2(actions_x, actions_y)
-	_mobile_dialog_cancel.size = Vector2(cancel_width, button_height)
+	_mobile_dialog_cancel.size = Vector2(button_width, button_height)
 	_mobile_dialog_cancel.add_theme_font_size_override("font_size", 13 if landscape else 14)
 
 	_start_battle_button.custom_minimum_size = Vector2.ZERO
-	_start_battle_button.position = Vector2(actions_x + cancel_width + gap, actions_y)
-	_start_battle_button.size = Vector2(start_width, button_height)
+	_start_battle_button.position = Vector2(actions_x + button_width + gap, actions_y)
+	_start_battle_button.size = Vector2(button_width, button_height)
 	_start_battle_button.add_theme_font_size_override("font_size", 13 if landscape else 14)
 
 
