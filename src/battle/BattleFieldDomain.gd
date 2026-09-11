@@ -1,4 +1,4 @@
-extends "res://src/Field.gd"
+extends "res://src/world/DevilsWorkshopField.gd"
 
 const ATTACK_RANGE_FILL := Color(1.0, 0.24, 0.20, 0.16)
 const SKILL_RANGE_FILL := Color(0.62, 0.30, 1.0, 0.16)
