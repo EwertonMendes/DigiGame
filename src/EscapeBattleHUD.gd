@@ -4,9 +4,7 @@ var _flee_button: Button = null
 var _escape_modal_layer: Control = null
 var _escape_modal_panel: Panel = null
 var _escape_title: Label = null
-var _escape_chance: Label = null
-var _escape_breakdown: Label = null
-var _escape_warning: Label = null
+var _escape_question: Label = null
 var _escape_confirm: Button = null
 var _escape_cancel: Button = null
 var _escape_announcement: Panel = null
@@ -32,7 +30,7 @@ func _ready() -> void:
 func _install_flee_command() -> void:
 	if _action_grid == null or _flee_button != null:
 		return
-	_flee_button = _make_action_button("Flee", "flee.svg", "6", "Attempt a tactical retreat")
+	_flee_button = _make_action_button("Flee", "flee.svg", "6", "Try to flee from battle")
 	_flee_button.pressed.connect(_on_flee_pressed)
 	_primary_buttons.append(_flee_button)
 	_action_grid.add_child(_flee_button)
@@ -50,12 +48,8 @@ func refresh_from_controller() -> void:
 	var policy_allowed := bool(preview.get("allowed", false))
 	var command_available := bool(state.get("can_wait", false))
 	_flee_button.disabled = not bool(state.get("can_flee", false)) if policy_allowed else not command_available
-	_flee_button.text = "Flee" if policy_allowed else "Flee · LOCKED"
-	var reason := String(preview.get("reason", "Retreat is unavailable in this battle."))
-	if policy_allowed:
-		_flee_button.tooltip_text = "Attempt retreat · %d%% chance  [6]" % int(round(float(preview.get("chance", 0.0))))
-	else:
-		_flee_button.tooltip_text = "%s  [6]" % reason
+	_flee_button.text = "Flee"
+	_flee_button.tooltip_text = "Try to flee from battle  [6]" if policy_allowed else "You can't flee from this battle.  [6]"
 	if bool(state.get("battle_over", false)):
 		_flee_button.disabled = true
 		_close_escape_modal()
@@ -99,28 +93,18 @@ func _on_flee_pressed() -> void:
 		return
 	var preview: Dictionary = _controller.call("get_flee_preview")
 	if not bool(preview.get("allowed", false)):
-		_show_escape_announcement(false, "RETREAT LOCKED", String(preview.get("reason", "Retreat is unavailable in this battle.")), 1.3)
+		_show_escape_announcement(false, "CAN'T FLEE", "You can't flee from this battle.", 1.15)
 		return
 	if _flee_button != null and _flee_button.disabled:
 		return
-	_open_escape_modal(preview)
+	_open_escape_modal()
 
 
-func _open_escape_modal(preview: Dictionary) -> void:
+func _open_escape_modal() -> void:
 	if _escape_modal_layer == null:
 		return
-	var chance := int(round(float(preview.get("chance", 0.0))))
-	var mode := String(preview.get("mode", "allowed"))
-	_escape_title.text = "TACTICAL RETREAT"
-	_escape_chance.text = "GUARANTEED ESCAPE" if mode == "guaranteed" else "%d%% ESCAPE CHANCE" % chance
-	_escape_breakdown.text = "Base %+d%%   ·   Speed %+d%%   ·   Distance %+d%%   ·   Retry %+d%%" % [
-		int(round(float(preview.get("base_chance", 0.0)))),
-		int(round(float(preview.get("speed_modifier", 0.0)))),
-		int(round(float(preview.get("distance_modifier", 0.0)))),
-		int(round(float(preview.get("retry_modifier", 0.0)))),
-	]
-	var recovery := int(round(float(preview.get("failure_recovery", 120.0))))
-	_escape_warning.text = "Failure ends this Digimon's turn with at least %d CT recovery.\nRetreat forfeits all Bits and Digi Data from this battle." % recovery
+	_escape_title.text = "FLEE FROM BATTLE?"
+	_escape_question.text = "Are you sure you want to flee?"
 	_escape_modal_layer.visible = true
 	_layout_escape_ui()
 	_escape_confirm.grab_focus()
@@ -129,8 +113,8 @@ func _open_escape_modal(preview: Dictionary) -> void:
 	var target_scale := Vector2.ONE * UI.ui_scale(get_viewport())
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_escape_modal_panel, "modulate:a", 1.0, 0.14)
-	tween.tween_property(_escape_modal_panel, "scale", target_scale, 0.14)
+	tween.tween_property(_escape_modal_panel, "modulate:a", 1.0, 0.12)
+	tween.tween_property(_escape_modal_panel, "scale", target_scale, 0.12)
 
 
 func _close_escape_modal() -> void:
@@ -150,14 +134,12 @@ func _on_escape_confirmed() -> void:
 
 func _on_escape_combat_event(event: Dictionary) -> void:
 	match String(event.get("type", "")):
-		"flee_attempt":
-			_show_escape_announcement(true, "RETREAT LINK", "Searching for a safe disengage route...", 0.55)
 		"flee_failed":
-			_show_escape_announcement(false, "RETREAT FAILED", "SIGNAL INTERCEPTED  ·  Next chance %d%%" % int(round(float(event.get("next_chance", 0.0)))), 1.05)
+			_show_escape_announcement(false, "FLEE FAILED", "You couldn't get away.", 1.0)
 		"flee_success":
-			_show_escape_announcement(true, "RETREAT SUCCESSFUL", "DATA LINK DISENGAGED", 1.35)
+			_show_escape_announcement(true, "ESCAPED!", "You got away.", 0.8)
 		"flee_blocked":
-			_show_escape_announcement(false, "RETREAT LOCKED", String(event.get("reason", "Retreat unavailable.")), 1.25)
+			_show_escape_announcement(false, "CAN'T FLEE", "You can't flee from this battle.", 1.15)
 
 
 func _build_escape_ui() -> void:
@@ -182,22 +164,18 @@ func _build_escape_ui() -> void:
 	_escape_modal_panel.add_theme_stylebox_override("panel", UI.panel_strong(UI.CYAN, 10))
 	_escape_modal_layer.add_child(_escape_modal_panel)
 
-	_escape_title = _escape_label("TACTICAL RETREAT", 16, UI.CYAN, true)
-	_escape_chance = _escape_label("50% ESCAPE CHANCE", 29, Color.WHITE, true)
-	_escape_chance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_escape_breakdown = _escape_label("", 13, UI.MUTED)
-	_escape_breakdown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_escape_warning = _escape_label("", 13, UI.TEXT)
-	_escape_warning.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_escape_warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	for label: Label in [_escape_title, _escape_chance, _escape_breakdown, _escape_warning]:
-		_escape_modal_panel.add_child(label)
+	_escape_title = _escape_label("FLEE FROM BATTLE?", 24, Color.WHITE, true)
+	_escape_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_escape_question = _escape_label("Are you sure you want to flee?", 15, UI.TEXT)
+	_escape_question.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_escape_modal_panel.add_child(_escape_title)
+	_escape_modal_panel.add_child(_escape_question)
 
-	_escape_confirm = _escape_dialog_button("ATTEMPT RETREAT", UI.CYAN)
+	_escape_confirm = _escape_dialog_button("YES, FLEE", UI.CYAN)
 	_escape_confirm.name = "ConfirmFlee"
 	_escape_confirm.pressed.connect(_on_escape_confirmed)
 	_escape_modal_panel.add_child(_escape_confirm)
-	_escape_cancel = _escape_dialog_button("STAY IN BATTLE", UI.GOLD)
+	_escape_cancel = _escape_dialog_button("NO", UI.GOLD)
 	_escape_cancel.name = "CancelFlee"
 	_escape_cancel.pressed.connect(_close_escape_modal)
 	_escape_modal_panel.add_child(_escape_cancel)
@@ -208,9 +186,9 @@ func _build_escape_ui() -> void:
 	_escape_announcement.visible = false
 	_escape_announcement.z_index = 72
 	add_child(_escape_announcement)
-	_escape_announcement_title = _escape_label("RETREAT", 30, Color.WHITE, true)
+	_escape_announcement_title = _escape_label("FLEE", 28, Color.WHITE, true)
 	_escape_announcement_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_escape_announcement_subtitle = _escape_label("", 14, UI.CYAN, true)
+	_escape_announcement_subtitle = _escape_label("", 15, UI.TEXT)
 	_escape_announcement_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_escape_announcement.add_child(_escape_announcement_title)
 	_escape_announcement.add_child(_escape_announcement_subtitle)
@@ -222,12 +200,11 @@ func _build_escape_ui() -> void:
 	_escape_result.z_index = 80
 	_escape_result.add_theme_stylebox_override("panel", UI.panel_strong(UI.CYAN, 10))
 	add_child(_escape_result)
-	_escape_result_title = _escape_label("RETREAT SUCCESSFUL", 30, UI.CYAN, true)
+	_escape_result_title = _escape_label("ESCAPED", 30, UI.CYAN, true)
 	_escape_result_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_escape_result_body = _escape_label("", 15, UI.TEXT)
+	_escape_result_body = _escape_label("You escaped from the battle.", 16, UI.TEXT)
 	_escape_result_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_escape_result_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_escape_result_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_escape_result_return = _escape_dialog_button("RETURN TO TERMINAL COMMONS", UI.CYAN)
 	_escape_result_return.name = "ReturnAfterRetreat"
 	_escape_result_return.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/world/hub.tscn"))
@@ -273,35 +250,31 @@ func _show_escape_announcement(success_style: bool, title: String, subtitle: Str
 	var accent := UI.CYAN if success_style else UI.RED
 	_escape_announcement.add_theme_stylebox_override("panel", UI.panel_strong(accent, 8))
 	_escape_announcement_title.text = title
-	_escape_announcement_title.add_theme_color_override("font_color", accent if title != "RETREAT LINK" else Color.WHITE)
+	_escape_announcement_title.add_theme_color_override("font_color", accent)
 	_escape_announcement_subtitle.text = subtitle
 	_escape_announcement_subtitle.add_theme_color_override("font_color", UI.TEXT)
 	_escape_announcement.visible = true
 	_escape_announcement.modulate.a = 0.0
 	var scale_value := UI.ui_scale(get_viewport())
-	_escape_announcement.scale = Vector2.ONE * scale_value * 0.92
+	_escape_announcement.scale = Vector2.ONE * scale_value * 0.94
 	_layout_escape_ui()
 	if _escape_announcement_tween != null and _escape_announcement_tween.is_valid():
 		_escape_announcement_tween.kill()
 	_escape_announcement_tween = create_tween()
-	_escape_announcement_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_escape_announcement_tween.tween_property(_escape_announcement, "scale", Vector2.ONE * scale_value, 0.16)
-	_escape_announcement_tween.parallel().tween_property(_escape_announcement, "modulate:a", 1.0, 0.12)
+	_escape_announcement_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_escape_announcement_tween.tween_property(_escape_announcement, "scale", Vector2.ONE * scale_value, 0.12)
+	_escape_announcement_tween.parallel().tween_property(_escape_announcement, "modulate:a", 1.0, 0.10)
 	_escape_announcement_tween.tween_interval(hold)
 	_escape_announcement_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_escape_announcement_tween.tween_property(_escape_announcement, "modulate:a", 0.0, 0.18)
+	_escape_announcement_tween.tween_property(_escape_announcement, "modulate:a", 0.0, 0.16)
 	_escape_announcement_tween.tween_callback(func(): _escape_announcement.visible = false)
 
 
-func _show_escape_result(result: Dictionary) -> void:
+func _show_escape_result(_result: Dictionary) -> void:
 	_hide_base_result_panel()
 	_escape_announcement.visible = false
 	_escape_result.visible = true
-	_escape_result_body.text = "Disengaged after %d turns · %d retreat attempt%s\nNo Bits or Digi Data were gained from this battle." % [
-		int(result.get("acts", 0)),
-		int(result.get("flee_attempts", 1)),
-		"" if int(result.get("flee_attempts", 1)) == 1 else "s",
-	]
+	_escape_result_body.text = "You escaped from the battle."
 	_layout_escape_ui()
 	call_deferred("_focus_escape_result")
 
@@ -380,48 +353,43 @@ func _layout_escape_ui() -> void:
 	var ui_scale := UI.ui_scale(viewport_obj)
 	var compact := UI.is_compact(viewport_obj, 820.0)
 
-	var modal_w := minf(540.0, physical.x - 24.0)
-	var modal_h := minf(314.0, physical.y - 24.0)
+	var modal_w := minf(420.0, physical.x - 24.0)
+	var modal_h := minf(196.0, physical.y - 24.0)
 	_escape_modal_panel.scale = Vector2.ONE * ui_scale
 	_escape_modal_panel.position = Vector2((physical.x - modal_w) * 0.5, (physical.y - modal_h) * 0.5) * ui_scale
 	_escape_modal_panel.size = Vector2(modal_w, modal_h)
-	_escape_title.position = Vector2(20.0, 16.0)
-	_escape_title.size = Vector2(modal_w - 40.0, 24.0)
-	_escape_chance.position = Vector2(20.0, 48.0)
-	_escape_chance.size = Vector2(modal_w - 40.0, 48.0)
-	_escape_chance.add_theme_font_size_override("font_size", 24 if compact else 29)
-	_escape_breakdown.position = Vector2(18.0, 101.0)
-	_escape_breakdown.size = Vector2(modal_w - 36.0, 26.0)
-	_escape_breakdown.add_theme_font_size_override("font_size", 11 if compact else 13)
-	_escape_warning.position = Vector2(24.0, 132.0)
-	_escape_warning.size = Vector2(modal_w - 48.0, 66.0)
-	_escape_warning.add_theme_font_size_override("font_size", 11 if compact else 13)
-	var button_y := modal_h - 66.0
+	_escape_title.position = Vector2(18.0, 20.0)
+	_escape_title.size = Vector2(modal_w - 36.0, 38.0)
+	_escape_title.add_theme_font_size_override("font_size", 21 if compact else 24)
+	_escape_question.position = Vector2(20.0, 62.0)
+	_escape_question.size = Vector2(modal_w - 40.0, 34.0)
+	_escape_question.add_theme_font_size_override("font_size", 14 if compact else 15)
+	var button_y := modal_h - 62.0
 	var gap := 10.0
 	var button_w := (modal_w - 40.0 - gap) * 0.5
 	_escape_confirm.position = Vector2(20.0, button_y)
-	_escape_confirm.size = Vector2(button_w, 46.0)
+	_escape_confirm.size = Vector2(button_w, 44.0)
 	_escape_cancel.position = Vector2(20.0 + button_w + gap, button_y)
-	_escape_cancel.size = Vector2(button_w, 46.0)
+	_escape_cancel.size = Vector2(button_w, 44.0)
 
-	var announce_w := minf(560.0, physical.x - 24.0)
-	var announce_h := 120.0
+	var announce_w := minf(420.0, physical.x - 24.0)
+	var announce_h := 104.0
 	_escape_announcement.scale = Vector2.ONE * ui_scale
 	_escape_announcement.position = Vector2((physical.x - announce_w) * 0.5, maxf(28.0, physical.y * 0.22)) * ui_scale
 	_escape_announcement.size = Vector2(announce_w, announce_h)
-	_escape_announcement_title.position = Vector2(16.0, 18.0)
-	_escape_announcement_title.size = Vector2(announce_w - 32.0, 42.0)
-	_escape_announcement_subtitle.position = Vector2(16.0, 65.0)
+	_escape_announcement_title.position = Vector2(16.0, 14.0)
+	_escape_announcement_title.size = Vector2(announce_w - 32.0, 40.0)
+	_escape_announcement_subtitle.position = Vector2(16.0, 56.0)
 	_escape_announcement_subtitle.size = Vector2(announce_w - 32.0, 28.0)
 
-	var result_w := minf(520.0, physical.x - 28.0)
-	var result_h := minf(244.0, physical.y - 28.0)
+	var result_w := minf(440.0, physical.x - 28.0)
+	var result_h := minf(210.0, physical.y - 28.0)
 	_escape_result.scale = Vector2.ONE * ui_scale
 	_escape_result.position = Vector2((physical.x - result_w) * 0.5, (physical.y - result_h) * 0.5) * ui_scale
 	_escape_result.size = Vector2(result_w, result_h)
-	_escape_result_title.position = Vector2(18.0, 22.0)
-	_escape_result_title.size = Vector2(result_w - 36.0, 46.0)
-	_escape_result_body.position = Vector2(24.0, 72.0)
-	_escape_result_body.size = Vector2(result_w - 48.0, 86.0)
-	_escape_result_return.position = Vector2(64.0, result_h - 62.0)
-	_escape_result_return.size = Vector2(result_w - 128.0, 44.0)
+	_escape_result_title.position = Vector2(18.0, 20.0)
+	_escape_result_title.size = Vector2(result_w - 36.0, 44.0)
+	_escape_result_body.position = Vector2(24.0, 68.0)
+	_escape_result_body.size = Vector2(result_w - 48.0, 46.0)
+	_escape_result_return.position = Vector2(54.0, result_h - 60.0)
+	_escape_result_return.size = Vector2(result_w - 108.0, 42.0)
