@@ -7,7 +7,7 @@
 [ext_resource type="Script" path="res://src/DebugOverlay.gd" id="5_debug"]
 [ext_resource type="Script" path="res://src/ui/CompactDigimonInfoPanel.gd" id="6_info"]
 [ext_resource type="Script" path="res://src/battle/StableSequencedBattleController.gd" id="7_battle"]
-[ext_resource type="Script" path="res://src/BattleHUDVisualDomain.gd" id="8_hud"]
+[ext_resource type="Script" path="res://src/BattleHUDMobileDomain.gd" id="8_hud"]
 [ext_resource type="Script" path="res://src/battle/TechniqueBattlePresentationFX.gd" id="9_fx"]
 
 [node name="Main" type="Node2D"]
