@@ -32,9 +32,6 @@ const MOVEMENT_TYPE_OVERRIDES_BY_NAME := {
 	"whamon": "aquatic",
 	"gomamon": "amphibious",
 }
-# Bootstrap combat elements for species already playable in the prototype. The
-# database schema supports explicit element values and can be enriched species by
-# species later without changing combat code.
 const ELEMENT_OVERRIDES_BY_NAME := {
 	"agumon": "fire",
 	"gabumon": "fire",
@@ -109,6 +106,16 @@ func get_name_for_seed(seed: String) -> String:
 	return String(species.get("name", ""))
 
 
+func get_evolution_routes(seed: String) -> Array[Dictionary]:
+	var species := get_by_seed(seed)
+	return _route_array(species.get("evolutions", []))
+
+
+func get_degeneration_routes(seed: String) -> Array[Dictionary]:
+	var species := get_by_seed(seed)
+	return _route_array(species.get("degenerations", []))
+
+
 func get_base_stat(species: Dictionary, stat_key: String) -> int:
 	var key := "mp" if stat_key.to_lower() == "sp" else stat_key.to_lower()
 	match key:
@@ -138,15 +145,72 @@ func _normalize_species(raw_entry: Dictionary) -> Dictionary:
 		species["movementType"] = _derive_movement_type(species)
 	if not species.has("int"):
 		species["int"] = _derive_int(species)
-	# Legacy database names are kept, while normalized aliases make combat code
-	# explicit: family = Beast/Dragon/etc, type = Vaccine/Data/Virus/Free.
 	if not species.has("family"):
 		species["family"] = String(species.get("species", "Unknown"))
 	if not species.has("type"):
 		species["type"] = String(species.get("attribute", "Free"))
 	if not species.has("element"):
 		species["element"] = String(ELEMENT_OVERRIDES_BY_NAME.get(name_key, "neutral"))
+
+	# The inherited catalogue remains the source of truth. At runtime we normalize
+	# its legacy route lists into target-specific route objects. New/edited species
+	# may define `evolutions` directly, while old records continue to work without
+	# a risky all-at-once rewrite of the 250KB catalogue.
+	if not species.has("evolutions"):
+		species["evolutions"] = _legacy_routes(
+			species.get("digiEvolutionSeedList", []),
+			species.get("evolutionRequirements", [])
+		)
+	else:
+		species["evolutions"] = _normalize_routes(species.get("evolutions", []))
+	if not species.has("degenerations"):
+		species["degenerations"] = _legacy_routes(species.get("degenerateSeedList", []), [])
+	else:
+		species["degenerations"] = _normalize_routes(species.get("degenerations", []))
 	return species
+
+
+func _legacy_routes(raw_seeds, raw_requirements) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not raw_seeds is Array:
+		return result
+	var requirements: Array = raw_requirements if raw_requirements is Array else []
+	for raw_seed in raw_seeds:
+		var seed := String(raw_seed).strip_edges()
+		if seed.is_empty():
+			continue
+		result.append({
+			"targetSeed": seed,
+			"requirements": requirements.duplicate(true),
+		})
+	return result
+
+
+func _normalize_routes(raw_routes) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not raw_routes is Array:
+		return result
+	for raw_route in raw_routes:
+		if not raw_route is Dictionary:
+			continue
+		var route := (raw_route as Dictionary).duplicate(true)
+		var target_seed := String(route.get("targetSeed", route.get("seed", ""))).strip_edges()
+		if target_seed.is_empty():
+			continue
+		route["targetSeed"] = target_seed
+		if not route.get("requirements", []) is Array:
+			route["requirements"] = []
+		result.append(route)
+	return result
+
+
+func _route_array(raw) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if raw is Array:
+		for route in raw:
+			if route is Dictionary:
+				result.append((route as Dictionary).duplicate(true))
+	return result
 
 
 func _derive_int(species: Dictionary) -> int:
@@ -159,7 +223,6 @@ func _derive_mov(species: Dictionary) -> int:
 	var name_key := String(species.get("name", "")).to_lower()
 	if MOV_OVERRIDES_BY_NAME.has(name_key):
 		return int(MOV_OVERRIDES_BY_NAME[name_key])
-
 	var rank := String(species.get("rank", ""))
 	var mov := int(MOV_BY_RANK.get(rank, DEFAULT_MOV))
 	var speed := int(species.get("speed", 50))
