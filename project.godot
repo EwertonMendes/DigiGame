@@ -14,6 +14,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 GlobalVariables="*res://src/GlobalVariables.gd"
 OverworldState="*res://src/state/OverworldState.gd"
 DigiUiRuntime="*res://src/ui/DigiUiRuntime.gd"
+DigitalSceneTransition="*res://src/ui/DigitalSceneTransition.gd"
 
 [display]
 
