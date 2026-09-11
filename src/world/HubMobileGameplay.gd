@@ -15,7 +15,7 @@ func _build_mobile_controls() -> void:
 
 	_touch_joystick = TouchJoystickScript.new()
 	_touch_joystick.name = "MovementJoystick"
-	_touch_joystick.size = Vector2(148.0, 148.0)
+	_touch_joystick.size = Vector2(156.0, 156.0)
 	_touch_joystick.direction_changed.connect(_on_touch_joystick_changed)
 	_mobile_controls.add_child(_touch_joystick)
 
@@ -30,7 +30,7 @@ func _build_mobile_controls() -> void:
 	var move_label := _label("MOVE", 11, UI.MUTED)
 	move_label.name = "MoveLabel"
 	move_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	move_label.size = Vector2(148.0, 18.0)
+	move_label.size = Vector2(156.0, 18.0)
 	_mobile_controls.add_child(move_label)
 
 
@@ -53,7 +53,7 @@ func _layout_ui() -> void:
 	# of placing it flush against the physical bottom edge.
 	_mobile_controls.visible = touch_layout and not _dialog_open and not _transitioning
 	_mobile_controls.scale = Vector2.ONE * ui_scale
-	var joystick_side := 132.0 if landscape else 148.0
+	var joystick_side := 136.0 if landscape else 156.0
 	_mobile_controls.position = Vector2(edge * ui_scale, (physical.y - joystick_side - bottom) * ui_scale)
 	_mobile_controls.size = Vector2(maxf(1.0, physical.x - edge * 2.0), joystick_side)
 
