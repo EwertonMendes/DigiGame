@@ -3,6 +3,7 @@ class_name HubActor
 
 signal world_position_changed(world_position: Vector2)
 
+const GameInputBootstrapScript = preload("res://src/input/GameInputBootstrap.gd")
 const FRAME_COLUMNS := 3
 const FRAME_ROWS := 5
 const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
@@ -85,6 +86,7 @@ func configure(texture: Texture2D, player_controlled: bool, world_controller: No
 
 
 func _ready() -> void:
+	GameInputBootstrapScript.configure_gamepad_actions()
 	_sprite = Sprite2D.new()
 	_sprite.name = "CharacterSprite"
 	_sprite.texture = _texture

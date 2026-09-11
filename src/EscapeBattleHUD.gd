@@ -1,5 +1,7 @@
 extends "res://src/BattleHUDMobileDomain.gd"
 
+const GameInputBootstrapScript = preload("res://src/input/GameInputBootstrap.gd")
+
 var _flee_button: Button = null
 var _escape_modal_layer: Control = null
 var _escape_modal_panel: Panel = null
@@ -18,6 +20,7 @@ var _escape_announcement_tween: Tween = null
 
 
 func _ready() -> void:
+	GameInputBootstrapScript.configure_gamepad_actions()
 	super._ready()
 	_install_flee_command()
 	_build_escape_ui()
@@ -70,10 +73,10 @@ func _input(event: InputEvent) -> void:
 			_close_escape_modal()
 			get_viewport().set_input_as_handled()
 			return
-		if event.is_action_pressed("ui_accept"):
-			_on_escape_confirmed()
-			get_viewport().set_input_as_handled()
-			return
+		# Do not translate ui_accept into a hard-coded YES action here. Leaving the
+		# event unhandled lets Godot activate whichever Button currently owns focus,
+		# so Enter/Space, Xbox A and PlayStation Cross all respect YES or NO.
+		return
 	super._input(event)
 
 
