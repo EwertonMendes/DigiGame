@@ -32,6 +32,7 @@ var PARTICLES_POSITION_DEVIATION := Vector2.ZERO
 var initialTileCoords := Vector2.ZERO
 var initial_facing := "up_right"
 var sprite_layout := "directional_12"
+var horizontal_facing_inverted := false
 var digimon_key := ""
 var is_player_controlled := true
 var is_selected := false
@@ -274,7 +275,7 @@ func _show_current_facing(animate: bool) -> void:
 		_show_spaced_9_facing(animate)
 		return
 	sprite.region_enabled = false
-	sprite.flip_h = false
+	sprite.flip_h = horizontal_facing_inverted
 	var base_frame: int = DIRECTION_FRAME_BASE.get(facing_direction, 9)
 	sprite.frame = base_frame + (_selected_animation_frame if animate else 0)
 
