@@ -102,6 +102,10 @@ jobs:
           grep -q 'isometric keyboard navigation regression passed' /tmp/isometric-keyboard.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/isometric-keyboard.log; then exit 1; fi
 
+          godot --headless --path . tools/test_attack_patterns.tscn --quit-after 5 2>&1 | tee /tmp/attack-patterns.log
+          grep -q 'advanced attack pattern regression passed' /tmp/attack-patterns.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/attack-patterns.log; then exit 1; fi
+
           godot --headless --path . tools/test_hub_foundation.tscn --quit-after 8 2>&1 | tee /tmp/hub-foundation.log
           grep -q 'hub foundation regression passed' /tmp/hub-foundation.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/hub-foundation.log; then exit 1; fi
