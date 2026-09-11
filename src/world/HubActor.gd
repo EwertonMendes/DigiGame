@@ -7,26 +7,31 @@ const FRAME_COLUMNS := 3
 const FRAME_ROWS := 4
 const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
 const WALK_FRAME_DURATION := 0.10
+# The Dawn/Dusk overworld sheet is ordered by screen-facing direction:
+# row 0 = down, row 1 = left, row 2 = right, row 3 = up.
+# The isometric perspective is already baked into the artwork itself.
 const FACING_ROWS := {
-	"down_left": 0,
-	"down_right": 1,
-	"up_left": 2,
-	"up_right": 3,
+	"down": 0,
+	"left": 1,
+	"right": 2,
+	"up": 3,
 }
-const FACING_VECTORS := {
-	"down_left": Vector2(-2.0, 1.0),
-	"down_right": Vector2(2.0, 1.0),
-	"up_left": Vector2(-2.0, -1.0),
-	"up_right": Vector2(2.0, -1.0),
+# Keep compatibility with the names used by the first hub implementation.
+# These aliases map by the original row number, not by their old semantic name.
+const LEGACY_FACING_ALIASES := {
+	"down_left": "down",
+	"down_right": "left",
+	"up_left": "right",
+	"up_right": "up",
 }
 const BASE_SPRITE_POSITION := Vector2(0.0, -32.0)
 const INPUT_DEADZONE := 0.18
-const FACING_TIE_EPSILON := 0.001
+const FACING_AXIS_EPSILON := 0.04
 
 var is_player_controlled := false
 var movement_enabled := true
 var move_speed := 150.0
-var facing_direction := "down_left"
+var facing_direction := "down"
 
 var _world_controller: Node = null
 var _texture: Texture2D = null
@@ -42,8 +47,9 @@ func configure(texture: Texture2D, player_controlled: bool, world_controller: No
 	_texture = texture
 	is_player_controlled = player_controlled
 	_world_controller = world_controller
-	if FACING_ROWS.has(initial_facing):
-		facing_direction = initial_facing
+	var canonical_facing := _canonical_facing(initial_facing)
+	if not canonical_facing.is_empty():
+		facing_direction = canonical_facing
 
 
 func _ready() -> void:
@@ -106,11 +112,18 @@ func set_touch_direction(direction: Vector2) -> void:
 
 
 func set_facing(direction_name: String) -> void:
-	if not FACING_ROWS.has(direction_name):
+	var canonical_facing := _canonical_facing(direction_name)
+	if canonical_facing.is_empty():
 		return
-	facing_direction = direction_name
+	facing_direction = canonical_facing
 	_reset_walk_cycle()
 	_update_frame(false)
+
+
+func _canonical_facing(direction_name: String) -> String:
+	if FACING_ROWS.has(direction_name):
+		return direction_name
+	return String(LEGACY_FACING_ALIASES.get(direction_name, ""))
 
 
 func _movement_input() -> Vector2:
@@ -151,32 +164,27 @@ func _face_direction(direction: Vector2) -> bool:
 	if direction.length_squared() <= INPUT_DEADZONE * INPUT_DEADZONE:
 		return false
 
+	var horizontal_facing := "right" if direction.x >= 0.0 else "left"
+	var vertical_facing := "down" if direction.y >= 0.0 else "up"
+	var horizontal_strength := absf(direction.x)
+	var vertical_strength := absf(direction.y)
 	var next_facing := facing_direction
-	var best_score := -1.0e20
-	for candidate_key in FACING_VECTORS:
-		var candidate := String(candidate_key)
-		var facing_vector: Vector2 = FACING_VECTORS[candidate]
-		var score := direction.dot(facing_vector)
-		if score > best_score + FACING_TIE_EPSILON:
-			best_score = score
-			next_facing = candidate
-		elif absf(score - best_score) <= FACING_TIE_EPSILON:
-			if _facing_retention_score(candidate) > _facing_retention_score(next_facing):
-				next_facing = candidate
+
+	if horizontal_strength > vertical_strength + FACING_AXIS_EPSILON:
+		next_facing = horizontal_facing
+	elif vertical_strength > horizontal_strength + FACING_AXIS_EPSILON:
+		next_facing = vertical_facing
+	else:
+		# For a true/near diagonal, retain the current compatible side to avoid
+		# rapid sprite flipping with analog input. Otherwise prefer horizontal,
+		# which matches how the isometric side-facing poses read on screen.
+		if facing_direction != horizontal_facing and facing_direction != vertical_facing:
+			next_facing = horizontal_facing
 
 	if next_facing == facing_direction:
 		return false
 	facing_direction = next_facing
 	return true
-
-
-func _facing_retention_score(candidate: String) -> int:
-	var score := 0
-	if candidate.begins_with("down") == facing_direction.begins_with("down"):
-		score += 1
-	if candidate.ends_with("left") == facing_direction.ends_with("left"):
-		score += 1
-	return score
 
 
 func _reset_walk_cycle() -> void:
