@@ -1,6 +1,10 @@
 extends RefCounted
 class_name TargetingSystem
 
+const TargetPatternResolverScript = preload("res://src/battle/combat/TargetPatternResolver.gd")
+
+var _patterns = TargetPatternResolverScript.new()
+
 
 func distance_between(field: Node, source: Node, target: Node) -> int:
 	if field == null or source == null or target == null:
@@ -10,26 +14,26 @@ func distance_between(field: Node, source: Node, target: Node) -> int:
 	return absi(source_grid.x - target_grid.x) + absi(source_grid.y - target_grid.y)
 
 
+func selection_mode(action: Dictionary) -> String:
+	return _patterns.selection_mode(action)
+
+
 func is_valid_target(field: Node, source: Node, target: Node, action: Dictionary) -> bool:
 	if source == null or target == null or not is_instance_valid(target):
 		return false
 	if target.has_method("is_available_for_turn") and not bool(target.call("is_available_for_turn")):
 		return false
-	var targets = action.get("targets", ["enemy"])
-	if not targets is Array:
+	if not _patterns.relationship_matches(source, target, action):
 		return false
-	var source_player := bool(source.get("is_player_controlled"))
-	var target_player := bool(target.get("is_player_controlled"))
-	var relationship := "self" if source == target else ("ally" if source_player == target_player else "enemy")
-	if not targets.has(relationship):
+	var source_grid := _grid_for_actor(field, source)
+	var target_grid := _grid_for_actor(field, target)
+	return _patterns.is_valid_aim_grid(field, source_grid, action, target_grid)
+
+
+func is_valid_aim_grid(field: Node, source: Node, action: Dictionary, aim_grid: Vector2i) -> bool:
+	if field == null or source == null:
 		return false
-	var range_data = action.get("range", {})
-	if not range_data is Dictionary:
-		return source == target
-	var min_range := maxi(0, int(range_data.get("min", 0)))
-	var max_range := maxi(min_range, int(range_data.get("max", min_range)))
-	var distance := distance_between(field, source, target)
-	return distance >= min_range and distance <= max_range
+	return _patterns.is_valid_aim_grid(field, _grid_for_actor(field, source), action, aim_grid)
 
 
 func valid_targets(field: Node, source: Node, actors: Array[Node], action: Dictionary) -> Array[Node]:
@@ -40,26 +44,33 @@ func valid_targets(field: Node, source: Node, actors: Array[Node], action: Dicti
 	return result
 
 
-func grids_in_range(field: Node, source: Node, action: Dictionary) -> Array[Vector2i]:
-	var result: Array[Vector2i] = []
+func valid_targets_for_aim(field: Node, source: Node, actors: Array[Node], action: Dictionary, aim_grid: Vector2i) -> Array[Node]:
+	var result: Array[Node] = []
 	if field == null or source == null:
 		return result
-	var range_data = action.get("range", {})
-	if not range_data is Dictionary:
-		return result
-	var min_range := maxi(0, int(range_data.get("min", 0)))
-	var max_range := maxi(min_range, int(range_data.get("max", min_range)))
-	var origin := _grid_for_actor(field, source)
-	for x in range(origin.x - max_range, origin.x + max_range + 1):
-		for y in range(origin.y - max_range, origin.y + max_range + 1):
-			var grid := Vector2i(x, y)
-			var distance := absi(grid.x - origin.x) + absi(grid.y - origin.y)
-			if distance < min_range or distance > max_range:
-				continue
-			if field.has_method("get_static_tile_block_reason") and String(field.call("get_static_tile_block_reason", grid)) == "out_of_bounds":
-				continue
-			result.append(grid)
+	var effect := effect_grids(field, source, action, aim_grid)
+	for actor: Node in actors:
+		if actor == null or not is_instance_valid(actor):
+			continue
+		if actor.has_method("is_available_for_turn") and not bool(actor.call("is_available_for_turn")):
+			continue
+		if not _patterns.relationship_matches(source, actor, action):
+			continue
+		if effect.has(_grid_for_actor(field, actor)):
+			result.append(actor)
 	return result
+
+
+func grids_in_range(field: Node, source: Node, action: Dictionary) -> Array[Vector2i]:
+	if field == null or source == null:
+		return []
+	return _patterns.cast_grids(field, _grid_for_actor(field, source), action)
+
+
+func effect_grids(field: Node, source: Node, action: Dictionary, aim_grid: Vector2i) -> Array[Vector2i]:
+	if field == null or source == null:
+		return []
+	return _patterns.effect_grids(field, _grid_for_actor(field, source), aim_grid, action)
 
 
 func _grid_for_actor(field: Node, actor: Node) -> Vector2i:
