@@ -15,9 +15,14 @@ The Web workflow is optimized for short feedback without reducing the quality ga
 ## Performance safeguards
 
 - Godot and export templates are cached by engine version.
-- `.godot` imports are cached using project/source/scene/resource/asset content hashes and still run through `godot --import` on every build.
+- Only `.godot/imported` payloads are cached using project/source/scene/resource/asset content hashes. Godot UID/editor metadata is deliberately rebuilt every run so stale identity data cannot leak between revisions.
+- `godot --import` still runs on every build and remains a hard validation gate.
 - Playwright's npm downloads are cached; Chromium is not downloaded because the GitHub runner Chrome installation is used.
 - Browser startup waits on `[Hub] READY` and `[Battle] READY` runtime markers instead of fixed multi-second sleeps.
 - `concurrency.cancel-in-progress` stops obsolete runs when a newer commit is pushed to the same PR/ref.
+
+## Benchmarking
+
+Measure wall-clock feedback from the start of **Validate and build Web** to completion of the slowest browser suite. A cold-cache run validates the fallback installation path; a following documentation-only commit provides a representative warm-cache run without changing game/source hashes.
 
 Screenshots remain diagnostic artifacts per browser suite, while the playable Web artifact contains only the exported game.
