@@ -13,14 +13,15 @@ DigiGame includes or references third-party assets under their respective licens
 
 Detailed file provenance is recorded in `assets/world/devilsworkshop/README.md`.
 
-## Kenney — UI Pack - Sci-Fi
+## Kenney — Fantasy UI Borders
 
 - Artwork / original pack by **Kenney**.
-- Official source: https://kenney.nl/assets/ui-pack-sci-fi
+- Official source: https://kenney.nl/assets/fantasy-ui-borders
+- Original release: **1.0 (2023)**.
 - License: **CC0 1.0 Universal**.
 - Attribution required: **No**.
-- Use in DigiGame: the pack's sci-fi panel/button visual language is adapted into a small dark-mode SVG skin used by the hub and battle interface.
-- Modifications: dark surfaces, DigiGame cyan/gold accents, scalable vector reconstruction, and separation of artwork from runtime text for localization.
-- Pinned source-inspection mirror: https://github.com/ETdoFresh/kenney.nl/tree/45df48c4d45f8716216b1a9e22df0b69cd9f5932/uipack-space
+- Use in DigiGame: selected frame silhouettes from the source vector are adapted for panels, modals and important action buttons.
+- Modifications: custom deep-indigo / electric-blue / warm-orange digital-fantasy palette, scalable SVG reconstruction, selective runtime application, and separation of artwork from runtime text for localization.
+- Pinned source-inspection mirror: https://github.com/Tiddybub/2d-assets/tree/e0cbe0d995554a490d4c182fe9beb8769ffbb606/ui/fantasy-ui-borders
 
-Detailed file provenance is recorded in `assets/ui/kenney_scifi_dark/README.md`.
+Detailed file provenance is recorded in `assets/ui/kenney_fantasy_digi/README.md`.
