@@ -13,23 +13,48 @@ func _init(targeting_system = null, damage_calculator = null) -> void:
 func choose_action(field: Node, actor: Node, opponents: Array[Node], actions: Array[Dictionary]) -> Dictionary:
 	var best: Dictionary = {}
 	var best_score := -INF
+	if _targeting == null:
+		return best
+
 	for action: Dictionary in actions:
-		for target: Node in opponents:
-			if _targeting == null or not _targeting.is_valid_target(field, actor, target, action):
+		var aim_grids: Array[Vector2i] = _targeting.grids_in_range(field, actor, action)
+		for aim_grid: Vector2i in aim_grids:
+			var targets: Array[Node] = _targeting.valid_targets_for_aim(field, actor, opponents, action, aim_grid)
+			if targets.is_empty():
 				continue
-			var preview: Dictionary = _damage.preview(actor, target, action) if _damage != null else {}
-			var damage := float(preview.get("damage", 0))
-			var hit := float(preview.get("hit_chance", 100.0)) / 100.0
-			var expected := damage * hit
-			var hp := _current_hp(target)
-			var ko_bonus := 120.0 if damage >= hp and hp > 0 else 0.0
-			var matchup_bonus := (float(preview.get("type_modifier", 1.0)) - 1.0) * 40.0
-			var sp_penalty := float(action.get("spCost", 0)) * 0.35
-			var recovery_penalty := float(action.get("recoveryCost", 30.0)) * 0.08
-			var score := expected + ko_bonus + matchup_bonus - sp_penalty - recovery_penalty
+
+			var score := -float(action.get("spCost", 0)) * 0.35
+			score -= float(action.get("recoveryCost", 30.0)) * 0.08
+			var primary: Node = null
+			var primary_value := -INF
+			for target: Node in targets:
+				var preview: Dictionary = _damage.preview(actor, target, action) if _damage != null else {}
+				var damage := float(preview.get("damage", 0))
+				var hit := float(preview.get("hit_chance", action.get("accuracy", 100.0))) / 100.0
+				var expected := damage * hit
+				var hp := _current_hp(target)
+				var ko_bonus := 120.0 if damage >= hp and hp > 0 else 0.0
+				var matchup_bonus := (float(preview.get("type_modifier", 1.0)) - 1.0) * 40.0
+				var target_value := expected + ko_bonus + matchup_bonus
+				score += target_value
+				if target_value > primary_value:
+					primary_value = target_value
+					primary = target
+
+			# Multi-target pressure is strategically valuable beyond raw damage: it
+			# rewards spreading out and makes formation matter to both sides.
+			if targets.size() > 1:
+				score += float(targets.size() - 1) * 18.0
+
 			if score > best_score:
 				best_score = score
-				best = {"action": action.duplicate(true), "target": target, "score": score}
+				best = {
+					"action": action.duplicate(true),
+					"target": primary,
+					"target_grid": aim_grid,
+					"target_count": targets.size(),
+					"score": score,
+				}
 	return best
 
 
