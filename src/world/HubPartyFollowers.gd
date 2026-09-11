@@ -179,22 +179,41 @@ func _record_player_position(world_position: Vector2) -> void:
 
 
 func _trail_target_at_distance(distance_behind: float) -> Dictionary:
-	if _trail.size() < 2:
+	if _trail.is_empty():
 		return {"valid": false}
 
 	var remaining := distance_behind
-	for index in range(_trail.size() - 1, 0, -1):
-		var newer := _trail[index]
+	var newest := _player.global_position if _player != null else _trail[_trail.size() - 1]
+	var last_trail_index := _trail.size() - 1
+	var sampled_head := _trail[last_trail_index]
+
+	# PATH_SAMPLE_DISTANCE keeps the stored path compact, but followers need a
+	# target that advances every physics frame. Treat the player's current live
+	# position as a temporary unsampled head segment so Digimon move continuously
+	# instead of in 5-pixel bursts that repeatedly reset their walk animation.
+	var live_segment_length := newest.distance_to(sampled_head)
+	if live_segment_length > 0.001:
+		if remaining <= live_segment_length:
+			return {
+				"valid": true,
+				"position": newest.lerp(sampled_head, remaining / live_segment_length),
+			}
+		remaining -= live_segment_length
+		newest = sampled_head
+
+	for index in range(last_trail_index, 0, -1):
 		var older := _trail[index - 1]
-		var segment_length := newer.distance_to(older)
+		var segment_length := newest.distance_to(older)
 		if segment_length <= 0.001:
+			newest = older
 			continue
 		if remaining <= segment_length:
 			return {
 				"valid": true,
-				"position": newer.lerp(older, remaining / segment_length),
+				"position": newest.lerp(older, remaining / segment_length),
 			}
 		remaining -= segment_length
+		newest = older
 
 	return {"valid": false}
 
