@@ -8,7 +8,7 @@ const FRAME_COLUMNS := 3
 const FRAME_ROWS := 5
 const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
 const WALK_FRAME_DURATION := 0.10
-const INPUT_DEADZONE := 0.18
+const INPUT_DEADZONE := 0.05
 const FACING_TIE_EPSILON := 0.0001
 const BASE_SPRITE_POSITION := Vector2(0.0, -32.0)
 
@@ -117,12 +117,17 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var direction := _movement_input() if movement_enabled else Vector2.ZERO
-	var has_movement_input := direction.length_squared() > INPUT_DEADZONE * INPUT_DEADZONE
+	var input_strength := clampf(direction.length(), 0.0, 1.0)
+	var has_movement_input := input_strength > INPUT_DEADZONE
 	var facing_changed := false
 	if has_movement_input:
-		direction = direction.normalized()
-		velocity = velocity.move_toward(direction * move_speed, 900.0 * delta)
-		facing_changed = _face_direction(direction)
+		var normalized_direction := direction / maxf(input_strength, 0.0001)
+		# Preserve analog/touch strength instead of normalizing every source to full
+		# speed. Keyboard remains at 100%, while a thumb near the joystick center can
+		# now make small controlled adjustments on a portrait phone.
+		var movement_strength := clampf((input_strength - INPUT_DEADZONE) / (1.0 - INPUT_DEADZONE), 0.0, 1.0)
+		velocity = velocity.move_toward(normalized_direction * move_speed * movement_strength, 900.0 * delta)
+		facing_changed = _face_direction(normalized_direction)
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, 1100.0 * delta)
 
