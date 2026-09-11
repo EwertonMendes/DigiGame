@@ -1,10 +1,8 @@
 extends "res://src/world/DevilsWorkshopField.gd"
 
 # Tactical guidance deliberately sits above the terrain treatment but below all
-# combatants. The previous alpha-only overlays were technically correct, yet
-# they disappeared against the new detailed grass. Each state now combines a
-# restrained fill, a crisp frame and a soft outer glow so the player can read
-# clickability at a glance without turning the battlefield into a neon board.
+# combatants. Each state combines a restrained fill, a crisp frame and a soft
+# outer glow so the player can read clickability without hiding the terrain.
 const MOVE_RANGE_FILL := Color(0.04, 0.72, 0.92, 0.24)
 const MOVE_RANGE_OUTLINE := Color(0.22, 0.92, 1.0, 0.72)
 const MOVE_RANGE_GLOW := Color(0.10, 0.84, 1.0, 0.16)
@@ -24,6 +22,8 @@ const SKILL_RANGE_GLOW := Color(0.66, 0.30, 1.0, 0.18)
 const TARGET_FILL := Color(1.0, 0.78, 0.10, 0.42)
 const TARGET_OUTLINE := Color(1.0, 0.94, 0.42, 1.0)
 const TARGET_GLOW := Color(1.0, 0.70, 0.08, 0.26)
+const TARGET_CENTER_FILL := Color(1.0, 0.48, 0.08, 0.46)
+const TARGET_CENTER_OUTLINE := Color(1.0, 0.86, 0.26, 1.0)
 
 const HOVER_AVAILABLE_FILL_V2 := Color(0.06, 0.86, 1.0, 0.34)
 const HOVER_AVAILABLE_OUTLINE_V2 := Color(0.64, 0.98, 1.0, 1.0)
@@ -55,15 +55,9 @@ func set_movement_range(reachable: Dictionary, origin: Vector2i, moving_actor: N
 		if grid == origin:
 			continue
 		var indicator := _create_tactical_indicator(
-			"MoveRange_%02d_%02d" % [grid.x, grid.y],
-			grid,
-			MOVE_RANGE_FILL,
-			MOVE_RANGE_OUTLINE,
-			MOVE_RANGE_GLOW,
-			Vector2(-1.5, -0.75),
-			1.35,
-			4.25,
-			-36
+			"MoveRange_%02d_%02d" % [grid.x, grid.y], grid,
+			MOVE_RANGE_FILL, MOVE_RANGE_OUTLINE, MOVE_RANGE_GLOW,
+			Vector2(-1.5, -0.75), 1.35, 4.25, -36
 		)
 		_range_indicators.append(indicator)
 
@@ -77,15 +71,9 @@ func set_movement_path(path: Array[Vector2i]) -> void:
 		if grid == _movement_origin:
 			continue
 		var indicator := _create_tactical_indicator(
-			"MovePath_%02d_%02d" % [grid.x, grid.y],
-			grid,
-			MOVE_PATH_FILL,
-			MOVE_PATH_OUTLINE,
-			MOVE_PATH_GLOW,
-			Vector2(-5.0, -2.5),
-			1.8,
-			5.0,
-			-34
+			"MovePath_%02d_%02d" % [grid.x, grid.y], grid,
+			MOVE_PATH_FILL, MOVE_PATH_OUTLINE, MOVE_PATH_GLOW,
+			Vector2(-5.0, -2.5), 1.8, 5.0, -34
 		)
 		_path_indicators.append(indicator)
 
@@ -98,33 +86,47 @@ func set_action_range(grids: Array[Vector2i], kind: String = "attack") -> void:
 
 	for grid: Vector2i in grids:
 		var indicator := _create_tactical_indicator(
-			"ActionRange_%02d_%02d" % [grid.x, grid.y],
-			grid,
-			fill,
-			outline,
-			glow,
-			Vector2(-2.0, -1.0),
-			1.45,
-			4.5,
-			-33
+			"ActionRange_%02d_%02d" % [grid.x, grid.y], grid,
+			fill, outline, glow,
+			Vector2(-2.0, -1.0), 1.45, 4.5, -33
 		)
 		_action_range_indicators.append(indicator)
 
 
 func set_target_preview_grid(grid: Vector2i) -> void:
+	set_target_preview_grids([grid], grid)
+
+
+func set_target_preview_grids(grids: Array[Vector2i], center_grid: Vector2i) -> void:
 	clear_target_preview()
-	var indicator := _create_tactical_indicator(
-		"TargetPreview",
-		grid,
-		TARGET_FILL,
-		TARGET_OUTLINE,
-		TARGET_GLOW,
-		Vector2(-5.0, -2.5),
-		2.25,
-		7.0,
-		-29
-	)
-	_target_indicators.append(indicator)
+	for grid: Vector2i in grids:
+		var is_center := grid == center_grid
+		var indicator := _create_tactical_indicator(
+			"TargetPreview_%02d_%02d" % [grid.x, grid.y], grid,
+			TARGET_CENTER_FILL if is_center else TARGET_FILL,
+			TARGET_CENTER_OUTLINE if is_center else TARGET_OUTLINE,
+			TARGET_GLOW,
+			Vector2(-5.0, -2.5),
+			2.5 if is_center else 2.0,
+			7.5 if is_center else 6.0,
+			-29
+		)
+		_target_indicators.append(indicator)
+
+
+func set_targeting_hover_state(grid: Vector2i, valid: bool) -> void:
+	if _hover_fill == null or _hover_outline == null or _hover_glow == null:
+		return
+	var world_position := grid_to_world(grid)
+	_hover_glow.position = world_position
+	_hover_fill.position = world_position
+	_hover_outline.position = world_position
+	_hover_glow.default_color = HOVER_AVAILABLE_GLOW_V2 if valid else HOVER_BLOCKED_GLOW_V2
+	_hover_fill.color = HOVER_AVAILABLE_FILL_V2 if valid else HOVER_BLOCKED_FILL_V2
+	_hover_outline.default_color = HOVER_AVAILABLE_OUTLINE_V2 if valid else HOVER_BLOCKED_OUTLINE_V2
+	_hover_glow.visible = true
+	_hover_fill.visible = true
+	_hover_outline.visible = true
 
 
 func clear_action_range() -> void:
