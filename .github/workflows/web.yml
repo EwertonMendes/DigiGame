@@ -70,13 +70,15 @@ jobs:
           sudo ln -sf "$HOME/.cache/digigame-godot/godot" /usr/local/bin/godot
           godot --version
 
-      - name: Restore Godot import cache
+      - name: Restore Godot imported-resource cache
         uses: actions/cache@v4
         with:
-          path: .godot
-          key: godot-import-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', '**/*.gd', '**/*.tscn', '**/*.tres', 'assets/**/*') }}
+          # Cache only generated imported payloads. UID/editor metadata is rebuilt
+          # every run so stale project identity data can never leak between commits.
+          path: .godot/imported
+          key: godot-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', '**/*.gd', '**/*.tscn', '**/*.tres', 'assets/**/*') }}
           restore-keys: |
-            godot-import-${{ runner.os }}-${{ env.GODOT_VERSION }}-
+            godot-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-
 
       - name: Import and validate project
         shell: bash
