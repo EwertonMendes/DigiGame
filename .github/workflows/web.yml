@@ -56,9 +56,6 @@ jobs:
           mv "/tmp/godot/Godot_v${GODOT_TAG}_linux.x86_64" "$HOME/.cache/digigame-godot/godot"
           chmod +x "$HOME/.cache/digigame-godot/godot"
 
-          # The project only exports Web. The official template archive contains
-          # every desktop/mobile platform, so caching all of it wastes restore
-          # time. Keep just Web templates plus the version marker Godot expects.
           curl -fL "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_export_templates.tpz" -o /tmp/templates.tpz
           rm -rf /tmp/godot-templates && mkdir -p /tmp/godot-templates
           unzip -q /tmp/templates.tpz 'templates/web*.zip' 'templates/version.txt' -d /tmp/godot-templates
@@ -76,8 +73,6 @@ jobs:
       - name: Restore Godot imported-resource cache
         uses: actions/cache@v4
         with:
-          # Cache only generated imported payloads. UID/editor metadata is rebuilt
-          # every run so stale project identity data can never leak between commits.
           path: .godot/imported
           key: godot-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', '**/*.gd', '**/*.tscn', '**/*.tres', 'assets/**/*') }}
           restore-keys: |
@@ -110,12 +105,17 @@ jobs:
           grep -q 'hub foundation regression passed' /tmp/hub-foundation.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/hub-foundation.log; then exit 1; fi
 
+          godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8 2>&1 | tee /tmp/digimon-progression.log
+          grep -q 'digimon progression regression passed' /tmp/digimon-progression.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/digimon-progression.log; then exit 1; fi
+
       - name: Validate game data
         shell: bash
         run: |
           set -euo pipefail
           python3 tools/enrich_digimon_database.py --check
           python3 tools/validate_combat_data.py
+          python3 tools/validate_digimon_progression.py
 
       - name: Export Web build
         shell: bash
@@ -183,11 +183,6 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
 
-          # VFX validation observes a real attack rather than forcing combatants
-          # into test-only positions. Random deployment can occasionally produce
-          # a layout where no attack happens before that smoke sample times out.
-          # Retry only this stochastic suite with a fresh battle; deterministic
-          # desktop/combat/mobile suites still fail immediately on regressions.
           if [ "$SMOKE_SUITE" = "vfx" ]; then
             MAX_ATTEMPTS=5
             for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
