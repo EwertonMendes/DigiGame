@@ -2,6 +2,7 @@ extends "res://src/MainCamera.gd"
 
 const OPENING_BOOT_ZOOM := 0.94
 const DESKTOP_BATTLE_ZOOM := 1.08
+const LAPTOP_BATTLE_ZOOM := 1.00
 const COMPACT_BATTLE_ZOOM := 1.02
 const OPENING_ZOOM_TIME := 0.58
 
@@ -44,6 +45,13 @@ func _preferred_battle_zoom() -> float:
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.y < 560.0 or viewport_size.x < 1000.0:
 		return COMPACT_BATTLE_ZOOM
+	# Short landscape browser windows need a little more breathing room because
+	# deployment can legitimately place Digimon on the first/last grid rows. A
+	# 1.00 zoom is still noticeably closer than the old 0.90 opening, while
+	# keeping those edge spawns readable instead of hiding them under browser/UI
+	# chrome. Taller desktop screens can afford the more cinematic 1.08 framing.
+	if viewport_size.y < 780.0:
+		return LAPTOP_BATTLE_ZOOM
 	return DESKTOP_BATTLE_ZOOM
 
 
