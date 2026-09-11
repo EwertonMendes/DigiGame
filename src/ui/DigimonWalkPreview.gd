@@ -36,6 +36,7 @@ var _sprite: Sprite2D = null
 var _active := false
 var _elapsed := 0.0
 var _sequence_index := 0
+var _pending_species := ""
 
 
 func _ready() -> void:
@@ -46,27 +47,40 @@ func _ready() -> void:
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(_sprite)
 	set_process(false)
-	_layout_sprite()
+	if not _pending_species.is_empty():
+		_load_species(_pending_species)
+	else:
+		_layout_sprite()
 
 
 func set_species(species_name: String) -> void:
-	var key := species_name.strip_edges().to_lower()
-	var path := "res://assets/resources/%s.tres" % key
-	_digimon = load(path) as Digimon if ResourceLoader.exists(path) else null
-	_apply_visuals()
-	_show_idle_frame()
-	_layout_sprite()
+	_pending_species = species_name
+	if _sprite != null:
+		_load_species(species_name)
 
 
 func set_active(value: bool) -> void:
 	_active = value
 	_elapsed = 0.0
 	_sequence_index = 0
-	set_process(_active)
+	set_process(_active and _sprite != null and _digimon != null)
 	if _active:
 		_show_walk_frame()
 	else:
 		_show_idle_frame()
+
+
+func _load_species(species_name: String) -> void:
+	var key := species_name.strip_edges().to_lower()
+	var path := "res://assets/resources/%s.tres" % key
+	_digimon = load(path) as Digimon if ResourceLoader.exists(path) else null
+	_apply_visuals()
+	if _active:
+		_show_walk_frame()
+	else:
+		_show_idle_frame()
+	set_process(_active and _digimon != null)
+	_layout_sprite()
 
 
 func _process(delta: float) -> void:
@@ -89,6 +103,7 @@ func _apply_visuals() -> void:
 		return
 	_sprite.visible = _digimon != null and _digimon.texture != null
 	if not _sprite.visible:
+		_sprite.texture = null
 		return
 	_sprite.texture = _digimon.texture
 	_sprite.flip_h = false
