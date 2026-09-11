@@ -6,7 +6,7 @@ const OPERATOR_SHEET_PATH := "res://assets/characters/world/battle_operator_purp
 const FRAME_WIDTH := 24
 const FRAME_HEIGHT := 32
 const FRAME_COLUMNS := 3
-const FRAME_ROWS := 4
+const FRAME_ROWS := 5
 
 
 func _ready() -> void:
@@ -29,16 +29,17 @@ func _ready() -> void:
 	assert(player.position.distance_to(operator.position) <= 94.0, "Operator must be reachable from spawn immediately")
 	assert(bool(hub.call("can_actor_move_to", player.position, player)), "Spawn must be walkable")
 
-	_assert_directional_frames(player)
-	_assert_screen_direction_facing(player)
+	_assert_authored_and_mirrored_rows(player)
+	_assert_eight_direction_facing(player)
 	_assert_walk_sequence(player)
+	_assert_legacy_hub_facings(player)
 
 	hub.call("open_test_battle_dialog")
 	await get_tree().process_frame
 	assert(dialog.visible, "Talking to the operator must open the battle prompt")
 	assert(not bool(player.get("movement_enabled")), "Dialogue must pause player movement")
-	assert(player.get("facing_direction") == "up", "Player must face up toward the operator in dialogue")
-	assert(operator.get("facing_direction") == "down", "Operator must face down toward the player in dialogue")
+	assert(player.get("facing_direction") == "north", "Player must face north toward the operator in dialogue")
+	assert(operator.get("facing_direction") == "south", "Operator must face south toward the player in dialogue")
 
 	print("hub foundation regression passed")
 	get_tree().quit()
@@ -47,7 +48,7 @@ func _ready() -> void:
 func _assert_character_sheet_padding(path: String) -> void:
 	var image := Image.load_from_file(path)
 	assert(image.get_width() == FRAME_WIDTH * FRAME_COLUMNS, "%s must be a 3-column 24px atlas" % path)
-	assert(image.get_height() == FRAME_HEIGHT * FRAME_ROWS, "%s must be a 4-row 32px atlas" % path)
+	assert(image.get_height() == FRAME_HEIGHT * FRAME_ROWS, "%s must be a 5-row 32px atlas" % path)
 
 	for frame_row in range(FRAME_ROWS):
 		for frame_column in range(FRAME_COLUMNS):
@@ -70,62 +71,58 @@ func _assert_character_sheet_padding(path: String) -> void:
 			assert(opaque_pixels > 150, "%s frame (%d,%d) must contain a complete pose" % [path, frame_column, frame_row])
 
 
-func _assert_directional_frames(player: Node) -> void:
+func _assert_authored_and_mirrored_rows(player: Node) -> void:
 	var sprite := player.get_node("CharacterSprite") as Sprite2D
-	var expected_idle_frames := {
-		"down": 0,
-		"left": 3,
-		"right": 6,
-		"up": 9,
-	}
-	for direction_name in expected_idle_frames:
-		player.call("set_facing", String(direction_name))
-		assert(
-			sprite.frame == int(expected_idle_frames[direction_name]),
-			"%s must use atlas row starting at frame %d, got %d" % [direction_name, expected_idle_frames[direction_name], sprite.frame]
-		)
-
-	var legacy_expected := {
-		"down_left": "down",
-		"down_right": "left",
-		"up_left": "right",
-		"up_right": "up",
-	}
-	for legacy_name in legacy_expected:
-		player.call("set_facing", String(legacy_name))
-		assert(player.get("facing_direction") == legacy_expected[legacy_name], "%s alias mapped to the wrong sprite row" % legacy_name)
-
-
-func _assert_screen_direction_facing(player: Node) -> void:
 	var cases := [
-		[Vector2.RIGHT, "right"],
-		[Vector2.LEFT, "left"],
-		[Vector2.UP, "up"],
-		[Vector2.DOWN, "down"],
+		["south", 0, false],
+		["southwest", 3, false],
+		["west", 6, false],
+		["northwest", 9, false],
+		["north", 12, false],
+		["northeast", 9, true],
+		["east", 6, true],
+		["southeast", 3, true],
 	]
 	for test_case in cases:
-		player.call("set_facing", "down")
+		player.call("set_facing", String(test_case[0]))
+		assert(sprite.frame == int(test_case[1]), "%s must start on frame %d" % [test_case[0], test_case[1]])
+		assert(sprite.flip_h == bool(test_case[2]), "%s horizontal mirror state is wrong" % test_case[0])
+
+
+func _assert_eight_direction_facing(player: Node) -> void:
+	var cases := [
+		[Vector2.DOWN, "south"],
+		[Vector2(-1.0, 1.0).normalized(), "southwest"],
+		[Vector2.LEFT, "west"],
+		[Vector2(-1.0, -1.0).normalized(), "northwest"],
+		[Vector2.UP, "north"],
+		[Vector2(1.0, -1.0).normalized(), "northeast"],
+		[Vector2.RIGHT, "east"],
+		[Vector2(1.0, 1.0).normalized(), "southeast"],
+	]
+	for test_case in cases:
+		player.call("set_facing", "south")
 		player.call("_face_direction", Vector2(test_case[0]))
 		assert(
 			player.get("facing_direction") == String(test_case[1]),
-			"Movement %s must show the %s-facing sprite" % [test_case[0], test_case[1]]
+			"Movement %s must select %s" % [test_case[0], test_case[1]]
 		)
-
-	player.call("set_facing", "up")
-	player.call("_face_direction", Vector2(1.0, -1.0).normalized())
-	assert(player.get("facing_direction") == "up", "Up-right diagonal must retain a compatible up-facing pose")
-	player.call("set_facing", "left")
-	player.call("_face_direction", Vector2(-1.0, 1.0).normalized())
-	assert(player.get("facing_direction") == "left", "Down-left diagonal must retain a compatible left-facing pose")
 
 
 func _assert_walk_sequence(player: Node) -> void:
 	var sprite := player.get_node("CharacterSprite") as Sprite2D
-	player.call("set_facing", "right")
-	assert(sprite.frame == 6, "Right idle must start on frame 6")
+	player.call("set_facing", "east")
+	assert(sprite.frame == 6 and sprite.flip_h, "East idle must mirror authored west frame 6")
 	player.call("_advance_walk_animation", 0.11)
-	assert(sprite.frame == 7, "Right walk first step must use frame 7")
+	assert(sprite.frame == 7 and sprite.flip_h, "East first walk step must mirror frame 7")
 	player.call("_advance_walk_animation", 0.10)
-	assert(sprite.frame == 6, "Right walk midpoint must return to frame 6")
+	assert(sprite.frame == 6 and sprite.flip_h, "East walk midpoint must return to frame 6")
 	player.call("_advance_walk_animation", 0.10)
-	assert(sprite.frame == 8, "Right walk opposite step must use frame 8")
+	assert(sprite.frame == 8 and sprite.flip_h, "East opposite walk step must mirror frame 8")
+
+
+func _assert_legacy_hub_facings(player: Node) -> void:
+	player.call("set_facing", "down_left")
+	assert(player.get("facing_direction") == "south", "Legacy down_left must preserve the hub's south-facing pose")
+	player.call("set_facing", "up_right")
+	assert(player.get("facing_direction") == "north", "Legacy up_right must preserve the hub's north-facing pose")
