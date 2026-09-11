@@ -105,6 +105,10 @@ func _shuffle_grids(grids: Array[Vector2i]) -> void:
 func _prepare_actor_for_intro(actor: CharacterBody2D, field: Node2D) -> void:
 	if actor == null:
 		return
+	# The normalized Koromon source sheet has the horizontal visual convention
+	# opposite to the runtime directional groups. Correct it as actor metadata so
+	# logical facing/movement remains identical to every other Digimon.
+	actor.set("horizontal_facing_inverted", String(actor.get("digimon_key")) == "koromon")
 	# Center-facing is only a temporary fallback while the opposite roster may not
 	# exist yet. A second pass below replaces it with nearest-opponent facing.
 	if actor.has_method("face_toward_world_position"):
