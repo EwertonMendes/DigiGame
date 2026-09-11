@@ -102,7 +102,10 @@ func _prepare_actor_for_intro(actor: CharacterBody2D, field: Node2D) -> void:
 		return
 	if actor.has_method("face_toward_world_position"):
 		actor.call("face_toward_world_position", field.to_global(Vector2.ZERO))
-	if actor.has_method("prepare_battle_spawn"):
+	# Only the real battle scene owns the cinematic opening. Isolated controller
+	# tests intentionally omit BattleController and need actors at their normal
+	# scale/opacity for pointer and overlap regressions.
+	if get_node_or_null("../BattleController") != null and actor.has_method("prepare_battle_spawn"):
 		actor.call("prepare_battle_spawn")
 
 
