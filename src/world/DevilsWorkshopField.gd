@@ -6,18 +6,20 @@ const ART = preload("res://src/world/DevilsWorkshopArt.gd")
 const LOWER_LEVEL_OFFSET := 24.0
 const BOARD_SKIRT_DEPTH := 24.0
 
-const GRASS_BASE := Color(0.34, 0.60, 0.32, 1.0)
-const GRASS_ALT_BASE := Color(0.31, 0.56, 0.30, 1.0)
-const GRASS_EDGE_BASE := Color(0.25, 0.46, 0.27, 1.0)
+const GRASS_BASE := Color(0.30, 0.52, 0.29, 1.0)
+const GRASS_ALT_BASE := Color(0.27, 0.48, 0.27, 1.0)
+const GRASS_EDGE_BASE := Color(0.22, 0.40, 0.24, 1.0)
 const GRASS_DETAIL := Color(0.92, 1.0, 0.88, 1.0)
-const STAGING_BASE := Color(0.37, 0.43, 0.40, 1.0)
-const STAGING_DETAIL := Color(0.88, 0.92, 0.84, 1.0)
-const DATA_BASE := Color(0.20, 0.39, 0.46, 1.0)
-const DATA_DETAIL := Color(0.76, 0.86, 1.0, 1.0)
-const WATER_BASE := Color(0.07, 0.34, 0.42, 1.0)
-const WATER_DETAIL := Color(0.76, 0.96, 1.0, 1.0)
-const SKIRT_LEFT := Color(0.16, 0.30, 0.20, 1.0)
-const SKIRT_RIGHT := Color(0.12, 0.25, 0.18, 1.0)
+const STAGING_BASE := Color(0.17, 0.34, 0.39, 1.0)
+const STAGING_DETAIL := Color(0.78, 0.94, 1.0, 1.0)
+const CROSSING_BASE := Color(0.35, 0.38, 0.35, 1.0)
+const CROSSING_DETAIL := Color(0.86, 0.90, 0.82, 1.0)
+const DATA_BASE := Color(0.18, 0.34, 0.43, 1.0)
+const DATA_DETAIL := Color(0.74, 0.82, 1.0, 1.0)
+const WATER_BASE := Color(0.055, 0.29, 0.37, 1.0)
+const WATER_DETAIL := Color(0.72, 0.94, 1.0, 1.0)
+const SKIRT_LEFT := Color(0.14, 0.27, 0.18, 1.0)
+const SKIRT_RIGHT := Color(0.10, 0.22, 0.16, 1.0)
 
 
 func _ready() -> void:
@@ -62,16 +64,27 @@ func _battle_surface(grid: Vector2i) -> Dictionary:
 			"texture": ART.DATA_BLOCK,
 			"base_color": DATA_BASE,
 			"detail_tint": DATA_DETAIL,
-			"detail_alpha": 0.34,
+			"detail_alpha": 0.28,
 		}
 
-	if _is_staging_terrace(grid) or _is_center_crossing(grid):
+	if _is_staging_terrace(grid):
+		# The more detailed blue source face reads as a digital deployment deck
+		# while remaining a normal walkable tile mechanically.
+		return {
+			"name": "route",
+			"texture": ART.WATER_BLOCK,
+			"base_color": STAGING_BASE,
+			"detail_tint": STAGING_DETAIL,
+			"detail_alpha": 0.52,
+		}
+
+	if _is_center_crossing(grid):
 		return {
 			"name": "route",
 			"texture": ART.WARM_BLOCK,
-			"base_color": STAGING_BASE,
-			"detail_tint": STAGING_DETAIL,
-			"detail_alpha": 0.34,
+			"base_color": CROSSING_BASE,
+			"detail_tint": CROSSING_DETAIL,
+			"detail_alpha": 0.30,
 		}
 
 	if grid.x == 0 or grid.x == GRID_SIZE_X - 1 or grid.y == 0 or grid.y == GRID_SIZE_Y - 1:
@@ -80,7 +93,7 @@ func _battle_surface(grid: Vector2i) -> Dictionary:
 			"texture": ART.GRASS_BLOCK,
 			"base_color": GRASS_EDGE_BASE,
 			"detail_tint": GRASS_DETAIL,
-			"detail_alpha": 0.42,
+			"detail_alpha": 0.36,
 		}
 
 	return {
@@ -88,7 +101,7 @@ func _battle_surface(grid: Vector2i) -> Dictionary:
 		"texture": ART.GRASS_BLOCK,
 		"base_color": _grass_base_for(grid),
 		"detail_tint": GRASS_DETAIL,
-		"detail_alpha": 0.48,
+		"detail_alpha": 0.40,
 	}
 
 
@@ -151,7 +164,7 @@ func _add_water_tile(parent: Node2D, grid: Vector2i) -> void:
 		-240 + grid.x + grid.y,
 		WATER_BASE,
 		WATER_DETAIL,
-		0.66
+		0.64
 	)
 	tile.name = "Water_%02d_%02d" % [grid.x, grid.y]
 	parent.add_child(tile)
@@ -201,6 +214,6 @@ func _create_board_foundation() -> void:
 		outline[0], outline[1], outline[2], outline[3], outline[0],
 	])
 	rim.width = 1.25
-	rim.default_color = Color(0.55, 0.84, 0.66, 0.38)
+	rim.default_color = Color(0.45, 0.76, 0.60, 0.34)
 	rim.z_index = -70
 	add_child(rim)
