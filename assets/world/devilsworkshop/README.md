@@ -18,11 +18,13 @@ The official itch.io page states that the pack contains roughly 700 isometric as
 | DigiGame file | Upstream file | Git blob SHA | Current use |
 |---|---|---|---|
 | `blocks/isometric_pixel_0000.png` | `Textures/assets_pixel_50x50/isometric_pixel_0000.png` | `0d619e63570dd0c75f15da9f4f9768db97d0fbab` | grass / primary terrain |
-| `blocks/isometric_pixel_0001.png` | `Textures/assets_pixel_50x50/isometric_pixel_0001.png` | `87c195bf9a2fc6dcdbff292cf373a4c274543b8c` | warm route / staging terrain |
-| `blocks/isometric_pixel_0005.png` | `Textures/assets_pixel_50x50/isometric_pixel_0005.png` | `77a4f814304a3910ee62fc4da2fed1b5989763a7` | digital data pads / beacons |
-| `blocks/isometric_pixel_0020.png` | `Textures/assets_pixel_50x50/isometric_pixel_0020.png` | `fa56fc3049abe91f4a3bd53ca0c07c1d4354256e` | lower water terraces / perimeter |
+| `blocks/isometric_pixel_0001.png` | `Textures/assets_pixel_50x50/isometric_pixel_0001.png` | `87c195bf9a2fc6dcdbff292cf373a4c274543b8c` | stone/plaza terrain |
+| `blocks/isometric_pixel_0005.png` | `Textures/assets_pixel_50x50/isometric_pixel_0005.png` | `77a4f814304a3910ee62fc4da2fed1b5989763a7` | digital data plates |
+| `blocks/isometric_pixel_0020.png` | `Textures/assets_pixel_50x50/isometric_pixel_0020.png` | `fa56fc3049abe91f4a3bd53ca0c07c1d4354256e` | water terraces / perimeter |
 
-The sprites are used without pixel-level modification. DigiGame scales them at runtime to match the existing 64x32 logical isometric grid and applies color modulation for scene-level art direction. No endorsement by Devil's Work.shop is implied.
+The committed PNG pixels are unchanged. The source image is a complete 50x50 block, but its visible top face is smaller than the full canvas and does not use the exact same projection as DigiGame's 64x32 gameplay grid. Rendering the entire PNG once per logical tile therefore creates visible spacing and alignment artifacts.
+
+`DevilsWorkshopArt.gd` samples only the authored top-face region and maps it onto an exact 64x32 polygon. Terrain colors are established by an opaque base diamond and the source artwork is blended over it as pixel detail. Full cube sprites remain available for isolated props, but continuous floors use surface polygons so gameplay coordinates, hover overlays and movement remain mathematically identical to the original board.
 
 ## Attribution notice
 
