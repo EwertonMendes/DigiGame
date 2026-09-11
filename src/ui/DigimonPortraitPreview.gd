@@ -10,6 +10,7 @@ var _frame_count := 0
 var _durations: Array = []
 var _frame_index := 0
 var _elapsed := 0.0
+var _pending_species := ""
 
 
 func _ready() -> void:
@@ -24,9 +25,17 @@ func _ready() -> void:
 	_texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_texture_rect)
 	set_process(false)
+	if not _pending_species.is_empty():
+		_load_species(_pending_species)
 
 
 func set_species(species_name: String) -> void:
+	_pending_species = species_name
+	if _texture_rect != null:
+		_load_species(species_name)
+
+
+func _load_species(species_name: String) -> void:
 	var key := species_name.strip_edges().to_lower()
 	_reset_animation()
 	if key.is_empty():
