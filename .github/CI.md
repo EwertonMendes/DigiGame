@@ -14,7 +14,7 @@ The Web workflow is optimized for short feedback without reducing the quality ga
 
 ## Performance safeguards
 
-- Godot and export templates are cached by engine version.
+- The Godot executable and only the Web export templates are cached by engine version; unused desktop/mobile export templates are not restored on every run.
 - Only `.godot/imported` payloads are cached using project/source/scene/resource/asset content hashes. Godot UID/editor metadata is deliberately rebuilt every run so stale identity data cannot leak between revisions.
 - `godot --import` still runs on every build and remains a hard validation gate.
 - Playwright's npm downloads are cached; Chromium is not downloaded because the GitHub runner Chrome installation is used.
