@@ -12,64 +12,64 @@ func _init() -> void:
 	_action_database.load_default()
 
 
-func can_digivolve(instance: DigimonInstance, target_seed: String, database, calculator) -> bool:
+func can_digivolve(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator) -> bool:
 	return _can_transition(instance, target_seed, database, calculator, false)
 
 
-func can_degenerate(instance: DigimonInstance, target_seed: String, database, calculator) -> bool:
+func can_degenerate(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator) -> bool:
 	return _can_transition(instance, target_seed, database, calculator, true)
 
 
-func get_available_evolutions(instance: DigimonInstance, database, calculator) -> Array[Dictionary]:
+func get_available_evolutions(instance: DigimonInstance, database: DigimonDatabase, calculator: DigimonStatCalculator) -> Array[Dictionary]:
 	return _available_routes(instance, database, calculator, false)
 
 
-func get_available_degenerations(instance: DigimonInstance, database, calculator) -> Array[Dictionary]:
+func get_available_degenerations(instance: DigimonInstance, database: DigimonDatabase, calculator: DigimonStatCalculator) -> Array[Dictionary]:
 	return _available_routes(instance, database, calculator, true)
 
 
-func digivolve(instance: DigimonInstance, target_seed: String, database, calculator) -> bool:
+func digivolve(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator) -> bool:
 	if not can_digivolve(instance, target_seed, database, calculator):
 		return false
 	return _apply_transition(instance, target_seed, database, calculator, false)
 
 
-func degenerate(instance: DigimonInstance, target_seed: String, database, calculator) -> bool:
+func degenerate(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator) -> bool:
 	if not can_degenerate(instance, target_seed, database, calculator):
 		return false
 	return _apply_transition(instance, target_seed, database, calculator, true)
 
 
-func _can_transition(instance: DigimonInstance, target_seed: String, database, calculator, degenerating: bool) -> bool:
+func _can_transition(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator, degenerating: bool) -> bool:
 	if instance == null or database == null or calculator == null:
 		return false
 	var current_species: Dictionary = database.get_by_seed(instance.species_seed)
 	var target_species: Dictionary = database.get_by_seed(target_seed)
 	if current_species.is_empty() or target_species.is_empty():
 		return false
-	var route := _find_route(current_species, target_seed, degenerating)
+	var route: Dictionary = _find_route(current_species, target_seed, degenerating)
 	if route.is_empty():
 		return false
 	return _requirements_met(instance, current_species, route.get("requirements", []), calculator)
 
 
-func _available_routes(instance: DigimonInstance, database, calculator, degenerating: bool) -> Array[Dictionary]:
+func _available_routes(instance: DigimonInstance, database: DigimonDatabase, calculator: DigimonStatCalculator, degenerating: bool) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if instance == null or database == null:
 		return result
 	var species: Dictionary = database.get_by_seed(instance.species_seed)
 	if species.is_empty():
 		return result
-	var route_key := "degenerations" if degenerating else "evolutions"
+	var route_key: String = "degenerations" if degenerating else "evolutions"
 	var raw_routes = species.get(route_key, [])
 	if not raw_routes is Array:
 		return result
 	for raw_route in raw_routes:
 		if not raw_route is Dictionary:
 			continue
-		var route := (raw_route as Dictionary).duplicate(true)
-		var target_seed := String(route.get("targetSeed", ""))
-		var target := database.get_by_seed(target_seed)
+		var route: Dictionary = (raw_route as Dictionary).duplicate(true)
+		var target_seed: String = String(route.get("targetSeed", ""))
+		var target: Dictionary = database.get_by_seed(target_seed)
 		if target.is_empty():
 			continue
 		route["targetName"] = String(target.get("name", "Unknown"))
@@ -80,7 +80,7 @@ func _available_routes(instance: DigimonInstance, database, calculator, degenera
 
 
 func _find_route(species: Dictionary, target_seed: String, degenerating: bool) -> Dictionary:
-	var route_key := "degenerations" if degenerating else "evolutions"
+	var route_key: String = "degenerations" if degenerating else "evolutions"
 	var raw_routes = species.get(route_key, [])
 	if not raw_routes is Array:
 		return {}
@@ -90,7 +90,7 @@ func _find_route(species: Dictionary, target_seed: String, degenerating: bool) -
 	return {}
 
 
-func _requirements_met(instance: DigimonInstance, species: Dictionary, raw_requirements, calculator) -> bool:
+func _requirements_met(instance: DigimonInstance, species: Dictionary, raw_requirements, calculator: DigimonStatCalculator) -> bool:
 	if not raw_requirements is Array:
 		return true
 	for requirement in raw_requirements:
@@ -101,9 +101,9 @@ func _requirements_met(instance: DigimonInstance, species: Dictionary, raw_requi
 	return true
 
 
-func _requirement_met(instance: DigimonInstance, species: Dictionary, requirement: Dictionary, calculator) -> bool:
-	var requirement_type := String(requirement.get("type", "")).to_lower()
-	var required_value := int(requirement.get("value", 0))
+func _requirement_met(instance: DigimonInstance, species: Dictionary, requirement: Dictionary, calculator: DigimonStatCalculator) -> bool:
+	var requirement_type: String = String(requirement.get("type", "")).to_lower()
+	var required_value: int = int(requirement.get("value", 0))
 	match requirement_type:
 		"level":
 			return instance.level >= required_value
@@ -124,17 +124,17 @@ func _requirement_met(instance: DigimonInstance, species: Dictionary, requiremen
 	return false
 
 
-func _apply_transition(instance: DigimonInstance, target_seed: String, database, calculator, degenerating: bool) -> bool:
-	var old_species := database.get_by_seed(instance.species_seed)
-	var target_species := database.get_by_seed(target_seed)
+func _apply_transition(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator, degenerating: bool) -> bool:
+	var old_species: Dictionary = database.get_by_seed(instance.species_seed)
+	var target_species: Dictionary = database.get_by_seed(target_seed)
 	if old_species.is_empty() or target_species.is_empty():
 		return false
 
-	var old_seed := instance.species_seed
-	var old_level := instance.level
-	var direction := "degeneration" if degenerating else "digivolution"
-	var repeat_count := _transition_repeat_count(instance, old_seed, target_seed, direction)
-	var potential_gain := (
+	var old_seed: String = instance.species_seed
+	var old_level: int = instance.level
+	var direction: String = "degeneration" if degenerating else "digivolution"
+	var repeat_count: int = _transition_repeat_count(instance, old_seed, target_seed, direction)
+	var potential_gain: int = (
 		_progression.potential_gain_for_degeneration(old_level, repeat_count)
 		if degenerating
 		else _progression.potential_gain_for_digivolution(old_level, repeat_count)
