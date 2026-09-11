@@ -1,8 +1,8 @@
 extends RefCounted
 class_name TacticalTheme
 
-# Monochrome UI surfaces. Accent colors are kept for text and gameplay meaning
-# only; frames, buttons and structural chrome stay black/white/gray.
+# Kenney-inspired dark-mode surfaces. Structural chrome stays dark and quiet;
+# orange/gold is reserved for focused, selected or otherwise active UI states.
 const CYAN: Color = Color(0.38, 0.79, 0.97, 1.0)
 const BLUE: Color = Color(0.31, 0.47, 1.0, 1.0)
 const RED: Color = Color(1.0, 0.40, 0.49, 1.0)
@@ -18,6 +18,8 @@ const BASE_SOFT: Color = Color(0.028, 0.030, 0.038, 0.78)
 const GLASS: Color = Color(0.018, 0.020, 0.026, 0.70)
 const GLASS_LIGHT: Color = Color(0.11, 0.11, 0.12, 0.74)
 const DISABLED: Color = Color(0.27, 0.28, 0.30, 1.0)
+# Sampled from the normal dark Kenney panel presentation in the reference UI.
+const FRAME_DARK: Color = Color(0.118, 0.149, 0.184, 1.0)
 
 
 static func body_font() -> Font:
@@ -84,7 +86,7 @@ static func font_px(viewport: Viewport, value: float) -> int:
 static func panel(_accent: Color = BLUE, fill_alpha: float = 0.76, border_alpha: float = 0.24, radius: int = 8, _shadow: int = 0) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(BASE.r, BASE.g, BASE.b, fill_alpha)
-	style.border_color = Color(1.0, 1.0, 1.0, minf(border_alpha, 0.34))
+	style.border_color = Color(FRAME_DARK.r, FRAME_DARK.g, FRAME_DARK.b, minf(maxf(border_alpha, 0.28), 0.92))
 	style.set_border_width_all(1)
 	style.corner_radius_top_left = radius
 	style.corner_radius_top_right = radius
@@ -97,7 +99,7 @@ static func panel(_accent: Color = BLUE, fill_alpha: float = 0.76, border_alpha:
 static func glass_panel(_accent: Color = BLUE, fill_alpha: float = 0.70, radius: int = 7) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(GLASS.r, GLASS.g, GLASS.b, fill_alpha)
-	style.border_color = Color(1.0, 1.0, 1.0, 0.20)
+	style.border_color = Color(FRAME_DARK.r, FRAME_DARK.g, FRAME_DARK.b, 0.88)
 	style.set_border_width_all(1)
 	style.corner_radius_top_left = radius
 	style.corner_radius_top_right = radius
@@ -110,7 +112,7 @@ static func glass_panel(_accent: Color = BLUE, fill_alpha: float = 0.70, radius:
 static func ribbon(_accent: Color = GOLD, fill_alpha: float = 0.64) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(BASE_SOFT.r, BASE_SOFT.g, BASE_SOFT.b, fill_alpha)
-	style.border_color = Color(1.0, 1.0, 1.0, 0.18)
+	style.border_color = Color(FRAME_DARK.r, FRAME_DARK.g, FRAME_DARK.b, 0.88)
 	style.border_width_bottom = 1
 	style.corner_radius_top_left = 6
 	style.corner_radius_top_right = 6
@@ -123,7 +125,7 @@ static func ribbon(_accent: Color = GOLD, fill_alpha: float = 0.64) -> StyleBoxF
 
 static func panel_strong(_accent: Color = BLUE, radius: int = 9) -> StyleBoxFlat:
 	var style := glass_panel(Color.WHITE, 0.78, radius)
-	style.border_color = Color(1.0, 1.0, 1.0, 0.48)
+	style.border_color = FRAME_DARK
 	style.set_border_width_all(1)
 	return style
 
@@ -131,7 +133,7 @@ static func panel_strong(_accent: Color = BLUE, radius: int = 9) -> StyleBoxFlat
 static func pill(_accent: Color, alpha: float = 0.10) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.0, 0.0, 0.0, clampf(alpha + 0.20, 0.24, 0.42))
-	style.border_color = Color(1.0, 1.0, 1.0, 0.26)
+	style.border_color = Color(FRAME_DARK.r, FRAME_DARK.g, FRAME_DARK.b, 0.94)
 	style.set_border_width_all(1)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
@@ -144,17 +146,17 @@ static func pill(_accent: Color, alpha: float = 0.10) -> StyleBoxFlat:
 	return style
 
 
-static func command_style(_accent: Color, state: String = "normal", compact: bool = false) -> StyleBoxFlat:
+static func command_style(accent: Color, state: String = "normal", compact: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	var bg := Color(0.0, 0.0, 0.0, 0.10)
-	var edge := Color(1.0, 1.0, 1.0, 0.0)
+	var edge := Color(FRAME_DARK.r, FRAME_DARK.g, FRAME_DARK.b, 0.0)
 	match state:
 		"hover", "focus":
-			bg = Color(1.0, 1.0, 1.0, 0.07)
-			edge = Color(1.0, 1.0, 1.0, 0.72)
+			bg = Color(0.0, 0.0, 0.0, 0.28)
+			edge = Color(accent.r, accent.g, accent.b, 0.82)
 		"pressed", "selected":
-			bg = Color(1.0, 1.0, 1.0, 0.13)
-			edge = Color(1.0, 1.0, 1.0, 0.96)
+			bg = Color(0.0, 0.0, 0.0, 0.38)
+			edge = Color(accent.r, accent.g, accent.b, 1.0)
 		"disabled":
 			bg = Color(0.0, 0.0, 0.0, 0.04)
 	style.bg_color = bg
@@ -171,10 +173,10 @@ static func command_style(_accent: Color, state: String = "normal", compact: boo
 	return style
 
 
-static func focus_outline(_accent: Color = CYAN, radius: int = 7) -> StyleBoxFlat:
+static func focus_outline(accent: Color = GOLD, radius: int = 7) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
-	style.border_color = Color(1.0, 1.0, 1.0, 0.92)
+	style.border_color = Color(accent.r, accent.g, accent.b, 0.98)
 	style.set_border_width_all(1)
 	style.corner_radius_top_left = radius
 	style.corner_radius_top_right = radius
@@ -187,17 +189,19 @@ static func focus_outline(_accent: Color = CYAN, radius: int = 7) -> StyleBoxFla
 	return style
 
 
-static func turn_node_style(_accent: Color, current: bool, state: String = "normal") -> StyleBoxFlat:
+static func turn_node_style(accent: Color, current: bool, state: String = "normal") -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.0, 0.0, 0.0, 0.72 if current else 0.48)
-	var border_alpha := 0.82 if current else 0.24
+	var border := Color(FRAME_DARK.r, FRAME_DARK.g, FRAME_DARK.b, 0.90)
+	if current:
+		border = Color(accent.r, accent.g, accent.b, 0.88)
 	if state == "hover" or state == "focus":
-		style.bg_color = Color(1.0, 1.0, 1.0, 0.08)
-		border_alpha = 0.92
+		style.bg_color = Color(0.0, 0.0, 0.0, 0.66)
+		border = Color(accent.r, accent.g, accent.b, 0.94)
 	elif state == "pressed":
-		style.bg_color = Color(1.0, 1.0, 1.0, 0.12)
-		border_alpha = 1.0
-	style.border_color = Color(1.0, 1.0, 1.0, border_alpha)
+		style.bg_color = Color(0.0, 0.0, 0.0, 0.76)
+		border = Color(accent.r, accent.g, accent.b, 1.0)
+	style.border_color = border
 	style.set_border_width_all(1)
 	var radius := 12 if current else 10
 	style.corner_radius_top_left = radius
@@ -208,20 +212,20 @@ static func turn_node_style(_accent: Color, current: bool, state: String = "norm
 	return style
 
 
-static func action_style(_accent: Color, state: String = "normal") -> StyleBoxFlat:
+static func action_style(accent: Color, state: String = "normal") -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	var bg := Color(0.0, 0.0, 0.0, 0.50)
-	var border := Color(1.0, 1.0, 1.0, 0.20)
+	var border := Color(FRAME_DARK.r, FRAME_DARK.g, FRAME_DARK.b, 0.92)
 	match state:
 		"hover", "focus":
-			bg = Color(1.0, 1.0, 1.0, 0.08)
-			border = Color(1.0, 1.0, 1.0, 0.72)
+			bg = Color(0.0, 0.0, 0.0, 0.62)
+			border = Color(accent.r, accent.g, accent.b, 0.86)
 		"pressed", "selected":
-			bg = Color(1.0, 1.0, 1.0, 0.14)
-			border = Color(1.0, 1.0, 1.0, 0.94)
+			bg = Color(0.0, 0.0, 0.0, 0.72)
+			border = Color(accent.r, accent.g, accent.b, 1.0)
 		"disabled":
 			bg = Color(0.0, 0.0, 0.0, 0.24)
-			border = Color(1.0, 1.0, 1.0, 0.08)
+			border = Color(FRAME_DARK.r, FRAME_DARK.g, FRAME_DARK.b, 0.34)
 	style.bg_color = bg
 	style.border_color = border
 	style.set_border_width_all(1)

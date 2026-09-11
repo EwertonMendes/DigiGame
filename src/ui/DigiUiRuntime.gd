@@ -2,12 +2,14 @@ extends Node
 
 # Runtime presentation layer for DigiGame UI.
 #
-# Structural UI uses one crisp monochrome frame derived directly from Kenney
-# Fantasy UI Borders (panel-border-000). The artwork itself is never recolored,
-# blurred, glowed or animated. Color and motion belong to text/gameplay state.
+# Kenney Fantasy UI Borders stays structurally faithful to the source artwork:
+# normal surfaces use the original frame geometry tinted to the dark slate seen
+# in Kenney's dark presentation, while focused/selected states reuse that same
+# geometry in DigiGame orange. No glow, blur, gradients or satin decoration.
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const FRAME_PATH := "res://assets/ui/kenney_fantasy_digi/frame_original.svg"
+const BORDER_ONLY_PATH := "res://assets/ui/kenney_fantasy_digi/panel-border-000.png"
 
 const STANDARD_PANELS := [
 	"LocationPanel",
@@ -16,16 +18,17 @@ const STANDARD_PANELS := [
 	"TechniqueMenu",
 	"ActionPreview",
 	"BattleResult",
-	"DigimonContextCard",
+	"BattleDialog",
+	"RetreatPanel",
+	"RetreatResult",
 ]
 
-const EMPHASIS_PANELS := [
-	"BattleDialog",
+# These surfaces only exist while the player is being actively prompted or is
+# inspecting something, so an orange frame is meaningful rather than decorative.
+const ACCENT_PANELS := [
 	"InteractionPrompt",
-	"RetreatPanel",
 	"RetreatAnnouncement",
-	"RetreatResult",
-	"BattleStartFrame",
+	"DigimonContextCard",
 ]
 
 const DIALOG_ANCESTORS := [
@@ -47,9 +50,13 @@ const FRAMED_BUTTON_NAMES := [
 ]
 
 var _frame_texture: Texture2D = null
-var _panel_standard_style: StyleBoxTexture = null
-var _panel_emphasis_style: StyleBoxTexture = null
-var _button_style: StyleBoxTexture = null
+var _border_only_texture: Texture2D = null
+var _panel_dark_style: StyleBoxTexture = null
+var _panel_accent_style: StyleBoxTexture = null
+var _button_dark_style: StyleBoxTexture = null
+var _button_accent_style: StyleBoxTexture = null
+var _button_focus_overlay: StyleBoxTexture = null
+var _button_disabled_style: StyleBoxTexture = null
 var _tracked_panels: Dictionary = {}
 var _restyle_elapsed := 0.0
 var _skin_ready := false
@@ -78,8 +85,8 @@ func _process(delta: float) -> void:
 		if panel == null or not is_instance_valid(panel):
 			stale_ids.append(instance_id)
 			continue
-		var emphasis := bool(entry.get("emphasis", false))
-		var desired: StyleBoxTexture = _panel_emphasis_style if emphasis else _panel_standard_style
+		var accented := bool(entry.get("accented", false))
+		var desired: StyleBoxTexture = _panel_accent_style if accented else _panel_dark_style
 		if panel.get_theme_stylebox("panel") != desired:
 			panel.add_theme_stylebox_override("panel", desired)
 	for instance_id: int in stale_ids:
@@ -88,31 +95,44 @@ func _process(delta: float) -> void:
 
 func _load_skin_resources() -> void:
 	_frame_texture = load(FRAME_PATH) as Texture2D
-	_skin_ready = _frame_texture != null
+	_border_only_texture = load(BORDER_ONLY_PATH) as Texture2D
+	_skin_ready = _frame_texture != null and _border_only_texture != null
 	if not _skin_ready:
-		push_warning("Kenney monochrome UI frame could not be loaded; keeping TacticalTheme fallbacks.")
+		push_warning("Kenney dark UI resources could not be loaded; keeping TacticalTheme fallbacks.")
 		return
 
-	# 12px keeps every corner ornament out of the nine-patch stretch region.
-	# Panel content margins intentionally stay at zero: each UI surface already
-	# owns its padding/layout, and hidden StyleBox padding would shift explicit
-	# dialog controls away from the visual center of the frame.
+	# 12px preserves every original corner ornament outside the stretch region.
+	# Panel content margins remain zero because each HUD owns its own layout.
 	var margins := Vector4(12.0, 12.0, 12.0, 12.0)
 	var panel_content := Vector4.ZERO
-	_panel_standard_style = _nine_patch(
+	_panel_dark_style = _nine_patch(_frame_texture, margins, panel_content, UI.FRAME_DARK)
+	_panel_accent_style = _nine_patch(_frame_texture, margins, panel_content, UI.GOLD)
+	_button_dark_style = _nine_patch(
 		_frame_texture,
 		margins,
-		panel_content
+		Vector4(16.0, 9.0, 16.0, 9.0),
+		UI.FRAME_DARK
 	)
-	_panel_emphasis_style = _nine_patch(
+	_button_accent_style = _nine_patch(
 		_frame_texture,
 		margins,
-		panel_content
+		Vector4(16.0, 9.0, 16.0, 9.0),
+		UI.GOLD
 	)
-	_button_style = _nine_patch(
+	# Focus is drawn as an overlay by Godot. Using Kenney's exact border-only PNG
+	# avoids doubling the dark backing while still giving selected controls the
+	# precise orange source silhouette requested for the game.
+	_button_focus_overlay = _nine_patch(
+		_border_only_texture,
+		margins,
+		Vector4.ZERO,
+		UI.GOLD
+	)
+	_button_disabled_style = _nine_patch(
 		_frame_texture,
 		margins,
-		Vector4(16.0, 9.0, 16.0, 9.0)
+		Vector4(16.0, 9.0, 16.0, 9.0),
+		Color(UI.FRAME_DARK.r, UI.FRAME_DARK.g, UI.FRAME_DARK.b, 0.42)
 	)
 
 
@@ -144,7 +164,7 @@ func _decorate_node(node: Node) -> void:
 
 	if control is Panel or control is PanelContainer:
 		var panel_name := String(control.name)
-		if panel_name in EMPHASIS_PANELS:
+		if panel_name in ACCENT_PANELS:
 			_style_panel(control, true)
 			control.set_meta("digi_fantasy_skin_applied", true)
 			return
@@ -161,12 +181,12 @@ func _decorate_node(node: Node) -> void:
 			control.set_meta("digi_fantasy_skin_applied", true)
 
 
-func _style_panel(control: Control, emphasis: bool) -> void:
-	var style: StyleBoxTexture = _panel_emphasis_style if emphasis else _panel_standard_style
+func _style_panel(control: Control, accented: bool) -> void:
+	var style: StyleBoxTexture = _panel_accent_style if accented else _panel_dark_style
 	control.add_theme_stylebox_override("panel", style)
 	_tracked_panels[control.get_instance_id()] = {
 		"ref": weakref(control),
-		"emphasis": emphasis,
+		"accented": accented,
 	}
 
 
@@ -189,34 +209,37 @@ func _style_related_result_panel(button: Button) -> void:
 		if parent is Panel or parent is PanelContainer:
 			var panel := parent as Control
 			if not panel.has_meta("digi_fantasy_skin_applied"):
-				_style_panel(panel, true)
+				_style_panel(panel, false)
 				panel.set_meta("digi_fantasy_skin_applied", true)
 			return
 		parent = parent.get_parent()
 
 
 func _style_dialog_button(button: Button) -> void:
-	# The frame stays identical in every interaction state. Feedback is textual,
-	# keeping the underlying Kenney artwork untouched and predictable.
-	button.add_theme_stylebox_override("normal", _button_style)
-	button.add_theme_stylebox_override("hover", _button_style)
-	button.add_theme_stylebox_override("focus", _button_style)
-	button.add_theme_stylebox_override("pressed", _button_style)
-	button.add_theme_stylebox_override("hover_pressed", _button_style)
+	# Match Kenney's sample behavior: resting controls are dark and only the
+	# hovered/focused/pressed control receives the bright border. DigiGame uses
+	# orange instead of white for that selected-state frame.
+	button.add_theme_stylebox_override("normal", _button_dark_style)
+	button.add_theme_stylebox_override("hover", _button_accent_style)
+	button.add_theme_stylebox_override("focus", _button_focus_overlay)
+	button.add_theme_stylebox_override("pressed", _button_accent_style)
+	button.add_theme_stylebox_override("hover_pressed", _button_accent_style)
+	button.add_theme_stylebox_override("disabled", _button_disabled_style)
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_focus_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
 	button.add_theme_color_override("font_disabled_color", Color(UI.MUTED.r, UI.MUTED.g, UI.MUTED.b, 0.44))
 	button.add_theme_color_override("icon_normal_color", Color(0.90, 0.90, 0.92, 0.92))
-	button.add_theme_color_override("icon_hover_color", Color.WHITE)
-	button.add_theme_color_override("icon_focus_color", Color.WHITE)
-	button.add_theme_color_override("icon_pressed_color", Color.WHITE)
+	button.add_theme_color_override("icon_hover_color", UI.GOLD)
+	button.add_theme_color_override("icon_focus_color", UI.GOLD)
+	button.add_theme_color_override("icon_pressed_color", UI.GOLD)
 
 
-func _nine_patch(texture: Texture2D, margins: Vector4, content: Vector4) -> StyleBoxTexture:
+func _nine_patch(texture: Texture2D, margins: Vector4, content: Vector4, tint: Color) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
 	style.texture = texture
+	style.modulate_color = tint
 	style.set_texture_margin(SIDE_LEFT, margins.x)
 	style.set_texture_margin(SIDE_TOP, margins.y)
 	style.set_texture_margin(SIDE_RIGHT, margins.z)
