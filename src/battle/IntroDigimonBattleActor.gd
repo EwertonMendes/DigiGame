@@ -52,6 +52,46 @@ func play_battle_spawn_animation() -> void:
 	print("[BattleIntro] SPAWN actor=%s team=%s" % [name, "player" if is_player_controlled else "enemy"])
 
 
+func play_battle_escape_animation() -> void:
+	if sprite == null:
+		visible = false
+		return
+	var base_position := sprite.position
+	var base_scale := sprite.scale
+	var escape_color := Color(0.24, 0.94, 1.0, 1.0)
+	_spawn_burst(escape_color, 18, 92.0, 0.40, 1.4)
+	_spawn_burst(Color(0.86, 0.98, 1.0, 1.0), 9, 58.0, 0.34, 1.0)
+	_spawn_arrival_diamond(escape_color)
+
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(sprite, "scale", base_scale * 0.28, 0.28)
+	tween.tween_property(sprite, "position", base_position + Vector2(0.0, -18.0), 0.28)
+	tween.tween_property(sprite, "modulate", Color(0.45, 0.96, 1.0, 0.18), 0.24)
+	tween.tween_property(self, "modulate:a", 0.0, 0.28)
+	await tween.finished
+	visible = false
+	sprite.position = base_position
+	sprite.scale = base_scale
+	sprite.modulate = Color.WHITE
+	print("[BattleEscape] DESPAWN actor=%s" % name)
+
+
+func play_battle_escape_failed_animation() -> void:
+	if sprite == null:
+		return
+	var base_position := sprite.position
+	var base_modulate := sprite.modulate
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	for offset_x in [-4.0, 5.0, -3.0, 2.0, 0.0]:
+		tween.tween_property(sprite, "position", base_position + Vector2(offset_x, 0.0), 0.045)
+		tween.parallel().tween_property(sprite, "modulate", Color(1.0, 0.55, 0.58, 1.0) if offset_x != 0.0 else base_modulate, 0.045)
+	await tween.finished
+	sprite.position = base_position
+	sprite.modulate = base_modulate
+
+
 func _spawn_arrival_diamond(color: Color) -> void:
 	var diamond := Line2D.new()
 	diamond.name = "SpawnDiamond"

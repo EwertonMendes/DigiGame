@@ -2,6 +2,7 @@ extends Node
 
 const FieldScript = preload("res://src/Field.gd")
 const PatternResolverScript = preload("res://src/battle/combat/TargetPatternResolver.gd")
+const EscapeResolverScript = preload("res://src/battle/BattleEscapeResolver.gd")
 
 
 func _ready() -> void:
@@ -35,12 +36,33 @@ func _ready() -> void:
 	_assert(cone_grids.has(origin + Vector2i(4, 0)), "cone must reach its configured length")
 	_assert(not cone_grids.has(origin + Vector2i(-1, 0)), "cone must never hit behind the caster")
 
+	var escape_resolver = EscapeResolverScript.new()
+	_expect_escape_chance(escape_resolver.calculate(50.0, 10.0, 10.0, 1, 0), 50.0, "equal-speed adjacent retreat")
+	_expect_escape_chance(escape_resolver.calculate(50.0, 10.0, 10.0, 5, 0), 66.0, "safe-distance retreat bonus")
+	_expect_escape_chance(escape_resolver.calculate(50.0, 20.0, 10.0, 1, 0), 70.0, "retreat speed advantage cap")
+	_expect_escape_chance(escape_resolver.calculate(50.0, 5.0, 10.0, 1, 0), 30.0, "retreat speed disadvantage cap")
+	_expect_escape_chance(escape_resolver.calculate(50.0, 10.0, 10.0, 1, 1), 65.0, "first failed-retreat pity")
+	_expect_escape_chance(escape_resolver.calculate(50.0, 10.0, 10.0, 1, 3), 80.0, "failed-retreat pity cap")
+	_expect_escape_chance(escape_resolver.calculate(90.0, 30.0, 10.0, 8, 2), 95.0, "retreat global chance cap")
+	var forbidden: Dictionary = escape_resolver.preview(null, null, [], 0, {"mode": "forbidden", "reason": "boss"})
+	_assert(not bool(forbidden.get("allowed", true)), "forbidden escape policy must block retreat")
+	_assert(String(forbidden.get("reason", "")) == "boss", "forbidden escape policy must preserve its reason")
+	var guaranteed: Dictionary = escape_resolver.preview(null, null, [], 0, {"mode": "guaranteed"})
+	_assert(bool(guaranteed.get("allowed", false)), "guaranteed escape policy must allow retreat")
+	_expect_escape_chance(guaranteed, 100.0, "guaranteed retreat")
+
 	# This field is instantiated only as a lightweight board-bounds collaborator;
 	# free it explicitly so the headless regression exits without resource noise.
 	field.free()
 	resolver = null
+	escape_resolver = null
 	print("advanced attack pattern regression passed")
 	get_tree().quit()
+
+
+func _expect_escape_chance(result: Dictionary, expected: float, label: String) -> void:
+	var actual := float(result.get("chance", -999.0))
+	_assert(is_equal_approx(actual, expected), "%s expected %.1f but got %.1f" % [label, expected, actual])
 
 
 func _assert(condition: bool, message: String) -> void:

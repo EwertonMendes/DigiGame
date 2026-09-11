@@ -39,6 +39,11 @@ func _spawn_demo_rosters() -> void:
 		var profile := String(descriptor.get("profile", "wild"))
 		var instance: DigimonInstance = _factory.create_enemy_by_name(species_name, level, profile)
 		var actor := _spawn_instance_in_zone(instance, false, enemy_candidates, field)
+		if actor != null:
+			# Encounter profile is battle metadata, not a species property. Escape and
+			# future mission rules can inspect it without coupling those systems to the
+			# demo roster descriptor or DigimonFactory internals.
+			actor.set_meta("encounter_profile", profile.to_lower())
 		_prepare_actor_for_intro(actor, field)
 
 	# Initial facing is only authoritative after both teams have been created.
