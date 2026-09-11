@@ -1,6 +1,7 @@
 extends RefCounted
 class_name DigimonStatCalculator
 
+const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const MAX_LEVEL := 99
 const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
 const LEVEL_GROWTH := {
@@ -11,8 +12,9 @@ const LEVEL_GROWTH := {
 	"int": 0.020,
 	"speed": 0.020,
 }
-const TRAINING_BONUS_PER_POINT := 0.004
 const MAX_FINAL_MOV := 8
+
+var _balance = BalanceScript.new()
 
 
 func get_stat(instance: DigimonInstance, species: Dictionary, stat_key: String) -> int:
@@ -22,7 +24,8 @@ func get_stat(instance: DigimonInstance, species: Dictionary, stat_key: String) 
 	var base_value := _base_stat(species, normalized_key)
 	var level_factor := 1.0 + float(maxi(0, instance.level - 1)) * float(LEVEL_GROWTH.get(normalized_key, 0.020))
 	var aptitude_factor := 1.0 + float(clampi(int(instance.aptitudes.get(normalized_key, 0)), -3, 3)) / 100.0
-	var training_factor := 1.0 + float(maxi(0, int(instance.training.get(normalized_key, 0)))) * TRAINING_BONUS_PER_POINT
+	var training_bonus := _balance.training_number("bonusPerPoint", 0.004)
+	var training_factor := 1.0 + float(maxi(0, int(instance.training.get(normalized_key, 0)))) * training_bonus
 	return maxi(1 if normalized_key != "mp" else 0, int(round(float(base_value) * level_factor * aptitude_factor * training_factor)))
 
 
