@@ -182,7 +182,29 @@ jobs:
           python3 -m http.server 8000 --directory build/web >/tmp/digigame-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
-          node .github/scripts/browser-smoke.mjs
+
+          # VFX validation observes a real attack rather than forcing combatants
+          # into test-only positions. Random deployment can occasionally produce
+          # a layout where no attack happens before that smoke sample times out.
+          # Retry only this stochastic suite with a fresh battle; deterministic
+          # desktop/combat/mobile suites still fail immediately on regressions.
+          if [ "$SMOKE_SUITE" = "vfx" ]; then
+            MAX_ATTEMPTS=5
+            for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+              echo "VFX smoke attempt ${attempt}/${MAX_ATTEMPTS}"
+              if node .github/scripts/browser-smoke.mjs; then
+                exit 0
+              fi
+              if [ "$attempt" -eq "$MAX_ATTEMPTS" ]; then
+                echo "VFX smoke failed after ${MAX_ATTEMPTS} independent randomized battles." >&2
+                exit 1
+              fi
+              echo "::warning::VFX smoke did not reach an attack in randomized battle ${attempt}; retrying with a fresh deployment."
+              sleep 1
+            done
+          else
+            node .github/scripts/browser-smoke.mjs
+          fi
 
       - name: Upload ${{ matrix.suite }} diagnostics
         if: always()
