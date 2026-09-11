@@ -8,6 +8,9 @@ func _ready() -> void:
 	super._ready()
 	_install_technique_navigation_hint()
 	_install_damage_preview_arrow()
+	# Browser smoke tests wait for a real runtime readiness marker instead of
+	# sleeping for several seconds after every scene transition.
+	print("[Battle] READY")
 
 
 func _install_technique_navigation_hint() -> void:
