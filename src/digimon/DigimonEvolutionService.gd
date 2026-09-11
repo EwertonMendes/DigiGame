@@ -2,8 +2,14 @@ extends RefCounted
 class_name DigimonEvolutionService
 
 const ProgressionScript = preload("res://src/digimon/DigimonProgression.gd")
+const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
 
 var _progression = ProgressionScript.new()
+var _action_database = ActionDatabaseScript.new()
+
+
+func _init() -> void:
+	_action_database.load_default()
 
 
 func can_digivolve(instance: DigimonInstance, target_seed: String, database, calculator) -> bool:
@@ -12,6 +18,14 @@ func can_digivolve(instance: DigimonInstance, target_seed: String, database, cal
 
 func can_degenerate(instance: DigimonInstance, target_seed: String, database, calculator) -> bool:
 	return _can_transition(instance, target_seed, database, calculator, true)
+
+
+func get_available_evolutions(instance: DigimonInstance, database, calculator) -> Array[Dictionary]:
+	return _available_routes(instance, database, calculator, false)
+
+
+func get_available_degenerations(instance: DigimonInstance, database, calculator) -> Array[Dictionary]:
+	return _available_routes(instance, database, calculator, true)
 
 
 func digivolve(instance: DigimonInstance, target_seed: String, database, calculator) -> bool:
@@ -33,20 +47,53 @@ func _can_transition(instance: DigimonInstance, target_seed: String, database, c
 	var target_species: Dictionary = database.get_by_seed(target_seed)
 	if current_species.is_empty() or target_species.is_empty():
 		return false
-	var relation_key := "degenerateSeedList" if degenerating else "digiEvolutionSeedList"
-	var allowed = current_species.get(relation_key, [])
-	if not allowed is Array or not allowed.has(target_seed):
+	var route := _find_route(current_species, target_seed, degenerating)
+	if route.is_empty():
 		return false
-	if degenerating:
-		return true
-	return _requirements_met(instance, current_species, database, calculator)
+	return _requirements_met(instance, current_species, route.get("requirements", []), calculator)
 
 
-func _requirements_met(instance: DigimonInstance, species: Dictionary, database, calculator) -> bool:
-	var requirements = species.get("evolutionRequirements", [])
-	if not requirements is Array:
+func _available_routes(instance: DigimonInstance, database, calculator, degenerating: bool) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if instance == null or database == null:
+		return result
+	var species: Dictionary = database.get_by_seed(instance.species_seed)
+	if species.is_empty():
+		return result
+	var route_key := "degenerations" if degenerating else "evolutions"
+	var raw_routes = species.get(route_key, [])
+	if not raw_routes is Array:
+		return result
+	for raw_route in raw_routes:
+		if not raw_route is Dictionary:
+			continue
+		var route := (raw_route as Dictionary).duplicate(true)
+		var target_seed := String(route.get("targetSeed", ""))
+		var target := database.get_by_seed(target_seed)
+		if target.is_empty():
+			continue
+		route["targetName"] = String(target.get("name", "Unknown"))
+		route["targetRank"] = String(target.get("rank", ""))
+		route["unlocked"] = _requirements_met(instance, species, route.get("requirements", []), calculator)
+		result.append(route)
+	return result
+
+
+func _find_route(species: Dictionary, target_seed: String, degenerating: bool) -> Dictionary:
+	var route_key := "degenerations" if degenerating else "evolutions"
+	var raw_routes = species.get(route_key, [])
+	if not raw_routes is Array:
+		return {}
+	for raw_route in raw_routes:
+		if raw_route is Dictionary and String((raw_route as Dictionary).get("targetSeed", "")) == target_seed:
+			return (raw_route as Dictionary).duplicate(true)
+	return {}
+
+
+func _requirements_met(instance: DigimonInstance, species: Dictionary, raw_requirements, calculator) -> bool:
+	if not raw_requirements is Array:
 		return true
-	for requirement in requirements:
+	for requirement in raw_requirements:
 		if not requirement is Dictionary:
 			continue
 		if not _requirement_met(instance, species, requirement, calculator):
@@ -62,15 +109,15 @@ func _requirement_met(instance: DigimonInstance, species: Dictionary, requiremen
 			return instance.level >= required_value
 		"potential", "abi":
 			return instance.potential >= required_value
-		"hp", "mp", "atk", "def", "speed":
+		"hp", "mp", "atk", "def", "int", "speed":
 			return int(calculator.get_stat(instance, species, requirement_type)) >= required_value
 		"attack":
 			return int(calculator.get_stat(instance, species, "atk")) >= required_value
 		"defense":
 			return int(calculator.get_stat(instance, species, "def")) >= required_value
 		"item":
-			# Inventory integration will resolve item requirements later. Never
-			# silently bypass a requirement we cannot currently validate.
+			# Inventory integration will resolve item requirements later. Requirements
+			# that cannot be proven are never silently bypassed.
 			return false
 		"":
 			return true
@@ -83,22 +130,45 @@ func _apply_transition(instance: DigimonInstance, target_seed: String, database,
 	if old_species.is_empty() or target_species.is_empty():
 		return false
 
+	var old_seed := instance.species_seed
 	var old_level := instance.level
+	var direction := "degeneration" if degenerating else "digivolution"
+	var repeat_count := _transition_repeat_count(instance, old_seed, target_seed, direction)
 	var potential_gain := (
-		_progression.potential_gain_for_degeneration(old_level)
+		_progression.potential_gain_for_degeneration(old_level, repeat_count)
 		if degenerating
-		else _progression.potential_gain_for_digivolution(old_level)
+		else _progression.potential_gain_for_digivolution(old_level, repeat_count)
 	)
 	instance.evolution_history.append({
-		"fromSeed": instance.species_seed,
+		"fromSeed": old_seed,
 		"toSeed": target_seed,
 		"fromLevel": old_level,
-		"direction": "degeneration" if degenerating else "digivolution",
+		"direction": direction,
 		"potentialGain": potential_gain,
+		"repeatIndex": repeat_count,
 	})
 	instance.species_seed = target_seed
 	instance.level = 1
 	instance.exp = 0
 	_progression.add_potential(instance, potential_gain)
+	_sync_form_skills(instance, target_species)
 	calculator.refill_instance(instance, target_species)
 	return true
+
+
+func _transition_repeat_count(instance: DigimonInstance, from_seed: String, to_seed: String, direction: String) -> int:
+	var repeats := 0
+	for record in instance.evolution_history:
+		if String(record.get("fromSeed", "")) != from_seed:
+			continue
+		if String(record.get("toSeed", "")) != to_seed:
+			continue
+		if String(record.get("direction", "")) == direction:
+			repeats += 1
+	return repeats
+
+
+func _sync_form_skills(instance: DigimonInstance, species: Dictionary) -> void:
+	var available: Array[Dictionary] = _action_database.get_known_actions(String(species.get("name", "")), instance.level)
+	for action: Dictionary in available:
+		instance.learn_skill(String(action.get("id", "")), true)
