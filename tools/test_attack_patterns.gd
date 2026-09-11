@@ -35,6 +35,10 @@ func _ready() -> void:
 	_assert(cone_grids.has(origin + Vector2i(4, 0)), "cone must reach its configured length")
 	_assert(not cone_grids.has(origin + Vector2i(-1, 0)), "cone must never hit behind the caster")
 
+	# This field is instantiated only as a lightweight board-bounds collaborator;
+	# free it explicitly so the headless regression exits without resource noise.
+	field.free()
+	resolver = null
 	print("advanced attack pattern regression passed")
 	get_tree().quit()
 
