@@ -33,8 +33,9 @@ func animate_intro_focus(world_position: Vector2, first_focus: bool = false) -> 
 	_refresh_pan_bounds()
 	var target_zoom := _preferred_intro_zoom()
 	var duration := FIRST_FOCUS_MOVE_TIME if first_focus else FOCUS_MOVE_TIME
-	var target_position := _safe_focus_position(world_position, target_zoom)
-	await _animate_camera_to(target_position, target_zoom, duration)
+	# Gameplay HUD is hidden during the roster reveal, so center each Digimon in
+	# the full viewport for a clean cinematic introduction.
+	await _animate_camera_to(world_position, target_zoom, duration)
 
 
 func animate_gameplay_focus(world_position: Vector2, duration: float = GAMEPLAY_FOCUS_TIME) -> void:
