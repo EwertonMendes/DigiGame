@@ -1,6 +1,6 @@
 # Digi Fantasy Border skin
 
-This folder contains a compact DigiGame UI skin derived from the vector geometry in **Kenney — Fantasy UI Borders**.
+This folder contains DigiGame's runtime use of **Kenney — Fantasy UI Borders**.
 
 - Original pack: Fantasy UI Borders
 - Author/publisher: Kenney
@@ -10,16 +10,14 @@ This folder contains a compact DigiGame UI skin derived from the vector geometry
 - Attribution required: No
 - Source-inspection mirror: https://github.com/Tiddybub/2d-assets/tree/e0cbe0d995554a490d4c182fe9beb8769ffbb606/ui/fantasy-ui-borders
 - Pinned mirror commit: `e0cbe0d995554a490d4c182fe9beb8769ffbb606`
-- Source vector: `Vector/fantasy-ui-borders.svg`
+- Exact source reference: `PNG/Default/Border/panel-border-000.png`
 
-DigiGame uses selected frame silhouettes from the original vector without palette recoloring. Runtime artwork stays monochrome: white Kenney geometry over a simple semi-transparent black center. There are no baked glows, gradients, colored highlights or decorative light streaks. Text remains native Godot Controls so typography color and animation can evolve independently from the frame artwork.
+`frame_original.svg` is a crisp 48×48 reconstruction of the exact opaque-pixel geometry from `panel-border-000.png`. The white border is not recolored or embellished. DigiGame only places a simple semi-transparent black rectangle behind the frame so labels remain readable over the battlefield.
 
-Runtime files:
+There are no baked gradients, glows, satin streaks, colored dots, palette tints or decorative light effects. The same neutral frame is used for panels and important dialog buttons; interaction feedback is handled by native Godot text/icon states instead of changing the artwork.
 
-- `panel_standard.svg` — ordinary monochrome framed surfaces
-- `panel_emphasis.svg` — modal / important monochrome framed surfaces
-- `button_normal.svg` — neutral dialog button
-- `button_hover.svg` — brighter monochrome hover/focus state
-- `button_pressed.svg` — high-contrast monochrome pressed state
+Runtime file:
 
-Structural UI uses grayscale styling; gameplay/text semantics may still use accent colors where useful. The previous sci-fi skin is not used by the runtime.
+- `frame_original.svg` — original monochrome Kenney border geometry plus neutral transparent backing.
+
+Text remains native Godot Controls so typography color and animation stay independent from the frame artwork. The previous custom colored reconstructions are intentionally removed.
