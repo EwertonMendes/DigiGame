@@ -1,11 +1,14 @@
 extends Camera2D
 
+const GameInputBootstrapScript = preload("res://src/input/GameInputBootstrap.gd")
 const MIN_ZOOM := 0.65
 const MAX_ZOOM := 1.80
 const INITIAL_ZOOM := 0.90
 const ZOOM_STEP := 0.10
 const PAN_SPEED := 1.0
 const KEYBOARD_PAN_SPEED := 560.0
+const GAMEPAD_PAN_SPEED := 620.0
+const GAMEPAD_PAN_DEADZONE := 0.20
 const PAN_OVERSCROLL := Vector2(96.0, 64.0)
 const TOUCH_TAP_SLOP := 18.0
 const PINCH_MIN_DISTANCE := 24.0
@@ -27,6 +30,7 @@ var _shake_rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+	GameInputBootstrapScript.configure_gamepad_actions()
 	zoom = Vector2.ONE * INITIAL_ZOOM
 	_shake_rng.randomize()
 	get_viewport().size_changed.connect(_clamp_to_pan_bounds)
@@ -35,7 +39,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_handle_zoom()
-	_handle_keyboard_pan(delta)
+	_handle_manual_pan(delta)
 	_update_shake(delta)
 
 
@@ -43,6 +47,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		_handle_keyboard_zoom(event as InputEventKey)
 		return
+
+	if event is InputEventJoypadButton:
+		if _handle_gamepad_camera_button(event as InputEventJoypadButton):
+			return
 
 	if event is InputEventMouseButton:
 		var mouse_button := event as InputEventMouseButton
@@ -185,22 +193,62 @@ func _handle_keyboard_zoom(key_event: InputEventKey) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _handle_keyboard_pan(delta: float) -> void:
-	# Arrow keys/D-pad belong exclusively to UI focus navigation. Camera panning
-	# stays on WASD, right-mouse drag and touch gestures.
-	var direction := Vector2.ZERO
-	if Input.is_key_pressed(KEY_A):
-		direction.x -= 1.0
-	if Input.is_key_pressed(KEY_D):
-		direction.x += 1.0
-	if Input.is_key_pressed(KEY_W):
-		direction.y -= 1.0
-	if Input.is_key_pressed(KEY_S):
-		direction.y += 1.0
-	if direction == Vector2.ZERO:
+func _handle_gamepad_camera_button(button: InputEventJoypadButton) -> bool:
+	if not button.pressed:
+		return false
+	if button.button_index == JOY_BUTTON_LEFT_SHOULDER:
+		zoom_out()
+		get_viewport().set_input_as_handled()
+		return true
+	if button.button_index == JOY_BUTTON_RIGHT_SHOULDER:
+		zoom_in()
+		get_viewport().set_input_as_handled()
+		return true
+	return false
+
+
+func _handle_manual_pan(delta: float) -> void:
+	# Arrow keys, D-pad and left stick belong to navigation / battlefield cursor
+	# control. Camera panning uses WASD on keyboard and the right analog stick on
+	# standard gamepads, so both systems can be used independently.
+	var movement := Vector2.ZERO
+	var keyboard_direction := Vector2(
+		float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
+		float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W))
+	)
+	if keyboard_direction != Vector2.ZERO:
+		movement += keyboard_direction.normalized() * KEYBOARD_PAN_SPEED
+
+	var gamepad_direction := _strongest_right_stick()
+	if gamepad_direction != Vector2.ZERO:
+		movement += gamepad_direction * GAMEPAD_PAN_SPEED
+
+	if movement == Vector2.ZERO:
 		return
-	global_position += direction.normalized() * (KEYBOARD_PAN_SPEED * delta / zoom.x)
+	movement = movement.limit_length(maxf(KEYBOARD_PAN_SPEED, GAMEPAD_PAN_SPEED))
+	global_position += movement * delta / zoom.x
 	_clamp_to_pan_bounds()
+
+
+func _strongest_right_stick() -> Vector2:
+	var strongest := Vector2.ZERO
+	for device_variant in Input.get_connected_joypads():
+		var device := int(device_variant)
+		var candidate := Vector2(
+			Input.get_joy_axis(device, JOY_AXIS_RIGHT_X),
+			Input.get_joy_axis(device, JOY_AXIS_RIGHT_Y)
+		)
+		if candidate.length_squared() > strongest.length_squared():
+			strongest = candidate
+	var magnitude := strongest.length()
+	if magnitude <= GAMEPAD_PAN_DEADZONE:
+		return Vector2.ZERO
+	var strength := clampf(
+		(magnitude - GAMEPAD_PAN_DEADZONE) / (1.0 - GAMEPAD_PAN_DEADZONE),
+		0.0,
+		1.0
+	)
+	return strongest.normalized() * strength
 
 
 func _handle_screen_touch(touch: InputEventScreenTouch) -> void:
