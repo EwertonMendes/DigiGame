@@ -1,4 +1,4 @@
-extends "res://src/BattleHUDDomain.gd"
+extends "res://src/BattleHUDResultDomain.gd"
 
 const NAV_ICON_ROOT := "res://assets/ui/icons"
 const CombatPreviewArrowDecoratorScript = preload("res://src/ui/CombatPreviewArrowDecorator.gd")
