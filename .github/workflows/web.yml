@@ -12,74 +12,102 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: digigame-web-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   GODOT_VERSION: 4.7.2
+  PLAYWRIGHT_VERSION: 1.55.0
 
 jobs:
   build-web:
-    name: Build and browser smoke test
+    name: Validate and build Web
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
       - name: Validate vendored runtime assets
         shell: bash
         run: |
           set -euo pipefail
           python3 tools/validate_runtime_assets.py
-      - name: Install Godot and export templates
+
+      - name: Restore Godot toolchain cache
+        id: godot-toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/digigame-godot
+            ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-toolchain-${{ runner.os }}-${{ env.GODOT_VERSION }}
+
+      - name: Download Godot toolchain on cache miss
+        if: steps.godot-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euo pipefail
           GODOT_TAG="${GODOT_VERSION}-stable"
+          mkdir -p "$HOME/.cache/digigame-godot"
           curl -fL "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_linux.x86_64.zip" -o /tmp/godot.zip
           unzip -q /tmp/godot.zip -d /tmp/godot
-          chmod +x "/tmp/godot/Godot_v${GODOT_TAG}_linux.x86_64"
-          sudo mv "/tmp/godot/Godot_v${GODOT_TAG}_linux.x86_64" /usr/local/bin/godot
+          mv "/tmp/godot/Godot_v${GODOT_TAG}_linux.x86_64" "$HOME/.cache/digigame-godot/godot"
+          chmod +x "$HOME/.cache/digigame-godot/godot"
+
           curl -fL "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_export_templates.tpz" -o /tmp/templates.tpz
           rm -rf /tmp/godot-templates && mkdir -p /tmp/godot-templates
           unzip -q /tmp/templates.tpz -d /tmp/godot-templates
           mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
           cp -a /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
+
+      - name: Activate Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x "$HOME/.cache/digigame-godot/godot"
+          sudo ln -sf "$HOME/.cache/digigame-godot/godot" /usr/local/bin/godot
           godot --version
+
+      - name: Restore Godot import cache
+        uses: actions/cache@v4
+        with:
+          path: .godot
+          key: godot-import-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', '**/*.gd', '**/*.tscn', '**/*.tres', 'assets/**/*') }}
+          restore-keys: |
+            godot-import-${{ runner.os }}-${{ env.GODOT_VERSION }}-
+
       - name: Import and validate project
         shell: bash
         run: |
           set -euo pipefail
           godot --headless --path . --import 2>&1 | tee /tmp/godot-import.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing .*assets/characters' /tmp/godot-import.log; then exit 1; fi
-      - name: Validate tile-based Digimon selection
+
+      - name: Run headless gameplay regressions
         shell: bash
         run: |
           set -euo pipefail
           godot --headless --path . tools/test_tile_based_selection.tscn --quit-after 5 2>&1 | tee /tmp/tile-selection.log
           grep -q 'tile-based Digimon selection regression passed' /tmp/tile-selection.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/tile-selection.log; then exit 1; fi
-      - name: Validate isometric keyboard navigation
-        shell: bash
-        run: |
-          set -euo pipefail
+
           godot --headless --path . tools/test_isometric_keyboard_navigation.tscn --quit-after 5 2>&1 | tee /tmp/isometric-keyboard.log
           grep -q 'isometric keyboard navigation regression passed' /tmp/isometric-keyboard.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/isometric-keyboard.log; then exit 1; fi
-      - name: Validate overworld hub foundation
-        shell: bash
-        run: |
-          set -euo pipefail
+
           godot --headless --path . tools/test_hub_foundation.tscn --quit-after 8 2>&1 | tee /tmp/hub-foundation.log
           grep -q 'hub foundation regression passed' /tmp/hub-foundation.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/hub-foundation.log; then exit 1; fi
-      - name: Validate Digimon species database
+
+      - name: Validate game data
         shell: bash
         run: |
           set -euo pipefail
           python3 tools/enrich_digimon_database.py --check
-      - name: Validate combat data
-        shell: bash
-        run: |
-          set -euo pipefail
           python3 tools/validate_combat_data.py
+
       - name: Export Web build
         shell: bash
         run: |
@@ -88,41 +116,80 @@ jobs:
           godot --headless --path . --export-release Web build/web/index.html 2>&1 | tee /tmp/godot-export.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing ' /tmp/godot-export.log; then exit 1; fi
           test -s build/web/index.html && test -s build/web/index.wasm
-      - name: Prepare browser smoke test
+
+      - name: Upload Web build once
+        uses: actions/upload-artifact@v4
+        with:
+          name: digigame-web-build
+          path: build/web
+          if-no-files-found: error
+          retention-days: 7
+
+  browser-smoke:
+    name: Browser smoke · ${{ matrix.suite }}
+    needs: build-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - desktop
+          - combat
+          - mobile
+          - vfx
+    steps:
+      - name: Checkout test harness
+        uses: actions/checkout@v6
+
+      - name: Download tested Web build
+        uses: actions/download-artifact@v5
+        with:
+          name: digigame-web-build
+          path: build/web
+
+      - name: Restore npm download cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+
+      - name: Prepare Playwright
         shell: bash
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
         run: |
           set -euo pipefail
-          npm install --no-save playwright@1.55.0
+          npm install --no-save --ignore-scripts "playwright@${PLAYWRIGHT_VERSION}"
           google-chrome --version
-      - name: Run Web build in Chrome
+
+      - name: Run ${{ matrix.suite }} browser suite
         shell: bash
         env:
           CHROME_BIN: /usr/bin/google-chrome
+          SMOKE_SUITE: ${{ matrix.suite }}
         run: |
           set -euo pipefail
           python3 -m http.server 8000 --directory build/web >/tmp/digigame-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
-          node .github/scripts/web-smoke-test.mjs
-          node .github/scripts/submenu-navigation-smoke.mjs
-          node .github/scripts/combat-vfx-smoke.mjs
-      - name: Upload playable Web artifact
+          node .github/scripts/browser-smoke.mjs
+
+      - name: Upload ${{ matrix.suite }} diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: digigame-web
-          path: |
-            build/web
-            build/*.png
-            assets/characters/**/*.png
-            assets/characters/**/*.webp
-          if-no-files-found: error
-          retention-days: 14
+          name: smoke-${{ matrix.suite }}
+          path: build/*.png
+          if-no-files-found: warn
+          retention-days: 7
 
   deploy-pages:
     name: Deploy GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: build-web
+    needs:
+      - build-web
+      - browser-smoke
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -135,14 +202,14 @@ jobs:
       - name: Download tested Web build
         uses: actions/download-artifact@v5
         with:
-          name: digigame-web
+          name: digigame-web-build
           path: artifact
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: artifact/build/web
+          path: artifact
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
