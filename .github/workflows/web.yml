@@ -35,16 +35,16 @@ jobs:
           set -euo pipefail
           python3 tools/validate_runtime_assets.py
 
-      - name: Restore Godot toolchain cache
+      - name: Restore Godot Web toolchain cache
         id: godot-toolchain
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/digigame-godot
             ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
-          key: godot-toolchain-${{ runner.os }}-${{ env.GODOT_VERSION }}
+          key: godot-web-toolchain-v2-${{ runner.os }}-${{ env.GODOT_VERSION }}
 
-      - name: Download Godot toolchain on cache miss
+      - name: Download Godot Web toolchain on cache miss
         if: steps.godot-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
@@ -56,9 +56,12 @@ jobs:
           mv "/tmp/godot/Godot_v${GODOT_TAG}_linux.x86_64" "$HOME/.cache/digigame-godot/godot"
           chmod +x "$HOME/.cache/digigame-godot/godot"
 
+          # The project only exports Web. The official template archive contains
+          # every desktop/mobile platform, so caching all of it wastes restore
+          # time. Keep just Web templates plus the version marker Godot expects.
           curl -fL "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_export_templates.tpz" -o /tmp/templates.tpz
           rm -rf /tmp/godot-templates && mkdir -p /tmp/godot-templates
-          unzip -q /tmp/templates.tpz -d /tmp/godot-templates
+          unzip -q /tmp/templates.tpz 'templates/web*.zip' 'templates/version.txt' -d /tmp/godot-templates
           mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
           cp -a /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
 
@@ -163,7 +166,7 @@ jobs:
         run: |
           set -euo pipefail
           npm install --no-save --ignore-scripts "playwright@${PLAYWRIGHT_VERSION}"
-          google-chrome --version
+          test -x /usr/bin/google-chrome
 
       - name: Run ${{ matrix.suite }} browser suite
         shell: bash
