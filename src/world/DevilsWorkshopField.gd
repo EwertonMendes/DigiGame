@@ -37,7 +37,6 @@ func _generate_terrain() -> void:
 			add_child(block)
 
 	_build_perimeter_water()
-	_build_corner_beacons()
 	selectedTile = Vector2i(grid_to_world(Vector2i(GRID_SIZE_X / 2, GRID_SIZE_Y / 2)))
 
 
@@ -97,24 +96,6 @@ func _add_water_block(parent: Node2D, grid: Vector2i) -> void:
 	)
 	block.name = "Water_%02d_%02d" % [grid.x, grid.y]
 	parent.add_child(block)
-
-
-func _build_corner_beacons() -> void:
-	var beacons := Node2D.new()
-	beacons.name = "CornerBeacons"
-	add_child(beacons)
-	var anchors: Array[Vector2i] = [
-		Vector2i(-2, -1), Vector2i(GRID_SIZE_X + 1, -1),
-		Vector2i(-2, GRID_SIZE_Y), Vector2i(GRID_SIZE_X + 1, GRID_SIZE_Y),
-	]
-	for index in range(anchors.size()):
-		var top_center := grid_to_world(anchors[index]) + Vector2(0.0, 12.0)
-		var base := ART.create_block(ART.DATA_BLOCK, top_center, -80 + int(round(top_center.y)), DATA_TINT)
-		base.name = "BeaconBase%02d" % index
-		beacons.add_child(base)
-		var cap := ART.create_block(ART.WARM_BLOCK, top_center, -78 + int(round(top_center.y)), ROUTE_TINT, 1)
-		cap.name = "BeaconCap%02d" % index
-		beacons.add_child(cap)
 
 
 func _create_board_foundation() -> void:
