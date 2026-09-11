@@ -6,14 +6,22 @@ signal world_position_changed(world_position: Vector2)
 const FRAME_COLUMNS := 3
 const FRAME_ROWS := 4
 const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
+const WALK_FRAME_DURATION := 0.10
 const FACING_ROWS := {
 	"down_left": 0,
 	"down_right": 1,
 	"up_left": 2,
 	"up_right": 3,
 }
+const FACING_VECTORS := {
+	"down_left": Vector2(-2.0, 1.0),
+	"down_right": Vector2(2.0, 1.0),
+	"up_left": Vector2(-2.0, -1.0),
+	"up_right": Vector2(2.0, -1.0),
+}
 const BASE_SPRITE_POSITION := Vector2(0.0, -32.0)
 const INPUT_DEADZONE := 0.18
+const FACING_TIE_EPSILON := 0.001
 
 var is_player_controlled := false
 var movement_enabled := true
@@ -23,8 +31,10 @@ var facing_direction := "down_left"
 var _world_controller: Node = null
 var _texture: Texture2D = null
 var _sprite: Sprite2D = null
-var _animation_time := 0.0
+var _idle_time := 0.0
+var _walk_time := 0.0
 var _animation_frame := 0
+var _was_walking := false
 var _touch_direction := Vector2.ZERO
 
 
@@ -61,23 +71,32 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_animation_time += delta
+	_idle_time += delta
 	if not is_player_controlled:
 		_update_idle_pose()
 		return
 
 	var direction := _movement_input() if movement_enabled else Vector2.ZERO
-	if direction.length_squared() > INPUT_DEADZONE * INPUT_DEADZONE:
+	var has_movement_input := direction.length_squared() > INPUT_DEADZONE * INPUT_DEADZONE
+	var facing_changed := false
+	if has_movement_input:
 		direction = direction.normalized()
 		velocity = velocity.move_toward(direction * move_speed, 900.0 * delta)
-		_face_direction(direction)
-		_advance_walk_animation()
+		facing_changed = _face_direction(direction)
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, 1100.0 * delta)
-		_animation_frame = 0
+
+	var is_walking := velocity.length_squared() > 1.0
+	if is_walking:
+		if not _was_walking or facing_changed:
+			_reset_walk_cycle()
+		_advance_walk_animation(delta)
+	else:
+		_reset_walk_cycle()
 		_update_frame(false)
 
-	if velocity.length_squared() > 1.0:
+	_was_walking = is_walking
+	if is_walking:
 		_try_move(velocity * delta)
 	_update_depth()
 
@@ -90,7 +109,7 @@ func set_facing(direction_name: String) -> void:
 	if not FACING_ROWS.has(direction_name):
 		return
 	facing_direction = direction_name
-	_animation_frame = 0
+	_reset_walk_cycle()
 	_update_frame(false)
 
 
@@ -128,30 +147,55 @@ func _can_move_to(candidate: Vector2) -> bool:
 	return bool(_world_controller.call("can_actor_move_to", candidate, self))
 
 
-func _face_direction(direction: Vector2) -> void:
+func _face_direction(direction: Vector2) -> bool:
 	if direction.length_squared() <= INPUT_DEADZONE * INPUT_DEADZONE:
-		return
-	var horizontal := "right" if direction.x >= 0.0 else "left"
-	var vertical := "down" if direction.y >= -0.05 else "up"
-	if absf(direction.x) < 0.08:
-		horizontal = "right" if facing_direction.ends_with("right") else "left"
-	var next_facing := "%s_%s" % [vertical, horizontal]
-	if next_facing != facing_direction:
-		facing_direction = next_facing
-		_animation_frame = 0
+		return false
+
+	var next_facing := facing_direction
+	var best_score := -1.0e20
+	for candidate_key in FACING_VECTORS:
+		var candidate := String(candidate_key)
+		var facing_vector: Vector2 = FACING_VECTORS[candidate]
+		var score := direction.dot(facing_vector)
+		if score > best_score + FACING_TIE_EPSILON:
+			best_score = score
+			next_facing = candidate
+		elif absf(score - best_score) <= FACING_TIE_EPSILON:
+			if _facing_retention_score(candidate) > _facing_retention_score(next_facing):
+				next_facing = candidate
+
+	if next_facing == facing_direction:
+		return false
+	facing_direction = next_facing
+	return true
 
 
-func _advance_walk_animation() -> void:
-	var sequence_index := int(floor(_animation_time * 10.0)) % WALK_SEQUENCE.size()
+func _facing_retention_score(candidate: String) -> int:
+	var score := 0
+	if candidate.begins_with("down") == facing_direction.begins_with("down"):
+		score += 1
+	if candidate.ends_with("left") == facing_direction.ends_with("left"):
+		score += 1
+	return score
+
+
+func _reset_walk_cycle() -> void:
+	_walk_time = 0.0
+	_animation_frame = 0
+
+
+func _advance_walk_animation(delta: float) -> void:
+	_walk_time += delta
+	var sequence_index := int(floor(_walk_time / WALK_FRAME_DURATION)) % WALK_SEQUENCE.size()
 	_animation_frame = WALK_SEQUENCE[sequence_index]
 	_update_frame(true)
 
 
 func _update_idle_pose() -> void:
-	_animation_frame = 0
+	_reset_walk_cycle()
 	_update_frame(false)
 	if _sprite != null:
-		_sprite.position = BASE_SPRITE_POSITION + Vector2(0.0, sin(_animation_time * 2.1) * 0.7)
+		_sprite.position = BASE_SPRITE_POSITION + Vector2(0.0, sin(_idle_time * 2.1) * 0.7)
 
 
 func _update_frame(walking: bool) -> void:
