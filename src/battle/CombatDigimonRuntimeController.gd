@@ -15,6 +15,7 @@ func _spawn_demo_rosters() -> void:
 	if field == null or not field.has_method("grid_to_world"):
 		super._spawn_demo_rosters()
 		_prepare_existing_actors_for_intro()
+		orient_battle_actors_toward_opponents()
 		return
 
 	var player_candidates := _spawn_zone_candidates(field, true)
@@ -39,6 +40,10 @@ func _spawn_demo_rosters() -> void:
 		var instance: DigimonInstance = _factory.create_enemy_by_name(species_name, level, profile)
 		var actor := _spawn_instance_in_zone(instance, false, enemy_candidates, field)
 		_prepare_actor_for_intro(actor, field)
+
+	# Initial facing is only authoritative after both teams have been created.
+	# Face each actor toward a real opponent rather than a fixed screen direction.
+	orient_battle_actors_toward_opponents()
 
 
 func _spawn_instance_in_zone(instance: DigimonInstance, player_controlled: bool, candidates: Array[Vector2i], field: Node2D) -> CharacterBody2D:
@@ -100,6 +105,8 @@ func _shuffle_grids(grids: Array[Vector2i]) -> void:
 func _prepare_actor_for_intro(actor: CharacterBody2D, field: Node2D) -> void:
 	if actor == null:
 		return
+	# Center-facing is only a temporary fallback while the opposite roster may not
+	# exist yet. A second pass below replaces it with nearest-opponent facing.
 	if actor.has_method("face_toward_world_position"):
 		actor.call("face_toward_world_position", field.to_global(Vector2.ZERO))
 	# Only the real battle scene owns the cinematic opening. Isolated controller
@@ -116,6 +123,43 @@ func _prepare_existing_actors_for_intro() -> void:
 	for actor: Node in get_battle_digimons():
 		if actor is CharacterBody2D:
 			_prepare_actor_for_intro(actor as CharacterBody2D, field)
+
+
+func orient_battle_actors_toward_opponents() -> void:
+	for actor: Node in get_battle_digimons():
+		face_actor_toward_nearest_opponent(actor)
+
+
+func face_actor_toward_nearest_opponent(actor: Node) -> void:
+	if actor == null or not is_instance_valid(actor) or not actor is Node2D:
+		return
+	if not actor.has_method("face_toward_world_position"):
+		return
+
+	var actor_2d := actor as Node2D
+	var actor_team := bool(actor.get("is_player_controlled"))
+	var nearest: Node2D = null
+	var nearest_distance := INF
+	for candidate: Node in get_battle_digimons():
+		if candidate == actor or not candidate is Node2D:
+			continue
+		if bool(candidate.get("is_player_controlled")) == actor_team:
+			continue
+		if candidate.has_method("is_available_for_turn") and not bool(candidate.call("is_available_for_turn")):
+			continue
+		var candidate_2d := candidate as Node2D
+		var distance := actor_2d.global_position.distance_squared_to(candidate_2d.global_position)
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest = candidate_2d
+
+	if nearest != null:
+		actor.call("face_toward_world_position", nearest.global_position)
+		return
+
+	var field := get_node_or_null("../Blocks") as Node2D
+	if field != null:
+		actor.call("face_toward_world_position", field.to_global(Vector2.ZERO))
 
 
 func get_digimon_at_tile(tile_world_position: Vector2, ignored_digimon: Node = null) -> Node:
