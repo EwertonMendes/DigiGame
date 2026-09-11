@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://src/world/HubProgressionGameplay.gd" id="1_hub"]
+[ext_resource type="Script" path="res://src/world/HubDigitalTransition.gd" id="1_hub"]
 [ext_resource type="Script" path="res://src/world/HubPartyFollowers.gd" id="2_party"]
 
 [node name="Hub" type="Node2D"]
