@@ -4,34 +4,66 @@ class_name HubActor
 signal world_position_changed(world_position: Vector2)
 
 const FRAME_COLUMNS := 3
-const FRAME_ROWS := 4
+const FRAME_ROWS := 5
 const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
 const WALK_FRAME_DURATION := 0.10
-# The Dawn/Dusk overworld sheet is ordered by screen-facing direction:
-# row 0 = down, row 1 = left, row 2 = right, row 3 = up.
-# The isometric perspective is already baked into the artwork itself.
-const FACING_ROWS := {
-	"down": 0,
-	"left": 1,
-	"right": 2,
-	"up": 3,
-}
-# Keep compatibility with the names used by the first hub implementation.
-# These aliases map by the original row number, not by their old semantic name.
-const LEGACY_FACING_ALIASES := {
-	"down_left": "down",
-	"down_right": "left",
-	"up_left": "right",
-	"up_right": "up",
-}
-const BASE_SPRITE_POSITION := Vector2(0.0, -32.0)
 const INPUT_DEADZONE := 0.18
-const FACING_AXIS_EPSILON := 0.04
+const FACING_TIE_EPSILON := 0.0001
+const BASE_SPRITE_POSITION := Vector2(0.0, -32.0)
+
+# The supplied Dawn/Dusk trainer sheet contains five authored directions:
+# south, southwest, west, northwest and north. The remaining three directions
+# are their horizontal mirrors, giving a complete eight-direction walk set.
+const FACING_ROWS := {
+	"south": 0,
+	"southwest": 1,
+	"west": 2,
+	"northwest": 3,
+	"north": 4,
+	"northeast": 3,
+	"east": 2,
+	"southeast": 1,
+}
+const FACING_FLIP_H := {
+	"south": false,
+	"southwest": false,
+	"west": false,
+	"northwest": false,
+	"north": false,
+	"northeast": true,
+	"east": true,
+	"southeast": true,
+}
+const FACING_VECTORS := {
+	"east": Vector2(1.0, 0.0),
+	"southeast": Vector2(0.70710678, 0.70710678),
+	"south": Vector2(0.0, 1.0),
+	"southwest": Vector2(-0.70710678, 0.70710678),
+	"west": Vector2(-1.0, 0.0),
+	"northwest": Vector2(-0.70710678, -0.70710678),
+	"north": Vector2(0.0, -1.0),
+	"northeast": Vector2(0.70710678, -0.70710678),
+}
+
+# Compatibility for the names used by the first hub implementation. Those
+# names were based on the old, incorrect four-row crop, so they intentionally
+# preserve the visual direction that code expected rather than their literal
+# text meaning.
+const LEGACY_FACING_ALIASES := {
+	"down": "south",
+	"left": "west",
+	"right": "east",
+	"up": "north",
+	"down_left": "south",
+	"down_right": "west",
+	"up_left": "east",
+	"up_right": "north",
+}
 
 var is_player_controlled := false
 var movement_enabled := true
 var move_speed := 150.0
-var facing_direction := "down"
+var facing_direction := "south"
 
 var _world_controller: Node = null
 var _texture: Texture2D = null
@@ -164,22 +196,18 @@ func _face_direction(direction: Vector2) -> bool:
 	if direction.length_squared() <= INPUT_DEADZONE * INPUT_DEADZONE:
 		return false
 
-	var horizontal_facing := "right" if direction.x >= 0.0 else "left"
-	var vertical_facing := "down" if direction.y >= 0.0 else "up"
-	var horizontal_strength := absf(direction.x)
-	var vertical_strength := absf(direction.y)
+	var normalized_direction := direction.normalized()
 	var next_facing := facing_direction
-
-	if horizontal_strength > vertical_strength + FACING_AXIS_EPSILON:
-		next_facing = horizontal_facing
-	elif vertical_strength > horizontal_strength + FACING_AXIS_EPSILON:
-		next_facing = vertical_facing
-	else:
-		# For a true/near diagonal, retain the current compatible side to avoid
-		# rapid sprite flipping with analog input. Otherwise prefer horizontal,
-		# which matches how the isometric side-facing poses read on screen.
-		if facing_direction != horizontal_facing and facing_direction != vertical_facing:
-			next_facing = horizontal_facing
+	var best_score := -1.0e20
+	for candidate_key in FACING_VECTORS:
+		var candidate := String(candidate_key)
+		var candidate_vector: Vector2 = FACING_VECTORS[candidate]
+		var score := normalized_direction.dot(candidate_vector)
+		if score > best_score + FACING_TIE_EPSILON:
+			best_score = score
+			next_facing = candidate
+		elif absf(score - best_score) <= FACING_TIE_EPSILON and candidate == facing_direction:
+			next_facing = candidate
 
 	if next_facing == facing_direction:
 		return false
@@ -211,6 +239,7 @@ func _update_frame(walking: bool) -> void:
 		return
 	var row := int(FACING_ROWS.get(facing_direction, 0))
 	_sprite.frame = row * FRAME_COLUMNS + _animation_frame
+	_sprite.flip_h = bool(FACING_FLIP_H.get(facing_direction, false))
 	if walking:
 		_sprite.position = BASE_SPRITE_POSITION
 

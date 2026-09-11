@@ -8,8 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_BLOBS = {
-    "assets/characters/world/battle_operator_purple.png": "ff9de9d88ead435dedffe5f32de7b6d75dc00093",
-    "assets/characters/world/player_blond.png": "ea8b21d71e4dcca941ed6ce22694446e618e87b0",
+    "assets/characters/world/battle_operator_purple.png": "4bb1ca417d2885373179952694a7a722d7545043",
+    "assets/characters/world/player_blond.png": "3ced6f70dec3fb4aadbd6ffcb37cd27a436eb86a",
     "assets/world/hawkbirdtree/crate.png": "9f9f7b54fcc69f3765789aac1e00ee8357ec846c",
     "assets/world/hawkbirdtree/flowers_purple.png": "b7b16a90cfb30210d1cb1021aacaa259c70153fe",
     "assets/world/hawkbirdtree/flowers_red.png": "90c556ac4870357a62ffabad9902ea823217e738",
