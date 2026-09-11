@@ -22,7 +22,7 @@ static func configure_gamepad_actions() -> void:
 	_ensure_axis("ui_down", JOY_AXIS_LEFT_Y, 1.0)
 
 
-static func _ensure_button(action_name: StringName, button_index: JoyButton) -> void:
+static func _ensure_button(action_name: StringName, button_index: int) -> void:
 	_ensure_action(action_name)
 	var event := InputEventJoypadButton.new()
 	event.device = -1
@@ -31,7 +31,7 @@ static func _ensure_button(action_name: StringName, button_index: JoyButton) -> 
 		InputMap.action_add_event(action_name, event)
 
 
-static func _ensure_axis(action_name: StringName, axis: JoyAxis, axis_value: float) -> void:
+static func _ensure_axis(action_name: StringName, axis: int, axis_value: float) -> void:
 	_ensure_action(action_name)
 	var event := InputEventJoypadMotion.new()
 	event.device = -1
