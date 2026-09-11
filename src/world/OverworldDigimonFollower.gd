@@ -7,8 +7,12 @@ const DIRECTION_FRAME_BASE := {
 	"up_left": 6,
 	"up_right": 9,
 }
-const WALK_SEQUENCE: Array[int] = [0, 1, 2]
-const WALK_FRAME_DURATION := 0.12
+# The normalized DS sheets use the first frame of each direction as the neutral
+# pose and the other two as opposite walk steps. Returning through the neutral
+# frame makes the overworld walk read clearly instead of snapping 0 -> 1 -> 2.
+const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
+const WALK_FRAME_DURATION := 0.10
+const WALK_STOP_GRACE := 0.14
 const FOLLOW_SPEED := 215.0
 const ARRIVAL_DISTANCE := 2.0
 const MIN_SEPARATION := 40.0
@@ -23,10 +27,10 @@ const SPACED_9_IDLE_FRAME := {
 	"up_right": 1,
 }
 const SPACED_9_WALK_SEQUENCE := {
-	"down_left": [3, 4, 3],
-	"down_right": [5, 4, 5],
-	"up_left": [0, 1, 2],
-	"up_right": [0, 1, 2],
+	"down_left": [3, 4, 3, 4],
+	"down_right": [5, 4, 5, 4],
+	"up_left": [0, 1, 2, 1],
+	"up_right": [0, 1, 2, 1],
 }
 const SPACED_9_FLIP_H := {
 	"down_left": false,
@@ -46,6 +50,7 @@ var _sprite: Sprite2D = null
 var _walk_time := 0.0
 var _walk_sequence_index := 0
 var _walking := false
+var _stationary_time := 0.0
 
 
 func configure(digimon: Digimon, key: String, party_slot: int) -> void:
@@ -78,6 +83,7 @@ func teleport_to(world_position: Vector2, initial_facing: String = "up_right") -
 	_walk_time = 0.0
 	_walk_sequence_index = 0
 	_walking = false
+	_stationary_time = 0.0
 	_show_idle_frame()
 	_update_depth()
 
@@ -85,34 +91,48 @@ func teleport_to(world_position: Vector2, initial_facing: String = "up_right") -
 func step_toward(target_position: Vector2, delta: float, separation_points: Array[Vector2]) -> bool:
 	var offset := target_position - global_position
 	if offset.length() <= ARRIVAL_DISTANCE:
-		set_idle()
+		_settle_from_motion(delta)
 		return false
 
 	var candidate := global_position.move_toward(target_position, FOLLOW_SPEED * delta)
 	if not _has_safe_separation(candidate, separation_points):
-		set_idle()
+		_settle_from_motion(delta)
 		return false
 
 	var previous_position := global_position
 	global_position = candidate
 	var movement := global_position - previous_position
 	if movement.length_squared() > 0.0001:
+		_stationary_time = 0.0
 		_face_motion(movement)
 		_advance_walk_animation(delta)
 		_update_depth()
 		return true
 
-	set_idle()
+	_settle_from_motion(delta)
 	return false
 
 
 func set_idle() -> void:
-	if not _walking and _walk_sequence_index == 0:
-		return
 	_walking = false
+	_stationary_time = 0.0
 	_walk_time = 0.0
 	_walk_sequence_index = 0
 	_show_idle_frame()
+
+
+func _settle_from_motion(delta: float) -> void:
+	if not _walking:
+		return
+	_stationary_time += delta
+	if _stationary_time < WALK_STOP_GRACE:
+		# Trail samples are intentionally sparse. A follower can reach the latest
+		# sample for a frame or two while the leader is still walking; keep the
+		# locomotion phase alive through that tiny gap instead of flashing back to
+		# the idle frame on every sample boundary.
+		_advance_walk_animation(delta)
+		return
+	set_idle()
 
 
 func _apply_digimon_visuals() -> void:
@@ -140,15 +160,18 @@ func _face_motion(motion: Vector2) -> void:
 	if next_facing == facing_direction:
 		return
 	facing_direction = next_facing
-	_walk_time = 0.0
-	_walk_sequence_index = 0
+	# Direction changes must not restart the feet at frame zero. Preserving the
+	# locomotion phase avoids the apparent frozen pose when a curved trail makes
+	# the facing direction alternate around a diagonal threshold.
+	if _walking:
+		_show_walk_frame()
 
 
 func _advance_walk_animation(delta: float) -> void:
 	_walking = true
 	_walk_time += delta
-	if _walk_time >= WALK_FRAME_DURATION:
-		_walk_time = fmod(_walk_time, WALK_FRAME_DURATION)
+	while _walk_time >= WALK_FRAME_DURATION:
+		_walk_time -= WALK_FRAME_DURATION
 		_walk_sequence_index = (_walk_sequence_index + 1) % WALK_SEQUENCE.size()
 	_show_walk_frame()
 
@@ -169,7 +192,7 @@ func _show_walk_frame() -> void:
 	if _sprite == null or _digimon == null:
 		return
 	if _digimon.sprite_layout == "spaced_9_32":
-		var sequence: Array = SPACED_9_WALK_SEQUENCE.get(facing_direction, [3, 4, 3])
+		var sequence: Array = SPACED_9_WALK_SEQUENCE.get(facing_direction, [3, 4, 3, 4])
 		var frame_index := int(sequence[_walk_sequence_index % sequence.size()])
 		_show_spaced_9_frame(frame_index)
 		return
