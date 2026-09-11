@@ -1,9 +1,8 @@
 extends RefCounted
 class_name TacticalTheme
 
-# DigiGame visual language: deep indigo surfaces, electric blue / sky highlights
-# and warm orange for decisive actions. Violet and mint are reserved for
-# secondary state so the interface stays colorful without turning noisy.
+# Monochrome UI surfaces. Accent colors are kept for text and gameplay meaning
+# only; frames, buttons and structural chrome stay black/white/gray.
 const CYAN: Color = Color(0.38, 0.79, 0.97, 1.0)
 const BLUE: Color = Color(0.31, 0.47, 1.0, 1.0)
 const RED: Color = Color(1.0, 0.40, 0.49, 1.0)
@@ -12,16 +11,15 @@ const PURPLE: Color = Color(0.60, 0.49, 1.0, 1.0)
 const GREEN: Color = Color(0.39, 0.86, 0.61, 1.0)
 const GOLD: Color = Color(1.0, 0.69, 0.29, 1.0)
 const TEXT: Color = Color(0.96, 0.97, 1.0, 1.0)
-const MUTED: Color = Color(0.68, 0.71, 0.81, 1.0)
-const SUBTLE: Color = Color(0.45, 0.49, 0.61, 1.0)
-const BASE: Color = Color(0.063, 0.078, 0.149, 0.94)
-const BASE_SOFT: Color = Color(0.090, 0.114, 0.212, 0.94)
-const GLASS: Color = Color(0.078, 0.102, 0.188, 0.88)
-const GLASS_LIGHT: Color = Color(0.133, 0.169, 0.294, 0.94)
-const DISABLED: Color = Color(0.24, 0.27, 0.38, 1.0)
+const MUTED: Color = Color(0.72, 0.73, 0.77, 1.0)
+const SUBTLE: Color = Color(0.53, 0.54, 0.58, 1.0)
+const BASE: Color = Color(0.015, 0.017, 0.022, 0.82)
+const BASE_SOFT: Color = Color(0.028, 0.030, 0.038, 0.78)
+const GLASS: Color = Color(0.018, 0.020, 0.026, 0.70)
+const GLASS_LIGHT: Color = Color(0.11, 0.11, 0.12, 0.74)
+const DISABLED: Color = Color(0.27, 0.28, 0.30, 1.0)
 
-# Keep the platform/default sans-serif. It stays readable at small physical
-# sizes and avoids forcing the decorative border style into typography too.
+
 static func body_font() -> Font:
 	return null
 
@@ -83,49 +81,39 @@ static func font_px(viewport: Viewport, value: float) -> int:
 	return maxi(1, int(round(value * ui_scale(viewport))))
 
 
-static func panel(accent: Color = BLUE, fill_alpha: float = 0.90, border_alpha: float = 0.26, radius: int = 8, shadow: int = 3) -> StyleBoxFlat:
+static func panel(_accent: Color = BLUE, fill_alpha: float = 0.76, border_alpha: float = 0.24, radius: int = 8, _shadow: int = 0) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	var bg := BASE
-	bg.a = fill_alpha
-	style.bg_color = bg
-	style.border_color = Color(accent.r, accent.g, accent.b, minf(border_alpha, 0.46))
+	style.bg_color = Color(BASE.r, BASE.g, BASE.b, fill_alpha)
+	style.border_color = Color(1.0, 1.0, 1.0, minf(border_alpha, 0.34))
 	style.set_border_width_all(1)
 	style.corner_radius_top_left = radius
 	style.corner_radius_top_right = radius
 	style.corner_radius_bottom_left = radius
 	style.corner_radius_bottom_right = radius
-	style.shadow_color = Color(0.01, 0.015, 0.04, 0.34)
-	style.shadow_size = mini(shadow, 4)
-	style.shadow_offset = Vector2(0.0, 2.0)
+	style.shadow_size = 0
 	return style
 
 
-static func glass_panel(accent: Color = BLUE, fill_alpha: float = 0.86, radius: int = 7) -> StyleBoxFlat:
+static func glass_panel(_accent: Color = BLUE, fill_alpha: float = 0.70, radius: int = 7) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	var bg := GLASS
-	bg.a = fill_alpha
-	style.bg_color = bg
-	style.border_color = Color(accent.r, accent.g, accent.b, 0.24)
+	style.bg_color = Color(GLASS.r, GLASS.g, GLASS.b, fill_alpha)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.20)
 	style.set_border_width_all(1)
 	style.corner_radius_top_left = radius
 	style.corner_radius_top_right = radius
 	style.corner_radius_bottom_left = radius
 	style.corner_radius_bottom_right = radius
-	style.shadow_color = Color(0.01, 0.015, 0.04, 0.30)
-	style.shadow_size = 3
-	style.shadow_offset = Vector2(0.0, 2.0)
+	style.shadow_size = 0
 	return style
 
 
-static func ribbon(accent: Color = GOLD, fill_alpha: float = 0.76) -> StyleBoxFlat:
+static func ribbon(_accent: Color = GOLD, fill_alpha: float = 0.64) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	var bg := BASE_SOFT
-	bg.a = fill_alpha
-	style.bg_color = bg
-	style.border_color = Color(accent.r, accent.g, accent.b, 0.30)
-	style.border_width_bottom = 2
-	style.corner_radius_top_left = 7
-	style.corner_radius_top_right = 7
+	style.bg_color = Color(BASE_SOFT.r, BASE_SOFT.g, BASE_SOFT.b, fill_alpha)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.18)
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
 	style.corner_radius_bottom_left = 3
 	style.corner_radius_bottom_right = 3
 	style.content_margin_left = 12.0
@@ -133,22 +121,22 @@ static func ribbon(accent: Color = GOLD, fill_alpha: float = 0.76) -> StyleBoxFl
 	return style
 
 
-static func panel_strong(accent: Color = BLUE, radius: int = 9) -> StyleBoxFlat:
-	var style := glass_panel(accent, 0.94, radius)
-	style.border_color = Color(accent.r, accent.g, accent.b, 0.64)
-	style.set_border_width_all(2)
+static func panel_strong(_accent: Color = BLUE, radius: int = 9) -> StyleBoxFlat:
+	var style := glass_panel(Color.WHITE, 0.78, radius)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.48)
+	style.set_border_width_all(1)
 	return style
 
 
-static func pill(accent: Color, alpha: float = 0.14) -> StyleBoxFlat:
+static func pill(_accent: Color, alpha: float = 0.10) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(accent.r, accent.g, accent.b, alpha)
-	style.border_color = Color(accent.r, accent.g, accent.b, 0.38)
+	style.bg_color = Color(0.0, 0.0, 0.0, clampf(alpha + 0.20, 0.24, 0.42))
+	style.border_color = Color(1.0, 1.0, 1.0, 0.26)
 	style.set_border_width_all(1)
-	style.corner_radius_top_left = 9
-	style.corner_radius_top_right = 9
-	style.corner_radius_bottom_left = 9
-	style.corner_radius_bottom_right = 9
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
 	style.content_margin_left = 9.0
 	style.content_margin_right = 9.0
 	style.content_margin_top = 4.0
@@ -156,31 +144,26 @@ static func pill(accent: Color, alpha: float = 0.14) -> StyleBoxFlat:
 	return style
 
 
-# Command rows stay deliberately understated. The ornate Kenney-derived frames
-# are reserved for large surfaces and dialog actions, so the command rail can
-# remain dense, readable and free from edge collisions.
-static func command_style(accent: Color, state: String = "normal", compact: bool = false) -> StyleBoxFlat:
+static func command_style(_accent: Color, state: String = "normal", compact: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	var bg := Color(GLASS.r, GLASS.g, GLASS.b, 0.16)
-	var edge := Color(accent.r, accent.g, accent.b, 0.0)
-	var edge_width := 3
+	var bg := Color(0.0, 0.0, 0.0, 0.10)
+	var edge := Color(1.0, 1.0, 1.0, 0.0)
 	match state:
 		"hover", "focus":
-			bg = Color(BLUE.r, BLUE.g, BLUE.b, 0.15)
-			edge = Color(accent.r, accent.g, accent.b, 0.84)
+			bg = Color(1.0, 1.0, 1.0, 0.07)
+			edge = Color(1.0, 1.0, 1.0, 0.72)
 		"pressed", "selected":
-			bg = Color(accent.r, accent.g, accent.b, 0.22)
-			edge = Color(accent.r, accent.g, accent.b, 0.96)
+			bg = Color(1.0, 1.0, 1.0, 0.13)
+			edge = Color(1.0, 1.0, 1.0, 0.96)
 		"disabled":
-			bg = Color(GLASS.r, GLASS.g, GLASS.b, 0.08)
-			edge = Color(1.0, 1.0, 1.0, 0.0)
+			bg = Color(0.0, 0.0, 0.0, 0.04)
 	style.bg_color = bg
 	style.border_color = edge
-	style.border_width_left = edge_width
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 6
+	style.border_width_left = 2
+	style.corner_radius_top_left = 3
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 3
+	style.corner_radius_bottom_right = 4
 	style.content_margin_left = 14.0 if not compact else 11.0
 	style.content_margin_right = 12.0
 	style.content_margin_top = 8.0
@@ -188,11 +171,11 @@ static func command_style(accent: Color, state: String = "normal", compact: bool
 	return style
 
 
-static func focus_outline(accent: Color = CYAN, radius: int = 7) -> StyleBoxFlat:
+static func focus_outline(_accent: Color = CYAN, radius: int = 7) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
-	style.border_color = Color(accent.r, accent.g, accent.b, 0.94)
-	style.set_border_width_all(2)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.92)
+	style.set_border_width_all(1)
 	style.corner_radius_top_left = radius
 	style.corner_radius_top_right = radius
 	style.corner_radius_bottom_left = radius
@@ -204,55 +187,48 @@ static func focus_outline(accent: Color = CYAN, radius: int = 7) -> StyleBoxFlat
 	return style
 
 
-static func turn_node_style(accent: Color, current: bool, state: String = "normal") -> StyleBoxFlat:
+static func turn_node_style(_accent: Color, current: bool, state: String = "normal") -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	var alpha := 0.93 if current else 0.76
-	style.bg_color = Color(BASE_SOFT.r, BASE_SOFT.g, BASE_SOFT.b, alpha)
-	var border_alpha := 0.90 if current else 0.34
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.72 if current else 0.48)
+	var border_alpha := 0.82 if current else 0.24
 	if state == "hover" or state == "focus":
-		style.bg_color = Color(GLASS_LIGHT.r, GLASS_LIGHT.g, GLASS_LIGHT.b, 0.96)
-		border_alpha = 0.95
+		style.bg_color = Color(1.0, 1.0, 1.0, 0.08)
+		border_alpha = 0.92
 	elif state == "pressed":
-		style.bg_color = Color(accent.r, accent.g, accent.b, 0.24)
+		style.bg_color = Color(1.0, 1.0, 1.0, 0.12)
 		border_alpha = 1.0
-	style.border_color = Color(accent.r, accent.g, accent.b, border_alpha)
-	style.set_border_width_all(2 if current else 1)
-	var radius := 13 if current else 10
+	style.border_color = Color(1.0, 1.0, 1.0, border_alpha)
+	style.set_border_width_all(1)
+	var radius := 12 if current else 10
 	style.corner_radius_top_left = radius
 	style.corner_radius_top_right = radius
 	style.corner_radius_bottom_left = radius
 	style.corner_radius_bottom_right = radius
-	style.shadow_color = Color(0.01, 0.015, 0.04, 0.30)
-	style.shadow_size = 3 if current else 1
-	style.shadow_offset = Vector2(0.0, 2.0)
+	style.shadow_size = 0
 	return style
 
 
-# Secondary/context controls use a restrained colored edge. Major dialog buttons
-# receive the Kenney-derived texture at runtime.
-static func action_style(accent: Color, state: String = "normal") -> StyleBoxFlat:
+static func action_style(_accent: Color, state: String = "normal") -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	var bg := Color(BASE_SOFT.r, BASE_SOFT.g, BASE_SOFT.b, 0.86)
-	var border := Color(accent.r, accent.g, accent.b, 0.26)
-	var border_width := 1
+	var bg := Color(0.0, 0.0, 0.0, 0.50)
+	var border := Color(1.0, 1.0, 1.0, 0.20)
 	match state:
 		"hover", "focus":
-			bg = Color(BLUE.r, BLUE.g, BLUE.b, 0.16)
-			border = Color(accent.r, accent.g, accent.b, 0.72)
+			bg = Color(1.0, 1.0, 1.0, 0.08)
+			border = Color(1.0, 1.0, 1.0, 0.72)
 		"pressed", "selected":
-			bg = Color(accent.r, accent.g, accent.b, 0.22)
-			border = Color(accent.r, accent.g, accent.b, 0.94)
-			border_width = 2
+			bg = Color(1.0, 1.0, 1.0, 0.14)
+			border = Color(1.0, 1.0, 1.0, 0.94)
 		"disabled":
-			bg = Color(GLASS.r, GLASS.g, GLASS.b, 0.30)
-			border = Color(0.45, 0.48, 0.58, 0.10)
+			bg = Color(0.0, 0.0, 0.0, 0.24)
+			border = Color(1.0, 1.0, 1.0, 0.08)
 	style.bg_color = bg
 	style.border_color = border
-	style.set_border_width_all(border_width)
-	style.corner_radius_top_left = 7
-	style.corner_radius_top_right = 7
-	style.corner_radius_bottom_left = 7
-	style.corner_radius_bottom_right = 7
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
 	style.content_margin_left = 12.0
 	style.content_margin_right = 12.0
 	style.content_margin_top = 8.0
@@ -260,8 +236,8 @@ static func action_style(accent: Color, state: String = "normal") -> StyleBoxFla
 	return style
 
 
-static func separator(accent: Color = BLUE, alpha: float = 0.22) -> Color:
-	return Color(accent.r, accent.g, accent.b, alpha)
+static func separator(_accent: Color = BLUE, alpha: float = 0.20) -> Color:
+	return Color(1.0, 1.0, 1.0, alpha)
 
 
 static func rank_color(rank: String) -> Color:
