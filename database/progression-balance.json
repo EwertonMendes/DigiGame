@@ -1,0 +1,60 @@
+{
+  "maxLevel": 99,
+  "experience": {
+    "base": 18.0,
+    "exponent": 1.58,
+    "rankRequirementMultiplier": {
+      "Fresh": 0.8,
+      "In-Training": 0.9,
+      "Rookie": 1.0,
+      "Champion": 1.05,
+      "Ultimate": 1.1,
+      "Mega": 1.15,
+      "Ultra": 1.2,
+      "Armor": 1.05,
+      "Hybrid": 1.1
+    },
+    "enemyRankRewardMultiplier": {
+      "Fresh": 0.55,
+      "In-Training": 0.7,
+      "Rookie": 1.0,
+      "Champion": 1.45,
+      "Ultimate": 2.05,
+      "Mega": 2.8,
+      "Ultra": 3.5,
+      "Armor": 1.6,
+      "Hybrid": 2.15
+    },
+    "encounterProfileMultiplier": {
+      "wild": 1.0,
+      "trained": 1.15,
+      "elite": 1.35,
+      "boss": 1.8,
+      "story": 1.25,
+      "important": 1.25
+    },
+    "rewardBase": 14.0,
+    "rewardLevelExponent": 1.12,
+    "perLevelAbove": 0.08,
+    "maxAboveMultiplier": 1.6,
+    "perLevelBelow": 0.12,
+    "minimumBelowMultiplier": 0.1
+  },
+  "potential": {
+    "max": 100,
+    "digivolutionBase": 2,
+    "degenerationBase": 4,
+    "levelDivisor": 10,
+    "repeatTransitionMultipliers": [1.0, 0.7, 0.4, 0.2]
+  },
+  "training": {
+    "baseCapacity": 10,
+    "potentialPerCapacity": 2,
+    "maxPointsPerStat": 30,
+    "bonusPerPoint": 0.004,
+    "mobilityOnePotential": 20,
+    "mobilityTwoPotential": 70,
+    "mobilityOneCapacityCost": 20,
+    "mobilityTwoAdditionalCost": 30
+  }
+}
