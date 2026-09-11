@@ -349,9 +349,13 @@ func _replace_result_divider_with_kenney_asset() -> void:
 	for child: Node in _content.get_children():
 		if not child is HSeparator:
 			continue
-		var separator_index := child.get_index()
-		_content.remove_child(child)
-		child.queue_free()
+		# Keep the original Control alive because DigiUiRuntime decorates freshly
+		# added nodes deferred. Hiding it avoids a dangling deferred argument while
+		# ensuring no Godot-drawn separator is ever visible or consumes layout.
+		var separator := child as HSeparator
+		var separator_index := separator.get_index()
+		separator.visible = false
+		separator.custom_minimum_size = Vector2.ZERO
 
 		_result_divider = TextureRect.new()
 		_result_divider.name = "KenneyResultDivider"
@@ -364,7 +368,7 @@ func _replace_result_divider_with_kenney_asset() -> void:
 		_result_divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_result_divider.modulate = UI.GOLD
 		_content.add_child(_result_divider)
-		_content.move_child(_result_divider, separator_index)
+		_content.move_child(_result_divider, separator_index + 1)
 		return
 
 
