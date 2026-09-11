@@ -2,18 +2,12 @@ extends Node
 
 # Runtime presentation layer for DigiGame UI.
 #
-# Kenney Fantasy UI Borders are kept monochrome and transparent. Structural UI
-# does not receive palette tints, glow, blur or panel-scale animation; color is
-# reserved for text and gameplay state so the frame artwork stays faithful to
-# the original black/white language.
+# Structural UI uses one crisp monochrome frame derived directly from Kenney
+# Fantasy UI Borders (panel-border-000). The artwork itself is never recolored,
+# blurred, glowed or animated. Color and motion belong to text/gameplay state.
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
-const ASSET_ROOT := "res://assets/ui/kenney_fantasy_digi"
-const PANEL_STANDARD_PATH := ASSET_ROOT + "/panel_standard.svg"
-const PANEL_EMPHASIS_PATH := ASSET_ROOT + "/panel_emphasis.svg"
-const BUTTON_NORMAL_PATH := ASSET_ROOT + "/button_normal.svg"
-const BUTTON_HOVER_PATH := ASSET_ROOT + "/button_hover.svg"
-const BUTTON_PRESSED_PATH := ASSET_ROOT + "/button_pressed.svg"
+const FRAME_PATH := "res://assets/ui/kenney_fantasy_digi/frame_original.svg"
 
 const STANDARD_PANELS := [
 	"LocationPanel",
@@ -52,16 +46,10 @@ const FRAMED_BUTTON_NAMES := [
 	"Talk",
 ]
 
-var _panel_standard: Texture2D = null
-var _panel_emphasis: Texture2D = null
-var _button_normal: Texture2D = null
-var _button_hover: Texture2D = null
-var _button_pressed: Texture2D = null
+var _frame_texture: Texture2D = null
 var _panel_standard_style: StyleBoxTexture = null
 var _panel_emphasis_style: StyleBoxTexture = null
-var _button_normal_style: StyleBoxTexture = null
-var _button_hover_style: StyleBoxTexture = null
-var _button_pressed_style: StyleBoxTexture = null
+var _button_style: StyleBoxTexture = null
 var _tracked_panels: Dictionary = {}
 var _restyle_elapsed := 0.0
 var _skin_ready := false
@@ -99,37 +87,30 @@ func _process(delta: float) -> void:
 
 
 func _load_skin_resources() -> void:
-	_panel_standard = load(PANEL_STANDARD_PATH) as Texture2D
-	_panel_emphasis = load(PANEL_EMPHASIS_PATH) as Texture2D
-	_button_normal = load(BUTTON_NORMAL_PATH) as Texture2D
-	_button_hover = load(BUTTON_HOVER_PATH) as Texture2D
-	_button_pressed = load(BUTTON_PRESSED_PATH) as Texture2D
-	_skin_ready = (
-		_panel_standard != null
-		and _panel_emphasis != null
-		and _button_normal != null
-		and _button_hover != null
-		and _button_pressed != null
-	)
+	_frame_texture = load(FRAME_PATH) as Texture2D
+	_skin_ready = _frame_texture != null
 	if not _skin_ready:
-		push_warning("Digi fantasy UI skin could not be loaded; keeping TacticalTheme fallbacks.")
+		push_warning("Kenney monochrome UI frame could not be loaded; keeping TacticalTheme fallbacks.")
 		return
 
+	# 12px keeps every corner ornament out of the nine-patch stretch region.
+	# Only the plain middle edge and transparent/black center are stretched.
+	var margins := Vector4(12.0, 12.0, 12.0, 12.0)
 	_panel_standard_style = _nine_patch(
-		_panel_standard,
-		Vector4(9.0, 9.0, 9.0, 9.0),
-		Vector4(14.0, 13.0, 14.0, 13.0)
+		_frame_texture,
+		margins,
+		Vector4(16.0, 15.0, 16.0, 15.0)
 	)
 	_panel_emphasis_style = _nine_patch(
-		_panel_emphasis,
-		Vector4(10.0, 10.0, 10.0, 10.0),
-		Vector4(18.0, 17.0, 18.0, 17.0)
+		_frame_texture,
+		margins,
+		Vector4(20.0, 19.0, 20.0, 19.0)
 	)
-	var button_margins := Vector4(9.0, 9.0, 9.0, 9.0)
-	var button_content := Vector4(16.0, 10.0, 16.0, 10.0)
-	_button_normal_style = _nine_patch(_button_normal, button_margins, button_content)
-	_button_hover_style = _nine_patch(_button_hover, button_margins, button_content)
-	_button_pressed_style = _nine_patch(_button_pressed, button_margins, button_content)
+	_button_style = _nine_patch(
+		_frame_texture,
+		margins,
+		Vector4(16.0, 9.0, 16.0, 9.0)
+	)
 
 
 func _decorate_existing_tree() -> void:
@@ -212,17 +193,19 @@ func _style_related_result_panel(button: Button) -> void:
 
 
 func _style_dialog_button(button: Button) -> void:
-	button.add_theme_stylebox_override("normal", _button_normal_style)
-	button.add_theme_stylebox_override("hover", _button_hover_style)
-	button.add_theme_stylebox_override("focus", _button_hover_style)
-	button.add_theme_stylebox_override("pressed", _button_pressed_style)
-	button.add_theme_stylebox_override("hover_pressed", _button_pressed_style)
+	# The frame stays identical in every interaction state. Feedback is textual,
+	# keeping the underlying Kenney artwork untouched and predictable.
+	button.add_theme_stylebox_override("normal", _button_style)
+	button.add_theme_stylebox_override("hover", _button_style)
+	button.add_theme_stylebox_override("focus", _button_style)
+	button.add_theme_stylebox_override("pressed", _button_style)
+	button.add_theme_stylebox_override("hover_pressed", _button_style)
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_focus_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
 	button.add_theme_color_override("font_disabled_color", Color(UI.MUTED.r, UI.MUTED.g, UI.MUTED.b, 0.44))
-	button.add_theme_color_override("icon_normal_color", Color(0.88, 0.88, 0.90, 0.92))
+	button.add_theme_color_override("icon_normal_color", Color(0.90, 0.90, 0.92, 0.92))
 	button.add_theme_color_override("icon_hover_color", Color.WHITE)
 	button.add_theme_color_override("icon_focus_color", Color.WHITE)
 	button.add_theme_color_override("icon_pressed_color", Color.WHITE)
