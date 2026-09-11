@@ -1,12 +1,12 @@
 [gd_scene load_steps=10 format=3 uid="uid://dwfwmlo2bqdlu"]
 
 [ext_resource type="Script" path="res://src/battle/BattleFieldDomain.gd" id="1_field"]
-[ext_resource type="Script" path="res://src/MainCamera.gd" id="2_camera"]
+[ext_resource type="Script" path="res://src/battle/BattleCamera.gd" id="2_camera"]
 [ext_resource type="Script" path="res://src/battle/CombatDigimonRuntimeController.gd" id="3_digimon"]
 [ext_resource type="PackedScene" uid="uid://celawaflf4raa" path="res://scenes/blue_space_background.tscn" id="4_background"]
 [ext_resource type="Script" path="res://src/DebugOverlay.gd" id="5_debug"]
 [ext_resource type="Script" path="res://src/ui/CompactDigimonInfoPanel.gd" id="6_info"]
-[ext_resource type="Script" path="res://src/battle/StableSequencedBattleController.gd" id="7_battle"]
+[ext_resource type="Script" path="res://src/battle/BattleOpeningController.gd" id="7_battle"]
 [ext_resource type="Script" path="res://src/BattleHUDMobileDomain.gd" id="8_hud"]
 [ext_resource type="Script" path="res://src/battle/TechniqueBattlePresentationFX.gd" id="9_fx"]
 
@@ -23,7 +23,7 @@ script = ExtResource("3_digimon")
 
 [node name="MainCamera" type="Camera2D" parent="DigimonController"]
 position = Vector2(0, 0)
-zoom = Vector2(0.9, 0.9)
+zoom = Vector2(0.94, 0.94)
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
 script = ExtResource("2_camera")
