@@ -4,8 +4,8 @@ extends Node
 #
 # The Kenney Fantasy UI Borders geometry is reserved for meaningful surfaces
 # and dialog actions instead of being stamped on every Control. This keeps the
-# new identity visible while avoiding the crowding and edge collisions caused
-# by the previous global sci-fi decorator.
+# identity visible while avoiding the crowding and edge collisions caused by
+# the previous global sci-fi decorator.
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const ASSET_ROOT := "res://assets/ui/kenney_fantasy_digi"
@@ -63,6 +63,13 @@ var _panel_emphasis: Texture2D = null
 var _button_normal: Texture2D = null
 var _button_hover: Texture2D = null
 var _button_pressed: Texture2D = null
+var _panel_standard_style: StyleBoxTexture = null
+var _panel_emphasis_style: StyleBoxTexture = null
+var _button_normal_style: StyleBoxTexture = null
+var _button_hover_style: StyleBoxTexture = null
+var _button_pressed_style: StyleBoxTexture = null
+var _tracked_panels: Dictionary = {}
+var _restyle_elapsed := 0.0
 var _skin_ready := false
 
 
@@ -70,6 +77,31 @@ func _ready() -> void:
 	_load_skin_resources()
 	get_tree().node_added.connect(_on_node_added)
 	call_deferred("_decorate_existing_tree")
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	if not _skin_ready or _tracked_panels.is_empty():
+		return
+	_restyle_elapsed += delta
+	if _restyle_elapsed < 0.10:
+		return
+	_restyle_elapsed = 0.0
+	var stale_ids: Array[int] = []
+	for raw_id: Variant in _tracked_panels.keys():
+		var instance_id := int(raw_id)
+		var entry: Dictionary = _tracked_panels.get(instance_id, {}) as Dictionary
+		var ref: WeakRef = entry.get("ref") as WeakRef
+		var panel: Control = ref.get_ref() as Control if ref != null else null
+		if panel == null or not is_instance_valid(panel):
+			stale_ids.append(instance_id)
+			continue
+		var emphasis := bool(entry.get("emphasis", false))
+		var desired: StyleBoxTexture = _panel_emphasis_style if emphasis else _panel_standard_style
+		if panel.get_theme_stylebox("panel") != desired:
+			panel.add_theme_stylebox_override("panel", desired)
+	for instance_id: int in stale_ids:
+		_tracked_panels.erase(instance_id)
 
 
 func _load_skin_resources() -> void:
@@ -87,6 +119,14 @@ func _load_skin_resources() -> void:
 	)
 	if not _skin_ready:
 		push_warning("Digi fantasy UI skin could not be loaded; keeping TacticalTheme fallbacks.")
+		return
+	_panel_standard_style = _nine_patch(_panel_standard, Vector4(9.0, 9.0, 9.0, 9.0), Vector4(11.0, 11.0, 11.0, 11.0))
+	_panel_emphasis_style = _nine_patch(_panel_emphasis, Vector4(10.0, 10.0, 10.0, 10.0), Vector4(14.0, 14.0, 14.0, 14.0))
+	var button_margins := Vector4(9.0, 9.0, 9.0, 9.0)
+	var button_content := Vector4(15.0, 8.0, 15.0, 8.0)
+	_button_normal_style = _nine_patch(_button_normal, button_margins, button_content)
+	_button_hover_style = _nine_patch(_button_hover, button_margins, button_content)
+	_button_pressed_style = _nine_patch(_button_pressed, button_margins, button_content)
 
 
 func _decorate_existing_tree() -> void:
@@ -138,15 +178,12 @@ func _decorate_node(node: Node) -> void:
 
 
 func _style_panel(control: Control, emphasis: bool) -> void:
-	var texture: Texture2D = _panel_emphasis if emphasis else _panel_standard
-	var texture_margin := 10.0 if emphasis else 9.0
-	var content_margin := 14.0 if emphasis else 11.0
-	var style := _nine_patch(
-		texture,
-		Vector4(texture_margin, texture_margin, texture_margin, texture_margin),
-		Vector4(content_margin, content_margin, content_margin, content_margin)
-	)
+	var style: StyleBoxTexture = _panel_emphasis_style if emphasis else _panel_standard_style
 	control.add_theme_stylebox_override("panel", style)
+	_tracked_panels[control.get_instance_id()] = {
+		"ref": weakref(control),
+		"emphasis": emphasis,
+	}
 
 
 func _should_frame_button(button: Button) -> bool:
@@ -162,8 +199,7 @@ func _should_frame_button(button: Button) -> bool:
 
 # The base battle result panel predates the naming convention and is an unnamed
 # Panel. Discover it from its uniquely named return button so it receives the
-# same finished treatment as retreat / hub dialogs without broadly skinning
-# unrelated utility panels.
+# same treatment as retreat / hub dialogs without broadly skinning utilities.
 func _style_related_result_panel(button: Button) -> void:
 	if String(button.name) != "ReturnToHub":
 		return
@@ -180,13 +216,11 @@ func _style_related_result_panel(button: Button) -> void:
 
 
 func _style_dialog_button(button: Button) -> void:
-	var margins := Vector4(9.0, 9.0, 9.0, 9.0)
-	var content := Vector4(15.0, 8.0, 15.0, 8.0)
-	button.add_theme_stylebox_override("normal", _nine_patch(_button_normal, margins, content))
-	button.add_theme_stylebox_override("hover", _nine_patch(_button_hover, margins, content))
-	button.add_theme_stylebox_override("focus", _nine_patch(_button_hover, margins, content))
-	button.add_theme_stylebox_override("pressed", _nine_patch(_button_pressed, margins, content))
-	button.add_theme_stylebox_override("hover_pressed", _nine_patch(_button_pressed, margins, content))
+	button.add_theme_stylebox_override("normal", _button_normal_style)
+	button.add_theme_stylebox_override("hover", _button_hover_style)
+	button.add_theme_stylebox_override("focus", _button_hover_style)
+	button.add_theme_stylebox_override("pressed", _button_pressed_style)
+	button.add_theme_stylebox_override("hover_pressed", _button_pressed_style)
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_focus_color", Color.WHITE)
