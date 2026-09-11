@@ -33,14 +33,18 @@ func _build_dialog() -> void:
 	_mobile_dialog_title.name = "Title"
 	_mobile_dialog_content.add_child(_mobile_dialog_title)
 
-	_mobile_dialog_body = _label(
-		"Combat systems are online. Start a test battle with the current Digimon squad?",
-		18,
-		UI.TEXT
-	)
+	# This label intentionally does not use HubController._label(), whose clipped
+	# single-line defaults are ideal for HUD chrome but can suppress wrapped text
+	# after a mobile orientation/size change.
+	_mobile_dialog_body = Label.new()
 	_mobile_dialog_body.name = "Body"
+	_mobile_dialog_body.text = "Combat systems are online. Start a test battle with the current Digimon squad?"
+	_mobile_dialog_body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_mobile_dialog_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_mobile_dialog_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_mobile_dialog_body.clip_text = false
+	_mobile_dialog_body.add_theme_color_override("font_color", UI.TEXT)
+	UI.apply_body_font(_mobile_dialog_body)
 	_mobile_dialog_content.add_child(_mobile_dialog_body)
 
 	_mobile_dialog_cancel = _dialog_button("NOT NOW", UI.MUTED)
