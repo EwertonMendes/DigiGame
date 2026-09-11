@@ -2,18 +2,12 @@ extends Node
 
 # Runtime presentation layer for DigiGame UI.
 #
-# The Kenney Fantasy UI Borders geometry is reserved for meaningful surfaces
-# and dialog actions instead of being stamped on every Control. This keeps the
-# identity visible while avoiding the crowding and edge collisions caused by
-# the previous global sci-fi decorator.
+# Structural UI uses one crisp monochrome frame derived directly from Kenney
+# Fantasy UI Borders (panel-border-000). The artwork itself is never recolored,
+# blurred, glowed or animated. Color and motion belong to text/gameplay state.
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
-const ASSET_ROOT := "res://assets/ui/kenney_fantasy_digi"
-const PANEL_STANDARD_PATH := ASSET_ROOT + "/panel_standard.svg"
-const PANEL_EMPHASIS_PATH := ASSET_ROOT + "/panel_emphasis.svg"
-const BUTTON_NORMAL_PATH := ASSET_ROOT + "/button_normal.svg"
-const BUTTON_HOVER_PATH := ASSET_ROOT + "/button_hover.svg"
-const BUTTON_PRESSED_PATH := ASSET_ROOT + "/button_pressed.svg"
+const FRAME_PATH := "res://assets/ui/kenney_fantasy_digi/frame_original.svg"
 
 const STANDARD_PANELS := [
 	"LocationPanel",
@@ -44,6 +38,7 @@ const DIALOG_ANCESTORS := [
 const FRAMED_BUTTON_NAMES := [
 	"StartBattle",
 	"CancelBattleDialog",
+	"Cancel",
 	"ConfirmFlee",
 	"CancelFlee",
 	"ReturnAfterRetreat",
@@ -51,23 +46,10 @@ const FRAMED_BUTTON_NAMES := [
 	"Talk",
 ]
 
-const FADE_IN_PANELS := [
-	"BattleDialog",
-	"TechniqueMenu",
-	"RetreatPanel",
-	"RetreatResult",
-]
-
-var _panel_standard: Texture2D = null
-var _panel_emphasis: Texture2D = null
-var _button_normal: Texture2D = null
-var _button_hover: Texture2D = null
-var _button_pressed: Texture2D = null
+var _frame_texture: Texture2D = null
 var _panel_standard_style: StyleBoxTexture = null
 var _panel_emphasis_style: StyleBoxTexture = null
-var _button_normal_style: StyleBoxTexture = null
-var _button_hover_style: StyleBoxTexture = null
-var _button_pressed_style: StyleBoxTexture = null
+var _button_style: StyleBoxTexture = null
 var _tracked_panels: Dictionary = {}
 var _restyle_elapsed := 0.0
 var _skin_ready := false
@@ -105,28 +87,33 @@ func _process(delta: float) -> void:
 
 
 func _load_skin_resources() -> void:
-	_panel_standard = load(PANEL_STANDARD_PATH) as Texture2D
-	_panel_emphasis = load(PANEL_EMPHASIS_PATH) as Texture2D
-	_button_normal = load(BUTTON_NORMAL_PATH) as Texture2D
-	_button_hover = load(BUTTON_HOVER_PATH) as Texture2D
-	_button_pressed = load(BUTTON_PRESSED_PATH) as Texture2D
-	_skin_ready = (
-		_panel_standard != null
-		and _panel_emphasis != null
-		and _button_normal != null
-		and _button_hover != null
-		and _button_pressed != null
-	)
+	_frame_texture = load(FRAME_PATH) as Texture2D
+	_skin_ready = _frame_texture != null
 	if not _skin_ready:
-		push_warning("Digi fantasy UI skin could not be loaded; keeping TacticalTheme fallbacks.")
+		push_warning("Kenney monochrome UI frame could not be loaded; keeping TacticalTheme fallbacks.")
 		return
-	_panel_standard_style = _nine_patch(_panel_standard, Vector4(9.0, 9.0, 9.0, 9.0), Vector4(11.0, 11.0, 11.0, 11.0))
-	_panel_emphasis_style = _nine_patch(_panel_emphasis, Vector4(10.0, 10.0, 10.0, 10.0), Vector4(14.0, 14.0, 14.0, 14.0))
-	var button_margins := Vector4(9.0, 9.0, 9.0, 9.0)
-	var button_content := Vector4(15.0, 8.0, 15.0, 8.0)
-	_button_normal_style = _nine_patch(_button_normal, button_margins, button_content)
-	_button_hover_style = _nine_patch(_button_hover, button_margins, button_content)
-	_button_pressed_style = _nine_patch(_button_pressed, button_margins, button_content)
+
+	# 12px keeps every corner ornament out of the nine-patch stretch region.
+	# Panel content margins intentionally stay at zero: each UI surface already
+	# owns its padding/layout, and hidden StyleBox padding would shift explicit
+	# dialog controls away from the visual center of the frame.
+	var margins := Vector4(12.0, 12.0, 12.0, 12.0)
+	var panel_content := Vector4.ZERO
+	_panel_standard_style = _nine_patch(
+		_frame_texture,
+		margins,
+		panel_content
+	)
+	_panel_emphasis_style = _nine_patch(
+		_frame_texture,
+		margins,
+		panel_content
+	)
+	_button_style = _nine_patch(
+		_frame_texture,
+		margins,
+		Vector4(16.0, 9.0, 16.0, 9.0)
+	)
 
 
 func _decorate_existing_tree() -> void:
@@ -159,13 +146,10 @@ func _decorate_node(node: Node) -> void:
 		var panel_name := String(control.name)
 		if panel_name in EMPHASIS_PANELS:
 			_style_panel(control, true)
-			_install_fade_in(control)
 			control.set_meta("digi_fantasy_skin_applied", true)
 			return
 		if panel_name in STANDARD_PANELS:
 			_style_panel(control, false)
-			if panel_name in FADE_IN_PANELS:
-				_install_fade_in(control)
 			control.set_meta("digi_fantasy_skin_applied", true)
 			return
 
@@ -197,9 +181,6 @@ func _should_frame_button(button: Button) -> bool:
 	return false
 
 
-# The base battle result panel predates the naming convention and is an unnamed
-# Panel. Discover it from its uniquely named return button so it receives the
-# same treatment as retreat / hub dialogs without broadly skinning utilities.
 func _style_related_result_panel(button: Button) -> void:
 	if String(button.name) != "ReturnToHub":
 		return
@@ -209,26 +190,28 @@ func _style_related_result_panel(button: Button) -> void:
 			var panel := parent as Control
 			if not panel.has_meta("digi_fantasy_skin_applied"):
 				_style_panel(panel, true)
-				_install_fade_in(panel)
 				panel.set_meta("digi_fantasy_skin_applied", true)
 			return
 		parent = parent.get_parent()
 
 
 func _style_dialog_button(button: Button) -> void:
-	button.add_theme_stylebox_override("normal", _button_normal_style)
-	button.add_theme_stylebox_override("hover", _button_hover_style)
-	button.add_theme_stylebox_override("focus", _button_hover_style)
-	button.add_theme_stylebox_override("pressed", _button_pressed_style)
-	button.add_theme_stylebox_override("hover_pressed", _button_pressed_style)
+	# The frame stays identical in every interaction state. Feedback is textual,
+	# keeping the underlying Kenney artwork untouched and predictable.
+	button.add_theme_stylebox_override("normal", _button_style)
+	button.add_theme_stylebox_override("hover", _button_style)
+	button.add_theme_stylebox_override("focus", _button_style)
+	button.add_theme_stylebox_override("pressed", _button_style)
+	button.add_theme_stylebox_override("hover_pressed", _button_style)
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_focus_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
 	button.add_theme_color_override("font_disabled_color", Color(UI.MUTED.r, UI.MUTED.g, UI.MUTED.b, 0.44))
-	button.add_theme_color_override("icon_hover_color", UI.CYAN)
-	button.add_theme_color_override("icon_focus_color", UI.CYAN)
-	button.add_theme_color_override("icon_pressed_color", UI.GOLD)
+	button.add_theme_color_override("icon_normal_color", Color(0.90, 0.90, 0.92, 0.92))
+	button.add_theme_color_override("icon_hover_color", Color.WHITE)
+	button.add_theme_color_override("icon_focus_color", Color.WHITE)
+	button.add_theme_color_override("icon_pressed_color", Color.WHITE)
 
 
 func _nine_patch(texture: Texture2D, margins: Vector4, content: Vector4) -> StyleBoxTexture:
@@ -245,29 +228,3 @@ func _nine_patch(texture: Texture2D, margins: Vector4, content: Vector4) -> Styl
 	style.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
 	style.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
 	return style
-
-
-func _install_fade_in(control: Control) -> void:
-	if control.has_meta("digi_fantasy_fade_installed"):
-		return
-	control.set_meta("digi_fantasy_fade_installed", true)
-	control.visibility_changed.connect(_on_panel_visibility_changed.bind(control))
-	if control.visible:
-		call_deferred("_fade_panel_in", control)
-
-
-func _on_panel_visibility_changed(control: Control) -> void:
-	if is_instance_valid(control) and control.visible:
-		_fade_panel_in(control)
-
-
-func _fade_panel_in(control: Control) -> void:
-	if not is_instance_valid(control) or not control.visible:
-		return
-	var target_alpha := control.modulate.a
-	if target_alpha <= 0.01:
-		target_alpha = 1.0
-	control.modulate.a = 0.0
-	var tween := control.create_tween()
-	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(control, "modulate:a", target_alpha, 0.14)

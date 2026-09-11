@@ -71,11 +71,11 @@ func _build_ui() -> void:
 	_panel.add_child(_objective_label)
 
 	_left_tick = ColorRect.new()
-	_left_tick.color = UI.GOLD
+	_left_tick.color = Color(1.0, 1.0, 1.0, 0.34)
 	_left_tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(_left_tick)
 	_right_tick = ColorRect.new()
-	_right_tick.color = UI.separator(UI.GOLD, 0.42)
+	_right_tick.color = UI.separator(UI.GOLD, 0.28)
 	_right_tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(_right_tick)
 

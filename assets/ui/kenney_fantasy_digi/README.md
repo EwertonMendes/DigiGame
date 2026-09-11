@@ -1,6 +1,6 @@
 # Digi Fantasy Border skin
 
-This folder contains a compact DigiGame UI skin derived from the vector geometry in **Kenney — Fantasy UI Borders**.
+This folder contains DigiGame's runtime use of **Kenney — Fantasy UI Borders**.
 
 - Original pack: Fantasy UI Borders
 - Author/publisher: Kenney
@@ -10,16 +10,14 @@ This folder contains a compact DigiGame UI skin derived from the vector geometry
 - Attribution required: No
 - Source-inspection mirror: https://github.com/Tiddybub/2d-assets/tree/e0cbe0d995554a490d4c182fe9beb8769ffbb606/ui/fantasy-ui-borders
 - Pinned mirror commit: `e0cbe0d995554a490d4c182fe9beb8769ffbb606`
-- Source vector: `Vector/fantasy-ui-borders.svg`
+- Exact source reference: `PNG/Default/Border/panel-border-000.png`
 
-DigiGame uses selected frame silhouettes from the source vector and recolors them into a custom digital-fantasy palette. Text is never baked into the artwork; labels and buttons stay native Godot Controls so localization and responsive layout remain independent of the skin.
+`frame_original.svg` is a crisp 48×48 reconstruction of the exact opaque-pixel geometry from `panel-border-000.png`. The white border is not recolored or embellished. DigiGame only places a simple semi-transparent black rectangle behind the frame so labels remain readable over the battlefield.
 
-Runtime files:
+There are no baked gradients, glows, satin streaks, colored dots, palette tints or decorative light effects. The same neutral frame is used for panels and important dialog buttons; interaction feedback is handled by native Godot text/icon states instead of changing the artwork.
 
-- `panel_standard.svg` — ordinary framed surfaces
-- `panel_emphasis.svg` — modal / important framed surfaces
-- `button_normal.svg` — dialog / secondary action button
-- `button_hover.svg` — hovered/focused dialog button
-- `button_pressed.svg` — pressed/selected dialog button
+Runtime file:
 
-The previous sci-fi skin is intentionally not used by the runtime after this refresh.
+- `frame_original.svg` — original monochrome Kenney border geometry plus neutral transparent backing.
+
+Text remains native Godot Controls so typography color and animation stay independent from the frame artwork. The previous custom colored reconstructions are intentionally removed.

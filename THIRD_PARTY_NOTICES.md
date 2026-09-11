@@ -20,8 +20,8 @@ Detailed file provenance is recorded in `assets/world/devilsworkshop/README.md`.
 - Original release: **1.0 (2023)**.
 - License: **CC0 1.0 Universal**.
 - Attribution required: **No**.
-- Use in DigiGame: selected frame silhouettes from the source vector are adapted for panels, modals and important action buttons.
-- Modifications: custom deep-indigo / electric-blue / warm-orange digital-fantasy palette, scalable SVG reconstruction, selective runtime application, and separation of artwork from runtime text for localization.
+- Use in DigiGame: selected frame silhouettes from the source vector are used for panels, modals and important action buttons.
+- Modifications: scalable SVG reconstruction with the original monochrome geometry, a semi-transparent black center for in-game readability, selective runtime application, and separation of artwork from runtime text for localization.
 - Pinned source-inspection mirror: https://github.com/Tiddybub/2d-assets/tree/e0cbe0d995554a490d4c182fe9beb8769ffbb606/ui/fantasy-ui-borders
 
 Detailed file provenance is recorded in `assets/ui/kenney_fantasy_digi/README.md`.
