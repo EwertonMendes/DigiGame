@@ -3,8 +3,9 @@ class_name TouchJoystick
 
 signal direction_changed(direction: Vector2)
 
-const DEADZONE := 0.16
+const DEADZONE := 0.10
 const KNOB_LIMIT := 0.72
+const CAPTURE_PADDING := 18.0
 
 var _active_touch := -1
 var _direction := Vector2.ZERO
@@ -14,7 +15,7 @@ var _mouse_active := false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_NONE
-	custom_minimum_size = Vector2(148.0, 148.0)
+	custom_minimum_size = Vector2(156.0, 156.0)
 	set_process_input(true)
 	queue_redraw()
 
@@ -84,7 +85,13 @@ func get_direction() -> Vector2:
 
 func _contains_viewport_point(viewport_pos: Vector2) -> bool:
 	var local_pos := get_global_transform_with_canvas().affine_inverse() * viewport_pos
-	return Rect2(Vector2.ZERO, size).has_point(local_pos)
+	# The visual ring stays compact, but the thumb does not need to land on an
+	# exact pixel-perfect boundary. The invisible padding is intentionally larger
+	# on touch than the rendered control and makes portrait play much less fussy.
+	return Rect2(
+		Vector2(-CAPTURE_PADDING, -CAPTURE_PADDING),
+		size + Vector2.ONE * CAPTURE_PADDING * 2.0
+	).has_point(local_pos)
 
 
 func _update_from_viewport_position(viewport_pos: Vector2) -> void:
@@ -114,15 +121,15 @@ func _set_direction(next_direction: Vector2) -> void:
 
 func _draw() -> void:
 	var center := size * 0.5
-	var radius := minf(size.x, size.y) * 0.44
-	var outline := Color(0.35, 0.86, 0.90, 0.72)
-	var fill := Color(0.025, 0.045, 0.045, 0.72)
-	var inner := Color(0.35, 0.86, 0.90, 0.16)
+	var radius := minf(size.x, size.y) * 0.42
+	var outline := Color(0.35, 0.86, 0.90, 0.78)
+	var fill := Color(0.025, 0.045, 0.045, 0.76)
+	var inner := Color(0.35, 0.86, 0.90, 0.18)
 	draw_circle(center, radius, fill)
-	draw_arc(center, radius, 0.0, TAU, 48, outline, 2.0, true)
+	draw_arc(center, radius, 0.0, TAU, 48, outline, 2.4, true)
 	draw_circle(center, radius * 0.56, inner)
 
 	var knob_offset := _direction * radius * KNOB_LIMIT
 	var knob_center := center + knob_offset
-	draw_circle(knob_center, radius * 0.28, Color(0.35, 0.86, 0.90, 0.32))
-	draw_arc(knob_center, radius * 0.28, 0.0, TAU, 32, Color(0.87, 0.98, 1.0, 0.92), 2.0, true)
+	draw_circle(knob_center, radius * 0.31, Color(0.35, 0.86, 0.90, 0.38))
+	draw_arc(knob_center, radius * 0.31, 0.0, TAU, 32, Color(0.87, 0.98, 1.0, 0.96), 2.2, true)
