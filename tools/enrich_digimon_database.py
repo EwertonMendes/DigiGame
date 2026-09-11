@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Add tactical movement metadata to every Digimon species record.
+"""Add tactical movement metadata to every Digimon species record safely.
 
-The source JSON remains the canonical species catalogue. MOV is intentionally
-stored on the species record after this migration, while DigimonDatabase keeps
-the same derivation as a compatibility fallback for older/custom databases.
+The source JSON remains the canonical species catalogue. Writes are staged next
+to the catalogue, parsed again, fsynced, and atomically replaced only after the
+entire transformed document is valid. A failed migration therefore cannot leave
+half of the species database rewritten.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import tempfile
 from pathlib import Path
 
 DATABASE = Path("database/base-digimon-list.json")
@@ -73,6 +76,25 @@ def enrich(data: list[dict]) -> int:
     return changed
 
 
+def atomic_write_json(path: Path, data: object) -> None:
+    payload = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    # Validate the complete serialized document before touching the canonical file.
+    json.loads(payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, raw_temp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temp_path = Path(raw_temp)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        json.loads(temp_path.read_text(encoding="utf-8"))
+        os.replace(temp_path, path)
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="Fail when migration would change the file")
@@ -81,6 +103,8 @@ def main() -> int:
     data = json.loads(DATABASE.read_text(encoding="utf-8"))
     if not isinstance(data, list):
         raise SystemExit("database root must be an array")
+    if not all(isinstance(entry, dict) for entry in data):
+        raise SystemExit("every database entry must be an object")
     changed = enrich(data)
     if args.check:
         if changed:
@@ -88,7 +112,7 @@ def main() -> int:
         print(f"movement metadata complete for {len(data)} species")
         return 0
     if changed:
-        DATABASE.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        atomic_write_json(DATABASE, data)
     print(f"updated {changed} fields across {len(data)} species")
     return 0
 
