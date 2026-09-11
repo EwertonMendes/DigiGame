@@ -33,18 +33,11 @@ func _build_dialog() -> void:
 	_mobile_dialog_title.name = "Title"
 	_mobile_dialog_content.add_child(_mobile_dialog_title)
 
-	# This label intentionally does not use HubController._label(), whose clipped
-	# single-line defaults are ideal for HUD chrome but can suppress wrapped text
-	# after a mobile orientation/size change.
-	_mobile_dialog_body = Label.new()
-	_mobile_dialog_body.name = "Body"
-	_mobile_dialog_body.text = "Combat systems are online. Start a test battle with the current Digimon squad?"
-	_mobile_dialog_body.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_mobile_dialog_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_mobile_dialog_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_mobile_dialog_body.clip_text = false
-	_mobile_dialog_body.add_theme_color_override("font_color", UI.TEXT)
-	UI.apply_body_font(_mobile_dialog_body)
+	# Keep the actionable copy to one explicit line. Wrapped Labels can report a
+	# content-driven minimum height before a mobile Web viewport has stabilized,
+	# which is what originally made this dialog overflow the phone screen.
+	_mobile_dialog_body = _label("START A TEST BATTLE?", 19, UI.TEXT)
+	_mobile_dialog_body.name = "Prompt"
 	_mobile_dialog_content.add_child(_mobile_dialog_body)
 
 	_mobile_dialog_cancel = _dialog_button("NOT NOW", UI.MUTED)
@@ -136,7 +129,7 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	if _dialog_panel == null or _mobile_dialog_content == null:
 		return
 	var dialog_width := minf(620.0 if landscape else 660.0, physical.x - edge * 2.0)
-	var desired_height := 174.0 if landscape else 204.0
+	var desired_height := 156.0 if landscape else 168.0
 	var dialog_height := minf(desired_height, physical.y - edge * 2.0)
 	_dialog_panel.scale = Vector2.ONE * ui_scale
 	_dialog_panel.position = Vector2(
@@ -148,16 +141,16 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	var pad := 18.0 if landscape else 16.0
 	_mobile_dialog_content.position = Vector2.ZERO
 	_mobile_dialog_content.size = Vector2(dialog_width, dialog_height)
-	_mobile_dialog_title.position = Vector2(pad, 14.0)
-	_mobile_dialog_title.size = Vector2(dialog_width - pad * 2.0, 22.0)
-	_mobile_dialog_title.add_theme_font_size_override("font_size", 12 if landscape else 13)
+	_mobile_dialog_title.position = Vector2(pad, 12.0)
+	_mobile_dialog_title.size = Vector2(dialog_width - pad * 2.0, 20.0)
+	_mobile_dialog_title.add_theme_font_size_override("font_size", 11 if landscape else 12)
+
+	_mobile_dialog_body.position = Vector2(pad, 34.0)
+	_mobile_dialog_body.size = Vector2(dialog_width - pad * 2.0, 30.0)
+	_mobile_dialog_body.add_theme_font_size_override("font_size", 17 if landscape else 19)
 
 	var actions_height := 48.0
 	var actions_y := dialog_height - pad - actions_height
-	_mobile_dialog_body.position = Vector2(pad, 40.0)
-	_mobile_dialog_body.size = Vector2(dialog_width - pad * 2.0, maxf(48.0, actions_y - 48.0))
-	_mobile_dialog_body.add_theme_font_size_override("font_size", 16 if landscape else 18)
-
 	var gap := 10.0
 	var available := dialog_width - pad * 2.0 - gap
 	var cancel_width := minf(150.0, available * 0.43)
