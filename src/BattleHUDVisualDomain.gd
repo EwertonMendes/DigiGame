@@ -1,11 +1,13 @@
 extends "res://src/BattleHUDDomain.gd"
 
 const NAV_ICON_ROOT := "res://assets/ui/icons"
+const CombatPreviewArrowDecoratorScript = preload("res://src/ui/CombatPreviewArrowDecorator.gd")
 
 
 func _ready() -> void:
 	super._ready()
 	_install_technique_navigation_hint()
+	_install_damage_preview_arrow()
 
 
 func _install_technique_navigation_hint() -> void:
@@ -50,6 +52,15 @@ func _install_technique_navigation_hint() -> void:
 	row.add_child(_hint_separator())
 	row.add_child(_navigation_icon("nav_horizontal.svg", "Return to the Skill command"))
 	row.add_child(_hint_label("B / Esc  Back"))
+
+
+func _install_damage_preview_arrow() -> void:
+	if _combat_overlay == null or _combat_overlay.get_node_or_null("DamagePreviewArrowDecorator") != null:
+		return
+	var decorator := CombatPreviewArrowDecoratorScript.new()
+	decorator.name = "DamagePreviewArrowDecorator"
+	_combat_overlay.add_child(decorator)
+	decorator.setup(_combat_overlay)
 
 
 func _navigation_icon(file_name: String, tooltip: String) -> TextureRect:

@@ -15,6 +15,7 @@ var _preview_matchup: Label = null
 var _result_panel: Panel = null
 var _result_title: Label = null
 var _result_body: Label = null
+var _result_return: Button = null
 var _toast: Label = null
 var _toast_tween: Tween = null
 var _skill_panel_tween: Tween = null
@@ -175,8 +176,23 @@ func _build_ui() -> void:
 	_result_body = _label("", 16, UI.TEXT)
 	_result_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_result_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_result_return = Button.new()
+	_result_return.name = "ReturnToHub"
+	_result_return.text = "RETURN TO TERMINAL COMMONS"
+	_result_return.focus_mode = Control.FOCUS_ALL
+	_result_return.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_result_return.add_theme_font_size_override("font_size", 14)
+	_result_return.add_theme_color_override("font_color", UI.TEXT)
+	_result_return.add_theme_color_override("font_hover_color", Color.WHITE)
+	_result_return.add_theme_color_override("font_focus_color", Color.WHITE)
+	_result_return.add_theme_stylebox_override("normal", UI.action_style(UI.GOLD, "normal"))
+	_result_return.add_theme_stylebox_override("hover", UI.action_style(UI.GOLD, "hover"))
+	_result_return.add_theme_stylebox_override("pressed", UI.action_style(UI.GOLD, "pressed"))
+	_result_return.add_theme_stylebox_override("focus", UI.focus_outline(UI.GOLD, 8))
+	_result_return.pressed.connect(_return_to_hub)
 	_result_panel.add_child(_result_title)
 	_result_panel.add_child(_result_body)
+	_result_panel.add_child(_result_return)
 
 	_toast = _label("", 18, Color.WHITE)
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -328,6 +344,7 @@ func _refresh_preview(preview: Dictionary) -> void:
 
 
 func _show_result(result: Dictionary) -> void:
+	var result_was_hidden := not _result_panel.visible
 	_result_panel.visible = true
 	var victory := bool(result.get("victory", false))
 	_result_title.text = "Victory" if victory else "Defeat"
@@ -343,6 +360,17 @@ func _show_result(result: Dictionary) -> void:
 				rewards.append("%s +%d" % [String(species_name), int(digi_data[species_name])])
 			lines.append("Digi Data · %s" % "   ".join(rewards))
 	_result_body.text = "\n".join(lines)
+	if result_was_hidden:
+		call_deferred("_focus_result_return")
+
+
+func _focus_result_return() -> void:
+	if _result_return != null and _result_return.visible:
+		_result_return.grab_focus()
+
+
+func _return_to_hub() -> void:
+	get_tree().change_scene_to_file("res://scenes/world/hub.tscn")
 
 
 func _on_combat_event(event: Dictionary) -> void:
@@ -435,14 +463,16 @@ func _layout() -> void:
 	_preview_matchup.size = Vector2(preview_width - 28.0, 20.0)
 
 	var result_width := minf(520.0, physical.x - 28.0)
-	var result_height := 210.0
+	var result_height := 256.0
 	_result_panel.scale = Vector2.ONE * ui_scale
 	_result_panel.position = Vector2((physical.x - result_width) * 0.5 * ui_scale, (physical.y - result_height) * 0.5 * ui_scale)
 	_result_panel.size = Vector2(result_width, result_height)
 	_result_title.position = Vector2(18.0, 22.0)
 	_result_title.size = Vector2(result_width - 36.0, 50.0)
 	_result_body.position = Vector2(24.0, 74.0)
-	_result_body.size = Vector2(result_width - 48.0, 108.0)
+	_result_body.size = Vector2(result_width - 48.0, 90.0)
+	_result_return.position = Vector2(74.0, 184.0)
+	_result_return.size = Vector2(result_width - 148.0, 48.0)
 
 	_toast.scale = Vector2.ONE * ui_scale
 	_toast.position = Vector2((physical.x - 320.0) * 0.5 * ui_scale, 96.0 * ui_scale)

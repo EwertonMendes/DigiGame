@@ -8,6 +8,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_BLOBS = {
+    "assets/characters/world/battle_operator_purple.png": "26b3e8fec54dd54d14eb7153f820a03d22e8471c",
+    "assets/characters/world/player_blond.png": "c867feca28da02462b5dcb66bded35750fef89da",
+    "assets/world/hawkbirdtree/crate.png": "9f9f7b54fcc69f3765789aac1e00ee8357ec846c",
+    "assets/world/hawkbirdtree/flowers_purple.png": "b7b16a90cfb30210d1cb1021aacaa259c70153fe",
+    "assets/world/hawkbirdtree/flowers_red.png": "90c556ac4870357a62ffabad9902ea823217e738",
+    "assets/world/hawkbirdtree/flowers_yellow.png": "90339e8069331a37c9a22d1ae6bed370f1c496c9",
+    "assets/world/hawkbirdtree/grass.png": "47e4ee0336dea862f1c5674d3f1058741e54553e",
+    "assets/world/hawkbirdtree/path.png": "db7799925c93012cb599aac1442ee6acc5d7d091",
+    "assets/world/hawkbirdtree/rock.png": "fafc912930746dcf6761c85599f0a5ded6709f3e",
+    "assets/world/hawkbirdtree/tree.png": "61233eec4a9dc8fe6b7f3aec47d7cbbb5a1119ba",
+    "assets/world/hawkbirdtree/water.png": "a43634cb304e617607dd921b82c3c4a191d2afe2",
     "assets/terrain/kenney/grass.png": "cb244de5ff52525b5afb7d8d64ce3180d0c32f54",
     "assets/terrain/kenney/earth.png": "c7d48eea143016d148d46db5d1ffad8b234078fa",
     "assets/terrain/kenney/lush_grass.png": "fd1e55397462fcb347f62e3763bbbc53ff666583",

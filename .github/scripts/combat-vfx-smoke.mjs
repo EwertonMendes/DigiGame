@@ -18,6 +18,18 @@ async function waitForGame(page) {
   await page.waitForTimeout(5000);
 }
 
+async function enterTestBattle(page) {
+  const battleStarted = page.waitForEvent('console', {
+    predicate: message => message.text().includes('[Hub] START_TEST_BATTLE'),
+    timeout: 10000,
+  });
+  await page.keyboard.press('KeyE');
+  await page.waitForTimeout(350);
+  await page.keyboard.press('Enter');
+  await battleStarted;
+  await page.waitForTimeout(5000);
+}
+
 try {
   const page = await browser.newPage({ viewport: { width: 1365, height: 685 } });
   page.on('pageerror', error => runtimeErrors.push(`pageerror: ${error.message}`));
@@ -26,6 +38,7 @@ try {
   });
 
   await waitForGame(page);
+  await enterTestBattle(page);
   const baseline = await page.screenshot();
 
   // Register all waits before advancing turns so a fast Web build cannot race

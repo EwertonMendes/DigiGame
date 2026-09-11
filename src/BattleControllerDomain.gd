@@ -852,8 +852,8 @@ func get_hud_state() -> Dictionary:
 		state["level"] = int(current_actor.call("get_level"))
 	if current_actor.has_method("get_potential"):
 		state["potential"] = int(current_actor.call("get_potential"))
-	if current_actor.has_method("get_instance_id"):
-		state["instance_id"] = String(current_actor.call("get_instance_id"))
+	if current_actor.has_method("get_digimon_instance_id"):
+		state["instance_id"] = String(current_actor.call("get_digimon_instance_id"))
 	if current_actor.has_method("get_species_seed"):
 		state["species_seed"] = String(current_actor.call("get_species_seed"))
 	if current_actor.has_method("get_movement_type"):
