@@ -94,17 +94,20 @@ func _load_skin_resources() -> void:
 		return
 
 	# 12px keeps every corner ornament out of the nine-patch stretch region.
-	# Only the plain middle edge and transparent/black center are stretched.
+	# Panel content margins intentionally stay at zero: each UI surface already
+	# owns its padding/layout, and hidden StyleBox padding would shift explicit
+	# dialog controls away from the visual center of the frame.
 	var margins := Vector4(12.0, 12.0, 12.0, 12.0)
+	var panel_content := Vector4.ZERO
 	_panel_standard_style = _nine_patch(
 		_frame_texture,
 		margins,
-		Vector4(16.0, 15.0, 16.0, 15.0)
+		panel_content
 	)
 	_panel_emphasis_style = _nine_patch(
 		_frame_texture,
 		margins,
-		Vector4(20.0, 19.0, 20.0, 19.0)
+		panel_content
 	)
 	_button_style = _nine_patch(
 		_frame_texture,
