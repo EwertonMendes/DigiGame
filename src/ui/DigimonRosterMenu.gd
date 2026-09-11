@@ -6,8 +6,8 @@ signal close_requested
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
 
-var _database
-var _progression
+var _database: DigimonDatabase
+var _progression: DigimonProgressionService
 var _backdrop: ColorRect
 var _panel: PanelContainer
 var _title: Label
@@ -25,8 +25,8 @@ var _selected_index := 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_database = OverworldState.get_database()
-	_progression = ProgressionServiceScript.new(_database)
+	_database = OverworldState.get_database() as DigimonDatabase
+	_progression = ProgressionServiceScript.new(_database) as DigimonProgressionService
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
@@ -109,7 +109,7 @@ func _refresh_roster() -> void:
 	for index in range(roster.size()):
 		var instance: DigimonInstance = roster[index]
 		var species: Dictionary = _database.get_by_seed(instance.species_seed)
-		var button := _button("%s\nLV %d  ·  %s" % [
+		var button: Button = _button("%s\nLV %d  ·  %s" % [
 			instance.get_display_name(String(species.get("name", "Unknown"))),
 			instance.level,
 			String(species.get("rank", "")),
@@ -145,8 +145,8 @@ func _refresh_details() -> void:
 		return
 	var instance: DigimonInstance = roster[clampi(_selected_index, 0, roster.size() - 1)]
 	var species: Dictionary = _database.get_by_seed(instance.species_seed)
-	var display_name := instance.get_display_name(String(species.get("name", "Unknown")))
-	var heading := _label(display_name.to_upper(), 28, UI.TEXT)
+	var display_name: String = instance.get_display_name(String(species.get("name", "Unknown")))
+	var heading: Label = _label(display_name.to_upper(), 28, UI.TEXT)
 	_detail_list.add_child(heading)
 	_detail_list.add_child(_label("%s  ·  %s  ·  %s" % [
 		String(species.get("rank", "Unknown")),
@@ -173,8 +173,8 @@ func _refresh_details() -> void:
 	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_row.add_child(summary)
 	summary.add_child(_label("LEVEL %d" % instance.level, 22, UI.GOLD))
-	var required := _progression.exp_to_next_level(instance)
-	var xp_copy := "%d XP" % instance.exp if required <= 0 else "%d / %d XP" % [instance.exp, required]
+	var required: int = _progression.exp_to_next_level(instance)
+	var xp_copy: String = "%d XP" % instance.exp if required <= 0 else "%d / %d XP" % [instance.exp, required]
 	summary.add_child(_label(xp_copy, 13, UI.MUTED))
 	var xp_bar := ProgressBar.new()
 	xp_bar.custom_minimum_size = Vector2(240.0, 12.0)
@@ -204,8 +204,8 @@ func _refresh_details() -> void:
 	_detail_list.add_child(_label(_development_copy(instance), 13, UI.TEXT, true))
 
 	_add_section("SKILLS")
-	var equipped := " · ".join(instance.equipped_skills) if not instance.equipped_skills.is_empty() else "None equipped"
-	var learned := " · ".join(instance.learned_skills) if not instance.learned_skills.is_empty() else "No learned techniques"
+	var equipped: String = " · ".join(instance.equipped_skills) if not instance.equipped_skills.is_empty() else "None equipped"
+	var learned: String = " · ".join(instance.learned_skills) if not instance.learned_skills.is_empty() else "No learned techniques"
 	_detail_list.add_child(_label("Equipped: %s" % equipped, 13, UI.GOLD, true))
 	_detail_list.add_child(_label("Learned: %s" % learned, 12, UI.MUTED, true))
 
