@@ -13,6 +13,7 @@ func _ready() -> void:
 	_assert_character_sheet_padding(PLAYER_SHEET_PATH)
 	_assert_character_sheet_padding(OPERATOR_SHEET_PATH)
 
+	OverworldState.reset_active_party()
 	var hub := HUB_SCENE.instantiate()
 	add_child(hub)
 	await get_tree().process_frame
@@ -22,10 +23,12 @@ func _ready() -> void:
 	var operator := hub.get_node_or_null("Actors/BattleOperator")
 	var portal := hub.get_node_or_null("Actors/TestBattlePortal")
 	var dialog := hub.get_node_or_null("HubUI/Root/BattleDialog")
+	var party_followers := hub.get_node_or_null("PartyFollowers")
 	assert(player != null, "Hub must create the controllable player")
 	assert(operator != null, "Hub must create the nearby battle operator")
 	assert(portal != null, "Hub must create the animated test battle portal")
 	assert(dialog != null, "Hub must expose the test battle conversation")
+	assert(party_followers != null, "Hub must create the overworld active-party follower system")
 	assert(player.position.distance_to(operator.position) <= 94.0, "Operator must be reachable from spawn immediately")
 	assert(bool(hub.call("can_actor_move_to", player.position, player)), "Spawn must be walkable")
 
@@ -33,6 +36,7 @@ func _ready() -> void:
 	_assert_eight_direction_facing(player)
 	_assert_walk_sequence(player)
 	_assert_legacy_hub_facings(player)
+	await _assert_overworld_active_party(player, party_followers)
 
 	hub.call("open_test_battle_dialog")
 	await get_tree().process_frame
@@ -126,3 +130,45 @@ func _assert_legacy_hub_facings(player: Node) -> void:
 	assert(player.get("facing_direction") == "south", "Legacy down_left must preserve the hub's south-facing pose")
 	player.call("set_facing", "up_right")
 	assert(player.get("facing_direction") == "north", "Legacy up_right must preserve the hub's north-facing pose")
+
+
+func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> void:
+	var default_party := ["agumon", "gabumon", "greymon"]
+	assert(OverworldState.get_active_party() == default_party, "Default overworld party must be Agumon, Gabumon and Greymon")
+	assert(OverworldState.get_max_active_party_size() == 3, "Active overworld party must cap at three Digimon")
+	assert(int(party_followers.call("get_follower_count")) == 3, "Default active party must render three followers")
+	assert(Array(party_followers.call("get_active_party_keys")) == default_party, "Follower order must match active-party order")
+
+	var followers_root := party_followers.get_node_or_null("Followers")
+	assert(followers_root != null, "Follower system must expose a stable Followers container")
+	var follower_nodes := followers_root.get_children()
+	assert(follower_nodes.size() == 3, "Exactly the three active Digimon must exist in the hub")
+	var minimum_separation := float(party_followers.call("get_minimum_team_separation"))
+	var occupied: Array[Vector2] = [player.global_position]
+	for follower in follower_nodes:
+		var follower_node := follower as Node2D
+		assert(follower_node != null, "Every active-party follower must be a Node2D")
+		for point in occupied:
+			assert(
+				follower_node.global_position.distance_to(point) >= minimum_separation,
+				"Party followers must spawn without overlapping the player or each other"
+			)
+		occupied.append(follower_node.global_position)
+
+	assert(OverworldState.set_active_party(["agumon"]), "A one-Digimon active party must be valid")
+	await get_tree().process_frame
+	assert(int(party_followers.call("get_follower_count")) == 1, "One-Digimon parties must render exactly one follower")
+
+	assert(OverworldState.set_active_party(["agumon", "gabumon"]), "A two-Digimon active party must be valid")
+	await get_tree().process_frame
+	assert(int(party_followers.call("get_follower_count")) == 2, "Two-Digimon parties must render exactly two followers")
+
+	var two_member_party := OverworldState.get_active_party()
+	assert(not OverworldState.set_active_party([]), "An empty active party must be rejected")
+	assert(OverworldState.get_active_party() == two_member_party, "Rejected party changes must leave state untouched")
+	assert(not OverworldState.set_active_party(["agumon", "gabumon", "greymon", "veemon"]), "Active party must reject more than three Digimon")
+	assert(not OverworldState.set_active_party(["missing_digimon"]), "Active party must reject Digimon without a runtime resource")
+
+	OverworldState.reset_active_party()
+	await get_tree().process_frame
+	assert(int(party_followers.call("get_follower_count")) == 3, "Resetting state must restore all three starter followers")
