@@ -1,18 +1,18 @@
 extends RefCounted
 class_name DigimonTrainingService
 
-const TRAINABLE_STATS: Array[String] = ["hp", "mp", "atk", "def", "speed"]
-const MAX_POINTS_PER_STAT := 30
-const MOBILITY_I_POTENTIAL := 20
-const MOBILITY_II_POTENTIAL := 70
-const MOBILITY_I_CAPACITY_COST := 20
-const MOBILITY_II_ADDITIONAL_COST := 30
+const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
+const TRAINABLE_STATS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
+
+var _balance = BalanceScript.new()
 
 
 func capacity_for(instance: DigimonInstance) -> int:
 	if instance == null:
 		return 0
-	return 10 + instance.potential / 2
+	var base := _balance.training_int("baseCapacity", 10)
+	var divisor := maxi(1, _balance.training_int("potentialPerCapacity", 2))
+	return base + instance.potential / divisor
 
 
 func used_capacity(instance: DigimonInstance) -> int:
@@ -23,9 +23,9 @@ func used_capacity(instance: DigimonInstance) -> int:
 		used += maxi(0, int(instance.training.get(stat_key, 0)))
 	var mov_level := clampi(int(instance.training.get("mov", 0)), 0, 2)
 	if mov_level >= 1:
-		used += MOBILITY_I_CAPACITY_COST
+		used += _balance.training_int("mobilityOneCapacityCost", 20)
 	if mov_level >= 2:
-		used += MOBILITY_II_ADDITIONAL_COST
+		used += _balance.training_int("mobilityTwoAdditionalCost", 30)
 	return used
 
 
@@ -37,7 +37,7 @@ func can_allocate_stat(instance: DigimonInstance, stat_key: String, points: int 
 	if instance == null or not TRAINABLE_STATS.has(stat_key) or points <= 0:
 		return false
 	var current := maxi(0, int(instance.training.get(stat_key, 0)))
-	if current + points > MAX_POINTS_PER_STAT:
+	if current + points > _balance.training_int("maxPointsPerStat", 30):
 		return false
 	return remaining_capacity(instance) >= points
 
@@ -55,9 +55,15 @@ func can_train_mobility(instance: DigimonInstance) -> bool:
 	var mov_level := clampi(int(instance.training.get("mov", 0)), 0, 2)
 	match mov_level:
 		0:
-			return instance.potential >= MOBILITY_I_POTENTIAL and remaining_capacity(instance) >= MOBILITY_I_CAPACITY_COST
+			return (
+				instance.potential >= _balance.training_int("mobilityOnePotential", 20)
+				and remaining_capacity(instance) >= _balance.training_int("mobilityOneCapacityCost", 20)
+			)
 		1:
-			return instance.potential >= MOBILITY_II_POTENTIAL and remaining_capacity(instance) >= MOBILITY_II_ADDITIONAL_COST
+			return (
+				instance.potential >= _balance.training_int("mobilityTwoPotential", 70)
+				and remaining_capacity(instance) >= _balance.training_int("mobilityTwoAdditionalCost", 30)
+			)
 	return false
 
 
