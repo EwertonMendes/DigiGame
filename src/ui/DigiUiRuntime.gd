@@ -7,11 +7,11 @@ extends Node
 # Kenney's CC0 UI Pack - Sci-Fi. The art remains separate from translated text.
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
-const PANEL_TEXTURE := preload("res://assets/ui/kenney_scifi_dark/panel.svg")
-const PANEL_STRONG_TEXTURE := preload("res://assets/ui/kenney_scifi_dark/panel_strong.svg")
-const BUTTON_NORMAL_TEXTURE := preload("res://assets/ui/kenney_scifi_dark/button_normal.svg")
-const BUTTON_HOVER_TEXTURE := preload("res://assets/ui/kenney_scifi_dark/button_hover.svg")
-const BUTTON_PRESSED_TEXTURE := preload("res://assets/ui/kenney_scifi_dark/button_pressed.svg")
+const PANEL_TEXTURE_PATH := "res://assets/ui/kenney_scifi_dark/panel.svg"
+const PANEL_STRONG_TEXTURE_PATH := "res://assets/ui/kenney_scifi_dark/panel_strong.svg"
+const BUTTON_NORMAL_TEXTURE_PATH := "res://assets/ui/kenney_scifi_dark/button_normal.svg"
+const BUTTON_HOVER_TEXTURE_PATH := "res://assets/ui/kenney_scifi_dark/button_hover.svg"
+const BUTTON_PRESSED_TEXTURE_PATH := "res://assets/ui/kenney_scifi_dark/button_pressed.svg"
 
 const PANEL_NAMES_STRONG := [
 	"BattleDialog",
@@ -34,32 +34,60 @@ const PANEL_NAME_HINTS := [
 	"Overlay",
 ]
 
+var _panel_texture: Texture2D = null
+var _panel_strong_texture: Texture2D = null
+var _button_normal_texture: Texture2D = null
+var _button_hover_texture: Texture2D = null
+var _button_pressed_texture: Texture2D = null
+var _skin_ready := false
+
 
 func _ready() -> void:
+	_load_skin_resources()
 	get_tree().node_added.connect(_on_node_added)
 	call_deferred("_decorate_existing_tree")
 
 
+func _load_skin_resources() -> void:
+	_panel_texture = load(PANEL_TEXTURE_PATH) as Texture2D
+	_panel_strong_texture = load(PANEL_STRONG_TEXTURE_PATH) as Texture2D
+	_button_normal_texture = load(BUTTON_NORMAL_TEXTURE_PATH) as Texture2D
+	_button_hover_texture = load(BUTTON_HOVER_TEXTURE_PATH) as Texture2D
+	_button_pressed_texture = load(BUTTON_PRESSED_TEXTURE_PATH) as Texture2D
+	_skin_ready = (
+		_panel_texture != null
+		and _panel_strong_texture != null
+		and _button_normal_texture != null
+		and _button_hover_texture != null
+		and _button_pressed_texture != null
+	)
+	if not _skin_ready:
+		push_warning("Digi UI Dark skin resources could not be loaded; keeping the base TacticalTheme presentation.")
+
+
 func _decorate_existing_tree() -> void:
-	var scene := get_tree().current_scene
+	if not _skin_ready:
+		return
+	var scene: Node = get_tree().current_scene
 	if scene != null:
 		_decorate_branch(scene)
 
 
 func _decorate_branch(node: Node) -> void:
 	_decorate_node(node)
-	for child in node.get_children():
+	for child: Node in node.get_children():
 		_decorate_branch(child)
 
 
 func _on_node_added(node: Node) -> void:
-	call_deferred("_decorate_node", node)
+	if _skin_ready:
+		call_deferred("_decorate_node", node)
 
 
 func _decorate_node(node: Node) -> void:
-	if not is_instance_valid(node) or not node is Control:
+	if not _skin_ready or not is_instance_valid(node) or not node is Control:
 		return
-	var control := node as Control
+	var control: Control = node as Control
 	if control.has_meta("digi_ui_dark_applied"):
 		return
 
@@ -77,28 +105,28 @@ func _decorate_node(node: Node) -> void:
 
 
 func _should_skin_panel(control: Control) -> bool:
-	var node_name := String(control.name)
-	for strong_name in PANEL_NAMES_STRONG:
+	var node_name: String = String(control.name)
+	for strong_name: String in PANEL_NAMES_STRONG:
 		if node_name == strong_name:
 			return true
-	for hint in PANEL_NAME_HINTS:
+	for hint: String in PANEL_NAME_HINTS:
 		if node_name.contains(hint):
 			return true
 	return false
 
 
 func _style_panel(control: Control) -> void:
-	var strong := String(control.name) in PANEL_NAMES_STRONG
-	var texture := PANEL_STRONG_TEXTURE if strong else PANEL_TEXTURE
-	var style := _nine_patch(texture, Vector4(28.0, 24.0, 30.0, 24.0), Vector4(20.0, 16.0, 20.0, 16.0))
+	var strong: bool = String(control.name) in PANEL_NAMES_STRONG
+	var texture: Texture2D = _panel_strong_texture if strong else _panel_texture
+	var style: StyleBoxTexture = _nine_patch(texture, Vector4(28.0, 24.0, 30.0, 24.0), Vector4(20.0, 16.0, 20.0, 16.0))
 	control.add_theme_stylebox_override("panel", style)
 
 
 func _style_button(button: Button) -> void:
-	button.add_theme_stylebox_override("normal", _nine_patch(BUTTON_NORMAL_TEXTURE, Vector4(22.0, 16.0, 22.0, 16.0), Vector4(15.0, 8.0, 15.0, 8.0)))
-	button.add_theme_stylebox_override("hover", _nine_patch(BUTTON_HOVER_TEXTURE, Vector4(22.0, 16.0, 22.0, 16.0), Vector4(15.0, 8.0, 15.0, 8.0)))
-	button.add_theme_stylebox_override("pressed", _nine_patch(BUTTON_PRESSED_TEXTURE, Vector4(22.0, 16.0, 22.0, 16.0), Vector4(15.0, 8.0, 15.0, 8.0)))
-	button.add_theme_stylebox_override("hover_pressed", _nine_patch(BUTTON_PRESSED_TEXTURE, Vector4(22.0, 16.0, 22.0, 16.0), Vector4(15.0, 8.0, 15.0, 8.0)))
+	button.add_theme_stylebox_override("normal", _nine_patch(_button_normal_texture, Vector4(22.0, 16.0, 22.0, 16.0), Vector4(15.0, 8.0, 15.0, 8.0)))
+	button.add_theme_stylebox_override("hover", _nine_patch(_button_hover_texture, Vector4(22.0, 16.0, 22.0, 16.0), Vector4(15.0, 8.0, 15.0, 8.0)))
+	button.add_theme_stylebox_override("pressed", _nine_patch(_button_pressed_texture, Vector4(22.0, 16.0, 22.0, 16.0), Vector4(15.0, 8.0, 15.0, 8.0)))
+	button.add_theme_stylebox_override("hover_pressed", _nine_patch(_button_pressed_texture, Vector4(22.0, 16.0, 22.0, 16.0), Vector4(15.0, 8.0, 15.0, 8.0)))
 	button.add_theme_stylebox_override("focus", UI.focus_outline(UI.CYAN, 7))
 	button.add_theme_color_override("font_color", UI.TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
@@ -146,10 +174,10 @@ func _animate_button(button: Button, active: bool) -> void:
 	if not is_instance_valid(button) or button.disabled:
 		return
 	button.pivot_offset = button.size * 0.5
-	var tween := button.create_tween()
+	var tween: Tween = button.create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(button, "scale", Vector2(1.018, 1.018) if active else Vector2.ONE, 0.11)
-	var target := Color(1.04, 1.04, 1.04, 1.0) if active else Color.WHITE
+	var target: Color = Color(1.04, 1.04, 1.04, 1.0) if active else Color.WHITE
 	tween.parallel().tween_property(button, "modulate", target, 0.11)
 
 
@@ -157,7 +185,7 @@ func _press_button(button: Button) -> void:
 	if not is_instance_valid(button) or button.disabled:
 		return
 	button.pivot_offset = button.size * 0.5
-	var tween := button.create_tween()
+	var tween: Tween = button.create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(button, "scale", Vector2(0.985, 0.985), 0.065)
 
@@ -165,7 +193,7 @@ func _press_button(button: Button) -> void:
 func _release_button(button: Button) -> void:
 	if not is_instance_valid(button):
 		return
-	var tween := button.create_tween()
+	var tween: Tween = button.create_tween()
 	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(button, "scale", Vector2.ONE, 0.13)
 
@@ -187,8 +215,8 @@ func _animate_panel_in(control: Control) -> void:
 	control.pivot_offset = control.size * 0.5
 	control.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	control.scale = Vector2(0.985, 0.985)
-	var tween := control.create_tween()
+	var tween: Tween = control.create_tween()
 	tween.set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(control, "modulate:a", 1.0, 0.18)
+	tween.tween_property(control, "modulate", Color.WHITE, 0.18)
 	tween.tween_property(control, "scale", Vector2.ONE, 0.20)
