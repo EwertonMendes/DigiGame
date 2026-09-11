@@ -4,6 +4,54 @@ const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
 
 var _touch_joystick: Control = null
 var _last_touch_marker := ""
+var _mobile_dialog_content: Control = null
+var _mobile_dialog_title: Label = null
+var _mobile_dialog_body: Label = null
+var _mobile_dialog_cancel: Button = null
+
+
+# Build the dialog without nested Containers calculating a very large wrapped
+# minimum height on portrait Web exports. The panel remains a PanelContainer so
+# the inherited controller contract is unchanged, while its direct child has no
+# content-driven minimum size and can be laid out safely inside the viewport.
+func _build_dialog() -> void:
+	_dialog_panel = PanelContainer.new()
+	_dialog_panel.name = "BattleDialog"
+	_dialog_panel.visible = false
+	_dialog_panel.clip_contents = true
+	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_dialog_panel.add_theme_stylebox_override("panel", UI.panel_strong(UI.CYAN, 12))
+	_ui_root.add_child(_dialog_panel)
+
+	_mobile_dialog_content = Control.new()
+	_mobile_dialog_content.name = "Content"
+	_mobile_dialog_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mobile_dialog_content.custom_minimum_size = Vector2.ZERO
+	_dialog_panel.add_child(_mobile_dialog_content)
+
+	_mobile_dialog_title = _label("BATTLE OPERATOR", 13, UI.CYAN)
+	_mobile_dialog_title.name = "Title"
+	_mobile_dialog_content.add_child(_mobile_dialog_title)
+
+	_mobile_dialog_body = _label(
+		"Combat systems are online. Start a test battle with the current Digimon squad?",
+		18,
+		UI.TEXT
+	)
+	_mobile_dialog_body.name = "Body"
+	_mobile_dialog_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_mobile_dialog_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_mobile_dialog_content.add_child(_mobile_dialog_body)
+
+	_mobile_dialog_cancel = _dialog_button("NOT NOW", UI.MUTED)
+	_mobile_dialog_cancel.name = "Cancel"
+	_mobile_dialog_cancel.pressed.connect(_close_dialog)
+	_mobile_dialog_content.add_child(_mobile_dialog_cancel)
+
+	_start_battle_button = _dialog_button("START TEST BATTLE", UI.GOLD)
+	_start_battle_button.name = "StartBattle"
+	_start_battle_button.pressed.connect(_start_test_battle)
+	_mobile_dialog_content.add_child(_start_battle_button)
 
 
 func _build_mobile_controls() -> void:
@@ -48,9 +96,8 @@ func _layout_ui() -> void:
 	var edge := 14.0
 	var bottom := 14.0
 
-	# The browser UI and phone gesture area can steal a little vertical space in
-	# landscape. Keep every interactive control visibly inside the canvas instead
-	# of placing it flush against the physical bottom edge.
+	# Browser chrome and the OS gesture area can steal vertical space in landscape.
+	# Keep every interactive control away from the physical edge.
 	_mobile_controls.visible = touch_layout and not _dialog_open and not _transitioning
 	_mobile_controls.scale = Vector2.ONE * ui_scale
 	var joystick_side := 136.0 if landscape else 156.0
@@ -72,25 +119,53 @@ func _layout_ui() -> void:
 			maxf(0.0, (joystick_side - 68.0) * 0.5)
 		)
 
-	# The original dialog sat almost flush with the bottom of mobile browsers and
-	# could be clipped after an orientation change. Keep it centered/contained and
-	# slightly shorter while preserving the same content and buttons.
-	if _dialog_panel != null:
-		var dialog_width := minf(620.0 if landscape else 660.0, physical.x - edge * 2.0)
-		var dialog_height := 190.0 if landscape else 220.0
-		dialog_height = minf(dialog_height, physical.y - edge * 2.0)
-		_dialog_panel.scale = Vector2.ONE * ui_scale
-		_dialog_panel.position = Vector2(
-			(physical.x - dialog_width) * 0.5 * ui_scale,
-			(physical.y - dialog_height) * 0.5 * ui_scale
-		)
-		_dialog_panel.size = Vector2(dialog_width, dialog_height)
+	_layout_mobile_dialog(physical, ui_scale, landscape, edge)
 
 	# The information card should not dominate a short landscape phone viewport.
 	if landscape and compact and _location_panel != null:
 		var location_width := minf(330.0, physical.x * 0.44)
 		_location_panel.position = Vector2(edge * ui_scale, 10.0 * ui_scale)
 		_location_panel.size = Vector2(location_width, 108.0)
+
+
+func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, edge: float) -> void:
+	if _dialog_panel == null or _mobile_dialog_content == null:
+		return
+	var dialog_width := minf(620.0 if landscape else 660.0, physical.x - edge * 2.0)
+	var desired_height := 174.0 if landscape else 204.0
+	var dialog_height := minf(desired_height, physical.y - edge * 2.0)
+	_dialog_panel.scale = Vector2.ONE * ui_scale
+	_dialog_panel.position = Vector2(
+		(physical.x - dialog_width) * 0.5 * ui_scale,
+		(physical.y - dialog_height) * 0.5 * ui_scale
+	)
+	_dialog_panel.size = Vector2(dialog_width, dialog_height)
+
+	var pad := 18.0 if landscape else 16.0
+	_mobile_dialog_content.position = Vector2.ZERO
+	_mobile_dialog_content.size = Vector2(dialog_width, dialog_height)
+	_mobile_dialog_title.position = Vector2(pad, 14.0)
+	_mobile_dialog_title.size = Vector2(dialog_width - pad * 2.0, 22.0)
+	_mobile_dialog_title.add_theme_font_size_override("font_size", 12 if landscape else 13)
+
+	var actions_height := 48.0
+	var actions_y := dialog_height - pad - actions_height
+	_mobile_dialog_body.position = Vector2(pad, 40.0)
+	_mobile_dialog_body.size = Vector2(dialog_width - pad * 2.0, maxf(48.0, actions_y - 48.0))
+	_mobile_dialog_body.add_theme_font_size_override("font_size", 16 if landscape else 18)
+
+	var gap := 10.0
+	var available := dialog_width - pad * 2.0 - gap
+	var cancel_width := minf(150.0, available * 0.43)
+	var start_width := available - cancel_width
+	_mobile_dialog_cancel.custom_minimum_size = Vector2.ZERO
+	_mobile_dialog_cancel.position = Vector2(pad, actions_y)
+	_mobile_dialog_cancel.size = Vector2(cancel_width, actions_height)
+	_mobile_dialog_cancel.add_theme_font_size_override("font_size", 13 if landscape else 14)
+	_start_battle_button.custom_minimum_size = Vector2.ZERO
+	_start_battle_button.position = Vector2(pad + cancel_width + gap, actions_y)
+	_start_battle_button.size = Vector2(start_width, actions_height)
+	_start_battle_button.add_theme_font_size_override("font_size", 13 if landscape else 14)
 
 
 func _open_dialog() -> void:
