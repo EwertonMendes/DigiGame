@@ -37,6 +37,12 @@ var _target_indicators: Array[Node] = []
 var _hover_glow: Line2D
 
 
+func _process(_delta: float) -> void:
+	_update_hover()
+	if _last_hovered_grid == INVALID_GRID and _hover_glow != null:
+		_hover_glow.visible = false
+
+
 func set_movement_range(reachable: Dictionary, origin: Vector2i, moving_actor: Node) -> void:
 	clear_movement_range()
 	_movement_mode_active = true
