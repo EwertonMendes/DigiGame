@@ -56,7 +56,6 @@ const FADE_IN_PANELS := [
 	"TechniqueMenu",
 	"RetreatPanel",
 	"RetreatResult",
-	"BattleStartFrame",
 ]
 
 var _panel_standard: Texture2D = null
@@ -133,6 +132,7 @@ func _decorate_node(node: Node) -> void:
 	if control is Button:
 		var button := control as Button
 		if _should_frame_button(button):
+			_style_related_result_panel(button)
 			_style_dialog_button(button)
 			control.set_meta("digi_fantasy_skin_applied", true)
 
@@ -158,6 +158,25 @@ func _should_frame_button(button: Button) -> bool:
 			return true
 		parent = parent.get_parent()
 	return false
+
+
+# The base battle result panel predates the naming convention and is an unnamed
+# Panel. Discover it from its uniquely named return button so it receives the
+# same finished treatment as retreat / hub dialogs without broadly skinning
+# unrelated utility panels.
+func _style_related_result_panel(button: Button) -> void:
+	if String(button.name) != "ReturnToHub":
+		return
+	var parent: Node = button.get_parent()
+	while parent != null:
+		if parent is Panel or parent is PanelContainer:
+			var panel := parent as Control
+			if not panel.has_meta("digi_fantasy_skin_applied"):
+				_style_panel(panel, true)
+				_install_fade_in(panel)
+				panel.set_meta("digi_fantasy_skin_applied", true)
+			return
+		parent = parent.get_parent()
 
 
 func _style_dialog_button(button: Button) -> void:
