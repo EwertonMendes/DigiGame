@@ -29,6 +29,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Fetch preferred UI fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/fetch_ui_fonts.py
+
       - name: Validate vendored runtime assets
         shell: bash
         run: |
