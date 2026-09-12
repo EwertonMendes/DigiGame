@@ -30,6 +30,11 @@ const FRAME_DARK: Color = Color(0.16, 0.20, 0.25, 1.0)
 # copy. Noto Sans is deliberately used for microcopy because its open forms and
 # larger apparent x-height stay readable at 10-12 px and survive translation
 # better than a display face. Rajdhani remains a committed bootstrap fallback.
+#
+# Battle UI is intentionally different from dense menus: every tactical datum
+# (commands, HP/SP values, turn labels, hover cards and previews) stays in the
+# same Oxanium family for fast visual consistency, but uses the family's maximum
+# practical weight so the small/medium glyphs do not look wire-thin in motion.
 const FONT_DISPLAY_PATH := "res://assets/ui/fonts/Oxanium[wght].ttf"
 const FONT_UI_PATH := "res://assets/ui/fonts/Exo2[wght].ttf"
 const FONT_READING_PATH := "res://assets/ui/fonts/NotoSans[wdth,wght].ttf"
@@ -37,6 +42,7 @@ const FONT_BOOTSTRAP_REGULAR_PATH := "res://assets/ui/fonts/Rajdhani-Regular.ttf
 const FONT_BOOTSTRAP_SEMIBOLD_PATH := "res://assets/ui/fonts/Rajdhani-SemiBold.ttf"
 
 const DISPLAY_WEIGHT := 700.0
+const COMBAT_WEIGHT := 800.0
 const UI_WEIGHT := 600.0
 const READING_WEIGHT := 500.0
 const MICRO_WEIGHT := 650.0
@@ -46,6 +52,7 @@ const TYPOGRAPHY_ROOT_META := &"digi_typography_root_installed"
 const TYPOGRAPHY_PENDING_META := &"digi_typography_root_pending"
 
 static var _display_font_cache: Font = null
+static var _combat_font_cache: Font = null
 static var _body_font_cache: Font = null
 static var _reading_font_cache: Font = null
 static var _micro_font_cache: Font = null
@@ -95,6 +102,17 @@ static func display_font() -> Font:
 	return _display_font_cache
 
 
+static func combat_font() -> Font:
+	if _combat_font_cache == null:
+		_combat_font_cache = _font_with_fallbacks(
+			FONT_DISPLAY_PATH,
+			FONT_BOOTSTRAP_SEMIBOLD_PATH,
+			[FONT_UI_PATH, FONT_READING_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
+			COMBAT_WEIGHT
+		)
+	return _combat_font_cache
+
+
 static func heading_font() -> Font:
 	return display_font()
 
@@ -139,6 +157,24 @@ static func _top_control(control: Control) -> Control:
 	return root
 
 
+static func _is_combat_typography_root(root: Control) -> bool:
+	if root == null:
+		return false
+	var script := root.get_script() as Script
+	if script == null:
+		return false
+	match script.resource_path:
+		"res://src/BattleHUD.gd",
+		"res://src/TurnOrderHUD.gd",
+		"res://src/DigimonInfoPanel.gd",
+		"res://src/ui/CombatOverlayHUD.gd",
+		"res://src/ui/CompactDigimonInfoPanel.gd",
+		"res://src/ui/NavigableTurnOrderHUD.gd",
+		"res://src/ui/BattleTopBar.gd":
+			return true
+	return false
+
+
 static func _install_root_typography(control: Control) -> void:
 	# Most UI factories style a control before adding it to its parent. Defer the
 	# root lookup until tree_entered so the full Control ancestry is available;
@@ -155,31 +191,44 @@ static func _install_root_typography(control: Control) -> void:
 			, Object.CONNECT_ONE_SHOT)
 		return
 
-	# Legacy/modal controls that are created directly should default to the most
-	# readable member of the family. Explicitly styled normal-size UI still gets
-	# Exo 2 and display headings still get Oxanium.
 	var root := _top_control(control)
-	if root == null or root.has_meta(TYPOGRAPHY_ROOT_META):
+	if root == null:
 		return
-	var default_font := micro_font()
-	if default_font == null:
-		return
-	var inherited_theme: Theme = null
-	if root.theme != null:
-		inherited_theme = root.theme.duplicate() as Theme
-	if inherited_theme == null:
-		inherited_theme = Theme.new()
-	inherited_theme.default_font = default_font
-	root.theme = inherited_theme
-	root.set_meta(TYPOGRAPHY_ROOT_META, true)
+	var combat_root := _is_combat_typography_root(root)
+
+	# Legacy/modal controls that are created directly should inherit the most
+	# suitable family for their screen. Menus use the highly readable Noto micro
+	# face; tactical screens use the heavier Oxanium combat face consistently.
+	if not root.has_meta(TYPOGRAPHY_ROOT_META):
+		var default_font := combat_font() if combat_root else micro_font()
+		if default_font != null:
+			var inherited_theme: Theme = null
+			if root.theme != null:
+				inherited_theme = root.theme.duplicate() as Theme
+			if inherited_theme == null:
+				inherited_theme = Theme.new()
+			inherited_theme.default_font = default_font
+			root.theme = inherited_theme
+			root.set_meta(TYPOGRAPHY_ROOT_META, true)
+
+	# Explicit body/heading calls made before the control entered the tree may
+	# already have installed Exo/Noto/Oxanium-700. Once the real battle root is
+	# known, normalize the individual control to the heavier combat face too.
+	if combat_root:
+		var tactical_font := combat_font()
+		if tactical_font != null:
+			control.add_theme_font_override("font", tactical_font)
 
 
 static func _apply_font(control: Control, font: Font) -> void:
 	if control == null:
 		return
 	_install_root_typography(control)
-	if font != null:
-		control.add_theme_font_override("font", font)
+	var resolved_font := font
+	if control.is_inside_tree() and _is_combat_typography_root(_top_control(control)):
+		resolved_font = combat_font()
+	if resolved_font != null:
+		control.add_theme_font_override("font", resolved_font)
 
 
 static func _legible_font_size(control: Control) -> int:
@@ -200,7 +249,8 @@ static func apply_body_font(control: Control) -> void:
 static func apply_heading_font(control: Control) -> void:
 	var size := _legible_font_size(control)
 	# Tiny all-caps/status headings used Oxanium before this split. At 9-12 px
-	# its distinctive shapes are attractive but materially harder to scan.
+	# its distinctive shapes are attractive but materially harder to scan in
+	# dense menus. Battle roots are normalized back to combat_font() afterwards.
 	_apply_font(control, micro_font() if size <= SMALL_TEXT_BREAKPOINT else heading_font())
 
 
