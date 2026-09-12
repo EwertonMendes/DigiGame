@@ -213,6 +213,125 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+  deploy-pr-preview:
+    name: Deploy PR preview
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    needs:
+      - build-web
+      - browser-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      actions: read
+      contents: read
+      pages: write
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Download tested PR build
+        uses: actions/download-artifact@v5
+        with:
+          name: digigame-web-build
+          path: preview
+
+      - name: Restore production and add PR preview
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          mkdir -p site
+
+          MASTER_RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow web.yml \
+            --branch master \
+            --event push \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+
+          if [ -z "$MASTER_RUN_ID" ] || [ "$MASTER_RUN_ID" = "null" ]; then
+            echo "No successful master Web workflow run was found; refusing to replace the production Pages root." >&2
+            exit 1
+          fi
+
+          echo "Using master Web artifact from workflow run ${MASTER_RUN_ID}."
+          gh run download "$MASTER_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name digigame-web-build \
+            --dir site
+
+          PREVIEW_DIR="site/pr-${PR_NUMBER}"
+          mkdir -p "$PREVIEW_DIR"
+          cp -a preview/. "$PREVIEW_DIR/"
+
+          cat > "$PREVIEW_DIR/preview-build.txt" <<EOF
+          DigiGame pull request preview
+          PR: #${PR_NUMBER}
+          Commit: ${GITHUB_SHA}
+          Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          EOF
+
+          test -s site/index.html
+          test -s "$PREVIEW_DIR/index.html"
+          test -s "$PREVIEW_DIR/index.wasm"
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload combined Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - name: Deploy preview
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Publish preview link on PR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PREVIEW_URL: ${{ steps.pages.outputs.base_url }}/pr-${{ github.event.pull_request.number }}/
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          MARKER='<!-- digigame-playable-preview -->'
+          SHORT_SHA="${HEAD_SHA:0:7}"
+          BODY="${MARKER}
+          ## 🎮 Playable PR preview
+
+          **[Open DigiGame PR #${PR_NUMBER}](${PREVIEW_URL})**
+
+          Build: \`${SHORT_SHA}\` · validated by the Web, desktop, mobile, combat and VFX jobs before deployment.
+
+          This URL is the PR build; the normal Pages root remains the latest successful \`master\` build."
+
+          COMMENT_ID="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            --paginate \
+            --jq ".[] | select(.body | contains(\"${MARKER}\")) | .id" \
+            | head -n 1)"
+
+          if [ -n "$COMMENT_ID" ]; then
+            gh api \
+              --method PATCH \
+              "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" \
+              -f body="$BODY" >/dev/null
+          else
+            gh api \
+              --method POST \
+              "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+              -f body="$BODY" >/dev/null
+          fi
+
   deploy-pages:
     name: Deploy GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
