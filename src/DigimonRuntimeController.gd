@@ -4,7 +4,6 @@ signal hovered_digimon_changed(digimon_key: String)
 
 const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
-const PLAYER_SCENE = preload("res://scenes/player.tscn")
 const BATTLE_SPRITE_SCALE := Vector2(1.0, 1.0)
 
 # Temporary encounter/bootstrap data. These descriptors already use the same
@@ -114,10 +113,16 @@ func _instantiate_actor(instance: DigimonInstance, player_controlled: bool, init
 
 
 func create_digimon_actor() -> CharacterBody2D:
-	if PLAYER_SCENE == null:
+	# Keep this as a runtime load instead of a script-level preload. player.tscn
+	# references battle classes which inherit this controller, so preloading it
+	# while this script is being parsed creates a circular resource dependency.
+	# During the real transition this load happens in the off-tree preparation
+	# phase, before the visible mosaic begins.
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	if player_scene == null:
 		push_error("Could not load Digimon battle actor scene")
 		return null
-	return PLAYER_SCENE.instantiate() as CharacterBody2D
+	return player_scene.instantiate() as CharacterBody2D
 
 
 func _set_actor_graphics(digimon_name: String, digimon_resource: Digimon, actor: CharacterBody2D, player_controlled: bool, instance_id: String) -> void:
