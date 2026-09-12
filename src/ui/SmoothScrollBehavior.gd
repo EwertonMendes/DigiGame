@@ -1,11 +1,11 @@
 extends Node
 class_name SmoothScrollBehavior
 
-# Adds comfortable inertial mouse-wheel scrolling to any ScrollContainer without
-# replacing Godot's native touch drag/scrollbar behavior.
+# Comfortable mouse-wheel scrolling for ScrollContainer while keeping Godot's
+# native touch drag and scrollbar behavior intact.
 
-const WHEEL_STEP := 92.0
-const DURATION := 0.24
+const WHEEL_STEP := 56.0
+const DURATION := 0.30
 
 var _scroll: ScrollContainer = null
 var _target_vertical := 0.0
@@ -51,10 +51,11 @@ func _on_gui_input(event: InputEvent) -> void:
 	if _tween == null or not _tween.is_valid():
 		_target_vertical = float(_scroll.scroll_vertical)
 	_target_vertical = clampf(_target_vertical + direction * WHEEL_STEP, 0.0, maximum)
+
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 	_tween = create_tween()
-	_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_tween.tween_method(_set_vertical, float(_scroll.scroll_vertical), _target_vertical, DURATION)
 	_scroll.accept_event()
 
