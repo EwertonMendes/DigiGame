@@ -43,13 +43,14 @@ EXPECTED_BLOBS = {
     "assets/characters/koromon.png": "7be3ffad6cf60fd35e1f31e08052fff4b9e7b6f8",
     "assets/characters/tanemon.png": "53da8d44945acfab69505ba2d7e111aab19f97bb",
     "assets/characters/veemon/field.png": "4de1db9fac82ae76ff285bf53f5b8280e2939a22",
+    "assets/characters/metalgreymon/field.png": "617c27d18cbc1c6ab3f0d1bf5b745ba47c4d472d",
 }
 
 EXPECTED_SOURCE_SHA256 = {
     "vendor/vfx-source/pixel-art-spells.zip": "bf6e751559942aad40a50359ab5ae8f9750054546de0b21b4519d39904e163cb",
     "vendor/vfx-source/foozle-pixel-magic.zip": "0c04ab8ee856988b55885a92305d5382459cc855b2a6361c417bb11606f41e9a",
     "vendor/vfx-source/pvfx-foundry-0.7.0.zip": "a2a26a2c162ff9d58037c921d6c568d7fa944cfb166e25eef68f908046c29add",
-    "vendor/vfx-source/nature-magic.zip": "46f44a30d38b65d55ed1101ce8dc8907e31043958abaf9e2b1894508438815f8",
+    "vendor/vfx-source/nature-magic.zip": "46f44a30d38b65d55c061ab62c9be7e31043958abaf9e2b1894508438815f8",
 }
 
 RUNTIME_TEXT_ROOTS = (
