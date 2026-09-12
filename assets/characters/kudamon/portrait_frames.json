@@ -1,0 +1,14 @@
+{
+  "source": "Kudamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "a37418c0be6928705e8c12aa25c09136143d5c594774dc8aa297ffcf41412e6a"
+}

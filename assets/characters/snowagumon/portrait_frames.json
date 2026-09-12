@@ -1,0 +1,14 @@
+{
+  "source": "SnowAgumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "b11987bfb6c9c750232496283d20777a66ac251264ea4b0b635735d5acfa1b61"
+}

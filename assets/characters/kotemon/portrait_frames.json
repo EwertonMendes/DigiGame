@@ -1,0 +1,14 @@
+{
+  "source": "Kotemon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "7bdda936c6b9fabbd9c2505fdf7e0cfa0e93d6ce8a4b5feb6ee9590f50cf6de5"
+}

@@ -1,0 +1,17 @@
+{
+  "source_kind": "community_ds_style_exception",
+  "source_url": "https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/Pichimon.png",
+  "credit": "PixelDots community DS-style sprite",
+  "cell_width": 35,
+  "cell_height": 48,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "directions": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "runtime_scale": 1.0,
+  "field_path": "res://assets/characters/pitchmon/field.png"
+}

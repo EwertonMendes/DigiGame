@@ -1,0 +1,14 @@
+{
+  "source": "Salamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "72ac532170aa679f2186dbdbed5cd55aecf7cb69502aa58c65b1ff9ececdab72"
+}

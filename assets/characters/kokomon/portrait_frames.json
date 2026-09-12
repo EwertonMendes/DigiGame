@@ -1,0 +1,14 @@
+{
+  "source": "Kokomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 34,
+  "frame_height": 44,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "c475d052f739782efe00de40ccea7b5a6b18243b1409640b23c41030bee98567"
+}

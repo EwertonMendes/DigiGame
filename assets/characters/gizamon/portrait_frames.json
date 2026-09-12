@@ -1,0 +1,14 @@
+{
+  "source": "Gizamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 62,
+  "frame_height": 71,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "3c96dc741aa3d5c7ed04be1e2a4f4c47640535177dfa20f10bf8983f3e5ebf33"
+}

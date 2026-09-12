@@ -24,7 +24,6 @@ const RESOURCE_FALLBACKS: Array[String] = [
 var _picker: OptionButton
 var _field: Control
 var _field_dark: ColorRect
-var _field_light: ColorRect
 var _name_label: Label
 var _state_label: Label
 var _auto_button: Button
@@ -188,18 +187,12 @@ func _build_ui() -> void:
 	field_panel.add_child(_field)
 	_field.resized.connect(_on_field_resized)
 
-	# Two high-contrast halves make stray background pixels obvious without
-	# changing the sprite texture itself.
+	# One uniform near-black field makes DS pixel edges and transparency easy to inspect.
 	_field_dark = ColorRect.new()
-	_field_dark.color = Color(0.035, 0.055, 0.08, 1.0)
+	_field_dark.color = Color(0.002, 0.003, 0.006, 1.0)
 	_field_dark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_field_dark.z_index = 0
 	_field.add_child(_field_dark)
-	_field_light = ColorRect.new()
-	_field_light.color = Color(0.68, 0.70, 0.72, 1.0)
-	_field_light.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_light.z_index = 0
-	_field.add_child(_field_light)
 
 	var side := PanelContainer.new()
 	side.custom_minimum_size.x = 320
@@ -218,12 +211,19 @@ func _build_ui() -> void:
 	stack.add_child(_state_label)
 	stack.add_child(_label("MOVE - HOLD", 10, UI.GOLD))
 	var move_grid := GridContainer.new()
-	move_grid.columns = 2
+	move_grid.columns = 3
+	move_grid.add_theme_constant_override("h_separation", 5)
+	move_grid.add_theme_constant_override("v_separation", 5)
 	stack.add_child(move_grid)
-	_add_move(move_grid, "UP LEFT", Vector2(-1, -1))
-	_add_move(move_grid, "UP RIGHT", Vector2(1, -1))
-	_add_move(move_grid, "DOWN LEFT", Vector2(-1, 1))
-	_add_move(move_grid, "DOWN RIGHT", Vector2(1, 1))
+	_add_dpad_spacer(move_grid)
+	_add_move(move_grid, "UP", Vector2.UP)
+	_add_dpad_spacer(move_grid)
+	_add_move(move_grid, "LEFT", Vector2.LEFT)
+	_add_dpad_spacer(move_grid)
+	_add_move(move_grid, "RIGHT", Vector2.RIGHT)
+	_add_dpad_spacer(move_grid)
+	_add_move(move_grid, "DOWN", Vector2.DOWN)
+	_add_dpad_spacer(move_grid)
 	stack.add_child(_label("FACE - CLICK", 10, UI.GOLD))
 	var face_grid := GridContainer.new()
 	face_grid.columns = 2
@@ -232,7 +232,7 @@ func _build_ui() -> void:
 	_add_face(face_grid, "FRONT RIGHT", "down_right")
 	_add_face(face_grid, "BACK LEFT", "up_left")
 	_add_face(face_grid, "BACK RIGHT", "up_right")
-	var help := _label("WASD / arrows: move\nQ / E: rotate facing\nR: reset\nSpace: auto patrol\nDark/light field: inspect residue", 11, UI.MUTED)
+	var help := _label("Touch D-pad / WASD / arrows: move\nGamepad left stick / D-pad: move\nQ / E: rotate facing\nR: reset\nSpace: auto patrol", 11, UI.MUTED)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stack.add_child(help)
 
@@ -335,14 +335,33 @@ func _movement_input() -> Vector2:
 	var wasd := Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
 	if wasd.length_squared() > direction.length_squared():
 		direction = wasd
+	for device in Input.get_connected_joypads():
+		var stick := Vector2(Input.get_joy_axis(device, JOY_AXIS_LEFT_X), Input.get_joy_axis(device, JOY_AXIS_LEFT_Y))
+		if stick.length() < 0.22:
+			stick = Vector2.ZERO
+		var dpad := Vector2(
+			float(Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_RIGHT)) - float(Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_LEFT)),
+			float(Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_DOWN)) - float(Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_UP))
+		)
+		if dpad.length_squared() > stick.length_squared():
+			stick = dpad
+		if stick.length_squared() > direction.length_squared():
+			direction = stick
 	if _touch.length_squared() > direction.length_squared():
 		direction = _touch
 	return direction.limit_length(1.0)
 
 
+func _add_dpad_spacer(parent: Control) -> void:
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(82, 42)
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(spacer)
+
+
 func _add_move(parent: Control, text_value: String, direction: Vector2) -> void:
 	var button := _button(text_value, UI.CYAN)
-	button.custom_minimum_size = Vector2(138, 42)
+	button.custom_minimum_size = Vector2(82, 42)
 	button.button_down.connect(_set_touch.bind(direction.normalized()))
 	button.button_up.connect(_clear_touch)
 	button.mouse_exited.connect(_clear_touch)
@@ -429,9 +448,7 @@ func _on_field_resized() -> void:
 	if _field_dark == null:
 		return
 	_field_dark.position = Vector2.ZERO
-	_field_dark.size = Vector2(_field.size.x * 0.5, _field.size.y)
-	_field_light.position = Vector2(_field.size.x * 0.5, 0)
-	_field_light.size = Vector2(_field.size.x * 0.5, _field.size.y)
+	_field_dark.size = _field.size
 	if visible and _follower != null:
 		_reset_actor()
 

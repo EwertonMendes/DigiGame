@@ -1,0 +1,14 @@
+{
+  "source": "Penguinmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 63,
+  "frame_height": 57,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "b2cd356c6e5583b1937ef5bcffcf2a0ec6c1f6c7588c3dbbca3fa353a2cc09ba"
+}

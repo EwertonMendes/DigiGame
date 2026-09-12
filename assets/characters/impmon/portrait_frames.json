@@ -1,0 +1,14 @@
+{
+  "source": "Impmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 60,
+  "frame_height": 70,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "33639cd91d6318b8a7451fef6e71e7cd8ee71c2c78f0aa6b9985bf261c74baa1"
+}

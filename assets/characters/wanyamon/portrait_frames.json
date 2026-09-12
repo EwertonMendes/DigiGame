@@ -1,0 +1,14 @@
+{
+  "source": "Wanyamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 80,
+  "frame_height": 80,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "9560da44ceb537fe08e80ac0ab06bc3db2169d45f5462e4626646724547a69b7"
+}

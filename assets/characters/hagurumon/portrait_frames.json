@@ -1,0 +1,14 @@
+{
+  "source": "Hagurumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 72,
+  "frame_height": 47,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "1c9f6265666db6546f73c82f8688b1414a1894fa21b55bc438243a76b4e9af2c"
+}

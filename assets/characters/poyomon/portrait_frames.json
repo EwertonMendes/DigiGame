@@ -1,0 +1,14 @@
+{
+  "source": "Poyomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 35,
+  "frame_height": 35,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "10b2e6a5d0fbca0711b64da3cdf64bacd525a476bdb5e36be568dde28ed87ca4"
+}

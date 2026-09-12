@@ -115,13 +115,14 @@ func _set_actor_graphics(digimon_name: String, digimon_resource: Digimon, actor:
 	digimon_sprite.texture = digimon_resource.texture
 	digimon_sprite.hframes = maxi(1, digimon_resource.sprite_hframes)
 	digimon_sprite.vframes = maxi(1, digimon_resource.sprite_vframes)
-	digimon_sprite.frame = digimon_resource.initial_frame
+	digimon_sprite.frame = clampi(digimon_resource.initial_frame, 0, maxi(0, digimon_sprite.hframes * digimon_sprite.vframes - 1))
 	digimon_sprite.flip_h = false
 	digimon_sprite.region_enabled = false
 	digimon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	digimon_sprite.scale = BATTLE_SPRITE_SCALE
+	digimon_sprite.scale = BATTLE_SPRITE_SCALE * digimon_resource.sprite_scale
 	actor.set("initial_facing", digimon_resource.initial_facing)
 	actor.set("sprite_layout", digimon_resource.sprite_layout)
+	actor.set("sprite_frame_duration", maxf(0.02, digimon_resource.sprite_frame_duration))
 	actor.set("is_player_controlled", player_controlled)
 
 

@@ -1,0 +1,14 @@
+{
+  "source": "Keramon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 130,
+  "frame_height": 130,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "bd3c9a1febd861756404de30083f0d9fc7ef21915ae3952ebc2d0767b7847827"
+}

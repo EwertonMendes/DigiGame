@@ -1,0 +1,14 @@
+{
+  "source": "Kunemon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 55,
+  "frame_height": 68,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "8ad8e7372bb52efd91aec1c52a189065c83e2512024608ffdebee38cd810420f"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "PawnChessmon (Black).webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "0083ef315e88b40d6c4f30e1af8125303f149819eb29ace85efe975c4c02049e"
+}

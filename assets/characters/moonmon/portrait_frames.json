@@ -1,0 +1,14 @@
+{
+  "source": "Moonmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 27,
+  "frame_height": 54,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "35c4ab764dd78cfc17caeabab16b6a38935aa3d5ae0e89f188d6acbd57212333"
+}

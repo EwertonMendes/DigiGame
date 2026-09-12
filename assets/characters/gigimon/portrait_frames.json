@@ -1,0 +1,14 @@
+{
+  "source": "Gigimon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 60,
+  "frame_height": 50,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "a702a5be81406ee02abb37cddd6cc2dfaad3713dc13793045edcd2e92a4fed8d"
+}

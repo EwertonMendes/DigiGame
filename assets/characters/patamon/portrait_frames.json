@@ -1,0 +1,14 @@
+{
+  "source": "Patamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "61f815daba9b1f4758cd95d5137e717e9b009d0a85d548583b6583568d9535e9"
+}

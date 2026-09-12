@@ -87,9 +87,14 @@ func _process(delta: float) -> void:
 	if not _active or _digimon == null or _sprite == null:
 		return
 	_elapsed += delta
-	while _elapsed >= WALK_FRAME_DURATION:
-		_elapsed -= WALK_FRAME_DURATION
-		_sequence_index = (_sequence_index + 1) % WALK_SEQUENCE.size()
+	var duration := maxf(0.02, _digimon.sprite_frame_duration) if _digimon.sprite_layout == "portrait_strip" else WALK_FRAME_DURATION
+	while _elapsed >= duration:
+		_elapsed -= duration
+		if _digimon.sprite_layout == "portrait_strip":
+			var frame_count := maxi(1, _sprite.hframes * _sprite.vframes)
+			_sequence_index = (_sequence_index + 1) % frame_count
+		else:
+			_sequence_index = (_sequence_index + 1) % WALK_SEQUENCE.size()
 	_show_walk_frame()
 
 
@@ -119,7 +124,11 @@ func _apply_visuals() -> void:
 func _show_idle_frame() -> void:
 	if _sprite == null or _digimon == null:
 		return
-	if _digimon.sprite_layout == "spaced_9_32":
+	if _digimon.sprite_layout == "portrait_strip":
+		_sprite.region_enabled = false
+		_sprite.flip_h = false
+		_sprite.frame = 0
+	elif _digimon.sprite_layout == "spaced_9_32":
 		_show_spaced_9_frame(int(SPACED_9_IDLE_FRAME.get(PREVIEW_FACING, 5)))
 	else:
 		_sprite.region_enabled = false
@@ -130,7 +139,12 @@ func _show_idle_frame() -> void:
 func _show_walk_frame() -> void:
 	if _sprite == null or _digimon == null:
 		return
-	if _digimon.sprite_layout == "spaced_9_32":
+	if _digimon.sprite_layout == "portrait_strip":
+		_sprite.region_enabled = false
+		_sprite.flip_h = false
+		var frame_count := maxi(1, _sprite.hframes * _sprite.vframes)
+		_sprite.frame = _sequence_index % frame_count
+	elif _digimon.sprite_layout == "spaced_9_32":
 		var sequence: Array = SPACED_9_WALK_SEQUENCE.get(PREVIEW_FACING, [5, 4, 5, 4])
 		_show_spaced_9_frame(int(sequence[_sequence_index % sequence.size()]))
 	else:

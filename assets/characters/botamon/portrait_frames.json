@@ -1,0 +1,14 @@
+{
+  "source": "Botamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 37,
+  "frame_height": 34,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "37cdf1fea01dee4cb93b3c9c656228c7de198c97ffb003fdd018708a9cb49c74"
+}

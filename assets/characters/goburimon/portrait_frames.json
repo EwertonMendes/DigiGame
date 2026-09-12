@@ -1,0 +1,14 @@
+{
+  "source": "Goburimon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2469161e6074f67ed4ad17748e393f1f613428cf47a1e89161236a9ae72913a4"
+}

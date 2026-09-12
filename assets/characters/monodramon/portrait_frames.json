@@ -1,0 +1,14 @@
+{
+  "source": "Monodramon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "a64f501326566104b8563773a7a696749f8d41253f137845ee53899231ebc4fc"
+}

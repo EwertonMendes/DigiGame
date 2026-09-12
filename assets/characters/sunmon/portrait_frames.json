@@ -1,0 +1,14 @@
+{
+  "source": "Sunmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 37,
+  "frame_height": 59,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "eaf262a57ea685000fa85b85639a046b7db53f7bbe531d1be550e56865318fe1"
+}

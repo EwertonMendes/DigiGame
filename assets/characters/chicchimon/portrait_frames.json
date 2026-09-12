@@ -1,0 +1,14 @@
+{
+  "source": "Chicchimon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 70,
+  "frame_height": 70,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2ac50db9957a7fc72e6950a996d62b7f8d9c72203cfe66e042745b77a86d63b1"
+}

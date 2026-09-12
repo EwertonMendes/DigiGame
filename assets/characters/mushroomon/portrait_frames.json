@@ -1,0 +1,14 @@
+{
+  "source": "Mushroomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 63,
+  "frame_height": 60,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "1ff1761b962012148ceb0e687bae1c729f773199ad318a6b36268130300f504b"
+}

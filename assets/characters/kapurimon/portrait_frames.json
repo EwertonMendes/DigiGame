@@ -1,0 +1,14 @@
+{
+  "source": "Kapurimon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 53,
+  "frame_height": 49,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "7d65f404d3a9d715f5321d715f87227dbb16643665317c1606b2abc57b49cf49"
+}

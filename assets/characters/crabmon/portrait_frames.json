@@ -1,0 +1,14 @@
+{
+  "source": "Crabmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "bfe1e4a024f5060a1cc85baff601900b831da3b31693522433497cad8fc86327"
+}

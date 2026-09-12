@@ -1,0 +1,14 @@
+{
+  "source": "Palmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "7ed4fb14c417e7266ce88265cbc9f2289818af6fdd0c442f49d908cfba0c5a82"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Armadillomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 80,
+  "frame_height": 65,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "1e07c966e49258ce8260af6daf63800a39f476315084acd27a227aa80457eee2"
+}
