@@ -27,11 +27,12 @@ jobs:
           git -C /tmp/ds-manager checkout --quiet 06b3c4df09dc5eeaccee511d731f37947b1c8259
           python3 /tmp/ds-manager/Scripts/download_sheets.py --delay 0.02
 
-      - name: Regenerate all early-rank directional field sprites
+      - name: Build and normalize the complete directional roster
         shell: bash
         run: |
           set -euo pipefail
           python3 tools/build_early_rank_ds_fields.py --manager /tmp/ds-manager
+          python3 tools/regenerate_authoritative_ds_facings.py --manager /tmp/ds-manager
           python3 tools/validate_early_rank_playables.py
 
       - name: Commit regenerated directional assets
@@ -40,10 +41,10 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/characters assets/resources database/early-rank-playables.json
+          git add assets/characters assets/resources database/early-rank-playables.json database/ds-facing-audit.json
           if git diff --cached --quiet; then
             echo 'No generated changes to commit.'
             exit 0
           fi
-          git commit -m 'fix: regenerate DS sprites with authoritative facings'
+          git commit -m 'fix: normalize DS sprite facing directions'
           git push origin HEAD:fix/ds-sprite-facing-audit
