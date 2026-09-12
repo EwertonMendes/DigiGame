@@ -68,12 +68,19 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.name = "Sprite2D"
 	_sprite.position = SPRITE_POSITION
-	_sprite.scale = Vector2.ONE * SPRITE_SCALE
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(_sprite)
 	_apply_digimon_visuals()
 	_show_idle_frame()
 	_update_depth()
+
+
+func _process(delta: float) -> void:
+	# Generic early-rank fallbacks use the canonical animated WebP as a portrait
+	# strip. Keep that source animation alive while the follower is stationary;
+	# directional field sheets continue to animate only when walking.
+	if _digimon != null and _digimon.sprite_layout == "portrait_strip" and not _walking:
+		_advance_portrait_animation(delta)
 
 
 func teleport_to(world_position: Vector2, initial_facing: String = "up_right") -> void:
@@ -116,6 +123,8 @@ func step_toward(target_position: Vector2, delta: float, separation_points: Arra
 func set_idle() -> void:
 	_walking = false
 	_stationary_time = 0.0
+	if _digimon != null and _digimon.sprite_layout == "portrait_strip":
+		return
 	_walk_time = 0.0
 	_walk_sequence_index = 0
 	_show_idle_frame()
@@ -139,6 +148,7 @@ func _apply_digimon_visuals() -> void:
 	if _sprite == null or _digimon == null:
 		return
 	_sprite.texture = _digimon.texture
+	_sprite.scale = Vector2.ONE * SPRITE_SCALE * _digimon.sprite_scale
 	_sprite.flip_h = false
 	_sprite.region_enabled = false
 	if _digimon.sprite_layout == "spaced_9_32":
@@ -169,6 +179,9 @@ func _face_motion(motion: Vector2) -> void:
 
 func _advance_walk_animation(delta: float) -> void:
 	_walking = true
+	if _digimon != null and _digimon.sprite_layout == "portrait_strip":
+		_advance_portrait_animation(delta)
+		return
 	_walk_time += delta
 	while _walk_time >= WALK_FRAME_DURATION:
 		_walk_time -= WALK_FRAME_DURATION
@@ -176,8 +189,26 @@ func _advance_walk_animation(delta: float) -> void:
 	_show_walk_frame()
 
 
+func _advance_portrait_animation(delta: float) -> void:
+	if _sprite == null or _digimon == null:
+		return
+	var frame_count := maxi(1, _sprite.hframes * _sprite.vframes)
+	if frame_count <= 1:
+		_sprite.frame = 0
+		return
+	var duration := maxf(0.02, _digimon.sprite_frame_duration)
+	_walk_time += delta
+	while _walk_time >= duration:
+		_walk_time -= duration
+		_walk_sequence_index = (_walk_sequence_index + 1) % frame_count
+	_show_portrait_frame()
+
+
 func _show_idle_frame() -> void:
 	if _sprite == null or _digimon == null:
+		return
+	if _digimon.sprite_layout == "portrait_strip":
+		_show_portrait_frame()
 		return
 	if _digimon.sprite_layout == "spaced_9_32":
 		_show_spaced_9_frame(int(SPACED_9_IDLE_FRAME.get(facing_direction, 3)))
@@ -191,6 +222,9 @@ func _show_idle_frame() -> void:
 func _show_walk_frame() -> void:
 	if _sprite == null or _digimon == null:
 		return
+	if _digimon.sprite_layout == "portrait_strip":
+		_show_portrait_frame()
+		return
 	if _digimon.sprite_layout == "spaced_9_32":
 		var sequence: Array = SPACED_9_WALK_SEQUENCE.get(facing_direction, [3, 4, 3, 4])
 		var frame_index := int(sequence[_walk_sequence_index % sequence.size()])
@@ -199,7 +233,14 @@ func _show_walk_frame() -> void:
 	_sprite.region_enabled = false
 	_sprite.flip_h = false
 	var base_frame := int(DIRECTION_FRAME_BASE.get(facing_direction, 9))
-	_sprite.frame = base_frame + WALK_SEQUENCE[_walk_sequence_index]
+	_sprite.frame = base_frame + WALK_SEQUENCE[_walk_sequence_index % WALK_SEQUENCE.size()]
+
+
+func _show_portrait_frame() -> void:
+	_sprite.region_enabled = false
+	_sprite.flip_h = false
+	var frame_count := maxi(1, _sprite.hframes * _sprite.vframes)
+	_sprite.frame = _walk_sequence_index % frame_count
 
 
 func _show_spaced_9_frame(frame_index: int) -> void:
