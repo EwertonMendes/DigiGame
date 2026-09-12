@@ -2,46 +2,68 @@ extends "res://src/ui/DigimonRosterMenu.gd"
 class_name DigimonProgressionMenu
 
 const ProgressionUI = preload("res://src/ui/TacticalTheme.gd")
-const EvolutionConstellationScript = preload("res://src/ui/EvolutionConstellation.gd")
-const DigiLabScreenScript = preload("res://src/ui/DigiLabScreen.gd")
+const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
+const EvolutionChartScript = preload("res://src/ui/EvolutionChart.gd")
+const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
+const BattleActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
+const DIVIDER_TEXTURE = preload("res://assets/ui/kenney_fantasy_digi/divider-fade-000.png")
 
-var _digilab_button: Button
-var _constellation: EvolutionConstellation
-var _digilab: DigiLabScreen
+var _constellation: EvolutionChart
+var _actions: BattleActionDatabase
+var _menu_root: Control
 
 
 func _build() -> void:
 	super._build()
-	_digilab_button = _button("DIGILAB", ProgressionUI.CYAN)
-	_digilab_button.name = "OpenDigiLab"
-	_digilab_button.pressed.connect(_open_digilab)
-	add_child(_digilab_button)
 
-	_constellation = EvolutionConstellationScript.new() as EvolutionConstellation
-	_constellation.name = "EvolutionConstellation"
+	_actions = BattleActionDatabaseScript.new() as BattleActionDatabase
+	_actions.load_default()
+
+	# The menu frame is the sole visual container. Every visible menu child is
+	# parented under a clipped local root so no panel can escape the Kenney frame.
+	_panel.clip_contents = true
+	_panel.add_theme_stylebox_override(
+		"panel",
+		SKIN.frame_style(ProgressionUI.FRAME_DARK, Vector4.ZERO, 14.0)
+	)
+	_menu_root = Control.new()
+	_menu_root.name = "MenuContent"
+	_menu_root.clip_contents = true
+	_panel.add_child(_menu_root)
+	for control: Control in [_title, _account, _close_button, _roster_panel, _detail_panel]:
+		remove_child(control)
+		_menu_root.add_child(control)
+
+	_roster_panel.clip_contents = true
+	_roster_panel.add_theme_stylebox_override(
+		"panel",
+		SKIN.frame_style(Color(0.07, 0.12, 0.18, 0.98), Vector4(10, 10, 10, 10), 12.0)
+	)
+	_detail_panel.clip_contents = true
+	_detail_panel.add_theme_stylebox_override(
+		"panel",
+		SKIN.frame_style(Color(0.06, 0.10, 0.17, 0.98), Vector4(14, 14, 14, 14), 12.0)
+	)
+	_detail_scroll.clip_contents = true
+	SmoothScrollScript.attach(_roster_scroll)
+	SmoothScrollScript.attach(_detail_scroll)
+
+	_constellation = EvolutionChartScript.new() as EvolutionChart
+	_constellation.name = "EvolutionChart"
 	_constellation.visible = false
 	_constellation.close_requested.connect(_close_constellation)
 	_constellation.evolution_applied.connect(_on_evolution_state_changed)
 	add_child(_constellation)
 
-	_digilab = DigiLabScreenScript.new() as DigiLabScreen
-	_digilab.name = "DigiLabScreen"
-	_digilab.visible = false
-	_digilab.close_requested.connect(_close_digilab)
-	_digilab.reconstructed.connect(_on_reconstructed)
-	add_child(_digilab)
-
 
 func open_menu() -> void:
 	if _constellation != null:
 		_constellation.visible = false
-	if _digilab != null:
-		_digilab.visible = false
 	super.open_menu()
 
 
 func has_nested_view_open() -> bool:
-	return (_constellation != null and _constellation.is_open()) or (_digilab != null and _digilab.is_open())
+	return _constellation != null and _constellation.is_open()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -52,45 +74,124 @@ func _unhandled_input(event: InputEvent) -> void:
 			_close_constellation()
 			get_viewport().set_input_as_handled()
 		return
-	if _digilab != null and _digilab.is_open():
-		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu"):
-			_close_digilab()
-			get_viewport().set_input_as_handled()
-		return
 	super._unhandled_input(event)
 
 
+func _build_hero(instance: DigimonInstance, species: Dictionary) -> Control:
+	var rank := String(species.get("rank", "Unknown"))
+	var accent := ProgressionUI.rank_color(rank)
+	var hero := PanelContainer.new()
+	hero.name = "IdentityCard"
+	hero.clip_contents = true
+	hero.add_theme_stylebox_override(
+		"panel",
+		SKIN.frame_style(Color(0.08, 0.13, 0.20, 0.98), Vector4(14, 12, 14, 12), 12.0)
+	)
+	_detail_list.add_child(hero)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	hero.add_child(row)
+
+	var portrait_frame := PanelContainer.new()
+	portrait_frame.custom_minimum_size = Vector2(158.0, 142.0)
+	portrait_frame.clip_contents = true
+	portrait_frame.add_theme_stylebox_override(
+		"panel",
+		SKIN.frame_style(Color(accent.r * 0.34, accent.g * 0.34, accent.b * 0.34, 0.96), Vector4(6, 6, 6, 6), 10.0)
+	)
+	row.add_child(portrait_frame)
+	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
+	portrait.custom_minimum_size = Vector2(146.0, 130.0)
+	portrait.set_species(String(species.get("name", "")))
+	portrait_frame.add_child(portrait)
+
+	var summary := VBoxContainer.new()
+	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summary.alignment = BoxContainer.ALIGNMENT_CENTER
+	summary.add_theme_constant_override("separation", 5)
+	row.add_child(summary)
+
+	var heading_row := HBoxContainer.new()
+	heading_row.add_theme_constant_override("separation", 8)
+	summary.add_child(heading_row)
+	var display_name := instance.get_display_name(String(species.get("name", "Unknown")))
+	var heading := _label(display_name.to_upper(), 25, ProgressionUI.TEXT, true)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	heading_row.add_child(heading)
+	heading_row.add_child(_chip(rank.to_upper(), accent))
+
+	var identity := _label("%s  ·  %s" % [
+		String(species.get("type", species.get("attribute", "Free"))).to_upper(),
+		String(species.get("family", species.get("species", "Unknown"))).to_upper(),
+	], 11, ProgressionUI.MUTED, true)
+	summary.add_child(identity)
+
+	var level_row := HBoxContainer.new()
+	level_row.add_theme_constant_override("separation", 10)
+	summary.add_child(level_row)
+	level_row.add_child(_label("LEVEL %d" % instance.level, 20, ProgressionUI.GOLD, true))
+	level_row.add_child(_chip("POTENTIAL %d" % instance.potential, ProgressionUI.PURPLE))
+
+	var required := _progression.exp_to_next_level(instance)
+	var xp_copy := "%d XP" % instance.exp if required <= 0 else "%d / %d XP" % [instance.exp, required]
+	var xp_line := HBoxContainer.new()
+	xp_line.add_theme_constant_override("separation", 9)
+	summary.add_child(xp_line)
+	var xp_caption := _label("NEXT LEVEL", 9, ProgressionUI.SUBTLE, true)
+	xp_caption.custom_minimum_size.x = 72.0
+	xp_line.add_child(xp_caption)
+	var xp_bar := _mini_progress(ProgressionUI.GOLD)
+	xp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	xp_bar.max_value = maxf(1.0, float(required))
+	xp_bar.value = float(instance.exp if required > 0 else required)
+	xp_line.add_child(xp_bar)
+	var xp_value := _label(xp_copy, 10, ProgressionUI.MUTED, true)
+	xp_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	xp_value.custom_minimum_size.x = 80.0
+	xp_line.add_child(xp_value)
+	return hero
+
+
+func _build_skills_card(instance: DigimonInstance) -> Control:
+	var card := _section_card("SKILLS", ProgressionUI.GOLD)
+	var body := card.get_meta("body") as VBoxContainer
+	body.add_child(_subheading("EQUIPPED", ProgressionUI.GOLD))
+	body.add_child(_wrapped_value(_skill_list_copy(instance.equipped_skills, "None equipped"), ProgressionUI.TEXT))
+	if not instance.learned_skills.is_empty():
+		body.add_child(_subheading("LEARNED", ProgressionUI.CYAN))
+		body.add_child(_wrapped_value(_skill_list_copy(instance.learned_skills, ""), ProgressionUI.MUTED))
+	return card
+
+
 func _build_evolution_card(instance: DigimonInstance) -> Control:
-	var card := _section_card("EVOLUTION CONSTELLATION", ProgressionUI.PURPLE)
+	var card := _section_card("EVOLUTION CHART", ProgressionUI.PURPLE)
 	var body := card.get_meta("body") as VBoxContainer
 	var evolutions: Array[Dictionary] = _progression.get_evolution_routes(instance)
 	var degenerations: Array[Dictionary] = _progression.get_degeneration_routes(instance)
-	var ready_evolutions := 0
-	var ready_degenerations := 0
+	var ready := 0
 	for route: Dictionary in evolutions:
 		if bool(route.get("unlocked", false)):
-			ready_evolutions += 1
+			ready += 1
 	for route: Dictionary in degenerations:
 		if bool(route.get("unlocked", false)):
-			ready_degenerations += 1
+			ready += 1
 
-	var summary := _wrapped_value(
-		"Explore the complete connected evolution graph, inspect future forms and requirements, plan a route, then Digivolve or Degenerate directly from the constellation.",
-		ProgressionUI.MUTED
-	)
-	body.add_child(summary)
-	body.add_child(_label("%d direct evolution routes · %d ready    |    %d degeneration routes · %d ready" % [
-		evolutions.size(), ready_evolutions, degenerations.size(), ready_degenerations
-	], 10, ProgressionUI.CYAN, true))
-
+	var route_line := "%d EVOLUTION%s  ·  %d DEGENERATION%s" % [
+		evolutions.size(), "" if evolutions.size() == 1 else "S",
+		degenerations.size(), "" if degenerations.size() == 1 else "S"
+	]
+	body.add_child(_label(route_line, 10, ProgressionUI.CYAN, true))
+	if ready > 0:
+		body.add_child(_label("%d route%s ready" % [ready, "" if ready == 1 else "s"], 10, ProgressionUI.GREEN, true))
 	if not instance.evolution_goal_seed.is_empty():
 		var goal_species := _database.get_by_seed(instance.evolution_goal_seed)
 		if not goal_species.is_empty():
-			body.add_child(_subheading("EVOLUTION GOAL", ProgressionUI.PURPLE))
-			body.add_child(_label(String(goal_species.get("name", "Unknown")).to_upper(), 13, ProgressionUI.PURPLE.lightened(0.16), true))
+			body.add_child(_label("TARGET  ·  %s" % String(goal_species.get("name", "Unknown")).to_upper(), 10, ProgressionUI.PURPLE.lightened(0.18), true))
 
-	var open_button := _button("OPEN EVOLUTION CONSTELLATION", ProgressionUI.PURPLE)
-	open_button.custom_minimum_size.y = 44.0
+	var open_button := _button("OPEN EVOLUTION CHART", ProgressionUI.PURPLE)
+	open_button.custom_minimum_size.y = 46.0
 	open_button.pressed.connect(_open_constellation.bind(instance.id))
 	body.add_child(open_button)
 	return card
@@ -103,29 +204,11 @@ func _open_constellation(instance_id: String) -> void:
 	if instance == null:
 		return
 	_constellation.open_for(instance)
-	_digilab_button.visible = false
 
 
 func _close_constellation() -> void:
 	if _constellation != null:
 		_constellation.visible = false
-	_digilab_button.visible = true
-	_refresh_roster()
-	if not _buttons.is_empty():
-		_buttons[clampi(_selected_index, 0, _buttons.size() - 1)].grab_focus()
-
-
-func _open_digilab() -> void:
-	if _digilab == null:
-		return
-	_digilab.open_lab()
-	_digilab_button.visible = false
-
-
-func _close_digilab() -> void:
-	if _digilab != null:
-		_digilab.visible = false
-	_digilab_button.visible = true
 	_refresh_roster()
 	if not _buttons.is_empty():
 		_buttons[clampi(_selected_index, 0, _buttons.size() - 1)].grab_focus()
@@ -136,15 +219,110 @@ func _on_evolution_state_changed(_instance: DigimonInstance) -> void:
 	_refresh_roster()
 
 
-func _on_reconstructed(instance: DigimonInstance) -> void:
-	if instance == null:
-		return
-	_refresh_roster()
+func _section_card(title: String, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.clip_contents = true
+	panel.add_theme_stylebox_override(
+		"panel",
+		SKIN.frame_style(Color(0.055, 0.08, 0.13, 0.96), Vector4(12, 10, 12, 10), 10.0)
+	)
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 7)
+	panel.add_child(body)
+	var heading := _label(title, 11, accent.lightened(0.10), true)
+	body.add_child(heading)
+	var divider := TextureRect.new()
+	divider.texture = DIVIDER_TEXTURE
+	divider.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	divider.stretch_mode = TextureRect.STRETCH_SCALE
+	divider.custom_minimum_size.y = 2.0
+	divider.modulate = Color(accent.r, accent.g, accent.b, 0.72)
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_child(divider)
+	panel.set_meta("body", body)
+	return panel
+
+
+func _stat_tile(label_text: String, value: int, accent: Color) -> Control:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(96.0, 54.0)
+	panel.add_theme_stylebox_override(
+		"panel",
+		SKIN.border_style(Color(accent.r, accent.g, accent.b, 0.72), Vector4(9, 5, 9, 5), 8.0)
+	)
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 0)
+	panel.add_child(box)
+	box.add_child(_label(label_text, 9, ProgressionUI.SUBTLE, true))
+	box.add_child(_label(str(value), 18, ProgressionUI.TEXT, true))
+	return panel
+
+
+func _chip(text: String, accent: Color) -> Label:
+	var label := _label(text, 9, accent.lightened(0.12), true)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_stylebox_override(
+		"normal",
+		SKIN.border_style(accent, Vector4(8, 3, 8, 3), 8.0)
+	)
+	return label
+
+
+func _button(text: String, accent: Color) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_size_override("font_size", 12)
+	SKIN.apply_button(button, accent)
+	return button
+
+
+func _style_roster_button(button: Button, selected: bool, rank_color: Color) -> void:
+	var accent := ProgressionUI.GOLD if selected else rank_color
+	SKIN.apply_button(button, accent)
+	if selected:
+		button.add_theme_stylebox_override(
+			"normal",
+			SKIN.border_style(ProgressionUI.GOLD, Vector4(10, 8, 10, 8), 10.0)
+		)
+
+
+func _mini_progress(accent: Color) -> ProgressBar:
+	var bar := ProgressBar.new()
+	bar.min_value = 0.0
+	bar.max_value = 100.0
+	bar.value = 0.0
+	bar.show_percentage = false
+	bar.custom_minimum_size.y = 8.0
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_theme_stylebox_override("background", SKIN.progress_track_style())
+	bar.add_theme_stylebox_override("fill", SKIN.progress_fill_style(accent))
+	return bar
+
+
+func _skill_list_copy(skill_ids: Array[String], empty_copy: String) -> String:
+	if skill_ids.is_empty():
+		return empty_copy
+	var names: Array[String] = []
+	for skill_id: String in skill_ids:
+		names.append(_skill_display_name(skill_id))
+	return ", ".join(names)
+
+
+func _skill_display_name(skill_id: String) -> String:
+	if _actions != null:
+		var action := _actions.get_action(skill_id)
+		var display_name := String(action.get("name", "")).strip_edges()
+		if not display_name.is_empty():
+			return display_name
+	return skill_id.replace("_", " ").capitalize()
 
 
 func _layout() -> void:
-	super._layout()
-	if _digilab_button == null or _panel == null:
+	if _panel == null or _menu_root == null:
 		return
 	var physical := ProgressionUI.physical_window_size(get_viewport())
 	var scale_factor := ProgressionUI.ui_scale(get_viewport())
@@ -153,13 +331,49 @@ func _layout() -> void:
 	var width := minf(1240.0, physical.x - edge * 2.0)
 	var height := minf(760.0, physical.y - edge * 2.0)
 	var origin := Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
-	_digilab_button.scale = Vector2.ONE * scale_factor
-	_digilab_button.position = origin + Vector2(width - 218.0, 14.0) * scale_factor
-	_digilab_button.size = Vector2(96.0, 40.0)
-	_digilab_button.visible = not has_nested_view_open()
-	if width >= 650.0:
-		_account.position = origin + Vector2(width - 460.0, 21.0) * scale_factor
-		_account.size = Vector2(220.0, 26.0)
-		_account.visible = true
+
+	_panel.scale = Vector2.ONE * scale_factor
+	_panel.position = origin
+	_panel.size = Vector2(width, height)
+	_panel.clip_contents = true
+	_menu_root.position = Vector2.ZERO
+	_menu_root.size = Vector2(width, height)
+	_menu_root.clip_contents = true
+
+	var header_h := 68.0
+	_title.position = Vector2(24.0, 17.0)
+	_title.size = Vector2(240.0, 34.0)
+	_account.position = Vector2(width - 348.0, 21.0)
+	_account.size = Vector2(210.0, 26.0)
+	_close_button.position = Vector2(width - 112.0, 14.0)
+	_close_button.size = Vector2(88.0, 40.0)
+
+	if compact:
+		var roster_h := minf(196.0, height * 0.29)
+		_roster_panel.position = Vector2(18.0, header_h)
+		_roster_panel.size = Vector2(width - 36.0, roster_h)
+		_detail_panel.position = Vector2(18.0, header_h + roster_h + 12.0)
+		_detail_panel.size = Vector2(width - 36.0, height - header_h - roster_h - 30.0)
+		_roster_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_roster_grid.columns = 2 if width < 620.0 else 3
 	else:
-		_account.visible = false
+		var roster_w := clampf(width * 0.245, 270.0, 310.0)
+		var left := 18.0
+		var gap := 14.0
+		var right := 18.0
+		var detail_x := left + roster_w + gap
+		_roster_panel.position = Vector2(left, header_h)
+		_roster_panel.size = Vector2(roster_w, height - header_h - 18.0)
+		_detail_panel.position = Vector2(detail_x, header_h)
+		_detail_panel.size = Vector2(width - detail_x - right, height - header_h - 18.0)
+		_roster_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_roster_grid.columns = 1
+
+	_roster_panel.clip_contents = true
+	_detail_panel.clip_contents = true
+	_apply_adaptive_detail_layout(compact)
+	if compact != _last_compact:
+		_last_compact = compact
+		call_deferred("_refresh_details")
