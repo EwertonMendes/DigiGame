@@ -5,9 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import struct
 import sys
 from pathlib import Path, PurePosixPath
-from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 DATABASE_PATH = ROOT / "database/base-digimon-list.json"
@@ -31,6 +31,18 @@ def resource_relpath(name: str) -> str:
 def parse_assignment(text: str, key: str) -> str | None:
     match = re.search(rf'^{re.escape(key)}\s*=\s*(.+)$', text, re.MULTILINE)
     return match.group(1).strip() if match else None
+
+
+def read_png_ihdr(path: Path) -> tuple[int, int, int]:
+    """Return width, height and PNG color type without third-party dependencies."""
+    data = path.read_bytes()
+    if len(data) < 33 or data[:8] != b"\x89PNG\r\n\x1a\n":
+        fail(f"{path.relative_to(ROOT)}: invalid PNG signature/header")
+    if data[12:16] != b"IHDR":
+        fail(f"{path.relative_to(ROOT)}: PNG does not start with IHDR")
+    width, height = struct.unpack(">II", data[16:24])
+    color_type = data[25]
+    return width, height, color_type
 
 
 def main() -> int:
@@ -83,11 +95,12 @@ def main() -> int:
         if source_kind not in {"official_ds", "community_ds_style_exception"}:
             fail(f"{name}: unsupported field source kind {source_kind!r}")
         source_counts[source_kind] = source_counts.get(source_kind, 0) + 1
-        with Image.open(field_path) as image:
-            if image.width <= 0 or image.height <= 0 or image.width % 12 != 0:
-                fail(f"{name}: field.png must be one horizontal 12-frame strip, got {image.size}")
-            if image.mode not in {"RGBA", "LA", "P"}:
-                fail(f"{name}: field.png must preserve transparency-capable pixel art")
+
+        width, height, color_type = read_png_ihdr(field_path)
+        if width <= 0 or height <= 0 or width % 12 != 0:
+            fail(f"{name}: field.png must be one horizontal 12-frame strip, got {(width, height)}")
+        if color_type not in {3, 4, 6}:
+            fail(f"{name}: field.png must preserve transparency-capable pixel art (PNG color type {color_type})")
 
         resource_path = ROOT / resource_relpath(name)
         if not resource_path.is_file():
