@@ -58,7 +58,9 @@ func _fit_visible_graph() -> void:
 	var graph_center := (min_center + max_center) * 0.5
 	var content_size := (max_center - min_center) + NODE_SIZE
 	var safe_size := Vector2(maxf(120.0, size.x - 72.0), maxf(120.0, size.y - 72.0))
-	var fit_zoom := minf(DEFAULT_ZOOM, safe_size.x / maxf(1.0, content_size.x), safe_size.y / maxf(1.0, content_size.y))
+	var horizontal_fit := safe_size.x / maxf(1.0, content_size.x)
+	var vertical_fit := safe_size.y / maxf(1.0, content_size.y)
+	var fit_zoom := minf(DEFAULT_ZOOM, minf(horizontal_fit, vertical_fit))
 	_zoom = clampf(fit_zoom, MIN_ZOOM, MAX_ZOOM)
 	_pan = -graph_center
 	_has_centered = true
