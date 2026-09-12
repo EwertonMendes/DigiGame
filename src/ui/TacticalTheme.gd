@@ -163,16 +163,16 @@ static func _is_combat_typography_root(root: Control) -> bool:
 	var script := root.get_script() as Script
 	if script == null:
 		return false
-	match script.resource_path:
-		"res://src/BattleHUD.gd",
-		"res://src/TurnOrderHUD.gd",
-		"res://src/DigimonInfoPanel.gd",
-		"res://src/ui/CombatOverlayHUD.gd",
-		"res://src/ui/CompactDigimonInfoPanel.gd",
-		"res://src/ui/NavigableTurnOrderHUD.gd",
-		"res://src/ui/BattleTopBar.gd":
-			return true
-	return false
+	var path := script.resource_path
+	return (
+		path == "res://src/BattleHUD.gd"
+		or path == "res://src/TurnOrderHUD.gd"
+		or path == "res://src/DigimonInfoPanel.gd"
+		or path == "res://src/ui/CombatOverlayHUD.gd"
+		or path == "res://src/ui/CompactDigimonInfoPanel.gd"
+		or path == "res://src/ui/NavigableTurnOrderHUD.gd"
+		or path == "res://src/ui/BattleTopBar.gd"
+	)
 
 
 static func _install_root_typography(control: Control) -> void:
