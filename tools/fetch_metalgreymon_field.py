@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
-"""Rebuild MetalGreymon's normalized field-walk sheet.
+"""Rebuild MetalGreymon's normalized four-direction field-walk sheet.
 
 The source is the legacy Digimon World DS MetalGreymon sheet mirrored by The
 Spriters Resource. It is copyrighted commercial game artwork; this script does
 not claim a free-content license and exists only to make the fan/prototype asset
 preparation reproducible.
 
-Runtime layout (12 x 32x40 cells):
-  0..2   down_left
-  3..5   down_right
-  6..8   up_left
-  9..11  up_right
+Runtime layout (12 x 32x42 cells):
+  0..2   down_left   (front-left)
+  3..5   down_right  (front-right)
+  6..8   up_left     (rear-left)
+  9..11  up_right    (rear-right)
 
-The original sheet exposes one three-frame isometric field-walk cycle and its
-horizontal mirror, but no distinct rear-facing walk cycle. We therefore preserve
-the original bottom-left cycle pixel-for-pixel, mirror it for right-facing
-movement, and intentionally reuse those horizontal orientations for the two
-"up" runtime groups. That is preferable to inventing non-source rear artwork and
-keeps MetalGreymon compatible with DigiGame's existing directional_12 runtime.
+Asset 48322 contains two three-frame front-facing walk columns and two
+three-frame rear-facing walk columns. The extractor copies those authored
+directions directly instead of mirroring or inventing missing poses.
 """
 from __future__ import annotations
 
@@ -26,7 +23,7 @@ import io
 import subprocess
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image
 
 SOURCE_URL = "https://www.spriters-resource.com/media/assets/45/48322.png"
 SOURCE_PAGE = "https://www.spriters-resource.com/ds_dsi/dgmnworldds/asset/48322/"
@@ -36,15 +33,35 @@ USER_AGENT = (
     "AppleWebKit/537.36 Chrome/140 Safari/537.36"
 )
 
-CELL_SIZE = (32, 40)
+CELL_SIZE = (32, 42)
 DIRECTION_ORDER = ("down_left", "down_right", "up_left", "up_right")
-# Exact alpha-component bounds of the three clean field frames in asset 48322.
-# These crops contain no logos, labels, portraits, or watermark pixels.
-SOURCE_FRAMES = (
-    (23, 306, 53, 338),
-    (24, 350, 55, 384),
-    (23, 391, 54, 427),
-)
+
+# Exact alpha-component bounds of the twelve small field sprites in asset
+# 48322. The six front-facing frames sit near the right edge of the sheet while
+# the six rear-facing frames sit at the lower left. All boxes are outside the
+# purple credit panels/watermarks and already use real transparency.
+SOURCE_FRAMES = {
+    "down_left": (
+        (292, 171, 323, 208),
+        (290, 212, 321, 248),
+        (291, 250, 322, 291),
+    ),
+    "down_right": (
+        (334, 172, 365, 209),
+        (336, 213, 367, 249),
+        (335, 251, 366, 292),
+    ),
+    "up_left": (
+        (23, 306, 53, 338),
+        (24, 350, 55, 384),
+        (23, 391, 54, 427),
+    ),
+    "up_right": (
+        (71, 305, 101, 337),
+        (69, 349, 100, 383),
+        (70, 390, 101, 426),
+    ),
+}
 
 
 def fetch(url: str) -> bytes:
@@ -78,37 +95,29 @@ def normalize(frame: Image.Image) -> Image.Image:
     return output
 
 
-def validate_source_crop(frame: Image.Image, index: int) -> None:
-    # The useful field sprites in this sheet already have true alpha. Refuse to
-    # accept a future source revision that silently replaces that with a flat
-    # background, because color-key cleanup risks eating legitimate sprite pixels.
+def validate_source_crop(frame: Image.Image, direction: str, index: int) -> None:
     alpha = frame.convert("RGBA").getchannel("A")
     if alpha.getbbox() is None:
-        raise RuntimeError(f"MetalGreymon source frame {index} is empty")
+        raise RuntimeError(f"MetalGreymon {direction} source frame {index} is empty")
     transparent = sum(1 for value in alpha.getdata() if value == 0)
     if transparent == 0:
         raise RuntimeError(
-            f"MetalGreymon source frame {index} has no transparency; source layout changed"
+            f"MetalGreymon {direction} source frame {index} has no transparency; "
+            "source layout changed"
         )
 
 
-def compose(frames: list[Image.Image]) -> Image.Image:
-    right = [ImageOps.mirror(frame) for frame in frames]
-    prepared = {
-        "down_left": frames,
-        "down_right": right,
-        "up_left": [frame.copy() for frame in frames],
-        "up_right": [frame.copy() for frame in right],
-    }
-
+def compose(source: Image.Image) -> Image.Image:
     output = Image.new(
         "RGBA",
         (CELL_SIZE[0] * 12, CELL_SIZE[1]),
         (0, 0, 0, 0),
     )
     for direction_index, direction in enumerate(DIRECTION_ORDER):
-        direction_frames = prepared[direction]
-        for frame_index, frame in enumerate(direction_frames):
+        for frame_index, box in enumerate(SOURCE_FRAMES[direction]):
+            crop = source.crop(box)
+            validate_source_crop(crop, direction, frame_index)
+            frame = normalize(crop)
             output.alpha_composite(
                 frame,
                 ((direction_index * 3 + frame_index) * CELL_SIZE[0], 0),
@@ -149,13 +158,7 @@ def main() -> None:
     if source.size != (395, 432):
         raise RuntimeError(f"Unexpected MetalGreymon source dimensions: {source.size}")
 
-    frames: list[Image.Image] = []
-    for index, box in enumerate(SOURCE_FRAMES):
-        crop = source.crop(box)
-        validate_source_crop(crop, index)
-        frames.append(normalize(crop))
-
-    sheet = compose(frames)
+    sheet = compose(source)
     validate_runtime_sheet(sheet)
 
     output_path = Path("assets/characters/metalgreymon/field.png")
@@ -163,7 +166,7 @@ def main() -> None:
     sheet.save(output_path, format="PNG", optimize=True)
     print(
         f"MetalGreymon: prepared {output_path} ({sheet.width}x{sheet.height}) "
-        f"from {SOURCE_PAGE}"
+        f"with four authored directions from {SOURCE_PAGE}"
     )
 
 
