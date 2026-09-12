@@ -70,6 +70,7 @@ func _resolve_portrait_key(species_name: String) -> String:
 		normalized.replace(" ", ""),
 		normalized.replace(" ", "_"),
 		normalized.replace("-", "").replace(" ", ""),
+		_compact_portrait_key(normalized),
 	]:
 		var candidate := String(raw_candidate)
 		if not candidate.is_empty() and not candidates.has(candidate):
@@ -80,6 +81,13 @@ func _resolve_portrait_key(species_name: String) -> String:
 		if FileAccess.file_exists(metadata_path) and ResourceLoader.exists(strip_path):
 			return candidate
 	return ""
+
+
+func _compact_portrait_key(value: String) -> String:
+	var regex := RegEx.new()
+	if regex.compile("[^a-z0-9]+") != OK:
+		return value.replace(" ", "").replace("-", "")
+	return regex.sub(value.to_lower(), "", true)
 
 
 func _process(delta: float) -> void:
