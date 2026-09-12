@@ -7,7 +7,7 @@ const RANK_ORDER: Array[String] = [
 
 
 func build_connected_graph(start_seed: String, database: DigimonDatabase) -> Dictionary:
-	var result := {"nodes": [], "edges": []}
+	var result: Dictionary = {"nodes": [], "edges": []}
 	if database == null or start_seed.is_empty() or not database.has_seed(start_seed):
 		return result
 
@@ -17,11 +17,11 @@ func build_connected_graph(start_seed: String, database: DigimonDatabase) -> Dic
 	var edges_by_key: Dictionary = {}
 
 	while not queue.is_empty():
-		var seed := queue.pop_front()
+		var seed: String = queue.pop_front()
 		if visited.has(seed):
 			continue
 		visited[seed] = true
-		var species := database.get_by_seed(seed)
+		var species: Dictionary = database.get_by_seed(seed)
 		if species.is_empty():
 			continue
 		nodes.append({
@@ -45,9 +45,6 @@ func build_connected_graph(start_seed: String, database: DigimonDatabase) -> Dic
 			var lower_seed := String(route.get("targetSeed", ""))
 			if lower_seed.is_empty() or not database.has_seed(lower_seed):
 				continue
-			# Degeneration routes point downward. Store the visual graph in the
-			# evolutionary direction so rank columns and route highlighting remain
-			# easy to read.
 			_add_edge(edges_by_key, lower_seed, seed, [])
 			if not visited.has(lower_seed):
 				queue.append(lower_seed)
@@ -77,7 +74,7 @@ func find_shortest_path(start_seed: String, target_seed: String, database: Digim
 	var queue: Array[String] = [start_seed]
 	var previous: Dictionary = {start_seed: ""}
 	while not queue.is_empty():
-		var seed := queue.pop_front()
+		var seed: String = queue.pop_front()
 		for neighbor: String in _neighbors(seed, database):
 			if previous.has(neighbor):
 				continue
@@ -119,7 +116,7 @@ func path_edge_keys(path: Array[String]) -> Dictionary:
 
 
 func rank_index(rank: String) -> int:
-	var index := RANK_ORDER.find(rank)
+	var index: int = RANK_ORDER.find(rank)
 	return index if index >= 0 else RANK_ORDER.size()
 
 
