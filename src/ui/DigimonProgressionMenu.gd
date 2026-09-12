@@ -6,6 +6,7 @@ const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
 const EvolutionChartScript = preload("res://src/ui/EvolutionChart.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
 const BattleActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
+const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
 
 var _constellation: EvolutionChart
 var _actions: BattleActionDatabase
@@ -32,6 +33,8 @@ func _build() -> void:
 	for control: Control in [_title, _account, _close_button, _roster_panel, _detail_panel]:
 		remove_child(control)
 		_menu_root.add_child(control)
+
+	_configure_close_button(_close_button, "Close Digimon menu")
 
 	_roster_panel.clip_contents = true
 	_roster_panel.add_theme_stylebox_override(
@@ -280,6 +283,17 @@ func _button(text: String, accent: Color) -> Button:
 	return button
 
 
+func _configure_close_button(button: Button, tooltip: String) -> void:
+	if button == null:
+		return
+	button.text = ""
+	button.icon = CLOSE_ICON
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.tooltip_text = tooltip
+	button.custom_minimum_size = Vector2(44.0, 44.0)
+
+
 func _style_roster_button(button: Button, selected: bool, rank_color: Color) -> void:
 	var accent := ProgressionUI.GOLD if selected else rank_color
 	SKIN.apply_button(button, accent)
@@ -343,10 +357,10 @@ func _layout() -> void:
 	var header_h := 72.0
 	_title.position = Vector2(28.0, 19.0)
 	_title.size = Vector2(240.0, 34.0)
-	_account.position = Vector2(width - 352.0, 23.0)
+	_account.position = Vector2(width - 300.0, 23.0)
 	_account.size = Vector2(210.0, 26.0)
-	_close_button.position = Vector2(width - 116.0, 16.0)
-	_close_button.size = Vector2(90.0, 40.0)
+	_close_button.position = Vector2(width - 68.0, 14.0)
+	_close_button.size = Vector2(44.0, 44.0)
 
 	if compact:
 		var roster_h := minf(196.0, height * 0.29)
