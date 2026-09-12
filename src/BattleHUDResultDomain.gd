@@ -1,6 +1,6 @@
 extends "res://src/BattleHUDDomain.gd"
 
-const BattleResultScreenScript = preload("res://src/ui/ParallelBattleResultScreen.gd")
+const BattleResultScreenScript = preload("res://src/ui/RetreatAwareBattleResultScreen.gd")
 
 var _battle_result_screen: BattleResultScreen = null
 

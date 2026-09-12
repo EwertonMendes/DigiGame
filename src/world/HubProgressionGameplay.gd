@@ -1,6 +1,6 @@
 extends "res://src/world/HubMobileGameplay.gd"
 
-const DigimonRosterMenuScript = preload("res://src/ui/DigimonRosterMenu.gd")
+const DigimonRosterMenuScript = preload("res://src/ui/DigimonProgressionMenu.gd")
 
 var _digimon_menu: DigimonRosterMenu = null
 var _menu_open := false
@@ -16,6 +16,8 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _menu_open:
 		if event.is_action_pressed("game_menu") or event.is_action_pressed("ui_cancel"):
+			if _digimon_menu is DigimonProgressionMenu and (_digimon_menu as DigimonProgressionMenu).has_nested_view_open():
+				return
 			_close_digimon_menu()
 			get_viewport().set_input_as_handled()
 		return

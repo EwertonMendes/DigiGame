@@ -39,6 +39,9 @@ func _ready() -> void:
 	var party_changed := Callable(self, "_on_active_party_changed")
 	if not OverworldState.active_party_changed.is_connected(party_changed):
 		OverworldState.active_party_changed.connect(party_changed)
+	var roster_changed := Callable(self, "_on_roster_changed")
+	if not OverworldState.roster_changed.is_connected(roster_changed):
+		OverworldState.roster_changed.connect(roster_changed)
 	call_deferred("_bind_to_hub")
 
 
@@ -46,6 +49,9 @@ func _exit_tree() -> void:
 	var party_changed := Callable(self, "_on_active_party_changed")
 	if OverworldState.active_party_changed.is_connected(party_changed):
 		OverworldState.active_party_changed.disconnect(party_changed)
+	var roster_changed := Callable(self, "_on_roster_changed")
+	if OverworldState.roster_changed.is_connected(roster_changed):
+		OverworldState.roster_changed.disconnect(roster_changed)
 	if _player != null:
 		var moved := Callable(self, "_on_player_world_position_changed")
 		if _player.is_connected("world_position_changed", moved):
@@ -104,6 +110,14 @@ func _on_active_party_changed(_party: Array) -> void:
 		_sync_party()
 
 
+func _on_roster_changed() -> void:
+	# A persistent individual can change species without changing its party key.
+	# Rebuild followers so the overworld immediately reflects Digivolution or
+	# Degeneration and so duplicate roster keys never dictate the visual resource.
+	if _bound:
+		_sync_party()
+
+
 func _on_player_world_position_changed(_world_position: Vector2) -> void:
 	if _player != null:
 		_record_player_position(_player.global_position)
@@ -117,13 +131,23 @@ func _sync_party() -> void:
 	_active_party_keys.clear()
 
 	var party := OverworldState.get_active_party()
+	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
 	var occupied: Array[Vector2] = []
 	if _player != null:
 		occupied.append(_player.global_position)
 
 	for party_slot in range(party.size()):
 		var key := String(party[party_slot])
-		var resource_path := DIGIMON_RESOURCE_TEMPLATE % key
+		var instance := OverworldState.get_instance_for_party_key(key)
+		if instance == null:
+			push_warning("Active party instance is missing: %s" % key)
+			continue
+		var species: Dictionary = database.get_by_seed(instance.species_seed) if database != null else {}
+		if species.is_empty():
+			push_warning("Active party species is missing for roster key: %s" % key)
+			continue
+		var visual_key := String(species.get("name", "")).to_lower()
+		var resource_path := DIGIMON_RESOURCE_TEMPLATE % visual_key
 		if not ResourceLoader.exists(resource_path):
 			push_warning("Active party Digimon resource is missing: %s" % resource_path)
 			continue
@@ -133,7 +157,7 @@ func _sync_party() -> void:
 			continue
 
 		var follower := FOLLOWER_SCRIPT.new() as Node2D
-		follower.call("configure", digimon, key, party_slot)
+		follower.call("configure", digimon, visual_key, party_slot)
 		_followers_root.add_child(follower)
 		var spawn_position := _find_safe_spawn_position(party_slot, occupied)
 		follower.call("teleport_to", spawn_position, _initial_digimon_facing())
@@ -187,10 +211,6 @@ func _trail_target_at_distance(distance_behind: float) -> Dictionary:
 	var last_trail_index := _trail.size() - 1
 	var sampled_head := _trail[last_trail_index]
 
-	# PATH_SAMPLE_DISTANCE keeps the stored path compact, but followers need a
-	# target that advances every physics frame. Treat the player's current live
-	# position as a temporary unsampled head segment so Digimon move continuously
-	# instead of in 5-pixel bursts that repeatedly reset their walk animation.
 	var live_segment_length := newest.distance_to(sampled_head)
 	if live_segment_length > 0.001:
 		if remaining <= live_segment_length:
@@ -247,8 +267,6 @@ func _find_safe_spawn_position(party_slot: int, occupied: Array[Vector2]) -> Vec
 			if _is_walkable(candidate) and _has_clearance(candidate, occupied):
 				return candidate
 
-	# Extremely defensive fallback: keep visual separation even if the hub's
-	# walkability query cannot find a free ring around a future spawn point.
 	return _player.global_position + Vector2(0.0, FOLLOW_SPACING * float(party_slot + 1))
 
 
