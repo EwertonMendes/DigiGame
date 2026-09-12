@@ -5,6 +5,7 @@ const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
 const ExperienceCalculatorScript = preload("res://src/digimon/ExperienceCalculator.gd")
 const EvolutionServiceScript = preload("res://src/digimon/DigimonEvolutionService.gd")
+const EvolutionGraphServiceScript = preload("res://src/digimon/EvolutionGraphService.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const TrainingServiceScript = preload("res://src/digimon/DigimonTrainingService.gd")
 
@@ -17,6 +18,7 @@ func _ready() -> void:
 	var progression = ProgressionServiceScript.new(database)
 	var xp = ExperienceCalculatorScript.new()
 	var evolution = EvolutionServiceScript.new()
+	var graph_service = EvolutionGraphServiceScript.new()
 	var calculator = StatCalculatorScript.new()
 	var training = TrainingServiceScript.new()
 
@@ -37,6 +39,18 @@ func _ready() -> void:
 	assert(bool(first_step.get("leveled_up", false)), "XP animation segment must explicitly mark level-up boundaries")
 	assert(int(first_step.get("required", 0)) == required, "XP animation segment must use the canonical XP threshold")
 	assert(String(level_result.get("species_name", "")).to_lower() == "agumon", "Progression result must include display species metadata")
+
+	var graph: Dictionary = graph_service.build_connected_graph(agumon.species_seed, database)
+	assert((graph.get("nodes", []) as Array).size() > 1, "Evolution constellation must traverse beyond the next form")
+	assert(not (graph.get("edges", []) as Array).is_empty(), "Evolution constellation must expose connected routes")
+	var direct_routes: Array[Dictionary] = progression.get_evolution_routes(agumon)
+	if not direct_routes.is_empty():
+		var graph_target := String(direct_routes[0].get("targetSeed", ""))
+		var path: Array[String] = graph_service.find_shortest_path(agumon.species_seed, graph_target, database)
+		assert(path.size() == 2, "A direct evolution must be represented as a two-node constellation path")
+		agumon.evolution_goal_seed = graph_target
+		var restored := DigimonInstance.from_dict(agumon.to_dict())
+		assert(restored.evolution_goal_seed == graph_target, "Evolution planning target must persist through serialization")
 
 	var rookie_enemy: DigimonInstance = factory.create_enemy_by_name("veemon", 5, "wild")
 	var enemy_species: Dictionary = database.get_by_seed(rookie_enemy.species_seed)
@@ -71,6 +85,15 @@ func _ready() -> void:
 	assert(persistent_party.size() == 3, "Overworld must own three persistent starter instances")
 	var persistent_id := persistent_party[0].id
 	assert(OverworldState.get_instance_by_id(persistent_id) == persistent_party[0], "Roster lookup must return the same persistent object")
+
+	var roster_before := OverworldState.get_roster_instances().size()
+	OverworldState.apply_account_rewards(0, {"Agumon": 200})
+	assert(OverworldState.can_reconstruct_digimon("Agumon", 150), "DigiLab must allow reconstruction when enough species data exists")
+	var reconstructed: DigimonInstance = OverworldState.reconstruct_digimon("Agumon", 150)
+	assert(reconstructed != null, "DigiLab reconstruction must create a persistent individual")
+	assert(reconstructed.level == 1 and reconstructed.potential == factory.potential_from_scan_percent(150), "Reconstruction quality must map Digi Data investment to starting Potential")
+	assert(OverworldState.get_roster_instances().size() == roster_before + 1, "DigiLab must support an additional individual even when that species already exists")
+	assert(OverworldState.get_digi_data_for("Agumon") == 50, "DigiLab reconstruction must consume the selected Digi Data amount")
 
 	print("digimon progression regression passed")
 	get_tree().quit()
