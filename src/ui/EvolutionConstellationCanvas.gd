@@ -474,7 +474,7 @@ func _refresh_node_styles() -> void:
 func _find_status_label(button: Button) -> Label:
 	var stack: Array[Node] = [button]
 	while not stack.is_empty():
-		var node := stack.pop_back()
+		var node: Node = stack.pop_back() as Node
 		if node is Label and node.name == "Status":
 			return node as Label
 		for child in node.get_children():
