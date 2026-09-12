@@ -3,23 +3,27 @@ class_name TacticalTheme
 
 # Kenney-inspired dark-mode surfaces. Structural chrome stays dark and quiet;
 # orange/gold is reserved for focused, selected or otherwise active UI states.
-const CYAN: Color = Color(0.38, 0.79, 0.97, 1.0)
-const BLUE: Color = Color(0.31, 0.47, 1.0, 1.0)
-const RED: Color = Color(1.0, 0.40, 0.49, 1.0)
-const ORANGE: Color = Color(1.0, 0.56, 0.32, 1.0)
-const PURPLE: Color = Color(0.60, 0.49, 1.0, 1.0)
-const GREEN: Color = Color(0.39, 0.86, 0.61, 1.0)
-const GOLD: Color = Color(1.0, 0.69, 0.29, 1.0)
-const TEXT: Color = Color(0.96, 0.97, 1.0, 1.0)
-const MUTED: Color = Color(0.72, 0.73, 0.77, 1.0)
-const SUBTLE: Color = Color(0.53, 0.54, 0.58, 1.0)
+# Text/accent colors intentionally keep stronger luminance than the surfaces:
+# the UI sits over a very dark game world and thin low-contrast copy quickly
+# becomes tiring at 720p, browser scaling and handheld sizes.
+const CYAN: Color = Color(0.46, 0.84, 1.0, 1.0)
+const BLUE: Color = Color(0.38, 0.55, 1.0, 1.0)
+const RED: Color = Color(1.0, 0.48, 0.56, 1.0)
+const ORANGE: Color = Color(1.0, 0.62, 0.38, 1.0)
+const PURPLE: Color = Color(0.70, 0.60, 1.0, 1.0)
+const GREEN: Color = Color(0.47, 0.90, 0.67, 1.0)
+const GOLD: Color = Color(1.0, 0.72, 0.32, 1.0)
+const TEXT: Color = Color(0.985, 0.99, 1.0, 1.0)
+const MUTED: Color = Color(0.82, 0.84, 0.89, 1.0)
+const SUBTLE: Color = Color(0.67, 0.70, 0.76, 1.0)
 const BASE: Color = Color(0.015, 0.017, 0.022, 0.82)
 const BASE_SOFT: Color = Color(0.028, 0.030, 0.038, 0.78)
 const GLASS: Color = Color(0.018, 0.020, 0.026, 0.70)
 const GLASS_LIGHT: Color = Color(0.11, 0.11, 0.12, 0.74)
-const DISABLED: Color = Color(0.27, 0.28, 0.30, 1.0)
-# Sampled from the normal dark Kenney panel presentation in the reference UI.
-const FRAME_DARK: Color = Color(0.118, 0.149, 0.184, 1.0)
+const DISABLED: Color = Color(0.40, 0.42, 0.46, 1.0)
+# Slightly brighter than the old structural chrome so panels remain separated
+# from black backdrops without competing with text.
+const FRAME_DARK: Color = Color(0.14, 0.18, 0.23, 1.0)
 
 # Typography system.
 # Oxanium carries display/game identity, Exo 2 handles dense UI, and Noto Sans
@@ -31,6 +35,15 @@ const FONT_READING_PATH := "res://assets/ui/fonts/NotoSans[wdth,wght].ttf"
 const FONT_BOOTSTRAP_REGULAR_PATH := "res://assets/ui/fonts/Rajdhani-Regular.ttf"
 const FONT_BOOTSTRAP_SEMIBOLD_PATH := "res://assets/ui/fonts/Rajdhani-SemiBold.ttf"
 
+const DISPLAY_WEIGHT := 700.0
+const UI_WEIGHT := 500.0
+const READING_WEIGHT := 450.0
+const TYPOGRAPHY_ROOT_META := &"digi_typography_root_installed"
+
+static var _display_font_cache: Font = null
+static var _body_font_cache: Font = null
+static var _reading_font_cache: Font = null
+
 
 static func _load_font(path: String) -> Font:
 	if not ResourceLoader.exists(path):
@@ -39,7 +52,12 @@ static func _load_font(path: String) -> Font:
 	return resource as Font
 
 
-static func _font_with_fallbacks(primary_path: String, bootstrap_path: String, fallback_paths: Array[String]) -> Font:
+static func _font_with_fallbacks(
+	primary_path: String,
+	bootstrap_path: String,
+	fallback_paths: Array[String],
+	weight: float
+) -> Font:
 	var primary := _load_font(primary_path)
 	if primary == null:
 		primary = _load_font(bootstrap_path)
@@ -52,20 +70,25 @@ static func _font_with_fallbacks(primary_path: String, bootstrap_path: String, f
 		if fallback != null and fallback != primary:
 			fallbacks.append(fallback)
 
-	# Use a variation wrapper so the shared imported font resource is not mutated
-	# when different text roles assemble different fallback chains.
+	# FontVariation is also how Godot exposes OpenType variable-font axes. The
+	# previous implementation left wght at each family's default (400), making
+	# display headings unexpectedly thin and visually dim on dark panels.
 	var composed := FontVariation.new()
 	composed.base_font = primary
 	composed.fallbacks = fallbacks
+	composed.variation_opentype = {"wght": weight}
 	return composed
 
 
 static func display_font() -> Font:
-	return _font_with_fallbacks(
-		FONT_DISPLAY_PATH,
-		FONT_BOOTSTRAP_SEMIBOLD_PATH,
-		[FONT_UI_PATH, FONT_READING_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
-	)
+	if _display_font_cache == null:
+		_display_font_cache = _font_with_fallbacks(
+			FONT_DISPLAY_PATH,
+			FONT_BOOTSTRAP_SEMIBOLD_PATH,
+			[FONT_UI_PATH, FONT_READING_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
+			DISPLAY_WEIGHT
+		)
+	return _display_font_cache
 
 
 static func heading_font() -> Font:
@@ -73,25 +96,61 @@ static func heading_font() -> Font:
 
 
 static func body_font() -> Font:
-	return _font_with_fallbacks(
-		FONT_UI_PATH,
-		FONT_BOOTSTRAP_REGULAR_PATH,
-		[FONT_READING_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
-	)
+	if _body_font_cache == null:
+		_body_font_cache = _font_with_fallbacks(
+			FONT_UI_PATH,
+			FONT_BOOTSTRAP_REGULAR_PATH,
+			[FONT_READING_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
+			UI_WEIGHT
+		)
+	return _body_font_cache
 
 
 static func reading_font() -> Font:
-	return _font_with_fallbacks(
-		FONT_READING_PATH,
-		FONT_BOOTSTRAP_REGULAR_PATH,
-		[FONT_UI_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
-	)
+	if _reading_font_cache == null:
+		_reading_font_cache = _font_with_fallbacks(
+			FONT_READING_PATH,
+			FONT_BOOTSTRAP_REGULAR_PATH,
+			[FONT_UI_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
+			READING_WEIGHT
+		)
+	return _reading_font_cache
+
+
+static func _top_control(control: Control) -> Control:
+	var root := control
+	while root != null and root.get_parent() is Control:
+		root = root.get_parent() as Control
+	return root
+
+
+static func _install_root_typography(control: Control) -> void:
+	# A number of legacy/modal components create Buttons and Labels directly
+	# instead of going through the shared factories. Give the whole Control tree
+	# an Exo 2 default font so those controls still inherit the professional UI
+	# typography, while explicit heading overrides continue to use Oxanium.
+	var root := _top_control(control)
+	if root == null or root.has_meta(TYPOGRAPHY_ROOT_META):
+		return
+	var default_font := body_font()
+	if default_font == null:
+		return
+	var inherited_theme: Theme = null
+	if root.theme != null:
+		inherited_theme = root.theme.duplicate() as Theme
+	if inherited_theme == null:
+		inherited_theme = Theme.new()
+	inherited_theme.default_font = default_font
+	root.theme = inherited_theme
+	root.set_meta(TYPOGRAPHY_ROOT_META, true)
 
 
 static func _apply_font(control: Control, font: Font) -> void:
-	if control == null or font == null:
+	if control == null:
 		return
-	control.add_theme_font_override("font", font)
+	_install_root_typography(control)
+	if font != null:
+		control.add_theme_font_override("font", font)
 
 
 static func apply_body_font(control: Control) -> void:
@@ -319,6 +378,6 @@ static func rank_color(rank: String) -> Color:
 		"ultimate": return PURPLE
 		"mega": return GOLD
 		"ultra": return RED
-		"in-training", "training": return Color(0.56, 0.68, 0.96, 1.0)
+		"in-training", "training": return Color(0.64, 0.75, 1.0, 1.0)
 		"fresh": return MUTED
 	return MUTED
