@@ -2,7 +2,6 @@ extends "res://src/Field.gd"
 class_name DevilsWorkshopField
 
 const ART = preload("res://src/world/DevilsWorkshopArt.gd")
-const SurfaceBatchScript = preload("res://src/world/DevilsWorkshopSurfaceBatch.gd")
 
 const LOWER_LEVEL_OFFSET := 24.0
 const BOARD_SKIRT_DEPTH := 24.0
@@ -27,10 +26,7 @@ var _transition_prepare_started := false
 var _transition_tile_index := 0
 var _transition_water_index := 0
 var _transition_water_grids: Array[Vector2i] = []
-var _surface_entries: Array[Dictionary] = []
-var _water_entries: Array[Dictionary] = []
-var _surface_batch: DevilsWorkshopSurfaceBatch = null
-var _water_batch: DevilsWorkshopSurfaceBatch = null
+var _transition_water_root: Node2D = null
 
 
 func _ready() -> void:
@@ -48,13 +44,14 @@ func begin_transition_preparation() -> void:
 	_transition_tile_index = 0
 	_transition_water_index = 0
 	_transition_water_grids.clear()
-	_surface_entries.clear()
-	_water_entries.clear()
 	_map_center = _grid_to_raw(Vector2((GRID_SIZE_X - 1) * 0.5, (GRID_SIZE_Y - 1) * 0.5))
 	_create_board_foundation()
 	_create_hover_indicator()
 	tile_map_data.clear()
-	_create_surface_batches()
+
+	_transition_water_root = Node2D.new()
+	_transition_water_root.name = "PerimeterWater"
+	add_child(_transition_water_root)
 
 	for x in range(-1, GRID_SIZE_X + 1):
 		_transition_water_grids.append(Vector2i(x, -1))
@@ -64,7 +61,7 @@ func begin_transition_preparation() -> void:
 		_transition_water_grids.append(Vector2i(GRID_SIZE_X, y))
 
 
-func prepare_transition_chunk(max_items: int = 40) -> bool:
+func prepare_transition_chunk(max_items: int = 20) -> bool:
 	if _transition_prepared:
 		return true
 	begin_transition_preparation()
@@ -80,13 +77,11 @@ func prepare_transition_chunk(max_items: int = 40) -> bool:
 		processed += 1
 
 	while _transition_tile_index >= tile_count and _transition_water_index < _transition_water_grids.size() and processed < budget:
-		_add_water_entry(_transition_water_grids[_transition_water_index])
+		_add_water_tile(_transition_water_root, _transition_water_grids[_transition_water_index])
 		_transition_water_index += 1
 		processed += 1
 
 	if _transition_tile_index >= tile_count and _transition_water_index >= _transition_water_grids.size():
-		_surface_batch.set_entries(_surface_entries)
-		_water_batch.set_entries(_water_entries)
 		selectedTile = Vector2i(grid_to_world(Vector2i(GRID_SIZE_X / 2, GRID_SIZE_Y / 2)))
 		_transition_prepared = true
 		return true
@@ -101,43 +96,35 @@ func _ensure_battlefield_ready() -> void:
 		pass
 
 
-func _create_surface_batches() -> void:
-	if _water_batch == null:
-		_water_batch = SurfaceBatchScript.new()
-		_water_batch.name = "PerimeterWaterBatch"
-		_water_batch.z_index = -240
-		add_child(_water_batch)
-	if _surface_batch == null:
-		_surface_batch = SurfaceBatchScript.new()
-		_surface_batch.name = "BattleSurfaceBatch"
-		_surface_batch.z_index = -120
-		add_child(_surface_batch)
+func _generate_terrain() -> void:
+	if _transition_prepared:
+		return
+	_ensure_battlefield_ready()
 
 
 func _add_battle_tile(grid: Vector2i) -> void:
+	var x := grid.x
+	var y := grid.y
 	var world_position := grid_to_world(grid)
 	var presentation := _battle_surface(grid)
 	tile_map_data[grid] = {
 		"type": String(presentation["name"]),
 		"world_position": world_position,
 	}
-	_surface_entries.append({
-		"position": world_position,
-		"texture": presentation["texture"],
-		"base_color": presentation["base_color"],
-		"detail_tint": presentation["detail_tint"],
-		"detail_alpha": presentation["detail_alpha"],
-	})
 
-
-func _add_water_entry(grid: Vector2i) -> void:
-	_water_entries.append({
-		"position": grid_to_world(grid) + Vector2(0.0, LOWER_LEVEL_OFFSET),
-		"texture": ART.WATER_BLOCK,
-		"base_color": WATER_BASE,
-		"detail_tint": WATER_DETAIL,
-		"detail_alpha": 0.64,
-	})
+	# Keep the exact renderer that was already proven in Web/GL Compatibility.
+	# Preparation is spread over frames, but each tile still uses the same
+	# Polygon2D + textured top-face implementation as master.
+	var tile := ART.create_surface_tile(
+		presentation["texture"],
+		world_position,
+		-120 + x + y,
+		presentation["base_color"],
+		presentation["detail_tint"],
+		float(presentation["detail_alpha"])
+	)
+	tile.name = "%s_%02d_%02d" % [String(presentation["name"]), x, y]
+	add_child(tile)
 
 
 func _battle_surface(grid: Vector2i) -> Dictionary:
@@ -151,8 +138,6 @@ func _battle_surface(grid: Vector2i) -> Dictionary:
 		}
 
 	if _is_staging_terrace(grid):
-		# The more detailed blue source face reads as a digital deployment deck
-		# while remaining a normal walkable tile mechanically.
 		return {
 			"name": "route",
 			"texture": ART.WATER_BLOCK,
@@ -189,8 +174,6 @@ func _battle_surface(grid: Vector2i) -> Dictionary:
 
 
 func _grass_base_for(grid: Vector2i) -> Color:
-	# Large, subtle authored patches break up the single-color carpet without
-	# turning the battlefield back into noisy procedural terrain.
 	var patch_a_dx := grid.x - 3
 	var patch_a_dy := grid.y - 9
 	var patch_b_dx := grid.x - 11
@@ -204,8 +187,6 @@ func _grass_base_for(grid: Vector2i) -> Color:
 
 
 func _is_staging_terrace(grid: Vector2i) -> bool:
-	# Compact deployment plazas leave much more natural grass visible than the
-	# first pass's large mustard rectangles.
 	var north_deck := grid.y >= 2 and grid.y <= 4 and grid.x >= 4 and grid.x <= 10
 	var south_deck := grid.y >= GRID_SIZE_Y - 5 and grid.y <= GRID_SIZE_Y - 3 and grid.x >= 4 and grid.x <= 10
 	return north_deck or south_deck
@@ -227,23 +208,31 @@ func _is_data_anchor(grid: Vector2i) -> bool:
 
 
 func _build_perimeter_water() -> void:
-	_create_surface_batches()
-	_water_entries.clear()
+	var water := Node2D.new()
+	water.name = "PerimeterWater"
+	add_child(water)
 	for x in range(-1, GRID_SIZE_X + 1):
-		_add_water_entry(Vector2i(x, -1))
-		_add_water_entry(Vector2i(x, GRID_SIZE_Y))
+		_add_water_tile(water, Vector2i(x, -1))
+		_add_water_tile(water, Vector2i(x, GRID_SIZE_Y))
 	for y in range(GRID_SIZE_Y):
-		_add_water_entry(Vector2i(-1, y))
-		_add_water_entry(Vector2i(GRID_SIZE_X, y))
-	_water_batch.set_entries(_water_entries)
+		_add_water_tile(water, Vector2i(-1, y))
+		_add_water_tile(water, Vector2i(GRID_SIZE_X, y))
 
 
-func _add_water_tile(_parent: Node2D, grid: Vector2i) -> void:
-	# Compatibility shim for any inherited/debug helper still calling the old
-	# per-node water API. Runtime rendering is batched by _water_batch.
-	_add_water_entry(grid)
-	if _water_batch != null:
-		_water_batch.set_entries(_water_entries)
+func _add_water_tile(parent: Node2D, grid: Vector2i) -> void:
+	if parent == null:
+		return
+	var top_center := grid_to_world(grid) + Vector2(0.0, LOWER_LEVEL_OFFSET)
+	var tile := ART.create_surface_tile(
+		ART.WATER_BLOCK,
+		top_center,
+		-240 + grid.x + grid.y,
+		WATER_BASE,
+		WATER_DETAIL,
+		0.64
+	)
+	tile.name = "Water_%02d_%02d" % [grid.x, grid.y]
+	parent.add_child(tile)
 
 
 func _create_board_foundation() -> void:
@@ -275,8 +264,6 @@ func _create_board_foundation() -> void:
 	right_face.z_index = -175
 	add_child(right_face)
 
-	# A continuous top underlay hides any rasterization crack underneath the
-	# exact 64x32 surface diamonds at every supported camera zoom.
 	var underlay := Polygon2D.new()
 	underlay.name = "BoardUnderlay"
 	underlay.polygon = outline
