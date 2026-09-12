@@ -11,13 +11,13 @@ jobs:
   fetch-source:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch MetalGreymon source sheet
+      - name: Fetch MetalGreymon source sheet and animation reference
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p probe
-          curl -fL --retry 3 \
-            -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36' \
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
+          curl -fL --retry 3 -A "$UA" \
             'https://www.spriters-resource.com/media/assets/45/48322.png' \
             -o probe/metalgreymon-source.png
           file probe/metalgreymon-source.png
@@ -33,6 +33,19 @@ jobs:
           if (width, height) != (395, 432):
               raise SystemExit(f'Unexpected source dimensions: {width}x{height}')
           PY
+
+          # Historical animation reference from the With the Will animation topic.
+          # Photobucket is intentionally best-effort because the host is unreliable.
+          if curl -fL --retry 2 -A "$UA" \
+            -e 'https://withthewill.net/threads/digimon-sprite-animation-thread-read-first-post-fully-working.10472/' \
+            'https://i997.photobucket.com/albums/af96/WtWAnimatedSprites/Perfect/195MetalGreymon.gif' \
+            -o probe/195MetalGreymon.gif; then
+            file probe/195MetalGreymon.gif
+            sha256sum probe/195MetalGreymon.gif | tee probe/animation-sha256.txt
+          else
+            echo 'Historical GIF unavailable; continuing with the transparent source sheet.' | tee probe/animation-unavailable.txt
+            rm -f probe/195MetalGreymon.gif
+          fi
 
       - name: Upload source probe
         uses: actions/upload-artifact@v4
