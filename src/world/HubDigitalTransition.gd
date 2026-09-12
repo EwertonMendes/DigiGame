@@ -2,11 +2,15 @@ extends "res://src/world/HubProgressionGameplay.gd"
 
 
 func _ready() -> void:
+	# Start I/O before the hub finishes building its own UI/world so resource
+	# streaming overlaps work the player is already waiting for at initial load.
+	var can_prewarm := _supports_transition_prewarm()
+	if can_prewarm:
+		DigitalSceneTransition.preload_scene(BATTLE_SCENE_PATH)
 	super._ready()
-	# Start the frame-budgeted detached battle preparation as soon as the hub is
-	# playable. It advances in tiny chunks between rendered frames, so by the time
-	# the player reaches the operator there is normally nothing left to create.
-	if _supports_transition_prewarm():
+	# Once the first hub frame can render, construct the detached battle in tiny
+	# chunks. No large preparation loop is allowed to monopolize one frame.
+	if can_prewarm:
 		DigitalSceneTransition.prepare_scene(BATTLE_SCENE_PATH)
 
 
