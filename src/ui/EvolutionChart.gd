@@ -52,9 +52,16 @@ func _build() -> void:
 	_detail_panel.clip_contents = true
 	_detail_panel.add_theme_stylebox_override(
 		"panel",
-		SKIN.frame_style(Color(0.07, 0.12, 0.20, 0.98), Vector4(14, 14, 14, 14), 12.0)
+		SKIN.frame_style(Color(0.07, 0.12, 0.20, 0.98), Vector4.ZERO, 12.0)
 	)
 	_content_root.add_child(_detail_panel)
+
+	var detail_margin := MarginContainer.new()
+	detail_margin.add_theme_constant_override("margin_left", 18)
+	detail_margin.add_theme_constant_override("margin_top", 18)
+	detail_margin.add_theme_constant_override("margin_right", 18)
+	detail_margin.add_theme_constant_override("margin_bottom", 18)
+	_detail_panel.add_child(detail_margin)
 
 	_detail_scroll = ScrollContainer.new()
 	_detail_scroll.name = "EvolutionChartDetailScroll"
@@ -63,13 +70,13 @@ func _build() -> void:
 	_detail_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail_panel.add_child(_detail_scroll)
+	detail_margin.add_child(_detail_scroll)
 	SmoothScrollScript.attach(_detail_scroll)
 
 	_detail_body = VBoxContainer.new()
 	_detail_body.name = "EvolutionChartDetailBody"
 	_detail_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_detail_body.add_theme_constant_override("separation", 9)
+	_detail_body.add_theme_constant_override("separation", 10)
 	_detail_scroll.add_child(_detail_body)
 
 	_flash = ColorRect.new()
@@ -110,15 +117,21 @@ func _refresh_detail() -> void:
 	portrait_frame.clip_contents = true
 	portrait_frame.add_theme_stylebox_override(
 		"panel",
-		SKIN.frame_style(Color(accent.r * 0.34, accent.g * 0.34, accent.b * 0.34, 0.96), Vector4(8, 8, 8, 8), 10.0)
+		SKIN.frame_style(Color(accent.r * 0.34, accent.g * 0.34, accent.b * 0.34, 0.96), Vector4.ZERO, 10.0)
 	)
 	_detail_body.add_child(portrait_frame)
+	var portrait_margin := MarginContainer.new()
+	portrait_margin.add_theme_constant_override("margin_left", 10)
+	portrait_margin.add_theme_constant_override("margin_top", 10)
+	portrait_margin.add_theme_constant_override("margin_right", 10)
+	portrait_margin.add_theme_constant_override("margin_bottom", 10)
+	portrait_frame.add_child(portrait_margin)
 
 	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
 	portrait.custom_minimum_size = Vector2(0.0, 154.0)
 	portrait.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	portrait.set_species(species_name)
-	portrait_frame.add_child(portrait)
+	portrait_margin.add_child(portrait)
 
 	var name_label := _label(species_name.to_upper(), 22, UI.TEXT, true)
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -132,7 +145,9 @@ func _refresh_detail() -> void:
 	))
 
 	if _selected_seed == _instance.species_seed:
-		_detail_body.add_child(_chip("CURRENT FORM", UI.GOLD))
+		var current_label := _label("CURRENT FORM", 9, UI.GOLD, true)
+		current_label.add_theme_constant_override("outline_size", 1)
+		_detail_body.add_child(current_label)
 		_detail_body.add_child(_label("LV %d   ·   POTENTIAL %d" % [_instance.level, _instance.potential], 13, UI.TEXT, true))
 		if not _instance.evolution_goal_seed.is_empty():
 			var goal_species := _database.get_by_seed(_instance.evolution_goal_seed)
@@ -176,10 +191,9 @@ func _add_goal_controls(path: Array[String]) -> void:
 
 
 func _chip(text: String, accent: Color) -> Label:
-	var label := _label(text, 10, accent.lightened(0.16), true)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.custom_minimum_size = Vector2(0.0, 28.0)
-	label.add_theme_stylebox_override("normal", SKIN.border_style(accent, Vector4(10, 4, 10, 4), 8.0))
+	# Keep tiny statuses typographic; the surrounding Kenney frame is the chrome.
+	var label := _label(text, 9, accent.lightened(0.16), true)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return label
 
 
@@ -201,28 +215,28 @@ func _layout() -> void:
 	_content_root.position = Vector2.ZERO
 	_content_root.size = Vector2(width, height)
 
-	_title.position = Vector2(24, 15)
-	_title.size = Vector2(maxf(180.0, width - 180.0), 34)
-	_subtitle.position = Vector2(26, 45)
-	_subtitle.size = Vector2(maxf(180.0, width - 180.0), 24)
-	_close_button.position = Vector2(width - 108.0, 17.0)
-	_close_button.size = Vector2(86.0, 38.0)
+	_title.position = Vector2(28, 17)
+	_title.size = Vector2(maxf(180.0, width - 190.0), 34)
+	_subtitle.position = Vector2(30, 48)
+	_subtitle.size = Vector2(maxf(180.0, width - 190.0), 24)
+	_close_button.position = Vector2(width - 112.0, 18.0)
+	_close_button.size = Vector2(88.0, 38.0)
 
 	if compact:
 		var detail_h := clampf(height * 0.38, 250.0, 340.0)
-		_canvas.position = Vector2(18.0, 78.0)
-		_canvas.size = Vector2(width - 36.0, maxf(160.0, height - detail_h - 106.0))
-		_detail_panel.position = Vector2(18.0, height - detail_h - 16.0)
-		_detail_panel.size = Vector2(width - 36.0, detail_h)
+		_canvas.position = Vector2(20.0, 82.0)
+		_canvas.size = Vector2(width - 40.0, maxf(160.0, height - detail_h - 112.0))
+		_detail_panel.position = Vector2(20.0, height - detail_h - 18.0)
+		_detail_panel.size = Vector2(width - 40.0, detail_h)
 	else:
 		var detail_w := clampf(width * 0.285, 330.0, 390.0)
-		var right_margin := 18.0
-		var gap := 14.0
+		var right_margin := 20.0
+		var gap := 16.0
 		var detail_x := width - right_margin - detail_w
-		_canvas.position = Vector2(18.0, 78.0)
-		_canvas.size = Vector2(maxf(280.0, detail_x - gap - 18.0), height - 96.0)
-		_detail_panel.position = Vector2(detail_x, 78.0)
-		_detail_panel.size = Vector2(detail_w, height - 96.0)
+		_canvas.position = Vector2(20.0, 82.0)
+		_canvas.size = Vector2(maxf(280.0, detail_x - gap - 20.0), height - 102.0)
+		_detail_panel.position = Vector2(detail_x, 82.0)
+		_detail_panel.size = Vector2(detail_w, height - 102.0)
 
 	_canvas.clip_contents = true
 	_detail_panel.clip_contents = true
