@@ -50,7 +50,7 @@ EXPECTED_SOURCE_SHA256 = {
     "vendor/vfx-source/pixel-art-spells.zip": "bf6e751559942aad40a50359ab5ae8f9750054546de0b21b4519d39904e163cb",
     "vendor/vfx-source/foozle-pixel-magic.zip": "0c04ab8ee856988b55885a92305d5382459cc855b2a6361c417bb11606f41e9a",
     "vendor/vfx-source/pvfx-foundry-0.7.0.zip": "a2a26a2c162ff9d58037c921d6c568d7fa944cfb166e25eef68f908046c29add",
-    "vendor/vfx-source/nature-magic.zip": "46f44a30d38b65d55c061ab62c9be7e31043958abaf9e2b1894508438815f8",
+    "vendor/vfx-source/nature-magic.zip": "46f44a30d38b65d55ed1101ce8dc8907e31043958abaf9e2b1894508438815f8",
 }
 
 RUNTIME_TEXT_ROOTS = (
