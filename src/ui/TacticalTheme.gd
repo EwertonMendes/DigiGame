@@ -263,10 +263,41 @@ static func uses_physical_touch_scale() -> bool:
 	return DisplayServer.is_touchscreen_available()
 
 
+static func _parse_web_size(raw_value: Variant) -> Vector2:
+	var parts := String(raw_value).split(",")
+	if parts.size() != 2:
+		return Vector2.ZERO
+	if not parts[0].is_valid_float() or not parts[1].is_valid_float():
+		return Vector2.ZERO
+	return Vector2(maxf(parts[0].to_float(), 0.0), maxf(parts[1].to_float(), 0.0))
+
+
+static func _web_size(expression: String) -> Vector2:
+	if not OS.has_feature("web") or not Engine.has_singleton("JavaScriptBridge"):
+		return Vector2.ZERO
+	var bridge := Engine.get_singleton("JavaScriptBridge")
+	if bridge == null:
+		return Vector2.ZERO
+	return _parse_web_size(bridge.call("eval", expression, true))
+
+
+static func _web_canvas_css_size() -> Vector2:
+	return _web_size("(()=>{const c=document.getElementById('canvas');if(!c)return '0,0';const r=c.getBoundingClientRect();return r.width+','+r.height;})()")
+
+
+static func _web_visual_viewport_size() -> Vector2:
+	return _web_size("(()=>{const v=window.visualViewport;return (v?v.width:window.innerWidth)+','+(v?v.height:window.innerHeight);})()")
+
+
 static func ui_scale(viewport: Viewport) -> float:
 	if viewport == null or not uses_physical_touch_scale():
 		return 1.0
 	var logical: Vector2 = viewport.get_visible_rect().size
+	var web_canvas := _web_canvas_css_size()
+	if web_canvas.x > 0.0 and web_canvas.y > 0.0:
+		var css_scale_x := logical.x / maxf(web_canvas.x, 1.0)
+		var css_scale_y := logical.y / maxf(web_canvas.y, 1.0)
+		return maxf(1.0, maxf(css_scale_x, css_scale_y))
 	var window_size: Vector2i = DisplayServer.window_get_size()
 	if window_size.x <= 0 or window_size.y <= 0:
 		return 1.0
@@ -280,6 +311,13 @@ static func physical_window_size(viewport: Viewport) -> Vector2:
 		return Vector2(1280.0, 720.0)
 	if not uses_physical_touch_scale():
 		return viewport.get_visible_rect().size
+	var web_visual := _web_visual_viewport_size()
+	if web_visual.x > 0.0 and web_visual.y > 0.0:
+		var web_canvas := _web_canvas_css_size()
+		if web_canvas.x > 0.0 and web_canvas.y > 0.0:
+			web_visual.x = minf(web_visual.x, web_canvas.x)
+			web_visual.y = minf(web_visual.y, web_canvas.y)
+		return web_visual
 	var window_size: Vector2i = DisplayServer.window_get_size()
 	if window_size.x > 0 and window_size.y > 0:
 		return Vector2(float(window_size.x), float(window_size.y))
