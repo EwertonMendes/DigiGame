@@ -20,11 +20,14 @@ func _ready() -> void:
 	assert(runtime.get_factory() != null, "Battle runtime must initialize the canonical Digimon factory")
 
 	# DigimonRuntimeController normally creates the six demo actors in _ready().
-	# Remove them so this regression is an isolated one-species-at-a-time check
-	# rather than an ever-growing battle scene while all 87 species are tested.
+	# Let the global UI runtime finish its deferred decoration pass before these
+	# short-lived regression actors are removed; otherwise the test itself can
+	# create stale deferred Object references even though gameplay is healthy.
+	await get_tree().process_frame
 	for demo_actor in runtime.get_battle_digimons():
 		runtime.remove_child(demo_actor)
 		demo_actor.free()
+	await get_tree().process_frame
 
 	var tested := 0
 	var seen_ranks: Dictionary = {}
@@ -57,11 +60,12 @@ func _ready() -> void:
 			assert(resource.sprite_hframes == int(row.get("frame_count", 0)), "%s portrait-strip frames must match its WebP metadata" % species_name)
 			assert(resource.sprite_scale.x > 0.0 and resource.sprite_scale.y > 0.0, "%s portrait fallback must have a positive battle scale" % species_name)
 
+		# The UI runtime decorates newly added controls/actors with call_deferred().
+		# Give it one idle frame while the actor is still valid before freeing it.
+		await get_tree().process_frame
 		runtime.remove_child(actor)
 		actor.free()
 		tested += 1
-		if tested % 10 == 0:
-			await get_tree().process_frame
 
 	for rank in EXPECTED_RANKS:
 		assert(seen_ranks.has(rank), "Battle regression must exercise %s Digimon" % rank)
