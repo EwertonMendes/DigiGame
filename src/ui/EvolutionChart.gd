@@ -3,6 +3,7 @@ class_name EvolutionChart
 
 const ChartCanvasScript = preload("res://src/ui/EvolutionChartCanvas.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
+const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
 
 var _content_root: Control = null
 
@@ -33,8 +34,13 @@ func _build() -> void:
 	_subtitle = _label("Explore Digivolution and Degeneration routes", 11, UI.MUTED)
 	_content_root.add_child(_subtitle)
 
-	_close_button = _button("BACK", UI.MUTED)
-	_close_button.name = "BackFromEvolutionChart"
+	_close_button = _button("", UI.MUTED)
+	_close_button.name = "CloseEvolutionChart"
+	_close_button.icon = CLOSE_ICON
+	_close_button.expand_icon = true
+	_close_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_close_button.tooltip_text = "Close Evolution Chart"
+	_close_button.custom_minimum_size = Vector2(44.0, 44.0)
 	_close_button.pressed.connect(close_view)
 	_content_root.add_child(_close_button)
 	_center_button = null
@@ -219,8 +225,8 @@ func _layout() -> void:
 	_title.size = Vector2(maxf(180.0, width - 190.0), 34)
 	_subtitle.position = Vector2(30, 48)
 	_subtitle.size = Vector2(maxf(180.0, width - 190.0), 24)
-	_close_button.position = Vector2(width - 112.0, 18.0)
-	_close_button.size = Vector2(88.0, 38.0)
+	_close_button.position = Vector2(width - 68.0, 14.0)
+	_close_button.size = Vector2(44.0, 44.0)
 
 	if compact:
 		var detail_h := clampf(height * 0.38, 250.0, 340.0)
