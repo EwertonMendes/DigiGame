@@ -14,26 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Fetch source pack
+      - name: Fetch supplemental DWDS-style sprites
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/ds-samples
-          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://www.mediafire.com/file/lk0pjupv8n88006/sprite_thread.zip/file' -o /tmp/ds-samples/mediafire.html
-          python3 - <<'PY'
-          import html, re
-          from pathlib import Path
-          page=Path('/tmp/ds-samples/mediafire.html').read_text('utf-8','ignore')
-          m=re.search(r'href="([^"]+)"\s+id="downloadButton"', page)
-          if not m:
-              raise SystemExit('MediaFire direct link not found')
-          url=html.unescape(m.group(1))
-          print(url)
-          Path('/tmp/ds-samples/mediafire-download-url.txt').write_text(url+'\n')
-          PY
-          curl -fL --retry 3 -A 'Mozilla/5.0' "$(cat /tmp/ds-samples/mediafire-download-url.txt)" -o /tmp/ds-samples/sprite_thread.zip
-          unzip -l /tmp/ds-samples/sprite_thread.zip | head -120 > /tmp/ds-samples/archive-list.txt
-          file /tmp/ds-samples/sprite_thread.zip
+          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/1Dodomon.png' -o /tmp/ds-samples/dodomon.png
+          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/Pichimon.png' -o /tmp/ds-samples/pichimon.png
+          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/motimon_sprite_by_wooded_wolf-d4ai2kv.gif' -o /tmp/ds-samples/motimon.gif
+          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/bukamon_sprite_by_wooded_wolf-d4ai84c.gif' -o /tmp/ds-samples/bukamon.gif
+          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/Flamemon_zpsb381aecd.gif' -o /tmp/ds-samples/flamemon.gif
+          file /tmp/ds-samples/*
       - name: Upload samples
         if: always()
         uses: actions/upload-artifact@v4
