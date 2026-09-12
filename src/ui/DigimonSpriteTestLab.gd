@@ -5,6 +5,7 @@ signal close_requested
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const FollowerScript = preload("res://src/world/OverworldDigimonFollower.gd")
+const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
 const FACINGS: Array[String] = ["down_left", "down_right", "up_right", "up_left"]
 const AUTO_VECTORS: Array[Vector2] = [Vector2(1, 1), Vector2(-1, 1), Vector2(-1, -1), Vector2(1, -1)]
 const AUTO_STEP := 1.1
@@ -28,6 +29,7 @@ var _name_label: Label
 var _state_label: Label
 var _auto_button: Button
 var _zoom_button: Button
+var _touch_joystick: Control
 var _entries: Array[Dictionary] = []
 var _index := 0
 var _follower: OverworldDigimonFollower = null
@@ -52,7 +54,7 @@ func open_lab() -> void:
 	visible = true
 	set_process(true)
 	_auto = false
-	_touch = Vector2.ZERO
+	_release_touch_joystick()
 	_refresh_auto_text()
 	call_deferred("_spawn_selected")
 
@@ -63,7 +65,7 @@ func close_lab() -> void:
 	visible = false
 	set_process(false)
 	_auto = false
-	_touch = Vector2.ZERO
+	_release_touch_joystick()
 	if _follower != null:
 		_follower.set_idle()
 	close_requested.emit()
@@ -209,21 +211,19 @@ func _build_ui() -> void:
 	stack.add_child(_name_label)
 	_state_label = _label("", 11, UI.CYAN)
 	stack.add_child(_state_label)
-	stack.add_child(_label("MOVE - HOLD", 10, UI.GOLD))
-	var move_grid := GridContainer.new()
-	move_grid.columns = 3
-	move_grid.add_theme_constant_override("h_separation", 5)
-	move_grid.add_theme_constant_override("v_separation", 5)
-	stack.add_child(move_grid)
-	_add_dpad_spacer(move_grid)
-	_add_move(move_grid, "UP", Vector2.UP)
-	_add_dpad_spacer(move_grid)
-	_add_move(move_grid, "LEFT", Vector2.LEFT)
-	_add_dpad_spacer(move_grid)
-	_add_move(move_grid, "RIGHT", Vector2.RIGHT)
-	_add_dpad_spacer(move_grid)
-	_add_move(move_grid, "DOWN", Vector2.DOWN)
-	_add_dpad_spacer(move_grid)
+	stack.add_child(_label("MOVE - TOUCH / DRAG", 10, UI.GOLD))
+
+	var joystick_center := CenterContainer.new()
+	joystick_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	joystick_center.custom_minimum_size.y = 160.0
+	stack.add_child(joystick_center)
+	_touch_joystick = TouchJoystickScript.new()
+	_touch_joystick.name = "MovementJoystick"
+	_touch_joystick.custom_minimum_size = Vector2(156.0, 156.0)
+	_touch_joystick.size = Vector2(156.0, 156.0)
+	_touch_joystick.direction_changed.connect(_on_touch_joystick_changed)
+	joystick_center.add_child(_touch_joystick)
+
 	stack.add_child(_label("FACE - CLICK", 10, UI.GOLD))
 	var face_grid := GridContainer.new()
 	face_grid.columns = 2
@@ -232,7 +232,7 @@ func _build_ui() -> void:
 	_add_face(face_grid, "FRONT RIGHT", "down_right")
 	_add_face(face_grid, "BACK LEFT", "up_left")
 	_add_face(face_grid, "BACK RIGHT", "up_right")
-	var help := _label("Touch D-pad / WASD / arrows: move\nGamepad left stick / D-pad: move\nQ / E: rotate facing\nR: reset\nSpace: auto patrol", 11, UI.MUTED)
+	var help := _label("Virtual joystick / WASD / arrows: move\nGamepad left stick / D-pad: move\nQ / E: rotate facing\nR: reset\nSpace: auto patrol", 11, UI.MUTED)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stack.add_child(help)
 
@@ -318,6 +318,7 @@ func _select_species(index: int) -> void:
 		return
 	_index = index
 	_auto = false
+	_release_touch_joystick()
 	_refresh_auto_text()
 	_spawn_selected()
 
@@ -352,22 +353,6 @@ func _movement_input() -> Vector2:
 	return direction.limit_length(1.0)
 
 
-func _add_dpad_spacer(parent: Control) -> void:
-	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(82, 42)
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(spacer)
-
-
-func _add_move(parent: Control, text_value: String, direction: Vector2) -> void:
-	var button := _button(text_value, UI.CYAN)
-	button.custom_minimum_size = Vector2(82, 42)
-	button.button_down.connect(_set_touch.bind(direction.normalized()))
-	button.button_up.connect(_clear_touch)
-	button.mouse_exited.connect(_clear_touch)
-	parent.add_child(button)
-
-
 func _add_face(parent: Control, text_value: String, facing: String) -> void:
 	var button := _button(text_value, UI.PURPLE)
 	button.custom_minimum_size = Vector2(138, 40)
@@ -375,21 +360,24 @@ func _add_face(parent: Control, text_value: String, facing: String) -> void:
 	parent.add_child(button)
 
 
-func _set_touch(direction: Vector2) -> void:
-	_auto = false
-	_refresh_auto_text()
-	_touch = direction
+func _on_touch_joystick_changed(direction: Vector2) -> void:
+	if direction.length_squared() > 0.0001:
+		_auto = false
+		_refresh_auto_text()
+	_touch = direction.limit_length(1.0)
 
 
-func _clear_touch() -> void:
+func _release_touch_joystick() -> void:
 	_touch = Vector2.ZERO
+	if _touch_joystick != null and _touch_joystick.has_method("force_release"):
+		_touch_joystick.call("force_release")
 
 
 func _set_facing(facing: String) -> void:
 	if _follower == null:
 		return
 	_auto = false
-	_touch = Vector2.ZERO
+	_release_touch_joystick()
 	_refresh_auto_text()
 	_follower.teleport_to(_follower.global_position, facing)
 
@@ -408,7 +396,7 @@ func _toggle_auto() -> void:
 	_auto = not _auto
 	_auto_time = 0.0
 	_auto_index = 0
-	_touch = Vector2.ZERO
+	_release_touch_joystick()
 	_refresh_auto_text()
 
 
