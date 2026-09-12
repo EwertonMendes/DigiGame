@@ -39,6 +39,7 @@ const DISPLAY_WEIGHT := 700.0
 const UI_WEIGHT := 500.0
 const READING_WEIGHT := 450.0
 const TYPOGRAPHY_ROOT_META := &"digi_typography_root_installed"
+const TYPOGRAPHY_PENDING_META := &"digi_typography_root_pending"
 
 static var _display_font_cache: Font = null
 static var _body_font_cache: Font = null
@@ -125,6 +126,21 @@ static func _top_control(control: Control) -> Control:
 
 
 static func _install_root_typography(control: Control) -> void:
+	# Most UI factories style a control before adding it to its parent. Defer the
+	# root lookup until tree_entered so the full Control ancestry is available;
+	# otherwise only that single Label would receive the default theme.
+	if control == null:
+		return
+	if not control.is_inside_tree():
+		if not control.has_meta(TYPOGRAPHY_PENDING_META):
+			control.set_meta(TYPOGRAPHY_PENDING_META, true)
+			control.tree_entered.connect(func() -> void:
+				if is_instance_valid(control):
+					control.remove_meta(TYPOGRAPHY_PENDING_META)
+					_install_root_typography(control)
+			, Object.CONNECT_ONE_SHOT)
+		return
+
 	# A number of legacy/modal components create Buttons and Labels directly
 	# instead of going through the shared factories. Give the whole Control tree
 	# an Exo 2 default font so those controls still inherit the professional UI
