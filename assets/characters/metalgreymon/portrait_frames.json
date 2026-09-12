@@ -1,0 +1,14 @@
+{
+  "source": "MetalGreymon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "848a867218cd68acb6cfb273cee70a1aa6ff3e0e563768fcc5df3e77016c9810"
+}

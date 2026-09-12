@@ -25,6 +25,7 @@ CURRENT_DIGIMONS = {
     "gabumon": "Gabumon.webp",
     "greymon": "Greymon.webp",
     "koromon": "Koromon.webp",
+    "metalgreymon": "MetalGreymon.webp",
     "tanemon": "Tanemon.webp",
     "veemon": "Veemon.webp",
 }

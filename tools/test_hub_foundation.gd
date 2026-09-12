@@ -29,6 +29,20 @@ func _ready() -> void:
 	assert(portal != null, "Hub must create the animated test battle portal")
 	assert(dialog != null, "Hub must expose the test battle conversation")
 	assert(party_followers != null, "Hub must create the overworld active-party follower system")
+	var sprite_debug := hub.get_node_or_null("SpriteTestDebug")
+	assert(sprite_debug != null, "Hub must create the temporary sprite-test controller")
+	var sprite_lab := sprite_debug.get_node_or_null("SpriteTestDebugUI/DigimonSpriteTestLab")
+	assert(sprite_lab != null, "Sprite-test controller must create the lab UI")
+	assert(int(sprite_lab.call("get_testable_species_count")) >= 7, "Sprite test lab must discover packaged Digimon resources")
+	assert(Array(sprite_lab.call("get_testable_species_names")).has("Metal Greymon"), "Sprite test lab must include Metal Greymon")
+	sprite_lab.call("open_lab")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var sprite_test_follower := sprite_lab.get("_follower") as Node2D
+	assert(sprite_test_follower != null, "Sprite test lab must spawn the selected Digimon")
+	var sprite_test_visual := sprite_test_follower.get_node_or_null("Sprite2D") as Sprite2D
+	assert(sprite_test_visual != null and sprite_test_visual.texture != null, "Sprite test lab must render the selected field texture")
+	sprite_lab.call("close_lab")
 	assert(player.position.distance_to(operator.position) <= 94.0, "Operator must be reachable from spawn immediately")
 	assert(bool(hub.call("can_actor_move_to", player.position, player)), "Spawn must be walkable")
 

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/characters/metalgreymon/field.png" id="1_metalgreymon"]
+[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="2_digimon"]
+
+[resource]
+script = ExtResource("2_digimon")
+texture = ExtResource("1_metalgreymon")
+initial_frame = 9
+initial_facing = "up_right"
+sprite_hframes = 12
+sprite_vframes = 1
+sprite_layout = "directional_12"
+sprite_deviation = Vector2(0, 13)
+particle_deviation = Vector2(0, 25)
+initial_position = Vector2i(96, 48)
+type = ""
+display_name = "Metal Greymon"
+level = 1
+hp = 200
+mp = 200
+attack = 20
+defense = 20
+age = 1
+battles = 0
+victories = 0
+defeats = 0

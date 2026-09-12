@@ -43,6 +43,7 @@ EXPECTED_BLOBS = {
     "assets/characters/koromon.png": "7be3ffad6cf60fd35e1f31e08052fff4b9e7b6f8",
     "assets/characters/tanemon.png": "53da8d44945acfab69505ba2d7e111aab19f97bb",
     "assets/characters/veemon/field.png": "4de1db9fac82ae76ff285bf53f5b8280e2939a22",
+    "assets/characters/metalgreymon/field.png": "1d7385ff3722579f1bab84b46da1c48ef75f9b0d",
 }
 
 EXPECTED_SOURCE_SHA256 = {
