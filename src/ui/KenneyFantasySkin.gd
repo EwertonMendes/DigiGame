@@ -38,6 +38,7 @@ static func progress_fill_style(accent: Color) -> StyleBoxTexture:
 static func apply_button(button: Button, accent: Color = UI.GOLD) -> void:
 	if button == null:
 		return
+	UI.apply_body_font(button)
 	var content := Vector4(16.0, 9.0, 16.0, 9.0)
 	button.add_theme_stylebox_override("normal", frame_style(UI.FRAME_DARK, content))
 	button.add_theme_stylebox_override("hover", frame_style(accent, content))
