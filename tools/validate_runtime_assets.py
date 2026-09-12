@@ -15,7 +15,7 @@ EXPECTED_BLOBS = {
     "assets/world/hawkbirdtree/flowers_red.png": "90c556ac4870357a62ffabad9902ea823217e738",
     "assets/world/hawkbirdtree/flowers_yellow.png": "90339e8069331a37c9a22d1ae6bed370f1c496c9",
     "assets/world/hawkbirdtree/grass.png": "47e4ee0336dea862f1c5674d3f1058741e54553e",
-    "assets/world/hawkbirdtree/path.png": "db7799925c93012cb599aac1442ee8357ec846c",
+    "assets/world/hawkbirdtree/path.png": "db7799925c93012cb599aac1442ee6acc5d7d091",
     "assets/world/hawkbirdtree/rock.png": "fafc912930746dcf6761c85599f0a5ded6709f3e",
     "assets/world/hawkbirdtree/tree.png": "61233eec4a9dc8fe6b7f3aec47d7cbbb5a1119ba",
     "assets/world/hawkbirdtree/water.png": "a43634cb304e617607dd921b82c3c4a191d2afe2",
@@ -50,7 +50,7 @@ EXPECTED_SOURCE_SHA256 = {
     "vendor/vfx-source/pixel-art-spells.zip": "bf6e751559942aad40a50359ab5ae8f9750054546de0b21b4519d39904e163cb",
     "vendor/vfx-source/foozle-pixel-magic.zip": "0c04ab8ee856988b55885a92305d5382459cc855b2a6361c417bb11606f41e9a",
     "vendor/vfx-source/pvfx-foundry-0.7.0.zip": "a2a26a2c162ff9d58037c921d6c568d7fa944cfb166e25eef68f908046c29add",
-    "vendor/vfx-source/nature-magic.zip": "46f44a30d38b65d55ed1101ce8dc8907e31043958abaf9e2b1894508438815f8",
+    "vendor/vfx-source/nature-magic.zip": "46f44a30d38b65d55c061ab62c9be7e31043958abaf9e2b1894508438815f8",
 }
 
 RUNTIME_TEXT_ROOTS = (
