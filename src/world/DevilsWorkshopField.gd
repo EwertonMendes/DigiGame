@@ -22,6 +22,11 @@ const SKIRT_LEFT := Color(0.14, 0.27, 0.18, 1.0)
 const SKIRT_RIGHT := Color(0.10, 0.22, 0.16, 1.0)
 
 var _transition_prepared := false
+var _transition_prepare_started := false
+var _transition_tile_index := 0
+var _transition_water_index := 0
+var _transition_water: Node2D = null
+var _transition_water_grids: Array[Vector2i] = []
 
 
 func _ready() -> void:
@@ -32,42 +37,84 @@ func prepare_transition_offtree() -> void:
 	_ensure_battlefield_ready()
 
 
-func _ensure_battlefield_ready() -> void:
-	if _transition_prepared:
+func begin_transition_preparation() -> void:
+	if _transition_prepared or _transition_prepare_started:
 		return
-	_transition_prepared = true
+	_transition_prepare_started = true
+	_transition_tile_index = 0
+	_transition_water_index = 0
+	_transition_water_grids.clear()
 	_map_center = _grid_to_raw(Vector2((GRID_SIZE_X - 1) * 0.5, (GRID_SIZE_Y - 1) * 0.5))
 	_create_board_foundation()
 	_create_hover_indicator()
-	_generate_terrain()
-
-
-func _generate_terrain() -> void:
 	tile_map_data.clear()
 
+	for x in range(-1, GRID_SIZE_X + 1):
+		_transition_water_grids.append(Vector2i(x, -1))
+		_transition_water_grids.append(Vector2i(x, GRID_SIZE_Y))
 	for y in range(GRID_SIZE_Y):
-		for x in range(GRID_SIZE_X):
-			var grid := Vector2i(x, y)
-			var world_position := grid_to_world(grid)
-			var presentation := _battle_surface(grid)
-			tile_map_data[grid] = {
-				"type": String(presentation["name"]),
-				"world_position": world_position,
-			}
+		_transition_water_grids.append(Vector2i(-1, y))
+		_transition_water_grids.append(Vector2i(GRID_SIZE_X, y))
 
-			var tile := ART.create_surface_tile(
-				presentation["texture"],
-				world_position,
-				-120 + x + y,
-				presentation["base_color"],
-				presentation["detail_tint"],
-				float(presentation["detail_alpha"])
-			)
-			tile.name = "%s_%02d_%02d" % [String(presentation["name"]), x, y]
-			add_child(tile)
 
-	_build_perimeter_water()
-	selectedTile = Vector2i(grid_to_world(Vector2i(GRID_SIZE_X / 2, GRID_SIZE_Y / 2)))
+func prepare_transition_chunk(max_items: int = 24) -> bool:
+	if _transition_prepared:
+		return true
+	begin_transition_preparation()
+	var budget := maxi(1, max_items)
+	var processed := 0
+	var tile_count := GRID_SIZE_X * GRID_SIZE_Y
+
+	while _transition_tile_index < tile_count and processed < budget:
+		var x := _transition_tile_index % GRID_SIZE_X
+		var y := _transition_tile_index / GRID_SIZE_X
+		_add_battle_tile(Vector2i(x, y))
+		_transition_tile_index += 1
+		processed += 1
+
+	if _transition_tile_index >= tile_count and _transition_water == null:
+		_transition_water = Node2D.new()
+		_transition_water.name = "PerimeterWater"
+		add_child(_transition_water)
+
+	while _transition_tile_index >= tile_count and _transition_water_index < _transition_water_grids.size() and processed < budget:
+		_add_water_tile(_transition_water, _transition_water_grids[_transition_water_index])
+		_transition_water_index += 1
+		processed += 1
+
+	if _transition_tile_index >= tile_count and _transition_water_index >= _transition_water_grids.size():
+		selectedTile = Vector2i(grid_to_world(Vector2i(GRID_SIZE_X / 2, GRID_SIZE_Y / 2)))
+		_transition_prepared = true
+		return true
+	return false
+
+
+func _ensure_battlefield_ready() -> void:
+	if _transition_prepared:
+		return
+	begin_transition_preparation()
+	while not prepare_transition_chunk(512):
+		pass
+
+
+func _add_battle_tile(grid: Vector2i) -> void:
+	var world_position := grid_to_world(grid)
+	var presentation := _battle_surface(grid)
+	tile_map_data[grid] = {
+		"type": String(presentation["name"]),
+		"world_position": world_position,
+	}
+
+	var tile := ART.create_surface_tile(
+		presentation["texture"],
+		world_position,
+		-120 + grid.x + grid.y,
+		presentation["base_color"],
+		presentation["detail_tint"],
+		float(presentation["detail_alpha"])
+	)
+	tile.name = "%s_%02d_%02d" % [String(presentation["name"]), grid.x, grid.y]
+	add_child(tile)
 
 
 func _battle_surface(grid: Vector2i) -> Dictionary:
@@ -157,16 +204,18 @@ func _is_data_anchor(grid: Vector2i) -> bool:
 
 
 func _build_perimeter_water() -> void:
-	var water := Node2D.new()
-	water.name = "PerimeterWater"
-	add_child(water)
+	if _transition_water != null:
+		return
+	_transition_water = Node2D.new()
+	_transition_water.name = "PerimeterWater"
+	add_child(_transition_water)
 
 	for x in range(-1, GRID_SIZE_X + 1):
-		_add_water_tile(water, Vector2i(x, -1))
-		_add_water_tile(water, Vector2i(x, GRID_SIZE_Y))
+		_add_water_tile(_transition_water, Vector2i(x, -1))
+		_add_water_tile(_transition_water, Vector2i(x, GRID_SIZE_Y))
 	for y in range(GRID_SIZE_Y):
-		_add_water_tile(water, Vector2i(-1, y))
-		_add_water_tile(water, Vector2i(GRID_SIZE_X, y))
+		_add_water_tile(_transition_water, Vector2i(-1, y))
+		_add_water_tile(_transition_water, Vector2i(GRID_SIZE_X, y))
 
 
 func _add_water_tile(parent: Node2D, grid: Vector2i) -> void:
