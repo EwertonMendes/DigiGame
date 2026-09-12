@@ -21,21 +21,89 @@ const DISABLED: Color = Color(0.27, 0.28, 0.30, 1.0)
 # Sampled from the normal dark Kenney panel presentation in the reference UI.
 const FRAME_DARK: Color = Color(0.118, 0.149, 0.184, 1.0)
 
+# Typography system.
+# Oxanium carries display/game identity, Exo 2 handles dense UI, and Noto Sans
+# is the neutral long-form/localization safety net. Rajdhani remains a committed
+# bootstrap fallback so partially-updated checkouts never lose readable text.
+const FONT_DISPLAY_PATH := "res://assets/ui/fonts/Oxanium[wght].ttf"
+const FONT_UI_PATH := "res://assets/ui/fonts/Exo2[wght].ttf"
+const FONT_READING_PATH := "res://assets/ui/fonts/NotoSans[wdth,wght].ttf"
+const FONT_BOOTSTRAP_REGULAR_PATH := "res://assets/ui/fonts/Rajdhani-Regular.ttf"
+const FONT_BOOTSTRAP_SEMIBOLD_PATH := "res://assets/ui/fonts/Rajdhani-SemiBold.ttf"
 
-static func body_font() -> Font:
-	return null
+
+static func _load_font(path: String) -> Font:
+	if not ResourceLoader.exists(path):
+		return null
+	var resource := ResourceLoader.load(path)
+	return resource as Font
+
+
+static func _font_with_fallbacks(primary_path: String, bootstrap_path: String, fallback_paths: Array[String]) -> Font:
+	var primary := _load_font(primary_path)
+	if primary == null:
+		primary = _load_font(bootstrap_path)
+	if primary == null:
+		return null
+
+	var fallbacks: Array[Font] = []
+	for path in fallback_paths:
+		var fallback := _load_font(path)
+		if fallback != null and fallback != primary:
+			fallbacks.append(fallback)
+
+	# Use a variation wrapper so the shared imported font resource is not mutated
+	# when different text roles assemble different fallback chains.
+	var composed := FontVariation.new()
+	composed.base_font = primary
+	composed.fallbacks = fallbacks
+	return composed
+
+
+static func display_font() -> Font:
+	return _font_with_fallbacks(
+		FONT_DISPLAY_PATH,
+		FONT_BOOTSTRAP_SEMIBOLD_PATH,
+		[FONT_UI_PATH, FONT_READING_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
+	)
 
 
 static func heading_font() -> Font:
-	return null
+	return display_font()
 
 
-static func apply_body_font(_control: Control) -> void:
-	pass
+static func body_font() -> Font:
+	return _font_with_fallbacks(
+		FONT_UI_PATH,
+		FONT_BOOTSTRAP_REGULAR_PATH,
+		[FONT_READING_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
+	)
 
 
-static func apply_heading_font(_control: Control) -> void:
-	pass
+static func reading_font() -> Font:
+	return _font_with_fallbacks(
+		FONT_READING_PATH,
+		FONT_BOOTSTRAP_REGULAR_PATH,
+		[FONT_UI_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
+	)
+
+
+static func _apply_font(control: Control, font: Font) -> void:
+	if control == null or font == null:
+		return
+	control.add_theme_font_override("font", font)
+
+
+static func apply_body_font(control: Control) -> void:
+	_apply_font(control, body_font())
+
+
+static func apply_heading_font(control: Control) -> void:
+	_apply_font(control, heading_font())
+
+
+static func apply_reading_font(control: Control) -> void:
+	_apply_font(control, reading_font())
 
 
 static func uses_physical_touch_scale() -> bool:

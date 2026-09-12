@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """Fetch pinned, redistributable UI fonts used by DigiGame.
 
-The repository keeps provenance/license text in source control while the font
-binaries are fetched for local development and CI. Each download is pinned to
-an immutable google/fonts commit and verified using its Git blob SHA-1.
+The runtime typography stack is:
+- Oxanium: display / game identity
+- Exo 2: dense interface text
+- Noto Sans: reading and localization fallback
+- Rajdhani: committed bootstrap fallback for partial/offline checkouts
+
+Every download is verified against the exact Git blob SHA published by the
+Google Fonts repository, so the script remains reproducible even though the
+raw URL points at the repository's main branch.
 """
 
 from __future__ import annotations
@@ -14,16 +20,27 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 FONT_DIR = ROOT / "assets" / "ui" / "fonts"
-GOOGLE_FONTS_COMMIT = "9d1ce2fc3c335cca32b6db00c19f55d57b0a68fe"
-BASE_URL = f"https://raw.githubusercontent.com/google/fonts/{GOOGLE_FONTS_COMMIT}/ofl/rajdhani"
+BASE_URL = "https://raw.githubusercontent.com/google/fonts/main/ofl"
 
 FONTS = {
+    "Oxanium[wght].ttf": {
+        "url": f"{BASE_URL}/oxanium/Oxanium%5Bwght%5D.ttf",
+        "git_blob_sha": "ead485c7bf517197db91ef657614ac37d8007775",
+    },
+    "Exo2[wght].ttf": {
+        "url": f"{BASE_URL}/exo2/Exo2%5Bwght%5D.ttf",
+        "git_blob_sha": "9cb20188a07687580312d2099e6c79ca8ecb7b58",
+    },
+    "NotoSans[wdth,wght].ttf": {
+        "url": f"{BASE_URL}/notosans/NotoSans%5Bwdth%2Cwght%5D.ttf",
+        "git_blob_sha": "75575046c015ff623a848096a15779867ba71453",
+    },
     "Rajdhani-Regular.ttf": {
-        "url": f"{BASE_URL}/Rajdhani-Regular.ttf",
+        "url": f"{BASE_URL}/rajdhani/Rajdhani-Regular.ttf",
         "git_blob_sha": "d25bd37233b672ef565e01d998a9412d761d7b00",
     },
     "Rajdhani-SemiBold.ttf": {
-        "url": f"{BASE_URL}/Rajdhani-SemiBold.ttf",
+        "url": f"{BASE_URL}/rajdhani/Rajdhani-SemiBold.ttf",
         "git_blob_sha": "d43750bd05c130d36c8e7fbeb06ecd7c5d3c3b17",
     },
 }
@@ -35,7 +52,7 @@ def git_blob_sha(data: bytes) -> str:
 
 
 def fetch(url: str) -> bytes:
-    request = Request(url, headers={"User-Agent": "DigiGame-asset-fetcher/1.0"})
+    request = Request(url, headers={"User-Agent": "DigiGame-asset-fetcher/2.0"})
     with urlopen(request, timeout=45) as response:
         return response.read()
 
