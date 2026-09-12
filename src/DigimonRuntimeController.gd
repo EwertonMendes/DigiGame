@@ -4,6 +4,7 @@ signal hovered_digimon_changed(digimon_key: String)
 
 const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
+const PLAYER_SCENE = preload("res://scenes/player.tscn")
 const BATTLE_SPRITE_SCALE := Vector2(1.0, 1.0)
 
 # Temporary encounter/bootstrap data. These descriptors already use the same
@@ -26,12 +27,25 @@ var _hovered_actor: Node = null
 var _database = DatabaseScript.new()
 var _factory = null
 var _encounter_rng := RandomNumberGenerator.new()
+var _runtime_prepared := false
 
 
 func _ready() -> void:
+	_ensure_runtime_prepared()
+
+
+func prepare_transition_offtree() -> void:
+	_ensure_runtime_prepared()
+
+
+func _ensure_runtime_prepared() -> void:
+	if _runtime_prepared:
+		return
+	_runtime_prepared = true
 	_encounter_rng.randomize()
 	if not _database.load_default():
 		push_error("Could not initialize Digimon species database")
+		_runtime_prepared = false
 		return
 	_factory = FactoryScript.new(_database)
 	_spawn_demo_rosters()
@@ -100,11 +114,10 @@ func _instantiate_actor(instance: DigimonInstance, player_controlled: bool, init
 
 
 func create_digimon_actor() -> CharacterBody2D:
-	var player_scene := load("res://scenes/player.tscn") as PackedScene
-	if player_scene == null:
+	if PLAYER_SCENE == null:
 		push_error("Could not load Digimon battle actor scene")
 		return null
-	return player_scene.instantiate() as CharacterBody2D
+	return PLAYER_SCENE.instantiate() as CharacterBody2D
 
 
 func _set_actor_graphics(digimon_name: String, digimon_resource: Digimon, actor: CharacterBody2D, player_controlled: bool, instance_id: String) -> void:
