@@ -30,7 +30,9 @@ DATABASE_URL = f"{SOURCE_ROOT}/database/base-digimon-list.json"
 EXPECTED_DATABASE_SHA256 = "edefcfa2275267760498b65971038beb4e35227e123e69c8a189a220612e9f15"
 EARLY_RANKS = ("Fresh", "In-Training", "Rookie")
 MANIFEST_PATH = Path("database/early-rank-playables.json")
-PORTRAIT_FALLBACK_SCALE = 0.32
+PORTRAIT_TARGET_MAX_DIMENSION = 56.0
+PORTRAIT_MIN_SCALE = 0.28
+PORTRAIT_MAX_SCALE = 1.60
 DEFAULT_FRAME_DURATION_MS = 120
 
 
@@ -178,17 +180,27 @@ def existing_resource_visual_mode(resource_path: Path) -> str:
     return match.group(1) if match else "directional_12"
 
 
+def portrait_fallback_scale(metadata: dict[str, Any]) -> float:
+    width = max(1, int(metadata.get("frame_width", 1)))
+    height = max(1, int(metadata.get("frame_height", 1)))
+    raw_scale = PORTRAIT_TARGET_MAX_DIMENSION / float(max(width, height))
+    return max(PORTRAIT_MIN_SCALE, min(PORTRAIT_MAX_SCALE, raw_scale))
+
+
 def create_visual_resource(entry: dict[str, Any], metadata: dict[str, Any]) -> tuple[Path, str]:
     resource_path = Path("assets/resources") / resource_filename(entry)
     resource_path.parent.mkdir(parents=True, exist_ok=True)
     if resource_path.exists():
-        return resource_path, existing_resource_visual_mode(resource_path)
+        existing_layout = existing_resource_visual_mode(resource_path)
+        if existing_layout != "portrait_strip":
+            return resource_path, existing_layout
 
     key = portrait_key(entry)
     frame_count = max(1, int(metadata["frame_count"]))
     durations = [max(20, int(value)) for value in metadata.get("durations_ms", [])]
     avg_duration_ms = round(sum(durations) / len(durations)) if durations else DEFAULT_FRAME_DURATION_MS
-    resource_text = f'''[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]\n\n[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1_script"]\n[ext_resource type="Texture2D" path="res://assets/characters/{key}/portrait_frames.png" id="2_texture"]\n\n[resource]\nscript = ExtResource("1_script")\ntexture = ExtResource("2_texture")\ninitial_frame = 0\ninitial_facing = "down_right"\nsprite_hframes = {frame_count}\nsprite_vframes = 1\nsprite_layout = "portrait_strip"\nsprite_scale = Vector2({PORTRAIT_FALLBACK_SCALE:.2f}, {PORTRAIT_FALLBACK_SCALE:.2f})\nsprite_frame_duration = {avg_duration_ms / 1000.0:.3f}\nsprite_deviation = Vector2(0, 20)\nparticle_deviation = Vector2(0, 10)\ninitial_position = Vector2i(0, 0)\ntype = {json.dumps(str(entry.get("attribute", "Free")))}\ndisplay_name = {json.dumps(str(entry.get("name", "")))}\nlevel = 1\nhp = {max(1, int(entry.get("hp", 1)))}\nmp = {max(0, int(entry.get("sp", entry.get("mp", 0))))}\nattack = {max(1, int(entry.get("atk", entry.get("attack", 1))))}\ndefense = {max(1, int(entry.get("def", entry.get("defense", 1))))}\nage = 1\nbattles = 0\nvictories = 0\ndefeats = 0\n'''
+    fallback_scale = portrait_fallback_scale(metadata)
+    resource_text = f'''[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]\n\n[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1_script"]\n[ext_resource type="Texture2D" path="res://assets/characters/{key}/portrait_frames.png" id="2_texture"]\n\n[resource]\nscript = ExtResource("1_script")\ntexture = ExtResource("2_texture")\ninitial_frame = 0\ninitial_facing = "down_right"\nsprite_hframes = {frame_count}\nsprite_vframes = 1\nsprite_layout = "portrait_strip"\nsprite_scale = Vector2({fallback_scale:.3f}, {fallback_scale:.3f})\nsprite_frame_duration = {avg_duration_ms / 1000.0:.3f}\nsprite_deviation = Vector2(0, 20)\nparticle_deviation = Vector2(0, 10)\ninitial_position = Vector2i(0, 0)\ntype = {json.dumps(str(entry.get("attribute", "Free")))}\ndisplay_name = {json.dumps(str(entry.get("name", "")))}\nlevel = 1\nhp = {max(1, int(entry.get("hp", 1)))}\nmp = {max(0, int(entry.get("sp", entry.get("mp", 0))))}\nattack = {max(1, int(entry.get("atk", entry.get("attack", 1))))}\ndefense = {max(1, int(entry.get("def", entry.get("defense", 1))))}\nage = 1\nbattles = 0\nvictories = 0\ndefeats = 0\n'''
     resource_path.write_text(resource_text, encoding="utf-8")
     return resource_path, "portrait_strip"
 
