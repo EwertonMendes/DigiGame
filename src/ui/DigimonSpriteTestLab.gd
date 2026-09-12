@@ -21,7 +21,7 @@ var _auto_button: Button
 var _zoom_button: Button
 var _entries: Array[Dictionary] = []
 var _index := 0
-var _follower = null
+var _follower: OverworldDigimonFollower = null
 var _touch := Vector2.ZERO
 var _auto := false
 var _auto_index := 0
@@ -83,7 +83,7 @@ func _input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not visible or _follower == null:
 		return
-	var direction := _movement_input()
+	var direction: Vector2 = _movement_input()
 	if _auto:
 		_auto_time += delta
 		if _auto_time >= AUTO_STEP:
@@ -91,7 +91,7 @@ func _process(delta: float) -> void:
 			_auto_index = (_auto_index + 1) % AUTO_VECTORS.size()
 		direction = AUTO_VECTORS[_auto_index]
 	if direction.length_squared() > 0.01:
-		var target := _follower.global_position + direction.normalized() * 1000.0
+		var target: Vector2 = _follower.global_position + direction.normalized() * 1000.0
 		_follower.step_toward(target, delta, [])
 		_clamp_actor()
 	else:
@@ -270,7 +270,7 @@ func _spawn_selected() -> void:
 	var resource := load(String(entry.get("path", ""))) as Digimon
 	if resource == null:
 		return
-	_follower = FollowerScript.new()
+	_follower = FollowerScript.new() as OverworldDigimonFollower
 	_follower.configure(resource, String(entry.get("key", "")), 0)
 	_field.add_child(_follower)
 	_follower.scale = Vector2.ONE * INSPECT_SCALES[_inspect_index]
@@ -375,7 +375,7 @@ func _reset_actor() -> void:
 	if _follower == null or _field.size.x < 2.0:
 		return
 	_auto_time = 0.0
-	var center_global := _field.get_global_transform() * (_field.size * 0.5 + Vector2(0, 20))
+	var center_global: Vector2 = _field.get_global_transform() * (_field.size * 0.5 + Vector2(0, 20))
 	_follower.teleport_to(center_global, "down_right")
 	_clamp_actor()
 
@@ -383,8 +383,8 @@ func _reset_actor() -> void:
 func _clamp_actor() -> void:
 	if _follower == null:
 		return
-	var inverse := _field.get_global_transform().affine_inverse()
-	var p := inverse * _follower.global_position
+	var inverse: Transform2D = _field.get_global_transform().affine_inverse()
+	var p: Vector2 = inverse * _follower.global_position
 	p.x = clampf(p.x, PADDING, maxf(PADDING, _field.size.x - PADDING))
 	p.y = clampf(p.y, PADDING, maxf(PADDING, _field.size.y - PADDING))
 	_follower.global_position = _field.get_global_transform() * p
