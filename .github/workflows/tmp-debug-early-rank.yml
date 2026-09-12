@@ -1,0 +1,65 @@
+name: Temporary Early-Rank Regression Diagnostics
+
+on:
+  push:
+    branches:
+      - feature/early-rank-digimon-roster
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GODOT_VERSION: 4.7.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Restore Godot Web toolchain cache
+        id: godot-toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/digigame-godot
+            ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-web-toolchain-v2-${{ runner.os }}-${{ env.GODOT_VERSION }}
+
+      - name: Activate Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x "$HOME/.cache/digigame-godot/godot"
+          sudo ln -sf "$HOME/.cache/digigame-godot/godot" /usr/local/bin/godot
+          godot --version
+
+      - name: Import project
+        shell: bash
+        run: godot --headless --path . --import >/tmp/import.log 2>&1
+
+      - name: Run diagnostic regression
+        id: regression
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          godot --headless --path . tools/test_early_rank_playables.tscn --quit-after 240 > /tmp/early-rank-playables.log 2>&1
+          status=$?
+          echo "exit_status=$status" > /tmp/early-rank-diagnostic.txt
+          echo "--- matching failures/errors ---" >> /tmp/early-rank-diagnostic.txt
+          grep -nE 'early-rank battle check|ASSERT|Assertion|SCRIPT ERROR:|ERROR:|failed|Failed|Invalid|Could not' /tmp/early-rank-playables.log | tail -n 120 >> /tmp/early-rank-diagnostic.txt || true
+          echo "--- final 160 log lines ---" >> /tmp/early-rank-diagnostic.txt
+          tail -n 160 /tmp/early-rank-playables.log >> /tmp/early-rank-diagnostic.txt
+          exit $status
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: early-rank-diagnostic
+          path: /tmp/early-rank-diagnostic.txt
+          if-no-files-found: error
+          retention-days: 2
