@@ -10,6 +10,8 @@ const MAX_ACTIVE_PARTY_SIZE := 3
 const MIN_ACTIVE_PARTY_SIZE := 1
 const DEFAULT_ACTIVE_PARTY := ["agumon", "gabumon", "greymon"]
 const DIGIMON_RESOURCE_TEMPLATE := "res://assets/resources/%s.tres"
+const MIN_RECONSTRUCTION_DATA := 100
+const MAX_RECONSTRUCTION_DATA := 200
 
 var _active_party: Array[String] = ["agumon", "gabumon", "greymon"]
 var _roster_by_key: Dictionary = {}
@@ -68,7 +70,7 @@ func set_active_party(party: Array) -> bool:
 		var key := String(raw_key).strip_edges().to_lower()
 		if key.is_empty():
 			continue
-		if not _is_valid_digimon_key(key) or not _roster_by_key.has(key):
+		if not _is_valid_digimon_key(key.get_slice("_", 0)) or not _roster_by_key.has(key):
 			return false
 		if normalized.has(key):
 			continue
@@ -110,6 +112,26 @@ func replace_or_add_instance(instance: DigimonInstance, party_key: String = "") 
 	return true
 
 
+func add_roster_instance(instance: DigimonInstance, preferred_key: String = "") -> String:
+	if instance == null:
+		return ""
+	_ensure_database()
+	var species: Dictionary = _database.get_by_seed(instance.species_seed)
+	if species.is_empty():
+		return ""
+	var base_key := preferred_key.to_lower().strip_edges()
+	if base_key.is_empty():
+		base_key = String(species.get("name", "digimon")).to_lower().replace(" ", "_")
+	var key := _unique_roster_key(base_key)
+	_roster_by_key[key] = instance
+	roster_changed.emit()
+	return key
+
+
+func notify_roster_changed() -> void:
+	roster_changed.emit()
+
+
 func get_max_active_party_size() -> int:
 	return MAX_ACTIVE_PARTY_SIZE
 
@@ -127,12 +149,45 @@ func get_digi_data() -> Dictionary:
 	return _digi_data.duplicate(true)
 
 
+func get_digi_data_for(species_name: String) -> int:
+	var key := _resolve_digi_data_key(species_name)
+	return int(_digi_data.get(key, 0)) if not key.is_empty() else 0
+
+
 func apply_account_rewards(bits: int, digi_data: Dictionary) -> void:
 	_bits += maxi(0, bits)
 	for raw_name in digi_data.keys():
 		var name := String(raw_name)
 		_digi_data[name] = int(_digi_data.get(name, 0)) + maxi(0, int(digi_data[raw_name]))
 	account_rewards_changed.emit(_bits, get_digi_data())
+
+
+func can_reconstruct_digimon(species_name: String, data_amount: int = MIN_RECONSTRUCTION_DATA) -> bool:
+	var amount := clampi(data_amount, MIN_RECONSTRUCTION_DATA, MAX_RECONSTRUCTION_DATA)
+	_ensure_database()
+	return not _database.get_by_name(species_name).is_empty() and get_digi_data_for(species_name) >= amount
+
+
+func reconstruct_digimon(species_name: String, data_amount: int = MIN_RECONSTRUCTION_DATA) -> DigimonInstance:
+	var amount := clampi(data_amount, MIN_RECONSTRUCTION_DATA, MAX_RECONSTRUCTION_DATA)
+	_ensure_database()
+	if _factory == null:
+		return null
+	var species := _database.get_by_name(species_name)
+	if species.is_empty():
+		return null
+	var data_key := _resolve_digi_data_key(String(species.get("name", species_name)))
+	if data_key.is_empty() or int(_digi_data.get(data_key, 0)) < amount:
+		return null
+	var instance: DigimonInstance = _factory.create_player_by_seed(String(species.get("seed", "")), 1, amount)
+	if instance == null:
+		return null
+	_digi_data[data_key] = int(_digi_data.get(data_key, 0)) - amount
+	if int(_digi_data[data_key]) <= 0:
+		_digi_data.erase(data_key)
+	add_roster_instance(instance, String(species.get("name", "digimon")).to_lower().replace(" ", "_"))
+	account_rewards_changed.emit(_bits, get_digi_data())
+	return instance
 
 
 func _ensure_roster() -> void:
@@ -160,3 +215,24 @@ func _ensure_database() -> void:
 
 func _is_valid_digimon_key(key: String) -> bool:
 	return ResourceLoader.exists(DIGIMON_RESOURCE_TEMPLATE % key)
+
+
+func _unique_roster_key(base_key: String) -> String:
+	var clean := base_key.to_lower().strip_edges()
+	if clean.is_empty():
+		clean = "digimon"
+	if not _roster_by_key.has(clean):
+		return clean
+	var suffix := 2
+	while _roster_by_key.has("%s_%d" % [clean, suffix]):
+		suffix += 1
+	return "%s_%d" % [clean, suffix]
+
+
+func _resolve_digi_data_key(species_name: String) -> String:
+	var normalized := species_name.to_lower().strip_edges()
+	for raw_key in _digi_data.keys():
+		var key := String(raw_key)
+		if key.to_lower().strip_edges() == normalized:
+			return key
+	return ""
