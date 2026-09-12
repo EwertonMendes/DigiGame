@@ -323,6 +323,8 @@ func _swap_scene(prepared_scene: Node, scene_path: String, context: String) -> E
 		_set_scene_active(current, false)
 		tree.current_scene = hub
 		_set_scene_active(hub, true)
+		if hub.has_method("resume_after_battle_transition"):
+			hub.call("resume_after_battle_transition")
 		if current != hub:
 			current.queue_free()
 		_retained_hub = null
