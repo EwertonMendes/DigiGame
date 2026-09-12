@@ -40,6 +40,10 @@ func open_menu() -> void:
 	super.open_menu()
 
 
+func has_nested_view_open() -> bool:
+	return (_constellation != null and _constellation.is_open()) or (_digilab != null and _digilab.is_open())
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -152,7 +156,7 @@ func _layout() -> void:
 	_digilab_button.scale = Vector2.ONE * scale_factor
 	_digilab_button.position = origin + Vector2(width - 218.0, 14.0) * scale_factor
 	_digilab_button.size = Vector2(96.0, 40.0)
-	_digilab_button.visible = not (_constellation != null and _constellation.is_open()) and not (_digilab != null and _digilab.is_open())
+	_digilab_button.visible = not has_nested_view_open()
 	if width >= 650.0:
 		_account.position = origin + Vector2(width - 460.0, 21.0) * scale_factor
 		_account.size = Vector2(220.0, 26.0)
