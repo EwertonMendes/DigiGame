@@ -14,29 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Fetch source samples
+      - name: Fetch source pack
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/ds-samples
-          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i874.photobucket.com/albums/ab308/WtWSprites/Child/031_Patamon.png' -o /tmp/ds-samples/patamon-sheet.png
-          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i997.photobucket.com/albums/af96/WtWAnimatedSprites/Child/031Patamon.gif' -o /tmp/ds-samples/patamon-animated.gif
-          curl -L --retry 3 -A 'Mozilla/5.0' 'https://www.mediafire.com/file/lk0pjupv8n88006/sprite_thread.zip/file' -o /tmp/ds-samples/mediafire.html
+          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://www.mediafire.com/file/lk0pjupv8n88006/sprite_thread.zip/file' -o /tmp/ds-samples/mediafire.html
           python3 - <<'PY'
           import html, re
           from pathlib import Path
           page=Path('/tmp/ds-samples/mediafire.html').read_text('utf-8','ignore')
-          urls=re.findall(r'https://download[^"\'<> ]+sprite_thread\.zip[^"\'<> ]*', page)
-          urls=[html.unescape(u) for u in urls]
-          print('mediafire candidates', urls[:5])
-          if urls:
-              Path('/tmp/ds-samples/mediafire-download-url.txt').write_text(urls[0]+'\n')
+          m=re.search(r'href="([^"]+)"\s+id="downloadButton"', page)
+          if not m:
+              raise SystemExit('MediaFire direct link not found')
+          url=html.unescape(m.group(1))
+          print(url)
+          Path('/tmp/ds-samples/mediafire-download-url.txt').write_text(url+'\n')
           PY
-          if [[ -s /tmp/ds-samples/mediafire-download-url.txt ]]; then
-            url="$(cat /tmp/ds-samples/mediafire-download-url.txt)"
-            curl -fL --retry 3 -A 'Mozilla/5.0' "$url" -o /tmp/ds-samples/sprite_thread.zip || true
-          fi
-          file /tmp/ds-samples/* || true
+          curl -fL --retry 3 -A 'Mozilla/5.0' "$(cat /tmp/ds-samples/mediafire-download-url.txt)" -o /tmp/ds-samples/sprite_thread.zip
+          unzip -l /tmp/ds-samples/sprite_thread.zip | head -120 > /tmp/ds-samples/archive-list.txt
+          file /tmp/ds-samples/sprite_thread.zip
       - name: Upload samples
         if: always()
         uses: actions/upload-artifact@v4
