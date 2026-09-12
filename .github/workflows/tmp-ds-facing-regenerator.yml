@@ -1,0 +1,49 @@
+name: Temporary DS Facing Regenerator
+
+on:
+  push:
+    branches:
+      - fix/ds-sprite-facing-audit
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Prepare pinned directional sprite source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --break-system-packages pillow numpy scipy flask requests beautifulsoup4
+          git clone --quiet https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/ds-manager
+          git -C /tmp/ds-manager checkout --quiet 06b3c4df09dc5eeaccee511d731f37947b1c8259
+          python3 /tmp/ds-manager/Scripts/download_sheets.py --delay 0.02
+
+      - name: Regenerate all early-rank directional field sprites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/build_early_rank_ds_fields.py --manager /tmp/ds-manager
+          python3 tools/validate_early_rank_playables.py
+
+      - name: Commit regenerated directional assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/characters assets/resources database/early-rank-playables.json
+          if git diff --cached --quiet; then
+            echo 'No generated changes to commit.'
+            exit 0
+          fi
+          git commit -m 'fix: regenerate DS sprites with authoritative facings'
+          git push origin HEAD:fix/ds-sprite-facing-audit
