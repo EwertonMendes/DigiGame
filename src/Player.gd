@@ -32,6 +32,7 @@ var PARTICLES_POSITION_DEVIATION := Vector2.ZERO
 var initialTileCoords := Vector2.ZERO
 var initial_facing := "up_right"
 var sprite_layout := "directional_12"
+var sprite_frame_duration := SELECTED_FRAME_DURATION
 var horizontal_facing_inverted := false
 var digimon_key := ""
 var is_player_controlled := true
@@ -57,6 +58,13 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	selected_tile_coords = GlobalVariables.SelectedTileCoords
+
+	# Portrait strips are generated directly from the canonical animated WebPs.
+	# They represent a complete idle animation rather than directional walk rows,
+	# so keep them playing even while the unit is stationary.
+	if sprite_layout == "portrait_strip":
+		_advance_selected_animation(delta)
+		return
 
 	if _is_path_moving:
 		_advance_selected_animation(delta)
@@ -119,8 +127,9 @@ func set_tactical_selected(selected: bool) -> void:
 		_update_turn_indicator()
 		return
 	is_selected = selected
-	_selected_animation_time = 0.0
-	_selected_animation_frame = 0
+	if sprite_layout != "portrait_strip":
+		_selected_animation_time = 0.0
+		_selected_animation_frame = 0
 	_show_current_facing(is_selected or is_debug_selected)
 	emit_particles_when_selected()
 	_update_turn_indicator()
@@ -131,8 +140,9 @@ func set_debug_selected(selected: bool) -> void:
 		_update_turn_indicator()
 		return
 	is_debug_selected = selected
-	_selected_animation_time = 0.0
-	_selected_animation_frame = 0
+	if sprite_layout != "portrait_strip":
+		_selected_animation_time = 0.0
+		_selected_animation_frame = 0
 	_show_current_facing(is_selected or is_debug_selected)
 	emit_particles_when_selected()
 	_update_turn_indicator()
@@ -152,8 +162,9 @@ func move_along_grid_path(path: Array[Vector2i], field: Node) -> void:
 		return
 
 	_is_path_moving = true
-	_selected_animation_time = 0.0
-	_selected_animation_frame = 0
+	if sprite_layout != "portrait_strip":
+		_selected_animation_time = 0.0
+		_selected_animation_frame = 0
 	for grid in path:
 		var target_world := Vector2(field.call("grid_to_world", grid)) + PLAYER_POSITION_DEVIATION
 		face_toward_world_position(target_world)
@@ -165,8 +176,9 @@ func move_along_grid_path(path: Array[Vector2i], field: Node) -> void:
 		await tween.finished
 
 	_is_path_moving = false
-	_selected_animation_time = 0.0
-	_selected_animation_frame = 0
+	if sprite_layout != "portrait_strip":
+		_selected_animation_time = 0.0
+		_selected_animation_frame = 0
 	_show_current_facing(is_selected or is_debug_selected)
 
 
@@ -181,8 +193,9 @@ func debug_relocate_to_grid(grid: Vector2i, field: Node) -> bool:
 	var target_position := tile_world_position + PLAYER_POSITION_DEVIATION
 	face_toward_world_position(target_position)
 	global_position = target_position
-	_selected_animation_time = 0.0
-	_selected_animation_frame = 0
+	if sprite_layout != "portrait_strip":
+		_selected_animation_time = 0.0
+		_selected_animation_frame = 0
 	_show_current_facing(is_selected or is_debug_selected)
 	return true
 
@@ -246,8 +259,9 @@ func face_toward_world_position(target_position: Vector2) -> void:
 		return
 
 	facing_direction = next_direction
-	_selected_animation_time = 0.0
-	_selected_animation_frame = 0
+	if sprite_layout != "portrait_strip":
+		_selected_animation_time = 0.0
+		_selected_animation_frame = 0
 	_show_current_facing(is_selected or is_debug_selected or _is_path_moving)
 
 
@@ -262,15 +276,23 @@ func _direction_from_vector(direction_vector: Vector2) -> String:
 
 
 func _advance_selected_animation(delta: float) -> void:
+	var duration := maxf(0.02, sprite_frame_duration) if sprite_layout == "portrait_strip" else SELECTED_FRAME_DURATION
 	_selected_animation_time += delta
-	if _selected_animation_time < SELECTED_FRAME_DURATION:
+	if _selected_animation_time < duration:
 		return
-	_selected_animation_time = fmod(_selected_animation_time, SELECTED_FRAME_DURATION)
-	_selected_animation_frame = (_selected_animation_frame + 1) % 3
+	_selected_animation_time = fmod(_selected_animation_time, duration)
+	var frame_count := maxi(1, sprite.hframes * sprite.vframes) if sprite_layout == "portrait_strip" else 3
+	_selected_animation_frame = (_selected_animation_frame + 1) % frame_count
 	_show_current_facing(true)
 
 
 func _show_current_facing(animate: bool) -> void:
+	if sprite_layout == "portrait_strip":
+		sprite.region_enabled = false
+		sprite.flip_h = false
+		var frame_count := maxi(1, sprite.hframes * sprite.vframes)
+		sprite.frame = _selected_animation_frame % frame_count
+		return
 	if sprite_layout == "spaced_9_32":
 		_show_spaced_9_facing(animate)
 		return
