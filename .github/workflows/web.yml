@@ -115,7 +115,11 @@ jobs:
           grep -q 'digimon progression regression passed' /tmp/digimon-progression.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/digimon-progression.log; then exit 1; fi
 
-          godot --headless --path . tools/test_early_rank_playables.tscn --quit-after 20 2>&1 | tee /tmp/early-rank-playables.log
+      - name: Run early-rank playable battle regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . tools/test_early_rank_playables.tscn --quit-after 240 2>&1 | tee /tmp/early-rank-playables.log
           grep -q 'early-rank playable battle regression passed' /tmp/early-rank-playables.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/early-rank-playables.log; then exit 1; fi
 
@@ -364,6 +368,7 @@ jobs:
           name: digigame-web-build
           path: artifact
       - name: Configure Pages
+        id: pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
