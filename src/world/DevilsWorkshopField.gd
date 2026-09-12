@@ -21,8 +21,21 @@ const WATER_DETAIL := Color(0.72, 0.94, 1.0, 1.0)
 const SKIRT_LEFT := Color(0.14, 0.27, 0.18, 1.0)
 const SKIRT_RIGHT := Color(0.10, 0.22, 0.16, 1.0)
 
+var _transition_prepared := false
+
 
 func _ready() -> void:
+	_ensure_battlefield_ready()
+
+
+func prepare_transition_offtree() -> void:
+	_ensure_battlefield_ready()
+
+
+func _ensure_battlefield_ready() -> void:
+	if _transition_prepared:
+		return
+	_transition_prepared = true
 	_map_center = _grid_to_raw(Vector2((GRID_SIZE_X - 1) * 0.5, (GRID_SIZE_Y - 1) * 0.5))
 	_create_board_foundation()
 	_create_hover_indicator()
