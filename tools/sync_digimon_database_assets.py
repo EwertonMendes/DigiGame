@@ -21,6 +21,7 @@ import re
 import subprocess
 from pathlib import Path, PurePosixPath
 from typing import Any
+from urllib.parse import quote
 
 from PIL import Image, ImageSequence
 
@@ -115,7 +116,8 @@ def build_portrait_assets(entry: dict[str, Any]) -> dict[str, Any]:
         encoding="utf-8",
     )
 
-    payload = fetch(f"{SOURCE_ROOT}/assets/digimons/{source_name}")
+    encoded_source_name = quote(source_name, safe="")
+    payload = fetch(f"{SOURCE_ROOT}/assets/digimons/{encoded_source_name}")
     source_webp_path = source_directory / "portrait.webp"
     source_webp_path.write_bytes(payload)
 
