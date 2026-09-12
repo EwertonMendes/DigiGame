@@ -30,10 +30,8 @@ func _build() -> void:
 	_frame.add_child(_content_root)
 
 	_title = _label("EVOLUTION CHART", 24, UI.TEXT, true)
-	UI.apply_heading_font(_title)
 	_content_root.add_child(_title)
 	_subtitle = _label("Explore Digivolution and Degeneration routes", 11, UI.MUTED)
-	UI.apply_body_font(_subtitle)
 	_content_root.add_child(_subtitle)
 
 	_close_button = _button("", UI.MUTED)
@@ -95,7 +93,6 @@ func _build() -> void:
 	add_child(_flash)
 
 	_announcement = _label("", 30, Color.WHITE, true)
-	UI.apply_heading_font(_announcement)
 	_announcement.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_announcement.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_announcement.add_theme_constant_override("outline_size", 6)
@@ -143,7 +140,6 @@ func _refresh_detail() -> void:
 	portrait_margin.add_child(portrait)
 
 	var name_label := _label(species_name.to_upper(), 22, UI.TEXT, true)
-	UI.apply_heading_font(name_label)
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_body.add_child(name_label)
@@ -254,3 +250,31 @@ func _layout() -> void:
 	_flash.size = get_viewport_rect().size
 	_announcement.position = origin + Vector2(width * 0.18, height * 0.40) * scale_factor
 	_announcement.size = Vector2(width * 0.64, 150.0) * scale_factor
+
+
+func _label(text: String, font_size: int, color: Color, bold: bool = false) -> Label:
+	# Override the legacy constellation factory so every label produced by the
+	# inherited requirement/route helpers also gets the new font family.
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	if bold:
+		label.add_theme_constant_override("outline_size", 1)
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.72))
+		UI.apply_heading_font(label)
+	else:
+		UI.apply_body_font(label)
+	return label
+
+
+func _button(text: String, accent: Color) -> Button:
+	# The base constellation predates the shared typography system. Keep its
+	# Kenney chrome but explicitly apply Exo 2 to actions in this chart.
+	var button := Button.new()
+	button.text = text
+	button.focus_mode = Control.FOCUS_ALL
+	button.custom_minimum_size = Vector2(110, 40)
+	SKIN.apply_button(button, accent)
+	UI.apply_body_font(button)
+	return button
