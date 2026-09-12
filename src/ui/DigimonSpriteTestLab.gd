@@ -67,11 +67,16 @@ func _input(event: InputEvent) -> void:
 		var key := event as InputEventKey
 		if key.pressed and not key.echo:
 			match key.physical_keycode:
-				KEY_ESCAPE: close_lab()
-				KEY_Q: _rotate(-1)
-				KEY_E: _rotate(1)
-				KEY_R: _reset_actor()
-				KEY_SPACE: _toggle_auto()
+				KEY_ESCAPE:
+					close_lab()
+				KEY_Q:
+					_rotate(-1)
+				KEY_E:
+					_rotate(1)
+				KEY_R:
+					_reset_actor()
+				KEY_SPACE:
+					_toggle_auto()
 		get_viewport().set_input_as_handled()
 
 
@@ -242,7 +247,9 @@ func _load_entries() -> void:
 				_entries.append({"key": key, "name": display, "path": path})
 		filename = directory.get_next()
 	directory.list_dir_end()
-	_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a.get("name", "")) < String(b.get("name", "")))
+	_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return String(a.get("name", "")) < String(b.get("name", ""))
+	)
 	var metal := -1
 	for i in range(_entries.size()):
 		_picker.add_item(String(_entries[i].get("name", "")))
