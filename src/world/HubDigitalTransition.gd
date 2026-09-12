@@ -1,6 +1,21 @@
 extends "res://src/world/HubProgressionGameplay.gd"
 
 
+func _ready() -> void:
+	super._ready()
+	# Dependencies start streaming while the player is still exploring the hub.
+	# This is threaded and does not instantiate the battle scene yet.
+	DigitalSceneTransition.preload_scene(BATTLE_SCENE_PATH)
+
+
+func _open_dialog() -> void:
+	super._open_dialog()
+	if _dialog_open:
+		# The operator dialog is a natural idle moment. Build the detached battle
+		# field and Digimon here so pressing START only has to run the visual gate.
+		DigitalSceneTransition.prepare_scene(BATTLE_SCENE_PATH)
+
+
 func _start_test_battle() -> void:
 	if _transitioning or DigitalSceneTransition.is_transitioning():
 		return
