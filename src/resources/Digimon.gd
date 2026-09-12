@@ -7,6 +7,8 @@ class_name Digimon
 @export var sprite_hframes: int = 12
 @export var sprite_vframes: int = 1
 @export var sprite_layout: String = "directional_12"
+@export var sprite_scale: Vector2 = Vector2.ONE
+@export var sprite_frame_duration: float = 0.12
 @export var sprite_deviation: Vector2
 @export var particle_deviation: Vector2
 @export var initial_position: Vector2i
