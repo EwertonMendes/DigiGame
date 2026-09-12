@@ -1,0 +1,12 @@
+{
+  "source": "Dodomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 198,
+  "frame_height": 198,
+  "frame_count": 2,
+  "durations_ms": [
+    500,
+    500
+  ],
+  "source_sha256": "6385d6a1e7d4a6ee45df38962bec0e199add76ea2ca0a4c3c3b171b4ce85bfed"
+}

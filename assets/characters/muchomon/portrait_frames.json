@@ -1,0 +1,14 @@
+{
+  "source": "Muchomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "cdee37ccfe36d59434c47f86e521b5c1304104211f498f8e360e177d37a2c4fb"
+}

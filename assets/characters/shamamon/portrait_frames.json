@@ -1,0 +1,14 @@
+{
+  "source": "Shamamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 69,
+  "frame_height": 85,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "abf054f9a71165af34c5c7818b1075f5873b7a273289385ad2039e8b2dd25c39"
+}

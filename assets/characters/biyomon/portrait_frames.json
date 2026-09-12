@@ -1,0 +1,14 @@
+{
+  "source": "Biyomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "12841a428709c2c1878af3781804c818e0b5fae183ed604e85a2714c1ffb21b2"
+}

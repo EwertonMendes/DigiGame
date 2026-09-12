@@ -1,0 +1,14 @@
+{
+  "source": "SnowGoburimon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 69,
+  "frame_height": 85,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "de85825c10e8d2c4594b3e75656f000c9e9aa509353a9204a3dabfba09626a58"
+}

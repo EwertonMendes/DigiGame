@@ -1,0 +1,14 @@
+{
+  "source": "Falcomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "bfeb5071155eface884064c9bd0815cc4fa58e2083140ba9e1587536b02e801e"
+}

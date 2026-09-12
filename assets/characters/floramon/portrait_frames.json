@@ -1,0 +1,14 @@
+{
+  "source": "Floramon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "3e8083262f44461e157ffa6c6e5b7811e1b2ecfdf5c63ae80065fc4e72a5acce"
+}

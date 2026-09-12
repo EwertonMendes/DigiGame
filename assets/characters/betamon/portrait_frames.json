@@ -1,0 +1,14 @@
+{
+  "source": "Betamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "30982159773c96d62f4cb6d3ad1c5594b76490fb402717c4a4f13d2d9fd9799e"
+}

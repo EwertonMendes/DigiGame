@@ -1,0 +1,14 @@
+{
+  "source": "Budmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 53,
+  "frame_height": 39,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "61dd74316260610d13dee3b994a204578346eb3aba5023c264c0f6736d417b7e"
+}

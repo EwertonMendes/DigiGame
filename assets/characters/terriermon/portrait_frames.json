@@ -1,0 +1,14 @@
+{
+  "source": "Terriermon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 75,
+  "frame_height": 55,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "64d262697c2e1a974940f73da97183b989bb3b80b07e0ac0f4d2a9a6e2044131"
+}

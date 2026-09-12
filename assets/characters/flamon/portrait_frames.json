@@ -1,0 +1,12 @@
+{
+  "source": "Flamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 198,
+  "frame_height": 198,
+  "frame_count": 2,
+  "durations_ms": [
+    500,
+    500
+  ],
+  "source_sha256": "61a9e9b30d8e6b341dcbc7e3e0ad0a0ae0881b6891470ccb899c818f968e04a5"
+}

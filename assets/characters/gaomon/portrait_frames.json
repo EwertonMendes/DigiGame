@@ -1,0 +1,14 @@
+{
+  "source": "Gaomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "f0bdecd769c9b7caaacba98319c04e037de56b836a91e75926f921c573d37e83"
+}

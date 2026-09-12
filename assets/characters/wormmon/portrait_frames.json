@@ -1,0 +1,14 @@
+{
+  "source": "Wormmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "927372ead02b8bd4488edb29ad198751af9633ce4c679140ce572c6ec661f6a4"
+}

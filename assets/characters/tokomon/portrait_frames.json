@@ -1,0 +1,14 @@
+{
+  "source": "Tokomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 45,
+  "frame_height": 43,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "bf336d4283c9036ac1a20fc16c0a32503dcbfcbbffd987de85d14c47e153026d"
+}

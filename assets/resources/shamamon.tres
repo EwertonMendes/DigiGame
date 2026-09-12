@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/characters/shamamon/portrait_frames.png" id="2_texture"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("2_texture")
+initial_frame = 0
+initial_facing = "down_right"
+sprite_hframes = 4
+sprite_vframes = 1
+sprite_layout = "portrait_strip"
+sprite_scale = Vector2(0.32, 0.32)
+sprite_frame_duration = 0.250
+sprite_deviation = Vector2(0, 20)
+particle_deviation = Vector2(0, 10)
+initial_position = Vector2i(0, 0)
+type = "Vaccine"
+display_name = "Shamamon"
+level = 1
+hp = 117
+mp = 132
+attack = 75
+defense = 60
+age = 1
+battles = 0
+victories = 0
+defeats = 0

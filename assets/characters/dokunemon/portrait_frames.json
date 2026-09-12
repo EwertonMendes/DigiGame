@@ -1,0 +1,14 @@
+{
+  "source": "DoKunemon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 55,
+  "frame_height": 68,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "ff29e88935d2d91f2439bce3b362ba4692fa19b5472be1b6f3eae2fbaf836aac"
+}

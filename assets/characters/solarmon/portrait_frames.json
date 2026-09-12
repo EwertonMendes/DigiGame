@@ -1,0 +1,14 @@
+{
+  "source": "Solarmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 75,
+  "frame_height": 51,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "40a2ac7273b3d6b2eb44c6b0b49e29bf03e421ec2860e7e5fc9a01e46a025bed"
+}

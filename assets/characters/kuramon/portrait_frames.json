@@ -1,0 +1,14 @@
+{
+  "source": "Kuramon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 39,
+  "frame_height": 39,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "2375cc211a831c5dac0663e63e12c495d6209d52e8eff3ce9bfa57ffc0b35f40"
+}

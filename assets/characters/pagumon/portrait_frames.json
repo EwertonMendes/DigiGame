@@ -1,0 +1,14 @@
+{
+  "source": "Pagumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 54,
+  "frame_height": 29,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "2bd8e50e61e378323abee0344c4d67293f4ed0933d57baa2f878884cd9d7d151"
+}

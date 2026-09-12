@@ -1,0 +1,14 @@
+{
+  "source": "Tentomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "ddec3ff23fe52d5771cacf01a893edff136659e7a378ca423ebc14a187a0e152"
+}

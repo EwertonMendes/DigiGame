@@ -1,0 +1,14 @@
+{
+  "source": "Aruraumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "8be056a4d339b06a751bae40df1c53bf5c3590dab43fe1c456adfffe21ca4a1d"
+}

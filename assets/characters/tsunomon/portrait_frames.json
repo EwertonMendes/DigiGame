@@ -1,0 +1,14 @@
+{
+  "source": "Tsunomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 31,
+  "frame_height": 51,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "00df8b23cf4b688f51add51db972ec8986ba7fff8a8425cb4ce1a5660a462f22"
+}

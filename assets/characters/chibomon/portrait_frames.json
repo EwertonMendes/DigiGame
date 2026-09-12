@@ -1,0 +1,14 @@
+{
+  "source": "Chibomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "208861c1a4f2cd96c30d17050444893632c118ac852e6c557fe8b9fda2e365f7"
+}

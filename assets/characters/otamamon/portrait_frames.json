@@ -1,0 +1,14 @@
+{
+  "source": "Otamamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "e91d7bb640823202c3086f38db3010f8e7480f35977b390bf951ccf898763f17"
+}

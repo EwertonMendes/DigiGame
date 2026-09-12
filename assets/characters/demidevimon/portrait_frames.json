@@ -1,0 +1,14 @@
+{
+  "source": "DemiDevimon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "103889a6e6052f4c7d43cbecfbd7e880092fb72f817ad33dfa457486c046da1d"
+}

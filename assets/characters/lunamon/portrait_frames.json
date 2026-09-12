@@ -1,0 +1,14 @@
+{
+  "source": "Lunamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "7ce130079ee90ad90682ee242df8c73e370fb7aefe6f24c8cd5dce17ea1a35c9"
+}

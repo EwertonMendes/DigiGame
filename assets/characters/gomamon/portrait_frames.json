@@ -1,0 +1,12 @@
+{
+  "source": "Gomamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 2,
+  "durations_ms": [
+    300,
+    300
+  ],
+  "source_sha256": "3b96d69509758c01b69c051192263d0601ff6419242ffc17f1eca1e6f499e0fd"
+}

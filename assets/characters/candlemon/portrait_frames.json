@@ -1,0 +1,14 @@
+{
+  "source": "Candlemon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2a276720106a0c429548732bbaed9e3cc218285bdf35daa0e9b32efd2f47bd9d"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Syakomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 45,
+  "frame_height": 53,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "d352e68bba634a75db349ab9947e4ea551aaf50a4363064c35aa091e9830ac58"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Lalamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "6cdf9924d1f55b37a1076cbb970eafceda7a540f5fdafa38fae110f5f0cbc298"
+}

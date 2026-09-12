@@ -1,0 +1,14 @@
+{
+  "source": "Lopmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 75,
+  "frame_height": 55,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "d4d32c41f3dcd9e7905d48fcd0efc3627d96bbfb4f845fe20b13b816c812d062"
+}

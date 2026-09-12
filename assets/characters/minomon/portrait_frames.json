@@ -1,0 +1,14 @@
+{
+  "source": "Minomon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 33,
+  "frame_height": 62,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "336da870ae3dcee11abe3a50ebd2e26e00e89d68bd1fe96d9fe4afb3a0925d5e"
+}

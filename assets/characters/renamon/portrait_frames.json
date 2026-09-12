@@ -1,0 +1,14 @@
+{
+  "source": "Renamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "68e5f756785ae5fae09b1cebb0bfc5d68418859ec9ac700efb358b9b072dbd72"
+}

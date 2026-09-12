@@ -1,0 +1,14 @@
+{
+  "source": "Dorumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 56,
+  "frame_height": 82,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "089a72639bc02c9642c8a5d4d04c514c178aac47ad2d144bd50a82a9e01299ef"
+}

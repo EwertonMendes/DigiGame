@@ -1,0 +1,14 @@
+{
+  "source": "Gummymon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 34,
+  "frame_height": 43,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "11eff6548255d32fdbd04b68f06b526b45e3833f3e8d683c7e4be7e61b50e2ad"
+}

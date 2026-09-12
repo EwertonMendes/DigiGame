@@ -1,0 +1,14 @@
+{
+  "source": "Hawkmon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 90,
+  "frame_height": 80,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "a8f9d5f598f8ec973bf89684b5312675ec954e9591f5050ad0ab71843dd706e8"
+}

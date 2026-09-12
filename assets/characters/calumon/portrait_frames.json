@@ -1,0 +1,14 @@
+{
+  "source": "Calumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 70,
+  "frame_height": 55,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "ce01310345d154c7d6d5da344002c51809e93c0f31929c6876759d5948c5ab0d"
+}

@@ -1,0 +1,12 @@
+{
+  "source": "Mochimon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 198,
+  "frame_height": 198,
+  "frame_count": 2,
+  "durations_ms": [
+    500,
+    500
+  ],
+  "source_sha256": "303fb91957fee3bc608150c2273705756dc366746b1f16cc665cadb8b2e07944"
+}

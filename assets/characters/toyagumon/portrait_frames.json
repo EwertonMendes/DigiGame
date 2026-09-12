@@ -1,0 +1,14 @@
+{
+  "source": "ToyAgumon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "43f81c113929f262b2dcea7ae29a474df08bdadbf3bcfc6da9ab10822881bba1"
+}

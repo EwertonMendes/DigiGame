@@ -1,0 +1,12 @@
+{
+  "source": "Coronamon.webp",
+  "source_path": "source/portrait.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 2,
+  "durations_ms": [
+    300,
+    300
+  ],
+  "source_sha256": "773d6e8ffc1f5819d4419320b7b95ac1780a21b16ac55af87a5f9098ea91b7ea"
+}
