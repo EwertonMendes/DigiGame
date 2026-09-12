@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Normalize risky early-rank DS facings from reviewed SpriteManager specs.
+"""Normalize early-rank DS field facings from reviewed directional sources.
 
-The WtW archive contains both explicit four-facing sheets and sheets whose right
-facings are mirrors of left-facing artwork. The base roster builder handles the
-former directly; this pass replaces every risky/non-explicit layout for which a
-reviewed DigimonWorldSpriteManager spec can resolve all four diagonals.
+The WtW archive mixes several sheet layouts. Most rows can be validated against
+reviewed DigimonWorldSpriteManager specs, while a small number of legacy sheets
+need explicit project/source-sheet rules. This pass refuses to silently accept a
+compact ambiguous sheet: every such sprite must have an authoritative mapping.
 """
 from __future__ import annotations
 
@@ -39,6 +39,22 @@ NAME_ALIASES: dict[str, tuple[str, ...]] = {
     "Tapirmon": ("Tapirmon", "Bakumon"),
     "ToyAgumon (Black)": ("ShadowToyAgumon", "ToyAgumonBlack", "ToyAgumon (Black)"),
     "Veemon": ("Veemon", "Vmon", "V-mon"),
+}
+
+# These two original Verion/WtW map grids are grouped by horizontal facing:
+# front-left, back-left, front-right, back-right. The generic extractor had
+# incorrectly interpreted row 2 as down-right and row 3 as up-left.
+# Output order below is always DL, DR, UL, UR.
+MANUAL_WTW_GROUP_ORDERS: dict[str, tuple[int, int, int, int]] = {
+    "Poyomon": (0, 2, 1, 3),
+    "Tokomon": (0, 2, 1, 3),
+}
+
+# Koromon was already hand-reviewed earlier in this project. Its dedicated
+# extractor explicitly documents that the source-facing convention is reversed
+# relative to Tanemon and intentionally swaps/mirrors horizontal assignments.
+REVIEWED_PROJECT_STRIPS: dict[str, Path] = {
+    "Koromon": Path("assets/characters/koromon.png"),
 }
 
 
@@ -148,6 +164,51 @@ def _build_from_manager(manager_root: Path, spec_path: Path, spec: dict[str, Any
     return strip, metadata
 
 
+def _reorder_existing_groups(field_path: Path, metadata: dict[str, Any], order: tuple[int, int, int, int]) -> Image.Image:
+    image = Image.open(field_path).convert("RGBA")
+    cell_w = int(metadata.get("cell_width", 0))
+    cell_h = int(metadata.get("cell_height", image.height))
+    if cell_w <= 0 or image.width != cell_w * 12 or image.height != cell_h:
+        raise RuntimeError(f"{field_path}: expected a 12-cell strip, got {image.size} with cell {cell_w}x{cell_h}")
+    groups: list[list[Image.Image]] = []
+    for group_index in range(4):
+        group: list[Image.Image] = []
+        for frame_index in range(3):
+            index = group_index * 3 + frame_index
+            group.append(image.crop((index * cell_w, 0, (index + 1) * cell_w, cell_h)))
+        groups.append(group)
+    output = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    out_index = 0
+    for source_group in order:
+        for frame in groups[source_group]:
+            output.alpha_composite(frame, (out_index * cell_w, 0))
+            out_index += 1
+    return output
+
+
+def _use_reviewed_project_strip(name: str, key: str, directory: Path, metadata_path: Path) -> dict[str, Any]:
+    source_path = REVIEWED_PROJECT_STRIPS[name]
+    image = Image.open(source_path).convert("RGBA")
+    if image.size != (384, 32):
+        raise RuntimeError(f"{name}: reviewed project strip changed unexpectedly: {image.size}")
+    image.save(directory / "field.png", "PNG", optimize=True)
+    new_meta = {
+        "source_kind": "official_ds",
+        "source_variant": "reviewed_project_extraction",
+        "direction_source": "tools/fetch_enemy_assets.py",
+        "reviewed_source_file": str(source_path),
+        "cell_width": 32,
+        "cell_height": 32,
+        "frame_count": 12,
+        "frames_per_direction": 3,
+        "directions": list(DIRECTION_ORDER),
+        "runtime_scale": 1.0,
+        "field_path": f"res://assets/characters/{key}/field.png",
+    }
+    metadata_path.write_text(json.dumps(new_meta, indent=2) + "\n", encoding="utf-8")
+    return new_meta
+
+
 def _patch_resource_scale(resource_path: Path, scale: float) -> None:
     text = resource_path.read_text(encoding="utf-8")
     replacement = f"sprite_scale = Vector2({scale:.4f}, {scale:.4f})"
@@ -173,6 +234,8 @@ def main() -> None:
     entries = [entry for entry in database if str(entry.get("rank", "")) in EARLY_RANKS]
     grouped = _load_specs(args.manager)
     corrected: list[dict[str, str]] = []
+    corrected_manual: list[dict[str, Any]] = []
+    corrected_project: list[dict[str, str]] = []
     trusted_explicit: list[str] = []
     community: list[str] = []
     unresolved: list[str] = []
@@ -182,15 +245,45 @@ def main() -> None:
         key = portrait_key(entry)
         directory = Path("assets/characters") / key
         metadata_path = directory / "field.json"
+        field_path = directory / "field.png"
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         if metadata.get("source_kind") == "community_ds_style_exception":
             community.append(name)
             continue
 
+        resource_path = Path("assets/resources") / f"{name.strip().lower()}.tres"
+
+        if name in REVIEWED_PROJECT_STRIPS:
+            try:
+                new_meta = _use_reviewed_project_strip(name, key, directory, metadata_path)
+                _patch_resource_scale(resource_path, float(new_meta["runtime_scale"]))
+                corrected_project.append({"name": name, "source": str(REVIEWED_PROJECT_STRIPS[name])})
+                print(f"normalized facing: {name} <- reviewed project extractor")
+            except Exception as exc:
+                unresolved.append(f"{name} ({exc})")
+            continue
+
+        if name in MANUAL_WTW_GROUP_ORDERS:
+            try:
+                order = MANUAL_WTW_GROUP_ORDERS[name]
+                reordered = _reorder_existing_groups(field_path, metadata, order)
+                reordered.save(field_path, "PNG", optimize=True)
+                metadata["direction_source"] = "reviewed_original_wtw_map_grid"
+                metadata["source_group_order"] = ["front_left", "back_left", "front_right", "back_right"]
+                metadata["normalized_group_order"] = list(DIRECTION_ORDER)
+                metadata["direction_group_permutation"] = list(order)
+                metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+                _patch_resource_scale(resource_path, float(metadata.get("runtime_scale", 1.0)))
+                corrected_manual.append({"name": name, "source_group_permutation": list(order)})
+                print(f"normalized facing: {name} <- reviewed WtW map grid {order}")
+            except Exception as exc:
+                unresolved.append(f"{name} ({exc})")
+            continue
+
         resolved = _resolve_spec(name, grouped)
         if resolved is None:
-            # Two explicit rows of six are already four authored WtW facings.
-            # Everything else must be backed by reviewed directional metadata.
+            # Two explicit rows of six already expose four authored WtW facings.
+            # Everything compact/ambiguous must be backed by a reviewed rule.
             if metadata.get("extraction_layout") == "two_rows_of_six":
                 trusted_explicit.append(name)
             else:
@@ -203,26 +296,37 @@ def main() -> None:
         except Exception as exc:
             unresolved.append(f"{name} ({exc})")
             continue
-        strip.save(directory / "field.png", "PNG", optimize=True)
+        strip.save(field_path, "PNG", optimize=True)
         new_meta["field_path"] = f"res://assets/characters/{key}/field.png"
         metadata_path.write_text(json.dumps(new_meta, indent=2) + "\n", encoding="utf-8")
-        resource_path = Path("assets/resources") / f"{name.strip().lower()}.tres"
         _patch_resource_scale(resource_path, float(new_meta["runtime_scale"]))
         corrected.append({"name": name, "manager_spec": spec_path.name})
         print(f"normalized facing: {name} <- {spec_path.name}")
 
+    audited_total = len(corrected) + len(corrected_manual) + len(corrected_project) + len(trusted_explicit) + len(community)
     report = {
         "direction_order": list(DIRECTION_ORDER),
+        "early_rank_total": len(entries),
+        "audited_total": audited_total,
         "corrected_from_reviewed_specs": corrected,
+        "corrected_from_reviewed_wtw_grids": corrected_manual,
+        "corrected_from_reviewed_project_extractors": corrected_project,
         "trusted_explicit_wtw_four_facing": trusted_explicit,
         "community_synthetic_four_facing": community,
         "already_reviewed_outside_early_rank": ["Greymon", "Metal Greymon"],
         "unresolved": unresolved,
     }
     args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(f"facing audit: corrected={len(corrected)} explicit={len(trusted_explicit)} community={len(community)} unresolved={len(unresolved)}")
+    print(
+        "facing audit: "
+        f"spec={len(corrected)} manual={len(corrected_manual)} project={len(corrected_project)} "
+        f"explicit={len(trusted_explicit)} community={len(community)} "
+        f"audited={audited_total}/{len(entries)} unresolved={len(unresolved)}"
+    )
     if unresolved:
         raise RuntimeError("Unresolved risky DS facings: " + ", ".join(unresolved))
+    if audited_total != len(entries):
+        raise RuntimeError(f"Facing audit coverage mismatch: audited={audited_total}, expected={len(entries)}")
     if not corrected:
         raise RuntimeError("Facing audit corrected no reviewed directional sprites")
 
