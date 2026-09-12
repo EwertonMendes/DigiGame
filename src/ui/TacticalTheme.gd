@@ -6,29 +6,30 @@ class_name TacticalTheme
 # Text/accent colors intentionally keep stronger luminance than the surfaces:
 # the UI sits over a very dark game world and thin low-contrast copy quickly
 # becomes tiring at 720p, browser scaling and handheld sizes.
-const CYAN: Color = Color(0.46, 0.84, 1.0, 1.0)
-const BLUE: Color = Color(0.38, 0.55, 1.0, 1.0)
-const RED: Color = Color(1.0, 0.48, 0.56, 1.0)
-const ORANGE: Color = Color(1.0, 0.62, 0.38, 1.0)
-const PURPLE: Color = Color(0.70, 0.60, 1.0, 1.0)
-const GREEN: Color = Color(0.47, 0.90, 0.67, 1.0)
-const GOLD: Color = Color(1.0, 0.72, 0.32, 1.0)
-const TEXT: Color = Color(0.985, 0.99, 1.0, 1.0)
-const MUTED: Color = Color(0.82, 0.84, 0.89, 1.0)
-const SUBTLE: Color = Color(0.67, 0.70, 0.76, 1.0)
+const CYAN: Color = Color(0.50, 0.87, 1.0, 1.0)
+const BLUE: Color = Color(0.43, 0.60, 1.0, 1.0)
+const RED: Color = Color(1.0, 0.52, 0.59, 1.0)
+const ORANGE: Color = Color(1.0, 0.66, 0.42, 1.0)
+const PURPLE: Color = Color(0.78, 0.70, 1.0, 1.0)
+const GREEN: Color = Color(0.52, 0.92, 0.70, 1.0)
+const GOLD: Color = Color(1.0, 0.75, 0.36, 1.0)
+const TEXT: Color = Color(0.995, 0.997, 1.0, 1.0)
+const MUTED: Color = Color(0.89, 0.90, 0.94, 1.0)
+const SUBTLE: Color = Color(0.77, 0.79, 0.84, 1.0)
 const BASE: Color = Color(0.015, 0.017, 0.022, 0.82)
 const BASE_SOFT: Color = Color(0.028, 0.030, 0.038, 0.78)
 const GLASS: Color = Color(0.018, 0.020, 0.026, 0.70)
 const GLASS_LIGHT: Color = Color(0.11, 0.11, 0.12, 0.74)
-const DISABLED: Color = Color(0.40, 0.42, 0.46, 1.0)
+const DISABLED: Color = Color(0.46, 0.48, 0.52, 1.0)
 # Slightly brighter than the old structural chrome so panels remain separated
 # from black backdrops without competing with text.
-const FRAME_DARK: Color = Color(0.14, 0.18, 0.23, 1.0)
+const FRAME_DARK: Color = Color(0.16, 0.20, 0.25, 1.0)
 
 # Typography system.
-# Oxanium carries display/game identity, Exo 2 handles dense UI, and Noto Sans
-# is the neutral long-form/localization safety net. Rajdhani remains a committed
-# bootstrap fallback so partially-updated checkouts never lose readable text.
+# Oxanium carries display/game identity. Exo 2 handles normal-size interface
+# copy. Noto Sans is deliberately used for microcopy because its open forms and
+# larger apparent x-height stay readable at 10-12 px and survive translation
+# better than a display face. Rajdhani remains a committed bootstrap fallback.
 const FONT_DISPLAY_PATH := "res://assets/ui/fonts/Oxanium[wght].ttf"
 const FONT_UI_PATH := "res://assets/ui/fonts/Exo2[wght].ttf"
 const FONT_READING_PATH := "res://assets/ui/fonts/NotoSans[wdth,wght].ttf"
@@ -36,14 +37,18 @@ const FONT_BOOTSTRAP_REGULAR_PATH := "res://assets/ui/fonts/Rajdhani-Regular.ttf
 const FONT_BOOTSTRAP_SEMIBOLD_PATH := "res://assets/ui/fonts/Rajdhani-SemiBold.ttf"
 
 const DISPLAY_WEIGHT := 700.0
-const UI_WEIGHT := 500.0
-const READING_WEIGHT := 450.0
+const UI_WEIGHT := 600.0
+const READING_WEIGHT := 500.0
+const MICRO_WEIGHT := 650.0
+const SMALL_TEXT_BREAKPOINT := 12
+const MIN_SMALL_TEXT_SIZE := 10
 const TYPOGRAPHY_ROOT_META := &"digi_typography_root_installed"
 const TYPOGRAPHY_PENDING_META := &"digi_typography_root_pending"
 
 static var _display_font_cache: Font = null
 static var _body_font_cache: Font = null
 static var _reading_font_cache: Font = null
+static var _micro_font_cache: Font = null
 
 
 static func _load_font(path: String) -> Font:
@@ -71,9 +76,7 @@ static func _font_with_fallbacks(
 		if fallback != null and fallback != primary:
 			fallbacks.append(fallback)
 
-	# FontVariation is also how Godot exposes OpenType variable-font axes. The
-	# previous implementation left wght at each family's default (400), making
-	# display headings unexpectedly thin and visually dim on dark panels.
+	# FontVariation is also how Godot exposes OpenType variable-font axes.
 	var composed := FontVariation.new()
 	composed.base_font = primary
 	composed.fallbacks = fallbacks
@@ -100,7 +103,7 @@ static func body_font() -> Font:
 	if _body_font_cache == null:
 		_body_font_cache = _font_with_fallbacks(
 			FONT_UI_PATH,
-			FONT_BOOTSTRAP_REGULAR_PATH,
+			FONT_BOOTSTRAP_SEMIBOLD_PATH,
 			[FONT_READING_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
 			UI_WEIGHT
 		)
@@ -116,6 +119,17 @@ static func reading_font() -> Font:
 			READING_WEIGHT
 		)
 	return _reading_font_cache
+
+
+static func micro_font() -> Font:
+	if _micro_font_cache == null:
+		_micro_font_cache = _font_with_fallbacks(
+			FONT_READING_PATH,
+			FONT_BOOTSTRAP_SEMIBOLD_PATH,
+			[FONT_UI_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
+			MICRO_WEIGHT
+		)
+	return _micro_font_cache
 
 
 static func _top_control(control: Control) -> Control:
@@ -141,14 +155,13 @@ static func _install_root_typography(control: Control) -> void:
 			, Object.CONNECT_ONE_SHOT)
 		return
 
-	# A number of legacy/modal components create Buttons and Labels directly
-	# instead of going through the shared factories. Give the whole Control tree
-	# an Exo 2 default font so those controls still inherit the professional UI
-	# typography, while explicit heading overrides continue to use Oxanium.
+	# Legacy/modal controls that are created directly should default to the most
+	# readable member of the family. Explicitly styled normal-size UI still gets
+	# Exo 2 and display headings still get Oxanium.
 	var root := _top_control(control)
 	if root == null or root.has_meta(TYPOGRAPHY_ROOT_META):
 		return
-	var default_font := body_font()
+	var default_font := micro_font()
 	if default_font == null:
 		return
 	var inherited_theme: Theme = null
@@ -169,16 +182,31 @@ static func _apply_font(control: Control, font: Font) -> void:
 		control.add_theme_font_override("font", font)
 
 
+static func _legible_font_size(control: Control) -> int:
+	if control == null:
+		return 16
+	var size := control.get_theme_font_size("font_size")
+	if size > 0 and size < MIN_SMALL_TEXT_SIZE:
+		size = MIN_SMALL_TEXT_SIZE
+		control.add_theme_font_size_override("font_size", size)
+	return size
+
+
 static func apply_body_font(control: Control) -> void:
-	_apply_font(control, body_font())
+	var size := _legible_font_size(control)
+	_apply_font(control, micro_font() if size <= SMALL_TEXT_BREAKPOINT else body_font())
 
 
 static func apply_heading_font(control: Control) -> void:
-	_apply_font(control, heading_font())
+	var size := _legible_font_size(control)
+	# Tiny all-caps/status headings used Oxanium before this split. At 9-12 px
+	# its distinctive shapes are attractive but materially harder to scan.
+	_apply_font(control, micro_font() if size <= SMALL_TEXT_BREAKPOINT else heading_font())
 
 
 static func apply_reading_font(control: Control) -> void:
-	_apply_font(control, reading_font())
+	var size := _legible_font_size(control)
+	_apply_font(control, micro_font() if size <= SMALL_TEXT_BREAKPOINT else reading_font())
 
 
 static func uses_physical_touch_scale() -> bool:
@@ -394,6 +422,6 @@ static func rank_color(rank: String) -> Color:
 		"ultimate": return PURPLE
 		"mega": return GOLD
 		"ultra": return RED
-		"in-training", "training": return Color(0.64, 0.75, 1.0, 1.0)
+		"in-training", "training": return Color(0.70, 0.80, 1.0, 1.0)
 		"fresh": return MUTED
 	return MUTED
