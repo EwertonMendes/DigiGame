@@ -15,7 +15,7 @@ EXPECTED_BLOBS = {
     "assets/world/hawkbirdtree/flowers_red.png": "90c556ac4870357a62ffabad9902ea823217e738",
     "assets/world/hawkbirdtree/flowers_yellow.png": "90339e8069331a37c9a22d1ae6bed370f1c496c9",
     "assets/world/hawkbirdtree/grass.png": "47e4ee0336dea862f1c5674d3f1058741e54553e",
-    "assets/world/hawkbirdtree/path.png": "db7799925c93012cb599aac1442ee6acc5d7d091",
+    "assets/world/hawkbirdtree/path.png": "db7799925c93012cb599aac1442ee8357ec846c",
     "assets/world/hawkbirdtree/rock.png": "fafc912930746dcf6761c85599f0a5ded6709f3e",
     "assets/world/hawkbirdtree/tree.png": "61233eec4a9dc8fe6b7f3aec47d7cbbb5a1119ba",
     "assets/world/hawkbirdtree/water.png": "a43634cb304e617607dd921b82c3c4a191d2afe2",
@@ -43,7 +43,7 @@ EXPECTED_BLOBS = {
     "assets/characters/koromon.png": "7be3ffad6cf60fd35e1f31e08052fff4b9e7b6f8",
     "assets/characters/tanemon.png": "53da8d44945acfab69505ba2d7e111aab19f97bb",
     "assets/characters/veemon/field.png": "4de1db9fac82ae76ff285bf53f5b8280e2939a22",
-    "assets/characters/metalgreymon/field.png": "617c27d18cbc1c6ab3f0d1bf5b745ba47c4d472d",
+    "assets/characters/metalgreymon/field.png": "1d7385ff3722579f1bab84b46da1c48ef75f9b0d",
 }
 
 EXPECTED_SOURCE_SHA256 = {
