@@ -27,12 +27,28 @@ static func border_style(
 	return _texture_style(BORDER_TEXTURE, tint, content, texture_margin)
 
 
-static func progress_track_style() -> StyleBoxTexture:
-	return frame_style(UI.FRAME_DARK, Vector4.ZERO, 6.0)
+# EXP deliberately does not use the decorative Kenney frame texture. HP/SP are
+# compact resource meters, and EXP should speak the same visual language: a
+# quiet dark track with a clean rounded fill. These progress helpers are only
+# used by EXP meters in the Digimon menu and battle-result screen.
+static func progress_track_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.02, 0.05, 0.05, 0.72)
+	style.corner_radius_top_left = 3
+	style.corner_radius_top_right = 3
+	style.corner_radius_bottom_left = 3
+	style.corner_radius_bottom_right = 3
+	return style
 
 
-static func progress_fill_style(accent: Color) -> StyleBoxTexture:
-	return frame_style(accent, Vector4.ZERO, 6.0)
+static func progress_fill_style(_accent: Color = UI.GOLD) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = UI.GOLD
+	style.corner_radius_top_left = 3
+	style.corner_radius_top_right = 3
+	style.corner_radius_bottom_left = 3
+	style.corner_radius_bottom_right = 3
+	return style
 
 
 static func apply_button(button: Button, accent: Color = UI.GOLD) -> void:
