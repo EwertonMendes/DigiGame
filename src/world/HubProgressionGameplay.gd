@@ -15,14 +15,9 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _menu_open:
-		# The Digimon menu owns nested DigiLab/Constellation cancel handling.
 		if event.is_action_pressed("game_menu") or event.is_action_pressed("ui_cancel"):
-			if _digimon_menu is DigimonProgressionMenu:
-				var progression_menu := _digimon_menu as DigimonProgressionMenu
-				if progression_menu._constellation != null and progression_menu._constellation.is_open():
-					return
-				if progression_menu._digilab != null and progression_menu._digilab.is_open():
-					return
+			if _digimon_menu is DigimonProgressionMenu and (_digimon_menu as DigimonProgressionMenu).has_nested_view_open():
+				return
 			_close_digimon_menu()
 			get_viewport().set_input_as_handled()
 		return
