@@ -20,6 +20,7 @@ var learned_skills: Array[String] = []
 var equipped_skills: Array[String] = []
 var equipment: Array[String] = []
 var evolution_history: Array[Dictionary] = []
+var evolution_goal_seed: String = ""
 var origin: String = "generated"
 
 
@@ -97,6 +98,7 @@ func to_dict() -> Dictionary:
 		"equippedSkills": equipped_skills.duplicate(),
 		"equipment": equipment.duplicate(),
 		"evolutionHistory": evolution_history.duplicate(true),
+		"evolutionGoalSeed": evolution_goal_seed,
 		"origin": origin,
 	}
 
@@ -158,6 +160,7 @@ static func from_dict(data: Dictionary) -> DigimonInstance:
 			if record is Dictionary:
 				instance.evolution_history.append(record.duplicate(true))
 
+	instance.evolution_goal_seed = String(data.get("evolutionGoalSeed", ""))
 	instance.origin = String(data.get("origin", "generated"))
 	return instance
 
