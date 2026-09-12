@@ -9,7 +9,6 @@ const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const MAX_ACTIVE_PARTY_SIZE := 3
 const MIN_ACTIVE_PARTY_SIZE := 1
 const DEFAULT_ACTIVE_PARTY := ["agumon", "gabumon", "greymon"]
-const DIGIMON_RESOURCE_TEMPLATE := "res://assets/resources/%s.tres"
 const MIN_RECONSTRUCTION_DATA := 100
 const MAX_RECONSTRUCTION_DATA := 200
 
@@ -65,12 +64,18 @@ func get_instance_for_party_key(key: String) -> DigimonInstance:
 
 func set_active_party(party: Array) -> bool:
 	_ensure_roster()
+	_ensure_database()
 	var normalized: Array[String] = []
 	for raw_key in party:
 		var key := String(raw_key).strip_edges().to_lower()
 		if key.is_empty():
 			continue
-		if not _is_valid_digimon_key(key.get_slice("_", 0)) or not _roster_by_key.has(key):
+		if not _roster_by_key.has(key):
+			return false
+		var candidate = _roster_by_key.get(key)
+		if not candidate is DigimonInstance:
+			return false
+		if _database.get_by_seed((candidate as DigimonInstance).species_seed).is_empty():
 			return false
 		if normalized.has(key):
 			continue
@@ -211,10 +216,6 @@ func _ensure_database() -> void:
 			return
 	if _factory == null:
 		_factory = FactoryScript.new(_database)
-
-
-func _is_valid_digimon_key(key: String) -> bool:
-	return ResourceLoader.exists(DIGIMON_RESOURCE_TEMPLATE % key)
 
 
 func _unique_roster_key(base_key: String) -> String:
