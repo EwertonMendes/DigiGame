@@ -1,11 +1,12 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_sprite_thread",
-  "source_archive_file": "sprite thread/028_Dorumon.png",
-  "source_id": 28,
-  "extraction_layout": "two_rows_of_six",
-  "cell_width": 31,
-  "cell_height": 33,
+  "source_variant": "digimon_world_sprite_manager",
+  "direction_source": "reviewed_walk_and_mirror_spec",
+  "source_name": "Dorumon",
+  "manager_spec": "017.extract.json",
+  "manager_sheet_id": "48420",
+  "cell_width": 66,
+  "cell_height": 66,
   "frame_count": 12,
   "frames_per_direction": 3,
   "directions": [
@@ -14,7 +15,6 @@
     "up_left",
     "up_right"
   ],
-  "runtime_scale": 1.0,
-  "withthewill_thread": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "runtime_scale": 0.5,
   "field_path": "res://assets/characters/dorumon/field.png"
 }

@@ -1,11 +1,12 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_sprite_thread",
-  "source_archive_file": "sprite thread/003_Tsunomon.png",
-  "source_id": 3,
-  "extraction_layout": "four_rows_of_three",
-  "cell_width": 21,
-  "cell_height": 26,
+  "source_variant": "digimon_world_sprite_manager",
+  "direction_source": "reviewed_walk_and_mirror_spec",
+  "source_name": "Tsunomon",
+  "manager_spec": "008.extract.json",
+  "manager_sheet_id": "48285",
+  "cell_width": 34,
+  "cell_height": 66,
   "frame_count": 12,
   "frames_per_direction": 3,
   "directions": [
@@ -14,7 +15,6 @@
     "up_left",
     "up_right"
   ],
-  "runtime_scale": 1.0,
-  "withthewill_thread": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "runtime_scale": 0.5,
   "field_path": "res://assets/characters/tsunomon/field.png"
 }
