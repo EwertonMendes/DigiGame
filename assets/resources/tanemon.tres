@@ -1,21 +1,28 @@
 [gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]
-[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/characters/tanemon/field.png" id="2"]
+
+[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/characters/tanemon/field.png" id="2_texture"]
+
 [resource]
-script = ExtResource("1")
-texture = ExtResource("2")
+script = ExtResource("1_script")
+texture = ExtResource("2_texture")
 initial_frame = 0
 initial_facing = "down_left"
+sprite_hframes = 12
+sprite_vframes = 1
+sprite_layout = "directional_12"
+sprite_scale = Vector2(1.0000, 1.0000)
+sprite_frame_duration = 0.120
 sprite_deviation = Vector2(0, 20)
-particle_deviation = Vector2(0, 8)
-initial_position = Vector2i(0, -128)
+particle_deviation = Vector2(0, 10)
+initial_position = Vector2i(0, 0)
 type = "Data"
 display_name = "Tanemon"
 level = 1
-hp = 55
-mp = 35
-attack = 5
-defense = 5
+hp = 63
+mp = 82
+attack = 38
+defense = 31
 age = 1
 battles = 0
 victories = 0

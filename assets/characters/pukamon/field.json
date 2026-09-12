@@ -1,0 +1,17 @@
+{
+  "source_kind": "community_ds_style_exception",
+  "source_url": "https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/bukamon_sprite_by_wooded_wolf-d4ai84c.gif",
+  "credit": "Wooded-Wolf community DS-style sprite",
+  "cell_width": 37,
+  "cell_height": 69,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "directions": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "runtime_scale": 0.7119,
+  "field_path": "res://assets/characters/pukamon/field.png"
+}

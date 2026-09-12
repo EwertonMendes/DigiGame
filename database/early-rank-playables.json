@@ -10,6 +10,10 @@
     "In-Training": 24,
     "Rookie": 60
   },
+  "field_sources": {
+    "official_ds": 82,
+    "community_ds_style_exception": 5
+  },
   "species": [
     {
       "name": "Botamon",
@@ -21,8 +25,12 @@
       "portrait_source": "res://assets/characters/botamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/botamon/portrait_frames.png",
       "resource": "res://assets/resources/botamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/botamon/field.png",
+      "field_metadata": "res://assets/characters/botamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Dodomon",
@@ -34,8 +42,12 @@
       "portrait_source": "res://assets/characters/dodomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/dodomon/portrait_frames.png",
       "resource": "res://assets/resources/dodomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 2
+      "visual_mode": "directional_12",
+      "frame_count": 2,
+      "field_sprite": "res://assets/characters/dodomon/field.png",
+      "field_metadata": "res://assets/characters/dodomon/field.json",
+      "field_source_kind": "community_ds_style_exception",
+      "field_frame_count": 12
     },
     {
       "name": "Pitchmon",
@@ -47,8 +59,12 @@
       "portrait_source": "res://assets/characters/pitchmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/pitchmon/portrait_frames.png",
       "resource": "res://assets/resources/pitchmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 41
+      "visual_mode": "directional_12",
+      "frame_count": 41,
+      "field_sprite": "res://assets/characters/pitchmon/field.png",
+      "field_metadata": "res://assets/characters/pitchmon/field.json",
+      "field_source_kind": "community_ds_style_exception",
+      "field_frame_count": 12
     },
     {
       "name": "Budmon",
@@ -60,8 +76,12 @@
       "portrait_source": "res://assets/characters/budmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/budmon/portrait_frames.png",
       "resource": "res://assets/resources/budmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/budmon/field.png",
+      "field_metadata": "res://assets/characters/budmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Calumon",
@@ -73,8 +93,12 @@
       "portrait_source": "res://assets/characters/calumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/calumon/portrait_frames.png",
       "resource": "res://assets/resources/calumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/calumon/field.png",
+      "field_metadata": "res://assets/characters/calumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Chibomon",
@@ -86,8 +110,12 @@
       "portrait_source": "res://assets/characters/chibomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/chibomon/portrait_frames.png",
       "resource": "res://assets/resources/chibomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/chibomon/field.png",
+      "field_metadata": "res://assets/characters/chibomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Chicchimon",
@@ -99,8 +127,12 @@
       "portrait_source": "res://assets/characters/chicchimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/chicchimon/portrait_frames.png",
       "resource": "res://assets/resources/chicchimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/chicchimon/field.png",
+      "field_metadata": "res://assets/characters/chicchimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Dorimon",
@@ -112,8 +144,12 @@
       "portrait_source": "res://assets/characters/dorimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/dorimon/portrait_frames.png",
       "resource": "res://assets/resources/dorimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/dorimon/field.png",
+      "field_metadata": "res://assets/characters/dorimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Gigimon",
@@ -125,8 +161,12 @@
       "portrait_source": "res://assets/characters/gigimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/gigimon/portrait_frames.png",
       "resource": "res://assets/resources/gigimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/gigimon/field.png",
+      "field_metadata": "res://assets/characters/gigimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Gummymon",
@@ -138,8 +178,12 @@
       "portrait_source": "res://assets/characters/gummymon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/gummymon/portrait_frames.png",
       "resource": "res://assets/resources/gummymon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/gummymon/field.png",
+      "field_metadata": "res://assets/characters/gummymon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kapurimon",
@@ -151,8 +195,12 @@
       "portrait_source": "res://assets/characters/kapurimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kapurimon/portrait_frames.png",
       "resource": "res://assets/resources/kapurimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kapurimon/field.png",
+      "field_metadata": "res://assets/characters/kapurimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kokomon",
@@ -164,8 +212,12 @@
       "portrait_source": "res://assets/characters/kokomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kokomon/portrait_frames.png",
       "resource": "res://assets/resources/kokomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kokomon/field.png",
+      "field_metadata": "res://assets/characters/kokomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Koromon",
@@ -178,7 +230,11 @@
       "portrait_strip": "res://assets/characters/koromon/portrait_frames.png",
       "resource": "res://assets/resources/koromon.tres",
       "visual_mode": "directional_12",
-      "frame_count": 4
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/koromon/field.png",
+      "field_metadata": "res://assets/characters/koromon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kuramon",
@@ -190,8 +246,12 @@
       "portrait_source": "res://assets/characters/kuramon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kuramon/portrait_frames.png",
       "resource": "res://assets/resources/kuramon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kuramon/field.png",
+      "field_metadata": "res://assets/characters/kuramon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Minomon",
@@ -203,8 +263,12 @@
       "portrait_source": "res://assets/characters/minomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/minomon/portrait_frames.png",
       "resource": "res://assets/resources/minomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/minomon/field.png",
+      "field_metadata": "res://assets/characters/minomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Mochimon",
@@ -216,8 +280,12 @@
       "portrait_source": "res://assets/characters/mochimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/mochimon/portrait_frames.png",
       "resource": "res://assets/resources/mochimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 2
+      "visual_mode": "directional_12",
+      "frame_count": 2,
+      "field_sprite": "res://assets/characters/mochimon/field.png",
+      "field_metadata": "res://assets/characters/mochimon/field.json",
+      "field_source_kind": "community_ds_style_exception",
+      "field_frame_count": 12
     },
     {
       "name": "Moonmon",
@@ -229,8 +297,12 @@
       "portrait_source": "res://assets/characters/moonmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/moonmon/portrait_frames.png",
       "resource": "res://assets/resources/moonmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/moonmon/field.png",
+      "field_metadata": "res://assets/characters/moonmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Pagumon",
@@ -242,8 +314,12 @@
       "portrait_source": "res://assets/characters/pagumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/pagumon/portrait_frames.png",
       "resource": "res://assets/resources/pagumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/pagumon/field.png",
+      "field_metadata": "res://assets/characters/pagumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Poyomon",
@@ -255,8 +331,12 @@
       "portrait_source": "res://assets/characters/poyomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/poyomon/portrait_frames.png",
       "resource": "res://assets/resources/poyomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/poyomon/field.png",
+      "field_metadata": "res://assets/characters/poyomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Pukamon",
@@ -268,8 +348,12 @@
       "portrait_source": "res://assets/characters/pukamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/pukamon/portrait_frames.png",
       "resource": "res://assets/resources/pukamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 40
+      "visual_mode": "directional_12",
+      "frame_count": 40,
+      "field_sprite": "res://assets/characters/pukamon/field.png",
+      "field_metadata": "res://assets/characters/pukamon/field.json",
+      "field_source_kind": "community_ds_style_exception",
+      "field_frame_count": 12
     },
     {
       "name": "Puttimon",
@@ -281,8 +365,12 @@
       "portrait_source": "res://assets/characters/puttimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/puttimon/portrait_frames.png",
       "resource": "res://assets/resources/puttimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/puttimon/field.png",
+      "field_metadata": "res://assets/characters/puttimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Sunmon",
@@ -294,8 +382,12 @@
       "portrait_source": "res://assets/characters/sunmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/sunmon/portrait_frames.png",
       "resource": "res://assets/resources/sunmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/sunmon/field.png",
+      "field_metadata": "res://assets/characters/sunmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Tanemon",
@@ -308,7 +400,11 @@
       "portrait_strip": "res://assets/characters/tanemon/portrait_frames.png",
       "resource": "res://assets/resources/tanemon.tres",
       "visual_mode": "directional_12",
-      "frame_count": 4
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/tanemon/field.png",
+      "field_metadata": "res://assets/characters/tanemon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Tokomon",
@@ -320,8 +416,12 @@
       "portrait_source": "res://assets/characters/tokomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/tokomon/portrait_frames.png",
       "resource": "res://assets/resources/tokomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/tokomon/field.png",
+      "field_metadata": "res://assets/characters/tokomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Tsumemon",
@@ -333,8 +433,12 @@
       "portrait_source": "res://assets/characters/tsumemon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/tsumemon/portrait_frames.png",
       "resource": "res://assets/resources/tsumemon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/tsumemon/field.png",
+      "field_metadata": "res://assets/characters/tsumemon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Tsunomon",
@@ -346,8 +450,12 @@
       "portrait_source": "res://assets/characters/tsunomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/tsunomon/portrait_frames.png",
       "resource": "res://assets/resources/tsunomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/tsunomon/field.png",
+      "field_metadata": "res://assets/characters/tsunomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Wanyamon",
@@ -359,8 +467,12 @@
       "portrait_source": "res://assets/characters/wanyamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/wanyamon/portrait_frames.png",
       "resource": "res://assets/resources/wanyamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/wanyamon/field.png",
+      "field_metadata": "res://assets/characters/wanyamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Agumon",
@@ -373,7 +485,11 @@
       "portrait_strip": "res://assets/characters/agumon/portrait_frames.png",
       "resource": "res://assets/resources/agumon.tres",
       "visual_mode": "directional_12",
-      "frame_count": 4
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/agumon/field.png",
+      "field_metadata": "res://assets/characters/agumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Armadillomon",
@@ -385,8 +501,12 @@
       "portrait_source": "res://assets/characters/armadillomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/armadillomon/portrait_frames.png",
       "resource": "res://assets/resources/armadillomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/armadillomon/field.png",
+      "field_metadata": "res://assets/characters/armadillomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Aruraumon",
@@ -398,8 +518,12 @@
       "portrait_source": "res://assets/characters/aruraumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/aruraumon/portrait_frames.png",
       "resource": "res://assets/resources/aruraumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/aruraumon/field.png",
+      "field_metadata": "res://assets/characters/aruraumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Betamon",
@@ -411,8 +535,12 @@
       "portrait_source": "res://assets/characters/betamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/betamon/portrait_frames.png",
       "resource": "res://assets/resources/betamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/betamon/field.png",
+      "field_metadata": "res://assets/characters/betamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Biyomon",
@@ -424,8 +552,12 @@
       "portrait_source": "res://assets/characters/biyomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/biyomon/portrait_frames.png",
       "resource": "res://assets/resources/biyomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/biyomon/field.png",
+      "field_metadata": "res://assets/characters/biyomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "BlackAgumon",
@@ -437,8 +569,12 @@
       "portrait_source": "res://assets/characters/blackagumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/blackagumon/portrait_frames.png",
       "resource": "res://assets/resources/blackagumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/blackagumon/field.png",
+      "field_metadata": "res://assets/characters/blackagumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Candlemon",
@@ -450,8 +586,12 @@
       "portrait_source": "res://assets/characters/candlemon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/candlemon/portrait_frames.png",
       "resource": "res://assets/resources/candlemon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/candlemon/field.png",
+      "field_metadata": "res://assets/characters/candlemon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Coronamon",
@@ -463,8 +603,12 @@
       "portrait_source": "res://assets/characters/coronamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/coronamon/portrait_frames.png",
       "resource": "res://assets/resources/coronamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 2
+      "visual_mode": "directional_12",
+      "frame_count": 2,
+      "field_sprite": "res://assets/characters/coronamon/field.png",
+      "field_metadata": "res://assets/characters/coronamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Crabmon",
@@ -476,8 +620,12 @@
       "portrait_source": "res://assets/characters/crabmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/crabmon/portrait_frames.png",
       "resource": "res://assets/resources/crabmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/crabmon/field.png",
+      "field_metadata": "res://assets/characters/crabmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "DemiDevimon",
@@ -489,8 +637,12 @@
       "portrait_source": "res://assets/characters/demidevimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/demidevimon/portrait_frames.png",
       "resource": "res://assets/resources/demidevimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/demidevimon/field.png",
+      "field_metadata": "res://assets/characters/demidevimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "DoKunemon",
@@ -502,8 +654,12 @@
       "portrait_source": "res://assets/characters/dokunemon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/dokunemon/portrait_frames.png",
       "resource": "res://assets/resources/dokunemon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/dokunemon/field.png",
+      "field_metadata": "res://assets/characters/dokunemon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Dorumon",
@@ -515,8 +671,12 @@
       "portrait_source": "res://assets/characters/dorumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/dorumon/portrait_frames.png",
       "resource": "res://assets/resources/dorumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/dorumon/field.png",
+      "field_metadata": "res://assets/characters/dorumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Dracmon",
@@ -528,8 +688,12 @@
       "portrait_source": "res://assets/characters/dracmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/dracmon/portrait_frames.png",
       "resource": "res://assets/resources/dracmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/dracmon/field.png",
+      "field_metadata": "res://assets/characters/dracmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Falcomon",
@@ -541,8 +705,12 @@
       "portrait_source": "res://assets/characters/falcomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/falcomon/portrait_frames.png",
       "resource": "res://assets/resources/falcomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/falcomon/field.png",
+      "field_metadata": "res://assets/characters/falcomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Flamon",
@@ -554,8 +722,12 @@
       "portrait_source": "res://assets/characters/flamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/flamon/portrait_frames.png",
       "resource": "res://assets/resources/flamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 2
+      "visual_mode": "directional_12",
+      "frame_count": 2,
+      "field_sprite": "res://assets/characters/flamon/field.png",
+      "field_metadata": "res://assets/characters/flamon/field.json",
+      "field_source_kind": "community_ds_style_exception",
+      "field_frame_count": 12
     },
     {
       "name": "Floramon",
@@ -567,8 +739,12 @@
       "portrait_source": "res://assets/characters/floramon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/floramon/portrait_frames.png",
       "resource": "res://assets/resources/floramon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/floramon/field.png",
+      "field_metadata": "res://assets/characters/floramon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Gabumon",
@@ -581,7 +757,11 @@
       "portrait_strip": "res://assets/characters/gabumon/portrait_frames.png",
       "resource": "res://assets/resources/gabumon.tres",
       "visual_mode": "directional_12",
-      "frame_count": 4
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/gabumon/field.png",
+      "field_metadata": "res://assets/characters/gabumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Gaomon",
@@ -593,8 +773,12 @@
       "portrait_source": "res://assets/characters/gaomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/gaomon/portrait_frames.png",
       "resource": "res://assets/resources/gaomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/gaomon/field.png",
+      "field_metadata": "res://assets/characters/gaomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Gizamon",
@@ -606,8 +790,12 @@
       "portrait_source": "res://assets/characters/gizamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/gizamon/portrait_frames.png",
       "resource": "res://assets/resources/gizamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/gizamon/field.png",
+      "field_metadata": "res://assets/characters/gizamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Goburimon",
@@ -619,8 +807,12 @@
       "portrait_source": "res://assets/characters/goburimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/goburimon/portrait_frames.png",
       "resource": "res://assets/resources/goburimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/goburimon/field.png",
+      "field_metadata": "res://assets/characters/goburimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Gomamon",
@@ -632,8 +824,12 @@
       "portrait_source": "res://assets/characters/gomamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/gomamon/portrait_frames.png",
       "resource": "res://assets/resources/gomamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 2
+      "visual_mode": "directional_12",
+      "frame_count": 2,
+      "field_sprite": "res://assets/characters/gomamon/field.png",
+      "field_metadata": "res://assets/characters/gomamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Gotsumon",
@@ -645,8 +841,12 @@
       "portrait_source": "res://assets/characters/gotsumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/gotsumon/portrait_frames.png",
       "resource": "res://assets/resources/gotsumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/gotsumon/field.png",
+      "field_metadata": "res://assets/characters/gotsumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Guilmon",
@@ -658,8 +858,12 @@
       "portrait_source": "res://assets/characters/guilmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/guilmon/portrait_frames.png",
       "resource": "res://assets/resources/guilmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/guilmon/field.png",
+      "field_metadata": "res://assets/characters/guilmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Hagurumon",
@@ -671,8 +875,12 @@
       "portrait_source": "res://assets/characters/hagurumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/hagurumon/portrait_frames.png",
       "resource": "res://assets/resources/hagurumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/hagurumon/field.png",
+      "field_metadata": "res://assets/characters/hagurumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Hawkmon",
@@ -684,8 +892,12 @@
       "portrait_source": "res://assets/characters/hawkmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/hawkmon/portrait_frames.png",
       "resource": "res://assets/resources/hawkmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/hawkmon/field.png",
+      "field_metadata": "res://assets/characters/hawkmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Impmon",
@@ -697,8 +909,12 @@
       "portrait_source": "res://assets/characters/impmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/impmon/portrait_frames.png",
       "resource": "res://assets/resources/impmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/impmon/field.png",
+      "field_metadata": "res://assets/characters/impmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kamemon",
@@ -710,8 +926,12 @@
       "portrait_source": "res://assets/characters/kamemon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kamemon/portrait_frames.png",
       "resource": "res://assets/resources/kamemon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kamemon/field.png",
+      "field_metadata": "res://assets/characters/kamemon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Keramon",
@@ -723,8 +943,12 @@
       "portrait_source": "res://assets/characters/keramon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/keramon/portrait_frames.png",
       "resource": "res://assets/resources/keramon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/keramon/field.png",
+      "field_metadata": "res://assets/characters/keramon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kokuwamon",
@@ -736,8 +960,12 @@
       "portrait_source": "res://assets/characters/kokuwamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kokuwamon/portrait_frames.png",
       "resource": "res://assets/resources/kokuwamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kokuwamon/field.png",
+      "field_metadata": "res://assets/characters/kokuwamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kotemon",
@@ -749,8 +977,12 @@
       "portrait_source": "res://assets/characters/kotemon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kotemon/portrait_frames.png",
       "resource": "res://assets/resources/kotemon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kotemon/field.png",
+      "field_metadata": "res://assets/characters/kotemon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kudamon",
@@ -762,8 +994,12 @@
       "portrait_source": "res://assets/characters/kudamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kudamon/portrait_frames.png",
       "resource": "res://assets/resources/kudamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kudamon/field.png",
+      "field_metadata": "res://assets/characters/kudamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kumamon",
@@ -775,8 +1011,12 @@
       "portrait_source": "res://assets/characters/kumamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kumamon/portrait_frames.png",
       "resource": "res://assets/resources/kumamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kumamon/field.png",
+      "field_metadata": "res://assets/characters/kumamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Kunemon",
@@ -788,8 +1028,12 @@
       "portrait_source": "res://assets/characters/kunemon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/kunemon/portrait_frames.png",
       "resource": "res://assets/resources/kunemon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/kunemon/field.png",
+      "field_metadata": "res://assets/characters/kunemon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Lalamon",
@@ -801,8 +1045,12 @@
       "portrait_source": "res://assets/characters/lalamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/lalamon/portrait_frames.png",
       "resource": "res://assets/resources/lalamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/lalamon/field.png",
+      "field_metadata": "res://assets/characters/lalamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Lopmon",
@@ -814,8 +1062,12 @@
       "portrait_source": "res://assets/characters/lopmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/lopmon/portrait_frames.png",
       "resource": "res://assets/resources/lopmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/lopmon/field.png",
+      "field_metadata": "res://assets/characters/lopmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Lunamon",
@@ -827,8 +1079,12 @@
       "portrait_source": "res://assets/characters/lunamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/lunamon/portrait_frames.png",
       "resource": "res://assets/resources/lunamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/lunamon/field.png",
+      "field_metadata": "res://assets/characters/lunamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Monodramon",
@@ -840,8 +1096,12 @@
       "portrait_source": "res://assets/characters/monodramon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/monodramon/portrait_frames.png",
       "resource": "res://assets/resources/monodramon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/monodramon/field.png",
+      "field_metadata": "res://assets/characters/monodramon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Muchomon",
@@ -853,8 +1113,12 @@
       "portrait_source": "res://assets/characters/muchomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/muchomon/portrait_frames.png",
       "resource": "res://assets/resources/muchomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/muchomon/field.png",
+      "field_metadata": "res://assets/characters/muchomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Mushroomon",
@@ -866,8 +1130,12 @@
       "portrait_source": "res://assets/characters/mushroomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/mushroomon/portrait_frames.png",
       "resource": "res://assets/resources/mushroomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/mushroomon/field.png",
+      "field_metadata": "res://assets/characters/mushroomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Otamamon",
@@ -879,8 +1147,12 @@
       "portrait_source": "res://assets/characters/otamamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/otamamon/portrait_frames.png",
       "resource": "res://assets/resources/otamamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/otamamon/field.png",
+      "field_metadata": "res://assets/characters/otamamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Palmon",
@@ -892,8 +1164,12 @@
       "portrait_source": "res://assets/characters/palmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/palmon/portrait_frames.png",
       "resource": "res://assets/resources/palmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/palmon/field.png",
+      "field_metadata": "res://assets/characters/palmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Patamon",
@@ -905,8 +1181,12 @@
       "portrait_source": "res://assets/characters/patamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/patamon/portrait_frames.png",
       "resource": "res://assets/resources/patamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/patamon/field.png",
+      "field_metadata": "res://assets/characters/patamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "PawnChessmon (Black)",
@@ -918,8 +1198,12 @@
       "portrait_source": "res://assets/characters/pawnchessmonblack/source/portrait.webp",
       "portrait_strip": "res://assets/characters/pawnchessmonblack/portrait_frames.png",
       "resource": "res://assets/resources/pawnchessmon (black).tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/pawnchessmonblack/field.png",
+      "field_metadata": "res://assets/characters/pawnchessmonblack/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "PawnChessmon (White)",
@@ -931,8 +1215,12 @@
       "portrait_source": "res://assets/characters/pawnchessmonwhite/source/portrait.webp",
       "portrait_strip": "res://assets/characters/pawnchessmonwhite/portrait_frames.png",
       "resource": "res://assets/resources/pawnchessmon (white).tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/pawnchessmonwhite/field.png",
+      "field_metadata": "res://assets/characters/pawnchessmonwhite/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Penguinmon",
@@ -944,8 +1232,12 @@
       "portrait_source": "res://assets/characters/penguinmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/penguinmon/portrait_frames.png",
       "resource": "res://assets/resources/penguinmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/penguinmon/field.png",
+      "field_metadata": "res://assets/characters/penguinmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Renamon",
@@ -957,8 +1249,12 @@
       "portrait_source": "res://assets/characters/renamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/renamon/portrait_frames.png",
       "resource": "res://assets/resources/renamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/renamon/field.png",
+      "field_metadata": "res://assets/characters/renamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Salamon",
@@ -970,8 +1266,12 @@
       "portrait_source": "res://assets/characters/salamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/salamon/portrait_frames.png",
       "resource": "res://assets/resources/salamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/salamon/field.png",
+      "field_metadata": "res://assets/characters/salamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Shamamon",
@@ -983,8 +1283,12 @@
       "portrait_source": "res://assets/characters/shamamon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/shamamon/portrait_frames.png",
       "resource": "res://assets/resources/shamamon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/shamamon/field.png",
+      "field_metadata": "res://assets/characters/shamamon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "SnowAgumon",
@@ -996,8 +1300,12 @@
       "portrait_source": "res://assets/characters/snowagumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/snowagumon/portrait_frames.png",
       "resource": "res://assets/resources/snowagumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/snowagumon/field.png",
+      "field_metadata": "res://assets/characters/snowagumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "SnowGoburimon",
@@ -1009,8 +1317,12 @@
       "portrait_source": "res://assets/characters/snowgoburimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/snowgoburimon/portrait_frames.png",
       "resource": "res://assets/resources/snowgoburimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/snowgoburimon/field.png",
+      "field_metadata": "res://assets/characters/snowgoburimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Solarmon",
@@ -1022,8 +1334,12 @@
       "portrait_source": "res://assets/characters/solarmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/solarmon/portrait_frames.png",
       "resource": "res://assets/resources/solarmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/solarmon/field.png",
+      "field_metadata": "res://assets/characters/solarmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Syakomon",
@@ -1035,8 +1351,12 @@
       "portrait_source": "res://assets/characters/syakomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/syakomon/portrait_frames.png",
       "resource": "res://assets/resources/syakomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/syakomon/field.png",
+      "field_metadata": "res://assets/characters/syakomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Tapirmon",
@@ -1048,8 +1368,12 @@
       "portrait_source": "res://assets/characters/tapirmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/tapirmon/portrait_frames.png",
       "resource": "res://assets/resources/tapirmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/tapirmon/field.png",
+      "field_metadata": "res://assets/characters/tapirmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Tentomon",
@@ -1061,8 +1385,12 @@
       "portrait_source": "res://assets/characters/tentomon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/tentomon/portrait_frames.png",
       "resource": "res://assets/resources/tentomon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/tentomon/field.png",
+      "field_metadata": "res://assets/characters/tentomon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Terriermon",
@@ -1074,8 +1402,12 @@
       "portrait_source": "res://assets/characters/terriermon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/terriermon/portrait_frames.png",
       "resource": "res://assets/resources/terriermon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/terriermon/field.png",
+      "field_metadata": "res://assets/characters/terriermon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "ToyAgumon",
@@ -1087,8 +1419,12 @@
       "portrait_source": "res://assets/characters/toyagumon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/toyagumon/portrait_frames.png",
       "resource": "res://assets/resources/toyagumon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/toyagumon/field.png",
+      "field_metadata": "res://assets/characters/toyagumon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "ToyAgumon (Black)",
@@ -1100,8 +1436,12 @@
       "portrait_source": "res://assets/characters/toyagumonblack/source/portrait.webp",
       "portrait_strip": "res://assets/characters/toyagumonblack/portrait_frames.png",
       "resource": "res://assets/resources/toyagumon (black).tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/toyagumonblack/field.png",
+      "field_metadata": "res://assets/characters/toyagumonblack/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Tsukaimon",
@@ -1113,8 +1453,12 @@
       "portrait_source": "res://assets/characters/tsukaimon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/tsukaimon/portrait_frames.png",
       "resource": "res://assets/resources/tsukaimon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/tsukaimon/field.png",
+      "field_metadata": "res://assets/characters/tsukaimon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Veemon",
@@ -1126,8 +1470,12 @@
       "portrait_source": "res://assets/characters/veemon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/veemon/portrait_frames.png",
       "resource": "res://assets/resources/veemon.tres",
-      "visual_mode": "spaced_9_32",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/veemon/field.png",
+      "field_metadata": "res://assets/characters/veemon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     },
     {
       "name": "Wormmon",
@@ -1139,8 +1487,12 @@
       "portrait_source": "res://assets/characters/wormmon/source/portrait.webp",
       "portrait_strip": "res://assets/characters/wormmon/portrait_frames.png",
       "resource": "res://assets/resources/wormmon.tres",
-      "visual_mode": "portrait_strip",
-      "frame_count": 4
+      "visual_mode": "directional_12",
+      "frame_count": 4,
+      "field_sprite": "res://assets/characters/wormmon/field.png",
+      "field_metadata": "res://assets/characters/wormmon/field.json",
+      "field_source_kind": "official_ds",
+      "field_frame_count": 12
     }
   ]
 }
