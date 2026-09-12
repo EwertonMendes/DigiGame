@@ -19,6 +19,13 @@ func _ready() -> void:
 	await get_tree().process_frame
 	assert(runtime.get_factory() != null, "Battle runtime must initialize the canonical Digimon factory")
 
+	# DigimonRuntimeController normally creates the six demo actors in _ready().
+	# Remove them so this regression is an isolated one-species-at-a-time check
+	# rather than an ever-growing battle scene while all 87 species are tested.
+	for demo_actor in runtime.get_battle_digimons():
+		runtime.remove_child(demo_actor)
+		demo_actor.free()
+
 	var tested := 0
 	var seen_ranks: Dictionary = {}
 	for raw_row in species_rows:
@@ -29,6 +36,7 @@ func _ready() -> void:
 		assert(not species_name.is_empty(), "Manifest species must have a name")
 		assert(rank in EXPECTED_RANKS, "%s has unsupported early rank %s" % [species_name, rank])
 		seen_ranks[rank] = true
+		print("early-rank battle check %d/%d: %s [%s]" % [tested + 1, species_rows.size(), species_name, rank])
 
 		var actor := runtime.instantiate_player_digimon(species_name, 1, 100)
 		assert(actor != null, "%s must instantiate through DigimonRuntimeController" % species_name)
@@ -52,6 +60,8 @@ func _ready() -> void:
 		runtime.remove_child(actor)
 		actor.free()
 		tested += 1
+		if tested % 10 == 0:
+			await get_tree().process_frame
 
 	for rank in EXPECTED_RANKS:
 		assert(seen_ranks.has(rank), "Battle regression must exercise %s Digimon" % rank)
