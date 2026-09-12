@@ -22,14 +22,8 @@ jobs:
           curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i874.photobucket.com/albums/ab308/WtWSprites/Child/031_Patamon.png' -o /tmp/ds-samples/patamon-sheet.png
           curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i997.photobucket.com/albums/af96/WtWAnimatedSprites/Child/031Patamon.gif' -o /tmp/ds-samples/patamon-animated.gif
           file /tmp/ds-samples/*
-          python3 - <<'PY'
-          from PIL import Image
-          from pathlib import Path
-          for p in Path('/tmp/ds-samples').iterdir():
-              im=Image.open(p)
-              print(p.name, im.size, im.mode, getattr(im, 'n_frames', 1))
-          PY
       - name: Upload samples
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ds-sprite-samples
