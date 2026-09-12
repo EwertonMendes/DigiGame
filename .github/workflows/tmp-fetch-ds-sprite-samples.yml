@@ -1,4 +1,4 @@
-name: Temporary DS Sprite Sample Fetch
+name: Temporary Early-Rank DS Field Generator
 
 on:
   push:
@@ -6,29 +6,188 @@ on:
       - feature/early-rank-digimon-roster
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  fetch:
+  generate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
-      - name: Fetch supplemental DWDS-style sprites
+        with:
+          fetch-depth: 0
+
+      - name: Prepare pinned DS sprite extraction tool
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/ds-samples
-          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/1Dodomon.png' -o /tmp/ds-samples/dodomon.png
-          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/Pichimon.png' -o /tmp/ds-samples/pichimon.png
-          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/motimon_sprite_by_wooded_wolf-d4ai2kv.gif' -o /tmp/ds-samples/motimon.gif
-          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/bukamon_sprite_by_wooded_wolf-d4ai84c.gif' -o /tmp/ds-samples/bukamon.gif
-          curl -fL --retry 3 -A 'Mozilla/5.0' 'https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/Flamemon_zpsb381aecd.gif' -o /tmp/ds-samples/flamemon.gif
-          file /tmp/ds-samples/*
-      - name: Upload samples
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ds-sprite-samples
-          path: /tmp/ds-samples
-          retention-days: 1
+          python3 -m pip install --quiet --break-system-packages pillow numpy scipy flask requests beautifulsoup4
+          git clone --quiet https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/ds-manager
+          git -C /tmp/ds-manager checkout --quiet 06b3c4df09dc5eeaccee511d731f37947b1c8259
+          python3 /tmp/ds-manager/Scripts/download_sheets.py --delay 0.02
+
+      - name: Build 87 field sprite strips
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/build_early_rank_ds_fields.py --manager /tmp/ds-manager
+
+      - name: Make Sprite Test Lab dark and controller friendly
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/ui/DigimonSpriteTestLab.gd')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('var _field_light: ColorRect\n', '')
+          old = '''\t# Two high-contrast halves make stray background pixels obvious without
+\t# changing the sprite texture itself.
+\t_field_dark = ColorRect.new()
+\t_field_dark.color = Color(0.035, 0.055, 0.08, 1.0)
+\t_field_dark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+\t_field_dark.z_index = 0
+\t_field.add_child(_field_dark)
+\t_field_light = ColorRect.new()
+\t_field_light.color = Color(0.68, 0.70, 0.72, 1.0)
+\t_field_light.mouse_filter = Control.MOUSE_FILTER_IGNORE
+\t_field_light.z_index = 0
+\t_field.add_child(_field_light)
+'''
+          new = '''\t# Keep the inspection field uniformly dark so every DS sprite is easy to
+\t# read and no bright half competes with the pixel art.
+\t_field_dark = ColorRect.new()
+\t_field_dark.color = Color(0.004, 0.006, 0.010, 1.0)
+\t_field_dark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+\t_field_dark.z_index = 0
+\t_field.add_child(_field_dark)
+'''
+          if old not in text:
+              raise SystemExit('sprite-test background block changed unexpectedly')
+          text = text.replace(old, new)
+          old = '''\tvar move_grid := GridContainer.new()
+\tmove_grid.columns = 2
+\tstack.add_child(move_grid)
+\t_add_move(move_grid, "UP LEFT", Vector2(-1, -1))
+\t_add_move(move_grid, "UP RIGHT", Vector2(1, -1))
+\t_add_move(move_grid, "DOWN LEFT", Vector2(-1, 1))
+\t_add_move(move_grid, "DOWN RIGHT", Vector2(1, 1))
+'''
+          new = '''\tvar move_grid := GridContainer.new()
+\tmove_grid.columns = 3
+\tmove_grid.add_theme_constant_override("h_separation", 5)
+\tmove_grid.add_theme_constant_override("v_separation", 5)
+\tstack.add_child(move_grid)
+\t_add_dpad_spacer(move_grid)
+\t_add_move(move_grid, "UP", Vector2.UP)
+\t_add_dpad_spacer(move_grid)
+\t_add_move(move_grid, "LEFT", Vector2.LEFT)
+\t_add_dpad_spacer(move_grid)
+\t_add_move(move_grid, "RIGHT", Vector2.RIGHT)
+\t_add_dpad_spacer(move_grid)
+\t_add_move(move_grid, "DOWN", Vector2.DOWN)
+\t_add_dpad_spacer(move_grid)
+'''
+          if old not in text:
+              raise SystemExit('sprite-test movement block changed unexpectedly')
+          text = text.replace(old, new)
+          text = text.replace('''\tvar help := _label("WASD / arrows: move\\nQ / E: rotate facing\\nR: reset\\nSpace: auto patrol\\nDark/light field: inspect residue", 11, UI.MUTED)''', '''\tvar help := _label("Touch D-pad / WASD / arrows: move\\nGamepad left stick / D-pad: move\\nQ / E: rotate facing\\nR: reset\\nSpace: auto patrol", 11, UI.MUTED)''')
+          old = '''func _movement_input() -> Vector2:
+\tvar direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+\tvar wasd := Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
+\tif wasd.length_squared() > direction.length_squared():
+\t\tdirection = wasd
+\tif _touch.length_squared() > direction.length_squared():
+\t\tdirection = _touch
+\treturn direction.limit_length(1.0)
+'''
+          new = '''func _movement_input() -> Vector2:
+\tvar direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+\tvar wasd := Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
+\tif wasd.length_squared() > direction.length_squared():
+\t\tdirection = wasd
+\tfor device in Input.get_connected_joypads():
+\t\tvar stick := Vector2(Input.get_joy_axis(device, JOY_AXIS_LEFT_X), Input.get_joy_axis(device, JOY_AXIS_LEFT_Y))
+\t\tif stick.length() < 0.22:
+\t\t\tstick = Vector2.ZERO
+\t\tvar dpad := Vector2(
+\t\t\tfloat(Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_RIGHT)) - float(Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_LEFT)),
+\t\t\tfloat(Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_DOWN)) - float(Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_UP))
+\t\t)
+\t\tif dpad.length_squared() > stick.length_squared():
+\t\t\tstick = dpad
+\t\tif stick.length_squared() > direction.length_squared():
+\t\t\tdirection = stick
+\tif _touch.length_squared() > direction.length_squared():
+\t\tdirection = _touch
+\treturn direction.limit_length(1.0)
+'''
+          if old not in text:
+              raise SystemExit('sprite-test input function changed unexpectedly')
+          text = text.replace(old, new)
+          marker = '''func _add_move(parent: Control, text_value: String, direction: Vector2) -> void:
+'''
+          spacer = '''func _add_dpad_spacer(parent: Control) -> void:
+\tvar spacer := Control.new()
+\tspacer.custom_minimum_size = Vector2(82, 42)
+\tspacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+\tparent.add_child(spacer)
+
+
+'''
+          if spacer not in text:
+              text = text.replace(marker, spacer + marker)
+          text = text.replace('button.custom_minimum_size = Vector2(138, 42)', 'button.custom_minimum_size = Vector2(82, 42)')
+          old = '''func _on_field_resized() -> void:
+\tif _field_dark == null:
+\t\treturn
+\t_field_dark.position = Vector2.ZERO
+\t_field_dark.size = Vector2(_field.size.x * 0.5, _field.size.y)
+\t_field_light.position = Vector2(_field.size.x * 0.5, 0)
+\t_field_light.size = Vector2(_field.size.x * 0.5, _field.size.y)
+\tif visible and _follower != null:
+\t\t_reset_actor()
+'''
+          new = '''func _on_field_resized() -> void:
+\tif _field_dark == null:
+\t\treturn
+\t_field_dark.position = Vector2.ZERO
+\t_field_dark.size = _field.size
+\tif visible and _follower != null:
+\t\t_reset_actor()
+'''
+          if old not in text:
+              raise SystemExit('sprite-test resize block changed unexpectedly')
+          text = text.replace(old, new)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate generated roster
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/validate_early_rank_playables.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('database/early-rank-playables.json').read_text())
+          assert manifest['count'] == 87
+          assert all(row['visual_mode'] == 'directional_12' for row in manifest['species'])
+          assert all(Path(row['field_sprite'].replace('res://','')).is_file() for row in manifest['species'])
+          print('all 87 early-rank field sprites generated')
+          PY
+
+      - name: Commit generated DS field assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/characters assets/resources database/early-rank-playables.json src/ui/DigimonSpriteTestLab.gd tools/build_early_rank_ds_fields.py tools/test_early_rank_playables.gd tools/validate_early_rank_playables.py
+          if git diff --cached --quiet; then
+            echo 'No generated changes to commit.'
+            exit 0
+          fi
+          git commit -m 'feat: wire early-rank roster to DS field sprites'
+          git push origin HEAD:feature/early-rank-digimon-roster
