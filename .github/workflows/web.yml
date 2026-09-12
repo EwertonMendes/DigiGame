@@ -229,9 +229,6 @@ jobs:
       pages: write
       id-token: write
       pull-requests: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}pr-${{ github.event.pull_request.number }}/
     steps:
       - name: Download tested PR build
         uses: actions/download-artifact@v5
