@@ -43,8 +43,6 @@ func resume_after_battle_transition() -> void:
 	_dialog_panel.visible = false
 	if _start_battle_button != null:
 		_start_battle_button.disabled = false
-	if _cancel_battle_button != null:
-		_cancel_battle_button.disabled = false
 	if _player != null:
 		_player.movement_enabled = true
 	_layout_ui()
