@@ -10,6 +10,16 @@ const AUTO_VECTORS: Array[Vector2] = [Vector2(1, 1), Vector2(-1, 1), Vector2(-1,
 const AUTO_STEP := 1.1
 const PADDING := 56.0
 const INSPECT_SCALES: Array[float] = [1.0, 1.5, 2.0]
+const RESOURCE_ROOT := "res://assets/resources"
+const RESOURCE_FALLBACKS: Array[String] = [
+	"agumon.tres",
+	"gabumon.tres",
+	"greymon.tres",
+	"koromon.tres",
+	"metal greymon.tres",
+	"tanemon.tres",
+	"veemon.tres",
+]
 
 var _picker: OptionButton
 var _field: Control
@@ -130,7 +140,7 @@ func _build_ui() -> void:
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(titles)
 	titles.add_child(_label("DIGIMON SPRITE TEST LAB", 24, UI.TEXT))
-	titles.add_child(_label("Temporary tool · production movement, animation, facing and transparency", 11, UI.MUTED))
+	titles.add_child(_label("Temporary tool - production movement, animation, facing and transparency", 11, UI.MUTED))
 	var close := _button("CLOSE", UI.MUTED)
 	close.pressed.connect(close_lab)
 	header.add_child(close)
@@ -138,7 +148,7 @@ func _build_ui() -> void:
 	var toolbar := HBoxContainer.new()
 	toolbar.add_theme_constant_override("separation", 8)
 	root.add_child(toolbar)
-	var previous := _button("◀ PREV", UI.CYAN)
+	var previous := _button("PREV", UI.CYAN)
 	previous.pressed.connect(_select_relative.bind(-1))
 	toolbar.add_child(previous)
 	_picker = OptionButton.new()
@@ -148,7 +158,7 @@ func _build_ui() -> void:
 	_picker.add_theme_color_override("font_color", UI.TEXT)
 	_picker.item_selected.connect(_select_species)
 	toolbar.add_child(_picker)
-	var next := _button("NEXT ▶", UI.CYAN)
+	var next := _button("NEXT", UI.CYAN)
 	next.pressed.connect(_select_relative.bind(1))
 	toolbar.add_child(next)
 	_auto_button = _button("AUTO: OFF", UI.PURPLE)
@@ -157,7 +167,7 @@ func _build_ui() -> void:
 	var reset := _button("RESET", UI.GOLD)
 	reset.pressed.connect(_reset_actor)
 	toolbar.add_child(reset)
-	_zoom_button = _button("INSPECT 1.0×", UI.CYAN)
+	_zoom_button = _button("INSPECT 1.0x", UI.CYAN)
 	_zoom_button.pressed.connect(_cycle_zoom)
 	toolbar.add_child(_zoom_button)
 
@@ -183,12 +193,12 @@ func _build_ui() -> void:
 	_field_dark = ColorRect.new()
 	_field_dark.color = Color(0.035, 0.055, 0.08, 1.0)
 	_field_dark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_dark.z_index = -10
+	_field_dark.z_index = 0
 	_field.add_child(_field_dark)
 	_field_light = ColorRect.new()
 	_field_light.color = Color(0.68, 0.70, 0.72, 1.0)
 	_field_light.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_light.z_index = -10
+	_field_light.z_index = 0
 	_field.add_child(_field_light)
 
 	var side := PanelContainer.new()
@@ -206,15 +216,15 @@ func _build_ui() -> void:
 	stack.add_child(_name_label)
 	_state_label = _label("", 11, UI.CYAN)
 	stack.add_child(_state_label)
-	stack.add_child(_label("MOVE · HOLD", 10, UI.GOLD))
+	stack.add_child(_label("MOVE - HOLD", 10, UI.GOLD))
 	var move_grid := GridContainer.new()
 	move_grid.columns = 2
 	stack.add_child(move_grid)
-	_add_move(move_grid, "↖ UP LEFT", Vector2(-1, -1))
-	_add_move(move_grid, "UP RIGHT ↗", Vector2(1, -1))
-	_add_move(move_grid, "↙ DOWN LEFT", Vector2(-1, 1))
-	_add_move(move_grid, "DOWN RIGHT ↘", Vector2(1, 1))
-	stack.add_child(_label("FACE · CLICK", 10, UI.GOLD))
+	_add_move(move_grid, "UP LEFT", Vector2(-1, -1))
+	_add_move(move_grid, "UP RIGHT", Vector2(1, -1))
+	_add_move(move_grid, "DOWN LEFT", Vector2(-1, 1))
+	_add_move(move_grid, "DOWN RIGHT", Vector2(1, 1))
+	stack.add_child(_label("FACE - CLICK", 10, UI.GOLD))
 	var face_grid := GridContainer.new()
 	face_grid.columns = 2
 	stack.add_child(face_grid)
@@ -230,23 +240,34 @@ func _build_ui() -> void:
 func _load_entries() -> void:
 	_entries.clear()
 	_picker.clear()
-	var directory := DirAccess.open("res://assets/resources")
-	if directory == null:
-		return
-	directory.list_dir_begin()
-	var filename := directory.get_next()
-	while not filename.is_empty():
-		if not directory.current_is_dir() and filename.ends_with(".tres"):
-			var path := "res://assets/resources/%s" % filename
-			var resource := load(path) as Digimon
-			if resource != null and resource.texture != null:
-				var key := filename.get_basename()
-				var display := resource.display_name.strip_edges()
-				if display.is_empty():
-					display = key.capitalize()
-				_entries.append({"key": key, "name": display, "path": path})
-		filename = directory.get_next()
-	directory.list_dir_end()
+
+	# ResourceLoader.list_directory() is export-aware. DirAccess can expose only
+	# imported/remapped files inside Web PCKs, which made the lab empty in the
+	# playable PR preview even though the .tres resources were packaged.
+	var filenames: Array[String] = []
+	for raw_filename in ResourceLoader.list_directory(RESOURCE_ROOT):
+		filenames.append(String(raw_filename))
+	if filenames.is_empty():
+		# Keep the current test roster usable even on platforms that cannot list
+		# the resource directory. Normal builds still auto-discover new .tres files.
+		for fallback in RESOURCE_FALLBACKS:
+			filenames.append(fallback)
+
+	for filename in filenames:
+		if not filename.ends_with(".tres"):
+			continue
+		var path := "%s/%s" % [RESOURCE_ROOT, filename]
+		if not ResourceLoader.exists(path):
+			continue
+		var resource := ResourceLoader.load(path) as Digimon
+		if resource == null or resource.texture == null:
+			continue
+		var key := filename.get_basename().to_lower().replace(" ", "")
+		var display := resource.display_name.strip_edges()
+		if display.is_empty():
+			display = key.capitalize()
+		_entries.append({"key": key, "name": display, "path": path})
+
 	_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.get("name", "")) < String(b.get("name", ""))
 	)
@@ -255,9 +276,23 @@ func _load_entries() -> void:
 		_picker.add_item(String(_entries[i].get("name", "")))
 		if String(_entries[i].get("name", "")).to_lower() == "metal greymon":
 			metal = i
-	if not _entries.is_empty():
-		_index = metal if metal >= 0 else 0
-		_picker.select(_index)
+	if _entries.is_empty():
+		_name_label.text = "NO SPRITES FOUND"
+		_state_label.text = "No packaged Digimon field resources were discovered."
+		return
+	_index = metal if metal >= 0 else 0
+	_picker.select(_index)
+
+
+func get_testable_species_count() -> int:
+	return _entries.size()
+
+
+func get_testable_species_names() -> Array[String]:
+	var names: Array[String] = []
+	for entry in _entries:
+		names.append(String(entry.get("name", "")))
+	return names
 
 
 func _spawn_selected() -> void:
@@ -365,7 +400,7 @@ func _refresh_auto_text() -> void:
 
 func _cycle_zoom() -> void:
 	_inspect_index = (_inspect_index + 1) % INSPECT_SCALES.size()
-	_zoom_button.text = "INSPECT %.1f×" % INSPECT_SCALES[_inspect_index]
+	_zoom_button.text = "INSPECT %.1fx" % INSPECT_SCALES[_inspect_index]
 	if _follower != null:
 		_follower.scale = Vector2.ONE * INSPECT_SCALES[_inspect_index]
 		_reset_actor()
@@ -405,7 +440,7 @@ func _refresh_state() -> void:
 	if _follower == null or _entries.is_empty():
 		return
 	var resource := load(String(_entries[_index].get("path", ""))) as Digimon
-	_state_label.text = "Facing: %s\nLayout: %s · %dx%d\nRuntime sprite scale: 1.5×\nInspection multiplier: %.1f×" % [String(_follower.get("facing_direction")), resource.sprite_layout, resource.sprite_hframes, resource.sprite_vframes, INSPECT_SCALES[_inspect_index]]
+	_state_label.text = "Facing: %s\nLayout: %s - %dx%d\nRuntime sprite scale: 1.5x\nInspection multiplier: %.1fx" % [String(_follower.get("facing_direction")), resource.sprite_layout, resource.sprite_hframes, resource.sprite_vframes, INSPECT_SCALES[_inspect_index]]
 
 
 func _button(text_value: String, accent: Color) -> Button:
