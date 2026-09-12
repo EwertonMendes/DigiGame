@@ -11,6 +11,8 @@ const CONTEXT_HUB := "hub"
 const LOAD_TIMEOUT_MS := 10000
 const FX_LONG_EDGE := 320
 const FX_MIN_EDGE := 112
+const FIELD_ITEMS_PER_FRAME := 20
+const ACTORS_PER_FRAME := 1
 
 var _root: Control = null
 var _screen: TextureRect = null
@@ -20,16 +22,16 @@ var _material: ShaderMaterial = null
 var _busy := false
 var _progress := 0.0
 
-# Resource loading is threaded, while PackedScene instantiation and selected
-# expensive battle bootstrap work are deliberately performed before the visual
-# transition starts. This keeps the animated portion free of main-thread spikes.
+# Resource loading is threaded. Scene construction is then spread over multiple
+# rendered frames before the visual transition starts, so preparation never has
+# to compete with the animation for one large main-thread frame.
 var _resource_cache: Dictionary = {}
 var _preload_inflight: Dictionary = {}
 var _prepared_instances: Dictionary = {}
 var _prepare_inflight: Dictionary = {}
 
-# Terminal Commons is intentionally retained while a battle is active. Returning
-# from combat therefore does not rebuild hundreds of hub nodes or rerun _ready().
+# Terminal Commons stays mounted but dormant while combat is active. Returning
+# from battle simply wakes the same scene instead of rebuilding the whole hub.
 var _retained_hub: Node = null
 
 
@@ -49,6 +51,12 @@ func _input(_event: InputEvent) -> void:
 
 func is_transitioning() -> bool:
 	return _busy
+
+
+func is_scene_prepared(scene_path: String) -> bool:
+	if scene_path == HUB_SCENE_PATH and _retained_hub != null and is_instance_valid(_retained_hub):
+		return true
+	return _prepared_instances.has(scene_path)
 
 
 func preload_scene(scene_path: String) -> void:
@@ -98,15 +106,14 @@ func _build_overlay() -> void:
 	add_child(_root)
 	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# The shader is intentionally rendered to a tiny transparent viewport and the
-	# result is scaled to the screen with nearest filtering. At 1080p this reduces
-	# transition fragment work from ~2 million pixels to ~58 thousand while keeping
-	# the digital squares crisp. This matters a lot on integrated/mobile GPUs.
+	# Render the effect at a tiny internal resolution and scale it with nearest
+	# filtering. The squares stay intentionally crisp while fragment work drops by
+	# more than an order of magnitude on phone/integrated GPUs.
 	_fx_viewport = SubViewport.new()
 	_fx_viewport.name = "LowResolutionTransitionFX"
 	_fx_viewport.transparent_bg = true
 	_fx_viewport.disable_3d = true
-	_fx_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_fx_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_fx_viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ALWAYS
 	add_child(_fx_viewport)
 
@@ -153,6 +160,12 @@ func _resize_fx_viewport() -> void:
 	_material.set_shader_parameter("cell_pixels", 8.0)
 
 
+func _set_fx_active(active: bool) -> void:
+	if _fx_viewport == null:
+		return
+	_fx_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
+
+
 func _preload_scene_worker(scene_path: String) -> void:
 	var packed_scene := await _load_packed_scene(scene_path)
 	if packed_scene != null:
@@ -170,31 +183,43 @@ func _prepare_scene_worker(scene_path: String) -> void:
 		_prepare_inflight.erase(scene_path)
 		return
 
-	# Let the threaded loader hand control back to rendering before the one
-	# unavoidable main-thread PackedScene.instantiate() call.
+	# PackedScene.instantiate() itself cannot run on a worker thread. Give loading
+	# a frame to settle, instantiate detached, then frame-budget the expensive
+	# generated field and actor bootstrap below.
 	await get_tree().process_frame
 	var instantiate_started := Time.get_ticks_usec()
 	var instance := packed_scene.instantiate()
+	var instantiate_ms := float(Time.get_ticks_usec() - instantiate_started) / 1000.0
 	if instance == null:
 		_prepare_inflight.erase(scene_path)
 		return
 	_set_scene_active(instance, false)
-	_prepare_expensive_offtree_nodes(instance)
-	var prepare_ms := float(Time.get_ticks_usec() - instantiate_started) / 1000.0
+
+	var spread_started := Time.get_ticks_msec()
+	await _prepare_expensive_offtree_nodes(instance)
+	var spread_ms := Time.get_ticks_msec() - spread_started
 	_prepared_instances[scene_path] = instance
 	_prepare_inflight.erase(scene_path)
-	print("[TransitionPerf] PREPARED target=%s main_thread_ms=%.2f" % [scene_path, prepare_ms])
+	print("[TransitionPerf] PREPARED target=%s instantiate_ms=%.2f spread_ms=%d" % [scene_path, instantiate_ms, spread_ms])
 
 
 func _prepare_expensive_offtree_nodes(instance: Node) -> void:
-	# Ordering matters: the field must have tile_map_data before Digimon deployment
-	# computes spawn zones. These hooks are idempotent and _ready() will simply reuse
-	# the already-built data once the scene is attached to the tree.
+	# Field first: actor deployment reads tile_map_data. Both components expose a
+	# chunk API so low-end devices create a small, bounded amount of work per frame.
 	var field := instance.get_node_or_null("Blocks")
-	if field != null and field.has_method("prepare_transition_offtree"):
+	if field != null and field.has_method("begin_transition_preparation") and field.has_method("prepare_transition_chunk"):
+		field.call("begin_transition_preparation")
+		while not bool(field.call("prepare_transition_chunk", FIELD_ITEMS_PER_FRAME)):
+			await get_tree().process_frame
+	elif field != null and field.has_method("prepare_transition_offtree"):
 		field.call("prepare_transition_offtree")
+
 	var controller := instance.get_node_or_null("DigimonController")
-	if controller != null and controller.has_method("prepare_transition_offtree"):
+	if controller != null and controller.has_method("begin_transition_preparation") and controller.has_method("prepare_transition_chunk"):
+		controller.call("begin_transition_preparation")
+		while not bool(controller.call("prepare_transition_chunk", ACTORS_PER_FRAME)):
+			await get_tree().process_frame
+	elif controller != null and controller.has_method("prepare_transition_offtree"):
 		controller.call("prepare_transition_offtree")
 
 
@@ -256,9 +281,9 @@ func _run_transition(scene_path: String, context: String) -> void:
 	if focus_owner != null:
 		focus_owner.release_focus()
 
-	# Crucially, expensive CPU preparation completes before the animation begins.
-	# In the normal hub flow this work already started while the Battle Operator
-	# dialog was open, so this await resolves immediately.
+	# The visible effect starts only after all expensive scene preparation is done.
+	# Hub prewarm normally finishes this long before START is pressed. If a very
+	# slow device races it, frames keep rendering while this coroutine waits.
 	var prepared_scene := await _await_prepared_scene(scene_path)
 	if prepared_scene == null:
 		push_error("DigitalSceneTransition: could not prepare scene: %s" % scene_path)
@@ -271,6 +296,7 @@ func _run_transition(scene_path: String, context: String) -> void:
 	_material.set_shader_parameter("phase_seed", fmod(float(Time.get_ticks_msec()) * 0.001, 97.0))
 	_set_progress(0.0)
 	_set_flash(0.0)
+	_set_fx_active(true)
 	_root.visible = true
 
 	var cover := create_tween()
@@ -331,7 +357,7 @@ func _swap_scene(prepared_scene: Node, scene_path: String, context: String) -> E
 		return OK
 
 	# Keep Terminal Commons mounted but completely dormant during battle. Its root
-	# Node2D visibility hides the whole world/UI and DISABLED stops all processing.
+	# visibility hides the whole world/UI and DISABLED stops all processing.
 	if context == CONTEXT_BATTLE and current.scene_file_path == HUB_SCENE_PATH:
 		_retained_hub = current
 		_set_scene_active(current, false)
@@ -364,6 +390,7 @@ func _abort_transition() -> void:
 	tween.tween_method(_set_flash, float(_material.get_shader_parameter("flash")), 0.0, 0.12)
 	await tween.finished
 	_root.visible = false
+	_set_fx_active(false)
 	_busy = false
 	_set_progress(0.0)
 	_set_flash(0.0)
@@ -371,6 +398,7 @@ func _abort_transition() -> void:
 
 func _finish_transition(scene_path: String, context: String) -> void:
 	_root.visible = false
+	_set_fx_active(false)
 	_set_progress(0.0)
 	_set_flash(0.0)
 	_busy = false
