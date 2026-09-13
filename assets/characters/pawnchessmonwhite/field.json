@@ -9,18 +9,18 @@
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
   "direction_registry_schema_version": 4,
-  "review_pattern": "canonical_rows_horizontal_reversed",
+  "review_pattern": "canonical_rows_front_reversed",
   "runtime_group_indices": [
     1,
     0,
-    3,
-    2
+    2,
+    3
   ],
   "source_group_order": [
     "down_right",
     "down_left",
-    "up_right",
-    "up_left"
+    "up_left",
+    "up_right"
   ],
   "canonical_runtime_phases": [
     "idle",
@@ -124,30 +124,10 @@
     ],
     "up_left": [
       {
-        "x": 118,
-        "y": 262,
-        "w": 22,
-        "h": 30
-      },
-      {
-        "x": 152,
-        "y": 260,
-        "w": 22,
-        "h": 31
-      },
-      {
-        "x": 191,
+        "x": 4,
         "y": 262,
         "w": 22,
         "h": 31
-      }
-    ],
-    "up_right": [
-      {
-        "x": 77,
-        "y": 262,
-        "w": 22,
-        "h": 30
       },
       {
         "x": 43,
@@ -156,10 +136,30 @@
         "h": 31
       },
       {
-        "x": 4,
+        "x": 77,
+        "y": 262,
+        "w": 22,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 191,
         "y": 262,
         "w": 22,
         "h": 31
+      },
+      {
+        "x": 152,
+        "y": 260,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 118,
+        "y": 262,
+        "w": 22,
+        "h": 30
       }
     ]
   },
@@ -175,14 +175,14 @@
       "73c9ff5538e52e4e9f01d9a8f28ff33ea6e676681741cda9a3554b5cb3a9764c"
     ],
     "up_left": [
-      "fcbfae7dd5ac8b45ef95ddc1430a0012f0d9e0148dd9cd0d034d24b583d2a87f",
-      "76f305b8ec0dc10fa12bec08a3a4d1891e6de6d86838add6896ee3129e9960f2",
-      "c230397f388faa88390ce2c85f29afc86d77480f528a513f7fe6ba0538f00f66"
+      "cf3d955bf569cd10be15e90c6626498fb167333b6cb79e523b537c3c88f0d63c",
+      "e93fd479ae7b92ce64fe3f23d464d85d919ddb647462bce5ffba90a07328c6e6",
+      "5ed78ac1b50ca33d58f23084af65566d2c472e1288f1a07685d2db7d5ccbdad1"
     ],
     "up_right": [
-      "5ed78ac1b50ca33d58f23084af65566d2c472e1288f1a07685d2db7d5ccbdad1",
-      "e93fd479ae7b92ce64fe3f23d464d85d919ddb647462bce5ffba90a07328c6e6",
-      "cf3d955bf569cd10be15e90c6626498fb167333b6cb79e523b537c3c88f0d63c"
+      "c230397f388faa88390ce2c85f29afc86d77480f528a513f7fe6ba0538f00f66",
+      "76f305b8ec0dc10fa12bec08a3a4d1891e6de6d86838add6896ee3129e9960f2",
+      "fcbfae7dd5ac8b45ef95ddc1430a0012f0d9e0148dd9cd0d034d24b583d2a87f"
     ]
   },
   "cell_width": 32,

@@ -15,7 +15,7 @@
   ],
   "source_policy": "fresh-download source; reviewed reusable direction conventions; left authored phase order; deterministic mirrored-pose derivation for right phases; uniform bottom-center runtime anchor",
   "review_map": "database/ds-direction-review-map.json",
-  "review_map_sha256": "28fdb93cfc1a8e4bec74f760ac1595b49f0b4936feb8e9dee8eedfb018af8cc5",
+  "review_map_sha256": "27af4e905c3f137a93237b0ff98e11dff4360c3339edbd0c12aa6982b841d9a6",
   "species_count": 82,
   "species": {
     "Chicchimon": {
@@ -7740,18 +7740,18 @@
         255
       ],
       "layout": "two_rows_of_six",
-      "review_pattern": "canonical_rows_horizontal_reversed",
+      "review_pattern": "canonical_rows_front_reversed",
       "runtime_group_indices": [
         1,
         0,
-        3,
-        2
+        2,
+        3
       ],
       "source_group_order": [
         "down_right",
         "down_left",
-        "up_right",
-        "up_left"
+        "up_left",
+        "up_right"
       ],
       "canonical_runtime_phases": [
         "idle",
@@ -7850,30 +7850,10 @@
         ],
         "up_left": [
           {
-            "x": 120,
-            "y": 252,
-            "w": 23,
-            "h": 34
-          },
-          {
-            "x": 159,
-            "y": 252,
-            "w": 17,
-            "h": 34
-          },
-          {
-            "x": 195,
+            "x": 3,
             "y": 254,
             "w": 19,
             "h": 32
-          }
-        ],
-        "up_right": [
-          {
-            "x": 74,
-            "y": 252,
-            "w": 23,
-            "h": 34
           },
           {
             "x": 41,
@@ -7882,10 +7862,30 @@
             "h": 34
           },
           {
-            "x": 3,
+            "x": 74,
+            "y": 252,
+            "w": 23,
+            "h": 34
+          }
+        ],
+        "up_right": [
+          {
+            "x": 195,
             "y": 254,
             "w": 19,
             "h": 32
+          },
+          {
+            "x": 159,
+            "y": 252,
+            "w": 17,
+            "h": 34
+          },
+          {
+            "x": 120,
+            "y": 252,
+            "w": 23,
+            "h": 34
           }
         ]
       }
@@ -11184,18 +11184,18 @@
         255
       ],
       "layout": "two_rows_of_six",
-      "review_pattern": "canonical_rows_horizontal_reversed",
+      "review_pattern": "canonical_rows_front_reversed",
       "runtime_group_indices": [
         1,
         0,
-        3,
-        2
+        2,
+        3
       ],
       "source_group_order": [
         "down_right",
         "down_left",
-        "up_right",
-        "up_left"
+        "up_left",
+        "up_right"
       ],
       "canonical_runtime_phases": [
         "idle",
@@ -11294,29 +11294,9 @@
         ],
         "up_left": [
           {
-            "x": 120,
-            "y": 288,
-            "w": 17,
-            "h": 28
-          },
-          {
-            "x": 152,
-            "y": 286,
-            "w": 22,
-            "h": 30
-          },
-          {
-            "x": 192,
+            "x": 6,
             "y": 288,
             "w": 19,
-            "h": 28
-          }
-        ],
-        "up_right": [
-          {
-            "x": 80,
-            "y": 288,
-            "w": 17,
             "h": 28
           },
           {
@@ -11326,9 +11306,29 @@
             "h": 30
           },
           {
-            "x": 6,
+            "x": 80,
+            "y": 288,
+            "w": 17,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 192,
             "y": 288,
             "w": 19,
+            "h": 28
+          },
+          {
+            "x": 152,
+            "y": 286,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 120,
+            "y": 288,
+            "w": 17,
             "h": 28
           }
         ]
@@ -12004,18 +12004,18 @@
         255
       ],
       "layout": "two_rows_of_six",
-      "review_pattern": "canonical_rows_horizontal_reversed",
+      "review_pattern": "canonical_rows_front_reversed",
       "runtime_group_indices": [
         1,
         0,
-        3,
-        2
+        2,
+        3
       ],
       "source_group_order": [
         "down_right",
         "down_left",
-        "up_right",
-        "up_left"
+        "up_left",
+        "up_right"
       ],
       "canonical_runtime_phases": [
         "idle",
@@ -12114,30 +12114,10 @@
         ],
         "up_left": [
           {
-            "x": 118,
-            "y": 262,
-            "w": 22,
-            "h": 30
-          },
-          {
-            "x": 152,
-            "y": 260,
-            "w": 22,
-            "h": 31
-          },
-          {
-            "x": 191,
+            "x": 4,
             "y": 262,
             "w": 22,
             "h": 31
-          }
-        ],
-        "up_right": [
-          {
-            "x": 77,
-            "y": 262,
-            "w": 22,
-            "h": 30
           },
           {
             "x": 43,
@@ -12146,10 +12126,30 @@
             "h": 31
           },
           {
-            "x": 4,
+            "x": 77,
+            "y": 262,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 191,
             "y": 262,
             "w": 22,
             "h": 31
+          },
+          {
+            "x": 152,
+            "y": 260,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 118,
+            "y": 262,
+            "w": 22,
+            "h": 30
           }
         ]
       }

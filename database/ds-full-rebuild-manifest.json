@@ -1404,11 +1404,11 @@
       "runtime_group_indices": [
         1,
         0,
-        3,
-        2
+        2,
+        3
       ],
       "output": "assets/characters/pawnchessmonblack/field.png",
-      "output_sha256": "b45d5ebfb92a841d96b75b6b7d5eaf56a00ae67971efeb3d63969c02299f214b",
+      "output_sha256": "f7a0304e030c866b9d144b80619d4dcebfccb1882c6f77d953ac26727a371345",
       "cell": [
         32,
         34
@@ -1422,11 +1422,11 @@
       "runtime_group_indices": [
         1,
         0,
-        3,
-        2
+        2,
+        3
       ],
       "output": "assets/characters/pawnchessmonwhite/field.png",
-      "output_sha256": "cae65664cf5e56cee592251b0bad40512e4dee63b039965dd4cf1571957a95fe",
+      "output_sha256": "d872e89a8dfe3d32af29676698ee8dda9312a7ca12562f9bda7727705a7e582a",
       "cell": [
         32,
         35
@@ -1458,11 +1458,11 @@
       "runtime_group_indices": [
         1,
         0,
-        3,
-        2
+        2,
+        3
       ],
       "output": "assets/characters/renamon/field.png",
-      "output_sha256": "ae8be2b70b38e59afeb53821f33487fc75d9632e9e29d82c6ddf20f63563a536",
+      "output_sha256": "71e34acad29581a228630d78ed8bc98857f2723c4850fef332267038cc0ae20c",
       "cell": [
         32,
         38
