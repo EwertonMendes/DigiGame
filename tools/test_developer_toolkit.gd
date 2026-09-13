@@ -2,6 +2,7 @@ extends Node
 
 const ProgressionToolsScript = preload("res://src/debug/DebugProgressionTools.gd")
 const StateToolsScript = preload("res://src/debug/DebugStateTools.gd")
+const RosterToolsScript = preload("res://src/debug/DebugRosterTools.gd")
 const AccessScript = preload("res://src/debug/DebugToolkitAccess.gd")
 
 func _ready() -> void:
@@ -11,6 +12,7 @@ func _ready() -> void:
 	assert(not AccessScript.is_available(), "Developer toolkit must stay unavailable in headless validation")
 	var progression := ProgressionToolsScript.new() as DebugProgressionTools
 	var state := StateToolsScript.new() as DebugStateTools
+	var roster := RosterToolsScript.new() as DebugRosterTools
 	var party := OverworldState.get_active_instances()
 	assert(not party.is_empty(), "Debug regression requires the normal starter party")
 	var selected: DigimonInstance = party[0]
@@ -18,16 +20,23 @@ func _ready() -> void:
 
 	assert(progression.set_level(original_id, 7), "Debug level setter must work")
 	assert(selected.level == 7 and selected.exp == 0, "Setting a level must normalize XP")
+	assert(progression.set_exp(original_id, 77) and selected.exp == 77, "Exact XP editing must persist")
 	var xp_result := progression.add_xp(original_id, 500)
 	assert(not xp_result.is_empty(), "Debug XP must go through the real progression service")
 	assert(progression.set_potential(original_id, 42) and selected.potential == 42, "Potential editing must persist on the individual")
 	assert(progression.set_link(original_id, 37) and selected.link == 37, "Link editing must persist on the individual")
+	assert(progression.set_training(original_id, {"atk": 25, "speed": 11, "mov": 2}), "Exact training editing must work")
+	assert(int(selected.training.get("atk", 0)) == 25 and int(selected.training.get("mov", 0)) == 2, "Training edits must persist")
 	assert(progression.set_critical(original_id), "Critical-resource preset must apply")
 	assert(selected.current_hp == 1 and selected.current_mp == 0, "Critical preset must set deterministic resources")
 	assert(progression.heal(original_id), "Heal must use calculated form resources")
 	var stats := progression.final_stats(original_id)
 	assert(selected.current_hp == int(stats.get("hp", -1)), "Heal must refill current HP to calculated HP")
 	assert(selected.current_mp == int(stats.get("mp", -1)), "Heal must refill current SP to calculated SP")
+	assert(progression.set_resources(original_id, 2, 3), "Exact HP/SP editing must work")
+	assert(selected.current_hp == 2 and selected.current_mp == mini(3, int(stats.get("mp", 0))), "Exact HP/SP must clamp to calculated maxima")
+	assert(progression.set_knocked_out(original_id), "Knock-out preset must work")
+	assert(selected.current_hp == 0 and selected.current_mp == 0, "Knock-out preset must clear resources")
 
 	state.set_bits(12345)
 	assert(OverworldState.get_bits() == 12345, "Debug Bits editing must reach persistent account state")
@@ -35,6 +44,32 @@ func _ready() -> void:
 	assert(OverworldState.get_digi_data_for(selected.species_seed) == 177, "Debug Digi Data value must be exact")
 	assert(state.set_flag("debug_regression_flag", true), "Debug flag editing must accept a non-empty id")
 	assert(bool(state.progression_flags().get("debug_regression_flag", false)), "Debug flag must be visible in persistent progression flags")
+
+	var catalog := roster.catalog()
+	assert(catalog.size() > 100, "Visual debug picker must receive the canonical species catalog")
+	var metalgreymon := roster.database.get_by_name("Metal Greymon")
+	assert(not metalgreymon.is_empty(), "Storage spawn regression requires Metal Greymon")
+	var spawned := roster.create_storage_instance({
+		"species_seed": String(metalgreymon.get("seed", "")),
+		"level": 35,
+		"exp": 123,
+		"potential": 64,
+		"link": 72,
+		"resource_state": "critical",
+	})
+	assert(spawned != null, "Debug roster tool must create any canonical Digimon directly in Storage")
+	assert(spawned.level == 35 and spawned.exp == 123 and spawned.potential == 64 and spawned.link == 72, "Spawned Storage Digimon must keep the requested state")
+	assert(spawned.current_hp == 1 and spawned.current_mp == 0, "Spawned Storage Digimon must honor resource presets")
+	assert(not OverworldState.get_active_party_ids().has(spawned.id), "Debug-created Digimon must start in Storage rather than silently replacing the party")
+
+	var mixed_enemy_team: Array[Dictionary] = []
+	for entry in [["Agumon", 5, "wild"], ["Gabumon", 9, "trained"], ["Veemon", 12, "elite"], ["Greymon", 20, "boss"]]:
+		var species := roster.database.get_by_name(String(entry[0]))
+		var descriptor := roster.make_enemy_descriptor(String(species.get("seed", "")), int(entry[1]), String(entry[2]))
+		assert(not descriptor.is_empty(), "Battle roster descriptor must resolve a selected species")
+		mixed_enemy_team.append(descriptor)
+	assert(mixed_enemy_team.size() == 4, "Battle sandbox must support mixed teams larger than three")
+	assert(String(mixed_enemy_team[0].get("species_seed", "")) != String(mixed_enemy_team[1].get("species_seed", "")), "Battle sandbox rows must be independently configurable")
 
 	assert(state.capture_snapshot("Regression Snapshot"), "Debug snapshot must serialize the current collection")
 	var snapshot_level := selected.level
