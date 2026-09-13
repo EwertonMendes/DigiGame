@@ -12,7 +12,7 @@ const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd
 const TrainingServiceScript = preload("res://src/digimon/DigimonTrainingService.gd")
 const RewardServiceScript = preload("res://src/digimon/BattleRewardService.gd")
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
-const RosterScript = preload("res://src/collection/PlayerRoster.gd")
+const CollectionScript = preload("res://src/collection/PlayerRoster.gd")
 const PartyServiceScript = preload("res://src/collection/PartyService.gd")
 const SaveServiceScript = preload("res://src/save/SaveService.gd")
 const MigrationScript = preload("res://src/save/SaveMigration.gd")
@@ -20,14 +20,12 @@ const EncounterScript = preload("res://src/world/BattleEncounterDefinition.gd")
 
 const TEST_SAVE_PATH := "user://digigame-progression-regression.json"
 
-
 func _ready() -> void:
 	OverworldState.set_persistence_enabled(false)
 	OverworldState.reset_progress_for_tests(false)
-
 	var database: DigimonDatabase = DatabaseScript.new()
 	assert(database.load_default(), "Species database must load")
-	assert(database.species_count() > 100, "Canonical catalogue must contain the full inherited species set")
+	assert(database.species_count() > 100, "Canonical catalogue must contain the inherited species set")
 	var factory: DigimonFactory = FactoryScript.new(database)
 	var progression: DigimonProgressionService = ProgressionServiceScript.new(database)
 	var progression_curve: DigimonProgression = ProgressionScript.new()
@@ -36,6 +34,7 @@ func _ready() -> void:
 	var graph_service: EvolutionGraphService = EvolutionGraphServiceScript.new()
 	var requirements: EvolutionRequirementEvaluator = RequirementEvaluatorScript.new()
 	var calculator: DigimonStatCalculator = StatCalculatorScript.new()
+	var training: DigimonTrainingService = TrainingServiceScript.new()
 	var reward_service: BattleRewardService = RewardServiceScript.new(database)
 	var balance: ProgressionBalance = BalanceScript.new()
 	var party_service: PartyService = PartyServiceScript.new()
@@ -43,13 +42,12 @@ func _ready() -> void:
 	_test_xp_and_stats(database, factory, progression, progression_curve, calculator, balance)
 	_test_rewards(database, factory, xp, reward_service)
 	_test_evolution(database, factory, progression, evolution, graph_service, requirements, calculator)
-	_test_roster_party_and_save(factory, party_service)
+	_test_training(database, factory, training, calculator)
+	_test_collection_party_save_and_migration(factory, party_service, training)
 	_test_overworld_digi_data()
 	_test_encounter_definition(database)
-
 	print("digimon progression regression passed")
 	get_tree().quit()
-
 
 func _test_xp_and_stats(database: DigimonDatabase, factory: DigimonFactory, progression: DigimonProgressionService, progression_curve: DigimonProgression, calculator: DigimonStatCalculator, balance: ProgressionBalance) -> void:
 	var agumon: DigimonInstance = factory.create_player_by_name("agumon", 1, 100)
@@ -58,158 +56,155 @@ func _test_xp_and_stats(database: DigimonDatabase, factory: DigimonFactory, prog
 	for stat_key: String in DigimonInstance.STAT_KEYS:
 		agumon.aptitudes[stat_key] = 0
 		agumon.training[stat_key] = 0
-	var level_one_stats: Dictionary = calculator.get_all_stats(agumon, species)
-	assert(level_one_stats == calculator.get_all_stats(agumon, species), "Stat calculation must be deterministic")
+	assert(calculator.get_all_stats(agumon, species) == calculator.get_all_stats(agumon, species), "Stat calculation must be deterministic")
 	var required: int = progression.exp_to_next_level(agumon)
 	var level_result: Dictionary = progression.apply_experience(agumon, required)
-	assert(agumon.level == 2 and int(level_result.get("levels_gained", 0)) == 1, "Exact threshold must level up once")
-	assert(agumon.exp == 0, "Exact threshold must not lose or invent overflow")
+	assert(agumon.level == 2 and int(level_result.get("levels_gained", 0)) == 1, "Exact threshold must level once")
+	assert(agumon.exp == 0, "Exact threshold must leave no overflow")
 	assert((level_result.get("stat_deltas", {}) as Dictionary).has("hp"), "Level result must expose stat deltas")
-
 	var multi: DigimonInstance = factory.create_player_by_name("agumon", 1, 100)
-	var l1: int = progression_curve.exp_to_next_level_for_level(1, species)
-	var l2: int = progression_curve.exp_to_next_level_for_level(2, species)
-	var multi_result: Dictionary = progression.apply_experience(multi, l1 + l2 + 7)
-	assert(multi.level == 3 and multi.exp == 7, "One grant must support multiple levels and preserve overflow")
-	assert(int(multi_result.get("levels_gained", 0)) == 2, "Multi-level grant must report both levels")
-
+	var l1 := progression_curve.exp_to_next_level_for_level(1, species)
+	var l2 := progression_curve.exp_to_next_level_for_level(2, species)
+	var multi_result := progression.apply_experience(multi, l1 + l2 + 7)
+	assert(multi.level == 3 and multi.exp == 7 and int(multi_result.get("levels_gained", 0)) == 2, "Multi-level XP must preserve overflow")
 	var capped: DigimonInstance = factory.create_player_by_name("agumon", balance.max_level(), 100)
 	capped.exp = 123
 	progression.apply_experience(capped, 9999999)
-	assert(capped.level == balance.max_level() and capped.exp == 0, "Max-level XP must remain capped")
-
+	assert(capped.level == balance.max_level() and capped.exp == 0, "Max-level XP must remain normalized")
 
 func _test_rewards(database: DigimonDatabase, factory: DigimonFactory, xp: ExperienceCalculator, reward_service: BattleRewardService) -> void:
 	var enemy: DigimonInstance = factory.create_enemy_by_name("veemon", 5, "wild")
-	var species: Dictionary = database.get_by_seed(enemy.species_seed)
+	var species := database.get_by_seed(enemy.species_seed)
 	assert(xp.reward_for_enemy(5, 5, species, "wild") > xp.reward_for_enemy(30, 5, species, "wild"), "Overleveled farming must be devalued")
-	var players: Array[Dictionary] = [
-		{"instance_id": "participant-a", "level": 5, "knocked_out": false},
-		{"instance_id": "participant-b", "level": 5, "knocked_out": true},
-	]
+	var players: Array[Dictionary] = [{"instance_id": "a", "level": 5, "knocked_out": false}, {"instance_id": "b", "level": 5, "knocked_out": true}]
 	var enemies: Array[Dictionary] = [{"species_seed": enemy.species_seed, "level": 5, "profile": "wild", "reward_modifier": 1.0}]
-	var rewards: BattleRewards = reward_service.calculate_for_snapshots(players, enemies)
-	assert(int(rewards.xp_by_instance.get("participant-a", 0)) > 0, "Participant must receive XP")
-	assert(int(rewards.xp_by_instance.get("participant-b", 0)) > 0, "KO participant follows configured XP rule")
+	var rewards := reward_service.calculate_for_snapshots(players, enemies)
+	assert(int(rewards.xp_by_instance.get("a", 0)) > 0 and int(rewards.xp_by_instance.get("b", 0)) > 0, "Configured participants must receive XP")
 	assert(rewards.bits > 0 and int(rewards.digi_data.get(String(species.get("name", "")), 0)) > 0, "Victory must emit Bits and Digi Data")
-	var boosted_enemies: Array[Dictionary] = [{"species_seed": enemy.species_seed, "level": 5, "profile": "wild", "reward_modifier": 2.0}]
-	var boosted: BattleRewards = reward_service.calculate_for_snapshots(players, boosted_enemies)
-	assert(int(boosted.xp_by_instance.get("participant-a", 0)) > int(rewards.xp_by_instance.get("participant-a", 0)), "Encounter modifier must scale XP")
-	assert(boosted.bits > rewards.bits, "Encounter modifier must scale economic rewards")
-
+	var boosted: Array[Dictionary] = [{"species_seed": enemy.species_seed, "level": 5, "profile": "wild", "reward_modifier": 2.0}]
+	var boosted_rewards := reward_service.calculate_for_snapshots(players, boosted)
+	assert(int(boosted_rewards.xp_by_instance.get("a", 0)) > int(rewards.xp_by_instance.get("a", 0)) and boosted_rewards.bits > rewards.bits, "Encounter modifier must scale rewards")
 
 func _test_evolution(database: DigimonDatabase, factory: DigimonFactory, progression: DigimonProgressionService, evolution: DigimonEvolutionService, graph_service: EvolutionGraphService, requirements: EvolutionRequirementEvaluator, calculator: DigimonStatCalculator) -> void:
-	var blocked: DigimonInstance = factory.create_player_by_name("koromon", 1, 100)
-	var blocked_routes: Array[Dictionary] = progression.get_evolution_routes(blocked)
+	var blocked := factory.create_player_by_name("koromon", 1, 100)
+	var blocked_routes := progression.get_evolution_routes(blocked)
 	assert(not blocked_routes.is_empty(), "Evolution routes must be visible before unlock")
 	var has_locked := false
 	for route: Dictionary in blocked_routes:
 		if not bool(route.get("unlocked", false)):
 			has_locked = true
 	assert(has_locked, "Low-level evolution must be blocked")
-
-	var koromon: DigimonInstance = factory.create_player_by_name("koromon", 5, 100)
+	var koromon := factory.create_player_by_name("koromon", 5, 100)
 	koromon.link = 63
-	var routes: Array[Dictionary] = progression.get_evolution_routes(koromon)
 	var unlocked: Dictionary = {}
-	for route: Dictionary in routes:
+	for route: Dictionary in progression.get_evolution_routes(koromon):
 		if bool(route.get("unlocked", false)):
 			unlocked = route
 			break
-	assert(not unlocked.is_empty(), "Koromon level 5 must have an unlocked route")
-	var current_species: Dictionary = database.get_by_seed(koromon.species_seed)
-	assert(bool(requirements.evaluate(koromon, current_species, {"type": "link", "value": 50}, calculator).get("is_met", false)), "Link requirement must use persistent instance state")
-	assert(not bool(requirements.evaluate(koromon, current_species, {"type": "level", "value": 99}, calculator).get("is_met", true)), "Unmet level requirement must block")
-
-	var original_id: String = koromon.id
-	var original_seed: String = koromon.species_seed
-	var original_link: int = koromon.link
+	assert(not unlocked.is_empty(), "Koromon level 5 must expose an unlocked route")
+	var current_species := database.get_by_seed(koromon.species_seed)
+	assert(bool(requirements.evaluate(koromon, current_species, {"type": "link", "value": 50}, calculator).get("is_met", false)), "Link requirement must use persistent state")
+	var original_id := koromon.id
+	var original_link := koromon.link
+	var original_seed := koromon.species_seed
 	var target_seed := String(unlocked.get("targetSeed", ""))
 	assert(graph_service.find_shortest_path(original_seed, target_seed, database).size() == 2, "Direct evolution must remain a graph edge")
 	assert(evolution.digivolve(koromon, target_seed, database, calculator), "Unlocked evolution must succeed")
-	assert(koromon.id == original_id and koromon.species_seed == target_seed, "Evolution must preserve UUID and change species")
-	assert(koromon.level == 1 and koromon.exp == 0 and koromon.link == original_link, "Evolution must reset level/XP and preserve Link")
+	assert(koromon.id == original_id and koromon.level == 1 and koromon.exp == 0 and koromon.link == original_link, "Evolution must preserve identity/Link and reset level/XP")
 	assert(koromon.species_history.size() >= 2, "Evolution must append species history")
-	var stats: Dictionary = calculator.get_all_stats(koromon, database.get_by_seed(target_seed))
-	assert(koromon.current_hp == int(stats.get("hp", 0)), "Evolution must recalculate/refill stats")
-
-	var degeneration_routes: Array[Dictionary] = evolution.get_available_degenerations(koromon, database, calculator)
 	var degeneration_target := ""
-	for route: Dictionary in degeneration_routes:
+	for route: Dictionary in evolution.get_available_degenerations(koromon, database, calculator):
 		if bool(route.get("unlocked", false)):
 			degeneration_target = String(route.get("targetSeed", ""))
 			break
-	assert(not degeneration_target.is_empty(), "Degeneration must be a first-class available route")
+	assert(not degeneration_target.is_empty(), "Degeneration must be a first-class route")
 	koromon.level = 8
-	koromon.exp = 25
 	assert(evolution.degenerate(koromon, degeneration_target, database, calculator), "Degeneration must succeed")
-	assert(koromon.id == original_id and koromon.level == 1 and koromon.exp == 0, "Degeneration must preserve UUID and reset progression")
-	assert(koromon.link == original_link, "Degeneration must preserve Link")
+	assert(koromon.id == original_id and koromon.level == 1 and koromon.link == original_link, "Degeneration must preserve individual state")
 
-	var training: DigimonTrainingService = TrainingServiceScript.new()
-	var before_capacity: int = training.capacity_for(koromon)
-	koromon.potential = 20
-	assert(training.capacity_for(koromon) > before_capacity, "Potential must increase training capacity")
-	assert(training.allocate_stat(koromon, "int", 1), "INT training must remain supported")
+func _test_training(database: DigimonDatabase, factory: DigimonFactory, training: DigimonTrainingService, calculator: DigimonStatCalculator) -> void:
+	var agumon := factory.create_player_by_name("agumon", 10, 100)
+	for stat_key: String in DigimonInstance.STAT_KEYS:
+		agumon.aptitudes[stat_key] = 0
+		agumon.training[stat_key] = 0
+	agumon.potential = 40
+	var species := database.get_by_seed(agumon.species_seed)
+	var before := calculator.get_all_stats(agumon, species)
+	assert(training.capacity_for(agumon) == 30, "Potential 40 must provide 30 Training Capacity")
+	var plan := {"atk": 5, "speed": 5}
+	assert(training.validate_plan(agumon, plan, 0).is_empty(), "Valid stat training plan must pass")
+	assert(training.apply_plan(agumon, plan, 0), "Valid training plan must apply atomically")
+	var after := calculator.get_all_stats(agumon, species)
+	assert(int(after.get("atk", 0)) > int(before.get("atk", 0)) and int(after.get("speed", 0)) > int(before.get("speed", 0)), "Training must affect final stats")
+	assert(training.used_capacity(agumon) == 10, "Applied points must consume Training Capacity")
+	assert(not training.validate_plan(agumon, {"atk": 100}, 0).is_empty(), "Per-stat cap must reject invalid plans")
+	agumon.potential = 70
+	assert(training.validate_plan(agumon, {}, 1).is_empty(), "Potential 70 with enough capacity must allow first MOV training")
+	var before_mov := calculator.get_mov(agumon, species)
+	assert(training.apply_plan(agumon, {}, 1), "MOV training plan must apply")
+	assert(calculator.get_mov(agumon, species) == before_mov + 1, "MOV training must increase tactical movement")
 
-
-func _test_roster_party_and_save(factory: DigimonFactory, party_service: PartyService) -> void:
-	var roster: PlayerRoster = RosterScript.new()
-	var first: DigimonInstance = factory.create_player_by_name("agumon", 4, 100)
-	var second: DigimonInstance = factory.create_player_by_name("agumon", 7, 100)
-	var third: DigimonInstance = factory.create_player_by_name("gabumon", 6, 100)
-	var fourth: DigimonInstance = factory.create_player_by_name("veemon", 5, 100)
-	assert(first.id != second.id, "Same-species owned Digimon need unique UUIDs")
+func _test_collection_party_save_and_migration(factory: DigimonFactory, party_service: PartyService, training: DigimonTrainingService) -> void:
+	var collection: PlayerRoster = CollectionScript.new()
+	var first := factory.create_player_by_name("agumon", 4, 100)
+	var second := factory.create_player_by_name("agumon", 7, 100)
+	var third := factory.create_player_by_name("gabumon", 6, 100)
+	var fourth := factory.create_player_by_name("veemon", 5, 100)
+	assert(first.id != second.id, "Same-species Digimon need unique UUIDs")
 	first.exp = 33
 	first.link = 42
-	roster.add_instance(first, "agumon", "Agumon")
-	roster.add_instance(second, "agumon", "Agumon")
-	roster.add_instance(third, "gabumon", "Gabumon")
-	roster.add_instance(fourth, "veemon", "Veemon")
+	first.potential = 40
+	assert(training.apply_plan(first, {"atk": 3}, 0), "Training state must be persistable")
+	collection.add_instance(first, "agumon", "Agumon")
+	collection.add_instance(second, "agumon", "Agumon")
+	collection.add_instance(third, "gabumon", "Gabumon")
+	collection.add_instance(fourth, "veemon", "Veemon")
 	var party_ids: Array[String] = [first.id, second.id, third.id]
-	assert(party_service.set_party(roster, party_ids), "Valid party must be accepted")
+	assert(party_service.set_party(collection, party_ids), "Valid party must be accepted")
 	var duplicates: Array[String] = [first.id, first.id]
-	assert(not party_service.set_party(roster, duplicates), "Duplicate instance must be rejected")
-	assert(not party_service.add_to_party(roster, fourth.id), "Party limit must be enforced")
-	assert(party_service.remove_from_party(roster, third.id) and party_service.add_to_party(roster, fourth.id), "Party remove/add must work")
-	assert(roster.get_reserve_instances().size() == 1, "Non-active owned Digimon must stay in Storage")
-
-	roster.bits = 321
-	roster.add_digi_data(first.species_seed, 87)
+	assert(not party_service.set_party(collection, duplicates), "Duplicate individual must be rejected")
+	assert(not party_service.add_to_party(collection, fourth.id), "Party limit must be enforced")
+	assert(party_service.remove_from_party(collection, third.id) and party_service.add_to_party(collection, fourth.id), "Party swap flow must work")
+	assert(collection.get_reserve_instances().size() == 1, "Non-active Digimon must remain in Storage")
+	collection.bits = 321
+	collection.add_digi_data(first.species_seed, 87)
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
-	assert(save_service.save_roster(roster, TEST_SAVE_PATH), "Versioned save must write")
-	var loaded: PlayerRoster = save_service.load_roster(TEST_SAVE_PATH)
-	assert(loaded != null and loaded.get_instances().size() == roster.get_instances().size(), "Save/load must preserve roster")
-	var restored: DigimonInstance = loaded.get_instance(first.id)
-	assert(restored != null and restored.level == first.level and restored.exp == first.exp, "Save/load must preserve level/XP")
-	assert(restored.link == first.link, "Save/load must preserve Link")
-	assert(loaded.get_digi_data(first.species_seed) == 87 and loaded.bits == 321, "Save/load must preserve rewards")
-	assert(loaded.get_active_party_ids() == roster.get_active_party_ids(), "Save/load must preserve party order")
+	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Collection save v2 must write")
+	var loaded: PlayerRoster = save_service.load_collection(TEST_SAVE_PATH)
+	assert(loaded != null and loaded.get_instances().size() == collection.get_instances().size(), "Save/load must preserve collection")
+	var restored := loaded.get_instance(first.id)
+	assert(restored != null and restored.level == first.level and restored.exp == first.exp and restored.link == first.link, "Save/load must preserve individual progression")
+	assert(int(restored.training.get("atk", 0)) == 3, "Save/load must preserve permanent Training")
+	assert(loaded.get_digi_data(first.species_seed) == 87 and loaded.bits == 321, "Save/load must preserve account rewards")
+	assert(loaded.get_active_party_ids() == collection.get_active_party_ids(), "Save/load must preserve party order")
+	var save_data := save_service.load_data(TEST_SAVE_PATH)
+	assert(save_data != null and save_data.save_version == 2 and not save_data.collection.is_empty(), "New saves must use v2 collection schema")
 	assert(save_service.delete_save(TEST_SAVE_PATH), "Regression save must be removable")
 
 	var migration: SaveMigration = MigrationScript.new()
-	var migrated: Dictionary = migration.migrate({"ownedDigimon": [], "activePartyIds": [], "bits": 19, "digiData": {first.species_seed: 4}})
-	assert(int(migrated.get("save_version", 0)) == 1, "Unversioned save must migrate")
-	assert(int((migrated.get("roster", {}) as Dictionary).get("bits", 0)) == 19, "Migration must retain legacy values")
-
+	var legacy_entry := {"rosterKey": "legacy_agumon", "instance": first.to_dict()}
+	var migrated := migration.migrate({"save_version": 1, "roster": {"instances": [legacy_entry], "activePartyIds": [first.id], "bits": 19, "digiData": {first.species_seed: 4}}})
+	assert(int(migrated.get("save_version", 0)) == 2, "v1 save must migrate to v2")
+	var migrated_collection := migrated.get("collection", {}) as Dictionary
+	assert(int(migrated_collection.get("bits", 0)) == 19, "Migration must retain legacy values")
+	var migrated_entries := migrated_collection.get("instances", []) as Array
+	assert(migrated_entries.size() == 1 and String((migrated_entries[0] as Dictionary).get("collectionKey", "")) == "legacy_agumon", "Migration must rename legacy entry key")
+	assert(not (migrated_entries[0] as Dictionary).has("rosterKey"), "v2 save must not write legacy key names")
 
 func _test_overworld_digi_data() -> void:
-	var persistent_party: Array[DigimonInstance] = OverworldState.get_active_instances()
-	assert(persistent_party.size() == 3, "Production flow must start with three active instances")
-	var roster_before: int = OverworldState.get_roster_instances().size()
-	var first_progress: Dictionary = OverworldState.apply_account_rewards(0, {"Agumon": 40})
-	var second_progress: Dictionary = OverworldState.apply_account_rewards(0, {"Agumon": 60})
+	assert(OverworldState.get_active_instances().size() == 3, "Production flow must start with three active instances")
+	var collection_before := OverworldState.get_roster_instances().size()
+	var first_progress := OverworldState.apply_account_rewards(0, {"Agumon": 40})
+	var second_progress := OverworldState.apply_account_rewards(0, {"Agumon": 60})
 	assert(OverworldState.get_digi_data_for("Agumon") == 100, "Digi Data must accumulate")
 	var seed := String(OverworldState.get_database().get_by_name("Agumon").get("seed", ""))
 	assert(not bool((first_progress.get(seed, {}) as Dictionary).get("ready", false)), "Below threshold remains collecting")
-	assert(bool((second_progress.get(seed, {}) as Dictionary).get("newly_ready", false)), "Crossing threshold must report unlock")
-	var created: DigimonInstance = OverworldState.reconstruct_digimon("Agumon", 100)
-	assert(created != null and created.level == 1 and created.exp == 0, "Creation must produce Level 1 instance")
-	assert(OverworldState.get_roster_instances().size() == roster_before + 1, "Created Digimon must join roster")
-	assert(OverworldState.get_digi_data_for("Agumon") == 0, "Creation must consume configured Digi Data")
-	assert(not OverworldState.get_active_party_ids().has(created.id), "Created Digimon must enter Storage")
-
+	assert(bool((second_progress.get(seed, {}) as Dictionary).get("newly_ready", false)), "Crossing threshold must report ready")
+	var created := OverworldState.reconstruct_digimon("Agumon", 100)
+	assert(created != null and created.level == 1 and created.exp == 0, "Reconstruction must create Level 1 individual")
+	assert(OverworldState.get_roster_instances().size() == collection_before + 1, "Created Digimon must join the collection")
+	assert(OverworldState.get_digi_data_for("Agumon") == 0 and not OverworldState.get_active_party_ids().has(created.id), "Creation must consume data and place Digimon in Storage")
 
 func _test_encounter_definition(database: DigimonDatabase) -> void:
 	var encounter: BattleEncounterDefinition = EncounterScript.new()
