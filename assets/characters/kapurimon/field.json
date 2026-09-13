@@ -8,19 +8,19 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 3,
-  "review_pattern": "canonical_rows",
+  "direction_registry_schema_version": 4,
+  "review_pattern": "canonical_rows_rear_reversed",
   "runtime_group_indices": [
     0,
     1,
-    2,
-    3
+    3,
+    2
   ],
   "source_group_order": [
     "down_left",
     "down_right",
-    "up_left",
-    "up_right"
+    "up_right",
+    "up_left"
   ],
   "canonical_runtime_phases": [
     "idle",
@@ -33,15 +33,15 @@
       1,
       2
     ],
-    "down_right": [
-      2,
-      1,
-      0
-    ],
     "up_left": [
       0,
       1,
       2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
     ],
     "up_right": [
       0,
@@ -52,23 +52,27 @@
   "pose_alignment": {
     "down_right": {
       "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
         2,
         1,
         0
       ],
       "pixel_error": 56138,
-      "confidence_margin": 108398
+      "confidence_margin": 108398,
+      "equivalent_best_count": 1
     },
     "up_right": {
       "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
         0,
         1,
         2
       ],
       "pixel_error": 45434,
-      "confidence_margin": 0
+      "confidence_margin": 0,
+      "equivalent_best_count": 2
     }
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
@@ -120,26 +124,6 @@
     ],
     "up_left": [
       {
-        "x": 7,
-        "y": 143,
-        "w": 21,
-        "h": 19
-      },
-      {
-        "x": 43,
-        "y": 140,
-        "w": 20,
-        "h": 22
-      },
-      {
-        "x": 79,
-        "y": 143,
-        "w": 21,
-        "h": 19
-      }
-    ],
-    "up_right": [
-      {
         "x": 119,
         "y": 143,
         "w": 21,
@@ -153,6 +137,26 @@
       },
       {
         "x": 191,
+        "y": 143,
+        "w": 21,
+        "h": 19
+      }
+    ],
+    "up_right": [
+      {
+        "x": 7,
+        "y": 143,
+        "w": 21,
+        "h": 19
+      },
+      {
+        "x": 43,
+        "y": 140,
+        "w": 20,
+        "h": 22
+      },
+      {
+        "x": 79,
         "y": 143,
         "w": 21,
         "h": 19
@@ -171,14 +175,14 @@
       "58fb578f28e24f4f67d7d861f88f20e810e3391c762dbb774ad706c3d5a0772d"
     ],
     "up_left": [
-      "0c54e9f577c5ee2d919bd489089ea74c2d105d9af839c9abf13ce5cbf8903c8f",
-      "1d88cdb4c490ae315142e166beee59c2e5db20ac2a584bbd3353e454e0f43b25",
-      "0c54e9f577c5ee2d919bd489089ea74c2d105d9af839c9abf13ce5cbf8903c8f"
-    ],
-    "up_right": [
       "f2bdeb9030fad8d7c37108731edf2c737d5408f37c1d60a9ed3ef653c8c11f32",
       "31527b83cddfb488f087ab9bc1ded05e78a69491d8c9d5ded2257709a40063e9",
       "f2bdeb9030fad8d7c37108731edf2c737d5408f37c1d60a9ed3ef653c8c11f32"
+    ],
+    "up_right": [
+      "0c54e9f577c5ee2d919bd489089ea74c2d105d9af839c9abf13ce5cbf8903c8f",
+      "1d88cdb4c490ae315142e166beee59c2e5db20ac2a584bbd3353e454e0f43b25",
+      "0c54e9f577c5ee2d919bd489089ea74c2d105d9af839c9abf13ce5cbf8903c8f"
     ]
   },
   "cell_width": 32,

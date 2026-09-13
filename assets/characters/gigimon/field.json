@@ -8,7 +8,7 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 3,
+  "direction_registry_schema_version": 4,
   "review_pattern": "rear_rows_first",
   "runtime_group_indices": [
     2,
@@ -33,15 +33,15 @@
       1,
       2
     ],
-    "down_right": [
-      2,
-      1,
-      0
-    ],
     "up_left": [
       0,
       1,
       2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
     ],
     "up_right": [
       2,
@@ -52,23 +52,27 @@
   "pose_alignment": {
     "down_right": {
       "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
         2,
         1,
         0
       ],
       "pixel_error": 0,
-      "confidence_margin": 175536
+      "confidence_margin": 175536,
+      "equivalent_best_count": 1
     },
     "up_right": {
       "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
         2,
         1,
         0
       ],
       "pixel_error": 111164,
-      "confidence_margin": 63382
+      "confidence_margin": 63382,
+      "equivalent_best_count": 1
     }
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",

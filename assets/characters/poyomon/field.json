@@ -8,7 +8,7 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 3,
+  "direction_registry_schema_version": 4,
   "review_pattern": "compact_interleaved",
   "runtime_group_indices": [
     0,
@@ -33,42 +33,46 @@
       1,
       2
     ],
-    "down_right": [
-      2,
-      1,
-      0
-    ],
     "up_left": [
       0,
       1,
       2
     ],
-    "up_right": [
+    "down_right": [
       2,
       1,
       0
+    ],
+    "up_right": [
+      0,
+      1,
+      2
     ]
   },
   "pose_alignment": {
     "down_right": {
       "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
         2,
         1,
         0
       ],
       "pixel_error": 0,
-      "confidence_margin": 24518
+      "confidence_margin": 24518,
+      "equivalent_best_count": 1
     },
     "up_right": {
       "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
-        2,
+        0,
         1,
-        0
+        2
       ],
       "pixel_error": 56236,
-      "confidence_margin": 0
+      "confidence_margin": 0,
+      "equivalent_best_count": 2
     }
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
@@ -140,8 +144,8 @@
     ],
     "up_right": [
       {
-        "x": 187,
-        "y": 84,
+        "x": 138,
+        "y": 83,
         "w": 13,
         "h": 14
       },
@@ -152,8 +156,8 @@
         "h": 14
       },
       {
-        "x": 138,
-        "y": 83,
+        "x": 187,
+        "y": 84,
         "w": 13,
         "h": 14
       }
@@ -176,9 +180,9 @@
       "ab8d536e8e80d8ce3a792a2aac86bd3b136c97e85cc193b88a12ebde46532b4d"
     ],
     "up_right": [
-      "7f161839aa0e319a1a772df8dd252e3e76aa218f23f61bca62778192aa882e75",
+      "a1f9147ee9f351e28832b94b6c62b44250a7f405ef144937ef682ebbcaed094f",
       "f327e993b2f4de0219eebd1ff2263c1c631b695500661e82fe2d42f1d35648a4",
-      "a1f9147ee9f351e28832b94b6c62b44250a7f405ef144937ef682ebbcaed094f"
+      "7f161839aa0e319a1a772df8dd252e3e76aa218f23f61bca62778192aa882e75"
     ]
   },
   "cell_width": 32,
