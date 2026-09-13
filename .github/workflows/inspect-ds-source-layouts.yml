@@ -16,11 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install image tooling
-        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
-      - name: Render every original WtW directional group
-        run: python3 tools/render_ds_source_direction_audit.py
+        run: python3 -m pip install --disable-pip-version-check pillow
+      - name: Render all final DS runtime direction strips
+        run: python3 tools/render_generated_ds_direction_audit.py
       - uses: actions/upload-artifact@v4
         with:
-          name: ds-all-source-direction-groups
-          path: /tmp/ds-direction-audit
+          name: ds-final-generated-direction-audit
+          path: /tmp/ds-generated-direction-audit
           retention-days: 1
