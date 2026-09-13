@@ -64,10 +64,10 @@ func _build_digilab_terminal() -> void:
 		return
 	_digilab_terminal = Node2D.new()
 	_digilab_terminal.name = "DigiLabTerminal"
-	# Keep the terminal away from the spawn/Operator interaction cluster. (-3, 3)
-	# is inside the playable island, clear of existing props, and requires a
-	# deliberate walk to the DigiLab instead of stealing the initial E/Enter.
-	_digilab_terminal.position = _grid_to_world(Vector2(-3, 3))
+	# Service terminals live together in the upper-left part of the commons,
+	# outside the central Battle Operator focal point. The Training Specialist is
+	# offset down/right from here so both world labels remain independently clear.
+	_digilab_terminal.position = _grid_to_world(Vector2(-6, -2))
 	_digilab_terminal.z_index = 960 + int(round(_digilab_terminal.position.y))
 	actors.add_child(_digilab_terminal)
 	var base := Sprite2D.new()
