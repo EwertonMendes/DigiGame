@@ -6,6 +6,8 @@ signal close_requested
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const MENU = preload("res://src/ui/MenuUiStyle.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
+const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
+const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
 const CLOSE_ICON := preload("res://assets/ui/icons/cancel.svg")
 
@@ -17,10 +19,15 @@ var _frame: PanelContainer
 var _body_grid: GridContainer
 var _collection_panel: PanelContainer
 var _detail_panel: PanelContainer
+var _list_scroll: ScrollContainer
+var _detail_scroll: ScrollContainer
 var _list: VBoxContainer
 var _detail: VBoxContainer
 var _summary_label: Label
 var _status_label: Label
+var _list_buttons: Array[Button] = []
+var _list_ids: Array[String] = []
+var _list_previews: Array[DigimonWalkPreview] = []
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -42,6 +49,7 @@ func open_screen() -> void:
 	_status_label.text = ""
 	_refresh()
 	call_deferred("_layout")
+	call_deferred("_focus_selected")
 	_frame.modulate.a = 0.0
 	var tween := create_tween()
 	tween.tween_property(_frame, "modulate:a", 1.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -87,11 +95,11 @@ func _build() -> void:
 	heading.add_child(_label("PARTY / STORAGE", 25, UI.TEXT, true))
 	_summary_label = _label("", 11, UI.MUTED)
 	heading.add_child(_summary_label)
-	var close := MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close Party / Storage")
+	var close := MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close Party / Storage", Vector2(44, 44))
 	close.pressed.connect(close_view)
 	header.add_child(close)
 
-	_status_label = _label("", 10, UI.CYAN, true)
+	_status_label = _single_line_label("", 10, UI.CYAN, true)
 	_status_label.custom_minimum_size.y = 20
 	root.add_child(_status_label)
 
@@ -115,15 +123,18 @@ func _build() -> void:
 	collection_root.add_theme_constant_override("separation", 8)
 	collection_margin.add_child(collection_root)
 	collection_root.add_child(_section_label("COLLECTION", UI.CYAN))
-	var list_scroll := ScrollContainer.new()
-	list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	list_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	collection_root.add_child(list_scroll)
+	_list_scroll = ScrollContainer.new()
+	_list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_list_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_list_scroll.follow_focus = true
+	_list_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	collection_root.add_child(_list_scroll)
+	SmoothScrollScript.attach(_list_scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 8)
-	list_scroll.add_child(_list)
+	_list_scroll.add_child(_list)
 
 	_detail_panel = PanelContainer.new()
 	_detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -133,15 +144,18 @@ func _build() -> void:
 	_body_grid.add_child(_detail_panel)
 	var detail_margin := MENU.margin(14, 14, 14, 14)
 	_detail_panel.add_child(detail_margin)
-	var detail_scroll := ScrollContainer.new()
-	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	detail_margin.add_child(detail_scroll)
+	_detail_scroll = ScrollContainer.new()
+	_detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_detail_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_detail_scroll.follow_focus = true
+	_detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	detail_margin.add_child(_detail_scroll)
+	SmoothScrollScript.attach(_detail_scroll)
 	_detail = VBoxContainer.new()
 	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail.add_theme_constant_override("separation", 10)
-	detail_scroll.add_child(_detail)
+	_detail_scroll.add_child(_detail)
 
 func _refresh() -> void:
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
@@ -153,27 +167,97 @@ func _refresh() -> void:
 func _refresh_list() -> void:
 	for child in _list.get_children():
 		child.queue_free()
+	_list_buttons.clear()
+	_list_ids.clear()
+	_list_previews.clear()
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
 	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
 	if collection.is_empty():
 		_list.add_child(_label("No Digimon available.", 12, UI.MUTED))
 		return
+	if _selected_id.is_empty() or OverworldState.get_instance_by_id(_selected_id) == null:
+		_selected_id = collection[0].id
 	for instance: DigimonInstance in collection:
 		var species: Dictionary = _database.get_by_seed(instance.species_seed)
-		var name := instance.get_display_name(String(species.get("name", "Unknown")))
 		var active := active_ids.has(instance.id)
-		var location := "PARTY SLOT %d" % (active_ids.find(instance.id) + 1) if active else "STORAGE"
 		var accent := UI.GOLD if active else UI.CYAN
-		var button := MENU.action_button("%s\nLV %d  ·  %s" % [name.to_upper(), instance.level, location], accent, 60)
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.pressed.connect(_select.bind(instance.id))
-		MENU.style_action_button(button, UI.GREEN if instance.id == _selected_id else accent, instance.id == _selected_id)
+		var button := _collection_button(instance, species, active, active_ids, accent)
 		_list.add_child(button)
+		_list_buttons.append(button)
+		_list_ids.append(instance.id)
+	_style_list_selection()
+
+func _collection_button(instance: DigimonInstance, species: Dictionary, active: bool, active_ids: Array[String], accent: Color) -> Button:
+	var button := Button.new()
+	button.text = ""
+	button.focus_mode = Control.FOCUS_ALL
+	button.custom_minimum_size = Vector2(268, 78)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.clip_contents = true
+	button.pressed.connect(_select.bind(instance.id))
+	button.focus_entered.connect(_select.bind(instance.id))
+	button.tooltip_text = "Select %s" % instance.get_display_name(String(species.get("name", "Digimon")))
+	MENU.style_action_button(button, accent, instance.id == _selected_id)
+
+	var margin := MENU.margin(9, 7, 10, 7)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(margin)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 9)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+	var preview := WalkPreviewScript.new() as DigimonWalkPreview
+	preview.custom_minimum_size = Vector2(60, 60)
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	preview.set_species(String(species.get("name", "")))
+	preview.set_active(instance.id == _selected_id)
+	row.add_child(preview)
+	_list_previews.append(preview)
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.add_theme_constant_override("separation", 2)
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(copy)
+	var name := instance.get_display_name(String(species.get("name", "Unknown")))
+	var location := "PARTY SLOT %d" % (active_ids.find(instance.id) + 1) if active else "STORAGE"
+	copy.add_child(_single_line_label(name.to_upper(), 13, UI.TEXT, true))
+	copy.add_child(_single_line_label("LV %d  ·  %s" % [instance.level, location], 10, accent.lightened(0.08), true))
+	copy.add_child(_single_line_label("POT %d  ·  LINK %d" % [instance.potential, instance.link], 9, UI.SUBTLE, true))
+	return button
+
+func _style_list_selection() -> void:
+	var active_ids := OverworldState.get_active_party_ids()
+	for index in range(_list_buttons.size()):
+		var id := _list_ids[index] if index < _list_ids.size() else ""
+		var active := active_ids.has(id)
+		var accent := UI.GOLD if active else UI.CYAN
+		var selected := id == _selected_id
+		MENU.style_action_button(_list_buttons[index], UI.GREEN if selected else accent, selected)
+		if index < _list_previews.size():
+			_list_previews[index].set_active(selected)
+
+func _focus_selected() -> void:
+	if not visible:
+		return
+	for index in range(_list_ids.size()):
+		if _list_ids[index] == _selected_id and index < _list_buttons.size():
+			_list_buttons[index].grab_focus()
+			return
+	if not _list_buttons.is_empty():
+		_list_buttons[0].grab_focus()
 
 func _select(instance_id: String) -> void:
+	if instance_id.is_empty() or OverworldState.get_instance_by_id(instance_id) == null:
+		return
+	if _selected_id == instance_id:
+		_style_list_selection()
+		return
 	_selected_id = instance_id
 	_status_label.text = ""
-	_refresh()
+	_style_list_selection()
+	_refresh_detail()
 
 func _refresh_detail() -> void:
 	for child in _detail.get_children():
@@ -245,10 +329,10 @@ func _refresh_detail() -> void:
 	var meta_row := HBoxContainer.new()
 	meta_row.add_theme_constant_override("separation", 12)
 	meta_margin.add_child(meta_row)
-	var link := _label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, UI.CYAN, true)
+	var link := _single_line_label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, UI.CYAN, true)
 	link.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	meta_row.add_child(link)
-	var potential := _label("POTENTIAL %d / %d" % [instance.potential, DigimonInstance.MAX_POTENTIAL], 10, UI.PURPLE, true)
+	var potential := _single_line_label("POTENTIAL %d / %d" % [instance.potential, DigimonInstance.MAX_POTENTIAL], 10, UI.PURPLE, true)
 	potential.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	meta_row.add_child(potential)
 
@@ -301,7 +385,7 @@ func _stat_chip(stat_name: String, value: int, accent: Color) -> Control:
 	panel.add_theme_stylebox_override("panel", MENU.stat_surface(accent))
 	var margin := MENU.margin(8, 6, 8, 6)
 	panel.add_child(margin)
-	var label := _label("%s  %d" % [stat_name, value], 11, UI.TEXT, true)
+	var label := _single_line_label("%s  %d" % [stat_name, value], 11, UI.TEXT, true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	margin.add_child(label)
 	return panel
@@ -310,21 +394,25 @@ func _add_to_party(instance_id: String) -> void:
 	var ok := OverworldState.add_to_active_party(instance_id)
 	_status_label.text = "Added to active party." if ok else "Could not add this Digimon to the party."
 	_refresh()
+	call_deferred("_focus_selected")
 
 func _remove_from_party(instance_id: String) -> void:
 	var ok := OverworldState.remove_from_active_party(instance_id)
 	_status_label.text = "Moved to Storage." if ok else "At least one Digimon must remain active."
 	_refresh()
+	call_deferred("_focus_selected")
 
 func _swap(active_id: String, reserve_id: String) -> void:
 	var ok := OverworldState.swap_party_with_reserve(active_id, reserve_id)
 	_status_label.text = "Party slot updated." if ok else "Could not swap these Digimon."
 	_refresh()
+	call_deferred("_focus_selected")
 
 func _move(instance_id: String, new_index: int) -> void:
 	var ok := OverworldState.move_active_party_member(instance_id, new_index)
 	_status_label.text = "Party order updated." if ok else "Could not change party order."
 	_refresh()
+	call_deferred("_focus_selected")
 
 func _on_state_changed() -> void:
 	if visible:
@@ -337,26 +425,18 @@ func _on_party_changed(_party: Array) -> void:
 func _layout() -> void:
 	if not visible or _frame == null:
 		return
-	var physical := UI.physical_window_size(get_viewport())
-	var scale_factor := UI.ui_scale(get_viewport())
-	var compact := UI.is_compact(get_viewport(), 840.0)
-	var edge := 12.0 if compact else 18.0
-	var width := minf(1240.0, physical.x - edge * 2.0)
-	var height := minf(760.0, physical.y - edge * 2.0)
-	var origin := Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
-	_frame.scale = Vector2.ONE * scale_factor
-	_frame.position = origin
-	_frame.size = Vector2(width, height)
+	var layout := MENU.apply_safe_frame(_frame, get_viewport(), Vector2(1240, 720), 840.0)
+	var compact := bool(layout.get("compact", false))
 	_body_grid.columns = 1 if compact else 2
 	if compact:
-		_collection_panel.custom_minimum_size = Vector2(0, 185)
-		_detail_panel.custom_minimum_size = Vector2(0, 330)
+		_collection_panel.custom_minimum_size = Vector2(0, 175)
+		_detail_panel.custom_minimum_size = Vector2.ZERO
 	else:
-		_collection_panel.custom_minimum_size = Vector2(300, 0)
-		_detail_panel.custom_minimum_size = Vector2(600, 0)
+		_collection_panel.custom_minimum_size = Vector2(310, 0)
+		_detail_panel.custom_minimum_size = Vector2.ZERO
 
 func _section_label(text: String, accent: Color) -> Label:
-	var label := _label(text, 10, accent.lightened(0.08), true)
+	var label := _single_line_label(text, 10, accent.lightened(0.08), true)
 	label.custom_minimum_size.y = 22
 	return label
 
@@ -369,8 +449,15 @@ func _label(text: String, size: int, color: Color, bold: bool = false) -> Label:
 	label.add_theme_constant_override("outline_size", 2 if size >= 13 else 1)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if bold:
 		UI.apply_heading_font(label)
 	else:
 		UI.apply_body_font(label)
+	return label
+
+func _single_line_label(text: String, size: int, color: Color, bold: bool = false) -> Label:
+	var label := _label(text, size, color, bold)
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	return label
