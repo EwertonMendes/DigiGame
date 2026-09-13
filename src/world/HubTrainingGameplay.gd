@@ -31,9 +31,10 @@ func _build_training_specialist() -> void:
 	_trainer = TrainerActorScript.new() as HubActor
 	_trainer.name = "TrainingSpecialist"
 	_trainer.configure(TRAINER_TEXTURE, false, self, "southwest")
-	# Keep the specialist in the same upper-left service zone as DigiLab, while
-	# leaving enough world-space separation for both labels to read cleanly.
-	_trainer.position = _grid_to_world(Vector2(-3, -1))
+	# Put the specialist close to the upper-left rim, clearly separated from both
+	# DigiLab and the central Battle Operator. Vertical separation also keeps the
+	# long TRAINING SPECIALIST label from ever touching the operator label.
+	_trainer.position = _grid_to_world(Vector2(-5, -3))
 	actors.add_child(_trainer)
 	_blockers.append({"position": _trainer.position, "radius": 28.0})
 	var sprite := _trainer.get_node_or_null("CharacterSprite") as Sprite2D
@@ -140,9 +141,7 @@ func _trainer_has_interaction_priority() -> bool:
 func _is_trainer_nearby() -> bool:
 	if _player == null or _trainer == null:
 		return false
-	var compact := UI.is_compact(get_viewport(), 820.0)
-	var distance := MOBILE_INTERACTION_DISTANCE if DisplayServer.is_touchscreen_available() or compact else INTERACTION_DISTANCE
-	return _player.position.distance_to(_trainer.position) <= distance
+	return _player.position.distance_to(_trainer.position) <= _interaction_distance_for_current_device()
 
 func _layout_ui() -> void:
 	super._layout_ui()
