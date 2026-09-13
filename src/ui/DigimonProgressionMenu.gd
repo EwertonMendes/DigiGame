@@ -1,4 +1,4 @@
-extends "res://src/ui/DigimonRosterMenu.gd"
+extends "res://src/ui/DigimonCollectionMenu.gd"
 class_name DigimonProgressionMenu
 
 const ProgressionUI = preload("res://src/ui/TacticalTheme.gd")
@@ -11,7 +11,6 @@ const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
 var _constellation: EvolutionChart
 var _actions: BattleActionDatabase
 var _menu_root: Control
-
 
 func _build() -> void:
 	super._build()
@@ -30,14 +29,14 @@ func _build() -> void:
 	_menu_root.name = "MenuContent"
 	_menu_root.clip_contents = true
 	_panel.add_child(_menu_root)
-	for control: Control in [_title, _account, _close_button, _roster_panel, _detail_panel]:
+	for control: Control in [_title, _account, _close_button, _collection_panel, _detail_panel]:
 		remove_child(control)
 		_menu_root.add_child(control)
 
 	_configure_close_button(_close_button, "Close Digimon menu")
 
-	_roster_panel.clip_contents = true
-	_roster_panel.add_theme_stylebox_override(
+	_collection_panel.clip_contents = true
+	_collection_panel.add_theme_stylebox_override(
 		"panel",
 		SKIN.frame_style(Color(0.07, 0.12, 0.18, 0.98), Vector4(14, 14, 14, 14), 12.0)
 	)
@@ -47,7 +46,7 @@ func _build() -> void:
 		SKIN.frame_style(Color(0.06, 0.10, 0.17, 0.98), Vector4(16, 16, 16, 16), 12.0)
 	)
 	_detail_scroll.clip_contents = true
-	SmoothScrollScript.attach(_roster_scroll)
+	SmoothScrollScript.attach(_collection_scroll)
 	SmoothScrollScript.attach(_detail_scroll)
 
 	_constellation = EvolutionChartScript.new() as EvolutionChart
@@ -57,16 +56,13 @@ func _build() -> void:
 	_constellation.evolution_applied.connect(_on_evolution_state_changed)
 	add_child(_constellation)
 
-
 func open_menu() -> void:
 	if _constellation != null:
 		_constellation.visible = false
 	super.open_menu()
 
-
 func has_nested_view_open() -> bool:
 	return _constellation != null and _constellation.is_open()
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -77,7 +73,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	super._unhandled_input(event)
-
 
 func _build_hero(instance: DigimonInstance, species: Dictionary) -> Control:
 	var rank := String(species.get("rank", "Unknown"))
@@ -161,7 +156,6 @@ func _build_hero(instance: DigimonInstance, species: Dictionary) -> Control:
 	xp_line.add_child(xp_value)
 	return hero
 
-
 func _build_skills_card(instance: DigimonInstance) -> Control:
 	var card := _section_card("SKILLS", ProgressionUI.GOLD)
 	var body := card.get_meta("body") as VBoxContainer
@@ -171,7 +165,6 @@ func _build_skills_card(instance: DigimonInstance) -> Control:
 		body.add_child(_subheading("LEARNED", ProgressionUI.CYAN))
 		body.add_child(_wrapped_value(_skill_list_copy(instance.learned_skills, ""), ProgressionUI.MUTED))
 	return card
-
 
 func _build_evolution_card(instance: DigimonInstance) -> Control:
 	var card := _section_card("EVOLUTION CHART", ProgressionUI.PURPLE)
@@ -204,7 +197,6 @@ func _build_evolution_card(instance: DigimonInstance) -> Control:
 	body.add_child(open_button)
 	return card
 
-
 func _open_constellation(instance_id: String) -> void:
 	if _constellation == null:
 		return
@@ -213,19 +205,16 @@ func _open_constellation(instance_id: String) -> void:
 		return
 	_constellation.open_for(instance)
 
-
 func _close_constellation() -> void:
 	if _constellation != null:
 		_constellation.visible = false
-	_refresh_roster()
+	_refresh_collection()
 	if not _buttons.is_empty():
 		_buttons[clampi(_selected_index, 0, _buttons.size() - 1)].grab_focus()
 
-
 func _on_evolution_state_changed(_instance: DigimonInstance) -> void:
-	OverworldState.notify_roster_changed()
-	_refresh_roster()
-
+	OverworldState.notify_collection_changed()
+	_refresh_collection()
 
 func _section_card(title: String, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -246,7 +235,6 @@ func _section_card(title: String, accent: Color) -> PanelContainer:
 	panel.set_meta("body", body)
 	return panel
 
-
 func _stat_tile(label_text: String, value: int, accent: Color) -> Control:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(100.0, 62.0)
@@ -265,14 +253,12 @@ func _stat_tile(label_text: String, value: int, accent: Color) -> Control:
 	box.add_child(_label(str(value), 18, ProgressionUI.TEXT, true))
 	return panel
 
-
 func _chip(text: String, accent: Color) -> Label:
 	# Chips are deliberately typographic here. Decorative micro-frames made the
 	# text cramped; the surrounding surfaces already provide the Kenney chrome.
 	var label := _label(text, 9, accent.lightened(0.14), true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
-
 
 func _button(text: String, accent: Color) -> Button:
 	var button := Button.new()
@@ -281,7 +267,6 @@ func _button(text: String, accent: Color) -> Button:
 	button.add_theme_font_size_override("font_size", 12)
 	SKIN.apply_button(button, accent)
 	return button
-
 
 func _configure_close_button(button: Button, tooltip: String) -> void:
 	if button == null:
@@ -293,8 +278,7 @@ func _configure_close_button(button: Button, tooltip: String) -> void:
 	button.tooltip_text = tooltip
 	button.custom_minimum_size = Vector2(44.0, 44.0)
 
-
-func _style_roster_button(button: Button, selected: bool, rank_color: Color) -> void:
+func _style_collection_button(button: Button, selected: bool, rank_color: Color) -> void:
 	var accent := ProgressionUI.GOLD if selected else rank_color
 	SKIN.apply_button(button, accent)
 	if selected:
@@ -302,7 +286,6 @@ func _style_roster_button(button: Button, selected: bool, rank_color: Color) -> 
 			"normal",
 			SKIN.border_style(ProgressionUI.GOLD, Vector4(14, 10, 14, 10), 10.0)
 		)
-
 
 func _mini_progress(accent: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
@@ -316,7 +299,6 @@ func _mini_progress(accent: Color) -> ProgressBar:
 	bar.add_theme_stylebox_override("fill", SKIN.progress_fill_style(accent))
 	return bar
 
-
 func _skill_list_copy(skill_ids: Array[String], empty_copy: String) -> String:
 	if skill_ids.is_empty():
 		return empty_copy
@@ -325,7 +307,6 @@ func _skill_list_copy(skill_ids: Array[String], empty_copy: String) -> String:
 		names.append(_skill_display_name(skill_id))
 	return ", ".join(names)
 
-
 func _skill_display_name(skill_id: String) -> String:
 	if _actions != null:
 		var action := _actions.get_action(skill_id)
@@ -333,7 +314,6 @@ func _skill_display_name(skill_id: String) -> String:
 		if not display_name.is_empty():
 			return display_name
 	return skill_id.replace("_", " ").capitalize()
-
 
 func _layout() -> void:
 	if _panel == null or _menu_root == null:
@@ -363,29 +343,29 @@ func _layout() -> void:
 	_close_button.size = Vector2(44.0, 44.0)
 
 	if compact:
-		var roster_h := minf(196.0, height * 0.29)
-		_roster_panel.position = Vector2(20.0, header_h)
-		_roster_panel.size = Vector2(width - 40.0, roster_h)
-		_detail_panel.position = Vector2(20.0, header_h + roster_h + 14.0)
-		_detail_panel.size = Vector2(width - 40.0, height - header_h - roster_h - 34.0)
-		_roster_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		_roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		_roster_grid.columns = 2 if width < 620.0 else 3
+		var collection_h := minf(196.0, height * 0.29)
+		_collection_panel.position = Vector2(20.0, header_h)
+		_collection_panel.size = Vector2(width - 40.0, collection_h)
+		_detail_panel.position = Vector2(20.0, header_h + collection_h + 14.0)
+		_detail_panel.size = Vector2(width - 40.0, height - header_h - collection_h - 34.0)
+		_collection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_collection_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_collection_grid.columns = 2 if width < 620.0 else 3
 	else:
-		var roster_w := clampf(width * 0.245, 270.0, 310.0)
+		var collection_w := clampf(width * 0.245, 270.0, 310.0)
 		var left := 20.0
 		var gap := 16.0
 		var right := 20.0
-		var detail_x := left + roster_w + gap
-		_roster_panel.position = Vector2(left, header_h)
-		_roster_panel.size = Vector2(roster_w, height - header_h - 20.0)
+		var detail_x := left + collection_w + gap
+		_collection_panel.position = Vector2(left, header_h)
+		_collection_panel.size = Vector2(collection_w, height - header_h - 20.0)
 		_detail_panel.position = Vector2(detail_x, header_h)
 		_detail_panel.size = Vector2(width - detail_x - right, height - header_h - 20.0)
-		_roster_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		_roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		_roster_grid.columns = 1
+		_collection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_collection_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_collection_grid.columns = 1
 
-	_roster_panel.clip_contents = true
+	_collection_panel.clip_contents = true
 	_detail_panel.clip_contents = true
 	_apply_adaptive_detail_layout(compact)
 	if compact != _last_compact:
