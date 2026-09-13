@@ -14,18 +14,13 @@ const TRACK_BATTLE_1 := "battle_1"
 const DEFAULT_CROSSFADE_SECONDS := 0.55
 const SILENT_VOLUME_DB := -60.0
 
-# Static preloads are intentional: Godot's exporter can see these dependencies
-# and therefore includes the Ogg files in desktop and Web builds.
-const ZONE_1_STREAM = preload("res://assets/audio/music/zone_1.ogg")
-const BATTLE_1_STREAM = preload("res://assets/audio/music/battle_1.ogg")
-
 const TRACKS := {
 	TRACK_ZONE_1: {
-		"stream": ZONE_1_STREAM,
+		"path": "res://assets/audio/music/zone_1.ogg",
 		"volume_db": -8.0,
 	},
 	TRACK_BATTLE_1: {
-		"stream": BATTLE_1_STREAM,
+		"path": "res://assets/audio/music/battle_1.ogg",
 		"volume_db": -10.5,
 	},
 }
@@ -77,7 +72,6 @@ func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECOND
 	var previous_player: AudioStreamPlayer = _players[previous_index] if previous_index >= 0 else null
 	var target_volume := float((TRACKS[track_id] as Dictionary).get("volume_db", -8.0))
 
-	# Reusing the inactive player also cleans up an interrupted older crossfade.
 	if next_player.playing:
 		next_player.stop()
 	next_player.stream = stream
@@ -139,12 +133,18 @@ func _stream_for(track_id: String) -> AudioStream:
 		return _stream_cache[track_id] as AudioStream
 
 	var definition := TRACKS[track_id] as Dictionary
-	var source := definition.get("stream") as AudioStream
+	var path := str(definition.get("path", ""))
+	if path.is_empty():
+		return null
+
+	# Keep loading runtime-based instead of preload-based: during a clean Godot
+	# import, the Ogg importer has not registered the resource yet when autoload
+	# scripts are first parsed. By _ready/runtime the import exists and ResourceLoader
+	# can resolve the file normally on desktop and Web.
+	var source := ResourceLoader.load(path) as AudioStream
 	if source == null:
 		return null
 
-	# Duplicate so loop configuration belongs to this director instead of mutating
-	# the imported shared resource globally.
 	var stream := source.duplicate() as AudioStream
 	if stream is AudioStreamOggVorbis:
 		(stream as AudioStreamOggVorbis).loop = true
