@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Materialize exact DS source rectangles from the reviewed semantic map.
+"""Materialize canonical DS directions and walk phases from reviewed source conventions.
 
-This is intentionally a two-phase pipeline:
-1. database/ds-direction-review-map.json is the human-reviewed semantic truth.
-2. this script fresh-downloads the original WtW archive and turns each reviewed
-   source convention into exact x/y/w/h rectangles plus a pinned source SHA-256.
+The pipeline deliberately separates two concerns:
+1. database/ds-direction-review-map.json classifies the authored *sheet convention*
+   (where DL/DR/UL/UR groups live in the original DS art).
+2. this script fresh-downloads the WtW archive, extracts those authored groups,
+   and derives right-facing walk-phase order by deterministic mirrored-pose
+   comparison against the corresponding left-facing frames.
 
-No runtime species workaround exists here. Row/group detection finds authored
-movement groups; the reviewed data classifies the source-sheet convention and
-this materializer always emits one canonical runtime direction contract.
+There are no runtime species conditionals, no per-Digimon facing flips, and no
+per-species walk-phase overrides. Every source convention materializes into the
+same canonical runtime contract: DL, DR, UL, UR × idle, step_a, step_b.
 """
 from __future__ import annotations
 
@@ -28,6 +30,7 @@ REVIEW_MAP = Path("database/ds-direction-review-map.json")
 REGISTRY = Path("database/ds-direction-registry.json")
 DIRECTION_ORDER = ("down_left", "down_right", "up_left", "up_right")
 PHASE_ORDER = ("idle", "step_a", "step_b")
+DIRECTION_PAIRS = (("down_left", "down_right"), ("up_left", "up_right"))
 
 
 def sha256(data: bytes) -> str:
@@ -95,6 +98,7 @@ def pose_match_candidates(
     left_boxes: list[dict[str, int]],
     right_boxes: list[dict[str, int]],
 ) -> list[tuple[int, tuple[int, int, int]]]:
+    """Rank every right-frame permutation against mirrored left-frame poses."""
     left, right = comparison_cells(image, background, left_boxes, right_boxes)
     candidates: list[tuple[int, tuple[int, int, int]]] = []
     for permutation in itertools.permutations(range(3)):
@@ -106,17 +110,8 @@ def pose_match_candidates(
             candidate = np.asarray(right[source_index], dtype=np.int16)
             cost += int(np.abs(mirrored - candidate).sum())
         candidates.append((cost, permutation))
-    candidates.sort()
+    candidates.sort(key=lambda item: (item[0], item[1]))
     return candidates
-
-
-def reviewed_phase_order(review: dict[str, Any], name: str, direction: str) -> list[int]:
-    default = review["default_source_phase_order"][direction]
-    override = review.get("source_phase_overrides", {}).get(name, {}).get(direction, default)
-    order = [int(index) for index in override]
-    if sorted(order) != [0, 1, 2]:
-        raise RuntimeError(f"{name} {direction}: invalid source phase order {order}")
-    return order
 
 
 def candidate_groups(image: Image.Image) -> tuple[tuple[int, int, int], list[list[dict[str, float]]]]:
@@ -134,8 +129,10 @@ def candidate_groups(image: Image.Image) -> tuple[tuple[int, int, int], list[lis
     return background, groups
 
 
-def authored_groups(image: Image.Image, sprite_id: int) -> tuple[tuple[int, int, int], list[list[dict[str, int]]], str]:
-    """Find four source movement triples without assigning direction semantics."""
+def authored_groups(
+    image: Image.Image, sprite_id: int
+) -> tuple[tuple[int, int, int], list[list[dict[str, int]]], str]:
+    """Find four authored movement triples without assigning direction semantics."""
     background, groups = candidate_groups(image)
 
     six_rows = [group for group in groups if len(group) == 6]
@@ -144,7 +141,8 @@ def authored_groups(image: Image.Image, sprite_id: int) -> tuple[tuple[int, int,
         raw = [rows[0][:3], rows[0][3:6], rows[1][:3], rows[1][3:6]]
         return background, [[exact_box(item) for item in group] for group in raw], "two_rows_of_six"
 
-    # Kudamon includes additional poses on the movement rows.
+    # Kudamon carries extra poses on the same rows. This is a structural crop
+    # rule only; direction semantics still come from the reusable source pattern.
     if sprite_id == 72:
         movement_rows = [group for group in groups if len(group) >= 6]
         movement_rows = sorted(
@@ -157,9 +155,8 @@ def authored_groups(image: Image.Image, sprite_id: int) -> tuple[tuple[int, int,
         raw = [rows[0][:3], rows[0][3:6], rows[1][:3], rows[1][3:6]]
         return background, [[exact_box(item) for item in group] for group in raw], "kudamon_two_rows"
 
-    # Compact sheets have one authored movement triple per row. Detection finds
-    # the four triples only; source semantics come from a reusable convention in
-    # ds-direction-review-map.json (for example DL/UL/DR/UR or DL/UR/DR/UL).
+    # Compact sheets place one movement triple per row on the right. Detection
+    # finds the four triples; the review map supplies the reusable source order.
     triples: list[tuple[float, float, list[dict[str, float]]]] = []
     for group in groups:
         if len(group) < 3:
@@ -198,10 +195,16 @@ def load_review_map() -> dict[str, Any]:
         raise RuntimeError("Review map canonical reference must be Agumon")
     if data.get("canonical_runtime_order") != list(DIRECTION_ORDER):
         raise RuntimeError("Review map runtime order does not match DigiGame")
-    if data.get("schema_version", 0) < 2:
-        raise RuntimeError("Review map does not define canonical frame phases")
+    if data.get("schema_version", 0) < 4:
+        raise RuntimeError("Review map must use convention-driven direction/phase schema v4+")
     if data.get("canonical_runtime_phases") != list(PHASE_ORDER):
         raise RuntimeError("Review map phase order must be idle, step_a, step_b")
+    if data.get("left_source_phase_order") != [0, 1, 2]:
+        raise RuntimeError("Left-facing authored triples must define idle/step_a/step_b as [0,1,2]")
+    if data.get("right_phase_policy") != "deterministic_mirror_pose_match":
+        raise RuntimeError("Right-facing phases must use deterministic mirror-pose matching")
+    if "source_phase_overrides" in data:
+        raise RuntimeError("Per-species source phase overrides are not allowed")
 
     species = data.get("species", {})
     if set(species) != set(WTW_IDS):
@@ -238,23 +241,9 @@ def load_review_map() -> dict[str, Any]:
             raise RuntimeError(
                 f"{name}: regression convention {pattern_name} differs from species convention {species[name]}"
             )
-
-    defaults = data.get("default_source_phase_order", {})
-    if set(defaults) != set(DIRECTION_ORDER):
-        raise RuntimeError("Review map must define a default phase order for every direction")
-    for direction, order in defaults.items():
-        if sorted(order) != [0, 1, 2]:
-            raise RuntimeError(f"Invalid default source phase order {direction}: {order}")
-
-    overrides = data.get("source_phase_overrides", {})
-    if not set(overrides).issubset(WTW_IDS):
-        raise RuntimeError(f"Unknown phase override species: {sorted(set(overrides) - set(WTW_IDS))}")
-    for name, directions in overrides.items():
-        if not set(directions).issubset(DIRECTION_ORDER):
-            raise RuntimeError(f"{name}: unknown phase override direction")
-        for direction, order in directions.items():
-            if sorted(order) != [0, 1, 2]:
-                raise RuntimeError(f"{name} {direction}: invalid phase override {order}")
+    if set(regressions.values()) != set(patterns):
+        missing = sorted(set(patterns) - set(regressions.values()))
+        raise RuntimeError(f"Every source convention needs a regression representative; missing={missing}")
 
     phase_regressions = data.get("phase_regression_cases", {})
     if not set(phase_regressions).issubset(species):
@@ -269,6 +258,7 @@ def main() -> None:
     review_bytes = REVIEW_MAP.read_bytes()
     archive = load_wtw_archive()  # fresh download on every materialization run
     registry_species: dict[str, Any] = {}
+    left_phase_order = list(review["left_source_phase_order"])
 
     for name, sprite_id in sorted(WTW_IDS.items(), key=lambda item: item[1]):
         member = source_member(archive, sprite_id)
@@ -279,7 +269,7 @@ def main() -> None:
             raise RuntimeError(f"{name}: structural extraction did not yield 4x3 movement frames")
 
         pattern_name = str(review["species"][name])
-        permutation = list(review["patterns"].get(pattern_name, []))
+        permutation = [int(index) for index in review["patterns"].get(pattern_name, [])]
         if sorted(permutation) != [0, 1, 2, 3]:
             raise RuntimeError(f"{name}: unknown/invalid reviewed pattern {pattern_name}")
 
@@ -287,38 +277,38 @@ def main() -> None:
             direction: groups[permutation[index]]
             for index, direction in enumerate(DIRECTION_ORDER)
         }
-        source_frame_order = {
-            direction: reviewed_phase_order(review, name, direction)
-            for direction in DIRECTION_ORDER
+        source_frame_order: dict[str, list[int]] = {
+            "down_left": list(left_phase_order),
+            "up_left": list(left_phase_order),
+            "down_right": [],
+            "up_right": [],
         }
         pose_alignment: dict[str, Any] = {}
-        for left_direction, right_direction in (("down_left", "down_right"), ("up_left", "up_right")):
+
+        for left_direction, right_direction in DIRECTION_PAIRS:
             candidates = pose_match_candidates(
                 image,
                 background,
                 raw_frames[left_direction],
                 raw_frames[right_direction],
             )
-            chosen = tuple(source_frame_order[right_direction])
-            chosen_cost = next(cost for cost, order in candidates if order == chosen)
-            best_cost = candidates[0][0]
-            if chosen_cost != best_cost:
-                raise RuntimeError(
-                    f"{name} {right_direction}: reviewed phase order {chosen} costs {chosen_cost}, "
-                    f"but deterministic mirror-pose match prefers {candidates[0][1]} at {best_cost}"
-                )
+            best_cost, best_order = candidates[0]
+            source_frame_order[right_direction] = list(best_order)
+            equivalent_best = sum(1 for cost, _ in candidates if cost == best_cost)
             pose_alignment[right_direction] = {
                 "compared_with": left_direction,
-                "source_phase_order": list(chosen),
-                "pixel_error": chosen_cost,
-                "confidence_margin": candidates[1][0] - candidates[0][0],
+                "policy": review["right_phase_policy"],
+                "source_phase_order": list(best_order),
+                "pixel_error": best_cost,
+                "confidence_margin": candidates[1][0] - best_cost,
+                "equivalent_best_count": equivalent_best,
             }
 
         frames = {
             direction: [raw_frames[direction][source_index] for source_index in source_frame_order[direction]]
             for direction in DIRECTION_ORDER
         }
-        source_group_order = expected_source_group_order([int(index) for index in permutation])
+        source_group_order = expected_source_group_order(permutation)
         if source_group_order != review["pattern_source_group_order"][pattern_name]:
             raise RuntimeError(
                 f"{name}: materialized source order {source_group_order} differs from "
@@ -346,8 +336,7 @@ def main() -> None:
             f"source_order={source_group_order} phases={source_frame_order}"
         )
 
-    # Direction and phase regression truth is itself data-driven. The Python
-    # materializer intentionally contains no species-specific direction list.
+    # Regression truth is data-driven; Python contains no species-facing table.
     for name, pattern_name in review.get("regression_cases", {}).items():
         expected = list(review["patterns"][pattern_name])
         actual = registry_species[name]["runtime_group_indices"]
@@ -363,12 +352,16 @@ def main() -> None:
             raise RuntimeError(f"Phase regression changed for {name}: expected {expected}, got {actual}")
 
     payload = {
-        "schema_version": 3,
+        "schema_version": 4,
         "canonical_reference": "Agumon",
         "canonical_runtime_order": list(DIRECTION_ORDER),
         "frames_per_direction": 3,
         "canonical_runtime_phases": list(PHASE_ORDER),
-        "source_policy": "fresh-download source; reviewed reusable source conventions; reviewed per-direction phase order; deterministic mirror-pose verification; uniform bottom-center runtime anchor",
+        "source_policy": (
+            "fresh-download source; reviewed reusable direction conventions; "
+            "left authored phase order; deterministic mirrored-pose derivation for right phases; "
+            "uniform bottom-center runtime anchor"
+        ),
         "review_map": "database/ds-direction-review-map.json",
         "review_map_sha256": sha256(review_bytes),
         "species_count": len(registry_species),
@@ -377,7 +370,7 @@ def main() -> None:
     if len(registry_species) != 82:
         raise RuntimeError(f"Expected 82 official WtW species, got {len(registry_species)}")
     REGISTRY.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"wrote {REGISTRY}: 82/82 species with exact audited direction, phase, and anchor data")
+    print(f"wrote {REGISTRY}: 82/82 species with canonical direction, phase, and anchor data")
 
 
 if __name__ == "__main__":
