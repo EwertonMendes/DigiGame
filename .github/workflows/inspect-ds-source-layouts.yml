@@ -49,7 +49,6 @@ jobs:
           git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/digimon-sprite-manager
           python3 - <<'PY'
           import json
-          import os
           import sys
           from pathlib import Path
 
@@ -59,10 +58,36 @@ jobs:
           import config
           from core import downloader, baker
 
+          ISO_DIRS = ('down_left', 'down_right', 'up_left', 'up_right')
           roster = {row['name'] for row in json.loads(Path('/tmp/ds-exact-source-audit/manifest.json').read_text())}
           root = manager / 'specs' / 'digimon'
           specs = {}
-          selected = []
+          candidates = {}
+
+          def resolved_walk(data, direction):
+              walk = (data.get('clips') or {}).get('walk') or {}
+              mirror = data.get('mirror') or {}
+              if walk.get(direction):
+                  return list(walk[direction]), False
+              source = mirror.get(direction)
+              if source and walk.get(source):
+                  return list(walk[source]), True
+              return [], False
+
+          def candidate_score(data):
+              authored = 0
+              frame_total = 0
+              for direction in ISO_DIRS:
+                  ids, mirrored = resolved_walk(data, direction)
+                  if not ids:
+                      return None
+                  frame_total += len(ids)
+                  if not mirrored:
+                      authored += 1
+              # Prefer four explicitly authored directions; then richer frame
+              # coverage. Stable id tie-break keeps selection deterministic.
+              return (authored, frame_total, int(data.get('id') or 0))
+
           for path in sorted(root.glob('*.extract.json')):
               data = json.loads(path.read_text(encoding='utf-8'))
               name = str(data.get('creature_name', '')).strip()
@@ -83,14 +108,16 @@ jobs:
               }
               specs.setdefault(name, []).append(record)
               if name in roster:
-                  selected.append((name, path, data))
+                  score = candidate_score(data)
+                  if score is not None:
+                      current = candidates.get(name)
+                      if current is None or score > current[0]:
+                          candidates[name] = (score, path, data)
+
+          selected = [(name, item[1], item[2]) for name, item in sorted(candidates.items())]
           out = Path('/tmp/ds-exact-source-audit/manager-specs.json')
           out.write_text(json.dumps(specs, indent=2) + '\n', encoding='utf-8')
 
-          # Download only the raw Spriters Resource sheets referenced by the
-          # overlapping reviewed specs, then bake exactly what their authored
-          # direction/temporal assignments say. This provides an independent
-          # semantic oracle to match against the WtW archive by pixels.
           config.ensure_dirs()
           downloader.fetch_gallery(log=lambda *_: None)
           urls = dict(downloader.derive_urls(log=lambda *_: None))
@@ -120,10 +147,19 @@ jobs:
                   'spec_file': path.name,
                   'sheet_id': data.get('sheet_id'),
                   'file': renamed.name,
+                  'resolved_walk': {
+                      direction: {
+                          'ids': resolved_walk(data, direction)[0],
+                          'mirrored': resolved_walk(data, direction)[1],
+                      }
+                      for direction in ISO_DIRS
+                  },
                   'result': result,
               })
           (baked_dir / 'manifest.json').write_text(json.dumps(baked_manifest, indent=2, default=str) + '\n')
-          print(f'exported {len(specs)} named specs; baked {len(baked_manifest)} roster-overlap specs')
+          missing = sorted(roster - set(candidates))
+          (baked_dir / 'missing-roster-specs.json').write_text(json.dumps(missing, indent=2) + '\n')
+          print(f'exported {len(specs)} named specs; baked {len(baked_manifest)} complete roster-overlap specs; missing={len(missing)}')
           PY
       - name: Render all final DS runtime direction strips
         run: python3 tools/render_generated_ds_direction_audit.py
