@@ -22,12 +22,12 @@ func migrate(raw_data: Dictionary) -> Dictionary:
 
 func _migrate_unversioned(data: Dictionary) -> Dictionary:
 	var roster: Dictionary = {}
-	var existing_roster = data.get("roster", {})
-	if existing_roster is Dictionary:
+	var existing_roster = data.get("roster")
+	if data.has("roster") and existing_roster is Dictionary:
 		roster = (existing_roster as Dictionary).duplicate(true)
 	else:
 		roster = {
-			"instances": data.get("ownedDigimon", []),
+			"instances": data.get("ownedDigimon", data.get("instances", [])),
 			"activePartyIds": data.get("activePartyIds", []),
 			"bits": data.get("bits", 0),
 			"digiData": data.get("digiData", {}),
