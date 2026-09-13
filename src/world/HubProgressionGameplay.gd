@@ -30,7 +30,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_close_digimon_menu()
 			get_viewport().set_input_as_handled()
 		return
-	if not _dialog_open and not _transitioning and _is_interact_event(event) and _is_digilab_nearby():
+	# Battle Operator keeps priority when interaction radii ever overlap. This
+	# preserves the Hub's primary test-battle flow while still allowing DigiLab
+	# interaction everywhere else.
+	if not _dialog_open and not _transitioning and _is_interact_event(event) and _is_digilab_nearby() and not _is_operator_nearby():
 		_open_digilab()
 		get_viewport().set_input_as_handled()
 		return
@@ -65,7 +68,10 @@ func _build_digilab_terminal() -> void:
 		return
 	_digilab_terminal = Node2D.new()
 	_digilab_terminal.name = "DigiLabTerminal"
-	_digilab_terminal.position = _grid_to_world(Vector2(2, 3))
+	# Keep the terminal away from the spawn/Operator interaction cluster. (-3, 3)
+	# is inside the playable island, clear of existing props, and requires a
+	# deliberate walk to the DigiLab instead of stealing the initial E/Enter.
+	_digilab_terminal.position = _grid_to_world(Vector2(-3, 3))
 	_digilab_terminal.z_index = 960 + int(round(_digilab_terminal.position.y))
 	actors.add_child(_digilab_terminal)
 	var base := Sprite2D.new()
@@ -169,6 +175,11 @@ func _refresh_interaction() -> void:
 		return
 	if _digilab_open or _menu_open or _dialog_open:
 		_interaction_prompt.visible = false
+		return
+	# Match input priority: the primary Battle Operator interaction wins if two
+	# usable objects are ever simultaneously within range.
+	if _is_operator_nearby():
+		super._refresh_interaction()
 		return
 	if _is_digilab_nearby():
 		_interaction_prompt.visible = true
