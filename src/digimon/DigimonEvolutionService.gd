@@ -42,6 +42,27 @@ func degenerate(instance: DigimonInstance, target_seed: String, database: Digimo
 	return _apply_transition(instance, target_seed, database, calculator, true)
 
 
+func force_digivolve_for_debug(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator) -> bool:
+	return _force_transition_for_debug(instance, target_seed, database, calculator, false)
+
+
+func force_degenerate_for_debug(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator) -> bool:
+	return _force_transition_for_debug(instance, target_seed, database, calculator, true)
+
+
+func _force_transition_for_debug(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator, degenerating: bool) -> bool:
+	if instance == null or database == null or calculator == null:
+		return false
+	var current_species := database.get_by_seed(instance.species_seed)
+	if current_species.is_empty() or database.get_by_seed(target_seed).is_empty():
+		return false
+	# Debug bypasses requirements, never graph topology. This keeps the tool useful
+	# for testing the real transition pipeline without allowing impossible species jumps.
+	if _find_route(current_species, target_seed, degenerating).is_empty():
+		return false
+	return _apply_transition(instance, target_seed, database, calculator, degenerating)
+
+
 func _can_transition(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator, degenerating: bool, context: Dictionary) -> bool:
 	if instance == null or database == null or calculator == null:
 		return false
