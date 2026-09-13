@@ -49,12 +49,15 @@ func _ready() -> void:
 	assert(player.position.distance_to(operator.position) <= 94.0, "Operator must be reachable from spawn immediately")
 	assert(bool(hub.call("can_actor_move_to", player.position, player)), "Spawn must be walkable")
 
-	await _assert_training_center_entry(hub, player, trainer, training_screen)
+	# Keep the pre-existing Hub baseline isolated from the Training regression.
+	# The trainer check teleports the player on purpose; running it after follower
+	# invariants prevents the new test from mutating trail state before baseline QA.
 	_assert_authored_and_mirrored_rows(player)
 	_assert_eight_direction_facing(player)
 	_assert_walk_sequence(player)
 	_assert_legacy_hub_facings(player)
 	await _assert_overworld_active_party(player, party_followers)
+	await _assert_training_center_entry(hub, player, trainer, training_screen)
 
 	hub.call("open_test_battle_dialog")
 	await get_tree().process_frame
