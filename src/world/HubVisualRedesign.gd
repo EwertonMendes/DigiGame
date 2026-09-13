@@ -1,6 +1,7 @@
 extends "res://src/world/HubController.gd"
 
 const ART = preload("res://src/world/DevilsWorkshopArt.gd")
+const AreaTitleOverlayScript = preload("res://src/ui/AreaTitleOverlay.gd")
 
 const PLATFORM_MIN := -6
 const PLATFORM_MAX := 6
@@ -8,6 +9,8 @@ const WATER_MIN := -8
 const WATER_MAX := 8
 const LOWER_LEVEL_OFFSET := 24.0
 const PLATFORM_SKIRT_DEPTH := 24.0
+const AREA_TITLE := "Terminal Commons"
+const AREA_SUBTITLE := "Testing Lab"
 
 # The surface palette is intentionally calmer than the source cubes. Characters
 # and interaction VFX stay readable while the pack still provides pixel detail.
@@ -24,6 +27,59 @@ const WATER_BASE := Color(0.055, 0.29, 0.37, 1.0)
 const WATER_DETAIL := Color(0.72, 0.94, 1.0, 1.0)
 const SKIRT_LEFT := Color(0.14, 0.27, 0.18, 1.0)
 const SKIRT_RIGHT := Color(0.10, 0.22, 0.16, 1.0)
+
+var _area_title_overlay: AreaTitleOverlay = null
+
+
+func _build_actors() -> void:
+	super._build_actors()
+
+	# The old animated test portal sat directly behind the Battle Operator and
+	# read visually like a ring attached to the NPC. Keep the technical node for
+	# compatibility/debug tooling, but make the operator the only visible battle
+	# interaction anchor in the Hub.
+	var portal := get_node_or_null("Actors/TestBattlePortal") as Node2D
+	if portal != null:
+		portal.visible = false
+		portal.process_mode = Node.PROCESS_MODE_DISABLED
+
+	if _operator != null:
+		var previous_operator_position := _operator.position
+		_operator.position = _grid_to_world(Vector2.ZERO)
+		_operator.z_index = 1000 + int(round(_operator.position.y))
+		for index in range(_blockers.size()):
+			var blocker_position := Vector2(_blockers[index].get("position", Vector2.ZERO))
+			var blocker_radius := float(_blockers[index].get("radius", 0.0))
+			if blocker_position.is_equal_approx(previous_operator_position) and is_equal_approx(blocker_radius, 30.0):
+				_blockers[index]["position"] = _operator.position
+				break
+
+	# Keep the initial interaction immediately reachable after moving the Battle
+	# Operator to the visual center of the commons.
+	if _player != null:
+		_player.position = _grid_to_world(Vector2(2, 2))
+		_player.z_index = 1000 + int(round(_player.position.y))
+
+
+func _build_ui() -> void:
+	super._build_ui()
+
+	# Retire the persistent prototype panel without disturbing the interaction
+	# systems that still update its old objective label internally.
+	if _location_panel != null:
+		_location_panel.visible = false
+
+	if _ui_root == null:
+		return
+	_area_title_overlay = AreaTitleOverlayScript.new() as AreaTitleOverlay
+	_area_title_overlay.name = "AreaTitleOverlay"
+	_ui_root.add_child(_area_title_overlay)
+	call_deferred("_announce_current_area")
+
+
+func _announce_current_area() -> void:
+	if _area_title_overlay != null:
+		_area_title_overlay.present(AREA_TITLE, AREA_SUBTITLE, 1.75)
 
 
 # The old hub animated whole terrain sprites. Terrain is intentionally stable;

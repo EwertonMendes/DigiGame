@@ -6,7 +6,8 @@ const PORTRAIT_EDGE := 24.0
 const PORTRAIT_BOTTOM := 30.0
 const LANDSCAPE_EDGE := 18.0
 const LANDSCAPE_BOTTOM := 18.0
-const MOBILE_INTERACTION_DISTANCE := 128.0
+const DESKTOP_INTERACTION_DISTANCE := 64.0
+const MOBILE_INTERACTION_DISTANCE := 80.0
 
 var _touch_joystick: Control = null
 var _last_touch_marker := ""
@@ -246,14 +247,17 @@ func _release_touch_movement() -> void:
 	_last_touch_marker = ""
 
 
-func _is_operator_nearby() -> bool:
-	if _player == null or _operator == null:
-		return false
+func _interaction_distance_for_current_device() -> float:
 	var viewport_obj := get_viewport()
 	var compact := UI.is_compact(viewport_obj, 820.0)
 	var touch_layout := DisplayServer.is_touchscreen_available() or compact
-	var distance := MOBILE_INTERACTION_DISTANCE if touch_layout else INTERACTION_DISTANCE
-	return _player.position.distance_to(_operator.position) <= distance
+	return MOBILE_INTERACTION_DISTANCE if touch_layout else DESKTOP_INTERACTION_DISTANCE
+
+
+func _is_operator_nearby() -> bool:
+	if _player == null or _operator == null:
+		return false
+	return _player.position.distance_to(_operator.position) <= _interaction_distance_for_current_device()
 
 
 func _control_contains_viewport_point(control: Control, viewport_pos: Vector2, padding: float = 0.0) -> bool:
