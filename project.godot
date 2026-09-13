@@ -15,6 +15,7 @@ GlobalVariables="*res://src/GlobalVariables.gd"
 OverworldState="*res://src/state/OverworldState.gd"
 DigiUiRuntime="*res://src/ui/DigiUiRuntime.gd"
 DigitalSceneTransition="*res://src/ui/DigitalSceneTransition.gd"
+MusicDirector="*res://src/audio/MusicDirector.gd"
 
 [display]
 
