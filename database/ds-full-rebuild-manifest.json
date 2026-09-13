@@ -1402,13 +1402,13 @@
       "source": "sprite thread/069_PawnChessmonBlack.png",
       "source_sha256": "fbf1796436d57e08443c7496bcda792d121c9641f91b4f605f025b2839961217",
       "runtime_group_indices": [
-        1,
         0,
-        2,
-        3
+        1,
+        3,
+        2
       ],
       "output": "assets/characters/pawnchessmonblack/field.png",
-      "output_sha256": "f7a0304e030c866b9d144b80619d4dcebfccb1882c6f77d953ac26727a371345",
+      "output_sha256": "cf2d5c6f0c101596328b98ffbbd456319e1c25ca8208593193e18a0d0bf49320",
       "cell": [
         32,
         34
@@ -1420,13 +1420,13 @@
       "source": "sprite thread/075_PawnChessmonWhite.png",
       "source_sha256": "25ee84b00115ddbb1e6355456a9278b193e713ccd5b5c6c36e18f803c8fd6ba0",
       "runtime_group_indices": [
-        1,
         0,
-        2,
-        3
+        1,
+        3,
+        2
       ],
       "output": "assets/characters/pawnchessmonwhite/field.png",
-      "output_sha256": "d872e89a8dfe3d32af29676698ee8dda9312a7ca12562f9bda7727705a7e582a",
+      "output_sha256": "732763f1b8cb38e73d2a6a5632ecf3e3e1d43e883ed35a312d2e7d097bc9691d",
       "cell": [
         32,
         35
@@ -1456,13 +1456,13 @@
       "source": "sprite thread/048_Renamon.png",
       "source_sha256": "e8371b7d349a4f20579e6f25820e098a24b64d833ae9c62255d5040291a18d6e",
       "runtime_group_indices": [
-        1,
         0,
-        2,
-        3
+        1,
+        3,
+        2
       ],
       "output": "assets/characters/renamon/field.png",
-      "output_sha256": "71e34acad29581a228630d78ed8bc98857f2723c4850fef332267038cc0ae20c",
+      "output_sha256": "da4acbb44e8cdaaae9110a5dbbc2266bb38485803759dd7c86d133eaa7e9cd74",
       "cell": [
         32,
         38
