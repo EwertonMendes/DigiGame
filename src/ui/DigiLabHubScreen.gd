@@ -11,6 +11,12 @@ const DigimonMenuScript = preload("res://src/ui/DigimonProgressionMenu.gd")
 const CLOSE_ICON := preload("res://assets/ui/icons/cancel.svg")
 
 var _frame: PanelContainer
+var _menu_root: Control
+var _title: Label
+var _subtitle: Label
+var _hint: Label
+var _divider: ColorRect
+var _modules: VBoxContainer
 var _close: Button
 var _create_screen: DigiLabScreen
 var _party_screen: PartyStorageScreen
@@ -31,6 +37,7 @@ func open_lab() -> void:
 	_hide_nested_views()
 	visible = true
 	_frame.visible = true
+	_layout()
 	call_deferred("_layout")
 	call_deferred("_focus_first_service")
 	_frame.modulate.a = 0.0
@@ -70,43 +77,40 @@ func _build() -> void:
 	_frame.add_theme_stylebox_override("panel", MENU.screen_frame())
 	add_child(_frame)
 
-	var margin := MENU.margin(18, 16, 18, 18)
-	_frame.add_child(margin)
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 11)
-	margin.add_child(root)
+	_menu_root = Control.new()
+	_menu_root.name = "MenuContent"
+	_menu_root.clip_contents = true
+	_frame.add_child(_menu_root)
 
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 12)
-	root.add_child(header)
-	var heading := VBoxContainer.new()
-	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	heading.add_theme_constant_override("separation", 2)
-	header.add_child(heading)
-	heading.add_child(_label("DIGILAB", 25, UI.TEXT, true))
-	heading.add_child(_label("Manage your Digimon, reconstruction and active party.", 11, UI.MUTED))
-	_close = MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close DigiLab", Vector2(44, 44))
+	_title = _label("DIGILAB", 25, UI.TEXT, true)
+	_title.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_menu_root.add_child(_title)
+	_subtitle = _label("Manage your Digimon, reconstruction and active party.", 11, UI.MUTED)
+	_subtitle.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_menu_root.add_child(_subtitle)
+
+	_close = MENU.close_button(CLOSE_ICON, "Close DigiLab")
 	_close.pressed.connect(close_view)
-	header.add_child(_close)
+	_menu_root.add_child(_close)
 
-	var divider := ColorRect.new()
-	divider.custom_minimum_size.y = 1
-	divider.color = UI.separator(UI.CYAN, 0.20)
-	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(divider)
+	_divider = ColorRect.new()
+	_divider.color = UI.separator(UI.CYAN, 0.20)
+	_divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_menu_root.add_child(_divider)
 
-	root.add_child(_label("Choose a service. Click, tap or focus a card and confirm.", 10, UI.SUBTLE, true))
-	var modules := VBoxContainer.new()
-	modules.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	modules.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	modules.add_theme_constant_override("separation", 10)
-	root.add_child(modules)
+	_hint = _label("Choose a service. Click, tap or focus a card and confirm.", 10, UI.SUBTLE, true)
+	_hint.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_menu_root.add_child(_hint)
+
+	_modules = VBoxContainer.new()
+	_modules.add_theme_constant_override("separation", 10)
+	_menu_root.add_child(_modules)
 	_service_buttons.clear()
 	_service_buttons.append(_module_card("DIGIMON", "Inspect levels, XP, stats, skills, Potential and evolution routes.", UI.GOLD, _open_digimon))
 	_service_buttons.append(_module_card("CREATE DIGIMON", "Use Digi Data collected in battle to reconstruct a new persistent individual.", UI.CYAN, _open_create))
 	_service_buttons.append(_module_card("PARTY / STORAGE", "Organize the active squad, reorder slots and manage reserve Digimon.", UI.GREEN, _open_party))
 	for button: Button in _service_buttons:
-		modules.add_child(button)
+		_modules.add_child(button)
 
 	_create_screen = CreateScreenScript.new() as DigiLabScreen
 	_create_screen.name = "CreateDigimon"
@@ -151,7 +155,9 @@ func _module_card(title: String, description: String, accent: Color, callback: C
 	copy.add_theme_constant_override("separation", 4)
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
-	copy.add_child(_label(title, 17, accent.lightened(0.10), true))
+	var title_label := _label(title, 17, accent.lightened(0.10), true)
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	copy.add_child(title_label)
 	var body := _label(description, 11, UI.MUTED)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy.add_child(body)
@@ -187,6 +193,7 @@ func _close_nested() -> void:
 	_nested_open = false
 	_hide_nested_views()
 	_frame.visible = true
+	_layout()
 	call_deferred("_layout")
 	call_deferred("_focus_first_service")
 
@@ -199,10 +206,33 @@ func _hide_nested_views() -> void:
 		_digimon_menu.visible = false
 
 func _layout() -> void:
-	if not visible or _frame == null:
+	if not visible or _frame == null or _menu_root == null:
 		return
-	var layout := MENU.apply_safe_frame(_frame, get_viewport(), Vector2(1040, 620), 820.0)
-	var compact := bool(layout.get("compact", false))
+	var physical := UI.physical_window_size(get_viewport())
+	var scale_factor := UI.ui_scale(get_viewport())
+	var compact := UI.is_compact(get_viewport(), 820.0)
+	var edge := 12.0 if compact else 24.0
+	var width := minf(1040.0, maxf(1.0, physical.x - edge * 2.0))
+	var height := minf(620.0, maxf(1.0, physical.y - edge * 2.0))
+	_frame.scale = Vector2.ONE * scale_factor
+	_frame.position = Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
+	_frame.size = Vector2(width, height)
+	_frame.clip_contents = true
+	_menu_root.position = Vector2.ZERO
+	_menu_root.size = Vector2(width, height)
+
+	_title.position = Vector2(24.0, 15.0)
+	_title.size = Vector2(width - 110.0, 30.0)
+	_subtitle.position = Vector2(24.0, 45.0)
+	_subtitle.size = Vector2(width - 110.0, 22.0)
+	_close.position = Vector2(width - 68.0, 14.0)
+	_close.size = Vector2(44.0, 44.0)
+	_divider.position = Vector2(22.0, 76.0)
+	_divider.size = Vector2(width - 44.0, 1.0)
+	_hint.position = Vector2(24.0, 84.0)
+	_hint.size = Vector2(width - 48.0, 22.0)
+	_modules.position = Vector2(22.0, 114.0)
+	_modules.size = Vector2(width - 44.0, height - 136.0)
 	for button: Button in _service_buttons:
 		button.custom_minimum_size.y = 82 if compact else 94
 
