@@ -15,7 +15,7 @@ var _selected_id := ""
 
 var _frame: PanelContainer
 var _body_grid: GridContainer
-var _roster_panel: PanelContainer
+var _collection_panel: PanelContainer
 var _detail_panel: PanelContainer
 var _list: VBoxContainer
 var _detail: VBoxContainer
@@ -29,16 +29,16 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
-	OverworldState.roster_changed.connect(_on_state_changed)
+	OverworldState.collection_changed.connect(_on_state_changed)
 	OverworldState.active_party_changed.connect(_on_party_changed)
 	get_viewport().size_changed.connect(_layout)
 	visible = false
 
 func open_screen() -> void:
 	visible = true
-	var roster: Array[DigimonInstance] = OverworldState.get_roster_instances()
-	if (_selected_id.is_empty() or OverworldState.get_instance_by_id(_selected_id) == null) and not roster.is_empty():
-		_selected_id = roster[0].id
+	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
+	if (_selected_id.is_empty() or OverworldState.get_instance_by_id(_selected_id) == null) and not collection.is_empty():
+		_selected_id = collection[0].id
 	_status_label.text = ""
 	_refresh()
 	call_deferred("_layout")
@@ -104,20 +104,20 @@ func _build() -> void:
 	_body_grid.add_theme_constant_override("v_separation", 12)
 	root.add_child(_body_grid)
 
-	_roster_panel = PanelContainer.new()
-	_roster_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_roster_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_roster_panel.add_theme_stylebox_override("panel", SKIN.border_style(UI.CYAN, Vector4(12, 12, 12, 12), 10.0))
-	_body_grid.add_child(_roster_panel)
-	var roster_root := VBoxContainer.new()
-	roster_root.add_theme_constant_override("separation", 8)
-	_roster_panel.add_child(roster_root)
-	roster_root.add_child(_section_label("ROSTER", UI.CYAN))
+	_collection_panel = PanelContainer.new()
+	_collection_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_collection_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_collection_panel.add_theme_stylebox_override("panel", SKIN.border_style(UI.CYAN, Vector4(12, 12, 12, 12), 10.0))
+	_body_grid.add_child(_collection_panel)
+	var collection_root := VBoxContainer.new()
+	collection_root.add_theme_constant_override("separation", 8)
+	_collection_panel.add_child(collection_root)
+	collection_root.add_child(_section_label("COLLECTION", UI.CYAN))
 	var list_scroll := ScrollContainer.new()
 	list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	list_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	roster_root.add_child(list_scroll)
+	collection_root.add_child(list_scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 6)
@@ -140,8 +140,8 @@ func _build() -> void:
 
 func _refresh() -> void:
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
-	var roster: Array[DigimonInstance] = OverworldState.get_roster_instances()
-	_summary_label.text = "ACTIVE %d / %d    STORAGE %d" % [active_ids.size(), OverworldState.get_max_active_party_size(), maxi(0, roster.size() - active_ids.size())]
+	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
+	_summary_label.text = "ACTIVE %d / %d    STORAGE %d" % [active_ids.size(), OverworldState.get_max_active_party_size(), maxi(0, collection.size() - active_ids.size())]
 	_refresh_list()
 	_refresh_detail()
 
@@ -149,11 +149,11 @@ func _refresh_list() -> void:
 	for child in _list.get_children():
 		child.queue_free()
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
-	var roster: Array[DigimonInstance] = OverworldState.get_roster_instances()
-	if roster.is_empty():
+	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
+	if collection.is_empty():
 		_list.add_child(_label("No Digimon available.", 12, UI.MUTED))
 		return
-	for instance: DigimonInstance in roster:
+	for instance: DigimonInstance in collection:
 		var species: Dictionary = _database.get_by_seed(instance.species_seed)
 		var name := instance.get_display_name(String(species.get("name", "Unknown")))
 		var active := active_ids.has(instance.id)
@@ -176,7 +176,7 @@ func _refresh_detail() -> void:
 		child.queue_free()
 	var instance: DigimonInstance = OverworldState.get_instance_by_id(_selected_id)
 	if instance == null:
-		_detail.add_child(_label("Select a Digimon from the roster.", 13, UI.MUTED))
+		_detail.add_child(_label("Select a Digimon from your collection.", 13, UI.MUTED))
 		return
 	var species: Dictionary = _database.get_by_seed(instance.species_seed)
 	if species.is_empty():
@@ -326,10 +326,10 @@ func _layout() -> void:
 	var compact := width < 820.0 or height < 560.0
 	_body_grid.columns = 1 if compact else 2
 	if compact:
-		_roster_panel.custom_minimum_size = Vector2(0, 180)
+		_collection_panel.custom_minimum_size = Vector2(0, 180)
 		_detail_panel.custom_minimum_size = Vector2(0, 300)
 	else:
-		_roster_panel.custom_minimum_size = Vector2(300, 0)
+		_collection_panel.custom_minimum_size = Vector2(300, 0)
 		_detail_panel.custom_minimum_size = Vector2(600, 0)
 
 func _section_label(text: String, accent: Color) -> Label:
