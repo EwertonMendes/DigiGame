@@ -5,7 +5,7 @@ signal close_requested
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
-const CreateScreenScript = preload("res://src/ui/DigiLabScreen.gd")
+const CreateScreenScript = preload("res://src/ui/ProgressionDigiLabCreateScreen.gd")
 const PartyStorageScript = preload("res://src/ui/PartyStorageScreen.gd")
 const DigimonMenuScript = preload("res://src/ui/DigimonProgressionMenu.gd")
 
