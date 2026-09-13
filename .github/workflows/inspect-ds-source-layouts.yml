@@ -12,7 +12,7 @@ jobs:
   inspect:
     if: ${{ !contains(github.event.head_commit.message, '[skip ds-inspect]') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - name: Install image tooling
@@ -42,35 +42,88 @@ jobs:
           assert len(exported) == 82
           print('exported 82/82 raw WtW sources')
           PY
-      - name: Export public SpriteManager semantic specs for cross-checking
+      - name: Export and bake public SpriteManager semantic specs for cross-checking
         shell: bash
         run: |
           set -euo pipefail
           git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/digimon-sprite-manager
           python3 - <<'PY'
           import json
+          import os
+          import sys
           from pathlib import Path
 
-          root = Path('/tmp/digimon-sprite-manager/specs/digimon')
+          manager = Path('/tmp/digimon-sprite-manager')
+          sys.path.insert(0, str(manager))
+          sys.path.insert(0, str(manager / 'src'))
+          import config
+          from core import downloader, baker
+
+          roster = {row['name'] for row in json.loads(Path('/tmp/ds-exact-source-audit/manifest.json').read_text())}
+          root = manager / 'specs' / 'digimon'
           specs = {}
+          selected = []
           for path in sorted(root.glob('*.extract.json')):
               data = json.loads(path.read_text(encoding='utf-8'))
               name = str(data.get('creature_name', '')).strip()
               if not name:
                   continue
-              specs.setdefault(name, []).append({
+              record = {
                   'spec_file': path.name,
                   'id': data.get('id'),
                   'source': data.get('source'),
+                  'sheet_id': data.get('sheet_id'),
                   'clips': data.get('clips', {}),
                   'mirror': data.get('mirror', {}),
                   'anchor': data.get('anchor'),
                   'walk_style': data.get('walk_style'),
+                  'export_scale': data.get('export_scale'),
+                  'pad': data.get('pad'),
                   'boxes': data.get('boxes', []),
-              })
+              }
+              specs.setdefault(name, []).append(record)
+              if name in roster:
+                  selected.append((name, path, data))
           out = Path('/tmp/ds-exact-source-audit/manager-specs.json')
           out.write_text(json.dumps(specs, indent=2) + '\n', encoding='utf-8')
-          print(f'exported semantic specs for {len(specs)} named SpriteManager entries')
+
+          # Download only the raw Spriters Resource sheets referenced by the
+          # overlapping reviewed specs, then bake exactly what their authored
+          # direction/temporal assignments say. This provides an independent
+          # semantic oracle to match against the WtW archive by pixels.
+          config.ensure_dirs()
+          downloader.fetch_gallery(log=lambda *_: None)
+          urls = dict(downloader.derive_urls(log=lambda *_: None))
+          needed = {}
+          for name, path, data in selected:
+              sid = str(data.get('sheet_id') or Path(str(data['source'])).stem)
+              needed[sid] = name
+          for sid, name in sorted(needed.items(), key=lambda item: int(item[0])):
+              url = urls.get(sid)
+              if not url:
+                  raise RuntimeError(f'missing gallery URL for SpriteManager sheet {sid} ({name})')
+              dest = Path(config.RAW_DIR) / f'{sid}.png'
+              ok, code, size = downloader._curl(url, str(dest))
+              if not ok or size <= 0:
+                  raise RuntimeError(f'failed SpriteManager sheet {sid} ({name}), HTTP {code}')
+
+          baked_dir = Path('/tmp/ds-exact-source-audit/manager-baked')
+          baked_dir.mkdir(parents=True, exist_ok=True)
+          baked_manifest = []
+          for name, path, data in selected:
+              result = baker.bake(str(path), out_dir=str(baked_dir), log=lambda *_: None)
+              generated = baked_dir / f"{int(data['id']):03d}.png"
+              renamed = baked_dir / f"{name.replace('/', '_')}__{path.stem}.png"
+              generated.replace(renamed)
+              baked_manifest.append({
+                  'name': name,
+                  'spec_file': path.name,
+                  'sheet_id': data.get('sheet_id'),
+                  'file': renamed.name,
+                  'result': result,
+              })
+          (baked_dir / 'manifest.json').write_text(json.dumps(baked_manifest, indent=2, default=str) + '\n')
+          print(f'exported {len(specs)} named specs; baked {len(baked_manifest)} roster-overlap specs')
           PY
       - name: Render all final DS runtime direction strips
         run: python3 tools/render_generated_ds_direction_audit.py
