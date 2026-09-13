@@ -42,8 +42,8 @@ EXPECTED_BLOBS = {
     "assets/characters/greymon.png": "acc466df89f3854954fee6e110d30ebc233004d1",
     "assets/characters/koromon.png": "7be3ffad6cf60fd35e1f31e08052fff4b9e7b6f8",
     "assets/characters/tanemon.png": "53da8d44945acfab69505ba2d7e111aab19f97bb",
-    "assets/characters/veemon/field.png": "0b64fe6ee2099fb34dee6e4fc39661bc6d5621e5",
-    "assets/characters/metalgreymon/field.png": "1d7385ff3722579f1bab84b46da1c48ef75f9b0d",
+    "assets/characters/veemon/field.png": "15f84f87ed726cd6cdc7eb06517cb1d1a62cfddc",
+    "assets/characters/metalgreymon/field.png": "c885c44a76ae667c64a3e788a1bbb26116215bbd",
 }
 
 EXPECTED_SOURCE_SHA256 = {
