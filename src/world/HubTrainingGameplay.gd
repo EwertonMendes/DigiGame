@@ -74,7 +74,7 @@ func _open_training() -> void:
 	_training_open = true
 	_release_touch_movement()
 	if _player != null:
-		_player.set_physics_process(false)
+		_player.movement_enabled = false
 		_player.velocity = Vector2.ZERO
 		_player.set_facing("northwest")
 	if _trainer != null:
@@ -91,7 +91,7 @@ func _close_training() -> void:
 	if _training_screen != null:
 		_training_screen.visible = false
 	if _player != null:
-		_player.set_physics_process(true)
+		_player.movement_enabled = true
 	_layout_ui()
 	_refresh_interaction()
 	if OS.is_debug_build():
