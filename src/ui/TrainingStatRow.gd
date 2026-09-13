@@ -85,12 +85,27 @@ func _build() -> void:
 func _label(text: String, size: int, color: Color, bold: bool = false) -> Label:
 	var label := Label.new()
 	label.text = text
-	UI.apply_label(label, size, color, bold)
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.80))
+	label.add_theme_constant_override("outline_size", 2 if size >= 13 else 1)
+	if bold:
+		UI.apply_heading_font(label)
+	else:
+		UI.apply_body_font(label)
 	return label
 
 func _button(text: String, accent: Color) -> Button:
 	var button := Button.new()
 	button.text = text
-	UI.apply_button(button, accent)
 	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_size_override("font_size", 12)
+	button.add_theme_stylebox_override("normal", UI.command_style(accent, "normal"))
+	button.add_theme_stylebox_override("hover", UI.command_style(accent, "hover"))
+	button.add_theme_stylebox_override("focus", UI.command_style(accent, "focus"))
+	button.add_theme_stylebox_override("pressed", UI.command_style(accent, "pressed"))
+	button.add_theme_color_override("font_color", UI.TEXT)
+	button.add_theme_color_override("font_hover_color", UI.TEXT)
+	button.add_theme_color_override("font_focus_color", UI.TEXT)
+	UI.apply_body_font(button)
 	return button
