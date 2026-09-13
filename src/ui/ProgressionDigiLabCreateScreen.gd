@@ -1,6 +1,8 @@
 extends "res://src/ui/DigiLabScreen.gd"
 class_name ProgressionDigiLabCreateScreen
 
+const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
+
 func _refresh_list() -> void:
 	for child in _list_box.get_children():
 		child.queue_free()
@@ -71,12 +73,43 @@ func _data_button(species_name: String, amount: int) -> Button:
 	var required := OverworldState.get_reconstruction_requirement(species_name)
 	var percent := minf(100.0, float(amount) * 100.0 / float(maxi(1, required)))
 	var state := "READY" if amount >= required else "COLLECTING" if amount > 0 else "LOCKED"
-	var button := _button("%s\n%s  ·  %d / %d DATA  ·  %d%%  ·  %s" % [species_name.to_upper(), rank.to_upper(), amount, required, int(round(percent)), state], accent)
-	button.custom_minimum_size = Vector2(268, 72)
+
+	var button := Button.new()
+	button.text = ""
 	button.focus_mode = Control.FOCUS_ALL
+	button.custom_minimum_size = Vector2(280, 82)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.clip_contents = true
 	button.pressed.connect(_select_species.bind(species_name))
 	button.focus_entered.connect(_select_species.bind(species_name))
 	button.set_meta("species_name", species_name)
+	button.tooltip_text = "Inspect reconstruction data for %s" % species_name
+	MENU.style_action_button(button, accent)
+
+	var margin := MENU.margin(9, 7, 10, 7)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(margin)
+	var row := HBoxContainer.new()
+	row.name = "Row"
+	row.add_theme_constant_override("separation", 9)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+	var preview := WalkPreviewScript.new() as DigimonWalkPreview
+	preview.name = "WalkPreview"
+	preview.custom_minimum_size = Vector2(60, 60)
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	preview.set_species(String(species.get("name", species_name)))
+	row.add_child(preview)
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.add_theme_constant_override("separation", 2)
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(copy)
+	copy.add_child(_label(species_name.to_upper(), 13, UI.TEXT, true))
+	copy.add_child(_label("%s  ·  %d / %d DATA" % [rank.to_upper(), amount, required], 10, accent.lightened(0.10), true))
+	copy.add_child(_label("%d%%  ·  %s" % [int(round(percent)), state], 9, UI.GREEN if state == "READY" else UI.CYAN if state == "COLLECTING" else UI.MUTED, true))
 	return button
 
 func _style_selection() -> void:
@@ -86,6 +119,9 @@ func _style_selection() -> void:
 		var accent := UI.rank_color(String(species.get("rank", "Unknown")))
 		var selected := species_name.to_lower() == _selected_name.to_lower()
 		MENU.style_action_button(button, UI.GOLD if selected else accent, selected)
+		var preview := button.find_child("WalkPreview", true, false) as DigimonWalkPreview
+		if preview != null:
+			preview.set_active(selected)
 
 func _refresh_detail() -> void:
 	for child in _detail_body.get_children():
@@ -172,6 +208,7 @@ func _progress_bar(accent: Color, maximum: int, value: int) -> ProgressBar:
 	bar.show_percentage = false
 	bar.custom_minimum_size.y = 8
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(0.01, 0.01, 0.015, 0.88)
 	bg.corner_radius_top_left = 4
