@@ -16,6 +16,7 @@ var _create_screen: DigiLabScreen
 var _party_screen: PartyStorageScreen
 var _digimon_menu: DigimonProgressionMenu
 var _nested_open := false
+var _service_buttons: Array[Button] = []
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -31,6 +32,7 @@ func open_lab() -> void:
 	visible = true
 	_frame.visible = true
 	call_deferred("_layout")
+	call_deferred("_focus_first_service")
 	_frame.modulate.a = 0.0
 	var tween := create_tween()
 	tween.tween_property(_frame, "modulate:a", 1.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -71,7 +73,7 @@ func _build() -> void:
 	var margin := MENU.margin(18, 16, 18, 18)
 	_frame.add_child(margin)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 12)
+	root.add_theme_constant_override("separation", 11)
 	margin.add_child(root)
 
 	var header := HBoxContainer.new()
@@ -83,7 +85,7 @@ func _build() -> void:
 	header.add_child(heading)
 	heading.add_child(_label("DIGILAB", 25, UI.TEXT, true))
 	heading.add_child(_label("Manage your Digimon, reconstruction and active party.", 11, UI.MUTED))
-	_close = MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close DigiLab")
+	_close = MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close DigiLab", Vector2(44, 44))
 	_close.pressed.connect(close_view)
 	header.add_child(_close)
 
@@ -93,16 +95,18 @@ func _build() -> void:
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(divider)
 
-	var intro := _label("Choose a service", 10, UI.SUBTLE, true)
-	root.add_child(intro)
+	root.add_child(_label("Choose a service. Click, tap or focus a card and confirm.", 10, UI.SUBTLE, true))
 	var modules := VBoxContainer.new()
 	modules.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	modules.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	modules.add_theme_constant_override("separation", 10)
 	root.add_child(modules)
-	modules.add_child(_module_card("DIGIMON", "Inspect levels, XP, stats, skills, Potential and evolution routes.", UI.GOLD, _open_digimon))
-	modules.add_child(_module_card("CREATE DIGIMON", "Use Digi Data collected in battle to reconstruct a new persistent individual.", UI.CYAN, _open_create))
-	modules.add_child(_module_card("PARTY / STORAGE", "Organize the active squad, reorder slots and manage reserve Digimon.", UI.GREEN, _open_party))
+	_service_buttons.clear()
+	_service_buttons.append(_module_card("DIGIMON", "Inspect levels, XP, stats, skills, Potential and evolution routes.", UI.GOLD, _open_digimon))
+	_service_buttons.append(_module_card("CREATE DIGIMON", "Use Digi Data collected in battle to reconstruct a new persistent individual.", UI.CYAN, _open_create))
+	_service_buttons.append(_module_card("PARTY / STORAGE", "Organize the active squad, reorder slots and manage reserve Digimon.", UI.GREEN, _open_party))
+	for button: Button in _service_buttons:
+		modules.add_child(button)
 
 	_create_screen = CreateScreenScript.new() as DigiLabScreen
 	_create_screen.name = "CreateDigimon"
@@ -122,30 +126,44 @@ func _build() -> void:
 	_digimon_menu.close_requested.connect(_close_nested)
 	add_child(_digimon_menu)
 
-func _module_card(title: String, description: String, accent: Color, callback: Callable) -> Control:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(0, 104)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", MENU.card(accent, false))
-	var margin := MENU.margin(14, 12, 12, 12)
-	panel.add_child(margin)
+func _module_card(title: String, description: String, accent: Color, callback: Callable) -> Button:
+	var button := Button.new()
+	button.text = ""
+	button.focus_mode = Control.FOCUS_ALL
+	button.custom_minimum_size = Vector2(0, 94)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.clip_contents = true
+	button.tooltip_text = "Open %s" % title.capitalize()
+	button.pressed.connect(callback)
+	MENU.style_action_button(button, accent)
+
+	var margin := MENU.margin(16, 11, 14, 11)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(margin)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 	var copy := VBoxContainer.new()
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	copy.add_theme_constant_override("separation", 5)
+	copy.add_theme_constant_override("separation", 4)
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
 	copy.add_child(_label(title, 17, accent.lightened(0.10), true))
 	var body := _label(description, 11, UI.MUTED)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy.add_child(body)
-	var open := MENU.action_button("OPEN", accent, 46)
-	open.custom_minimum_size.x = 108
-	open.pressed.connect(callback)
-	row.add_child(open)
-	return panel
+	var cue := _label(">", 22, accent, true)
+	cue.custom_minimum_size.x = 34
+	cue.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(cue)
+	return button
+
+func _focus_first_service() -> void:
+	if visible and _frame.visible and not _service_buttons.is_empty():
+		_service_buttons[0].grab_focus()
 
 func _open_create() -> void:
 	_nested_open = true
@@ -170,6 +188,7 @@ func _close_nested() -> void:
 	_hide_nested_views()
 	_frame.visible = true
 	call_deferred("_layout")
+	call_deferred("_focus_first_service")
 
 func _hide_nested_views() -> void:
 	if _create_screen != null:
@@ -182,16 +201,10 @@ func _hide_nested_views() -> void:
 func _layout() -> void:
 	if not visible or _frame == null:
 		return
-	var physical := UI.physical_window_size(get_viewport())
-	var scale_factor := UI.ui_scale(get_viewport())
-	var compact := UI.is_compact(get_viewport(), 820.0)
-	var edge := 12.0 if compact else 18.0
-	var width := minf(960.0, physical.x - edge * 2.0)
-	var height := minf(600.0, physical.y - edge * 2.0)
-	var origin := Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
-	_frame.scale = Vector2.ONE * scale_factor
-	_frame.position = origin
-	_frame.size = Vector2(width, height)
+	var layout := MENU.apply_safe_frame(_frame, get_viewport(), Vector2(1040, 620), 820.0)
+	var compact := bool(layout.get("compact", false))
+	for button: Button in _service_buttons:
+		button.custom_minimum_size.y = 82 if compact else 94
 
 func _label(text: String, size: int, color: Color, bold: bool = false) -> Label:
 	var label := Label.new()
@@ -202,6 +215,7 @@ func _label(text: String, size: int, color: Color, bold: bool = false) -> Label:
 	label.add_theme_constant_override("outline_size", 2 if size >= 13 else 1)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if bold:
 		UI.apply_heading_font(label)
 	else:
