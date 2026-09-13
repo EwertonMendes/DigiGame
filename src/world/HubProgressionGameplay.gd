@@ -64,10 +64,10 @@ func _build_digilab_terminal() -> void:
 		return
 	_digilab_terminal = Node2D.new()
 	_digilab_terminal.name = "DigiLabTerminal"
-	# Service terminals live together in the upper-left part of the commons,
-	# outside the central Battle Operator focal point. The Training Specialist is
-	# offset down/right from here so both world labels remain independently clear.
-	_digilab_terminal.position = _grid_to_world(Vector2(-6, -2))
+	# Keep DigiLab clearly inside the playable platform instead of visually
+	# hanging from the upper rim. The Training Specialist sits farther above/right
+	# so both service labels have their own clean visual territory.
+	_digilab_terminal.position = _grid_to_world(Vector2(-4, 1))
 	_digilab_terminal.z_index = 960 + int(round(_digilab_terminal.position.y))
 	actors.add_child(_digilab_terminal)
 	var base := Sprite2D.new()
@@ -178,7 +178,7 @@ func _refresh_interaction() -> void:
 	super._refresh_interaction()
 
 func _is_digilab_nearby() -> bool:
-	return _player != null and _digilab_terminal != null and _player.position.distance_to(_digilab_terminal.position) <= INTERACTION_DISTANCE
+	return _player != null and _digilab_terminal != null and _player.position.distance_to(_digilab_terminal.position) <= _interaction_distance_for_current_device()
 
 func _layout_ui() -> void:
 	super._layout_ui()
