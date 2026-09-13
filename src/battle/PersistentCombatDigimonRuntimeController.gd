@@ -10,6 +10,7 @@ func configure_encounter(definition: BattleEncounterDefinition) -> void:
 
 
 func _spawn_demo_rosters() -> void:
+	_apply_pending_debug_encounter()
 	var field := get_node_or_null("../Blocks") as Node2D
 	if field == null or not field.has_method("grid_to_world"):
 		# The full battle scene always has a field. Keep the inherited fallback for
@@ -46,6 +47,28 @@ func _spawn_demo_rosters() -> void:
 		_prepare_actor_for_intro(actor, field)
 
 	orient_battle_actors_toward_opponents()
+
+
+func _apply_pending_debug_encounter() -> void:
+	if not Engine.has_singleton("DeveloperToolkit") and get_node_or_null("/root/DeveloperToolkit") == null:
+		return
+	var toolkit := get_node_or_null("/root/DeveloperToolkit")
+	if toolkit == null or not toolkit.has_method("consume_pending_battle_config"):
+		return
+	var raw_config = toolkit.call("consume_pending_battle_config")
+	if not raw_config is Dictionary or (raw_config as Dictionary).is_empty():
+		return
+	var config := raw_config as Dictionary
+	var definition := EncounterDefinitionScript.from_dict(config) as BattleEncounterDefinition
+	var errors := definition.validate(OverworldState.get_database())
+	if not errors.is_empty():
+		push_warning("Debug battle encounter rejected: %s" % "; ".join(errors))
+		return
+	encounter_definition = definition
+	var debug_seed := int(config.get("seed", 0))
+	if debug_seed != 0:
+		_encounter_rng.seed = debug_seed
+	print("[DebugToolkit] Battle sandbox loaded · %d enemies · seed %d" % [definition.enemy_party.size(), debug_seed])
 
 
 func _enemy_descriptors() -> Array[Dictionary]:
