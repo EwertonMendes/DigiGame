@@ -2,15 +2,88 @@ extends "res://src/ui/DigiLabScreen.gd"
 class_name ProgressionDigiLabCreateScreen
 
 
+func _refresh_list() -> void:
+	for child in _list_box.get_children():
+		child.queue_free()
+	_data_buttons.clear()
+
+	var known_names: Dictionary = {}
+	for raw_name in OverworldState.get_digi_data().keys():
+		var name := String(raw_name).strip_edges()
+		if not name.is_empty():
+			known_names[name.to_lower()] = name
+	for instance: DigimonInstance in OverworldState.get_roster_instances():
+		var seeds: Array[String] = instance.species_history.duplicate()
+		if seeds.is_empty() and not instance.species_seed.is_empty():
+			seeds.append(instance.species_seed)
+		for seed: String in seeds:
+			var species := _database.get_by_seed(seed)
+			if species.is_empty():
+				continue
+			var species_name := String(species.get("name", "")).strip_edges()
+			if not species_name.is_empty():
+				known_names[species_name.to_lower()] = species_name
+
+	var entries: Array[Dictionary] = []
+	for raw_key in known_names.keys():
+		var species_name := String(known_names[raw_key])
+		var amount := OverworldState.get_digi_data_for(species_name)
+		var required := OverworldState.get_reconstruction_requirement(species_name)
+		var state := "ready" if amount >= required else "collecting" if amount > 0 else "locked"
+		entries.append({
+			"name": species_name,
+			"amount": amount,
+			"required": required,
+			"state": state,
+		})
+	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var priority := {"ready": 0, "collecting": 1, "locked": 2}
+		var state_a := String(a.get("state", "locked"))
+		var state_b := String(b.get("state", "locked"))
+		var priority_a := int(priority.get(state_a, 3))
+		var priority_b := int(priority.get(state_b, 3))
+		if priority_a != priority_b:
+			return priority_a < priority_b
+		var amount_a := int(a.get("amount", 0))
+		var amount_b := int(b.get("amount", 0))
+		if amount_a != amount_b:
+			return amount_a > amount_b
+		return String(a.get("name", "")) < String(b.get("name", ""))
+	)
+
+	if entries.is_empty():
+		_empty_label = _label("No known Digimon yet.\nDefeat Digimon in battle to discover their reconstruction data.", 13, UI.MUTED)
+		_empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_empty_label.custom_minimum_size.y = 160
+		_list_box.add_child(_empty_label)
+		_selected_name = ""
+		return
+
+	var selection_still_exists := false
+	for entry: Dictionary in entries:
+		var species_name := String(entry.get("name", ""))
+		if species_name.to_lower() == _selected_name.to_lower():
+			selection_still_exists = true
+		var button := _data_button(species_name, int(entry.get("amount", 0)))
+		_list_box.add_child(button)
+		_data_buttons.append(button)
+	if not selection_still_exists:
+		_selected_name = String(entries[0].get("name", ""))
+	_style_selection()
+
+
 func _data_button(species_name: String, amount: int) -> Button:
 	var species := _database.get_by_name(species_name)
 	var rank := String(species.get("rank", "Unknown"))
 	var accent := UI.rank_color(rank)
 	var required := OverworldState.get_reconstruction_requirement(species_name)
 	var percent := minf(100.0, float(amount) * 100.0 / float(maxi(1, required)))
+	var state := "READY" if amount >= required else "COLLECTING" if amount > 0 else "LOCKED"
 	var button := Button.new()
-	button.text = "%s\n%s  ·  %d / %d DATA  ·  %d%%" % [species_name.to_upper(), rank.to_upper(), amount, required, int(round(percent))]
-	button.custom_minimum_size = Vector2(252, 72)
+	button.text = "%s\n%s  ·  %d / %d DATA  ·  %d%%  ·  %s" % [species_name.to_upper(), rank.to_upper(), amount, required, int(round(percent)), state]
+	button.custom_minimum_size = Vector2(268, 76)
 	button.focus_mode = Control.FOCUS_ALL
 	button.pressed.connect(_select_species.bind(species_name))
 	button.focus_entered.connect(_select_species.bind(species_name))
@@ -24,7 +97,7 @@ func _refresh_detail() -> void:
 		child.queue_free()
 	if _selected_name.is_empty():
 		_detail_body.add_child(_label("DIGI DATA ARCHIVE", 14, UI.CYAN, true))
-		_detail_body.add_child(_label("Collected species will appear here when you earn Digi Data from battle.", 11, UI.MUTED))
+		_detail_body.add_child(_label("Known species remain visible here as Locked, Collecting or Ready.", 11, UI.MUTED))
 		return
 	var species := _database.get_by_name(_selected_name)
 	if species.is_empty():
@@ -35,6 +108,7 @@ func _refresh_detail() -> void:
 	var available := OverworldState.get_digi_data_for(canonical_name)
 	var required := OverworldState.get_reconstruction_requirement(canonical_name)
 	var percent := minf(100.0, float(available) * 100.0 / float(maxi(1, required)))
+	var state := "READY" if available >= required else "COLLECTING" if available > 0 else "LOCKED"
 
 	var hero := HBoxContainer.new()
 	hero.add_theme_constant_override("separation", 14)
@@ -55,7 +129,7 @@ func _refresh_detail() -> void:
 	info.add_child(_label(canonical_name.to_upper(), 23, UI.TEXT, true))
 	info.add_child(_label(rank.to_upper(), 11, accent.lightened(0.14), true))
 	info.add_child(_label("%d / %d DIGI DATA" % [available, required], 20, UI.GOLD, true))
-	info.add_child(_label("%d%%  ·  %s" % [int(round(percent)), "READY" if available >= required else "COLLECTING"], 11, UI.GREEN if available >= required else UI.MUTED, true))
+	info.add_child(_label("%d%%  ·  %s" % [int(round(percent)), state], 11, UI.GREEN if state == "READY" else UI.CYAN if state == "COLLECTING" else UI.MUTED, true))
 
 	var progress := ProgressBar.new()
 	progress.max_value = float(maxi(1, required))
