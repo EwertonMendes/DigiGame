@@ -28,7 +28,11 @@ func exp_to_next_level_for_level(level: int, species: Dictionary) -> int:
 
 
 func add_experience(instance: DigimonInstance, species: Dictionary, amount: int) -> int:
-	if instance == null or amount <= 0 or instance.level >= max_level():
+	if instance == null or amount <= 0:
+		return 0
+	if instance.level >= max_level():
+		instance.level = max_level()
+		instance.exp = 0
 		return 0
 	instance.exp += amount
 	var levels_gained := 0
