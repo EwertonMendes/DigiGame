@@ -2,25 +2,30 @@ extends Node
 
 ## Persistent background-music coordinator shared by world and battle scenes.
 ##
-## Two AudioStreamPlayers are kept alive as an autoload so scene changes can
-## crossfade instead of cutting the current track abruptly. Track selection is
-## intentionally centralized here so future areas, bosses, and story scenes only
-## need to request a semantic track id rather than owning audio players.
+## Two AudioStreamPlayers stay alive as an autoload so scene changes can
+## crossfade instead of cutting music abruptly. Track selection is centralized
+## here so future areas, bosses, and story scenes only request a semantic track
+## id instead of owning their own music players.
 
 signal track_changed(track_id: String)
-
-const EmbeddedMusicData = preload("res://src/audio/EmbeddedMusicData.gd")
 
 const TRACK_ZONE_1 := "zone_1"
 const TRACK_BATTLE_1 := "battle_1"
 const DEFAULT_CROSSFADE_SECONDS := 0.55
 const SILENT_VOLUME_DB := -60.0
 
+# Static preloads are intentional: Godot's exporter can see these dependencies
+# and therefore includes the Ogg files in desktop and Web builds.
+const ZONE_1_STREAM = preload("res://assets/audio/music/zone_1.ogg")
+const BATTLE_1_STREAM = preload("res://assets/audio/music/battle_1.ogg")
+
 const TRACKS := {
 	TRACK_ZONE_1: {
+		"stream": ZONE_1_STREAM,
 		"volume_db": -8.0,
 	},
 	TRACK_BATTLE_1: {
+		"stream": BATTLE_1_STREAM,
 		"volume_db": -10.5,
 	},
 }
@@ -132,10 +137,20 @@ func has_track(track_id: String) -> bool:
 func _stream_for(track_id: String) -> AudioStream:
 	if _stream_cache.has(track_id):
 		return _stream_cache[track_id] as AudioStream
-	var stream := EmbeddedMusicData.build_stream(track_id) as AudioStreamMP3
-	if stream == null:
+
+	var definition := TRACKS[track_id] as Dictionary
+	var source := definition.get("stream") as AudioStream
+	if source == null:
 		return null
-	stream.loop = true
+
+	# Duplicate so loop configuration belongs to this director instead of mutating
+	# the imported shared resource globally.
+	var stream := source.duplicate() as AudioStream
+	if stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = true
+	elif stream is AudioStreamMP3:
+		(stream as AudioStreamMP3).loop = true
+
 	_stream_cache[track_id] = stream
 	return stream
 
