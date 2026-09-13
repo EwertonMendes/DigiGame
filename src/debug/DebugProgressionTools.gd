@@ -38,6 +38,14 @@ func set_level(instance_id: String, level: int) -> bool:
 	OverworldState.notify_collection_changed()
 	return true
 
+func set_exp(instance_id: String, amount: int) -> bool:
+	var value := instance(instance_id)
+	if value == null:
+		return false
+	value.exp = 0 if value.level >= curve.max_level() else maxi(0, amount)
+	OverworldState.notify_collection_changed()
+	return true
+
 func add_xp(instance_id: String, amount: int) -> Dictionary:
 	var value := instance(instance_id)
 	if value == null:
@@ -63,6 +71,41 @@ func set_link(instance_id: String, amount: int) -> bool:
 	OverworldState.notify_collection_changed()
 	return true
 
+func set_resources(instance_id: String, hp: int, sp: int) -> bool:
+	var value := instance(instance_id)
+	if value == null:
+		return false
+	var species := database.get_by_seed(value.species_seed)
+	value.current_hp = hp
+	value.current_mp = sp
+	calculator.clamp_resources(value, species)
+	OverworldState.notify_collection_changed()
+	return true
+
+func set_training(instance_id: String, values: Dictionary) -> bool:
+	var value := instance(instance_id)
+	if value == null:
+		return false
+	for stat_key: String in DigimonInstance.STAT_KEYS:
+		if values.has(stat_key):
+			value.training[stat_key] = clampi(int(values.get(stat_key, 0)), 0, MAX_DEBUG_TRAINING_POINTS)
+	if values.has("mov"):
+		value.training["mov"] = clampi(int(values.get("mov", 0)), 0, 2)
+	calculator.clamp_resources(value, database.get_by_seed(value.species_seed))
+	OverworldState.notify_collection_changed()
+	return true
+
+func set_aptitudes(instance_id: String, values: Dictionary) -> bool:
+	var value := instance(instance_id)
+	if value == null:
+		return false
+	for stat_key: String in DigimonInstance.STAT_KEYS:
+		if values.has(stat_key):
+			value.aptitudes[stat_key] = clampi(int(values.get(stat_key, 0)), -3, 3)
+	calculator.clamp_resources(value, database.get_by_seed(value.species_seed))
+	OverworldState.notify_collection_changed()
+	return true
+
 func heal(instance_id: String) -> bool:
 	var value := instance(instance_id)
 	if value == null:
@@ -76,6 +119,15 @@ func set_critical(instance_id: String) -> bool:
 	if value == null:
 		return false
 	value.current_hp = 1
+	value.current_mp = 0
+	OverworldState.notify_collection_changed()
+	return true
+
+func set_knocked_out(instance_id: String) -> bool:
+	var value := instance(instance_id)
+	if value == null:
+		return false
+	value.current_hp = 0
 	value.current_mp = 0
 	OverworldState.notify_collection_changed()
 	return true
