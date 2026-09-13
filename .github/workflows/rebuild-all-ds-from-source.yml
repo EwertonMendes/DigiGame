@@ -1,0 +1,64 @@
+name: Rebuild every DS field sprite from source
+
+on:
+  push:
+    branches:
+      - fix/ds-sprite-facing-audit
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ds-full-rebuild]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/ds-sprite-facing-audit
+          fetch-depth: 0
+
+      - name: Install sprite rebuild tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+
+      - name: Hard-delete and rebuild every non-Agumon DS field sprite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/rebuild_all_ds_fields_from_source.py
+
+      - name: Verify source-only rebuild manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('database/ds-full-rebuild-manifest.json').read_text())
+          assert data['canonical_reference'] == 'Agumon'
+          assert data['preserved_count'] == 1
+          assert data['rebuilt_count'] == 88
+          assert data['unresolved'] == []
+          assert data['existing_non_agumon_runtime_strips_allowed_as_input'] is False
+          assert data['canonical_runtime_order'] == ['down_left', 'down_right', 'up_left', 'up_right']
+          assert all(item['name'] != 'Agumon' for item in data['rebuilt'])
+          print('manifest verified: Agumon preserved; 88 DS sprites rebuilt from source')
+          PY
+          python3 tools/validate_early_rank_playables.py
+          python3 tools/validate_all_ds_directional_facings.py
+          python3 tools/validate_runtime_assets.py
+
+      - name: Commit hard-rebuilt DS sprites
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'Rebuild produced no changes; refusing because non-Agumon strips must be recreated.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A assets/characters assets/resources database tools/validate_runtime_assets.py
+          git commit -m 'fix: rebuild every non-Agumon DS field strip from source [skip ds-full-rebuild]'
+          git push origin HEAD:fix/ds-sprite-facing-audit
