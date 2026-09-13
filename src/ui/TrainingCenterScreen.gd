@@ -14,7 +14,7 @@ const CONFIRM_ICON := preload("res://assets/ui/icons/confirm.svg")
 const UNDO_ICON := preload("res://assets/ui/icons/undo.svg")
 const MOVE_ICON := preload("res://assets/ui/icons/move.svg")
 
-const STAT_META := {
+var STAT_META := {
 	"hp": ["HP", UI.GREEN],
 	"mp": ["SP", UI.BLUE.lightened(0.12)],
 	"atk": ["ATK", UI.GOLD],
