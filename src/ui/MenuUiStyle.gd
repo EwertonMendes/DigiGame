@@ -46,7 +46,15 @@ static func stat_surface(accent: Color, selected: bool = false) -> StyleBoxFlat:
 static func style_action_button(button: Button, accent: Color, selected: bool = false) -> void:
 	if button == null:
 		return
-	SKIN.apply_button(button, UI.GOLD if selected else accent)
+	button.add_theme_stylebox_override("normal", UI.action_style(accent, "selected" if selected else "normal"))
+	button.add_theme_stylebox_override("hover", UI.action_style(accent, "hover"))
+	button.add_theme_stylebox_override("focus", UI.action_style(UI.GOLD if selected else accent, "focus"))
+	button.add_theme_stylebox_override("pressed", UI.action_style(accent, "pressed"))
+	button.add_theme_stylebox_override("disabled", UI.action_style(accent, "disabled"))
+	button.add_theme_color_override("font_color", UI.TEXT)
+	button.add_theme_color_override("font_hover_color", UI.TEXT)
+	button.add_theme_color_override("font_focus_color", UI.TEXT)
+	button.add_theme_color_override("font_pressed_color", UI.TEXT)
 	button.add_theme_color_override("font_disabled_color", UI.DISABLED)
 	UI.apply_body_font(button)
 
@@ -60,8 +68,7 @@ static func action_button(text: String, accent: Color, minimum_height: float = 4
 	return button
 
 static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size: Vector2 = Vector2(44, 44)) -> Button:
-	var button := Button.new()
-	button.focus_mode = Control.FOCUS_ALL
+	var button := action_button("", accent, size.y)
 	button.custom_minimum_size = size
 	button.icon = texture
 	button.expand_icon = true
@@ -69,22 +76,22 @@ static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size
 	SKIN.apply_button(button, accent)
 	return button
 
-static func safe_frame_layout(viewport: Viewport, max_size: Vector2, breakpoint: float = 840.0) -> Dictionary:
-	var physical: Vector2 = UI.physical_window_size(viewport)
-	var scale_factor: float = UI.ui_scale(viewport)
-	var compact: bool = UI.is_compact(viewport, breakpoint)
-	var edge: float = 14.0 if compact else 28.0
-	var width: float = minf(max_size.x, maxf(1.0, physical.x - edge * 2.0))
-	var height: float = minf(max_size.y, maxf(1.0, physical.y - edge * 2.0))
-	var origin: Vector2 = Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
+static func safe_frame_layout(viewport, max_size, breakpoint = 840.0):
+	var physical = UI.physical_window_size(viewport)
+	var scale_factor = UI.ui_scale(viewport)
+	var compact = UI.is_compact(viewport, breakpoint)
+	var edge = 14.0 if compact else 28.0
+	var width = minf(max_size.x, maxf(1.0, physical.x - edge * 2.0))
+	var height = minf(max_size.y, maxf(1.0, physical.y - edge * 2.0))
+	var origin = Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
 	return {"compact": compact, "scale": scale_factor, "position": origin, "size": Vector2(width, height)}
 
-static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2, breakpoint: float = 840.0) -> Dictionary:
-	var layout: Dictionary = safe_frame_layout(viewport, max_size, breakpoint)
+static func apply_safe_frame(frame, viewport, max_size, breakpoint = 840.0):
+	var layout = safe_frame_layout(viewport, max_size, breakpoint)
 	if frame != null:
-		frame.scale = Vector2.ONE * float(layout["scale"])
-		frame.position = layout["position"] as Vector2
-		frame.size = layout["size"] as Vector2
+		frame.scale = Vector2.ONE * float(layout.get("scale", 1.0))
+		frame.position = Vector2(layout.get("position", Vector2.ZERO))
+		frame.size = Vector2(layout.get("size", max_size))
 		frame.clip_contents = true
 	return layout
 
