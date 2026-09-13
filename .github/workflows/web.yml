@@ -115,6 +115,10 @@ jobs:
           grep -q 'digimon progression regression passed' /tmp/digimon-progression.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/digimon-progression.log; then exit 1; fi
 
+          godot --headless --path . tools/test_progression_loop_e2e.tscn --quit-after 20 2>&1 | tee /tmp/progression-loop-e2e.log
+          grep -q 'complete progression loop e2e regression passed' /tmp/progression-loop-e2e.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/progression-loop-e2e.log; then exit 1; fi
+
       - name: Run early-rank playable battle regression
         shell: bash
         run: |
