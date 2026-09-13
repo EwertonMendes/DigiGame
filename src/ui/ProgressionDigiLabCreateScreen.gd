@@ -1,7 +1,6 @@
 extends "res://src/ui/DigiLabScreen.gd"
 class_name ProgressionDigiLabCreateScreen
 
-
 func _refresh_list() -> void:
 	for child in _list_box.get_children():
 		child.queue_free()
@@ -12,7 +11,7 @@ func _refresh_list() -> void:
 		var name := String(raw_name).strip_edges()
 		if not name.is_empty():
 			known_names[name.to_lower()] = name
-	for instance: DigimonInstance in OverworldState.get_roster_instances():
+	for instance: DigimonInstance in OverworldState.get_collection_instances():
 		var seeds: Array[String] = instance.species_history.duplicate()
 		if seeds.is_empty() and not instance.species_seed.is_empty():
 			seeds.append(instance.species_seed)
@@ -73,7 +72,6 @@ func _refresh_list() -> void:
 		_selected_name = String(entries[0].get("name", ""))
 	_style_selection()
 
-
 func _data_button(species_name: String, amount: int) -> Button:
 	var species := _database.get_by_name(species_name)
 	var rank := String(species.get("rank", "Unknown"))
@@ -90,7 +88,6 @@ func _data_button(species_name: String, amount: int) -> Button:
 	SKIN.apply_button(button, accent)
 	button.set_meta("species_name", species_name)
 	return button
-
 
 func _refresh_detail() -> void:
 	for child in _detail_body.get_children():
