@@ -7,7 +7,7 @@ const EvolutionServiceScript = preload("res://src/digimon/DigimonEvolutionServic
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const ActorScript = preload("res://src/battle/DigimonBattleActor.gd")
 const ResultScreenScript = preload("res://src/ui/RetreatAwareBattleResultScreen.gd")
-const RosterScript = preload("res://src/collection/PlayerRoster.gd")
+const CollectionScript = preload("res://src/collection/PlayerCollection.gd")
 const QuestDefinitionScript = preload("res://src/quests/QuestDefinition.gd")
 const QuestServiceScript = preload("res://src/quests/QuestService.gd")
 
@@ -16,7 +16,6 @@ var _factory: DigimonFactory
 var _reward_service: BattleRewardService
 var _evolution: DigimonEvolutionService
 var _calculator: DigimonStatCalculator
-
 
 func _ready() -> void:
 	_database = DatabaseScript.new() as DigimonDatabase
@@ -31,7 +30,7 @@ func _ready() -> void:
 	OverworldState.set_persistence_enabled(false)
 	OverworldState.reset_progress_for_tests(true)
 	OverworldState.set_persistence_enabled(true)
-	assert(OverworldState.save_progress(), "Fresh production roster must save")
+	assert(OverworldState.save_progress(), "Fresh production collection must save")
 
 	await _run_full_progression_loop()
 	_test_minimal_quest_foundation()
@@ -41,7 +40,6 @@ func _ready() -> void:
 	OverworldState.reset_progress_for_tests(true)
 	print("complete progression loop e2e regression passed")
 	get_tree().quit()
-
 
 func _run_full_progression_loop() -> void:
 	var initial_party: Array[DigimonInstance] = OverworldState.get_active_instances()
@@ -105,7 +103,15 @@ func _run_full_progression_loop() -> void:
 	var trained_created := OverworldState.get_instance_by_id(created_id)
 	assert(trained_created != null and trained_created.level >= 5, "Created Digimon must gain enough battle XP to meet an early evolution route")
 
-	# Choose a real database route; evolution keeps identity/Link and resets level/XP.
+	# Training Center progression is permanent, atomic and persisted before evolution.
+	assert(OverworldState.apply_training_plan(created_id, {"atk": 2, "speed": 1}, 0), "Training Center plan must apply through the production state service")
+	trained_created = OverworldState.get_instance_by_id(created_id)
+	assert(int(trained_created.training.get("atk", 0)) == 2 and int(trained_created.training.get("speed", 0)) == 1, "Training must be stored on the persistent individual")
+	assert(OverworldState.save_progress() and OverworldState.load_progress(), "Training must survive save/reload")
+	trained_created = OverworldState.get_instance_by_id(created_id)
+	assert(int(trained_created.training.get("atk", 0)) == 2, "Reload must retain permanent Training")
+
+	# Choose a real database route; evolution keeps identity/Link/Training and resets level/XP.
 	trained_created.link = 37
 	var routes: Array[Dictionary] = _evolution.get_available_evolutions(trained_created, _database, _calculator)
 	var chosen_route: Dictionary = {}
@@ -118,10 +124,12 @@ func _run_full_progression_loop() -> void:
 	assert(_evolution.digivolve(trained_created, evolved_seed, _database, _calculator), "Unlocked Digilab evolution must succeed")
 	assert(trained_created.id == created_id and trained_created.species_seed == evolved_seed, "Evolution must keep the same individual and change species")
 	assert(trained_created.level == 1 and trained_created.exp == 0 and trained_created.link == 37, "Evolution must reset level/XP and preserve Link")
-	OverworldState.notify_roster_changed()
+	assert(int(trained_created.training.get("atk", 0)) == 2, "Evolution must preserve permanent Training")
+	OverworldState.notify_collection_changed()
 	assert(OverworldState.save_progress() and OverworldState.load_progress(), "Evolved form must survive reload")
 	var reloaded_evolved := OverworldState.get_instance_by_id(created_id)
 	assert(reloaded_evolved != null and reloaded_evolved.species_seed == evolved_seed, "Reload must retain evolved species on the same UUID")
+	assert(int(reloaded_evolved.training.get("atk", 0)) == 2, "Evolved Training must survive reload")
 
 	# Battle 3 proves the evolved form can become a real battle actor and gain XP.
 	var evolved_actor := _actor_for(reloaded_evolved, true)
@@ -153,12 +161,13 @@ func _run_full_progression_loop() -> void:
 	assert(_evolution.degenerate(reloaded_evolved, degeneration_seed, _database, _calculator), "Digilab degeneration must succeed")
 	assert(reloaded_evolved.id == created_id and reloaded_evolved.level == 1 and reloaded_evolved.exp == 0, "Degeneration must keep UUID and reset level/XP")
 	assert(reloaded_evolved.link == 37, "Degeneration must preserve Link")
-	OverworldState.notify_roster_changed()
+	assert(int(reloaded_evolved.training.get("atk", 0)) == 2, "Degeneration must preserve permanent Training")
+	OverworldState.notify_collection_changed()
 	assert(OverworldState.save_progress() and OverworldState.load_progress(), "Degenerated state must survive reload")
 	var final_instance := OverworldState.get_instance_by_id(created_id)
 	assert(final_instance != null and final_instance.species_seed == degeneration_seed, "Final reload must retain degeneration")
 	assert(final_instance.species_history.size() >= 3, "Evolution history must survive the complete loop")
-
+	assert(int(final_instance.training.get("atk", 0)) == 2, "Complete progression loop must retain Training")
 
 func _victory(players: Array[DigimonInstance], enemy_name: String, enemy_level: int, profile: String, enemy_count: int) -> Dictionary:
 	var player_actors: Array[Node] = []
@@ -176,7 +185,6 @@ func _victory(players: Array[DigimonInstance], enemy_name: String, enemy_level: 
 		actor.free()
 	return result
 
-
 func _actor_for(instance: DigimonInstance, player_controlled: bool, profile: String = "wild") -> Node:
 	var actor := ActorScript.new() as Node
 	actor.call("bind_digimon_instance", instance, _database.get_by_seed(instance.species_seed), player_controlled)
@@ -185,9 +193,8 @@ func _actor_for(instance: DigimonInstance, player_controlled: bool, profile: Str
 		actor.set_meta("reward_modifier", 1.0)
 	return actor
 
-
 func _test_minimal_quest_foundation() -> void:
-	var roster: PlayerRoster = RosterScript.new()
+	var collection: PlayerCollection = CollectionScript.new()
 	var definition: QuestDefinition = QuestDefinitionScript.new()
 	definition.quest_id = "defeat_3_koromon"
 	definition.initial_state = "available"
@@ -196,13 +203,13 @@ func _test_minimal_quest_foundation() -> void:
 	definition.rewards = {"bits": 25, "digi_data": {koromon_seed: 10}, "flags": {"koromon_trial_complete": true}}
 	assert(definition.validate(_database).is_empty(), "Minimal quest definition must validate")
 	var quests: QuestService = QuestServiceScript.new()
-	assert(quests.start(roster, definition), "Available quest must become active")
-	var partial := quests.record_species_defeat(roster, definition, koromon_seed, 2)
+	assert(quests.start(collection, definition), "Available quest must become active")
+	var partial := quests.record_species_defeat(collection, definition, koromon_seed, 2)
 	assert(not bool(partial.get("completed", false)), "Quest must remain active before objective target")
-	var completed := quests.record_species_defeat(roster, definition, koromon_seed, 1)
-	assert(bool(completed.get("completed", false)) and quests.get_state(roster, definition) == "completed", "Quest must complete at objective target")
-	assert(roster.bits == 25 and roster.get_digi_data(koromon_seed) == 10, "Quest rewards must use persistent roster currencies")
-	assert(bool(roster.progression_flags.get("koromon_trial_complete", false)), "Quest progression flag must persist in roster state")
-	var restored := PlayerRoster.new()
-	restored.load_dict(roster.to_dict())
-	assert(String((restored.quest_states.get(definition.quest_id, {}) as Dictionary).get("state", "")) == "completed", "Quest state must survive roster serialization")
+	var completed := quests.record_species_defeat(collection, definition, koromon_seed, 1)
+	assert(bool(completed.get("completed", false)) and quests.get_state(collection, definition) == "completed", "Quest must complete at objective target")
+	assert(collection.bits == 25 and collection.get_digi_data(koromon_seed) == 10, "Quest rewards must use persistent collection currencies")
+	assert(bool(collection.progression_flags.get("koromon_trial_complete", false)), "Quest progression flag must persist in collection state")
+	var restored := PlayerCollection.new()
+	restored.load_dict(collection.to_dict())
+	assert(String((restored.quest_states.get(definition.quest_id, {}) as Dictionary).get("state", "")) == "completed", "Quest state must survive collection serialization")

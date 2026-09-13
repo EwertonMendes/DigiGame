@@ -8,13 +8,11 @@ const DEFAULT_PATH := "user://digigame-save.json"
 
 var _migration = MigrationScript.new()
 
-
-func save_roster(roster: PlayerRoster, path: String = DEFAULT_PATH) -> bool:
-	if roster == null:
+func save_collection(collection: PlayerCollection, path: String = DEFAULT_PATH) -> bool:
+	if collection == null:
 		return false
-	var dto: PlayerProgressSaveData = SaveDataScript.from_roster(roster)
+	var dto: PlayerProgressSaveData = SaveDataScript.from_collection(collection)
 	return save_data(dto, path)
-
 
 func save_data(data: PlayerProgressSaveData, path: String = DEFAULT_PATH) -> bool:
 	if data == null:
@@ -30,7 +28,6 @@ func save_data(data: PlayerProgressSaveData, path: String = DEFAULT_PATH) -> boo
 	file.store_string(json)
 	file.flush()
 	file.close()
-
 	if FileAccess.file_exists(backup_path):
 		DirAccess.remove_absolute(backup_path)
 	if FileAccess.file_exists(absolute_path):
@@ -49,7 +46,6 @@ func save_data(data: PlayerProgressSaveData, path: String = DEFAULT_PATH) -> boo
 		DirAccess.remove_absolute(backup_path)
 	return true
 
-
 func load_data(path: String = DEFAULT_PATH) -> PlayerProgressSaveData:
 	if not FileAccess.file_exists(path):
 		return null
@@ -62,15 +58,13 @@ func load_data(path: String = DEFAULT_PATH) -> PlayerProgressSaveData:
 		return null
 	return SaveDataScript.from_dict(migrated)
 
-
-func load_roster(path: String = DEFAULT_PATH) -> PlayerRoster:
+func load_collection(path: String = DEFAULT_PATH) -> PlayerCollection:
 	var data := load_data(path)
 	if data == null:
 		return null
-	var roster := PlayerRoster.new()
-	roster.load_dict(data.roster)
-	return roster
-
+	var collection := PlayerCollection.new()
+	collection.load_dict(data.collection)
+	return collection
 
 func delete_save(path: String = DEFAULT_PATH) -> bool:
 	if not FileAccess.file_exists(path):

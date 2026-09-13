@@ -1,9 +1,9 @@
 extends "res://src/world/HubMobileGameplay.gd"
 
-const DigimonRosterMenuScript = preload("res://src/ui/DigimonProgressionMenu.gd")
+const DigimonCollectionMenuScript = preload("res://src/ui/DigimonProgressionMenu.gd")
 const DigiLabHubScreenScript = preload("res://src/ui/DigiLabHubScreen.gd")
 
-var _digimon_menu: DigimonRosterMenu = null
+var _digimon_menu: DigimonCollectionMenu = null
 var _menu_open := false
 var _touch_menu_button: Button = null
 var _digilab: DigiLabHubScreen = null
@@ -11,14 +11,12 @@ var _digilab_open := false
 var _digilab_terminal: Node2D = null
 var _touch_digilab_button: Button = null
 
-
 func _ready() -> void:
 	super._ready()
 	_build_digimon_menu()
 	_build_digilab_terminal()
 	_build_digilab_ui()
 	call_deferred("_layout_ui")
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _digilab_open:
@@ -43,14 +41,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	super._unhandled_input(event)
 
-
 func _build_digimon_menu() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "DigimonMenuUI"
 	layer.layer = 85
 	add_child(layer)
-	_digimon_menu = DigimonRosterMenuScript.new()
-	_digimon_menu.name = "DigimonRosterMenu"
+	_digimon_menu = DigimonCollectionMenuScript.new()
+	_digimon_menu.name = "DigimonCollectionMenu"
 	_digimon_menu.visible = false
 	_digimon_menu.close_requested.connect(_close_digimon_menu)
 	layer.add_child(_digimon_menu)
@@ -60,7 +57,6 @@ func _build_digimon_menu() -> void:
 	_touch_menu_button.focus_mode = Control.FOCUS_NONE
 	_touch_menu_button.pressed.connect(_open_digimon_menu)
 	_ui_root.add_child(_touch_menu_button)
-
 
 func _build_digilab_terminal() -> void:
 	var actors := get_node_or_null("Actors") as Node2D
@@ -99,7 +95,6 @@ func _build_digilab_terminal() -> void:
 	_digilab_terminal.add_child(label)
 	_blockers.append({"position": _digilab_terminal.position, "radius": 24.0})
 
-
 func _build_digilab_ui() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "DigiLabUI"
@@ -117,7 +112,6 @@ func _build_digilab_ui() -> void:
 	_touch_digilab_button.pressed.connect(_open_digilab)
 	_ui_root.add_child(_touch_digilab_button)
 
-
 func _open_digimon_menu() -> void:
 	if _menu_open or _digilab_open or _dialog_open or _transitioning or _digimon_menu == null:
 		return
@@ -129,7 +123,6 @@ func _open_digimon_menu() -> void:
 	_layout_ui()
 	if OS.is_debug_build():
 		print("[Hub] DIGIMON_MENU open")
-
 
 func _close_digimon_menu() -> void:
 	if not _menu_open:
@@ -143,7 +136,6 @@ func _close_digimon_menu() -> void:
 	if OS.is_debug_build():
 		print("[Hub] DIGIMON_MENU close")
 
-
 func _open_digilab() -> void:
 	if _digilab_open or _menu_open or _dialog_open or _transitioning or _digilab == null:
 		return
@@ -156,7 +148,6 @@ func _open_digilab() -> void:
 	if OS.is_debug_build():
 		print("[Hub] DIGILAB open")
 
-
 func _close_digilab() -> void:
 	if not _digilab_open:
 		return
@@ -168,7 +159,6 @@ func _close_digilab() -> void:
 	_layout_ui()
 	if OS.is_debug_build():
 		print("[Hub] DIGILAB close")
-
 
 func _refresh_interaction() -> void:
 	if _interaction_prompt == null:
@@ -187,10 +177,8 @@ func _refresh_interaction() -> void:
 		return
 	super._refresh_interaction()
 
-
 func _is_digilab_nearby() -> bool:
 	return _player != null and _digilab_terminal != null and _player.position.distance_to(_digilab_terminal.position) <= INTERACTION_DISTANCE
-
 
 func _layout_ui() -> void:
 	super._layout_ui()
