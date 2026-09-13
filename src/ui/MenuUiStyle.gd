@@ -72,7 +72,9 @@ static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size
 	button.custom_minimum_size = size
 	button.icon = texture
 	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.tooltip_text = tooltip
+	SKIN.apply_button(button, accent)
 	return button
 
 static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2, compact_breakpoint: float = 840.0) -> Dictionary:
