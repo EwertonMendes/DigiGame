@@ -1,7 +1,6 @@
 extends CharacterBody2D
 
 const TurnIndicatorScript = preload("res://src/TurnIndicator.gd")
-const DIRECTION_FRAME_BASE := {"down_left": 0, "down_right": 3, "up_left": 6, "up_right": 9}
 const VEEMON_SPACED_9_IDLE_FRAME := {
 	"down_left": 3,
 	"down_right": 5,
@@ -51,7 +50,7 @@ var _turn_indicator: Node2D
 
 func _ready() -> void:
 	global_position = Vector2(initialTileCoords) + PLAYER_POSITION_DEVIATION
-	facing_direction = initial_facing if DIRECTION_FRAME_BASE.has(initial_facing) else "up_right"
+	facing_direction = initial_facing if DirectionalSpriteContract.has_direction(initial_facing) else "up_right"
 	_create_turn_indicator()
 	_show_current_facing(false)
 
@@ -281,7 +280,11 @@ func _advance_selected_animation(delta: float) -> void:
 	if _selected_animation_time < duration:
 		return
 	_selected_animation_time = fmod(_selected_animation_time, duration)
-	var frame_count := maxi(1, sprite.hframes * sprite.vframes) if sprite_layout == "portrait_strip" else 3
+	var frame_count := (
+		maxi(1, sprite.hframes * sprite.vframes)
+		if sprite_layout == "portrait_strip"
+		else DirectionalSpriteContract.WALK_PHASES.size()
+	)
 	_selected_animation_frame = (_selected_animation_frame + 1) % frame_count
 	_show_current_facing(true)
 
@@ -298,8 +301,11 @@ func _show_current_facing(animate: bool) -> void:
 		return
 	sprite.region_enabled = false
 	sprite.flip_h = horizontal_facing_inverted
-	var base_frame: int = DIRECTION_FRAME_BASE.get(facing_direction, 9)
-	sprite.frame = base_frame + (_selected_animation_frame if animate else 0)
+	sprite.frame = (
+		DirectionalSpriteContract.walk_frame(facing_direction, _selected_animation_frame)
+		if animate
+		else DirectionalSpriteContract.idle_frame(facing_direction)
+	)
 
 
 func _show_spaced_9_facing(animate: bool) -> void:
@@ -357,3 +363,4 @@ func _focus_camera_on(world_position: Vector2) -> void:
 		camera.call("focus_on", world_position)
 	else:
 		camera.global_position = world_position
+

@@ -2,6 +2,7 @@ extends Node
 
 const RuntimeControllerScript = preload("res://src/DigimonRuntimeController.gd")
 const FollowerScript = preload("res://src/world/OverworldDigimonFollower.gd")
+const DirectionalContractScript = preload("res://src/sprites/DirectionalSpriteContract.gd")
 const MANIFEST_PATH := "res://database/early-rank-playables.json"
 const EXPECTED_RANKS := ["Fresh", "In-Training", "Rookie"]
 const FACINGS := ["down_left", "down_right", "up_left", "up_right"]
@@ -71,8 +72,12 @@ func _ready() -> void:
 		assert(follower_sprite != null and follower_sprite.texture != null, "%s follower must load its DS field texture" % species_name)
 		for facing in FACINGS:
 			follower.teleport_to(Vector2.ZERO, facing)
-			follower.step_toward(_target_for_facing(facing), 0.12, [])
-			assert(follower_sprite.frame >= 0 and follower_sprite.frame < 12, "%s %s movement selected an invalid DS frame" % [species_name, facing])
+			var idle_frame := DirectionalContractScript.idle_frame(facing)
+			assert(follower_sprite.frame == idle_frame, "%s %s must start on the canonical idle frame" % [species_name, facing])
+			var expected_walk := [idle_frame + 1, idle_frame, idle_frame + 2, idle_frame]
+			for expected_frame in expected_walk:
+				follower.step_toward(_target_for_facing(facing), 0.11, [])
+				assert(follower_sprite.frame == expected_frame, "%s %s must follow idle/step-a/idle/step-b" % [species_name, facing])
 		follower.queue_free()
 
 		await get_tree().process_frame
@@ -98,3 +103,4 @@ func _target_for_facing(facing: String) -> Vector2:
 			return Vector2(-128.0, -128.0)
 		_:
 			return Vector2(128.0, -128.0)
+

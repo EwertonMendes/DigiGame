@@ -3,9 +3,10 @@
 
 `Digimon.gd` defaults sprite_layout to directional_12, so a resource that omits
 that assignment (legacy Greymon is one example) is still directional at runtime.
-The authoritative coverage source is `database/ds-full-rebuild-manifest.json`:
-Agumon is the only preserved golden strip; every other DS directional runtime
-asset must be rebuilt from source.
+The authoritative coverage source is `database/ds-full-rebuild-manifest.json`.
+Agumon is the golden strip. Greymon and Metal Greymon are also preserved with
+their separately pinned runtime hashes because their source host rejects CI
+downloads; every other DS directional runtime asset is rebuilt from source.
 """
 from __future__ import annotations
 
@@ -49,12 +50,15 @@ def main() -> None:
 
     preserved = _names(audit.get("preserved"))
     rebuilt = _names(audit.get("rebuilt"))
-    if preserved != {"Agumon"}:
-        raise RuntimeError(f"Only Agumon may be preserved, got: {sorted(preserved)}")
+    expected_preserved = {"Agumon", "Greymon", "Metal Greymon"}
+    if preserved != expected_preserved:
+        raise RuntimeError(
+            f"Expected preserved reviewed strips {sorted(expected_preserved)}, got: {sorted(preserved)}"
+        )
     if "Agumon" in rebuilt:
         raise RuntimeError("Agumon must not appear in rebuilt entries")
-    if len(rebuilt) != 88:
-        raise RuntimeError(f"Expected 88 source-rebuilt directional sprites, got {len(rebuilt)}")
+    if len(rebuilt) != 86:
+        raise RuntimeError(f"Expected 86 source-rebuilt directional sprites, got {len(rebuilt)}")
     covered = preserved | rebuilt
 
     directional: dict[str, dict[str, str]] = {}
@@ -115,3 +119,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

@@ -4,6 +4,8 @@ DigiGame contains legacy prototype character art from commercial Digimon games. 
 
 The normalized runtime sheets used by the current battle scene are committed to the repository. A clean checkout therefore does not have to contact sprite-hosting sites before the game can run. The old fetch/preparation scripts remain only as optional provenance/reproduction tools and are no longer part of normal Web CI.
 
+Every `directional_12` sheet follows one complete runtime contract: `down_left`, `down_right`, `up_left`, `up_right`, with `idle`, `step_a`, `step_b` inside each direction. The source archive frequently stores the corresponding right-facing poses in reverse physical order. `database/ds-direction-registry.json` therefore records both the reviewed direction group and the reviewed per-direction source frame order before a runtime strip is built. All frames in one species share a uniform bottom-center cell anchor, and the generated animated audit preserves that registration instead of trimming each preview frame again.
+
 Agumon, Gabumon, and Greymon come from Digimon World DS sheets prepared by `tools/fetch_character_assets.py` and use the normalized 12-frame directional runtime layout: `down_left` (0-2), `down_right` (3-5), `up_left` (6-8), `up_right` (9-11). Their committed runtime sheets are `assets/characters/agumon.png`, `assets/characters/gabumon.png`, and `assets/characters/greymon.png`.
 
 Koromon and Tanemon were prepared by `tools/fetch_enemy_assets.py` from the With the Will / Photobucket source images used by this prototype and their normalized runtime sheets are also committed:
@@ -20,3 +22,4 @@ MetalGreymon uses the Digimon World DS sheet listed as asset `48322` on The Spri
 `tools/validate_runtime_assets.py` verifies all battle-critical committed character sheets together with the terrain, VFX, and UI fonts without making network requests.
 
 Rights to Digimon and the official game artwork remain with their relevant Digimon/Bandai Namco rights holders. No free-content license is claimed. These assets are suitable only for the current fan/prototype context and should be replaced by original or properly licensed artwork before commercial distribution.
+

@@ -9,13 +9,14 @@ Semantic truth lives in database/ds-direction-registry.json.
 from __future__ import annotations
 
 import json
+import tempfile
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "database/ds-full-rebuild-manifest.json"
-OUT = Path("/tmp/ds-generated-direction-audit")
+OUT = Path(tempfile.gettempdir()) / "ds-generated-direction-audit"
 DIRECTIONS = (("DL", 0), ("DR", 3), ("UL", 6), ("UR", 9))
 FRAME_BOX = 70
 NAME_W = 190
@@ -23,6 +24,7 @@ HEADER_H = 28
 ROW_H = 92
 PAGE_ROWS = 9
 SCALE_LIMIT = 4
+WALK_PHASES = (0, 1, 0, 2)
 
 
 def _row_scale(frames: list[Image.Image]) -> int:
@@ -37,16 +39,45 @@ def _row_scale(frames: list[Image.Image]) -> int:
 
 
 def _fit_nearest(frame: Image.Image, scale: int) -> Image.Image:
-    bbox = frame.getbbox()
-    if bbox is None:
+    if frame.getbbox() is None:
         return Image.new("RGBA", (FRAME_BOX, FRAME_BOX), (0, 0, 0, 0))
-    crop = frame.crop(bbox)
-    crop = crop.resize((crop.width * scale, crop.height * scale), Image.Resampling.NEAREST)
+    scaled = frame.resize((frame.width * scale, frame.height * scale), Image.Resampling.NEAREST)
     canvas = Image.new("RGBA", (FRAME_BOX, FRAME_BOX), (0, 0, 0, 0))
-    x = (FRAME_BOX - crop.width) // 2
-    y = FRAME_BOX - crop.height - 4
-    canvas.alpha_composite(crop, (x, y))
+    x = (FRAME_BOX - scaled.width) // 2
+    y = FRAME_BOX - scaled.height - 4
+    canvas.alpha_composite(scaled, (x, y))
     return canvas
+
+
+def _animated_page(page_entries: list[dict], phase_index: int, font: ImageFont.ImageFont) -> Image.Image:
+    page_w = NAME_W + FRAME_BOX * len(DIRECTIONS) + 24
+    page_h = HEADER_H + ROW_H * len(page_entries)
+    page = _checker((page_w, page_h))
+    draw = ImageDraw.Draw(page)
+    draw.rectangle((0, 0, page_w, HEADER_H), fill=(250, 250, 250, 255))
+    draw.text(
+        (8, 8),
+        f"Animated runtime phase {WALK_PHASES[phase_index]}: DL / DR / UL / UR — red line is the shared anchor",
+        fill=(0, 0, 0, 255),
+        font=font,
+    )
+    for row_index, entry in enumerate(page_entries):
+        y = HEADER_H + row_index * ROW_H
+        draw.rectangle((0, y, page_w, y + ROW_H - 1), outline=(90, 90, 90, 255), width=1)
+        draw.rectangle((0, y, NAME_W, y + ROW_H - 1), fill=(248, 248, 248, 255))
+        frames = _load_frames(ROOT / entry["output"])
+        scale = _row_scale(frames)
+        draw.text((8, y + 8), f"{entry['name']}  x{scale}", fill=(0, 0, 0, 255), font=font)
+        for column, (direction, start) in enumerate(DIRECTIONS):
+            x = NAME_W + column * FRAME_BOX
+            if column:
+                draw.line((x, y, x, y + ROW_H - 1), fill=(70, 70, 70, 255), width=2)
+            draw.text((x + 3, y + 3), direction, fill=(0, 0, 0, 255), font=font)
+            anchor_y = y + 18 + FRAME_BOX - 4
+            draw.line((x + 4, anchor_y, x + FRAME_BOX - 5, anchor_y), fill=(220, 45, 45, 255), width=1)
+            frame = frames[start + WALK_PHASES[phase_index]]
+            page.alpha_composite(_fit_nearest(frame, scale), (x, y + 18))
+    return page
 
 
 def _checker(size: tuple[int, int]) -> Image.Image:
@@ -62,7 +93,10 @@ def _checker(size: tuple[int, int]) -> Image.Image:
 
 def _read_entries() -> list[dict]:
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    entries = [{"name": "Agumon", "output": "assets/characters/agumon/field.png"}]
+    entries = [
+        {"name": item["name"], "output": item["field"]}
+        for item in data["preserved"]
+    ]
     entries.extend(data["rebuilt"])
     if len(entries) != 89:
         raise RuntimeError(f"Expected 89 DS runtime strips, found {len(entries)}")
@@ -124,11 +158,28 @@ def main() -> None:
 
         filename = f"page-{page_index // PAGE_ROWS + 1:02d}.png"
         page.save(OUT / filename)
-        manifest.append({"page": filename, "names": [entry["name"] for entry in page_entries]})
+        animated_filename = f"animated-page-{page_index // PAGE_ROWS + 1:02d}.gif"
+        animated_frames = [_animated_page(page_entries, phase, font).convert("RGB") for phase in range(len(WALK_PHASES))]
+        animated_frames[0].save(
+            OUT / animated_filename,
+            save_all=True,
+            append_images=animated_frames[1:],
+            duration=120,
+            loop=0,
+            optimize=False,
+        )
+        manifest.append(
+            {
+                "page": filename,
+                "animated_page": animated_filename,
+                "names": [entry["name"] for entry in page_entries],
+            }
+        )
 
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    print(f"rendered {len(entries)} runtime strips across {len(manifest)} fixed-scale review pages")
+    print(f"rendered {len(entries)} runtime strips across {len(manifest)} static and animated review pages")
 
 
 if __name__ == "__main__":
     main()
+

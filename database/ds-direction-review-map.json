@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "canonical_reference": "Agumon",
   "canonical_runtime_order": [
     "down_left",
@@ -11,6 +11,35 @@
     "canonical_rows": [0, 1, 2, 3],
     "rear_rows_first": [2, 3, 0, 1],
     "compact_interleaved": [0, 2, 1, 3]
+  },
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "phase_policy": "WtW left-facing triples define idle/step_a/step_b. Right-facing triples are reordered to match the corresponding left-facing pose; listed exceptions were reviewed by deterministic mirror-pose comparison.",
+  "default_source_phase_order": {
+    "down_left": [0, 1, 2],
+    "down_right": [2, 1, 0],
+    "up_left": [0, 1, 2],
+    "up_right": [2, 1, 0]
+  },
+  "source_phase_overrides": {
+    "Calumon": {
+      "down_right": [0, 1, 2],
+      "up_right": [0, 1, 2]
+    },
+    "Kapurimon": {
+      "up_right": [0, 1, 2]
+    },
+    "Kudamon": {
+      "down_right": [0, 1, 2],
+      "up_right": [0, 1, 2]
+    },
+    "Monodramon": {
+      "down_right": [1, 0, 2],
+      "up_right": [2, 0, 1]
+    }
   },
   "species": {
     "Chicchimon": "rear_rows_first",
@@ -102,5 +131,26 @@
     "Candlemon": "rear_rows_first",
     "Chicchimon": "rear_rows_first",
     "Koromon": "compact_interleaved"
+  },
+  "phase_regression_cases": {
+    "Agumon": {
+      "down_left": [0, 1, 2],
+      "down_right": [2, 1, 0],
+      "up_left": [0, 1, 2],
+      "up_right": [2, 1, 0]
+    },
+    "BlackAgumon": {
+      "down_left": [0, 1, 2],
+      "down_right": [2, 1, 0],
+      "up_left": [0, 1, 2],
+      "up_right": [2, 1, 0]
+    },
+    "Gabumon": {
+      "down_left": [0, 1, 2],
+      "down_right": [2, 1, 0],
+      "up_left": [0, 1, 2],
+      "up_right": [2, 1, 0]
+    }
   }
 }
+

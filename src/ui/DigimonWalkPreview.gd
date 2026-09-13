@@ -1,15 +1,8 @@
 extends Control
 class_name DigimonWalkPreview
 
-const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
 const WALK_FRAME_DURATION := 0.11
 const PREVIEW_FACING := "down_right"
-const DIRECTION_FRAME_BASE := {
-	"down_left": 0,
-	"down_right": 3,
-	"up_left": 6,
-	"up_right": 9,
-}
 const SPACED_9_IDLE_FRAME := {
 	"down_left": 3,
 	"down_right": 5,
@@ -94,7 +87,7 @@ func _process(delta: float) -> void:
 			var frame_count := maxi(1, _sprite.hframes * _sprite.vframes)
 			_sequence_index = (_sequence_index + 1) % frame_count
 		else:
-			_sequence_index = (_sequence_index + 1) % WALK_SEQUENCE.size()
+			_sequence_index = (_sequence_index + 1) % DirectionalSpriteContract.WALK_PHASES.size()
 	_show_walk_frame()
 
 
@@ -133,7 +126,7 @@ func _show_idle_frame() -> void:
 	else:
 		_sprite.region_enabled = false
 		_sprite.flip_h = false
-		_sprite.frame = int(DIRECTION_FRAME_BASE.get(PREVIEW_FACING, 3))
+		_sprite.frame = DirectionalSpriteContract.idle_frame(PREVIEW_FACING)
 
 
 func _show_walk_frame() -> void:
@@ -150,8 +143,7 @@ func _show_walk_frame() -> void:
 	else:
 		_sprite.region_enabled = false
 		_sprite.flip_h = false
-		var base_frame := int(DIRECTION_FRAME_BASE.get(PREVIEW_FACING, 3))
-		_sprite.frame = base_frame + WALK_SEQUENCE[_sequence_index]
+		_sprite.frame = DirectionalSpriteContract.walk_frame(PREVIEW_FACING, _sequence_index)
 
 
 func _show_spaced_9_frame(frame_index: int) -> void:
@@ -187,3 +179,4 @@ func _layout_sprite() -> void:
 		return
 	var fit := minf(size.x / frame_size.x, size.y / frame_size.y) * 0.82
 	_sprite.scale = Vector2.ONE * clampf(fit, 0.6, 2.5)
+

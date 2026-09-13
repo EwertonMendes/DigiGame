@@ -14,10 +14,12 @@ from __future__ import annotations
 
 import hashlib
 import io
+import itertools
 import json
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 from PIL import Image
 
 from build_early_rank_ds_fields import WTW_IDS, _components, _group_by_y, load_wtw_archive
@@ -25,12 +27,27 @@ from build_early_rank_ds_fields import WTW_IDS, _components, _group_by_y, load_w
 REVIEW_MAP = Path("database/ds-direction-review-map.json")
 REGISTRY = Path("database/ds-direction-registry.json")
 DIRECTION_ORDER = ("down_left", "down_right", "up_left", "up_right")
+PHASE_ORDER = ("idle", "step_a", "step_b")
 EXPECTED_REGRESSIONS = {
     "Agumon": [0, 1, 2, 3],
     "BlackAgumon": [2, 3, 0, 1],
     "Candlemon": [2, 3, 0, 1],
     "Chicchimon": [2, 3, 0, 1],
     "Koromon": [0, 2, 1, 3],
+}
+EXPECTED_PHASE_REGRESSIONS = {
+    "Agumon": {
+        "down_left": [0, 1, 2], "down_right": [2, 1, 0],
+        "up_left": [0, 1, 2], "up_right": [2, 1, 0],
+    },
+    "BlackAgumon": {
+        "down_left": [0, 1, 2], "down_right": [2, 1, 0],
+        "up_left": [0, 1, 2], "up_right": [2, 1, 0],
+    },
+    "Gabumon": {
+        "down_left": [0, 1, 2], "down_right": [2, 1, 0],
+        "up_left": [0, 1, 2], "up_right": [2, 1, 0],
+    },
 }
 
 
@@ -40,6 +57,78 @@ def sha256(data: bytes) -> str:
 
 def exact_box(component: dict[str, float]) -> dict[str, int]:
     return {key: int(component[key]) for key in ("x", "y", "w", "h")}
+
+
+def keyed_source(image: Image.Image, background_rgb: tuple[int, int, int]) -> Image.Image:
+    rgba = np.array(image.convert("RGBA"), copy=True)
+    background = np.asarray(background_rgb, dtype=np.uint8)
+    rgba[np.all(rgba[:, :, :3] == background, axis=2), 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
+def crop_component(source: Image.Image, box: dict[str, int]) -> Image.Image:
+    x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
+    pad = 2
+    crop = source.crop(
+        (
+            max(0, x - pad),
+            max(0, y - pad),
+            min(source.width, x + w + pad),
+            min(source.height, y + h + pad),
+        )
+    )
+    bbox = crop.getbbox()
+    if bbox is None:
+        raise RuntimeError(f"Source component became empty: {box}")
+    return crop.crop(bbox)
+
+
+def comparison_cells(
+    image: Image.Image,
+    background: tuple[int, int, int],
+    left_boxes: list[dict[str, int]],
+    right_boxes: list[dict[str, int]],
+) -> tuple[list[Image.Image], list[Image.Image]]:
+    source = keyed_source(image, background)
+    crops = [crop_component(source, box) for box in left_boxes + right_boxes]
+    cell_w = max(frame.width for frame in crops) + 4
+    cell_h = max(frame.height for frame in crops) + 4
+    cells: list[Image.Image] = []
+    for frame in crops:
+        cell = Image.new("RGBA", (cell_w, cell_h), (0, 0, 0, 0))
+        cell.alpha_composite(frame, ((cell_w - frame.width) // 2, cell_h - frame.height - 1))
+        cells.append(cell)
+    return cells[:3], cells[3:]
+
+
+def pose_match_candidates(
+    image: Image.Image,
+    background: tuple[int, int, int],
+    left_boxes: list[dict[str, int]],
+    right_boxes: list[dict[str, int]],
+) -> list[tuple[int, tuple[int, int, int]]]:
+    left, right = comparison_cells(image, background, left_boxes, right_boxes)
+    candidates: list[tuple[int, tuple[int, int, int]]] = []
+    for permutation in itertools.permutations(range(3)):
+        cost = 0
+        for phase, source_index in enumerate(permutation):
+            mirrored = np.asarray(
+                left[phase].transpose(Image.Transpose.FLIP_LEFT_RIGHT), dtype=np.int16
+            )
+            candidate = np.asarray(right[source_index], dtype=np.int16)
+            cost += int(np.abs(mirrored - candidate).sum())
+        candidates.append((cost, permutation))
+    candidates.sort()
+    return candidates
+
+
+def reviewed_phase_order(review: dict[str, Any], name: str, direction: str) -> list[int]:
+    default = review["default_source_phase_order"][direction]
+    override = review.get("source_phase_overrides", {}).get(name, {}).get(direction, default)
+    order = [int(index) for index in override]
+    if sorted(order) != [0, 1, 2]:
+        raise RuntimeError(f"{name} {direction}: invalid source phase order {order}")
+    return order
 
 
 def candidate_groups(image: Image.Image) -> tuple[tuple[int, int, int], list[list[dict[str, float]]]]:
@@ -120,6 +209,10 @@ def load_review_map() -> dict[str, Any]:
         raise RuntimeError("Review map canonical reference must be Agumon")
     if data.get("canonical_runtime_order") != list(DIRECTION_ORDER):
         raise RuntimeError("Review map runtime order does not match DigiGame")
+    if data.get("schema_version", 0) < 2:
+        raise RuntimeError("Review map does not define canonical frame phases")
+    if data.get("canonical_runtime_phases") != list(PHASE_ORDER):
+        raise RuntimeError("Review map phase order must be idle, step_a, step_b")
     species = data.get("species", {})
     if set(species) != set(WTW_IDS):
         raise RuntimeError(
@@ -130,6 +223,21 @@ def load_review_map() -> dict[str, Any]:
     for name, permutation in patterns.items():
         if sorted(permutation) != [0, 1, 2, 3]:
             raise RuntimeError(f"Invalid direction permutation {name}: {permutation}")
+    defaults = data.get("default_source_phase_order", {})
+    if set(defaults) != set(DIRECTION_ORDER):
+        raise RuntimeError("Review map must define a default phase order for every direction")
+    for direction, order in defaults.items():
+        if sorted(order) != [0, 1, 2]:
+            raise RuntimeError(f"Invalid default source phase order {direction}: {order}")
+    overrides = data.get("source_phase_overrides", {})
+    if not set(overrides).issubset(WTW_IDS):
+        raise RuntimeError(f"Unknown phase override species: {sorted(set(overrides) - set(WTW_IDS))}")
+    for name, directions in overrides.items():
+        if not set(directions).issubset(DIRECTION_ORDER):
+            raise RuntimeError(f"{name}: unknown phase override direction")
+        for direction, order in directions.items():
+            if sorted(order) != [0, 1, 2]:
+                raise RuntimeError(f"{name} {direction}: invalid phase override {order}")
     return data
 
 
@@ -152,9 +260,40 @@ def main() -> None:
         if sorted(permutation) != [0, 1, 2, 3]:
             raise RuntimeError(f"{name}: unknown/invalid reviewed pattern {pattern_name}")
 
-        frames = {
+        raw_frames = {
             direction: groups[permutation[index]]
             for index, direction in enumerate(DIRECTION_ORDER)
+        }
+        source_frame_order = {
+            direction: reviewed_phase_order(review, name, direction)
+            for direction in DIRECTION_ORDER
+        }
+        pose_alignment: dict[str, Any] = {}
+        for left_direction, right_direction in (("down_left", "down_right"), ("up_left", "up_right")):
+            candidates = pose_match_candidates(
+                image,
+                background,
+                raw_frames[left_direction],
+                raw_frames[right_direction],
+            )
+            chosen = tuple(source_frame_order[right_direction])
+            chosen_cost = next(cost for cost, order in candidates if order == chosen)
+            best_cost = candidates[0][0]
+            if chosen_cost != best_cost:
+                raise RuntimeError(
+                    f"{name} {right_direction}: reviewed phase order {chosen} costs {chosen_cost}, "
+                    f"but deterministic mirror-pose match prefers {candidates[0][1]} at {best_cost}"
+                )
+            pose_alignment[right_direction] = {
+                "compared_with": left_direction,
+                "source_phase_order": list(chosen),
+                "pixel_error": chosen_cost,
+                "confidence_margin": candidates[1][0] - candidates[0][0],
+            }
+
+        frames = {
+            direction: [raw_frames[direction][source_index] for source_index in source_frame_order[direction]]
+            for direction in DIRECTION_ORDER
         }
         source_group_order: list[str | None] = [None, None, None, None]
         for runtime_index, source_index in enumerate(permutation):
@@ -170,21 +309,33 @@ def main() -> None:
             "review_pattern": pattern_name,
             "runtime_group_indices": permutation,
             "source_group_order": source_group_order,
+            "canonical_runtime_phases": list(PHASE_ORDER),
+            "source_frame_order": source_frame_order,
+            "pose_alignment": pose_alignment,
+            "anchor_policy": "bottom_center_in_uniform_species_cell",
             "frames": frames,
         }
-        print(f"materialized {sprite_id:03d} {name}: {pattern_name} {permutation}")
+        print(
+            f"materialized {sprite_id:03d} {name}: groups={pattern_name} {permutation} "
+            f"phases={source_frame_order}"
+        )
 
     for name, expected in EXPECTED_REGRESSIONS.items():
         actual = registry_species[name]["runtime_group_indices"]
         if actual != expected:
             raise RuntimeError(f"Regression mapping changed for {name}: expected {expected}, got {actual}")
+    for name, expected in EXPECTED_PHASE_REGRESSIONS.items():
+        actual = registry_species[name]["source_frame_order"]
+        if actual != expected:
+            raise RuntimeError(f"Phase regression changed for {name}: expected {expected}, got {actual}")
 
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "canonical_reference": "Agumon",
         "canonical_runtime_order": list(DIRECTION_ORDER),
         "frames_per_direction": 3,
-        "source_policy": "fresh-download source, detect groups structurally, assign semantics only from reviewed per-species map",
+        "canonical_runtime_phases": list(PHASE_ORDER),
+        "source_policy": "fresh-download source; reviewed direction groups; reviewed per-direction phase order; deterministic mirror-pose verification; uniform bottom-center runtime anchor",
         "review_map": "database/ds-direction-review-map.json",
         "review_map_sha256": sha256(review_bytes),
         "species_count": len(registry_species),
@@ -193,8 +344,9 @@ def main() -> None:
     if len(registry_species) != 82:
         raise RuntimeError(f"Expected 82 official WtW species, got {len(registry_species)}")
     REGISTRY.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"wrote {REGISTRY}: 82/82 species with exact audited boxes")
+    print(f"wrote {REGISTRY}: 82/82 species with exact audited direction, phase, and anchor data")
 
 
 if __name__ == "__main__":
     main()
+

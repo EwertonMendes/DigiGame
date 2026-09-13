@@ -37,6 +37,7 @@ from fetch_character_assets import (
 import fetch_metalgreymon_field as metal_source
 
 DIRECTIONS = ("down_left", "down_right", "up_left", "up_right")
+PHASES = ("idle", "step_a", "step_b")
 FRAME_COUNT = 12
 FRAMES_PER_DIRECTION = 3
 GOLDEN_NAME = "Agumon"
@@ -70,6 +71,10 @@ def load_registry() -> dict[str, Any]:
         raise RuntimeError("Exact DS registry is not based on Agumon")
     if data.get("canonical_runtime_order") != list(DIRECTIONS):
         raise RuntimeError("Exact DS registry order differs from runtime order")
+    if data.get("schema_version", 0) < 3:
+        raise RuntimeError("Exact DS registry does not include frame phase and anchor data")
+    if data.get("canonical_runtime_phases") != list(PHASES):
+        raise RuntimeError("Exact DS registry phase order differs from runtime contract")
     species = data.get("species", {})
     if set(species) != set(WTW_IDS):
         raise RuntimeError("Exact DS registry does not cover all 82 official sources")
@@ -186,6 +191,11 @@ def rebuild_official(archive, entry: dict[str, Any], registry: dict[str, Any]) -
         "review_pattern": spec["review_pattern"],
         "runtime_group_indices": spec["runtime_group_indices"],
         "source_group_order": spec["source_group_order"],
+        "canonical_runtime_phases": spec["canonical_runtime_phases"],
+        "source_frame_order": spec["source_frame_order"],
+        "pose_alignment": spec["pose_alignment"],
+        "anchor_policy": spec["anchor_policy"],
+        "frame_anchor": [cell_w // 2, cell_h - 1],
         "source_layout": spec["layout"],
         "audited_source_frames": spec["frames"],
         "audited_frame_hashes": frame_hashes,
@@ -353,14 +363,6 @@ def hard_delete(entries: list[dict[str, Any]]) -> list[str]:
             if path.exists():
                 path.unlink()
                 deleted.append(str(path))
-    for path in (
-        Path("assets/characters/greymon.png"),
-        Path("assets/characters/metalgreymon/field.png"),
-        Path("assets/characters/metalgreymon/field.json"),
-    ):
-        if path.exists():
-            path.unlink()
-            deleted.append(str(path))
     return deleted
 
 
@@ -383,6 +385,21 @@ def main() -> None:
         raise RuntimeError("Golden Agumon field strip/metadata is missing")
     golden_png_sha = sha256(GOLDEN_FIELD.read_bytes())
     golden_meta_sha = sha256(GOLDEN_META.read_bytes())
+    preserved = [
+        {"name": GOLDEN_NAME, "field": str(GOLDEN_FIELD), "sha256": golden_png_sha},
+        {
+            "name": "Greymon",
+            "field": "assets/characters/greymon.png",
+            "sha256": sha256(Path("assets/characters/greymon.png").read_bytes()),
+            "reason": "source host rejects automated downloads; existing reviewed strip is hash-verified",
+        },
+        {
+            "name": "Metal Greymon",
+            "field": "assets/characters/metalgreymon/field.png",
+            "sha256": sha256(Path("assets/characters/metalgreymon/field.png").read_bytes()),
+            "reason": "source host rejects automated downloads; existing reviewed strip is hash-verified",
+        },
+    ]
 
     deleted = hard_delete(entries)
     archive = load_wtw_archive()  # fresh second download: registry materialization is a separate phase
@@ -404,27 +421,20 @@ def main() -> None:
         except Exception as exc:
             failures.append(f"{name}: {exc}")
 
-    for label, rebuild in (("Greymon", rebuild_greymon), ("Metal Greymon", rebuild_metalgreymon)):
-        try:
-            rebuilt.append(rebuild())
-            print(f"rebuilt: {label}")
-        except Exception as exc:
-            failures.append(f"{label}: {exc}")
-
     if sha256(GOLDEN_FIELD.read_bytes()) != golden_png_sha or sha256(GOLDEN_META.read_bytes()) != golden_meta_sha:
         raise RuntimeError("Agumon golden reference was modified")
-    if len(rebuilt) != 88:
-        failures.append(f"expected 88 rebuilt sprites, got {len(rebuilt)}")
+    if len(rebuilt) != 86:
+        failures.append(f"expected 86 rebuilt sprites, got {len(rebuilt)}")
 
     manifest = {
         "canonical_reference": GOLDEN_NAME,
         "canonical_runtime_order": list(DIRECTIONS),
         "direction_registry": str(REGISTRY_PATH),
         "direction_registry_schema_version": registry["schema_version"],
-        "source_policy": "fresh download + SHA-256 pin + 12 exact audited source rectangles; no semantic direction inference",
+        "source_policy": "fresh download + SHA-256 pin + exact reviewed directions/phases + deterministic mirror-pose verification + uniform bottom-center anchor; three already-reviewed strips are preserved by hash",
         "existing_non_agumon_runtime_strips_allowed_as_input": False,
-        "preserved_count": 1,
-        "preserved": [{"name": GOLDEN_NAME, "field": str(GOLDEN_FIELD), "sha256": golden_png_sha}],
+        "preserved_count": len(preserved),
+        "preserved": preserved,
         "deleted_before_rebuild_count": len(deleted),
         "deleted_before_rebuild": deleted,
         "rebuilt_count": len(rebuilt),
@@ -436,8 +446,9 @@ def main() -> None:
         raise RuntimeError("Exact DS rebuild failed:\n- " + "\n- ".join(failures))
 
     update_pinned_hashes()
-    print("Exact DS rebuild complete: Agumon preserved; 88 sprites recreated from fresh sources")
+    print("Exact DS rebuild complete: 3 reviewed strips preserved; 86 sprites recreated from fresh sources")
 
 
 if __name__ == "__main__":
     main()
+

@@ -9,6 +9,7 @@ from build_early_rank_ds_fields import WTW_IDS, portrait_key
 
 REGISTRY = Path("database/ds-direction-registry.json")
 DIRECTIONS = ["down_left", "down_right", "up_left", "up_right"]
+PHASES = ["idle", "step_a", "step_b"]
 KNOWN_REGRESSIONS = {
     "Agumon": [0, 1, 2, 3],
     "BlackAgumon": [2, 3, 0, 1],
@@ -16,15 +17,30 @@ KNOWN_REGRESSIONS = {
     "Chicchimon": [2, 3, 0, 1],
     "Koromon": [0, 2, 1, 3],
 }
+KNOWN_PHASE_REGRESSIONS = {
+    "Agumon": {
+        "down_left": [0, 1, 2], "down_right": [2, 1, 0],
+        "up_left": [0, 1, 2], "up_right": [2, 1, 0],
+    },
+    "BlackAgumon": {
+        "down_left": [0, 1, 2], "down_right": [2, 1, 0],
+        "up_left": [0, 1, 2], "up_right": [2, 1, 0],
+    },
+    "Gabumon": {
+        "down_left": [0, 1, 2], "down_right": [2, 1, 0],
+        "up_left": [0, 1, 2], "up_right": [2, 1, 0],
+    },
+}
 
 
 def main() -> None:
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
-    assert data["schema_version"] >= 2
+    assert data["schema_version"] >= 3
     assert data["canonical_reference"] == "Agumon"
     assert data["canonical_runtime_order"] == DIRECTIONS
     assert data["frames_per_direction"] == 3
-    assert "semantics only from reviewed per-species map" in data["source_policy"]
+    assert data["canonical_runtime_phases"] == PHASES
+    assert "reviewed per-direction phase order" in data["source_policy"]
     assert len(data["review_map_sha256"]) == 64
 
     species = data["species"]
@@ -41,6 +57,16 @@ def main() -> None:
         permutation = spec["runtime_group_indices"]
         assert sorted(permutation) == [0, 1, 2, 3], (name, permutation)
         assert sorted(spec["source_group_order"]) == DIRECTIONS, (name, spec["source_group_order"])
+        assert spec["canonical_runtime_phases"] == PHASES, name
+        assert spec["anchor_policy"] == "bottom_center_in_uniform_species_cell", name
+        assert set(spec["source_frame_order"]) == set(DIRECTIONS), name
+        for direction, order in spec["source_frame_order"].items():
+            assert sorted(order) == [0, 1, 2], (name, direction, order)
+        assert set(spec["pose_alignment"]) == {"down_right", "up_right"}, name
+        for direction, alignment in spec["pose_alignment"].items():
+            assert alignment["source_phase_order"] == spec["source_frame_order"][direction], (name, direction)
+            assert int(alignment["pixel_error"]) >= 0, (name, direction)
+            assert int(alignment["confidence_margin"]) >= 0, (name, direction)
         assert list(spec["frames"]) == DIRECTIONS, name
         seen: list[tuple[int, int, int, int]] = []
         for direction in DIRECTIONS:
@@ -54,6 +80,9 @@ def main() -> None:
 
     for name, expected in KNOWN_REGRESSIONS.items():
         actual = species[name]["runtime_group_indices"]
+        assert actual == expected, (name, expected, actual)
+    for name, expected in KNOWN_PHASE_REGRESSIONS.items():
+        actual = species[name]["source_frame_order"]
         assert actual == expected, (name, expected, actual)
 
     # When the rebuild has already run, prove every official non-Agumon output
@@ -74,14 +103,20 @@ def main() -> None:
         assert meta.get("direction_registry") == "res://database/ds-direction-registry.json", name
         assert meta.get("source_sha256") == spec["source_sha256"], name
         assert meta.get("runtime_group_indices") == spec["runtime_group_indices"], name
+        assert meta.get("canonical_runtime_phases") == PHASES, name
+        assert meta.get("source_frame_order") == spec["source_frame_order"], name
+        assert meta.get("pose_alignment") == spec["pose_alignment"], name
+        assert meta.get("anchor_policy") == spec["anchor_policy"], name
+        assert meta.get("frame_anchor") == [int(meta["cell_width"]) // 2, int(meta["cell_height"]) - 1], name
         assert meta.get("audited_source_frames") == spec["frames"], name
         assert meta.get("directions") == DIRECTIONS, name
         generated += 1
 
     if generated not in (0, 81):
         raise RuntimeError(f"Partial exact-registry generation detected: {generated}/81 official non-Agumon sprites")
-    print(f"DS direction registry valid: 82/82 exact mappings; generated metadata checked={generated}/81")
+    print(f"DS direction/phase registry valid: 82/82 exact mappings; generated metadata checked={generated}/81")
 
 
 if __name__ == "__main__":
     main()
+
