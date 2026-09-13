@@ -39,6 +39,9 @@ func apply_experience(instance: DigimonInstance, amount: int) -> Dictionary:
 		"new_exp": 0,
 		"old_xp_required": 0,
 		"new_xp_required": 0,
+		"old_stats": {},
+		"new_stats": {},
+		"stat_deltas": {},
 		"level_steps": [],
 		"learned_skills": [],
 		"unlocked_evolutions": [],
@@ -48,6 +51,7 @@ func apply_experience(instance: DigimonInstance, amount: int) -> Dictionary:
 	var species: Dictionary = _database.get_by_seed(instance.species_seed)
 	if species.is_empty():
 		return result
+	var old_stats := _calculator.get_all_stats(instance, species)
 	result["instance_id"] = instance.id
 	result["species_seed"] = instance.species_seed
 	result["species_name"] = String(species.get("name", "Digimon"))
@@ -59,6 +63,9 @@ func apply_experience(instance: DigimonInstance, amount: int) -> Dictionary:
 	result["new_exp"] = instance.exp
 	result["old_xp_required"] = _progression.exp_to_next_level(instance, species)
 	result["new_xp_required"] = int(result["old_xp_required"])
+	result["old_stats"] = old_stats
+	result["new_stats"] = old_stats.duplicate(true)
+	result["stat_deltas"] = _stat_deltas(old_stats, old_stats)
 	if amount <= 0:
 		return result
 
@@ -69,10 +76,13 @@ func apply_experience(instance: DigimonInstance, amount: int) -> Dictionary:
 	if levels_gained > 0:
 		_sync_level_skills(instance, species)
 		_calculator.clamp_resources(instance, species)
+	var new_stats := _calculator.get_all_stats(instance, species)
 	result["new_level"] = instance.level
 	result["new_exp"] = instance.exp
 	result["new_xp_required"] = _progression.exp_to_next_level(instance, species)
 	result["levels_gained"] = levels_gained
+	result["new_stats"] = new_stats
+	result["stat_deltas"] = _stat_deltas(old_stats, new_stats)
 	for skill_id: String in instance.learned_skills:
 		if not skills_before.has(skill_id):
 			(result["learned_skills"] as Array).append(skill_id)
@@ -87,6 +97,8 @@ func apply_experience(instance: DigimonInstance, amount: int) -> Dictionary:
 			"name": String(route.get("targetName", "Unknown")),
 			"rank": String(route.get("targetRank", "")),
 		})
+	if OS.is_debug_build() and amount > 0:
+		print("[Progression] %s gained %d XP · Level %d -> %d" % [String(result["display_name"]), amount, int(result["old_level"]), instance.level])
 	return result
 
 
@@ -149,4 +161,11 @@ func _unlocked_target_seeds(instance: DigimonInstance) -> Array[String]:
 	for route: Dictionary in _evolution.get_available_evolutions(instance, _database, _calculator):
 		if bool(route.get("unlocked", false)):
 			result.append(String(route.get("targetSeed", "")))
+	return result
+
+
+func _stat_deltas(before: Dictionary, after: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for stat_key: String in ["hp", "sp", "atk", "def", "int", "speed", "mov"]:
+		result[stat_key] = int(after.get(stat_key, 0)) - int(before.get(stat_key, 0))
 	return result
