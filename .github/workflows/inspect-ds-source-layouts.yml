@@ -42,6 +42,17 @@ jobs:
           assert len(exported) == 82
           print('exported 82/82 raw WtW sources')
           PY
+      - name: Export preserved animated DS references
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/E-M-B-E-R/digimon-world-ds-dawn-dusk-animated-sprites.git /tmp/ds-preserved-animations
+          rm -rf /tmp/ds-preserved-animations/.git
+          mkdir -p /tmp/ds-exact-source-audit/preserved-animations
+          cp -r /tmp/ds-preserved-animations/in-training /tmp/ds-exact-source-audit/preserved-animations/
+          cp -r /tmp/ds-preserved-animations/rookie /tmp/ds-exact-source-audit/preserved-animations/
+          cp -r /tmp/ds-preserved-animations/champion /tmp/ds-exact-source-audit/preserved-animations/
+          cp -r /tmp/ds-preserved-animations/ultimate /tmp/ds-exact-source-audit/preserved-animations/
       - name: Export and bake public SpriteManager semantic specs for cross-checking
         shell: bash
         run: |
@@ -84,8 +95,6 @@ jobs:
                   frame_total += len(ids)
                   if not mirrored:
                       authored += 1
-              # Prefer four explicitly authored directions; then richer frame
-              # coverage. Stable id tie-break keeps selection deterministic.
               return (authored, frame_total, int(data.get('id') or 0))
 
           for path in sorted(root.glob('*.extract.json')):
