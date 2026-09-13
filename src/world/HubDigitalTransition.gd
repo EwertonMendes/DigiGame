@@ -1,5 +1,4 @@
-extends "res://src/world/HubProgressionGameplay.gd"
-
+extends "res://src/world/HubTrainingGameplay.gd"
 
 func _start_test_battle() -> void:
 	if _transitioning or DigitalSceneTransition.is_transitioning():
