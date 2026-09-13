@@ -12,7 +12,7 @@ const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd
 const TrainingServiceScript = preload("res://src/digimon/DigimonTrainingService.gd")
 const RewardServiceScript = preload("res://src/digimon/BattleRewardService.gd")
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
-const CollectionScript = preload("res://src/collection/PlayerRoster.gd")
+const CollectionScript = preload("res://src/collection/PlayerCollection.gd")
 const PartyServiceScript = preload("res://src/collection/PartyService.gd")
 const SaveServiceScript = preload("res://src/save/SaveService.gd")
 const MigrationScript = preload("res://src/save/SaveMigration.gd")
@@ -145,7 +145,7 @@ func _test_training(database: DigimonDatabase, factory: DigimonFactory, training
 	assert(calculator.get_mov(agumon, species) == before_mov + 1, "MOV training must increase tactical movement")
 
 func _test_collection_party_save_and_migration(factory: DigimonFactory, party_service: PartyService, training: DigimonTrainingService) -> void:
-	var collection: PlayerRoster = CollectionScript.new()
+	var collection: PlayerCollection = CollectionScript.new()
 	var first := factory.create_player_by_name("agumon", 4, 100)
 	var second := factory.create_player_by_name("agumon", 7, 100)
 	var third := factory.create_player_by_name("gabumon", 6, 100)
@@ -171,7 +171,7 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
 	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Collection save v2 must write")
-	var loaded: PlayerRoster = save_service.load_collection(TEST_SAVE_PATH)
+	var loaded: PlayerCollection = save_service.load_collection(TEST_SAVE_PATH)
 	assert(loaded != null and loaded.get_instances().size() == collection.get_instances().size(), "Save/load must preserve collection")
 	var restored := loaded.get_instance(first.id)
 	assert(restored != null and restored.level == first.level and restored.exp == first.exp and restored.link == first.link, "Save/load must preserve individual progression")
@@ -182,6 +182,8 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	assert(save_data != null and save_data.save_version == 2 and not save_data.collection.is_empty(), "New saves must use v2 collection schema")
 	assert(save_service.delete_save(TEST_SAVE_PATH), "Regression save must be removable")
 
+	# Legacy vocabulary exists only in this fixture because it verifies that real
+	# v1 saves are migrated without data loss. New v2 data must never write it.
 	var migration: SaveMigration = MigrationScript.new()
 	var legacy_entry := {"rosterKey": "legacy_agumon", "instance": first.to_dict()}
 	var migrated := migration.migrate({"save_version": 1, "roster": {"instances": [legacy_entry], "activePartyIds": [first.id], "bits": 19, "digiData": {first.species_seed: 4}}})
@@ -194,7 +196,7 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 
 func _test_overworld_digi_data() -> void:
 	assert(OverworldState.get_active_instances().size() == 3, "Production flow must start with three active instances")
-	var collection_before := OverworldState.get_roster_instances().size()
+	var collection_before := OverworldState.get_collection_instances().size()
 	var first_progress := OverworldState.apply_account_rewards(0, {"Agumon": 40})
 	var second_progress := OverworldState.apply_account_rewards(0, {"Agumon": 60})
 	assert(OverworldState.get_digi_data_for("Agumon") == 100, "Digi Data must accumulate")
@@ -203,7 +205,7 @@ func _test_overworld_digi_data() -> void:
 	assert(bool((second_progress.get(seed, {}) as Dictionary).get("newly_ready", false)), "Crossing threshold must report ready")
 	var created := OverworldState.reconstruct_digimon("Agumon", 100)
 	assert(created != null and created.level == 1 and created.exp == 0, "Reconstruction must create Level 1 individual")
-	assert(OverworldState.get_roster_instances().size() == collection_before + 1, "Created Digimon must join the collection")
+	assert(OverworldState.get_collection_instances().size() == collection_before + 1, "Created Digimon must join the collection")
 	assert(OverworldState.get_digi_data_for("Agumon") == 0 and not OverworldState.get_active_party_ids().has(created.id), "Creation must consume data and place Digimon in Storage")
 
 func _test_encounter_definition(database: DigimonDatabase) -> void:
