@@ -5,11 +5,6 @@ signal collection_changed
 signal account_rewards_changed(bits: int, digi_data: Dictionary)
 signal progress_saved
 
-# Legacy runtime bridge only. Canonical code, save data and new systems use Collection.
-# This signal remains temporarily so older UI/controllers keep working while callers
-# are migrated without breaking existing gameplay.
-signal roster_changed
-
 const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const CollectionScript = preload("res://src/collection/PlayerCollection.gd")
@@ -30,8 +25,6 @@ var _balance = BalanceScript.new()
 var _persistence_enabled := true
 
 func _ready() -> void:
-	if not collection_changed.is_connected(_emit_legacy_collection_bridge):
-		collection_changed.connect(_emit_legacy_collection_bridge)
 	_ensure_database()
 	if not load_progress():
 		_ensure_starter_collection()
@@ -61,10 +54,6 @@ func get_reserve_instances() -> Array[DigimonInstance]:
 func get_collection_instances() -> Array[DigimonInstance]:
 	_ensure_starter_collection()
 	return _collection.get_instances()
-
-# Deprecated compatibility alias. New code must call get_collection_instances().
-func get_roster_instances() -> Array[DigimonInstance]:
-	return get_collection_instances()
 
 func get_instance_by_id(instance_id: String) -> DigimonInstance:
 	_ensure_starter_collection()
@@ -181,10 +170,6 @@ func add_collection_instance(instance: DigimonInstance, preferred_key: String = 
 func notify_collection_changed() -> void:
 	collection_changed.emit()
 	_save_after_mutation()
-
-# Deprecated compatibility alias. New code must call notify_collection_changed().
-func notify_roster_changed() -> void:
-	notify_collection_changed()
 
 func apply_training_plan(instance_id: String, stat_additions: Dictionary, mobility_steps: int) -> bool:
 	_ensure_starter_collection()
@@ -387,6 +372,3 @@ func _resolve_species_seed(species_name_or_seed: String) -> String:
 func _save_after_mutation() -> void:
 	if not save_progress() and _persistence_enabled:
 		push_warning("Player progression changed but could not be persisted")
-
-func _emit_legacy_collection_bridge() -> void:
-	roster_changed.emit()
