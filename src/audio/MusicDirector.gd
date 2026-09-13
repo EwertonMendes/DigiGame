@@ -14,13 +14,17 @@ const TRACK_BATTLE_1 := "battle_1"
 const DEFAULT_CROSSFADE_SECONDS := 0.55
 const SILENT_VOLUME_DB := -60.0
 
+# Keep the streams as static dependencies. Dynamic string-based loads work from
+# an editor checkout but can be omitted from an exported PCK because the exporter
+# cannot discover that dependency relationship.
+const ZONE_1_STREAM = preload("res://assets/audio/music/zone_1.ogg")
+const BATTLE_1_STREAM = preload("res://assets/audio/music/battle_1.ogg")
+
 const TRACKS := {
 	TRACK_ZONE_1: {
-		"path": "res://assets/audio/music/zone_1.ogg",
 		"volume_db": -8.0,
 	},
 	TRACK_BATTLE_1: {
-		"path": "res://assets/audio/music/battle_1.ogg",
 		"volume_db": -10.5,
 	},
 }
@@ -132,11 +136,14 @@ func has_track(track_id: String) -> bool:
 func _stream_for(track_id: String) -> AudioStream:
 	if _stream_cache.has(track_id):
 		return _stream_cache[track_id] as AudioStream
-	var definition: Dictionary = TRACKS[track_id]
-	var path := str(definition.get("path", ""))
-	if path.is_empty() or not ResourceLoader.exists(path):
-		return null
-	var stream := load(path) as AudioStream
+	var stream: AudioStream = null
+	match track_id:
+		TRACK_ZONE_1:
+			stream = ZONE_1_STREAM as AudioStream
+		TRACK_BATTLE_1:
+			stream = BATTLE_1_STREAM as AudioStream
+		_:
+			return null
 	if stream == null:
 		return null
 	_configure_loop(stream)
