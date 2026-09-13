@@ -34,7 +34,7 @@
       "sha256": "9c610ef44b04a2b3def4395960b7ebe683e6a95b8113eb234c7e2728840b5396"
     }
   ],
-  "deleted_before_rebuild_count": 176,
+  "deleted_before_rebuild_count": 175,
   "deleted_before_rebuild": [
     "assets/characters/botamon/field.png",
     "assets/characters/botamon/field.json",
@@ -210,8 +210,7 @@
     "assets/characters/wormmon/field.json",
     "assets/characters/greymon.png",
     "assets/characters/metalgreymon/field.png",
-    "database/ds-facing-audit.json",
-    "database/ds-four-facing-normalization.json"
+    "assets/characters/metalgreymon/field.json"
   ],
   "rebuilt_count": 88,
   "rebuilt": [
@@ -221,7 +220,7 @@
       "source": "sprite thread/021_Botamon.png",
       "source_sha256": "aa6a554902c432eddfa50d46bea4d0bc05a23d53237595bf56028d59789f23b0",
       "output": "assets/characters/botamon/field.png",
-      "output_sha256": "399e977d7a15b9cdc3d76f55816ea6419300da3c4c694a59c06439f57befa07f",
+      "output_sha256": "1b21667f45997240011bf7b6c6b876adf218f6ced424c11a3b3d4e5f6466168c",
       "cell": [
         32,
         32
@@ -256,7 +255,7 @@
       "source": "sprite thread/020_Budmon.png",
       "source_sha256": "33638b4333b05005e8fb146efbbc762a9684c3d5b0bda1afd1f117cf74089a83",
       "output": "assets/characters/budmon/field.png",
-      "output_sha256": "8aac5602665d9efe010dde6d89db210a5fd2b1b75fb44b1bacabcb48c8c5aa9c",
+      "output_sha256": "8bcbff7f8947166cd6fd45c2435a0fc013f620d79f54bccec5477ba72b649b46",
       "cell": [
         32,
         32
@@ -282,7 +281,7 @@
       "source": "sprite thread/011_Chicomon.png",
       "source_sha256": "9de50eb157a8aa74e3e5eaa81bbc7b2deb5f8224715075d067aca0f9f44ee7f2",
       "output": "assets/characters/chibomon/field.png",
-      "output_sha256": "90c416723501f2c68b49c5e0f8a5e2d85b991b614af0f6f143fd2c29898311a5",
+      "output_sha256": "32dda30227cb65e0915f125ff8ba6bfc12f93cf10e97dd96c19378a24e0ae0d2",
       "cell": [
         32,
         32
@@ -295,7 +294,7 @@
       "source": "sprite thread/001_Chicchimon.png",
       "source_sha256": "40487b9c05c193743b122c4bf06eee5512ae3dbe3c0e2b9445336128409f5897",
       "output": "assets/characters/chicchimon/field.png",
-      "output_sha256": "284e0f0a7cbd80b3625324ab083a072e60a4c5ad9131e0231bb0ac3644f198ba",
+      "output_sha256": "218f02abc29c24a67c217036a016366041dfa12dba855cdac748d94a8f3a5c5b",
       "cell": [
         32,
         32
@@ -321,7 +320,7 @@
       "source": "sprite thread/014_Gigimon.png",
       "source_sha256": "f5519449a1ff40bbae338f140b28c49f425c7d27426b7facd9539d960882a23d",
       "output": "assets/characters/gigimon/field.png",
-      "output_sha256": "d735164f29f3bd7795aa1ff1e58241dd7a648716211eef747d5731ae00a6bc63",
+      "output_sha256": "29baea5ebd226af2f555950143a039a4cdd97adb4163c5d8cd34610a1cacee34",
       "cell": [
         32,
         33
@@ -334,7 +333,7 @@
       "source": "sprite thread/015_Gummymon.png",
       "source_sha256": "0a8eb7d86c4330f9d979e1a2c71bf46477667f8e7bf719b9bab11ff87b4e2606",
       "output": "assets/characters/gummymon/field.png",
-      "output_sha256": "99a4ef1e876fb3bb5e4da851d56bc654e36192850823c06ffcc8b0e3bffe80e2",
+      "output_sha256": "9a473482cf141325f12a5235d3ee8949902f8cbce9d5502608c108c30c6e5509",
       "cell": [
         32,
         32
@@ -360,7 +359,7 @@
       "source": "sprite thread/016_Chocomon.png",
       "source_sha256": "556b020c9ef1cf92c020fdcb22ec475a4f9136fd6a0cc9daba49420708e0aa14",
       "output": "assets/characters/kokomon/field.png",
-      "output_sha256": "71a4ac6d993724d6bf1c244fe442dcb820e08e26f5f563a33bd4ce5131e50cfa",
+      "output_sha256": "d961fee3143486ca29300c87b02f74ec1a57d52b37493666be7c59282c1d7978",
       "cell": [
         32,
         32
@@ -386,7 +385,7 @@
       "source": "sprite thread/009_Kuramon.png",
       "source_sha256": "902044eb9b3fa1f7916c21629647335306b62e4b7557a381955dce9736005c4a",
       "output": "assets/characters/kuramon/field.png",
-      "output_sha256": "1ae84b2ea4e5d66710a5c66e4385afb0f2a358986cb3beafa1bf8d15094b0d95",
+      "output_sha256": "ed6bbf3336405cd0a33c5efb9f0151da93ceb3e64ca07bcc23b089c47fc259a9",
       "cell": [
         32,
         32
@@ -399,7 +398,7 @@
       "source": "sprite thread/018_Minomon.png",
       "source_sha256": "557e272a8057e96a1ca7ae04d8d430e2b4787b6ae02b7b06d61954c43dbb6b11",
       "output": "assets/characters/minomon/field.png",
-      "output_sha256": "6e87ba93f6ef8b1328c0aa5086046b907049f8e3a34024fa95c2c8cfa20bc75a",
+      "output_sha256": "1e85bfbeaaeb7969f483fd4430c373bd3bbf0282c01481cb56851018b404a515",
       "cell": [
         32,
         33
@@ -486,7 +485,7 @@
       "source": "sprite thread/022_Sunmon.png",
       "source_sha256": "aeb629495cc8678908e68dac38945f218cba80261cf881ed203bddf3203d1e11",
       "output": "assets/characters/sunmon/field.png",
-      "output_sha256": "fb017fdb9766ffbf765e3dc939ee3fa581b6cbf1e51d61ebff10e85e01acffbc",
+      "output_sha256": "70c97b057bf9621580e4b0503d10360cb309285a79fd59dcd482ef3b52d1a8b3",
       "cell": [
         32,
         32
@@ -525,7 +524,7 @@
       "source": "sprite thread/017_Tsumemon.png",
       "source_sha256": "e544412ee93bdf82f7dd592d6dc170b614c4e5f30ba39f75caeaf4dc1783c469",
       "output": "assets/characters/tsumemon/field.png",
-      "output_sha256": "f724360d0abeb8d0ce71f1b78c65ab558537f177bcc1908202dc170100071d4f",
+      "output_sha256": "4ea776132031c5b11c4346f5eafc67b0a32ef125abd64f8adc64d14d463900db",
       "cell": [
         32,
         32
@@ -551,7 +550,7 @@
       "source": "sprite thread/019_Wanyamon.png",
       "source_sha256": "12b7c3344c5dea0753d3f440111a2fef996214ec04a3250ecb6dfa2d72f9e00e",
       "output": "assets/characters/wanyamon/field.png",
-      "output_sha256": "a1eb98acfd4e775bb3e701d30f3a0091bdae7332b5cc380a0f42a6cd8c4c97d2",
+      "output_sha256": "73f79e4a404a1dc92eb58dbd21f2dc87166d28f2017f3a23979ee931059a3103",
       "cell": [
         32,
         32
@@ -616,7 +615,7 @@
       "source": "sprite thread/060_BlackAgumon.png",
       "source_sha256": "005ec84d9bceaae30358a065bc054adfc2aa7750a1787106f659c1fe51235b96",
       "output": "assets/characters/blackagumon/field.png",
-      "output_sha256": "664273215cf4ea305918b4f4198f219f167f83d03c00d3f7b41e96b8d83ecbdd",
+      "output_sha256": "68cb426593942609f5a99ea4a08929ea9de168c0b3e58f039e0a198ad10d64c8",
       "cell": [
         32,
         32
@@ -629,7 +628,7 @@
       "source": "sprite thread/080_Candmon.png",
       "source_sha256": "bc0a9cb46c324aaaf3c51dff2b57c1d84ed5049edb553184563dbe9f98b23dd2",
       "output": "assets/characters/candlemon/field.png",
-      "output_sha256": "29e16b38849e1a8f6e9223adac3a9b9ae36e2d03285870c6df35aa165b1ed9c5",
+      "output_sha256": "2b5b1933e9349c51b5a1cbf7f778467a67d8656327b38aaa150d4d8f78a93e9f",
       "cell": [
         32,
         36
@@ -655,7 +654,7 @@
       "source": "sprite thread/062_Ganimon.png",
       "source_sha256": "0b6d0c11ba53d8d6a9c9ac5d2cd4d475973eda936c048df89569d71cefdfafc6",
       "output": "assets/characters/crabmon/field.png",
-      "output_sha256": "548115b518d2b065fbfaefc197346658462309dd29b34b49c1b09964a890ae23",
+      "output_sha256": "3446ee59d2e3a529f6eaf52ee85115c6f58c483b381f731c279a6d5f9b8165b8",
       "cell": [
         35,
         35
@@ -668,7 +667,7 @@
       "source": "sprite thread/039_PicoDevimon.png",
       "source_sha256": "9e5bb6acf2491c8a274fff452b81881b83959ad9aaa6586e587ff041a34c4897",
       "output": "assets/characters/demidevimon/field.png",
-      "output_sha256": "83e2297c3497278f24d3f0cb2662e1fa47240aaf744e8853357583795a207dca",
+      "output_sha256": "6c55f0b6e0930bdb66131aa66aed6a3208a67a328591887b577219bd9715c8ec",
       "cell": [
         32,
         32
@@ -681,7 +680,7 @@
       "source": "sprite thread/082_DoKunemon.png",
       "source_sha256": "8438a3d766a01ec03d112d43825d3cfae473d36394af812de05e93448eb52733",
       "output": "assets/characters/dokunemon/field.png",
-      "output_sha256": "1539e43c2bcb991d798171ab7a482d086e61ec5627ad51cb98641d0eb5e88dfb",
+      "output_sha256": "c367b27301628aa6d00cc54d631c218d64d59763168453fc87272ede6647c0ac",
       "cell": [
         32,
         34
@@ -822,7 +821,7 @@
       "source": "sprite thread/035_Gotsumon.png",
       "source_sha256": "cd3b9fccaa80402ab10fb77bb1e7aeb21813511ad6ee3ca56b455c84d3e46ef3",
       "output": "assets/characters/gotsumon/field.png",
-      "output_sha256": "4cc734455cad1e0e631f40025e9119851a7d28b704347e216e1bff31096f9ca4",
+      "output_sha256": "ff7de7011714cf74cbba8e9da33e6c108d07f213cf84f28b7b500d05921d86a0",
       "cell": [
         32,
         35
@@ -913,7 +912,7 @@
       "source": "sprite thread/081_Kokuwamon.png",
       "source_sha256": "29a9d32db1171e8fa80a2ead4077caab55d6e0777b11dcb55c30fd0345495dcd",
       "output": "assets/characters/kokuwamon/field.png",
-      "output_sha256": "e333ccbfcb0efb0a9f6a3c90b5e79780a31c6a0205c5e1af1afcb27c1a4fe099",
+      "output_sha256": "de81879bc6519469bf0a0ff62b322ebf67d560e4ee21d66ab21110505d7f7852",
       "cell": [
         32,
         34
@@ -965,7 +964,7 @@
       "source": "sprite thread/077_Kunemon.png",
       "source_sha256": "d79924f1656d2bcc6489ed589d86863dfe3d9d09fd2e376818a07b2fe5a3e275",
       "output": "assets/characters/kunemon/field.png",
-      "output_sha256": "845a6044792bb901a521e169305efdc8041d0ec8c46b7a5344f4131cd91ca954",
+      "output_sha256": "1b445adcda3f9eb15fcdaf5806fd4f65b472f6cc122d2d7e422708db765e958f",
       "cell": [
         32,
         34
@@ -1030,7 +1029,7 @@
       "source": "sprite thread/061_Muchomon.png",
       "source_sha256": "2514d7f2d8b9aa2a71c29a7ed33c1c3cb0d9633848bb48fbc085eae8dc93486a",
       "output": "assets/characters/muchomon/field.png",
-      "output_sha256": "05a43594cdb4ea0fb80f047e2f2ae073ee05f305269fda298d1539f80736807c",
+      "output_sha256": "3cb0a48520381483c265f3f6f6fafe7383b2f4c3f2d2cbb092ba636a2d24610a",
       "cell": [
         33,
         32
@@ -1043,7 +1042,7 @@
       "source": "sprite thread/078_Mushmon.png",
       "source_sha256": "6f51d4116ce060f9069d104d90a75c9b08e78b86403b6d7915e8e76ac2de6c37",
       "output": "assets/characters/mushroomon/field.png",
-      "output_sha256": "8deb49ad7c889eb4bb28732fdfb6e9b295dd82d4311548a6fb72a84039727d61",
+      "output_sha256": "0ebdc2c3cc4d9372d61c9bcfd91f277c97d00b1c05d831fc4a7bafaaca4b53eb",
       "cell": [
         32,
         32
@@ -1160,7 +1159,7 @@
       "source": "sprite thread/056_Shamamon.png",
       "source_sha256": "a9d2ecb612b8663b806e6c09faac6a345591ac7657356d6230af58ec749d77af",
       "output": "assets/characters/shamamon/field.png",
-      "output_sha256": "080e4233a5c994d321cf7e2fe18d424ae9278bde9d06ecc8dd944c73846511d3",
+      "output_sha256": "eaef832577ee6bfe07f6b72d38afadcc0149276d86c2b4ccb646fdeff8ca6596",
       "cell": [
         36,
         36
@@ -1173,7 +1172,7 @@
       "source": "sprite thread/059_YukiAgumon.png",
       "source_sha256": "7f9161280e0e29feda7de9a8f28f03bcb37cc2fdfec01f1fb079244f5adf23ab",
       "output": "assets/characters/snowagumon/field.png",
-      "output_sha256": "3792322bd77a06f8dd79a1c5ada49b02c62317c8f47e0667013a11835861b9b7",
+      "output_sha256": "9a554297a812a3e6610b1ea903258e0b614f3e5101a78129fbb9c0f730f9fc97",
       "cell": [
         32,
         32
@@ -1186,10 +1185,10 @@
       "source": "sprite thread/057_SnowGoblimon.png",
       "source_sha256": "d7650f6a18f23c08f6d0ca4f366ae50939fd980415d9c093f1a3cc2007dd280b",
       "output": "assets/characters/snowgoburimon/field.png",
-      "output_sha256": "ca2e7e3d138efe1e6e9476a36e76f35bd4082a9f7b25e2e4ac1d49fe1479f2da",
+      "output_sha256": "be19ebc8e9c47b6d2ffd5ae23c6a769bd65db3d9d96ade1cef17ec64c3c0af03",
       "cell": [
         36,
-        37
+        39
       ],
       "source_layout": "two_rows_of_six"
     },
@@ -1199,7 +1198,7 @@
       "source": "sprite thread/079_Solarmon.png",
       "source_sha256": "8ba254bcb60ee723efb97e7b9569ba9a6f229c92b5f5c7e356c2ba1361550d92",
       "output": "assets/characters/solarmon/field.png",
-      "output_sha256": "570309ac1af71a166f5ddb9452665bfc36a28c2aa28f01ae182c85e54fe876d5",
+      "output_sha256": "a54877aa1282d6dcd136e34a69253782553397b6a9a66ca263f612311525cca8",
       "cell": [
         34,
         32
@@ -1212,7 +1211,7 @@
       "source": "sprite thread/058_Shakomon.png",
       "source_sha256": "126633f2b87a833fd29d50b7c973e7223a4086dcb10c672f09509eeb97da63b2",
       "output": "assets/characters/syakomon/field.png",
-      "output_sha256": "6d833128bd808ce0befdb4c9dab989171b781c5de5b3ecd939c3c8ce92618ca9",
+      "output_sha256": "58d01ae7de00ebfe2ef87737dd69dc3f2aa6ea13bc80c7aac9fa72bd4b31bd42",
       "cell": [
         32,
         32
@@ -1238,7 +1237,7 @@
       "source": "sprite thread/034_Tentomon.png",
       "source_sha256": "0f352c395f0707158e942d9e3e973f5d2abd233ed915aedb77acb4f58000117a",
       "output": "assets/characters/tentomon/field.png",
-      "output_sha256": "5a684f182f87c39e7b03741f875c9a49472693daa877eed81c51d77eec771b5b",
+      "output_sha256": "4af4b44d402b783e3bf7b349151c158a991890d4883750f33ca3aa8d94f4ee6c",
       "cell": [
         32,
         32
@@ -1264,7 +1263,7 @@
       "source": "sprite thread/040_ToyAgumon.png",
       "source_sha256": "e54843e61a272ef3a8a911ee7474e8c79412f1c5ee13f5ce5c882d83d936042e",
       "output": "assets/characters/toyagumon/field.png",
-      "output_sha256": "a8b70b72e2ed73cfeefe7edda38c60e532047f3243f1833051cdf5d4b768aca7",
+      "output_sha256": "2993f00860341def9b9e5cdab3b66b610d9c2bdbaf475ee04adfd4d62e2eef83",
       "cell": [
         32,
         34
@@ -1290,7 +1289,7 @@
       "source": "sprite thread/068_Tsukaimon.png",
       "source_sha256": "0493c4e1ba56bdab844193543a2ed0670924423e6839edbfe202948a28798500",
       "output": "assets/characters/tsukaimon/field.png",
-      "output_sha256": "a70648d6a3cf60d7fa3e7ba94a9d39aa91dd6a96cf49a4038c2256fd867a667c",
+      "output_sha256": "c36b3ccf3b1280e362196adb2f46c7dad9b3f8cf518953c69e299a9333248a5e",
       "cell": [
         32,
         32
@@ -1303,7 +1302,7 @@
       "source": "sprite thread/026_V-mon.png",
       "source_sha256": "97cdde3f4a0248539f2266f2e9b6e60297f4954ac9d71c410bf0523ea6bf5897",
       "output": "assets/characters/veemon/field.png",
-      "output_sha256": "1fc287144c56cd90662f6f5ff9c0c3c3ad51c2e5041903bc07bb403f0fe752aa",
+      "output_sha256": "5a7bc69bac3d76de6a0b813419175a937f20a5dab549f2037a07f666edf93f53",
       "cell": [
         32,
         36
@@ -1316,7 +1315,7 @@
       "source": "sprite thread/043_Wormmon.png",
       "source_sha256": "9db3cf46e9123918437564f48f30a5e10b9508dc7c24632589b6ad6ad0b0c9cf",
       "output": "assets/characters/wormmon/field.png",
-      "output_sha256": "0f6750130c485d38c02fe6470ffad032ac1aef0e68a24fafdc526cfc576eae3a",
+      "output_sha256": "7f57aea801d16ea4baac27cdc848d3f6017daa22165aaa2f1322f5cdb9dd03a7",
       "cell": [
         35,
         32
@@ -1348,5 +1347,9 @@
       ]
     }
   ],
-  "unresolved": []
+  "unresolved": [],
+  "semantic_direction_registry": "database/ds-source-direction-registry.json",
+  "semantic_direction_registry_sha256": "c1a9b28140b69f14431a5afc1420fe566db658f3b039770d453673157d13cee8",
+  "semantic_direction_registry_entries": 82,
+  "semantic_direction_policy": "explicit per-species reviewed G0..G3 mapping; semantic directions are never inferred from source row/group position"
 }

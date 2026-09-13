@@ -23,13 +23,43 @@
   "field_path": "res://assets/characters/wanyamon/field.png",
   "source_layout": "two_rows_of_six",
   "source_group_order": [
-    "down_left",
-    "down_right",
     "up_right",
-    "up_left"
+    "up_left",
+    "down_left",
+    "down_right"
   ],
+  "registered_direction_groups": {
+    "down_left": 2,
+    "down_right": 3,
+    "up_left": 1,
+    "up_right": 0
+  },
+  "registered_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "up_right": [
+      0,
+      1,
+      2
+    ]
+  },
+  "semantic_mapping_source": "database/ds-source-direction-registry.json",
+  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
   "authored_groups_used": [
-    0,
-    3
+    2,
+    1
   ]
 }
