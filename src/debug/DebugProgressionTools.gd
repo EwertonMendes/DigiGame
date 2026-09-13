@@ -225,7 +225,9 @@ func _context(instance_id: String) -> Dictionary:
 	var raw = contexts.get(instance_id, {})
 	var result := _as_dict(raw)
 	if not result.has("flags"):
-		result["flags"] = OverworldState.get_progression_flags()
+		var collection = OverworldState.get("_collection")
+		if collection != null:
+			result["flags"] = _as_dict(collection.get("progression_flags"))
 	return result
 
 func _refill(value: DigimonInstance) -> void:
