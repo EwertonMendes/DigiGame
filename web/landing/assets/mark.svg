@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Digi Game grid constellation mark">
+  <defs><linearGradient id="g" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#6ff6ff"/><stop offset="1" stop-color="#ffcc66"/></linearGradient></defs>
+  <path fill="#061820" stroke="url(#g)" stroke-width="3" d="M32 4 58 19v26L32 60 6 45V19Z"/>
+  <path fill="none" stroke="#6ff6ff" stroke-width="2" opacity=".7" d="m6 19 26 15 26-15M32 4v30m0 0v26M6 45l26-11 26 11"/>
+  <circle cx="32" cy="34" r="6" fill="#ffcc66"/><circle cx="32" cy="4" r="3" fill="#6ff6ff"/><circle cx="6" cy="45" r="3" fill="#6ff6ff"/><circle cx="58" cy="45" r="3" fill="#6ff6ff"/>
+</svg>
