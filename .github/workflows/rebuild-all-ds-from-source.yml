@@ -24,8 +24,8 @@ jobs:
 
       - name: Validate one-by-one semantic direction registry
         run: |
-          python3 - <<'PY'
-          from tools.ds_direction_registry import load_registry
+          PYTHONPATH=tools python3 - <<'PY'
+          from ds_direction_registry import load_registry
           registry = load_registry()
           assert len(registry['entries']) == 82
           print('semantic registry structurally valid: 82/82 WtW sources')
