@@ -813,7 +813,7 @@ func _create_storage_digimon() -> void:
 	if _spawn_species_seed.is_empty():
 		_status.text = "Choose a Digimon species first."
 		return
-	var resource_state := ["full", "critical", "empty", "custom"][_spawn_resource_state.selected]
+	var resource_state: String = String(["full", "critical", "empty", "custom"][_spawn_resource_state.selected])
 	var instance := _roster.create_storage_instance({
 		"species_seed": _spawn_species_seed,
 		"level": int(_spawn_level.value),
