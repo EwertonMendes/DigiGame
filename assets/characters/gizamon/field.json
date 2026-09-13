@@ -1,10 +1,133 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_sprite_thread",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/064_Gizamon.png",
   "source_id": 64,
-  "extraction_layout": "two_rows_of_six",
-  "cell_width": 36,
+  "source_sha256": "e09e1670da65db6498f909fde0d521ebc1e7755d5807d595c966219456680063",
+  "canonical_reference": "Agumon",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 1,
+        "y": 157,
+        "w": 29,
+        "h": 25
+      },
+      {
+        "x": 37,
+        "y": 158,
+        "w": 27,
+        "h": 25
+      },
+      {
+        "x": 68,
+        "y": 158,
+        "w": 30,
+        "h": 23
+      }
+    ],
+    "down_right": [
+      {
+        "x": 100,
+        "y": 158,
+        "w": 30,
+        "h": 23
+      },
+      {
+        "x": 134,
+        "y": 158,
+        "w": 27,
+        "h": 25
+      },
+      {
+        "x": 168,
+        "y": 157,
+        "w": 29,
+        "h": 25
+      }
+    ],
+    "up_left": [
+      {
+        "x": 0,
+        "y": 189,
+        "w": 27,
+        "h": 24
+      },
+      {
+        "x": 33,
+        "y": 190,
+        "w": 30,
+        "h": 25
+      },
+      {
+        "x": 68,
+        "y": 189,
+        "w": 26,
+        "h": 26
+      }
+    ],
+    "up_right": [
+      {
+        "x": 104,
+        "y": 189,
+        "w": 26,
+        "h": 26
+      },
+      {
+        "x": 135,
+        "y": 190,
+        "w": 30,
+        "h": 25
+      },
+      {
+        "x": 171,
+        "y": 189,
+        "w": 27,
+        "h": 24
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "afa41bc34f04ddba7c6c0240638701b23c1f4e25e05f189d234320de48f74b96",
+      "73b827094d23d50f816e3845f17572a8f20cf28ff352bdb21cffc929b15b31e0",
+      "d7b455940a28cc8d04aaf81972b541505d5094551b744cb12442e90d6a244cf7"
+    ],
+    "down_right": [
+      "4c58f6cf7d95faa9612a7862fefd216d607911b5b0ee7b799c0065f758d7c6fa",
+      "3a24287c80abfaddaa7d2362979ba6c7c0592877875a28c8e0b45b275ca34a8f",
+      "63da3049618a8d8f61128804eb10c918a34e97c946ece05777f925ae1b72de5c"
+    ],
+    "up_left": [
+      "b548516c24421319d4fb310cf58adf343cf0e707b4494cb23bf2e7ee33c6a461",
+      "6637048ed341bf49c1c9c6acc3879921c83e6b6e88394ea87152dfc3b94242fc",
+      "f7524b2b73d4860a1fd8d3e7a37cd867882e662bf3710b2904ac9597f791c3ad"
+    ],
+    "up_right": [
+      "cde5add3f359af7ca7787dae0b1f6479d26fec29d0107c1480c7a8755ba1c54f",
+      "4f722f1072e933f41b9cf053f114f5c8eea0207ee6a84735d2f43bed92fcf3e1",
+      "d9b85a01b28256ef3f7323cae6f70670ca515a9a9b84e002a4df9692dbc57bb9"
+    ]
+  },
+  "cell_width": 34,
   "cell_height": 32,
   "frame_count": 12,
   "frames_per_direction": 3,
@@ -15,6 +138,5 @@
     "up_right"
   ],
   "runtime_scale": 1.0,
-  "withthewill_thread": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
   "field_path": "res://assets/characters/gizamon/field.png"
 }

@@ -1,11 +1,134 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_sprite_thread",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/047_Lopmon.png",
   "source_id": 47,
-  "extraction_layout": "two_rows_of_six",
-  "cell_width": 34,
-  "cell_height": 29,
+  "source_sha256": "76d527d6a90244c97a1f0bc0f9b85aa8dd4e60d2ab51c43d41c17dcf05d1466f",
+  "canonical_reference": "Agumon",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 3,
+        "y": 183,
+        "w": 24,
+        "h": 21
+      },
+      {
+        "x": 35,
+        "y": 181,
+        "w": 28,
+        "h": 23
+      },
+      {
+        "x": 75,
+        "y": 183,
+        "w": 28,
+        "h": 21
+      }
+    ],
+    "down_right": [
+      {
+        "x": 116,
+        "y": 183,
+        "w": 28,
+        "h": 21
+      },
+      {
+        "x": 156,
+        "y": 181,
+        "w": 28,
+        "h": 23
+      },
+      {
+        "x": 190,
+        "y": 183,
+        "w": 24,
+        "h": 21
+      }
+    ],
+    "up_left": [
+      {
+        "x": 2,
+        "y": 243,
+        "w": 22,
+        "h": 21
+      },
+      {
+        "x": 36,
+        "y": 244,
+        "w": 25,
+        "h": 20
+      },
+      {
+        "x": 80,
+        "y": 244,
+        "w": 25,
+        "h": 20
+      }
+    ],
+    "up_right": [
+      {
+        "x": 113,
+        "y": 244,
+        "w": 25,
+        "h": 20
+      },
+      {
+        "x": 157,
+        "y": 244,
+        "w": 25,
+        "h": 20
+      },
+      {
+        "x": 194,
+        "y": 243,
+        "w": 22,
+        "h": 21
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "366f15bb396283f04f71be5f78a52ed01aa163113d2416855fd62091e84473a1",
+      "bd5ad52f377a8c0fe38f58fac02406d0a248541a1864cd9a88e94a3f83ab751a",
+      "7f724e534d544f7bf77e7be89786f04958d1b723f43001a94a5837d20f57b11f"
+    ],
+    "down_right": [
+      "b60a13d279e20e92d6f3293f2cea87455b3ce7cea03ec5a0bf7dde7323978186",
+      "fe2a86494661ef8639bba5fcca613eddb0c23b9a15526c8253b06445b98380b7",
+      "2ff532948ce958df941ee0e6a9aa818ef7060eac57583ac884108721c9147700"
+    ],
+    "up_left": [
+      "552031603a3b7ae4c86bb17dff146094ef33072a1fc5f112f7eff4d2e71c65d5",
+      "011b1c117bae6dfc0a523fc88082e6caff3004f8df783e244327d3ba03a7df5b",
+      "cb3696566b9b37d4029fa1c28bb46513444ef25e16949cda927a75fd8c132c02"
+    ],
+    "up_right": [
+      "497345935a1b681f3b17abef6f82424cadd193685e9fb45e52fa7a270cf87f64",
+      "5d7b3c028b9e833db8cba476663ee4159bdfc4df64e60673ed616951bf16b424",
+      "72b95490cf5441a271dd98c1a6eeb09385bd0792b9bc1cb7c76e6f5913b59347"
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 32,
   "frame_count": 12,
   "frames_per_direction": 3,
   "directions": [
@@ -15,6 +138,5 @@
     "up_right"
   ],
   "runtime_scale": 1.0,
-  "withthewill_thread": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
   "field_path": "res://assets/characters/lopmon/field.png"
 }

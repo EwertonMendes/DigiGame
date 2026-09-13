@@ -1,11 +1,134 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_sprite_thread",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/063_Floramon.png",
   "source_id": 63,
-  "extraction_layout": "two_rows_of_six",
-  "cell_width": 30,
-  "cell_height": 34,
+  "source_sha256": "884fdb38ce9970ce0482c68dd05fb3e13b5aa7e39bac43b02da0c06b34cd0334",
+  "canonical_reference": "Agumon",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 3,
+        "y": 166,
+        "w": 22,
+        "h": 28
+      },
+      {
+        "x": 36,
+        "y": 167,
+        "w": 24,
+        "h": 28
+      },
+      {
+        "x": 71,
+        "y": 166,
+        "w": 21,
+        "h": 27
+      }
+    ],
+    "down_right": [
+      {
+        "x": 108,
+        "y": 166,
+        "w": 21,
+        "h": 27
+      },
+      {
+        "x": 140,
+        "y": 167,
+        "w": 24,
+        "h": 28
+      },
+      {
+        "x": 175,
+        "y": 166,
+        "w": 22,
+        "h": 28
+      }
+    ],
+    "up_left": [
+      {
+        "x": 2,
+        "y": 203,
+        "w": 21,
+        "h": 27
+      },
+      {
+        "x": 36,
+        "y": 204,
+        "w": 20,
+        "h": 27
+      },
+      {
+        "x": 68,
+        "y": 203,
+        "w": 23,
+        "h": 28
+      }
+    ],
+    "up_right": [
+      {
+        "x": 109,
+        "y": 203,
+        "w": 23,
+        "h": 28
+      },
+      {
+        "x": 144,
+        "y": 204,
+        "w": 20,
+        "h": 27
+      },
+      {
+        "x": 177,
+        "y": 203,
+        "w": 21,
+        "h": 27
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "8a60da38df69cd984d8743267c901dd1fdcce42e418471f88c50306965861869",
+      "48b862281a5d607c3ae44eaa96628102258b9ddb66dda51b5a37a404d3a90cb6",
+      "1f3a83bce21ce31302cca7a36d1f48fdf7e9abb4a0c768a9b3251a31d9a0467f"
+    ],
+    "down_right": [
+      "c67546caaba18a04012efa061399e22e641f20089a17c593f036539d3648284c",
+      "9d26c331126aa45d97bf9e7af07140108437984dc47f233d072fe5c6fdc5b2f1",
+      "af6eab4bea34a9ebbedb7ffd05eaae27c1a5a6c75e2674acfa66a5e10cd43dc1"
+    ],
+    "up_left": [
+      "fee1b3d0f763bd151c57f1f1a17cd95fd492e0175c6dd5195afee654019825a9",
+      "be112981c5fbf388b712e6b80a024c442035e8c82aac4d051c8ed933b609dc8c",
+      "6352811f5645277749ef0e554c5c5f3ba1a656e258b5a50cadc4f8c66b6c2ea6"
+    ],
+    "up_right": [
+      "c4d59220cda4df0f45136161b617f98ee2c7e924a7a15c925b78099ca90305be",
+      "521b1d33c2c773295f3539f6201c7efb1e3830068ead62501a56331b3fb52c7a",
+      "b65d0795dde238948faf51093048789415a2305c503ba7fe620d3a8854fdef56"
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 32,
   "frame_count": 12,
   "frames_per_direction": 3,
   "directions": [
@@ -15,6 +138,5 @@
     "up_right"
   ],
   "runtime_scale": 1.0,
-  "withthewill_thread": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
   "field_path": "res://assets/characters/floramon/field.png"
 }

@@ -1,11 +1,134 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_sprite_thread",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/046_Terriermon.png",
   "source_id": 46,
-  "extraction_layout": "two_rows_of_six",
-  "cell_width": 33,
-  "cell_height": 28,
+  "source_sha256": "595badff62d4bfc0a953aa63bfee8a1cf9bfe6dab2bb10ee3226cd8d736c8dc8",
+  "canonical_reference": "Agumon",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 4,
+        "y": 132,
+        "w": 25,
+        "h": 22
+      },
+      {
+        "x": 42,
+        "y": 132,
+        "w": 26,
+        "h": 22
+      },
+      {
+        "x": 79,
+        "y": 134,
+        "w": 26,
+        "h": 20
+      }
+    ],
+    "down_right": [
+      {
+        "x": 115,
+        "y": 134,
+        "w": 26,
+        "h": 20
+      },
+      {
+        "x": 152,
+        "y": 132,
+        "w": 26,
+        "h": 22
+      },
+      {
+        "x": 191,
+        "y": 132,
+        "w": 25,
+        "h": 22
+      }
+    ],
+    "up_left": [
+      {
+        "x": 3,
+        "y": 192,
+        "w": 25,
+        "h": 22
+      },
+      {
+        "x": 38,
+        "y": 194,
+        "w": 27,
+        "h": 20
+      },
+      {
+        "x": 76,
+        "y": 194,
+        "w": 27,
+        "h": 20
+      }
+    ],
+    "up_right": [
+      {
+        "x": 116,
+        "y": 194,
+        "w": 27,
+        "h": 20
+      },
+      {
+        "x": 154,
+        "y": 194,
+        "w": 27,
+        "h": 20
+      },
+      {
+        "x": 191,
+        "y": 192,
+        "w": 25,
+        "h": 22
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "20d3372a85ac6c80213cf5b0d01d7bdd4d606830776ad7990b7de780c9f5c474",
+      "cbe543df9a5a82afa64f453c934693b39374306c3b321def73c8a88751b07a34",
+      "a4e554cb45bcc09952a6ebd2c6cf9b3d1adb5d428e2d931450c218f081b1548d"
+    ],
+    "down_right": [
+      "e1297a74788dd5baf088521d428f6ee004fe6f1057792502ce031c8d9fdfa788",
+      "a7538d74f54a2f41492809ba2a0d2260ef0a50894acbc1af345b2a4d8685df52",
+      "f44a692e59e11f60716929d897240d9015de361b17890f04adaa1fab32307564"
+    ],
+    "up_left": [
+      "b645b7521b141450c147d5869bf0fcc128a13d4169eebf3ab5d2b7117609c865",
+      "1df8ea7b6d3ef3a50d45c3251f385999e970980a3412b92c1402677a6c9b8566",
+      "9e2e11809a18c0618cf389faf1329cacfc202e716398c67bcf6a6f9702914254"
+    ],
+    "up_right": [
+      "cb7e6067b1303f28feb65407c9b8983fd463c762bf33e157ae1b33388684b99a",
+      "d4dc25fc8bb58de4b4d1b1d013437354564c4bf7f3a59e478d22ce6b3143e154",
+      "9683bd636ab9f1b2d3fec8e7f656408f902c9a23945ba2d058346473f8f09f51"
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 32,
   "frame_count": 12,
   "frames_per_direction": 3,
   "directions": [
@@ -15,6 +138,5 @@
     "up_right"
   ],
   "runtime_scale": 1.0,
-  "withthewill_thread": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
   "field_path": "res://assets/characters/terriermon/field.png"
 }

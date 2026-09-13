@@ -1,0 +1,9037 @@
+{
+  "schema_version": 2,
+  "canonical_reference": "Agumon",
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "frames_per_direction": 3,
+  "source_policy": "fresh-download source, detect groups structurally, assign semantics only from reviewed per-species map",
+  "review_map": "database/ds-direction-review-map.json",
+  "review_map_sha256": "100c7a9b6132973339408e9afdb72988987fcf4b05b0fbb76900a93fa26c5908",
+  "species_count": 82,
+  "species": {
+    "Chicchimon": {
+      "source_id": 1,
+      "source_member": "sprite thread/001_Chicchimon.png",
+      "source_sha256": "40487b9c05c193743b122c4bf06eee5512ae3dbe3c0e2b9445336128409f5897",
+      "source_size": [
+        186,
+        236
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 0,
+            "y": 175,
+            "w": 24,
+            "h": 22
+          },
+          {
+            "x": 34,
+            "y": 176,
+            "w": 22,
+            "h": 22
+          },
+          {
+            "x": 66,
+            "y": 177,
+            "w": 22,
+            "h": 22
+          }
+        ],
+        "down_right": [
+          {
+            "x": 98,
+            "y": 177,
+            "w": 22,
+            "h": 22
+          },
+          {
+            "x": 130,
+            "y": 176,
+            "w": 22,
+            "h": 22
+          },
+          {
+            "x": 162,
+            "y": 175,
+            "w": 24,
+            "h": 22
+          }
+        ],
+        "up_left": [
+          {
+            "x": 12,
+            "y": 145,
+            "w": 22,
+            "h": 22
+          },
+          {
+            "x": 44,
+            "y": 146,
+            "w": 18,
+            "h": 22
+          },
+          {
+            "x": 72,
+            "y": 147,
+            "w": 16,
+            "h": 22
+          }
+        ],
+        "up_right": [
+          {
+            "x": 98,
+            "y": 147,
+            "w": 16,
+            "h": 22
+          },
+          {
+            "x": 124,
+            "y": 146,
+            "w": 18,
+            "h": 22
+          },
+          {
+            "x": 152,
+            "y": 145,
+            "w": 22,
+            "h": 22
+          }
+        ]
+      }
+    },
+    "Koromon": {
+      "source_id": 2,
+      "source_member": "sprite thread/002_Koromon.png",
+      "source_sha256": "7edca05cba54d9d954b6527e7b1f1c2621adc48994b4b002ff509b1b13a636f4",
+      "source_size": [
+        224,
+        100
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 144,
+            "y": 5,
+            "w": 18,
+            "h": 18
+          },
+          {
+            "x": 171,
+            "y": 6,
+            "w": 19,
+            "h": 17
+          },
+          {
+            "x": 201,
+            "y": 8,
+            "w": 20,
+            "h": 15
+          }
+        ],
+        "down_right": [
+          {
+            "x": 147,
+            "y": 59,
+            "w": 20,
+            "h": 15
+          },
+          {
+            "x": 178,
+            "y": 57,
+            "w": 19,
+            "h": 17
+          },
+          {
+            "x": 206,
+            "y": 56,
+            "w": 18,
+            "h": 18
+          }
+        ],
+        "up_left": [
+          {
+            "x": 146,
+            "y": 30,
+            "w": 16,
+            "h": 19
+          },
+          {
+            "x": 172,
+            "y": 32,
+            "w": 17,
+            "h": 17
+          },
+          {
+            "x": 204,
+            "y": 34,
+            "w": 18,
+            "h": 15
+          }
+        ],
+        "up_right": [
+          {
+            "x": 146,
+            "y": 83,
+            "w": 18,
+            "h": 15
+          },
+          {
+            "x": 179,
+            "y": 81,
+            "w": 17,
+            "h": 17
+          },
+          {
+            "x": 206,
+            "y": 79,
+            "w": 16,
+            "h": 19
+          }
+        ]
+      }
+    },
+    "Tsunomon": {
+      "source_id": 3,
+      "source_member": "sprite thread/003_Tsunomon.png",
+      "source_sha256": "8fdaea0e9baf6f5bc01ac9a399dad052c16a5181fdc56865319265c64b76373f",
+      "source_size": [
+        224,
+        100
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 126,
+            "y": 2,
+            "w": 15,
+            "h": 19
+          },
+          {
+            "x": 151,
+            "y": 0,
+            "w": 15,
+            "h": 20
+          },
+          {
+            "x": 177,
+            "y": 5,
+            "w": 15,
+            "h": 18
+          }
+        ],
+        "down_right": [
+          {
+            "x": 127,
+            "y": 55,
+            "w": 15,
+            "h": 18
+          },
+          {
+            "x": 153,
+            "y": 50,
+            "w": 15,
+            "h": 20
+          },
+          {
+            "x": 178,
+            "y": 52,
+            "w": 15,
+            "h": 19
+          }
+        ],
+        "up_left": [
+          {
+            "x": 128,
+            "y": 29,
+            "w": 15,
+            "h": 19
+          },
+          {
+            "x": 152,
+            "y": 28,
+            "w": 15,
+            "h": 19
+          },
+          {
+            "x": 178,
+            "y": 32,
+            "w": 15,
+            "h": 18
+          }
+        ],
+        "up_right": [
+          {
+            "x": 126,
+            "y": 82,
+            "w": 15,
+            "h": 18
+          },
+          {
+            "x": 152,
+            "y": 78,
+            "w": 15,
+            "h": 19
+          },
+          {
+            "x": 176,
+            "y": 79,
+            "w": 15,
+            "h": 19
+          }
+        ]
+      }
+    },
+    "Poyomon": {
+      "source_id": 4,
+      "source_member": "sprite thread/004_Poyomon.png",
+      "source_sha256": "ce6392f012c426176583ce6b3ad9d8aebab829f4dc79c9caedc65761a6209599",
+      "source_size": [
+        224,
+        100
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 139,
+            "y": 13,
+            "w": 13,
+            "h": 14
+          },
+          {
+            "x": 163,
+            "y": 14,
+            "w": 13,
+            "h": 14
+          },
+          {
+            "x": 187,
+            "y": 11,
+            "w": 13,
+            "h": 14
+          }
+        ],
+        "down_right": [
+          {
+            "x": 139,
+            "y": 57,
+            "w": 13,
+            "h": 14
+          },
+          {
+            "x": 163,
+            "y": 60,
+            "w": 13,
+            "h": 14
+          },
+          {
+            "x": 187,
+            "y": 59,
+            "w": 13,
+            "h": 14
+          }
+        ],
+        "up_left": [
+          {
+            "x": 139,
+            "y": 38,
+            "w": 13,
+            "h": 14
+          },
+          {
+            "x": 164,
+            "y": 39,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 188,
+            "y": 37,
+            "w": 13,
+            "h": 14
+          }
+        ],
+        "up_right": [
+          {
+            "x": 138,
+            "y": 83,
+            "w": 13,
+            "h": 14
+          },
+          {
+            "x": 161,
+            "y": 85,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 187,
+            "y": 84,
+            "w": 13,
+            "h": 14
+          }
+        ]
+      }
+    },
+    "Tokomon": {
+      "source_id": 5,
+      "source_member": "sprite thread/005_Tokomon.png",
+      "source_sha256": "4dd6ffc0dee84a8f4bcbd741601bfdc977a758e5112c50f6c654b06e7f71cd9c",
+      "source_size": [
+        224,
+        100
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 144,
+            "y": 1,
+            "w": 17,
+            "h": 20
+          },
+          {
+            "x": 167,
+            "y": 0,
+            "w": 17,
+            "h": 23
+          },
+          {
+            "x": 191,
+            "y": 2,
+            "w": 18,
+            "h": 18
+          }
+        ],
+        "down_right": [
+          {
+            "x": 144,
+            "y": 51,
+            "w": 18,
+            "h": 18
+          },
+          {
+            "x": 169,
+            "y": 49,
+            "w": 17,
+            "h": 23
+          },
+          {
+            "x": 192,
+            "y": 50,
+            "w": 17,
+            "h": 20
+          }
+        ],
+        "up_left": [
+          {
+            "x": 144,
+            "y": 26,
+            "w": 16,
+            "h": 20
+          },
+          {
+            "x": 168,
+            "y": 28,
+            "w": 16,
+            "h": 18
+          },
+          {
+            "x": 191,
+            "y": 25,
+            "w": 16,
+            "h": 21
+          }
+        ],
+        "up_right": [
+          {
+            "x": 146,
+            "y": 74,
+            "w": 16,
+            "h": 21
+          },
+          {
+            "x": 169,
+            "y": 77,
+            "w": 16,
+            "h": 18
+          },
+          {
+            "x": 193,
+            "y": 75,
+            "w": 16,
+            "h": 20
+          }
+        ]
+      }
+    },
+    "Tanemon": {
+      "source_id": 6,
+      "source_member": "sprite thread/006_Tanemon.png",
+      "source_sha256": "7b19b59abb6fd375215f4dba296e577b90d69af5f667ed67ae2e2c6eae0036a1",
+      "source_size": [
+        224,
+        100
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 129,
+            "y": 1,
+            "w": 18,
+            "h": 21
+          },
+          {
+            "x": 159,
+            "y": 1,
+            "w": 18,
+            "h": 21
+          },
+          {
+            "x": 190,
+            "y": 1,
+            "w": 17,
+            "h": 21
+          }
+        ],
+        "down_right": [
+          {
+            "x": 128,
+            "y": 53,
+            "w": 17,
+            "h": 21
+          },
+          {
+            "x": 158,
+            "y": 53,
+            "w": 18,
+            "h": 21
+          },
+          {
+            "x": 188,
+            "y": 53,
+            "w": 18,
+            "h": 21
+          }
+        ],
+        "up_left": [
+          {
+            "x": 130,
+            "y": 27,
+            "w": 18,
+            "h": 20
+          },
+          {
+            "x": 159,
+            "y": 27,
+            "w": 17,
+            "h": 20
+          },
+          {
+            "x": 189,
+            "y": 27,
+            "w": 17,
+            "h": 20
+          }
+        ],
+        "up_right": [
+          {
+            "x": 129,
+            "y": 79,
+            "w": 17,
+            "h": 20
+          },
+          {
+            "x": 159,
+            "y": 79,
+            "w": 17,
+            "h": 20
+          },
+          {
+            "x": 187,
+            "y": 79,
+            "w": 18,
+            "h": 20
+          }
+        ]
+      }
+    },
+    "Pagumon": {
+      "source_id": 7,
+      "source_member": "sprite thread/007_Pagumon.png",
+      "source_sha256": "4d121624dc2c36ec2e7d61b633b8489b874385673c6cc86ff54ac0949f0e5f02",
+      "source_size": [
+        251,
+        93
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 165,
+            "y": 6,
+            "w": 21,
+            "h": 14
+          },
+          {
+            "x": 191,
+            "y": 9,
+            "w": 18,
+            "h": 13
+          },
+          {
+            "x": 215,
+            "y": 2,
+            "w": 20,
+            "h": 16
+          }
+        ],
+        "down_right": [
+          {
+            "x": 165,
+            "y": 48,
+            "w": 20,
+            "h": 16
+          },
+          {
+            "x": 191,
+            "y": 55,
+            "w": 18,
+            "h": 13
+          },
+          {
+            "x": 214,
+            "y": 52,
+            "w": 21,
+            "h": 14
+          }
+        ],
+        "up_left": [
+          {
+            "x": 164,
+            "y": 27,
+            "w": 21,
+            "h": 14
+          },
+          {
+            "x": 191,
+            "y": 30,
+            "w": 17,
+            "h": 14
+          },
+          {
+            "x": 215,
+            "y": 24,
+            "w": 20,
+            "h": 17
+          }
+        ],
+        "up_right": [
+          {
+            "x": 165,
+            "y": 70,
+            "w": 20,
+            "h": 17
+          },
+          {
+            "x": 192,
+            "y": 76,
+            "w": 17,
+            "h": 14
+          },
+          {
+            "x": 215,
+            "y": 73,
+            "w": 21,
+            "h": 14
+          }
+        ]
+      }
+    },
+    "Kapurimon": {
+      "source_id": 8,
+      "source_member": "sprite thread/008_Kapurimon.png",
+      "source_sha256": "46b3ea464eee81a07c94777159a9c40765c6a8e9acb00de1ef61cbd11d5a39e4",
+      "source_size": [
+        217,
+        207
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 6,
+            "y": 99,
+            "w": 24,
+            "h": 17
+          },
+          {
+            "x": 42,
+            "y": 97,
+            "w": 23,
+            "h": 19
+          },
+          {
+            "x": 76,
+            "y": 99,
+            "w": 22,
+            "h": 17
+          }
+        ],
+        "down_right": [
+          {
+            "x": 122,
+            "y": 99,
+            "w": 22,
+            "h": 17
+          },
+          {
+            "x": 155,
+            "y": 97,
+            "w": 23,
+            "h": 19
+          },
+          {
+            "x": 190,
+            "y": 99,
+            "w": 24,
+            "h": 17
+          }
+        ],
+        "up_left": [
+          {
+            "x": 7,
+            "y": 143,
+            "w": 21,
+            "h": 19
+          },
+          {
+            "x": 43,
+            "y": 140,
+            "w": 20,
+            "h": 22
+          },
+          {
+            "x": 79,
+            "y": 143,
+            "w": 21,
+            "h": 19
+          }
+        ],
+        "up_right": [
+          {
+            "x": 119,
+            "y": 143,
+            "w": 21,
+            "h": 19
+          },
+          {
+            "x": 156,
+            "y": 140,
+            "w": 20,
+            "h": 22
+          },
+          {
+            "x": 191,
+            "y": 143,
+            "w": 21,
+            "h": 19
+          }
+        ]
+      }
+    },
+    "Kuramon": {
+      "source_id": 9,
+      "source_member": "sprite thread/009_Kuramon.png",
+      "source_sha256": "902044eb9b3fa1f7916c21629647335306b62e4b7557a381955dce9736005c4a",
+      "source_size": [
+        161,
+        175
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 0,
+            "y": 122,
+            "w": 18,
+            "h": 17
+          },
+          {
+            "x": 24,
+            "y": 120,
+            "w": 20,
+            "h": 18
+          },
+          {
+            "x": 50,
+            "y": 119,
+            "w": 21,
+            "h": 18
+          }
+        ],
+        "down_right": [
+          {
+            "x": 90,
+            "y": 119,
+            "w": 21,
+            "h": 18
+          },
+          {
+            "x": 117,
+            "y": 120,
+            "w": 20,
+            "h": 18
+          },
+          {
+            "x": 143,
+            "y": 122,
+            "w": 18,
+            "h": 17
+          }
+        ],
+        "up_left": [
+          {
+            "x": 5,
+            "y": 96,
+            "w": 18,
+            "h": 17
+          },
+          {
+            "x": 32,
+            "y": 96,
+            "w": 17,
+            "h": 18
+          },
+          {
+            "x": 55,
+            "y": 98,
+            "w": 18,
+            "h": 17
+          }
+        ],
+        "up_right": [
+          {
+            "x": 88,
+            "y": 98,
+            "w": 18,
+            "h": 17
+          },
+          {
+            "x": 112,
+            "y": 96,
+            "w": 17,
+            "h": 18
+          },
+          {
+            "x": 138,
+            "y": 96,
+            "w": 18,
+            "h": 17
+          }
+        ]
+      }
+    },
+    "Puttimon": {
+      "source_id": 10,
+      "source_member": "sprite thread/010_Puttimon.png",
+      "source_sha256": "6aa436b3dad7268ec9235e02493fd930a7d1c9930da2af1a7922e5b778e7fb6f",
+      "source_size": [
+        256,
+        123
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 153,
+            "y": 2,
+            "w": 19,
+            "h": 16
+          },
+          {
+            "x": 177,
+            "y": 1,
+            "w": 18,
+            "h": 15
+          },
+          {
+            "x": 200,
+            "y": 4,
+            "w": 20,
+            "h": 16
+          }
+        ],
+        "down_right": [
+          {
+            "x": 151,
+            "y": 62,
+            "w": 20,
+            "h": 16
+          },
+          {
+            "x": 176,
+            "y": 59,
+            "w": 18,
+            "h": 15
+          },
+          {
+            "x": 199,
+            "y": 60,
+            "w": 19,
+            "h": 16
+          }
+        ],
+        "up_left": [
+          {
+            "x": 153,
+            "y": 32,
+            "w": 20,
+            "h": 16
+          },
+          {
+            "x": 177,
+            "y": 31,
+            "w": 18,
+            "h": 15
+          },
+          {
+            "x": 201,
+            "y": 34,
+            "w": 19,
+            "h": 16
+          }
+        ],
+        "up_right": [
+          {
+            "x": 151,
+            "y": 92,
+            "w": 19,
+            "h": 16
+          },
+          {
+            "x": 176,
+            "y": 89,
+            "w": 18,
+            "h": 15
+          },
+          {
+            "x": 198,
+            "y": 90,
+            "w": 20,
+            "h": 16
+          }
+        ]
+      }
+    },
+    "Chibomon": {
+      "source_id": 11,
+      "source_member": "sprite thread/011_Chicomon.png",
+      "source_sha256": "9de50eb157a8aa74e3e5eaa81bbc7b2deb5f8224715075d067aca0f9f44ee7f2",
+      "source_size": [
+        168,
+        184
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 129,
+            "w": 15,
+            "h": 16
+          },
+          {
+            "x": 35,
+            "y": 128,
+            "w": 15,
+            "h": 15
+          },
+          {
+            "x": 61,
+            "y": 125,
+            "w": 15,
+            "h": 14
+          }
+        ],
+        "down_right": [
+          {
+            "x": 91,
+            "y": 125,
+            "w": 15,
+            "h": 14
+          },
+          {
+            "x": 117,
+            "y": 128,
+            "w": 15,
+            "h": 15
+          },
+          {
+            "x": 142,
+            "y": 129,
+            "w": 15,
+            "h": 16
+          }
+        ],
+        "up_left": [
+          {
+            "x": 14,
+            "y": 103,
+            "w": 15,
+            "h": 16
+          },
+          {
+            "x": 39,
+            "y": 102,
+            "w": 15,
+            "h": 15
+          },
+          {
+            "x": 64,
+            "y": 99,
+            "w": 15,
+            "h": 14
+          }
+        ],
+        "up_right": [
+          {
+            "x": 88,
+            "y": 99,
+            "w": 15,
+            "h": 14
+          },
+          {
+            "x": 113,
+            "y": 102,
+            "w": 15,
+            "h": 15
+          },
+          {
+            "x": 138,
+            "y": 103,
+            "w": 15,
+            "h": 16
+          }
+        ]
+      }
+    },
+    "Dorimon": {
+      "source_id": 12,
+      "source_member": "sprite thread/012_Dorimon.png",
+      "source_sha256": "48032b46c0280aca501824fbe9f480af99c94b2cad265275d030de5040e2a360",
+      "source_size": [
+        154,
+        165
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 95,
+            "w": 17,
+            "h": 18
+          },
+          {
+            "x": 32,
+            "y": 96,
+            "w": 18,
+            "h": 17
+          },
+          {
+            "x": 56,
+            "y": 96,
+            "w": 18,
+            "h": 17
+          }
+        ],
+        "down_right": [
+          {
+            "x": 80,
+            "y": 96,
+            "w": 18,
+            "h": 17
+          },
+          {
+            "x": 104,
+            "y": 96,
+            "w": 18,
+            "h": 17
+          },
+          {
+            "x": 127,
+            "y": 95,
+            "w": 17,
+            "h": 18
+          }
+        ],
+        "up_left": [
+          {
+            "x": 10,
+            "y": 114,
+            "w": 16,
+            "h": 18
+          },
+          {
+            "x": 33,
+            "y": 115,
+            "w": 16,
+            "h": 17
+          },
+          {
+            "x": 56,
+            "y": 115,
+            "w": 17,
+            "h": 16
+          }
+        ],
+        "up_right": [
+          {
+            "x": 81,
+            "y": 115,
+            "w": 17,
+            "h": 16
+          },
+          {
+            "x": 105,
+            "y": 115,
+            "w": 16,
+            "h": 17
+          },
+          {
+            "x": 128,
+            "y": 114,
+            "w": 16,
+            "h": 18
+          }
+        ]
+      }
+    },
+    "Calumon": {
+      "source_id": 13,
+      "source_member": "sprite thread/013_Calumon.png",
+      "source_sha256": "1788a24a74d45606f9f13555cf2328e203e4732a5084ebb66455542259a470ce",
+      "source_size": [
+        300,
+        160
+      ],
+      "background_rgb": [
+        0,
+        0,
+        0
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 118,
+            "y": 61,
+            "w": 21,
+            "h": 22
+          },
+          {
+            "x": 147,
+            "y": 63,
+            "w": 21,
+            "h": 20
+          },
+          {
+            "x": 176,
+            "y": 63,
+            "w": 21,
+            "h": 20
+          }
+        ],
+        "down_right": [
+          {
+            "x": 215,
+            "y": 61,
+            "w": 21,
+            "h": 22
+          },
+          {
+            "x": 244,
+            "y": 63,
+            "w": 21,
+            "h": 20
+          },
+          {
+            "x": 273,
+            "y": 63,
+            "w": 21,
+            "h": 20
+          }
+        ],
+        "up_left": [
+          {
+            "x": 118,
+            "y": 86,
+            "w": 21,
+            "h": 22
+          },
+          {
+            "x": 147,
+            "y": 88,
+            "w": 21,
+            "h": 20
+          },
+          {
+            "x": 176,
+            "y": 88,
+            "w": 21,
+            "h": 20
+          }
+        ],
+        "up_right": [
+          {
+            "x": 215,
+            "y": 86,
+            "w": 21,
+            "h": 22
+          },
+          {
+            "x": 244,
+            "y": 88,
+            "w": 21,
+            "h": 20
+          },
+          {
+            "x": 273,
+            "y": 88,
+            "w": 21,
+            "h": 20
+          }
+        ]
+      }
+    },
+    "Gigimon": {
+      "source_id": 14,
+      "source_member": "sprite thread/014_Gigimon.png",
+      "source_sha256": "f5519449a1ff40bbae338f140b28c49f425c7d27426b7facd9539d960882a23d",
+      "source_size": [
+        199,
+        233
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 157,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 42,
+            "y": 161,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 72,
+            "y": 163,
+            "w": 22,
+            "h": 21
+          }
+        ],
+        "down_right": [
+          {
+            "x": 105,
+            "y": 163,
+            "w": 22,
+            "h": 21
+          },
+          {
+            "x": 135,
+            "y": 161,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 167,
+            "y": 157,
+            "w": 22,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 13,
+            "y": 123,
+            "w": 21,
+            "h": 29
+          },
+          {
+            "x": 43,
+            "y": 128,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 72,
+            "y": 132,
+            "w": 22,
+            "h": 20
+          }
+        ],
+        "up_right": [
+          {
+            "x": 105,
+            "y": 132,
+            "w": 22,
+            "h": 20
+          },
+          {
+            "x": 135,
+            "y": 128,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 165,
+            "y": 123,
+            "w": 21,
+            "h": 29
+          }
+        ]
+      }
+    },
+    "Gummymon": {
+      "source_id": 15,
+      "source_member": "sprite thread/015_Gummymon.png",
+      "source_sha256": "0a8eb7d86c4330f9d979e1a2c71bf46477667f8e7bf719b9bab11ff87b4e2606",
+      "source_size": [
+        182,
+        205
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 136,
+            "w": 18,
+            "h": 22
+          },
+          {
+            "x": 38,
+            "y": 138,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 67,
+            "y": 139,
+            "w": 19,
+            "h": 21
+          }
+        ],
+        "down_right": [
+          {
+            "x": 96,
+            "y": 139,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 125,
+            "y": 138,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 154,
+            "y": 136,
+            "w": 18,
+            "h": 22
+          }
+        ],
+        "up_left": [
+          {
+            "x": 12,
+            "y": 109,
+            "w": 17,
+            "h": 22
+          },
+          {
+            "x": 38,
+            "y": 111,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 67,
+            "y": 112,
+            "w": 19,
+            "h": 21
+          }
+        ],
+        "up_right": [
+          {
+            "x": 96,
+            "y": 112,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 125,
+            "y": 111,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 153,
+            "y": 109,
+            "w": 17,
+            "h": 22
+          }
+        ]
+      }
+    },
+    "Kokomon": {
+      "source_id": 16,
+      "source_member": "sprite thread/016_Chocomon.png",
+      "source_sha256": "556b020c9ef1cf92c020fdcb22ec475a4f9136fd6a0cc9daba49420708e0aa14",
+      "source_size": [
+        180,
+        209
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 11,
+            "y": 143,
+            "w": 18,
+            "h": 22
+          },
+          {
+            "x": 38,
+            "y": 145,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 66,
+            "y": 146,
+            "w": 19,
+            "h": 21
+          }
+        ],
+        "down_right": [
+          {
+            "x": 95,
+            "y": 146,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 123,
+            "y": 145,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 151,
+            "y": 143,
+            "w": 18,
+            "h": 22
+          }
+        ],
+        "up_left": [
+          {
+            "x": 10,
+            "y": 111,
+            "w": 17,
+            "h": 22
+          },
+          {
+            "x": 37,
+            "y": 113,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 66,
+            "y": 114,
+            "w": 19,
+            "h": 21
+          }
+        ],
+        "up_right": [
+          {
+            "x": 95,
+            "y": 114,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 124,
+            "y": 113,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 153,
+            "y": 111,
+            "w": 17,
+            "h": 22
+          }
+        ]
+      }
+    },
+    "Tsumemon": {
+      "source_id": 17,
+      "source_member": "sprite thread/017_Tsumemon.png",
+      "source_sha256": "e544412ee93bdf82f7dd592d6dc170b614c4e5f30ba39f75caeaf4dc1783c469",
+      "source_size": [
+        223,
+        242
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 21,
+            "y": 186,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 52,
+            "y": 185,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 84,
+            "y": 185,
+            "w": 21,
+            "h": 23
+          }
+        ],
+        "down_right": [
+          {
+            "x": 115,
+            "y": 185,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 146,
+            "y": 185,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 177,
+            "y": 186,
+            "w": 22,
+            "h": 23
+          }
+        ],
+        "up_left": [
+          {
+            "x": 26,
+            "y": 158,
+            "w": 19,
+            "h": 21
+          },
+          {
+            "x": 55,
+            "y": 158,
+            "w": 19,
+            "h": 22
+          },
+          {
+            "x": 84,
+            "y": 159,
+            "w": 21,
+            "h": 21
+          }
+        ],
+        "up_right": [
+          {
+            "x": 115,
+            "y": 159,
+            "w": 21,
+            "h": 21
+          },
+          {
+            "x": 146,
+            "y": 158,
+            "w": 19,
+            "h": 22
+          },
+          {
+            "x": 175,
+            "y": 158,
+            "w": 19,
+            "h": 21
+          }
+        ]
+      }
+    },
+    "Minomon": {
+      "source_id": 18,
+      "source_member": "sprite thread/018_Minomon.png",
+      "source_sha256": "557e272a8057e96a1ca7ae04d8d430e2b4787b6ae02b7b06d61954c43dbb6b11",
+      "source_size": [
+        206,
+        273
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 196,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 40,
+            "y": 196,
+            "w": 19,
+            "h": 27
+          },
+          {
+            "x": 76,
+            "y": 196,
+            "w": 18,
+            "h": 28
+          }
+        ],
+        "down_right": [
+          {
+            "x": 112,
+            "y": 196,
+            "w": 18,
+            "h": 28
+          },
+          {
+            "x": 147,
+            "y": 196,
+            "w": 19,
+            "h": 27
+          },
+          {
+            "x": 177,
+            "y": 196,
+            "w": 19,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 11,
+            "y": 155,
+            "w": 17,
+            "h": 28
+          },
+          {
+            "x": 42,
+            "y": 155,
+            "w": 20,
+            "h": 27
+          },
+          {
+            "x": 76,
+            "y": 155,
+            "w": 20,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 110,
+            "y": 155,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 144,
+            "y": 155,
+            "w": 20,
+            "h": 27
+          },
+          {
+            "x": 178,
+            "y": 155,
+            "w": 17,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Wanyamon": {
+      "source_id": 19,
+      "source_member": "sprite thread/019_Wanyamon.png",
+      "source_sha256": "12b7c3344c5dea0753d3f440111a2fef996214ec04a3250ecb6dfa2d72f9e00e",
+      "source_size": [
+        186,
+        222
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 5,
+            "y": 155,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "x": 36,
+            "y": 154,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 67,
+            "y": 153,
+            "w": 21,
+            "h": 24
+          }
+        ],
+        "down_right": [
+          {
+            "x": 98,
+            "y": 153,
+            "w": 21,
+            "h": 24
+          },
+          {
+            "x": 129,
+            "y": 154,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 160,
+            "y": 155,
+            "w": 21,
+            "h": 26
+          }
+        ],
+        "up_left": [
+          {
+            "x": 6,
+            "y": 122,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "x": 37,
+            "y": 121,
+            "w": 20,
+            "h": 25
+          },
+          {
+            "x": 68,
+            "y": 120,
+            "w": 20,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 98,
+            "y": 120,
+            "w": 20,
+            "h": 24
+          },
+          {
+            "x": 129,
+            "y": 121,
+            "w": 20,
+            "h": 25
+          },
+          {
+            "x": 159,
+            "y": 122,
+            "w": 21,
+            "h": 26
+          }
+        ]
+      }
+    },
+    "Budmon": {
+      "source_id": 20,
+      "source_member": "sprite thread/020_Budmon.png",
+      "source_sha256": "33638b4333b05005e8fb146efbbc762a9684c3d5b0bda1afd1f117cf74089a83",
+      "source_size": [
+        168,
+        184
+      ],
+      "background_rgb": [
+        224,
+        176,
+        248
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 5,
+            "y": 123,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 32,
+            "y": 121,
+            "w": 22,
+            "h": 25
+          },
+          {
+            "x": 59,
+            "y": 121,
+            "w": 22,
+            "h": 25
+          }
+        ],
+        "down_right": [
+          {
+            "x": 92,
+            "y": 121,
+            "w": 22,
+            "h": 25
+          },
+          {
+            "x": 119,
+            "y": 121,
+            "w": 22,
+            "h": 25
+          },
+          {
+            "x": 146,
+            "y": 123,
+            "w": 22,
+            "h": 23
+          }
+        ],
+        "up_left": [
+          {
+            "x": 7,
+            "y": 96,
+            "w": 22,
+            "h": 21
+          },
+          {
+            "x": 35,
+            "y": 94,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 61,
+            "y": 92,
+            "w": 23,
+            "h": 25
+          }
+        ],
+        "up_right": [
+          {
+            "x": 89,
+            "y": 92,
+            "w": 23,
+            "h": 25
+          },
+          {
+            "x": 116,
+            "y": 94,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 144,
+            "y": 96,
+            "w": 22,
+            "h": 21
+          }
+        ]
+      }
+    },
+    "Botamon": {
+      "source_id": 21,
+      "source_member": "sprite thread/021_Botamon.png",
+      "source_sha256": "aa6a554902c432eddfa50d46bea4d0bc05a23d53237595bf56028d59789f23b0",
+      "source_size": [
+        185,
+        190
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 11,
+            "y": 128,
+            "w": 19,
+            "h": 19
+          },
+          {
+            "x": 39,
+            "y": 124,
+            "w": 19,
+            "h": 19
+          },
+          {
+            "x": 67,
+            "y": 123,
+            "w": 19,
+            "h": 19
+          }
+        ],
+        "down_right": [
+          {
+            "x": 99,
+            "y": 123,
+            "w": 19,
+            "h": 19
+          },
+          {
+            "x": 127,
+            "y": 124,
+            "w": 19,
+            "h": 19
+          },
+          {
+            "x": 155,
+            "y": 128,
+            "w": 19,
+            "h": 19
+          }
+        ],
+        "up_left": [
+          {
+            "x": 10,
+            "y": 96,
+            "w": 19,
+            "h": 19
+          },
+          {
+            "x": 39,
+            "y": 92,
+            "w": 19,
+            "h": 19
+          },
+          {
+            "x": 68,
+            "y": 92,
+            "w": 19,
+            "h": 19
+          }
+        ],
+        "up_right": [
+          {
+            "x": 98,
+            "y": 92,
+            "w": 19,
+            "h": 19
+          },
+          {
+            "x": 127,
+            "y": 92,
+            "w": 19,
+            "h": 19
+          },
+          {
+            "x": 156,
+            "y": 96,
+            "w": 19,
+            "h": 19
+          }
+        ]
+      }
+    },
+    "Sunmon": {
+      "source_id": 22,
+      "source_member": "sprite thread/022_Sunmon.png",
+      "source_sha256": "aeb629495cc8678908e68dac38945f218cba80261cf881ed203bddf3203d1e11",
+      "source_size": [
+        176,
+        249
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 178,
+            "w": 18,
+            "h": 25
+          },
+          {
+            "x": 36,
+            "y": 174,
+            "w": 18,
+            "h": 28
+          },
+          {
+            "x": 62,
+            "y": 174,
+            "w": 18,
+            "h": 26
+          }
+        ],
+        "down_right": [
+          {
+            "x": 92,
+            "y": 174,
+            "w": 18,
+            "h": 26
+          },
+          {
+            "x": 118,
+            "y": 174,
+            "w": 18,
+            "h": 28
+          },
+          {
+            "x": 144,
+            "y": 178,
+            "w": 18,
+            "h": 25
+          }
+        ],
+        "up_left": [
+          {
+            "x": 13,
+            "y": 142,
+            "w": 17,
+            "h": 27
+          },
+          {
+            "x": 40,
+            "y": 139,
+            "w": 17,
+            "h": 28
+          },
+          {
+            "x": 64,
+            "y": 139,
+            "w": 17,
+            "h": 27
+          }
+        ],
+        "up_right": [
+          {
+            "x": 91,
+            "y": 139,
+            "w": 17,
+            "h": 27
+          },
+          {
+            "x": 115,
+            "y": 139,
+            "w": 17,
+            "h": 28
+          },
+          {
+            "x": 142,
+            "y": 142,
+            "w": 17,
+            "h": 27
+          }
+        ]
+      }
+    },
+    "Moonmon": {
+      "source_id": 23,
+      "source_member": "sprite thread/023_Moonmon.png",
+      "source_sha256": "d09bf0034fb803c794981718a96a0f7cdc8f99cf10cab19df83f7945085ac36b",
+      "source_size": [
+        123,
+        229
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 4,
+            "y": 133,
+            "w": 13,
+            "h": 25
+          },
+          {
+            "x": 22,
+            "y": 133,
+            "w": 13,
+            "h": 25
+          },
+          {
+            "x": 41,
+            "y": 134,
+            "w": 13,
+            "h": 24
+          }
+        ],
+        "down_right": [
+          {
+            "x": 70,
+            "y": 134,
+            "w": 13,
+            "h": 24
+          },
+          {
+            "x": 89,
+            "y": 133,
+            "w": 13,
+            "h": 25
+          },
+          {
+            "x": 107,
+            "y": 133,
+            "w": 13,
+            "h": 25
+          }
+        ],
+        "up_left": [
+          {
+            "x": 5,
+            "y": 168,
+            "w": 13,
+            "h": 25
+          },
+          {
+            "x": 23,
+            "y": 168,
+            "w": 13,
+            "h": 25
+          },
+          {
+            "x": 41,
+            "y": 168,
+            "w": 13,
+            "h": 25
+          }
+        ],
+        "up_right": [
+          {
+            "x": 70,
+            "y": 168,
+            "w": 13,
+            "h": 25
+          },
+          {
+            "x": 88,
+            "y": 168,
+            "w": 13,
+            "h": 25
+          },
+          {
+            "x": 106,
+            "y": 168,
+            "w": 13,
+            "h": 25
+          }
+        ]
+      }
+    },
+    "Monodramon": {
+      "source_id": 24,
+      "source_member": "sprite thread/024_Monodramon.png",
+      "source_sha256": "510e602a3653d7081eb1f0165b5c54f44abca6ba16de53d196a3c7ea8c453784",
+      "source_size": [
+        265,
+        331
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 27,
+            "y": 184,
+            "w": 21,
+            "h": 29
+          },
+          {
+            "x": 59,
+            "y": 184,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 88,
+            "y": 184,
+            "w": 26,
+            "h": 29
+          }
+        ],
+        "down_right": [
+          {
+            "x": 150,
+            "y": 184,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 180,
+            "y": 183,
+            "w": 21,
+            "h": 30
+          },
+          {
+            "x": 213,
+            "y": 184,
+            "w": 26,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 23,
+            "y": 233,
+            "w": 23,
+            "h": 29
+          },
+          {
+            "x": 57,
+            "y": 232,
+            "w": 21,
+            "h": 30
+          },
+          {
+            "x": 91,
+            "y": 233,
+            "w": 24,
+            "h": 31
+          }
+        ],
+        "up_right": [
+          {
+            "x": 148,
+            "y": 232,
+            "w": 21,
+            "h": 30
+          },
+          {
+            "x": 179,
+            "y": 233,
+            "w": 24,
+            "h": 31
+          },
+          {
+            "x": 217,
+            "y": 233,
+            "w": 23,
+            "h": 29
+          }
+        ]
+      }
+    },
+    "Agumon": {
+      "source_id": 25,
+      "source_member": "sprite thread/025_Agumon.png",
+      "source_sha256": "6bfc0c8076ada158793fa45a50438e81946c587f9f261b35a3aca515fb649351",
+      "source_size": [
+        190,
+        242
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 2,
+            "y": 164,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "x": 34,
+            "y": 165,
+            "w": 21,
+            "h": 24
+          },
+          {
+            "x": 65,
+            "y": 164,
+            "w": 22,
+            "h": 26
+          }
+        ],
+        "down_right": [
+          {
+            "x": 101,
+            "y": 165,
+            "w": 22,
+            "h": 26
+          },
+          {
+            "x": 133,
+            "y": 166,
+            "w": 21,
+            "h": 24
+          },
+          {
+            "x": 165,
+            "y": 165,
+            "w": 21,
+            "h": 26
+          }
+        ],
+        "up_left": [
+          {
+            "x": 1,
+            "y": 198,
+            "w": 22,
+            "h": 25
+          },
+          {
+            "x": 33,
+            "y": 199,
+            "w": 21,
+            "h": 24
+          },
+          {
+            "x": 64,
+            "y": 197,
+            "w": 22,
+            "h": 26
+          }
+        ],
+        "up_right": [
+          {
+            "x": 102,
+            "y": 198,
+            "w": 22,
+            "h": 26
+          },
+          {
+            "x": 134,
+            "y": 200,
+            "w": 21,
+            "h": 24
+          },
+          {
+            "x": 165,
+            "y": 199,
+            "w": 22,
+            "h": 25
+          }
+        ]
+      }
+    },
+    "Veemon": {
+      "source_id": 26,
+      "source_member": "sprite thread/026_V-mon.png",
+      "source_sha256": "97cdde3f4a0248539f2266f2e9b6e60297f4954ac9d71c410bf0523ea6bf5897",
+      "source_size": [
+        181,
+        289
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 5,
+            "y": 197,
+            "w": 24,
+            "h": 30
+          },
+          {
+            "x": 32,
+            "y": 196,
+            "w": 22,
+            "h": 32
+          },
+          {
+            "x": 62,
+            "y": 199,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 99,
+            "y": 198,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 125,
+            "y": 196,
+            "w": 22,
+            "h": 32
+          },
+          {
+            "x": 151,
+            "y": 197,
+            "w": 24,
+            "h": 30
+          }
+        ],
+        "up_left": [
+          {
+            "x": 7,
+            "y": 164,
+            "w": 23,
+            "h": 29
+          },
+          {
+            "x": 34,
+            "y": 164,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 66,
+            "y": 165,
+            "w": 22,
+            "h": 29
+          }
+        ],
+        "up_right": [
+          {
+            "x": 96,
+            "y": 165,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 124,
+            "y": 164,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 151,
+            "y": 164,
+            "w": 23,
+            "h": 29
+          }
+        ]
+      }
+    },
+    "Guilmon": {
+      "source_id": 27,
+      "source_member": "sprite thread/027_Guilmon.png",
+      "source_sha256": "c0354eb894e120359f5eb6aa942805617057be505dbf6da192fe7de5afda2dbe",
+      "source_size": [
+        249,
+        284
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 8,
+            "y": 185,
+            "w": 19,
+            "h": 31
+          },
+          {
+            "x": 49,
+            "y": 186,
+            "w": 23,
+            "h": 31
+          },
+          {
+            "x": 95,
+            "y": 184,
+            "w": 21,
+            "h": 29
+          }
+        ],
+        "down_right": [
+          {
+            "x": 135,
+            "y": 184,
+            "w": 21,
+            "h": 29
+          },
+          {
+            "x": 179,
+            "y": 186,
+            "w": 23,
+            "h": 31
+          },
+          {
+            "x": 224,
+            "y": 185,
+            "w": 19,
+            "h": 31
+          }
+        ],
+        "up_left": [
+          {
+            "x": 6,
+            "y": 236,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 51,
+            "y": 236,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 97,
+            "y": 237,
+            "w": 21,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 133,
+            "y": 235,
+            "w": 21,
+            "h": 30
+          },
+          {
+            "x": 178,
+            "y": 234,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 224,
+            "y": 238,
+            "w": 21,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Dorumon": {
+      "source_id": 28,
+      "source_member": "sprite thread/028_Dorumon.png",
+      "source_sha256": "39452c82014dd9188750937b9a3ebf156f9a213eb5003ac6c06f0d8ab7f74cc4",
+      "source_size": [
+        225,
+        253
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 4,
+            "y": 176,
+            "w": 22,
+            "h": 27
+          },
+          {
+            "x": 42,
+            "y": 176,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 76,
+            "y": 175,
+            "w": 25,
+            "h": 27
+          }
+        ],
+        "down_right": [
+          {
+            "x": 116,
+            "y": 175,
+            "w": 25,
+            "h": 27
+          },
+          {
+            "x": 154,
+            "y": 176,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 191,
+            "y": 176,
+            "w": 22,
+            "h": 27
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 213,
+            "w": 24,
+            "h": 26
+          },
+          {
+            "x": 43,
+            "y": 212,
+            "w": 25,
+            "h": 27
+          },
+          {
+            "x": 81,
+            "y": 214,
+            "w": 21,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 115,
+            "y": 214,
+            "w": 21,
+            "h": 24
+          },
+          {
+            "x": 149,
+            "y": 212,
+            "w": 25,
+            "h": 27
+          },
+          {
+            "x": 189,
+            "y": 213,
+            "w": 24,
+            "h": 26
+          }
+        ]
+      }
+    },
+    "Betamon": {
+      "source_id": 29,
+      "source_member": "sprite thread/029_Betamon.png",
+      "source_sha256": "bf419c6ae0ac7602babe2a10aa734d16c1d7ae804f888da2d06212df285161de",
+      "source_size": [
+        199,
+        247
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 4,
+            "y": 166,
+            "w": 24,
+            "h": 24
+          },
+          {
+            "x": 35,
+            "y": 167,
+            "w": 24,
+            "h": 23
+          },
+          {
+            "x": 66,
+            "y": 165,
+            "w": 24,
+            "h": 25
+          }
+        ],
+        "down_right": [
+          {
+            "x": 100,
+            "y": 164,
+            "w": 24,
+            "h": 25
+          },
+          {
+            "x": 131,
+            "y": 166,
+            "w": 24,
+            "h": 23
+          },
+          {
+            "x": 162,
+            "y": 165,
+            "w": 23,
+            "h": 24
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 205,
+            "w": 23,
+            "h": 24
+          },
+          {
+            "x": 35,
+            "y": 205,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 62,
+            "y": 206,
+            "w": 23,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 105,
+            "y": 205,
+            "w": 23,
+            "h": 24
+          },
+          {
+            "x": 134,
+            "y": 204,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 163,
+            "y": 204,
+            "w": 22,
+            "h": 24
+          }
+        ]
+      }
+    },
+    "Gabumon": {
+      "source_id": 30,
+      "source_member": "sprite thread/030_Gabumon.png",
+      "source_sha256": "fbd0021b8f6e81148e5c741024c04d49df48002e4587241ba3a429b7c111f4f4",
+      "source_size": [
+        363,
+        192
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 244,
+            "y": 3,
+            "w": 26,
+            "h": 29
+          },
+          {
+            "x": 279,
+            "y": 2,
+            "w": 27,
+            "h": 29
+          },
+          {
+            "x": 318,
+            "y": 2,
+            "w": 26,
+            "h": 28
+          }
+        ],
+        "down_right": [
+          {
+            "x": 241,
+            "y": 85,
+            "w": 26,
+            "h": 28
+          },
+          {
+            "x": 279,
+            "y": 85,
+            "w": 27,
+            "h": 29
+          },
+          {
+            "x": 315,
+            "y": 86,
+            "w": 26,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 239,
+            "y": 42,
+            "w": 26,
+            "h": 30
+          },
+          {
+            "x": 279,
+            "y": 43,
+            "w": 27,
+            "h": 29
+          },
+          {
+            "x": 318,
+            "y": 41,
+            "w": 24,
+            "h": 31
+          }
+        ],
+        "up_right": [
+          {
+            "x": 243,
+            "y": 124,
+            "w": 24,
+            "h": 31
+          },
+          {
+            "x": 279,
+            "y": 126,
+            "w": 27,
+            "h": 29
+          },
+          {
+            "x": 320,
+            "y": 125,
+            "w": 26,
+            "h": 30
+          }
+        ]
+      }
+    },
+    "Patamon": {
+      "source_id": 31,
+      "source_member": "sprite thread/031_Patamon.png",
+      "source_sha256": "9d6a6fe7b2a9619e90cfd96c8b56af893987976b2345b90dceb93b7a4d892194",
+      "source_size": [
+        217,
+        317
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 4,
+            "y": 192,
+            "w": 23,
+            "h": 21
+          },
+          {
+            "x": 34,
+            "y": 190,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 63,
+            "y": 189,
+            "w": 20,
+            "h": 24
+          }
+        ],
+        "down_right": [
+          {
+            "x": 126,
+            "y": 189,
+            "w": 20,
+            "h": 24
+          },
+          {
+            "x": 154,
+            "y": 190,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 182,
+            "y": 192,
+            "w": 23,
+            "h": 21
+          }
+        ],
+        "up_left": [
+          {
+            "x": 8,
+            "y": 246,
+            "w": 19,
+            "h": 23
+          },
+          {
+            "x": 37,
+            "y": 249,
+            "w": 21,
+            "h": 21
+          },
+          {
+            "x": 69,
+            "y": 246,
+            "w": 20,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 131,
+            "y": 246,
+            "w": 20,
+            "h": 24
+          },
+          {
+            "x": 162,
+            "y": 249,
+            "w": 21,
+            "h": 21
+          },
+          {
+            "x": 193,
+            "y": 246,
+            "w": 19,
+            "h": 23
+          }
+        ]
+      }
+    },
+    "Biyomon": {
+      "source_id": 32,
+      "source_member": "sprite thread/032_Biyomon.png",
+      "source_sha256": "4031345f400569b3da11eec837688305f717275cca756ca6ace4eb51bf9ad332",
+      "source_size": [
+        247,
+        252
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 165,
+            "w": 19,
+            "h": 27
+          },
+          {
+            "x": 39,
+            "y": 165,
+            "w": 20,
+            "h": 26
+          },
+          {
+            "x": 70,
+            "y": 163,
+            "w": 20,
+            "h": 28
+          }
+        ],
+        "down_right": [
+          {
+            "x": 112,
+            "y": 162,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 143,
+            "y": 164,
+            "w": 20,
+            "h": 26
+          },
+          {
+            "x": 173,
+            "y": 164,
+            "w": 19,
+            "h": 27
+          }
+        ],
+        "up_left": [
+          {
+            "x": 9,
+            "y": 206,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 37,
+            "y": 206,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 68,
+            "y": 207,
+            "w": 21,
+            "h": 26
+          }
+        ],
+        "up_right": [
+          {
+            "x": 113,
+            "y": 206,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "x": 144,
+            "y": 205,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 173,
+            "y": 205,
+            "w": 20,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Palmon": {
+      "source_id": 33,
+      "source_member": "sprite thread/033_Palmon.png",
+      "source_sha256": "5780858e135b4de73662a112aff3a812a61fe42dcae880462f66d7d4400f5881",
+      "source_size": [
+        217,
+        258
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 124,
+            "w": 20,
+            "h": 29
+          },
+          {
+            "x": 37,
+            "y": 123,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 70,
+            "y": 123,
+            "w": 24,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 119,
+            "y": 123,
+            "w": 24,
+            "h": 30
+          },
+          {
+            "x": 155,
+            "y": 123,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 190,
+            "y": 124,
+            "w": 20,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 2,
+            "y": 182,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 31,
+            "y": 180,
+            "w": 25,
+            "h": 30
+          },
+          {
+            "x": 68,
+            "y": 183,
+            "w": 21,
+            "h": 27
+          }
+        ],
+        "up_right": [
+          {
+            "x": 123,
+            "y": 183,
+            "w": 21,
+            "h": 27
+          },
+          {
+            "x": 156,
+            "y": 180,
+            "w": 25,
+            "h": 30
+          },
+          {
+            "x": 189,
+            "y": 182,
+            "w": 21,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Tentomon": {
+      "source_id": 34,
+      "source_member": "sprite thread/034_Tentomon.png",
+      "source_sha256": "0f352c395f0707158e942d9e3e973f5d2abd233ed915aedb77acb4f58000117a",
+      "source_size": [
+        221,
+        272
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 20,
+            "y": 206,
+            "w": 24,
+            "h": 23
+          },
+          {
+            "x": 50,
+            "y": 206,
+            "w": 23,
+            "h": 23
+          },
+          {
+            "x": 78,
+            "y": 207,
+            "w": 22,
+            "h": 22
+          }
+        ],
+        "down_right": [
+          {
+            "x": 134,
+            "y": 207,
+            "w": 22,
+            "h": 22
+          },
+          {
+            "x": 159,
+            "y": 206,
+            "w": 23,
+            "h": 23
+          },
+          {
+            "x": 186,
+            "y": 206,
+            "w": 24,
+            "h": 23
+          }
+        ],
+        "up_left": [
+          {
+            "x": 27,
+            "y": 170,
+            "w": 21,
+            "h": 22
+          },
+          {
+            "x": 53,
+            "y": 169,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 78,
+            "y": 168,
+            "w": 22,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 134,
+            "y": 169,
+            "w": 22,
+            "h": 24
+          },
+          {
+            "x": 159,
+            "y": 170,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 186,
+            "y": 171,
+            "w": 21,
+            "h": 22
+          }
+        ]
+      }
+    },
+    "Gotsumon": {
+      "source_id": 35,
+      "source_member": "sprite thread/035_Gotsumon.png",
+      "source_sha256": "cd3b9fccaa80402ab10fb77bb1e7aeb21813511ad6ee3ca56b455c84d3e46ef3",
+      "source_size": [
+        188,
+        290
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 11,
+            "y": 211,
+            "w": 23,
+            "h": 29
+          },
+          {
+            "x": 42,
+            "y": 210,
+            "w": 21,
+            "h": 29
+          },
+          {
+            "x": 72,
+            "y": 211,
+            "w": 18,
+            "h": 28
+          }
+        ],
+        "down_right": [
+          {
+            "x": 98,
+            "y": 211,
+            "w": 18,
+            "h": 28
+          },
+          {
+            "x": 125,
+            "y": 210,
+            "w": 21,
+            "h": 29
+          },
+          {
+            "x": 154,
+            "y": 211,
+            "w": 23,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 10,
+            "y": 176,
+            "w": 23,
+            "h": 31
+          },
+          {
+            "x": 41,
+            "y": 175,
+            "w": 19,
+            "h": 29
+          },
+          {
+            "x": 69,
+            "y": 176,
+            "w": 21,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 98,
+            "y": 176,
+            "w": 21,
+            "h": 30
+          },
+          {
+            "x": 128,
+            "y": 175,
+            "w": 19,
+            "h": 29
+          },
+          {
+            "x": 155,
+            "y": 176,
+            "w": 23,
+            "h": 31
+          }
+        ]
+      }
+    },
+    "Otamamon": {
+      "source_id": 36,
+      "source_member": "sprite thread/036_Otamamon.png",
+      "source_sha256": "100ebd5aa510b373077cf1a208d3b96ef8344a787ed65d288929c451fe45b07e",
+      "source_size": [
+        216,
+        194
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 4,
+            "y": 132,
+            "w": 24,
+            "h": 22
+          },
+          {
+            "x": 40,
+            "y": 132,
+            "w": 26,
+            "h": 23
+          },
+          {
+            "x": 77,
+            "y": 134,
+            "w": 21,
+            "h": 20
+          }
+        ],
+        "down_right": [
+          {
+            "x": 114,
+            "y": 135,
+            "w": 21,
+            "h": 20
+          },
+          {
+            "x": 146,
+            "y": 133,
+            "w": 26,
+            "h": 23
+          },
+          {
+            "x": 184,
+            "y": 133,
+            "w": 24,
+            "h": 22
+          }
+        ],
+        "up_left": [
+          {
+            "x": 3,
+            "y": 162,
+            "w": 24,
+            "h": 16
+          },
+          {
+            "x": 38,
+            "y": 163,
+            "w": 27,
+            "h": 17
+          },
+          {
+            "x": 79,
+            "y": 163,
+            "w": 20,
+            "h": 16
+          }
+        ],
+        "up_right": [
+          {
+            "x": 113,
+            "y": 164,
+            "w": 20,
+            "h": 16
+          },
+          {
+            "x": 147,
+            "y": 164,
+            "w": 27,
+            "h": 17
+          },
+          {
+            "x": 185,
+            "y": 163,
+            "w": 24,
+            "h": 16
+          }
+        ]
+      }
+    },
+    "Gomamon": {
+      "source_id": 37,
+      "source_member": "sprite thread/037_Gomamon.png",
+      "source_sha256": "a078fe58fd533ec08f583fae9d7aa4cde02f503db450b09999b30c5fe0eeddf2",
+      "source_size": [
+        216,
+        216
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 149,
+            "w": 22,
+            "h": 23
+          },
+          {
+            "x": 39,
+            "y": 147,
+            "w": 20,
+            "h": 26
+          },
+          {
+            "x": 74,
+            "y": 151,
+            "w": 22,
+            "h": 19
+          }
+        ],
+        "down_right": [
+          {
+            "x": 113,
+            "y": 150,
+            "w": 22,
+            "h": 19
+          },
+          {
+            "x": 150,
+            "y": 146,
+            "w": 20,
+            "h": 26
+          },
+          {
+            "x": 184,
+            "y": 148,
+            "w": 22,
+            "h": 23
+          }
+        ],
+        "up_left": [
+          {
+            "x": 3,
+            "y": 181,
+            "w": 22,
+            "h": 22
+          },
+          {
+            "x": 37,
+            "y": 182,
+            "w": 20,
+            "h": 21
+          },
+          {
+            "x": 76,
+            "y": 177,
+            "w": 18,
+            "h": 26
+          }
+        ],
+        "up_right": [
+          {
+            "x": 115,
+            "y": 176,
+            "w": 18,
+            "h": 26
+          },
+          {
+            "x": 152,
+            "y": 181,
+            "w": 20,
+            "h": 21
+          },
+          {
+            "x": 184,
+            "y": 180,
+            "w": 22,
+            "h": 22
+          }
+        ]
+      }
+    },
+    "Tapirmon": {
+      "source_id": 38,
+      "source_member": "sprite thread/038_Bakumon.png",
+      "source_sha256": "592719a9f7d5348a08daef7561a4551964445ff86ff1a68f2b45eae56b8e3850",
+      "source_size": [
+        180,
+        265
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 116,
+            "w": 27,
+            "h": 28
+          },
+          {
+            "x": 34,
+            "y": 114,
+            "w": 27,
+            "h": 28
+          },
+          {
+            "x": 68,
+            "y": 115,
+            "w": 28,
+            "h": 28
+          }
+        ],
+        "down_right": [
+          {
+            "x": 4,
+            "y": 186,
+            "w": 28,
+            "h": 28
+          },
+          {
+            "x": 39,
+            "y": 185,
+            "w": 27,
+            "h": 28
+          },
+          {
+            "x": 70,
+            "y": 187,
+            "w": 27,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 152,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 38,
+            "y": 152,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 74,
+            "y": 152,
+            "w": 25,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 1,
+            "y": 223,
+            "w": 25,
+            "h": 28
+          },
+          {
+            "x": 38,
+            "y": 223,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 72,
+            "y": 223,
+            "w": 24,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "DemiDevimon": {
+      "source_id": 39,
+      "source_member": "sprite thread/039_PicoDevimon.png",
+      "source_sha256": "9e5bb6acf2491c8a274fff452b81881b83959ad9aaa6586e587ff041a34c4897",
+      "source_size": [
+        216,
+        232
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 168,
+            "w": 24,
+            "h": 18
+          },
+          {
+            "x": 43,
+            "y": 169,
+            "w": 18,
+            "h": 22
+          },
+          {
+            "x": 70,
+            "y": 169,
+            "w": 25,
+            "h": 22
+          }
+        ],
+        "down_right": [
+          {
+            "x": 105,
+            "y": 169,
+            "w": 25,
+            "h": 22
+          },
+          {
+            "x": 139,
+            "y": 169,
+            "w": 18,
+            "h": 22
+          },
+          {
+            "x": 166,
+            "y": 168,
+            "w": 24,
+            "h": 18
+          }
+        ],
+        "up_left": [
+          {
+            "x": 10,
+            "y": 140,
+            "w": 18,
+            "h": 23
+          },
+          {
+            "x": 37,
+            "y": 141,
+            "w": 24,
+            "h": 22
+          },
+          {
+            "x": 70,
+            "y": 145,
+            "w": 24,
+            "h": 17
+          }
+        ],
+        "up_right": [
+          {
+            "x": 106,
+            "y": 145,
+            "w": 24,
+            "h": 17
+          },
+          {
+            "x": 139,
+            "y": 141,
+            "w": 24,
+            "h": 22
+          },
+          {
+            "x": 172,
+            "y": 140,
+            "w": 18,
+            "h": 23
+          }
+        ]
+      }
+    },
+    "ToyAgumon": {
+      "source_id": 40,
+      "source_member": "sprite thread/040_ToyAgumon.png",
+      "source_sha256": "e54843e61a272ef3a8a911ee7474e8c79412f1c5ee13f5ce5c882d83d936042e",
+      "source_size": [
+        214,
+        252
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 11,
+            "y": 169,
+            "w": 28,
+            "h": 29
+          },
+          {
+            "x": 49,
+            "y": 168,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 81,
+            "y": 169,
+            "w": 21,
+            "h": 26
+          }
+        ],
+        "down_right": [
+          {
+            "x": 112,
+            "y": 169,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "x": 143,
+            "y": 168,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 175,
+            "y": 169,
+            "w": 28,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 10,
+            "y": 135,
+            "w": 28,
+            "h": 30
+          },
+          {
+            "x": 48,
+            "y": 134,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 82,
+            "y": 135,
+            "w": 20,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 112,
+            "y": 135,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 142,
+            "y": 134,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 176,
+            "y": 135,
+            "w": 28,
+            "h": 30
+          }
+        ]
+      }
+    },
+    "Hagurumon": {
+      "source_id": 41,
+      "source_member": "sprite thread/041_Hagurumon.png",
+      "source_sha256": "f087a9f33fbbb1146a8a856bb373647382c301393caf99cb1facd5144a6e1d9e",
+      "source_size": [
+        216,
+        194
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 1,
+            "y": 120,
+            "w": 30,
+            "h": 23
+          },
+          {
+            "x": 38,
+            "y": 120,
+            "w": 29,
+            "h": 23
+          },
+          {
+            "x": 79,
+            "y": 120,
+            "w": 25,
+            "h": 25
+          }
+        ],
+        "down_right": [
+          {
+            "x": 113,
+            "y": 120,
+            "w": 25,
+            "h": 25
+          },
+          {
+            "x": 150,
+            "y": 120,
+            "w": 29,
+            "h": 23
+          },
+          {
+            "x": 186,
+            "y": 120,
+            "w": 30,
+            "h": 23
+          }
+        ],
+        "up_left": [
+          {
+            "x": 1,
+            "y": 156,
+            "w": 30,
+            "h": 23
+          },
+          {
+            "x": 41,
+            "y": 157,
+            "w": 25,
+            "h": 26
+          },
+          {
+            "x": 78,
+            "y": 156,
+            "w": 27,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 112,
+            "y": 156,
+            "w": 27,
+            "h": 24
+          },
+          {
+            "x": 151,
+            "y": 157,
+            "w": 25,
+            "h": 26
+          },
+          {
+            "x": 186,
+            "y": 156,
+            "w": 30,
+            "h": 23
+          }
+        ]
+      }
+    },
+    "Salamon": {
+      "source_id": 42,
+      "source_member": "sprite thread/042_Plotmon.png",
+      "source_sha256": "cb3d7719d352a6b64c2671217fde9b2dd03adc216ac58fa161dca61e38f656f1",
+      "source_size": [
+        207,
+        192
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 104,
+            "w": 18,
+            "h": 19
+          },
+          {
+            "x": 35,
+            "y": 103,
+            "w": 23,
+            "h": 20
+          },
+          {
+            "x": 71,
+            "y": 105,
+            "w": 23,
+            "h": 18
+          }
+        ],
+        "down_right": [
+          {
+            "x": 109,
+            "y": 104,
+            "w": 23,
+            "h": 18
+          },
+          {
+            "x": 145,
+            "y": 102,
+            "w": 23,
+            "h": 20
+          },
+          {
+            "x": 182,
+            "y": 103,
+            "w": 18,
+            "h": 19
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 133,
+            "w": 18,
+            "h": 19
+          },
+          {
+            "x": 37,
+            "y": 133,
+            "w": 21,
+            "h": 20
+          },
+          {
+            "x": 74,
+            "y": 134,
+            "w": 21,
+            "h": 19
+          }
+        ],
+        "up_right": [
+          {
+            "x": 108,
+            "y": 133,
+            "w": 21,
+            "h": 19
+          },
+          {
+            "x": 145,
+            "y": 132,
+            "w": 21,
+            "h": 20
+          },
+          {
+            "x": 181,
+            "y": 132,
+            "w": 18,
+            "h": 19
+          }
+        ]
+      }
+    },
+    "Wormmon": {
+      "source_id": 43,
+      "source_member": "sprite thread/043_Wormmon.png",
+      "source_sha256": "9db3cf46e9123918437564f48f30a5e10b9508dc7c24632589b6ad6ad0b0c9cf",
+      "source_size": [
+        286,
+        239
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 38,
+            "y": 166,
+            "w": 28,
+            "h": 20
+          },
+          {
+            "x": 74,
+            "y": 166,
+            "w": 28,
+            "h": 22
+          },
+          {
+            "x": 109,
+            "y": 162,
+            "w": 29,
+            "h": 25
+          }
+        ],
+        "down_right": [
+          {
+            "x": 150,
+            "y": 162,
+            "w": 29,
+            "h": 25
+          },
+          {
+            "x": 186,
+            "y": 166,
+            "w": 28,
+            "h": 22
+          },
+          {
+            "x": 222,
+            "y": 166,
+            "w": 28,
+            "h": 20
+          }
+        ],
+        "up_left": [
+          {
+            "x": 36,
+            "y": 133,
+            "w": 28,
+            "h": 21
+          },
+          {
+            "x": 72,
+            "y": 129,
+            "w": 31,
+            "h": 24
+          },
+          {
+            "x": 111,
+            "y": 129,
+            "w": 28,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 149,
+            "y": 129,
+            "w": 28,
+            "h": 24
+          },
+          {
+            "x": 185,
+            "y": 129,
+            "w": 31,
+            "h": 24
+          },
+          {
+            "x": 224,
+            "y": 133,
+            "w": 28,
+            "h": 21
+          }
+        ]
+      }
+    },
+    "Hawkmon": {
+      "source_id": 44,
+      "source_member": "sprite thread/044_Hawkmon.png",
+      "source_sha256": "979f96e35e09f758a48d27af0b511d51c5ff6f0b3e8a250e21214f7a6a0752e3",
+      "source_size": [
+        246,
+        350
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 218,
+            "w": 18,
+            "h": 29
+          },
+          {
+            "x": 40,
+            "y": 219,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 77,
+            "y": 221,
+            "w": 19,
+            "h": 26
+          }
+        ],
+        "down_right": [
+          {
+            "x": 140,
+            "y": 221,
+            "w": 19,
+            "h": 26
+          },
+          {
+            "x": 178,
+            "y": 219,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 216,
+            "y": 218,
+            "w": 18,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 6,
+            "y": 270,
+            "w": 17,
+            "h": 26
+          },
+          {
+            "x": 44,
+            "y": 272,
+            "w": 16,
+            "h": 24
+          },
+          {
+            "x": 83,
+            "y": 271,
+            "w": 16,
+            "h": 25
+          }
+        ],
+        "up_right": [
+          {
+            "x": 148,
+            "y": 271,
+            "w": 16,
+            "h": 25
+          },
+          {
+            "x": 187,
+            "y": 272,
+            "w": 16,
+            "h": 24
+          },
+          {
+            "x": 224,
+            "y": 270,
+            "w": 17,
+            "h": 26
+          }
+        ]
+      }
+    },
+    "Armadillomon": {
+      "source_id": 45,
+      "source_member": "sprite thread/045_Armademon.png",
+      "source_sha256": "7a4ca1c339a45741c67136658057d957f51a463ee0e1db08402af425a09ee4fd",
+      "source_size": [
+        217,
+        258
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 2,
+            "y": 133,
+            "w": 24,
+            "h": 21
+          },
+          {
+            "x": 38,
+            "y": 135,
+            "w": 26,
+            "h": 19
+          },
+          {
+            "x": 75,
+            "y": 132,
+            "w": 22,
+            "h": 22
+          }
+        ],
+        "down_right": [
+          {
+            "x": 121,
+            "y": 132,
+            "w": 22,
+            "h": 22
+          },
+          {
+            "x": 154,
+            "y": 135,
+            "w": 26,
+            "h": 19
+          },
+          {
+            "x": 192,
+            "y": 133,
+            "w": 24,
+            "h": 21
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 186,
+            "w": 24,
+            "h": 22
+          },
+          {
+            "x": 41,
+            "y": 186,
+            "w": 23,
+            "h": 22
+          },
+          {
+            "x": 78,
+            "y": 185,
+            "w": 23,
+            "h": 23
+          }
+        ],
+        "up_right": [
+          {
+            "x": 119,
+            "y": 185,
+            "w": 23,
+            "h": 23
+          },
+          {
+            "x": 156,
+            "y": 186,
+            "w": 23,
+            "h": 22
+          },
+          {
+            "x": 192,
+            "y": 186,
+            "w": 24,
+            "h": 22
+          }
+        ]
+      }
+    },
+    "Terriermon": {
+      "source_id": 46,
+      "source_member": "sprite thread/046_Terriermon.png",
+      "source_sha256": "595badff62d4bfc0a953aa63bfee8a1cf9bfe6dab2bb10ee3226cd8d736c8dc8",
+      "source_size": [
+        217,
+        258
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 4,
+            "y": 132,
+            "w": 25,
+            "h": 22
+          },
+          {
+            "x": 42,
+            "y": 132,
+            "w": 26,
+            "h": 22
+          },
+          {
+            "x": 79,
+            "y": 134,
+            "w": 26,
+            "h": 20
+          }
+        ],
+        "down_right": [
+          {
+            "x": 115,
+            "y": 134,
+            "w": 26,
+            "h": 20
+          },
+          {
+            "x": 152,
+            "y": 132,
+            "w": 26,
+            "h": 22
+          },
+          {
+            "x": 191,
+            "y": 132,
+            "w": 25,
+            "h": 22
+          }
+        ],
+        "up_left": [
+          {
+            "x": 3,
+            "y": 192,
+            "w": 25,
+            "h": 22
+          },
+          {
+            "x": 38,
+            "y": 194,
+            "w": 27,
+            "h": 20
+          },
+          {
+            "x": 76,
+            "y": 194,
+            "w": 27,
+            "h": 20
+          }
+        ],
+        "up_right": [
+          {
+            "x": 116,
+            "y": 194,
+            "w": 27,
+            "h": 20
+          },
+          {
+            "x": 154,
+            "y": 194,
+            "w": 27,
+            "h": 20
+          },
+          {
+            "x": 191,
+            "y": 192,
+            "w": 25,
+            "h": 22
+          }
+        ]
+      }
+    },
+    "Lopmon": {
+      "source_id": 47,
+      "source_member": "sprite thread/047_Lopmon.png",
+      "source_sha256": "76d527d6a90244c97a1f0bc0f9b85aa8dd4e60d2ab51c43d41c17dcf05d1466f",
+      "source_size": [
+        217,
+        308
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 183,
+            "w": 24,
+            "h": 21
+          },
+          {
+            "x": 35,
+            "y": 181,
+            "w": 28,
+            "h": 23
+          },
+          {
+            "x": 75,
+            "y": 183,
+            "w": 28,
+            "h": 21
+          }
+        ],
+        "down_right": [
+          {
+            "x": 116,
+            "y": 183,
+            "w": 28,
+            "h": 21
+          },
+          {
+            "x": 156,
+            "y": 181,
+            "w": 28,
+            "h": 23
+          },
+          {
+            "x": 190,
+            "y": 183,
+            "w": 24,
+            "h": 21
+          }
+        ],
+        "up_left": [
+          {
+            "x": 2,
+            "y": 243,
+            "w": 22,
+            "h": 21
+          },
+          {
+            "x": 36,
+            "y": 244,
+            "w": 25,
+            "h": 20
+          },
+          {
+            "x": 80,
+            "y": 244,
+            "w": 25,
+            "h": 20
+          }
+        ],
+        "up_right": [
+          {
+            "x": 113,
+            "y": 244,
+            "w": 25,
+            "h": 20
+          },
+          {
+            "x": 157,
+            "y": 244,
+            "w": 25,
+            "h": 20
+          },
+          {
+            "x": 194,
+            "y": 243,
+            "w": 22,
+            "h": 21
+          }
+        ]
+      }
+    },
+    "Renamon": {
+      "source_id": 48,
+      "source_member": "sprite thread/048_Renamon.png",
+      "source_sha256": "e8371b7d349a4f20579e6f25820e098a24b64d833ae9c62255d5040291a18d6e",
+      "source_size": [
+        217,
+        330
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 214,
+            "w": 17,
+            "h": 32
+          },
+          {
+            "x": 35,
+            "y": 212,
+            "w": 24,
+            "h": 34
+          },
+          {
+            "x": 77,
+            "y": 214,
+            "w": 18,
+            "h": 32
+          }
+        ],
+        "down_right": [
+          {
+            "x": 121,
+            "y": 214,
+            "w": 18,
+            "h": 32
+          },
+          {
+            "x": 157,
+            "y": 212,
+            "w": 24,
+            "h": 34
+          },
+          {
+            "x": 196,
+            "y": 214,
+            "w": 17,
+            "h": 32
+          }
+        ],
+        "up_left": [
+          {
+            "x": 3,
+            "y": 254,
+            "w": 19,
+            "h": 32
+          },
+          {
+            "x": 41,
+            "y": 252,
+            "w": 17,
+            "h": 34
+          },
+          {
+            "x": 74,
+            "y": 252,
+            "w": 23,
+            "h": 34
+          }
+        ],
+        "up_right": [
+          {
+            "x": 120,
+            "y": 252,
+            "w": 23,
+            "h": 34
+          },
+          {
+            "x": 159,
+            "y": 252,
+            "w": 17,
+            "h": 34
+          },
+          {
+            "x": 195,
+            "y": 254,
+            "w": 19,
+            "h": 32
+          }
+        ]
+      }
+    },
+    "Impmon": {
+      "source_id": 49,
+      "source_member": "sprite thread/049_Impmon.png",
+      "source_sha256": "6d9fa18c8b2dfbba99efa050eb47b17ef0179497606c70f0d8ebaa1f45238b56",
+      "source_size": [
+        217,
+        258
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 12,
+            "y": 124,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 42,
+            "y": 125,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 72,
+            "y": 123,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 130,
+            "y": 123,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 160,
+            "y": 125,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 190,
+            "y": 124,
+            "w": 22,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 7,
+            "y": 182,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 46,
+            "y": 183,
+            "w": 20,
+            "h": 27
+          },
+          {
+            "x": 78,
+            "y": 181,
+            "w": 21,
+            "h": 29
+          }
+        ],
+        "up_right": [
+          {
+            "x": 124,
+            "y": 181,
+            "w": 21,
+            "h": 29
+          },
+          {
+            "x": 157,
+            "y": 183,
+            "w": 20,
+            "h": 27
+          },
+          {
+            "x": 195,
+            "y": 182,
+            "w": 21,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Keramon": {
+      "source_id": 50,
+      "source_member": "sprite thread/050_Keramon.png",
+      "source_sha256": "47ca7c72d6cf9bb7b66d827d4667a8d119b2bffe50ed3168a0439993b58d3b7a",
+      "source_size": [
+        241,
+        284
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 22,
+            "y": 205,
+            "w": 23,
+            "h": 32
+          },
+          {
+            "x": 48,
+            "y": 207,
+            "w": 28,
+            "h": 31
+          },
+          {
+            "x": 80,
+            "y": 203,
+            "w": 24,
+            "h": 31
+          }
+        ],
+        "down_right": [
+          {
+            "x": 125,
+            "y": 203,
+            "w": 24,
+            "h": 31
+          },
+          {
+            "x": 153,
+            "y": 207,
+            "w": 28,
+            "h": 31
+          },
+          {
+            "x": 184,
+            "y": 205,
+            "w": 23,
+            "h": 32
+          }
+        ],
+        "up_left": [
+          {
+            "x": 22,
+            "y": 246,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 51,
+            "y": 247,
+            "w": 26,
+            "h": 31
+          },
+          {
+            "x": 83,
+            "y": 243,
+            "w": 23,
+            "h": 31
+          }
+        ],
+        "up_right": [
+          {
+            "x": 123,
+            "y": 243,
+            "w": 23,
+            "h": 31
+          },
+          {
+            "x": 152,
+            "y": 247,
+            "w": 26,
+            "h": 31
+          },
+          {
+            "x": 185,
+            "y": 246,
+            "w": 22,
+            "h": 31
+          }
+        ]
+      }
+    },
+    "Falcomon": {
+      "source_id": 51,
+      "source_member": "sprite thread/051_Falcomon.png",
+      "source_sha256": "a1475feb71a3a0569a5e95c0c4c22a1a0d01fae233ddea92f2b7a24813075afa",
+      "source_size": [
+        217,
+        330
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 208,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 40,
+            "y": 210,
+            "w": 24,
+            "h": 26
+          },
+          {
+            "x": 77,
+            "y": 211,
+            "w": 19,
+            "h": 25
+          }
+        ],
+        "down_right": [
+          {
+            "x": 120,
+            "y": 212,
+            "w": 19,
+            "h": 25
+          },
+          {
+            "x": 152,
+            "y": 211,
+            "w": 24,
+            "h": 26
+          },
+          {
+            "x": 193,
+            "y": 209,
+            "w": 20,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 5,
+            "y": 252,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 38,
+            "y": 251,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 81,
+            "y": 252,
+            "w": 17,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 123,
+            "y": 253,
+            "w": 17,
+            "h": 28
+          },
+          {
+            "x": 159,
+            "y": 252,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 196,
+            "y": 253,
+            "w": 20,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Penguinmon": {
+      "source_id": 52,
+      "source_member": "sprite thread/052_Penmon.png",
+      "source_sha256": "b04d3dfe0e161a0bef79b77d86ae917cbbd1dc0a3bb3080863d47bf02d7da534",
+      "source_size": [
+        217,
+        335
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 1,
+            "y": 207,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 36,
+            "y": 209,
+            "w": 25,
+            "h": 23
+          },
+          {
+            "x": 77,
+            "y": 210,
+            "w": 21,
+            "h": 22
+          }
+        ],
+        "down_right": [
+          {
+            "x": 118,
+            "y": 210,
+            "w": 21,
+            "h": 22
+          },
+          {
+            "x": 155,
+            "y": 209,
+            "w": 25,
+            "h": 23
+          },
+          {
+            "x": 194,
+            "y": 207,
+            "w": 21,
+            "h": 25
+          }
+        ],
+        "up_left": [
+          {
+            "x": 2,
+            "y": 258,
+            "w": 22,
+            "h": 26
+          },
+          {
+            "x": 38,
+            "y": 259,
+            "w": 29,
+            "h": 25
+          },
+          {
+            "x": 80,
+            "y": 261,
+            "w": 21,
+            "h": 23
+          }
+        ],
+        "up_right": [
+          {
+            "x": 117,
+            "y": 261,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 151,
+            "y": 259,
+            "w": 29,
+            "h": 25
+          },
+          {
+            "x": 194,
+            "y": 258,
+            "w": 22,
+            "h": 26
+          }
+        ]
+      }
+    },
+    "Goburimon": {
+      "source_id": 53,
+      "source_member": "sprite thread/053_Goblimon.png",
+      "source_sha256": "7cd22b01c71e620ae46142becabe16cb054722b830524f78b4547383f299b6ed",
+      "source_size": [
+        241,
+        284
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 1,
+            "y": 200,
+            "w": 32,
+            "h": 32
+          },
+          {
+            "x": 41,
+            "y": 201,
+            "w": 27,
+            "h": 30
+          },
+          {
+            "x": 79,
+            "y": 202,
+            "w": 32,
+            "h": 31
+          }
+        ],
+        "down_right": [
+          {
+            "x": 123,
+            "y": 203,
+            "w": 32,
+            "h": 31
+          },
+          {
+            "x": 166,
+            "y": 202,
+            "w": 27,
+            "h": 30
+          },
+          {
+            "x": 201,
+            "y": 201,
+            "w": 32,
+            "h": 32
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 240,
+            "w": 27,
+            "h": 32
+          },
+          {
+            "x": 44,
+            "y": 240,
+            "w": 25,
+            "h": 31
+          },
+          {
+            "x": 81,
+            "y": 239,
+            "w": 31,
+            "h": 31
+          }
+        ],
+        "up_right": [
+          {
+            "x": 122,
+            "y": 240,
+            "w": 31,
+            "h": 31
+          },
+          {
+            "x": 165,
+            "y": 241,
+            "w": 25,
+            "h": 31
+          },
+          {
+            "x": 203,
+            "y": 241,
+            "w": 27,
+            "h": 32
+          }
+        ]
+      }
+    },
+    "Kumamon": {
+      "source_id": 54,
+      "source_member": "sprite thread/054_Bearmon.png",
+      "source_sha256": "4f295d78c0743ee8c248421a5fc5d133d3cfd3d3b99f8edcacb5efeb1c8d6044",
+      "source_size": [
+        216,
+        325
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 5,
+            "y": 188,
+            "w": 18,
+            "h": 27
+          },
+          {
+            "x": 38,
+            "y": 191,
+            "w": 23,
+            "h": 24
+          },
+          {
+            "x": 73,
+            "y": 192,
+            "w": 18,
+            "h": 23
+          }
+        ],
+        "down_right": [
+          {
+            "x": 123,
+            "y": 192,
+            "w": 18,
+            "h": 23
+          },
+          {
+            "x": 153,
+            "y": 191,
+            "w": 23,
+            "h": 24
+          },
+          {
+            "x": 191,
+            "y": 188,
+            "w": 18,
+            "h": 27
+          }
+        ],
+        "up_left": [
+          {
+            "x": 6,
+            "y": 247,
+            "w": 18,
+            "h": 28
+          },
+          {
+            "x": 39,
+            "y": 248,
+            "w": 19,
+            "h": 27
+          },
+          {
+            "x": 73,
+            "y": 247,
+            "w": 26,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 121,
+            "y": 247,
+            "w": 26,
+            "h": 28
+          },
+          {
+            "x": 162,
+            "y": 248,
+            "w": 19,
+            "h": 27
+          },
+          {
+            "x": 196,
+            "y": 247,
+            "w": 18,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Kotemon": {
+      "source_id": 55,
+      "source_member": "sprite thread/055_Kotemon.png",
+      "source_sha256": "fade46d96fd2539a99e31d59902ce192265532eef99022bb601fd2cea0b37ae6",
+      "source_size": [
+        217,
+        258
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 5,
+            "y": 126,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 42,
+            "y": 127,
+            "w": 25,
+            "h": 27
+          },
+          {
+            "x": 76,
+            "y": 126,
+            "w": 23,
+            "h": 28
+          }
+        ],
+        "down_right": [
+          {
+            "x": 121,
+            "y": 126,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 153,
+            "y": 127,
+            "w": 25,
+            "h": 27
+          },
+          {
+            "x": 192,
+            "y": 126,
+            "w": 23,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 5,
+            "y": 186,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 44,
+            "y": 187,
+            "w": 20,
+            "h": 27
+          },
+          {
+            "x": 75,
+            "y": 185,
+            "w": 27,
+            "h": 29
+          }
+        ],
+        "up_right": [
+          {
+            "x": 119,
+            "y": 185,
+            "w": 27,
+            "h": 29
+          },
+          {
+            "x": 157,
+            "y": 187,
+            "w": 20,
+            "h": 27
+          },
+          {
+            "x": 192,
+            "y": 186,
+            "w": 24,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Shamamon": {
+      "source_id": 56,
+      "source_member": "sprite thread/056_Shamamon.png",
+      "source_sha256": "a9d2ecb612b8663b806e6c09faac6a345591ac7657356d6230af58ec749d77af",
+      "source_size": [
+        232,
+        324
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 0,
+            "y": 239,
+            "w": 32,
+            "h": 31
+          },
+          {
+            "x": 42,
+            "y": 238,
+            "w": 32,
+            "h": 32
+          },
+          {
+            "x": 84,
+            "y": 239,
+            "w": 27,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 121,
+            "y": 239,
+            "w": 27,
+            "h": 30
+          },
+          {
+            "x": 158,
+            "y": 238,
+            "w": 32,
+            "h": 32
+          },
+          {
+            "x": 200,
+            "y": 239,
+            "w": 32,
+            "h": 31
+          }
+        ],
+        "up_left": [
+          {
+            "x": 8,
+            "y": 202,
+            "w": 25,
+            "h": 31
+          },
+          {
+            "x": 43,
+            "y": 201,
+            "w": 27,
+            "h": 32
+          },
+          {
+            "x": 80,
+            "y": 202,
+            "w": 31,
+            "h": 31
+          }
+        ],
+        "up_right": [
+          {
+            "x": 121,
+            "y": 202,
+            "w": 31,
+            "h": 31
+          },
+          {
+            "x": 162,
+            "y": 201,
+            "w": 27,
+            "h": 32
+          },
+          {
+            "x": 199,
+            "y": 202,
+            "w": 25,
+            "h": 31
+          }
+        ]
+      }
+    },
+    "SnowGoburimon": {
+      "source_id": 57,
+      "source_member": "sprite thread/057_SnowGoblimon.png",
+      "source_sha256": "d7650f6a18f23c08f6d0ca4f366ae50939fd980415d9c093f1a3cc2007dd280b",
+      "source_size": [
+        232,
+        319
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 0,
+            "y": 233,
+            "w": 32,
+            "h": 32
+          },
+          {
+            "x": 42,
+            "y": 232,
+            "w": 32,
+            "h": 33
+          },
+          {
+            "x": 84,
+            "y": 233,
+            "w": 27,
+            "h": 31
+          }
+        ],
+        "down_right": [
+          {
+            "x": 121,
+            "y": 233,
+            "w": 27,
+            "h": 31
+          },
+          {
+            "x": 158,
+            "y": 232,
+            "w": 32,
+            "h": 33
+          },
+          {
+            "x": 200,
+            "y": 233,
+            "w": 32,
+            "h": 32
+          }
+        ],
+        "up_left": [
+          {
+            "x": 8,
+            "y": 195,
+            "w": 25,
+            "h": 32
+          },
+          {
+            "x": 43,
+            "y": 194,
+            "w": 27,
+            "h": 33
+          },
+          {
+            "x": 80,
+            "y": 195,
+            "w": 31,
+            "h": 32
+          }
+        ],
+        "up_right": [
+          {
+            "x": 121,
+            "y": 195,
+            "w": 31,
+            "h": 32
+          },
+          {
+            "x": 162,
+            "y": 194,
+            "w": 27,
+            "h": 33
+          },
+          {
+            "x": 199,
+            "y": 195,
+            "w": 25,
+            "h": 32
+          }
+        ]
+      }
+    },
+    "Syakomon": {
+      "source_id": 58,
+      "source_member": "sprite thread/058_Shakomon.png",
+      "source_sha256": "126633f2b87a833fd29d50b7c973e7223a4086dcb10c672f09509eeb97da63b2",
+      "source_size": [
+        182,
+        212
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 154,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "x": 34,
+            "y": 151,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 65,
+            "y": 154,
+            "w": 21,
+            "h": 26
+          }
+        ],
+        "down_right": [
+          {
+            "x": 96,
+            "y": 154,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "x": 127,
+            "y": 151,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 158,
+            "y": 154,
+            "w": 21,
+            "h": 26
+          }
+        ],
+        "up_left": [
+          {
+            "x": 0,
+            "y": 118,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 32,
+            "y": 118,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 64,
+            "y": 117,
+            "w": 22,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 96,
+            "y": 117,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 128,
+            "y": 118,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 160,
+            "y": 118,
+            "w": 22,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "SnowAgumon": {
+      "source_id": 59,
+      "source_member": "sprite thread/059_YukiAgumon.png",
+      "source_sha256": "7f9161280e0e29feda7de9a8f28f03bcb37cc2fdfec01f1fb079244f5adf23ab",
+      "source_size": [
+        170,
+        222
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 147,
+            "w": 18,
+            "h": 25
+          },
+          {
+            "x": 32,
+            "y": 148,
+            "w": 18,
+            "h": 23
+          },
+          {
+            "x": 59,
+            "y": 148,
+            "w": 22,
+            "h": 25
+          }
+        ],
+        "down_right": [
+          {
+            "x": 91,
+            "y": 149,
+            "w": 22,
+            "h": 25
+          },
+          {
+            "x": 122,
+            "y": 149,
+            "w": 18,
+            "h": 23
+          },
+          {
+            "x": 151,
+            "y": 148,
+            "w": 18,
+            "h": 25
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 180,
+            "w": 19,
+            "h": 25
+          },
+          {
+            "x": 31,
+            "y": 181,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 62,
+            "y": 180,
+            "w": 19,
+            "h": 25
+          }
+        ],
+        "up_right": [
+          {
+            "x": 91,
+            "y": 181,
+            "w": 19,
+            "h": 25
+          },
+          {
+            "x": 120,
+            "y": 182,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 149,
+            "y": 181,
+            "w": 19,
+            "h": 25
+          }
+        ]
+      }
+    },
+    "BlackAgumon": {
+      "source_id": 60,
+      "source_member": "sprite thread/060_BlackAgumon.png",
+      "source_sha256": "005ec84d9bceaae30358a065bc054adfc2aa7750a1787106f659c1fe51235b96",
+      "source_size": [
+        186,
+        282
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 202,
+            "w": 22,
+            "h": 25
+          },
+          {
+            "x": 42,
+            "y": 201,
+            "w": 18,
+            "h": 25
+          },
+          {
+            "x": 70,
+            "y": 202,
+            "w": 18,
+            "h": 23
+          }
+        ],
+        "down_right": [
+          {
+            "x": 98,
+            "y": 202,
+            "w": 18,
+            "h": 23
+          },
+          {
+            "x": 126,
+            "y": 201,
+            "w": 18,
+            "h": 25
+          },
+          {
+            "x": 154,
+            "y": 202,
+            "w": 22,
+            "h": 25
+          }
+        ],
+        "up_left": [
+          {
+            "x": 12,
+            "y": 171,
+            "w": 19,
+            "h": 25
+          },
+          {
+            "x": 39,
+            "y": 170,
+            "w": 19,
+            "h": 25
+          },
+          {
+            "x": 67,
+            "y": 172,
+            "w": 21,
+            "h": 25
+          }
+        ],
+        "up_right": [
+          {
+            "x": 98,
+            "y": 172,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 128,
+            "y": 170,
+            "w": 19,
+            "h": 25
+          },
+          {
+            "x": 155,
+            "y": 171,
+            "w": 19,
+            "h": 25
+          }
+        ]
+      }
+    },
+    "Muchomon": {
+      "source_id": 61,
+      "source_member": "sprite thread/061_Muchomon.png",
+      "source_sha256": "2514d7f2d8b9aa2a71c29a7ed33c1c3cb0d9633848bb48fbc085eae8dc93486a",
+      "source_size": [
+        203,
+        242
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 9,
+            "y": 174,
+            "w": 25,
+            "h": 23
+          },
+          {
+            "x": 44,
+            "y": 173,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 75,
+            "y": 174,
+            "w": 21,
+            "h": 22
+          }
+        ],
+        "down_right": [
+          {
+            "x": 106,
+            "y": 174,
+            "w": 21,
+            "h": 22
+          },
+          {
+            "x": 137,
+            "y": 173,
+            "w": 21,
+            "h": 25
+          },
+          {
+            "x": 168,
+            "y": 174,
+            "w": 25,
+            "h": 23
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 144,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 35,
+            "y": 143,
+            "w": 22,
+            "h": 26
+          },
+          {
+            "x": 67,
+            "y": 144,
+            "w": 29,
+            "h": 25
+          }
+        ],
+        "up_right": [
+          {
+            "x": 106,
+            "y": 144,
+            "w": 29,
+            "h": 25
+          },
+          {
+            "x": 145,
+            "y": 143,
+            "w": 22,
+            "h": 26
+          },
+          {
+            "x": 177,
+            "y": 144,
+            "w": 21,
+            "h": 23
+          }
+        ]
+      }
+    },
+    "Crabmon": {
+      "source_id": 62,
+      "source_member": "sprite thread/062_Ganimon.png",
+      "source_sha256": "0b6d0c11ba53d8d6a9c9ac5d2cd4d475973eda936c048df89569d71cefdfafc6",
+      "source_size": [
+        243,
+        238
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 148,
+            "w": 31,
+            "h": 29
+          },
+          {
+            "x": 50,
+            "y": 146,
+            "w": 31,
+            "h": 30
+          },
+          {
+            "x": 90,
+            "y": 144,
+            "w": 28,
+            "h": 31
+          }
+        ],
+        "down_right": [
+          {
+            "x": 125,
+            "y": 144,
+            "w": 28,
+            "h": 31
+          },
+          {
+            "x": 162,
+            "y": 146,
+            "w": 31,
+            "h": 30
+          },
+          {
+            "x": 202,
+            "y": 148,
+            "w": 31,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 11,
+            "y": 113,
+            "w": 31,
+            "h": 22
+          },
+          {
+            "x": 51,
+            "y": 113,
+            "w": 31,
+            "h": 24
+          },
+          {
+            "x": 91,
+            "y": 111,
+            "w": 27,
+            "h": 27
+          }
+        ],
+        "up_right": [
+          {
+            "x": 125,
+            "y": 111,
+            "w": 27,
+            "h": 27
+          },
+          {
+            "x": 161,
+            "y": 113,
+            "w": 31,
+            "h": 24
+          },
+          {
+            "x": 201,
+            "y": 113,
+            "w": 31,
+            "h": 22
+          }
+        ]
+      }
+    },
+    "Floramon": {
+      "source_id": 63,
+      "source_member": "sprite thread/063_Floramon.png",
+      "source_sha256": "884fdb38ce9970ce0482c68dd05fb3e13b5aa7e39bac43b02da0c06b34cd0334",
+      "source_size": [
+        232,
+        244
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 166,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 36,
+            "y": 167,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 71,
+            "y": 166,
+            "w": 21,
+            "h": 27
+          }
+        ],
+        "down_right": [
+          {
+            "x": 108,
+            "y": 166,
+            "w": 21,
+            "h": 27
+          },
+          {
+            "x": 140,
+            "y": 167,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 175,
+            "y": 166,
+            "w": 22,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 2,
+            "y": 203,
+            "w": 21,
+            "h": 27
+          },
+          {
+            "x": 36,
+            "y": 204,
+            "w": 20,
+            "h": 27
+          },
+          {
+            "x": 68,
+            "y": 203,
+            "w": 23,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 109,
+            "y": 203,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 144,
+            "y": 204,
+            "w": 20,
+            "h": 27
+          },
+          {
+            "x": 177,
+            "y": 203,
+            "w": 21,
+            "h": 27
+          }
+        ]
+      }
+    },
+    "Gizamon": {
+      "source_id": 64,
+      "source_member": "sprite thread/064_Gizamon.png",
+      "source_sha256": "e09e1670da65db6498f909fde0d521ebc1e7755d5807d595c966219456680063",
+      "source_size": [
+        198,
+        232
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 1,
+            "y": 157,
+            "w": 29,
+            "h": 25
+          },
+          {
+            "x": 37,
+            "y": 158,
+            "w": 27,
+            "h": 25
+          },
+          {
+            "x": 68,
+            "y": 158,
+            "w": 30,
+            "h": 23
+          }
+        ],
+        "down_right": [
+          {
+            "x": 100,
+            "y": 158,
+            "w": 30,
+            "h": 23
+          },
+          {
+            "x": 134,
+            "y": 158,
+            "w": 27,
+            "h": 25
+          },
+          {
+            "x": 168,
+            "y": 157,
+            "w": 29,
+            "h": 25
+          }
+        ],
+        "up_left": [
+          {
+            "x": 0,
+            "y": 189,
+            "w": 27,
+            "h": 24
+          },
+          {
+            "x": 33,
+            "y": 190,
+            "w": 30,
+            "h": 25
+          },
+          {
+            "x": 68,
+            "y": 189,
+            "w": 26,
+            "h": 26
+          }
+        ],
+        "up_right": [
+          {
+            "x": 104,
+            "y": 189,
+            "w": 26,
+            "h": 26
+          },
+          {
+            "x": 135,
+            "y": 190,
+            "w": 30,
+            "h": 25
+          },
+          {
+            "x": 171,
+            "y": 189,
+            "w": 27,
+            "h": 24
+          }
+        ]
+      }
+    },
+    "Lalamon": {
+      "source_id": 65,
+      "source_member": "sprite thread/065_Raramon.png",
+      "source_sha256": "314c8c042c905706bca8e1b4e518e0651dc35eaa63e6ab7755770f3d5891043d",
+      "source_size": [
+        217,
+        273
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 7,
+            "y": 172,
+            "w": 18,
+            "h": 26
+          },
+          {
+            "x": 38,
+            "y": 170,
+            "w": 18,
+            "h": 28
+          },
+          {
+            "x": 68,
+            "y": 169,
+            "w": 18,
+            "h": 29
+          }
+        ],
+        "down_right": [
+          {
+            "x": 127,
+            "y": 169,
+            "w": 18,
+            "h": 29
+          },
+          {
+            "x": 157,
+            "y": 170,
+            "w": 18,
+            "h": 28
+          },
+          {
+            "x": 188,
+            "y": 172,
+            "w": 18,
+            "h": 26
+          }
+        ],
+        "up_left": [
+          {
+            "x": 8,
+            "y": 211,
+            "w": 18,
+            "h": 26
+          },
+          {
+            "x": 40,
+            "y": 209,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 74,
+            "y": 210,
+            "w": 18,
+            "h": 27
+          }
+        ],
+        "up_right": [
+          {
+            "x": 127,
+            "y": 210,
+            "w": 18,
+            "h": 27
+          },
+          {
+            "x": 160,
+            "y": 209,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 193,
+            "y": 211,
+            "w": 18,
+            "h": 26
+          }
+        ]
+      }
+    },
+    "Aruraumon": {
+      "source_id": 66,
+      "source_member": "sprite thread/066_Alraumon.png",
+      "source_sha256": "e35321386a3c62a71a1a5008cbb4199107831284be8120dda14fc5b360e6ed77",
+      "source_size": [
+        241,
+        197
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "compact_four_groups",
+      "review_pattern": "compact_interleaved",
+      "runtime_group_indices": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "up_left",
+        "down_right",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 144,
+            "y": 66,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 175,
+            "y": 67,
+            "w": 20,
+            "h": 29
+          },
+          {
+            "x": 205,
+            "y": 65,
+            "w": 24,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 143,
+            "y": 132,
+            "w": 24,
+            "h": 30
+          },
+          {
+            "x": 177,
+            "y": 134,
+            "w": 20,
+            "h": 29
+          },
+          {
+            "x": 207,
+            "y": 133,
+            "w": 21,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 144,
+            "y": 99,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 174,
+            "y": 101,
+            "w": 21,
+            "h": 27
+          },
+          {
+            "x": 204,
+            "y": 99,
+            "w": 25,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 143,
+            "y": 166,
+            "w": 25,
+            "h": 30
+          },
+          {
+            "x": 177,
+            "y": 168,
+            "w": 21,
+            "h": 27
+          },
+          {
+            "x": 207,
+            "y": 166,
+            "w": 21,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "ToyAgumon (Black)": {
+      "source_id": 67,
+      "source_member": "sprite thread/067_ToyAgumonBlack.png",
+      "source_sha256": "66182bdc56fde86df9a5bf330b3bf0d33eb084644fe83d155cc1f4018dfd788d",
+      "source_size": [
+        190,
+        221
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 1,
+            "y": 140,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 29,
+            "y": 141,
+            "w": 28,
+            "h": 29
+          },
+          {
+            "x": 64,
+            "y": 141,
+            "w": 21,
+            "h": 26
+          }
+        ],
+        "down_right": [
+          {
+            "x": 104,
+            "y": 142,
+            "w": 21,
+            "h": 26
+          },
+          {
+            "x": 132,
+            "y": 142,
+            "w": 28,
+            "h": 29
+          },
+          {
+            "x": 166,
+            "y": 141,
+            "w": 22,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 2,
+            "y": 179,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 34,
+            "y": 178,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 65,
+            "y": 177,
+            "w": 28,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 96,
+            "y": 178,
+            "w": 28,
+            "h": 30
+          },
+          {
+            "x": 135,
+            "y": 179,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 163,
+            "y": 180,
+            "w": 24,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Tsukaimon": {
+      "source_id": 68,
+      "source_member": "sprite thread/068_Tsukaimon.png",
+      "source_sha256": "0493c4e1ba56bdab844193543a2ed0670924423e6839edbfe202948a28798500",
+      "source_size": [
+        183,
+        229
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 2,
+            "y": 164,
+            "w": 23,
+            "h": 21
+          },
+          {
+            "x": 35,
+            "y": 162,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 66,
+            "y": 162,
+            "w": 20,
+            "h": 24
+          }
+        ],
+        "down_right": [
+          {
+            "x": 98,
+            "y": 162,
+            "w": 20,
+            "h": 24
+          },
+          {
+            "x": 128,
+            "y": 162,
+            "w": 21,
+            "h": 23
+          },
+          {
+            "x": 159,
+            "y": 164,
+            "w": 23,
+            "h": 21
+          }
+        ],
+        "up_left": [
+          {
+            "x": 8,
+            "y": 134,
+            "w": 21,
+            "h": 21
+          },
+          {
+            "x": 39,
+            "y": 132,
+            "w": 19,
+            "h": 23
+          },
+          {
+            "x": 68,
+            "y": 133,
+            "w": 20,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 96,
+            "y": 133,
+            "w": 20,
+            "h": 24
+          },
+          {
+            "x": 126,
+            "y": 132,
+            "w": 19,
+            "h": 23
+          },
+          {
+            "x": 155,
+            "y": 134,
+            "w": 21,
+            "h": 21
+          }
+        ]
+      }
+    },
+    "PawnChessmon (Black)": {
+      "source_id": 69,
+      "source_member": "sprite thread/069_PawnChessmonBlack.png",
+      "source_sha256": "fbf1796436d57e08443c7496bcda792d121c9641f91b4f605f025b2839961217",
+      "source_size": [
+        217,
+        360
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 7,
+            "y": 228,
+            "w": 20,
+            "h": 28
+          },
+          {
+            "x": 44,
+            "y": 227,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 81,
+            "y": 227,
+            "w": 19,
+            "h": 29
+          }
+        ],
+        "down_right": [
+          {
+            "x": 119,
+            "y": 227,
+            "w": 19,
+            "h": 29
+          },
+          {
+            "x": 153,
+            "y": 227,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 192,
+            "y": 228,
+            "w": 20,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 6,
+            "y": 288,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 43,
+            "y": 286,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 80,
+            "y": 288,
+            "w": 17,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 120,
+            "y": 288,
+            "w": 17,
+            "h": 28
+          },
+          {
+            "x": 152,
+            "y": 286,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 192,
+            "y": 288,
+            "w": 19,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Gaomon": {
+      "source_id": 70,
+      "source_member": "sprite thread/070_Gaomon.png",
+      "source_sha256": "dd342119f80c9b418e4d1f154e68f0bb4b6b0608723ae5ba1e4436e94b018f37",
+      "source_size": [
+        190,
+        232
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 5,
+            "y": 155,
+            "w": 21,
+            "h": 30
+          },
+          {
+            "x": 36,
+            "y": 155,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 65,
+            "y": 155,
+            "w": 23,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 102,
+            "y": 155,
+            "w": 23,
+            "h": 30
+          },
+          {
+            "x": 132,
+            "y": 155,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 164,
+            "y": 155,
+            "w": 21,
+            "h": 30
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 190,
+            "w": 19,
+            "h": 30
+          },
+          {
+            "x": 32,
+            "y": 190,
+            "w": 23,
+            "h": 30
+          },
+          {
+            "x": 63,
+            "y": 190,
+            "w": 18,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 109,
+            "y": 190,
+            "w": 18,
+            "h": 30
+          },
+          {
+            "x": 135,
+            "y": 190,
+            "w": 23,
+            "h": 30
+          },
+          {
+            "x": 167,
+            "y": 190,
+            "w": 19,
+            "h": 30
+          }
+        ]
+      }
+    },
+    "Kudamon": {
+      "source_id": 72,
+      "source_member": "sprite thread/072_Kudamon.gif",
+      "source_sha256": "01f3367af69daa123d4c368d28740597b86119b4d2352e08f2e513794178da69",
+      "source_size": [
+        280,
+        240
+      ],
+      "background_rgb": [
+        0,
+        0,
+        0
+      ],
+      "layout": "kudamon_two_rows",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 2,
+            "y": 147,
+            "w": 23,
+            "h": 32
+          },
+          {
+            "x": 32,
+            "y": 146,
+            "w": 22,
+            "h": 33
+          },
+          {
+            "x": 62,
+            "y": 149,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 115,
+            "y": 147,
+            "w": 23,
+            "h": 32
+          },
+          {
+            "x": 146,
+            "y": 146,
+            "w": 22,
+            "h": 33
+          },
+          {
+            "x": 176,
+            "y": 149,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "up_left": [
+          {
+            "x": 1,
+            "y": 197,
+            "w": 23,
+            "h": 31
+          },
+          {
+            "x": 32,
+            "y": 195,
+            "w": 22,
+            "h": 33
+          },
+          {
+            "x": 62,
+            "y": 199,
+            "w": 22,
+            "h": 29
+          }
+        ],
+        "up_right": [
+          {
+            "x": 116,
+            "y": 197,
+            "w": 23,
+            "h": 31
+          },
+          {
+            "x": 146,
+            "y": 195,
+            "w": 22,
+            "h": 33
+          },
+          {
+            "x": 176,
+            "y": 199,
+            "w": 22,
+            "h": 29
+          }
+        ]
+      }
+    },
+    "Kamemon": {
+      "source_id": 73,
+      "source_member": "sprite thread/073_Kamemon.png",
+      "source_sha256": "f4d6e84e387d885473b00e06b9fee85864ab67048368c15ffc9a1c46783483a2",
+      "source_size": [
+        190,
+        242
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 1,
+            "y": 155,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 35,
+            "y": 154,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 66,
+            "y": 155,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 99,
+            "y": 155,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 132,
+            "y": 154,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 165,
+            "y": 155,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "up_left": [
+          {
+            "x": 2,
+            "y": 190,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 34,
+            "y": 189,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 64,
+            "y": 190,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 102,
+            "y": 191,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 132,
+            "y": 190,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 164,
+            "y": 191,
+            "w": 22,
+            "h": 30
+          }
+        ]
+      }
+    },
+    "Dracmon": {
+      "source_id": 74,
+      "source_member": "sprite thread/074_Dracmon.png",
+      "source_sha256": "ef5735b44831c582bcb9b23b1bc37166bc68ebe0ad95ef9e5edf15db5c248350",
+      "source_size": [
+        222,
+        299
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 12,
+            "y": 182,
+            "w": 19,
+            "h": 27
+          },
+          {
+            "x": 47,
+            "y": 182,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 86,
+            "y": 181,
+            "w": 20,
+            "h": 29
+          }
+        ],
+        "down_right": [
+          {
+            "x": 122,
+            "y": 181,
+            "w": 20,
+            "h": 29
+          },
+          {
+            "x": 159,
+            "y": 182,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 197,
+            "y": 182,
+            "w": 19,
+            "h": 27
+          }
+        ],
+        "up_left": [
+          {
+            "x": 13,
+            "y": 222,
+            "w": 21,
+            "h": 27
+          },
+          {
+            "x": 51,
+            "y": 223,
+            "w": 21,
+            "h": 27
+          },
+          {
+            "x": 86,
+            "y": 223,
+            "w": 22,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 120,
+            "y": 223,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 156,
+            "y": 223,
+            "w": 21,
+            "h": 27
+          },
+          {
+            "x": 194,
+            "y": 222,
+            "w": 21,
+            "h": 27
+          }
+        ]
+      }
+    },
+    "PawnChessmon (White)": {
+      "source_id": 75,
+      "source_member": "sprite thread/075_PawnChessmonWhite.png",
+      "source_sha256": "25ee84b00115ddbb1e6355456a9278b193e713ccd5b5c6c36e18f803c8fd6ba0",
+      "source_size": [
+        217,
+        350
+      ],
+      "background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 6,
+            "y": 202,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 44,
+            "y": 201,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 79,
+            "y": 201,
+            "w": 22,
+            "h": 31
+          }
+        ],
+        "down_right": [
+          {
+            "x": 118,
+            "y": 201,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 153,
+            "y": 201,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 191,
+            "y": 202,
+            "w": 22,
+            "h": 31
+          }
+        ],
+        "up_left": [
+          {
+            "x": 4,
+            "y": 262,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 43,
+            "y": 260,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 77,
+            "y": 262,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 118,
+            "y": 262,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 152,
+            "y": 260,
+            "w": 22,
+            "h": 31
+          },
+          {
+            "x": 191,
+            "y": 262,
+            "w": 22,
+            "h": 31
+          }
+        ]
+      }
+    },
+    "Kunemon": {
+      "source_id": 77,
+      "source_member": "sprite thread/077_Kunemon.png",
+      "source_sha256": "d79924f1656d2bcc6489ed589d86863dfe3d9d09fd2e376818a07b2fe5a3e275",
+      "source_size": [
+        225,
+        283
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 12,
+            "y": 209,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 44,
+            "y": 209,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 75,
+            "y": 207,
+            "w": 23,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 127,
+            "y": 207,
+            "w": 23,
+            "h": 30
+          },
+          {
+            "x": 158,
+            "y": 209,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 190,
+            "y": 209,
+            "w": 23,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 10,
+            "y": 163,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 44,
+            "y": 163,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 77,
+            "y": 162,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 126,
+            "y": 162,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 157,
+            "y": 163,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 191,
+            "y": 163,
+            "w": 24,
+            "h": 29
+          }
+        ]
+      }
+    },
+    "Mushroomon": {
+      "source_id": 78,
+      "source_member": "sprite thread/078_Mushmon.png",
+      "source_sha256": "6f51d4116ce060f9069d104d90a75c9b08e78b86403b6d7915e8e76ac2de6c37",
+      "source_size": [
+        209,
+        243
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 14,
+            "y": 172,
+            "w": 20,
+            "h": 25
+          },
+          {
+            "x": 44,
+            "y": 171,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 76,
+            "y": 172,
+            "w": 24,
+            "h": 27
+          }
+        ],
+        "down_right": [
+          {
+            "x": 109,
+            "y": 172,
+            "w": 24,
+            "h": 27
+          },
+          {
+            "x": 143,
+            "y": 171,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 175,
+            "y": 172,
+            "w": 20,
+            "h": 25
+          }
+        ],
+        "up_left": [
+          {
+            "x": 16,
+            "y": 137,
+            "w": 19,
+            "h": 26
+          },
+          {
+            "x": 45,
+            "y": 136,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 76,
+            "y": 137,
+            "w": 24,
+            "h": 28
+          }
+        ],
+        "up_right": [
+          {
+            "x": 109,
+            "y": 137,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 143,
+            "y": 136,
+            "w": 21,
+            "h": 28
+          },
+          {
+            "x": 174,
+            "y": 137,
+            "w": 19,
+            "h": 26
+          }
+        ]
+      }
+    },
+    "Solarmon": {
+      "source_id": 79,
+      "source_member": "sprite thread/079_Solarmon.png",
+      "source_sha256": "8ba254bcb60ee723efb97e7b9569ba9a6f229c92b5f5c7e356c2ba1361550d92",
+      "source_size": [
+        239,
+        220
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 10,
+            "y": 159,
+            "w": 29,
+            "h": 23
+          },
+          {
+            "x": 49,
+            "y": 158,
+            "w": 30,
+            "h": 23
+          },
+          {
+            "x": 89,
+            "y": 159,
+            "w": 25,
+            "h": 25
+          }
+        ],
+        "down_right": [
+          {
+            "x": 124,
+            "y": 159,
+            "w": 25,
+            "h": 25
+          },
+          {
+            "x": 159,
+            "y": 158,
+            "w": 30,
+            "h": 23
+          },
+          {
+            "x": 199,
+            "y": 159,
+            "w": 29,
+            "h": 23
+          }
+        ],
+        "up_left": [
+          {
+            "x": 12,
+            "y": 126,
+            "w": 25,
+            "h": 26
+          },
+          {
+            "x": 47,
+            "y": 125,
+            "w": 30,
+            "h": 23
+          },
+          {
+            "x": 87,
+            "y": 126,
+            "w": 27,
+            "h": 24
+          }
+        ],
+        "up_right": [
+          {
+            "x": 124,
+            "y": 126,
+            "w": 27,
+            "h": 24
+          },
+          {
+            "x": 161,
+            "y": 125,
+            "w": 30,
+            "h": 23
+          },
+          {
+            "x": 201,
+            "y": 126,
+            "w": 25,
+            "h": 26
+          }
+        ]
+      }
+    },
+    "Candlemon": {
+      "source_id": 80,
+      "source_member": "sprite thread/080_Candmon.png",
+      "source_sha256": "bc0a9cb46c324aaaf3c51dff2b57c1d84ed5049edb553184563dbe9f98b23dd2",
+      "source_size": [
+        180,
+        250
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 0,
+            "y": 174,
+            "w": 24,
+            "h": 30
+          },
+          {
+            "x": 34,
+            "y": 175,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 66,
+            "y": 178,
+            "w": 19,
+            "h": 28
+          }
+        ],
+        "down_right": [
+          {
+            "x": 95,
+            "y": 178,
+            "w": 19,
+            "h": 28
+          },
+          {
+            "x": 124,
+            "y": 175,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 156,
+            "y": 174,
+            "w": 24,
+            "h": 30
+          }
+        ],
+        "up_left": [
+          {
+            "x": 7,
+            "y": 136,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 39,
+            "y": 137,
+            "w": 19,
+            "h": 30
+          },
+          {
+            "x": 68,
+            "y": 136,
+            "w": 17,
+            "h": 32
+          }
+        ],
+        "up_right": [
+          {
+            "x": 95,
+            "y": 136,
+            "w": 17,
+            "h": 32
+          },
+          {
+            "x": 122,
+            "y": 137,
+            "w": 19,
+            "h": 30
+          },
+          {
+            "x": 151,
+            "y": 136,
+            "w": 22,
+            "h": 30
+          }
+        ]
+      }
+    },
+    "Kokuwamon": {
+      "source_id": 81,
+      "source_member": "sprite thread/081_Kokuwamon.png",
+      "source_sha256": "29a9d32db1171e8fa80a2ead4077caab55d6e0777b11dcb55c30fd0345495dcd",
+      "source_size": [
+        263,
+        288
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 39,
+            "y": 214,
+            "w": 22,
+            "h": 28
+          },
+          {
+            "x": 71,
+            "y": 214,
+            "w": 24,
+            "h": 30
+          },
+          {
+            "x": 104,
+            "y": 213,
+            "w": 22,
+            "h": 30
+          }
+        ],
+        "down_right": [
+          {
+            "x": 136,
+            "y": 213,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 167,
+            "y": 214,
+            "w": 24,
+            "h": 30
+          },
+          {
+            "x": 201,
+            "y": 214,
+            "w": 22,
+            "h": 28
+          }
+        ],
+        "up_left": [
+          {
+            "x": 44,
+            "y": 178,
+            "w": 18,
+            "h": 29
+          },
+          {
+            "x": 72,
+            "y": 177,
+            "w": 21,
+            "h": 30
+          },
+          {
+            "x": 103,
+            "y": 178,
+            "w": 23,
+            "h": 30
+          }
+        ],
+        "up_right": [
+          {
+            "x": 136,
+            "y": 178,
+            "w": 23,
+            "h": 30
+          },
+          {
+            "x": 169,
+            "y": 177,
+            "w": 21,
+            "h": 30
+          },
+          {
+            "x": 200,
+            "y": 178,
+            "w": 18,
+            "h": 29
+          }
+        ]
+      }
+    },
+    "DoKunemon": {
+      "source_id": 82,
+      "source_member": "sprite thread/082_DoKunemon.png",
+      "source_sha256": "8438a3d766a01ec03d112d43825d3cfae473d36394af812de05e93448eb52733",
+      "source_size": [
+        187,
+        248
+      ],
+      "background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "rear_rows_first",
+      "runtime_group_indices": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source_group_order": [
+        "up_left",
+        "up_right",
+        "down_left",
+        "down_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 1,
+            "y": 181,
+            "w": 23,
+            "h": 30
+          },
+          {
+            "x": 34,
+            "y": 183,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 67,
+            "y": 183,
+            "w": 23,
+            "h": 28
+          }
+        ],
+        "down_right": [
+          {
+            "x": 97,
+            "y": 183,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 130,
+            "y": 183,
+            "w": 23,
+            "h": 28
+          },
+          {
+            "x": 163,
+            "y": 181,
+            "w": 23,
+            "h": 30
+          }
+        ],
+        "up_left": [
+          {
+            "x": 0,
+            "y": 145,
+            "w": 22,
+            "h": 30
+          },
+          {
+            "x": 32,
+            "y": 146,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 66,
+            "y": 146,
+            "w": 24,
+            "h": 29
+          }
+        ],
+        "up_right": [
+          {
+            "x": 97,
+            "y": 146,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 131,
+            "y": 146,
+            "w": 24,
+            "h": 29
+          },
+          {
+            "x": 165,
+            "y": 145,
+            "w": 22,
+            "h": 30
+          }
+        ]
+      }
+    },
+    "Coronamon": {
+      "source_id": 83,
+      "source_member": "sprite thread/083_Coronamon.png",
+      "source_sha256": "b912bafc0665fac89d7ba80a03275cf6b85d54219b863aecae726fa253389035",
+      "source_size": [
+        190,
+        240
+      ],
+      "background_rgb": [
+        208,
+        132,
+        92
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 0,
+            "y": 166,
+            "w": 23,
+            "h": 29
+          },
+          {
+            "x": 26,
+            "y": 166,
+            "w": 26,
+            "h": 29
+          },
+          {
+            "x": 56,
+            "y": 167,
+            "w": 24,
+            "h": 27
+          }
+        ],
+        "down_right": [
+          {
+            "x": 102,
+            "y": 166,
+            "w": 24,
+            "h": 27
+          },
+          {
+            "x": 130,
+            "y": 165,
+            "w": 26,
+            "h": 29
+          },
+          {
+            "x": 159,
+            "y": 165,
+            "w": 23,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 0,
+            "y": 198,
+            "w": 24,
+            "h": 28
+          },
+          {
+            "x": 27,
+            "y": 199,
+            "w": 24,
+            "h": 27
+          },
+          {
+            "x": 58,
+            "y": 197,
+            "w": 22,
+            "h": 29
+          }
+        ],
+        "up_right": [
+          {
+            "x": 102,
+            "y": 196,
+            "w": 22,
+            "h": 29
+          },
+          {
+            "x": 131,
+            "y": 198,
+            "w": 24,
+            "h": 27
+          },
+          {
+            "x": 158,
+            "y": 197,
+            "w": 24,
+            "h": 28
+          }
+        ]
+      }
+    },
+    "Lunamon": {
+      "source_id": 84,
+      "source_member": "sprite thread/084_Lunamon.png",
+      "source_sha256": "beee35401aecff2c8a65113066365d2af937a03b751271c331e90dd470463e9c",
+      "source_size": [
+        190,
+        208
+      ],
+      "background_rgb": [
+        115,
+        82,
+        255
+      ],
+      "layout": "two_rows_of_six",
+      "review_pattern": "canonical_rows",
+      "runtime_group_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source_group_order": [
+        "down_left",
+        "down_right",
+        "up_left",
+        "up_right"
+      ],
+      "frames": {
+        "down_left": [
+          {
+            "x": 3,
+            "y": 138,
+            "w": 26,
+            "h": 29
+          },
+          {
+            "x": 32,
+            "y": 138,
+            "w": 26,
+            "h": 28
+          },
+          {
+            "x": 61,
+            "y": 137,
+            "w": 28,
+            "h": 29
+          }
+        ],
+        "down_right": [
+          {
+            "x": 101,
+            "y": 137,
+            "w": 28,
+            "h": 29
+          },
+          {
+            "x": 132,
+            "y": 138,
+            "w": 26,
+            "h": 28
+          },
+          {
+            "x": 161,
+            "y": 138,
+            "w": 26,
+            "h": 29
+          }
+        ],
+        "up_left": [
+          {
+            "x": 3,
+            "y": 170,
+            "w": 27,
+            "h": 27
+          },
+          {
+            "x": 34,
+            "y": 170,
+            "w": 27,
+            "h": 26
+          },
+          {
+            "x": 63,
+            "y": 169,
+            "w": 28,
+            "h": 27
+          }
+        ],
+        "up_right": [
+          {
+            "x": 101,
+            "y": 169,
+            "w": 28,
+            "h": 27
+          },
+          {
+            "x": 131,
+            "y": 170,
+            "w": 27,
+            "h": 26
+          },
+          {
+            "x": 162,
+            "y": 170,
+            "w": 27,
+            "h": 27
+          }
+        ]
+      }
+    }
+  }
+}

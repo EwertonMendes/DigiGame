@@ -1,0 +1,181 @@
+name: Inspect DS source layouts
+
+on:
+  push:
+    branches:
+      - fix/ds-sprite-facing-audit
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ds-inspect]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install image tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+      - name: Export every raw WtW source used by the registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=tools python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from build_early_rank_ds_fields import load_wtw_archive
+
+          registry = json.loads(Path('database/ds-direction-registry.json').read_text())
+          out = Path('/tmp/ds-exact-source-audit/raw')
+          out.mkdir(parents=True, exist_ok=True)
+          archive = load_wtw_archive()
+          exported = []
+          for name, entry in sorted(registry['species'].items(), key=lambda item: int(item[1]['source_id'])):
+              member = entry['source_member']
+              data = archive.read(member)
+              suffix = Path(member).suffix.lower() or '.png'
+              filename = f"{int(entry['source_id']):03d}_{name.replace('/', '_')}{suffix}"
+              (out / filename).write_bytes(data)
+              exported.append({'name': name, 'source_id': entry['source_id'], 'member': member, 'file': filename})
+          Path('/tmp/ds-exact-source-audit/manifest.json').write_text(json.dumps(exported, indent=2) + '\n')
+          assert len(exported) == 82
+          print('exported 82/82 raw WtW sources')
+          PY
+      - name: Export preserved animated DS references
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/E-M-B-E-R/digimon-world-ds-dawn-dusk-animated-sprites.git /tmp/ds-preserved-animations
+          rm -rf /tmp/ds-preserved-animations/.git
+          mkdir -p /tmp/ds-exact-source-audit/preserved-animations
+          cp -r /tmp/ds-preserved-animations/in-training /tmp/ds-exact-source-audit/preserved-animations/
+          cp -r /tmp/ds-preserved-animations/rookie /tmp/ds-exact-source-audit/preserved-animations/
+          cp -r /tmp/ds-preserved-animations/champion /tmp/ds-exact-source-audit/preserved-animations/
+          cp -r /tmp/ds-preserved-animations/ultimate /tmp/ds-exact-source-audit/preserved-animations/
+      - name: Export and bake public SpriteManager semantic specs for cross-checking
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/digimon-sprite-manager
+          python3 - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          manager = Path('/tmp/digimon-sprite-manager')
+          sys.path.insert(0, str(manager))
+          sys.path.insert(0, str(manager / 'src'))
+          import config
+          from core import downloader, baker
+
+          ISO_DIRS = ('down_left', 'down_right', 'up_left', 'up_right')
+          roster = {row['name'] for row in json.loads(Path('/tmp/ds-exact-source-audit/manifest.json').read_text())}
+          root = manager / 'specs' / 'digimon'
+          specs = {}
+          candidates = {}
+
+          def resolved_walk(data, direction):
+              walk = (data.get('clips') or {}).get('walk') or {}
+              mirror = data.get('mirror') or {}
+              if walk.get(direction):
+                  return list(walk[direction]), False
+              source = mirror.get(direction)
+              if source and walk.get(source):
+                  return list(walk[source]), True
+              return [], False
+
+          def candidate_score(data):
+              authored = 0
+              frame_total = 0
+              for direction in ISO_DIRS:
+                  ids, mirrored = resolved_walk(data, direction)
+                  if not ids:
+                      return None
+                  frame_total += len(ids)
+                  if not mirrored:
+                      authored += 1
+              return (authored, frame_total, int(data.get('id') or 0))
+
+          for path in sorted(root.glob('*.extract.json')):
+              data = json.loads(path.read_text(encoding='utf-8'))
+              name = str(data.get('creature_name', '')).strip()
+              if not name:
+                  continue
+              record = {
+                  'spec_file': path.name,
+                  'id': data.get('id'),
+                  'source': data.get('source'),
+                  'sheet_id': data.get('sheet_id'),
+                  'clips': data.get('clips', {}),
+                  'mirror': data.get('mirror', {}),
+                  'anchor': data.get('anchor'),
+                  'walk_style': data.get('walk_style'),
+                  'export_scale': data.get('export_scale'),
+                  'pad': data.get('pad'),
+                  'boxes': data.get('boxes', []),
+              }
+              specs.setdefault(name, []).append(record)
+              if name in roster:
+                  score = candidate_score(data)
+                  if score is not None:
+                      current = candidates.get(name)
+                      if current is None or score > current[0]:
+                          candidates[name] = (score, path, data)
+
+          selected = [(name, item[1], item[2]) for name, item in sorted(candidates.items())]
+          out = Path('/tmp/ds-exact-source-audit/manager-specs.json')
+          out.write_text(json.dumps(specs, indent=2) + '\n', encoding='utf-8')
+
+          config.ensure_dirs()
+          downloader.fetch_gallery(log=lambda *_: None)
+          urls = dict(downloader.derive_urls(log=lambda *_: None))
+          needed = {}
+          for name, path, data in selected:
+              sid = str(data.get('sheet_id') or Path(str(data['source'])).stem)
+              needed[sid] = name
+          for sid, name in sorted(needed.items(), key=lambda item: int(item[0])):
+              url = urls.get(sid)
+              if not url:
+                  raise RuntimeError(f'missing gallery URL for SpriteManager sheet {sid} ({name})')
+              dest = Path(config.RAW_DIR) / f'{sid}.png'
+              ok, code, size = downloader._curl(url, str(dest))
+              if not ok or size <= 0:
+                  raise RuntimeError(f'failed SpriteManager sheet {sid} ({name}), HTTP {code}')
+
+          baked_dir = Path('/tmp/ds-exact-source-audit/manager-baked')
+          baked_dir.mkdir(parents=True, exist_ok=True)
+          baked_manifest = []
+          for name, path, data in selected:
+              result = baker.bake(str(path), out_dir=str(baked_dir), log=lambda *_: None)
+              generated = baked_dir / f"{int(data['id']):03d}.png"
+              renamed = baked_dir / f"{name.replace('/', '_')}__{path.stem}.png"
+              generated.replace(renamed)
+              baked_manifest.append({
+                  'name': name,
+                  'spec_file': path.name,
+                  'sheet_id': data.get('sheet_id'),
+                  'file': renamed.name,
+                  'resolved_walk': {
+                      direction: {
+                          'ids': resolved_walk(data, direction)[0],
+                          'mirrored': resolved_walk(data, direction)[1],
+                      }
+                      for direction in ISO_DIRS
+                  },
+                  'result': result,
+              })
+          (baked_dir / 'manifest.json').write_text(json.dumps(baked_manifest, indent=2, default=str) + '\n')
+          missing = sorted(roster - set(candidates))
+          (baked_dir / 'missing-roster-specs.json').write_text(json.dumps(missing, indent=2) + '\n')
+          print(f'exported {len(specs)} named specs; baked {len(baked_manifest)} complete roster-overlap specs; missing={len(missing)}')
+          PY
+      - name: Render all final DS runtime direction strips
+        run: python3 tools/render_generated_ds_direction_audit.py
+      - name: Copy final review sheets beside raw sources
+        run: cp -r /tmp/ds-generated-direction-audit /tmp/ds-exact-source-audit/final
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ds-exact-source-audit
+          path: /tmp/ds-exact-source-audit
+          retention-days: 1

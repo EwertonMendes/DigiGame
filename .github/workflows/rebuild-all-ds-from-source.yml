@@ -1,0 +1,97 @@
+name: Rebuild DS fields from audited exact coordinates
+
+on:
+  push:
+    branches:
+      - fix/ds-sprite-facing-audit
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ds-full-rebuild]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/ds-sprite-facing-audit
+          fetch-depth: 0
+
+      - name: Install sprite rebuild tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+
+      - name: Materialize exact coordinates from fresh original sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/materialize_ds_direction_registry.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('database/ds-direction-registry.json').read_text())
+          assert data['species_count'] == 82
+          assert data['canonical_reference'] == 'Agumon'
+          assert data['species']['Agumon']['runtime_group_indices'] == [0, 1, 2, 3]
+          assert data['species']['BlackAgumon']['runtime_group_indices'] == [2, 3, 0, 1]
+          assert data['species']['Candlemon']['runtime_group_indices'] == [2, 3, 0, 1]
+          assert data['species']['Chicchimon']['runtime_group_indices'] == [2, 3, 0, 1]
+          assert data['species']['Koromon']['runtime_group_indices'] == [0, 2, 1, 3]
+          print('exact direction registry materialized: 82/82 sources')
+          PY
+
+      - name: Hard-delete and rebuild from the exact registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/rebuild_ds_fields_from_exact_registry.py
+
+      - name: Verify exact registry-backed rebuild
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/validate_ds_direction_registry.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('database/ds-full-rebuild-manifest.json').read_text())
+          assert data['canonical_reference'] == 'Agumon'
+          assert data['preserved_count'] == 1
+          assert data['rebuilt_count'] == 88
+          assert data['unresolved'] == []
+          assert data['existing_non_agumon_runtime_strips_allowed_as_input'] is False
+          assert data['canonical_runtime_order'] == ['down_left', 'down_right', 'up_left', 'up_right']
+          assert data['direction_registry'] == 'database/ds-direction-registry.json'
+          assert all(item['name'] != 'Agumon' for item in data['rebuilt'])
+          black = next(item for item in data['rebuilt'] if item['name'] == 'BlackAgumon')
+          assert black['runtime_group_indices'] == [2, 3, 0, 1]
+          print('manifest verified: Agumon preserved; 88 sprites recreated from fresh sources')
+          PY
+          python3 tools/validate_early_rank_playables.py
+          python3 tools/validate_all_ds_directional_facings.py
+          python3 tools/validate_runtime_assets.py
+
+      - name: Render all generated directions for visual audit
+        run: python3 tools/render_generated_ds_direction_audit.py
+
+      - name: Upload generated direction audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: ds-generated-direction-audit
+          path: /tmp/ds-generated-direction-audit
+          retention-days: 3
+
+      - name: Commit exact-registry rebuilt DS sprites when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'Exact rebuild is deterministic: fresh-source regeneration matches committed outputs byte-for-byte.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A assets/characters assets/resources database tools/validate_runtime_assets.py
+          git commit -m 'fix: regenerate DS fields from exact audited coordinates [skip ds-full-rebuild] [skip ds-inspect]'
+          git push origin HEAD:fix/ds-sprite-facing-audit

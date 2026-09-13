@@ -1,11 +1,134 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_sprite_thread",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/075_PawnChessmonWhite.png",
   "source_id": 75,
-  "extraction_layout": "two_rows_of_six",
-  "cell_width": 28,
-  "cell_height": 37,
+  "source_sha256": "25ee84b00115ddbb1e6355456a9278b193e713ccd5b5c6c36e18f803c8fd6ba0",
+  "canonical_reference": "Agumon",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 6,
+        "y": 202,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 44,
+        "y": 201,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 79,
+        "y": 201,
+        "w": 22,
+        "h": 31
+      }
+    ],
+    "down_right": [
+      {
+        "x": 118,
+        "y": 201,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 153,
+        "y": 201,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 191,
+        "y": 202,
+        "w": 22,
+        "h": 31
+      }
+    ],
+    "up_left": [
+      {
+        "x": 4,
+        "y": 262,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 43,
+        "y": 260,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 77,
+        "y": 262,
+        "w": 22,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 118,
+        "y": 262,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 152,
+        "y": 260,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 191,
+        "y": 262,
+        "w": 22,
+        "h": 31
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "73c9ff5538e52e4e9f01d9a8f28ff33ea6e676681741cda9a3554b5cb3a9764c",
+      "b3d59973be11612ada49b2a814b87c465fe1bf61034330f8e8e7e2b6341ac23b",
+      "0b8d3803969249cb164ca9386b97dd5dc283ecdc98a01b3f3901b3c4a5546866"
+    ],
+    "down_right": [
+      "e174ab48f0e174ea9ddee7c6307721f0016c58dd87a43c929b1ba47212de1de8",
+      "802ed16d4d648c0bc181ea69457e79642f3a47bc22456d2223f44a51e33e2edf",
+      "3f50768cf41463a9492146e5d5eccd32ca4ad4964e387a9eaf4b0e71f7d0186d"
+    ],
+    "up_left": [
+      "cf3d955bf569cd10be15e90c6626498fb167333b6cb79e523b537c3c88f0d63c",
+      "e93fd479ae7b92ce64fe3f23d464d85d919ddb647462bce5ffba90a07328c6e6",
+      "5ed78ac1b50ca33d58f23084af65566d2c472e1288f1a07685d2db7d5ccbdad1"
+    ],
+    "up_right": [
+      "fcbfae7dd5ac8b45ef95ddc1430a0012f0d9e0148dd9cd0d034d24b583d2a87f",
+      "76f305b8ec0dc10fa12bec08a3a4d1891e6de6d86838add6896ee3129e9960f2",
+      "c230397f388faa88390ce2c85f29afc86d77480f528a513f7fe6ba0538f00f66"
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 35,
   "frame_count": 12,
   "frames_per_direction": 3,
   "directions": [
@@ -15,6 +138,5 @@
     "up_right"
   ],
   "runtime_scale": 1.0,
-  "withthewill_thread": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
   "field_path": "res://assets/characters/pawnchessmonwhite/field.png"
 }
