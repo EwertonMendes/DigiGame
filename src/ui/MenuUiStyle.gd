@@ -68,13 +68,29 @@ static func action_button(text: String, accent: Color, minimum_height: float = 4
 	return button
 
 static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size: Vector2 = Vector2(44, 40)) -> Button:
-	var button := action_button("", accent, size.y)
+	var button := Button.new()
+	button.text = ""
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_size_override("font_size", 12)
+	SKIN.apply_button(button, accent)
 	button.custom_minimum_size = size
 	button.icon = texture
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.tooltip_text = tooltip
-	SKIN.apply_button(button, accent)
+	return button
+
+static func close_button(texture: Texture2D, tooltip: String) -> Button:
+	var button := Button.new()
+	button.text = ""
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_size_override("font_size", 12)
+	SKIN.apply_button(button, UI.MUTED)
+	button.icon = texture
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.tooltip_text = tooltip
+	button.custom_minimum_size = Vector2(44.0, 44.0)
 	return button
 
 static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2, compact_breakpoint: float = 840.0) -> Dictionary:
@@ -87,28 +103,20 @@ static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vecto
 		maxf(1.0, physical_size.y - safe_margin * 2.0)
 	)
 	var requested := Vector2(minf(max_size.x, available.x), minf(max_size.y, available.y))
-
-	# A Container cannot be sized below its combined minimum. Assign first, then
-	# read the real size Godot accepted and fit that real rectangle into the safe
-	# area. This guarantees the modal chrome itself never leaks past the viewport,
-	# even if a future child accidentally increases the minimum size.
-	frame.size = requested
-	var actual := frame.size
-	var fit := minf(1.0, minf(available.x / maxf(1.0, actual.x), available.y / maxf(1.0, actual.y)))
-	var effective_physical := actual * fit
-	frame.scale = Vector2.ONE * canvas_scale * fit
+	frame.scale = Vector2.ONE * canvas_scale
 	frame.position = Vector2(
-		(physical_size.x - effective_physical.x) * 0.5,
-		(physical_size.y - effective_physical.y) * 0.5
+		(physical_size.x - requested.x) * 0.5,
+		(physical_size.y - requested.y) * 0.5
 	) * canvas_scale
+	frame.size = requested
 	frame.clip_contents = true
 	return {
 		"compact": compact,
-		"scale": canvas_scale * fit,
-		"fit": fit,
+		"scale": canvas_scale,
+		"fit": 1.0,
 		"position": frame.position,
-		"size": actual,
-		"effective_size": effective_physical,
+		"size": requested,
+		"effective_size": requested,
 	}
 
 static func margin(left: int, top: int, right: int, bottom: int) -> MarginContainer:
