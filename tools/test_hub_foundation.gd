@@ -24,11 +24,13 @@ func _ready() -> void:
 	var portal := hub.get_node_or_null("Actors/TestBattlePortal")
 	var dialog := hub.get_node_or_null("HubUI/Root/BattleDialog")
 	var training_screen := hub.get_node_or_null("TrainingCenterUI/TrainingCenter")
+	var digilab := hub.get_node_or_null("DigiLabUI/DigiLab")
 	var party_followers := hub.get_node_or_null("PartyFollowers")
 	assert(player != null, "Hub must create the controllable player")
 	assert(operator != null, "Hub must create the nearby battle operator")
 	assert(trainer != null, "Hub must create the Training Specialist near the service terminals")
 	assert(training_screen != null, "Hub must create the Training Center UI")
+	assert(digilab != null, "Hub must create the DigiLab root UI")
 	assert(portal != null, "Hub must create the animated test battle portal")
 	assert(dialog != null, "Hub must expose the test battle conversation")
 	assert(party_followers != null, "Hub must create the overworld active-party follower system")
@@ -49,15 +51,16 @@ func _ready() -> void:
 	assert(player.position.distance_to(operator.position) <= 94.0, "Operator must be reachable from spawn immediately")
 	assert(bool(hub.call("can_actor_move_to", player.position, player)), "Spawn must be walkable")
 
-	# Keep the pre-existing Hub baseline isolated from the Training regression.
-	# The trainer check teleports the player on purpose; running it after follower
-	# invariants prevents the new test from mutating trail state before baseline QA.
+	# Keep the pre-existing Hub baseline isolated from service regressions.
+	# Service checks teleport the player on purpose; running them after follower
+	# invariants prevents those tests from mutating trail state before baseline QA.
 	_assert_authored_and_mirrored_rows(player)
 	_assert_eight_direction_facing(player)
 	_assert_walk_sequence(player)
 	_assert_legacy_hub_facings(player)
 	await _assert_overworld_active_party(player, party_followers)
 	await _assert_training_center_entry(hub, player, trainer, training_screen)
+	await _assert_digilab_root_entry(hub, player, digilab)
 
 	hub.call("open_test_battle_dialog")
 	await get_tree().process_frame
@@ -84,6 +87,38 @@ func _assert_training_center_entry(hub: Node, player: Node2D, trainer: Node2D, t
 	await get_tree().process_frame
 	assert(not training_screen.visible, "Closing Training Center must return to the Hub")
 	assert(bool(player.get("movement_enabled")), "Closing Training Center must restore overworld movement")
+	player.position = original_position
+	await get_tree().process_frame
+
+func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> void:
+	var original_position := player.position
+	var terminal := hub.get_node_or_null("Actors/DigiLabTerminal") as Node2D
+	assert(terminal != null, "Hub must expose the DigiLab terminal actor")
+	player.position = terminal.position
+	await get_tree().process_frame
+
+	# Exercise the same E-key path used by the player, not a direct screen call.
+	var interact := InputEventKey.new()
+	interact.keycode = KEY_E
+	interact.physical_keycode = KEY_E
+	interact.pressed = true
+	hub.call("_unhandled_input", interact)
+	await get_tree().process_frame
+
+	assert(digilab.visible, "Pressing E at the DigiLab terminal must open the DigiLab")
+	var root_frame := digilab.get("_frame") as Control
+	var create_screen := digilab.get("_create_screen") as Control
+	var party_screen := digilab.get("_party_screen") as Control
+	var digimon_screen := digilab.get("_digimon_menu") as Control
+	assert(root_frame != null and root_frame.visible, "DigiLab must open on its root service menu")
+	assert(create_screen != null and not create_screen.visible, "Create Digimon must stay hidden until explicitly selected")
+	assert(party_screen != null and not party_screen.visible, "Party / Storage must stay hidden until explicitly selected")
+	assert(digimon_screen != null and not digimon_screen.visible, "Digimon details must not open automatically with DigiLab")
+
+	hub.call("_close_digilab")
+	await get_tree().process_frame
+	assert(not digilab.visible, "Closing the root DigiLab must return to the Hub")
+	assert(bool(player.get("movement_enabled")), "Closing DigiLab must restore overworld movement")
 	player.position = original_position
 	await get_tree().process_frame
 
