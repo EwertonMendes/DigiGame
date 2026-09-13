@@ -4,6 +4,7 @@ class_name RetreatAwareBattleResultScreen
 const CHANGE_ICON := preload("res://assets/ui/icons/hp_change_arrow.svg")
 
 var _data_rows: VBoxContainer = null
+var _data_render_key := ""
 
 func _build_ui() -> void:
 	super._build_ui()
@@ -13,9 +14,13 @@ func _build_ui() -> void:
 func _rebuild_reward_panel() -> void:
 	if _reward_panel == null:
 		return
+	# DigiUiRuntime decorates newly-added controls via deferred callbacks. Keep
+	# the inherited reward row alive instead of freeing it in the same frame.
+	# Hidden controls do not consume layout, but remain valid decoration targets.
 	for child in _reward_panel.get_children():
-		_reward_panel.remove_child(child)
-		child.queue_free()
+		if child is Control:
+			(child as Control).visible = false
+			(child as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 6)
 	_reward_panel.add_child(root)
@@ -84,7 +89,9 @@ func _apply_digi_data_progress_copy() -> void:
 func _render_digi_data_progress() -> void:
 	if _data_rows == null:
 		return
-	_clear_data_rows()
+	if _data_render_key == _result_key and _data_rows.get_child_count() > 0:
+		return
+	_begin_data_render()
 	var progress = _result.get("digi_data_progress", {})
 	if progress is Dictionary and not progress.is_empty():
 		for raw_seed in progress.keys():
@@ -103,7 +110,7 @@ func _render_digi_data_progress() -> void:
 			row.add_child(_label("+%d" % int(digi_data[species_name]), 11, UI.GREEN, true))
 			_data_rows.add_child(row)
 		return
-	_render_no_data("No Digi Data recovered.")
+	_data_rows.add_child(_label("No Digi Data recovered.", 10, UI.MUTED))
 
 func _data_progress_row(data: Dictionary, fallback_name: String) -> Control:
 	var row := HBoxContainer.new()
@@ -145,13 +152,19 @@ func _data_progress_row(data: Dictionary, fallback_name: String) -> Control:
 func _render_no_data(message: String) -> void:
 	if _data_rows == null:
 		return
-	_clear_data_rows()
+	if _data_render_key == _result_key and _data_rows.get_child_count() > 0:
+		return
+	_begin_data_render()
 	_data_rows.add_child(_label(message, 10, UI.MUTED))
 
-func _clear_data_rows() -> void:
+func _begin_data_render() -> void:
+	_data_render_key = _result_key
+	# Keep previous rows alive until the scene is replaced. This avoids racing
+	# DigiUiRuntime's deferred decoration and a same-frame queue_free.
 	for child in _data_rows.get_children():
-		_data_rows.remove_child(child)
-		child.queue_free()
+		if child is Control:
+			(child as Control).visible = false
+			(child as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _apply_retreat_status(card: Dictionary) -> void:
 	if _result_outcome() != "escaped":
