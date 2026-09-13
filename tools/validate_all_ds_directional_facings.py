@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Verify that every runtime directional Digimon resource is in the facing audit.
+"""Verify every runtime directional Digimon is covered by the source-only rebuild.
 
 `Digimon.gd` defaults sprite_layout to directional_12, so a resource that omits
 that assignment (legacy Greymon is one example) is still directional at runtime.
-This validator mirrors that behavior instead of only grepping explicit fields.
+The authoritative coverage source is `database/ds-full-rebuild-manifest.json`:
+Agumon is the only preserved golden strip; every other DS directional runtime
+asset must be rebuilt from source.
 """
 from __future__ import annotations
 
@@ -11,7 +13,7 @@ import json
 import re
 from pathlib import Path
 
-AUDIT_PATH = Path("database/ds-facing-audit.json")
+AUDIT_PATH = Path("database/ds-full-rebuild-manifest.json")
 REPORT_PATH = Path("database/ds-directional-resource-audit.json")
 RESOURCE_ROOT = Path("assets/resources")
 DEFAULT_LAYOUT = "directional_12"
@@ -36,16 +38,24 @@ def _assignment(text: str, key: str) -> str | None:
 
 def main() -> None:
     audit = json.loads(AUDIT_PATH.read_text(encoding="utf-8"))
-    covered: set[str] = set()
-    for key in (
-        "corrected_from_reviewed_specs",
-        "corrected_from_reviewed_wtw_grids",
-        "corrected_from_reviewed_project_extractors",
-        "trusted_explicit_wtw_four_facing",
-        "community_synthetic_four_facing",
-        "already_reviewed_outside_early_rank",
-    ):
-        covered.update(_names(audit.get(key)))
+    if audit.get("canonical_reference") != "Agumon":
+        raise RuntimeError("DS rebuild manifest must use Agumon as its canonical reference")
+    if audit.get("canonical_runtime_order") != ["down_left", "down_right", "up_left", "up_right"]:
+        raise RuntimeError("DS rebuild manifest runtime direction order is not canonical")
+    if audit.get("existing_non_agumon_runtime_strips_allowed_as_input") is not False:
+        raise RuntimeError("DS rebuild manifest permits reuse of an existing non-Agumon runtime strip")
+    if audit.get("unresolved") != []:
+        raise RuntimeError("DS rebuild manifest still contains unresolved sprites")
+
+    preserved = _names(audit.get("preserved"))
+    rebuilt = _names(audit.get("rebuilt"))
+    if preserved != {"Agumon"}:
+        raise RuntimeError(f"Only Agumon may be preserved, got: {sorted(preserved)}")
+    if "Agumon" in rebuilt:
+        raise RuntimeError("Agumon must not appear in rebuilt entries")
+    if len(rebuilt) != 88:
+        raise RuntimeError(f"Expected 88 source-rebuilt directional sprites, got {len(rebuilt)}")
+    covered = preserved | rebuilt
 
     directional: dict[str, dict[str, str]] = {}
     duplicate_names: dict[str, list[str]] = {}
@@ -71,7 +81,10 @@ def main() -> None:
     missing = sorted(covered - directional_names)
     report = {
         "runtime_default_layout": DEFAULT_LAYOUT,
+        "canonical_reference": "Agumon",
         "directional_resource_count": len(directional_names),
+        "preserved_resource_count": len(preserved),
+        "source_rebuilt_resource_count": len(rebuilt),
         "audited_resource_count": len(covered),
         "directional_resources": [
             {"name": name, **directional[name]}
@@ -84,14 +97,16 @@ def main() -> None:
     }
     REPORT_PATH.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(
-        "directional facing coverage: "
-        f"runtime={len(directional_names)} audited={len(covered)} "
-        f"unknown={len(unknown)} missing={len(missing)}"
+        "directional source-rebuild coverage: "
+        f"runtime={len(directional_names)} preserved={len(preserved)} rebuilt={len(rebuilt)} "
+        f"audited={len(covered)} unknown={len(unknown)} missing={len(missing)}"
     )
+    if len(directional_names) != 89:
+        raise RuntimeError(f"Expected 89 runtime directional resources, got {len(directional_names)}")
     if unknown:
         raise RuntimeError("Unaudited directional resources: " + ", ".join(unknown))
     if missing:
-        raise RuntimeError("Facing audit entries not using directional_12: " + ", ".join(missing))
+        raise RuntimeError("Rebuild manifest entries not using directional_12: " + ", ".join(missing))
     if missing_display_name:
         raise RuntimeError("Directional resources without display_name: " + ", ".join(missing_display_name))
     if duplicate_names:
