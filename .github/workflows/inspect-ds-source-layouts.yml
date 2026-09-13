@@ -12,48 +12,15 @@ jobs:
   inspect:
     if: ${{ !contains(github.event.head_commit.message, '[skip ds-inspect]') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v6
       - name: Install image tooling
         run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
-      - name: Extract original sources and rebuilt review strips
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          from tools.build_early_rank_ds_fields import load_wtw_archive
-          wanted = {1, 25, 60, 80, 2, 5, 28}
-          out = Path('/tmp/ds-source-layouts')
-          out.mkdir(parents=True, exist_ok=True)
-          archive = load_wtw_archive()
-          for name in archive.namelist():
-              if not name.startswith('sprite thread/'):
-                  continue
-              base = Path(name).name
-              try:
-                  sprite_id = int(base.split('_', 1)[0])
-              except ValueError:
-                  continue
-              if sprite_id in wanted and base.lower().endswith(('.png', '.gif')):
-                  (out / base).write_bytes(archive.read(name))
-          review = {
-              'REFERENCE_Agumon_field.png': Path('assets/characters/agumon/field.png'),
-              'REBUILT_BlackAgumon_field.png': Path('assets/characters/blackagumon/field.png'),
-              'REBUILT_Candlemon_field.png': Path('assets/characters/candlemon/field.png'),
-              'REBUILT_Chicchimon_field.png': Path('assets/characters/chicchimon/field.png'),
-              'REBUILT_Dorumon_field.png': Path('assets/characters/dorumon/field.png'),
-              'REBUILT_Tokomon_field.png': Path('assets/characters/tokomon/field.png'),
-              'REBUILT_Koromon_field.png': Path('assets/characters/koromon/field.png'),
-              'REBUILT_Greymon.png': Path('assets/characters/greymon.png'),
-              'REBUILT_MetalGreymon_field.png': Path('assets/characters/metalgreymon/field.png'),
-          }
-          for name, path in review.items():
-              (out / name).write_bytes(path.read_bytes())
-          PY
+      - name: Render every original WtW directional group
+        run: python3 tools/render_ds_source_direction_audit.py
       - uses: actions/upload-artifact@v4
         with:
-          name: ds-source-layouts
-          path: /tmp/ds-source-layouts
+          name: ds-all-source-direction-groups
+          path: /tmp/ds-direction-audit
           retention-days: 1
