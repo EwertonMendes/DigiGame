@@ -4,7 +4,7 @@ class_name TrainingCenterScreen
 signal close_requested
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
-const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
+const MENU = preload("res://src/ui/MenuUiStyle.gd")
 const TrainingServiceScript = preload("res://src/digimon/DigimonTrainingService.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
@@ -15,12 +15,12 @@ const UNDO_ICON := preload("res://assets/ui/icons/undo.svg")
 const MOVE_ICON := preload("res://assets/ui/icons/move.svg")
 
 const STAT_META := {
-	"hp": ["HP", Color(0.36, 0.95, 0.55)],
-	"mp": ["SP", Color(0.38, 0.74, 1.0)],
-	"atk": ["ATK", Color(1.0, 0.78, 0.28)],
-	"def": ["DEF", Color(0.35, 0.90, 1.0)],
-	"int": ["INT", Color(0.76, 0.54, 1.0)],
-	"speed": ["SPD", Color(1.0, 0.56, 0.26)],
+	"hp": ["HP", UI.GREEN],
+	"mp": ["SP", UI.BLUE.lightened(0.12)],
+	"atk": ["ATK", UI.GOLD],
+	"def": ["DEF", UI.CYAN],
+	"int": ["INT", UI.PURPLE],
+	"speed": ["SPD", UI.ORANGE],
 }
 
 var _database: DigimonDatabase
@@ -57,13 +57,12 @@ func open_screen() -> void:
 	if (_selected_id.is_empty() or OverworldState.get_instance_by_id(_selected_id) == null) and not owned.is_empty():
 		_selected_id = owned[0].id
 	_clear_plan()
+	_status.text = "Build a plan, preview the result, then apply it."
 	_refresh()
 	call_deferred("_layout")
 	_frame.modulate.a = 0.0
-	_frame.scale = Vector2(0.985, 0.985)
-	var tween := create_tween().set_parallel(true)
-	tween.tween_property(_frame, "modulate:a", 1.0, 0.16)
-	tween.tween_property(_frame, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var tween := create_tween()
+	tween.tween_property(_frame, "modulate:a", 1.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func close_view() -> void:
 	_clear_plan()
@@ -80,15 +79,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _build_ui() -> void:
 	var backdrop := ColorRect.new()
-	backdrop.color = Color(0.003, 0.010, 0.026, 0.975)
+	backdrop.color = Color(0.0, 0.0, 0.0, 0.78)
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(backdrop)
 
 	_frame = PanelContainer.new()
-	_frame.add_theme_stylebox_override("panel", SKIN.frame_style(Color(0.045, 0.085, 0.14, 0.99), Vector4.ZERO, 14.0))
+	_frame.name = "TrainingCenterPanel"
+	_frame.clip_contents = true
+	_frame.add_theme_stylebox_override("panel", MENU.screen_frame())
 	add_child(_frame)
-	var outer := _margin(20, 18, 20, 20)
+
+	var outer := MENU.margin(18, 16, 18, 18)
 	_frame.add_child(outer)
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 10)
@@ -99,15 +101,16 @@ func _build_ui() -> void:
 	root.add_child(header)
 	var titles := VBoxContainer.new()
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	titles.add_theme_constant_override("separation", 2)
 	header.add_child(titles)
-	titles.add_child(_label("TRAINING CENTER", 26, UI.TEXT, true))
-	titles.add_child(_label("Use Potential to shape this Digimon's permanent tactical strengths.", 11, UI.MUTED))
-	var close := _icon_button(CLOSE_ICON, UI.MUTED, "Close Training Center")
-	close.custom_minimum_size = Vector2(44, 44)
+	titles.add_child(_label("TRAINING CENTER", 25, UI.TEXT, true))
+	titles.add_child(_label("Use Potential to shape permanent tactical strengths.", 11, UI.MUTED))
+	var close := MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close Training Center")
 	close.pressed.connect(close_view)
 	header.add_child(close)
 
-	_status = _label("Build a plan, preview the result, then apply it.", 11, UI.CYAN, true)
+	_status = _label("Build a plan, preview the result, then apply it.", 10, UI.CYAN, true)
+	_status.custom_minimum_size.y = 20
 	root.add_child(_status)
 
 	_columns = GridContainer.new()
@@ -124,11 +127,14 @@ func _build_collection_panel() -> void:
 	_collection_panel = PanelContainer.new()
 	_collection_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_collection_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_collection_panel.add_theme_stylebox_override("panel", SKIN.border_style(UI.CYAN, Vector4(12, 12, 12, 12), 10.0))
+	_collection_panel.clip_contents = true
+	_collection_panel.add_theme_stylebox_override("panel", MENU.surface(UI.CYAN, 0.80, 10))
 	_columns.add_child(_collection_panel)
+	var margin := MENU.margin(12, 12, 12, 12)
+	_collection_panel.add_child(margin)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 7)
-	_collection_panel.add_child(root)
+	root.add_theme_constant_override("separation", 8)
+	margin.add_child(root)
 	root.add_child(_label("DIGIMON COLLECTION", 11, UI.CYAN, true))
 	root.add_child(_label("Choose the individual you want to develop.", 10, UI.MUTED))
 	var scroll := ScrollContainer.new()
@@ -138,23 +144,26 @@ func _build_collection_panel() -> void:
 	root.add_child(scroll)
 	_collection_list = VBoxContainer.new()
 	_collection_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_collection_list.add_theme_constant_override("separation", 6)
+	_collection_list.add_theme_constant_override("separation", 8)
 	scroll.add_child(_collection_list)
 
 func _build_detail_panel() -> void:
 	_detail_panel = PanelContainer.new()
 	_detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail_panel.add_theme_stylebox_override("panel", SKIN.border_style(UI.GOLD, Vector4(14, 14, 14, 14), 10.0))
+	_detail_panel.clip_contents = true
+	_detail_panel.add_theme_stylebox_override("panel", MENU.surface(UI.GOLD, 0.80, 10))
 	_columns.add_child(_detail_panel)
+	var margin := MENU.margin(14, 14, 14, 14)
+	_detail_panel.add_child(margin)
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail_panel.add_child(scroll)
+	margin.add_child(scroll)
 	_detail = VBoxContainer.new()
 	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_detail.add_theme_constant_override("separation", 9)
+	_detail.add_theme_constant_override("separation", 10)
 	scroll.add_child(_detail)
 
 func _refresh() -> void:
@@ -173,12 +182,11 @@ func _refresh_collection() -> void:
 		var species := _database.get_by_seed(instance.species_seed)
 		var name := instance.get_display_name(String(species.get("name", "Unknown")))
 		var location := "PARTY" if active_ids.has(instance.id) else "STORAGE"
-		var button := _button("%s\nLv. %d   %s   POT %d" % [name.to_upper(), instance.level, location, instance.potential], UI.GOLD if active_ids.has(instance.id) else UI.CYAN)
-		button.custom_minimum_size.y = 58
+		var accent := UI.GOLD if active_ids.has(instance.id) else UI.CYAN
+		var button := MENU.action_button("%s\nLV %d  ·  %s  ·  POT %d" % [name.to_upper(), instance.level, location, instance.potential], accent, 60)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(_select_instance.bind(instance.id))
-		if instance.id == _selected_id:
-			button.add_theme_stylebox_override("normal", SKIN.border_style(UI.GREEN, Vector4(13, 9, 13, 9), 9.0))
+		MENU.style_action_button(button, UI.GREEN if instance.id == _selected_id else accent, instance.id == _selected_id)
 		_collection_list.add_child(button)
 
 func _refresh_detail() -> void:
@@ -201,50 +209,72 @@ func _refresh_detail() -> void:
 	var preview_stats := _calculator.get_all_stats(preview, species)
 	_build_identity(instance, species)
 	_build_capacity(instance)
-	_detail.add_child(_label("ATTRIBUTE TRAINING", 10, UI.CYAN, true))
-	_detail.add_child(_label("1 point costs 1 Capacity and grants +%.1f%% to that attribute." % _training.stat_bonus_percent(1), 10, UI.MUTED))
+	_detail.add_child(_section_heading("ATTRIBUTE TRAINING", UI.CYAN))
+	_detail.add_child(_label("Each point costs 1 Capacity and grants +%.1f%% to that attribute." % _training.stat_bonus_percent(1), 10, UI.MUTED))
 	for stat_key: String in ["hp", "mp", "atk", "def", "int", "speed"]:
 		_build_stat_row(instance, stat_key, current_stats, preview_stats)
 	_build_mobility(instance, current_stats, preview_stats)
 	_build_plan_actions(instance)
 
 func _build_identity(instance: DigimonInstance, species: Dictionary) -> void:
+	var rank := String(species.get("rank", "Unknown"))
+	var accent := UI.rank_color(rank)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", MENU.card(accent, true))
+	_detail.add_child(card)
+	var margin := MENU.margin(12, 10, 12, 10)
+	card.add_child(margin)
 	var hero := HBoxContainer.new()
-	hero.add_theme_constant_override("separation", 12)
-	_detail.add_child(hero)
+	hero.add_theme_constant_override("separation", 14)
+	margin.add_child(hero)
 	var portrait_frame := PanelContainer.new()
-	portrait_frame.custom_minimum_size = Vector2(116, 102)
-	portrait_frame.add_theme_stylebox_override("panel", SKIN.frame_style(Color(0.055, 0.10, 0.16, 0.96), Vector4(5, 5, 5, 5), 8.0))
+	portrait_frame.custom_minimum_size = Vector2(118, 104)
+	portrait_frame.add_theme_stylebox_override("panel", MENU.portrait(accent))
 	hero.add_child(portrait_frame)
+	var portrait_margin := MENU.margin(6, 6, 6, 6)
+	portrait_frame.add_child(portrait_margin)
 	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
-	portrait.custom_minimum_size = Vector2(108, 94)
+	portrait.custom_minimum_size = Vector2(106, 92)
 	portrait.set_species(String(species.get("name", "Unknown")))
-	portrait_frame.add_child(portrait)
+	portrait_margin.add_child(portrait)
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
+	info.add_theme_constant_override("separation", 5)
 	hero.add_child(info)
 	info.add_child(_label(instance.get_display_name(String(species.get("name", "Unknown"))).to_upper(), 21, UI.TEXT, true))
-	info.add_child(_label("%s   LV %d" % [String(species.get("rank", "Unknown")).to_upper(), instance.level], 11, UI.rank_color(String(species.get("rank", "Unknown"))), true))
-	info.add_child(_label("Training survives Digivolution and Degeneration.", 10, UI.SUBTLE))
+	info.add_child(_label("%s  ·  LV %d" % [rank.to_upper(), instance.level], 11, accent.lightened(0.10), true))
+	info.add_child(_label("Training stays with this Digimon through Digivolution and Degeneration.", 10, UI.SUBTLE))
 
 func _build_capacity(instance: DigimonInstance) -> void:
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 12)
-	_detail.add_child(grid)
-	var potential := VBoxContainer.new()
-	grid.add_child(potential)
-	potential.add_child(_label("POTENTIAL %d / 100" % instance.potential, 11, UI.PURPLE, true))
-	var potential_bar := _progress(UI.PURPLE, 100, instance.potential)
-	potential.add_child(potential_bar)
-	var capacity := VBoxContainer.new()
-	grid.add_child(capacity)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", MENU.card(UI.PURPLE, false))
+	_detail.add_child(card)
+	var margin := MENU.margin(11, 9, 11, 9)
+	card.add_child(margin)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 7)
+	margin.add_child(body)
 	var total := _training.capacity_for(instance)
 	var used := _training.used_capacity(instance)
 	var planned := _training.plan_cost(instance, _pending_stats, _pending_mobility)
-	capacity.add_child(_label("CAPACITY %d / %d   +%d PLANNED" % [used + planned, total, planned], 11, UI.GOLD, true))
-	capacity.add_child(_progress(UI.GOLD, total, used + planned))
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 12)
+	body.add_child(header)
+	var potential := _label("POTENTIAL %d / 100" % instance.potential, 11, UI.PURPLE, true)
+	potential.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(potential)
+	var capacity := _label("CAPACITY %d / %d" % [used + planned, total], 11, UI.GOLD, true)
+	header.add_child(capacity)
+	if planned > 0:
+		header.add_child(_label("+%d PLANNED" % planned, 10, UI.GREEN, true))
+	var bars := GridContainer.new()
+	bars.columns = 2
+	bars.add_theme_constant_override("h_separation", 12)
+	body.add_child(bars)
+	bars.add_child(_progress(UI.PURPLE, 100, instance.potential))
+	bars.add_child(_progress(UI.GOLD, total, used + planned))
+	body.add_child(_label("Base Capacity 10  ·  +1 Capacity for every 2 Potential.", 9, UI.SUBTLE))
 
 func _build_stat_row(instance: DigimonInstance, stat_key: String, current_stats: Dictionary, preview_stats: Dictionary) -> void:
 	var meta: Array = STAT_META[stat_key]
@@ -258,13 +288,15 @@ func _build_stat_row(instance: DigimonInstance, stat_key: String, current_stats:
 	row.configure(stat_key, String(meta[0]), int(current_stats.get(stat_key, 0)), int(preview_stats.get(stat_key, 0)), int(instance.training.get(stat_key, 0)), int(_pending_stats.get(stat_key, 0)), _training.max_points_per_stat(), _training.can_apply_plan(instance, test_plan, _pending_mobility), meta[1] as Color)
 
 func _build_mobility(instance: DigimonInstance, current_stats: Dictionary, preview_stats: Dictionary) -> void:
-	_detail.add_child(_label("TACTICAL MOBILITY", 10, UI.GOLD, true))
+	_detail.add_child(_section_heading("TACTICAL MOBILITY", UI.GOLD))
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", SKIN.border_style(UI.GOLD.darkened(0.4), Vector4(10, 8, 10, 8), 8.0))
+	panel.add_theme_stylebox_override("panel", MENU.card(UI.GOLD, false))
 	_detail.add_child(panel)
+	var margin := MENU.margin(10, 9, 10, 9)
+	panel.add_child(margin)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 6)
-	panel.add_child(root)
+	root.add_theme_constant_override("separation", 8)
+	margin.add_child(root)
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 8)
 	root.add_child(line)
@@ -286,24 +318,24 @@ func _build_mobility(instance: DigimonInstance, current_stats: Dictionary, previ
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	root.add_child(actions)
-	var undo := _button("UNDO MOV", UI.MUTED)
+	var undo := MENU.action_button("UNDO MOV", UI.MUTED)
 	undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	undo.disabled = _pending_mobility <= 0
 	undo.pressed.connect(_remove_mobility)
 	actions.add_child(undo)
-	var add := _button("TRAIN MOV +1", UI.GOLD)
+	var add := MENU.action_button("TRAIN MOV +1", UI.GOLD)
 	add.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add.disabled = not _training.can_apply_plan(instance, _pending_stats, _pending_mobility + 1)
 	add.pressed.connect(_add_mobility)
 	actions.add_child(add)
 	if target_level < 2:
 		var next_level := target_level + 1
-		root.add_child(_label("Next upgrade requires Potential %d and costs %d Capacity." % [_training.mobility_potential_for_level(next_level), _training.mobility_cost_for_level(next_level)], 10, UI.MUTED))
+		root.add_child(_label("Next upgrade: Potential %d  ·  %d Capacity." % [_training.mobility_potential_for_level(next_level), _training.mobility_cost_for_level(next_level)], 10, UI.MUTED))
 	else:
 		root.add_child(_label("Maximum permanent mobility training reached.", 10, UI.GREEN, true))
 
 func _build_plan_actions(instance: DigimonInstance) -> void:
-	_detail.add_child(_label("TRAINING PLAN", 10, UI.GREEN, true))
+	_detail.add_child(_section_heading("TRAINING PLAN", UI.GREEN))
 	var has_plan := _has_plan()
 	var validation := _training.validate_plan(instance, _pending_stats, _pending_mobility)
 	var message := "Ready to apply this plan." if has_plan and validation.is_empty() else (validation if has_plan else "No pending changes.")
@@ -390,7 +422,7 @@ func _apply_plan() -> void:
 	_status.text = "Training applied and saved."
 	_refresh()
 	var tween := create_tween()
-	tween.tween_property(_detail_panel, "modulate", Color(1.18, 1.18, 1.18, 1.0), 0.08)
+	tween.tween_property(_detail_panel, "modulate", Color(1.08, 1.08, 1.08, 1.0), 0.08)
 	tween.tween_property(_detail_panel, "modulate", Color.WHITE, 0.20)
 
 func _clear_plan() -> void:
@@ -415,15 +447,20 @@ func _layout() -> void:
 	var physical := UI.physical_window_size(get_viewport())
 	var scale_factor := UI.ui_scale(get_viewport())
 	var compact := UI.is_compact(get_viewport(), 900.0)
-	var edge := 10.0 if compact else 20.0
-	var width := minf(1180.0, physical.x - edge * 2.0)
-	var height := minf(690.0, physical.y - edge * 2.0)
+	var edge := 12.0 if compact else 18.0
+	var width := minf(1240.0, physical.x - edge * 2.0)
+	var height := minf(760.0, physical.y - edge * 2.0)
 	_frame.scale = Vector2.ONE * scale_factor
 	_frame.position = Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
 	_frame.size = Vector2(width, height)
 	_columns.columns = 1 if compact else 2
-	_collection_panel.custom_minimum_size = Vector2(0, 165 if compact else 0)
-	_detail_panel.custom_minimum_size = Vector2(0, 380 if compact else 0)
+	_collection_panel.custom_minimum_size = Vector2(0, 185 if compact else 0)
+	_detail_panel.custom_minimum_size = Vector2(0, 390 if compact else 0)
+
+func _section_heading(text: String, accent: Color) -> Label:
+	var label := _label(text, 10, accent.lightened(0.08), true)
+	label.custom_minimum_size.y = 20
+	return label
 
 func _progress(accent: Color, maximum: int, value: int) -> ProgressBar:
 	var bar := ProgressBar.new()
@@ -431,19 +468,20 @@ func _progress(accent: Color, maximum: int, value: int) -> ProgressBar:
 	bar.max_value = maxf(1, maximum)
 	bar.value = clampi(value, 0, maxi(1, maximum))
 	bar.show_percentage = false
-	bar.custom_minimum_size.y = 8
+	bar.custom_minimum_size.y = 7
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var bg := StyleBoxFlat.new()
-	bg.bg_color = Color(0.01, 0.015, 0.025, 0.9)
-	bg.corner_radius_top_left = 4
-	bg.corner_radius_top_right = 4
-	bg.corner_radius_bottom_left = 4
-	bg.corner_radius_bottom_right = 4
+	bg.bg_color = Color(0.01, 0.01, 0.015, 0.88)
+	bg.corner_radius_top_left = 3
+	bg.corner_radius_top_right = 3
+	bg.corner_radius_bottom_left = 3
+	bg.corner_radius_bottom_right = 3
 	var fill := StyleBoxFlat.new()
 	fill.bg_color = accent
-	fill.corner_radius_top_left = 4
-	fill.corner_radius_top_right = 4
-	fill.corner_radius_bottom_left = 4
-	fill.corner_radius_bottom_right = 4
+	fill.corner_radius_top_left = 3
+	fill.corner_radius_top_right = 3
+	fill.corner_radius_bottom_left = 3
+	fill.corner_radius_bottom_right = 3
 	bar.add_theme_stylebox_override("background", bg)
 	bar.add_theme_stylebox_override("fill", fill)
 	return bar
@@ -456,44 +494,15 @@ func _label(text: String, size: int, color: Color, bold: bool = false) -> Label:
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.80))
 	label.add_theme_constant_override("outline_size", 2 if size >= 13 else 1)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if bold:
 		UI.apply_heading_font(label)
 	else:
 		UI.apply_body_font(label)
 	return label
 
-func _button(text: String, accent: Color) -> Button:
-	var button := Button.new()
-	button.text = text
-	button.focus_mode = Control.FOCUS_ALL
-	button.add_theme_font_size_override("font_size", 12)
-	button.add_theme_stylebox_override("normal", UI.command_style(accent, "normal"))
-	button.add_theme_stylebox_override("hover", UI.command_style(accent, "hover"))
-	button.add_theme_stylebox_override("focus", UI.command_style(accent, "focus"))
-	button.add_theme_stylebox_override("pressed", UI.command_style(accent, "pressed"))
-	button.add_theme_color_override("font_color", UI.TEXT)
-	button.add_theme_color_override("font_hover_color", UI.TEXT)
-	button.add_theme_color_override("font_focus_color", UI.TEXT)
-	UI.apply_body_font(button)
-	return button
-
-func _icon_button(texture: Texture2D, accent: Color, tooltip: String) -> Button:
-	var button := _button("", accent)
-	button.icon = texture
-	button.expand_icon = true
-	button.tooltip_text = tooltip
-	return button
-
 func _icon_text_button(texture: Texture2D, text: String, accent: Color) -> Button:
-	var button := _button(text, accent)
+	var button := MENU.action_button(text, accent)
 	button.icon = texture
 	button.expand_icon = false
 	return button
-
-func _margin(left: int, top: int, right: int, bottom: int) -> MarginContainer:
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", left)
-	margin.add_theme_constant_override("margin_top", top)
-	margin.add_theme_constant_override("margin_right", right)
-	margin.add_theme_constant_override("margin_bottom", bottom)
-	return margin
