@@ -4,9 +4,6 @@ class_name MenuUiStyle
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
 
-const SAFE_EDGE_DESKTOP := 28.0
-const SAFE_EDGE_COMPACT := 14.0
-
 static func screen_frame() -> StyleBox:
 	return SKIN.frame_style(UI.FRAME_DARK, Vector4.ZERO, 14.0)
 
@@ -46,12 +43,10 @@ static func stat_surface(accent: Color, selected: bool = false) -> StyleBoxFlat:
 	style.corner_radius_bottom_right = 7
 	return style
 
-static func style_action_button(button: Button, accent: Color, selected: bool = false) -> void:
+static func style_action_button(button: Button, accent: Color, _selected: bool = false) -> void:
 	if button == null:
 		return
 	SKIN.apply_button(button, accent)
-	if selected:
-		button.add_theme_stylebox_override("normal", SKIN.border_style(accent, Vector4(14.0, 8.0, 14.0, 8.0), 10.0))
 	button.add_theme_color_override("font_disabled_color", UI.DISABLED)
 	UI.apply_body_font(button)
 
@@ -75,18 +70,18 @@ static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size
 	SKIN.apply_button(button, accent)
 	return button
 
-static func safe_frame_layout(viewport: Viewport, max_size: Vector2 = Vector2(1240.0, 720.0), breakpoint: float = 840.0, desktop_edge: float = SAFE_EDGE_DESKTOP, compact_edge: float = SAFE_EDGE_COMPACT) -> Dictionary:
-	var physical := UI.physical_window_size(viewport)
-	var scale_factor := UI.ui_scale(viewport)
-	var compact := UI.is_compact(viewport, breakpoint)
-	var edge := compact_edge if compact else desktop_edge
-	var available := Vector2(maxf(1.0, physical.x - edge * 2.0), maxf(1.0, physical.y - edge * 2.0))
-	var frame_size := Vector2(minf(max_size.x, available.x), minf(max_size.y, available.y))
-	var origin := Vector2((physical.x - frame_size.x) * 0.5, (physical.y - frame_size.y) * 0.5) * scale_factor
+static func safe_frame_layout(viewport: Viewport, max_size: Vector2 = Vector2(1240.0, 720.0), breakpoint: float = 840.0, desktop_edge: float = 28.0, compact_edge: float = 14.0) -> Dictionary:
+	var physical: Vector2 = UI.physical_window_size(viewport)
+	var scale_factor: float = UI.ui_scale(viewport)
+	var compact: bool = UI.is_compact(viewport, breakpoint)
+	var edge: float = compact_edge if compact else desktop_edge
+	var available: Vector2 = Vector2(maxf(1.0, physical.x - edge * 2.0), maxf(1.0, physical.y - edge * 2.0))
+	var frame_size: Vector2 = Vector2(minf(max_size.x, available.x), minf(max_size.y, available.y))
+	var origin: Vector2 = Vector2((physical.x - frame_size.x) * 0.5, (physical.y - frame_size.y) * 0.5) * scale_factor
 	return {"physical": physical, "scale": scale_factor, "compact": compact, "edge": edge, "size": frame_size, "position": origin}
 
-static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2 = Vector2(1240.0, 720.0), breakpoint: float = 840.0, desktop_edge: float = SAFE_EDGE_DESKTOP, compact_edge: float = SAFE_EDGE_COMPACT) -> Dictionary:
-	var layout := safe_frame_layout(viewport, max_size, breakpoint, desktop_edge, compact_edge)
+static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2 = Vector2(1240.0, 720.0), breakpoint: float = 840.0, desktop_edge: float = 28.0, compact_edge: float = 14.0) -> Dictionary:
+	var layout: Dictionary = safe_frame_layout(viewport, max_size, breakpoint, desktop_edge, compact_edge)
 	if frame != null:
 		frame.scale = Vector2.ONE * float(layout.get("scale", 1.0))
 		frame.position = Vector2(layout.get("position", Vector2.ZERO))
