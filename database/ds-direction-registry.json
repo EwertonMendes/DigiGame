@@ -13,7 +13,7 @@
     "step_a",
     "step_b"
   ],
-  "source_policy": "fresh-download source; reviewed direction groups; reviewed per-direction phase order; deterministic mirror-pose verification; uniform bottom-center runtime anchor",
+  "source_policy": "fresh-download source; reviewed reusable source conventions; reviewed per-direction phase order; deterministic mirror-pose verification; uniform bottom-center runtime anchor",
   "review_map": "database/ds-direction-review-map.json",
   "review_map_sha256": "e3b6ea69edda9d8944937d8724aaaf47a18a01a3f6df4aea57891be8d5636893",
   "species_count": 82,
