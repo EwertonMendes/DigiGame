@@ -170,7 +170,7 @@ func _refresh_detail() -> void:
 
 	var stats := _progression.get_final_stats(instance)
 	_detail.add_child(_label("HP %d   SP %d   ATK %d   DEF %d   INT %d   SPD %d" % [int(stats.get("hp", 0)), int(stats.get("sp", 0)), int(stats.get("atk", 0)), int(stats.get("def", 0)), int(stats.get("int", 0)), int(stats.get("speed", 0))], 13, UI.TEXT, true))
-	_detail.add_child(_label("Link: tactical battle synergy · Potential %d" % instance.potential, 11, UI.MUTED))
+	_detail.add_child(_label("LINK %d / %d   ·   POTENTIAL %d / %d" % [instance.link, DigimonInstance.MAX_LINK, instance.potential, DigimonInstance.MAX_POTENTIAL], 11, UI.MUTED, true))
 
 	var actions := VBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
