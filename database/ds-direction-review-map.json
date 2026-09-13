@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "canonical_reference": "Agumon",
   "canonical_runtime_order": [
     "down_left",
@@ -32,31 +32,10 @@
     "step_a",
     "step_b"
   ],
-  "phase_policy": "WtW left-facing triples define idle/step_a/step_b. Right-facing triples are reordered to match the corresponding left-facing pose; listed exceptions were reviewed by deterministic mirror-pose comparison.",
+  "phase_policy": "Left-facing authored triples define idle/step_a/step_b in source order. Every right-facing triple is reordered automatically by deterministic mirrored-pose pixel matching against its corresponding left-facing triple. Per-species phase overrides are forbidden.",
   "direction_policy": "Patterns describe authored source-sheet conventions only. Runtime never applies species-specific flips or facing workarounds; every source group is materialized into the same canonical runtime order.",
-  "default_source_phase_order": {
-    "down_left": [0, 1, 2],
-    "down_right": [2, 1, 0],
-    "up_left": [0, 1, 2],
-    "up_right": [2, 1, 0]
-  },
-  "source_phase_overrides": {
-    "Calumon": {
-      "down_right": [0, 1, 2],
-      "up_right": [0, 1, 2]
-    },
-    "Kapurimon": {
-      "up_right": [0, 1, 2]
-    },
-    "Kudamon": {
-      "down_right": [0, 1, 2],
-      "up_right": [0, 1, 2]
-    },
-    "Monodramon": {
-      "down_right": [1, 0, 2],
-      "up_right": [2, 0, 1]
-    }
-  },
+  "left_source_phase_order": [0, 1, 2],
+  "right_phase_policy": "deterministic_mirror_pose_match",
   "species": {
     "Chicchimon": "rear_rows_first",
     "Koromon": "compact_interleaved_horizontal_reversed",
