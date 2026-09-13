@@ -8,7 +8,7 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 2,
+  "direction_registry_schema_version": 3,
   "review_pattern": "rear_rows_first",
   "runtime_group_indices": [
     2,
@@ -21,6 +21,60 @@
     "up_right",
     "down_left",
     "down_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 160418,
+      "confidence_margin": 55884
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 144212,
+      "confidence_margin": 92866
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    31
   ],
   "source_layout": "two_rows_of_six",
   "audited_source_frames": {
@@ -46,10 +100,10 @@
     ],
     "down_right": [
       {
-        "x": 150,
-        "y": 162,
-        "w": 29,
-        "h": 25
+        "x": 222,
+        "y": 166,
+        "w": 28,
+        "h": 20
       },
       {
         "x": 186,
@@ -58,10 +112,10 @@
         "h": 22
       },
       {
-        "x": 222,
-        "y": 166,
-        "w": 28,
-        "h": 20
+        "x": 150,
+        "y": 162,
+        "w": 29,
+        "h": 25
       }
     ],
     "up_left": [
@@ -86,10 +140,10 @@
     ],
     "up_right": [
       {
-        "x": 149,
-        "y": 129,
+        "x": 224,
+        "y": 133,
         "w": 28,
-        "h": 24
+        "h": 21
       },
       {
         "x": 185,
@@ -98,10 +152,10 @@
         "h": 24
       },
       {
-        "x": 224,
-        "y": 133,
+        "x": 149,
+        "y": 129,
         "w": 28,
-        "h": 21
+        "h": 24
       }
     ]
   },
@@ -112,9 +166,9 @@
       "563218b42c6d92eca965aa2b8c57fc1d7492f4ceaa847b47f737879b06f0af13"
     ],
     "down_right": [
-      "ce51cecf39a19e5e5de370ce9b3cb2d07c28db47ce049821aebb996f98b90f49",
+      "03c5db66133641eebe57f417a18c646a7b8b147f711fb666bfe228befb0f7cca",
       "74204986dcc48d32732e346ce0168bcc8beb015a56e9117d4cf167f524af2e2c",
-      "03c5db66133641eebe57f417a18c646a7b8b147f711fb666bfe228befb0f7cca"
+      "ce51cecf39a19e5e5de370ce9b3cb2d07c28db47ce049821aebb996f98b90f49"
     ],
     "up_left": [
       "bd9f1d67d14fee80011cb2a7a6b1225e1a617e2c05258ae26d325d54be60a2b6",
@@ -122,9 +176,9 @@
       "a2cd4e68b77b3dc7735446d2a348c4781194b99efe9b105d6f652452aa1bb6e7"
     ],
     "up_right": [
-      "ae6799d4bb5d9de05c8f904d1a4c136037230e1878e4d0e3d2f5e277d6b1de8c",
+      "b20f5317ec360abfbc6bdb7031fe41960ee529676ee0636e983a4878155ab9c2",
       "8c02f26f8cbb86a377f8da94b61822ac138de1cd1d8dbff54a728f30b635e27a",
-      "b20f5317ec360abfbc6bdb7031fe41960ee529676ee0636e983a4878155ab9c2"
+      "ae6799d4bb5d9de05c8f904d1a4c136037230e1878e4d0e3d2f5e277d6b1de8c"
     ]
   },
   "cell_width": 35,
