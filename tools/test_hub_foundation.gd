@@ -79,10 +79,18 @@ func _assert_training_center_entry(hub: Node, player: Node2D, trainer: Node2D, t
 	assert(bool(hub.call("_trainer_has_interaction_priority")), "Training Specialist must win interaction priority when the player is closest to that NPC")
 	hub.call("_open_training")
 	await get_tree().process_frame
+	await get_tree().process_frame
 	assert(training_screen.visible, "Talking to the Training Specialist must open the Training Center")
 	assert(not bool(player.get("movement_enabled")), "Training Center must pause overworld movement")
-	var collection_list := training_screen.get("_collection_list") as VBoxContainer
+	var collection_list := training_screen.get("_collection_list") as Container
 	assert(collection_list != null and collection_list.get_child_count() >= 3, "Training Center must load the persistent Digimon Collection")
+	for child in collection_list.get_children():
+		var card := child as Button
+		assert(card != null and card.focus_mode == Control.FOCUS_ALL, "Training Digimon cards must be keyboard/gamepad focusable")
+		assert(card.find_child("DigimonWalkPreview", true, false) != null or card.find_child("WalkPreview", true, false) != null, "Training selection cards must show a DS field preview")
+	var detail_scroll := training_screen.get("_detail_scroll") as ScrollContainer
+	assert(detail_scroll != null and detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Training details must use smooth scrolling")
+	_assert_safe_service_frame(training_screen.get("_frame") as Control, "Training Center")
 	hub.call("_close_training")
 	await get_tree().process_frame
 	assert(not training_screen.visible, "Closing Training Center must return to the Hub")
@@ -97,12 +105,12 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	player.position = terminal.position
 	await get_tree().process_frame
 
-	# Exercise the same E-key path used by the player, not a direct screen call.
 	var interact := InputEventKey.new()
 	interact.keycode = KEY_E
 	interact.physical_keycode = KEY_E
 	interact.pressed = true
 	hub.call("_unhandled_input", interact)
+	await get_tree().process_frame
 	await get_tree().process_frame
 
 	assert(digilab.visible, "Pressing E at the DigiLab terminal must open the DigiLab")
@@ -114,6 +122,13 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	assert(create_screen != null and not create_screen.visible, "Create Digimon must stay hidden until explicitly selected")
 	assert(party_screen != null and not party_screen.visible, "Party / Storage must stay hidden until explicitly selected")
 	assert(digimon_screen != null and not digimon_screen.visible, "Digimon details must not open automatically with DigiLab")
+	var service_buttons: Array = digilab.get("_service_buttons")
+	assert(service_buttons.size() == 3, "DigiLab root must expose exactly three service cards")
+	for raw_button in service_buttons:
+		var service_button := raw_button as Button
+		assert(service_button != null and service_button.focus_mode == Control.FOCUS_ALL, "The whole DigiLab service card must be selectable with keyboard/gamepad")
+		assert(service_button.text.is_empty(), "DigiLab service cards must not depend on a separate OPEN button")
+	_assert_safe_service_frame(root_frame, "DigiLab")
 
 	hub.call("_close_digilab")
 	await get_tree().process_frame
@@ -121,6 +136,14 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	assert(bool(player.get("movement_enabled")), "Closing DigiLab must restore overworld movement")
 	player.position = original_position
 	await get_tree().process_frame
+
+func _assert_safe_service_frame(frame: Control, label: String) -> void:
+	assert(frame != null, "%s must expose a framed modal" % label)
+	var viewport_size := get_viewport().get_visible_rect().size
+	var effective_size := frame.size * frame.scale
+	assert(frame.position.x >= 10.0 and frame.position.y >= 10.0, "%s must keep a visible safe margin from the top/left edges" % label)
+	assert(frame.position.x + effective_size.x <= viewport_size.x - 10.0, "%s must stay inside the right safe margin" % label)
+	assert(frame.position.y + effective_size.y <= viewport_size.y - 10.0, "%s must stay inside the bottom safe margin" % label)
 
 func _assert_character_sheet_padding(path: String) -> void:
 	var image := Image.load_from_file(path)
