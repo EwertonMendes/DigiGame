@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Install image tooling
         run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
-      - name: Extract original WtW DS source sheets
+      - name: Extract original sources and rebuilt review strips
         shell: bash
         run: |
           set -euo pipefail
@@ -38,9 +38,19 @@ jobs:
                   continue
               if sprite_id in wanted and base.lower().endswith(('.png', '.gif')):
                   (out / base).write_bytes(archive.read(name))
-                  print(base)
-          (out / 'REFERENCE_Agumon_field.png').write_bytes(Path('assets/characters/agumon/field.png').read_bytes())
-          (out / 'REFERENCE_Agumon_field.json').write_bytes(Path('assets/characters/agumon/field.json').read_bytes())
+          review = {
+              'REFERENCE_Agumon_field.png': Path('assets/characters/agumon/field.png'),
+              'REBUILT_BlackAgumon_field.png': Path('assets/characters/blackagumon/field.png'),
+              'REBUILT_Candlemon_field.png': Path('assets/characters/candlemon/field.png'),
+              'REBUILT_Chicchimon_field.png': Path('assets/characters/chicchimon/field.png'),
+              'REBUILT_Dorumon_field.png': Path('assets/characters/dorumon/field.png'),
+              'REBUILT_Tokomon_field.png': Path('assets/characters/tokomon/field.png'),
+              'REBUILT_Koromon_field.png': Path('assets/characters/koromon/field.png'),
+              'REBUILT_Greymon.png': Path('assets/characters/greymon.png'),
+              'REBUILT_MetalGreymon_field.png': Path('assets/characters/metalgreymon/field.png'),
+          }
+          for name, path in review.items():
+              (out / name).write_bytes(path.read_bytes())
           PY
       - uses: actions/upload-artifact@v4
         with:
