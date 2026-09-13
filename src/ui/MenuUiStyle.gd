@@ -75,6 +75,24 @@ static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size
 	button.tooltip_text = tooltip
 	return button
 
+static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2, compact_breakpoint: float = 840.0) -> Dictionary:
+	var physical_size := UI.physical_window_size(viewport)
+	var scale_factor := UI.ui_scale(viewport)
+	var compact := UI.is_compact(viewport, compact_breakpoint)
+	var safe_margin := 14.0 if compact else 28.0
+	var width := minf(max_size.x, maxf(1.0, physical_size.x - safe_margin * 2.0))
+	var height := minf(max_size.y, maxf(1.0, physical_size.y - safe_margin * 2.0))
+	frame.scale = Vector2.ONE * scale_factor
+	frame.position = Vector2((physical_size.x - width) * 0.5, (physical_size.y - height) * 0.5) * scale_factor
+	frame.size = Vector2(width, height)
+	frame.clip_contents = true
+	return {
+		"compact": compact,
+		"scale": scale_factor,
+		"position": frame.position,
+		"size": frame.size,
+	}
+
 static func margin(left: int, top: int, right: int, bottom: int) -> MarginContainer:
 	var result := MarginContainer.new()
 	result.add_theme_constant_override("margin_left", left)
