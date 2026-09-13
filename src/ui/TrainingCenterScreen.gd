@@ -47,13 +47,13 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_ui()
-	OverworldState.roster_changed.connect(_on_collection_changed)
+	OverworldState.collection_changed.connect(_on_collection_changed)
 	get_viewport().size_changed.connect(_layout)
 	visible = false
 
 func open_screen() -> void:
 	visible = true
-	var owned: Array[DigimonInstance] = OverworldState.get_roster_instances()
+	var owned: Array[DigimonInstance] = OverworldState.get_collection_instances()
 	if (_selected_id.is_empty() or OverworldState.get_instance_by_id(_selected_id) == null) and not owned.is_empty():
 		_selected_id = owned[0].id
 	_clear_plan()
@@ -164,7 +164,7 @@ func _refresh() -> void:
 func _refresh_collection() -> void:
 	for child in _collection_list.get_children():
 		child.queue_free()
-	var owned: Array[DigimonInstance] = OverworldState.get_roster_instances()
+	var owned: Array[DigimonInstance] = OverworldState.get_collection_instances()
 	var active_ids := OverworldState.get_active_party_ids()
 	if owned.is_empty():
 		_collection_list.add_child(_label("No Digimon in your collection.", 11, UI.MUTED))
@@ -383,10 +383,9 @@ func _apply_plan() -> void:
 	if not error.is_empty():
 		_status.text = error
 		return
-	if not _training.apply_plan(instance, _pending_stats, _pending_mobility):
+	if not OverworldState.apply_training_plan(_selected_id, _pending_stats, _pending_mobility):
 		_status.text = "Training could not be applied."
 		return
-	OverworldState.notify_roster_changed()
 	_clear_plan()
 	_status.text = "Training applied and saved."
 	_refresh()
