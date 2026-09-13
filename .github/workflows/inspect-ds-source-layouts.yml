@@ -42,6 +42,36 @@ jobs:
           assert len(exported) == 82
           print('exported 82/82 raw WtW sources')
           PY
+      - name: Export public SpriteManager semantic specs for cross-checking
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/digimon-sprite-manager
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/digimon-sprite-manager/specs/digimon')
+          specs = {}
+          for path in sorted(root.glob('*.extract.json')):
+              data = json.loads(path.read_text(encoding='utf-8'))
+              name = str(data.get('creature_name', '')).strip()
+              if not name:
+                  continue
+              specs.setdefault(name, []).append({
+                  'spec_file': path.name,
+                  'id': data.get('id'),
+                  'source': data.get('source'),
+                  'clips': data.get('clips', {}),
+                  'mirror': data.get('mirror', {}),
+                  'anchor': data.get('anchor'),
+                  'walk_style': data.get('walk_style'),
+                  'boxes': data.get('boxes', []),
+              })
+          out = Path('/tmp/ds-exact-source-audit/manager-specs.json')
+          out.write_text(json.dumps(specs, indent=2) + '\n', encoding='utf-8')
+          print(f'exported semantic specs for {len(specs)} named SpriteManager entries')
+          PY
       - name: Render all final DS runtime direction strips
         run: python3 tools/render_generated_ds_direction_audit.py
       - name: Copy final review sheets beside raw sources
