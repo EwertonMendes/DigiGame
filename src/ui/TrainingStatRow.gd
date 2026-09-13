@@ -20,6 +20,8 @@ var _accent := Color.WHITE
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_PASS
+	clip_contents = true
+	custom_minimum_size.y = 46.0
 	_build()
 
 func configure(key: String, title: String, current_value: int, preview_value: int, committed_points: int, pending_points: int, max_points: int, can_add: bool, accent: Color) -> void:
@@ -36,7 +38,7 @@ func configure(key: String, title: String, current_value: int, preview_value: in
 	_preview.text = str(preview_value)
 	_points.text = "%d / %d" % [committed_points + pending_points, max_points]
 	if pending_points > 0:
-		_points.text += "   +%d planned" % pending_points
+		_points.text += "  +%d" % pending_points
 		_points.add_theme_color_override("font_color", UI.GOLD)
 	else:
 		_points.add_theme_color_override("font_color", UI.MUTED)
@@ -49,39 +51,42 @@ func pulse() -> void:
 	var tween := create_tween()
 	tween.tween_property(self, "modulate", Color.WHITE, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
+func get_focus_buttons() -> Array[Button]:
+	return [_minus, _plus]
+
 func _build() -> void:
-	var margin := MENU.margin(10, 7, 8, 7)
+	var margin := MENU.margin(10, 6, 8, 6)
 	add_child(margin)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 6)
 	margin.add_child(row)
 
-	_name = _label("STAT", 11, UI.CYAN, true)
-	_name.custom_minimum_size.x = 48
+	_name = _single_line_label("STAT", 11, UI.CYAN, true)
+	_name.custom_minimum_size.x = 42
 	row.add_child(_name)
 
 	var values := HBoxContainer.new()
 	values.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	values.add_theme_constant_override("separation", 6)
+	values.add_theme_constant_override("separation", 5)
 	row.add_child(values)
-	_value = _label("0", 15, UI.TEXT, true)
-	_value.custom_minimum_size.x = 48
+	_value = _single_line_label("0", 14, UI.TEXT, true)
+	_value.custom_minimum_size.x = 38
 	values.add_child(_value)
 	_arrow = TextureRect.new()
 	_arrow.texture = CHANGE_ICON
 	_arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_arrow.custom_minimum_size = Vector2(17, 17)
+	_arrow.custom_minimum_size = Vector2(16, 16)
 	_arrow.modulate = UI.CYAN
 	_arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	values.add_child(_arrow)
-	_preview = _label("0", 15, UI.GREEN, true)
-	_preview.custom_minimum_size.x = 48
+	_preview = _single_line_label("0", 14, UI.GREEN, true)
+	_preview.custom_minimum_size.x = 38
 	values.add_child(_preview)
 
-	_points = _label("0 / 30", 10, UI.MUTED, true)
+	_points = _single_line_label("0 / 30", 10, UI.MUTED, true)
 	_points.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_points.custom_minimum_size.x = 132
+	_points.custom_minimum_size.x = 82
 	row.add_child(_points)
 
 	_minus = MENU.action_button("−", UI.MUTED, 34)
@@ -95,7 +100,7 @@ func _build() -> void:
 	_plus.pressed.connect(func(): add_requested.emit(stat_key))
 	row.add_child(_plus)
 
-func _label(text: String, size: int, color: Color, bold: bool = false) -> Label:
+func _single_line_label(text: String, size: int, color: Color, bold: bool = false) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", size)
@@ -103,6 +108,9 @@ func _label(text: String, size: int, color: Color, bold: bool = false) -> Label:
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.80))
 	label.add_theme_constant_override("outline_size", 2 if size >= 13 else 1)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if bold:
 		UI.apply_heading_font(label)
 	else:
