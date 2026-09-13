@@ -26,13 +26,13 @@ jobs:
           from pathlib import Path
           from build_early_rank_ds_fields import load_wtw_archive
 
-          registry = json.loads(Path('database/ds-source-direction-registry.json').read_text())
+          registry = json.loads(Path('database/ds-direction-registry.json').read_text())
           out = Path('/tmp/ds-exact-source-audit/raw')
           out.mkdir(parents=True, exist_ok=True)
           archive = load_wtw_archive()
           exported = []
-          for name, entry in sorted(registry['entries'].items(), key=lambda item: int(item[1]['source_id'])):
-              member = entry['source_archive_file']
+          for name, entry in sorted(registry['species'].items(), key=lambda item: int(item[1]['source_id'])):
+              member = entry['source_member']
               data = archive.read(member)
               suffix = Path(member).suffix.lower() or '.png'
               filename = f"{int(entry['source_id']):03d}_{name.replace('/', '_')}{suffix}"
