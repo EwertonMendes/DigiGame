@@ -30,7 +30,6 @@ var _trail: Array[Vector2] = []
 var _bound := false
 var _bind_attempts := 0
 
-
 func _ready() -> void:
 	_followers_root = Node2D.new()
 	_followers_root.name = "Followers"
@@ -39,24 +38,22 @@ func _ready() -> void:
 	var party_changed := Callable(self, "_on_active_party_changed")
 	if not OverworldState.active_party_changed.is_connected(party_changed):
 		OverworldState.active_party_changed.connect(party_changed)
-	var roster_changed := Callable(self, "_on_roster_changed")
-	if not OverworldState.roster_changed.is_connected(roster_changed):
-		OverworldState.roster_changed.connect(roster_changed)
+	var collection_changed := Callable(self, "_on_collection_changed")
+	if not OverworldState.collection_changed.is_connected(collection_changed):
+		OverworldState.collection_changed.connect(collection_changed)
 	call_deferred("_bind_to_hub")
-
 
 func _exit_tree() -> void:
 	var party_changed := Callable(self, "_on_active_party_changed")
 	if OverworldState.active_party_changed.is_connected(party_changed):
 		OverworldState.active_party_changed.disconnect(party_changed)
-	var roster_changed := Callable(self, "_on_roster_changed")
-	if OverworldState.roster_changed.is_connected(roster_changed):
-		OverworldState.roster_changed.disconnect(roster_changed)
+	var collection_changed := Callable(self, "_on_collection_changed")
+	if OverworldState.collection_changed.is_connected(collection_changed):
+		OverworldState.collection_changed.disconnect(collection_changed)
 	if _player != null:
 		var moved := Callable(self, "_on_player_world_position_changed")
 		if _player.is_connected("world_position_changed", moved):
 			_player.disconnect("world_position_changed", moved)
-
 
 func _physics_process(delta: float) -> void:
 	if not _bound or _player == null:
@@ -64,22 +61,17 @@ func _physics_process(delta: float) -> void:
 	_record_player_position(_player.global_position)
 	_update_followers(delta)
 
-
 func get_follower_count() -> int:
 	return _followers.size()
-
 
 func get_active_party_keys() -> Array[String]:
 	return _active_party_keys.duplicate()
 
-
 func get_follow_spacing() -> float:
 	return FOLLOW_SPACING
 
-
 func get_minimum_team_separation() -> float:
 	return MIN_TEAM_SEPARATION
-
 
 func _bind_to_hub() -> void:
 	if _bound:
@@ -104,24 +96,20 @@ func _bind_to_hub() -> void:
 	_trail.append(_player.global_position)
 	_sync_party()
 
-
 func _on_active_party_changed(_party: Array) -> void:
 	if _bound:
 		_sync_party()
 
-
-func _on_roster_changed() -> void:
-	# A persistent individual can change species without changing its party key.
+func _on_collection_changed() -> void:
+	# A persistent individual can change species without changing its collection key.
 	# Rebuild followers so the overworld immediately reflects Digivolution or
-	# Degeneration and so duplicate roster keys never dictate the visual resource.
+	# Degeneration and duplicate collection keys never dictate the visual resource.
 	if _bound:
 		_sync_party()
-
 
 func _on_player_world_position_changed(_world_position: Vector2) -> void:
 	if _player != null:
 		_record_player_position(_player.global_position)
-
 
 func _sync_party() -> void:
 	for follower in _followers:
@@ -144,7 +132,7 @@ func _sync_party() -> void:
 			continue
 		var species: Dictionary = database.get_by_seed(instance.species_seed) if database != null else {}
 		if species.is_empty():
-			push_warning("Active party species is missing for roster key: %s" % key)
+			push_warning("Active party species is missing for collection key: %s" % key)
 			continue
 		var visual_key := String(species.get("name", "")).to_lower()
 		var resource_path := DIGIMON_RESOURCE_TEMPLATE % visual_key
@@ -165,7 +153,6 @@ func _sync_party() -> void:
 		_active_party_keys.append(key)
 		occupied.append(spawn_position)
 
-
 func _update_followers(delta: float) -> void:
 	var occupied: Array[Vector2] = [_player.global_position]
 	for index in range(_followers.size()):
@@ -180,7 +167,6 @@ func _update_followers(delta: float) -> void:
 		else:
 			follower.call("set_idle")
 		occupied.append(follower.global_position)
-
 
 func _record_player_position(world_position: Vector2) -> void:
 	if _trail.is_empty():
@@ -200,7 +186,6 @@ func _record_player_position(world_position: Vector2) -> void:
 	_trail.append(world_position)
 	while _trail.size() > MAX_TRAIL_POINTS:
 		_trail.remove_at(0)
-
 
 func _trail_target_at_distance(distance_behind: float) -> Dictionary:
 	if _trail.is_empty():
@@ -237,7 +222,6 @@ func _trail_target_at_distance(distance_behind: float) -> Dictionary:
 
 	return {"valid": false}
 
-
 func _reposition_followers_around_player() -> void:
 	if _player == null:
 		return
@@ -249,7 +233,6 @@ func _reposition_followers_around_player() -> void:
 		var spawn_position := _find_safe_spawn_position(index, occupied)
 		follower.call("teleport_to", spawn_position, _initial_digimon_facing())
 		occupied.append(spawn_position)
-
 
 func _find_safe_spawn_position(party_slot: int, occupied: Array[Vector2]) -> Vector2:
 	if _player == null:
@@ -269,19 +252,16 @@ func _find_safe_spawn_position(party_slot: int, occupied: Array[Vector2]) -> Vec
 
 	return _player.global_position + Vector2(0.0, FOLLOW_SPACING * float(party_slot + 1))
 
-
 func _is_walkable(candidate: Vector2) -> bool:
 	if _hub == null or _player == null or not _hub.has_method("can_actor_move_to"):
 		return true
 	return bool(_hub.call("can_actor_move_to", candidate, _player))
-
 
 func _has_clearance(candidate: Vector2, occupied: Array[Vector2]) -> bool:
 	for point in occupied:
 		if candidate.distance_to(point) < MIN_TEAM_SEPARATION:
 			return false
 	return true
-
 
 func _initial_digimon_facing() -> String:
 	if _player == null:

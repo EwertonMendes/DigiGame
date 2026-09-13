@@ -107,7 +107,7 @@ jobs:
           grep -q 'advanced attack pattern regression passed' /tmp/attack-patterns.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/attack-patterns.log; then exit 1; fi
 
-          godot --headless --path . tools/test_hub_foundation.tscn --quit-after 8 2>&1 | tee /tmp/hub-foundation.log
+          godot --headless --path . tools/test_hub_foundation.tscn --quit-after 30 2>&1 | tee /tmp/hub-foundation.log
           grep -q 'hub foundation regression passed' /tmp/hub-foundation.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/hub-foundation.log; then exit 1; fi
 

@@ -40,6 +40,9 @@ var _pending_species := ""
 
 
 func _ready() -> void:
+	# Stable name lets UI regressions verify that every selectable Digimon card
+	# actually contains the DS field preview without coupling to child order.
+	name = "WalkPreview"
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_sprite = Sprite2D.new()
