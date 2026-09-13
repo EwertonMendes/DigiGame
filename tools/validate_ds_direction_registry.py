@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Fail closed if the exact audited DS direction registry is incomplete."""
+"""Validate exact audited DS direction coordinates and generated metadata."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from build_early_rank_ds_fields import WTW_IDS
+from build_early_rank_ds_fields import WTW_IDS, portrait_key
 
 REGISTRY = Path("database/ds-direction-registry.json")
 DIRECTIONS = ["down_left", "down_right", "up_left", "up_right"]
@@ -56,7 +56,31 @@ def main() -> None:
         actual = species[name]["runtime_group_indices"]
         assert actual == expected, (name, expected, actual)
 
-    print("DS direction registry valid: 82/82 official species have explicit audited source boxes")
+    # When the rebuild has already run, prove every official non-Agumon output
+    # was produced through this exact registry rather than an older heuristic.
+    database = json.loads(Path("database/base-digimon-list.json").read_text(encoding="utf-8"))
+    by_name = {str(row.get("name")): row for row in database}
+    generated = 0
+    for name in WTW_IDS:
+        if name == "Agumon":
+            continue
+        row = by_name[name]
+        meta_path = Path("assets/characters") / portrait_key(row) / "field.json"
+        if not meta_path.exists():
+            continue
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        spec = species[name]
+        assert meta.get("source_variant") == "withthewill_audited_exact_boxes", name
+        assert meta.get("direction_registry") == "res://database/ds-direction-registry.json", name
+        assert meta.get("source_sha256") == spec["source_sha256"], name
+        assert meta.get("runtime_group_indices") == spec["runtime_group_indices"], name
+        assert meta.get("audited_source_frames") == spec["frames"], name
+        assert meta.get("directions") == DIRECTIONS, name
+        generated += 1
+
+    if generated not in (0, 81):
+        raise RuntimeError(f"Partial exact-registry generation detected: {generated}/81 official non-Agumon sprites")
+    print(f"DS direction registry valid: 82/82 exact mappings; generated metadata checked={generated}/81")
 
 
 if __name__ == "__main__":
