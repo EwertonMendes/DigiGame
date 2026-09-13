@@ -39,6 +39,8 @@ jobs:
               if sprite_id in wanted and base.lower().endswith(('.png', '.gif')):
                   (out / base).write_bytes(archive.read(name))
                   print(base)
+          (out / 'REFERENCE_Agumon_field.png').write_bytes(Path('assets/characters/agumon/field.png').read_bytes())
+          (out / 'REFERENCE_Agumon_field.json').write_bytes(Path('assets/characters/agumon/field.json').read_bytes())
           PY
       - uses: actions/upload-artifact@v4
         with:
