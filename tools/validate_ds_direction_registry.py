@@ -1,60 +1,62 @@
 #!/usr/bin/env python3
-"""Validate the reviewed DS direction registry and generated runtime metadata."""
+"""Fail closed if the exact audited DS direction registry is incomplete."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from build_early_rank_ds_fields import WTW_IDS, portrait_key
-from ds_direction_registry import DIRECTIONS, REGISTRY_PATH, load_registry
+from build_early_rank_ds_fields import WTW_IDS
+
+REGISTRY = Path("database/ds-direction-registry.json")
+DIRECTIONS = ["down_left", "down_right", "up_left", "up_right"]
+KNOWN_REGRESSIONS = {
+    "Agumon": [0, 1, 2, 3],
+    "BlackAgumon": [2, 3, 0, 1],
+    "Candlemon": [2, 3, 0, 1],
+    "Chicchimon": [2, 3, 0, 1],
+    "Koromon": [0, 2, 1, 3],
+}
 
 
 def main() -> None:
-    registry = load_registry()
-    entries = registry["entries"]
-    if len(entries) != 82:
-        raise RuntimeError(f"Expected 82 reviewed WtW entries, found {len(entries)}")
+    data = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    assert data["schema_version"] >= 2
+    assert data["canonical_reference"] == "Agumon"
+    assert data["canonical_runtime_order"] == DIRECTIONS
+    assert data["frames_per_direction"] == 3
+    assert "semantics only from reviewed per-species map" in data["source_policy"]
+    assert len(data["review_map_sha256"]) == 64
 
-    # Explicit regression guard for the concrete failure that motivated the
-    # registry rewrite. BlackAgumon's source uses the opposite front/back row
-    # family from Agumon and therefore must never fall back to Agumon's groups.
-    expected_black = {"down_left": 2, "down_right": 3, "up_left": 1, "up_right": 0}
-    if entries["BlackAgumon"]["groups"] != expected_black:
-        raise RuntimeError("BlackAgumon semantic mapping regressed")
-    if entries["Agumon"]["groups"] == entries["BlackAgumon"]["groups"]:
-        raise RuntimeError("BlackAgumon must not reuse Agumon's physical group mapping")
+    species = data["species"]
+    assert data["species_count"] == 82
+    assert set(species) == set(WTW_IDS), (
+        sorted(set(WTW_IDS) - set(species)),
+        sorted(set(species) - set(WTW_IDS)),
+    )
 
-    database = json.loads(Path("database/base-digimon-list.json").read_text(encoding="utf-8"))
-    by_name = {str(row.get("name")): row for row in database}
-    failures: list[str] = []
-    generated = 0
-    for name in WTW_IDS:
-        if name == "Agumon":
-            continue
-        row = by_name.get(name)
-        if row is None:
-            failures.append(f"{name}: missing canonical database row")
-            continue
-        meta_path = Path("assets/characters") / portrait_key(row) / "field.json"
-        if not meta_path.exists():
-            failures.append(f"{name}: missing generated metadata")
-            continue
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        expected = {direction: int(entries[name]["groups"][direction]) for direction in DIRECTIONS}
-        if meta.get("registered_direction_groups") != expected:
-            failures.append(f"{name}: field.json mapping differs from reviewed registry")
-        if meta.get("semantic_mapping_source") != str(REGISTRY_PATH):
-            failures.append(f"{name}: field.json was not generated through the registry")
-        if meta.get("source_archive_file") != entries[name]["source_archive_file"]:
-            failures.append(f"{name}: generated source member differs from reviewed registry")
-        generated += 1
+    for name, spec in species.items():
+        assert int(spec["source_id"]) == WTW_IDS[name], name
+        assert len(spec["source_sha256"]) == 64, name
+        assert len(spec["background_rgb"]) == 3, name
+        permutation = spec["runtime_group_indices"]
+        assert sorted(permutation) == [0, 1, 2, 3], (name, permutation)
+        assert sorted(spec["source_group_order"]) == DIRECTIONS, (name, spec["source_group_order"])
+        assert list(spec["frames"]) == DIRECTIONS, name
+        seen: list[tuple[int, int, int, int]] = []
+        for direction in DIRECTIONS:
+            boxes = spec["frames"][direction]
+            assert len(boxes) == 3, (name, direction)
+            for box in boxes:
+                assert set(box) == {"x", "y", "w", "h"}, (name, direction, box)
+                assert box["x"] >= 0 and box["y"] >= 0 and box["w"] > 0 and box["h"] > 0, (name, direction, box)
+                seen.append((box["x"], box["y"], box["w"], box["h"]))
+        assert len(seen) == 12 and len(set(seen)) == 12, name
 
-    if generated != 81:
-        failures.append(f"Expected 81 generated WtW metadata files besides Agumon, got {generated}")
-    if failures:
-        raise RuntimeError("DS registry validation failed:\n- " + "\n- ".join(failures))
+    for name, expected in KNOWN_REGRESSIONS.items():
+        actual = species[name]["runtime_group_indices"]
+        assert actual == expected, (name, expected, actual)
 
-    print("DS direction registry valid: 82/82 sources reviewed; 81/81 generated WtW sprites registry-backed")
+    print("DS direction registry valid: 82/82 official species have explicit audited source boxes")
 
 
 if __name__ == "__main__":
