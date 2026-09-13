@@ -9,16 +9,12 @@ extends Node
 
 signal track_changed(track_id: String)
 
+const EmbeddedMusicData = preload("res://src/audio/EmbeddedMusicData.gd")
+
 const TRACK_ZONE_1 := "zone_1"
 const TRACK_BATTLE_1 := "battle_1"
 const DEFAULT_CROSSFADE_SECONDS := 0.55
 const SILENT_VOLUME_DB := -60.0
-
-# Keep the streams as static dependencies. Dynamic string-based loads work from
-# an editor checkout but can be omitted from an exported PCK because the exporter
-# cannot discover that dependency relationship.
-const ZONE_1_STREAM = preload("res://assets/audio/music/zone_1.ogg")
-const BATTLE_1_STREAM = preload("res://assets/audio/music/battle_1.ogg")
 
 const TRACKS := {
 	TRACK_ZONE_1: {
@@ -136,28 +132,12 @@ func has_track(track_id: String) -> bool:
 func _stream_for(track_id: String) -> AudioStream:
 	if _stream_cache.has(track_id):
 		return _stream_cache[track_id] as AudioStream
-	var stream: AudioStream = null
-	match track_id:
-		TRACK_ZONE_1:
-			stream = ZONE_1_STREAM as AudioStream
-		TRACK_BATTLE_1:
-			stream = BATTLE_1_STREAM as AudioStream
-		_:
-			return null
+	var stream := EmbeddedMusicData.build_stream(track_id) as AudioStreamMP3
 	if stream == null:
 		return null
-	_configure_loop(stream)
+	stream.loop = true
 	_stream_cache[track_id] = stream
 	return stream
-
-
-func _configure_loop(stream: AudioStream) -> void:
-	if stream is AudioStreamOggVorbis:
-		(stream as AudioStreamOggVorbis).loop = true
-	elif stream is AudioStreamMP3:
-		(stream as AudioStreamMP3).loop = true
-	elif stream is AudioStreamWAV:
-		(stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
 
 
 func _finish_crossfade(previous_player: AudioStreamPlayer, active_player: AudioStreamPlayer) -> void:
