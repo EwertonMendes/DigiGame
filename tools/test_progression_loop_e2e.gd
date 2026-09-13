@@ -73,7 +73,7 @@ func _run_full_progression_loop() -> void:
 	assert(results_screen.visible, "Victory must open Battle Results before returning to Hub")
 	assert((results_screen.get("_cards") as Array).size() == initial_party.size(), "Battle Results must represent every participating Digimon")
 	results_screen.hide_result()
-	results_screen.queue_free()
+	results_screen.free()
 
 	# Simulate closing/reopening the game by serializing and reloading the singleton state.
 	assert(OverworldState.save_progress(), "Battle progression must persist")
@@ -131,6 +131,8 @@ func _run_full_progression_loop() -> void:
 	var evolved_enemy_actor := _actor_for(evolved_enemy, false, "wild")
 	var evolved_enemies: Array[Node] = [evolved_enemy_actor]
 	var battle_three: Dictionary = _reward_service.apply_victory_rewards(evolved_players, evolved_enemies)
+	evolved_actor.free()
+	evolved_enemy_actor.free()
 	var evolved_xp := int(((battle_three.get("xp_rewards", {}) as Dictionary).get("total_enemy_xp_value", 0)))
 	assert(evolved_xp > 0, "Evolved form must receive battle XP")
 	OverworldState.apply_account_rewards(int(battle_three.get("bits", 0)), battle_three.get("digi_data", {}) as Dictionary)
@@ -167,7 +169,12 @@ func _victory(players: Array[DigimonInstance], enemy_name: String, enemy_level: 
 		var enemy: DigimonInstance = _factory.create_enemy_by_name(enemy_name, enemy_level, profile)
 		assert(enemy != null, "E2E enemy species must exist")
 		enemy_actors.append(_actor_for(enemy, false, profile))
-	return _reward_service.apply_victory_rewards(player_actors, enemy_actors)
+	var result: Dictionary = _reward_service.apply_victory_rewards(player_actors, enemy_actors)
+	for actor: Node in player_actors:
+		actor.free()
+	for actor: Node in enemy_actors:
+		actor.free()
+	return result
 
 
 func _actor_for(instance: DigimonInstance, player_controlled: bool, profile: String = "wild") -> Node:
