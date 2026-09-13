@@ -39,6 +39,7 @@ func apply_victory_rewards(player_actors: Array[Node], defeated_enemy_actors: Ar
 			"species_seed": instance.species_seed,
 			"level": instance.level,
 			"profile": String(actor.get_meta("encounter_profile", "wild")) if actor != null else "wild",
+			"reward_modifier": float(actor.get_meta("reward_modifier", 1.0)) if actor != null else 1.0,
 		})
 
 	var rewards: BattleRewards = _calculator.calculate(players, enemies, difficulty_modifier)

@@ -53,9 +53,10 @@ func _apply_enemy_economic_rewards(rewards: BattleRewards, enemy: Dictionary, di
 		return
 	var level := maxi(1, int(enemy.get("level", 1)))
 	var profile := String(enemy.get("profile", "wild"))
-	rewards.bits += bits_for_enemy(level, species, profile, difficulty)
+	var modifier := difficulty * maxf(0.0, float(enemy.get("reward_modifier", 1.0)))
+	rewards.bits += bits_for_enemy(level, species, profile, modifier)
 	var species_name := String(species.get("name", seed))
-	var data_gain := digi_data_for_enemy(level, species, profile, difficulty)
+	var data_gain := digi_data_for_enemy(level, species, profile, modifier)
 	rewards.digi_data[species_name] = int(rewards.digi_data.get(species_name, 0)) + data_gain
 
 
@@ -68,12 +69,13 @@ func _apply_player_xp(rewards: BattleRewards, player: Dictionary, enemies: Array
 		return
 	var recipient_level := maxi(1, int(player.get("level", 1)))
 	var participant_multiplier := _balance.party_number("participantXpMultiplier", 1.0)
-	var total := 0
+	var total := 0.0
 	for enemy: Dictionary in enemies:
 		var species := _database.get_by_seed(String(enemy.get("species_seed", "")))
 		if species.is_empty():
 			continue
 		var enemy_level := maxi(1, int(enemy.get("level", 1)))
 		var profile := String(enemy.get("profile", "wild"))
-		total += _experience.reward_for_enemy(recipient_level, enemy_level, species, profile)
-	rewards.xp_by_instance[instance_id] = maxi(0, int(round(float(total) * participant_multiplier * difficulty)))
+		var enemy_modifier := maxf(0.0, float(enemy.get("reward_modifier", 1.0)))
+		total += float(_experience.reward_for_enemy(recipient_level, enemy_level, species, profile)) * enemy_modifier
+	rewards.xp_by_instance[instance_id] = maxi(0, int(round(total * participant_multiplier * difficulty)))
