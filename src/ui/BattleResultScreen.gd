@@ -59,7 +59,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func show_result(result: Dictionary) -> void:
-	var key := "%s:%s:%s" % [String(result.get("battle_seed", "")), String(result.get("outcome", "")), String(result.get("acts", ""))]
+	# Result fields are intentionally an extensible Variant-based contract. Use
+	# str() here because numeric `acts` is valid input and String(int) is not a
+	# supported constructor in Godot 4.7.
+	var key := "%s:%s:%s" % [str(result.get("battle_seed", "")), str(result.get("outcome", "")), str(result.get("acts", ""))]
 	if visible and key == _result_key:
 		return
 	_result_key = key
