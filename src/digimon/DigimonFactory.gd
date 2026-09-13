@@ -71,7 +71,9 @@ func potential_from_scan_percent(scan_percent: int) -> int:
 func _create_instance(species: Dictionary, level: int, initial_potential: int, source: String) -> DigimonInstance:
 	var instance: DigimonInstance = InstanceScript.new()
 	instance.species_seed = String(species.get("seed", ""))
-	instance.species_history = [instance.species_seed] if not instance.species_seed.is_empty() else []
+	instance.species_history.clear()
+	if not instance.species_seed.is_empty():
+		instance.species_history.append(instance.species_seed)
 	instance.level = clampi(level, 1, _balance.max_level())
 	instance.exp = 0
 	instance.potential = clampi(initial_potential, 0, DigimonInstance.MAX_POTENTIAL)
