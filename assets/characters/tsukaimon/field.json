@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/068_Tsukaimon.png",
   "source_id": 68,
   "source_sha256": "0493c4e1ba56bdab844193543a2ed0670924423e6839edbfe202948a28798500",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 2,
+        "y": 164,
+        "w": 23,
+        "h": 21
+      },
+      {
+        "x": 35,
+        "y": 162,
+        "w": 21,
+        "h": 23
+      },
+      {
+        "x": 66,
+        "y": 162,
+        "w": 20,
+        "h": 24
+      }
+    ],
+    "down_right": [
+      {
+        "x": 98,
+        "y": 162,
+        "w": 20,
+        "h": 24
+      },
+      {
+        "x": 128,
+        "y": 162,
+        "w": 21,
+        "h": 23
+      },
+      {
+        "x": 159,
+        "y": 164,
+        "w": 23,
+        "h": 21
+      }
+    ],
+    "up_left": [
+      {
+        "x": 8,
+        "y": 134,
+        "w": 21,
+        "h": 21
+      },
+      {
+        "x": 39,
+        "y": 132,
+        "w": 19,
+        "h": 23
+      },
+      {
+        "x": 68,
+        "y": 133,
+        "w": 20,
+        "h": 24
+      }
+    ],
+    "up_right": [
+      {
+        "x": 96,
+        "y": 133,
+        "w": 20,
+        "h": 24
+      },
+      {
+        "x": 126,
+        "y": 132,
+        "w": 19,
+        "h": 23
+      },
+      {
+        "x": 155,
+        "y": 134,
+        "w": 21,
+        "h": 21
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "4bf475392aee7d28ae79679bcaa662a51513d19228d84f47724e50512232e505",
+      "3c04ac19417dee6afe9843f202cfaa66ef45ac90b3ad0829ac7c325f2b4cee8c",
+      "0f36dd37a28d1128d54d209fb6d7f515023002cf5c5c22d382a86be20d46c1fb"
+    ],
+    "down_right": [
+      "764023f0954fd5d7fbe86aa3b55a414f201671d5302dc36d395513f1904e7a93",
+      "3acd63364ea60b0413832f24c6ac551b8f43f58b7c3c7db5fb2137dbb4176623",
+      "3f087765412fcce6cd0bfa78b6e81d9501b6395e5be2a6bbca3bffb1228e7691"
+    ],
+    "up_left": [
+      "6f4f9622b84307d243e33f85dbbbc0bf1134d54221c3abd6fdda465149e4b08a",
+      "abd03e2f5563dd619779f51de2f79e31b1d3adbbf2770f414e1f8be8cfb59bb3",
+      "c0c498b621bbb8485d45b533664ada194df953145d61a87229779edf10ac078d"
+    ],
+    "up_right": [
+      "c5bca96fdb1ff5bfb69fbde43d99c31f1a025821847eb8e9d708884b665a42c8",
+      "67f614bef18efe3e79fbb0f81723a420c336f71007c86f8c7ca5512e313ecd2d",
+      "449e0231b1ce59192388df9c6ddab77475103720e1bb0bdab01a4697e6eaa2ef"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/tsukaimon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/tsukaimon/field.png"
 }

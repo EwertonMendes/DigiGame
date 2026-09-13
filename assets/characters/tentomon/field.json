@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/034_Tentomon.png",
   "source_id": 34,
   "source_sha256": "0f352c395f0707158e942d9e3e973f5d2abd233ed915aedb77acb4f58000117a",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 20,
+        "y": 206,
+        "w": 24,
+        "h": 23
+      },
+      {
+        "x": 50,
+        "y": 206,
+        "w": 23,
+        "h": 23
+      },
+      {
+        "x": 78,
+        "y": 207,
+        "w": 22,
+        "h": 22
+      }
+    ],
+    "down_right": [
+      {
+        "x": 134,
+        "y": 207,
+        "w": 22,
+        "h": 22
+      },
+      {
+        "x": 159,
+        "y": 206,
+        "w": 23,
+        "h": 23
+      },
+      {
+        "x": 186,
+        "y": 206,
+        "w": 24,
+        "h": 23
+      }
+    ],
+    "up_left": [
+      {
+        "x": 27,
+        "y": 170,
+        "w": 21,
+        "h": 22
+      },
+      {
+        "x": 53,
+        "y": 169,
+        "w": 22,
+        "h": 23
+      },
+      {
+        "x": 78,
+        "y": 168,
+        "w": 22,
+        "h": 24
+      }
+    ],
+    "up_right": [
+      {
+        "x": 134,
+        "y": 169,
+        "w": 22,
+        "h": 24
+      },
+      {
+        "x": 159,
+        "y": 170,
+        "w": 22,
+        "h": 23
+      },
+      {
+        "x": 186,
+        "y": 171,
+        "w": 21,
+        "h": 22
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "b3569a84e234bd3761ae1f9ebc23992585b553603a0bb14441f50052f4437c47",
+      "91105c94773d8b8f1200e7fa7db0367978000e674aae4889081e9f90796ae260",
+      "d9308286b55a4237753570e23e809226ef2b96b33f59226d49d7a0a43073a48c"
+    ],
+    "down_right": [
+      "8f59f39c66f9a6238197142fdfc1205230046d862b8125c780c319efeb654644",
+      "5a8be6e90485130fdc0e7681de4a9f25e6a8e96b332db3d155886413b9d4808b",
+      "c845e9c2f9d75847a0f1d80f7383e3d62cacc8d1db6f2320c3bef35ba4916900"
+    ],
+    "up_left": [
+      "a1d399c789762f1dc5acacc4c75d2db6fb99cc56b9ddcc3febfb0a9ce1fcbbb9",
+      "7a5042d915fa3c3e4058c31e3087890505be54c362a8fdecc83926419518c7d6",
+      "117ca43b503e86569bcd3a0597656bd65731ce9c38e0328cf1b6b692e6e8271f"
+    ],
+    "up_right": [
+      "fdc34d5476efb20448c03ef30c6e8d6eab9793a1362cf079869b4b9fdc3ba2b9",
+      "348e28bb34af9ce4ea2fa14ed6057277bc3b799453d3d0dac274cdabe0fcb531",
+      "14cb88c15c0f36c8bb2d816beabcfb7109312ca54bc358d20f1a72c5cac97212"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/tentomon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/tentomon/field.png"
 }

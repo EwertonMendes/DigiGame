@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/081_Kokuwamon.png",
   "source_id": 81,
   "source_sha256": "29a9d32db1171e8fa80a2ead4077caab55d6e0777b11dcb55c30fd0345495dcd",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 39,
+        "y": 214,
+        "w": 22,
+        "h": 28
+      },
+      {
+        "x": 71,
+        "y": 214,
+        "w": 24,
+        "h": 30
+      },
+      {
+        "x": 104,
+        "y": 213,
+        "w": 22,
+        "h": 30
+      }
+    ],
+    "down_right": [
+      {
+        "x": 136,
+        "y": 213,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 167,
+        "y": 214,
+        "w": 24,
+        "h": 30
+      },
+      {
+        "x": 201,
+        "y": 214,
+        "w": 22,
+        "h": 28
+      }
+    ],
+    "up_left": [
+      {
+        "x": 44,
+        "y": 178,
+        "w": 18,
+        "h": 29
+      },
+      {
+        "x": 72,
+        "y": 177,
+        "w": 21,
+        "h": 30
+      },
+      {
+        "x": 103,
+        "y": 178,
+        "w": 23,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 136,
+        "y": 178,
+        "w": 23,
+        "h": 30
+      },
+      {
+        "x": 169,
+        "y": 177,
+        "w": 21,
+        "h": 30
+      },
+      {
+        "x": 200,
+        "y": 178,
+        "w": 18,
+        "h": 29
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "b68bdafcb531f045b2bf801dd52171157dad29d71d3015b69b3d3a0fd5ed2b0a",
+      "e43382fae0129dc2a07d778087fe2b02775c5ce762fe107e5d1801b56e47773a",
+      "7de765755f410951c30c7f32130cf4dbf0b93f94cd67a526ba33ac35cf865a76"
+    ],
+    "down_right": [
+      "82bdc3e8d5c85b15a30bcdea4b2a3294ecbc5771e3a0636b5dac485357fea154",
+      "1ed57f43247a8c0d00f5b0b3290dc270747baf13e3bad27e90b31446300daeb2",
+      "7c8028fe6bbb52b055524140838098cd5d4916df0d18dbf4a920d93f074dda72"
+    ],
+    "up_left": [
+      "967ae7d014e5a767bae54c2b6ff1ed9534bbb75c47bc8299eee2ae0991eb9545",
+      "e880e45d3196fe2e938fb8f6f0e5b36815ad1ed79a0401a3308ec9667a510a59",
+      "0519bd3ed787c2eefd5f37ab82fc3e3cfdf6554044686fc9d8749e6d781486be"
+    ],
+    "up_right": [
+      "3bf5e17872644513595228041c047426cb6d8a0938d80382d96c702b8f316359",
+      "f09133e6937f3dbcdbe49d34555b104d4d777bbb9a149e8feb63e2dae4ef1d97",
+      "a886e0baa68b93de31f4bb9c3f33328c9f161a9bff6a7d93cf0b1a10b7b9a598"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 34,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/kokuwamon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/kokuwamon/field.png"
 }

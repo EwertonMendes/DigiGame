@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/033_Palmon.png",
   "source_id": 33,
   "source_sha256": "5780858e135b4de73662a112aff3a812a61fe42dcae880462f66d7d4400f5881",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 3,
+        "y": 124,
+        "w": 20,
+        "h": 29
+      },
+      {
+        "x": 37,
+        "y": 123,
+        "w": 21,
+        "h": 28
+      },
+      {
+        "x": 70,
+        "y": 123,
+        "w": 24,
+        "h": 30
+      }
+    ],
+    "down_right": [
+      {
+        "x": 119,
+        "y": 123,
+        "w": 24,
+        "h": 30
+      },
+      {
+        "x": 155,
+        "y": 123,
+        "w": 21,
+        "h": 28
+      },
+      {
+        "x": 190,
+        "y": 124,
+        "w": 20,
+        "h": 29
+      }
+    ],
+    "up_left": [
+      {
+        "x": 2,
+        "y": 182,
+        "w": 21,
+        "h": 28
+      },
+      {
+        "x": 31,
+        "y": 180,
+        "w": 25,
+        "h": 30
+      },
+      {
+        "x": 68,
+        "y": 183,
+        "w": 21,
+        "h": 27
+      }
+    ],
+    "up_right": [
+      {
+        "x": 123,
+        "y": 183,
+        "w": 21,
+        "h": 27
+      },
+      {
+        "x": 156,
+        "y": 180,
+        "w": 25,
+        "h": 30
+      },
+      {
+        "x": 189,
+        "y": 182,
+        "w": 21,
+        "h": 28
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "0b4ea432193df42a5a7fad4d12ccd62465693a4c6bfd813743b419f3be0e243d",
+      "27caaff92a28badd6ea0dc22f1bc5eda775ae0ba3db129e12cf98bf838ecc99d",
+      "797175df84eb1fdefd2d1893f8866b63f02533d955470c3027fb7618f6802679"
+    ],
+    "down_right": [
+      "82e60751a16f175288e4666c973ae3c86f3d82013755d8bbe96b144f5f744b3d",
+      "c4334806f05b277093b5ee7609eec92575df1040ca2b97b7044a7f4b32736c1b",
+      "1d9826f8d6c848dbbabe4ef79ad85ba5dfc2c5641374d701647ebbcc1ce0ee4c"
+    ],
+    "up_left": [
+      "d20ebf3d9f5caf62dc1dbcfacacd6523fb92459fad38fc8c2b2fd3f2474a8d62",
+      "2ec7e95b394c51e954e8471c919b4f6b1a8786a634611811e92cd98aea52df46",
+      "406da78bb0cca93d0007202998f82cf0f29b04d331e8473110b9136ad2479f71"
+    ],
+    "up_right": [
+      "01f11ee7088dc33d8fec89760c4c93dfe85e2ed5442debebe38e3c1580370f3e",
+      "4e1fdda4c9f7dd0718ca56a8b77af2ede0a361cee142bdf25beadb5e37830bc6",
+      "ae12738e1addbc857dcb66755644752214e73592d8104c16b2f7122767ad5105"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 34,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/palmon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/palmon/field.png"
 }

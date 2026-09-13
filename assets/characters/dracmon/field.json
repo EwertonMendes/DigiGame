@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/074_Dracmon.png",
   "source_id": 74,
   "source_sha256": "ef5735b44831c582bcb9b23b1bc37166bc68ebe0ad95ef9e5edf15db5c248350",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 12,
+        "y": 182,
+        "w": 19,
+        "h": 27
+      },
+      {
+        "x": 47,
+        "y": 182,
+        "w": 22,
+        "h": 29
+      },
+      {
+        "x": 86,
+        "y": 181,
+        "w": 20,
+        "h": 29
+      }
+    ],
+    "down_right": [
+      {
+        "x": 122,
+        "y": 181,
+        "w": 20,
+        "h": 29
+      },
+      {
+        "x": 159,
+        "y": 182,
+        "w": 22,
+        "h": 29
+      },
+      {
+        "x": 197,
+        "y": 182,
+        "w": 19,
+        "h": 27
+      }
+    ],
+    "up_left": [
+      {
+        "x": 13,
+        "y": 222,
+        "w": 21,
+        "h": 27
+      },
+      {
+        "x": 51,
+        "y": 223,
+        "w": 21,
+        "h": 27
+      },
+      {
+        "x": 86,
+        "y": 223,
+        "w": 22,
+        "h": 28
+      }
+    ],
+    "up_right": [
+      {
+        "x": 120,
+        "y": 223,
+        "w": 22,
+        "h": 28
+      },
+      {
+        "x": 156,
+        "y": 223,
+        "w": 21,
+        "h": 27
+      },
+      {
+        "x": 194,
+        "y": 222,
+        "w": 21,
+        "h": 27
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "3cdcddd6f1fe415d61171acb407c3cda6a342ccd876c03c73f16d1ce6ae7ac6d",
+      "4d5ffe59ee0aaa9a7ffe7aa46a94d2df44166baf420cf863f739e72449a09cbb",
+      "fdf7ba3954533b62a86ca511c90152122f8a0c00e19aadff3af3fd09f6f3e86a"
+    ],
+    "down_right": [
+      "8d4ed5972b7bd8929e35d4b0d818f968784b77af7ada9c7740d9b0498561e41b",
+      "e155542711584236a108ae1a36f40dfb21aaa52205ebe12b5a98f8e64ab1c23d",
+      "4a38ebf385a919f4f6e08a0aeff03b3eaa11583a6dd01df31d56decc8dd00471"
+    ],
+    "up_left": [
+      "069ffe44ba7bac6279ef5f2461120664ce30a93188f4b69d6bd2f11511470141",
+      "dd10cb2e8a3fed6ecc2efbb7d2c5761717f475399ccd0c16872dc44f630edcc5",
+      "abff8d06575bd8e14f420fc6b96ef347f41ad2531dac29db06e8ce6e31c533ed"
+    ],
+    "up_right": [
+      "a49cf7ca3f5b8b56294a2c9dd9223533f360e0efdcf6db4e63e703681d0352d1",
+      "4bc5320c3ba00aab550f4276f2cafdbf92111f13376c4e821a6c5760d04afc50",
+      "a5d9ed7869119a1f4ab4371fb2158c86037dcbfe7fb04fc0da2945f98319b56d"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 33,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/dracmon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/dracmon/field.png"
 }

@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/084_Lunamon.png",
   "source_id": 84,
   "source_sha256": "beee35401aecff2c8a65113066365d2af937a03b751271c331e90dd470463e9c",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 3,
+        "y": 138,
+        "w": 26,
+        "h": 29
+      },
+      {
+        "x": 32,
+        "y": 138,
+        "w": 26,
+        "h": 28
+      },
+      {
+        "x": 61,
+        "y": 137,
+        "w": 28,
+        "h": 29
+      }
+    ],
+    "down_right": [
+      {
+        "x": 101,
+        "y": 137,
+        "w": 28,
+        "h": 29
+      },
+      {
+        "x": 132,
+        "y": 138,
+        "w": 26,
+        "h": 28
+      },
+      {
+        "x": 161,
+        "y": 138,
+        "w": 26,
+        "h": 29
+      }
+    ],
+    "up_left": [
+      {
+        "x": 3,
+        "y": 170,
+        "w": 27,
+        "h": 27
+      },
+      {
+        "x": 34,
+        "y": 170,
+        "w": 27,
+        "h": 26
+      },
+      {
+        "x": 63,
+        "y": 169,
+        "w": 28,
+        "h": 27
+      }
+    ],
+    "up_right": [
+      {
+        "x": 101,
+        "y": 169,
+        "w": 28,
+        "h": 27
+      },
+      {
+        "x": 131,
+        "y": 170,
+        "w": 27,
+        "h": 26
+      },
+      {
+        "x": 162,
+        "y": 170,
+        "w": 27,
+        "h": 27
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "e317e50fb1ea3fa11f733416156d926e0f0b702fcd024dd74409781326123c51",
+      "9908935e191ebbaeba17e0722ed620a91fbd5d0b34a50c650a9927b772b680c6",
+      "df58ffd8b2c8153ad0e298551eeac06457492b210fe6e6c3be5fcb57a7a4a6c9"
+    ],
+    "down_right": [
+      "aa421c9d0016385a0a6e144355a22c184a6a35d2d8c786cde80b16cb17bba8ca",
+      "9e3195e41c15074c64f22afaff366f28d87113bf90c506ac537ab6897e0d77b3",
+      "a35737ec89fc8457a8730937c28cde3d9371d3c07fd76b9efa7fbcefd5f47cbb"
+    ],
+    "up_left": [
+      "3f559c4e2bead2283d777979bd7ce941bda959dad5ab5c9d86882da541874ca3",
+      "ed0e88b774464e50d464d4133f33b629902733afa862c6b7bfc27588324fbfec",
+      "83e5c9fea1bc60cbcc5ab5cd1b6f10f9a003a78de0f3447d04db0658c882bb9f"
+    ],
+    "up_right": [
+      "bef1d35075dbaada4601bcbf9ddd089f222c828c14debe6d4ee41f98e9df79d9",
+      "0709de5f676c082a2699709c3b306fc9c22f3f54aa051ea662c45dde40fe9d1a",
+      "f8bfa3ccd140b46243aef1d1259f4e03d5145833ca8cae34b30e1b2fdea9e93d"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 33,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/lunamon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/lunamon/field.png"
 }

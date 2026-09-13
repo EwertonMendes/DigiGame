@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/065_Raramon.png",
   "source_id": 65,
   "source_sha256": "314c8c042c905706bca8e1b4e518e0651dc35eaa63e6ab7755770f3d5891043d",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 7,
+        "y": 172,
+        "w": 18,
+        "h": 26
+      },
+      {
+        "x": 38,
+        "y": 170,
+        "w": 18,
+        "h": 28
+      },
+      {
+        "x": 68,
+        "y": 169,
+        "w": 18,
+        "h": 29
+      }
+    ],
+    "down_right": [
+      {
+        "x": 127,
+        "y": 169,
+        "w": 18,
+        "h": 29
+      },
+      {
+        "x": 157,
+        "y": 170,
+        "w": 18,
+        "h": 28
+      },
+      {
+        "x": 188,
+        "y": 172,
+        "w": 18,
+        "h": 26
+      }
+    ],
+    "up_left": [
+      {
+        "x": 8,
+        "y": 211,
+        "w": 18,
+        "h": 26
+      },
+      {
+        "x": 40,
+        "y": 209,
+        "w": 19,
+        "h": 28
+      },
+      {
+        "x": 74,
+        "y": 210,
+        "w": 18,
+        "h": 27
+      }
+    ],
+    "up_right": [
+      {
+        "x": 127,
+        "y": 210,
+        "w": 18,
+        "h": 27
+      },
+      {
+        "x": 160,
+        "y": 209,
+        "w": 19,
+        "h": 28
+      },
+      {
+        "x": 193,
+        "y": 211,
+        "w": 18,
+        "h": 26
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "67dfe9314a883a2b7e5b2d3c3e7b3a840cf15717e2a7914419ea39999db4eda8",
+      "9a3e48fe7c4a6be89ef594c85a6f770fb685e8efeb0746bf312e4a2154afcbb6",
+      "89130a1e244a7a86fe135d587510a7067ab3f72c698dfac8adc73fcdc8c34597"
+    ],
+    "down_right": [
+      "5e61f978a4f69021b5181da3e4eeba958fd9616a5d9cf8b49f4131c6b69609ff",
+      "45cc93056850853b1fdf1196810b62553114cd51a19a255fdcae6011fb3ab3fd",
+      "0ffecbac712c259ad9b86cd181345f0c34efba73f007fca40981821442789016"
+    ],
+    "up_left": [
+      "44c563f687dd6b5c6a87c71efeada9176bded9188ac3f7b9449a67198760bc00",
+      "c3dbc25fbc848681034d63d37d74a98f3ad808ca2d409a423e233e124f9305ee",
+      "575922703843aecb541dda26ef6632cfa7ecea378c84228e600501c9316e4bea"
+    ],
+    "up_right": [
+      "dfedcf928ce740fe216d5e40c841709f0e20abe076f2f4b27f38ff3d17408dde",
+      "bb867b18f06861cdfd48f11db8b01f84cc9e6cfd37fefd4d06bc52f7c997a773",
+      "84fdae9eb230c59a02475b14dc90834bf371db4b283b643b86c9dbd5eda181be"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 33,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/lalamon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/lalamon/field.png"
 }

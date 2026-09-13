@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/002_Koromon.png",
   "source_id": 2,
   "source_sha256": "7edca05cba54d9d954b6527e7b1f1c2621adc48994b4b002ff509b1b13a636f4",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "compact_interleaved",
+  "runtime_group_indices": [
+    0,
+    2,
+    1,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "up_left",
+    "down_right",
+    "up_right"
+  ],
+  "source_layout": "compact_four_groups",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 144,
+        "y": 5,
+        "w": 18,
+        "h": 18
+      },
+      {
+        "x": 171,
+        "y": 6,
+        "w": 19,
+        "h": 17
+      },
+      {
+        "x": 201,
+        "y": 8,
+        "w": 20,
+        "h": 15
+      }
+    ],
+    "down_right": [
+      {
+        "x": 147,
+        "y": 59,
+        "w": 20,
+        "h": 15
+      },
+      {
+        "x": 178,
+        "y": 57,
+        "w": 19,
+        "h": 17
+      },
+      {
+        "x": 206,
+        "y": 56,
+        "w": 18,
+        "h": 18
+      }
+    ],
+    "up_left": [
+      {
+        "x": 146,
+        "y": 30,
+        "w": 16,
+        "h": 19
+      },
+      {
+        "x": 172,
+        "y": 32,
+        "w": 17,
+        "h": 17
+      },
+      {
+        "x": 204,
+        "y": 34,
+        "w": 18,
+        "h": 15
+      }
+    ],
+    "up_right": [
+      {
+        "x": 146,
+        "y": 83,
+        "w": 18,
+        "h": 15
+      },
+      {
+        "x": 179,
+        "y": 81,
+        "w": 17,
+        "h": 17
+      },
+      {
+        "x": 206,
+        "y": 79,
+        "w": 16,
+        "h": 19
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "f1e3004aebfab07b0f0a711175f92e87684c5a48e506c016a3231fd536c89024",
+      "a3f63387a69e5baec3aef8c4ceeb67540057cf4bb230258454e719d902e51c72",
+      "7ba6ebc3ad8b70e6513a5c96db8362aeeba491688e9c9ef8d3c4f956b0979464"
+    ],
+    "down_right": [
+      "a1b573d6ffb5750a231ff2a2def336f50e4831f4075eee16f1a3c3a6eb56a02b",
+      "9e85aa7948cf69185158d46f4f1772df420ab7768a4d32eac9985c37c7a3ad2f",
+      "949aed9e32ac7515e65f8d52363c9b0f8ad2da7b9a31ea0ffab868ab3913157f"
+    ],
+    "up_left": [
+      "5705d23b7956bc83bbe7182bf5b397fe314f17f3f5a988e38cce6c19ce630690",
+      "3d721554af37aba086da49506d2dffc1744c59f8342a327e6af7a52abeff6017",
+      "b0aa31d6795503904ff5dee89c85b3500377198c439d2a9cb001b61f87811027"
+    ],
+    "up_right": [
+      "2069227426d3ab1467b4beb3e5e9ba4122b0efee5e85e5d18d2574f9b8f2e03b",
+      "3a3064eff6c71421954e39db08ecab0019eb488724c899276c862ff1c270d792",
+      "f97344d8a137b21b973a20df48d517622a53d5d164f6b03c7408657aee86bbe3"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/koromon/field.png",
-  "source_layout": "compact_four_groups",
-  "source_group_order": [
-    "down_left",
-    "up_left",
-    "down_right",
-    "up_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 2,
-    "up_left": 1,
-    "up_right": 3
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    1
-  ]
+  "field_path": "res://assets/characters/koromon/field.png"
 }

@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/069_PawnChessmonBlack.png",
   "source_id": 69,
   "source_sha256": "fbf1796436d57e08443c7496bcda792d121c9641f91b4f605f025b2839961217",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 7,
+        "y": 228,
+        "w": 20,
+        "h": 28
+      },
+      {
+        "x": 44,
+        "y": 227,
+        "w": 22,
+        "h": 29
+      },
+      {
+        "x": 81,
+        "y": 227,
+        "w": 19,
+        "h": 29
+      }
+    ],
+    "down_right": [
+      {
+        "x": 119,
+        "y": 227,
+        "w": 19,
+        "h": 29
+      },
+      {
+        "x": 153,
+        "y": 227,
+        "w": 22,
+        "h": 29
+      },
+      {
+        "x": 192,
+        "y": 228,
+        "w": 20,
+        "h": 28
+      }
+    ],
+    "up_left": [
+      {
+        "x": 6,
+        "y": 288,
+        "w": 19,
+        "h": 28
+      },
+      {
+        "x": 43,
+        "y": 286,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 80,
+        "y": 288,
+        "w": 17,
+        "h": 28
+      }
+    ],
+    "up_right": [
+      {
+        "x": 120,
+        "y": 288,
+        "w": 17,
+        "h": 28
+      },
+      {
+        "x": 152,
+        "y": 286,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 192,
+        "y": 288,
+        "w": 19,
+        "h": 28
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "7a4247f7ea5ac60ad6c7828fa2596ace79be7459efb804006f348318799dffee",
+      "f77ff0a81e115a3e10e49d1cd82dc6922988e1190f00727a596b93bda622c209",
+      "16d64c89ddd14104e4357df36862ab5923f38cfa75a7c065750997f7629daa9f"
+    ],
+    "down_right": [
+      "fbd3c9cb124018ab23b3f0d7b82c746c8e383920abd2d8b1f51b9d841c325a73",
+      "fabc8906fc82039e11c0f8d4e0097f2a198ebe761a5a661af8ca88a945980941",
+      "77f0815af09e53cf127b7549d4f8e667a8d22bedfd299453778c2e1a99cae8bf"
+    ],
+    "up_left": [
+      "935cccfa185b2404c0ed6e273599a2d937ac3fe37675fbc64a63f4c77399ef20",
+      "c6fdbd435db8bd84df250960aadd1724ebb843af82c50a45bb0addaaaa58837a",
+      "1f288f128e173241df050881abcf493eed37a30494d629a0a9e42aac7fca5e17"
+    ],
+    "up_right": [
+      "9312b645156bd6e036dbe251271c0cb2b7b4c177f6e7a680d8bccee0edead546",
+      "401284f60b4671a0a227d33a3fcb4ac4d56e8535d9ddc8d8a5d1add00e35bafe",
+      "aa1cbd1aae89cc1fd2c0a8861d773c121810d6ea3864eaa0993e1e513e1a750c"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 34,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/pawnchessmonblack/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/pawnchessmonblack/field.png"
 }

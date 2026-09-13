@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/078_Mushmon.png",
   "source_id": 78,
   "source_sha256": "6f51d4116ce060f9069d104d90a75c9b08e78b86403b6d7915e8e76ac2de6c37",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 14,
+        "y": 172,
+        "w": 20,
+        "h": 25
+      },
+      {
+        "x": 44,
+        "y": 171,
+        "w": 22,
+        "h": 28
+      },
+      {
+        "x": 76,
+        "y": 172,
+        "w": 24,
+        "h": 27
+      }
+    ],
+    "down_right": [
+      {
+        "x": 109,
+        "y": 172,
+        "w": 24,
+        "h": 27
+      },
+      {
+        "x": 143,
+        "y": 171,
+        "w": 22,
+        "h": 28
+      },
+      {
+        "x": 175,
+        "y": 172,
+        "w": 20,
+        "h": 25
+      }
+    ],
+    "up_left": [
+      {
+        "x": 16,
+        "y": 137,
+        "w": 19,
+        "h": 26
+      },
+      {
+        "x": 45,
+        "y": 136,
+        "w": 21,
+        "h": 28
+      },
+      {
+        "x": 76,
+        "y": 137,
+        "w": 24,
+        "h": 28
+      }
+    ],
+    "up_right": [
+      {
+        "x": 109,
+        "y": 137,
+        "w": 24,
+        "h": 28
+      },
+      {
+        "x": 143,
+        "y": 136,
+        "w": 21,
+        "h": 28
+      },
+      {
+        "x": 174,
+        "y": 137,
+        "w": 19,
+        "h": 26
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "bd2f0f3748c3ec40153e88b50331158b76d36b5501798befd254f0d11cac300f",
+      "8559f53703bafbdb216ecf20af84c4d34610abb71f53a9947341482ba3235293",
+      "db93f5dc6e8bf6a3c8b839dc4ed1ecc4c6cd781125b54ed563a1cdae4b87b7b3"
+    ],
+    "down_right": [
+      "1e0a9079053a41f33d9735caa54389a57ffc00d2618aa079ed884b9f3a980c66",
+      "06a5537e9346b11c6eeb9ff28488903697b478d00c600398d83ca8fcfc0b1a2c",
+      "24b7498bf42f119bc772a38727d443f542bc3286d7528fb603988c13d7fe8d89"
+    ],
+    "up_left": [
+      "5bc516ae333851f84c3abe17524432c015085694f8ef7ce042a980d6927794b8",
+      "04068facd9d5a6664f218469b9180ddf171e88ccb901a7e449b65bd4365fc065",
+      "81342e690968459a0d621cc93ece3cd234094630927c58dc3d0f5557e4fb022d"
+    ],
+    "up_right": [
+      "cdc1d35047f6d4fd3b577ed58079eac761e6e3bef35fb992d228d9f9054671b9",
+      "fd6ed4eef46cbfa5afa4f551785a7738cfbdda106caa48690dcefaacd9cbb7bd",
+      "520d9284a0e719f7bea18ba00d7807e1bcc5bbd06b96384289ca1c24902e3c2d"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/mushroomon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/mushroomon/field.png"
 }

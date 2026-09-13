@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/041_Hagurumon.png",
   "source_id": 41,
   "source_sha256": "f087a9f33fbbb1146a8a856bb373647382c301393caf99cb1facd5144a6e1d9e",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 1,
+        "y": 120,
+        "w": 30,
+        "h": 23
+      },
+      {
+        "x": 38,
+        "y": 120,
+        "w": 29,
+        "h": 23
+      },
+      {
+        "x": 79,
+        "y": 120,
+        "w": 25,
+        "h": 25
+      }
+    ],
+    "down_right": [
+      {
+        "x": 113,
+        "y": 120,
+        "w": 25,
+        "h": 25
+      },
+      {
+        "x": 150,
+        "y": 120,
+        "w": 29,
+        "h": 23
+      },
+      {
+        "x": 186,
+        "y": 120,
+        "w": 30,
+        "h": 23
+      }
+    ],
+    "up_left": [
+      {
+        "x": 1,
+        "y": 156,
+        "w": 30,
+        "h": 23
+      },
+      {
+        "x": 41,
+        "y": 157,
+        "w": 25,
+        "h": 26
+      },
+      {
+        "x": 78,
+        "y": 156,
+        "w": 27,
+        "h": 24
+      }
+    ],
+    "up_right": [
+      {
+        "x": 112,
+        "y": 156,
+        "w": 27,
+        "h": 24
+      },
+      {
+        "x": 151,
+        "y": 157,
+        "w": 25,
+        "h": 26
+      },
+      {
+        "x": 186,
+        "y": 156,
+        "w": 30,
+        "h": 23
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "67f34f1e84b600f9a0df6a2688418e6c76e7e9ff03b761ef3c9c45c59aa32423",
+      "bd303c1641847db693b33810382c5675842ad08e35386b69fbe3cf1ad0b99f17",
+      "e86981592430bf0110d95a1f767590b9298746311678988c1c7784db7f113eb2"
+    ],
+    "down_right": [
+      "2529ad2c0f29a26458f0cc111ba1d432408544bd53e6fbfbfcfa1692a27098c3",
+      "01a937e2dd8e00ae1311b593bbe9ed2c4120a7c50d6580c16e21dd465b09e248",
+      "0bd1368bf8831b41f783654153b8147f55312430172fceb6a98d44a5cc913f03"
+    ],
+    "up_left": [
+      "0e302b9045816734a5ea9a87c2e9e8db0e6faf1afb0bf5cd7d893914769be615",
+      "38b265c5f49a0433e43e6f0874c90ce04b0dfaad9e8578ccfd15857f3db5d4fc",
+      "870e4572da7648b085a554c13389026d800f5d7ae66141bf2c68d226e5ca2655"
+    ],
+    "up_right": [
+      "36feddae87fbfe6c529d38a325d76b1267774ac310261e97212ece7c2ba5f532",
+      "34544215b4ec993a878a95140461977155272fca25ccdf7a9848606b159e9b50",
+      "8a37542b4f9ba20228631d5de1df8f980a5b5a156a031e2e17312b5d7c2506da"
+    ]
+  },
   "cell_width": 34,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/hagurumon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/hagurumon/field.png"
 }

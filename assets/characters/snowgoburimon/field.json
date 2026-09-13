@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/057_SnowGoblimon.png",
   "source_id": 57,
   "source_sha256": "d7650f6a18f23c08f6d0ca4f366ae50939fd980415d9c093f1a3cc2007dd280b",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 0,
+        "y": 233,
+        "w": 32,
+        "h": 32
+      },
+      {
+        "x": 42,
+        "y": 232,
+        "w": 32,
+        "h": 33
+      },
+      {
+        "x": 84,
+        "y": 233,
+        "w": 27,
+        "h": 31
+      }
+    ],
+    "down_right": [
+      {
+        "x": 121,
+        "y": 233,
+        "w": 27,
+        "h": 31
+      },
+      {
+        "x": 158,
+        "y": 232,
+        "w": 32,
+        "h": 33
+      },
+      {
+        "x": 200,
+        "y": 233,
+        "w": 32,
+        "h": 32
+      }
+    ],
+    "up_left": [
+      {
+        "x": 8,
+        "y": 195,
+        "w": 25,
+        "h": 32
+      },
+      {
+        "x": 43,
+        "y": 194,
+        "w": 27,
+        "h": 33
+      },
+      {
+        "x": 80,
+        "y": 195,
+        "w": 31,
+        "h": 32
+      }
+    ],
+    "up_right": [
+      {
+        "x": 121,
+        "y": 195,
+        "w": 31,
+        "h": 32
+      },
+      {
+        "x": 162,
+        "y": 194,
+        "w": 27,
+        "h": 33
+      },
+      {
+        "x": 199,
+        "y": 195,
+        "w": 25,
+        "h": 32
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "12ba1035f234c603c300f0378a37cdefb41d82979ebcfc697c292e66ff26422a",
+      "3fe735cde415a295429ef1fd697b9d39d81d7f10fda17c078bb67c0c12ff0a8a",
+      "e2d6887a54dbe6b92b112f40c79e56c49c3a6135b7f5ffb4d21205ff52706607"
+    ],
+    "down_right": [
+      "608bf92393be2a9473e7d6cf82258364bd62f9c8bb837ec214f243f9f84be06d",
+      "cc01cddd1e4f9931cf6b7524bf2179706a7cf47c95c15e8c98b3de51cc59867f",
+      "3d10a27d68a1bc32cc6262f4cd27db03f091618cce0ac74257a3e54931a8fec8"
+    ],
+    "up_left": [
+      "e7dd6563f1fb11572b04e6fcaa75682a51a385c06a85bae45e1dbdd7e10e8568",
+      "b5e2182ff250265ece6b1fe4e7b251a0f5c8f79d68005f39721772fa9a93fd9e",
+      "a0150f2686d2ee06e2cf2fa573337a67ef9324f2ada191d929a92d48acf8ca9b"
+    ],
+    "up_right": [
+      "d16c2854eb7b5df828e6b01c66b4e017829c25d6efbbd537569a42c5635fe50d",
+      "a6a457ea4f5b461d177aa03a4c19811c61c4a3fa291248a364d1df689b61bfad",
+      "9a0265c983f9a09c3640d12f06746143e1ef05ed68cd09fe5f404eb95f7bef83"
+    ]
+  },
   "cell_width": 36,
   "cell_height": 39,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/snowgoburimon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/snowgoburimon/field.png"
 }

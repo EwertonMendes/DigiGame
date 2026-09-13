@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/055_Kotemon.png",
   "source_id": 55,
   "source_sha256": "fade46d96fd2539a99e31d59902ce192265532eef99022bb601fd2cea0b37ae6",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 5,
+        "y": 126,
+        "w": 23,
+        "h": 28
+      },
+      {
+        "x": 42,
+        "y": 127,
+        "w": 25,
+        "h": 27
+      },
+      {
+        "x": 76,
+        "y": 126,
+        "w": 23,
+        "h": 28
+      }
+    ],
+    "down_right": [
+      {
+        "x": 121,
+        "y": 126,
+        "w": 23,
+        "h": 28
+      },
+      {
+        "x": 153,
+        "y": 127,
+        "w": 25,
+        "h": 27
+      },
+      {
+        "x": 192,
+        "y": 126,
+        "w": 23,
+        "h": 28
+      }
+    ],
+    "up_left": [
+      {
+        "x": 5,
+        "y": 186,
+        "w": 24,
+        "h": 28
+      },
+      {
+        "x": 44,
+        "y": 187,
+        "w": 20,
+        "h": 27
+      },
+      {
+        "x": 75,
+        "y": 185,
+        "w": 27,
+        "h": 29
+      }
+    ],
+    "up_right": [
+      {
+        "x": 119,
+        "y": 185,
+        "w": 27,
+        "h": 29
+      },
+      {
+        "x": 157,
+        "y": 187,
+        "w": 20,
+        "h": 27
+      },
+      {
+        "x": 192,
+        "y": 186,
+        "w": 24,
+        "h": 28
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "6762227b4dd9e94b7d9449eada5679fe3a7f6b9394cd5c13e6b4f858c9ed4a8e",
+      "7b07b5c6826ff68fcf0436f16c8962550cba2ef53d9a104ed9c9720cc6a11663",
+      "4b65e12b023f23ea632f2322024b0f928e69cacdc4fa129e9fec2ba3ebd54a91"
+    ],
+    "down_right": [
+      "ca46d27f6675cc24332044398bd1f8309ac4e51e5349e6ea298d2104f21a2bd3",
+      "5555f14d872cbb6c301ffa159b55c7327f9961fab0a39d74dddd5a277bb2fb6e",
+      "0336687f3ca88d83ff30fbdbc64db437b2d8530823dfbb3f40ba2182cc182d46"
+    ],
+    "up_left": [
+      "5bdf74ff11528788548172b5b2af8ad8874976ee4c09fba20f593f0448cbeea1",
+      "fac4d00143113226cf59df4bc3c77142e3adc14300439260842e7e0d3a74b094",
+      "cb30ec69c24e656cc66524f6ee6e9d1ba16f4c31137027a07070010e36eff630"
+    ],
+    "up_right": [
+      "b5d7c87202db3193a50963d3996569a47911129875a97b3ef0623395645509fa",
+      "88953cb6b19047cb9406e3337c92d87ec97f55717cf0d4acecba41892eaa211d",
+      "1575dbc2f23a2575b6c985fef292d44c8b0536d90ff8c2831345a1f81413ecd7"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 33,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/kotemon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/kotemon/field.png"
 }

@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/024_Monodramon.png",
   "source_id": 24,
   "source_sha256": "510e602a3653d7081eb1f0165b5c54f44abca6ba16de53d196a3c7ea8c453784",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 27,
+        "y": 184,
+        "w": 21,
+        "h": 29
+      },
+      {
+        "x": 59,
+        "y": 184,
+        "w": 19,
+        "h": 28
+      },
+      {
+        "x": 88,
+        "y": 184,
+        "w": 26,
+        "h": 29
+      }
+    ],
+    "down_right": [
+      {
+        "x": 150,
+        "y": 184,
+        "w": 19,
+        "h": 28
+      },
+      {
+        "x": 180,
+        "y": 183,
+        "w": 21,
+        "h": 30
+      },
+      {
+        "x": 213,
+        "y": 184,
+        "w": 26,
+        "h": 29
+      }
+    ],
+    "up_left": [
+      {
+        "x": 23,
+        "y": 233,
+        "w": 23,
+        "h": 29
+      },
+      {
+        "x": 57,
+        "y": 232,
+        "w": 21,
+        "h": 30
+      },
+      {
+        "x": 91,
+        "y": 233,
+        "w": 24,
+        "h": 31
+      }
+    ],
+    "up_right": [
+      {
+        "x": 148,
+        "y": 232,
+        "w": 21,
+        "h": 30
+      },
+      {
+        "x": 179,
+        "y": 233,
+        "w": 24,
+        "h": 31
+      },
+      {
+        "x": 217,
+        "y": 233,
+        "w": 23,
+        "h": 29
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "66ab5ff357716b0e0e37716a671342513bb03748c048a03864b5158dcd5d821f",
+      "5e41582614055d72613d1d18f93fde1415f8fad2eea822f80448831563d695b1",
+      "65f73e1dde3dae4a06ff576034c313da34db1a8779e4eb2c1fab44c77444d2ad"
+    ],
+    "down_right": [
+      "dd4f3d3c9f5c71b25d36b72b6e0f384bb011444794d44e50116bc50e373778e0",
+      "fa09bc5a5bbef6f3d23f10e528cdb4cb6b990ee918f161333c74c72e8d782c44",
+      "0ece9e047e57a7b1095425f1840fd08db6b0cd181d3c42c464ee7dd2f5bf3a5c"
+    ],
+    "up_left": [
+      "1c2cf5a305539b2aa2975fe6cff335cb6c5dc1f5dbf74bc1ee9bedf649c09caf",
+      "7873be650302be39bfca9a4907cedb854b59c5fdcb947c827fd8a5cfb62c3218",
+      "db8984dbab30adfb32c1844b584464521654b29c73ff6145b246f4bf2b53c166"
+    ],
+    "up_right": [
+      "bd081204e8ed200340636060eccf8fa524884adb4eb033e5b5e6e0e4b13f7804",
+      "e9e481191b3e681580273365c2d801db0c31f8a65a038a577908fdffe9486a4a",
+      "eec1fd12529603bcc9f0439576b52add59b95a1139119500c7086b8a4f750c60"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 35,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/monodramon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/monodramon/field.png"
 }

@@ -16,6 +16,6 @@
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "rebuild_version": 3,
   "field_path": "res://assets/characters/flamon/field.png"
 }

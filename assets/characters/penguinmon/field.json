@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/052_Penmon.png",
   "source_id": 52,
   "source_sha256": "b04d3dfe0e161a0bef79b77d86ae917cbbd1dc0a3bb3080863d47bf02d7da534",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 1,
+        "y": 207,
+        "w": 21,
+        "h": 25
+      },
+      {
+        "x": 36,
+        "y": 209,
+        "w": 25,
+        "h": 23
+      },
+      {
+        "x": 77,
+        "y": 210,
+        "w": 21,
+        "h": 22
+      }
+    ],
+    "down_right": [
+      {
+        "x": 118,
+        "y": 210,
+        "w": 21,
+        "h": 22
+      },
+      {
+        "x": 155,
+        "y": 209,
+        "w": 25,
+        "h": 23
+      },
+      {
+        "x": 194,
+        "y": 207,
+        "w": 21,
+        "h": 25
+      }
+    ],
+    "up_left": [
+      {
+        "x": 2,
+        "y": 258,
+        "w": 22,
+        "h": 26
+      },
+      {
+        "x": 38,
+        "y": 259,
+        "w": 29,
+        "h": 25
+      },
+      {
+        "x": 80,
+        "y": 261,
+        "w": 21,
+        "h": 23
+      }
+    ],
+    "up_right": [
+      {
+        "x": 117,
+        "y": 261,
+        "w": 21,
+        "h": 23
+      },
+      {
+        "x": 151,
+        "y": 259,
+        "w": 29,
+        "h": 25
+      },
+      {
+        "x": 194,
+        "y": 258,
+        "w": 22,
+        "h": 26
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "1802dc2ebaa33ad193983fe5a166e3788b4ac85d5afbe691c44f4f52ebf5ca79",
+      "53a372c3784e1dec994e138f50027b82d19d90e84654f3ba85987373521f293b",
+      "c520f30f519e02f127ae3b7ea7db7f66611bd03761fd95a415bde19440562f84"
+    ],
+    "down_right": [
+      "21ce8d35ddf8b1acfcc6af285025d8febfd542d183d719eef21d3397aca7b37e",
+      "e83bd431494a15bf5581cf3e9ec1e35161e7fb0e76a05a084ce0c8d18a6e63b1",
+      "c98cb8f8386c27c5903f333d07762f92aced40b97c7c0154f09e0d26a16242cd"
+    ],
+    "up_left": [
+      "3220ea2d88a2d132b3100f0182d15d2f2c66048df942ae9baf91bf47efe418b3",
+      "6320948fc597c6fb542c14ae0048bec1b4d44358598e20eb73e4be0d73b1a6c9",
+      "e31fcfbe76103a6eb4dd8fb54488ffc5ff63da034d9a7c5d39a1058c01ec5998"
+    ],
+    "up_right": [
+      "d6b25c88187d2e5d944e033261fe4935fdcde8f170fecacf48d39baddb1c1842",
+      "ab541ee1b099c7f5cb5d1d05d07cf33fad9902fc7535457c6bd6f2485b1e76e6",
+      "06d4d975959a91e519fb36737fa4ee8e121712ff2424be6d24540c091cad4fca"
+    ]
+  },
   "cell_width": 33,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/penguinmon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/penguinmon/field.png"
 }

@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/007_Pagumon.png",
   "source_id": 7,
   "source_sha256": "4d121624dc2c36ec2e7d61b633b8489b874385673c6cc86ff54ac0949f0e5f02",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "compact_interleaved",
+  "runtime_group_indices": [
+    0,
+    2,
+    1,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "up_left",
+    "down_right",
+    "up_right"
+  ],
+  "source_layout": "compact_four_groups",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 165,
+        "y": 6,
+        "w": 21,
+        "h": 14
+      },
+      {
+        "x": 191,
+        "y": 9,
+        "w": 18,
+        "h": 13
+      },
+      {
+        "x": 215,
+        "y": 2,
+        "w": 20,
+        "h": 16
+      }
+    ],
+    "down_right": [
+      {
+        "x": 165,
+        "y": 48,
+        "w": 20,
+        "h": 16
+      },
+      {
+        "x": 191,
+        "y": 55,
+        "w": 18,
+        "h": 13
+      },
+      {
+        "x": 214,
+        "y": 52,
+        "w": 21,
+        "h": 14
+      }
+    ],
+    "up_left": [
+      {
+        "x": 164,
+        "y": 27,
+        "w": 21,
+        "h": 14
+      },
+      {
+        "x": 191,
+        "y": 30,
+        "w": 17,
+        "h": 14
+      },
+      {
+        "x": 215,
+        "y": 24,
+        "w": 20,
+        "h": 17
+      }
+    ],
+    "up_right": [
+      {
+        "x": 165,
+        "y": 70,
+        "w": 20,
+        "h": 17
+      },
+      {
+        "x": 192,
+        "y": 76,
+        "w": 17,
+        "h": 14
+      },
+      {
+        "x": 215,
+        "y": 73,
+        "w": 21,
+        "h": 14
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "efe1caa10e3d461ae5a68c69a38b2f15c1cfdfb21b75d5d53efba5e040104cea",
+      "b6487ad59fba0692124a20c2bca9f5a49e83023caa2a8971b2488e00c3e93a2e",
+      "a3e4717b1a0ad0ab096751d13cbaa5afac14ee8b4f200d57f25d5b30756c94d9"
+    ],
+    "down_right": [
+      "63889c9811c16120d763381ab9e3f39380614fdeb4e4599c89270308f911e2ba",
+      "a52e945f247da87fb6c9fc3925f9a3c1f682108aaad1571b2d1177faded6be36",
+      "eb29f3cc313f271a0bc1d7358434195857d7e5c49525c364cee21080c43dd11d"
+    ],
+    "up_left": [
+      "9f26745943a81241e2fcd753a0c99c98912a64c0fc99aca6c94210bba8c5c4aa",
+      "a1699d763e2d80e559c245106ceb4e46b176c93b2255a9ddcc1c13a31a537792",
+      "59b6de1f69a13dd38fa0e4437e67423700d83705c7bbee01754869862931e9fe"
+    ],
+    "up_right": [
+      "044aa54dc0e0981bc50c8c385ec9ca9ac93e523349ff4e304a3a7c0566957c85",
+      "b24850dba73e802b62bf8767f94888acf0033991cc2973e6f0b20da9f39b439a",
+      "a83e8c7ccf4b6fb20678551ba91afa4385d1265ee9534bb9a771ac52fc6393a4"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/pagumon/field.png",
-  "source_layout": "compact_four_groups",
-  "source_group_order": [
-    "down_left",
-    "up_left",
-    "down_right",
-    "up_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 2,
-    "up_left": 1,
-    "up_right": 3
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    1
-  ]
+  "field_path": "res://assets/characters/pagumon/field.png"
 }

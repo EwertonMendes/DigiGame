@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/006_Tanemon.png",
   "source_id": 6,
   "source_sha256": "7b19b59abb6fd375215f4dba296e577b90d69af5f667ed67ae2e2c6eae0036a1",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "compact_interleaved",
+  "runtime_group_indices": [
+    0,
+    2,
+    1,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "up_left",
+    "down_right",
+    "up_right"
+  ],
+  "source_layout": "compact_four_groups",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 129,
+        "y": 1,
+        "w": 18,
+        "h": 21
+      },
+      {
+        "x": 159,
+        "y": 1,
+        "w": 18,
+        "h": 21
+      },
+      {
+        "x": 190,
+        "y": 1,
+        "w": 17,
+        "h": 21
+      }
+    ],
+    "down_right": [
+      {
+        "x": 128,
+        "y": 53,
+        "w": 17,
+        "h": 21
+      },
+      {
+        "x": 158,
+        "y": 53,
+        "w": 18,
+        "h": 21
+      },
+      {
+        "x": 188,
+        "y": 53,
+        "w": 18,
+        "h": 21
+      }
+    ],
+    "up_left": [
+      {
+        "x": 130,
+        "y": 27,
+        "w": 18,
+        "h": 20
+      },
+      {
+        "x": 159,
+        "y": 27,
+        "w": 17,
+        "h": 20
+      },
+      {
+        "x": 189,
+        "y": 27,
+        "w": 17,
+        "h": 20
+      }
+    ],
+    "up_right": [
+      {
+        "x": 129,
+        "y": 79,
+        "w": 17,
+        "h": 20
+      },
+      {
+        "x": 159,
+        "y": 79,
+        "w": 17,
+        "h": 20
+      },
+      {
+        "x": 187,
+        "y": 79,
+        "w": 18,
+        "h": 20
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "d2c3f346a743f6407f890f3d488593fe8f53d576e14445b2e2c2f8c342a76ee1",
+      "40818106a7698979ff42ebc1a3127a0cb50125bfce34fecaf235785ec84d3acb",
+      "5ebeae92b19fc8b479c2a0301fa643c3edaf5f6021bbc824528e26693940b94d"
+    ],
+    "down_right": [
+      "3397fc6000b248a55d2b41385d79a919cc37ee957e549e7df1f028d7cf1c6aaa",
+      "fb605387bb7260d6a5287890395321c56a67e201d097c9379296070d9de854bb",
+      "a406178d7455fd0e842b00f78cecef5f62fe5a4cbcfabe4a93d7ddc0874fc4bc"
+    ],
+    "up_left": [
+      "cf0b81dd8bee14dca862ac817d556e1c154a11a0987895804a740e64e6c1f9de",
+      "7f4536c19ef294843f5b734a4f31472264c17458820cb6c81a4bf00d492ebe47",
+      "36a19cb774d18fe32a6ede2981b17d45fc0fba790400e8e22e464e9561b9344b"
+    ],
+    "up_right": [
+      "bb974566013b0113ca286ec3d8ef3ac1add4cea19a15b218df057910b9484a58",
+      "34193fc1989d7cb6abe32b1a6f41a71b7f817046a8e4995d1d26041cf19022d5",
+      "55dda5fcc900d414c80293105624b2ac3aa7f67795879d4cbb662dbe2831f303"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/tanemon/field.png",
-  "source_layout": "compact_four_groups",
-  "source_group_order": [
-    "down_left",
-    "up_left",
-    "down_right",
-    "up_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 2,
-    "up_left": 1,
-    "up_right": 3
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    1
-  ]
+  "field_path": "res://assets/characters/tanemon/field.png"
 }

@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/021_Botamon.png",
   "source_id": 21,
   "source_sha256": "aa6a554902c432eddfa50d46bea4d0bc05a23d53237595bf56028d59789f23b0",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 11,
+        "y": 128,
+        "w": 19,
+        "h": 19
+      },
+      {
+        "x": 39,
+        "y": 124,
+        "w": 19,
+        "h": 19
+      },
+      {
+        "x": 67,
+        "y": 123,
+        "w": 19,
+        "h": 19
+      }
+    ],
+    "down_right": [
+      {
+        "x": 99,
+        "y": 123,
+        "w": 19,
+        "h": 19
+      },
+      {
+        "x": 127,
+        "y": 124,
+        "w": 19,
+        "h": 19
+      },
+      {
+        "x": 155,
+        "y": 128,
+        "w": 19,
+        "h": 19
+      }
+    ],
+    "up_left": [
+      {
+        "x": 10,
+        "y": 96,
+        "w": 19,
+        "h": 19
+      },
+      {
+        "x": 39,
+        "y": 92,
+        "w": 19,
+        "h": 19
+      },
+      {
+        "x": 68,
+        "y": 92,
+        "w": 19,
+        "h": 19
+      }
+    ],
+    "up_right": [
+      {
+        "x": 98,
+        "y": 92,
+        "w": 19,
+        "h": 19
+      },
+      {
+        "x": 127,
+        "y": 92,
+        "w": 19,
+        "h": 19
+      },
+      {
+        "x": 156,
+        "y": 96,
+        "w": 19,
+        "h": 19
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "d31781461fa1bc89166a951f7793c1ebba065574623356c6c2ad583b201852a7",
+      "3f303a7e344c76c416ad47ee97bc25da1ff821aa772223cf4db77f6c9eab6d78",
+      "a9c3c620886e302ce52aca01f17c3bbb822038eae1fcd188cc42ba960a368bc1"
+    ],
+    "down_right": [
+      "3bff795188327241d2a1bd0e7980ed4f13b90f6cf0880f24bb9595709ed90f13",
+      "bf18e549f6e009b0a12f8fabc9ce28bcfe198c74672e8316fe4e5be8c3bed55f",
+      "628cd0da7520ae13395450070342eee77b31f18789ad026e60be4dfb8e087f48"
+    ],
+    "up_left": [
+      "03cff258ba5ea5397407b29d3668004125b9182f40c6b5cdc82a864f3e9e06b4",
+      "5d2234076c885066a5709c50094c1f6aee08e3e71c2590410b3653fa25c51436",
+      "0f1444c2b48883f5d8b518bec54ecd5a90964a7b19aeae359d0d9acb15c75167"
+    ],
+    "up_right": [
+      "a367f53b0f058ec2be7bea6ec10df2bc5abb784342dd9a5c55cd6e016fb1a864",
+      "a9ae3dcb0b609aa7d0344dcbc4b6d38a709db8be53b210fac1f653978e549aa1",
+      "9dc361cfc3dd80c0c1453b5b3978ed445f69f0bf9bcc5caf465b6e1f91ca2c8c"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/botamon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/botamon/field.png"
 }

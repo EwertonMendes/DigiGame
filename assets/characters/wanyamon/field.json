@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/019_Wanyamon.png",
   "source_id": 19,
   "source_sha256": "12b7c3344c5dea0753d3f440111a2fef996214ec04a3250ecb6dfa2d72f9e00e",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 5,
+        "y": 155,
+        "w": 21,
+        "h": 26
+      },
+      {
+        "x": 36,
+        "y": 154,
+        "w": 21,
+        "h": 25
+      },
+      {
+        "x": 67,
+        "y": 153,
+        "w": 21,
+        "h": 24
+      }
+    ],
+    "down_right": [
+      {
+        "x": 98,
+        "y": 153,
+        "w": 21,
+        "h": 24
+      },
+      {
+        "x": 129,
+        "y": 154,
+        "w": 21,
+        "h": 25
+      },
+      {
+        "x": 160,
+        "y": 155,
+        "w": 21,
+        "h": 26
+      }
+    ],
+    "up_left": [
+      {
+        "x": 6,
+        "y": 122,
+        "w": 21,
+        "h": 26
+      },
+      {
+        "x": 37,
+        "y": 121,
+        "w": 20,
+        "h": 25
+      },
+      {
+        "x": 68,
+        "y": 120,
+        "w": 20,
+        "h": 24
+      }
+    ],
+    "up_right": [
+      {
+        "x": 98,
+        "y": 120,
+        "w": 20,
+        "h": 24
+      },
+      {
+        "x": 129,
+        "y": 121,
+        "w": 20,
+        "h": 25
+      },
+      {
+        "x": 159,
+        "y": 122,
+        "w": 21,
+        "h": 26
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "374d3449e4b12c4cfe127501eb7dbf31f673e91444e08d15f58deab9b69cee42",
+      "51c4e36bc3864c7be26fb2d3a508d4087d1ce4cb36fe52faf9fe0b78f34f03c0",
+      "fde392bc8d1f0f908e86cc051ca2dbd56eca3a5350717337ef82aaf91ae745b6"
+    ],
+    "down_right": [
+      "a3767eb17d35a1e2c06cd7d178dcfd6036d1ad8f008a2ff2ebb196e2cc828100",
+      "a4bf7db6c37254179f5ab68faf374f153b101e6a079c73ffbc1bc5a49713964b",
+      "69e5bcf5fb73fc1b42b42d2e2f788a6d4889f50162368cbf5d2ab3631807a51e"
+    ],
+    "up_left": [
+      "6dd3b7051476e6c5e281d1e9a7f2eeeaf9b49ecb4cbd7e55b5a3e445efac6ee5",
+      "0affdad70a34111f43780ab0807b79544668a1523047a2b79458471b989d8813",
+      "560654c2875526941d1baad8c53e1b5928b144b57ef6b70dffab16824e0db9d4"
+    ],
+    "up_right": [
+      "9cd27479c443c99e9372bd81a21f9b24ecddc6904ee31ad8fe5f8a996e044703",
+      "e3b83e02269047fdead4020585a168065a1153701a2af811c56e540e5c90e0f8",
+      "7d53c0c4f9a26df753f2c1e1f4384a2a48ce4d6f39cc6b530ea713604b92ca8a"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/wanyamon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/wanyamon/field.png"
 }

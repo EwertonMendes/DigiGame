@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/013_Calumon.png",
   "source_id": 13,
   "source_sha256": "1788a24a74d45606f9f13555cf2328e203e4732a5084ebb66455542259a470ce",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 118,
+        "y": 61,
+        "w": 21,
+        "h": 22
+      },
+      {
+        "x": 147,
+        "y": 63,
+        "w": 21,
+        "h": 20
+      },
+      {
+        "x": 176,
+        "y": 63,
+        "w": 21,
+        "h": 20
+      }
+    ],
+    "down_right": [
+      {
+        "x": 215,
+        "y": 61,
+        "w": 21,
+        "h": 22
+      },
+      {
+        "x": 244,
+        "y": 63,
+        "w": 21,
+        "h": 20
+      },
+      {
+        "x": 273,
+        "y": 63,
+        "w": 21,
+        "h": 20
+      }
+    ],
+    "up_left": [
+      {
+        "x": 118,
+        "y": 86,
+        "w": 21,
+        "h": 22
+      },
+      {
+        "x": 147,
+        "y": 88,
+        "w": 21,
+        "h": 20
+      },
+      {
+        "x": 176,
+        "y": 88,
+        "w": 21,
+        "h": 20
+      }
+    ],
+    "up_right": [
+      {
+        "x": 215,
+        "y": 86,
+        "w": 21,
+        "h": 22
+      },
+      {
+        "x": 244,
+        "y": 88,
+        "w": 21,
+        "h": 20
+      },
+      {
+        "x": 273,
+        "y": 88,
+        "w": 21,
+        "h": 20
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "1ef032fd436d15cab487067eace3e1a2ae6579de7ac5b8cb39088bd1adbe03f8",
+      "635343608478631a384c28ba1dae540e22723ef6fdb86d85674ba8fb1fc70f40",
+      "75fd401e2fe2fc5597d768c4b91bf26ab1018f7f38f5d4419c700c278101624f"
+    ],
+    "down_right": [
+      "0d5b57786535b421bc03686492e47524e02da839a0283bd7209164e28d764f2c",
+      "a003f8062ce1c1ca01a104a1ea3cc11560afcfe68d1f52ea36058c9141cf0823",
+      "a89a17fd7c2c4d89b894614e4ac87f23bce67d2107322fc9c70d36fc62c2f88b"
+    ],
+    "up_left": [
+      "a511a9b57619a9cc79297e8cdf982b468ecb78bed392bd791fe55f579f0556f2",
+      "415dafa829eb753cfe5075bf4b11e43dff335176e5b91fd984c3b86a1f155d11",
+      "9f3a0d6f26313feee4ab08fc23de6a627ef7d266ce1223c6c77c262640dedeb0"
+    ],
+    "up_right": [
+      "e3b24d9d9f4ab828abfc53e7d716e02be634206a454ff7680aac79661477fc6d",
+      "3ceb11e83c799a5a975d611b0cba4e3f0e028b2c361651b4ec1e2bbd723cdaf0",
+      "bc411799d60b825588b6176dbf219ac0f262a07c25addef64d12b5c5905a62b7"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/calumon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/calumon/field.png"
 }

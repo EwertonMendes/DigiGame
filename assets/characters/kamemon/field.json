@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/073_Kamemon.png",
   "source_id": 73,
   "source_sha256": "f4d6e84e387d885473b00e06b9fee85864ab67048368c15ffc9a1c46783483a2",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 1,
+        "y": 155,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 35,
+        "y": 154,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 66,
+        "y": 155,
+        "w": 22,
+        "h": 30
+      }
+    ],
+    "down_right": [
+      {
+        "x": 99,
+        "y": 155,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 132,
+        "y": 154,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 165,
+        "y": 155,
+        "w": 22,
+        "h": 30
+      }
+    ],
+    "up_left": [
+      {
+        "x": 2,
+        "y": 190,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 34,
+        "y": 189,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 64,
+        "y": 190,
+        "w": 22,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 102,
+        "y": 191,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 132,
+        "y": 190,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 164,
+        "y": 191,
+        "w": 22,
+        "h": 30
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "24d41f55dcf9a96e84162d00c68102896a5e5ceba1fbecdf2cfeaa56c687accf",
+      "83f1b5c868754d3a09d0fb2361cb7d472d71d1c0289d5908664774211b03fc92",
+      "a5482e395d8b9e239447a29f6136c9139237b7e7dce89a018ee6fb8066d764f4"
+    ],
+    "down_right": [
+      "e3f7589a14d7816899b9a3eaf992dbbac3b5c8f9258a034c73a6fb584b318df4",
+      "773259eafa9481aacef5b8e4ff12e879340038631b7310db0116e92d565223bd",
+      "23c6a7b40e862de9deba080256f49679ba6ced62f0435729470d5443c18d56a8"
+    ],
+    "up_left": [
+      "4d25f6057bdfbc3523b47d022c7ead4ebb8fc35197872bd5de1e91d665c41806",
+      "66bcc5b5e34c2eab2d84f3f5d9230e76858dee53cb8309a6b3cc80065e7106c1",
+      "db8faad9d9b019995592c4d303ec509d8c58db118d3d6f02d13c5e51e85b4dc5"
+    ],
+    "up_right": [
+      "33b5eea60cf8bf0364bec7c730954bc4548cf6e4b521d67f58334a0f27ed3874",
+      "cdad85dec95334da6f07eada4b69925b9f09cb7f7d11b45346d82de6a6add1cf",
+      "369634f0e2c6fde615c77f6f683ea8ffaf741732a6ce528bf37681f75a79ba80"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 35,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/kamemon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/kamemon/field.png"
 }

@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/079_Solarmon.png",
   "source_id": 79,
   "source_sha256": "8ba254bcb60ee723efb97e7b9569ba9a6f229c92b5f5c7e356c2ba1361550d92",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 10,
+        "y": 159,
+        "w": 29,
+        "h": 23
+      },
+      {
+        "x": 49,
+        "y": 158,
+        "w": 30,
+        "h": 23
+      },
+      {
+        "x": 89,
+        "y": 159,
+        "w": 25,
+        "h": 25
+      }
+    ],
+    "down_right": [
+      {
+        "x": 124,
+        "y": 159,
+        "w": 25,
+        "h": 25
+      },
+      {
+        "x": 159,
+        "y": 158,
+        "w": 30,
+        "h": 23
+      },
+      {
+        "x": 199,
+        "y": 159,
+        "w": 29,
+        "h": 23
+      }
+    ],
+    "up_left": [
+      {
+        "x": 12,
+        "y": 126,
+        "w": 25,
+        "h": 26
+      },
+      {
+        "x": 47,
+        "y": 125,
+        "w": 30,
+        "h": 23
+      },
+      {
+        "x": 87,
+        "y": 126,
+        "w": 27,
+        "h": 24
+      }
+    ],
+    "up_right": [
+      {
+        "x": 124,
+        "y": 126,
+        "w": 27,
+        "h": 24
+      },
+      {
+        "x": 161,
+        "y": 125,
+        "w": 30,
+        "h": 23
+      },
+      {
+        "x": 201,
+        "y": 126,
+        "w": 25,
+        "h": 26
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "d1ebda8e03ffde2beefc07c2b9c912d9b78d17f4ceef959381d725727c7094e1",
+      "d89e12d112e7cf2df97805b2a65b2c45730a25b97d8bdcdd83f60f51cffb5754",
+      "c204a2ccb0552bb613418970a9aa9014db2f5f6fdbebacea6235cba44fee2790"
+    ],
+    "down_right": [
+      "d1cf175b81ca56a4b875a7470d8d3ba662543a59de52740476f0b2c632739beb",
+      "40af0e03225acbdccd56afa36d9b24ac2f087836a06f9c9b3a91edabc87193af",
+      "7816e0586f2d23b082d6069265617f8526ec5477f90fbf9cf865eb7a458edd7c"
+    ],
+    "up_left": [
+      "00dde2a912ac20316ae53d63c7ec51254b3a1e2b5a18b44c8014e9c9dc0936f8",
+      "57b9c9db35f76afd6104c43748b701c31973d1382cbd293adf2c0d81ed66e34f",
+      "7b8b682726bd8c0766448ff150f37db6141af89f0e81b90aecbc3ddae74f1c1c"
+    ],
+    "up_right": [
+      "9b46f98c7a03d4f1aef28f5580c204ea192d0ddada53e04e6706aa1ae519fbae",
+      "b8dcc115ca48706d6c3ae249f9804855a10d75357d7a3ba8e1e5f9ff36f0efcd",
+      "7cae9b519648b9dc1ff492db7421a33037e2fe7778f65820104d30e99d274d45"
+    ]
+  },
   "cell_width": 34,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/solarmon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/solarmon/field.png"
 }

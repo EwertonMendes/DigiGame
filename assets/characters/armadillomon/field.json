@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/045_Armademon.png",
   "source_id": 45,
   "source_sha256": "7a4ca1c339a45741c67136658057d957f51a463ee0e1db08402af425a09ee4fd",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 2,
+        "y": 133,
+        "w": 24,
+        "h": 21
+      },
+      {
+        "x": 38,
+        "y": 135,
+        "w": 26,
+        "h": 19
+      },
+      {
+        "x": 75,
+        "y": 132,
+        "w": 22,
+        "h": 22
+      }
+    ],
+    "down_right": [
+      {
+        "x": 121,
+        "y": 132,
+        "w": 22,
+        "h": 22
+      },
+      {
+        "x": 154,
+        "y": 135,
+        "w": 26,
+        "h": 19
+      },
+      {
+        "x": 192,
+        "y": 133,
+        "w": 24,
+        "h": 21
+      }
+    ],
+    "up_left": [
+      {
+        "x": 4,
+        "y": 186,
+        "w": 24,
+        "h": 22
+      },
+      {
+        "x": 41,
+        "y": 186,
+        "w": 23,
+        "h": 22
+      },
+      {
+        "x": 78,
+        "y": 185,
+        "w": 23,
+        "h": 23
+      }
+    ],
+    "up_right": [
+      {
+        "x": 119,
+        "y": 185,
+        "w": 23,
+        "h": 23
+      },
+      {
+        "x": 156,
+        "y": 186,
+        "w": 23,
+        "h": 22
+      },
+      {
+        "x": 192,
+        "y": 186,
+        "w": 24,
+        "h": 22
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "cf707c5845cf53cc3edf3414409c36f281b225997a236c0b9bbe17e2a308882b",
+      "fb4c40c2b03f0214f25e3c73ee1d212137994632b68503e72d808fd2063af61a",
+      "5b8b6f62768f4aa7c128566050d8b24850366f32ef12d56e2d51e888859bdf60"
+    ],
+    "down_right": [
+      "bc16be3360a5fdde4e8fcde6d5d2a2e2e681aace0dfe2092a23fb8fa4483a5e5",
+      "2cf68f98f8468a657a799888c7ccdf96b7e02d3fc974c253698f847d71769242",
+      "de3429940cc425ff6303d232e3df2ee4adc1c0c3fc6b1dffa8ae8e44b796bfa3"
+    ],
+    "up_left": [
+      "2b72dfd2aaf8678d2350ad42fdf0fea6224deed849e613fb30f370d40a397653",
+      "953bd3444421acd346eda326db7760d8c0901dd789123d18b721de3bc2e084df",
+      "4009d0864e218938acca4222e48bd342ce07b3a9aa5246d308794f1582da9bf4"
+    ],
+    "up_right": [
+      "bf077b3a048d1b4414fc5ab1420008c193b470ad8184828758b2bd6327873ec2",
+      "f00ab2ee1e86a7c5816c213d5e23ff96fabb8c292fcf994827a8c1f89d224a89",
+      "d8c09cd43a7b852b3c00acf348589988fc69c83691e532b047c811f53523712c"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/armadillomon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/armadillomon/field.png"
 }

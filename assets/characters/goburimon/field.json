@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/053_Goblimon.png",
   "source_id": 53,
   "source_sha256": "7cd22b01c71e620ae46142becabe16cb054722b830524f78b4547383f299b6ed",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 1,
+        "y": 200,
+        "w": 32,
+        "h": 32
+      },
+      {
+        "x": 41,
+        "y": 201,
+        "w": 27,
+        "h": 30
+      },
+      {
+        "x": 79,
+        "y": 202,
+        "w": 32,
+        "h": 31
+      }
+    ],
+    "down_right": [
+      {
+        "x": 123,
+        "y": 203,
+        "w": 32,
+        "h": 31
+      },
+      {
+        "x": 166,
+        "y": 202,
+        "w": 27,
+        "h": 30
+      },
+      {
+        "x": 201,
+        "y": 201,
+        "w": 32,
+        "h": 32
+      }
+    ],
+    "up_left": [
+      {
+        "x": 4,
+        "y": 240,
+        "w": 27,
+        "h": 32
+      },
+      {
+        "x": 44,
+        "y": 240,
+        "w": 25,
+        "h": 31
+      },
+      {
+        "x": 81,
+        "y": 239,
+        "w": 31,
+        "h": 31
+      }
+    ],
+    "up_right": [
+      {
+        "x": 122,
+        "y": 240,
+        "w": 31,
+        "h": 31
+      },
+      {
+        "x": 165,
+        "y": 241,
+        "w": 25,
+        "h": 31
+      },
+      {
+        "x": 203,
+        "y": 241,
+        "w": 27,
+        "h": 32
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "a6c909aa1c5f2ce43279d99af92ff7629b2652dbfb9b85dcd01d56749d526323",
+      "d2769b02330bb5c6406d3c3a5b754fdf0f3cd31bcb67270cbdb5b74812021b4f",
+      "3b587a1819faf60ce117dcac0182d5a838d7f98b500ae36bb5cfba5ca8bcf306"
+    ],
+    "down_right": [
+      "8d97219c1a04192ce5f98f6d31ea04eb22e2b2474990d1c915ffb5d420c05b02",
+      "0709671b4047e8bfbc899ef4708b5ac030069809ce077c7c994e2ba521c82001",
+      "2e124619cb61b29bd77f26f83ae9ec66d4fa6bd5cb3576c0e349e6cec53eb703"
+    ],
+    "up_left": [
+      "5e4b4ac7107d38fa198dbc82d5429876a809df65e7a63c73c9fbe9521b62b5e5",
+      "1a96becb2e2173b1ff72cb80814fb557970bca3cead12e229cb8784eac2e2310",
+      "9ee6fec74957c8487df52dfd04681bcf3e49cdc4c718cdb5cc6452103b763a4c"
+    ],
+    "up_right": [
+      "46919e3676e44c7823e5f0a144f375ed8568ababe03a273c930a31ca7dd24b9a",
+      "f6df73a5c1390fce4e42eb56af58e943dcf11fb6189dbd6ad52820161af40ae9",
+      "2daa57a714a84e0b9e3e16d09dc0806c2d23e0716cc95b29e0e9208aa2dfaa39"
+    ]
+  },
   "cell_width": 36,
   "cell_height": 36,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/goburimon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "down_left",
-    "down_right",
-    "up_right",
-    "up_left"
-  ],
-  "registered_direction_groups": {
-    "down_left": 0,
-    "down_right": 1,
-    "up_left": 3,
-    "up_right": 2
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    0,
-    3
-  ]
+  "field_path": "res://assets/characters/goburimon/field.png"
 }

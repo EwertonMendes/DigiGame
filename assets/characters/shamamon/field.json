@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/056_Shamamon.png",
   "source_id": 56,
   "source_sha256": "a9d2ecb612b8663b806e6c09faac6a345591ac7657356d6230af58ec749d77af",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 0,
+        "y": 239,
+        "w": 32,
+        "h": 31
+      },
+      {
+        "x": 42,
+        "y": 238,
+        "w": 32,
+        "h": 32
+      },
+      {
+        "x": 84,
+        "y": 239,
+        "w": 27,
+        "h": 30
+      }
+    ],
+    "down_right": [
+      {
+        "x": 121,
+        "y": 239,
+        "w": 27,
+        "h": 30
+      },
+      {
+        "x": 158,
+        "y": 238,
+        "w": 32,
+        "h": 32
+      },
+      {
+        "x": 200,
+        "y": 239,
+        "w": 32,
+        "h": 31
+      }
+    ],
+    "up_left": [
+      {
+        "x": 8,
+        "y": 202,
+        "w": 25,
+        "h": 31
+      },
+      {
+        "x": 43,
+        "y": 201,
+        "w": 27,
+        "h": 32
+      },
+      {
+        "x": 80,
+        "y": 202,
+        "w": 31,
+        "h": 31
+      }
+    ],
+    "up_right": [
+      {
+        "x": 121,
+        "y": 202,
+        "w": 31,
+        "h": 31
+      },
+      {
+        "x": 162,
+        "y": 201,
+        "w": 27,
+        "h": 32
+      },
+      {
+        "x": 199,
+        "y": 202,
+        "w": 25,
+        "h": 31
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "ec0c915dccef7873386657f7ca1ac25daa700b7808cff21ace5e24a4253121fc",
+      "532b3d476a4e3e060e23b5e5b6f4e04219ffc68d116ab2b4a94543a7ec951e90",
+      "17051e170aa2cac03794547d12768639f6a7f1c6e1ba2aa43cfdf08291a5eac6"
+    ],
+    "down_right": [
+      "6c5b6c75ba69777013f0641cbff614dd4c5f3823925459c5e20406f78f31237a",
+      "8d231fd1cc3a81546f183ef11ede8883c300dd6ff6267b669c73a158f4bd3f5f",
+      "7e877ad95be9c32b33bd814b6017fe5b537a6902a766f7bcd19d0a62e4d5316a"
+    ],
+    "up_left": [
+      "754001c8fa4b6bdad4bdf3420e68e2ebb67e406fe6b280a97e4186c0ecf37153",
+      "909aa9dffe9019068c170e18a137f044161ad07b03ca8c0693b42652cfb49ef0",
+      "9d43d536f0a1e728cd0668c403dcdb687d1dfcedf4f4089173d0e526ee942085"
+    ],
+    "up_right": [
+      "e62b81d3384eb8823e235f4bb24986a0b4a5022b79fececd545570f287146c13",
+      "f101fdf261669e904e4d9330f289c21c6b000cdf7c30b9f6549c8f07bd374e40",
+      "99b73a8dc0c58eb450d344ddfe93d3f29453ee02769fe6ebd119149fc9dd6f7d"
+    ]
+  },
   "cell_width": 36,
   "cell_height": 36,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/shamamon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/shamamon/field.png"
 }

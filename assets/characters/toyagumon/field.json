@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/040_ToyAgumon.png",
   "source_id": 40,
   "source_sha256": "e54843e61a272ef3a8a911ee7474e8c79412f1c5ee13f5ce5c882d83d936042e",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 11,
+        "y": 169,
+        "w": 28,
+        "h": 29
+      },
+      {
+        "x": 49,
+        "y": 168,
+        "w": 22,
+        "h": 29
+      },
+      {
+        "x": 81,
+        "y": 169,
+        "w": 21,
+        "h": 26
+      }
+    ],
+    "down_right": [
+      {
+        "x": 112,
+        "y": 169,
+        "w": 21,
+        "h": 26
+      },
+      {
+        "x": 143,
+        "y": 168,
+        "w": 22,
+        "h": 29
+      },
+      {
+        "x": 175,
+        "y": 169,
+        "w": 28,
+        "h": 29
+      }
+    ],
+    "up_left": [
+      {
+        "x": 10,
+        "y": 135,
+        "w": 28,
+        "h": 30
+      },
+      {
+        "x": 48,
+        "y": 134,
+        "w": 24,
+        "h": 28
+      },
+      {
+        "x": 82,
+        "y": 135,
+        "w": 20,
+        "h": 28
+      }
+    ],
+    "up_right": [
+      {
+        "x": 112,
+        "y": 135,
+        "w": 20,
+        "h": 28
+      },
+      {
+        "x": 142,
+        "y": 134,
+        "w": 24,
+        "h": 28
+      },
+      {
+        "x": 176,
+        "y": 135,
+        "w": 28,
+        "h": 30
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "196894d3311e6c1aa0fee8f6d8c8b82d4fe2da23fadf77046ae9455cd6daaeb3",
+      "f40f145f6614add0f96fc98b59653b1d14e3cb96122c2df2011ba451e9f7a031",
+      "b03ccb80943b2a1fc21c539a1e7d67da31d2a427b7107d6c3ccda2f5baa4ad81"
+    ],
+    "down_right": [
+      "18a25ee03057d2105964ad9973a89edafa998e657854be9a6fd93b4a61427a05",
+      "522dacd3e490379e4cfb2ac2dd99c7e76fd0e867436c478a8f56d4577f59a896",
+      "cb4cd6b1f2bf742fa6899e9392b7853e70c6b447d5fd60edbabdd004f7361a6e"
+    ],
+    "up_left": [
+      "8dfc167102d6b22e9654521a10b9655dd603683e725bad24de95ec994acc38fa",
+      "08094044c30174c6377f4311a0cefe9cbcc683d5cb787475ffbde50fdf4df702",
+      "04a6ddb93cbbfa24ccb12b224688ef2ea75fd18f4b10fe8ff7ecb7b6d9b915bc"
+    ],
+    "up_right": [
+      "6e99d8dd709373e7f147b93bf4318cfd57d3e15537f97ce69cc951f411db8796",
+      "028971c35956d2aeaa62b94a994b98410561c275a42dcfb6fe4e9c4060e7a0e8",
+      "548b308a111f031dbafcf0aac264942c7d6ab4025462f17e265a71f640864635"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 34,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/toyagumon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/toyagumon/field.png"
 }

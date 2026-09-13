@@ -1,13 +1,132 @@
 {
   "source_kind": "official_ds",
-  "source_variant": "withthewill_original_archive",
+  "source_variant": "withthewill_audited_exact_boxes",
   "source_archive_file": "sprite thread/020_Budmon.png",
   "source_id": 20,
   "source_sha256": "33638b4333b05005e8fb146efbbc762a9684c3d5b0bda1afd1f117cf74089a83",
   "canonical_reference": "Agumon",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 1,
+  "direction_registry": "res://database/ds-direction-registry.json",
+  "direction_registry_schema_version": 2,
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "source_group_order": [
+    "up_left",
+    "up_right",
+    "down_left",
+    "down_right"
+  ],
+  "source_layout": "two_rows_of_six",
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 5,
+        "y": 123,
+        "w": 22,
+        "h": 23
+      },
+      {
+        "x": 32,
+        "y": 121,
+        "w": 22,
+        "h": 25
+      },
+      {
+        "x": 59,
+        "y": 121,
+        "w": 22,
+        "h": 25
+      }
+    ],
+    "down_right": [
+      {
+        "x": 92,
+        "y": 121,
+        "w": 22,
+        "h": 25
+      },
+      {
+        "x": 119,
+        "y": 121,
+        "w": 22,
+        "h": 25
+      },
+      {
+        "x": 146,
+        "y": 123,
+        "w": 22,
+        "h": 23
+      }
+    ],
+    "up_left": [
+      {
+        "x": 7,
+        "y": 96,
+        "w": 22,
+        "h": 21
+      },
+      {
+        "x": 35,
+        "y": 94,
+        "w": 22,
+        "h": 23
+      },
+      {
+        "x": 61,
+        "y": 92,
+        "w": 23,
+        "h": 25
+      }
+    ],
+    "up_right": [
+      {
+        "x": 89,
+        "y": 92,
+        "w": 23,
+        "h": 25
+      },
+      {
+        "x": 116,
+        "y": 94,
+        "w": 22,
+        "h": 23
+      },
+      {
+        "x": 144,
+        "y": 96,
+        "w": 22,
+        "h": 21
+      }
+    ]
+  },
+  "audited_frame_hashes": {
+    "down_left": [
+      "a4206aecf7b3ba6f3d1193ff2801e4071701643bfbcd5790a05bc62457a0be4a",
+      "54ca9b5440d8b9cb1d2a3790669014e7f4f132cb5a4b756d3dda6a8f765622ac",
+      "72442e0dad0ad8f142b626e215690ddaa69e840ce1639c6d561d10aad5eca9f3"
+    ],
+    "down_right": [
+      "293946026265b3eefc3dc70fd489bb47f9c9848bc89690fddd4b4dd18ca54e07",
+      "eb5886645512992cc14eb85e4e280e68f85c7837afd5b45a21d0fb40fabd3617",
+      "adb6d85cbe80dca35c513af1b18b0ff1777c37d38c0e29ffa6d22fd64b2b3bb7"
+    ],
+    "up_left": [
+      "a118e577c81a99cec4e2aa2a96410683303bf38fbcc20e46755ea937f4ec05da",
+      "4295c80a633bc6a56af6ae683ad48f22ee0b8b3f2eda287caaf22c9fdaf711da",
+      "1dde8d53efab519d2695fdc1385fd8868ed77dc2630c72ff473c2ef1bf9b7244"
+    ],
+    "up_right": [
+      "6c2cc5012fb82065a4510e99e3955d0300f9cc46ed54f09620171f8531494a2a",
+      "3a8d2bf0d089092206fac0ed0845cc8f73a417578283fa3fa9ee74bb29ada3b6",
+      "99f1cb89415aac2d335ad258c264121a9ed7182f75f3a5fa8beabf72aa4021dc"
+    ]
+  },
   "cell_width": 32,
   "cell_height": 32,
   "frame_count": 12,
@@ -18,48 +137,6 @@
     "up_left",
     "up_right"
   ],
-  "right_facing_policy": "horizontal_mirror_of_corresponding_left_facing_group",
   "runtime_scale": 1.0,
-  "field_path": "res://assets/characters/budmon/field.png",
-  "source_layout": "two_rows_of_six",
-  "source_group_order": [
-    "up_right",
-    "up_left",
-    "down_left",
-    "down_right"
-  ],
-  "registered_direction_groups": {
-    "down_left": 2,
-    "down_right": 3,
-    "up_left": 1,
-    "up_right": 0
-  },
-  "registered_frame_order": {
-    "down_left": [
-      0,
-      1,
-      2
-    ],
-    "down_right": [
-      0,
-      1,
-      2
-    ],
-    "up_left": [
-      0,
-      1,
-      2
-    ],
-    "up_right": [
-      0,
-      1,
-      2
-    ]
-  },
-  "semantic_mapping_source": "database/ds-source-direction-registry.json",
-  "semantic_mapping_audit": "manual_source_group_review_2026-09-12",
-  "authored_groups_used": [
-    2,
-    1
-  ]
+  "field_path": "res://assets/characters/budmon/field.png"
 }
