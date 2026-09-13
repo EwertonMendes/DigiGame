@@ -40,6 +40,51 @@
     "perLevelBelow": 0.12,
     "minimumBelowMultiplier": 0.1
   },
+  "statGrowth": {
+    "hp": 0.025,
+    "mp": 0.02,
+    "atk": 0.02,
+    "def": 0.02,
+    "int": 0.02,
+    "speed": 0.02
+  },
+  "party": {
+    "minActive": 1,
+    "maxActive": 3,
+    "participantXpMultiplier": 1.0,
+    "reserveXpMultiplier": 0.0,
+    "knockedOutReceivesXp": true
+  },
+  "rewards": {
+    "bitsLevelMultiplier": 1.0,
+    "digiDataByRank": {
+      "Fresh": 20,
+      "In-Training": 18,
+      "Rookie": 14,
+      "Champion": 10,
+      "Ultimate": 7,
+      "Mega": 5,
+      "Ultra": 4,
+      "Armor": 9,
+      "Hybrid": 7
+    },
+    "digiDataLevelMultiplierPerLevel": 0.005,
+    "digiDataMaxLevelMultiplier": 1.25,
+    "profileMultiplier": {
+      "wild": 1.0,
+      "trained": 1.05,
+      "elite": 1.1,
+      "boss": 1.25,
+      "story": 1.0,
+      "important": 1.0
+    }
+  },
+  "reconstruction": {
+    "defaultRequired": 100,
+    "consumeData": true,
+    "minSpend": 100,
+    "maxSpend": 200
+  },
   "potential": {
     "max": 100,
     "digivolutionBase": 2,

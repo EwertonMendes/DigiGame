@@ -154,7 +154,7 @@ func _refresh_detail() -> void:
 		var current_label := _label("CURRENT FORM", 9, UI.GOLD, true)
 		current_label.add_theme_constant_override("outline_size", 1)
 		_detail_body.add_child(current_label)
-		_detail_body.add_child(_label("LV %d   ·   POTENTIAL %d" % [_instance.level, _instance.potential], 13, UI.TEXT, true))
+		_detail_body.add_child(_label("LV %d   ·   POTENTIAL %d   ·   LINK %d" % [_instance.level, _instance.potential, _instance.link], 13, UI.TEXT, true))
 		if not _instance.evolution_goal_seed.is_empty():
 			var goal_species := _database.get_by_seed(_instance.evolution_goal_seed)
 			if not goal_species.is_empty():
@@ -172,7 +172,7 @@ func _refresh_detail() -> void:
 		var route := _direct_route(_selected_seed, direction)
 		var route_accent := UI.GREEN if direction == "digivolution" else UI.CYAN
 		_detail_body.add_child(_section_label("REQUIREMENTS", route_accent))
-		_add_requirement_rows(route.get("requirements", []))
+		_add_requirement_rows(route.get("requirement_results", []))
 		var unlocked := bool(route.get("unlocked", false))
 		var action := _button("DIGIVOLVE" if direction == "digivolution" else "DEGENERATE", route_accent)
 		action.disabled = not unlocked
@@ -181,6 +181,43 @@ func _refresh_detail() -> void:
 		_detail_body.add_child(action)
 
 	_add_goal_controls(path)
+
+
+func _add_requirement_rows(raw_evaluations) -> void:
+	if not raw_evaluations is Array or (raw_evaluations as Array).is_empty():
+		_detail_body.add_child(_label("No extra requirements", 10, UI.GREEN, true))
+		return
+	for raw_evaluation in raw_evaluations:
+		if not raw_evaluation is Dictionary:
+			continue
+		var evaluation := raw_evaluation as Dictionary
+		var met := bool(evaluation.get("is_met", false))
+		var supported := bool(evaluation.get("supported", true))
+		var text := _requirement_result_text(evaluation)
+		var prefix := "✓  " if met else "✕  "
+		var color := UI.GREEN if met else UI.RED if supported else UI.ORANGE
+		_detail_body.add_child(_label(prefix + text, 11, color, true))
+
+
+func _requirement_result_text(evaluation: Dictionary) -> String:
+	var kind := String(evaluation.get("type", "")).to_lower()
+	var subject := String(evaluation.get("subject", kind))
+	var current = evaluation.get("current_value", 0)
+	var required = evaluation.get("required_value", 0)
+	match kind:
+		"level": return "Level %s / %s" % [current, required]
+		"potential", "abi": return "Potential %s / %s" % [current, required]
+		"link": return "Link %s / %s" % [current, required]
+		"item": return "%s × %s / %s" % [subject, current, required]
+		"quest": return "%s · %s / %s" % [subject, current, required]
+		"flag", "party_condition": return subject.replace("_", " ").capitalize()
+		"stat": return "%s %s / %s" % [subject.to_upper(), current, required]
+		"hp", "mp", "sp", "atk", "attack", "def", "defense", "int", "speed":
+			return "%s %s / %s" % [subject.to_upper(), current, required]
+		"battles_won": return "Battles won %s / %s" % [current, required]
+		"species_defeated": return "%s defeated %s / %s" % [subject, current, required]
+		"time": return "Time %s / %s" % [current, required]
+	return "%s %s / %s" % [subject.replace("_", " ").capitalize(), current, required]
 
 
 func _add_goal_controls(path: Array[String]) -> void:
@@ -197,7 +234,6 @@ func _add_goal_controls(path: Array[String]) -> void:
 
 
 func _chip(text: String, accent: Color) -> Label:
-	# Keep tiny statuses typographic; the surrounding Kenney frame is the chrome.
 	var label := _label(text, 9, accent.lightened(0.16), true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return label
@@ -253,8 +289,6 @@ func _layout() -> void:
 
 
 func _label(text: String, font_size: int, color: Color, bold: bool = false) -> Label:
-	# Override the legacy constellation factory so every label produced by the
-	# inherited requirement/route helpers also gets the new font family.
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", font_size)
@@ -269,8 +303,6 @@ func _label(text: String, font_size: int, color: Color, bold: bool = false) -> L
 
 
 func _button(text: String, accent: Color) -> Button:
-	# The base constellation predates the shared typography system. Keep its
-	# Kenney chrome but explicitly apply Exo 2 to actions in this chart.
 	var button := Button.new()
 	button.text = text
 	button.focus_mode = Control.FOCUS_ALL
