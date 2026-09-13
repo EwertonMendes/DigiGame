@@ -31,11 +31,16 @@ var _calculator: DigimonStatCalculator
 var _selected_id := ""
 var _pending_stats: Dictionary = {}
 var _pending_mobility := 0
+var _compact_layout := false
 
 var _frame: PanelContainer
+var _menu_root: Control
+var _title: Label
+var _subtitle: Label
+var _close: Button
 var _collection_panel: PanelContainer
 var _collection_scroll: ScrollContainer
-var _collection_list: HBoxContainer
+var _collection_list: GridContainer
 var _collection_buttons: Array[Button] = []
 var _collection_ids: Array[String] = []
 var _collection_previews: Array[DigimonWalkPreview] = []
@@ -64,6 +69,7 @@ func open_screen() -> void:
 		_selected_id = owned[0].id
 	_clear_plan()
 	_status.text = "Build a plan, preview the result, then apply it."
+	_layout()
 	_refresh()
 	call_deferred("_layout")
 	call_deferred("_focus_selected_collection")
@@ -97,72 +103,60 @@ func _build_ui() -> void:
 	_frame.add_theme_stylebox_override("panel", MENU.screen_frame())
 	add_child(_frame)
 
-	var outer := MENU.margin(18, 16, 18, 18)
-	_frame.add_child(outer)
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 9)
-	outer.add_child(root)
+	_menu_root = Control.new()
+	_menu_root.name = "MenuContent"
+	_menu_root.clip_contents = true
+	_frame.add_child(_menu_root)
 
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 12)
-	root.add_child(header)
-	var titles := VBoxContainer.new()
-	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	titles.add_theme_constant_override("separation", 2)
-	header.add_child(titles)
-	titles.add_child(_label("TRAINING CENTER", 25, UI.TEXT, true))
-	titles.add_child(_label("Use Potential to shape permanent tactical strengths.", 11, UI.MUTED))
-	var close := MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close Training Center", Vector2(44, 44))
-	close.pressed.connect(close_view)
-	header.add_child(close)
-
+	_title = _single_line_label("TRAINING CENTER", 25, UI.TEXT, true)
+	_menu_root.add_child(_title)
+	_subtitle = _single_line_label("Use Potential to shape permanent tactical strengths.", 11, UI.MUTED)
+	_menu_root.add_child(_subtitle)
 	_status = _single_line_label("Build a plan, preview the result, then apply it.", 10, UI.CYAN, true)
-	_status.custom_minimum_size.y = 20
-	root.add_child(_status)
+	_menu_root.add_child(_status)
+	_close = MENU.close_button(CLOSE_ICON, "Close Training Center")
+	_close.pressed.connect(close_view)
+	_menu_root.add_child(_close)
 
-	_build_collection_panel(root)
-	_build_detail_panel(root)
+	_build_collection_panel(_menu_root)
+	_build_detail_panel(_menu_root)
 
-func _build_collection_panel(parent: VBoxContainer) -> void:
+func _build_collection_panel(parent: Control) -> void:
 	_collection_panel = PanelContainer.new()
-	_collection_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_collection_panel.clip_contents = true
 	_collection_panel.add_theme_stylebox_override("panel", MENU.surface(UI.CYAN, 0.80, 10))
 	parent.add_child(_collection_panel)
-	var margin := MENU.margin(12, 9, 12, 9)
+	var margin := MENU.margin(10, 10, 10, 10)
 	_collection_panel.add_child(margin)
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 6)
 	margin.add_child(root)
 
-	var heading := HBoxContainer.new()
-	heading.add_theme_constant_override("separation", 10)
-	root.add_child(heading)
-	var title := _single_line_label("DIGIMON COLLECTION", 11, UI.CYAN, true)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	heading.add_child(title)
-	heading.add_child(_single_line_label("Select with mouse, touch, keyboard or controller", 9, UI.SUBTLE))
+	root.add_child(_single_line_label("DIGIMON COLLECTION", 11, UI.CYAN, true))
+	root.add_child(_single_line_label("Choose the individual you want to train.", 9, UI.SUBTLE))
 
 	_collection_scroll = ScrollContainer.new()
-	_collection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	_collection_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_collection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_collection_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_collection_scroll.follow_focus = true
 	_collection_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_collection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(_collection_scroll)
-	_collection_list = HBoxContainer.new()
+	SmoothScrollScript.attach(_collection_scroll)
+
+	_collection_list = GridContainer.new()
+	_collection_list.columns = 1
 	_collection_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_collection_list.add_theme_constant_override("separation", 8)
+	_collection_list.add_theme_constant_override("h_separation", 8)
+	_collection_list.add_theme_constant_override("v_separation", 8)
 	_collection_scroll.add_child(_collection_list)
 
-func _build_detail_panel(parent: VBoxContainer) -> void:
+func _build_detail_panel(parent: Control) -> void:
 	_detail_panel = PanelContainer.new()
-	_detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_detail_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail_panel.clip_contents = true
 	_detail_panel.add_theme_stylebox_override("panel", MENU.surface(UI.GOLD, 0.80, 10))
 	parent.add_child(_detail_panel)
-	var margin := MENU.margin(12, 10, 12, 10)
+	var margin := MENU.margin(11, 10, 11, 10)
 	_detail_panel.add_child(margin)
 	_detail_scroll = ScrollContainer.new()
 	_detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -174,7 +168,7 @@ func _build_detail_panel(parent: VBoxContainer) -> void:
 	SmoothScrollScript.attach(_detail_scroll)
 	_detail = VBoxContainer.new()
 	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_detail.add_theme_constant_override("separation", 8)
+	_detail.add_theme_constant_override("separation", 7)
 	_detail_scroll.add_child(_detail)
 
 func _refresh() -> void:
@@ -208,23 +202,25 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, active: 
 	var button := Button.new()
 	button.text = ""
 	button.focus_mode = Control.FOCUS_ALL
-	button.custom_minimum_size = Vector2(238, 76)
+	button.custom_minimum_size = Vector2(0, 78)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.clip_contents = true
 	button.tooltip_text = "Train %s" % instance.get_display_name(String(species.get("name", "Digimon")))
 	button.pressed.connect(_select_instance.bind(instance.id))
 	button.focus_entered.connect(_select_instance.bind(instance.id))
 	MENU.style_action_button(button, accent, instance.id == _selected_id)
 
-	var margin := MENU.margin(9, 7, 10, 7)
+	var margin := MENU.margin(8, 7, 9, 7)
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(margin)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 9)
+	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
 	var preview := WalkPreviewScript.new() as DigimonWalkPreview
+	preview.name = "WalkPreview"
 	preview.custom_minimum_size = Vector2(58, 58)
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	preview.set_species(String(species.get("name", "")))
@@ -288,9 +284,17 @@ func _refresh_detail() -> void:
 	_build_identity(instance, species)
 	_build_capacity(instance)
 	_detail.add_child(_section_heading("ATTRIBUTE TRAINING", UI.CYAN))
-	_detail.add_child(_label("Each point costs 1 Capacity and grants +%.1f%% to that attribute." % _training.stat_bonus_percent(1), 10, UI.MUTED))
+	_detail.add_child(_single_line_label("Each point costs 1 Capacity and grants +%.1f%% to that attribute." % _training.stat_bonus_percent(1), 9, UI.MUTED))
+
+	var stat_grid := GridContainer.new()
+	stat_grid.columns = 1 if _compact_layout else 2
+	stat_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stat_grid.add_theme_constant_override("h_separation", 8)
+	stat_grid.add_theme_constant_override("v_separation", 7)
+	_detail.add_child(stat_grid)
 	for stat_key: String in ["hp", "mp", "atk", "def", "int", "speed"]:
-		_build_stat_row(instance, stat_key, current_stats, preview_stats)
+		_build_stat_row(stat_grid, instance, stat_key, current_stats, preview_stats)
+
 	_build_mobility(instance, current_stats, preview_stats)
 	_build_plan_actions(instance)
 
@@ -300,38 +304,38 @@ func _build_identity(instance: DigimonInstance, species: Dictionary) -> void:
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", MENU.card(accent, true))
 	_detail.add_child(card)
-	var margin := MENU.margin(11, 8, 11, 8)
+	var margin := MENU.margin(9, 7, 9, 7)
 	card.add_child(margin)
 	var hero := HBoxContainer.new()
-	hero.add_theme_constant_override("separation", 12)
+	hero.add_theme_constant_override("separation", 10)
 	margin.add_child(hero)
 	var portrait_frame := PanelContainer.new()
-	portrait_frame.custom_minimum_size = Vector2(92, 82)
+	portrait_frame.custom_minimum_size = Vector2(76, 68)
 	portrait_frame.add_theme_stylebox_override("panel", MENU.portrait(accent))
 	hero.add_child(portrait_frame)
-	var portrait_margin := MENU.margin(5, 5, 5, 5)
+	var portrait_margin := MENU.margin(4, 4, 4, 4)
 	portrait_frame.add_child(portrait_margin)
 	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
-	portrait.custom_minimum_size = Vector2(82, 72)
+	portrait.custom_minimum_size = Vector2(66, 58)
 	portrait.set_species(String(species.get("name", "Unknown")))
 	portrait_margin.add_child(portrait)
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
-	info.add_theme_constant_override("separation", 3)
+	info.add_theme_constant_override("separation", 2)
 	hero.add_child(info)
-	info.add_child(_single_line_label(instance.get_display_name(String(species.get("name", "Unknown"))).to_upper(), 20, UI.TEXT, true))
-	info.add_child(_single_line_label("%s  ·  LV %d" % [rank.to_upper(), instance.level], 11, accent.lightened(0.10), true))
-	info.add_child(_label("Permanent training follows this individual through Digivolution and Degeneration.", 10, UI.SUBTLE))
+	info.add_child(_single_line_label(instance.get_display_name(String(species.get("name", "Unknown"))).to_upper(), 18, UI.TEXT, true))
+	info.add_child(_single_line_label("%s  ·  LV %d" % [rank.to_upper(), instance.level], 10, accent.lightened(0.10), true))
+	info.add_child(_single_line_label("Permanent training stays with this Digimon through Digivolution and Degeneration.", 9, UI.SUBTLE))
 
 func _build_capacity(instance: DigimonInstance) -> void:
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", MENU.card(UI.PURPLE, false))
 	_detail.add_child(card)
-	var margin := MENU.margin(10, 8, 10, 8)
+	var margin := MENU.margin(9, 7, 9, 7)
 	card.add_child(margin)
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 6)
+	body.add_theme_constant_override("separation", 5)
 	margin.add_child(body)
 	var total := _training.capacity_for(instance)
 	var used := _training.used_capacity(instance)
@@ -340,19 +344,19 @@ func _build_capacity(instance: DigimonInstance) -> void:
 	var metrics := GridContainer.new()
 	metrics.columns = 2
 	metrics.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	metrics.add_theme_constant_override("h_separation", 16)
+	metrics.add_theme_constant_override("h_separation", 14)
 	body.add_child(metrics)
 
 	var potential_box := VBoxContainer.new()
 	potential_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	potential_box.add_theme_constant_override("separation", 4)
+	potential_box.add_theme_constant_override("separation", 3)
 	metrics.add_child(potential_box)
 	potential_box.add_child(_single_line_label("POTENTIAL %d / 100" % instance.potential, 10, UI.PURPLE, true))
 	potential_box.add_child(_progress(UI.PURPLE, 100, instance.potential))
 
 	var capacity_box := VBoxContainer.new()
 	capacity_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	capacity_box.add_theme_constant_override("separation", 4)
+	capacity_box.add_theme_constant_override("separation", 3)
 	metrics.add_child(capacity_box)
 	var capacity_text := "CAPACITY %d / %d" % [used + planned, total]
 	if planned > 0:
@@ -361,14 +365,15 @@ func _build_capacity(instance: DigimonInstance) -> void:
 	capacity_box.add_child(_progress(UI.GOLD, total, used + planned))
 	body.add_child(_single_line_label("Base 10  ·  +1 Capacity for every 2 Potential", 9, UI.SUBTLE))
 
-func _build_stat_row(instance: DigimonInstance, stat_key: String, current_stats: Dictionary, preview_stats: Dictionary) -> void:
+func _build_stat_row(parent: Container, instance: DigimonInstance, stat_key: String, current_stats: Dictionary, preview_stats: Dictionary) -> void:
 	var meta: Array = STAT_META[stat_key]
 	var test_plan := _pending_stats.duplicate(true)
 	test_plan[stat_key] = int(test_plan.get(stat_key, 0)) + 1
 	var row := TrainingStatRowScript.new() as TrainingStatRow
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_requested.connect(_add_stat)
 	row.remove_requested.connect(_remove_stat)
-	_detail.add_child(row)
+	parent.add_child(row)
 	_stat_rows[stat_key] = row
 	row.configure(stat_key, String(meta[0]), int(current_stats.get(stat_key, 0)), int(preview_stats.get(stat_key, 0)), int(instance.training.get(stat_key, 0)), int(_pending_stats.get(stat_key, 0)), _training.max_points_per_stat(), _training.can_apply_plan(instance, test_plan, _pending_mobility), meta[1] as Color)
 
@@ -377,10 +382,10 @@ func _build_mobility(instance: DigimonInstance, current_stats: Dictionary, previ
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", MENU.card(UI.GOLD, false))
 	_detail.add_child(panel)
-	var margin := MENU.margin(10, 8, 10, 8)
+	var margin := MENU.margin(9, 7, 9, 7)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 7)
+	root.add_theme_constant_override("separation", 6)
 	margin.add_child(root)
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 8)
@@ -407,12 +412,12 @@ func _build_mobility(instance: DigimonInstance, current_stats: Dictionary, previ
 	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_theme_constant_override("h_separation", 8)
 	root.add_child(actions)
-	var undo := MENU.action_button("UNDO MOV", UI.MUTED, 38)
+	var undo := MENU.action_button("UNDO MOV", UI.MUTED, 36)
 	undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	undo.disabled = _pending_mobility <= 0
 	undo.pressed.connect(_remove_mobility)
 	actions.add_child(undo)
-	var add := MENU.action_button("TRAIN MOV +1", UI.GOLD, 38)
+	var add := MENU.action_button("TRAIN MOV +1", UI.GOLD, 36)
 	add.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add.disabled = not _training.can_apply_plan(instance, _pending_stats, _pending_mobility + 1)
 	add.pressed.connect(_add_mobility)
@@ -428,7 +433,7 @@ func _build_plan_actions(instance: DigimonInstance) -> void:
 	var has_plan := _has_plan()
 	var validation := _training.validate_plan(instance, _pending_stats, _pending_mobility)
 	var message := "Ready to apply this plan." if has_plan and validation.is_empty() else (validation if has_plan else "No pending changes.")
-	_detail.add_child(_label(message, 10, UI.GREEN if has_plan and validation.is_empty() else UI.MUTED, true))
+	_detail.add_child(_single_line_label(message, 9, UI.GREEN if has_plan and validation.is_empty() else UI.MUTED, true))
 	var actions := GridContainer.new()
 	actions.columns = 2
 	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -542,16 +547,59 @@ func _on_collection_changed() -> void:
 		_refresh()
 
 func _layout() -> void:
-	if _frame == null:
+	if not visible or _frame == null or _menu_root == null:
 		return
-	var layout := MENU.apply_safe_frame(_frame, get_viewport(), Vector2(1240, 720), 900.0)
-	var compact := bool(layout.get("compact", false))
-	_collection_panel.custom_minimum_size = Vector2(0, 150 if compact else 132)
-	_detail_panel.custom_minimum_size = Vector2.ZERO
+	var physical := UI.physical_window_size(get_viewport())
+	var scale_factor := UI.ui_scale(get_viewport())
+	var compact := UI.is_compact(get_viewport(), 900.0)
+	var edge := 12.0 if compact else 22.0
+	var width := minf(1240.0, maxf(1.0, physical.x - edge * 2.0))
+	var height := minf(760.0, maxf(1.0, physical.y - edge * 2.0))
+	_frame.scale = Vector2.ONE * scale_factor
+	_frame.position = Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
+	_frame.size = Vector2(width, height)
+	_frame.clip_contents = true
+	_menu_root.position = Vector2.ZERO
+	_menu_root.size = Vector2(width, height)
+
+	_title.position = Vector2(24.0, 14.0)
+	_title.size = Vector2(width - 112.0, 32.0)
+	_subtitle.position = Vector2(24.0, 45.0)
+	_subtitle.size = Vector2(width - 112.0, 20.0)
+	_status.position = Vector2(24.0, 69.0)
+	_status.size = Vector2(width - 112.0, 20.0)
+	_close.position = Vector2(width - 68.0, 14.0)
+	_close.size = Vector2(44.0, 44.0)
+
+	var content_y := 100.0
+	var bottom := 20.0
+	if compact:
+		var collection_h := minf(182.0, height * 0.28)
+		_collection_panel.position = Vector2(20.0, content_y)
+		_collection_panel.size = Vector2(width - 40.0, collection_h)
+		_detail_panel.position = Vector2(20.0, content_y + collection_h + 12.0)
+		_detail_panel.size = Vector2(width - 40.0, height - content_y - collection_h - bottom - 12.0)
+		_collection_list.columns = 1 if width < 560.0 else 2
+	else:
+		var collection_w := clampf(width * 0.255, 280.0, 320.0)
+		var gap := 14.0
+		_collection_panel.position = Vector2(20.0, content_y)
+		_collection_panel.size = Vector2(collection_w, height - content_y - bottom)
+		_detail_panel.position = Vector2(20.0 + collection_w + gap, content_y)
+		_detail_panel.size = Vector2(width - collection_w - gap - 40.0, height - content_y - bottom)
+		_collection_list.columns = 1
+
+	_collection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_collection_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_collection_panel.clip_contents = true
+	_detail_panel.clip_contents = true
+	if compact != _compact_layout:
+		_compact_layout = compact
+		call_deferred("_refresh_detail")
 
 func _section_heading(text: String, accent: Color) -> Label:
 	var label := _single_line_label(text, 10, accent.lightened(0.08), true)
-	label.custom_minimum_size.y = 19
+	label.custom_minimum_size.y = 18
 	return label
 
 func _progress(accent: Color, maximum: int, value: int) -> ProgressBar:
@@ -560,7 +608,7 @@ func _progress(accent: Color, maximum: int, value: int) -> ProgressBar:
 	bar.max_value = maxf(1, maximum)
 	bar.value = clampi(value, 0, maxi(1, maximum))
 	bar.show_percentage = false
-	bar.custom_minimum_size.y = 7
+	bar.custom_minimum_size.y = 6
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var bg := StyleBoxFlat.new()
@@ -602,7 +650,7 @@ func _single_line_label(text: String, size: int, color: Color, bold: bool = fals
 	return label
 
 func _icon_text_button(texture: Texture2D, text: String, accent: Color) -> Button:
-	var button := MENU.action_button(text, accent, 42)
+	var button := MENU.action_button(text, accent, 40)
 	button.icon = texture
 	button.expand_icon = false
 	return button
