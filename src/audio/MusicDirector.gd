@@ -17,11 +17,13 @@ const SILENT_VOLUME_DB := -60.0
 const TRACKS := {
 	TRACK_ZONE_1: {
 		"path": "res://assets/audio/music/zone_1.ogg",
-		"volume_db": -8.0,
+		# Keep exploration music present without competing with gameplay SFX.
+		"volume_db": -5.0,
 	},
 	TRACK_BATTLE_1: {
 		"path": "res://assets/audio/music/battle_1.ogg",
-		"volume_db": -10.5,
+		# Battle music has more perceived density, so leave a little extra headroom.
+		"volume_db": -6.0,
 	},
 }
 
@@ -70,7 +72,7 @@ func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECOND
 	var next_index := 0 if previous_index != 0 else 1
 	var next_player := _players[next_index]
 	var previous_player: AudioStreamPlayer = _players[previous_index] if previous_index >= 0 else null
-	var target_volume := float((TRACKS[track_id] as Dictionary).get("volume_db", -8.0))
+	var target_volume := float((TRACKS[track_id] as Dictionary).get("volume_db", -5.0))
 
 	if next_player.playing:
 		next_player.stop()
