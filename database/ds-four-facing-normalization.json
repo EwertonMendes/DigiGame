@@ -1,0 +1,388 @@
+{
+  "runtime_direction_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "source_group_order": [
+    "front_left",
+    "back_left",
+    "front_right",
+    "back_right"
+  ],
+  "group_permutation": [
+    0,
+    2,
+    1,
+    3
+  ],
+  "corrected_count": 38,
+  "corrected": [
+    {
+      "name": "BlackAgumon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/blackagumon/field.png"
+    },
+    {
+      "name": "botamon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/botamon/field.png"
+    },
+    {
+      "name": "budmon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/budmon/field.png"
+    },
+    {
+      "name": "calumon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/calumon/field.png"
+    },
+    {
+      "name": "candlemon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/candlemon/field.png"
+    },
+    {
+      "name": "chicchimon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/chicchimon/field.png"
+    },
+    {
+      "name": "coronamon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/coronamon/field.png"
+    },
+    {
+      "name": "Crabmon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/crabmon/field.png"
+    },
+    {
+      "name": "dokunemon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/dokunemon/field.png"
+    },
+    {
+      "name": "Floramon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/floramon/field.png"
+    },
+    {
+      "name": "Gabumon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/gabumon/field.png"
+    },
+    {
+      "name": "Gaomon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/gaomon/field.png"
+    },
+    {
+      "name": "gigimon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/gigimon/field.png"
+    },
+    {
+      "name": "gomamon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/gomamon/field.png"
+    },
+    {
+      "name": "guilmon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/guilmon/field.png"
+    },
+    {
+      "name": "gummymon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/gummymon/field.png"
+    },
+    {
+      "name": "Hagurumon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/hagurumon/field.png"
+    },
+    {
+      "name": "kokomon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/kokomon/field.png"
+    },
+    {
+      "name": "kokuwamon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/kokuwamon/field.png"
+    },
+    {
+      "name": "kunemon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/kunemon/field.png"
+    },
+    {
+      "name": "Lalamon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/lalamon/field.png"
+    },
+    {
+      "name": "lopmon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/lopmon/field.png"
+    },
+    {
+      "name": "lunamon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/lunamon/field.png"
+    },
+    {
+      "name": "minomon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/minomon/field.png"
+    },
+    {
+      "name": "monodramon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/monodramon/field.png"
+    },
+    {
+      "name": "moonmon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/moonmon/field.png"
+    },
+    {
+      "name": "mushroomon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/mushroomon/field.png"
+    },
+    {
+      "name": "Palmon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/palmon/field.png"
+    },
+    {
+      "name": "renamon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/renamon/field.png"
+    },
+    {
+      "name": "shamamon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/shamamon/field.png"
+    },
+    {
+      "name": "snowgoburimon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/snowgoburimon/field.png"
+    },
+    {
+      "name": "solarmon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/solarmon/field.png"
+    },
+    {
+      "name": "sunmon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/sunmon/field.png"
+    },
+    {
+      "name": "syakomon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/syakomon/field.png"
+    },
+    {
+      "name": "terriermon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/terriermon/field.png"
+    },
+    {
+      "name": "tsumemon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/tsumemon/field.png"
+    },
+    {
+      "name": "Tsunomon",
+      "reason": "manager_four_authored_source_order",
+      "path": "assets/characters/tsunomon/field.png"
+    },
+    {
+      "name": "wanyamon",
+      "reason": "wtw_four_authored_source_order",
+      "path": "assets/characters/wanyamon/field.png"
+    }
+  ],
+  "preserved_count": 43,
+  "preserved": [
+    {
+      "name": "Agumon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Armadillomon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Aruraumon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Betamon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Biyomon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Chibomon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "DemiDevimon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Dorimon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Dorumon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Dracmon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Falcomon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Gizamon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Goburimon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Gotsumon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Hawkmon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Impmon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Kamemon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Kapurimon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Keramon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Kotemon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Kudamon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Kumamon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Kuramon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Muchomon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Otamamon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Pagumon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Patamon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "PawnChessmon Black",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "PawnChessmon White",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Penguinmon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "poyomon",
+      "reason": "already_normalized"
+    },
+    {
+      "name": "Puttimon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Salamon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "SnowAgumon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Tanemon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Tapirmon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Tentomon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "tokomon",
+      "reason": "already_normalized"
+    },
+    {
+      "name": "ToyAgumon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "ShadowToyAgumon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Tsukaimon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Veemon",
+      "reason": "two_authored_plus_mirror"
+    },
+    {
+      "name": "Wormmon",
+      "reason": "two_authored_plus_mirror"
+    }
+  ]
+}

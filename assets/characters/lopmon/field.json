@@ -16,5 +16,24 @@
   ],
   "runtime_scale": 1.0,
   "withthewill_thread": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
-  "field_path": "res://assets/characters/lopmon/field.png"
+  "field_path": "res://assets/characters/lopmon/field.png",
+  "direction_source": "wtw_four_authored_source_order",
+  "source_group_order": [
+    "front_left",
+    "back_left",
+    "front_right",
+    "back_right"
+  ],
+  "normalized_group_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "direction_group_permutation": [
+    0,
+    2,
+    1,
+    3
+  ]
 }
