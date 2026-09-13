@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Verify that every runtime directional Digimon resource is in the facing audit.
 
-This is intentionally repository-wide rather than rank-scoped. Any new
-`directional_12` resource must be classified by the facing audit before it can
-silently enter Sprite Test, overworld followers, or battle runtime.
+`Digimon.gd` defaults sprite_layout to directional_12, so a resource that omits
+that assignment (legacy Greymon is one example) is still directional at runtime.
+This validator mirrors that behavior instead of only grepping explicit fields.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from pathlib import Path
 AUDIT_PATH = Path("database/ds-facing-audit.json")
 REPORT_PATH = Path("database/ds-directional-resource-audit.json")
 RESOURCE_ROOT = Path("assets/resources")
+DEFAULT_LAYOUT = "directional_12"
 
 
 def _names(items: object) -> set[str]:
@@ -46,29 +47,34 @@ def main() -> None:
     ):
         covered.update(_names(audit.get(key)))
 
-    directional: dict[str, str] = {}
+    directional: dict[str, dict[str, str]] = {}
     duplicate_names: dict[str, list[str]] = {}
     missing_display_name: list[str] = []
     for path in sorted(RESOURCE_ROOT.glob("*.tres")):
         text = path.read_text(encoding="utf-8")
-        if _assignment(text, "sprite_layout") != "directional_12":
+        layout = _assignment(text, "sprite_layout") or DEFAULT_LAYOUT
+        if layout != "directional_12":
             continue
         display_name = _assignment(text, "display_name")
         if not display_name:
             missing_display_name.append(str(path))
             continue
         if display_name in directional:
-            duplicate_names.setdefault(display_name, [directional[display_name]]).append(str(path))
-        directional[display_name] = str(path)
+            duplicate_names.setdefault(display_name, [directional[display_name]["resource"]]).append(str(path))
+        directional[display_name] = {
+            "resource": str(path),
+            "layout_source": "explicit" if _assignment(text, "sprite_layout") else "Digimon.gd default",
+        }
 
     directional_names = set(directional)
     unknown = sorted(directional_names - covered)
     missing = sorted(covered - directional_names)
     report = {
+        "runtime_default_layout": DEFAULT_LAYOUT,
         "directional_resource_count": len(directional_names),
         "audited_resource_count": len(covered),
         "directional_resources": [
-            {"name": name, "resource": directional[name]}
+            {"name": name, **directional[name]}
             for name in sorted(directional)
         ],
         "unknown_directional_resources": unknown,
