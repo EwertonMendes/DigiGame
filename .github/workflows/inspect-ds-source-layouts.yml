@@ -16,11 +16,38 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install image tooling
-        run: python3 -m pip install --disable-pip-version-check pillow
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+      - name: Export every raw WtW source used by the registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=tools python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from build_early_rank_ds_fields import load_wtw_archive
+
+          registry = json.loads(Path('database/ds-source-direction-registry.json').read_text())
+          out = Path('/tmp/ds-exact-source-audit/raw')
+          out.mkdir(parents=True, exist_ok=True)
+          archive = load_wtw_archive()
+          exported = []
+          for name, entry in sorted(registry['entries'].items(), key=lambda item: int(item[1]['source_id'])):
+              member = entry['source_archive_file']
+              data = archive.read(member)
+              suffix = Path(member).suffix.lower() or '.png'
+              filename = f"{int(entry['source_id']):03d}_{name.replace('/', '_')}{suffix}"
+              (out / filename).write_bytes(data)
+              exported.append({'name': name, 'source_id': entry['source_id'], 'member': member, 'file': filename})
+          Path('/tmp/ds-exact-source-audit/manifest.json').write_text(json.dumps(exported, indent=2) + '\n')
+          assert len(exported) == 82
+          print('exported 82/82 raw WtW sources')
+          PY
       - name: Render all final DS runtime direction strips
         run: python3 tools/render_generated_ds_direction_audit.py
+      - name: Copy final review sheets beside raw sources
+        run: cp -r /tmp/ds-generated-direction-audit /tmp/ds-exact-source-audit/final
       - uses: actions/upload-artifact@v4
         with:
-          name: ds-final-generated-direction-audit
-          path: /tmp/ds-generated-direction-audit
+          name: ds-exact-source-audit
+          path: /tmp/ds-exact-source-audit
           retention-days: 1
