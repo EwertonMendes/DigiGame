@@ -6,6 +6,10 @@ var _reward_service = null
 
 
 func _ready() -> void:
+	# The persistent director crossfades the current area theme into Battle 1 and
+	# keeps it alive for the full encounter/result flow. Returning to the Hub asks
+	# the same director for Zone 1, producing the reverse transition automatically.
+	MusicDirector.play_battle_1()
 	_reward_service = BattleRewardServiceScript.new(OverworldState.get_database())
 	super._ready()
 
