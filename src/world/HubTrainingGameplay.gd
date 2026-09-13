@@ -31,7 +31,9 @@ func _build_training_specialist() -> void:
 	_trainer = TrainerActorScript.new() as HubActor
 	_trainer.name = "TrainingSpecialist"
 	_trainer.configure(TRAINER_TEXTURE, false, self, "southwest")
-	_trainer.position = _grid_to_world(Vector2(-2, 2))
+	# Keep the specialist in the same upper-left service zone as DigiLab, while
+	# leaving enough world-space separation for both labels to read cleanly.
+	_trainer.position = _grid_to_world(Vector2(-3, -1))
 	actors.add_child(_trainer)
 	_blockers.append({"position": _trainer.position, "radius": 28.0})
 	var sprite := _trainer.get_node_or_null("CharacterSprite") as Sprite2D
