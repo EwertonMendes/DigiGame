@@ -4,9 +4,10 @@ class_name MenuUiStyle
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
 
+const SAFE_EDGE_DESKTOP := 28.0
+const SAFE_EDGE_COMPACT := 14.0
+
 static func screen_frame() -> StyleBox:
-	# Match the established Digimon menu: one quiet Kenney frame owns the screen.
-	# Accent-heavy borders belong to focused content, not every container.
 	return SKIN.frame_style(UI.FRAME_DARK, Vector4.ZERO, 14.0)
 
 static func surface(accent: Color = UI.CYAN, fill_alpha: float = 0.80, radius: int = 10) -> StyleBoxFlat:
@@ -48,15 +49,9 @@ static func stat_surface(accent: Color, selected: bool = false) -> StyleBoxFlat:
 static func style_action_button(button: Button, accent: Color, selected: bool = false) -> void:
 	if button == null:
 		return
-	button.add_theme_stylebox_override("normal", UI.action_style(accent, "selected" if selected else "normal"))
-	button.add_theme_stylebox_override("hover", UI.action_style(accent, "hover"))
-	button.add_theme_stylebox_override("focus", UI.action_style(UI.GOLD if selected else accent, "focus"))
-	button.add_theme_stylebox_override("pressed", UI.action_style(accent, "pressed"))
-	button.add_theme_stylebox_override("disabled", UI.action_style(accent, "disabled"))
-	button.add_theme_color_override("font_color", UI.TEXT)
-	button.add_theme_color_override("font_hover_color", UI.TEXT)
-	button.add_theme_color_override("font_focus_color", UI.TEXT)
-	button.add_theme_color_override("font_pressed_color", UI.TEXT)
+	SKIN.apply_button(button, accent)
+	if selected:
+		button.add_theme_stylebox_override("normal", SKIN.border_style(accent, Vector4(14.0, 8.0, 14.0, 8.0), 10.0))
 	button.add_theme_color_override("font_disabled_color", UI.DISABLED)
 	UI.apply_body_font(button)
 
@@ -69,13 +64,35 @@ static func action_button(text: String, accent: Color, minimum_height: float = 4
 	style_action_button(button, accent)
 	return button
 
-static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size: Vector2 = Vector2(44, 40)) -> Button:
-	var button := action_button("", accent, size.y)
+static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size: Vector2 = Vector2(44, 44)) -> Button:
+	var button := Button.new()
+	button.focus_mode = Control.FOCUS_ALL
 	button.custom_minimum_size = size
 	button.icon = texture
 	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.tooltip_text = tooltip
+	SKIN.apply_button(button, accent)
 	return button
+
+static func safe_frame_layout(viewport: Viewport, max_size: Vector2 = Vector2(1240.0, 720.0), breakpoint: float = 840.0, desktop_edge: float = SAFE_EDGE_DESKTOP, compact_edge: float = SAFE_EDGE_COMPACT) -> Dictionary:
+	var physical := UI.physical_window_size(viewport)
+	var scale_factor := UI.ui_scale(viewport)
+	var compact := UI.is_compact(viewport, breakpoint)
+	var edge := compact_edge if compact else desktop_edge
+	var available := Vector2(maxf(1.0, physical.x - edge * 2.0), maxf(1.0, physical.y - edge * 2.0))
+	var frame_size := Vector2(minf(max_size.x, available.x), minf(max_size.y, available.y))
+	var origin := Vector2((physical.x - frame_size.x) * 0.5, (physical.y - frame_size.y) * 0.5) * scale_factor
+	return {"physical": physical, "scale": scale_factor, "compact": compact, "edge": edge, "size": frame_size, "position": origin}
+
+static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2 = Vector2(1240.0, 720.0), breakpoint: float = 840.0, desktop_edge: float = SAFE_EDGE_DESKTOP, compact_edge: float = SAFE_EDGE_COMPACT) -> Dictionary:
+	var layout := safe_frame_layout(viewport, max_size, breakpoint, desktop_edge, compact_edge)
+	if frame != null:
+		frame.scale = Vector2.ONE * float(layout.get("scale", 1.0))
+		frame.position = Vector2(layout.get("position", Vector2.ZERO))
+		frame.size = Vector2(layout.get("size", max_size))
+		frame.clip_contents = true
+	return layout
 
 static func margin(left: int, top: int, right: int, bottom: int) -> MarginContainer:
 	var result := MarginContainer.new()
