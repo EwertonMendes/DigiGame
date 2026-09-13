@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Render all final DS runtime strips as human-review contact sheets.
 
-Each row is one Digimon. Frames are shown in the exact runtime order and are
-explicitly labelled DL / DR / UL / UR, three frames per group. This tool is a
-review aid: semantic truth still lives in ds-source-direction-registry.json.
+Each row is one Digimon. Frames are shown in exact runtime order and labelled
+DL / DR / UL / UR, three frames per group. Every frame in a Digimon row uses
+the same nearest-neighbour scale so the audit preserves real relative sizes.
+Semantic truth lives in database/ds-direction-registry.json.
 """
 from __future__ import annotations
 
@@ -24,13 +25,23 @@ PAGE_ROWS = 9
 SCALE_LIMIT = 4
 
 
-def _fit_nearest(frame: Image.Image) -> Image.Image:
+def _row_scale(frames: list[Image.Image]) -> int:
+    max_dimension = 1
+    for frame in frames:
+        bbox = frame.getbbox()
+        if bbox is None:
+            continue
+        crop = frame.crop(bbox)
+        max_dimension = max(max_dimension, crop.width, crop.height)
+    return max(1, min(SCALE_LIMIT, (FRAME_BOX - 8) // max_dimension))
+
+
+def _fit_nearest(frame: Image.Image, scale: int) -> Image.Image:
     bbox = frame.getbbox()
     if bbox is None:
         return Image.new("RGBA", (FRAME_BOX, FRAME_BOX), (0, 0, 0, 0))
     crop = frame.crop(bbox)
-    max_scale = max(1, min(SCALE_LIMIT, (FRAME_BOX - 8) // max(crop.width, crop.height)))
-    crop = crop.resize((crop.width * max_scale, crop.height * max_scale), Image.Resampling.NEAREST)
+    crop = crop.resize((crop.width * scale, crop.height * scale), Image.Resampling.NEAREST)
     canvas = Image.new("RGBA", (FRAME_BOX, FRAME_BOX), (0, 0, 0, 0))
     x = (FRAME_BOX - crop.width) // 2
     y = FRAME_BOX - crop.height - 4
@@ -64,7 +75,10 @@ def _load_frames(path: Path) -> list[Image.Image]:
         raise RuntimeError(f"{path}: width {strip.width} is not divisible by 12")
     cell_w = strip.width // 12
     cell_h = strip.height
-    return [strip.crop((index * cell_w, 0, (index + 1) * cell_w, cell_h)) for index in range(12)]
+    frames = [strip.crop((index * cell_w, 0, (index + 1) * cell_w, cell_h)) for index in range(12)]
+    if any(frame.getbbox() is None for frame in frames):
+        raise RuntimeError(f"{path}: one or more runtime frames are empty")
+    return frames
 
 
 def main() -> None:
@@ -80,15 +94,22 @@ def main() -> None:
         page = _checker((page_w, page_h))
         draw = ImageDraw.Draw(page)
         draw.rectangle((0, 0, page_w, HEADER_H), fill=(250, 250, 250, 255))
-        draw.text((8, 8), "Runtime contract: DL[0-2]  DR[3-5]  UL[6-8]  UR[9-11]", fill=(0, 0, 0, 255), font=font)
+        draw.text(
+            (8, 8),
+            "Runtime contract: DL[0-2]  DR[3-5]  UL[6-8]  UR[9-11] — fixed scale per Digimon",
+            fill=(0, 0, 0, 255),
+            font=font,
+        )
 
         for row_index, entry in enumerate(page_entries):
             y = HEADER_H + row_index * ROW_H
             draw.rectangle((0, y, page_w, y + ROW_H - 1), outline=(90, 90, 90, 255), width=1)
             draw.rectangle((0, y, NAME_W, y + ROW_H - 1), fill=(248, 248, 248, 255))
-            draw.text((8, y + 8), entry["name"], fill=(0, 0, 0, 255), font=font)
             output = ROOT / entry["output"]
             frames = _load_frames(output)
+            scale = _row_scale(frames)
+            draw.text((8, y + 8), f"{entry['name']}  x{scale}", fill=(0, 0, 0, 255), font=font)
+
             for direction, start in DIRECTIONS:
                 group_x = NAME_W + start * FRAME_BOX
                 draw.text((group_x + 3, y + 3), direction, fill=(0, 0, 0, 255), font=font)
@@ -96,7 +117,7 @@ def main() -> None:
                     draw.line((group_x, y, group_x, y + ROW_H - 1), fill=(70, 70, 70, 255), width=2)
                 for local_index in range(3):
                     frame_index = start + local_index
-                    rendered = _fit_nearest(frames[frame_index])
+                    rendered = _fit_nearest(frames[frame_index], scale)
                     x = NAME_W + frame_index * FRAME_BOX
                     page.alpha_composite(rendered, (x, y + 18))
                     draw.text((x + 2, y + ROW_H - 12), str(frame_index), fill=(50, 50, 50, 255), font=font)
@@ -106,7 +127,7 @@ def main() -> None:
         manifest.append({"page": filename, "names": [entry["name"] for entry in page_entries]})
 
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    print(f"rendered {len(entries)} runtime strips across {len(manifest)} review pages")
+    print(f"rendered {len(entries)} runtime strips across {len(manifest)} fixed-scale review pages")
 
 
 if __name__ == "__main__":
