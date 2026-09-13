@@ -74,13 +74,13 @@ func _assert_training_center_entry(hub: Node, player: Node2D, trainer: Node2D, t
 	hub.call("_open_training")
 	await get_tree().process_frame
 	assert(training_screen.visible, "Talking to the Training Specialist must open the Training Center")
-	assert(not player.is_physics_processing(), "Training Center must pause overworld movement")
+	assert(not bool(player.get("movement_enabled")), "Training Center must pause overworld movement")
 	var collection_list := training_screen.get("_collection_list") as VBoxContainer
 	assert(collection_list != null and collection_list.get_child_count() >= 3, "Training Center must load the persistent Digimon Collection")
 	hub.call("_close_training")
 	await get_tree().process_frame
 	assert(not training_screen.visible, "Closing Training Center must return to the Hub")
-	assert(player.is_physics_processing(), "Closing Training Center must restore overworld movement")
+	assert(bool(player.get("movement_enabled")), "Closing Training Center must restore overworld movement")
 	player.position = original_position
 	await get_tree().process_frame
 
