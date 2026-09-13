@@ -74,7 +74,6 @@ static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size
 	button.custom_minimum_size = size
 	button.icon = texture
 	button.expand_icon = true
-	button.icon_max_width = int(minf(size.x, size.y) * 0.45)
 	button.tooltip_text = tooltip
 	return button
 
