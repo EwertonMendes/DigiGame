@@ -1,5 +1,14 @@
 extends "res://src/world/HubTrainingGameplay.gd"
 
+
+func _ready() -> void:
+	super._ready()
+	# MusicDirector is persistent across scenes, so returning from combat fades the
+	# battle theme into the Terminal Commons theme instead of restarting audio
+	# through a scene-local player.
+	MusicDirector.play_zone_1()
+
+
 func _start_test_battle() -> void:
 	if _transitioning or DigitalSceneTransition.is_transitioning():
 		return
