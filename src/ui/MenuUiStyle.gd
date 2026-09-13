@@ -79,20 +79,36 @@ static func icon_button(texture: Texture2D, accent: Color, tooltip: String, size
 
 static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2, compact_breakpoint: float = 840.0) -> Dictionary:
 	var physical_size := UI.physical_window_size(viewport)
-	var scale_factor := UI.ui_scale(viewport)
+	var canvas_scale := UI.ui_scale(viewport)
 	var compact := UI.is_compact(viewport, compact_breakpoint)
 	var safe_margin := 14.0 if compact else 28.0
-	var width := minf(max_size.x, maxf(1.0, physical_size.x - safe_margin * 2.0))
-	var height := minf(max_size.y, maxf(1.0, physical_size.y - safe_margin * 2.0))
-	frame.scale = Vector2.ONE * scale_factor
-	frame.position = Vector2((physical_size.x - width) * 0.5, (physical_size.y - height) * 0.5) * scale_factor
-	frame.size = Vector2(width, height)
+	var available := Vector2(
+		maxf(1.0, physical_size.x - safe_margin * 2.0),
+		maxf(1.0, physical_size.y - safe_margin * 2.0)
+	)
+	var requested := Vector2(minf(max_size.x, available.x), minf(max_size.y, available.y))
+
+	# A Container cannot be sized below its combined minimum. Assign first, then
+	# read the real size Godot accepted and fit that real rectangle into the safe
+	# area. This guarantees the modal chrome itself never leaks past the viewport,
+	# even if a future child accidentally increases the minimum size.
+	frame.size = requested
+	var actual := frame.size
+	var fit := minf(1.0, minf(available.x / maxf(1.0, actual.x), available.y / maxf(1.0, actual.y)))
+	var effective_physical := actual * fit
+	frame.scale = Vector2.ONE * canvas_scale * fit
+	frame.position = Vector2(
+		(physical_size.x - effective_physical.x) * 0.5,
+		(physical_size.y - effective_physical.y) * 0.5
+	) * canvas_scale
 	frame.clip_contents = true
 	return {
 		"compact": compact,
-		"scale": scale_factor,
+		"scale": canvas_scale * fit,
+		"fit": fit,
 		"position": frame.position,
-		"size": frame.size,
+		"size": actual,
+		"effective_size": effective_physical,
 	}
 
 static func margin(left: int, top: int, right: int, bottom: int) -> MarginContainer:
