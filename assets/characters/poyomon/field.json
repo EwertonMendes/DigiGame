@@ -8,7 +8,7 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 2,
+  "direction_registry_schema_version": 4,
   "review_pattern": "compact_interleaved",
   "runtime_group_indices": [
     0,
@@ -21,6 +21,64 @@
     "up_left",
     "down_right",
     "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      0,
+      1,
+      2
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 24518,
+      "equivalent_best_count": 1
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 56236,
+      "confidence_margin": 0,
+      "equivalent_best_count": 2
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    31
   ],
   "source_layout": "compact_four_groups",
   "audited_source_frames": {
@@ -46,8 +104,8 @@
     ],
     "down_right": [
       {
-        "x": 139,
-        "y": 57,
+        "x": 187,
+        "y": 59,
         "w": 13,
         "h": 14
       },
@@ -58,8 +116,8 @@
         "h": 14
       },
       {
-        "x": 187,
-        "y": 59,
+        "x": 139,
+        "y": 57,
         "w": 13,
         "h": 14
       }
@@ -112,9 +170,9 @@
       "e5ec79abe50c3992a1829502ad1bcc7a4128443f74f5a5b1bb63add48c5a0d6b"
     ],
     "down_right": [
-      "6b62ff5a357616dcb2bb5bab666b64be7f084d220eaafdafa7d76f9aa73b2fd4",
+      "0733203828aa83d8fda7a0ec04e277deb3d5ab16ca7b81b1e0c47bac1b4ce468",
       "1d89000edb088933b1a30c78ad4a38ce9e2214a42d07d5eabc8983da945949a3",
-      "0733203828aa83d8fda7a0ec04e277deb3d5ab16ca7b81b1e0c47bac1b4ce468"
+      "6b62ff5a357616dcb2bb5bab666b64be7f084d220eaafdafa7d76f9aa73b2fd4"
     ],
     "up_left": [
       "f78a88614cb635e23ffef2885b39815276799126e4090ddff555589e1d6f6f38",

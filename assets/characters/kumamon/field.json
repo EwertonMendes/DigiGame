@@ -8,19 +8,77 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 2,
-  "review_pattern": "canonical_rows",
+  "direction_registry_schema_version": 4,
+  "review_pattern": "canonical_rows_rear_reversed",
   "runtime_group_indices": [
     0,
     1,
-    2,
-    3
+    3,
+    2
   ],
   "source_group_order": [
     "down_left",
     "down_right",
-    "up_left",
-    "up_right"
+    "up_right",
+    "up_left"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 119566,
+      "confidence_margin": 103974,
+      "equivalent_best_count": 1
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 46764,
+      "confidence_margin": 101578,
+      "equivalent_best_count": 1
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    31
   ],
   "source_layout": "two_rows_of_six",
   "audited_source_frames": {
@@ -46,10 +104,10 @@
     ],
     "down_right": [
       {
-        "x": 123,
-        "y": 192,
+        "x": 191,
+        "y": 188,
         "w": 18,
-        "h": 23
+        "h": 27
       },
       {
         "x": 153,
@@ -58,33 +116,13 @@
         "h": 24
       },
       {
-        "x": 191,
-        "y": 188,
+        "x": 123,
+        "y": 192,
         "w": 18,
-        "h": 27
+        "h": 23
       }
     ],
     "up_left": [
-      {
-        "x": 6,
-        "y": 247,
-        "w": 18,
-        "h": 28
-      },
-      {
-        "x": 39,
-        "y": 248,
-        "w": 19,
-        "h": 27
-      },
-      {
-        "x": 73,
-        "y": 247,
-        "w": 26,
-        "h": 28
-      }
-    ],
-    "up_right": [
       {
         "x": 121,
         "y": 247,
@@ -103,6 +141,26 @@
         "w": 18,
         "h": 28
       }
+    ],
+    "up_right": [
+      {
+        "x": 73,
+        "y": 247,
+        "w": 26,
+        "h": 28
+      },
+      {
+        "x": 39,
+        "y": 248,
+        "w": 19,
+        "h": 27
+      },
+      {
+        "x": 6,
+        "y": 247,
+        "w": 18,
+        "h": 28
+      }
     ]
   },
   "audited_frame_hashes": {
@@ -112,19 +170,19 @@
       "2d71614b0a5a90c38b2d84b019448ec0a3f2b1ef5b0e2ba1c4c0e2a07fb42f37"
     ],
     "down_right": [
-      "8c842c0d0f8dd7a55e64f4d9289272ba2fb1c48b8b51ff8330a692ed28722da6",
+      "73006c62f1f868d91e83e51f062d8903b5e353dd484b782a91e603a1a5a580b3",
       "e7e0db16df1ddd09c14e406e86d4cfaed4927b146794b051229e31f4bab3b25d",
-      "73006c62f1f868d91e83e51f062d8903b5e353dd484b782a91e603a1a5a580b3"
+      "8c842c0d0f8dd7a55e64f4d9289272ba2fb1c48b8b51ff8330a692ed28722da6"
     ],
     "up_left": [
-      "0ae896df99017d833af930fc5b575f67c0c75eacc609f3fe81033e346100c114",
-      "985f617098cfe4b84af3948b9e60ad5ef51b7e17143355c9a0c022f6aef192f8",
-      "e36af6509570e3a954789a0b94aec09bdc8b4902ff7dabc412baf7d663b3f167"
-    ],
-    "up_right": [
       "392eb20855c0c6df0dcd6221bf2a9906315a05b575ba1a1d5e1a8dafd304ae32",
       "260d7d0ccfd35bf7ca8ee50a99666a3b3267550e09ec354d73a0b8128ed96574",
       "1a59d8bf7e40dd79294bef14eb54dd16bf90d55d0bdb6ba7e90aa2a4c55f7505"
+    ],
+    "up_right": [
+      "e36af6509570e3a954789a0b94aec09bdc8b4902ff7dabc412baf7d663b3f167",
+      "985f617098cfe4b84af3948b9e60ad5ef51b7e17143355c9a0c022f6aef192f8",
+      "0ae896df99017d833af930fc5b575f67c0c75eacc609f3fe81033e346100c114"
     ]
   },
   "cell_width": 32,

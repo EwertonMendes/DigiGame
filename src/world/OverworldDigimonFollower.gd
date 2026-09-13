@@ -1,16 +1,9 @@
 extends Node2D
 class_name OverworldDigimonFollower
 
-const DIRECTION_FRAME_BASE := {
-	"down_left": 0,
-	"down_right": 3,
-	"up_left": 6,
-	"up_right": 9,
-}
 # The normalized DS sheets use the first frame of each direction as the neutral
 # pose and the other two as opposite walk steps. Returning through the neutral
 # frame makes the overworld walk read clearly instead of snapping 0 -> 1 -> 2.
-const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
 const WALK_FRAME_DURATION := 0.10
 const WALK_STOP_GRACE := 0.14
 const FOLLOW_SPEED := 215.0
@@ -58,7 +51,7 @@ func configure(digimon: Digimon, key: String, party_slot: int) -> void:
 	digimon_key = key
 	slot_index = party_slot
 	name = "Follower_%d_%s" % [party_slot + 1, key.capitalize()]
-	if _digimon != null and DIRECTION_FRAME_BASE.has(_digimon.initial_facing):
+	if _digimon != null and DirectionalSpriteContract.has_direction(_digimon.initial_facing):
 		facing_direction = _digimon.initial_facing
 	if is_node_ready():
 		_apply_digimon_visuals()
@@ -85,7 +78,7 @@ func _process(delta: float) -> void:
 
 func teleport_to(world_position: Vector2, initial_facing: String = "up_right") -> void:
 	global_position = world_position
-	if DIRECTION_FRAME_BASE.has(initial_facing):
+	if DirectionalSpriteContract.has_direction(initial_facing):
 		facing_direction = initial_facing
 	_walk_time = 0.0
 	_walk_sequence_index = 0
@@ -185,7 +178,7 @@ func _advance_walk_animation(delta: float) -> void:
 	_walk_time += delta
 	while _walk_time >= WALK_FRAME_DURATION:
 		_walk_time -= WALK_FRAME_DURATION
-		_walk_sequence_index = (_walk_sequence_index + 1) % WALK_SEQUENCE.size()
+		_walk_sequence_index = (_walk_sequence_index + 1) % DirectionalSpriteContract.WALK_PHASES.size()
 	_show_walk_frame()
 
 
@@ -215,8 +208,7 @@ func _show_idle_frame() -> void:
 		return
 	_sprite.region_enabled = false
 	_sprite.flip_h = false
-	var base_frame := int(DIRECTION_FRAME_BASE.get(facing_direction, 9))
-	_sprite.frame = base_frame
+	_sprite.frame = DirectionalSpriteContract.idle_frame(facing_direction)
 
 
 func _show_walk_frame() -> void:
@@ -232,8 +224,7 @@ func _show_walk_frame() -> void:
 		return
 	_sprite.region_enabled = false
 	_sprite.flip_h = false
-	var base_frame := int(DIRECTION_FRAME_BASE.get(facing_direction, 9))
-	_sprite.frame = base_frame + WALK_SEQUENCE[_walk_sequence_index % WALK_SEQUENCE.size()]
+	_sprite.frame = DirectionalSpriteContract.walk_frame(facing_direction, _walk_sequence_index)
 
 
 func _show_portrait_frame() -> void:
@@ -267,3 +258,4 @@ func _has_safe_separation(candidate: Vector2, separation_points: Array[Vector2])
 
 func _update_depth() -> void:
 	z_index = 1000 + int(round(global_position.y))
+

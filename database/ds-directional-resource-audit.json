@@ -2,8 +2,8 @@
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
   "directional_resource_count": 89,
-  "preserved_resource_count": 1,
-  "source_rebuilt_resource_count": 88,
+  "preserved_resource_count": 3,
+  "source_rebuilt_resource_count": 86,
   "audited_resource_count": 89,
   "directional_resources": [
     {

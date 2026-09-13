@@ -8,19 +8,77 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 2,
-  "review_pattern": "canonical_rows",
+  "direction_registry_schema_version": 4,
+  "review_pattern": "canonical_rows_rear_reversed",
   "runtime_group_indices": [
     0,
     1,
-    2,
-    3
+    3,
+    2
   ],
   "source_group_order": [
     "down_left",
     "down_right",
-    "up_left",
-    "up_right"
+    "up_right",
+    "up_left"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 64738,
+      "confidence_margin": 60842,
+      "equivalent_best_count": 1
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 67108,
+      "confidence_margin": 86720,
+      "equivalent_best_count": 1
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    31
   ],
   "source_layout": "two_rows_of_six",
   "audited_source_frames": {
@@ -46,10 +104,10 @@
     ],
     "down_right": [
       {
-        "x": 112,
-        "y": 162,
-        "w": 20,
-        "h": 28
+        "x": 173,
+        "y": 164,
+        "w": 19,
+        "h": 27
       },
       {
         "x": 143,
@@ -58,33 +116,13 @@
         "h": 26
       },
       {
-        "x": 173,
-        "y": 164,
-        "w": 19,
-        "h": 27
+        "x": 112,
+        "y": 162,
+        "w": 20,
+        "h": 28
       }
     ],
     "up_left": [
-      {
-        "x": 9,
-        "y": 206,
-        "w": 20,
-        "h": 28
-      },
-      {
-        "x": 37,
-        "y": 206,
-        "w": 21,
-        "h": 28
-      },
-      {
-        "x": 68,
-        "y": 207,
-        "w": 21,
-        "h": 26
-      }
-    ],
-    "up_right": [
       {
         "x": 113,
         "y": 206,
@@ -103,6 +141,26 @@
         "w": 20,
         "h": 28
       }
+    ],
+    "up_right": [
+      {
+        "x": 68,
+        "y": 207,
+        "w": 21,
+        "h": 26
+      },
+      {
+        "x": 37,
+        "y": 206,
+        "w": 21,
+        "h": 28
+      },
+      {
+        "x": 9,
+        "y": 206,
+        "w": 20,
+        "h": 28
+      }
     ]
   },
   "audited_frame_hashes": {
@@ -112,19 +170,19 @@
       "56f0eac19b8d297193d4ab1303688f83f01ccc3c660690067208dcc58d740bfd"
     ],
     "down_right": [
-      "8a9a17d99e7b19273cf1bad329eaa1fb47d9b55b6cd100431cfa1d37bb66173f",
+      "3d1952ffe059d49ed9fc8a8756dca026f5c5d91958c8d88367457e59035cec24",
       "822825d3a26359965fa30bbe226dc0c5a79568f8e945a1a5a078fc02126b29de",
-      "3d1952ffe059d49ed9fc8a8756dca026f5c5d91958c8d88367457e59035cec24"
+      "8a9a17d99e7b19273cf1bad329eaa1fb47d9b55b6cd100431cfa1d37bb66173f"
     ],
     "up_left": [
-      "428de934f19f2d9808a1ab0ace7e8118f865c225ff38ebac3ec5190be0dd51e8",
-      "310218d58b2f3abb8de518ff7c39d93017d3fccf55d67d19feaa29355a9e1286",
-      "6666ac03f4b447ce5a5cceb83eb2c06b16726e3c2518637bcde04c7b37d40938"
-    ],
-    "up_right": [
       "81f758689d1e848e063ebca4a154945bc50d670857814ab5d41d8b6adcac1a9c",
       "f5f242ad3b2412a71efba91d45399f0a7eaba01dfa7a46d9e8f6e7e20e8c6f9e",
       "e63c7b776ddb93a2a133d4d441d6771f798119f49a18d1ef4f3ae33d4c4b6f98"
+    ],
+    "up_right": [
+      "6666ac03f4b447ce5a5cceb83eb2c06b16726e3c2518637bcde04c7b37d40938",
+      "310218d58b2f3abb8de518ff7c39d93017d3fccf55d67d19feaa29355a9e1286",
+      "428de934f19f2d9808a1ab0ace7e8118f865c225ff38ebac3ec5190be0dd51e8"
     ]
   },
   "cell_width": 32,

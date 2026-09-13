@@ -8,19 +8,77 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 2,
-  "review_pattern": "canonical_rows",
+  "direction_registry_schema_version": 4,
+  "review_pattern": "canonical_rows_rear_reversed",
   "runtime_group_indices": [
     0,
     1,
-    2,
-    3
+    3,
+    2
   ],
   "source_group_order": [
     "down_left",
     "down_right",
-    "up_left",
-    "up_right"
+    "up_right",
+    "up_left"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 66720,
+      "confidence_margin": 144554,
+      "equivalent_best_count": 1
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 49636,
+      "confidence_margin": 69568,
+      "equivalent_best_count": 1
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    32
   ],
   "source_layout": "two_rows_of_six",
   "audited_source_frames": {
@@ -46,10 +104,10 @@
     ],
     "down_right": [
       {
-        "x": 120,
-        "y": 212,
-        "w": 19,
-        "h": 25
+        "x": 193,
+        "y": 209,
+        "w": 20,
+        "h": 28
       },
       {
         "x": 152,
@@ -58,33 +116,13 @@
         "h": 26
       },
       {
-        "x": 193,
-        "y": 209,
-        "w": 20,
-        "h": 28
+        "x": 120,
+        "y": 212,
+        "w": 19,
+        "h": 25
       }
     ],
     "up_left": [
-      {
-        "x": 5,
-        "y": 252,
-        "w": 20,
-        "h": 28
-      },
-      {
-        "x": 38,
-        "y": 251,
-        "w": 24,
-        "h": 29
-      },
-      {
-        "x": 81,
-        "y": 252,
-        "w": 17,
-        "h": 28
-      }
-    ],
-    "up_right": [
       {
         "x": 123,
         "y": 253,
@@ -103,6 +141,26 @@
         "w": 20,
         "h": 28
       }
+    ],
+    "up_right": [
+      {
+        "x": 81,
+        "y": 252,
+        "w": 17,
+        "h": 28
+      },
+      {
+        "x": 38,
+        "y": 251,
+        "w": 24,
+        "h": 29
+      },
+      {
+        "x": 5,
+        "y": 252,
+        "w": 20,
+        "h": 28
+      }
     ]
   },
   "audited_frame_hashes": {
@@ -112,19 +170,19 @@
       "c9c1652b330446479eb6e7226d68b67ec10f21a26bb7e2cd9ee53aab0e6f6658"
     ],
     "down_right": [
-      "20d8e80955b7a4721a8a798bd52741f3c168f98af559901aeb56cce1ffdb6dce",
+      "481bd0921470b0c75017e631a81509eea2421cdc3a6f98a9437364a75894e97f",
       "f7ae772dfb59ee2b003bca5d9a384841f818a5adb8abd9339729455eef71b2ce",
-      "481bd0921470b0c75017e631a81509eea2421cdc3a6f98a9437364a75894e97f"
+      "20d8e80955b7a4721a8a798bd52741f3c168f98af559901aeb56cce1ffdb6dce"
     ],
     "up_left": [
-      "2cea7d6c8394c00b4c914e304e5a2280e8b11c8f490d1d5d1420fb75949fddd8",
-      "f6cccdf6aa9ac7af29e7db1e205a687cc0b1736e0ca6ed7d17bf5a3fd803b930",
-      "4331d2096495e9abb5e6f34805bd24715d0c29a4dda000cd284b17f676d1fe8a"
-    ],
-    "up_right": [
       "d258230427417b8c84f0519ad27c7d62b740e545b09b4c2f1cf1913763bbf6e5",
       "bba0e23c4a422d934c5ea4def2b8d3e6171763a5717e688c6437dff9f049c435",
       "befafc19d9c6cd23f423ff8a83fa04bb5f4021829dc3dfe79ae26dcfde7df424"
+    ],
+    "up_right": [
+      "4331d2096495e9abb5e6f34805bd24715d0c29a4dda000cd284b17f676d1fe8a",
+      "f6cccdf6aa9ac7af29e7db1e205a687cc0b1736e0ca6ed7d17bf5a3fd803b930",
+      "2cea7d6c8394c00b4c914e304e5a2280e8b11c8f490d1d5d1420fb75949fddd8"
     ]
   },
   "cell_width": 32,

@@ -3,7 +3,8 @@ name: Rebuild DS fields from audited exact coordinates
 on:
   push:
     branches:
-      - fix/ds-sprite-facing-audit
+      - fix/ds-sprite-*
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -16,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: fix/ds-sprite-facing-audit
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Install sprite rebuild tooling
@@ -30,15 +31,39 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          data = json.loads(Path('database/ds-direction-registry.json').read_text())
-          assert data['species_count'] == 82
-          assert data['canonical_reference'] == 'Agumon'
-          assert data['species']['Agumon']['runtime_group_indices'] == [0, 1, 2, 3]
-          assert data['species']['BlackAgumon']['runtime_group_indices'] == [2, 3, 0, 1]
-          assert data['species']['Candlemon']['runtime_group_indices'] == [2, 3, 0, 1]
-          assert data['species']['Chicchimon']['runtime_group_indices'] == [2, 3, 0, 1]
-          assert data['species']['Koromon']['runtime_group_indices'] == [0, 2, 1, 3]
-          print('exact direction registry materialized: 82/82 sources')
+
+          registry = json.loads(Path('database/ds-direction-registry.json').read_text())
+          review = json.loads(Path('database/ds-direction-review-map.json').read_text())
+
+          assert registry['schema_version'] >= 4
+          assert registry['species_count'] == 82
+          assert registry['canonical_reference'] == 'Agumon'
+          assert registry['canonical_runtime_order'] == ['down_left', 'down_right', 'up_left', 'up_right']
+          assert registry['canonical_runtime_phases'] == ['idle', 'step_a', 'step_b']
+          assert review['schema_version'] >= 4
+          assert review['left_source_phase_order'] == [0, 1, 2]
+          assert review['right_phase_policy'] == 'deterministic_mirror_pose_match'
+          assert 'source_phase_overrides' not in review
+
+          patterns = review['patterns']
+          regressions = review['regression_cases']
+          assert set(regressions.values()) == set(patterns)
+          for name, pattern_name in regressions.items():
+              assert registry['species'][name]['review_pattern'] == pattern_name
+              assert registry['species'][name]['runtime_group_indices'] == patterns[pattern_name]
+
+          for name, spec in registry['species'].items():
+              assert spec['source_frame_order']['down_left'] == [0, 1, 2], name
+              assert spec['source_frame_order']['up_left'] == [0, 1, 2], name
+              for direction in ('down_right', 'up_right'):
+                  alignment = spec['pose_alignment'][direction]
+                  assert alignment['policy'] == 'deterministic_mirror_pose_match', (name, direction)
+                  assert alignment['source_phase_order'] == spec['source_frame_order'][direction], (name, direction)
+
+          print(
+              f"exact direction registry materialized: 82/82 sources; "
+              f"{len(patterns)}/{len(patterns)} source conventions covered"
+          )
           PY
 
       - name: Hard-delete and rebuild from the exact registry
@@ -57,16 +82,15 @@ jobs:
           from pathlib import Path
           data = json.loads(Path('database/ds-full-rebuild-manifest.json').read_text())
           assert data['canonical_reference'] == 'Agumon'
-          assert data['preserved_count'] == 1
-          assert data['rebuilt_count'] == 88
+          assert data['preserved_count'] == 3
+          assert {item['name'] for item in data['preserved']} == {'Agumon', 'Greymon', 'Metal Greymon'}
+          assert data['rebuilt_count'] == 86
           assert data['unresolved'] == []
           assert data['existing_non_agumon_runtime_strips_allowed_as_input'] is False
           assert data['canonical_runtime_order'] == ['down_left', 'down_right', 'up_left', 'up_right']
           assert data['direction_registry'] == 'database/ds-direction-registry.json'
           assert all(item['name'] != 'Agumon' for item in data['rebuilt'])
-          black = next(item for item in data['rebuilt'] if item['name'] == 'BlackAgumon')
-          assert black['runtime_group_indices'] == [2, 3, 0, 1]
-          print('manifest verified: Agumon preserved; 88 sprites recreated from fresh sources')
+          print('manifest verified: 3 reviewed strips preserved; 86 sprites recreated from fresh sources')
           PY
           python3 tools/validate_early_rank_playables.py
           python3 tools/validate_all_ds_directional_facings.py
@@ -93,5 +117,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A assets/characters assets/resources database tools/validate_runtime_assets.py
-          git commit -m 'fix: regenerate DS fields from exact audited coordinates [skip ds-full-rebuild] [skip ds-inspect]'
-          git push origin HEAD:fix/ds-sprite-facing-audit
+          git commit -m 'fix: regenerate DS fields from exact audited coordinates [skip ds-full-rebuild]'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

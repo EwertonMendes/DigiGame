@@ -8,19 +8,77 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 2,
-  "review_pattern": "canonical_rows",
+  "direction_registry_schema_version": 4,
+  "review_pattern": "canonical_rows_rear_reversed",
   "runtime_group_indices": [
     0,
     1,
-    2,
-    3
+    3,
+    2
   ],
   "source_group_order": [
     "down_left",
     "down_right",
-    "up_left",
-    "up_right"
+    "up_right",
+    "up_left"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      0,
+      1,
+      2
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 56138,
+      "confidence_margin": 108398,
+      "equivalent_best_count": 1
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 45434,
+      "confidence_margin": 0,
+      "equivalent_best_count": 2
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    31
   ],
   "source_layout": "two_rows_of_six",
   "audited_source_frames": {
@@ -46,9 +104,9 @@
     ],
     "down_right": [
       {
-        "x": 122,
+        "x": 190,
         "y": 99,
-        "w": 22,
+        "w": 24,
         "h": 17
       },
       {
@@ -58,33 +116,13 @@
         "h": 19
       },
       {
-        "x": 190,
+        "x": 122,
         "y": 99,
-        "w": 24,
+        "w": 22,
         "h": 17
       }
     ],
     "up_left": [
-      {
-        "x": 7,
-        "y": 143,
-        "w": 21,
-        "h": 19
-      },
-      {
-        "x": 43,
-        "y": 140,
-        "w": 20,
-        "h": 22
-      },
-      {
-        "x": 79,
-        "y": 143,
-        "w": 21,
-        "h": 19
-      }
-    ],
-    "up_right": [
       {
         "x": 119,
         "y": 143,
@@ -103,6 +141,26 @@
         "w": 21,
         "h": 19
       }
+    ],
+    "up_right": [
+      {
+        "x": 7,
+        "y": 143,
+        "w": 21,
+        "h": 19
+      },
+      {
+        "x": 43,
+        "y": 140,
+        "w": 20,
+        "h": 22
+      },
+      {
+        "x": 79,
+        "y": 143,
+        "w": 21,
+        "h": 19
+      }
     ]
   },
   "audited_frame_hashes": {
@@ -112,19 +170,19 @@
       "dc173c08a5ac2bcdc79a7917f8fe0892c5b76de6ac63bbe697bddca86ae1463f"
     ],
     "down_right": [
-      "58fb578f28e24f4f67d7d861f88f20e810e3391c762dbb774ad706c3d5a0772d",
+      "6a864ea3f509250eb6346be45a51d87c951ed87fa6910927d56792d9ff083f50",
       "7058aa83d3acae07a2d91017a62142ce6523f5a74a90f0804476af9c02f83874",
-      "6a864ea3f509250eb6346be45a51d87c951ed87fa6910927d56792d9ff083f50"
+      "58fb578f28e24f4f67d7d861f88f20e810e3391c762dbb774ad706c3d5a0772d"
     ],
     "up_left": [
-      "0c54e9f577c5ee2d919bd489089ea74c2d105d9af839c9abf13ce5cbf8903c8f",
-      "1d88cdb4c490ae315142e166beee59c2e5db20ac2a584bbd3353e454e0f43b25",
-      "0c54e9f577c5ee2d919bd489089ea74c2d105d9af839c9abf13ce5cbf8903c8f"
-    ],
-    "up_right": [
       "f2bdeb9030fad8d7c37108731edf2c737d5408f37c1d60a9ed3ef653c8c11f32",
       "31527b83cddfb488f087ab9bc1ded05e78a69491d8c9d5ded2257709a40063e9",
       "f2bdeb9030fad8d7c37108731edf2c737d5408f37c1d60a9ed3ef653c8c11f32"
+    ],
+    "up_right": [
+      "0c54e9f577c5ee2d919bd489089ea74c2d105d9af839c9abf13ce5cbf8903c8f",
+      "1d88cdb4c490ae315142e166beee59c2e5db20ac2a584bbd3353e454e0f43b25",
+      "0c54e9f577c5ee2d919bd489089ea74c2d105d9af839c9abf13ce5cbf8903c8f"
     ]
   },
   "cell_width": 32,

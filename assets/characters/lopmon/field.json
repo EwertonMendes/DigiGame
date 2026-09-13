@@ -8,19 +8,77 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "direction_registry": "res://database/ds-direction-registry.json",
-  "direction_registry_schema_version": 2,
-  "review_pattern": "canonical_rows",
+  "direction_registry_schema_version": 4,
+  "review_pattern": "canonical_rows_rear_reversed",
   "runtime_group_indices": [
     0,
     1,
-    2,
-    3
+    3,
+    2
   ],
   "source_group_order": [
     "down_left",
     "down_right",
-    "up_left",
-    "up_right"
+    "up_right",
+    "up_left"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 135832,
+      "equivalent_best_count": 1
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 56448,
+      "confidence_margin": 34544,
+      "equivalent_best_count": 1
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    31
   ],
   "source_layout": "two_rows_of_six",
   "audited_source_frames": {
@@ -46,9 +104,9 @@
     ],
     "down_right": [
       {
-        "x": 116,
+        "x": 190,
         "y": 183,
-        "w": 28,
+        "w": 24,
         "h": 21
       },
       {
@@ -58,33 +116,13 @@
         "h": 23
       },
       {
-        "x": 190,
+        "x": 116,
         "y": 183,
-        "w": 24,
+        "w": 28,
         "h": 21
       }
     ],
     "up_left": [
-      {
-        "x": 2,
-        "y": 243,
-        "w": 22,
-        "h": 21
-      },
-      {
-        "x": 36,
-        "y": 244,
-        "w": 25,
-        "h": 20
-      },
-      {
-        "x": 80,
-        "y": 244,
-        "w": 25,
-        "h": 20
-      }
-    ],
-    "up_right": [
       {
         "x": 113,
         "y": 244,
@@ -103,6 +141,26 @@
         "w": 22,
         "h": 21
       }
+    ],
+    "up_right": [
+      {
+        "x": 80,
+        "y": 244,
+        "w": 25,
+        "h": 20
+      },
+      {
+        "x": 36,
+        "y": 244,
+        "w": 25,
+        "h": 20
+      },
+      {
+        "x": 2,
+        "y": 243,
+        "w": 22,
+        "h": 21
+      }
     ]
   },
   "audited_frame_hashes": {
@@ -112,19 +170,19 @@
       "7f724e534d544f7bf77e7be89786f04958d1b723f43001a94a5837d20f57b11f"
     ],
     "down_right": [
-      "b60a13d279e20e92d6f3293f2cea87455b3ce7cea03ec5a0bf7dde7323978186",
+      "2ff532948ce958df941ee0e6a9aa818ef7060eac57583ac884108721c9147700",
       "fe2a86494661ef8639bba5fcca613eddb0c23b9a15526c8253b06445b98380b7",
-      "2ff532948ce958df941ee0e6a9aa818ef7060eac57583ac884108721c9147700"
+      "b60a13d279e20e92d6f3293f2cea87455b3ce7cea03ec5a0bf7dde7323978186"
     ],
     "up_left": [
-      "552031603a3b7ae4c86bb17dff146094ef33072a1fc5f112f7eff4d2e71c65d5",
-      "011b1c117bae6dfc0a523fc88082e6caff3004f8df783e244327d3ba03a7df5b",
-      "cb3696566b9b37d4029fa1c28bb46513444ef25e16949cda927a75fd8c132c02"
-    ],
-    "up_right": [
       "497345935a1b681f3b17abef6f82424cadd193685e9fb45e52fa7a270cf87f64",
       "5d7b3c028b9e833db8cba476663ee4159bdfc4df64e60673ed616951bf16b424",
       "72b95490cf5441a271dd98c1a6eeb09385bd0792b9bc1cb7c76e6f5913b59347"
+    ],
+    "up_right": [
+      "cb3696566b9b37d4029fa1c28bb46513444ef25e16949cda927a75fd8c132c02",
+      "011b1c117bae6dfc0a523fc88082e6caff3004f8df783e244327d3ba03a7df5b",
+      "552031603a3b7ae4c86bb17dff146094ef33072a1fc5f112f7eff4d2e71c65d5"
     ]
   },
   "cell_width": 32,
