@@ -1,0 +1,159 @@
+extends Node
+
+## Persistent background-music coordinator shared by world and battle scenes.
+##
+## Two AudioStreamPlayers are kept alive as an autoload so scene changes can
+## crossfade instead of cutting the current track abruptly. Track selection is
+## intentionally centralized here so future areas, bosses, and story scenes only
+## need to request a semantic track id rather than owning audio players.
+
+signal track_changed(track_id: String)
+
+const TRACK_ZONE_1 := "zone_1"
+const TRACK_BATTLE_1 := "battle_1"
+const DEFAULT_CROSSFADE_SECONDS := 0.55
+const SILENT_VOLUME_DB := -60.0
+
+const TRACKS := {
+	TRACK_ZONE_1: {
+		"path": "res://assets/audio/music/zone_1.ogg",
+		"volume_db": -8.0,
+	},
+	TRACK_BATTLE_1: {
+		"path": "res://assets/audio/music/battle_1.ogg",
+		"volume_db": -10.5,
+	},
+}
+
+var _players: Array[AudioStreamPlayer] = []
+var _active_index := -1
+var _current_track_id := ""
+var _crossfade: Tween = null
+var _stream_cache: Dictionary = {}
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	for index in range(2):
+		var player := AudioStreamPlayer.new()
+		player.name = "MusicPlayer%d" % (index + 1)
+		player.volume_db = SILENT_VOLUME_DB
+		add_child(player)
+		_players.append(player)
+
+
+func play_zone_1(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
+	play_track(TRACK_ZONE_1, fade_seconds)
+
+
+func play_battle_1(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
+	play_track(TRACK_BATTLE_1, fade_seconds)
+
+
+func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
+	if not TRACKS.has(track_id):
+		push_warning("[Music] Unknown track: %s" % track_id)
+		return
+	if _current_track_id == track_id and _active_index >= 0 and _players[_active_index].playing:
+		return
+
+	var stream := _stream_for(track_id)
+	if stream == null:
+		push_error("[Music] Could not load track: %s" % track_id)
+		return
+
+	if _crossfade != null and is_instance_valid(_crossfade):
+		_crossfade.kill()
+		_crossfade = null
+
+	var previous_index := _active_index
+	var next_index := 0 if previous_index != 0 else 1
+	var next_player := _players[next_index]
+	var previous_player: AudioStreamPlayer = _players[previous_index] if previous_index >= 0 else null
+	var target_volume := float((TRACKS[track_id] as Dictionary).get("volume_db", -8.0))
+
+	# Reusing the inactive player also cleans up an interrupted older crossfade.
+	if next_player.playing:
+		next_player.stop()
+	next_player.stream = stream
+	next_player.volume_db = SILENT_VOLUME_DB
+	next_player.play()
+
+	_active_index = next_index
+	_current_track_id = track_id
+	track_changed.emit(track_id)
+
+	var duration := maxf(fade_seconds, 0.0)
+	if duration <= 0.0:
+		next_player.volume_db = target_volume
+		if previous_player != null and previous_player != next_player:
+			previous_player.stop()
+		return
+
+	_crossfade = create_tween()
+	_crossfade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_crossfade.set_parallel(true)
+	_crossfade.tween_property(next_player, "volume_db", target_volume, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if previous_player != null and previous_player.playing and previous_player != next_player:
+		_crossfade.tween_property(previous_player, "volume_db", SILENT_VOLUME_DB, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_crossfade.set_parallel(false)
+	_crossfade.tween_callback(_finish_crossfade.bind(previous_player, next_player))
+
+
+func stop(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
+	if _active_index < 0:
+		return
+	var active := _players[_active_index]
+	_current_track_id = ""
+	if _crossfade != null and is_instance_valid(_crossfade):
+		_crossfade.kill()
+		_crossfade = null
+	if fade_seconds <= 0.0 or not active.playing:
+		active.stop()
+		_active_index = -1
+		return
+	_crossfade = create_tween()
+	_crossfade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_crossfade.tween_property(active, "volume_db", SILENT_VOLUME_DB, fade_seconds).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_crossfade.tween_callback(func():
+		active.stop()
+		_active_index = -1
+	)
+
+
+func current_track_id() -> String:
+	return _current_track_id
+
+
+func has_track(track_id: String) -> bool:
+	return TRACKS.has(track_id)
+
+
+func _stream_for(track_id: String) -> AudioStream:
+	if _stream_cache.has(track_id):
+		return _stream_cache[track_id] as AudioStream
+	var definition: Dictionary = TRACKS[track_id]
+	var path := str(definition.get("path", ""))
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return null
+	var stream := load(path) as AudioStream
+	if stream == null:
+		return null
+	_configure_loop(stream)
+	_stream_cache[track_id] = stream
+	return stream
+
+
+func _configure_loop(stream: AudioStream) -> void:
+	if stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = true
+	elif stream is AudioStreamMP3:
+		(stream as AudioStreamMP3).loop = true
+	elif stream is AudioStreamWAV:
+		(stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
+
+
+func _finish_crossfade(previous_player: AudioStreamPlayer, active_player: AudioStreamPlayer) -> void:
+	if previous_player != null and previous_player != active_player and previous_player.playing:
+		previous_player.stop()
+	_crossfade = null
