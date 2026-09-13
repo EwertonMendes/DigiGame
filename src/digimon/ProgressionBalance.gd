@@ -61,3 +61,41 @@ func training_int(key: String, fallback: int) -> int:
 
 func training_number(key: String, fallback: float) -> float:
 	return float(section("training").get(key, fallback))
+
+
+func party_int(key: String, fallback: int) -> int:
+	return int(section("party").get(key, fallback))
+
+
+func party_number(key: String, fallback: float) -> float:
+	return float(section("party").get(key, fallback))
+
+
+func stat_growth(stat_key: String, fallback: float = 0.02) -> float:
+	return float(section("statGrowth").get(stat_key.to_lower(), fallback))
+
+
+func reward_number(key: String, fallback: float) -> float:
+	return float(section("rewards").get(key, fallback))
+
+
+func digi_data_base_for_rank(rank: String, fallback: int = 10) -> int:
+	var raw = section("rewards").get("digiDataByRank", {})
+	if not raw is Dictionary:
+		return fallback
+	return int((raw as Dictionary).get(rank, fallback))
+
+
+func reward_profile_multiplier(profile: String, fallback: float = 1.0) -> float:
+	var raw = section("rewards").get("profileMultiplier", {})
+	if not raw is Dictionary:
+		return fallback
+	return float((raw as Dictionary).get(profile.to_lower(), fallback))
+
+
+func reconstruction_int(key: String, fallback: int) -> int:
+	return int(section("reconstruction").get(key, fallback))
+
+
+func reconstruction_bool(key: String, fallback: bool) -> bool:
+	return bool(section("reconstruction").get(key, fallback))

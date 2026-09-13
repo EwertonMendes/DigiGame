@@ -1,6 +1,7 @@
 extends RefCounted
 class_name DigimonInstance
 
+const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
 const MAX_POTENTIAL := 100
 const MAX_EQUIPPED_SKILLS := 4
@@ -20,6 +21,7 @@ var learned_skills: Array[String] = []
 var equipped_skills: Array[String] = []
 var equipment: Array[String] = []
 var evolution_history: Array[Dictionary] = []
+var species_history: Array[String] = []
 var evolution_goal_seed: String = ""
 var origin: String = "generated"
 
@@ -98,6 +100,7 @@ func to_dict() -> Dictionary:
 		"equippedSkills": equipped_skills.duplicate(),
 		"equipment": equipment.duplicate(),
 		"evolutionHistory": evolution_history.duplicate(true),
+		"speciesHistory": species_history.duplicate(),
 		"evolutionGoalSeed": evolution_goal_seed,
 		"origin": origin,
 	}
@@ -108,7 +111,8 @@ static func from_dict(data: Dictionary) -> DigimonInstance:
 	instance.id = String(data.get("id", generate_uuid()))
 	instance.species_seed = String(data.get("speciesSeed", ""))
 	instance.nickname = String(data.get("nickname", ""))
-	instance.level = clampi(int(data.get("level", 1)), 1, 99)
+	var balance = BalanceScript.new()
+	instance.level = clampi(int(data.get("level", 1)), 1, balance.max_level())
 	instance.exp = maxi(0, int(data.get("exp", 0)))
 	instance.potential = clampi(int(data.get("potential", 0)), 0, MAX_POTENTIAL)
 
@@ -159,6 +163,24 @@ static func from_dict(data: Dictionary) -> DigimonInstance:
 		for record in history:
 			if record is Dictionary:
 				instance.evolution_history.append(record.duplicate(true))
+
+	instance.species_history.clear()
+	var species_history_data = data.get("speciesHistory", [])
+	if species_history_data is Array:
+		for raw_seed in species_history_data:
+			var seed := String(raw_seed).strip_edges()
+			if not seed.is_empty():
+				instance.species_history.append(seed)
+	if instance.species_history.is_empty():
+		for record: Dictionary in instance.evolution_history:
+			var from_seed := String(record.get("fromSeed", "")).strip_edges()
+			var to_seed := String(record.get("toSeed", "")).strip_edges()
+			if instance.species_history.is_empty() and not from_seed.is_empty():
+				instance.species_history.append(from_seed)
+			if not to_seed.is_empty():
+				instance.species_history.append(to_seed)
+	if instance.species_history.is_empty() and not instance.species_seed.is_empty():
+		instance.species_history.append(instance.species_seed)
 
 	instance.evolution_goal_seed = String(data.get("evolutionGoalSeed", ""))
 	instance.origin = String(data.get("origin", "generated"))

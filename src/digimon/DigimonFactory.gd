@@ -4,11 +4,13 @@ class_name DigimonFactory
 const InstanceScript = preload("res://src/digimon/DigimonInstance.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
+const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
 
 var _database
 var _calculator = StatCalculatorScript.new()
 var _action_database = ActionDatabaseScript.new()
+var _balance = BalanceScript.new()
 var _rng := RandomNumberGenerator.new()
 
 
@@ -69,7 +71,8 @@ func potential_from_scan_percent(scan_percent: int) -> int:
 func _create_instance(species: Dictionary, level: int, initial_potential: int, source: String) -> DigimonInstance:
 	var instance: DigimonInstance = InstanceScript.new()
 	instance.species_seed = String(species.get("seed", ""))
-	instance.level = clampi(level, 1, 99)
+	instance.species_history = [instance.species_seed] if not instance.species_seed.is_empty() else []
+	instance.level = clampi(level, 1, _balance.max_level())
 	instance.exp = 0
 	instance.potential = clampi(initial_potential, 0, DigimonInstance.MAX_POTENTIAL)
 	instance.origin = source
