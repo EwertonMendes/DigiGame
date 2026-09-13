@@ -149,6 +149,77 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Assemble Pages site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/site/play build/site/media
+          cp -a web/landing/. build/site/
+          cp -a build/web/. build/site/play/
+          cp docs/media/*.png build/site/media/
+          touch build/site/.nojekyll
+          test -s build/site/index.html
+          test -s build/site/play/index.html
+          test -s build/site/play/index.wasm
+
+      - name: Upload Pages site
+        uses: actions/upload-artifact@v4
+        with:
+          name: digigame-pages-site
+          path: build/site
+          if-no-files-found: error
+          retention-days: 7
+
+  landing-smoke:
+    name: Landing page smoke
+    needs: build-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout test harness
+        uses: actions/checkout@v6
+
+      - name: Download assembled Pages site
+        uses: actions/download-artifact@v5
+        with:
+          name: digigame-pages-site
+          path: build/site
+
+      - name: Restore npm download cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+
+      - name: Prepare Playwright
+        shell: bash
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+        run: |
+          set -euo pipefail
+          npm install --no-save --ignore-scripts "playwright@${PLAYWRIGHT_VERSION}"
+          test -x /usr/bin/google-chrome
+
+      - name: Validate multilingual landing page
+        shell: bash
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8000 --directory build/site >/tmp/digigame-landing-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node .github/scripts/landing-smoke.mjs
+
+      - name: Upload landing screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-landing
+          path: build/landing-*.png
+          if-no-files-found: warn
+          retention-days: 7
+
   browser-smoke:
     name: Browser smoke · ${{ matrix.suite }}
     needs: build-web
@@ -236,6 +307,7 @@ jobs:
     needs:
       - build-web
       - browser-smoke
+      - landing-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
@@ -248,7 +320,7 @@ jobs:
       - name: Download tested PR build
         uses: actions/download-artifact@v5
         with:
-          name: digigame-web-build
+          name: digigame-pages-site
           path: preview
 
       - name: Restore production and add PR preview
@@ -276,10 +348,16 @@ jobs:
           fi
 
           echo "Using master Web artifact from workflow run ${MASTER_RUN_ID}."
-          gh run download "$MASTER_RUN_ID" \
+          if ! gh run download "$MASTER_RUN_ID" \
             --repo "$GITHUB_REPOSITORY" \
-            --name digigame-web-build \
-            --dir site
+            --name digigame-pages-site \
+            --dir site; then
+            echo "Master predates the landing artifact; restoring the tested game at the production root."
+            gh run download "$MASTER_RUN_ID" \
+              --repo "$GITHUB_REPOSITORY" \
+              --name digigame-web-build \
+              --dir site
+          fi
 
           PREVIEW_DIR="site/pr-${PR_NUMBER}"
           mkdir -p "$PREVIEW_DIR"
@@ -294,7 +372,8 @@ jobs:
 
           test -s site/index.html
           test -s "$PREVIEW_DIR/index.html"
-          test -s "$PREVIEW_DIR/index.wasm"
+          test -s "$PREVIEW_DIR/play/index.html"
+          test -s "$PREVIEW_DIR/play/index.wasm"
 
       - name: Configure Pages
         id: pages
@@ -323,9 +402,9 @@ jobs:
           BODY="${MARKER}
           ## 🎮 Playable PR preview
 
-          **[Open DigiGame PR #${PR_NUMBER}](${PREVIEW_URL})**
+          **[Open DigiGame PR #${PR_NUMBER} landing preview](${PREVIEW_URL})**
 
-          Build: \`${SHORT_SHA}\` · validated by the Web, desktop, mobile, combat and VFX jobs before deployment.
+          Build: \`${SHORT_SHA}\` · validated by the landing, Web, desktop, mobile, combat and VFX jobs before deployment.
 
           This URL is the PR build; the normal Pages root remains the latest successful \`master\` build."
 
@@ -353,6 +432,7 @@ jobs:
     needs:
       - build-web
       - browser-smoke
+      - landing-smoke
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -365,7 +445,7 @@ jobs:
       - name: Download tested Web build
         uses: actions/download-artifact@v5
         with:
-          name: digigame-web-build
+          name: digigame-pages-site
           path: artifact
       - name: Configure Pages
         id: pages

@@ -1,46 +1,67 @@
-# DigiGame
+# Digi Game — working title
 
-## Screenshot 20-09-2023
-  ### Features:
-  <ul>
-    <li>Random terrain generation</li>
-    <li>Camera zoom with limits</li>
-    <li>Player movement with smoothing</li>
-  </ul>
-    
-  ![20230920_212905](https://github.com/EwertonMendes/DigiGame/assets/33728924/503fd85a-dd46-419c-a44a-eba4c56ab718)
+An unofficial, non-commercial Digimon isometric tactical RPG being built in Godot by a solo developer.
 
-## Screenshot 21-09-2023
-  ### Features:
-  <ul>
-    <li>Fixed hovered tile position</li>
-    <li>Fixed digimon position on tile</li>
-    <li>Added digimon animation</li>
-    <li>Added background</li>
-  </ul>
-  
-  ![20230921_230136](https://github.com/EwertonMendes/DigiGame/assets/33728924/8d2184eb-27ed-493d-bd3b-e4b74deae59a)
+Digi Game combines branching progression inspired by the Nintendo DS *Digimon Story* games with grid battles for teams of up to three Digimon. Positioning, terrain, attack shapes, displacement, and team synergy are intended to matter as much as preparation outside combat.
 
-## Screenshot 24-09-2023
-  ### Features:
-  <ul>
-    <li>Added particle effect when digimon is selected</li>
-    <li>Added support for multiple digimons on the field</li>
-  </ul>
-  
-  ![24092023](https://github.com/EwertonMendes/DigiGame/assets/33728924/ceff32fc-b124-461f-829b-f3ee8239af74)
+![Current tactical combat prototype](docs/media/combat-current.png)
 
-  ## Screenshot 16-10-2023
-  ### Features:
-  <ul>
-    <li>Added animation for multiple digimon on selecting it</li>
-    <li>Fixed particle position offset</li>
-    <li>Fixed bug on selecting digimon</li>
-    <li>Made field smaller</li>
-    <li>Changed initial zoom</li>
-  </ul>
+## Project status
 
-https://github.com/EwertonMendes/DigiGame/assets/33728924/a2fd34f0-ace6-4bc6-a9ce-cc2f5f02b0eb
+The project is an early prototype, not a finished game. A public playtest is **not open yet**. The current goal is a focused 20–30 minute vertical slice that can be understood without developer guidance.
 
+| Available in the prototype | Planned or still experimental |
+| --- | --- |
+| Isometric hub and battle scenes | A complete campaign with a beginning, middle, and ending |
+| Grid movement, attack range, target patterns, turn flow, and enemy AI | The Link system for coordinated ally actions |
+| DigiLab progression foundations with branching digivolution and degeneration | A hub that expands visually and functionally through the campaign |
+| Persistent Digimon instances, rewards, stats, and data validation | Final balance, content, art direction, tutorials, and accessibility pass |
+| Web export with desktop and mobile browser checks | Public browser playtest after the vertical-slice gate |
 
+The data and runtime currently support many early-rank Digimon for development and automated testing. This does **not** mean that every supported Digimon is content-complete or ready for release.
 
+## Current prototype
+
+| Hub | Mobile Web layout |
+| --- | --- |
+| ![Current hub prototype](docs/media/hub-current.png) | ![Current mobile Web prototype](docs/media/mobile-current.png) |
+
+### Controls
+
+- Hub: move with `WASD` or the arrow keys; use `E` or `Enter` to interact.
+- Battle: select units, tiles, and actions with the pointer. Drag with the right mouse button to pan and use the mouse wheel to zoom.
+- Mobile Web: use the on-screen movement and action controls; tap to select, drag to pan, and pinch or use the zoom buttons to zoom.
+
+Controls, layouts, and onboarding are still being refined for the first external playtest.
+
+## Design direction
+
+The current design targets:
+
+- branching digivolution and degeneration handled in the DigiLab;
+- tactical combat built around movement, range, area patterns, terrain, and displacement;
+- teams of up to three Digimon;
+- a planned Link system for coordinated actions;
+- a campaign hub that grows with story progress;
+- one complete single-player campaign;
+- a Web build that works without installation, including mobile support.
+
+Read the evolving [game design plan](Plan.md) for the detailed rules, scope, and narrative direction.
+
+## Community and playtests
+
+Community spaces are being prepared before the first public build. Until the vertical slice is ready, development updates will focus on one mechanic or design decision at a time and will clearly label features as implemented, experimental, or planned.
+
+- [Community operating plan](docs/community/README.md)
+- [Player-visible changelog](CHANGELOG.md)
+- [Vertical-slice release gate](docs/community/vertical-slice-gate.md)
+- [Feedback template](docs/community/feedback-template.md)
+- [90-day content calendar and post kit](docs/community/content-calendar.md)
+
+GitHub Issues are used for internal development tracking. Player feedback will be collected through the community Discord and a simplified feedback worksheet once those channels open.
+
+## Disclaimer
+
+> Digi Game is a non-commercial fan project. Digimon and all related characters and properties belong to their respective rights holders. This project is not affiliated with or endorsed by Bandai, Bandai Namco, Toei Animation, or other rights holders.
+
+No commercial release, crowdfunding campaign, or paid access is planned.
