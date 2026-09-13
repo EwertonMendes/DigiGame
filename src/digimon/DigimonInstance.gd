@@ -4,6 +4,7 @@ class_name DigimonInstance
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
 const MAX_POTENTIAL := 100
+const MAX_LINK := 100
 const MAX_EQUIPPED_SKILLS := 4
 
 var id: String = ""
@@ -12,6 +13,10 @@ var nickname: String = ""
 var level: int = 1
 var exp: int = 0
 var potential: int = 0
+# Persistent affinity/synergy progression owned by this individual. This is not
+# an in-battle transformation resource; tactical Link mechanics may read it as
+# progression context without coupling evolution to battle runtime state.
+var link: int = 0
 var aptitudes: Dictionary = {}
 var training: Dictionary = {}
 var current_hp: int = 1
@@ -91,6 +96,7 @@ func to_dict() -> Dictionary:
 		"level": level,
 		"exp": exp,
 		"potential": potential,
+		"link": link,
 		"aptitudes": aptitudes.duplicate(true),
 		"training": training.duplicate(true),
 		"currentHp": current_hp,
@@ -115,6 +121,7 @@ static func from_dict(data: Dictionary) -> DigimonInstance:
 	instance.level = clampi(int(data.get("level", 1)), 1, balance.max_level())
 	instance.exp = maxi(0, int(data.get("exp", 0)))
 	instance.potential = clampi(int(data.get("potential", 0)), 0, MAX_POTENTIAL)
+	instance.link = clampi(int(data.get("link", 0)), 0, MAX_LINK)
 
 	var loaded_aptitudes = data.get("aptitudes", {})
 	if loaded_aptitudes is Dictionary:

@@ -61,9 +61,10 @@ func evaluate(instance: DigimonInstance, species: Dictionary, requirement: Dicti
 			required = int(requirement.get("amount", required if int(required) > 0 else 1))
 			met = not subject.is_empty() and int(current) >= int(required)
 		"link":
-			# Link is currently a tactical cooperation mechanic rather than persistent
-			# Digimon state. A caller may provide a future progression-safe Link value.
-			current = int(context.get("link", 0))
+			# Persistent individual Link is progression state. Battle-local Link
+			# opportunities remain a separate tactical concept and are never used to
+			# trigger an evolution during combat.
+			current = int(context.get("link", instance.link))
 			met = int(current) >= int(required)
 		"battles_won":
 			current = int(context.get("battles_won", 0))
