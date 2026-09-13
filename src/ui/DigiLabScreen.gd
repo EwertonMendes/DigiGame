@@ -8,6 +8,7 @@ const UI = preload("res://src/ui/TacticalTheme.gd")
 const MENU = preload("res://src/ui/MenuUiStyle.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
+const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
 const CLOSE_ICON := preload("res://assets/ui/icons/cancel.svg")
 
 var _database: DigimonDatabase
@@ -25,6 +26,7 @@ var _list_panel: PanelContainer
 var _list_scroll: ScrollContainer
 var _list_box: VBoxContainer
 var _detail_panel: PanelContainer
+var _detail_scroll: ScrollContainer
 var _detail_body: VBoxContainer
 var _empty_label: Label
 var _announcement: Label
@@ -44,6 +46,7 @@ func open_lab() -> void:
 	visible = true
 	_refresh()
 	call_deferred("_layout")
+	call_deferred("_focus_selected_data")
 	_frame.modulate.a = 0.0
 	var tween := create_tween()
 	tween.tween_property(_frame, "modulate:a", 1.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -92,7 +95,7 @@ func _build() -> void:
 	heading.add_child(_title)
 	_subtitle = _label("Reconstruct Digimon from species Digi Data", 11, UI.MUTED)
 	heading.add_child(_subtitle)
-	_close_button = MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close")
+	_close_button = MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close", Vector2(44, 44))
 	_close_button.pressed.connect(close_view)
 	header.add_child(_close_button)
 
@@ -118,9 +121,12 @@ func _build() -> void:
 	list_root.add_child(_section_label("DIGI DATA ARCHIVE", UI.CYAN))
 	_list_scroll = ScrollContainer.new()
 	_list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_list_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_list_scroll.follow_focus = true
 	_list_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	list_root.add_child(_list_scroll)
+	SmoothScrollScript.attach(_list_scroll)
 	_list_box = VBoxContainer.new()
 	_list_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list_box.add_theme_constant_override("separation", 8)
@@ -134,15 +140,18 @@ func _build() -> void:
 	_body_grid.add_child(_detail_panel)
 	var detail_margin := MENU.margin(14, 14, 14, 14)
 	_detail_panel.add_child(detail_margin)
-	var detail_scroll := ScrollContainer.new()
-	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	detail_margin.add_child(detail_scroll)
+	_detail_scroll = ScrollContainer.new()
+	_detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_detail_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_detail_scroll.follow_focus = true
+	_detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	detail_margin.add_child(_detail_scroll)
+	SmoothScrollScript.attach(_detail_scroll)
 	_detail_body = VBoxContainer.new()
 	_detail_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_body.add_theme_constant_override("separation", 10)
-	detail_scroll.add_child(_detail_body)
+	_detail_scroll.add_child(_detail_body)
 
 	_announcement = _label("", 18, UI.GREEN, true)
 	_announcement.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -219,6 +228,16 @@ func _style_selection() -> void:
 		var accent := UI.rank_color(String(species.get("rank", "Unknown")))
 		var selected := species_name.to_lower() == _selected_name.to_lower()
 		MENU.style_action_button(button, UI.GOLD if selected else accent, selected)
+
+func _focus_selected_data() -> void:
+	if not visible:
+		return
+	for button: Button in _data_buttons:
+		if String(button.get_meta("species_name", "")).to_lower() == _selected_name.to_lower():
+			button.grab_focus()
+			return
+	if not _data_buttons.is_empty():
+		_data_buttons[0].grab_focus()
 
 func _refresh_detail() -> void:
 	for child in _detail_body.get_children():
@@ -305,26 +324,21 @@ func _on_data_changed(_bits: int, _data: Dictionary) -> void:
 func _layout() -> void:
 	if not visible or _frame == null:
 		return
-	var physical := UI.physical_window_size(get_viewport())
-	var scale_factor := UI.ui_scale(get_viewport())
-	var compact := UI.is_compact(get_viewport(), 840.0)
-	var edge := 12.0 if compact else 18.0
-	var width := minf(1240.0, physical.x - edge * 2.0)
-	var height := minf(760.0, physical.y - edge * 2.0)
-	var origin := Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
-	_frame.scale = Vector2.ONE * scale_factor
-	_frame.position = origin
-	_frame.size = Vector2(width, height)
+	var layout := MENU.apply_safe_frame(_frame, get_viewport(), Vector2(1240, 720), 840.0)
+	var compact := bool(layout.get("compact", false))
 	_body_grid.columns = 1 if compact else 2
 	if compact:
-		_list_panel.custom_minimum_size = Vector2(0, 185)
-		_detail_panel.custom_minimum_size = Vector2(0, 330)
+		_list_panel.custom_minimum_size = Vector2(0, 170)
+		_detail_panel.custom_minimum_size = Vector2(0, 0)
 	else:
 		_list_panel.custom_minimum_size = Vector2(300, 0)
-		_detail_panel.custom_minimum_size = Vector2(600, 0)
+		_detail_panel.custom_minimum_size = Vector2(0, 0)
+	var scale_factor := float(layout.get("scale", 1.0))
+	var origin := Vector2(layout.get("position", Vector2.ZERO))
+	var frame_size := Vector2(layout.get("size", Vector2(1240, 720)))
 	_announcement.scale = Vector2.ONE * scale_factor
-	_announcement.position = origin + Vector2(width * 0.20, 72) * scale_factor
-	_announcement.size = Vector2(width * 0.60, 42)
+	_announcement.position = origin + Vector2(frame_size.x * 0.20, 72) * scale_factor
+	_announcement.size = Vector2(frame_size.x * 0.60, 42)
 
 func _section_label(text: String, accent: Color) -> Label:
 	var label := _label(text, 10, accent.lightened(0.08), true)
@@ -340,6 +354,7 @@ func _label(text: String, font_size: int, color: Color, bold: bool = false) -> L
 	label.add_theme_constant_override("outline_size", 2 if font_size >= 13 else 1)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if bold:
 		UI.apply_heading_font(label)
 	else:
