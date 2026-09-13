@@ -56,10 +56,22 @@ func _ready() -> void:
 		var sprite := actor.get_node_or_null("Sprite2D") as Sprite2D
 		assert(sprite != null and sprite.texture != null, "%s battle actor must have a DS field texture" % species_name)
 		assert(sprite.hframes == 12, "%s battle actor must expose the 12 DS movement frames" % species_name)
+		assert(not sprite.flip_h, "%s battle actor must not mirror a normalized directional strip" % species_name)
 		assert(String(actor.get("digimon_key")) == species_name.to_lower(), "%s must keep its canonical battle key" % species_name)
 		var instance = actor.get("digimon_instance")
 		assert(instance is DigimonInstance, "%s must bind a DigimonInstance" % species_name)
 		assert(String(instance.species_seed) == String(row.get("seed", "")), "%s must bind the database seed from the manifest" % species_name)
+
+		# Exercise the exact battle-facing implementation for every species and
+		# direction. A normalized strip must never need runtime mirroring, and the
+		# canonical idle frame for the selected facing must be used immediately.
+		for facing in FACINGS:
+			var actor_target := actor.global_position + _target_for_facing(facing)
+			actor.call("face_toward_world_position", actor_target)
+			var actor_idle_frame := DirectionalContractScript.idle_frame(facing)
+			assert(String(actor.get("facing_direction")) == facing, "%s battle actor must resolve %s facing" % [species_name, facing])
+			assert(sprite.frame == actor_idle_frame, "%s battle %s must use the canonical idle frame" % [species_name, facing])
+			assert(not sprite.flip_h, "%s battle %s must not use runtime horizontal mirroring" % [species_name, facing])
 
 		# Exercise the exact overworld/test-lab movement implementation for every
 		# species and every facing. This catches bad frame counts/layouts before a
@@ -74,10 +86,12 @@ func _ready() -> void:
 			follower.teleport_to(Vector2.ZERO, facing)
 			var idle_frame := DirectionalContractScript.idle_frame(facing)
 			assert(follower_sprite.frame == idle_frame, "%s %s must start on the canonical idle frame" % [species_name, facing])
+			assert(not follower_sprite.flip_h, "%s follower %s must not mirror a normalized directional strip" % [species_name, facing])
 			var expected_walk := [idle_frame + 1, idle_frame, idle_frame + 2, idle_frame]
 			for expected_frame in expected_walk:
 				follower.step_toward(_target_for_facing(facing), 0.11, [])
 				assert(follower_sprite.frame == expected_frame, "%s %s must follow idle/step-a/idle/step-b" % [species_name, facing])
+				assert(not follower_sprite.flip_h, "%s follower %s walk must not mirror the normalized strip" % [species_name, facing])
 		follower.queue_free()
 
 		await get_tree().process_frame
@@ -103,4 +117,3 @@ func _target_for_facing(facing: String) -> Vector2:
 			return Vector2(-128.0, -128.0)
 		_:
 			return Vector2(128.0, -128.0)
-
