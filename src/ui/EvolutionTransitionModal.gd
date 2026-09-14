@@ -7,7 +7,7 @@ signal cancelled
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
-const TRANSITION_ARROW = preload("res://assets/ui/icons/transition_arrow.svg")
+const TransitionFlowArrowScript = preload("res://src/ui/TransitionFlowArrow.gd")
 
 const STAT_ROWS: Array[Dictionary] = [
 	{"key": "level", "label": "LEVEL"},
@@ -33,8 +33,7 @@ var _subtitle: Label
 var _summary_scroll: ScrollContainer
 var _operation: Label
 var _route_grid: GridContainer
-var _route_arrow_slot: Control
-var _route_arrow: TextureRect
+var _route_arrow: TransitionFlowArrow
 var _from_portrait: DigimonPortraitPreview
 var _from_name: Label
 var _from_rank: Label
@@ -49,13 +48,11 @@ var _cancel_button: Button
 var _previous_focus: Control = null
 var _preview: Dictionary = {}
 var _changed_rows: Array[Control] = []
-var _stat_arrows: Array[Dictionary] = []
 var _open_tween: Tween = null
 var _close_tween: Tween = null
 var _closing := false
 var _layout_settle_frames := 0
 var _last_layout_signature := Vector3.ZERO
-var _arrow_phase := 0.0
 
 
 func _ready() -> void:
@@ -125,11 +122,9 @@ func is_open() -> bool:
 # frames. Re-evaluate only while settling or when the effective viewport really
 # changes; this removes the historical "first open wrong, second open right"
 # behavior without doing expensive layout work continuously.
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if not visible:
 		return
-	_arrow_phase = fmod(_arrow_phase + delta, 1000.0)
-	_animate_transition_arrows()
 	var physical := UI.physical_window_size(get_viewport())
 	var scale_factor := UI.ui_scale(get_viewport())
 	var signature := Vector3(physical.x, physical.y, scale_factor)
@@ -222,10 +217,11 @@ func _build() -> void:
 	_from_name = from_card.get("name") as Label
 	_from_rank = from_card.get("rank") as Label
 
-	var route_arrow_bundle := _arrow_slot(Vector2(46, 82), Vector2(44, 22))
-	_route_arrow_slot = route_arrow_bundle.get("slot") as Control
-	_route_arrow = route_arrow_bundle.get("icon") as TextureRect
-	_route_grid.add_child(_route_arrow_slot)
+	_route_arrow = TransitionFlowArrowScript.new() as TransitionFlowArrow
+	_route_arrow.name = "RouteTransitionArrow"
+	_route_arrow.custom_minimum_size = Vector2(46, 82)
+	_route_arrow.configure(UI.CYAN, true, false, 0.0)
+	_route_grid.add_child(_route_arrow)
 
 	var to_card := _form_card()
 	_route_grid.add_child(to_card.get("panel") as Control)
@@ -292,7 +288,6 @@ func _populate() -> void:
 	for child in _stat_body.get_children():
 		child.free()
 	_changed_rows.clear()
-	_stat_arrows.clear()
 	var before := _preview.get("before", {}) as Dictionary
 	var after := _preview.get("after", {}) as Dictionary
 	for definition: Dictionary in STAT_ROWS:
@@ -387,13 +382,10 @@ func _stat_row(stat_name: String, before_value: int, after_value: int) -> PanelC
 	before.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(before)
 
-	var arrow_bundle := _arrow_slot(Vector2(28, 30), Vector2(24, 12))
-	row.add_child(arrow_bundle.get("slot") as Control)
-	_stat_arrows.append({
-		"slot": arrow_bundle.get("slot"),
-		"icon": arrow_bundle.get("icon"),
-		"phase": float(_stat_arrows.size()) * 0.17,
-	})
+	var arrow := TransitionFlowArrowScript.new() as TransitionFlowArrow
+	arrow.custom_minimum_size = Vector2(28, 30)
+	arrow.configure(UI.BLUE if delta > 0 else UI.RED if delta < 0 else UI.SUBTLE, false, false, float(stat_name.length()) * 0.07)
+	row.add_child(arrow)
 
 	var after := _label(str(after_value), 12, UI.TEXT if delta == 0 else accent, true)
 	after.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -410,45 +402,6 @@ func _stat_row(stat_name: String, before_value: int, after_value: int) -> PanelC
 	delta_label.custom_minimum_size = Vector2(50, 0)
 	row.add_child(delta_label)
 	return panel
-
-
-func _arrow_slot(minimum_size: Vector2, icon_size: Vector2) -> Dictionary:
-	var slot := Control.new()
-	slot.custom_minimum_size = minimum_size
-	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.set_meta("arrow_icon_size", icon_size)
-	var icon := TextureRect.new()
-	icon.texture = TRANSITION_ARROW
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	slot.add_child(icon)
-	return {"slot": slot, "icon": icon}
-
-
-func _animate_transition_arrows() -> void:
-	if _route_arrow_slot != null and _route_arrow != null:
-		_place_animated_arrow(_route_arrow_slot, _route_arrow, _route_grid.columns == 1, 0.0)
-	for data: Dictionary in _stat_arrows:
-		var slot := data.get("slot") as Control
-		var icon := data.get("icon") as TextureRect
-		if slot == null or icon == null or not is_instance_valid(slot) or not is_instance_valid(icon):
-			continue
-		_place_animated_arrow(slot, icon, false, float(data.get("phase", 0.0)))
-
-
-func _place_animated_arrow(slot: Control, icon: TextureRect, vertical: bool, phase_offset: float) -> void:
-	var icon_size := Vector2(slot.get_meta("arrow_icon_size", Vector2(28, 14)))
-	var pulse := 0.5 + 0.5 * sin(_arrow_phase * 4.4 + phase_offset * TAU)
-	var travel := lerpf(-2.0, 3.5, pulse)
-	icon.size = icon_size
-	icon.pivot_offset = icon_size * 0.5
-	icon.rotation = PI * 0.5 if vertical else 0.0
-	var centered := (slot.size - icon_size) * 0.5
-	icon.position = centered + (Vector2(0.0, travel) if vertical else Vector2(travel, 0.0))
-	icon.scale = Vector2.ONE * lerpf(0.96, 1.05, pulse)
-	icon.modulate = Color(1.0, 1.0, 1.0, lerpf(0.62, 1.0, pulse))
 
 
 func _format_delta(delta: int) -> String:
@@ -564,7 +517,8 @@ func _layout() -> void:
 	)
 
 	_route_grid.columns = 1 if narrow else 3
-	_route_arrow_slot.custom_minimum_size = Vector2(0, 34) if narrow else Vector2(46, 82)
+	_route_arrow.custom_minimum_size = Vector2(0, 34) if narrow else Vector2(46, 82)
+	_route_arrow.set_vertical(narrow)
 
 
 func _surface_style(background: Color, accent: Color, border_alpha: float) -> StyleBoxFlat:
