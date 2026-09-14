@@ -10,6 +10,35 @@ CURRENT_PREVIEW_SHA="${CURRENT_PREVIEW_SHA:-}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
 : "${GH_TOKEN:?GH_TOKEN is required}"
 
+find_validated_run() {
+  local head_sha="$1"
+  local run_id
+  local success_count
+
+  while IFS= read -r run_id; do
+    if [ -z "$run_id" ]; then
+      continue
+    fi
+
+    success_count="$(gh api \
+      "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=latest&per_page=100" \
+      --jq '[.jobs[] | select(.conclusion == "success") | .name | select(. == "Validate and build Web" or . == "Browser smoke · desktop" or . == "Browser smoke · combat" or . == "Browser smoke · mobile" or . == "Browser smoke · vfx")] | unique | length' \
+      2>/dev/null || echo 0)"
+
+    if [ "$success_count" = "5" ]; then
+      printf '%s\n' "$run_id"
+      return 0
+    fi
+  done < <(
+    gh api \
+      "repos/${GITHUB_REPOSITORY}/actions/workflows/web.yml/runs?event=pull_request&head_sha=${head_sha}&per_page=10" \
+      --jq '.workflow_runs[].id' \
+      2>/dev/null || true
+  )
+
+  return 1
+}
+
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 cp -a "$PRODUCTION_DIR/." "$OUTPUT_DIR/"
@@ -30,12 +59,9 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
     continue
   fi
 
-  run_id="$(gh api \
-    "repos/${GITHUB_REPOSITORY}/actions/workflows/web.yml/runs?event=pull_request&head_sha=${head_sha}&status=success&per_page=1" \
-    --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)"
-
+  run_id="$(find_validated_run "$head_sha" || true)"
   if [ -z "$run_id" ]; then
-    echo "::warning::No successful Web workflow artifact found for open PR #${pr_number} at ${head_sha}; skipping its preview for this deployment."
+    echo "::warning::No Web workflow with a successful build and all four browser smoke suites was found for open PR #${pr_number} at ${head_sha}; skipping its preview for this deployment."
     continue
   fi
 
@@ -47,7 +73,7 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
     --name digigame-web-build \
     --dir "$preview_dir"; then
     rm -rf "$preview_dir"
-    echo "::warning::Could not restore the Web artifact for PR #${pr_number} from run ${run_id}; its artifact may have expired."
+    echo "::warning::Could not restore the Web artifact for PR #${pr_number} from validated run ${run_id}; its artifact may have expired."
     continue
   fi
 
@@ -55,13 +81,13 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
 DigiGame pull request preview
 PR: #${pr_number}
 Commit: ${head_sha}
-Restored from workflow run: ${run_id}
+Restored from validated workflow run: ${run_id}
 Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 EOF
 
   test -s "$preview_dir/index.html"
   test -s "$preview_dir/index.wasm"
-  echo "Restored PR #${pr_number} from workflow run ${run_id}."
+  echo "Restored PR #${pr_number} from validated workflow run ${run_id}."
 done < <(
   gh api \
     --paginate \
