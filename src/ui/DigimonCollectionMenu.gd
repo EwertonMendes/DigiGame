@@ -11,7 +11,7 @@ const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 
 var _database: DigimonDatabase
 var _progression: DigimonProgressionService
-var _actions = ActionDatabaseScript.new()
+var _technique_actions = ActionDatabaseScript.new()
 var _backdrop: ColorRect
 var _panel: PanelContainer
 var _title: Label
@@ -34,7 +34,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_database = OverworldState.get_database() as DigimonDatabase
 	_progression = ProgressionServiceScript.new(_database) as DigimonProgressionService
-	_actions.load_default()
+	_technique_actions.load_default()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
@@ -376,7 +376,7 @@ func _build_skills_card(instance: DigimonInstance) -> Control:
 func _technique_row(instance: DigimonInstance, skill_id: String) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
-	var action := _actions.get_action(skill_id, instance.get_skill_mastery_points(skill_id))
+	var action := _technique_actions.get_action(skill_id, instance.get_skill_mastery_points(skill_id))
 	var name := String(action.get("name", skill_id.replace("_", " ").capitalize()))
 	var grade := instance.get_skill_mastery_grade(skill_id).capitalize()
 	var archived := instance.archived_skills.has(skill_id)
