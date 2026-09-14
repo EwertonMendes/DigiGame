@@ -3,7 +3,7 @@
   "source_variant": "grass_agumon_concept_sheet",
   "source_name": "Grass Agumon",
   "source_sheet": "res://assets/characters/grassagumon/source/sheet.png",
-  "source_sha256": "2f8d75a3fca0a93e71fc6a6eaad4569e064caee9fe7050aefd14d08c3ccba342",
+  "source_sha256": "1fbe34aa0e2dda4936522cb391280a4bdf43dafa6d06c8cc2a3372f24a93586e",
   "background_rgb": [
     0,
     0,
@@ -11,108 +11,26 @@
   ],
   "background_tolerance": 85.0,
   "authored_source_boxes": [
-    [
-      0,
-      0,
-      48,
-      48
-    ],
-    [
-      48,
-      0,
-      48,
-      48
-    ],
-    [
-      96,
-      0,
-      48,
-      48
-    ],
-    [
-      144,
-      0,
-      48,
-      48
-    ],
-    [
-      192,
-      0,
-      48,
-      48
-    ],
-    [
-      240,
-      0,
-      48,
-      48
-    ],
-    [
-      0,
-      48,
-      48,
-      48
-    ],
-    [
-      48,
-      48,
-      48,
-      48
-    ],
-    [
-      96,
-      48,
-      48,
-      48
-    ],
-    [
-      144,
-      48,
-      48,
-      48
-    ],
-    [
-      192,
-      48,
-      48,
-      48
-    ],
-    [
-      240,
-      48,
-      48,
-      48
-    ]
+    [0,0,48,48],
+    [48,0,48,48],
+    [96,0,48,48],
+    [144,0,48,48],
+    [192,0,48,48],
+    [240,0,48,48],
+    [0,48,48,48],
+    [48,48,48,48],
+    [96,48,48,48],
+    [144,48,48,48],
+    [192,48,48,48],
+    [240,48,48,48]
   ],
-  "runtime_frame_indices": [
-    0,
-    1,
-    2,
-    5,
-    4,
-    3,
-    11,
-    10,
-    9,
-    6,
-    7,
-    8
-  ],
-  "canonical_runtime_phases": [
-    "idle",
-    "step_a",
-    "step_b"
-  ],
+  "runtime_frame_indices": [0,1,2,5,4,3,11,10,9,6,7,8],
+  "canonical_runtime_phases": ["idle","step_a","step_b"],
   "cell_width": 66,
   "cell_height": 66,
   "frame_count": 12,
   "frames_per_direction": 3,
-  "directions": [
-    "down_left",
-    "down_right",
-    "up_left",
-    "up_right"
-  ],
+  "directions": ["down_left","down_right","up_left","up_right"],
   "runtime_scale": 0.5,
   "field_path": "res://assets/characters/grassagumon/field.png",
   "anchor_policy": "bottom_center"
