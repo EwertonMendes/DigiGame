@@ -8,6 +8,10 @@ const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionSe
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
+const FAVORITE_OFF_ICON = preload("res://assets/ui/icons/favorite_off.svg")
+const FAVORITE_ON_ICON = preload("res://assets/ui/icons/favorite_on.svg")
+const MOVE_DOWN_ICON = preload("res://assets/ui/icons/move_down.svg")
+const MOVE_UP_ICON = preload("res://assets/ui/icons/move_up.svg")
 
 var _database: DigimonDatabase
 var _progression: DigimonProgressionService
@@ -384,7 +388,10 @@ func _technique_row(instance: DigimonInstance, skill_id: String) -> Control:
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
 	var favorite := instance.favorite_skills.has(skill_id)
-	var favorite_button := _button("★" if favorite else "☆", UI.GOLD)
+	var favorite_button := _button("", UI.GOLD)
+	favorite_button.icon = FAVORITE_ON_ICON if favorite else FAVORITE_OFF_ICON
+	favorite_button.expand_icon = true
+	favorite_button.icon_max_width = 18
 	favorite_button.custom_minimum_size = Vector2(38, 34)
 	favorite_button.tooltip_text = "Remove favorite" if favorite else "Add favorite shortcut"
 	favorite_button.disabled = archived or (not favorite and instance.favorite_skills.size() >= DigimonInstance.MAX_FAVORITE_SKILLS)
@@ -392,12 +399,18 @@ func _technique_row(instance: DigimonInstance, skill_id: String) -> Control:
 	row.add_child(favorite_button)
 	if favorite:
 		var favorite_index := instance.favorite_skills.find(skill_id)
-		var up := _button("↑", UI.CYAN)
+		var up := _button("", UI.CYAN)
+		up.icon = MOVE_UP_ICON
+		up.expand_icon = true
+		up.icon_max_width = 17
 		up.custom_minimum_size = Vector2(34, 34)
 		up.disabled = favorite_index <= 0
 		up.pressed.connect(_move_favorite.bind(instance.id, skill_id, favorite_index - 1))
 		row.add_child(up)
-		var down := _button("↓", UI.CYAN)
+		var down := _button("", UI.CYAN)
+		down.icon = MOVE_DOWN_ICON
+		down.expand_icon = true
+		down.icon_max_width = 17
 		down.custom_minimum_size = Vector2(34, 34)
 		down.disabled = favorite_index >= instance.favorite_skills.size() - 1
 		down.pressed.connect(_move_favorite.bind(instance.id, skill_id, favorite_index + 1))
@@ -707,3 +720,4 @@ func _route_style(accent: Color, active: bool) -> StyleBoxFlat:
 	style.corner_radius_bottom_left = 6
 	style.corner_radius_bottom_right = 6
 	return style
+
