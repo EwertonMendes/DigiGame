@@ -42,9 +42,7 @@ func _ready() -> void:
 	add_child(_sprite)
 	set_process(false)
 	if not _pending_species.is_empty():
-		if _pending_species == "Black War Greymon": print("BWG preview: ready -> load")
 		_load_species(_pending_species)
-		if _pending_species == "Black War Greymon": print("BWG preview: ready <- load")
 	else:
 		_layout_sprite()
 
@@ -67,23 +65,16 @@ func set_active(value: bool) -> void:
 
 
 func _load_species(species_name: String) -> void:
-	var trace := species_name == "Black War Greymon"
 	var key := species_name.strip_edges().to_lower()
 	var path := "res://assets/resources/%s.tres" % key
-	if trace: print("BWG preview: path=", path, " exists=", ResourceLoader.exists(path))
 	_digimon = load(path) as Digimon if ResourceLoader.exists(path) else null
-	if trace: print("BWG preview: loaded=", _digimon != null, " texture=", _digimon != null and _digimon.texture != null)
 	_apply_visuals()
-	if trace: print("BWG preview: visuals applied")
 	if _active:
 		_show_walk_frame()
 	else:
 		_show_idle_frame()
-	if trace: print("BWG preview: frame shown")
 	set_process(_active and _digimon != null)
-	if trace: print("BWG preview: before layout size=", size)
 	_layout_sprite()
-	if trace: print("BWG preview: after layout")
 
 
 func _process(delta: float) -> void:
