@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - fix/ds-sprite-agumon-line-*
-      - fix/ds-sprite-guilmon-family-additions
       - feat/agumon-evolution-ds-sprites
       - feat/garurumon-line-ds-sprites
   workflow_dispatch:
