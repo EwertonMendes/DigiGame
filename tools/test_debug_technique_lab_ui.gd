@@ -1,4 +1,4 @@
-extends SceneTree
+extends Node
 
 const ToolkitScript = preload("res://src/debug/DeveloperToolkitWithSkills.gd")
 const ProgressionToolsScript = preload("res://src/debug/DebugProgressionTools.gd")
@@ -7,16 +7,19 @@ const RosterToolsScript = preload("res://src/debug/DebugRosterTools.gd")
 const TechniqueToolsScript = preload("res://src/debug/DebugTechniqueTools.gd")
 
 
-func _initialize() -> void:
+func _ready() -> void:
 	OverworldState.set_persistence_enabled(false)
 	OverworldState.reset_progress_for_tests(false)
 	var party := OverworldState.get_active_instances()
 	assert(not party.is_empty(), "Technique lab UI regression requires the normal starter party")
 	var selected: DigimonInstance = party[0]
 
+	# The production toolkit deliberately stays unavailable in headless builds.
+	# Build only the Skills workspace here while keeping the real project
+	# autoloads/state available, exactly like the other toolkit regression.
 	var toolkit = ToolkitScript.new()
-	root.add_child(toolkit)
-	await process_frame
+	add_child(toolkit)
+	await get_tree().process_frame
 	toolkit._progression = ProgressionToolsScript.new() as DebugProgressionTools
 	toolkit._state = StateToolsScript.new() as DebugStateTools
 	toolkit._roster = RosterToolsScript.new() as DebugRosterTools
@@ -39,7 +42,7 @@ func _initialize() -> void:
 
 	toolkit._skill_search.text = "pepper"
 	toolkit._reset_skill_results()
-	assert(toolkit._skill_results_summary.text.begins_with("1 ") or not toolkit._skill_results_summary.text.begins_with("0 "), "Technique search must find canonical catalog entries")
+	assert(not toolkit._skill_results_summary.text.begins_with("0 matching"), "Technique search must find canonical catalog entries")
 	toolkit._reset_skill_filters()
 
 	var unlearned_id := ""
@@ -59,4 +62,4 @@ func _initialize() -> void:
 	assert(selected.get_skill_mastery_grade(unlearned_id) == "mastered", "Technique lab mastery controls must reach Mastered")
 
 	print("debug technique lab UI regression passed")
-	quit()
+	get_tree().quit()
