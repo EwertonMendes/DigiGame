@@ -22,6 +22,17 @@ jobs:
       - name: Install sprite tooling
         run: python3 -m pip install --disable-pip-version-check pillow numpy
 
+      - name: Restore Grass Agumon profile portrait source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat tools/bootstrap-assets/portrait.b64.part0 \
+              tools/bootstrap-assets/portrait.b64.part1 \
+              tools/bootstrap-assets/portrait.b64.part2 \
+              tools/bootstrap-assets/portrait.b64.part3 \
+            | base64 -d > assets/characters/grassagumon/source/portrait_frames.png
+          echo "7695726c43817175e27213073a2c4b7280e6ea242de9d7d793934df67ad3721c  assets/characters/grassagumon/source/portrait_frames.png" | sha256sum -c -
+
       - name: Patch shared portrait resolution
         run: python3 tools/bootstrap_portrait_resolution_fix.py
 
