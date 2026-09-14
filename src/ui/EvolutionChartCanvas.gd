@@ -158,7 +158,7 @@ func _find_connection_path(start_seed: String, target_seed: String) -> Array[Str
 	var queue: Array[String] = [start_seed]
 	var previous: Dictionary = {start_seed: ""}
 	while not queue.is_empty():
-		var cursor := queue.pop_front()
+		var cursor: String = String(queue.pop_front())
 		for neighbor: String in _neighbors(cursor):
 			if previous.has(neighbor):
 				continue
