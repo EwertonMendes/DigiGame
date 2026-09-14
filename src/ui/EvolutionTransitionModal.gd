@@ -22,10 +22,14 @@ const STAT_ROWS: Array[Dictionary] = [
 ]
 
 var _backdrop: ColorRect
-var _panel: PanelContainer
-var _panel_margin: MarginContainer
+# Deliberately a plain Panel, not a PanelContainer. A Container's combined
+# minimum size can temporarily grow to the full dynamic content height on the
+# first frame after opening and override a manually assigned safe size. The
+# modal frame must never be content-sized; only its internal ScrollContainer is.
+var _panel: Panel
 var _title: Label
 var _subtitle: Label
+var _summary_scroll: ScrollContainer
 var _operation: Label
 var _route_grid: GridContainer
 var _route_arrow: Label
@@ -46,6 +50,8 @@ var _changed_rows: Array[Control] = []
 var _open_tween: Tween = null
 var _close_tween: Tween = null
 var _closing := false
+var _layout_settle_frames := 0
+var _last_layout_signature := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -55,6 +61,7 @@ func _ready() -> void:
 	z_index = 100
 	_build()
 	get_viewport().size_changed.connect(_layout)
+	set_process(true)
 	visible = false
 
 
@@ -64,10 +71,16 @@ func open_preview(preview: Dictionary) -> void:
 	_preview = preview.duplicate(true)
 	_closing = false
 	_previous_focus = get_viewport().gui_get_focus_owner()
-	_populate()
-	visible = true
 	_confirm_button.disabled = false
 	_cancel_button.disabled = false
+
+	# Establish the bounded frame before rebuilding dynamic content. This is the
+	# same first-open ordering used by the hardened DigiLab screens: size first,
+	# content second, then settle again after Godot/browser layout has caught up.
+	visible = true
+	_layout_settle_frames = 4
+	_layout()
+	_populate()
 	_layout()
 	_play_open_animation()
 	call_deferred("_focus_safe_default")
@@ -85,7 +98,6 @@ func cancel() -> void:
 	_close_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_close_tween.tween_property(_backdrop, "modulate:a", 0.0, 0.10)
 	_close_tween.tween_property(_panel, "modulate:a", 0.0, 0.10)
-	_close_tween.tween_property(_panel, "scale", _panel.scale * 0.975, 0.10)
 	_close_tween.chain().tween_callback(_finish_cancel)
 
 
@@ -96,12 +108,28 @@ func close_immediately() -> void:
 		_close_tween.kill()
 	visible = false
 	_closing = false
+	_layout_settle_frames = 0
 	_preview.clear()
 	_previous_focus = null
 
 
 func is_open() -> bool:
 	return visible
+
+
+# Late browser canvas/CSS sizing can change during the first few rendered
+# frames. Re-evaluate only while settling or when the effective viewport really
+# changes; this removes the historical "first open wrong, second open right"
+# behavior without doing expensive layout work continuously.
+func _process(_delta: float) -> void:
+	if not visible:
+		return
+	var physical := UI.physical_window_size(get_viewport())
+	var scale_factor := UI.ui_scale(get_viewport())
+	var signature := Vector3(physical.x, physical.y, scale_factor)
+	if _layout_settle_frames > 0 or not signature.is_equal_approx(_last_layout_signature):
+		_layout_settle_frames = maxi(0, _layout_settle_frames - 1)
+		_layout()
 
 
 # Handle cancel before any parent menu receives _unhandled_input. This keeps
@@ -123,46 +151,39 @@ func _build() -> void:
 	_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_backdrop)
 
-	_panel = PanelContainer.new()
+	_panel = Panel.new()
 	_panel.name = "EvolutionTransitionPanel"
 	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_panel.clip_contents = true
 	_panel.add_theme_stylebox_override(
 		"panel",
 		SKIN.frame_style(Color(0.12, 0.24, 0.38, 0.99), Vector4.ZERO, 14.0)
 	)
 	add_child(_panel)
 
-	_panel_margin = MarginContainer.new()
-	_set_panel_margins(22, 20, 22, 18)
-	_panel.add_child(_panel_margin)
-
-	var root := VBoxContainer.new()
-	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_theme_constant_override("separation", 8)
-	_panel_margin.add_child(root)
-
 	_title = _label("CONFIRM DIGIVOLUTION", 23, UI.TEXT, true)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(_title)
+	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_panel.add_child(_title)
 
 	_subtitle = _label("Review the permanent form change before continuing.", 11, UI.MUTED)
 	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(_subtitle)
+	_panel.add_child(_subtitle)
 
-	var scroll := ScrollContainer.new()
-	scroll.name = "TransitionSummaryScroll"
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	root.add_child(scroll)
+	_summary_scroll = ScrollContainer.new()
+	_summary_scroll.name = "TransitionSummaryScroll"
+	_summary_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_summary_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_summary_scroll.follow_focus = true
+	_summary_scroll.clip_contents = true
+	_panel.add_child(_summary_scroll)
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 9)
-	scroll.add_child(body)
+	_summary_scroll.add_child(body)
 
 	_operation = _label("DIGIVOLUTION", 10, UI.GREEN, true)
 	_operation.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -176,9 +197,9 @@ func _build() -> void:
 	body.add_child(route_panel)
 
 	var route_margin := MarginContainer.new()
-	for side in [SIDE_LEFT, SIDE_RIGHT]:
-		route_margin.add_theme_constant_override("margin_%s" % _side_name(side), 10)
+	route_margin.add_theme_constant_override("margin_left", 10)
 	route_margin.add_theme_constant_override("margin_top", 8)
+	route_margin.add_theme_constant_override("margin_right", 10)
 	route_margin.add_theme_constant_override("margin_bottom", 8)
 	route_panel.add_child(route_margin)
 
@@ -195,7 +216,9 @@ func _build() -> void:
 	_from_name = from_card.get("name") as Label
 	_from_rank = from_card.get("rank") as Label
 
-	_route_arrow = _label("→", 28, UI.CYAN, true)
+	# ASCII-only transition markers avoid missing-glyph boxes in Web builds and
+	# on fallback fonts while remaining immediately readable.
+	_route_arrow = _label(">", 25, UI.CYAN, true)
 	_route_arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_route_arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_route_arrow.custom_minimum_size = Vector2(34, 82)
@@ -221,10 +244,9 @@ func _build() -> void:
 
 	_button_grid = GridContainer.new()
 	_button_grid.columns = 2
-	_button_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_button_grid.add_theme_constant_override("h_separation", 10)
 	_button_grid.add_theme_constant_override("v_separation", 6)
-	root.add_child(_button_grid)
+	_panel.add_child(_button_grid)
 
 	_cancel_button = _button("NO, GO BACK", UI.CYAN)
 	_cancel_button.name = "CancelEvolutionTransition"
@@ -288,6 +310,7 @@ func _populate() -> void:
 		"Level and EXP reset to 1 / 0. " + potential_copy
 		+ "Link, training, aptitudes, learned techniques, equipment and evolution history are preserved."
 	)
+	_summary_scroll.scroll_vertical = 0
 
 
 func _form_card() -> Dictionary:
@@ -360,7 +383,7 @@ func _stat_row(stat_name: String, before_value: int, after_value: int) -> PanelC
 	before.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(before)
 
-	var arrow := _label("→", 12, UI.SUBTLE, true)
+	var arrow := _label(">", 12, UI.SUBTLE, true)
 	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	arrow.custom_minimum_size = Vector2(20, 0)
 	row.add_child(arrow)
@@ -387,7 +410,7 @@ func _format_delta(delta: int) -> String:
 		return "+%d" % delta
 	if delta < 0:
 		return str(delta)
-	return "—"
+	return "-"
 
 
 func _play_open_animation() -> void:
@@ -395,8 +418,6 @@ func _play_open_animation() -> void:
 		_open_tween.kill()
 	_backdrop.modulate.a = 0.0
 	_panel.modulate.a = 0.0
-	var target_scale := _panel.scale
-	_panel.scale = target_scale * 0.94
 	for row: Control in _changed_rows:
 		row.modulate.a = 0.34
 
@@ -404,7 +425,6 @@ func _play_open_animation() -> void:
 	_open_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_open_tween.tween_property(_backdrop, "modulate:a", 1.0, 0.14)
 	_open_tween.tween_property(_panel, "modulate:a", 1.0, 0.15)
-	_open_tween.tween_property(_panel, "scale", target_scale, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	for index in range(_changed_rows.size()):
 		_open_tween.tween_property(_changed_rows[index], "modulate:a", 1.0, 0.16).set_delay(0.05 + float(index) * 0.025)
 
@@ -429,6 +449,7 @@ func _confirm() -> void:
 func _finish_cancel() -> void:
 	visible = false
 	_closing = false
+	_layout_settle_frames = 0
 	_preview.clear()
 	if (
 		is_instance_valid(_previous_focus)
@@ -446,42 +467,59 @@ func _layout() -> void:
 	var viewport_obj := get_viewport()
 	var physical := UI.physical_window_size(viewport_obj)
 	var scale_factor := UI.ui_scale(viewport_obj)
-	var safe := 12.0
+	_last_layout_signature = Vector3(physical.x, physical.y, scale_factor)
+
+	# The frame is capped against the *currently observable* physical viewport.
+	# Never impose a minimum modal height that is larger than the viewport.
+	var safe := 8.0 if physical.y < 480.0 else 12.0
 	var available_w := maxf(1.0, physical.x - safe * 2.0)
 	var available_h := maxf(1.0, physical.y - safe * 2.0)
 	var modal_w := minf(760.0, available_w)
 	var modal_h := minf(680.0, available_h)
-	var narrow := modal_w < 540.0 or physical.y > physical.x * 1.10
+	var narrow := modal_w < 560.0 or physical.y > physical.x * 1.05
+	var short := modal_h < 500.0
 
 	_panel.scale = Vector2.ONE * scale_factor
 	_panel.position = Vector2((physical.x - modal_w) * 0.5, (physical.y - modal_h) * 0.5) * scale_factor
 	_panel.size = Vector2(modal_w, modal_h)
-	_title.add_theme_font_size_override("font_size", 18 if narrow else 23)
-	_subtitle.add_theme_font_size_override("font_size", 10 if narrow else 11)
-	_set_panel_margins(14 if narrow else 22, 14 if narrow else 20, 14 if narrow else 22, 12 if narrow else 18)
+	_panel.clip_contents = true
+
+	var side := 12.0 if narrow else 20.0
+	var top := 8.0 if short else 14.0
+	var bottom := 8.0 if short else 14.0
+	var title_h := 28.0 if short else 34.0
+	var subtitle_h := 20.0 if short else 24.0
+	var header_gap := 2.0
+	var body_gap := 8.0
+
+	_title.add_theme_font_size_override("font_size", 17 if narrow or short else 23)
+	_title.position = Vector2(side, top)
+	_title.size = Vector2(maxf(1.0, modal_w - side * 2.0), title_h)
+	_subtitle.add_theme_font_size_override("font_size", 10 if narrow or short else 11)
+	_subtitle.position = Vector2(side, top + title_h + header_gap)
+	_subtitle.size = Vector2(maxf(1.0, modal_w - side * 2.0), subtitle_h)
+
+	_button_grid.columns = 1 if modal_w < 430.0 else 2
+	var footer_h := 94.0 if _button_grid.columns == 1 else 44.0
+	var footer_y := maxf(0.0, modal_h - bottom - footer_h)
+	_button_grid.position = Vector2(side, footer_y)
+	_button_grid.size = Vector2(maxf(1.0, modal_w - side * 2.0), footer_h)
+
+	var scroll_y := top + title_h + header_gap + subtitle_h + body_gap
+	var scroll_bottom := maxf(scroll_y + 36.0, footer_y - body_gap)
+	# On extremely short viewports preserve the action footer first. The summary
+	# becomes a smaller scrollable window instead of pushing actions off-screen.
+	if scroll_bottom > footer_y - 2.0:
+		scroll_bottom = maxf(scroll_y, footer_y - 2.0)
+	_summary_scroll.position = Vector2(side, scroll_y)
+	_summary_scroll.size = Vector2(
+		maxf(1.0, modal_w - side * 2.0),
+		maxf(1.0, scroll_bottom - scroll_y)
+	)
 
 	_route_grid.columns = 1 if narrow else 3
-	_route_arrow.text = "↓" if narrow else "→"
-	_route_arrow.custom_minimum_size = Vector2(0, 28) if narrow else Vector2(34, 82)
-	_button_grid.columns = 1 if modal_w < 390.0 else 2
-
-
-func _set_panel_margins(left: int, top: int, right: int, bottom: int) -> void:
-	if _panel_margin == null:
-		return
-	_panel_margin.add_theme_constant_override("margin_left", left)
-	_panel_margin.add_theme_constant_override("margin_top", top)
-	_panel_margin.add_theme_constant_override("margin_right", right)
-	_panel_margin.add_theme_constant_override("margin_bottom", bottom)
-
-
-func _side_name(side: int) -> String:
-	match side:
-		SIDE_LEFT: return "left"
-		SIDE_TOP: return "top"
-		SIDE_RIGHT: return "right"
-		SIDE_BOTTOM: return "bottom"
-	return "left"
+	_route_arrow.text = "v" if narrow else ">"
+	_route_arrow.custom_minimum_size = Vector2(0, 24) if narrow else Vector2(34, 82)
 
 
 func _surface_style(background: Color, accent: Color, border_alpha: float) -> StyleBoxFlat:
