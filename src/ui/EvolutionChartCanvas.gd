@@ -9,11 +9,17 @@ class_name EvolutionChartCanvas
 
 const LINK_SIGNAL_PRIMARY_SPEED := 0.10
 const LINK_SIGNAL_SECONDARY_SPEED := 0.075
-const DIGITAL_PARTICLE_CYCLE := 1.55
-const DIGITAL_PARTICLE_MIN_RISE := 28.0
-const DIGITAL_PARTICLE_MAX_RISE := 58.0
-const CURRENT_DIGITAL_PARTICLES := 22
-const SELECTED_DIGITAL_PARTICLES := 14
+const DIGITAL_PARTICLE_CYCLE := 2.35
+const DIGITAL_PARTICLE_MIN_RISE := 30.0
+const DIGITAL_PARTICLE_MAX_RISE := 62.0
+const CURRENT_DIGITAL_PARTICLES := 24
+const SELECTED_DIGITAL_PARTICLES := 16
+const CARD_BACKDROP_INSET := 5.0
+const CARD_BACKDROP_BASE := Color(0.004, 0.009, 0.020, 0.94)
+const CARD_BACKDROP_LINEAGE := Color(0.004, 0.018, 0.026, 0.95)
+const CARD_BACKDROP_SELECTED := Color(0.003, 0.024, 0.036, 0.96)
+const CARD_BACKDROP_CURRENT := Color(0.034, 0.022, 0.004, 0.96)
+const CARD_BACKDROP_GOAL := Color(0.022, 0.010, 0.032, 0.95)
 const NAVIGATION_TWEEN_DURATION := 0.18
 
 var _initializing_chart := false
@@ -615,6 +621,20 @@ func _primary_seed_at_rank(rank_index: int, group: Array) -> String:
 
 func _create_node_button(node: Dictionary) -> Button:
 	var button := super._create_node_button(node)
+	# Every chart card owns a persistent dark inner surface. It is a child of the
+	# button rather than part of a hover style, so focus/hover can never make the
+	# card transparent and the decorative Kenney border remains visible around it.
+	var backdrop := ColorRect.new()
+	backdrop.name = "CardBackdrop"
+	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	backdrop.offset_left = CARD_BACKDROP_INSET
+	backdrop.offset_top = CARD_BACKDROP_INSET
+	backdrop.offset_right = -CARD_BACKDROP_INSET
+	backdrop.offset_bottom = -CARD_BACKDROP_INSET
+	backdrop.color = CARD_BACKDROP_BASE
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(backdrop)
+	button.move_child(backdrop, 0)
 	var status := _find_status_label(button)
 	if status != null:
 		status.visible = String(node.get("seed", "")) == _current_seed
@@ -643,6 +663,18 @@ func _refresh_node_styles() -> void:
 		if seed == _current_seed:
 			accent = UI.GOLD
 		SKIN.apply_button(button, accent)
+		var backdrop := button.get_node_or_null("CardBackdrop") as ColorRect
+		if backdrop != null:
+			var backdrop_color := CARD_BACKDROP_BASE
+			if primary_lookup.has(seed):
+				backdrop_color = CARD_BACKDROP_LINEAGE
+			if seed == _goal_seed:
+				backdrop_color = CARD_BACKDROP_GOAL
+			if seed == _selected_seed:
+				backdrop_color = CARD_BACKDROP_SELECTED
+			if seed == _current_seed:
+				backdrop_color = CARD_BACKDROP_CURRENT
+			backdrop.color = backdrop_color
 		button.modulate.a = 1.0 if primary_lookup.has(seed) or seed == _selected_seed or seed == _current_seed else 0.88
 		if seed == _current_seed:
 			button.add_theme_stylebox_override("normal", SKIN.frame_style(Color(0.36, 0.27, 0.09, 0.99), Vector4(10, 8, 10, 8), 12.0))
@@ -713,10 +745,9 @@ func _draw() -> void:
 			var pulse_t := fmod(_phase * speed + float(abs(key.hash()) % 100) / 100.0, 1.0)
 			_draw_signal_packet(p1, p2, pulse_t, Color(color.r, color.g, color.b, minf(0.86, color.a + 0.06)), average_scale)
 
-	# Digital data pixels originate just inside the card's top edge. Because the
-	# canvas renders before Button children, the first part of each particle's life
-	# is naturally masked by the card and it appears to dissolve out of the frame.
-	# This avoids a rectangular emitter, texture atlas silhouette, or flame-like look.
+	# Digital data pixels now travel from the lower edge through the full height of
+	# the card and dissolve above it. They render behind the persistent dark card
+	# surface, so the effect occupies a larger area without competing with text.
 	if _buttons.has(_current_seed):
 		_draw_digital_card_particles(
 			_current_seed,
@@ -752,9 +783,10 @@ func _draw_digital_card_particles(
 
 	var scale_factor := _button_scale(seed)
 	var card_size := NODE_SIZE * scale_factor
-	var card_left := button.position.x + 13.0 * scale_factor
-	var card_right := button.position.x + card_size.x - 13.0 * scale_factor
+	var card_left := button.position.x - 5.0 * scale_factor
+	var card_right := button.position.x + card_size.x + 5.0 * scale_factor
 	var card_top := button.position.y
+	var card_bottom := card_top + card_size.y
 	var seed_value := float(abs(seed.hash()) % 100000)
 
 	for index in range(particle_count):
@@ -766,37 +798,37 @@ func _draw_digital_card_particles(
 		var drift_noise := _digital_noise01(seed_value + index_value * 89.53)
 		var alpha_noise := _digital_noise01(seed_value + index_value * 113.17)
 
-		var cycle := DIGITAL_PARTICLE_CYCLE * lerpf(0.82, 1.22, rise_noise)
+		var cycle := DIGITAL_PARTICLE_CYCLE * lerpf(0.84, 1.18, rise_noise)
 		var age := fposmod(_phase + phase_offset + phase_noise * cycle, cycle) / cycle
-		var fade_in := smoothstep(0.0, 0.12, age)
-		var fade_out := 1.0 - smoothstep(0.56, 1.0, age)
-		var alpha := fade_in * fade_out * intensity * lerpf(0.48, 0.92, alpha_noise)
+		var fade_in := smoothstep(0.0, 0.10, age)
+		var fade_out := 1.0 - smoothstep(0.68, 1.0, age)
+		var alpha := fade_in * fade_out * intensity * lerpf(0.50, 0.94, alpha_noise)
 		if alpha <= 0.015:
 			continue
 
-		# Spawn a few pixels inside the top of the card. The Button covers this part,
-		# so pixels seem to detach from the card instead of appearing from a hard line.
-		var hidden_depth := lerpf(3.0, 13.0, _digital_noise01(seed_value + index_value * 131.7)) * scale_factor
-		var rise := lerpf(DIGITAL_PARTICLE_MIN_RISE, DIGITAL_PARTICLE_MAX_RISE, rise_noise) * scale_factor
-		var drift := (drift_noise - 0.5) * 14.0 * scale_factor * age
+		# Start around the lower edge, then cross the entire card before fading
+		# above its top edge. A tiny randomized inset avoids a visible emitter line.
+		var start_offset := lerpf(-7.0, 6.0, _digital_noise01(seed_value + index_value * 131.7)) * scale_factor
+		var rise := card_size.y + lerpf(DIGITAL_PARTICLE_MIN_RISE, DIGITAL_PARTICLE_MAX_RISE, rise_noise) * scale_factor
+		var drift := (drift_noise - 0.5) * 12.0 * scale_factor * age
 		var position := Vector2(
 			lerpf(card_left, card_right, x_noise) + drift,
-			card_top + hidden_depth - rise * age
+			card_bottom + start_offset - rise * age
 		)
 
-		var pixel_size := lerpf(2.0, 4.4, size_noise) * scale_factor
+		var pixel_size := lerpf(1.8, 4.0, size_noise) * scale_factor
 		var pixel_rect := Rect2(
 			position - Vector2.ONE * pixel_size * 0.5,
 			Vector2.ONE * pixel_size
 		)
 		draw_rect(pixel_rect, Color(base_color.r, base_color.g, base_color.b, alpha), true)
 
-		# Roughly one third of the particles leave a smaller fading data-bit behind.
-		# It creates a digital stream without turning the effect into smoke or sparks.
-		if int(floor(size_noise * 10.0)) % 3 == 0 and age > 0.16:
-			var trail_size := maxf(1.0 * scale_factor, pixel_size * 0.52)
-			var trail_position := position + Vector2(0.0, lerpf(5.0, 10.0, rise_noise) * scale_factor)
-			var trail_alpha := alpha * 0.28
+		# A minority of pixels leave one dim data-bit behind. This keeps the
+		# movement readable as upward digital flow without turning into a streak.
+		if int(floor(size_noise * 10.0)) % 3 == 0 and age > 0.14:
+			var trail_size := maxf(0.9 * scale_factor, pixel_size * 0.50)
+			var trail_position := position + Vector2(0.0, lerpf(5.0, 9.0, rise_noise) * scale_factor)
+			var trail_alpha := alpha * 0.24
 			draw_rect(
 				Rect2(trail_position - Vector2.ONE * trail_size * 0.5, Vector2.ONE * trail_size),
 				Color(base_color.r, base_color.g, base_color.b, trail_alpha),
