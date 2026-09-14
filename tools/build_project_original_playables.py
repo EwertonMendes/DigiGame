@@ -38,8 +38,6 @@ def _sha256(path: Path) -> str:
 
 def _key_background(image: Image.Image, background_rgb: list[int]) -> Image.Image:
     rgba = np.asarray(image.convert("RGBA"), dtype=np.uint8).copy()
-    # Project-original source atlases may already carry audited transparency.
-    # In that case preserve opaque black outlines instead of chroma-keying them.
     if np.any(rgba[:, :, 3] < 255):
         return Image.fromarray(rgba, "RGBA")
     bg = np.asarray(background_rgb, dtype=np.int32)
@@ -264,13 +262,26 @@ def _sync_learnsets(specs: list[dict[str, Any]]) -> None:
     learnsets = json.loads(LEARNSETS_PATH.read_text(encoding="utf-8"))
     if not isinstance(learnsets, list):
         raise RuntimeError("digimon-learnsets.json root must be an array")
+
+    seeds = {str(spec["seed"]) for spec in specs}
     names = {str(spec["name"]) for spec in specs}
-    learnsets = [row for row in learnsets if str(row.get("species", "")) not in names]
+    learnsets = [
+        row for row in learnsets
+        if str(row.get("speciesSeed", "")) not in seeds
+        and str(row.get("species", "")) not in names
+    ]
     for spec in specs:
+        entry = dict(spec["database_entry"])
         learnsets.append({
+            "speciesSeed": str(spec["seed"]),
             "species": str(spec["name"]),
+            "rank": str(entry.get("rank", "")),
             "skills": list(spec.get("learnset", [])),
         })
+
+    database = json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
+    order = {str(row.get("seed", "")): index for index, row in enumerate(database)}
+    learnsets.sort(key=lambda row: order.get(str(row.get("speciesSeed", "")), 10**9))
     LEARNSETS_PATH.write_text(json.dumps(learnsets, indent=2) + "\n", encoding="utf-8")
 
 
