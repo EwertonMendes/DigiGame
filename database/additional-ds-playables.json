@@ -126,7 +126,7 @@
       "portrait_metadata": "res://assets/characters/garurumon/portrait_frames.json",
       "source_id": 93,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         36,
         36
@@ -186,7 +186,7 @@
       "portrait_metadata": "res://assets/characters/ancientgarurumon/portrait_frames.json",
       "source_id": null,
       "profile": "two_rows_right_region_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         36,
         47
@@ -206,7 +206,7 @@
       "portrait_metadata": "res://assets/characters/omnimon/portrait_frames.json",
       "source_id": 313,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         36,
         44
