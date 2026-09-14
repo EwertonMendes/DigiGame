@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 363,
+  "source_archive_file": "sprite thread/363_BlackWarGreymon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/363_BlackWarGreymon.png",
+  "source_sha256": "0975d4d5303760cb58f1a9694a818ffceee794243b9b51ad49a3cb40518f2a90",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "four_rows_rightmost_triples",
+  "review_pattern": "compact_interleaved_horizontal_reversed",
+  "runtime_group_indices": [
+    2,
+    0,
+    3,
+    1
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 129786,
+      "confidence_margin": 246168
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 95564,
+      "confidence_margin": 184028
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 213,
+        "y": 216,
+        "w": 29,
+        "h": 37
+      },
+      {
+        "x": 253,
+        "y": 218,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 295,
+        "y": 218,
+        "w": 30,
+        "h": 39
+      }
+    ],
+    "down_right": [
+      {
+        "x": 293,
+        "y": 125,
+        "w": 29,
+        "h": 37
+      },
+      {
+        "x": 252,
+        "y": 127,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 210,
+        "y": 127,
+        "w": 30,
+        "h": 39
+      }
+    ],
+    "up_left": [
+      {
+        "x": 211,
+        "y": 262,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 254,
+        "y": 264,
+        "w": 26,
+        "h": 37
+      },
+      {
+        "x": 296,
+        "y": 263,
+        "w": 27,
+        "h": 38
+      }
+    ],
+    "up_right": [
+      {
+        "x": 297,
+        "y": 171,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 255,
+        "y": 173,
+        "w": 26,
+        "h": 37
+      },
+      {
+        "x": 212,
+        "y": 172,
+        "w": 27,
+        "h": 38
+      }
+    ]
+  },
+  "cell_width": 34,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/blackwargreymon/field.png"
+}

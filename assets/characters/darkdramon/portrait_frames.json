@@ -1,0 +1,14 @@
+{
+  "source": "Darkdramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Darkdramon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "f0c80a6b73516eea2bd9af9312b0384d2cf28d14d115c795b2f5a9aac77ae8e3"
+}
