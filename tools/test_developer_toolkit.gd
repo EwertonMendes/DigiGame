@@ -29,6 +29,11 @@ func _ready() -> void:
 	assert(progression.set_link(original_id, 37) and selected.link == 37, "Link editing must persist on the individual")
 	assert(progression.set_training(original_id, {"atk": 25, "speed": 11, "mov": 2}), "Exact training editing must work")
 	assert(int(selected.training.get("atk", 0)) == 25 and int(selected.training.get("mov", 0)) == 2, "Training edits must persist")
+	assert(progression.tier_options() == ["E", "D", "C", "B", "A", "S", "SS", "SSS"], "F2 must expose every canonical Tier")
+	assert(progression.set_tier_and_expansion(original_id, "S", true, true), "F2 exact state must be able to prepare an expanded Tier S Digimon")
+	assert(selected.tier == "S" and selected.expansion_unlocked and selected.is_expanded(), "F2 Tier and Expansion state must persist on the selected individual")
+	assert(progression.set_tier_and_expansion(original_id, "A", false, false), "F2 exact state must also reset Tier and footprint deterministically")
+	assert(selected.tier == "A" and not selected.expansion_unlocked and not selected.is_expanded(), "F2 exact state must support locked 1x1 states")
 	assert(progression.set_critical(original_id), "Critical-resource preset must apply")
 	assert(selected.current_hp == 1 and selected.current_mp == 0, "Critical preset must set deterministic resources")
 	assert(progression.heal(original_id), "Heal must use calculated form resources")
@@ -69,6 +74,14 @@ func _ready() -> void:
 	var form_learnset := techniques.current_form_learnset(original_id)
 	assert(not form_learnset.is_empty(), "Skill lab must expose the current form learnset for comparison while testing")
 
+	state.set_bits(50000)
+	assert(progression.grant_expansion_core(1) == 1, "F2 Account tools must grant Expansion Cores")
+	assert(progression.grant_expansion_fragments(5) == 5, "F2 Account tools must grant Expansion Fragments")
+	var craft_result := progression.craft_expansion_core()
+	assert(bool(craft_result.get("success", false)), "F2 must exercise the real Fragment + Bits Core recipe")
+	assert(progression.get_item_count("expansion_core") == 2 and progression.get_item_count("expansion_fragment") == 0, "F2 item controls must reflect the persistent inventory after crafting")
+	assert(OverworldState.get_bits() == 0, "Core crafting through F2 must consume the real 50,000 Bits cost")
+
 	state.set_bits(12345)
 	assert(OverworldState.get_bits() == 12345, "Debug Bits editing must reach persistent account state")
 	assert(state.set_digi_data(selected.species_seed, 177), "Debug Digi Data editing must resolve canonical species")
@@ -86,21 +99,27 @@ func _ready() -> void:
 		"exp": 123,
 		"potential": 64,
 		"link": 72,
+		"tier": "SS",
+		"expansion_unlocked": true,
+		"footprint": "large_2x2",
 		"resource_state": "critical",
 	})
 	assert(spawned != null, "Debug roster tool must create any canonical Digimon directly in Storage")
 	assert(spawned.level == 35 and spawned.exp == 123 and spawned.potential == 64 and spawned.link == 72, "Spawned Storage Digimon must keep the requested state")
+	assert(spawned.tier == "SS" and spawned.expansion_unlocked and spawned.is_expanded(), "Storage spawn must expose Tier and 2x2 Expansion setup")
 	assert(spawned.current_hp == 1 and spawned.current_mp == 0, "Spawned Storage Digimon must honor resource presets")
 	assert(not OverworldState.get_active_party_ids().has(spawned.id), "Debug-created Digimon must start in Storage rather than silently replacing the party")
 
 	var mixed_enemy_team: Array[Dictionary] = []
-	for entry in [["Agumon", 5, "wild"], ["Gabumon", 9, "trained"], ["Veemon", 12, "elite"], ["Greymon", 20, "boss"]]:
+	var enemy_rows := [["Agumon", 5, "wild", "E", "single"], ["Gabumon", 9, "trained", "C", "single"], ["Veemon", 12, "elite", "S", "large_2x2"], ["Greymon", 20, "boss", "SSS", "large_2x2"]]
+	for entry in enemy_rows:
 		var species := roster.database.get_by_name(String(entry[0]))
-		var descriptor := roster.make_enemy_descriptor(String(species.get("seed", "")), int(entry[1]), String(entry[2]))
+		var descriptor := roster.make_enemy_descriptor(String(species.get("seed", "")), int(entry[1]), String(entry[2]), String(entry[3]), String(entry[4]))
 		assert(not descriptor.is_empty(), "Battle roster descriptor must resolve a selected species")
 		mixed_enemy_team.append(descriptor)
 	assert(mixed_enemy_team.size() == 4, "Battle sandbox must support mixed teams larger than three")
 	assert(String(mixed_enemy_team[0].get("species_seed", "")) != String(mixed_enemy_team[1].get("species_seed", "")), "Battle sandbox rows must be independently configurable")
+	assert(String(mixed_enemy_team[2].get("tier", "")) == "S" and String(mixed_enemy_team[2].get("footprint", "")) == "large_2x2", "Battle sandbox must preserve per-enemy Tier and footprint")
 
 	assert(state.capture_snapshot("Regression Snapshot"), "Debug snapshot must serialize the current collection")
 	var snapshot_level := selected.level
