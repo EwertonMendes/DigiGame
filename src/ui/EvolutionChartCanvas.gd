@@ -9,8 +9,12 @@ class_name EvolutionChartCanvas
 
 const LINK_SIGNAL_PRIMARY_SPEED := 0.10
 const LINK_SIGNAL_SECONDARY_SPEED := 0.075
-const CURRENT_FLAME_SPEED := 0.075
-const SELECTED_FLAME_SPEED := 0.060
+const CURRENT_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/dithered_fire_6x5.png")
+const SELECTED_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/lightstreaks_6x5.png")
+const VFX_COLUMNS := 6
+const VFX_ROWS := 5
+const CURRENT_VFX_FPS := 10.0
+const SELECTED_VFX_FPS := 8.0
 const NAVIGATION_TWEEN_DURATION := 0.18
 
 var _initializing_chart := false
@@ -759,10 +763,26 @@ func _draw() -> void:
 			var pulse_t := fmod(_phase * speed + float(abs(key.hash()) % 100) / 100.0, 1.0)
 			_draw_signal_packet(p1, p2, pulse_t, Color(color.r, color.g, color.b, minf(0.86, color.a + 0.06)), average_scale)
 
+	# VFX are rendered by the chart canvas before its Button children, so the animated
+	# sprites stay behind every card and never cover names, rank labels or status text.
 	if _buttons.has(_current_seed):
-		_draw_digital_flame(_current_seed, UI.GOLD, UI.CYAN, 11, CURRENT_FLAME_SPEED, 1.0)
+		_draw_card_vfx(
+			_current_seed,
+			CURRENT_FORM_VFX,
+			CURRENT_VFX_FPS,
+			Vector4(24.0, 56.0, 24.0, 18.0),
+			Color(1.0, 0.88, 0.48, 0.62),
+			0.0
+		)
 	if _selected_seed != _current_seed and _buttons.has(_selected_seed):
-		_draw_digital_flame(_selected_seed, Color(0.40, 0.76, 1.0, 1.0), Color(0.28, 0.90, 0.96, 1.0), 7, SELECTED_FLAME_SPEED, 0.72)
+		_draw_card_vfx(
+			_selected_seed,
+			SELECTED_FORM_VFX,
+			SELECTED_VFX_FPS,
+			Vector4(18.0, 34.0, 18.0, 20.0),
+			Color(0.58, 0.90, 1.0, 0.44),
+			0.11
+		)
 
 
 func _draw_signal_packet(p1: Vector2, p2: Vector2, t: float, color: Color, scale_factor: float) -> void:
@@ -782,61 +802,34 @@ func _draw_signal_packet(p1: Vector2, p2: Vector2, t: float, color: Color, scale
 	draw_colored_polygon(points, color)
 
 
-func _draw_digital_flame(seed: String, primary: Color, secondary: Color, count: int, speed: float, intensity: float) -> void:
+func _draw_card_vfx(seed: String, texture: Texture2D, fps: float, margins: Vector4, tint: Color, phase_offset: float) -> void:
 	var button := _buttons.get(seed) as Button
-	if button == null or count <= 0:
+	if button == null or texture == null or fps <= 0.0:
 		return
 
+	var frame_count := VFX_COLUMNS * VFX_ROWS
+	if frame_count <= 0:
+		return
+	var frame := int(floor((_phase + phase_offset) * fps)) % frame_count
+	var column := frame % VFX_COLUMNS
+	var row := int(frame / VFX_COLUMNS)
+	var frame_size := Vector2(
+		float(texture.get_width()) / float(VFX_COLUMNS),
+		float(texture.get_height()) / float(VFX_ROWS)
+	)
+	var source := Rect2(Vector2(float(column), float(row)) * frame_size, frame_size)
+
 	var scale_factor := _button_scale(seed)
-	var rect := Rect2(button.position, NODE_SIZE * scale_factor)
-	var top_y := rect.position.y
-	var usable_width := rect.size.x * 0.84
-	var left_x := rect.position.x + rect.size.x * 0.08
-	var seed_offset := float(abs(seed.hash()) % 997) / 997.0
-
-	for index in range(count):
-		var lane_t := (float(index) + 0.5) / float(count)
-		var local_speed := speed * (0.84 + float(index % 4) * 0.07)
-		var life := fmod(_phase * local_speed + seed_offset + float(index) * 0.137, 1.0)
-		var rise := (3.0 + life * (22.0 + float(index % 3) * 5.0)) * scale_factor
-		var sway := sin(_phase * 0.42 + float(index) * 1.71) * 2.2 * scale_factor
-		var x := left_x + usable_width * lane_t + sway
-		var y := top_y + 2.0 * scale_factor - rise
-
-		var fade := sin(life * PI)
-		var color := primary if index % 3 != 1 else secondary
-		color.a = clampf((0.16 + fade * 0.34) * intensity, 0.08, 0.50)
-
-		var block_width := (2.0 + float(index % 3)) * scale_factor
-		var block_height := (4.0 + float((index * 3) % 5)) * scale_factor
-		var main_rect := Rect2(
-			Vector2(x - block_width * 0.5, y),
-			Vector2(block_width, block_height)
+	var card_rect := Rect2(button.position, NODE_SIZE * scale_factor)
+	var scaled_margins := margins * scale_factor
+	var destination := Rect2(
+		card_rect.position - Vector2(scaled_margins.x, scaled_margins.y),
+		card_rect.size + Vector2(
+			scaled_margins.x + scaled_margins.z,
+			scaled_margins.y + scaled_margins.w
 		)
-		draw_rect(main_rect, color, true)
-
-		var trail_color := color
-		trail_color.a *= 0.42
-		var trail_width := maxf(1.0 * scale_factor, block_width * 0.62)
-		var trail_height := maxf(1.5 * scale_factor, block_height * 0.46)
-		var trail_shift := (-1.0 if index % 2 == 0 else 1.0) * 1.5 * scale_factor
-		var trail_rect := Rect2(
-			Vector2(x - trail_width * 0.5 + trail_shift, y + block_height + 1.5 * scale_factor),
-			Vector2(trail_width, trail_height)
-		)
-		draw_rect(trail_rect, trail_color, true)
-
-	for segment in range(5):
-		var segment_t := (float(segment) + 0.5) / 5.0
-		var segment_width := rect.size.x * 0.095
-		var segment_x := rect.position.x + rect.size.x * (0.18 + segment_t * 0.64) - segment_width * 0.5
-		var source_color := primary if segment % 2 == 0 else secondary
-		source_color.a = 0.11 * intensity
-		draw_rect(
-			Rect2(Vector2(segment_x, top_y - 1.5 * scale_factor), Vector2(segment_width, 2.0 * scale_factor)),
-			source_color,
-			true
-		)
+	)
+	draw_texture_rect_region(texture, destination, source, tint)
 
 
 func _button_screen_center(seed: String) -> Vector2:
