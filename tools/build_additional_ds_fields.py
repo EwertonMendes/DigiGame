@@ -46,6 +46,11 @@ def exact_box(component: dict[str, float]) -> dict[str, int]:
     return {key: int(component[key]) for key in ("x", "y", "w", "h")}
 
 
+def optional_source_id(spec: dict[str, Any]) -> int | None:
+    value = spec.get("source_id")
+    return None if value is None else int(value)
+
+
 def source_member(archive, expected: str) -> bytes:
     if expected not in archive.namelist():
         raise RuntimeError(f"Pinned WtW source missing: {expected}")
@@ -54,9 +59,20 @@ def source_member(archive, expected: str) -> bytes:
 
 def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[dict[str, int]]]:
     _background, components = _components(image)
+    min_cx_ratio = float(profile.get("min_cx_ratio", 0.0))
+    max_cx_ratio = float(profile.get("max_cx_ratio", 1.0))
+    if not 0.0 <= min_cx_ratio < max_cx_ratio <= 1.0:
+        raise RuntimeError(
+            f"Invalid structural profile x-range: min_cx_ratio={min_cx_ratio} max_cx_ratio={max_cx_ratio}"
+        )
+    min_cx = image.width * min_cx_ratio
+    max_cx = image.width * max_cx_ratio
     candidates = [
         item for item in components
-        if 10 <= item["w"] <= 50 and 7 <= item["h"] <= 50 and item["area"] >= 60
+        if 10 <= item["w"] <= 50
+        and 7 <= item["h"] <= 50
+        and item["area"] >= 60
+        and min_cx <= item["cx"] <= max_cx
     ]
     rows = _group_by_y(candidates, tolerance=8.0)
     kind = str(profile.get("kind", ""))
@@ -146,7 +162,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     metadata = {
         "source_kind": "official_ds",
         "source_variant": "withthewill_additional_audited",
-        "source_id": int(spec["source_id"]),
+        "source_id": optional_source_id(spec),
         "source_archive_file": str(spec["source_member"]),
         "source_url": str(spec["source_url"]),
         "source_sha256": sha256(source_bytes),
@@ -254,7 +270,7 @@ def main() -> None:
             "field_metadata": f"res://assets/characters/{key}/field.json",
             "portrait_strip": f"res://assets/characters/{key}/portrait_frames.png",
             "portrait_metadata": f"res://assets/characters/{key}/portrait_frames.json",
-            "source_id": int(spec["source_id"]),
+            "source_id": optional_source_id(spec),
             "profile": str(spec["profile"]),
             "pattern": str(spec["pattern"]),
             "field_cell": [int(field["cell_width"]), int(field["cell_height"])],
