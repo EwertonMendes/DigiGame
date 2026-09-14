@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import re
 import sys
@@ -28,6 +29,7 @@ PROFILES = {
     "single_row_four_triples": {"kind": "single_row_four_triples"},
     "four_rows_rightmost_triples": {"kind": "four_rows_rightmost_triples"},
 }
+RAW_OUT = Path("/tmp/requested-ds-raw")
 
 
 def sha256(payload: bytes) -> str:
@@ -74,11 +76,13 @@ def manager_matches(source_id: int) -> list[dict]:
 def main() -> None:
     archive = load_wtw_archive()
     names = archive.namelist()
+    RAW_OUT.mkdir(parents=True, exist_ok=True)
     report = []
     for canonical_name, source_id in REQUESTED.items():
         member = find_member(names, source_id)
         payload = archive.read(member)
-        with Image.open(Path("/dev/null") if False else __import__("io").BytesIO(payload)) as image:
+        (RAW_OUT / f"{source_id}_{Path(member).name}").write_bytes(payload)
+        with Image.open(io.BytesIO(payload)) as image:
             source = image.convert("RGBA")
         _background, components = _components(source)
         candidates = [
