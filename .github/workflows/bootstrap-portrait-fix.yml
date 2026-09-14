@@ -22,6 +22,9 @@ jobs:
       - name: Install sprite tooling
         run: python3 -m pip install --disable-pip-version-check pillow numpy
 
+      - name: Repair Grass Agumon transparent field source
+        run: python3 tools/apply_grass_agumon_visual_fix.py
+
       - name: Patch shared portrait resolution
         run: python3 tools/bootstrap_portrait_resolution_fix.py
 
@@ -50,5 +53,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'fix: resolve Grass Agumon and spaced-name battle portraits [skip portrait-bootstrap]'
+          git commit -m 'fix: repair Grass Agumon visuals and battle portraits [skip portrait-bootstrap]'
           git push origin "HEAD:${GITHUB_REF_NAME}"
