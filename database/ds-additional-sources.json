@@ -6,7 +6,7 @@
     "canonical_rows": [0, 1, 2, 3],
     "rear_rows_first": [2, 3, 0, 1],
     "compact_interleaved": [0, 2, 1, 3],
-    "compact_interleaved_opposite_facings": [3, 1, 2, 0]
+    "compact_interleaved_horizontal_reversed": [2, 0, 3, 1]
   },
   "profiles": {
     "two_rows_of_six": {"kind": "two_rows_of_six"},
@@ -36,7 +36,7 @@
       "source_sha256": "b1539843fde32a68b9e4901facb7c01ae1ba3ec3f4a27ea27db0ad8f96646d65",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/309_WarGreymon.png",
       "profile": "four_rows_rightmost_triples",
-      "pattern": "compact_interleaved_opposite_facings"
+      "pattern": "compact_interleaved_horizontal_reversed"
     },
     "Skull Greymon": {
       "source_id": 197,
