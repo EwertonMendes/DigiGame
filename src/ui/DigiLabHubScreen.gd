@@ -107,7 +107,7 @@ func _build() -> void:
 	_menu_root.add_child(_modules)
 	_service_buttons.clear()
 	_service_buttons.append(_module_card("DIGIMON", "Inspect levels, XP, stats, skills, Potential and evolution routes.", UI.GOLD, _open_digimon))
-	_service_buttons.append(_module_card("CREATE DIGIMON", "Use Digi Data collected in battle to reconstruct a new persistent individual.", UI.CYAN, _open_create))
+	_service_buttons.append(_module_card("CONVERT DIGI DATA", "Use Digi Data collected in battle to reconstruct a new persistent individual.", UI.CYAN, _open_create))
 	_service_buttons.append(_module_card("PARTY / STORAGE", "Organize the active squad, reorder slots and manage reserve Digimon.", UI.GREEN, _open_party))
 	for button: Button in _service_buttons:
 		_modules.add_child(button)
