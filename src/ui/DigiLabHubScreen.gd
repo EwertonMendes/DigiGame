@@ -8,6 +8,7 @@ const MENU = preload("res://src/ui/MenuUiStyle.gd")
 const CreateScreenScript = preload("res://src/ui/ProgressionDigiLabCreateScreen.gd")
 const PartyStorageScript = preload("res://src/ui/PartyStorageScreen.gd")
 const DigimonMenuScript = preload("res://src/ui/DigimonProgressionMenu.gd")
+const AscensionExpansionScript = preload("res://src/ui/AscensionExpansionScreen.gd")
 const CLOSE_ICON := preload("res://assets/ui/icons/cancel.svg")
 
 var _frame: PanelContainer
@@ -21,6 +22,7 @@ var _close: Button
 var _create_screen: DigiLabScreen
 var _party_screen: PartyStorageScreen
 var _digimon_menu: DigimonProgressionMenu
+var _ascension_screen: AscensionExpansionScreen
 var _nested_open := false
 var _service_buttons: Array[Button] = []
 
@@ -107,6 +109,7 @@ func _build() -> void:
 	_menu_root.add_child(_modules)
 	_service_buttons.clear()
 	_service_buttons.append(_module_card("DIGIMON", "Inspect levels, XP, stats, skills, Potential and evolution routes.", UI.GOLD, _open_digimon))
+	_service_buttons.append(_module_card("ASCENSION / EXPANSION", "Raise individual Tier, fuse duplicate knowledge and configure 1×1 or 2×2 size.", UI.ORANGE, _open_ascension))
 	_service_buttons.append(_module_card("CONVERT DIGI DATA", "Use Digi Data collected in battle to reconstruct a new persistent individual.", UI.CYAN, _open_create))
 	_service_buttons.append(_module_card("PARTY / STORAGE", "Organize the active squad, reorder slots and manage reserve Digimon.", UI.GREEN, _open_party))
 	for button: Button in _service_buttons:
@@ -129,6 +132,12 @@ func _build() -> void:
 	_digimon_menu.visible = false
 	_digimon_menu.close_requested.connect(_close_nested)
 	add_child(_digimon_menu)
+
+	_ascension_screen = AscensionExpansionScript.new() as AscensionExpansionScreen
+	_ascension_screen.name = "AscensionExpansion"
+	_ascension_screen.visible = false
+	_ascension_screen.close_requested.connect(_close_nested)
+	add_child(_ascension_screen)
 
 func _module_card(title: String, description: String, accent: Color, callback: Callable) -> Button:
 	var button := Button.new()
@@ -189,6 +198,12 @@ func _open_digimon() -> void:
 	_frame.visible = false
 	_digimon_menu.open_menu()
 
+func _open_ascension() -> void:
+	_nested_open = true
+	_hide_nested_views()
+	_frame.visible = false
+	_ascension_screen.open_screen()
+
 func _close_nested() -> void:
 	_nested_open = false
 	_hide_nested_views()
@@ -204,6 +219,8 @@ func _hide_nested_views() -> void:
 		_party_screen.visible = false
 	if _digimon_menu != null:
 		_digimon_menu.visible = false
+	if _ascension_screen != null:
+		_ascension_screen.visible = false
 
 func _layout() -> void:
 	if not visible or _frame == null or _menu_root == null:

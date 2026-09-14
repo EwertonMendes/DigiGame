@@ -35,11 +35,13 @@ func _spawn_demo_rosters() -> void:
 		var max_level := maxi(min_level, int(descriptor.get("level_max", descriptor.get("level", min_level))))
 		var level := _encounter_rng.randi_range(min_level, max_level)
 		var profile := String(descriptor.get("profile", "wild"))
+		var tier := String(descriptor.get("tier", "E"))
+		var footprint := String(descriptor.get("footprint", "single"))
 		var instance: DigimonInstance = null
 		if not species_seed.is_empty():
-			instance = _factory.create_enemy_by_seed(species_seed, level, profile)
+			instance = _factory.create_enemy_by_seed(species_seed, level, profile, tier, footprint)
 		else:
-			instance = _factory.create_enemy_by_name(species_name, level, profile)
+			instance = _factory.create_enemy_by_name(species_name, level, profile, tier, footprint)
 		var actor := _spawn_instance_in_zone(instance, false, enemy_candidates, field)
 		if actor != null:
 			actor.set_meta("encounter_profile", profile.to_lower())

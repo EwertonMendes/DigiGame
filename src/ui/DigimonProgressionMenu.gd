@@ -120,7 +120,10 @@ func _build_hero(instance: DigimonInstance, species: Dictionary) -> Control:
 	rank_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	heading_row.add_child(rank_text)
 
-	var identity := _label("%s  ·  %s" % [
+	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
+	var identity := _label("TIER %s  ·  %s  ·  %s  ·  %s" % [
+		instance.tier,
+		footprint_badge,
 		String(species.get("type", species.get("attribute", "Free"))).to_upper(),
 		String(species.get("family", species.get("species", "Unknown"))).to_upper(),
 	], 11, ProgressionUI.MUTED, true)

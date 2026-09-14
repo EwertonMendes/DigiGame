@@ -204,6 +204,14 @@ func _update_combat_preview_for_grid(aim_grid: Vector2i, primary_target: Node, l
 	}, true)
 
 	var effect_grids: Array[Vector2i] = _targeting_system.effect_grids(_field, current_actor, _selected_action, aim_grid)
+	# A unit is selected as one tactical body even when only one occupied cell was
+	# clicked. Including the complete footprint keeps pointer, keyboard and touch
+	# previews consistent without applying the action more than once.
+	if primary_target != null and primary_target.has_method("get_occupied_grids"):
+		var occupied: Array[Vector2i] = primary_target.call("get_occupied_grids")
+		for grid: Vector2i in occupied:
+			if not effect_grids.has(grid):
+				effect_grids.append(grid)
 	if _field != null and _field.has_method("set_target_preview_grids"):
 		_field.call("set_target_preview_grids", effect_grids, aim_grid)
 	elif _field != null and _field.has_method("set_target_preview_grid"):
@@ -420,4 +428,6 @@ func _handle_knockout(actor: Node) -> void:
 	})
 	if not bool(actor.get("is_player_controlled")) and not _defeated_enemy_ids.has(actor_id):
 		_defeated_enemy_ids.append(actor_id)
+	if _controller != null and _controller.has_method("refresh_occupancy_index"):
+		_controller.call("refresh_occupancy_index")
 	turn_order_changed.emit()

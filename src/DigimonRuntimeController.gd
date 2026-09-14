@@ -4,6 +4,7 @@ signal hovered_digimon_changed(digimon_key: String)
 
 const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
+const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const BATTLE_SPRITE_SCALE := Vector2(1.0, 1.0)
 
 # Temporary encounter/bootstrap data. These descriptors already use the same
@@ -25,6 +26,7 @@ var _hovered_digimon_key := ""
 var _hovered_actor: Node = null
 var _database = DatabaseScript.new()
 var _factory = null
+var _balance = BalanceScript.new()
 var _encounter_rng := RandomNumberGenerator.new()
 
 
@@ -54,7 +56,9 @@ func _spawn_demo_rosters() -> void:
 		var max_level := maxi(min_level, int(descriptor.get("level_max", min_level)))
 		var level := _encounter_rng.randi_range(min_level, max_level)
 		var profile := String(descriptor.get("profile", "wild"))
-		instantiate_enemy_digimon(species_name, level, profile)
+		var tier := String(descriptor.get("tier", "E"))
+		var footprint := String(descriptor.get("footprint", "single"))
+		instantiate_enemy_digimon(species_name, level, profile, tier, footprint)
 
 
 func instantiate_player_digimon(digimon_name: String, level: int = 1, scan_percent: int = 100) -> CharacterBody2D:
@@ -64,10 +68,10 @@ func instantiate_player_digimon(digimon_name: String, level: int = 1, scan_perce
 	return _instantiate_actor(instance, true)
 
 
-func instantiate_enemy_digimon(digimon_name: String, level: int, profile: String = "wild") -> CharacterBody2D:
+func instantiate_enemy_digimon(digimon_name: String, level: int, profile: String = "wild", tier: String = "E", footprint_id: String = "single") -> CharacterBody2D:
 	if _factory == null:
 		return null
-	var instance: DigimonInstance = _factory.create_enemy_by_name(digimon_name, level, profile)
+	var instance: DigimonInstance = _factory.create_enemy_by_name(digimon_name, level, profile, tier, footprint_id)
 	return _instantiate_actor(instance, false)
 
 
@@ -93,7 +97,7 @@ func _instantiate_actor(instance: DigimonInstance, player_controlled: bool, init
 		return null
 	if actor.has_method("bind_digimon_instance"):
 		actor.call("bind_digimon_instance", instance, species, player_controlled)
-	_set_actor_graphics(digimon_name, digimon_resource, actor, player_controlled, instance.id)
+	_set_actor_graphics(digimon_name, digimon_resource, actor, player_controlled, instance)
 	_set_actor_initial_position(digimon_resource, actor, initial_position_override)
 	add_child(actor)
 	return actor
@@ -107,9 +111,9 @@ func create_digimon_actor() -> CharacterBody2D:
 	return player_scene.instantiate() as CharacterBody2D
 
 
-func _set_actor_graphics(digimon_name: String, digimon_resource: Digimon, actor: CharacterBody2D, player_controlled: bool, instance_id: String) -> void:
+func _set_actor_graphics(digimon_name: String, digimon_resource: Digimon, actor: CharacterBody2D, player_controlled: bool, instance: DigimonInstance) -> void:
 	var digimon_sprite := actor.get_node("Sprite2D") as Sprite2D
-	var short_id := instance_id.substr(0, 8)
+	var short_id := instance.id.substr(0, 8)
 	actor.name = "%s_%s" % [digimon_name.capitalize(), short_id] if player_controlled else "Enemy_%s_%s" % [digimon_name, short_id]
 	actor.set("digimon_key", digimon_name)
 	digimon_sprite.texture = digimon_resource.texture
@@ -119,7 +123,8 @@ func _set_actor_graphics(digimon_name: String, digimon_resource: Digimon, actor:
 	digimon_sprite.flip_h = false
 	digimon_sprite.region_enabled = false
 	digimon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	digimon_sprite.scale = BATTLE_SPRITE_SCALE * digimon_resource.sprite_scale
+	var footprint_scale := _balance.expansion_number("battleVisualScale", 1.75) if instance.is_expanded() else 1.0
+	digimon_sprite.scale = BATTLE_SPRITE_SCALE * digimon_resource.sprite_scale * footprint_scale
 	actor.set("initial_facing", digimon_resource.initial_facing)
 	actor.set("sprite_layout", digimon_resource.sprite_layout)
 	actor.set("sprite_frame_duration", maxf(0.02, digimon_resource.sprite_frame_duration))

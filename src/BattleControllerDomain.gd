@@ -573,7 +573,12 @@ func _resolve_action_effects(action: Dictionary, target: Node) -> Dictionary:
 				if current_actor.has_method("restore_sp"):
 					outcome["effective"] = int(current_actor.call("restore_sp", maxi(0, int(effect.get("amount", 0))))) > 0 or bool(outcome["effective"])
 			"push", "pull":
-				outcome["effective"] = _apply_forced_movement(target, String(effect.get("type", "")), maxi(1, int(effect.get("distance", 1)))) or bool(outcome["effective"])
+				outcome["effective"] = _apply_forced_movement(
+					target,
+					String(effect.get("type", "")),
+					maxi(1, int(effect.get("distance", 1))),
+					String(effect.get("forceClass", effect.get("force_class", "normal")))
+				) or bool(outcome["effective"])
 			"status":
 				if _battle_rng.roll_percent(float(effect.get("chance", 100.0))):
 					var status_id := String(effect.get("status", ""))
@@ -737,11 +742,11 @@ func _enemy_move_toward(actor: Node, opponents: Array[Node]) -> void:
 	if reachable.is_empty():
 		return
 	var best_grid: Vector2i = origin
-	var best_score: int = _distance_to_nearest(origin, opponents)
+	var best_score: int = _distance_to_nearest(origin, opponents, actor)
 	var best_cost := 0
 	for raw_grid in reachable.keys():
 		var grid := Vector2i(raw_grid)
-		var score: int = _distance_to_nearest(grid, opponents)
+		var score: int = _distance_to_nearest(grid, opponents, actor)
 		var cost := int(reachable[grid])
 		if score < best_score or (score == best_score and cost < best_cost):
 			best_grid = grid
@@ -772,11 +777,16 @@ func _enemy_move_toward(actor: Node, opponents: Array[Node]) -> void:
 	turn_order_changed.emit()
 
 
-func _distance_to_nearest(grid: Vector2i, actors: Array[Node]) -> int:
+func _distance_to_nearest(grid: Vector2i, actors: Array[Node], moving_actor: Node = null) -> int:
 	var best := 999999
+	var source_grids: Array[Vector2i] = [grid]
+	if moving_actor != null and moving_actor.has_method("get_occupied_grids"):
+		source_grids = moving_actor.call("get_occupied_grids", grid)
 	for actor: Node in actors:
-		var target_grid: Vector2i = _grid_for_actor(actor)
-		best = mini(best, absi(grid.x - target_grid.x) + absi(grid.y - target_grid.y))
+		var target_grids: Array[Vector2i] = [_grid_for_actor(actor)]
+		if actor != null and actor.has_method("get_occupied_grids"):
+			target_grids = actor.call("get_occupied_grids")
+		best = mini(best, FootprintScript.minimum_distance(source_grids, target_grids))
 	return best
 
 
@@ -956,8 +966,14 @@ func _record_effective_skill_use(actor: Node, skill_id: String) -> void:
 		_observed_enemy_skill_ids.append(skill_id)
 
 
-func _apply_forced_movement(target: Node, mode: String, distance: int) -> bool:
+func _apply_forced_movement(target: Node, mode: String, distance: int, force_class: String = "normal") -> bool:
 	if target == null or current_actor == null or _field == null or not target.has_method("debug_relocate_to_grid"):
+		return false
+	var footprint := String(target.call("get_battle_footprint_id")) if target.has_method("get_battle_footprint_id") else "single"
+	var normalized_force := force_class.to_lower().strip_edges()
+	if footprint == "large_2x2" and not ["heavy", "colossal"].has(normalized_force):
+		return false
+	if footprint != "single" and footprint != "large_2x2" and normalized_force != "colossal":
 		return false
 	var source_grid := _grid_for_actor(current_actor)
 	var target_grid := _grid_for_actor(target)
@@ -970,7 +986,9 @@ func _apply_forced_movement(target: Node, mode: String, distance: int) -> bool:
 	var destination := target_grid
 	for _step in range(distance):
 		var candidate := destination + direction
-		if _field.has_method("get_tile_block_reason") and not String(_field.call("get_tile_block_reason", candidate, target)).is_empty():
+		if _field.has_method("get_actor_anchor_block_reason") and not String(_field.call("get_actor_anchor_block_reason", candidate, target)).is_empty():
+			break
+		if not _field.has_method("get_actor_anchor_block_reason") and _field.has_method("get_tile_block_reason") and not String(_field.call("get_tile_block_reason", candidate, target)).is_empty():
 			break
 		destination = candidate
 	if destination == target_grid:

@@ -1,8 +1,10 @@
 extends "res://src/DigimonRuntimeController.gd"
 
 const SPAWN_ZONE_DEPTH := 5
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 var _spawn_rng := RandomNumberGenerator.new()
+var _occupancy_by_grid: Dictionary = {}
 
 
 func _ready() -> void:
@@ -37,7 +39,9 @@ func _spawn_demo_rosters() -> void:
 		var max_level := maxi(min_level, int(descriptor.get("level_max", min_level)))
 		var level := _encounter_rng.randi_range(min_level, max_level)
 		var profile := String(descriptor.get("profile", "wild"))
-		var instance: DigimonInstance = _factory.create_enemy_by_name(species_name, level, profile)
+		var tier := String(descriptor.get("tier", "E"))
+		var footprint := String(descriptor.get("footprint", "single"))
+		var instance: DigimonInstance = _factory.create_enemy_by_name(species_name, level, profile, tier, footprint)
 		var actor := _spawn_instance_in_zone(instance, false, enemy_candidates, field)
 		if actor != null:
 			# Encounter profile is battle metadata, not a species property. Escape and
@@ -54,12 +58,29 @@ func _spawn_demo_rosters() -> void:
 func _spawn_instance_in_zone(instance: DigimonInstance, player_controlled: bool, candidates: Array[Vector2i], field: Node2D) -> CharacterBody2D:
 	if instance == null:
 		return null
-	var initial_world := Vector2i.ZERO
-	if not candidates.is_empty():
-		var grid: Vector2i = candidates.pop_back()
-		initial_world = Vector2i(field.call("grid_to_world", grid))
-		print("[BattleSpawn] team=%s grid=%s" % ["player" if player_controlled else "enemy", grid])
-	return _instantiate_actor(instance, player_controlled, initial_world)
+	var chosen_anchor := Vector2i(-1, -1)
+	while not candidates.is_empty():
+		var candidate: Vector2i = candidates.pop_back()
+		if _can_spawn_at(field, candidate, instance.battle_footprint_id):
+			chosen_anchor = candidate
+			break
+	if chosen_anchor.x < 0:
+		push_error("Could not place %s footprint '%s' in the encounter deployment zone." % [instance.species_seed, instance.battle_footprint_id])
+		return null
+	var initial_world := Vector2i(field.call("grid_to_world", chosen_anchor))
+	print("[BattleSpawn] team=%s grid=%s footprint=%s tier=%s" % ["player" if player_controlled else "enemy", chosen_anchor, instance.battle_footprint_id, instance.tier])
+	var actor := _instantiate_actor(instance, player_controlled, initial_world)
+	refresh_occupancy_index()
+	return actor
+
+
+func _can_spawn_at(field: Node, anchor: Vector2i, footprint: String) -> bool:
+	for grid: Vector2i in FootprintScript.occupied_grids(anchor, footprint):
+		if not String(field.call("get_static_tile_block_reason", grid)).is_empty():
+			return false
+		if get_digimon_at_grid(grid) != null:
+			return false
+	return true
 
 
 func _spawn_zone_candidates(field: Node2D, player_side: bool) -> Array[Vector2i]:
@@ -168,17 +189,32 @@ func face_actor_toward_nearest_opponent(actor: Node) -> void:
 
 
 func get_digimon_at_tile(tile_world_position: Vector2, ignored_digimon: Node = null) -> Node:
-	for child in get_children():
-		if child == ignored_digimon or not child is CharacterBody2D:
-			continue
-		if child.has_method("is_available_for_turn") and not bool(child.call("is_available_for_turn")):
-			continue
-		if not child.has_method("get_tile_world_position"):
-			continue
-		var occupied_position := Vector2(child.call("get_tile_world_position"))
-		if occupied_position.distance_squared_to(tile_world_position) < 0.25:
-			return child
+	var field := get_node_or_null("../Blocks") as Node2D
+	if field == null or not field.has_method("world_to_grid"):
+		return null
+	var grid := Vector2i(field.call("world_to_grid", field.to_local(tile_world_position)))
+	return get_digimon_at_grid(grid, ignored_digimon)
+
+
+func get_digimon_at_grid(grid: Vector2i, ignored_digimon: Node = null) -> Node:
+	var actor = _occupancy_by_grid.get(grid)
+	if actor == ignored_digimon:
+		return null
+	if actor is Node and is_instance_valid(actor):
+		if not actor.has_method("is_available_for_turn") or bool(actor.call("is_available_for_turn")):
+			return actor as Node
 	return null
+
+
+func refresh_occupancy_index() -> void:
+	_occupancy_by_grid.clear()
+	for actor: Node in get_battle_digimons():
+		if actor.has_method("is_available_for_turn") and not bool(actor.call("is_available_for_turn")):
+			continue
+		if not actor.has_method("get_occupied_grids"):
+			continue
+		for grid: Vector2i in actor.call("get_occupied_grids"):
+			_occupancy_by_grid[grid] = actor
 
 
 func is_tile_occupied(tile_world_position: Vector2, ignored_digimon: Node = null) -> bool:

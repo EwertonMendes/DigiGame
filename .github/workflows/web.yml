@@ -119,6 +119,10 @@ jobs:
           grep -q 'complete progression loop e2e regression passed' /tmp/progression-loop-e2e.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/progression-loop-e2e.log; then exit 1; fi
 
+          godot --headless --path . tools/test_tier_and_footprints.tscn --quit-after 12 2>&1 | tee /tmp/tier-footprints.log
+          grep -q 'tier and tactical footprint regression passed' /tmp/tier-footprints.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/tier-footprints.log; then exit 1; fi
+
       - name: Run early-rank playable battle regression
         shell: bash
         run: |

@@ -2,12 +2,14 @@ extends RefCounted
 class_name DigimonInstance
 
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
 const MAX_POTENTIAL := 100
 const MAX_LINK := 100
 const MAX_FAVORITE_SKILLS := 6
 const MAX_SKILL_MASTERY_POINTS := 24
 const EXPERIENCED_SKILL_MASTERY_POINTS := 8
+const DEFAULT_TIER := "E"
 
 var id: String = ""
 var species_seed: String = ""
@@ -19,6 +21,9 @@ var potential: int = 0
 # an in-battle transformation resource; tactical Link mechanics may read it as
 # progression context without coupling evolution to battle runtime state.
 var link: int = 0
+var tier: String = DEFAULT_TIER
+var expansion_unlocked: bool = false
+var battle_footprint_id: String = BattleFootprint.SINGLE
 var aptitudes: Dictionary = {}
 var training: Dictionary = {}
 var current_hp: int = 1
@@ -59,6 +64,18 @@ func get_current_sp() -> int:
 
 func set_current_sp(value: int) -> void:
 	current_mp = maxi(0, value)
+
+
+func is_expanded() -> bool:
+	return expansion_unlocked and battle_footprint_id == BattleFootprint.LARGE_2X2
+
+
+func set_battle_footprint(footprint_id: String) -> bool:
+	var normalized := FootprintScript.normalize_id(footprint_id)
+	if normalized == BattleFootprint.LARGE_2X2 and not expansion_unlocked:
+		return false
+	battle_footprint_id = normalized
+	return true
 
 
 func learn_skill(skill_id: String, favorite_if_possible: bool = true) -> bool:
@@ -152,6 +169,9 @@ func to_dict() -> Dictionary:
 		"exp": exp,
 		"potential": potential,
 		"link": link,
+		"tier": tier,
+		"expansionUnlocked": expansion_unlocked,
+		"battleFootprintId": battle_footprint_id,
 		"aptitudes": aptitudes.duplicate(true),
 		"training": training.duplicate(true),
 		"currentHp": current_hp,
@@ -179,6 +199,13 @@ static func from_dict(data: Dictionary) -> DigimonInstance:
 	instance.exp = maxi(0, int(data.get("exp", 0)))
 	instance.potential = clampi(int(data.get("potential", 0)), 0, MAX_POTENTIAL)
 	instance.link = clampi(int(data.get("link", 0)), 0, MAX_LINK)
+	instance.tier = String(data.get("tier", DEFAULT_TIER)).to_upper().strip_edges()
+	if instance.tier.is_empty():
+		instance.tier = DEFAULT_TIER
+	instance.expansion_unlocked = bool(data.get("expansionUnlocked", false))
+	instance.battle_footprint_id = FootprintScript.normalize_id(String(data.get("battleFootprintId", BattleFootprint.SINGLE)))
+	if instance.battle_footprint_id == BattleFootprint.LARGE_2X2 and not instance.expansion_unlocked:
+		instance.battle_footprint_id = BattleFootprint.SINGLE
 
 	var loaded_aptitudes = data.get("aptitudes", {})
 	if loaded_aptitudes is Dictionary:
