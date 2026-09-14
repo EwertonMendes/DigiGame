@@ -64,6 +64,7 @@ var _current_vfx_sprite: Sprite2D = null
 var _selected_vfx_sprite: Sprite2D = null
 var _current_vfx_material: ShaderMaterial = null
 var _selected_vfx_material: ShaderMaterial = null
+var _vfx_time := 0.0
 
 
 func _ready() -> void:
@@ -72,6 +73,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+\t_vfx_time += delta
 \tsuper._process(delta)
 \t_sync_card_vfx()
 
@@ -170,7 +172,7 @@ func _sync_one_card_vfx(
 \t\treturn
 
 \tvar frame_count := VFX_COLUMNS * VFX_ROWS
-\tvar frame := int(floor((_phase + phase_offset) * fps)) % frame_count
+\tvar frame := int(floor((_vfx_time + phase_offset) * fps)) % frame_count
 \tsprite.frame = frame
 \tvar column := frame % VFX_COLUMNS
 \tvar row := int(frame / VFX_COLUMNS)
