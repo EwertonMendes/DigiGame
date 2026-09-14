@@ -1,0 +1,23 @@
+name: Inspect new DS batch
+
+on:
+  push:
+    branches:
+      - feat/digimon-batch-2
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ds-batch-inspect]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+      - name: Fetch preserved animated references
+        run: git clone --depth 1 https://github.com/E-M-B-E-R/digimon-world-ds-dawn-dusk-animated-sprites.git /tmp/ds-animated
+      - name: Inspect requested WtW sources
+        run: PYTHONPATH=tools python3 tools/inspect_new_ds_batch.py
