@@ -23,9 +23,12 @@ const STAT_ROWS: Array[Dictionary] = [
 
 var _backdrop: ColorRect
 var _panel: PanelContainer
+var _panel_margin: MarginContainer
 var _title: Label
 var _subtitle: Label
 var _operation: Label
+var _route_grid: GridContainer
+var _route_arrow: Label
 var _from_portrait: DigimonPortraitPreview
 var _from_name: Label
 var _from_rank: Label
@@ -34,6 +37,7 @@ var _to_name: Label
 var _to_rank: Label
 var _stat_body: VBoxContainer
 var _preserved_note: Label
+var _button_grid: GridContainer
 var _confirm_button: Button
 var _cancel_button: Button
 var _previous_focus: Control = null
@@ -93,13 +97,17 @@ func close_immediately() -> void:
 	visible = false
 	_closing = false
 	_preview.clear()
+	_previous_focus = null
 
 
 func is_open() -> bool:
 	return visible
 
 
-func _unhandled_input(event: InputEvent) -> void:
+# Handle cancel before any parent menu receives _unhandled_input. This keeps
+# Escape/B/Circle equivalent to choosing the safe default (NO) instead of
+# accidentally closing the whole Evolution Chart behind the modal.
+func _input(event: InputEvent) -> void:
 	if not visible:
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu"):
@@ -124,18 +132,15 @@ func _build() -> void:
 	)
 	add_child(_panel)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 22)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_right", 22)
-	margin.add_theme_constant_override("margin_bottom", 18)
-	_panel.add_child(margin)
+	_panel_margin = MarginContainer.new()
+	_set_panel_margins(22, 20, 22, 18)
+	_panel.add_child(_panel_margin)
 
 	var root := VBoxContainer.new()
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_theme_constant_override("separation", 8)
-	margin.add_child(root)
+	_panel_margin.add_child(root)
 
 	_title = _label("CONFIRM DIGIVOLUTION", 23, UI.TEXT, true)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -164,39 +169,45 @@ func _build() -> void:
 	body.add_child(_operation)
 
 	var route_panel := PanelContainer.new()
-	route_panel.add_theme_stylebox_override("panel", _surface_style(Color(0.12, 0.28, 0.42, 0.55), UI.CYAN, 0.30))
+	route_panel.add_theme_stylebox_override(
+		"panel",
+		_surface_style(Color(0.12, 0.28, 0.42, 0.55), UI.CYAN, 0.30)
+	)
 	body.add_child(route_panel)
+
 	var route_margin := MarginContainer.new()
-	route_margin.add_theme_constant_override("margin_left", 10)
+	for side in [SIDE_LEFT, SIDE_RIGHT]:
+		route_margin.add_theme_constant_override("margin_%s" % _side_name(side), 10)
 	route_margin.add_theme_constant_override("margin_top", 8)
-	route_margin.add_theme_constant_override("margin_right", 10)
 	route_margin.add_theme_constant_override("margin_bottom", 8)
 	route_panel.add_child(route_margin)
-	var route_row := HBoxContainer.new()
-	route_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	route_row.add_theme_constant_override("separation", 8)
-	route_margin.add_child(route_row)
+
+	_route_grid = GridContainer.new()
+	_route_grid.columns = 3
+	_route_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_route_grid.add_theme_constant_override("h_separation", 8)
+	_route_grid.add_theme_constant_override("v_separation", 4)
+	route_margin.add_child(_route_grid)
 
 	var from_card := _form_card()
-	route_row.add_child(from_card.get("panel") as Control)
+	_route_grid.add_child(from_card.get("panel") as Control)
 	_from_portrait = from_card.get("portrait") as DigimonPortraitPreview
 	_from_name = from_card.get("name") as Label
 	_from_rank = from_card.get("rank") as Label
 
-	var arrow := _label("→", 28, UI.CYAN, true)
-	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	arrow.custom_minimum_size = Vector2(30, 74)
-	route_row.add_child(arrow)
+	_route_arrow = _label("→", 28, UI.CYAN, true)
+	_route_arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_route_arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_route_arrow.custom_minimum_size = Vector2(34, 82)
+	_route_grid.add_child(_route_arrow)
 
 	var to_card := _form_card()
-	route_row.add_child(to_card.get("panel") as Control)
+	_route_grid.add_child(to_card.get("panel") as Control)
 	_to_portrait = to_card.get("portrait") as DigimonPortraitPreview
 	_to_name = to_card.get("name") as Label
 	_to_rank = to_card.get("rank") as Label
 
-	var stat_heading := _label("ATTRIBUTE TRANSITION", 10, UI.SUBTLE, true)
-	body.add_child(stat_heading)
+	body.add_child(_label("ATTRIBUTE TRANSITION", 10, UI.SUBTLE, true))
 
 	_stat_body = VBoxContainer.new()
 	_stat_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -208,26 +219,31 @@ func _build() -> void:
 	_preserved_note.add_theme_constant_override("line_spacing", 2)
 	body.add_child(_preserved_note)
 
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 10)
-	root.add_child(buttons)
+	_button_grid = GridContainer.new()
+	_button_grid.columns = 2
+	_button_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_button_grid.add_theme_constant_override("h_separation", 10)
+	_button_grid.add_theme_constant_override("v_separation", 6)
+	root.add_child(_button_grid)
 
 	_cancel_button = _button("NO, GO BACK", UI.CYAN)
 	_cancel_button.name = "CancelEvolutionTransition"
 	_cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cancel_button.pressed.connect(cancel)
-	buttons.add_child(_cancel_button)
+	_button_grid.add_child(_cancel_button)
 
 	_confirm_button = _button("YES, DIGIVOLVE", UI.GREEN)
 	_confirm_button.name = "ConfirmEvolutionTransition"
 	_confirm_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_confirm_button.pressed.connect(_confirm)
-	buttons.add_child(_confirm_button)
+	_button_grid.add_child(_confirm_button)
 
 	_cancel_button.focus_neighbor_left = _cancel_button.get_path()
 	_cancel_button.focus_neighbor_right = _confirm_button.get_path()
+	_cancel_button.focus_neighbor_bottom = _confirm_button.get_path()
 	_confirm_button.focus_neighbor_left = _cancel_button.get_path()
 	_confirm_button.focus_neighbor_right = _confirm_button.get_path()
+	_confirm_button.focus_neighbor_top = _cancel_button.get_path()
 
 
 func _populate() -> void:
@@ -251,8 +267,8 @@ func _populate() -> void:
 	for child in _stat_body.get_children():
 		child.free()
 	_changed_rows.clear()
-	var before = _preview.get("before", {}) as Dictionary
-	var after = _preview.get("after", {}) as Dictionary
+	var before := _preview.get("before", {}) as Dictionary
+	var after := _preview.get("after", {}) as Dictionary
 	for definition: Dictionary in STAT_ROWS:
 		var key := String(definition.get("key", ""))
 		var before_value := int(before.get(key, 0))
@@ -263,7 +279,11 @@ func _populate() -> void:
 			_changed_rows.append(row)
 
 	var actual_gain := int(_preview.get("potential_gain", 0))
-	var potential_copy := "Potential +%d is awarded. " % actual_gain if actual_gain > 0 else "Potential is already capped. "
+	var potential_copy := (
+		"Potential +%d is awarded. " % actual_gain
+		if actual_gain > 0
+		else "Potential is already capped. "
+	)
 	_preserved_note.text = (
 		"Level and EXP reset to 1 / 0. " + potential_copy
 		+ "Link, training, aptitudes, learned techniques, equipment and evolution history are preserved."
@@ -273,27 +293,35 @@ func _populate() -> void:
 func _form_card() -> Dictionary:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.custom_minimum_size = Vector2(0, 84)
-	panel.add_theme_stylebox_override("panel", _surface_style(Color(0.025, 0.045, 0.075, 0.84), UI.FRAME_DARK, 0.40))
+	panel.custom_minimum_size = Vector2(0, 82)
+	panel.add_theme_stylebox_override(
+		"panel",
+		_surface_style(Color(0.025, 0.045, 0.075, 0.84), UI.FRAME_DARK, 0.40)
+	)
+
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 7)
 	panel.add_child(row)
+
 	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
-	portrait.custom_minimum_size = Vector2(64, 76)
+	portrait.custom_minimum_size = Vector2(58, 72)
 	portrait.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	portrait.size_flags_stretch_ratio = 0.42
+	portrait.size_flags_stretch_ratio = 0.40
 	row.add_child(portrait)
+
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.size_flags_stretch_ratio = 0.58
+	info.size_flags_stretch_ratio = 0.60
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(info)
+
 	var name_label := _label("UNKNOWN", 13, UI.TEXT, true)
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	info.add_child(name_label)
 	var rank_label := _label("UNKNOWN", 9, UI.SUBTLE, true)
 	info.add_child(rank_label)
+
 	return {
 		"panel": panel,
 		"portrait": portrait,
@@ -311,17 +339,20 @@ func _stat_row(stat_name: String, before_value: int, after_value: int) -> PanelC
 	panel.add_theme_stylebox_override(
 		"panel",
 		_surface_style(
-			Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.18, 0.72) if delta != 0 else Color(0.025, 0.035, 0.052, 0.56),
+			Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.18, 0.72)
+			if delta != 0
+			else Color(0.025, 0.035, 0.052, 0.56),
 			accent,
 			0.66 if delta != 0 else 0.22
 		)
 	)
+
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 5)
 	panel.add_child(row)
 
 	var stat := _label(stat_name, 10, UI.SUBTLE, true)
-	stat.custom_minimum_size = Vector2(92, 0)
+	stat.custom_minimum_size = Vector2(78, 0)
 	row.add_child(stat)
 
 	var before := _label(str(before_value), 12, UI.TEXT, true)
@@ -331,7 +362,7 @@ func _stat_row(stat_name: String, before_value: int, after_value: int) -> PanelC
 
 	var arrow := _label("→", 12, UI.SUBTLE, true)
 	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	arrow.custom_minimum_size = Vector2(22, 0)
+	arrow.custom_minimum_size = Vector2(20, 0)
 	row.add_child(arrow)
 
 	var after := _label(str(after_value), 12, UI.TEXT if delta == 0 else accent, true)
@@ -346,7 +377,7 @@ func _stat_row(stat_name: String, before_value: int, after_value: int) -> PanelC
 
 	var delta_label := _label(_format_delta(delta), 10, UI.SUBTLE if delta == 0 else accent, true)
 	delta_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	delta_label.custom_minimum_size = Vector2(56, 0)
+	delta_label.custom_minimum_size = Vector2(50, 0)
 	row.add_child(delta_label)
 	return panel
 
@@ -375,8 +406,7 @@ func _play_open_animation() -> void:
 	_open_tween.tween_property(_panel, "modulate:a", 1.0, 0.15)
 	_open_tween.tween_property(_panel, "scale", target_scale, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	for index in range(_changed_rows.size()):
-		var row := _changed_rows[index]
-		_open_tween.tween_property(row, "modulate:a", 1.0, 0.16).set_delay(0.05 + float(index) * 0.025)
+		_open_tween.tween_property(_changed_rows[index], "modulate:a", 1.0, 0.16).set_delay(0.05 + float(index) * 0.025)
 
 
 func _focus_safe_default() -> void:
@@ -400,7 +430,11 @@ func _finish_cancel() -> void:
 	visible = false
 	_closing = false
 	_preview.clear()
-	if is_instance_valid(_previous_focus) and _previous_focus.is_visible_in_tree() and _previous_focus.focus_mode != Control.FOCUS_NONE:
+	if (
+		is_instance_valid(_previous_focus)
+		and _previous_focus.is_visible_in_tree()
+		and _previous_focus.focus_mode != Control.FOCUS_NONE
+	):
 		_previous_focus.grab_focus()
 	_previous_focus = null
 	cancelled.emit()
@@ -412,21 +446,48 @@ func _layout() -> void:
 	var viewport_obj := get_viewport()
 	var physical := UI.physical_window_size(viewport_obj)
 	var scale_factor := UI.ui_scale(viewport_obj)
-	var compact := UI.is_compact(viewport_obj, 760.0)
-	var modal_w := minf(760.0, maxf(276.0, physical.x - 24.0))
-	var modal_h := minf(680.0, maxf(360.0, physical.y - 24.0))
+	var safe := 12.0
+	var available_w := maxf(1.0, physical.x - safe * 2.0)
+	var available_h := maxf(1.0, physical.y - safe * 2.0)
+	var modal_w := minf(760.0, available_w)
+	var modal_h := minf(680.0, available_h)
+	var narrow := modal_w < 540.0 or physical.y > physical.x * 1.10
+
 	_panel.scale = Vector2.ONE * scale_factor
 	_panel.position = Vector2((physical.x - modal_w) * 0.5, (physical.y - modal_h) * 0.5) * scale_factor
 	_panel.size = Vector2(modal_w, modal_h)
-	_title.add_theme_font_size_override("font_size", 19 if compact else 23)
-	_subtitle.add_theme_font_size_override("font_size", 10 if compact else 11)
+	_title.add_theme_font_size_override("font_size", 18 if narrow else 23)
+	_subtitle.add_theme_font_size_override("font_size", 10 if narrow else 11)
+	_set_panel_margins(14 if narrow else 22, 14 if narrow else 20, 14 if narrow else 22, 12 if narrow else 18)
+
+	_route_grid.columns = 1 if narrow else 3
+	_route_arrow.text = "↓" if narrow else "→"
+	_route_arrow.custom_minimum_size = Vector2(0, 28) if narrow else Vector2(34, 82)
+	_button_grid.columns = 1 if modal_w < 390.0 else 2
+
+
+func _set_panel_margins(left: int, top: int, right: int, bottom: int) -> void:
+	if _panel_margin == null:
+		return
+	_panel_margin.add_theme_constant_override("margin_left", left)
+	_panel_margin.add_theme_constant_override("margin_top", top)
+	_panel_margin.add_theme_constant_override("margin_right", right)
+	_panel_margin.add_theme_constant_override("margin_bottom", bottom)
+
+
+func _side_name(side: int) -> String:
+	match side:
+		SIDE_LEFT: return "left"
+		SIDE_TOP: return "top"
+		SIDE_RIGHT: return "right"
+		SIDE_BOTTOM: return "bottom"
+	return "left"
 
 
 func _surface_style(background: Color, accent: Color, border_alpha: float) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = background
-	var border := Color(accent.r, accent.g, accent.b, border_alpha)
-	style.border_color = border
+	style.border_color = Color(accent.r, accent.g, accent.b, border_alpha)
 	style.border_width_left = 1
 	style.border_width_top = 1
 	style.border_width_right = 1
@@ -459,7 +520,7 @@ func _button(text: String, accent: Color) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.focus_mode = Control.FOCUS_ALL
-	button.custom_minimum_size = Vector2(140, 44)
+	button.custom_minimum_size = Vector2(104, 44)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	SKIN.apply_button(button, accent)
 	UI.apply_body_font(button)
