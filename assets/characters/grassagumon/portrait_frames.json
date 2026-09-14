@@ -1,14 +1,14 @@
 {
-  "source": "sheet.png",
-  "source_path": "source/sheet.png",
+  "source": "portrait_frames.png",
+  "source_path": "source/portrait_frames.png",
   "source_kind": "project_original",
-  "frame_width": 64,
-  "frame_height": 64,
+  "frame_width": 160,
+  "frame_height": 180,
   "frame_count": 3,
   "durations_ms": [
-    220,
-    140,
-    220
+    240,
+    180,
+    240
   ],
-  "source_sha256": "2f8d75a3fca0a93e71fc6a6eaad4569e064caee9fe7050aefd14d08c3ccba342"
+  "source_sha256": "7695726c43817175e27213073a2c4b7280e6ea242de9d7d793934df67ad3721c"
 }

@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
-"""Build and synchronize project-original Digimon playable assets.
-
-Project-original species are intentionally kept out of the audited official/community
-DS extraction pipelines. Their source sheets, crop boxes, frame ordering, stats,
-progression links and learnsets are declared in database/project-original-playables.json.
-"""
-
+"""Build and synchronize project-original Digimon playable assets."""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+from collections import deque
 from pathlib import Path
 from typing import Any
 
 from PIL import Image
-import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "database/project-original-playables.json"
@@ -23,7 +17,8 @@ DATABASE_PATH = ROOT / "database/base-digimon-list.json"
 EARLY_MANIFEST_PATH = ROOT / "database/early-rank-playables.json"
 LEARNSETS_PATH = ROOT / "database/digimon-learnsets.json"
 EARLY_RANKS = ("Fresh", "In-Training", "Rookie")
-BACKGROUND_TOLERANCE = 85.0
+CANONICAL_DIRECTIONS = ["down_left", "down_right", "up_left", "up_right"]
+CANONICAL_PHASES = ["idle", "step_a", "step_b"]
 
 
 def _res_path_to_local(value: str) -> Path:
@@ -36,102 +31,133 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _key_background(image: Image.Image, background_rgb: list[int]) -> Image.Image:
-    rgba = np.asarray(image.convert("RGBA"), dtype=np.uint8).copy()
-    if np.any(rgba[:, :, 3] < 255):
-        return Image.fromarray(rgba, "RGBA")
-    bg = np.asarray(background_rgb, dtype=np.int32)
-    rgb = rgba[:, :, :3].astype(np.int32)
-    distance = np.sqrt(np.sum((rgb - bg) ** 2, axis=2))
-    rgba[distance <= BACKGROUND_TOLERANCE, 3] = 0
-    return Image.fromarray(rgba, "RGBA")
+def _remove_connected_black_background(image: Image.Image, threshold: int = 8) -> Image.Image:
+    """Remove only dark pixels connected to a frame edge, preserving black outlines."""
+    rgba = image.convert("RGBA")
+    pixels = rgba.load()
+    width, height = rgba.size
+    queue: deque[tuple[int, int]] = deque()
+    seen: set[tuple[int, int]] = set()
+
+    def is_background(x: int, y: int) -> bool:
+        r, g, b, a = pixels[x, y]
+        return a == 0 or (r <= threshold and g <= threshold and b <= threshold)
+
+    def seed(x: int, y: int) -> None:
+        if (x, y) not in seen and is_background(x, y):
+            seen.add((x, y))
+            queue.append((x, y))
+
+    for x in range(width):
+        seed(x, 0)
+        seed(x, height - 1)
+    for y in range(height):
+        seed(0, y)
+        seed(width - 1, y)
+
+    while queue:
+        x, y = queue.popleft()
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in seen and is_background(nx, ny):
+                seen.add((nx, ny))
+                queue.append((nx, ny))
+
+    output = rgba.copy()
+    out_pixels = output.load()
+    for x, y in seen:
+        out_pixels[x, y] = (0, 0, 0, 0)
+    return output
 
 
-def _crop_box(keyed: Image.Image, box: list[int]) -> Image.Image:
+def _crop_frame(sheet: Image.Image, box: list[int]) -> Image.Image:
     if len(box) != 4:
         raise RuntimeError(f"Invalid source box: {box}")
     x, y, w, h = map(int, box)
-    if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > keyed.width or y + h > keyed.height:
-        raise RuntimeError(f"Source box outside sheet {keyed.size}: {box}")
-    crop = keyed.crop((x, y, x + w, y + h))
+    if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > sheet.width or y + h > sheet.height:
+        raise RuntimeError(f"Source box outside sheet {sheet.size}: {box}")
+    crop = sheet.crop((x, y, x + w, y + h))
+    crop = _remove_connected_black_background(crop)
     bbox = crop.getbbox()
     if bbox is None:
         raise RuntimeError(f"Source box contains no foreground pixels: {box}")
     return crop.crop(bbox)
 
 
-def _uniform_scale(frames: list[Image.Image], max_width: int, max_height: int) -> float:
-    if not frames:
-        raise RuntimeError("No frames supplied")
-    source_width = max(frame.width for frame in frames)
-    source_height = max(frame.height for frame in frames)
-    return min(max_width / float(source_width), max_height / float(source_height))
-
-
-def _resize(frame: Image.Image, scale: float) -> Image.Image:
-    width = max(1, int(round(frame.width * scale)))
-    height = max(1, int(round(frame.height * scale)))
-    return frame.resize((width, height), Image.Resampling.NEAREST)
-
-
-def _compose_strip(
-    frames: list[Image.Image],
-    cell_width: int,
-    cell_height: int,
-    max_sprite_width: int,
-    max_sprite_height: int,
-) -> Image.Image:
-    scale = _uniform_scale(frames, max_sprite_width, max_sprite_height)
-    resized = [_resize(frame, scale) for frame in frames]
-    strip = Image.new("RGBA", (cell_width * len(resized), cell_height), (0, 0, 0, 0))
-    for index, frame in enumerate(resized):
-        x = index * cell_width + (cell_width - frame.width) // 2
-        y = cell_height - frame.height - 1
-        strip.alpha_composite(frame, (x, y))
+def _compose_field_strip(frames: list[Image.Image], field: dict[str, Any]) -> Image.Image:
+    max_width = max(frame.width for frame in frames)
+    max_height = max(frame.height for frame in frames)
+    scale = min(
+        int(field["max_sprite_width"]) / float(max_width),
+        int(field["max_sprite_height"]) / float(max_height),
+    )
+    cell_width = int(field["cell_width"])
+    cell_height = int(field["cell_height"])
+    strip = Image.new("RGBA", (cell_width * len(frames), cell_height), (0, 0, 0, 0))
+    for index, frame in enumerate(frames):
+        width = max(1, int(round(frame.width * scale)))
+        height = max(1, int(round(frame.height * scale)))
+        resized = frame.resize((width, height), Image.Resampling.NEAREST)
+        x = index * cell_width + (cell_width - width) // 2
+        y = cell_height - height - 1
+        strip.alpha_composite(resized, (x, y))
     return strip
+
+
+def _load_profile_strip(path: Path, portrait: dict[str, Any], name: str) -> Image.Image:
+    if not path.is_file():
+        raise RuntimeError(f"{name}: missing portrait source {path.relative_to(ROOT)}")
+    image = Image.open(path).convert("RGBA")
+    expected = (int(portrait["frame_width"]) * int(portrait["frame_count"]), int(portrait["frame_height"]))
+    if image.size != expected:
+        raise RuntimeError(f"{name}: portrait source expected {expected}, got {image.size}")
+    lo, hi = image.getchannel("A").getextrema()
+    if lo >= 255 or hi <= 0:
+        raise RuntimeError(f"{name}: portrait source must contain visible pixels over transparency")
+    return image
 
 
 def _build_species_assets(spec: dict[str, Any]) -> dict[str, Any]:
     name = str(spec["name"])
     key = str(spec["portrait_key"])
-    source_path = _res_path_to_local(str(spec["source_sheet"]))
-    if not source_path.is_file():
-        raise RuntimeError(f"{name}: missing source sheet {source_path.relative_to(ROOT)}")
-    actual_sha = _sha256(source_path)
-    expected_sha = str(spec["source_sha256"])
-    if actual_sha != expected_sha:
-        raise RuntimeError(f"{name}: source sheet SHA-256 mismatch: {actual_sha} != {expected_sha}")
+    field = dict(spec["field"])
+    portrait = dict(spec["portrait"])
+    if list(field.get("directions", [])) != CANONICAL_DIRECTIONS or list(field.get("phases", [])) != CANONICAL_PHASES:
+        raise RuntimeError(f"{name}: field direction/phase contract is not canonical")
 
-    source = Image.open(source_path).convert("RGBA")
-    keyed = _key_background(source, list(spec["background_rgb"]))
+    source_boxes = list(field.get("source_boxes", []))
+    order = [int(value) for value in field.get("runtime_frame_indices", [])]
+    if len(source_boxes) != 12 or sorted(order) != list(range(12)):
+        raise RuntimeError(f"{name}: field source boxes/order must define 12 canonical frames")
+
+    field_source_value = str(spec["field_source"])
+    portrait_source_value = str(spec["portrait_source"])
+    field_source = _res_path_to_local(field_source_value)
+    portrait_source = _res_path_to_local(portrait_source_value)
+    if not field_source.is_file():
+        raise RuntimeError(f"{name}: missing field source {field_source.relative_to(ROOT)}")
+
+    sheet = Image.open(field_source).convert("RGBA")
+    authored_frames = [_crop_frame(sheet, box) for box in source_boxes]
+    runtime_frames = [authored_frames[index] for index in order]
+    field_strip = _compose_field_strip(runtime_frames, field)
+    portrait_strip = _load_profile_strip(portrait_source, portrait, name)
+
     directory = ROOT / "assets/characters" / key
     directory.mkdir(parents=True, exist_ok=True)
-
-    field = dict(spec["field"])
-    authored_frames = [_crop_box(keyed, box) for box in field["source_boxes"]]
-    order = [int(index) for index in field["runtime_frame_indices"]]
-    if sorted(order) != list(range(12)):
-        raise RuntimeError(f"{name}: runtime frame indices must be a permutation of 0..11")
-    runtime_frames = [authored_frames[index] for index in order]
-    field_strip = _compose_strip(
-        runtime_frames,
-        int(field["cell_width"]),
-        int(field["cell_height"]),
-        int(field["max_sprite_width"]),
-        int(field["max_sprite_height"]),
-    )
     field_path = directory / "field.png"
+    portrait_path = directory / "portrait_frames.png"
     field_strip.save(field_path, "PNG", optimize=True)
+    portrait_path.write_bytes(portrait_source.read_bytes())
 
     field_metadata = {
         "source_kind": "project_original",
         "source_variant": "grass_agumon_concept_sheet",
         "source_name": name,
-        "source_sheet": str(spec["source_sheet"]),
-        "source_sha256": actual_sha,
-        "background_rgb": list(spec["background_rgb"]),
-        "background_tolerance": BACKGROUND_TOLERANCE,
-        "authored_source_boxes": field["source_boxes"],
+        "source_sheet": field_source_value,
+        "source_sha256": _sha256(field_source),
+        "background_policy": "edge_connected_near_black_only",
+        "authored_source_boxes": source_boxes,
         "runtime_frame_indices": order,
         "canonical_runtime_phases": list(field["phases"]),
         "cell_width": int(field["cell_width"]),
@@ -145,26 +171,18 @@ def _build_species_assets(spec: dict[str, Any]) -> dict[str, Any]:
     }
     (directory / "field.json").write_text(json.dumps(field_metadata, indent=2) + "\n", encoding="utf-8")
 
-    portrait = dict(spec["portrait"])
-    portrait_frames = [_crop_box(keyed, box) for box in portrait["source_boxes"]]
-    portrait_strip = _compose_strip(
-        portrait_frames,
-        int(portrait["frame_width"]),
-        int(portrait["frame_height"]),
-        int(portrait["max_sprite_width"]),
-        int(portrait["max_sprite_height"]),
-    )
-    portrait_path = directory / "portrait_frames.png"
-    portrait_strip.save(portrait_path, "PNG", optimize=True)
+    durations = [int(value) for value in portrait.get("durations_ms", [])]
+    if len(durations) != int(portrait["frame_count"]):
+        raise RuntimeError(f"{name}: portrait duration count must equal frame count")
     portrait_metadata = {
-        "source": Path(str(spec["source_sheet"])).name,
-        "source_path": "source/sheet.png",
+        "source": portrait_source.name,
+        "source_path": str(portrait_source.relative_to(directory)),
         "source_kind": "project_original",
         "frame_width": int(portrait["frame_width"]),
         "frame_height": int(portrait["frame_height"]),
-        "frame_count": len(portrait_frames),
-        "durations_ms": [int(value) for value in portrait["durations_ms"]],
-        "source_sha256": actual_sha,
+        "frame_count": int(portrait["frame_count"]),
+        "durations_ms": durations,
+        "source_sha256": _sha256(portrait_source),
     }
     (directory / "portrait_frames.json").write_text(json.dumps(portrait_metadata, indent=2) + "\n", encoding="utf-8")
 
@@ -181,11 +199,11 @@ def _build_species_assets(spec: dict[str, Any]) -> dict[str, Any]:
         "attribute": str(entry["attribute"]),
         "database_image": str(entry["img"]),
         "portrait_key": key,
-        "portrait_source": str(spec["source_sheet"]),
+        "portrait_source": portrait_source_value,
         "portrait_strip": f"res://assets/characters/{key}/portrait_frames.png",
         "resource": f"res://assets/resources/{name.lower()}.tres",
         "visual_mode": "directional_12",
-        "frame_count": len(portrait_frames),
+        "frame_count": int(portrait["frame_count"]),
         "field_sprite": f"res://assets/characters/{key}/field.png",
         "field_metadata": f"res://assets/characters/{key}/field.json",
         "field_source_kind": "project_original",
@@ -197,29 +215,16 @@ def _sync_database(specs: list[dict[str, Any]]) -> None:
     database = json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
     if not isinstance(database, list):
         raise RuntimeError("base-digimon-list.json root must be an array")
-
     for spec in specs:
         entry = dict(spec["database_entry"])
         seed = str(spec["seed"])
         name_key = str(spec["name"]).casefold()
-        existing_index = next(
-            (
-                index
-                for index, row in enumerate(database)
-                if str(row.get("seed", "")) == seed
-                or str(row.get("name", "")).casefold() == name_key
-            ),
-            -1,
-        )
+        existing_index = next((i for i, row in enumerate(database) if str(row.get("seed", "")) == seed or str(row.get("name", "")).casefold() == name_key), -1)
         if existing_index >= 0:
             database[existing_index] = entry
         else:
-            agumon_index = next(
-                (index for index, row in enumerate(database) if str(row.get("name", "")) == "Agumon"),
-                len(database) - 1,
-            )
+            agumon_index = next((i for i, row in enumerate(database) if str(row.get("name", "")) == "Agumon"), len(database) - 1)
             database.insert(agumon_index + 1, entry)
-
         parent_seed = str(spec["evolves_from_seed"])
         parent = next((row for row in database if str(row.get("seed", "")) == parent_seed), None)
         if parent is None:
@@ -227,7 +232,6 @@ def _sync_database(specs: list[dict[str, Any]]) -> None:
         routes = parent.setdefault("digiEvolutionSeedList", [])
         if seed not in routes:
             routes.append(seed)
-
     DATABASE_PATH.write_text(json.dumps(database, indent=2) + "\n", encoding="utf-8")
 
 
@@ -237,22 +241,12 @@ def _sync_early_manifest(rows: list[dict[str, Any]]) -> None:
     by_name = {str(row.get("name", "")): row for row in rows}
     species_rows = [row for row in species_rows if str(row.get("name", "")) not in by_name]
     species_rows.extend(rows)
-    species_rows.sort(
-        key=lambda row: (
-            EARLY_RANKS.index(str(row.get("rank", ""))) if str(row.get("rank", "")) in EARLY_RANKS else 99,
-            str(row.get("name", "")),
-        )
-    )
+    species_rows.sort(key=lambda row: (EARLY_RANKS.index(str(row.get("rank", ""))) if str(row.get("rank", "")) in EARLY_RANKS else 99, str(row.get("name", ""))))
     manifest["ranks"] = list(EARLY_RANKS)
     manifest["count"] = len(species_rows)
-    manifest["counts_by_rank"] = {
-        rank: sum(1 for row in species_rows if str(row.get("rank", "")) == rank)
-        for rank in EARLY_RANKS
-    }
+    manifest["counts_by_rank"] = {rank: sum(1 for row in species_rows if str(row.get("rank", "")) == rank) for rank in EARLY_RANKS}
     field_sources = dict(manifest.get("field_sources", {}))
-    field_sources["project_original"] = sum(
-        1 for row in species_rows if str(row.get("field_source_kind", "")) == "project_original"
-    )
+    field_sources["project_original"] = sum(1 for row in species_rows if str(row.get("field_source_kind", "")) == "project_original")
     manifest["field_sources"] = field_sources
     manifest["species"] = species_rows
     EARLY_MANIFEST_PATH.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -262,23 +256,12 @@ def _sync_learnsets(specs: list[dict[str, Any]]) -> None:
     learnsets = json.loads(LEARNSETS_PATH.read_text(encoding="utf-8"))
     if not isinstance(learnsets, list):
         raise RuntimeError("digimon-learnsets.json root must be an array")
-
     seeds = {str(spec["seed"]) for spec in specs}
     names = {str(spec["name"]) for spec in specs}
-    learnsets = [
-        row for row in learnsets
-        if str(row.get("speciesSeed", "")) not in seeds
-        and str(row.get("species", "")) not in names
-    ]
+    learnsets = [row for row in learnsets if str(row.get("speciesSeed", "")) not in seeds and str(row.get("species", "")) not in names]
     for spec in specs:
         entry = dict(spec["database_entry"])
-        learnsets.append({
-            "speciesSeed": str(spec["seed"]),
-            "species": str(spec["name"]),
-            "rank": str(entry.get("rank", "")),
-            "skills": list(spec.get("learnset", [])),
-        })
-
+        learnsets.append({"speciesSeed": str(spec["seed"]), "species": str(spec["name"]), "rank": str(entry.get("rank", "")), "skills": list(spec.get("learnset", []))})
     database = json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
     order = {str(row.get("seed", "")): index for index, row in enumerate(database)}
     learnsets.sort(key=lambda row: order.get(str(row.get("speciesSeed", "")), 10**9))
@@ -287,30 +270,20 @@ def _sync_learnsets(specs: list[dict[str, Any]]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--assets-only",
-        action="store_true",
-        help="Rebuild sprite/portrait/resources without synchronizing database/manifests.",
-    )
+    parser.add_argument("--assets-only", action="store_true")
     args = parser.parse_args()
-
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-    if int(manifest.get("schema_version", 0)) != 1:
-        raise RuntimeError("Unsupported project-original playable manifest schema")
+    if int(manifest.get("schema_version", 0)) != 2 or manifest.get("source_kind") != "project_original":
+        raise RuntimeError("Unsupported project-original playable manifest schema/source kind")
     specs = [row for row in manifest.get("species", []) if isinstance(row, dict)]
     if not specs:
         raise RuntimeError("Project-original playable manifest contains no species")
-
     rows = [_build_species_assets(spec) for spec in specs]
     if not args.assets_only:
         _sync_database(specs)
         _sync_early_manifest(rows)
         _sync_learnsets(specs)
-
-    print(
-        "project-original playables built: "
-        + ", ".join(str(spec["name"]) for spec in specs)
-    )
+    print("project-original playables built: " + ", ".join(str(spec["name"]) for spec in specs))
     return 0
 
 

@@ -4,6 +4,7 @@ const RuntimeControllerScript = preload("res://src/DigimonRuntimeController.gd")
 const FollowerScript = preload("res://src/world/OverworldDigimonFollower.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const DirectionalContractScript = preload("res://src/sprites/DirectionalSpriteContract.gd")
+const PortraitResolverScript = preload("res://src/ui/DigimonPortraitResolver.gd")
 const MANIFEST_PATH := "res://database/additional-ds-playables.json"
 const FACINGS := ["down_left", "down_right", "up_left", "up_right"]
 
@@ -71,9 +72,10 @@ func _ready() -> void:
 		assert(preview_sprite != null and preview_sprite.texture != null and preview_sprite.visible, "%s menu walk preview must resolve the DS field sprite" % species_name)
 		preview.queue_free()
 
-		var portrait_key := _compact_key(species_name)
-		assert(FileAccess.file_exists("res://assets/characters/%s/portrait_frames.json" % portrait_key), "%s portrait metadata must be packaged for detail menus" % species_name)
-		assert(ResourceLoader.exists("res://assets/characters/%s/portrait_frames.png" % portrait_key), "%s portrait strip must be packaged for detail menus" % species_name)
+		var portrait_key := PortraitResolverScript.resolve_key(species_name)
+		assert(not portrait_key.is_empty(), "%s spaced/canonical name must resolve through the shared portrait resolver" % species_name)
+		assert(FileAccess.file_exists(PortraitResolverScript.metadata_path(portrait_key)), "%s portrait metadata must be packaged for detail menus" % species_name)
+		assert(ResourceLoader.exists(PortraitResolverScript.strip_path(portrait_key)), "%s portrait strip must be packaged for detail menus" % species_name)
 
 		runtime.remove_child(actor)
 		actor.free()
@@ -89,9 +91,3 @@ func _target_for_facing(facing: String) -> Vector2:
 		"down_right": return Vector2(128.0, 128.0)
 		"up_left": return Vector2(-128.0, -128.0)
 		_: return Vector2(128.0, -128.0)
-
-
-func _compact_key(value: String) -> String:
-	var regex := RegEx.new()
-	assert(regex.compile("[^a-z0-9]+") == OK)
-	return regex.sub(value.to_lower(), "", true)

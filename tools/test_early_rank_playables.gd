@@ -3,6 +3,7 @@ extends Node
 const RuntimeControllerScript = preload("res://src/DigimonRuntimeController.gd")
 const FollowerScript = preload("res://src/world/OverworldDigimonFollower.gd")
 const DirectionalContractScript = preload("res://src/sprites/DirectionalSpriteContract.gd")
+const PortraitResolverScript = preload("res://src/ui/DigimonPortraitResolver.gd")
 const MANIFEST_PATH := "res://database/early-rank-playables.json"
 const EXPECTED_RANKS := ["Fresh", "In-Training", "Rookie"]
 const FACINGS := ["down_left", "down_right", "up_left", "up_right"]
@@ -50,6 +51,25 @@ func _ready() -> void:
 		assert(resource.sprite_hframes == 12 and resource.sprite_vframes == 1, "%s DS field strip must contain 12 horizontal frames" % species_name)
 		assert(String(row.get("visual_mode", "")) == "directional_12", "%s manifest must expose directional_12 visual mode" % species_name)
 		assert(String(row.get("field_sprite", "")).ends_with("/field.png"), "%s manifest must link its DS field sprite" % species_name)
+
+		var portrait_key := PortraitResolverScript.resolve_key(species_name)
+		assert(not portrait_key.is_empty(), "%s portrait must resolve through the shared battle/detail resolver" % species_name)
+		var portrait_meta_path := PortraitResolverScript.metadata_path(portrait_key)
+		assert(FileAccess.file_exists(portrait_meta_path), "%s portrait metadata must be packaged" % species_name)
+		assert(ResourceLoader.exists(PortraitResolverScript.strip_path(portrait_key)), "%s portrait strip must be packaged" % species_name)
+		if species_name == "Grass Agumon":
+			assert(portrait_key == "grassagumon", "Grass Agumon spaced runtime key must resolve to compact portrait assets")
+			var portrait_metadata = JSON.parse_string(FileAccess.get_file_as_string(portrait_meta_path))
+			assert(portrait_metadata is Dictionary, "Grass Agumon portrait metadata must be valid")
+			var portrait_data := portrait_metadata as Dictionary
+			assert(int(portrait_data.get("frame_width", 0)) == 160 and int(portrait_data.get("frame_height", 0)) == 180, "Grass Agumon details must use profile frames rather than 48px walking frames")
+			var field_image := resource.texture.get_image()
+			assert(field_image != null and field_image.get_width() > 0, "Grass Agumon field image must be readable")
+			var cell_width := field_image.get_width() / 12
+			for field_frame in range(12):
+				var left := field_frame * cell_width
+				var right := left + cell_width - 1
+				assert(field_image.get_pixel(left, 0).a < 0.01 and field_image.get_pixel(right, 0).a < 0.01, "Grass Agumon field frame %d must have a transparent background" % field_frame)
 
 		var actor := runtime.instantiate_player_digimon(species_name, 1, 100)
 		assert(actor != null, "%s must instantiate through DigimonRuntimeController" % species_name)

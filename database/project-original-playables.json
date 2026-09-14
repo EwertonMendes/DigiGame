@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "source_kind": "project_original",
   "count": 1,
   "species": [
@@ -7,13 +7,8 @@
       "name": "Grass Agumon",
       "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
       "portrait_key": "grassagumon",
-      "source_sheet": "res://assets/characters/grassagumon/source/sheet.png",
-      "source_sha256": "2f8d75a3fca0a93e71fc6a6eaad4569e064caee9fe7050aefd14d08c3ccba342",
-      "background_rgb": [
-        0,
-        0,
-        0
-      ],
+      "field_source": "res://assets/characters/grassagumon/source/sheet.png",
+      "portrait_source": "res://assets/characters/grassagumon/source/portrait_frames.png",
       "database_entry": {
         "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
         "name": "Grass Agumon",
@@ -70,26 +65,36 @@
           [192, 48, 48, 48],
           [240, 48, 48, 48]
         ],
-        "runtime_frame_indices": [0, 1, 2, 5, 4, 3, 11, 10, 9, 6, 7, 8],
-        "directions": ["down_left", "down_right", "up_left", "up_right"],
-        "phases": ["idle", "step_a", "step_b"],
+        "directions": [
+          "down_left",
+          "down_right",
+          "up_left",
+          "up_right"
+        ],
+        "phases": [
+          "idle",
+          "step_a",
+          "step_b"
+        ],
+        "runtime_frame_indices": [
+          0, 1, 2, 5, 4, 3, 11, 10, 9, 6, 7, 8
+        ],
         "cell_width": 66,
         "cell_height": 66,
         "max_sprite_width": 46,
         "max_sprite_height": 46,
+        "frame_count": 12,
         "runtime_scale": 0.5
       },
       "portrait": {
-        "source_boxes": [
-          [0, 0, 48, 48],
-          [48, 0, 48, 48],
-          [96, 0, 48, 48]
-        ],
-        "frame_width": 64,
-        "frame_height": 64,
-        "max_sprite_width": 46,
-        "max_sprite_height": 46,
-        "durations_ms": [220, 140, 220]
+        "frame_width": 160,
+        "frame_height": 180,
+        "frame_count": 3,
+        "durations_ms": [
+          240,
+          180,
+          240
+        ]
       }
     }
   ]
