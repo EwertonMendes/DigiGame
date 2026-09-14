@@ -21,3 +21,8 @@ jobs:
         run: git clone --depth 1 https://github.com/E-M-B-E-R/digimon-world-ds-dawn-dusk-animated-sprites.git /tmp/ds-animated
       - name: Inspect requested WtW sources
         run: PYTHONPATH=tools python3 tools/inspect_new_ds_batch.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: new-ds-batch-audit
+          path: /tmp/new-ds-batch-audit
+          retention-days: 3
