@@ -129,9 +129,10 @@ func _draw_move(center: Vector2, side: float, width: float) -> void:
 	var s := side * 0.30
 	draw_line(center + Vector2(-s, 0.0), center + Vector2(s, 0.0), _accent, width, true)
 	draw_line(center + Vector2(0.0, -s), center + Vector2(0.0, s), _accent, width, true)
-	for direction in [Vector2.RIGHT, Vector2.LEFT, Vector2.UP, Vector2.DOWN]:
-		var tip := center + direction * s
-		var tangent := Vector2(-direction.y, direction.x)
+	var directions: Array[Vector2] = [Vector2.RIGHT, Vector2.LEFT, Vector2.UP, Vector2.DOWN]
+	for direction: Vector2 in directions:
+		var tip: Vector2 = center + direction * s
+		var tangent: Vector2 = Vector2(-direction.y, direction.x)
 		draw_line(tip, tip - direction * s * 0.34 + tangent * s * 0.22, _accent, width, true)
 		draw_line(tip, tip - direction * s * 0.34 - tangent * s * 0.22, _accent, width, true)
 
@@ -158,7 +159,8 @@ func _draw_evolution(center: Vector2, side: float, width: float) -> void:
 func _draw_training(center: Vector2, side: float, width: float) -> void:
 	var s := side * 0.30
 	draw_line(center + Vector2(-s * 0.62, 0.0), center + Vector2(s * 0.62, 0.0), _accent, width, true)
-	for x in [-s, -s * 0.72, s * 0.72, s]:
+	var marker_offsets: Array[float] = [-s, -s * 0.72, s * 0.72, s]
+	for x: float in marker_offsets:
 		draw_line(center + Vector2(x, -s * 0.52), center + Vector2(x, s * 0.52), _accent, width * 1.18, true)
 
 
