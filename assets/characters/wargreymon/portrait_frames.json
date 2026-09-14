@@ -1,0 +1,14 @@
+{
+  "source": "WarGreymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/WarGreymon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "e349e699fb13050b5398c7737e49f6a4c4ef805e7c4218d42f29b65ce892ceee"
+}

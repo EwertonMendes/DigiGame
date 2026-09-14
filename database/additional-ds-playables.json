@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "count": 5,
+  "species": [
+    {
+      "name": "Geo Greymon",
+      "seed": "67cd2d63-4299-446e-a851-6f04e9b51bc5",
+      "rank": "Champion",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/geo greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/geogreymon/field.png",
+      "field_metadata": "res://assets/characters/geogreymon/field.json",
+      "portrait_strip": "res://assets/characters/geogreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/geogreymon/portrait_frames.json",
+      "source_id": 139,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        34,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Rize Greymon",
+      "seed": "529f424a-7efe-49bd-90dc-58286aaa9fb5",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/rize greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/rizegreymon/field.png",
+      "field_metadata": "res://assets/characters/rizegreymon/field.json",
+      "portrait_strip": "res://assets/characters/rizegreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/rizegreymon/portrait_frames.json",
+      "source_id": 256,
+      "profile": "single_row_four_triples",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        45
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "War Greymon",
+      "seed": "df67cc96-4a69-4f26-88d6-2c98ccaecfe6",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/war greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/wargreymon/field.png",
+      "field_metadata": "res://assets/characters/wargreymon/field.json",
+      "portrait_strip": "res://assets/characters/wargreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/wargreymon/portrait_frames.json",
+      "source_id": 309,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        34,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Skull Greymon",
+      "seed": "66e5a6ea-93a5-47f8-91d9-8601857496f6",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/skull greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/skullgreymon/field.png",
+      "field_metadata": "res://assets/characters/skullgreymon/field.json",
+      "portrait_strip": "res://assets/characters/skullgreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/skullgreymon/portrait_frames.json",
+      "source_id": 197,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Shine Greymon",
+      "seed": "e3f58de4-75f0-4e38-81a0-ad1c32367f97",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/shine greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/shinegreymon/field.png",
+      "field_metadata": "res://assets/characters/shinegreymon/field.json",
+      "portrait_strip": "res://assets/characters/shinegreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/shinegreymon/portrait_frames.json",
+      "source_id": 374,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        43
+      ],
+      "portrait_frames": 4
+    }
+  ]
+}

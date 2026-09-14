@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 197,
+  "source_archive_file": "sprite thread/197_SkullGreymon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/197_SkullGreymon.png",
+  "source_sha256": "b4a8090142abf1c0b962e24de57e1d2538913fabf8ed07c380d2a37e5b1fb239",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 221250,
+      "confidence_margin": 171248
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 11476
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    41
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 115,
+        "y": 288,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 157,
+        "y": 287,
+        "w": 30,
+        "h": 37
+      },
+      {
+        "x": 197,
+        "y": 288,
+        "w": 29,
+        "h": 37
+      }
+    ],
+    "down_right": [
+      {
+        "x": 315,
+        "y": 288,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 275,
+        "y": 287,
+        "w": 30,
+        "h": 37
+      },
+      {
+        "x": 236,
+        "y": 288,
+        "w": 29,
+        "h": 37
+      }
+    ],
+    "up_left": [
+      {
+        "x": 117,
+        "y": 246,
+        "w": 29,
+        "h": 35
+      },
+      {
+        "x": 156,
+        "y": 245,
+        "w": 31,
+        "h": 36
+      },
+      {
+        "x": 197,
+        "y": 246,
+        "w": 29,
+        "h": 35
+      }
+    ],
+    "up_right": [
+      {
+        "x": 316,
+        "y": 246,
+        "w": 29,
+        "h": 35
+      },
+      {
+        "x": 275,
+        "y": 245,
+        "w": 31,
+        "h": 36
+      },
+      {
+        "x": 236,
+        "y": 246,
+        "w": 29,
+        "h": 35
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 42,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/skullgreymon/field.png"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "ShineGreymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/ShineGreymon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "216b2c340bfca18481f07e36594d8490e546973d91b8ab08d569a9823d0fc250"
+}
