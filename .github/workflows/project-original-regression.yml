@@ -12,34 +12,29 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v6
 
       - name: Install sprite tooling
         run: python3 -m pip install --disable-pip-version-check pillow numpy
 
-      - name: Rebuild project-original playable assets
+      - name: Rebuild project-original playable assets and data
         run: python3 tools/build_project_original_playables.py
 
-      - name: Validate data and source contracts
+      - name: Rebuild permanent technique catalogue deterministically
+        run: node tools/build_technique_catalog.mjs
+
+      - name: Validate data, source contracts and runtime coverage
         shell: bash
         run: |
           set -euo pipefail
           python3 tools/enrich_digimon_database.py --check
+          python3 tools/validate_combat_data.py
           python3 tools/validate_digimon_progression.py
           python3 tools/validate_project_original_playables.py
           python3 tools/validate_early_rank_playables.py
           python3 tools/validate_all_ds_directional_facings.py
 
-      - name: Verify generated outputs are committed
-        shell: bash
-        run: |
-          set -euo pipefail
-          git diff --exit-code -- \
-            assets/characters/grassagumon \
-            "assets/resources/grass agumon.tres" \
-            database/base-digimon-list.json \
-            database/digimon-learnsets.json \
-            database/early-rank-playables.json \
-            database/ds-directional-resource-audit.json
+      - name: Verify every generated output is committed
+        run: git diff --exit-code
