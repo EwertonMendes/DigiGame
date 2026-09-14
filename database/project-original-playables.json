@@ -7,7 +7,7 @@
       "name": "Grass Agumon",
       "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
       "portrait_key": "grassagumon",
-      "field_source": "res://assets/characters/grassagumon/source/field.png",
+      "field_source": "res://assets/characters/grassagumon/source/sheet.png",
       "portrait_source": "res://assets/characters/grassagumon/source/portrait_frames.png",
       "database_entry": {
         "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
@@ -51,6 +51,20 @@
         }
       ],
       "field": {
+        "source_boxes": [
+          [0, 0, 48, 48],
+          [48, 0, 48, 48],
+          [96, 0, 48, 48],
+          [144, 0, 48, 48],
+          [192, 0, 48, 48],
+          [240, 0, 48, 48],
+          [0, 48, 48, 48],
+          [48, 48, 48, 48],
+          [96, 48, 48, 48],
+          [144, 48, 48, 48],
+          [192, 48, 48, 48],
+          [240, 48, 48, 48]
+        ],
         "directions": [
           "down_left",
           "down_right",
@@ -63,10 +77,12 @@
           "step_b"
         ],
         "runtime_frame_indices": [
-          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+          0, 1, 2, 5, 4, 3, 11, 10, 9, 6, 7, 8
         ],
         "cell_width": 66,
         "cell_height": 66,
+        "max_sprite_width": 46,
+        "max_sprite_height": 46,
         "frame_count": 12,
         "runtime_scale": 0.5
       },
