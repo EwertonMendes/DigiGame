@@ -16,7 +16,7 @@ OverworldState="*res://src/state/OverworldState.gd"
 DigiUiRuntime="*res://src/ui/DigiUiRuntime.gd"
 DigitalSceneTransition="*res://src/ui/DigitalSceneTransition.gd"
 MusicDirector="*res://src/audio/MusicDirector.gd"
-DeveloperToolkit="*res://src/debug/DeveloperToolkit.gd"
+DeveloperToolkit="*res://src/debug/DeveloperToolkitWithSkills.gd"
 
 [display]
 

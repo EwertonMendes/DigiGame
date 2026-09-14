@@ -3,6 +3,7 @@ extends Node
 const ProgressionToolsScript = preload("res://src/debug/DebugProgressionTools.gd")
 const StateToolsScript = preload("res://src/debug/DebugStateTools.gd")
 const RosterToolsScript = preload("res://src/debug/DebugRosterTools.gd")
+const TechniqueToolsScript = preload("res://src/debug/DebugTechniqueTools.gd")
 const AccessScript = preload("res://src/debug/DebugToolkitAccess.gd")
 
 func _ready() -> void:
@@ -13,6 +14,7 @@ func _ready() -> void:
 	var progression := ProgressionToolsScript.new() as DebugProgressionTools
 	var state := StateToolsScript.new() as DebugStateTools
 	var roster := RosterToolsScript.new() as DebugRosterTools
+	var techniques := TechniqueToolsScript.new() as DebugTechniqueTools
 	var party := OverworldState.get_active_instances()
 	assert(not party.is_empty(), "Debug regression requires the normal starter party")
 	var selected: DigimonInstance = party[0]
@@ -37,6 +39,35 @@ func _ready() -> void:
 	assert(selected.current_hp == 2 and selected.current_mp == mini(3, int(stats.get("mp", 0))), "Exact HP/SP must clamp to calculated maxima")
 	assert(progression.set_knocked_out(original_id), "Knock-out preset must work")
 	assert(selected.current_hp == 0 and selected.current_mp == 0, "Knock-out preset must clear resources")
+
+	var technique_catalog := techniques.catalog(true)
+	assert(technique_catalog.size() > 1000, "Skill lab must expose the complete technique catalog")
+	var test_skill_id := ""
+	for action: Dictionary in technique_catalog:
+		var candidate := String(action.get("id", ""))
+		if String(action.get("availability", "ready")) == "ready" and not selected.learned_skills.has(candidate):
+			test_skill_id = candidate
+			break
+	assert(not test_skill_id.is_empty(), "Skill lab regression requires an unlearned battle-ready technique")
+	assert(techniques.learn(original_id, test_skill_id, false), "Skill lab must be able to grant any catalog technique")
+	assert(selected.learned_skills.has(test_skill_id) and not selected.favorite_skills.has(test_skill_id), "Debug-granted technique must enter the permanent library without silently becoming a favorite")
+	assert(techniques.set_favorite(original_id, test_skill_id, true), "Skill lab must toggle favorites")
+	assert(selected.favorite_skills.has(test_skill_id), "Favorite mutation must persist on the selected individual")
+	assert(techniques.set_mastery(original_id, test_skill_id, DigimonInstance.EXPERIENCED_SKILL_MASTERY_POINTS), "Skill lab must edit mastery")
+	assert(selected.get_skill_mastery_grade(test_skill_id) == "experienced", "Experienced mastery threshold must be reachable from debug tools")
+	assert(techniques.set_mastery(original_id, test_skill_id, DigimonInstance.MAX_SKILL_MASTERY_POINTS), "Skill lab must reach mastered state")
+	assert(selected.get_skill_mastery_grade(test_skill_id) == "mastered", "Mastered mastery threshold must be reflected by the real DigimonInstance")
+	var mastered_action := techniques.action(test_skill_id, original_id)
+	assert(String(mastered_action.get("masteryGrade", "")) == "mastered", "Skill lab preview must use mastery-adjusted action data")
+	assert(techniques.set_archived(original_id, test_skill_id, true), "Skill lab must archive learned techniques")
+	assert(selected.archived_skills.has(test_skill_id) and not selected.favorite_skills.has(test_skill_id), "Archiving through debug tools must preserve normal archive invariants")
+	assert(techniques.set_archived(original_id, test_skill_id, false), "Skill lab must restore archived techniques")
+	assert(not selected.archived_skills.has(test_skill_id), "Restored debug technique must leave the archive")
+	assert(techniques.forget(original_id, test_skill_id), "Skill lab must support deliberately forgetting a technique for test setup")
+	assert(not selected.learned_skills.has(test_skill_id) and not selected.skill_mastery.has(test_skill_id), "Forgetting through debug tools must remove organization and mastery state atomically")
+	assert(not techniques.set_mastery(original_id, test_skill_id, 24), "Skill lab must not assign mastery to a technique the Digimon does not know")
+	var form_learnset := techniques.current_form_learnset(original_id)
+	assert(not form_learnset.is_empty(), "Skill lab must expose the current form learnset for comparison while testing")
 
 	state.set_bits(12345)
 	assert(OverworldState.get_bits() == 12345, "Debug Bits editing must reach persistent account state")
