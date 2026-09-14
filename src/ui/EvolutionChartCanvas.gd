@@ -11,6 +11,7 @@ const LINK_SIGNAL_PRIMARY_SPEED := 0.10
 const LINK_SIGNAL_SECONDARY_SPEED := 0.075
 const CURRENT_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/dithered_fire_6x5.png")
 const SELECTED_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/lightstreaks_6x5.png")
+const CARD_VFX_SHADER: Shader = preload("res://shaders/evolution_chart_card_vfx.gdshader")
 const VFX_COLUMNS := 6
 const VFX_ROWS := 5
 const CURRENT_VFX_FPS := 10.0
@@ -43,6 +44,99 @@ var _prefetched_field_resources: Dictionary = {}
 # Reuse already-created cards while this chart is open. Hidden Digimon previews are
 # disabled, so returning to a branch is instant without keeping their animations hot.
 var _button_cache: Dictionary = {}
+
+# Only two VFX nodes exist for the whole chart. The shader removes the low-alpha
+# rectangular wash from the source atlases and feathers their frame boundaries.
+var _current_vfx_sprite: Sprite2D = null
+var _selected_vfx_sprite: Sprite2D = null
+var _current_vfx_material: ShaderMaterial = null
+var _selected_vfx_material: ShaderMaterial = null
+var _vfx_time := 0.0
+
+
+func _ready() -> void:
+	super._ready()
+	_setup_card_vfx()
+
+
+func _process(delta: float) -> void:
+	_vfx_time += delta
+	super._process(delta)
+	_sync_card_vfx()
+
+
+func _setup_card_vfx() -> void:
+	_current_vfx_material = _make_card_vfx_material(Color(1.0, 0.78, 0.28, 0.82), 0.38, 0.18, 0.12, 0.82)
+	_selected_vfx_material = _make_card_vfx_material(Color(0.40, 0.86, 1.0, 0.70), 0.28, 0.17, 0.16, 0.62)
+	_current_vfx_sprite = _make_card_vfx_sprite(CURRENT_FORM_VFX, _current_vfx_material)
+	_selected_vfx_sprite = _make_card_vfx_sprite(SELECTED_FORM_VFX, _selected_vfx_material)
+	add_child(_current_vfx_sprite)
+	add_child(_selected_vfx_sprite)
+	move_child(_selected_vfx_sprite, 0)
+	move_child(_current_vfx_sprite, 0)
+	_sync_card_vfx()
+
+
+func _make_card_vfx_material(tint: Color, cutoff: float, softness: float, edge_fade: float, intensity: float) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = CARD_VFX_SHADER
+	material.set_shader_parameter("tint", tint)
+	material.set_shader_parameter("alpha_cutoff", cutoff)
+	material.set_shader_parameter("alpha_softness", softness)
+	material.set_shader_parameter("edge_fade", edge_fade)
+	material.set_shader_parameter("intensity", intensity)
+	material.set_shader_parameter("frame_uv_size", Vector2(1.0 / float(VFX_COLUMNS), 1.0 / float(VFX_ROWS)))
+	return material
+
+
+func _make_card_vfx_sprite(texture: Texture2D, material: ShaderMaterial) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	sprite.hframes = VFX_COLUMNS
+	sprite.vframes = VFX_ROWS
+	sprite.centered = true
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.material = material
+	sprite.visible = false
+	return sprite
+
+
+func _sync_card_vfx() -> void:
+	_sync_one_card_vfx(_current_vfx_sprite, _current_vfx_material, _current_seed, CURRENT_VFX_FPS, Vector2(1.02, 0.50), true, 0.0)
+	var selected_seed := _selected_seed if _selected_seed != _current_seed else ""
+	_sync_one_card_vfx(_selected_vfx_sprite, _selected_vfx_material, selected_seed, SELECTED_VFX_FPS, Vector2(1.06, 0.54), false, 0.11)
+
+
+func _sync_one_card_vfx(sprite: Sprite2D, material: ShaderMaterial, seed: String, fps: float, size_factor: Vector2, anchor_to_card_top: bool, phase_offset: float) -> void:
+	if sprite == null or material == null or seed.is_empty() or not _buttons.has(seed):
+		if sprite != null:
+			sprite.visible = false
+		return
+	var button := _buttons.get(seed) as Button
+	if button == null or not button.visible:
+		sprite.visible = false
+		return
+
+	var frame_count := VFX_COLUMNS * VFX_ROWS
+	var frame := int(floor((_vfx_time + phase_offset) * fps)) % frame_count
+	sprite.frame = frame
+	var column := frame % VFX_COLUMNS
+	var row := int(frame / VFX_COLUMNS)
+	material.set_shader_parameter("frame_uv_offset", Vector2(float(column) / float(VFX_COLUMNS), float(row) / float(VFX_ROWS)))
+
+	var card_scale := _button_scale(seed)
+	var card_size := NODE_SIZE * card_scale
+	var target_size := card_size * size_factor
+	var frame_size := Vector2(float(sprite.texture.get_width()) / float(VFX_COLUMNS), float(sprite.texture.get_height()) / float(VFX_ROWS))
+	sprite.scale = Vector2(target_size.x / maxf(1.0, frame_size.x), target_size.y / maxf(1.0, frame_size.y))
+	var card_center := button.position + card_size * 0.5
+	if anchor_to_card_top:
+		# Fire grows from the card's top edge instead of filling a large rectangle behind it.
+		sprite.position = Vector2(card_center.x, button.position.y + 3.0 * card_scale - target_size.y * 0.42)
+	else:
+		# Streaks hug the focused card; the card itself masks most of their body.
+		sprite.position = card_center + Vector2(0.0, -2.0 * card_scale)
+	sprite.visible = true
 
 
 func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionary, goal_seed: String = "", goal_edges: Dictionary = {}) -> void:
@@ -274,10 +368,6 @@ func _animate_relayout(new_seeds: Array[String], source_seed: String) -> void:
 		queue_redraw()
 		return
 
-	# One shared tween keeps movement smooth without delaying state changes. New
-	# choices exist immediately on the click frame and simply glide out from the
-	# selected card; rapid clicks kill the old tween and continue from the exact
-	# current positions instead of queueing animations.
 	_layout_tween = create_tween()
 	_layout_tween.set_parallel(true)
 	for raw_seed in _buttons.keys():
@@ -301,7 +391,6 @@ func _animate_relayout(new_seeds: Array[String], source_seed: String) -> void:
 func _activate_node(seed: String) -> void:
 	if not _buttons.has(seed):
 		return
-
 	_focus_lane = _rendered_lane_for_seed(seed)
 	_selected_seed = seed
 	_refresh_focus_bridge()
@@ -317,10 +406,6 @@ func _rebuild_visible_nodes(source_seed: String) -> void:
 	var visible_lookup: Dictionary = {}
 	for seed: String in visible_seeds:
 		visible_lookup[seed] = true
-
-	# Hide instead of destroying cards. DigimonWalkPreview setup is one of the most
-	# expensive parts of branch navigation in Web builds, so explored forms are kept
-	# as dormant controls and reused when the player comes back to them.
 	for raw_seed in _buttons.keys().duplicate():
 		var seed := String(raw_seed)
 		if visible_lookup.has(seed):
@@ -355,9 +440,6 @@ func _rebuild_visible_nodes(source_seed: String) -> void:
 	_animate_relayout(new_seeds, source_seed)
 	_configure_focus_neighbors()
 	queue_redraw()
-
-	# This work is for the NEXT click, so it intentionally starts after the current
-	# frame has already been presented.
 	call_deferred("_prefetch_click_frontier", visible_seeds.duplicate())
 
 
@@ -365,10 +447,8 @@ func _visible_seeds_for_state() -> Array[String]:
 	var result: Array[String] = []
 	for seed: String in _primary_route:
 		_add_unique_seed(result, seed)
-
 	for seed: String in _focus_bridge_path:
 		_add_unique_seed(result, seed)
-
 	_add_unique_seed(result, _current_seed)
 	var focus_seed := _selected_seed if _nodes_by_seed.has(_selected_seed) else _current_seed
 	_add_unique_seed(result, focus_seed)
@@ -395,9 +475,6 @@ func _find_connection_path(start_seed: String, target_seed: String) -> Array[Str
 		return [start_seed]
 	if not _nodes_by_seed.has(start_seed) or not _nodes_by_seed.has(target_seed):
 		return empty
-
-	# Normal chart navigation always targets the current form, so this is usually a
-	# simple O(path length) lookup instead of a new BFS over the full evolution graph.
 	if target_seed == _current_seed and _bridge_parent.has(start_seed):
 		var path: Array[String] = []
 		var cursor := start_seed
@@ -407,8 +484,6 @@ func _find_connection_path(start_seed: String, target_seed: String) -> Array[Str
 				return path
 			cursor = String(_bridge_parent.get(cursor, ""))
 		return empty
-
-	# Generic fallback for callers that request another target.
 	var queue: Array[String] = [start_seed]
 	var previous: Dictionary = {start_seed: ""}
 	var head := 0
@@ -437,12 +512,10 @@ func _derive_primary_route() -> Array[String]:
 	var route: Array[String] = []
 	if _current_seed.is_empty() or not _nodes_by_seed.has(_current_seed):
 		return route
-
 	route.append(_current_seed)
 	var visited: Dictionary = {_current_seed: true}
 	var cursor := _current_seed
 	var history_cutoff := 2147483647
-
 	while true:
 		var cursor_rank := _rank_index_for(cursor)
 		var best_seed := ""
@@ -522,10 +595,8 @@ func _lane_counts(occupied: Dictionary) -> Vector2i:
 
 
 func _nearest_open_lane(occupied: Dictionary, preferred_lane: int, side: int) -> int:
-	# Straight ahead is always the best layout when that row is actually free.
 	if not occupied.has(preferred_lane):
 		return preferred_lane
-
 	if side != 0:
 		var magnitude := maxi(1, absi(preferred_lane))
 		for radius in range(1, 64):
@@ -538,9 +609,6 @@ func _nearest_open_lane(occupied: Dictionary, preferred_lane: int, side: int) ->
 			if not occupied.has(outer):
 				return outer
 		return side * (occupied.size() + 1)
-
-	# With no committed side, pick the closest row and balance ties based on what is
-	# already in this column instead of always biasing upward.
 	var counts := _lane_counts(occupied)
 	var first_side := -1 if counts.x <= counts.y else 1
 	for distance in range(1, 64):
@@ -565,17 +633,14 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 	_base_positions.clear()
 	if visible_seeds.is_empty():
 		return
-
 	for seed: String in _primary_route:
 		_branch_lanes[seed] = 0
-
 	var current_rank := _rank_index_for(_current_seed)
 	var focus_seed := _selected_seed if _nodes_by_seed.has(_selected_seed) else _current_seed
 	var focus_lane := _focus_lane if focus_seed == _selected_seed else _rendered_lane_for_seed(focus_seed)
 	if _primary_route.has(focus_seed):
 		focus_lane = 0
 	var focus_side := _lane_side(focus_lane)
-
 	var by_rank: Dictionary = {}
 	for seed: String in visible_seeds:
 		var rank_index := _rank_index_for(seed)
@@ -589,7 +654,6 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 		group.sort_custom(func(a, b) -> bool:
 			return String((_nodes_by_seed.get(String(a), {}) as Dictionary).get("name", "")) < String((_nodes_by_seed.get(String(b), {}) as Dictionary).get("name", ""))
 		)
-
 		var occupied: Dictionary = {}
 		var x := float(rank_index - current_rank) * COLUMN_GAP
 		var lineage_seed := _primary_seed_at_rank(rank_index, group)
@@ -597,9 +661,6 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 			occupied[0] = true
 			_base_positions[lineage_seed] = Vector2(x, 0.0)
 			_branch_lanes[lineage_seed] = 0
-
-		# The selected card keeps its side when it is already in a branch, but can use
-		# the center row when there is genuinely no main-line card occupying it.
 		if group.has(_selected_seed) and _selected_seed != lineage_seed:
 			var selected_preferred := _focus_lane
 			var selected_side := _lane_side(selected_preferred)
@@ -608,9 +669,6 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 				selected_side = _lane_side(selected_preferred)
 			var selected_lane := _claim_lane(_selected_seed, occupied, selected_preferred, selected_side)
 			_base_positions[_selected_seed] = Vector2(x, float(selected_lane) * ROW_GAP)
-
-		# Keep the route back to CURRENT FORM compact before placing decorative/direct
-		# alternatives, so context nodes cannot be pushed out by a sibling choice.
 		for raw_seed in group:
 			var seed := String(raw_seed)
 			if _base_positions.has(seed) or not _focus_bridge_path.has(seed):
@@ -619,10 +677,6 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 			var side := _lane_side(preferred)
 			var lane := _claim_lane(seed, occupied, preferred, side)
 			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
-
-		# Direct options prefer a straight horizontal continuation. Only move them one
-		# row up/down when that exact slot is occupied. A non-main branch never crosses
-		# the center: it searches the closest free row on its established side.
 		for raw_seed in group:
 			var seed := String(raw_seed)
 			if _base_positions.has(seed) or not _are_neighbors(focus_seed, seed):
@@ -636,9 +690,6 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 				preferred = focus_lane
 			var lane := _claim_lane(seed, occupied, preferred, side)
 			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
-
-		# Remaining visible context uses its last side as a preference, but exact row
-		# offsets are compacted every rebuild instead of accumulating indefinitely.
 		for raw_seed in group:
 			var seed := String(raw_seed)
 			if _base_positions.has(seed):
@@ -672,7 +723,6 @@ func _refresh_node_styles() -> void:
 	var primary_lookup: Dictionary = {}
 	for seed: String in _primary_route:
 		primary_lookup[seed] = true
-
 	for raw_seed in _buttons.keys():
 		var seed := String(raw_seed)
 		var button := _buttons[seed] as Button
@@ -687,7 +737,6 @@ func _refresh_node_styles() -> void:
 			accent = UI.PURPLE.lightened(0.12)
 		if seed == _current_seed:
 			accent = UI.GOLD
-
 		SKIN.apply_button(button, accent)
 		button.modulate.a = 1.0 if primary_lookup.has(seed) or seed == _selected_seed or seed == _current_seed else 0.88
 		if seed == _current_seed:
@@ -707,7 +756,6 @@ func _refresh_node_styles() -> void:
 			button.tooltip_text = "Previous form on this Digimon's active lineage"
 		else:
 			button.tooltip_text = "Select to focus this form and reveal its connected routes"
-
 		var status := _find_status_label(button)
 		if status != null:
 			status.visible = seed == _current_seed
@@ -727,14 +775,12 @@ func _draw() -> void:
 			continue
 		if not _buttons.has(from_seed) or not _buttons.has(to_seed):
 			continue
-
 		var p1 := _button_screen_center(from_seed)
 		var p2 := _button_screen_center(to_seed)
 		var key := String(edge.get("key", ""))
 		var color := Color(0.24, 0.46, 0.74, 0.28)
 		var width := 1.5
 		var emphasized := false
-
 		if _history_edges.has(key):
 			color = Color(0.28, 0.60, 0.68, 0.36)
 			width = 1.7
@@ -754,7 +800,6 @@ func _draw() -> void:
 			color = Color(0.72, 0.45, 1.0, 0.98)
 			width = 3.5
 			emphasized = true
-
 		var average_scale := (_button_scale(from_seed) + _button_scale(to_seed)) * 0.5
 		draw_line(p1, p2, Color(0.035, 0.075, 0.16, 0.88), (width + 3.0) * average_scale, true)
 		draw_line(p1, p2, color, width * average_scale, true)
@@ -762,27 +807,6 @@ func _draw() -> void:
 			var speed := LINK_SIGNAL_PRIMARY_SPEED if _primary_edges.has(key) or _goal_edges.has(key) else LINK_SIGNAL_SECONDARY_SPEED
 			var pulse_t := fmod(_phase * speed + float(abs(key.hash()) % 100) / 100.0, 1.0)
 			_draw_signal_packet(p1, p2, pulse_t, Color(color.r, color.g, color.b, minf(0.86, color.a + 0.06)), average_scale)
-
-	# VFX are rendered by the chart canvas before its Button children, so the animated
-	# sprites stay behind every card and never cover names, rank labels or status text.
-	if _buttons.has(_current_seed):
-		_draw_card_vfx(
-			_current_seed,
-			CURRENT_FORM_VFX,
-			CURRENT_VFX_FPS,
-			Vector4(24.0, 56.0, 24.0, 18.0),
-			Color(1.0, 0.88, 0.48, 0.62),
-			0.0
-		)
-	if _selected_seed != _current_seed and _buttons.has(_selected_seed):
-		_draw_card_vfx(
-			_selected_seed,
-			SELECTED_FORM_VFX,
-			SELECTED_VFX_FPS,
-			Vector4(18.0, 34.0, 18.0, 20.0),
-			Color(0.58, 0.90, 1.0, 0.44),
-			0.11
-		)
 
 
 func _draw_signal_packet(p1: Vector2, p2: Vector2, t: float, color: Color, scale_factor: float) -> void:
@@ -800,36 +824,6 @@ func _draw_signal_packet(p1: Vector2, p2: Vector2, t: float, color: Color, scale
 		center - direction * half_length + normal * half_width,
 	])
 	draw_colored_polygon(points, color)
-
-
-func _draw_card_vfx(seed: String, texture: Texture2D, fps: float, margins: Vector4, tint: Color, phase_offset: float) -> void:
-	var button := _buttons.get(seed) as Button
-	if button == null or texture == null or fps <= 0.0:
-		return
-
-	var frame_count := VFX_COLUMNS * VFX_ROWS
-	if frame_count <= 0:
-		return
-	var frame := int(floor((_phase + phase_offset) * fps)) % frame_count
-	var column := frame % VFX_COLUMNS
-	var row := int(frame / VFX_COLUMNS)
-	var frame_size := Vector2(
-		float(texture.get_width()) / float(VFX_COLUMNS),
-		float(texture.get_height()) / float(VFX_ROWS)
-	)
-	var source := Rect2(Vector2(float(column), float(row)) * frame_size, frame_size)
-
-	var scale_factor := _button_scale(seed)
-	var card_rect := Rect2(button.position, NODE_SIZE * scale_factor)
-	var scaled_margins := margins * scale_factor
-	var destination := Rect2(
-		card_rect.position - Vector2(scaled_margins.x, scaled_margins.y),
-		card_rect.size + Vector2(
-			scaled_margins.x + scaled_margins.z,
-			scaled_margins.y + scaled_margins.w
-		)
-	)
-	draw_texture_rect_region(texture, destination, source, tint)
 
 
 func _button_screen_center(seed: String) -> Vector2:
