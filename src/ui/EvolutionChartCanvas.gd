@@ -11,6 +11,7 @@ const LINK_SIGNAL_PRIMARY_SPEED := 0.10
 const LINK_SIGNAL_SECONDARY_SPEED := 0.075
 const CURRENT_FLAME_SPEED := 0.075
 const SELECTED_FLAME_SPEED := 0.060
+const NAVIGATION_TWEEN_DURATION := 0.18
 
 var _initializing_chart := false
 var _ignore_center_requests := false
@@ -20,12 +21,20 @@ var _focus_bridge_path: Array[String] = []
 var _focus_bridge_edges: Dictionary = {}
 var _branch_lanes: Dictionary = {}
 var _focus_lane := 0
+var _layout_tween: Tween = null
 
 # Performance indexes. The base canvas resolves neighbors by scanning every edge;
 # doing that repeatedly inside a BFS is noticeably expensive in Web builds. Build
 # adjacency and the shortest-path tree to the current form once per chart instead.
 var _adjacency: Dictionary = {}
+var _adjacency_lookup: Dictionary = {}
 var _bridge_parent: Dictionary = {}
+
+# Field previews can require a resource load the first time a form is revealed.
+# Resolve paths once and request the next-click frontier in the background so the
+# input handler never does avoidable disk/PCK work.
+var _visual_key_cache: Dictionary = {}
+var _prefetched_field_resources: Dictionary = {}
 
 # Reuse already-created cards while this chart is open. Hidden Digimon previews are
 # disabled, so returning to a branch is instant without keeping their animations hot.
@@ -35,6 +44,9 @@ var _button_cache: Dictionary = {}
 func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionary, goal_seed: String = "", goal_edges: Dictionary = {}) -> void:
 	_initializing_chart = true
 	_ignore_center_requests = true
+	if _layout_tween != null and _layout_tween.is_valid():
+		_layout_tween.kill()
+	_layout_tween = null
 	_clear_button_cache()
 	_primary_route.clear()
 	_primary_edges.clear()
@@ -42,7 +54,10 @@ func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionar
 	_focus_bridge_edges.clear()
 	_branch_lanes.clear()
 	_adjacency.clear()
+	_adjacency_lookup.clear()
 	_bridge_parent.clear()
+	_visual_key_cache.clear()
+	_prefetched_field_resources.clear()
 	_focus_lane = 0
 
 	super.set_graph(graph, current_seed, history_edges, goal_seed, goal_edges)
@@ -78,6 +93,7 @@ func _clear_button_cache() -> void:
 
 func _build_adjacency_index() -> void:
 	_adjacency.clear()
+	_adjacency_lookup.clear()
 	for edge: Dictionary in _edges:
 		var from_seed := String(edge.get("from", ""))
 		var to_seed := String(edge.get("to", ""))
@@ -85,14 +101,18 @@ func _build_adjacency_index() -> void:
 			continue
 		if not _adjacency.has(from_seed):
 			_adjacency[from_seed] = []
+			_adjacency_lookup[from_seed] = {}
 		if not _adjacency.has(to_seed):
 			_adjacency[to_seed] = []
+			_adjacency_lookup[to_seed] = {}
 		var from_neighbors := _adjacency[from_seed] as Array
 		var to_neighbors := _adjacency[to_seed] as Array
 		if not from_neighbors.has(to_seed):
 			from_neighbors.append(to_seed)
 		if not to_neighbors.has(from_seed):
 			to_neighbors.append(from_seed)
+		(_adjacency_lookup[from_seed] as Dictionary)[to_seed] = true
+		(_adjacency_lookup[to_seed] as Dictionary)[from_seed] = true
 
 	for raw_seed in _adjacency.keys():
 		var neighbors := _adjacency[raw_seed] as Array
@@ -112,9 +132,11 @@ func _build_bridge_index() -> void:
 	if _current_seed.is_empty() or not _nodes_by_seed.has(_current_seed):
 		return
 	var queue: Array[String] = [_current_seed]
+	var head := 0
 	_bridge_parent[_current_seed] = ""
-	while not queue.is_empty():
-		var cursor: String = String(queue.pop_front())
+	while head < queue.size():
+		var cursor := queue[head]
+		head += 1
 		for neighbor: String in _neighbors(cursor):
 			if _bridge_parent.has(neighbor):
 				continue
@@ -129,6 +151,46 @@ func _neighbors(seed: String) -> Array[String]:
 	for raw_neighbor in _adjacency[seed] as Array:
 		result.append(String(raw_neighbor))
 	return result
+
+
+func _are_neighbors(a: String, b: String) -> bool:
+	if _adjacency_lookup.has(a):
+		return (_adjacency_lookup[a] as Dictionary).has(b)
+	return super._are_neighbors(a, b)
+
+
+func _resolve_field_visual_key(species_name: String) -> String:
+	var cache_key := species_name.to_lower().strip_edges()
+	if _visual_key_cache.has(cache_key):
+		return String(_visual_key_cache[cache_key])
+	var resolved := super._resolve_field_visual_key(species_name)
+	_visual_key_cache[cache_key] = resolved
+	return resolved
+
+
+func _prefetch_click_frontier(visible_seeds: Array[String]) -> void:
+	if not is_inside_tree():
+		return
+	var frontier: Dictionary = {}
+	for seed: String in visible_seeds:
+		for neighbor: String in _neighbors(seed):
+			frontier[neighbor] = true
+
+	for raw_seed in frontier.keys():
+		var seed := String(raw_seed)
+		if _button_cache.has(seed):
+			continue
+		var node := _nodes_by_seed.get(seed, {}) as Dictionary
+		if node.is_empty():
+			continue
+		var visual_key := _resolve_field_visual_key(String(node.get("name", "")))
+		if visual_key.is_empty():
+			continue
+		var path := "res://assets/resources/%s.tres" % visual_key
+		if _prefetched_field_resources.has(path) or not ResourceLoader.exists(path):
+			continue
+		_prefetched_field_resources[path] = true
+		ResourceLoader.load_threaded_request(path)
 
 
 func center_on(seed: String) -> void:
@@ -178,16 +240,58 @@ func _apply_fit_transform() -> void:
 	_has_centered = true
 
 
-func _animate_relayout(_new_seeds: Array[String], _source_seed: String) -> void:
-	# Navigation should react on the same frame as the click. The previous tween
-	# intentionally delayed the final state and amplified the cost of creating new
-	# preview cards in Web builds. Framing and card positions now update atomically.
+func _animate_relayout(new_seeds: Array[String], source_seed: String) -> void:
 	_apply_fit_transform()
+	var center := size * 0.5
+
+	if _layout_tween != null and _layout_tween.is_valid():
+		_layout_tween.kill()
+	_layout_tween = null
+
+	var source_position := center
+	if _buttons.has(source_seed):
+		var source_button := _buttons[source_seed] as Button
+		if source_button != null:
+			source_position = source_button.position
+
+	var new_lookup: Dictionary = {}
+	for seed: String in new_seeds:
+		new_lookup[seed] = true
+
+	if _initializing_chart:
+		for raw_seed in _buttons.keys():
+			var seed := String(raw_seed)
+			var button := _buttons[seed] as Button
+			if button == null:
+				continue
+			var base := Vector2(_base_positions.get(seed, Vector2.ZERO))
+			button.position = center + (base + _pan) * _zoom
+			button.scale = Vector2.ONE * _zoom
+		queue_redraw()
+		return
+
+	# One shared tween keeps movement smooth without delaying state changes. New
+	# choices exist immediately on the click frame and simply glide out from the
+	# selected card; rapid clicks kill the old tween and continue from the exact
+	# current positions instead of queueing animations.
+	_layout_tween = create_tween()
+	_layout_tween.set_parallel(true)
 	for raw_seed in _buttons.keys():
-		var button := _buttons[raw_seed] as Button
-		if button != null:
-			button.modulate.a = 1.0
-	_refresh_layout()
+		var seed := String(raw_seed)
+		var button := _buttons[seed] as Button
+		if button == null:
+			continue
+		var base := Vector2(_base_positions.get(seed, Vector2.ZERO))
+		var target_position := center + (base + _pan) * _zoom
+		var target_alpha := button.modulate.a
+		if new_lookup.has(seed):
+			button.position = source_position
+			button.scale = Vector2.ONE * (_zoom * 0.88)
+			button.modulate.a = 0.0
+			_layout_tween.tween_property(button, "modulate:a", target_alpha, NAVIGATION_TWEEN_DURATION * 0.72).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_layout_tween.tween_property(button, "position", target_position, NAVIGATION_TWEEN_DURATION).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_layout_tween.tween_property(button, "scale", Vector2.ONE * _zoom, NAVIGATION_TWEEN_DURATION).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	queue_redraw()
 
 
 func _activate_node(seed: String) -> void:
@@ -240,12 +344,17 @@ func _rebuild_visible_nodes(source_seed: String) -> void:
 		else:
 			button.process_mode = Node.PROCESS_MODE_INHERIT
 			button.show()
+			new_seeds.append(seed)
 		_buttons[seed] = button
 
 	_refresh_node_styles()
 	_animate_relayout(new_seeds, source_seed)
 	_configure_focus_neighbors()
 	queue_redraw()
+
+	# This work is for the NEXT click, so it intentionally starts after the current
+	# frame has already been presented.
+	call_deferred("_prefetch_click_frontier", visible_seeds.duplicate())
 
 
 func _visible_seeds_for_state() -> Array[String]:
@@ -298,8 +407,10 @@ func _find_connection_path(start_seed: String, target_seed: String) -> Array[Str
 	# Generic fallback for callers that request another target.
 	var queue: Array[String] = [start_seed]
 	var previous: Dictionary = {start_seed: ""}
-	while not queue.is_empty():
-		var cursor: String = String(queue.pop_front())
+	var head := 0
+	while head < queue.size():
+		var cursor := queue[head]
+		head += 1
 		for neighbor: String in _neighbors(cursor):
 			if previous.has(neighbor):
 				continue
