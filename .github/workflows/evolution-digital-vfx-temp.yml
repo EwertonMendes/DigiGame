@@ -1,0 +1,95 @@
+name: Evolution Chart digital VFX refinement (temporary)
+
+on:
+  push:
+    branches:
+      - feat/focused-evolution-chart
+    paths:
+      - .github/workflows/evolution-digital-vfx-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/focused-evolution-chart
+          fetch-depth: 0
+
+      - name: Replace Brackeys card VFX with digital data particles
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/ui/EvolutionChartCanvas.gd')
+          text = path.read_text(encoding='utf-8')
+
+          old_constants = '''const LINK_SIGNAL_PRIMARY_SPEED := 0.10
+          const LINK_SIGNAL_SECONDARY_SPEED := 0.075
+          const CURRENT_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/dithered_fire_6x5.png")
+          const SELECTED_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/lightstreaks_6x5.png")
+          const CARD_VFX_SHADER: Shader = preload("res://shaders/evolution_chart_card_vfx.gdshader")
+          const VFX_COLUMNS := 6
+          const VFX_ROWS := 5
+          const CURRENT_VFX_FPS := 10.0
+          const SELECTED_VFX_FPS := 8.0
+          const NAVIGATION_TWEEN_DURATION := 0.18'''
+          new_constants = '''const LINK_SIGNAL_PRIMARY_SPEED := 0.10
+          const LINK_SIGNAL_SECONDARY_SPEED := 0.075
+          const DIGITAL_PARTICLE_CYCLE := 1.55
+          const DIGITAL_PARTICLE_MIN_RISE := 28.0
+          const DIGITAL_PARTICLE_MAX_RISE := 58.0
+          const CURRENT_DIGITAL_PARTICLES := 22
+          const SELECTED_DIGITAL_PARTICLES := 14
+          const NAVIGATION_TWEEN_DURATION := 0.18'''
+          if old_constants not in text:
+              raise SystemExit('Expected Brackeys VFX constants block was not found')
+          text = text.replace(old_constants, new_constants, 1)
+
+          pattern = re.compile(
+              r'\n# Only two VFX nodes exist for the whole chart\..*?\n\nfunc set_graph',
+              re.S,
+          )
+          text, count = pattern.subn('\n\nfunc set_graph', text, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected one Brackeys VFX runtime block, removed {count}')
+
+          draw_anchor = '''\t\tif emphasized:\n\t\t\tvar speed := LINK_SIGNAL_PRIMARY_SPEED if _primary_edges.has(key) or _goal_edges.has(key) else LINK_SIGNAL_SECONDARY_SPEED\n\t\t\tvar pulse_t := fmod(_phase * speed + float(abs(key.hash()) % 100) / 100.0, 1.0)\n\t\t\t_draw_signal_packet(p1, p2, pulse_t, Color(color.r, color.g, color.b, minf(0.86, color.a + 0.06)), average_scale)\n'''
+          digital_calls = draw_anchor + '''\n\t# Digital data pixels originate just inside the card's top edge. Because the\n\t# canvas renders before Button children, the first part of each particle's life\n\t# is naturally masked by the card and it appears to dissolve out of the frame.\n\t# This avoids a rectangular emitter, texture atlas silhouette, or flame-like look.\n\tif _buttons.has(_current_seed):\n\t\t_draw_digital_card_particles(\n\t\t\t_current_seed,\n\t\t\tColor(1.0, 0.72, 0.22, 1.0),\n\t\t\tCURRENT_DIGITAL_PARTICLES,\n\t\t\t0.0,\n\t\t\t1.0\n\t\t)\n\tif _selected_seed != _current_seed and _buttons.has(_selected_seed):\n\t\t_draw_digital_card_particles(\n\t\t\t_selected_seed,\n\t\t\tColor(0.34, 0.80, 1.0, 1.0),\n\t\t\tSELECTED_DIGITAL_PARTICLES,\n\t\t\t0.37,\n\t\t\t0.78\n\t\t)\n'''
+          if draw_anchor not in text:
+              raise SystemExit('Expected _draw edge anchor was not found')
+          text = text.replace(draw_anchor, digital_calls, 1)
+
+          helper_anchor = '''\n\nfunc _draw_signal_packet(p1: Vector2, p2: Vector2, t: float, color: Color, scale_factor: float) -> void:\n'''
+          helpers = '''\n\nfunc _digital_noise01(value: float) -> float:\n\treturn fposmod(sin(value * 12.9898 + 78.233) * 43758.5453, 1.0)\n\n\nfunc _draw_digital_card_particles(\n\tseed: String,\n\tbase_color: Color,\n\tparticle_count: int,\n\tphase_offset: float,\n\tintensity: float\n) -> void:\n\tvar button := _buttons.get(seed) as Button\n\tif button == null or not button.visible or particle_count <= 0:\n\t\treturn\n\n\tvar scale_factor := _button_scale(seed)\n\tvar card_size := NODE_SIZE * scale_factor\n\tvar card_left := button.position.x + 13.0 * scale_factor\n\tvar card_right := button.position.x + card_size.x - 13.0 * scale_factor\n\tvar card_top := button.position.y\n\tvar seed_value := float(abs(seed.hash()) % 100000)\n\n\tfor index in range(particle_count):\n\t\tvar index_value := float(index + 1)\n\t\tvar x_noise := _digital_noise01(seed_value + index_value * 17.13)\n\t\tvar phase_noise := _digital_noise01(seed_value + index_value * 31.71)\n\t\tvar size_noise := _digital_noise01(seed_value + index_value * 47.29)\n\t\tvar rise_noise := _digital_noise01(seed_value + index_value * 71.91)\n\t\tvar drift_noise := _digital_noise01(seed_value + index_value * 89.53)\n\t\tvar alpha_noise := _digital_noise01(seed_value + index_value * 113.17)\n\n\t\tvar cycle := DIGITAL_PARTICLE_CYCLE * lerpf(0.82, 1.22, rise_noise)\n\t\tvar age := fposmod(_phase + phase_offset + phase_noise * cycle, cycle) / cycle\n\t\tvar fade_in := smoothstep(0.0, 0.12, age)\n\t\tvar fade_out := 1.0 - smoothstep(0.56, 1.0, age)\n\t\tvar alpha := fade_in * fade_out * intensity * lerpf(0.48, 0.92, alpha_noise)\n\t\tif alpha <= 0.015:\n\t\t\tcontinue\n\n\t\t# Spawn a few pixels inside the top of the card. The Button covers this part,\n\t\t# so pixels seem to detach from the card instead of appearing from a hard line.\n\t\tvar hidden_depth := lerpf(3.0, 13.0, _digital_noise01(seed_value + index_value * 131.7)) * scale_factor\n\t\tvar rise := lerpf(DIGITAL_PARTICLE_MIN_RISE, DIGITAL_PARTICLE_MAX_RISE, rise_noise) * scale_factor\n\t\tvar drift := (drift_noise - 0.5) * 14.0 * scale_factor * age\n\t\tvar position := Vector2(\n\t\t\tlerpf(card_left, card_right, x_noise) + drift,\n\t\t\tcard_top + hidden_depth - rise * age\n\t\t)\n\n\t\tvar pixel_size := lerpf(2.0, 4.4, size_noise) * scale_factor\n\t\tvar pixel_rect := Rect2(\n\t\t\tposition - Vector2.ONE * pixel_size * 0.5,\n\t\t\tVector2.ONE * pixel_size\n\t\t)\n\t\tdraw_rect(pixel_rect, Color(base_color.r, base_color.g, base_color.b, alpha), true)\n\n\t\t# Roughly one third of the particles leave a smaller fading data-bit behind.\n\t\t# It creates a digital stream without turning the effect into smoke or sparks.\n\t\tif int(floor(size_noise * 10.0)) % 3 == 0 and age > 0.16:\n\t\t\tvar trail_size := maxf(1.0 * scale_factor, pixel_size * 0.52)\n\t\t\tvar trail_position := position + Vector2(0.0, lerpf(5.0, 10.0, rise_noise) * scale_factor)\n\t\t\tvar trail_alpha := alpha * 0.28\n\t\t\tdraw_rect(\n\t\t\t\tRect2(trail_position - Vector2.ONE * trail_size * 0.5, Vector2.ONE * trail_size),\n\t\t\t\tColor(base_color.r, base_color.g, base_color.b, trail_alpha),\n\t\t\t\ttrue\n\t\t\t)\n'''
+          if helper_anchor not in text:
+              raise SystemExit('Expected signal-packet helper anchor was not found')
+          text = text.replace(helper_anchor, helpers + helper_anchor, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git rm -f shaders/evolution_chart_card_vfx.gdshader
+          if [ -d assets/vfx/brackeys ]; then
+            git rm -r assets/vfx/brackeys
+          fi
+
+          git diff --check
+          git diff --stat
+
+      - name: Commit digital VFX pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/ui/EvolutionChartCanvas.gd shaders assets/vfx || true
+          git commit -m "fix: replace Evolution Chart effects with digital data pixels"
+          git push origin HEAD:feat/focused-evolution-chart
