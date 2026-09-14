@@ -4,15 +4,16 @@
     "In-Training",
     "Rookie"
   ],
-  "count": 87,
+  "count": 88,
   "counts_by_rank": {
     "Fresh": 3,
     "In-Training": 24,
-    "Rookie": 60
+    "Rookie": 61
   },
   "field_sources": {
     "official_ds": 82,
-    "community_ds_style_exception": 5
+    "community_ds_style_exception": 5,
+    "project_original": 1
   },
   "species": [
     {
@@ -846,6 +847,23 @@
       "field_sprite": "res://assets/characters/gotsumon/field.png",
       "field_metadata": "res://assets/characters/gotsumon/field.json",
       "field_source_kind": "official_ds",
+      "field_frame_count": 12
+    },
+    {
+      "name": "Grass Agumon",
+      "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
+      "rank": "Rookie",
+      "attribute": "Data",
+      "database_image": "/assets/digimons/GrassAgumon.png",
+      "portrait_key": "grassagumon",
+      "portrait_source": "res://assets/characters/grassagumon/source/sheet.png",
+      "portrait_strip": "res://assets/characters/grassagumon/portrait_frames.png",
+      "resource": "res://assets/resources/grass agumon.tres",
+      "visual_mode": "directional_12",
+      "frame_count": 3,
+      "field_sprite": "res://assets/characters/grassagumon/field.png",
+      "field_metadata": "res://assets/characters/grassagumon/field.json",
+      "field_source_kind": "project_original",
       "field_frame_count": 12
     },
     {

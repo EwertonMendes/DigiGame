@@ -28,6 +28,7 @@ from PIL import Image
 from scipy import ndimage
 
 EARLY_RANKS = ("Fresh", "In-Training", "Rookie")
+PROJECT_ORIGINAL_MANIFEST = Path("database/project-original-playables.json")
 DIRECTION_ORDER = ("down_left", "down_right", "up_left", "up_right")
 FRAME_COUNT = 12
 FRAMES_PER_DIRECTION = 3
@@ -89,6 +90,17 @@ def resource_filename(name: str) -> str:
     return f"{name.strip().lower()}.tres"
 
 
+def project_original_names() -> set[str]:
+    if not PROJECT_ORIGINAL_MANIFEST.is_file():
+        return set()
+    payload = json.loads(PROJECT_ORIGINAL_MANIFEST.read_text(encoding="utf-8"))
+    return {
+        str(item.get("name", ""))
+        for item in payload.get("species", [])
+        if isinstance(item, dict) and str(item.get("name", ""))
+    }
+
+
 def fetch(url: str) -> bytes:
     result = subprocess.run(
         ["curl", "-fsSL", "--retry", "3", "-A", "Mozilla/5.0", url],
@@ -116,7 +128,8 @@ def load_wtw_archive() -> zipfile.ZipFile:
 
 
 def load_early_database(path: Path) -> list[dict[str, Any]]:
-    rows = [entry for entry in json.loads(path.read_text(encoding="utf-8")) if str(entry.get("rank", "")) in EARLY_RANKS]
+    project_original = project_original_names()
+    rows = [entry for entry in json.loads(path.read_text(encoding="utf-8")) if str(entry.get("rank", "")) in EARLY_RANKS and str(entry.get("name", "")) not in project_original]
     rows.sort(key=lambda entry: (EARLY_RANKS.index(str(entry.get("rank"))), str(entry.get("name", ""))))
     if len(rows) != 87:
         raise RuntimeError(f"Expected 87 early-rank database rows, got {len(rows)}")
@@ -380,11 +393,17 @@ def main() -> None:
         built.append(row)
         print(f"field {index:02d}/87: {name} -> {metadata['source_kind']}")
 
+    for project_name in sorted(project_original_names()):
+        row = old_rows.get(project_name)
+        if row is None:
+            raise RuntimeError(f"Project-original early-rank row is missing from manifest: {project_name}")
+        built.append(dict(row))
+
     payload = {
         "ranks": list(EARLY_RANKS),
         "count": len(built),
-        "counts_by_rank": {rank: sum(1 for entry in entries if str(entry.get("rank")) == rank) for rank in EARLY_RANKS},
-        "field_sources": {"official_ds": official_count, "community_ds_style_exception": exception_count},
+        "counts_by_rank": {rank: sum(1 for row in built if str(row.get("rank")) == rank) for rank in EARLY_RANKS},
+        "field_sources": {"official_ds": official_count, "community_ds_style_exception": exception_count, "project_original": sum(1 for row in built if str(row.get("field_source_kind", "")) == "project_original")},
         "species": built,
     }
     args.manifest.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

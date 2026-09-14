@@ -14,6 +14,7 @@ from pathlib import Path
 
 EARLY_AUDIT_PATH = Path("database/ds-full-rebuild-manifest.json")
 ADDITIONAL_AUDIT_PATH = Path("database/additional-ds-playables.json")
+PROJECT_ORIGINAL_AUDIT_PATH = Path("database/project-original-playables.json")
 REPORT_PATH = Path("database/ds-directional-resource-audit.json")
 RESOURCE_ROOT = Path("assets/resources")
 DEFAULT_LAYOUT = "directional_12"
@@ -48,6 +49,18 @@ def _additional_names() -> set[str]:
     return names
 
 
+def _project_original_names() -> set[str]:
+    if not PROJECT_ORIGINAL_AUDIT_PATH.exists():
+        return set()
+    data = json.loads(PROJECT_ORIGINAL_AUDIT_PATH.read_text(encoding="utf-8"))
+    if data.get("source_kind") != "project_original":
+        raise RuntimeError("Project-original manifest source kind is invalid")
+    names = _names(data.get("species"))
+    if int(data.get("count", -1)) != len(names):
+        raise RuntimeError("Project-original manifest count does not match its species")
+    return names
+
+
 def main() -> None:
     audit = json.loads(EARLY_AUDIT_PATH.read_text(encoding="utf-8"))
     if audit.get("canonical_reference") != "Agumon":
@@ -70,10 +83,11 @@ def main() -> None:
         raise RuntimeError(f"Expected 86 source-rebuilt early directional sprites, got {len(rebuilt)}")
 
     additional = _additional_names()
-    overlap = (preserved | rebuilt) & additional
+    project_original = _project_original_names()
+    overlap = ((preserved | rebuilt) & additional) | ((preserved | rebuilt | additional) & project_original)
     if overlap:
         raise RuntimeError("Directional species cannot be owned by two source pipelines: " + ", ".join(sorted(overlap)))
-    covered = preserved | rebuilt | additional
+    covered = preserved | rebuilt | additional | project_original
 
     directional: dict[str, dict[str, str]] = {}
     duplicate_names: dict[str, list[str]] = {}
@@ -92,7 +106,7 @@ def main() -> None:
         directional[display_name] = {
             "resource": str(path),
             "layout_source": "explicit" if _assignment(text, "sprite_layout") else "Digimon.gd default",
-            "coverage": "additional_ds" if display_name in additional else "early_ds",
+            "coverage": "project_original" if display_name in project_original else ("additional_ds" if display_name in additional else "early_ds"),
         }
 
     directional_names = set(directional)
@@ -105,6 +119,7 @@ def main() -> None:
         "preserved_resource_count": len(preserved),
         "source_rebuilt_resource_count": len(rebuilt),
         "additional_source_rebuilt_resource_count": len(additional),
+        "project_original_resource_count": len(project_original),
         "audited_resource_count": len(covered),
         "directional_resources": [{"name": name, **directional[name]} for name in sorted(directional)],
         "unknown_directional_resources": unknown,
@@ -116,7 +131,7 @@ def main() -> None:
     print(
         "directional source coverage: "
         f"runtime={len(directional_names)} early_preserved={len(preserved)} early_rebuilt={len(rebuilt)} "
-        f"additional={len(additional)} audited={len(covered)} unknown={len(unknown)} missing={len(missing)}"
+        f"additional={len(additional)} project_original={len(project_original)} audited={len(covered)} unknown={len(unknown)} missing={len(missing)}"
     )
     if len(directional_names) != len(covered):
         raise RuntimeError(f"Expected {len(covered)} covered runtime directional resources, got {len(directional_names)}")

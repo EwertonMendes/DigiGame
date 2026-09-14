@@ -481,6 +481,28 @@
     ]
   },
   {
+    "speciesSeed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
+    "species": "Grass Agumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "adhesive_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "guard_charge",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "speed_charge",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
     "speciesSeed": "67307a7e-681f-4b3b-a71e-16baae4ea11f",
     "species": "Betamon",
     "rank": "Rookie",
