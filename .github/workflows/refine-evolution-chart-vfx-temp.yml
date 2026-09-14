@@ -1,0 +1,261 @@
+name: Refine Evolution Chart VFX integration (temporary)
+
+on:
+  push:
+    branches:
+      - feat/focused-evolution-chart
+    paths:
+      - .github/workflows/refine-evolution-chart-vfx-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/focused-evolution-chart
+          fetch-depth: 0
+
+      - name: Integrate card VFX without rectangular atlas silhouettes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/ui/EvolutionChartCanvas.gd')
+          text = path.read_text(encoding='utf-8')
+
+          old_constants = '''const LINK_SIGNAL_PRIMARY_SPEED := 0.10
+          const LINK_SIGNAL_SECONDARY_SPEED := 0.075
+          const CURRENT_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/dithered_fire_6x5.png")
+          const SELECTED_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/lightstreaks_6x5.png")
+          const VFX_COLUMNS := 6
+          const VFX_ROWS := 5
+          const CURRENT_VFX_FPS := 10.0
+          const SELECTED_VFX_FPS := 8.0
+          const NAVIGATION_TWEEN_DURATION := 0.18'''
+          new_constants = '''const LINK_SIGNAL_PRIMARY_SPEED := 0.10
+          const LINK_SIGNAL_SECONDARY_SPEED := 0.075
+          const CURRENT_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/dithered_fire_6x5.png")
+          const SELECTED_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/lightstreaks_6x5.png")
+          const CARD_VFX_SHADER: Shader = preload("res://shaders/evolution_chart_card_vfx.gdshader")
+          const VFX_COLUMNS := 6
+          const VFX_ROWS := 5
+          const CURRENT_VFX_FPS := 10.0
+          const SELECTED_VFX_FPS := 8.0
+          const NAVIGATION_TWEEN_DURATION := 0.18'''
+          if old_constants not in text:
+              raise SystemExit('Expected EvolutionChartCanvas VFX constants block was not found')
+          text = text.replace(old_constants, new_constants, 1)
+
+          old_cache = '''var _button_cache: Dictionary = {}\n\n\nfunc set_graph'''
+          new_cache = '''var _button_cache: Dictionary = {}
+
+# The atlas effects are real CanvasItems instead of being stretched through _draw().
+# This gives each one a compositing shader and precise placement relative to the card,
+# while keeping only two tiny visual nodes alive for the entire chart.
+var _current_vfx_sprite: Sprite2D = null
+var _selected_vfx_sprite: Sprite2D = null
+var _current_vfx_material: ShaderMaterial = null
+var _selected_vfx_material: ShaderMaterial = null
+
+
+func _ready() -> void:
+\tsuper._ready()
+\t_setup_card_vfx()
+
+
+func _process(delta: float) -> void:
+\tsuper._process(delta)
+\t_sync_card_vfx()
+
+
+func _setup_card_vfx() -> void:
+\t_current_vfx_material = _make_card_vfx_material(
+\t\tColor(1.0, 0.78, 0.28, 0.82),
+\t\t0.38,
+\t\t0.18,
+\t\t0.12,
+\t\t0.82
+\t)
+\t_selected_vfx_material = _make_card_vfx_material(
+\t\tColor(0.40, 0.86, 1.0, 0.70),
+\t\t0.28,
+\t\t0.17,
+\t\t0.16,
+\t\t0.62
+\t)
+
+\t_current_vfx_sprite = _make_card_vfx_sprite(CURRENT_FORM_VFX, _current_vfx_material)
+\t_selected_vfx_sprite = _make_card_vfx_sprite(SELECTED_FORM_VFX, _selected_vfx_material)
+\tadd_child(_current_vfx_sprite)
+\tadd_child(_selected_vfx_sprite)
+\t# VFX are the first children. Dynamically-created Digimon buttons are appended
+\t# afterwards, so the effect stays behind the card without using negative z-index.
+\tmove_child(_selected_vfx_sprite, 0)
+\tmove_child(_current_vfx_sprite, 0)
+\t_sync_card_vfx()
+
+
+func _make_card_vfx_material(tint: Color, cutoff: float, softness: float, edge_fade: float, intensity: float) -> ShaderMaterial:
+\tvar material := ShaderMaterial.new()
+\tmaterial.shader = CARD_VFX_SHADER
+\tmaterial.set_shader_parameter("tint", tint)
+\tmaterial.set_shader_parameter("alpha_cutoff", cutoff)
+\tmaterial.set_shader_parameter("alpha_softness", softness)
+\tmaterial.set_shader_parameter("edge_fade", edge_fade)
+\tmaterial.set_shader_parameter("intensity", intensity)
+\tmaterial.set_shader_parameter("frame_uv_size", Vector2(1.0 / float(VFX_COLUMNS), 1.0 / float(VFX_ROWS)))
+\treturn material
+
+
+func _make_card_vfx_sprite(texture: Texture2D, material: ShaderMaterial) -> Sprite2D:
+\tvar sprite := Sprite2D.new()
+\tsprite.texture = texture
+\tsprite.hframes = VFX_COLUMNS
+\tsprite.vframes = VFX_ROWS
+\tsprite.centered = true
+\tsprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+\tsprite.material = material
+\tsprite.visible = false
+\treturn sprite
+
+
+func _sync_card_vfx() -> void:
+\t_sync_one_card_vfx(
+\t\t_current_vfx_sprite,
+\t\t_current_vfx_material,
+\t\t_current_seed,
+\t\tCURRENT_VFX_FPS,
+\t\tVector2(1.04, 0.64),
+\t\ttrue,
+\t\t0.0
+\t)
+
+\tvar selected_seed := _selected_seed if _selected_seed != _current_seed else ""
+\t_sync_one_card_vfx(
+\t\t_selected_vfx_sprite,
+\t\t_selected_vfx_material,
+\t\tselected_seed,
+\t\tSELECTED_VFX_FPS,
+\t\tVector2(1.14, 0.68),
+\t\tfalse,
+\t\t0.11
+\t)
+
+
+func _sync_one_card_vfx(
+\tsprite: Sprite2D,
+\tmaterial: ShaderMaterial,
+\tseed: String,
+\tfps: float,
+\tsize_factor: Vector2,
+\tanchor_to_card_top: bool,
+\tphase_offset: float
+) -> void:
+\tif sprite == null or material == null or seed.is_empty() or not _buttons.has(seed):
+\t\tif sprite != null:
+\t\t\tsprite.visible = false
+\t\treturn
+
+\tvar button := _buttons.get(seed) as Button
+\tif button == null or not button.visible:
+\t\tsprite.visible = false
+\t\treturn
+
+\tvar frame_count := VFX_COLUMNS * VFX_ROWS
+\tvar frame := int(floor((_phase + phase_offset) * fps)) % frame_count
+\tsprite.frame = frame
+\tvar column := frame % VFX_COLUMNS
+\tvar row := int(frame / VFX_COLUMNS)
+\tmaterial.set_shader_parameter(
+\t\t"frame_uv_offset",
+\t\tVector2(float(column) / float(VFX_COLUMNS), float(row) / float(VFX_ROWS))
+\t)
+
+\tvar card_scale := _button_scale(seed)
+\tvar card_size := NODE_SIZE * card_scale
+\tvar target_size := card_size * size_factor
+\tvar frame_size := Vector2(
+\t\tfloat(sprite.texture.get_width()) / float(VFX_COLUMNS),
+\t\tfloat(sprite.texture.get_height()) / float(VFX_ROWS)
+\t)
+\tsprite.scale = Vector2(
+\t\ttarget_size.x / maxf(1.0, frame_size.x),
+\t\ttarget_size.y / maxf(1.0, frame_size.y)
+\t)
+
+\tvar card_center := button.position + card_size * 0.5
+\tif anchor_to_card_top:
+\t\t# Dithered Fire now behaves like an accent growing from the top edge of the
+\t\t# CURRENT FORM card. It no longer paints a large translucent rectangle through
+\t\t# the body of the card.
+\t\tsprite.position = Vector2(
+\t\t\tcard_center.x,
+\t\t\tbutton.position.y + 5.0 * card_scale - target_size.y * 0.5
+\t\t)
+\telse:
+\t\t# Light Streaks hugs the selected card instead of spanning a large horizontal
+\t\t# slab. Most of the animation remains hidden by the card, leaving a soft moving
+\t\t# accent at its edges.
+\t\tsprite.position = card_center + Vector2(0.0, -2.0 * card_scale)
+
+\tsprite.visible = true
+
+
+func set_graph'''
+          if old_cache not in text:
+              raise SystemExit('Expected button-cache insertion point was not found')
+          text = text.replace(old_cache, new_cache, 1)
+
+          old_draw_calls = '''\t# VFX are rendered by the chart canvas before its Button children, so the animated
+          \t# sprites stay behind every card and never cover names, rank labels or status text.
+          \tif _buttons.has(_current_seed):
+          \t\t_draw_card_vfx(
+          \t\t\t_current_seed,
+          \t\t\tCURRENT_FORM_VFX,
+          \t\t\tCURRENT_VFX_FPS,
+          \t\t\tVector4(24.0, 56.0, 24.0, 18.0),
+          \t\t\tColor(1.0, 0.88, 0.48, 0.62),
+          \t\t\t0.0
+          \t\t)
+          \tif _selected_seed != _current_seed and _buttons.has(_selected_seed):
+          \t\t_draw_card_vfx(
+          \t\t\t_selected_seed,
+          \t\t\tSELECTED_FORM_VFX,
+          \t\t\tSELECTED_VFX_FPS,
+          \t\t\tVector4(18.0, 34.0, 18.0, 20.0),
+          \t\t\tColor(0.58, 0.90, 1.0, 0.44),
+          \t\t\t0.11
+          \t\t)
+          \n'''
+          if old_draw_calls not in text:
+              raise SystemExit('Expected old _draw card VFX calls were not found')
+          text = text.replace(old_draw_calls, '', 1)
+
+          pattern = re.compile(r'\n\nfunc _draw_card_vfx\(.*?\n\nfunc _button_screen_center', re.S)
+          text, count = pattern.subn('\n\nfunc _button_screen_center', text, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected one _draw_card_vfx function, replaced {count}')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+          git diff -- src/ui/EvolutionChartCanvas.gd shaders/evolution_chart_card_vfx.gdshader
+
+      - name: Commit refinement
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/ui/EvolutionChartCanvas.gd
+          git commit -m "fix: integrate Evolution Chart card VFX cleanly"
+          git push origin HEAD:feat/focused-evolution-chart
