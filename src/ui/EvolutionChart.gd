@@ -7,6 +7,14 @@ const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
 
 var _content_root: Control = null
 
+# Navigation data is immutable while the chart is open for the same Digimon state.
+# Build it once when the graph is rebuilt, then every click is dictionary lookup
+# instead of another database traversal/BFS.
+var _path_cache: Dictionary = {}
+var _direction_cache: Dictionary = {}
+var _direct_route_cache: Dictionary = {}
+var _detail_refresh_generation := 0
+
 
 func _build() -> void:
 	_backdrop = ColorRect.new()
@@ -102,6 +110,123 @@ func _build() -> void:
 	add_child(_announcement)
 
 
+func _rebuild_graph() -> void:
+	if _instance == null or _database == null:
+		return
+
+	_graph = _graph_service.build_connected_graph(_instance.species_seed, _database)
+	_rebuild_navigation_cache()
+
+	var history_edges := _graph_service.history_edge_keys(_instance.evolution_history)
+	_goal_path.clear()
+	var goal_edges: Dictionary = {}
+	if not _instance.evolution_goal_seed.is_empty() and _database.has_seed(_instance.evolution_goal_seed):
+		_goal_path = _cached_path(_instance.evolution_goal_seed)
+		goal_edges = _graph_service.path_edge_keys(_goal_path)
+	_canvas.set_graph(_graph, _instance.species_seed, history_edges, _instance.evolution_goal_seed, goal_edges)
+
+
+func _rebuild_navigation_cache() -> void:
+	_path_cache.clear()
+	_direction_cache.clear()
+	_direct_route_cache.clear()
+	if _instance == null:
+		return
+
+	var adjacency: Dictionary = {}
+	var raw_nodes = _graph.get("nodes", [])
+	if raw_nodes is Array:
+		for raw_node in raw_nodes:
+			if not raw_node is Dictionary:
+				continue
+			var seed := String((raw_node as Dictionary).get("seed", ""))
+			if not seed.is_empty():
+				adjacency[seed] = []
+
+	var raw_edges = _graph.get("edges", [])
+	if raw_edges is Array:
+		for raw_edge in raw_edges:
+			if not raw_edge is Dictionary:
+				continue
+			var edge := raw_edge as Dictionary
+			var from_seed := String(edge.get("from", ""))
+			var to_seed := String(edge.get("to", ""))
+			if from_seed.is_empty() or to_seed.is_empty():
+				continue
+			if not adjacency.has(from_seed):
+				adjacency[from_seed] = []
+			if not adjacency.has(to_seed):
+				adjacency[to_seed] = []
+			(adjacency[from_seed] as Array).append(to_seed)
+			(adjacency[to_seed] as Array).append(from_seed)
+
+	# One O(V + E) BFS when the chart is built. Clicks only read the cached path.
+	var current_seed := _instance.species_seed
+	if adjacency.has(current_seed):
+		var queue: Array[String] = [current_seed]
+		var head := 0
+		var previous: Dictionary = {current_seed: ""}
+		while head < queue.size():
+			var cursor := queue[head]
+			head += 1
+			for raw_neighbor in adjacency.get(cursor, []) as Array:
+				var neighbor := String(raw_neighbor)
+				if previous.has(neighbor):
+					continue
+				previous[neighbor] = cursor
+				queue.append(neighbor)
+
+		for raw_seed in previous.keys():
+			var seed := String(raw_seed)
+			var path: Array[String] = []
+			var cursor := seed
+			while not cursor.is_empty():
+				path.append(cursor)
+				if cursor == current_seed:
+					break
+				cursor = String(previous.get(cursor, ""))
+			path.reverse()
+			_path_cache[seed] = path
+
+	# Direct action/requirements are also evaluated only once for this Digimon state.
+	for route: Dictionary in _progression.get_evolution_routes(_instance):
+		var target := String(route.get("targetSeed", ""))
+		if target.is_empty():
+			continue
+		_direction_cache[target] = "digivolution"
+		_direct_route_cache["digivolution|%s" % target] = route
+	for route: Dictionary in _progression.get_degeneration_routes(_instance):
+		var target := String(route.get("targetSeed", ""))
+		if target.is_empty():
+			continue
+		_direction_cache[target] = "degeneration"
+		_direct_route_cache["degeneration|%s" % target] = route
+
+
+func _cached_path(seed: String) -> Array[String]:
+	var result: Array[String] = []
+	var raw_path = _path_cache.get(seed, [])
+	if raw_path is Array:
+		for raw_seed in raw_path as Array:
+			result.append(String(raw_seed))
+	return result
+
+
+func _on_node_selected(seed: String) -> void:
+	_selected_seed = seed
+	_detail_refresh_generation += 1
+	_refresh_detail_next_frame(seed, _detail_refresh_generation)
+
+
+func _refresh_detail_next_frame(seed: String, generation: int) -> void:
+	# Let the graph present the new branch on this frame. Detail-panel work happens
+	# one frame later and is discarded if the player has already moved again.
+	await get_tree().process_frame
+	if generation != _detail_refresh_generation or seed != _selected_seed or not visible:
+		return
+	_refresh_detail()
+
+
 func _refresh_detail() -> void:
 	if _detail_body == null:
 		return
@@ -162,11 +287,11 @@ func _refresh_detail() -> void:
 				_detail_body.add_child(_label(String(goal_species.get("name", "Unknown")), 14, UI.PURPLE.lightened(0.18), true))
 		return
 
-	var direction := _graph_service.route_direction(_instance.species_seed, _selected_seed, _database)
-	var path := _graph_service.find_shortest_path(_instance.species_seed, _selected_seed, _database)
+	var direction := String(_direction_cache.get(_selected_seed, ""))
+	var path := _cached_path(_selected_seed)
 
 	if direction == "digivolution" or direction == "degeneration":
-		var route := _direct_route(_selected_seed, direction)
+		var route := _direct_route_cache.get("%s|%s" % [direction, _selected_seed], {}) as Dictionary
 		var route_accent := UI.GREEN if direction == "digivolution" else UI.CYAN
 		_detail_body.add_child(_section_label("REQUIREMENTS", route_accent))
 		_add_requirement_rows(route.get("requirement_results", []))
@@ -178,6 +303,16 @@ func _refresh_detail() -> void:
 		_detail_body.add_child(action)
 
 	_add_goal_controls(path)
+
+
+func _mark_selected_as_goal() -> void:
+	if _instance == null or _selected_seed.is_empty() or _selected_seed == _instance.species_seed:
+		return
+	_instance.evolution_goal_seed = _selected_seed
+	_goal_path = _cached_path(_selected_seed)
+	_canvas.set_goal(_selected_seed, _graph_service.path_edge_keys(_goal_path))
+	_refresh_detail()
+	evolution_applied.emit(_instance)
 
 
 func _add_requirement_rows(raw_evaluations) -> void:
