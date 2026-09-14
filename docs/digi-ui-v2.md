@@ -18,6 +18,9 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - `DigiActionCard.gd`: focusable/touch-safe action card with icon, title, description and status footer.
 - `DigiStatRow.gd`: compact stat/value/progress presentation.
 - `DigiInputHintBar.gd`: last-input-aware keyboard/mouse, Xbox, PlayStation and touch hints.
+- `DigiProfileHero.gd`: reusable Digimon identity card with portrait, rank/type chips, level, XP, Potential and Link.
+- `DigiStatsPanel.gd`: semantic combat-stat presentation using the reusable stat rows.
+- `DigiDevelopmentPanel.gd`: reusable aptitude/training summary with readable semantic colors.
 
 ## Interaction rules
 
@@ -26,6 +29,7 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - Focus is never represented by color alone: focused controls also receive a stronger border.
 - Touch never depends on hover-only information.
 - The Digimon screen keeps keyboard/controller spatial focus navigation while mouse and touch use the same underlying controls.
+- Input hints follow the last active input family and avoid font-dependent symbol glyphs that can render inconsistently on Web/mobile builds.
 
 ## Responsive layout
 
@@ -34,5 +38,6 @@ The Digimon screen uses the physical-size helpers already proven by the Web buil
 - Large screens: roster on the left, profile/actions in the center, combat/development information in the right column.
 - Compact screens: roster becomes a top collection area and details stack below it inside the existing scroll container.
 - Very narrow screens: the identity and action grids collapse to one column instead of shrinking fonts to unreadable sizes.
+- Existing scroll containers remain the overflow mechanism, so information is never intentionally clipped to fit a smaller viewport.
 
 Other screens should adopt these components gradually; this change deliberately does not restyle DigiLab, Training, Party / Storage, Evolution Chart or battle UI.
