@@ -14,6 +14,7 @@ on:
       - 'src/world/BattleEncounterDefinition.gd'
       - 'tools/test_developer_toolkit.gd'
       - 'tools/test_developer_toolkit.tscn'
+      - 'tools/test_debug_technique_lab_ui.gd'
   workflow_dispatch:
 
 permissions:
@@ -90,3 +91,11 @@ jobs:
           godot --headless --path . tools/test_developer_toolkit.tscn --quit-after 20 2>&1 | tee /tmp/developer-toolkit.log
           grep -q 'developer toolkit regression passed' /tmp/developer-toolkit.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/developer-toolkit.log; then exit 1; fi
+
+      - name: Run technique lab UI regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --script tools/test_debug_technique_lab_ui.gd --quit-after 20 2>&1 | tee /tmp/technique-lab-ui.log
+          grep -q 'debug technique lab UI regression passed' /tmp/technique-lab-ui.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/technique-lab-ui.log; then exit 1; fi
