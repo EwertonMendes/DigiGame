@@ -21,6 +21,10 @@ REQUESTED = {
     "Gallantmon": 323,
     "Triceramon": 244,
     "Cannondramon": 344,
+    "REFERENCE Growlmon canonical_rows": 113,
+    "REFERENCE Geo Greymon rear_rows_first": 139,
+    "REFERENCE Tyrannomon canonical_rows_front_reversed": 87,
+    "REFERENCE Darkdramon rear_rows_first_horizontal_reversed": 350,
 }
 
 PROFILES = {
