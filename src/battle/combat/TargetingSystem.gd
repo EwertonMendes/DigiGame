@@ -21,7 +21,7 @@ func selection_mode(action: Dictionary) -> String:
 func is_valid_target(field: Node, source: Node, target: Node, action: Dictionary) -> bool:
 	if source == null or target == null or not is_instance_valid(target):
 		return false
-	if target.has_method("is_available_for_turn") and not bool(target.call("is_available_for_turn")):
+	if target.has_method("is_available_for_turn") and not bool(target.call("is_available_for_turn")) and not _allows_knocked_out_target(action):
 		return false
 	if not _patterns.relationship_matches(source, target, action):
 		return false
@@ -52,7 +52,7 @@ func valid_targets_for_aim(field: Node, source: Node, actors: Array[Node], actio
 	for actor: Node in actors:
 		if actor == null or not is_instance_valid(actor):
 			continue
-		if actor.has_method("is_available_for_turn") and not bool(actor.call("is_available_for_turn")):
+		if actor.has_method("is_available_for_turn") and not bool(actor.call("is_available_for_turn")) and not _allows_knocked_out_target(action):
 			continue
 		if not _patterns.relationship_matches(source, actor, action):
 			continue
@@ -78,3 +78,12 @@ func _grid_for_actor(field: Node, actor: Node) -> Vector2i:
 		return Vector2i.ZERO
 	var world_position := Vector2(actor.call("get_tile_world_position"))
 	return Vector2i(field.call("world_to_grid", field.to_local(world_position)))
+
+
+func _allows_knocked_out_target(action: Dictionary) -> bool:
+	var effects = action.get("effects", [])
+	if effects is Array:
+		for effect in effects:
+			if effect is Dictionary and String((effect as Dictionary).get("type", "")) == "revive":
+				return true
+	return false

@@ -17,6 +17,8 @@ const PartyServiceScript = preload("res://src/collection/PartyService.gd")
 const SaveServiceScript = preload("res://src/save/SaveService.gd")
 const MigrationScript = preload("res://src/save/SaveMigration.gd")
 const EncounterScript = preload("res://src/world/BattleEncounterDefinition.gd")
+const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
+const TechniqueRecordServiceScript = preload("res://src/collection/TechniqueRecordService.gd")
 
 const TEST_SAVE_PATH := "user://digigame-progression-regression.json"
 
@@ -43,6 +45,7 @@ func _ready() -> void:
 	_test_rewards(database, factory, xp, reward_service)
 	_test_evolution(database, factory, progression, evolution, graph_service, requirements, calculator)
 	_test_training(database, factory, training, calculator)
+	_test_technique_library(database, factory, progression, evolution, calculator)
 	_test_collection_party_save_and_migration(factory, party_service, training)
 	_test_overworld_digi_data()
 	_test_encounter_definition(database)
@@ -144,6 +147,55 @@ func _test_training(database: DigimonDatabase, factory: DigimonFactory, training
 	assert(training.apply_plan(agumon, {}, 1), "MOV training plan must apply")
 	assert(calculator.get_mov(agumon, species) == before_mov + 1, "MOV training must increase tactical movement")
 
+
+func _test_technique_library(database: DigimonDatabase, factory: DigimonFactory, progression: DigimonProgressionService, evolution: DigimonEvolutionService, calculator: DigimonStatCalculator) -> void:
+	var actions: BattleActionDatabase = ActionDatabaseScript.new()
+	assert(actions.load_default(), "Technique databases must load")
+	assert(actions.get_all_actions(true).size() > 1000, "The complete DS technique catalogue must be available")
+	var agumon := factory.create_player_by_name("agumon", 30, 100)
+	var learnset := actions.get_learnset_entries(agumon.species_seed)
+	assert(learnset.size() == 3, "Rookie learnsets must contain one signature and two inherited techniques")
+	assert(agumon.learned_skills.size() == 1 and agumon.favorite_skills == agumon.learned_skills, "Reconstruction must grant only the current signature and favorite it")
+	var signature := agumon.learned_skills[0]
+	agumon.record_effective_skill_uses(signature, 8)
+	assert(agumon.get_skill_mastery_grade(signature) == "experienced", "Eight effective uses must reach Experienced")
+	agumon.record_effective_skill_uses(signature, 99)
+	assert(agumon.get_skill_mastery_points(signature) == 24 and agumon.get_skill_mastery_grade(signature) == "mastered", "Mastery must cap at 24")
+	assert(agumon.archive_skill(signature) and agumon.learned_skills.has(signature), "Archiving must never forget a technique")
+	assert(agumon.restore_skill(signature), "Archived techniques must be restorable")
+	var level_result := progression.apply_experience(agumon, 999999)
+	assert(agumon.learned_skills.size() >= 3 and not (level_result.get("learned_skills", []) as Array).is_empty(), "Level-up must permanently learn inherited techniques")
+	var known_before := agumon.learned_skills.duplicate()
+	var route := progression.get_evolution_routes(agumon).filter(func(candidate: Dictionary): return bool(candidate.get("unlocked", false)))
+	if not route.is_empty():
+		assert(evolution.digivolve(agumon, String((route[0] as Dictionary).get("targetSeed", "")), database, calculator), "Technique persistence evolution fixture must evolve")
+		for known_skill: String in known_before:
+			assert(agumon.learned_skills.has(known_skill), "Evolution must preserve every learned technique")
+		assert(agumon.level == 1, "Evolution still resets level to one")
+
+	var collection: PlayerCollection = CollectionScript.new()
+	var tutor_target := factory.create_player_by_name("gabumon", 1, 100)
+	collection.add_instance(tutor_target, "tutor", "Gabumon")
+	collection.bits = 10000
+	var records: TechniqueRecordService = TechniqueRecordServiceScript.new()
+	var teachable: Dictionary = {}
+	var species := database.get_by_seed(tutor_target.species_seed)
+	for candidate: Dictionary in records.get_teachable_records(collection, tutor_target, species):
+		var record = candidate.get("record", {})
+		if record is Dictionary and bool(record.get("teachable", false)) and String(record.get("recordLevel", "")) == "common" and bool(candidate.get("compatible", false)):
+			teachable = candidate
+			break
+	assert(not teachable.is_empty(), "Tutor test requires a compatible Common record")
+	var teachable_id := String(teachable.get("id", ""))
+	collection.add_technique_research(teachable_id)
+	collection.add_technique_research(teachable_id)
+	var unlocked := collection.add_technique_research(teachable_id)
+	assert(bool(unlocked.get("unlocked", false)) and collection.has_technique_record(teachable_id), "Three victories worth of insight must unlock a Common record")
+	var bits_before := collection.bits
+	var taught := records.teach(collection, tutor_target, species, teachable_id)
+	assert(bool(taught.get("success", false)) and tutor_target.learned_skills.has(teachable_id), "Unlocked compatible Records must teach permanently")
+	assert(collection.bits == bits_before - 300, "Common Records must cost exactly 300 Bits")
+
 func _test_collection_party_save_and_migration(factory: DigimonFactory, party_service: PartyService, training: DigimonTrainingService) -> void:
 	var collection: PlayerCollection = CollectionScript.new()
 	var first := factory.create_player_by_name("agumon", 4, 100)
@@ -170,7 +222,7 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	collection.add_digi_data(first.species_seed, 87)
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
-	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Collection save v2 must write")
+	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Collection save v3 must write")
 	var loaded: PlayerCollection = save_service.load_collection(TEST_SAVE_PATH)
 	assert(loaded != null and loaded.get_instances().size() == collection.get_instances().size(), "Save/load must preserve collection")
 	var restored := loaded.get_instance(first.id)
@@ -179,20 +231,32 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	assert(loaded.get_digi_data(first.species_seed) == 87 and loaded.bits == 321, "Save/load must preserve account rewards")
 	assert(loaded.get_active_party_ids() == collection.get_active_party_ids(), "Save/load must preserve party order")
 	var save_data := save_service.load_data(TEST_SAVE_PATH)
-	assert(save_data != null and save_data.save_version == 2 and not save_data.collection.is_empty(), "New saves must use v2 collection schema")
+	assert(save_data != null and save_data.save_version == 3 and not save_data.collection.is_empty(), "New saves must use v3 collection schema")
 	assert(save_service.delete_save(TEST_SAVE_PATH), "Regression save must be removable")
 
 	# Legacy vocabulary exists only in this fixture because it verifies that real
-	# v1 saves are migrated without data loss. New v2 data must never write it.
+	# v1 saves are migrated without data loss. New v3 data must never write it.
 	var migration: SaveMigration = MigrationScript.new()
 	var legacy_entry := {"rosterKey": "legacy_agumon", "instance": first.to_dict()}
 	var migrated := migration.migrate({"save_version": 1, "roster": {"instances": [legacy_entry], "activePartyIds": [first.id], "bits": 19, "digiData": {first.species_seed: 4}}})
-	assert(int(migrated.get("save_version", 0)) == 2, "v1 save must migrate to v2")
+	assert(int(migrated.get("save_version", 0)) == 3, "v1 save must migrate through v3")
 	var migrated_collection := migrated.get("collection", {}) as Dictionary
 	assert(int(migrated_collection.get("bits", 0)) == 19, "Migration must retain legacy values")
 	var migrated_entries := migrated_collection.get("instances", []) as Array
 	assert(migrated_entries.size() == 1 and String((migrated_entries[0] as Dictionary).get("collectionKey", "")) == "legacy_agumon", "Migration must rename legacy entry key")
-	assert(not (migrated_entries[0] as Dictionary).has("rosterKey"), "v2 save must not write legacy key names")
+	assert(not (migrated_entries[0] as Dictionary).has("rosterKey"), "v3 save must not write legacy key names")
+	var legacy_v2_instance := first.to_dict()
+	legacy_v2_instance["equippedSkills"] = ["pepper_breath", "guard_charge"]
+	legacy_v2_instance.erase("favoriteSkills")
+	legacy_v2_instance.erase("archivedSkills")
+	legacy_v2_instance.erase("skillMastery")
+	var migrated_v2 := migration.migrate({"save_version": 2, "collection": {"instances": [{"collectionKey": "legacy", "instance": legacy_v2_instance}]}})
+	var migrated_v2_collection := migrated_v2.get("collection", {}) as Dictionary
+	var migrated_v2_entries := migrated_v2_collection.get("instances", []) as Array
+	var migrated_v2_entry := migrated_v2_entries[0] as Dictionary
+	var migrated_instance := migrated_v2_entry.get("instance", {}) as Dictionary
+	assert((migrated_instance.get("favoriteSkills", []) as Array) == ["pepper_breath", "guard_charge"], "v2 equipped order must become v3 Favorites")
+	assert(not migrated_instance.has("equippedSkills") and (migrated_instance.get("archivedSkills", []) as Array).is_empty(), "v3 migration must remove slots and initialize Archive")
 
 func _test_overworld_digi_data() -> void:
 	assert(OverworldState.get_active_instances().size() == 3, "Production flow must start with three active instances")

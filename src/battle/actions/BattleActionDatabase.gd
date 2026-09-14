@@ -3,51 +3,127 @@ class_name BattleActionDatabase
 
 const TECHNIQUES_PATH := "res://database/techniques.json"
 const LEARNSETS_PATH := "res://database/digimon-learnsets.json"
+const RECORDS_PATH := "res://database/technique-records.json"
+const EXPERIENCED_POINTS := 8
+const MASTERED_POINTS := 24
 
 var _actions: Dictionary = {}
-var _learnsets_by_species: Dictionary = {}
+var _learnsets_by_seed: Dictionary = {}
+var _legacy_learnsets_by_name: Dictionary = {}
+var _records: Dictionary = {}
 
 
 func load_default() -> bool:
 	_actions.clear()
-	_learnsets_by_species.clear()
+	_learnsets_by_seed.clear()
+	_legacy_learnsets_by_name.clear()
+	_records.clear()
 	if not _load_actions():
 		return false
 	_load_learnsets()
+	_load_records()
 	return true
 
 
-func get_action(action_id: String) -> Dictionary:
+func get_action(action_id: String, mastery_points: int = 0) -> Dictionary:
 	if not _actions.has(action_id):
 		return {}
-	return (_actions[action_id] as Dictionary).duplicate(true)
+	var action := (_actions[action_id] as Dictionary).duplicate(true)
+	_apply_localized_fallbacks(action)
+	return _apply_mastery(action, mastery_points)
 
 
-func get_known_actions(species_name: String, level: int, learned_ids: Array[String] = []) -> Array[Dictionary]:
+func get_all_actions(include_unavailable: bool = false) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for raw_id in _actions.keys():
+		var action := get_action(String(raw_id))
+		if include_unavailable or String(action.get("availability", "ready")) == "ready":
+			result.append(action)
+	result.sort_custom(func(a: Dictionary, b: Dictionary): return String(a.get("name", "")) < String(b.get("name", "")))
+	return result
+
+
+func get_known_actions(species_seed: String, level: int, learned_ids: Array[String] = [], mastery: Dictionary = {}) -> Array[Dictionary]:
 	var ids: Array[String] = []
 	for learned_id: String in learned_ids:
 		if _actions.has(learned_id) and not ids.has(learned_id):
 			ids.append(learned_id)
-	var key := species_name.to_lower().strip_edges()
-	var learnset = _learnsets_by_species.get(key, [])
-	if learnset is Array:
-		for raw_entry in learnset:
-			if not raw_entry is Dictionary:
-				continue
-			if int(raw_entry.get("level", 1)) > level:
-				continue
-			var action_id := String(raw_entry.get("skill", ""))
-			if _actions.has(action_id) and not ids.has(action_id):
-				ids.append(action_id)
+	for entry: Dictionary in get_learnset_entries(species_seed):
+		if int(entry.get("level", 1)) > level:
+			continue
+		var action_id := String(entry.get("skill", ""))
+		if _actions.has(action_id) and not ids.has(action_id):
+			ids.append(action_id)
 	var result: Array[Dictionary] = []
 	for action_id: String in ids:
-		result.append(get_action(action_id))
+		var action := get_action(action_id, int(mastery.get(action_id, 0)))
+		if String(action.get("availability", "ready")) == "ready":
+			result.append(action)
 	return result
 
 
-func get_default_action_for_species(species_name: String, level: int) -> Dictionary:
-	var actions := get_known_actions(species_name, level)
+func get_learnset_entries(species_seed: String) -> Array[Dictionary]:
+	var key := species_seed.to_lower().strip_edges()
+	var raw_entries = _learnsets_by_seed.get(key, _legacy_learnsets_by_name.get(key, []))
+	var result: Array[Dictionary] = []
+	if raw_entries is Array:
+		for raw_entry in raw_entries:
+			if raw_entry is Dictionary:
+				result.append((raw_entry as Dictionary).duplicate(true))
+	return result
+
+
+func get_signature_action_ids(species_seed: String) -> Array[String]:
+	var result: Array[String] = []
+	for entry: Dictionary in get_learnset_entries(species_seed):
+		if String(entry.get("acquisition", "level")) != "signature":
+			continue
+		var skill_id := String(entry.get("skill", ""))
+		if _actions.has(skill_id) and not result.has(skill_id):
+			result.append(skill_id)
+	return result
+
+
+func get_default_action_for_species(species_seed: String, level: int) -> Dictionary:
+	var actions := get_known_actions(species_seed, level)
 	return actions[0] if not actions.is_empty() else {}
+
+
+func get_record(skill_id: String) -> Dictionary:
+	return (_records[skill_id] as Dictionary).duplicate(true) if _records.has(skill_id) else {}
+
+
+func can_teach(skill_id: String, species: Dictionary) -> bool:
+	var record := get_record(skill_id)
+	if record.is_empty() or not bool(record.get("teachable", false)):
+		return false
+	var species_seed := String(species.get("seed", ""))
+	var denied = record.get("denySpeciesSeeds", [])
+	if denied is Array and (denied as Array).has(species_seed):
+		return false
+	var allowed = record.get("allowSpeciesSeeds", [])
+	if allowed is Array and (allowed as Array).has(species_seed):
+		return true
+	var species_tags: Array[String] = []
+	var raw_tags = species.get("techniqueTags", [])
+	if raw_tags is Array:
+		for raw_tag in raw_tags:
+			species_tags.append(String(raw_tag))
+	for fallback_tag in _fallback_species_tags(species):
+		if not species_tags.has(fallback_tag):
+			species_tags.append(fallback_tag)
+	var all_of = record.get("allOf", [])
+	if all_of is Array:
+		for raw_tag in all_of:
+			if not species_tags.has(String(raw_tag)):
+				return false
+	var any_of = record.get("anyOf", [])
+	if any_of is Array and not (any_of as Array).is_empty():
+		for raw_tag in any_of:
+			if species_tags.has(String(raw_tag)):
+				return true
+		return false
+	return true
 
 
 func _load_actions() -> bool:
@@ -77,9 +153,100 @@ func _load_learnsets() -> void:
 	for raw_learnset in parsed:
 		if not raw_learnset is Dictionary:
 			continue
-		var species_name := String(raw_learnset.get("species", "")).to_lower().strip_edges()
-		if species_name.is_empty():
-			continue
 		var skills = raw_learnset.get("skills", [])
-		if skills is Array:
-			_learnsets_by_species[species_name] = skills.duplicate(true)
+		if not skills is Array:
+			continue
+		var seed := String(raw_learnset.get("speciesSeed", "")).to_lower().strip_edges()
+		if not seed.is_empty():
+			_learnsets_by_seed[seed] = skills.duplicate(true)
+		var species_name := String(raw_learnset.get("species", "")).to_lower().strip_edges()
+		if not species_name.is_empty():
+			_legacy_learnsets_by_name[species_name] = skills.duplicate(true)
+
+
+func _load_records() -> void:
+	if not FileAccess.file_exists(RECORDS_PATH):
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(RECORDS_PATH))
+	if not parsed is Array:
+		return
+	for raw_record in parsed:
+		if not raw_record is Dictionary:
+			continue
+		var skill_id := String(raw_record.get("skill", "")).strip_edges()
+		if not skill_id.is_empty() and _actions.has(skill_id):
+			_records[skill_id] = raw_record.duplicate(true)
+
+
+func _apply_localized_fallbacks(action: Dictionary) -> void:
+	var names = action.get("names", {})
+	if names is Dictionary:
+		action["name"] = String((names as Dictionary).get("en", action.get("name", action.get("id", "Technique"))))
+		action["namePtBr"] = String((names as Dictionary).get("pt_BR", action.get("name", "")))
+	var descriptions = action.get("descriptions", {})
+	if descriptions is Dictionary:
+		action["description"] = String((descriptions as Dictionary).get("en", action.get("description", "")))
+		action["descriptionPtBr"] = String((descriptions as Dictionary).get("pt_BR", action.get("description", "")))
+
+
+func _apply_mastery(action: Dictionary, points: int) -> Dictionary:
+	var bounded_points := clampi(points, 0, MASTERED_POINTS)
+	var grade := "mastered" if bounded_points >= MASTERED_POINTS else ("experienced" if bounded_points >= EXPERIENCED_POINTS else "learned")
+	action["masteryPoints"] = bounded_points
+	action["masteryGrade"] = grade
+	if grade == "learned":
+		return action
+	var mastered := grade == "mastered"
+	match String(action.get("masteryProfile", "swift")):
+		"efficient":
+			action["spCost"] = maxi(0, int(action.get("spCost", 0)) - (2 if mastered else 1))
+		"precise":
+			action["accuracy"] = minf(100.0, float(action.get("accuracy", 100.0)) + (10.0 if mastered else 5.0))
+		"reliable_effect":
+			var effects = action.get("effects", [])
+			if effects is Array:
+				for effect in effects:
+					if effect is Dictionary and (effect as Dictionary).has("chance"):
+						effect["chance"] = minf(100.0, float(effect.get("chance", 100.0)) + (10.0 if mastered else 5.0))
+		"potent":
+			var potent_multiplier := 1.10 if mastered else 1.05
+			action["power"] = maxi(0, int(round(float(action.get("power", 0)) * potent_multiplier)))
+			var effects = action.get("effects", [])
+			if effects is Array:
+				for effect in effects:
+					if effect is Dictionary and String((effect as Dictionary).get("type", "")) == "heal" and effect.has("percentMaxHp"):
+						effect["percentMaxHp"] = float(effect.get("percentMaxHp", 0.0)) * potent_multiplier
+		_:
+			action["recoveryCost"] = maxf(1.0, float(action.get("recoveryCost", 30.0)) - (10.0 if mastered else 5.0))
+	return action
+
+
+func _fallback_species_tags(species: Dictionary) -> Array[String]:
+	var result: Array[String] = ["neutral", "melee"]
+	var family := String(species.get("species", species.get("family", ""))).to_lower()
+	var name := String(species.get("name", "")).to_lower()
+	var movement := String(species.get("movementType", "ground")).to_lower()
+	var element := String(species.get("element", "neutral")).to_lower()
+	if not result.has(element):
+		result.append(element)
+	if movement == "flying":
+		result.append("aerial")
+	if family.contains("aqua") or family.contains("sea") or family.contains("fish"):
+		result.append("aquatic")
+	if family.contains("machine") or family.contains("steel"):
+		result.append("machine")
+		result.append("projectile")
+	if family.contains("insect") or family.contains("plant"):
+		result.append("plant")
+	if family.contains("dragon") or family.contains("dinosaur"):
+		result.append("breath")
+		result.append("claw")
+	if family.contains("beast") or family.contains("animal"):
+		result.append("bite")
+		result.append("claw")
+	if family.contains("holy") or family.contains("dark") or int(species.get("int", 0)) >= int(species.get("atk", 0)):
+		result.append("magic")
+		result.append("healing")
+	if family.contains("knight") or name.contains("mon") and (name.contains("sword") or name.contains("blade")):
+		result.append("weapon")
+	return result

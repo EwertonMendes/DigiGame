@@ -14,6 +14,7 @@ const CLOSE_ICON := preload("res://assets/ui/icons/cancel.svg")
 var _database: DigimonDatabase
 var _factory: DigimonFactory
 var _selected_name := ""
+var _lab_mode := "reconstruction"
 var _data_buttons: Array[Button] = []
 
 var _backdrop: ColorRect
@@ -23,6 +24,7 @@ var _title: Label
 var _subtitle: Label
 var _close_button: Button
 var _list_panel: PanelContainer
+var _list_title: Label
 var _list_scroll: ScrollContainer
 var _list_box: VBoxContainer
 var _detail_panel: PanelContainer
@@ -30,6 +32,7 @@ var _detail_scroll: ScrollContainer
 var _detail_body: VBoxContainer
 var _empty_label: Label
 var _announcement: Label
+var _record_search: LineEdit
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -44,6 +47,8 @@ func _ready() -> void:
 
 func open_lab() -> void:
 	visible = true
+	# Size the safe frame before dynamic content is rebuilt. This avoids the
+	# first-open overflow that can otherwise happen before Godot's next layout pass.
 	_layout()
 	_refresh()
 	call_deferred("_layout")
@@ -96,6 +101,20 @@ func _build() -> void:
 	heading.add_child(_title)
 	_subtitle = _label("Reconstruct Digimon from species Digi Data", 11, UI.MUTED)
 	heading.add_child(_subtitle)
+	var reconstruct_tab := _button("RECONSTRUCT", UI.CYAN)
+	reconstruct_tab.custom_minimum_size = Vector2(118, 40)
+	reconstruct_tab.pressed.connect(_set_lab_mode.bind("reconstruction"))
+	header.add_child(reconstruct_tab)
+	var records_tab := _button("TECHNIQUE RECORDS", UI.GOLD)
+	records_tab.custom_minimum_size = Vector2(160, 40)
+	records_tab.pressed.connect(_set_lab_mode.bind("records"))
+	header.add_child(records_tab)
+	_record_search = LineEdit.new()
+	_record_search.placeholder_text = "Search techniques"
+	_record_search.custom_minimum_size = Vector2(170, 40)
+	_record_search.visible = false
+	_record_search.text_changed.connect(func(_text: String): _refresh_detail())
+	header.add_child(_record_search)
 	_close_button = MENU.icon_button(CLOSE_ICON, UI.MUTED, "Close", Vector2(44, 44))
 	_close_button.pressed.connect(close_view)
 	header.add_child(_close_button)
@@ -119,7 +138,8 @@ func _build() -> void:
 	var list_root := VBoxContainer.new()
 	list_root.add_theme_constant_override("separation", 8)
 	list_margin.add_child(list_root)
-	list_root.add_child(_section_label("DIGI DATA ARCHIVE", UI.CYAN))
+	_list_title = _section_label("DIGI DATA ARCHIVE", UI.CYAN)
+	list_root.add_child(_list_title)
 	_list_scroll = ScrollContainer.new()
 	_list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_list_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
@@ -165,10 +185,17 @@ func _refresh() -> void:
 	_refresh_list()
 	_refresh_detail()
 
-func _refresh_list() -> void:
-	for child in _list_box.get_children():
+func _clear_children_now(container: Node) -> void:
+	for child in container.get_children():
+		container.remove_child(child)
 		child.queue_free()
+
+func _refresh_list() -> void:
+	_clear_children_now(_list_box)
 	_data_buttons.clear()
+	if _lab_mode == "records":
+		_refresh_record_roster()
+		return
 	var data := OverworldState.get_digi_data()
 	var entries: Array[Dictionary] = []
 	for raw_name in data.keys():
@@ -223,6 +250,11 @@ func _select_species(species_name: String) -> void:
 	_refresh_detail()
 
 func _style_selection() -> void:
+	if _lab_mode == "records":
+		for button: Button in _data_buttons:
+			var selected := String(button.get_meta("instance_id", "")) == _selected_name
+			MENU.style_action_button(button, UI.GOLD if selected else UI.CYAN, selected)
+		return
 	for button: Button in _data_buttons:
 		var species_name := String(button.get_meta("species_name", ""))
 		var species := _database.get_by_name(species_name)
@@ -234,6 +266,9 @@ func _focus_selected_data() -> void:
 	if not visible:
 		return
 	for button: Button in _data_buttons:
+		if _lab_mode == "records" and String(button.get_meta("instance_id", "")) == _selected_name:
+			button.grab_focus()
+			return
 		if String(button.get_meta("species_name", "")).to_lower() == _selected_name.to_lower():
 			button.grab_focus()
 			return
@@ -241,8 +276,10 @@ func _focus_selected_data() -> void:
 		_data_buttons[0].grab_focus()
 
 func _refresh_detail() -> void:
-	for child in _detail_body.get_children():
-		child.queue_free()
+	_clear_children_now(_detail_body)
+	if _lab_mode == "records":
+		_refresh_record_detail()
+		return
 	if _selected_name.is_empty():
 		_detail_body.add_child(_label("Select a species to inspect its reconstruction progress.", 12, UI.MUTED))
 		return
@@ -321,6 +358,97 @@ func _show_announcement(text: String) -> void:
 func _on_data_changed(_bits: int, _data: Dictionary) -> void:
 	if visible:
 		_refresh()
+
+func _set_lab_mode(mode: String) -> void:
+	if mode == _lab_mode:
+		return
+	_lab_mode = mode
+	_selected_name = ""
+	var records_mode := mode == "records"
+	_title.text = "TECHNIQUE RECORDS" if records_mode else "CONVERT DIGI DATA"
+	_subtitle.text = "Teach permanent techniques with account-wide Records" if records_mode else "Reconstruct Digimon from species Digi Data"
+	_list_title.text = "OWNED DIGIMON" if records_mode else "DIGI DATA ARCHIVE"
+	_list_title.add_theme_color_override("font_color", (UI.GOLD if records_mode else UI.CYAN).lightened(0.08))
+	_record_search.visible = records_mode
+	_layout()
+	_refresh()
+	call_deferred("_focus_selected_data")
+
+func _refresh_record_roster() -> void:
+	var instances := OverworldState.get_collection_instances()
+	if instances.is_empty():
+		_list_box.add_child(_label("No owned Digimon.", 12, UI.MUTED))
+		return
+	var selection_exists := false
+	for instance: DigimonInstance in instances:
+		var species := _database.get_by_seed(instance.species_seed)
+		var name := instance.get_display_name(String(species.get("name", "Digimon")))
+		var button := _button("%s\n%s · %d BITS" % [name.to_upper(), String(species.get("rank", "")).to_upper(), OverworldState.get_bits()], UI.CYAN)
+		button.custom_minimum_size.y = 60
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.set_meta("instance_id", instance.id)
+		button.pressed.connect(_select_record_instance.bind(instance.id))
+		button.focus_entered.connect(_select_record_instance.bind(instance.id))
+		_list_box.add_child(button)
+		_data_buttons.append(button)
+		selection_exists = selection_exists or instance.id == _selected_name
+	if not selection_exists:
+		_selected_name = instances[0].id
+	_style_selection()
+
+func _select_record_instance(instance_id: String) -> void:
+	if _selected_name == instance_id and _detail_body.get_child_count() > 0:
+		return
+	_selected_name = instance_id
+	_style_selection()
+	_refresh_detail()
+
+func _refresh_record_detail() -> void:
+	var instance := OverworldState.get_instance_by_id(_selected_name)
+	if instance == null:
+		_detail_body.add_child(_label("Select an owned Digimon to use Technique Records.", 12, UI.MUTED))
+		return
+	var species := _database.get_by_seed(instance.species_seed)
+	_detail_body.add_child(_section_label("TECHNIQUE RECORDS · %d BITS" % OverworldState.get_bits(), UI.GOLD))
+	_detail_body.add_child(_label("Compatibility is checked only while teaching. Once learned, a technique remains usable in every future form.", 11, UI.MUTED))
+	var query := _record_search.text.to_lower().strip_edges()
+	var shown := 0
+	for action: Dictionary in OverworldState.get_teachable_techniques(instance.id):
+		var name := String(action.get("name", action.get("id", "Technique")))
+		if not query.is_empty() and not name.to_lower().contains(query) and not String(action.get("id", "")).contains(query):
+			continue
+		var unlocked := bool(action.get("unlocked", false))
+		var research := int(action.get("research", 0))
+		if not unlocked and research <= 0:
+			continue
+		var record = action.get("record", {})
+		var cost := int(record.get("bitsCost", 0)) if record is Dictionary else 0
+		var panel := PanelContainer.new()
+		panel.add_theme_stylebox_override("panel", MENU.card(UI.GOLD if unlocked else UI.CYAN, unlocked))
+		var margin := MENU.margin(10, 8, 10, 8)
+		panel.add_child(margin)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		margin.add_child(row)
+		var info := _label("%s\n%s · %s · Research %d/3" % [name, String(action.get("element", "neutral")).capitalize(), String(record.get("recordLevel", "common")).capitalize(), research], 11, UI.TEXT, true)
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(info)
+		var teach := _button("LEARN\n%d BITS" % cost, UI.GOLD)
+		teach.custom_minimum_size = Vector2(104, 46)
+		teach.disabled = not unlocked or not bool(action.get("compatible", false)) or bool(action.get("learned", false)) or OverworldState.get_bits() < cost
+		teach.tooltip_text = "Already learned" if bool(action.get("learned", false)) else ("Incompatible with the current form" if not bool(action.get("compatible", false)) else "Teach permanently")
+		teach.pressed.connect(_teach_record.bind(instance.id, String(action.get("id", ""))))
+		row.add_child(teach)
+		_detail_body.add_child(panel)
+		shown += 1
+	if shown == 0:
+		_detail_body.add_child(_label("No unlocked or researched Records match this search.", 12, UI.MUTED))
+
+func _teach_record(instance_id: String, skill_id: String) -> void:
+	var result := OverworldState.teach_technique(instance_id, skill_id)
+	if bool(result.get("success", false)):
+		_show_announcement("TECHNIQUE LEARNED")
+	_refresh()
 
 func _layout() -> void:
 	if not visible or _frame == null:

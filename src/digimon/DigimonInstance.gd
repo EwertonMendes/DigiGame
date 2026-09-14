@@ -5,7 +5,9 @@ const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
 const MAX_POTENTIAL := 100
 const MAX_LINK := 100
-const MAX_EQUIPPED_SKILLS := 4
+const MAX_FAVORITE_SKILLS := 6
+const MAX_SKILL_MASTERY_POINTS := 24
+const EXPERIENCED_SKILL_MASTERY_POINTS := 8
 
 var id: String = ""
 var species_seed: String = ""
@@ -23,7 +25,9 @@ var current_hp: int = 1
 # Internally kept as current_mp for save compatibility. UI/gameplay calls it SP.
 var current_mp: int = 0
 var learned_skills: Array[String] = []
-var equipped_skills: Array[String] = []
+var favorite_skills: Array[String] = []
+var archived_skills: Array[String] = []
+var skill_mastery: Dictionary = {}
 var equipment: Array[String] = []
 var evolution_history: Array[Dictionary] = []
 var species_history: Array[String] = []
@@ -57,35 +61,86 @@ func set_current_sp(value: int) -> void:
 	current_mp = maxi(0, value)
 
 
-func learn_skill(skill_id: String, equip_if_possible: bool = true) -> bool:
+func learn_skill(skill_id: String, favorite_if_possible: bool = true) -> bool:
 	var clean_id := skill_id.strip_edges()
 	if clean_id.is_empty():
 		return false
 	var changed := false
 	if not learned_skills.has(clean_id):
 		learned_skills.append(clean_id)
+		skill_mastery[clean_id] = 0
 		changed = true
-	if equip_if_possible and equipped_skills.size() < MAX_EQUIPPED_SKILLS and not equipped_skills.has(clean_id):
-		equipped_skills.append(clean_id)
+	if favorite_if_possible and favorite_skills.size() < MAX_FAVORITE_SKILLS and not favorite_skills.has(clean_id):
+		favorite_skills.append(clean_id)
 		changed = true
 	return changed
 
 
-func equip_skill(skill_id: String) -> bool:
-	if not learned_skills.has(skill_id) or equipped_skills.has(skill_id):
+func favorite_skill(skill_id: String) -> bool:
+	if not learned_skills.has(skill_id) or favorite_skills.has(skill_id):
 		return false
-	if equipped_skills.size() >= MAX_EQUIPPED_SKILLS:
+	if favorite_skills.size() >= MAX_FAVORITE_SKILLS:
 		return false
-	equipped_skills.append(skill_id)
+	archived_skills.erase(skill_id)
+	favorite_skills.append(skill_id)
 	return true
 
 
-func unequip_skill(skill_id: String) -> bool:
-	var index := equipped_skills.find(skill_id)
+func unfavorite_skill(skill_id: String) -> bool:
+	var index := favorite_skills.find(skill_id)
 	if index < 0:
 		return false
-	equipped_skills.remove_at(index)
+	favorite_skills.remove_at(index)
 	return true
+
+
+func move_favorite(skill_id: String, new_index: int) -> bool:
+	var old_index := favorite_skills.find(skill_id)
+	if old_index < 0:
+		return false
+	var bounded_index := clampi(new_index, 0, favorite_skills.size() - 1)
+	if old_index == bounded_index:
+		return true
+	favorite_skills.remove_at(old_index)
+	favorite_skills.insert(bounded_index, skill_id)
+	return true
+
+
+func archive_skill(skill_id: String) -> bool:
+	if not learned_skills.has(skill_id) or archived_skills.has(skill_id):
+		return false
+	favorite_skills.erase(skill_id)
+	archived_skills.append(skill_id)
+	return true
+
+
+func restore_skill(skill_id: String) -> bool:
+	var index := archived_skills.find(skill_id)
+	if index < 0:
+		return false
+	archived_skills.remove_at(index)
+	return true
+
+
+func record_effective_skill_uses(skill_id: String, amount: int = 1) -> int:
+	if not learned_skills.has(skill_id) or amount <= 0:
+		return get_skill_mastery_points(skill_id)
+	var points := clampi(get_skill_mastery_points(skill_id) + amount, 0, MAX_SKILL_MASTERY_POINTS)
+	skill_mastery[skill_id] = points
+	return points
+
+
+func get_skill_mastery_points(skill_id: String) -> int:
+	return clampi(int(skill_mastery.get(skill_id, 0)), 0, MAX_SKILL_MASTERY_POINTS)
+
+
+func get_skill_mastery_grade(skill_id: String) -> String:
+	var points := get_skill_mastery_points(skill_id)
+	if points >= MAX_SKILL_MASTERY_POINTS:
+		return "mastered"
+	if points >= EXPERIENCED_SKILL_MASTERY_POINTS:
+		return "experienced"
+	return "learned"
 
 
 func to_dict() -> Dictionary:
@@ -103,7 +158,9 @@ func to_dict() -> Dictionary:
 		"currentSp": current_mp,
 		"currentMp": current_mp,
 		"learnedSkills": learned_skills.duplicate(),
-		"equippedSkills": equipped_skills.duplicate(),
+		"favoriteSkills": favorite_skills.duplicate(),
+		"archivedSkills": archived_skills.duplicate(),
+		"skillMastery": skill_mastery.duplicate(true),
 		"equipment": equipment.duplicate(),
 		"evolutionHistory": evolution_history.duplicate(true),
 		"speciesHistory": species_history.duplicate(),
@@ -145,18 +202,28 @@ static func from_dict(data: Dictionary) -> DigimonInstance:
 			if not skill_id.is_empty() and not instance.learned_skills.has(skill_id):
 				instance.learned_skills.append(skill_id)
 
-	instance.equipped_skills.clear()
-	var equipped_skills_data = data.get("equippedSkills", [])
-	if equipped_skills_data is Array:
-		for skill in equipped_skills_data:
+	instance.favorite_skills.clear()
+	var favorite_skills_data = data.get("favoriteSkills", data.get("equippedSkills", []))
+	if favorite_skills_data is Array:
+		for skill in favorite_skills_data:
 			var skill_id := String(skill)
-			if instance.learned_skills.has(skill_id) and not instance.equipped_skills.has(skill_id) and instance.equipped_skills.size() < MAX_EQUIPPED_SKILLS:
-				instance.equipped_skills.append(skill_id)
-	if instance.equipped_skills.is_empty():
-		for skill_id: String in instance.learned_skills:
-			if instance.equipped_skills.size() >= MAX_EQUIPPED_SKILLS:
-				break
-			instance.equipped_skills.append(skill_id)
+			if instance.learned_skills.has(skill_id) and not instance.favorite_skills.has(skill_id) and instance.favorite_skills.size() < MAX_FAVORITE_SKILLS:
+				instance.favorite_skills.append(skill_id)
+
+	instance.archived_skills.clear()
+	var archived_skills_data = data.get("archivedSkills", [])
+	if archived_skills_data is Array:
+		for skill in archived_skills_data:
+			var skill_id := String(skill)
+			if instance.learned_skills.has(skill_id) and not instance.archived_skills.has(skill_id):
+				instance.archived_skills.append(skill_id)
+				instance.favorite_skills.erase(skill_id)
+
+	instance.skill_mastery.clear()
+	var mastery_data = data.get("skillMastery", {})
+	for skill_id: String in instance.learned_skills:
+		var points := int((mastery_data as Dictionary).get(skill_id, 0)) if mastery_data is Dictionary else 0
+		instance.skill_mastery[skill_id] = clampi(points, 0, MAX_SKILL_MASTERY_POINTS)
 
 	instance.equipment.clear()
 	var equipped = data.get("equipment", [])

@@ -1,8 +1,22 @@
 [
   {"id": "guard", "name": "Guard", "duration": 1, "modifiers": {}, "damageTakenMultiplier": 0.65},
+  {"id": "atk_up", "name": "ATK Up", "duration": 3, "modifiers": {"atkPercent": 20}},
+  {"id": "atk_down", "name": "ATK Down", "duration": 3, "modifiers": {"atkPercent": -20}},
   {"id": "def_up", "name": "DEF Up", "duration": 3, "modifiers": {"defPercent": 20}},
+  {"id": "def_down", "name": "DEF Down", "duration": 3, "modifiers": {"defPercent": -20}},
+  {"id": "int_up", "name": "INT Up", "duration": 3, "modifiers": {"intPercent": 20}},
+  {"id": "int_down", "name": "INT Down", "duration": 3, "modifiers": {"intPercent": -20}},
   {"id": "speed_up", "name": "SPD Up", "duration": 3, "modifiers": {"speedPercent": 20}},
   {"id": "speed_down", "name": "SPD Down", "duration": 3, "modifiers": {"speedPercent": -20}},
   {"id": "burn", "name": "Burn", "duration": 3, "modifiers": {}, "turnDamagePercentMaxHp": 5},
-  {"id": "poison", "name": "Poison", "duration": 3, "modifiers": {}, "turnDamagePercentMaxHp": 7}
+  {"id": "poison", "name": "Poison", "duration": 3, "modifiers": {}, "turnDamagePercentMaxHp": 7},
+  {"id": "paralysis", "name": "Paralysis", "duration": 2, "modifiers": {"speedPercent": -20}, "preventsAction": true},
+  {"id": "sleep", "name": "Sleep", "duration": 2, "modifiers": {}, "preventsAction": true},
+  {"id": "confusion", "name": "Confusion", "duration": 2, "modifiers": {"intPercent": -20}},
+  {"id": "blind", "name": "Blind", "duration": 3, "modifiers": {}, "accuracyPercent": -20},
+  {"id": "stun", "name": "Stun", "duration": 1, "modifiers": {}, "preventsAction": true},
+  {"id": "doom", "name": "Doom", "duration": 3, "modifiers": {}, "executesOnFinalTurn": true, "bossMaxHpDamagePercent": 12},
+  {"id": "data_mark", "name": "Data Mark", "duration": 4, "modifiers": {}, "digiDataBonusPercent": 25},
+  {"id": "counter", "name": "Counter", "duration": 2, "modifiers": {}, "counterPercent": 50},
+  {"id": "reflect", "name": "Reflect", "duration": 2, "modifiers": {}, "reflectPercent": 35}
 ]

@@ -58,6 +58,14 @@ func effect_grids(field: Node, source_grid: Vector2i, aim_grid: Vector2i, action
 				for dy in range(-radius, radius + 1):
 					if absi(dx) + absi(dy) <= radius:
 						_append_if_valid(result, field, aim_grid + Vector2i(dx, dy))
+		"ring":
+			var inner_radius := maxi(0, int(area_data.get("innerRadius", 1)))
+			var outer_radius := maxi(inner_radius, int(area_data.get("radius", 2)))
+			for dx in range(-outer_radius, outer_radius + 1):
+				for dy in range(-outer_radius, outer_radius + 1):
+					var distance := absi(dx) + absi(dy)
+					if distance >= inner_radius and distance <= outer_radius:
+						_append_if_valid(result, field, aim_grid + Vector2i(dx, dy))
 		"square", "adjacent_8":
 			var radius := maxi(1, int(area_data.get("radius", 1)))
 			for dx in range(-radius, radius + 1):

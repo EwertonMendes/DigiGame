@@ -151,7 +151,7 @@ func _build_level_steps(start_level: int, start_exp: int, amount: int, species: 
 
 
 func _sync_level_skills(instance: DigimonInstance, species: Dictionary) -> void:
-	var available: Array[Dictionary] = _actions.get_known_actions(String(species.get("name", "")), instance.level)
+	var available: Array[Dictionary] = _actions.get_known_actions(instance.species_seed, instance.level)
 	for action: Dictionary in available:
 		instance.learn_skill(String(action.get("id", "")), true)
 

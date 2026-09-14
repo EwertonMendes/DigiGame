@@ -172,6 +172,6 @@ func _transition_repeat_count(instance: DigimonInstance, from_seed: String, to_s
 
 
 func _sync_form_skills(instance: DigimonInstance, species: Dictionary) -> void:
-	var available: Array[Dictionary] = _action_database.get_known_actions(String(species.get("name", "")), instance.level)
+	var available: Array[Dictionary] = _action_database.get_known_actions(instance.species_seed, instance.level)
 	for action: Dictionary in available:
 		instance.learn_skill(String(action.get("id", "")), true)
