@@ -164,9 +164,6 @@ func _refresh_detail() -> void:
 
 	var direction := _graph_service.route_direction(_instance.species_seed, _selected_seed, _database)
 	var path := _graph_service.find_shortest_path(_instance.species_seed, _selected_seed, _database)
-	if path.size() > 1:
-		_detail_body.add_child(_section_label("ROUTE", UI.CYAN))
-		_detail_body.add_child(_route_path_label(path))
 
 	if direction == "digivolution" or direction == "degeneration":
 		var route := _direct_route(_selected_seed, direction)
