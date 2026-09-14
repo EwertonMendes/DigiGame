@@ -19,6 +19,11 @@ def compact_key(value: str) -> str:
 def main() -> None:
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    patterns = config.get("patterns", {})
+    for pattern_name, permutation in patterns.items():
+        if sorted(permutation) != [0, 1, 2, 3]:
+            raise RuntimeError(f"Invalid additional DS direction pattern {pattern_name}: {permutation}")
+
     expected = set(config["species"])
     rows = manifest.get("species", [])
     by_name = {row["name"]: row for row in rows}
@@ -46,8 +51,18 @@ def main() -> None:
             raise RuntimeError(f"{name}: field rebuild must not reuse an old runtime strip")
         if meta.get("source_sha256") != config["species"][name]["source_sha256"]:
             raise RuntimeError(f"{name}: field source SHA differs from pinned source")
-        if meta.get("review_pattern") != config["species"][name]["pattern"]:
+        pattern_name = config["species"][name]["pattern"]
+        if pattern_name not in patterns:
+            raise RuntimeError(f"{name}: unknown reviewed source convention {pattern_name}")
+        if meta.get("review_pattern") != pattern_name:
             raise RuntimeError(f"{name}: field pattern differs from reviewed source convention")
+        if meta.get("runtime_group_indices") != patterns[pattern_name]:
+            raise RuntimeError(
+                f"{name}: runtime direction mapping drifted; "
+                f"expected={patterns[pattern_name]} actual={meta.get('runtime_group_indices')}"
+            )
+        if row.get("pattern") != pattern_name:
+            raise RuntimeError(f"{name}: generated manifest pattern differs from reviewed source convention")
 
         image = Image.open(field_path).convert("RGBA")
         cell_w = int(meta["cell_width"])
