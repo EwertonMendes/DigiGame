@@ -1,6 +1,7 @@
 extends Node
 
 const MovementSystemScript = preload("res://src/MovementSystem.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 const DATABASE_PATH := "res://database/base-digimon-list.json"
 const DEFAULT_MOV := 4
 const ENEMY_PLACEHOLDER_TURN_SECONDS := 0.45
