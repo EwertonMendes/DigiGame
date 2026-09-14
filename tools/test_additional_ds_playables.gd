@@ -74,6 +74,8 @@ func _ready() -> void:
 		add_child(preview)
 		await get_tree().process_frame
 		var preview_sprite := preview.get_node_or_null("FieldSprite") as Sprite2D
+		var preview_path := "res://assets/resources/%s.tres" % species_name.strip_edges().to_lower()
+		print("    path=%s exists=%s digimon=%s node=%s texture=%s visible=%s" % [preview_path, ResourceLoader.exists(preview_path), preview.get("_digimon") != null, preview_sprite != null, preview_sprite != null and preview_sprite.texture != null, preview_sprite != null and preview_sprite.visible])
 		assert(preview_sprite != null and preview_sprite.texture != null and preview_sprite.visible, "%s menu walk preview must resolve the DS field sprite" % species_name)
 		preview.queue_free()
 
