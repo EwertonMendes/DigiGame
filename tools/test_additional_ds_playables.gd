@@ -66,6 +66,11 @@ func _ready() -> void:
 				follower.step_toward(_target_for_facing(facing), 0.11, [])
 				assert(follower_sprite.frame == expected and not follower_sprite.flip_h, "%s follower %s walk phase mismatch" % [species_name, facing])
 		follower.queue_free()
+		# Finish the follower lifecycle before creating the Control-based menu
+		# preview. Mixing a deferred Node2D free and a new CanvasItem in the same
+		# headless frame can make this integration test exercise render teardown
+		# ordering instead of either consumer's actual contract.
+		await get_tree().process_frame
 
 		print("  menu walk preview")
 		var preview := WalkPreviewScript.new() as DigimonWalkPreview
@@ -74,10 +79,9 @@ func _ready() -> void:
 		add_child(preview)
 		await get_tree().process_frame
 		var preview_sprite := preview.get_node_or_null("FieldSprite") as Sprite2D
-		var preview_path := "res://assets/resources/%s.tres" % species_name.strip_edges().to_lower()
-		print("    path=%s exists=%s digimon=%s node=%s texture=%s visible=%s" % [preview_path, ResourceLoader.exists(preview_path), preview.get("_digimon") != null, preview_sprite != null, preview_sprite != null and preview_sprite.texture != null, preview_sprite != null and preview_sprite.visible])
 		assert(preview_sprite != null and preview_sprite.texture != null and preview_sprite.visible, "%s menu walk preview must resolve the DS field sprite" % species_name)
 		preview.queue_free()
+		await get_tree().process_frame
 
 		print("  portrait")
 		var portrait_key := PortraitResolverScript.resolve_key(species_name)
