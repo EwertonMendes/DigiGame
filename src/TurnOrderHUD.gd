@@ -2,7 +2,7 @@ extends Control
 class_name TurnOrderHUD
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
-const PORTRAIT_ROOT := "res://assets/characters"
+const PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")
 const DESKTOP_SLOTS := 6
 const COMPACT_BREAKPOINT := 760.0
 
@@ -206,10 +206,11 @@ func _label(text_value: String, font_size: int, color: Color) -> Label:
 
 
 func _load_portrait(digimon_key: String) -> Texture2D:
-	if digimon_key.is_empty():
+	var portrait_key := PortraitResolver.resolve_key(digimon_key)
+	if portrait_key.is_empty():
 		return null
-	var metadata_path := "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, digimon_key]
-	var strip_path := "%s/%s/portrait_frames.png" % [PORTRAIT_ROOT, digimon_key]
+	var metadata_path := PortraitResolver.metadata_path(portrait_key)
+	var strip_path := PortraitResolver.strip_path(portrait_key)
 	if not FileAccess.file_exists(metadata_path) or not ResourceLoader.exists(strip_path):
 		return null
 	var metadata = JSON.parse_string(FileAccess.get_file_as_string(metadata_path))

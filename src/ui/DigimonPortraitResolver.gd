@@ -4,8 +4,8 @@ class_name DigimonPortraitResolver
 const PORTRAIT_ROOT := "res://assets/characters"
 
 
-static func resolve_key(value: String) -> String:
-	var normalized := value.strip_edges().to_lower()
+static func resolve_key(species_or_key: String) -> String:
+	var normalized := species_or_key.strip_edges().to_lower()
 	if normalized.is_empty():
 		return ""
 	var candidates: Array[String] = []
@@ -14,31 +14,33 @@ static func resolve_key(value: String) -> String:
 		normalized.replace(" ", ""),
 		normalized.replace(" ", "_"),
 		normalized.replace("-", "").replace(" ", ""),
-		_compact_key(normalized),
+		compact_key(normalized),
 	]:
 		var candidate := String(raw_candidate)
 		if not candidate.is_empty() and not candidates.has(candidate):
 			candidates.append(candidate)
 	for candidate: String in candidates:
-		var metadata_path := "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, candidate]
-		var strip_path := "%s/%s/portrait_frames.png" % [PORTRAIT_ROOT, candidate]
-		if FileAccess.file_exists(metadata_path) and ResourceLoader.exists(strip_path):
+		if has_portrait(candidate):
 			return candidate
 	return ""
 
 
-static func metadata_path(value: String) -> String:
-	var key := resolve_key(value)
-	return "" if key.is_empty() else "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, key]
-
-
-static func strip_path(value: String) -> String:
-	var key := resolve_key(value)
-	return "" if key.is_empty() else "%s/%s/portrait_frames.png" % [PORTRAIT_ROOT, key]
-
-
-static func _compact_key(value: String) -> String:
+static func compact_key(value: String) -> String:
 	var regex := RegEx.new()
 	if regex.compile("[^a-z0-9]+") != OK:
-		return value.replace(" ", "").replace("-", "")
+		return value.to_lower().replace(" ", "").replace("-", "")
 	return regex.sub(value.to_lower(), "", true)
+
+
+static func has_portrait(key: String) -> bool:
+	if key.is_empty():
+		return false
+	return FileAccess.file_exists(metadata_path(key)) and ResourceLoader.exists(strip_path(key))
+
+
+static func metadata_path(key: String) -> String:
+	return "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, key]
+
+
+static func strip_path(key: String) -> String:
+	return "%s/%s/portrait_frames.png" % [PORTRAIT_ROOT, key]

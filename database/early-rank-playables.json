@@ -856,7 +856,7 @@
       "attribute": "Data",
       "database_image": "/assets/digimons/GrassAgumon.png",
       "portrait_key": "grassagumon",
-      "portrait_source": "res://assets/characters/grassagumon/source/sheet.png",
+      "portrait_source": "res://assets/characters/grassagumon/source/portrait_frames.png",
       "portrait_strip": "res://assets/characters/grassagumon/portrait_frames.png",
       "resource": "res://assets/resources/grass agumon.tres",
       "visual_mode": "directional_12",

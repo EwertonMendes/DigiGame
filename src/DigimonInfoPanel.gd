@@ -1,7 +1,7 @@
 extends Control
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
-const PORTRAIT_ROOT := "res://assets/characters"
+const PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")
 const COMPACT_BREAKPOINT := 760.0
 
 var _digimon_controller: Node = null
@@ -282,10 +282,11 @@ func _load_portrait_animation(digimon_key: String) -> void:
 	_frame_durations = []
 	_frame_index = 0
 	_frame_elapsed = 0.0
-	if digimon_key.is_empty():
+	var portrait_key := PortraitResolver.resolve_key(digimon_key)
+	if portrait_key.is_empty():
 		return
-	var metadata_path: String = "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, digimon_key]
-	var strip_path: String = "%s/%s/portrait_frames.png" % [PORTRAIT_ROOT, digimon_key]
+	var metadata_path: String = PortraitResolver.metadata_path(portrait_key)
+	var strip_path: String = PortraitResolver.strip_path(portrait_key)
 	if not FileAccess.file_exists(metadata_path) or not ResourceLoader.exists(strip_path):
 		return
 	var metadata = JSON.parse_string(FileAccess.get_file_as_string(metadata_path))

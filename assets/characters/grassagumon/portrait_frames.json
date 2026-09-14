@@ -1,6 +1,6 @@
 {
-  "source": "sheet.png",
-  "source_path": "source/sheet.png",
+  "source": "portrait_frames.png",
+  "source_path": "source/portrait_frames.png",
   "source_kind": "project_original",
   "frame_width": 160,
   "frame_height": 180,
@@ -10,5 +10,5 @@
     180,
     240
   ],
-  "source_sha256": "1fbe34aa0e2dda4936522cb391280a4bdf43dafa6d06c8cc2a3372f24a93586e"
+  "source_sha256": "7695726c43817175e27213073a2c4b7280e6ea242de9d7d793934df67ad3721c"
 }

@@ -1,7 +1,7 @@
 extends Control
 class_name DigimonPortraitPreview
 
-const PORTRAIT_ROOT := "res://assets/characters"
+const PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")
 
 var _texture_rect: TextureRect = null
 var _atlas: AtlasTexture = null
@@ -37,11 +37,11 @@ func set_species(species_name: String) -> void:
 
 func _load_species(species_name: String) -> void:
 	_reset_animation()
-	var key := _resolve_portrait_key(species_name)
+	var key := PortraitResolver.resolve_key(species_name)
 	if key.is_empty():
 		return
-	var metadata_path := "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, key]
-	var strip_path := "%s/%s/portrait_frames.png" % [PORTRAIT_ROOT, key]
+	var metadata_path := PortraitResolver.metadata_path(key)
+	var strip_path := PortraitResolver.strip_path(key)
 	var metadata = JSON.parse_string(FileAccess.get_file_as_string(metadata_path))
 	if not metadata is Dictionary:
 		return
@@ -58,36 +58,6 @@ func _load_species(species_name: String) -> void:
 	_texture_rect.texture = _atlas
 	_apply_frame()
 	set_process(_frame_count > 1)
-
-
-func _resolve_portrait_key(species_name: String) -> String:
-	var normalized := species_name.strip_edges().to_lower()
-	if normalized.is_empty():
-		return ""
-	var candidates: Array[String] = []
-	for raw_candidate in [
-		normalized,
-		normalized.replace(" ", ""),
-		normalized.replace(" ", "_"),
-		normalized.replace("-", "").replace(" ", ""),
-		_compact_portrait_key(normalized),
-	]:
-		var candidate := String(raw_candidate)
-		if not candidate.is_empty() and not candidates.has(candidate):
-			candidates.append(candidate)
-	for candidate: String in candidates:
-		var metadata_path := "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, candidate]
-		var strip_path := "%s/%s/portrait_frames.png" % [PORTRAIT_ROOT, candidate]
-		if FileAccess.file_exists(metadata_path) and ResourceLoader.exists(strip_path):
-			return candidate
-	return ""
-
-
-func _compact_portrait_key(value: String) -> String:
-	var regex := RegEx.new()
-	if regex.compile("[^a-z0-9]+") != OK:
-		return value.replace(" ", "").replace("-", "")
-	return regex.sub(value.to_lower(), "", true)
 
 
 func _process(delta: float) -> void:
