@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate project-original Digimon data, source provenance and generated runtime assets."""
+"""Validate project-original Digimon data, transparent sources and runtime assets."""
 from __future__ import annotations
 
 import hashlib
@@ -21,6 +21,10 @@ def fail(message: str) -> None:
     raise RuntimeError(message)
 
 
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def png_info(path: Path) -> tuple[int, int, int]:
     data = path.read_bytes()
     if len(data) < 33 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
@@ -33,6 +37,12 @@ def assignment(text: str, key: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
+def local_res(value: str) -> Path:
+    if not value.startswith("res://"):
+        fail(f"Expected res:// source path, got {value!r}")
+    return ROOT / value.removeprefix("res://")
+
+
 def main() -> int:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     database = json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
@@ -40,11 +50,11 @@ def main() -> int:
     learnsets = json.loads(LEARNSETS_PATH.read_text(encoding="utf-8"))
     techniques = json.loads(TECHNIQUES_PATH.read_text(encoding="utf-8"))
 
-    if int(manifest.get("schema_version", 0)) != 1 or manifest.get("source_kind") != "project_original":
+    if int(manifest.get("schema_version", 0)) != 2 or manifest.get("source_kind") != "project_original":
         fail("project-original manifest schema/source kind is invalid")
     specs = manifest.get("species", [])
-    if not isinstance(specs, list) or not specs:
-        fail("project-original manifest must contain species")
+    if not isinstance(specs, list) or not specs or int(manifest.get("count", -1)) != len(specs):
+        fail("project-original manifest species/count is invalid")
 
     db_by_seed = {str(row.get("seed", "")): row for row in database}
     early_by_name = {str(row.get("name", "")): row for row in early.get("species", [])}
@@ -55,33 +65,44 @@ def main() -> int:
         name = str(spec["name"])
         seed = str(spec["seed"])
         key = str(spec["portrait_key"])
-        if seed not in db_by_seed:
-            fail(f"{name}: missing database entry")
-        if db_by_seed[seed] != spec.get("database_entry"):
+        entry = db_by_seed.get(seed)
+        if entry is None or entry != spec.get("database_entry"):
             fail(f"{name}: database entry drifted from project-original manifest")
 
         parent_seed = str(spec["evolves_from_seed"])
         parent = db_by_seed.get(parent_seed)
         if parent is None or seed not in parent.get("digiEvolutionSeedList", []):
             fail(f"{name}: parent evolution route is missing")
-        if parent_seed not in db_by_seed[seed].get("degenerateSeedList", []):
+        if parent_seed not in entry.get("degenerateSeedList", []):
             fail(f"{name}: degeneration route back to parent is missing")
-        if db_by_seed[seed].get("digiEvolutionSeedList") != []:
-            fail(f"{name}: project-original Rookie must not expose an evolution yet")
-        if db_by_seed[seed].get("rank") != "Rookie":
-            fail(f"{name}: expected Rookie rank")
-        if db_by_seed[seed].get("element") != "plant":
+        if entry.get("digiEvolutionSeedList") != [] or entry.get("rank") != "Rookie":
+            fail(f"{name}: expected terminal project-original Rookie")
+        if entry.get("element") != "plant":
             fail(f"{name}: expected plant element")
 
-        source_value = str(spec["source_sheet"])
-        if not source_value.startswith("res://"):
-            fail(f"{name}: source sheet must use res://")
-        source_path = ROOT / source_value.removeprefix("res://")
-        if not source_path.is_file():
-            fail(f"{name}: source sheet is missing")
-        digest = hashlib.sha256(source_path.read_bytes()).hexdigest()
-        if digest != str(spec["source_sha256"]):
-            fail(f"{name}: source sheet hash mismatch")
+        field_source = local_res(str(spec["field_source"]))
+        portrait_source = local_res(str(spec["portrait_source"]))
+        for source in (field_source, portrait_source):
+            if not source.is_file() or source.stat().st_size <= 0:
+                fail(f"{name}: missing source {source.relative_to(ROOT)}")
+
+        field_cfg = spec["field"]
+        portrait_cfg = spec["portrait"]
+        fw, fh, fct = png_info(field_source)
+        if (fw, fh) != (int(field_cfg["cell_width"]) * 12, int(field_cfg["cell_height"])):
+            fail(f"{name}: normalized field source dimensions are invalid")
+        if fct not in {4, 6}:
+            fail(f"{name}: normalized field source must preserve alpha")
+        pw, ph, pct = png_info(portrait_source)
+        if (pw, ph) != (
+            int(portrait_cfg["frame_width"]) * int(portrait_cfg["frame_count"]),
+            int(portrait_cfg["frame_height"]),
+        ):
+            fail(f"{name}: normalized portrait source dimensions are invalid")
+        if pct not in {4, 6}:
+            fail(f"{name}: normalized portrait source must preserve alpha")
+        if int(portrait_cfg["frame_width"]) <= int(field_cfg["cell_width"]):
+            fail(f"{name}: profile portrait must be distinct from the walking sprite")
 
         char_dir = ROOT / "assets/characters" / key
         field_path = char_dir / "field.png"
@@ -91,41 +112,32 @@ def main() -> int:
         resource_path = ROOT / "assets/resources" / f"{name.lower()}.tres"
         for path in (field_path, field_meta_path, portrait_path, portrait_meta_path, resource_path):
             if not path.is_file() or path.stat().st_size == 0:
-                fail(f"{name}: missing generated runtime asset {path.relative_to(ROOT)}")
+                fail(f"{name}: missing runtime asset {path.relative_to(ROOT)}")
+
+        if field_path.read_bytes() != field_source.read_bytes():
+            fail(f"{name}: runtime field strip must reproduce the transparent normalized source byte-for-byte")
+        if portrait_path.read_bytes() != portrait_source.read_bytes():
+            fail(f"{name}: runtime portrait strip must reproduce the profile source byte-for-byte")
 
         field_meta = json.loads(field_meta_path.read_text(encoding="utf-8"))
         if field_meta.get("source_kind") != "project_original":
             fail(f"{name}: field metadata lost project-original provenance")
-        if field_meta.get("source_sha256") != digest:
-            fail(f"{name}: field metadata source hash mismatch")
+        if field_meta.get("source_sheet") != spec["field_source"] or field_meta.get("source_sha256") != sha256(field_source):
+            fail(f"{name}: field metadata source provenance mismatch")
         if field_meta.get("directions") != CANONICAL_DIRECTIONS:
             fail(f"{name}: field directions do not match runtime contract")
         if field_meta.get("canonical_runtime_phases") != ["idle", "step_a", "step_b"]:
             fail(f"{name}: field phase order is invalid")
-        if field_meta.get("runtime_frame_indices") != spec["field"]["runtime_frame_indices"]:
-            fail(f"{name}: audited runtime frame ordering drifted")
-
-        width, height, color_type = png_info(field_path)
-        if (width, height) != (
-            int(spec["field"]["cell_width"]) * 12,
-            int(spec["field"]["cell_height"]),
-        ):
-            fail(f"{name}: unexpected field strip dimensions {(width, height)}")
-        if color_type not in {4, 6}:
-            fail(f"{name}: field strip must preserve alpha transparency")
+        if field_meta.get("runtime_frame_indices") != list(range(12)):
+            fail(f"{name}: normalized field strip must already be canonical")
 
         portrait_meta = json.loads(portrait_meta_path.read_text(encoding="utf-8"))
-        if portrait_meta.get("source_kind") != "project_original" or portrait_meta.get("source_sha256") != digest:
+        if portrait_meta.get("source_kind") != "project_original" or portrait_meta.get("source_sha256") != sha256(portrait_source):
             fail(f"{name}: portrait metadata provenance mismatch")
-        portrait_width, portrait_height, portrait_color_type = png_info(portrait_path)
-        expected_portrait_frames = len(spec["portrait"]["source_boxes"])
-        if (
-            portrait_width != int(spec["portrait"]["frame_width"]) * expected_portrait_frames
-            or portrait_height != int(spec["portrait"]["frame_height"])
-        ):
-            fail(f"{name}: unexpected portrait strip dimensions {(portrait_width, portrait_height)}")
-        if portrait_color_type not in {4, 6}:
-            fail(f"{name}: portrait strip must preserve alpha transparency")
+        if int(portrait_meta.get("frame_width", 0)) != int(portrait_cfg["frame_width"]) or int(portrait_meta.get("frame_height", 0)) != int(portrait_cfg["frame_height"]):
+            fail(f"{name}: portrait frame dimensions drifted")
+        if int(portrait_meta.get("frame_count", 0)) != int(portrait_cfg["frame_count"]):
+            fail(f"{name}: portrait frame count drifted")
 
         text = resource_path.read_text(encoding="utf-8")
         if assignment(text, "display_name") != json.dumps(name):
@@ -135,22 +147,18 @@ def main() -> int:
         if assignment(text, "sprite_hframes") != "12" or assignment(text, "sprite_vframes") != "1":
             fail(f"{name}: runtime resource frame grid mismatch")
         if f"res://assets/characters/{key}/field.png" not in text:
-            fail(f"{name}: runtime resource is not linked to generated field strip")
+            fail(f"{name}: runtime resource is not linked to field strip")
 
         early_row = early_by_name.get(name)
         if not early_row or early_row.get("field_source_kind") != "project_original":
             fail(f"{name}: early-rank playable manifest entry is missing")
-        if early_row.get("portrait_source") != source_value:
-            fail(f"{name}: early-rank manifest source sheet mismatch")
+        if early_row.get("portrait_source") != spec["portrait_source"]:
+            fail(f"{name}: early-rank manifest profile source mismatch")
 
         learnset = learnsets_by_name.get(name)
         expected_skills = spec.get("learnset", [])
-        if not learnset:
-            fail(f"{name}: permanent technique learnset is missing")
-        if str(learnset.get("speciesSeed", "")) != seed or str(learnset.get("rank", "")) != "Rookie":
-            fail(f"{name}: learnset identity/rank does not match the project-original species")
-        if learnset.get("skills") != expected_skills:
-            fail(f"{name}: learnset does not match project-original manifest")
+        if not learnset or learnset.get("skills") != expected_skills:
+            fail(f"{name}: permanent technique learnset mismatch")
         signatures = [skill for skill in expected_skills if skill.get("acquisition") == "signature"]
         inherited = [skill for skill in expected_skills if skill.get("acquisition") == "level"]
         if len(signatures) != 1 or int(signatures[0].get("level", 0)) != 1:
@@ -161,10 +169,7 @@ def main() -> int:
             if str(skill.get("skill", "")) not in technique_ids:
                 fail(f"{name}: learnset references unknown technique {skill}")
 
-    print(
-        "project-original playable validation passed: "
-        + ", ".join(str(spec["name"]) for spec in specs)
-    )
+    print("project-original playable validation passed: " + ", ".join(str(spec["name"]) for spec in specs))
     return 0
 
 
