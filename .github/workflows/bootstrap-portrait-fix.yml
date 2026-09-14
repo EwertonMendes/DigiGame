@@ -22,9 +22,6 @@ jobs:
       - name: Install sprite tooling
         run: python3 -m pip install --disable-pip-version-check pillow numpy
 
-      - name: Repair Grass Agumon transparent field source
-        run: python3 tools/apply_grass_agumon_visual_fix.py
-
       - name: Patch shared portrait resolution
         run: python3 tools/bootstrap_portrait_resolution_fix.py
 
