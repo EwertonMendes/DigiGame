@@ -3,6 +3,21 @@
 from pathlib import Path
 
 
+# The branch bootstrap workflow may run again after the first materialization.
+# Once all cross-cutting ownership markers are present, the migration is done;
+# asset/data rebuilding remains deterministic and can continue normally.
+_directional_text = Path("tools/validate_all_ds_directional_facings.py").read_text(encoding="utf-8")
+_technique_text = Path("tools/build_technique_catalog.mjs").read_text(encoding="utf-8")
+_combat_validation_text = Path("tools/validate_combat_data.py").read_text(encoding="utf-8")
+if (
+    "PROJECT_ORIGINAL_AUDIT_PATH" in _directional_text
+    and '["grass agumon", "adhesive_bubble"]' in _technique_text
+    and "len(species_database)" in _combat_validation_text
+):
+    print("Grass Agumon repository integration patches already applied")
+    raise SystemExit(0)
+
+
 def replace_once(path: str, old: str, new: str) -> None:
     file = Path(path)
     text = file.read_text(encoding="utf-8")
