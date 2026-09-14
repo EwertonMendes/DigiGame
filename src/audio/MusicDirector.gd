@@ -11,6 +11,8 @@ signal track_changed(track_id: String)
 
 const TRACK_ZONE_1 := "zone_1"
 const TRACK_BATTLE_1 := "battle_1"
+const TRACK_VICTORY_THEME := "victory_theme"
+const TRACK_GAME_OVER := "game_over"
 const DEFAULT_CROSSFADE_SECONDS := 0.55
 const SILENT_VOLUME_DB := -60.0
 
@@ -19,11 +21,23 @@ const TRACKS := {
 		"path": "res://assets/audio/music/zone_1.ogg",
 		# Exploration music stays present while gameplay SFX remain slightly ahead.
 		"volume_db": -3.0,
+		"loop": true,
 	},
 	TRACK_BATTLE_1: {
 		"path": "res://assets/audio/music/battle_1.ogg",
 		# Battle music has more perceived density, so leave a little extra headroom.
 		"volume_db": -6.0,
+		"loop": true,
+	},
+	TRACK_VICTORY_THEME: {
+		"path": "res://assets/audio/music/victory-theme.ogg",
+		"volume_db": -3.0,
+		"loop": false,
+	},
+	TRACK_GAME_OVER: {
+		"path": "res://assets/audio/music/game-over.ogg",
+		"volume_db": -3.0,
+		"loop": false,
 	},
 }
 
@@ -40,6 +54,7 @@ func _ready() -> void:
 		var player := AudioStreamPlayer.new()
 		player.name = "MusicPlayer%d" % (index + 1)
 		player.volume_db = SILENT_VOLUME_DB
+		player.finished.connect(_on_player_finished.bind(index))
 		add_child(player)
 		_players.append(player)
 
@@ -50,6 +65,14 @@ func play_zone_1(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
 
 func play_battle_1(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
 	play_track(TRACK_BATTLE_1, fade_seconds)
+
+
+func play_victory_theme(fade_seconds: float = 0.0) -> void:
+	play_track(TRACK_VICTORY_THEME, fade_seconds)
+
+
+func play_game_over(fade_seconds: float = 0.0) -> void:
+	play_track(TRACK_GAME_OVER, fade_seconds)
 
 
 func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
@@ -148,10 +171,11 @@ func _stream_for(track_id: String) -> AudioStream:
 		return null
 
 	var stream := source.duplicate() as AudioStream
+	var should_loop := bool(definition.get("loop", true))
 	if stream is AudioStreamOggVorbis:
-		(stream as AudioStreamOggVorbis).loop = true
+		(stream as AudioStreamOggVorbis).loop = should_loop
 	elif stream is AudioStreamMP3:
-		(stream as AudioStreamMP3).loop = true
+		(stream as AudioStreamMP3).loop = should_loop
 
 	_stream_cache[track_id] = stream
 	return stream
@@ -161,3 +185,11 @@ func _finish_crossfade(previous_player: AudioStreamPlayer, active_player: AudioS
 	if previous_player != null and previous_player != active_player and previous_player.playing:
 		previous_player.stop()
 	_crossfade = null
+
+
+func _on_player_finished(index: int) -> void:
+	if index != _active_index:
+		return
+	_active_index = -1
+	_current_track_id = ""
+	track_changed.emit("")
