@@ -5,18 +5,13 @@ const ProgressionUI = preload("res://src/ui/TacticalTheme.gd")
 const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
 const EvolutionChartScript = preload("res://src/ui/EvolutionChart.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
-const BattleActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
 const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
 
 var _constellation: EvolutionChart
-var _actions: BattleActionDatabase
 var _menu_root: Control
 
 func _build() -> void:
 	super._build()
-
-	_actions = BattleActionDatabaseScript.new() as BattleActionDatabase
-	_actions.load_default()
 
 	# A single clipped Kenney frame owns the complete menu. Local positioning is
 	# always relative to this frame, so content cannot escape at other scales.
@@ -157,14 +152,7 @@ func _build_hero(instance: DigimonInstance, species: Dictionary) -> Control:
 	return hero
 
 func _build_skills_card(instance: DigimonInstance) -> Control:
-	var card := _section_card("SKILLS", ProgressionUI.GOLD)
-	var body := card.get_meta("body") as VBoxContainer
-	body.add_child(_subheading("FAVORITES", ProgressionUI.GOLD))
-	body.add_child(_wrapped_value(_skill_list_copy(instance.favorite_skills, "No favorites"), ProgressionUI.TEXT))
-	if not instance.learned_skills.is_empty():
-		body.add_child(_subheading("LEARNED", ProgressionUI.CYAN))
-		body.add_child(_wrapped_value(_skill_list_copy(instance.learned_skills, ""), ProgressionUI.MUTED))
-	return card
+	return super._build_skills_card(instance)
 
 func _build_evolution_card(instance: DigimonInstance) -> Control:
 	var card := _section_card("EVOLUTION CHART", ProgressionUI.PURPLE)
@@ -299,22 +287,6 @@ func _mini_progress(accent: Color) -> ProgressBar:
 	bar.add_theme_stylebox_override("fill", SKIN.progress_fill_style(accent))
 	return bar
 
-func _skill_list_copy(skill_ids: Array[String], empty_copy: String) -> String:
-	if skill_ids.is_empty():
-		return empty_copy
-	var names: Array[String] = []
-	for skill_id: String in skill_ids:
-		names.append(_skill_display_name(skill_id))
-	return ", ".join(names)
-
-func _skill_display_name(skill_id: String) -> String:
-	if _actions != null:
-		var action := _actions.get_action(skill_id)
-		var display_name := String(action.get("name", "")).strip_edges()
-		if not display_name.is_empty():
-			return display_name
-	return skill_id.replace("_", " ").capitalize()
-
 func _layout() -> void:
 	if _panel == null or _menu_root == null:
 		return
@@ -371,3 +343,4 @@ func _layout() -> void:
 	if compact != _last_compact:
 		_last_compact = compact
 		call_deferred("_refresh_details")
+
