@@ -98,7 +98,7 @@ def main() -> None:
         for entry in learnset.get("skills", []):
             assert entry.get("skill") in action_ids, f"{species}: unknown skill {entry.get('skill')}"
             assert int(entry.get("level", 0)) >= 1, f"{species}: invalid skill level"
-    assert species_seen == species_seeds and len(species_seen) == 408, "every current species must have one learnset"
+    assert species_seen == species_seeds and len(species_seen) == len(species_database), "every current species must have one learnset"
 
     record_ids: set[str] = set()
     costs = {"common": 300, "uncommon": 900, "rare": 2500, "legendary": 6000}

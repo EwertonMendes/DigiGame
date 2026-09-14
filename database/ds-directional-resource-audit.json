@@ -1,11 +1,12 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 100,
+  "directional_resource_count": 101,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
   "additional_source_rebuilt_resource_count": 11,
-  "audited_resource_count": 100,
+  "project_original_resource_count": 1,
+  "audited_resource_count": 101,
   "directional_resources": [
     {
       "name": "Agumon",
@@ -204,6 +205,12 @@
       "resource": "assets/resources/gotsumon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Grass Agumon",
+      "resource": "assets/resources/grass agumon.tres",
+      "layout_source": "explicit",
+      "coverage": "project_original"
     },
     {
       "name": "Greymon",

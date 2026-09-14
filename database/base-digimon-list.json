@@ -96,7 +96,8 @@
     "digiEvolutionSeedList": [
       "42e8ce3c-0f51-4238-866e-a195628b165c",
       "605568d6-840c-4cd0-bdf4-b7d04819f149",
-      "96c23ff9-d6b4-43da-91e6-f0c9799c65d7"
+      "96c23ff9-d6b4-43da-91e6-f0c9799c65d7",
+      "670c2bb3-b540-415d-b34b-4c8c33d64ce0"
     ],
     "degenerateSeedList": [
       "b5ac222a-e653-4543-923e-77355dd24686"
@@ -781,6 +782,29 @@
         "value": 10
       }
     ],
+    "checked": true,
+    "MOV": 4,
+    "movementType": "ground"
+  },
+  {
+    "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
+    "name": "Grass Agumon",
+    "img": "/assets/digimons/GrassAgumon.png",
+    "rank": "Rookie",
+    "species": "Dragon",
+    "attribute": "Data",
+    "element": "plant",
+    "hp": 108,
+    "mp": 124,
+    "atk": 76,
+    "def": 69,
+    "speed": 56,
+    "bitFarmingRate": 27,
+    "digiEvolutionSeedList": [],
+    "degenerateSeedList": [
+      "edc9812f-82a6-487f-9a4d-52b845643176"
+    ],
+    "evolutionRequirements": [],
     "checked": true,
     "MOV": 4,
     "movementType": "ground"

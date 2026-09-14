@@ -1,0 +1,14 @@
+{
+  "source": "sheet.png",
+  "source_path": "source/sheet.png",
+  "source_kind": "project_original",
+  "frame_width": 64,
+  "frame_height": 64,
+  "frame_count": 3,
+  "durations_ms": [
+    220,
+    140,
+    220
+  ],
+  "source_sha256": "2f8d75a3fca0a93e71fc6a6eaad4569e064caee9fe7050aefd14d08c3ccba342"
+}

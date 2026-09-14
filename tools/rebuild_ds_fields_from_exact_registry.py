@@ -58,7 +58,16 @@ def git_blob_sha(data: bytes) -> str:
 
 def early_entries() -> list[dict[str, Any]]:
     rows = json.loads(Path("database/base-digimon-list.json").read_text(encoding="utf-8"))
-    rows = [row for row in rows if str(row.get("rank", "")) in EARLY_RANKS]
+    project_manifest = Path("database/project-original-playables.json")
+    project_original = set()
+    if project_manifest.is_file():
+        project_payload = json.loads(project_manifest.read_text(encoding="utf-8"))
+        project_original = {
+            str(item.get("name", ""))
+            for item in project_payload.get("species", [])
+            if isinstance(item, dict)
+        }
+    rows = [row for row in rows if str(row.get("rank", "")) in EARLY_RANKS and str(row.get("name", "")) not in project_original]
     rows.sort(key=lambda row: (EARLY_RANKS.index(str(row.get("rank", ""))), str(row.get("name", ""))))
     if len(rows) != 87:
         raise RuntimeError(f"Expected 87 early-rank rows, got {len(rows)}")

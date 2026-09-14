@@ -245,6 +245,9 @@ def main() -> None:
         )
 
     write_manifest(entries, manifest_rows)
+    project_builder = Path("tools/build_project_original_playables.py")
+    if project_builder.is_file():
+        subprocess.run(["python3", str(project_builder)], check=True)
 
 
 if __name__ == "__main__":

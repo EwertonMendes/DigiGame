@@ -375,10 +375,12 @@ async function main() {
   const signatureOverrides = new Map([
     ["agumon", "pepper_breath"], ["gabumon", "blue_blaster"], ["greymon", "mega_flame"],
     ["koromon", "bubbles"], ["tanemon", "adhesive_bubble"], ["veemon", "vee_headbutt"],
+    ["grass agumon", "adhesive_bubble"],
   ]);
   const inheritedOverrides = new Map([
     ["agumon", ["guard_charge"]], ["gabumon", ["speed_charge"]],
     ["greymon", ["guard_charge"]], ["veemon", ["speed_charge"]],
+    ["grass agumon", ["guard_charge", "speed_charge"]],
   ]);
   const learnsets = species.map((entry) => {
     const used = new Set();
