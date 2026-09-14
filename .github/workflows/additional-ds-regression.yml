@@ -51,6 +51,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path . tools/test_additional_ds_playables.tscn --quit-after 60 2>&1 | tee /tmp/additional-ds.log
+          timeout 90s godot --headless --path . tools/test_additional_ds_playables.tscn 2>&1 | tee /tmp/additional-ds.log
           grep -q 'additional DS playable regression passed' /tmp/additional-ds.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/additional-ds.log; then exit 1; fi
