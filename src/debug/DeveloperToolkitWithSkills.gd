@@ -8,6 +8,7 @@ var _skill_catalog: Array[Dictionary] = []
 var _selected_skill_id := ""
 var _skill_page := 0
 
+var _skill_target_select: OptionButton
 var _skill_target_summary: Label
 var _skill_search: LineEdit
 var _skill_role_filter: OptionButton
@@ -48,9 +49,17 @@ func _refresh_selected() -> void:
 func _build_skills_tab(tabs: TabContainer) -> void:
 	var page := _page(tabs, "SKILLS")
 	page.add_child(_section_label("TECHNIQUE TEST LAB", UI.PURPLE))
-	var intro := _label("Assign any catalog technique to the selected owned Digimon, change its organization/mastery state, then launch the normal battle sandbox. Debug mutations are real collection state and therefore exercise the same battle/save paths as gameplay.", 10, UI.SUBTLE)
+	var intro := _label("Choose the target Digimon here, select any catalog technique, then use the explicit TEACH button. Debug mutations are real collection state and therefore exercise the same battle/save paths as gameplay.", 10, UI.SUBTLE)
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(intro)
+
+	page.add_child(_section_label("TARGET DIGIMON", UI.GREEN))
+	_skill_target_select = OptionButton.new()
+	_skill_target_select.custom_minimum_size = Vector2(320, 42)
+	_skill_target_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_field(_skill_target_select)
+	_skill_target_select.item_selected.connect(_on_skill_target_selected)
+	page.add_child(_skill_target_select)
 
 	_skill_target_summary = _label("Select an owned Digimon.", 11, UI.TEXT, true)
 	_skill_target_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -118,7 +127,8 @@ func _build_skills_tab(tabs: TabContainer) -> void:
 	_skill_details.custom_minimum_size.y = 92
 	detail_margin.add_child(_skill_details)
 
-	_skill_learn_button = _action("LEARN", _toggle_selected_skill_learned, UI.GREEN)
+	_skill_learn_button = _action("TEACH SELECTED SKILL", _toggle_selected_skill_learned, UI.GREEN, 46)
+	_skill_learn_button.custom_minimum_size.x = 250
 	_skill_favorite_button = _action("FAVORITE", _toggle_selected_skill_favorite, UI.GOLD)
 	_skill_archive_button = _action("ARCHIVE", _toggle_selected_skill_archived, UI.PURPLE)
 	page.add_child(_button_row([_skill_learn_button, _skill_favorite_button, _skill_archive_button, _action("REFILL HP / SP", _heal, UI.CYAN), _action("TEST IN BATTLE", _start_debug_battle, UI.RED)]))
@@ -160,6 +170,7 @@ func _refresh_skill_lab() -> void:
 	if _techniques == null or _skill_list == null:
 		return
 	var value := _selected_instance()
+	_refresh_skill_target_picker(value)
 	if value == null:
 		_skill_target_summary.text = "No owned Digimon selected."
 		_skill_results_summary.text = "0 results"
@@ -169,7 +180,6 @@ func _refresh_skill_lab() -> void:
 		_refresh_form_learnset()
 		return
 
-	var species := _roster.database.get_by_seed(value.species_seed)
 	var party_state := "PARTY" if OverworldState.get_active_party_ids().has(value.id) else "STORAGE"
 	_skill_target_summary.text = "%s · LV %d · %s · %d learned · %d favorites · %d archived" % [
 		_progression.display_name(value).to_upper(), value.level, party_state,
@@ -211,6 +221,40 @@ func _refresh_skill_lab() -> void:
 			_skill_list.add_child(pager)
 	_refresh_skill_details()
 	_refresh_form_learnset()
+
+
+func _refresh_skill_target_picker(value: DigimonInstance) -> void:
+	if _skill_target_select == null:
+		return
+	var selected_id := value.id if value != null else ""
+	_skill_target_select.clear()
+	var selected_index := -1
+	var active_ids := OverworldState.get_active_party_ids()
+	for owned: DigimonInstance in OverworldState.get_collection_instances():
+		var state := "PARTY" if active_ids.has(owned.id) else "STORAGE"
+		_skill_target_select.add_item("%s · LV %d · %s" % [_progression.display_name(owned).to_upper(), owned.level, state])
+		var index := _skill_target_select.item_count - 1
+		_skill_target_select.set_item_metadata(index, owned.id)
+		if owned.id == selected_id:
+			selected_index = index
+	if selected_index >= 0:
+		_skill_target_select.select(selected_index)
+	elif _skill_target_select.item_count > 0:
+		_skill_target_select.select(0)
+	_skill_target_select.disabled = _skill_target_select.item_count == 0
+
+
+func _on_skill_target_selected(index: int) -> void:
+	if _skill_target_select == null or index < 0 or index >= _skill_target_select.item_count:
+		return
+	var instance_id := String(_skill_target_select.get_item_metadata(index))
+	if instance_id.is_empty() or instance_id == _selected_id or OverworldState.get_instance_by_id(instance_id) == null:
+		return
+	_selected_id = instance_id
+	_skill_page = 0
+	_refresh_collection()
+	_refresh_selected()
+	_refresh_diagnostics()
 
 
 func _filtered_skills(value: DigimonInstance) -> Array[Dictionary]:
@@ -350,7 +394,8 @@ func _refresh_skill_details() -> void:
 		String(action.get("masteryProfile", "swift")).replace("_", " ").capitalize(), availability.replace("_", " ").capitalize(),
 		_progression.display_name(value), learned_state, String(action.get("description", ""))
 	]
-	_skill_learn_button.text = "FORGET" if learned else "LEARN"
+	_skill_learn_button.disabled = false
+	_skill_learn_button.text = "REMOVE SKILL FROM %s" % _progression.display_name(value).to_upper() if learned else "TEACH TO %s" % _progression.display_name(value).to_upper()
 	_skill_learn_button.add_theme_color_override("font_color", UI.RED if learned else UI.TEXT)
 	_skill_favorite_button.text = "UNFAVORITE" if favorite else "FAVORITE"
 	_skill_archive_button.text = "RESTORE" if archived else "ARCHIVE"
