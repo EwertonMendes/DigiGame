@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v6
+      - name: Install contact-sheet tooling
+        run: python3 -m pip install --disable-pip-version-check pillow
       - name: Build visual direction contact sheet
         shell: bash
         run: |
