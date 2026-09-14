@@ -145,8 +145,18 @@ def main() -> int:
 
         learnset = learnsets_by_name.get(name)
         expected_skills = spec.get("learnset", [])
-        if not learnset or learnset.get("skills") != expected_skills:
+        if not learnset:
+            fail(f"{name}: permanent technique learnset is missing")
+        if str(learnset.get("speciesSeed", "")) != seed or str(learnset.get("rank", "")) != "Rookie":
+            fail(f"{name}: learnset identity/rank does not match the project-original species")
+        if learnset.get("skills") != expected_skills:
             fail(f"{name}: learnset does not match project-original manifest")
+        signatures = [skill for skill in expected_skills if skill.get("acquisition") == "signature"]
+        inherited = [skill for skill in expected_skills if skill.get("acquisition") == "level"]
+        if len(signatures) != 1 or int(signatures[0].get("level", 0)) != 1:
+            fail(f"{name}: Rookie must have exactly one level-1 signature")
+        if [int(skill.get("level", 0)) for skill in inherited] != [8, 16]:
+            fail(f"{name}: Rookie inherited technique levels must be 8 and 16")
         for skill in expected_skills:
             if str(skill.get("skill", "")) not in technique_ids:
                 fail(f"{name}: learnset references unknown technique {skill}")
