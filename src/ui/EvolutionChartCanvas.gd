@@ -1,26 +1,205 @@
 extends "res://src/ui/EvolutionConstellationCanvas.gd"
 class_name EvolutionChartCanvas
 
-# Progressive exploration: the current form and all direct Digivolution /
-# Degeneration routes are visible immediately. Selecting a connected form then
-# advances the trail and reveals only that form's next choices.
+# Focused exploration keeps the active lineage permanently visible while only
+# revealing the direct routes around the form the player is currently inspecting.
+# Layout is rank-column based, compact, and side-aware: a branch stays above/below
+# once it leaves the main route, but it never wastes an empty row when it can keep
+# moving straight ahead without colliding with another visible card.
+
+const LINK_SIGNAL_PRIMARY_SPEED := 0.10
+const LINK_SIGNAL_SECONDARY_SPEED := 0.075
+const DIGITAL_PARTICLE_CYCLE := 2.35
+const DIGITAL_PARTICLE_MIN_RISE := 30.0
+const DIGITAL_PARTICLE_MAX_RISE := 62.0
+const CURRENT_DIGITAL_PARTICLES := 24
+const SELECTED_DIGITAL_PARTICLES := 16
+const CARD_BACKDROP_INSET := 5.0
+const CARD_BACKDROP_BASE := Color(0.004, 0.009, 0.020, 0.94)
+const CARD_BACKDROP_LINEAGE := Color(0.004, 0.018, 0.026, 0.95)
+const CARD_BACKDROP_SELECTED := Color(0.003, 0.024, 0.036, 0.96)
+const CARD_BACKDROP_CURRENT := Color(0.034, 0.022, 0.004, 0.96)
+const CARD_BACKDROP_GOAL := Color(0.022, 0.010, 0.032, 0.95)
+const NAVIGATION_TWEEN_DURATION := 0.18
 
 var _initializing_chart := false
 var _ignore_center_requests := false
+var _primary_route: Array[String] = []
+var _primary_edges: Dictionary = {}
+var _focus_bridge_path: Array[String] = []
+var _focus_bridge_edges: Dictionary = {}
+var _branch_lanes: Dictionary = {}
+var _focus_lane := 0
+var _layout_tween: Tween = null
+
+# Performance indexes. The base canvas resolves neighbors by scanning every edge;
+# doing that repeatedly inside a BFS is noticeably expensive in Web builds. Build
+# adjacency and the shortest-path tree to the current form once per chart instead.
+var _adjacency: Dictionary = {}
+var _adjacency_lookup: Dictionary = {}
+var _bridge_parent: Dictionary = {}
+
+# Field previews can require a resource load the first time a form is revealed.
+# Resolve paths once and request the next-click frontier in the background so the
+# input handler never does avoidable disk/PCK work.
+var _visual_key_cache: Dictionary = {}
+var _prefetched_field_resources: Dictionary = {}
+
+# Reuse already-created cards while this chart is open. Hidden Digimon previews are
+# disabled, so returning to a branch is instant without keeping their animations hot.
+var _button_cache: Dictionary = {}
 
 
 func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionary, goal_seed: String = "", goal_edges: Dictionary = {}) -> void:
-	# Suppress the parent canvas' deferred centering/tween during first build.
-	# Those asynchronous operations could finish after the chart was laid out and
-	# move the cards away from the connection lines for a few frames (or until the
-	# user interacted with the canvas).
 	_initializing_chart = true
 	_ignore_center_requests = true
+	if _layout_tween != null and _layout_tween.is_valid():
+		_layout_tween.kill()
+	_layout_tween = null
+	_clear_button_cache()
+	_primary_route.clear()
+	_primary_edges.clear()
+	_focus_bridge_path.clear()
+	_focus_bridge_edges.clear()
+	_branch_lanes.clear()
+	_adjacency.clear()
+	_adjacency_lookup.clear()
+	_bridge_parent.clear()
+	_visual_key_cache.clear()
+	_prefetched_field_resources.clear()
+	_focus_lane = 0
+
 	super.set_graph(graph, current_seed, history_edges, goal_seed, goal_edges)
+	_build_adjacency_index()
+	_build_bridge_index()
+	_primary_route = _derive_primary_route()
+	_primary_edges = _edge_keys_for_path(_primary_route)
+	for seed: String in _primary_route:
+		_branch_lanes[seed] = 0
+	_selected_seed = current_seed
+	_refresh_focus_bridge()
 	_branch_open = true
 	_rebuild_visible_nodes(current_seed)
 	_initializing_chart = false
 	call_deferred("_finish_initial_layout")
+
+
+func _clear_button_cache() -> void:
+	var freed: Dictionary = {}
+	for raw_button in _button_cache.values():
+		var button := raw_button as Button
+		if button == null or not is_instance_valid(button):
+			continue
+		var instance_id := button.get_instance_id()
+		if freed.has(instance_id):
+			continue
+		freed[instance_id] = true
+		button.free()
+	_button_cache.clear()
+	_buttons.clear()
+	_fallback_icons.clear()
+
+
+func _build_adjacency_index() -> void:
+	_adjacency.clear()
+	_adjacency_lookup.clear()
+	for edge: Dictionary in _edges:
+		var from_seed := String(edge.get("from", ""))
+		var to_seed := String(edge.get("to", ""))
+		if from_seed.is_empty() or to_seed.is_empty():
+			continue
+		if not _adjacency.has(from_seed):
+			_adjacency[from_seed] = []
+			_adjacency_lookup[from_seed] = {}
+		if not _adjacency.has(to_seed):
+			_adjacency[to_seed] = []
+			_adjacency_lookup[to_seed] = {}
+		var from_neighbors := _adjacency[from_seed] as Array
+		var to_neighbors := _adjacency[to_seed] as Array
+		if not from_neighbors.has(to_seed):
+			from_neighbors.append(to_seed)
+		if not to_neighbors.has(from_seed):
+			to_neighbors.append(from_seed)
+		(_adjacency_lookup[from_seed] as Dictionary)[to_seed] = true
+		(_adjacency_lookup[to_seed] as Dictionary)[from_seed] = true
+
+	for raw_seed in _adjacency.keys():
+		var neighbors := _adjacency[raw_seed] as Array
+		neighbors.sort_custom(func(a, b) -> bool:
+			var a_node := _nodes_by_seed.get(String(a), {}) as Dictionary
+			var b_node := _nodes_by_seed.get(String(b), {}) as Dictionary
+			var ar := int(a_node.get("rank_index", 99))
+			var br := int(b_node.get("rank_index", 99))
+			if ar == br:
+				return String(a_node.get("name", "")) < String(b_node.get("name", ""))
+			return ar < br
+		)
+
+
+func _build_bridge_index() -> void:
+	_bridge_parent.clear()
+	if _current_seed.is_empty() or not _nodes_by_seed.has(_current_seed):
+		return
+	var queue: Array[String] = [_current_seed]
+	var head := 0
+	_bridge_parent[_current_seed] = ""
+	while head < queue.size():
+		var cursor := queue[head]
+		head += 1
+		for neighbor: String in _neighbors(cursor):
+			if _bridge_parent.has(neighbor):
+				continue
+			_bridge_parent[neighbor] = cursor
+			queue.append(neighbor)
+
+
+func _neighbors(seed: String) -> Array[String]:
+	if not _adjacency.has(seed):
+		return super._neighbors(seed)
+	var result: Array[String] = []
+	for raw_neighbor in _adjacency[seed] as Array:
+		result.append(String(raw_neighbor))
+	return result
+
+
+func _are_neighbors(a: String, b: String) -> bool:
+	if _adjacency_lookup.has(a):
+		return (_adjacency_lookup[a] as Dictionary).has(b)
+	return super._are_neighbors(a, b)
+
+
+func _resolve_field_visual_key(species_name: String) -> String:
+	var cache_key := species_name.to_lower().strip_edges()
+	if _visual_key_cache.has(cache_key):
+		return String(_visual_key_cache[cache_key])
+	var resolved := super._resolve_field_visual_key(species_name)
+	_visual_key_cache[cache_key] = resolved
+	return resolved
+
+
+func _prefetch_click_frontier(visible_seeds: Array[String]) -> void:
+	if not is_inside_tree():
+		return
+	var frontier: Dictionary = {}
+	for seed: String in visible_seeds:
+		for neighbor: String in _neighbors(seed):
+			frontier[neighbor] = true
+
+	for raw_seed in frontier.keys():
+		var seed := String(raw_seed)
+		if _button_cache.has(seed):
+			continue
+		var node := _nodes_by_seed.get(seed, {}) as Dictionary
+		if node.is_empty():
+			continue
+		var visual_key := _resolve_field_visual_key(String(node.get("name", "")))
+		if visual_key.is_empty():
+			continue
+		var path := "res://assets/resources/%s.tres" % visual_key
+		if _prefetched_field_resources.has(path) or not ResourceLoader.exists(path):
+			continue
+		_prefetched_field_resources[path] = true
+		ResourceLoader.load_threaded_request(path)
 
 
 func center_on(seed: String) -> void:
@@ -30,7 +209,6 @@ func center_on(seed: String) -> void:
 
 
 func _finish_initial_layout() -> void:
-	# Wait until EvolutionChart has assigned the real canvas rectangle.
 	await get_tree().process_frame
 	_ignore_center_requests = false
 	_fit_visible_graph()
@@ -39,6 +217,11 @@ func _finish_initial_layout() -> void:
 
 
 func _fit_visible_graph() -> void:
+	_apply_fit_transform()
+	_refresh_layout()
+
+
+func _apply_fit_transform() -> void:
 	if _buttons.is_empty() or size.x <= 1.0 or size.y <= 1.0:
 		return
 	var min_center := Vector2(INF, INF)
@@ -64,23 +247,394 @@ func _fit_visible_graph() -> void:
 	_zoom = clampf(fit_zoom, MIN_ZOOM, MAX_ZOOM)
 	_pan = -graph_center
 	_has_centered = true
-	_refresh_layout()
 
 
 func _animate_relayout(new_seeds: Array[String], source_seed: String) -> void:
+	_apply_fit_transform()
+	var center := size * 0.5
+
+	if _layout_tween != null and _layout_tween.is_valid():
+		_layout_tween.kill()
+	_layout_tween = null
+
+	var source_position := center
+	if _buttons.has(source_seed):
+		var source_button := _buttons[source_seed] as Button
+		if source_button != null:
+			source_position = source_button.position
+
+	var new_lookup: Dictionary = {}
+	for seed: String in new_seeds:
+		new_lookup[seed] = true
+
 	if _initializing_chart:
 		for raw_seed in _buttons.keys():
-			var button := _buttons[raw_seed] as Button
-			if button != null:
-				button.modulate.a = 1.0
-				button.scale = Vector2.ONE * _zoom
-		_refresh_layout()
+			var seed := String(raw_seed)
+			var button := _buttons[seed] as Button
+			if button == null:
+				continue
+			var base := Vector2(_base_positions.get(seed, Vector2.ZERO))
+			button.position = center + (base + _pan) * _zoom
+			button.scale = Vector2.ONE * _zoom
+		queue_redraw()
 		return
-	super._animate_relayout(new_seeds, source_seed)
+
+	_layout_tween = create_tween()
+	_layout_tween.set_parallel(true)
+	for raw_seed in _buttons.keys():
+		var seed := String(raw_seed)
+		var button := _buttons[seed] as Button
+		if button == null:
+			continue
+		var base := Vector2(_base_positions.get(seed, Vector2.ZERO))
+		var target_position := center + (base + _pan) * _zoom
+		var target_alpha := button.modulate.a
+		if new_lookup.has(seed):
+			button.position = source_position
+			button.scale = Vector2.ONE * (_zoom * 0.88)
+			button.modulate.a = 0.0
+			_layout_tween.tween_property(button, "modulate:a", target_alpha, NAVIGATION_TWEEN_DURATION * 0.72).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_layout_tween.tween_property(button, "position", target_position, NAVIGATION_TWEEN_DURATION).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_layout_tween.tween_property(button, "scale", Vector2.ONE * _zoom, NAVIGATION_TWEEN_DURATION).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	queue_redraw()
+
+
+func _activate_node(seed: String) -> void:
+	if not _buttons.has(seed):
+		return
+	_focus_lane = _rendered_lane_for_seed(seed)
+	_selected_seed = seed
+	_refresh_focus_bridge()
+	_trail.clear()
+	_trail.append(seed)
+	_branch_open = true
+	_rebuild_visible_nodes(seed)
+	node_selected.emit(seed)
+
+
+func _rebuild_visible_nodes(source_seed: String) -> void:
+	var visible_seeds := _visible_seeds_for_state()
+	var visible_lookup: Dictionary = {}
+	for seed: String in visible_seeds:
+		visible_lookup[seed] = true
+	for raw_seed in _buttons.keys().duplicate():
+		var seed := String(raw_seed)
+		if visible_lookup.has(seed):
+			continue
+		var old_button := _buttons[seed] as Button
+		_buttons.erase(seed)
+		if old_button != null:
+			old_button.hide()
+			old_button.process_mode = Node.PROCESS_MODE_DISABLED
+
+	_recalculate_positions(visible_seeds)
+	var new_seeds: Array[String] = []
+	for seed: String in visible_seeds:
+		if _buttons.has(seed):
+			continue
+		var button := _button_cache.get(seed) as Button
+		if button == null or not is_instance_valid(button):
+			var node := _nodes_by_seed.get(seed, {}) as Dictionary
+			if node.is_empty():
+				continue
+			button = _create_node_button(node)
+			_button_cache[seed] = button
+			add_child(button)
+			new_seeds.append(seed)
+		else:
+			button.process_mode = Node.PROCESS_MODE_INHERIT
+			button.show()
+			new_seeds.append(seed)
+		_buttons[seed] = button
+
+	_refresh_node_styles()
+	_animate_relayout(new_seeds, source_seed)
+	_configure_focus_neighbors()
+	queue_redraw()
+	call_deferred("_prefetch_click_frontier", visible_seeds.duplicate())
+
+
+func _visible_seeds_for_state() -> Array[String]:
+	var result: Array[String] = []
+	for seed: String in _primary_route:
+		_add_unique_seed(result, seed)
+	for seed: String in _focus_bridge_path:
+		_add_unique_seed(result, seed)
+	_add_unique_seed(result, _current_seed)
+	var focus_seed := _selected_seed if _nodes_by_seed.has(_selected_seed) else _current_seed
+	_add_unique_seed(result, focus_seed)
+	for neighbor: String in _neighbors(focus_seed):
+		_add_unique_seed(result, neighbor)
+	return result
+
+
+func _add_unique_seed(target: Array[String], seed: String) -> void:
+	if not seed.is_empty() and _nodes_by_seed.has(seed) and not target.has(seed):
+		target.append(seed)
+
+
+func _refresh_focus_bridge() -> void:
+	_focus_bridge_path = _find_connection_path(_selected_seed, _current_seed)
+	_focus_bridge_edges = _edge_keys_for_path(_focus_bridge_path)
+
+
+func _find_connection_path(start_seed: String, target_seed: String) -> Array[String]:
+	var empty: Array[String] = []
+	if start_seed.is_empty() or target_seed.is_empty():
+		return empty
+	if start_seed == target_seed:
+		return [start_seed]
+	if not _nodes_by_seed.has(start_seed) or not _nodes_by_seed.has(target_seed):
+		return empty
+	if target_seed == _current_seed and _bridge_parent.has(start_seed):
+		var path: Array[String] = []
+		var cursor := start_seed
+		while not cursor.is_empty():
+			path.append(cursor)
+			if cursor == target_seed:
+				return path
+			cursor = String(_bridge_parent.get(cursor, ""))
+		return empty
+	var queue: Array[String] = [start_seed]
+	var previous: Dictionary = {start_seed: ""}
+	var head := 0
+	while head < queue.size():
+		var cursor := queue[head]
+		head += 1
+		for neighbor: String in _neighbors(cursor):
+			if previous.has(neighbor):
+				continue
+			previous[neighbor] = cursor
+			if neighbor == target_seed:
+				var reversed: Array[String] = []
+				var path_cursor := target_seed
+				while not path_cursor.is_empty():
+					reversed.append(path_cursor)
+					if path_cursor == start_seed:
+						break
+					path_cursor = String(previous.get(path_cursor, ""))
+				reversed.reverse()
+				return reversed
+			queue.append(neighbor)
+	return empty
+
+
+func _derive_primary_route() -> Array[String]:
+	var route: Array[String] = []
+	if _current_seed.is_empty() or not _nodes_by_seed.has(_current_seed):
+		return route
+	route.append(_current_seed)
+	var visited: Dictionary = {_current_seed: true}
+	var cursor := _current_seed
+	var history_cutoff := 2147483647
+	while true:
+		var cursor_rank := _rank_index_for(cursor)
+		var best_seed := ""
+		var best_order := -1
+		var best_rank := -1
+		for neighbor: String in _neighbors(cursor):
+			if visited.has(neighbor):
+				continue
+			var neighbor_rank := _rank_index_for(neighbor)
+			if neighbor_rank >= cursor_rank:
+				continue
+			var key := _edge_key(cursor, neighbor)
+			if not _history_edges.has(key):
+				continue
+			var order := int(_history_edges.get(key, 0))
+			if order <= 0 or order >= history_cutoff:
+				continue
+			if order > best_order or (order == best_order and neighbor_rank > best_rank):
+				best_seed = neighbor
+				best_order = order
+				best_rank = neighbor_rank
+		if best_seed.is_empty():
+			break
+		route.push_front(best_seed)
+		visited[best_seed] = true
+		cursor = best_seed
+		history_cutoff = best_order
+	return route
+
+
+func _edge_keys_for_path(path: Array[String]) -> Dictionary:
+	var result: Dictionary = {}
+	for index in range(maxi(0, path.size() - 1)):
+		result[_edge_key(path[index], path[index + 1])] = true
+	return result
+
+
+func _rank_index_for(seed: String) -> int:
+	var node := _nodes_by_seed.get(seed, {}) as Dictionary
+	return int(node.get("rank_index", 99)) if not node.is_empty() else 99
+
+
+func _rendered_lane_for_seed(seed: String) -> int:
+	if _base_positions.has(seed):
+		return int(round(Vector2(_base_positions[seed]).y / ROW_GAP))
+	return int(_branch_lanes.get(seed, 0))
+
+
+func _lane_for_seed(seed: String) -> int:
+	if _primary_route.has(seed):
+		return 0
+	if seed == _selected_seed and _focus_lane != 0:
+		return _focus_lane
+	if _base_positions.has(seed):
+		return int(round(Vector2(_base_positions[seed]).y / ROW_GAP))
+	return int(_branch_lanes.get(seed, 0))
+
+
+func _lane_side(lane: int) -> int:
+	if lane < 0:
+		return -1
+	if lane > 0:
+		return 1
+	return 0
+
+
+func _lane_counts(occupied: Dictionary) -> Vector2i:
+	var above := 0
+	var below := 0
+	for raw_lane in occupied.keys():
+		var lane := int(raw_lane)
+		if lane < 0:
+			above += 1
+		elif lane > 0:
+			below += 1
+	return Vector2i(above, below)
+
+
+func _nearest_open_lane(occupied: Dictionary, preferred_lane: int, side: int) -> int:
+	if not occupied.has(preferred_lane):
+		return preferred_lane
+	if side != 0:
+		var magnitude := maxi(1, absi(preferred_lane))
+		for radius in range(1, 64):
+			var inner_magnitude := magnitude - radius
+			if inner_magnitude >= 1:
+				var inner := side * inner_magnitude
+				if not occupied.has(inner):
+					return inner
+			var outer := side * (magnitude + radius)
+			if not occupied.has(outer):
+				return outer
+		return side * (occupied.size() + 1)
+	var counts := _lane_counts(occupied)
+	var first_side := -1 if counts.x <= counts.y else 1
+	for distance in range(1, 64):
+		var first := first_side * distance
+		var second := -first_side * distance
+		if not occupied.has(first):
+			return first
+		if not occupied.has(second):
+			return second
+	return occupied.size() + 1
+
+
+func _claim_lane(seed: String, occupied: Dictionary, preferred_lane: int, side: int) -> int:
+	var lane := _nearest_open_lane(occupied, preferred_lane, side)
+	occupied[lane] = true
+	_branch_lanes[seed] = lane
+	return lane
+
+
+func _recalculate_positions(visible_seeds: Array[String]) -> void:
+	var previous_positions := _base_positions.duplicate(true)
+	_base_positions.clear()
+	if visible_seeds.is_empty():
+		return
+	for seed: String in _primary_route:
+		_branch_lanes[seed] = 0
+	var current_rank := _rank_index_for(_current_seed)
+	var focus_seed := _selected_seed if _nodes_by_seed.has(_selected_seed) else _current_seed
+	var focus_lane := _focus_lane if focus_seed == _selected_seed else _rendered_lane_for_seed(focus_seed)
+	if _primary_route.has(focus_seed):
+		focus_lane = 0
+	var focus_side := _lane_side(focus_lane)
+	var by_rank: Dictionary = {}
+	for seed: String in visible_seeds:
+		var rank_index := _rank_index_for(seed)
+		if not by_rank.has(rank_index):
+			by_rank[rank_index] = []
+		(by_rank[rank_index] as Array).append(seed)
+
+	for raw_rank in by_rank.keys():
+		var rank_index := int(raw_rank)
+		var group: Array = by_rank[raw_rank]
+		group.sort_custom(func(a, b) -> bool:
+			return String((_nodes_by_seed.get(String(a), {}) as Dictionary).get("name", "")) < String((_nodes_by_seed.get(String(b), {}) as Dictionary).get("name", ""))
+		)
+		var occupied: Dictionary = {}
+		var x := float(rank_index - current_rank) * COLUMN_GAP
+		var lineage_seed := _primary_seed_at_rank(rank_index, group)
+		if not lineage_seed.is_empty():
+			occupied[0] = true
+			_base_positions[lineage_seed] = Vector2(x, 0.0)
+			_branch_lanes[lineage_seed] = 0
+		if group.has(_selected_seed) and _selected_seed != lineage_seed:
+			var selected_preferred := _focus_lane
+			var selected_side := _lane_side(selected_preferred)
+			if selected_preferred == 0 and previous_positions.has(_selected_seed):
+				selected_preferred = int(round(Vector2(previous_positions[_selected_seed]).y / ROW_GAP))
+				selected_side = _lane_side(selected_preferred)
+			var selected_lane := _claim_lane(_selected_seed, occupied, selected_preferred, selected_side)
+			_base_positions[_selected_seed] = Vector2(x, float(selected_lane) * ROW_GAP)
+		for raw_seed in group:
+			var seed := String(raw_seed)
+			if _base_positions.has(seed) or not _focus_bridge_path.has(seed):
+				continue
+			var preferred := int(_branch_lanes.get(seed, focus_lane))
+			var side := _lane_side(preferred)
+			var lane := _claim_lane(seed, occupied, preferred, side)
+			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
+		for raw_seed in group:
+			var seed := String(raw_seed)
+			if _base_positions.has(seed) or not _are_neighbors(focus_seed, seed):
+				continue
+			var preferred := focus_lane
+			var side := focus_side
+			if focus_side == 0:
+				preferred = 0
+				side = 0
+			elif _lane_side(int(_branch_lanes.get(seed, focus_lane))) == focus_side:
+				preferred = focus_lane
+			var lane := _claim_lane(seed, occupied, preferred, side)
+			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
+		for raw_seed in group:
+			var seed := String(raw_seed)
+			if _base_positions.has(seed):
+				continue
+			var remembered := int(_branch_lanes.get(seed, 0))
+			var remembered_side := _lane_side(remembered)
+			var preferred := remembered_side if remembered_side != 0 else 0
+			var lane := _claim_lane(seed, occupied, preferred, remembered_side)
+			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
+
+
+func _primary_seed_at_rank(rank_index: int, group: Array) -> String:
+	for seed: String in _primary_route:
+		if _rank_index_for(seed) == rank_index and group.has(seed):
+			return seed
+	return ""
 
 
 func _create_node_button(node: Dictionary) -> Button:
 	var button := super._create_node_button(node)
+	# Every chart card owns a persistent dark inner surface. It is a child of the
+	# button rather than part of a hover style, so focus/hover can never make the
+	# card transparent and the decorative Kenney border remains visible around it.
+	var backdrop := ColorRect.new()
+	backdrop.name = "CardBackdrop"
+	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	backdrop.offset_left = CARD_BACKDROP_INSET
+	backdrop.offset_top = CARD_BACKDROP_INSET
+	backdrop.offset_right = -CARD_BACKDROP_INSET
+	backdrop.offset_bottom = -CARD_BACKDROP_INSET
+	backdrop.color = CARD_BACKDROP_BASE
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(backdrop)
+	button.move_child(backdrop, 0)
 	var status := _find_status_label(button)
 	if status != null:
 		status.visible = String(node.get("seed", "")) == _current_seed
@@ -91,18 +645,221 @@ func _create_node_button(node: Dictionary) -> Button:
 
 
 func _refresh_node_styles() -> void:
-	super._refresh_node_styles()
-	# Keep the node copy clean: only the current form carries a status caption.
+	var primary_lookup: Dictionary = {}
+	for seed: String in _primary_route:
+		primary_lookup[seed] = true
 	for raw_seed in _buttons.keys():
 		var seed := String(raw_seed)
 		var button := _buttons[seed] as Button
 		if button == null:
 			continue
+		var node := _nodes_by_seed.get(seed, {}) as Dictionary
+		var rank := String(node.get("rank", "Unknown"))
+		var accent := UI.rank_color(rank)
+		if primary_lookup.has(seed):
+			accent = UI.CYAN
+		if seed == _goal_seed:
+			accent = UI.PURPLE.lightened(0.12)
+		if seed == _current_seed:
+			accent = UI.GOLD
+		SKIN.apply_button(button, accent)
+		var backdrop := button.get_node_or_null("CardBackdrop") as ColorRect
+		if backdrop != null:
+			var backdrop_color := CARD_BACKDROP_BASE
+			if primary_lookup.has(seed):
+				backdrop_color = CARD_BACKDROP_LINEAGE
+			if seed == _goal_seed:
+				backdrop_color = CARD_BACKDROP_GOAL
+			if seed == _selected_seed:
+				backdrop_color = CARD_BACKDROP_SELECTED
+			if seed == _current_seed:
+				backdrop_color = CARD_BACKDROP_CURRENT
+			backdrop.color = backdrop_color
+		button.modulate.a = 1.0 if primary_lookup.has(seed) or seed == _selected_seed or seed == _current_seed else 0.88
+		if seed == _current_seed:
+			button.add_theme_stylebox_override("normal", SKIN.frame_style(Color(0.36, 0.27, 0.09, 0.99), Vector4(10, 8, 10, 8), 12.0))
+			button.add_theme_stylebox_override("hover", SKIN.border_style(UI.GOLD.lightened(0.14), Vector4(10, 8, 10, 8), 12.0))
+			button.tooltip_text = "Current form"
+		elif seed == _selected_seed:
+			button.add_theme_stylebox_override("normal", SKIN.border_style(accent.lightened(0.16), Vector4(10, 8, 10, 8), 12.0))
+			button.add_theme_stylebox_override("hover", SKIN.border_style(accent.lightened(0.24), Vector4(10, 8, 10, 8), 12.0))
+			button.tooltip_text = "Focused form · select a connected card to continue exploring"
+		elif seed == _goal_seed:
+			button.add_theme_stylebox_override("normal", SKIN.frame_style(Color(0.29, 0.16, 0.42, 0.98), Vector4(10, 8, 10, 8), 12.0))
+			button.tooltip_text = "Evolution target"
+		elif primary_lookup.has(seed):
+			button.add_theme_stylebox_override("normal", SKIN.frame_style(Color(0.035, 0.15, 0.19, 0.97), Vector4(10, 8, 10, 8), 12.0))
+			button.add_theme_stylebox_override("hover", SKIN.border_style(UI.CYAN.lightened(0.12), Vector4(10, 8, 10, 8), 12.0))
+			button.tooltip_text = "Previous form on this Digimon's active lineage"
+		else:
+			button.tooltip_text = "Select to focus this form and reveal its connected routes"
 		var status := _find_status_label(button)
-		if status == null:
+		if status != null:
+			status.visible = seed == _current_seed
+			status.custom_minimum_size = Vector2.ZERO
+			if status.visible:
+				status.text = "CURRENT FORM"
+				status.add_theme_color_override("font_color", UI.GOLD)
+
+
+func _draw() -> void:
+	_draw_space_backdrop()
+	var visible := _visible_seed_dictionary()
+	for edge: Dictionary in _edges:
+		var from_seed := String(edge.get("from", ""))
+		var to_seed := String(edge.get("to", ""))
+		if not visible.has(from_seed) or not visible.has(to_seed):
 			continue
-		status.visible = seed == _current_seed
-		status.custom_minimum_size = Vector2.ZERO
-		if status.visible:
-			status.text = "CURRENT FORM"
-			status.add_theme_color_override("font_color", UI.GOLD)
+		if not _buttons.has(from_seed) or not _buttons.has(to_seed):
+			continue
+		var p1 := _button_screen_center(from_seed)
+		var p2 := _button_screen_center(to_seed)
+		var key := String(edge.get("key", ""))
+		var color := Color(0.24, 0.46, 0.74, 0.28)
+		var width := 1.5
+		var emphasized := false
+		if _history_edges.has(key):
+			color = Color(0.28, 0.60, 0.68, 0.36)
+			width = 1.7
+		if _focus_bridge_edges.has(key):
+			color = Color(0.34, 0.66, 0.94, 0.74)
+			width = 2.3
+			emphasized = true
+		if from_seed == _selected_seed or to_seed == _selected_seed:
+			color = Color(0.38, 0.72, 1.0, 0.88)
+			width = 2.7
+			emphasized = true
+		if _primary_edges.has(key):
+			color = Color(0.28, 0.86, 0.92, 0.96)
+			width = 3.2
+			emphasized = true
+		if _goal_edges.has(key):
+			color = Color(0.72, 0.45, 1.0, 0.98)
+			width = 3.5
+			emphasized = true
+		var average_scale := (_button_scale(from_seed) + _button_scale(to_seed)) * 0.5
+		draw_line(p1, p2, Color(0.035, 0.075, 0.16, 0.88), (width + 3.0) * average_scale, true)
+		draw_line(p1, p2, color, width * average_scale, true)
+		if emphasized:
+			var speed := LINK_SIGNAL_PRIMARY_SPEED if _primary_edges.has(key) or _goal_edges.has(key) else LINK_SIGNAL_SECONDARY_SPEED
+			var pulse_t := fmod(_phase * speed + float(abs(key.hash()) % 100) / 100.0, 1.0)
+			_draw_signal_packet(p1, p2, pulse_t, Color(color.r, color.g, color.b, minf(0.86, color.a + 0.06)), average_scale)
+
+	# Digital data pixels now travel from the lower edge through the full height of
+	# the card and dissolve above it. They render behind the persistent dark card
+	# surface, so the effect occupies a larger area without competing with text.
+	if _buttons.has(_current_seed):
+		_draw_digital_card_particles(
+			_current_seed,
+			Color(1.0, 0.72, 0.22, 1.0),
+			CURRENT_DIGITAL_PARTICLES,
+			0.0,
+			1.0
+		)
+	if _selected_seed != _current_seed and _buttons.has(_selected_seed):
+		_draw_digital_card_particles(
+			_selected_seed,
+			Color(0.34, 0.80, 1.0, 1.0),
+			SELECTED_DIGITAL_PARTICLES,
+			0.37,
+			0.78
+		)
+
+
+func _digital_noise01(value: float) -> float:
+	return fposmod(sin(value * 12.9898 + 78.233) * 43758.5453, 1.0)
+
+
+func _draw_digital_card_particles(
+	seed: String,
+	base_color: Color,
+	particle_count: int,
+	phase_offset: float,
+	intensity: float
+) -> void:
+	var button := _buttons.get(seed) as Button
+	if button == null or not button.visible or particle_count <= 0:
+		return
+
+	var scale_factor := _button_scale(seed)
+	var card_size := NODE_SIZE * scale_factor
+	var card_left := button.position.x - 5.0 * scale_factor
+	var card_right := button.position.x + card_size.x + 5.0 * scale_factor
+	var card_top := button.position.y
+	var card_bottom := card_top + card_size.y
+	var seed_value := float(abs(seed.hash()) % 100000)
+
+	for index in range(particle_count):
+		var index_value := float(index + 1)
+		var x_noise := _digital_noise01(seed_value + index_value * 17.13)
+		var phase_noise := _digital_noise01(seed_value + index_value * 31.71)
+		var size_noise := _digital_noise01(seed_value + index_value * 47.29)
+		var rise_noise := _digital_noise01(seed_value + index_value * 71.91)
+		var drift_noise := _digital_noise01(seed_value + index_value * 89.53)
+		var alpha_noise := _digital_noise01(seed_value + index_value * 113.17)
+
+		var cycle := DIGITAL_PARTICLE_CYCLE * lerpf(0.84, 1.18, rise_noise)
+		var age := fposmod(_phase + phase_offset + phase_noise * cycle, cycle) / cycle
+		var fade_in := smoothstep(0.0, 0.10, age)
+		var fade_out := 1.0 - smoothstep(0.68, 1.0, age)
+		var alpha := fade_in * fade_out * intensity * lerpf(0.50, 0.94, alpha_noise)
+		if alpha <= 0.015:
+			continue
+
+		# Start around the lower edge, then cross the entire card before fading
+		# above its top edge. A tiny randomized inset avoids a visible emitter line.
+		var start_offset := lerpf(-7.0, 6.0, _digital_noise01(seed_value + index_value * 131.7)) * scale_factor
+		var rise := card_size.y + lerpf(DIGITAL_PARTICLE_MIN_RISE, DIGITAL_PARTICLE_MAX_RISE, rise_noise) * scale_factor
+		var drift := (drift_noise - 0.5) * 12.0 * scale_factor * age
+		var position := Vector2(
+			lerpf(card_left, card_right, x_noise) + drift,
+			card_bottom + start_offset - rise * age
+		)
+
+		var pixel_size := lerpf(1.8, 4.0, size_noise) * scale_factor
+		var pixel_rect := Rect2(
+			position - Vector2.ONE * pixel_size * 0.5,
+			Vector2.ONE * pixel_size
+		)
+		draw_rect(pixel_rect, Color(base_color.r, base_color.g, base_color.b, alpha), true)
+
+		# A minority of pixels leave one dim data-bit behind. This keeps the
+		# movement readable as upward digital flow without turning into a streak.
+		if int(floor(size_noise * 10.0)) % 3 == 0 and age > 0.14:
+			var trail_size := maxf(0.9 * scale_factor, pixel_size * 0.50)
+			var trail_position := position + Vector2(0.0, lerpf(5.0, 9.0, rise_noise) * scale_factor)
+			var trail_alpha := alpha * 0.24
+			draw_rect(
+				Rect2(trail_position - Vector2.ONE * trail_size * 0.5, Vector2.ONE * trail_size),
+				Color(base_color.r, base_color.g, base_color.b, trail_alpha),
+				true
+			)
+
+
+func _draw_signal_packet(p1: Vector2, p2: Vector2, t: float, color: Color, scale_factor: float) -> void:
+	var direction := (p2 - p1).normalized()
+	if direction == Vector2.ZERO:
+		return
+	var normal := Vector2(-direction.y, direction.x)
+	var center := p1.lerp(p2, t)
+	var half_length := 3.2 * scale_factor
+	var half_width := 0.85 * scale_factor
+	var points := PackedVector2Array([
+		center - direction * half_length - normal * half_width,
+		center + direction * half_length - normal * half_width,
+		center + direction * half_length + normal * half_width,
+		center - direction * half_length + normal * half_width,
+	])
+	draw_colored_polygon(points, color)
+
+
+func _button_screen_center(seed: String) -> Vector2:
+	var button := _buttons.get(seed) as Button
+	if button == null:
+		return Vector2.ZERO
+	return button.position + NODE_SIZE * 0.5 * button.scale.x
+
+
+func _button_scale(seed: String) -> float:
+	var button := _buttons.get(seed) as Button
+	return maxf(0.01, button.scale.x) if button != null else maxf(0.01, _zoom)

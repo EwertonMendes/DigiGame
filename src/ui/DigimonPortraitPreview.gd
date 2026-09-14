@@ -3,6 +3,11 @@ class_name DigimonPortraitPreview
 
 const PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")
 
+# Portrait metadata and imported strips are immutable while the game is running.
+# Keep them shared across preview instances so navigating a UI never re-reads JSON
+# or re-loads the same texture from the PCK on every selection.
+static var _portrait_cache: Dictionary = {}
+
 var _texture_rect: TextureRect = null
 var _atlas: AtlasTexture = null
 var _frame_size := Vector2.ZERO
@@ -40,6 +45,18 @@ func _load_species(species_name: String) -> void:
 	var key := PortraitResolver.resolve_key(species_name)
 	if key.is_empty():
 		return
+
+	var cached = _portrait_cache.get(key, null)
+	if cached is Dictionary:
+		var entry := cached as Dictionary
+		_frame_size = Vector2(entry.get("frame_size", Vector2.ZERO))
+		_frame_count = int(entry.get("frame_count", 0))
+		_durations = (entry.get("durations", []) as Array).duplicate()
+		var cached_strip := entry.get("strip", null) as Texture2D
+		if cached_strip != null and _frame_size.x > 0.0 and _frame_size.y > 0.0 and _frame_count > 0:
+			_apply_loaded_strip(cached_strip)
+		return
+
 	var metadata_path := PortraitResolver.metadata_path(key)
 	var strip_path := PortraitResolver.strip_path(key)
 	var metadata = JSON.parse_string(FileAccess.get_file_as_string(metadata_path))
@@ -53,6 +70,17 @@ func _load_species(species_name: String) -> void:
 	_durations = metadata.get("durations_ms", [])
 	if _frame_size.x <= 0.0 or _frame_size.y <= 0.0 or _frame_count <= 0:
 		return
+
+	_portrait_cache[key] = {
+		"frame_size": _frame_size,
+		"frame_count": _frame_count,
+		"durations": _durations.duplicate(),
+		"strip": strip,
+	}
+	_apply_loaded_strip(strip)
+
+
+func _apply_loaded_strip(strip: Texture2D) -> void:
 	_atlas = AtlasTexture.new()
 	_atlas.atlas = strip
 	_texture_rect.texture = _atlas
