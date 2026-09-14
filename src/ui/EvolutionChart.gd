@@ -3,9 +3,11 @@ class_name EvolutionChart
 
 const ChartCanvasScript = preload("res://src/ui/EvolutionChartCanvas.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
+const TransitionModalScript = preload("res://src/ui/EvolutionTransitionModal.gd")
 const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
 
 var _content_root: Control = null
+var _transition_modal: EvolutionTransitionModal = null
 
 # Navigation data is immutable while the chart is open for the same Digimon state.
 # Build it once when the graph is rebuilt, then every click is dictionary lookup
@@ -108,6 +110,47 @@ func _build() -> void:
 	_announcement.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_announcement.visible = false
 	add_child(_announcement)
+
+	_transition_modal = TransitionModalScript.new() as EvolutionTransitionModal
+	_transition_modal.name = "EvolutionTransitionModal"
+	_transition_modal.confirmed.connect(_on_transition_confirmed)
+	add_child(_transition_modal)
+
+
+func close_view() -> void:
+	if _transition_modal != null:
+		_transition_modal.close_immediately()
+	super.close_view()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _transition_modal != null and _transition_modal.is_open():
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu"):
+			_transition_modal.cancel()
+			get_viewport().set_input_as_handled()
+		return
+	super._unhandled_input(event)
+
+
+func _show_transition_confirmation(direction: String, target_seed: String) -> void:
+	if _instance == null or _transition_modal == null:
+		return
+	var allowed := (
+		_evolution_service.can_digivolve(_instance, target_seed, _database, _calculator)
+		if direction == "digivolution"
+		else _evolution_service.can_degenerate(_instance, target_seed, _database, _calculator)
+	)
+	if not allowed:
+		_refresh_detail()
+		return
+	var preview := _evolution_service.build_transition_preview(_instance, target_seed, _database, _calculator, direction)
+	if preview.is_empty():
+		return
+	_transition_modal.open_preview(preview)
+
+
+func _on_transition_confirmed(direction: String, target_seed: String) -> void:
+	_apply_transition(direction, target_seed)
 
 
 func _rebuild_graph() -> void:

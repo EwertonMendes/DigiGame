@@ -30,6 +30,43 @@ func get_available_degenerations(instance: DigimonInstance, database: DigimonDat
 	return _available_routes(instance, database, calculator, true, context)
 
 
+func build_transition_preview(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator, direction: String) -> Dictionary:
+	if instance == null or database == null or calculator == null:
+		return {}
+	if direction != "digivolution" and direction != "degeneration":
+		return {}
+
+	var degenerating := direction == "degeneration"
+	var current_species: Dictionary = database.get_by_seed(instance.species_seed)
+	var target_species: Dictionary = database.get_by_seed(target_seed)
+	if current_species.is_empty() or target_species.is_empty():
+		return {}
+	if _find_route(current_species, target_seed, degenerating).is_empty():
+		return {}
+
+	var before_stats := calculator.get_all_stats(instance, current_species)
+	var preview_instance := DigimonInstance.from_dict(instance.to_dict())
+	preview_instance.species_seed = target_seed
+	preview_instance.level = 1
+	preview_instance.exp = 0
+	var potential_gain := _potential_gain_for_transition(instance, target_seed, degenerating)
+	_progression.add_potential(preview_instance, potential_gain)
+	var after_stats := calculator.get_all_stats(preview_instance, target_species)
+
+	return {
+		"direction": direction,
+		"from_seed": instance.species_seed,
+		"from_name": String(current_species.get("name", "Unknown")),
+		"from_rank": String(current_species.get("rank", "Unknown")),
+		"to_seed": target_seed,
+		"to_name": String(target_species.get("name", "Unknown")),
+		"to_rank": String(target_species.get("rank", "Unknown")),
+		"before": _transition_snapshot(instance, before_stats),
+		"after": _transition_snapshot(preview_instance, after_stats),
+		"potential_gain": preview_instance.potential - instance.potential,
+	}
+
+
 func digivolve(instance: DigimonInstance, target_seed: String, database: DigimonDatabase, calculator: DigimonStatCalculator, context: Dictionary = {}) -> bool:
 	if not can_digivolve(instance, target_seed, database, calculator, context):
 		return false
@@ -132,11 +169,7 @@ func _apply_transition(instance: DigimonInstance, target_seed: String, database:
 	var old_level: int = instance.level
 	var direction: String = "degeneration" if degenerating else "digivolution"
 	var repeat_count: int = _transition_repeat_count(instance, old_seed, target_seed, direction)
-	var potential_gain: int = (
-		_progression.potential_gain_for_degeneration(old_level, repeat_count)
-		if degenerating
-		else _progression.potential_gain_for_digivolution(old_level, repeat_count)
-	)
+	var potential_gain: int = _potential_gain_for_transition(instance, target_seed, degenerating)
 	instance.evolution_history.append({
 		"fromSeed": old_seed,
 		"toSeed": target_seed,
@@ -157,6 +190,31 @@ func _apply_transition(instance: DigimonInstance, target_seed: String, database:
 	if OS.is_debug_build():
 		print("[Evolution] %s -> %s · %s" % [String(old_species.get("name", old_seed)), String(target_species.get("name", target_seed)), direction])
 	return true
+
+
+func _potential_gain_for_transition(instance: DigimonInstance, target_seed: String, degenerating: bool) -> int:
+	var direction := "degeneration" if degenerating else "digivolution"
+	var repeat_count := _transition_repeat_count(instance, instance.species_seed, target_seed, direction)
+	return (
+		_progression.potential_gain_for_degeneration(instance.level, repeat_count)
+		if degenerating
+		else _progression.potential_gain_for_digivolution(instance.level, repeat_count)
+	)
+
+
+func _transition_snapshot(instance: DigimonInstance, stats: Dictionary) -> Dictionary:
+	return {
+		"level": instance.level,
+		"exp": instance.exp,
+		"potential": instance.potential,
+		"hp": int(stats.get("hp", 0)),
+		"sp": int(stats.get("sp", stats.get("mp", 0))),
+		"atk": int(stats.get("atk", 0)),
+		"def": int(stats.get("def", 0)),
+		"int": int(stats.get("int", 0)),
+		"speed": int(stats.get("speed", 0)),
+		"mov": int(stats.get("mov", 0)),
+	}
 
 
 func _transition_repeat_count(instance: DigimonInstance, from_seed: String, to_seed: String, direction: String) -> int:
