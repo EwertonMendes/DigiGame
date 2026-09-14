@@ -71,8 +71,8 @@ func _menu_hints() -> Array[Dictionary]:
 		InputMode.PLAYSTATION:
 			return [
 				{"key": "D-PAD", "label": "Navigate"},
-				{"key": "×", "label": "Select"},
-				{"key": "○", "label": "Back"},
+				{"key": "X", "label": "Select"},
+				{"key": "O", "label": "Back"},
 			]
 		InputMode.XBOX:
 			return [
@@ -87,7 +87,7 @@ func _menu_hints() -> Array[Dictionary]:
 			]
 		_:
 			return [
-				{"key": "↑↓←→", "label": "Navigate"},
+				{"key": "ARROWS", "label": "Navigate"},
 				{"key": "ENTER", "label": "Select"},
 				{"key": "ESC", "label": "Back"},
 			]
