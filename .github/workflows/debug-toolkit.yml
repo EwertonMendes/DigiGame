@@ -15,6 +15,7 @@ on:
       - 'tools/test_developer_toolkit.gd'
       - 'tools/test_developer_toolkit.tscn'
       - 'tools/test_debug_technique_lab_ui.gd'
+      - 'tools/test_debug_technique_lab_ui.tscn'
   workflow_dispatch:
 
 permissions:
@@ -96,6 +97,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path . --script tools/test_debug_technique_lab_ui.gd --quit-after 20 2>&1 | tee /tmp/technique-lab-ui.log
+          godot --headless --path . tools/test_debug_technique_lab_ui.tscn --quit-after 20 2>&1 | tee /tmp/technique-lab-ui.log
           grep -q 'debug technique lab UI regression passed' /tmp/technique-lab-ui.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/technique-lab-ui.log; then exit 1; fi
