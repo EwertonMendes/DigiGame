@@ -1,6 +1,7 @@
 extends "res://src/battle/EscapeBattleController.gd"
 
 const BattleRewardServiceScript = preload("res://src/digimon/BattleRewardService.gd")
+const ExpansionQuestCatalogScript = preload("res://src/quests/ExpansionQuestCatalog.gd")
 
 var _reward_service = null
 
@@ -31,6 +32,7 @@ func _build_battle_result(victory: bool) -> Dictionary:
 	result["money"] = 0
 	result["other_rewards"] = {}
 	result["digi_data_progress"] = {}
+	result["expansion_quests"] = {}
 	if not victory:
 		OverworldState.save_progress()
 		return result
@@ -62,6 +64,18 @@ func _build_battle_result(victory: bool) -> Dictionary:
 		_item_totals(result.get("items", []))
 	)
 
+	var collection = OverworldState.get("_collection")
+	if collection is PlayerCollection:
+		var quest_result: Dictionary = ExpansionQuestCatalogScript.record_victory(
+			collection as PlayerCollection,
+			_is_advanced_expansion_encounter(defeated_enemies)
+		)
+		result["expansion_quests"] = quest_result
+		var quest_items = quest_result.get("rewarded_items", {})
+		if quest_items is Dictionary and not (quest_items as Dictionary).is_empty():
+			OverworldState.inventory_changed.emit(OverworldState.get_inventory())
+			OverworldState.account_rewards_changed.emit(OverworldState.get_bits(), OverworldState.get_digi_data())
+
 	var observed: Array[String] = []
 	var raw_observed = result.get("observed_techniques", [])
 	if raw_observed is Array:
@@ -73,7 +87,20 @@ func _build_battle_result(victory: bool) -> Dictionary:
 	)
 	result["mastery_progress"] = technique_progress.get("mastery", [])
 	result["technique_research"] = technique_progress.get("research", [])
+	OverworldState.save_progress()
 	return result
+
+
+func _is_advanced_expansion_encounter(defeated_enemies: Array[Node]) -> bool:
+	for actor: Node in defeated_enemies:
+		if actor == null or not is_instance_valid(actor):
+			continue
+		var profile := String(actor.get_meta("encounter_profile", "wild")).to_lower().strip_edges()
+		if ["trainer", "elite", "boss", "advanced"].has(profile):
+			return true
+		if actor.has_method("get_level") and int(actor.call("get_level")) >= 20:
+			return true
+	return false
 
 
 func _encounter_guaranteed_items() -> Dictionary:
