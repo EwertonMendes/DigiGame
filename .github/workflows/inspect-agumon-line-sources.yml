@@ -1,0 +1,27 @@
+name: Inspect Agumon-line DS sources
+
+on:
+  push:
+    branches:
+      - fix/ds-sprite-agumon-line-*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+      - name: Inspect requested WtW sources
+        run: python3 tools/inspect_agumon_line_sources.py
+      - name: Upload source audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: agumon-line-source-audit
+          path: /tmp/agumon-line-source-audit
+          retention-days: 3
