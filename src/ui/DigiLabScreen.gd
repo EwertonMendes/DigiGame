@@ -44,6 +44,7 @@ func _ready() -> void:
 
 func open_lab() -> void:
 	visible = true
+	_layout()
 	_refresh()
 	call_deferred("_layout")
 	call_deferred("_focus_selected_data")
@@ -91,7 +92,7 @@ func _build() -> void:
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_theme_constant_override("separation", 2)
 	header.add_child(heading)
-	_title = _label("DIGILAB", 25, UI.TEXT, true)
+	_title = _label("CONVERT DIGI DATA", 25, UI.TEXT, true)
 	heading.add_child(_title)
 	_subtitle = _label("Reconstruct Digimon from species Digi Data", 11, UI.MUTED)
 	heading.add_child(_subtitle)

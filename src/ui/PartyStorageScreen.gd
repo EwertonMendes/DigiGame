@@ -47,6 +47,7 @@ func open_screen() -> void:
 	if (_selected_id.is_empty() or OverworldState.get_instance_by_id(_selected_id) == null) and not collection.is_empty():
 		_selected_id = collection[0].id
 	_status_label.text = ""
+	_layout()
 	_refresh()
 	call_deferred("_layout")
 	call_deferred("_focus_selected")
