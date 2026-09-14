@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix/ds-sprite-agumon-line-*
+      - feat/agumon-evolution-ds-sprites
   workflow_dispatch:
 
 permissions:
