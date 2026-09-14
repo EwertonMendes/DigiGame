@@ -1,0 +1,131 @@
+name: Apply Evolution Chart Brackeys VFX (temporary)
+
+on:
+  push:
+    branches:
+      - feat/focused-evolution-chart
+    paths:
+      - .github/workflows/apply-evolution-chart-brackeys-vfx-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/focused-evolution-chart
+          fetch-depth: 0
+
+      - name: Replace procedural chart highlight with Brackeys VFX
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/ui/EvolutionChartCanvas.gd')
+          text = path.read_text(encoding='utf-8')
+
+          old_constants = '''const LINK_SIGNAL_PRIMARY_SPEED := 0.10
+          const LINK_SIGNAL_SECONDARY_SPEED := 0.075
+          const CURRENT_FLAME_SPEED := 0.075
+          const SELECTED_FLAME_SPEED := 0.060
+          const NAVIGATION_TWEEN_DURATION := 0.18'''
+          new_constants = '''const LINK_SIGNAL_PRIMARY_SPEED := 0.10
+          const LINK_SIGNAL_SECONDARY_SPEED := 0.075
+          const CURRENT_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/dithered_fire_6x5.png")
+          const SELECTED_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/lightstreaks_6x5.png")
+          const VFX_COLUMNS := 6
+          const VFX_ROWS := 5
+          const CURRENT_VFX_FPS := 10.0
+          const SELECTED_VFX_FPS := 8.0
+          const NAVIGATION_TWEEN_DURATION := 0.18'''
+          if old_constants not in text:
+              raise SystemExit('Expected EvolutionChartCanvas constants block was not found')
+          text = text.replace(old_constants, new_constants, 1)
+
+          old_calls = '''\tif _buttons.has(_current_seed):
+          \t\t_draw_digital_flame(_current_seed, UI.GOLD, UI.CYAN, 11, CURRENT_FLAME_SPEED, 1.0)
+          \tif _selected_seed != _current_seed and _buttons.has(_selected_seed):
+          \t\t_draw_digital_flame(_selected_seed, Color(0.40, 0.76, 1.0, 1.0), Color(0.28, 0.90, 0.96, 1.0), 7, SELECTED_FLAME_SPEED, 0.72)'''
+          new_calls = '''\t# VFX are rendered by the chart canvas before its Button children, so the animated
+          \t# sprites stay behind every card and never cover names, rank labels or status text.
+          \tif _buttons.has(_current_seed):
+          \t\t_draw_card_vfx(
+          \t\t\t_current_seed,
+          \t\t\tCURRENT_FORM_VFX,
+          \t\t\tCURRENT_VFX_FPS,
+          \t\t\tVector4(24.0, 56.0, 24.0, 18.0),
+          \t\t\tColor(1.0, 0.88, 0.48, 0.62),
+          \t\t\t0.0
+          \t\t)
+          \tif _selected_seed != _current_seed and _buttons.has(_selected_seed):
+          \t\t_draw_card_vfx(
+          \t\t\t_selected_seed,
+          \t\t\tSELECTED_FORM_VFX,
+          \t\t\tSELECTED_VFX_FPS,
+          \t\t\tVector4(18.0, 34.0, 18.0, 20.0),
+          \t\t\tColor(0.58, 0.90, 1.0, 0.44),
+          \t\t\t0.11
+          \t\t)'''
+          if old_calls not in text:
+              raise SystemExit('Expected procedural VFX draw calls were not found')
+          text = text.replace(old_calls, new_calls, 1)
+
+          replacement = '''
+          func _draw_card_vfx(seed: String, texture: Texture2D, fps: float, margins: Vector4, tint: Color, phase_offset: float) -> void:
+          \tvar button := _buttons.get(seed) as Button
+          \tif button == null or texture == null or fps <= 0.0:
+          \t\treturn
+          
+          \tvar frame_count := VFX_COLUMNS * VFX_ROWS
+          \tif frame_count <= 0:
+          \t\treturn
+          \tvar frame := int(floor((_phase + phase_offset) * fps)) % frame_count
+          \tvar column := frame % VFX_COLUMNS
+          \tvar row := int(frame / VFX_COLUMNS)
+          \tvar frame_size := Vector2(
+          \t\tfloat(texture.get_width()) / float(VFX_COLUMNS),
+          \t\tfloat(texture.get_height()) / float(VFX_ROWS)
+          \t)
+          \tvar source := Rect2(Vector2(float(column), float(row)) * frame_size, frame_size)
+          
+          \tvar scale_factor := _button_scale(seed)
+          \tvar card_rect := Rect2(button.position, NODE_SIZE * scale_factor)
+          \tvar scaled_margins := margins * scale_factor
+          \tvar destination := Rect2(
+          \t\tcard_rect.position - Vector2(scaled_margins.x, scaled_margins.y),
+          \t\tcard_rect.size + Vector2(
+          \t\t\tscaled_margins.x + scaled_margins.z,
+          \t\t\tscaled_margins.y + scaled_margins.w
+          \t\t)
+          \t)
+          \tdraw_texture_rect_region(texture, destination, source, tint)
+          '''.strip('\n')
+
+          pattern = re.compile(r'func _draw_digital_flame\(.*?\n\nfunc _button_screen_center', re.S)
+          text, count = pattern.subn(replacement + '\n\n\nfunc _button_screen_center', text, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected one _draw_digital_flame function, replaced {count}')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+          git diff -- src/ui/EvolutionChartCanvas.gd
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/ui/EvolutionChartCanvas.gd
+          git commit -m "feat: use Brackeys VFX for evolution chart highlights"
+          git push origin HEAD:feat/focused-evolution-chart
