@@ -30,11 +30,10 @@ jobs:
           python3 tools/validate_additional_ds_fields.py
           python3 tools/validate_all_ds_directional_facings.py
           git diff --exit-code -- \
-            assets/characters/geogreymon assets/characters/rizegreymon assets/characters/wargreymon \
-            assets/characters/skullgreymon assets/characters/shinegreymon \
-            'assets/resources/geo greymon.tres' 'assets/resources/rize greymon.tres' \
-            'assets/resources/war greymon.tres' 'assets/resources/skull greymon.tres' \
-            'assets/resources/shine greymon.tres' database/additional-ds-playables.json
+            assets/characters \
+            assets/resources \
+            database/additional-ds-playables.json \
+            database/ds-directional-resource-audit.json
 
       - name: Download Godot
         shell: bash

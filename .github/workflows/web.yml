@@ -151,7 +151,7 @@ jobs:
           name: digigame-web-build
           path: build/web
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
 
   browser-smoke:
     name: Browser smoke · ${{ matrix.suite }}
@@ -242,6 +242,9 @@ jobs:
       - browser-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    concurrency:
+      group: digigame-pages-publish
+      cancel-in-progress: false
     permissions:
       actions: read
       contents: read
@@ -249,21 +252,21 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
+      - name: Checkout deployment scripts
+        uses: actions/checkout@v6
+
       - name: Download tested PR build
         uses: actions/download-artifact@v5
         with:
           name: digigame-web-build
           path: preview
 
-      - name: Restore production and add PR preview
+      - name: Download latest successful master build
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          mkdir -p site
-
           MASTER_RUN_ID="$(gh run list \
             --repo "$GITHUB_REPOSITORY" \
             --workflow web.yml \
@@ -283,22 +286,20 @@ jobs:
           gh run download "$MASTER_RUN_ID" \
             --repo "$GITHUB_REPOSITORY" \
             --name digigame-web-build \
-            --dir site
+            --dir production
 
-          PREVIEW_DIR="site/pr-${PR_NUMBER}"
-          mkdir -p "$PREVIEW_DIR"
-          cp -a preview/. "$PREVIEW_DIR/"
-
-          cat > "$PREVIEW_DIR/preview-build.txt" <<EOF
-          DigiGame pull request preview
-          PR: #${PR_NUMBER}
-          Commit: ${GITHUB_SHA}
-          Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
-          EOF
-
-          test -s site/index.html
-          test -s "$PREVIEW_DIR/index.html"
-          test -s "$PREVIEW_DIR/index.wasm"
+      - name: Compose production and all open PR previews
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_PREVIEW_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          bash .github/scripts/compose-pages-site.sh \
+            site \
+            production \
+            preview \
+            "${{ github.event.pull_request.number }}"
 
       - name: Configure Pages
         id: pages
@@ -331,7 +332,7 @@ jobs:
 
           Build: \`${SHORT_SHA}\` · validated by the Web, desktop, mobile, combat and VFX jobs before deployment.
 
-          This URL is the PR build; the normal Pages root remains the latest successful \`master\` build."
+          Other open PR previews are preserved in the same Pages deployment."
 
           COMMENT_ID="$(gh api \
             "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
@@ -358,26 +359,45 @@ jobs:
       - build-web
       - browser-smoke
     runs-on: ubuntu-latest
+    concurrency:
+      group: digigame-pages-publish
+      cancel-in-progress: false
     permissions:
+      actions: read
       contents: read
+      pull-requests: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout deployment scripts
+        uses: actions/checkout@v6
+
       - name: Download tested Web build
         uses: actions/download-artifact@v5
         with:
           name: digigame-web-build
-          path: artifact
+          path: production
+
+      - name: Compose production and all open PR previews
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash .github/scripts/compose-pages-site.sh site production
+
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: artifact
+          path: site
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4

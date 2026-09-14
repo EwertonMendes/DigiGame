@@ -5,6 +5,7 @@ on:
     branches:
       - fix/ds-sprite-agumon-line-*
       - feat/agumon-evolution-ds-sprites
+      - feat/garurumon-line-ds-sprites
   workflow_dispatch:
 
 permissions:
@@ -43,17 +44,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
-            assets/characters/geogreymon \
-            assets/characters/rizegreymon \
-            assets/characters/wargreymon \
-            assets/characters/skullgreymon \
-            assets/characters/shinegreymon \
-            'assets/resources/geo greymon.tres' \
-            'assets/resources/rize greymon.tres' \
-            'assets/resources/war greymon.tres' \
-            'assets/resources/skull greymon.tres' \
-            'assets/resources/shine greymon.tres' \
+            assets/characters \
+            assets/resources \
             database/additional-ds-playables.json \
             database/ds-directional-resource-audit.json
-          git commit -m 'feat: generate Agumon-line DS runtime sprites [skip additional-ds-rebuild]'
+          git commit -m 'feat: regenerate additional DS runtime sprites [skip additional-ds-rebuild]'
           git push origin "HEAD:${GITHUB_REF_NAME}"

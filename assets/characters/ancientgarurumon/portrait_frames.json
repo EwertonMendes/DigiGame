@@ -1,0 +1,14 @@
+{
+  "source": "AncientGarurumon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/AncientGarurumon.webp",
+  "frame_width": 122,
+  "frame_height": 149,
+  "frame_count": 4,
+  "durations_ms": [
+    300,
+    300,
+    300,
+    300
+  ],
+  "source_sha256": "fe5deba566329d7bbd10cf00fa054793b10265a5dd20835c671f98e8dbd4c124"
+}

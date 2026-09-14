@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 5,
+  "count": 11,
   "species": [
     {
       "name": "Geo Greymon",
@@ -110,6 +110,126 @@
       "field_cell": [
         35,
         43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Garurumon",
+      "seed": "80c6f1b9-648a-49b3-92c9-01d6e2f4bc8e",
+      "rank": "Champion",
+      "attribute": "Data",
+      "resource": "res://assets/resources/garurumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/garurumon/field.png",
+      "field_metadata": "res://assets/characters/garurumon/field.json",
+      "portrait_strip": "res://assets/characters/garurumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/garurumon/portrait_frames.json",
+      "source_id": 93,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "field_cell": [
+        36,
+        36
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Were Garurumon",
+      "seed": "a5e0bfb7-8d2a-4ef1-9636-cbb9db1fe1d0",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/were garurumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/weregarurumon/field.png",
+      "field_metadata": "res://assets/characters/weregarurumon/field.json",
+      "portrait_strip": "res://assets/characters/weregarurumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/weregarurumon/portrait_frames.json",
+      "source_id": 214,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        32,
+        36
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Metal Garurumon",
+      "seed": "d9f9c182-731b-4f21-8e2f-167b2d663e34",
+      "rank": "Mega",
+      "attribute": "Data",
+      "resource": "res://assets/resources/metal garurumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/metalgarurumon/field.png",
+      "field_metadata": "res://assets/characters/metalgarurumon/field.json",
+      "portrait_strip": "res://assets/characters/metalgarurumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/metalgarurumon/portrait_frames.json",
+      "source_id": 310,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        40
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "AncientGarurumon",
+      "seed": "e6a29e6f-9a3d-41a3-87c3-7c0c573b42de",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/ancientgarurumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/ancientgarurumon/field.png",
+      "field_metadata": "res://assets/characters/ancientgarurumon/field.json",
+      "portrait_strip": "res://assets/characters/ancientgarurumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/ancientgarurumon/portrait_frames.json",
+      "source_id": null,
+      "profile": "two_rows_right_region_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "field_cell": [
+        36,
+        47
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Omnimon",
+      "seed": "49d973b4-549f-45ff-9c41-e43dcc8b43f6",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/omnimon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/omnimon/field.png",
+      "field_metadata": "res://assets/characters/omnimon/field.json",
+      "portrait_strip": "res://assets/characters/omnimon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/omnimon/portrait_frames.json",
+      "source_id": 313,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "field_cell": [
+        36,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "JungleMojyamon",
+      "seed": "41d20f3e-c798-4e3d-b0f2-718b49f305d7",
+      "rank": "Champion",
+      "attribute": "Data",
+      "resource": "res://assets/resources/junglemojyamon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/junglemojyamon/field.png",
+      "field_metadata": "res://assets/characters/junglemojyamon/field.json",
+      "portrait_strip": "res://assets/characters/junglemojyamon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/junglemojyamon/portrait_frames.json",
+      "source_id": 183,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        33
       ],
       "portrait_frames": 4
     }

@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 93,
+  "source_archive_file": "sprite thread/093_Garurumon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/093_Garurumon.png",
+  "source_sha256": "c1ed6a013f9bf8f1b2a8c6fdf56c6a98e57a875700b1249639f11876160128a6",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows_rear_reversed",
+  "runtime_group_indices": [
+    0,
+    1,
+    3,
+    2
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 130692,
+      "confidence_margin": 158060
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 111830,
+      "confidence_margin": 221308
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    35
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 6,
+        "y": 224,
+        "w": 28,
+        "h": 30
+      },
+      {
+        "x": 51,
+        "y": 221,
+        "w": 29,
+        "h": 32
+      },
+      {
+        "x": 91,
+        "y": 225,
+        "w": 29,
+        "h": 27
+      }
+    ],
+    "down_right": [
+      {
+        "x": 262,
+        "y": 222,
+        "w": 28,
+        "h": 30
+      },
+      {
+        "x": 216,
+        "y": 219,
+        "w": 29,
+        "h": 32
+      },
+      {
+        "x": 176,
+        "y": 223,
+        "w": 29,
+        "h": 27
+      }
+    ],
+    "up_left": [
+      {
+        "x": 167,
+        "y": 270,
+        "w": 32,
+        "h": 30
+      },
+      {
+        "x": 217,
+        "y": 272,
+        "w": 27,
+        "h": 29
+      },
+      {
+        "x": 264,
+        "y": 270,
+        "w": 28,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 97,
+        "y": 272,
+        "w": 32,
+        "h": 30
+      },
+      {
+        "x": 52,
+        "y": 274,
+        "w": 27,
+        "h": 29
+      },
+      {
+        "x": 4,
+        "y": 272,
+        "w": 28,
+        "h": 30
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 36,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/garurumon/field.png"
+}
