@@ -9,13 +9,11 @@ class_name EvolutionChartCanvas
 
 const LINK_SIGNAL_PRIMARY_SPEED := 0.10
 const LINK_SIGNAL_SECONDARY_SPEED := 0.075
-const CURRENT_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/dithered_fire_6x5.png")
-const SELECTED_FORM_VFX: Texture2D = preload("res://assets/vfx/brackeys/predrawn/lightstreaks_6x5.png")
-const CARD_VFX_SHADER: Shader = preload("res://shaders/evolution_chart_card_vfx.gdshader")
-const VFX_COLUMNS := 6
-const VFX_ROWS := 5
-const CURRENT_VFX_FPS := 10.0
-const SELECTED_VFX_FPS := 8.0
+const DIGITAL_PARTICLE_CYCLE := 1.55
+const DIGITAL_PARTICLE_MIN_RISE := 28.0
+const DIGITAL_PARTICLE_MAX_RISE := 58.0
+const CURRENT_DIGITAL_PARTICLES := 22
+const SELECTED_DIGITAL_PARTICLES := 14
 const NAVIGATION_TWEEN_DURATION := 0.18
 
 var _initializing_chart := false
@@ -44,99 +42,6 @@ var _prefetched_field_resources: Dictionary = {}
 # Reuse already-created cards while this chart is open. Hidden Digimon previews are
 # disabled, so returning to a branch is instant without keeping their animations hot.
 var _button_cache: Dictionary = {}
-
-# Only two VFX nodes exist for the whole chart. The shader removes the low-alpha
-# rectangular wash from the source atlases and feathers their frame boundaries.
-var _current_vfx_sprite: Sprite2D = null
-var _selected_vfx_sprite: Sprite2D = null
-var _current_vfx_material: ShaderMaterial = null
-var _selected_vfx_material: ShaderMaterial = null
-var _vfx_time := 0.0
-
-
-func _ready() -> void:
-	super._ready()
-	_setup_card_vfx()
-
-
-func _process(delta: float) -> void:
-	_vfx_time += delta
-	super._process(delta)
-	_sync_card_vfx()
-
-
-func _setup_card_vfx() -> void:
-	_current_vfx_material = _make_card_vfx_material(Color(1.0, 0.78, 0.28, 0.82), 0.38, 0.18, 0.12, 0.82)
-	_selected_vfx_material = _make_card_vfx_material(Color(0.40, 0.86, 1.0, 0.70), 0.28, 0.17, 0.16, 0.62)
-	_current_vfx_sprite = _make_card_vfx_sprite(CURRENT_FORM_VFX, _current_vfx_material)
-	_selected_vfx_sprite = _make_card_vfx_sprite(SELECTED_FORM_VFX, _selected_vfx_material)
-	add_child(_current_vfx_sprite)
-	add_child(_selected_vfx_sprite)
-	move_child(_selected_vfx_sprite, 0)
-	move_child(_current_vfx_sprite, 0)
-	_sync_card_vfx()
-
-
-func _make_card_vfx_material(tint: Color, cutoff: float, softness: float, edge_fade: float, intensity: float) -> ShaderMaterial:
-	var material := ShaderMaterial.new()
-	material.shader = CARD_VFX_SHADER
-	material.set_shader_parameter("tint", tint)
-	material.set_shader_parameter("alpha_cutoff", cutoff)
-	material.set_shader_parameter("alpha_softness", softness)
-	material.set_shader_parameter("edge_fade", edge_fade)
-	material.set_shader_parameter("intensity", intensity)
-	material.set_shader_parameter("frame_uv_size", Vector2(1.0 / float(VFX_COLUMNS), 1.0 / float(VFX_ROWS)))
-	return material
-
-
-func _make_card_vfx_sprite(texture: Texture2D, material: ShaderMaterial) -> Sprite2D:
-	var sprite := Sprite2D.new()
-	sprite.texture = texture
-	sprite.hframes = VFX_COLUMNS
-	sprite.vframes = VFX_ROWS
-	sprite.centered = true
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	sprite.material = material
-	sprite.visible = false
-	return sprite
-
-
-func _sync_card_vfx() -> void:
-	_sync_one_card_vfx(_current_vfx_sprite, _current_vfx_material, _current_seed, CURRENT_VFX_FPS, Vector2(1.02, 0.50), true, 0.0)
-	var selected_seed := _selected_seed if _selected_seed != _current_seed else ""
-	_sync_one_card_vfx(_selected_vfx_sprite, _selected_vfx_material, selected_seed, SELECTED_VFX_FPS, Vector2(1.06, 0.54), false, 0.11)
-
-
-func _sync_one_card_vfx(sprite: Sprite2D, material: ShaderMaterial, seed: String, fps: float, size_factor: Vector2, anchor_to_card_top: bool, phase_offset: float) -> void:
-	if sprite == null or material == null or seed.is_empty() or not _buttons.has(seed):
-		if sprite != null:
-			sprite.visible = false
-		return
-	var button := _buttons.get(seed) as Button
-	if button == null or not button.visible:
-		sprite.visible = false
-		return
-
-	var frame_count := VFX_COLUMNS * VFX_ROWS
-	var frame := int(floor((_vfx_time + phase_offset) * fps)) % frame_count
-	sprite.frame = frame
-	var column := frame % VFX_COLUMNS
-	var row := int(frame / VFX_COLUMNS)
-	material.set_shader_parameter("frame_uv_offset", Vector2(float(column) / float(VFX_COLUMNS), float(row) / float(VFX_ROWS)))
-
-	var card_scale := _button_scale(seed)
-	var card_size := NODE_SIZE * card_scale
-	var target_size := card_size * size_factor
-	var frame_size := Vector2(float(sprite.texture.get_width()) / float(VFX_COLUMNS), float(sprite.texture.get_height()) / float(VFX_ROWS))
-	sprite.scale = Vector2(target_size.x / maxf(1.0, frame_size.x), target_size.y / maxf(1.0, frame_size.y))
-	var card_center := button.position + card_size * 0.5
-	if anchor_to_card_top:
-		# Fire grows from the card's top edge instead of filling a large rectangle behind it.
-		sprite.position = Vector2(card_center.x, button.position.y + 3.0 * card_scale - target_size.y * 0.42)
-	else:
-		# Streaks hug the focused card; the card itself masks most of their body.
-		sprite.position = card_center + Vector2(0.0, -2.0 * card_scale)
-	sprite.visible = true
 
 
 func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionary, goal_seed: String = "", goal_edges: Dictionary = {}) -> void:
@@ -807,6 +712,96 @@ func _draw() -> void:
 			var speed := LINK_SIGNAL_PRIMARY_SPEED if _primary_edges.has(key) or _goal_edges.has(key) else LINK_SIGNAL_SECONDARY_SPEED
 			var pulse_t := fmod(_phase * speed + float(abs(key.hash()) % 100) / 100.0, 1.0)
 			_draw_signal_packet(p1, p2, pulse_t, Color(color.r, color.g, color.b, minf(0.86, color.a + 0.06)), average_scale)
+
+	# Digital data pixels originate just inside the card's top edge. Because the
+	# canvas renders before Button children, the first part of each particle's life
+	# is naturally masked by the card and it appears to dissolve out of the frame.
+	# This avoids a rectangular emitter, texture atlas silhouette, or flame-like look.
+	if _buttons.has(_current_seed):
+		_draw_digital_card_particles(
+			_current_seed,
+			Color(1.0, 0.72, 0.22, 1.0),
+			CURRENT_DIGITAL_PARTICLES,
+			0.0,
+			1.0
+		)
+	if _selected_seed != _current_seed and _buttons.has(_selected_seed):
+		_draw_digital_card_particles(
+			_selected_seed,
+			Color(0.34, 0.80, 1.0, 1.0),
+			SELECTED_DIGITAL_PARTICLES,
+			0.37,
+			0.78
+		)
+
+
+func _digital_noise01(value: float) -> float:
+	return fposmod(sin(value * 12.9898 + 78.233) * 43758.5453, 1.0)
+
+
+func _draw_digital_card_particles(
+	seed: String,
+	base_color: Color,
+	particle_count: int,
+	phase_offset: float,
+	intensity: float
+) -> void:
+	var button := _buttons.get(seed) as Button
+	if button == null or not button.visible or particle_count <= 0:
+		return
+
+	var scale_factor := _button_scale(seed)
+	var card_size := NODE_SIZE * scale_factor
+	var card_left := button.position.x + 13.0 * scale_factor
+	var card_right := button.position.x + card_size.x - 13.0 * scale_factor
+	var card_top := button.position.y
+	var seed_value := float(abs(seed.hash()) % 100000)
+
+	for index in range(particle_count):
+		var index_value := float(index + 1)
+		var x_noise := _digital_noise01(seed_value + index_value * 17.13)
+		var phase_noise := _digital_noise01(seed_value + index_value * 31.71)
+		var size_noise := _digital_noise01(seed_value + index_value * 47.29)
+		var rise_noise := _digital_noise01(seed_value + index_value * 71.91)
+		var drift_noise := _digital_noise01(seed_value + index_value * 89.53)
+		var alpha_noise := _digital_noise01(seed_value + index_value * 113.17)
+
+		var cycle := DIGITAL_PARTICLE_CYCLE * lerpf(0.82, 1.22, rise_noise)
+		var age := fposmod(_phase + phase_offset + phase_noise * cycle, cycle) / cycle
+		var fade_in := smoothstep(0.0, 0.12, age)
+		var fade_out := 1.0 - smoothstep(0.56, 1.0, age)
+		var alpha := fade_in * fade_out * intensity * lerpf(0.48, 0.92, alpha_noise)
+		if alpha <= 0.015:
+			continue
+
+		# Spawn a few pixels inside the top of the card. The Button covers this part,
+		# so pixels seem to detach from the card instead of appearing from a hard line.
+		var hidden_depth := lerpf(3.0, 13.0, _digital_noise01(seed_value + index_value * 131.7)) * scale_factor
+		var rise := lerpf(DIGITAL_PARTICLE_MIN_RISE, DIGITAL_PARTICLE_MAX_RISE, rise_noise) * scale_factor
+		var drift := (drift_noise - 0.5) * 14.0 * scale_factor * age
+		var position := Vector2(
+			lerpf(card_left, card_right, x_noise) + drift,
+			card_top + hidden_depth - rise * age
+		)
+
+		var pixel_size := lerpf(2.0, 4.4, size_noise) * scale_factor
+		var pixel_rect := Rect2(
+			position - Vector2.ONE * pixel_size * 0.5,
+			Vector2.ONE * pixel_size
+		)
+		draw_rect(pixel_rect, Color(base_color.r, base_color.g, base_color.b, alpha), true)
+
+		# Roughly one third of the particles leave a smaller fading data-bit behind.
+		# It creates a digital stream without turning the effect into smoke or sparks.
+		if int(floor(size_noise * 10.0)) % 3 == 0 and age > 0.16:
+			var trail_size := maxf(1.0 * scale_factor, pixel_size * 0.52)
+			var trail_position := position + Vector2(0.0, lerpf(5.0, 10.0, rise_noise) * scale_factor)
+			var trail_alpha := alpha * 0.28
+			draw_rect(
+				Rect2(trail_position - Vector2.ONE * trail_size * 0.5, Vector2.ONE * trail_size),
+				Color(base_color.r, base_color.g, base_color.b, trail_alpha),
+				true
+			)
 
 
 func _draw_signal_packet(p1: Vector2, p2: Vector2, t: float, color: Color, scale_factor: float) -> void:
