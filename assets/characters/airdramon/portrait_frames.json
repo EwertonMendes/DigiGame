@@ -1,0 +1,14 @@
+{
+  "source": "Airdramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Airdramon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "05dfafcc1f17c425cc508395968de382159fb0ba69c66e4d045b1421c410d351"
+}

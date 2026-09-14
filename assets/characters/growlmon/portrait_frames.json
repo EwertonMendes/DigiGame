@@ -1,0 +1,14 @@
+{
+  "source": "Growlmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Growlmon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "4f5c09333c22e49aa72ecbe432e2f53ea6f923e518e9f226b201df9badccf52b"
+}

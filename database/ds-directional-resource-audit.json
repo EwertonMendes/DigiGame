@@ -1,18 +1,24 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 101,
+  "directional_resource_count": 113,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 11,
+  "additional_source_rebuilt_resource_count": 23,
   "project_original_resource_count": 1,
-  "audited_resource_count": 101,
+  "audited_resource_count": 113,
   "directional_resources": [
     {
       "name": "Agumon",
       "resource": "assets/resources/agumon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Airdramon",
+      "resource": "assets/resources/airdramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "AncientGarurumon",
@@ -43,6 +49,12 @@
       "resource": "assets/resources/biyomon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Black War Greymon",
+      "resource": "assets/resources/black war greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "BlackAgumon",
@@ -97,6 +109,18 @@
       "resource": "assets/resources/crabmon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "DKTyrannomon",
+      "resource": "assets/resources/dktyrannomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Darkdramon",
+      "resource": "assets/resources/darkdramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "DemiDevimon",
@@ -219,6 +243,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Growlmon",
+      "resource": "assets/resources/growlmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Guilmon",
       "resource": "assets/resources/guilmon.tres",
       "layout_source": "explicit",
@@ -339,6 +369,18 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Machinedramon",
+      "resource": "assets/resources/machinedramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Megadramon",
+      "resource": "assets/resources/megadramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Metal Garurumon",
       "resource": "assets/resources/metal garurumon.tres",
       "layout_source": "explicit",
@@ -351,6 +393,18 @@
       "coverage": "early_ds"
     },
     {
+      "name": "MetalTyrannomon",
+      "resource": "assets/resources/metaltyrannomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Millenniummon",
+      "resource": "assets/resources/millenniummon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Minomon",
       "resource": "assets/resources/minomon.tres",
       "layout_source": "explicit",
@@ -361,6 +415,12 @@
       "resource": "assets/resources/mochimon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Monochromon",
+      "resource": "assets/resources/monochromon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Monodramon",
@@ -585,10 +645,22 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Tyrannomon",
+      "resource": "assets/resources/tyrannomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Veemon",
       "resource": "assets/resources/veemon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Vermilimon",
+      "resource": "assets/resources/vermilimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Wanyamon",

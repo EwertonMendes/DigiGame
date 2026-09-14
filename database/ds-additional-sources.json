@@ -1,19 +1,74 @@
 {
   "schema_version": 3,
-  "canonical_runtime_order": ["down_left", "down_right", "up_left", "up_right"],
-  "canonical_runtime_phases": ["idle", "step_a", "step_b"],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
   "patterns": {
-    "canonical_rows": [0, 1, 2, 3],
-    "canonical_rows_rear_reversed": [0, 1, 3, 2],
-    "rear_rows_first": [2, 3, 0, 1],
-    "compact_interleaved": [0, 2, 1, 3],
-    "compact_interleaved_horizontal_reversed": [2, 0, 3, 1]
+    "canonical_rows": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "canonical_rows_rear_reversed": [
+      0,
+      1,
+      3,
+      2
+    ],
+    "rear_rows_first": [
+      2,
+      3,
+      0,
+      1
+    ],
+    "compact_interleaved": [
+      0,
+      2,
+      1,
+      3
+    ],
+    "compact_interleaved_horizontal_reversed": [
+      2,
+      0,
+      3,
+      1
+    ],
+    "canonical_rows_front_reversed": [
+      1,
+      0,
+      3,
+      2
+    ],
+    "rear_rows_first_horizontal_reversed": [
+      3,
+      2,
+      1,
+      0
+    ]
   },
   "profiles": {
-    "two_rows_of_six": {"kind": "two_rows_of_six"},
-    "two_rows_right_region_of_six": {"kind": "two_rows_of_six", "min_cx_ratio": 0.37},
-    "single_row_four_triples": {"kind": "single_row_four_triples"},
-    "four_rows_rightmost_triples": {"kind": "four_rows_rightmost_triples"}
+    "two_rows_of_six": {
+      "kind": "two_rows_of_six"
+    },
+    "two_rows_right_region_of_six": {
+      "kind": "two_rows_of_six",
+      "min_cx_ratio": 0.37
+    },
+    "single_row_four_triples": {
+      "kind": "single_row_four_triples"
+    },
+    "four_rows_rightmost_triples": {
+      "kind": "four_rows_rightmost_triples"
+    }
   },
   "species": {
     "Geo Greymon": {
@@ -103,6 +158,102 @@
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/183_J-Mojyamon.png",
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first"
+    },
+    "DKTyrannomon": {
+      "source_id": 131,
+      "source_member": "sprite thread/131_DarkTyranomon.png",
+      "source_sha256": "9a0dff15ef972c07908e21c04dfebb4b32c38530dad75108965d9a076ad651a6",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/131_DarkTyranomon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows"
+    },
+    "Machinedramon": {
+      "source_id": 311,
+      "source_member": "sprite thread/311_Mugendramon.png",
+      "source_sha256": "c62e98af251e45e6e1a6ccb9e3931dd2cb9b0ebd9540a35cf8157d03810ed1dd",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/311_Mugendramon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows"
+    },
+    "Millenniummon": {
+      "source_id": 370,
+      "source_member": "sprite thread/370_Milleniumon.png",
+      "source_sha256": "1391650f3c017c065afa599d621351723c1e0863de88f0459f179e1acb50eba8",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/370_Milleniumon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "compact_interleaved"
+    },
+    "Growlmon": {
+      "source_id": 113,
+      "source_member": "sprite thread/113_Growlmon.png",
+      "source_sha256": "5aa761070bdf500d56150479ebe615e051f847e823511a2c35321de0fc23b3e5",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/113_Growlmon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows"
+    },
+    "Tyrannomon": {
+      "source_id": 87,
+      "source_member": "sprite thread/087_Tyrannomon.png",
+      "source_sha256": "2d319734882e81b6eb6144fed0cdcf0cd7405956e12937bb71fd338b5c774c71",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/087_Tyrannomon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_front_reversed"
+    },
+    "MetalTyrannomon": {
+      "source_id": 269,
+      "source_member": "sprite thread/269_MetalTyranomon.png",
+      "source_sha256": "d0251b400e2a56b03e359a44c562a9cacd4b84f392b3258b5ba2244a243636f3",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/269_MetalTyranomon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Monochromon": {
+      "source_id": 181,
+      "source_member": "sprite thread/181_Monochromon.png",
+      "source_sha256": "d0b60a9f12b4425146c34132f7d41dbb775448af70e4c530a43389aef287f8ac",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/181_Monochromon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Vermilimon": {
+      "source_id": 273,
+      "source_member": "sprite thread/273_Vermilimon.png",
+      "source_sha256": "32922bbde453622471cbe081c3da8fafb73253a7b29126948d82a88cb130cbde",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/273_Vermilimon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Black War Greymon": {
+      "source_id": 363,
+      "source_member": "sprite thread/363_BlackWarGreymon.png",
+      "source_sha256": "0975d4d5303760cb58f1a9694a818ffceee794243b9b51ad49a3cb40518f2a90",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/363_BlackWarGreymon.png",
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved_horizontal_reversed"
+    },
+    "Darkdramon": {
+      "source_id": 350,
+      "source_member": "sprite thread/350_DarkdramonGarmmon.png",
+      "source_sha256": "6222b051190b8a5e6ea6d813f09e057805f5391b6584767de04c34e686b03633",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/DarkdramonGarmmon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first_horizontal_reversed"
+    },
+    "Megadramon": {
+      "source_id": 201,
+      "source_member": "sprite thread/201_Megadramon.png",
+      "source_sha256": "09783f4ae3cdb8a17569104d239b23a5e5e02450a53d5876f994033f0beeb7fc",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/201_Megadramon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Airdramon": {
+      "source_id": 89,
+      "source_member": "sprite thread/089_Airdramon.png",
+      "source_sha256": "b2a98bd06f49508a1b73b0a8a30d26fcd4862cc0056a1da581456402637840bf",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/089_Airdramon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed"
     }
   }
 }

@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 11,
+  "count": 23,
   "species": [
     {
       "name": "Geo Greymon",
@@ -230,6 +230,246 @@
       "field_cell": [
         32,
         33
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "DKTyrannomon",
+      "seed": "d0c5e9b7-3f1a-4e6b-8c2d-9f0e3a5d7c6b",
+      "rank": "Champion",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/dktyrannomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/dktyrannomon/field.png",
+      "field_metadata": "res://assets/characters/dktyrannomon/field.json",
+      "portrait_strip": "res://assets/characters/dktyrannomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/dktyrannomon/portrait_frames.json",
+      "source_id": 131,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Machinedramon",
+      "seed": "f1b3b3b4-1b3b-4b3b-8b3b-3b3b3b3b3b3b",
+      "rank": "Mega",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/machinedramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/machinedramon/field.png",
+      "field_metadata": "res://assets/characters/machinedramon/field.json",
+      "portrait_strip": "res://assets/characters/machinedramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/machinedramon/portrait_frames.json",
+      "source_id": 311,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        35,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Millenniummon",
+      "seed": "42528387-e8e5-4a69-adaa-7089aeb620a1",
+      "rank": "Mega",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/millenniummon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/millenniummon/field.png",
+      "field_metadata": "res://assets/characters/millenniummon/field.json",
+      "portrait_strip": "res://assets/characters/millenniummon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/millenniummon/portrait_frames.json",
+      "source_id": 370,
+      "profile": "two_rows_of_six",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Growlmon",
+      "seed": "124e3f9c-0f48-402c-9f29-b92ff742a965",
+      "rank": "Champion",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/growlmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/growlmon/field.png",
+      "field_metadata": "res://assets/characters/growlmon/field.json",
+      "portrait_strip": "res://assets/characters/growlmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/growlmon/portrait_frames.json",
+      "source_id": 113,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        35,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Tyrannomon",
+      "seed": "d7e9f1a3-5b2c-4d8a-9c6e-1f0b3a5d7e2c",
+      "rank": "Champion",
+      "attribute": "Data",
+      "resource": "res://assets/resources/tyrannomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/tyrannomon/field.png",
+      "field_metadata": "res://assets/characters/tyrannomon/field.json",
+      "portrait_strip": "res://assets/characters/tyrannomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/tyrannomon/portrait_frames.json",
+      "source_id": 87,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_front_reversed",
+      "field_cell": [
+        35,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "MetalTyrannomon",
+      "seed": "86661f39-b878-4321-9533-0b95d434ef43",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/metaltyrannomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/metaltyrannomon/field.png",
+      "field_metadata": "res://assets/characters/metaltyrannomon/field.json",
+      "portrait_strip": "res://assets/characters/metaltyrannomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/metaltyrannomon/portrait_frames.json",
+      "source_id": 269,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Monochromon",
+      "seed": "ecb85eb6-9dd6-4997-b4b0-2f5bfa778712",
+      "rank": "Champion",
+      "attribute": "Data",
+      "resource": "res://assets/resources/monochromon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/monochromon/field.png",
+      "field_metadata": "res://assets/characters/monochromon/field.json",
+      "portrait_strip": "res://assets/characters/monochromon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/monochromon/portrait_frames.json",
+      "source_id": 181,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Vermilimon",
+      "seed": "88a7bd2c-77fb-469e-abc8-bd67c4ea5924",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/vermilimon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/vermilimon/field.png",
+      "field_metadata": "res://assets/characters/vermilimon/field.json",
+      "portrait_strip": "res://assets/characters/vermilimon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/vermilimon/portrait_frames.json",
+      "source_id": 273,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Black War Greymon",
+      "seed": "1a2b3c4d-5e6f-4a8b-9c1d-2e3f4a5b6c7d",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/black war greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/blackwargreymon/field.png",
+      "field_metadata": "res://assets/characters/blackwargreymon/field.json",
+      "portrait_strip": "res://assets/characters/blackwargreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/blackwargreymon/portrait_frames.json",
+      "source_id": 363,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved_horizontal_reversed",
+      "field_cell": [
+        34,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Darkdramon",
+      "seed": "5c59bdf1-0288-4a39-bfbc-3d513a6dfe4c",
+      "rank": "Mega",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/darkdramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/darkdramon/field.png",
+      "field_metadata": "res://assets/characters/darkdramon/field.json",
+      "portrait_strip": "res://assets/characters/darkdramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/darkdramon/portrait_frames.json",
+      "source_id": 350,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first_horizontal_reversed",
+      "field_cell": [
+        34,
+        45
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Megadramon",
+      "seed": "40ed91a1-d2e3-47dc-8c18-64a55757e6b1",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/megadramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/megadramon/field.png",
+      "field_metadata": "res://assets/characters/megadramon/field.json",
+      "portrait_strip": "res://assets/characters/megadramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/megadramon/portrait_frames.json",
+      "source_id": 201,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Airdramon",
+      "seed": "b7569307-7fd2-4ebb-a05f-6b1b30410921",
+      "rank": "Champion",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/airdramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/airdramon/field.png",
+      "field_metadata": "res://assets/characters/airdramon/field.json",
+      "portrait_strip": "res://assets/characters/airdramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/airdramon/portrait_frames.json",
+      "source_id": 89,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "field_cell": [
+        36,
+        41
       ],
       "portrait_frames": 4
     }

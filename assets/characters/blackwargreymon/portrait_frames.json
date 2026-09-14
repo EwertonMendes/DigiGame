@@ -1,0 +1,14 @@
+{
+  "source": "BlackWarGreymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/BlackWarGreymon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "60d27c4dcb47952a1da857c4cce2cc5c12996ec99aa2599a86b38205f64807fa"
+}

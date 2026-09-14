@@ -1,0 +1,14 @@
+{
+  "source": "MachineDramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MachineDramon.webp",
+  "frame_width": 119,
+  "frame_height": 142,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "bb215695c9e326f5f5c1e6952cc0a391e96470ea0714f47cb235ea8613bb5069"
+}

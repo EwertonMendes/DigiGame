@@ -1,0 +1,14 @@
+{
+  "source": "DKTyrannomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/DKTyrannomon.webp",
+  "frame_width": 126,
+  "frame_height": 118,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "0173eedc491fbe24217ab085a974293d608a5b76b1c4559e6274a7f64220ce6f"
+}

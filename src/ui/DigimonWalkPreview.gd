@@ -33,8 +33,6 @@ var _pending_species := ""
 
 
 func _ready() -> void:
-	# Stable name lets UI regressions verify that every selectable Digimon card
-	# actually contains the DS field preview without coupling to child order.
 	name = "WalkPreview"
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -155,12 +153,7 @@ func _show_spaced_9_frame(frame_index: int) -> void:
 	_sprite.frame = 0
 	_sprite.region_enabled = true
 	_sprite.region_filter_clip_enabled = true
-	_sprite.region_rect = Rect2(
-		frame_index * SPACED_9_CELL_STRIDE,
-		0,
-		SPACED_9_CELL_SIZE,
-		SPACED_9_CELL_SIZE
-	)
+	_sprite.region_rect = Rect2(frame_index * SPACED_9_CELL_STRIDE, 0, SPACED_9_CELL_SIZE, SPACED_9_CELL_SIZE)
 	_sprite.flip_h = bool(SPACED_9_FLIP_H.get(PREVIEW_FACING, false))
 
 
@@ -182,4 +175,3 @@ func _layout_sprite() -> void:
 		return
 	var fit := minf(size.x / frame_size.x, size.y / frame_size.y) * 0.82
 	_sprite.scale = Vector2.ONE * clampf(fit, 0.6, 2.5)
-
