@@ -41,11 +41,18 @@
       "learnset": [
         {
           "skill": "adhesive_bubble",
-          "level": 1
+          "level": 1,
+          "acquisition": "signature"
         },
         {
           "skill": "guard_charge",
-          "level": 12
+          "level": 8,
+          "acquisition": "level"
+        },
+        {
+          "skill": "speed_charge",
+          "level": 16,
+          "acquisition": "level"
         }
       ],
       "field": {
