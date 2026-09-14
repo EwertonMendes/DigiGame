@@ -7,11 +7,21 @@ var _reward_service = null
 
 func _ready() -> void:
 	# The persistent director crossfades the current area theme into Battle 1 and
-	# keeps it alive for the full encounter/result flow. Returning to the Hub asks
-	# the same director for Zone 1, producing the reverse transition automatically.
+	# keeps it alive for the encounter. Result themes replace it immediately when
+	# the battle ends; returning to the Hub asks the same director for Zone 1.
 	MusicDirector.play_battle_1()
 	_reward_service = BattleRewardServiceScript.new(OverworldState.get_database())
 	super._ready()
+
+
+func _finish_battle(victory: bool) -> void:
+	# Result jingles intentionally cut the looping battle theme instead of
+	# crossfading, and are configured as one-shots by MusicDirector.
+	if victory:
+		MusicDirector.play_victory_theme()
+	else:
+		MusicDirector.play_game_over()
+	super._finish_battle(victory)
 
 
 func _build_battle_result(victory: bool) -> Dictionary:
