@@ -3,9 +3,9 @@ class_name EvolutionChartCanvas
 
 # Focused exploration keeps the active lineage permanently visible while only
 # revealing the direct routes around the form the player is currently inspecting.
-# The lineage owns the center lane. Alternative branches get a stable upper/lower
-# side, but their exact row is recomputed compactly so repeated exploration cannot
-# push cards farther and farther away from their parent.
+# Layout is rank-column based, compact, and side-aware: a branch stays above/below
+# once it leaves the main route, but it never wastes an empty row when it can keep
+# moving straight ahead without colliding with another visible card.
 
 const LINK_SIGNAL_PRIMARY_SPEED := 0.10
 const LINK_SIGNAL_SECONDARY_SPEED := 0.075
@@ -21,17 +21,33 @@ var _focus_bridge_edges: Dictionary = {}
 var _branch_lanes: Dictionary = {}
 var _focus_lane := 0
 
+# Performance indexes. The base canvas resolves neighbors by scanning every edge;
+# doing that repeatedly inside a BFS is noticeably expensive in Web builds. Build
+# adjacency and the shortest-path tree to the current form once per chart instead.
+var _adjacency: Dictionary = {}
+var _bridge_parent: Dictionary = {}
+
+# Reuse already-created cards while this chart is open. Hidden Digimon previews are
+# disabled, so returning to a branch is instant without keeping their animations hot.
+var _button_cache: Dictionary = {}
+
 
 func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionary, goal_seed: String = "", goal_edges: Dictionary = {}) -> void:
 	_initializing_chart = true
 	_ignore_center_requests = true
+	_clear_button_cache()
 	_primary_route.clear()
 	_primary_edges.clear()
 	_focus_bridge_path.clear()
 	_focus_bridge_edges.clear()
 	_branch_lanes.clear()
+	_adjacency.clear()
+	_bridge_parent.clear()
 	_focus_lane = 0
+
 	super.set_graph(graph, current_seed, history_edges, goal_seed, goal_edges)
+	_build_adjacency_index()
+	_build_bridge_index()
 	_primary_route = _derive_primary_route()
 	_primary_edges = _edge_keys_for_path(_primary_route)
 	for seed: String in _primary_route:
@@ -42,6 +58,77 @@ func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionar
 	_rebuild_visible_nodes(current_seed)
 	_initializing_chart = false
 	call_deferred("_finish_initial_layout")
+
+
+func _clear_button_cache() -> void:
+	var freed: Dictionary = {}
+	for raw_button in _button_cache.values():
+		var button := raw_button as Button
+		if button == null or not is_instance_valid(button):
+			continue
+		var instance_id := button.get_instance_id()
+		if freed.has(instance_id):
+			continue
+		freed[instance_id] = true
+		button.free()
+	_button_cache.clear()
+	_buttons.clear()
+	_fallback_icons.clear()
+
+
+func _build_adjacency_index() -> void:
+	_adjacency.clear()
+	for edge: Dictionary in _edges:
+		var from_seed := String(edge.get("from", ""))
+		var to_seed := String(edge.get("to", ""))
+		if from_seed.is_empty() or to_seed.is_empty():
+			continue
+		if not _adjacency.has(from_seed):
+			_adjacency[from_seed] = []
+		if not _adjacency.has(to_seed):
+			_adjacency[to_seed] = []
+		var from_neighbors := _adjacency[from_seed] as Array
+		var to_neighbors := _adjacency[to_seed] as Array
+		if not from_neighbors.has(to_seed):
+			from_neighbors.append(to_seed)
+		if not to_neighbors.has(from_seed):
+			to_neighbors.append(from_seed)
+
+	for raw_seed in _adjacency.keys():
+		var neighbors := _adjacency[raw_seed] as Array
+		neighbors.sort_custom(func(a, b) -> bool:
+			var a_node := _nodes_by_seed.get(String(a), {}) as Dictionary
+			var b_node := _nodes_by_seed.get(String(b), {}) as Dictionary
+			var ar := int(a_node.get("rank_index", 99))
+			var br := int(b_node.get("rank_index", 99))
+			if ar == br:
+				return String(a_node.get("name", "")) < String(b_node.get("name", ""))
+			return ar < br
+		)
+
+
+func _build_bridge_index() -> void:
+	_bridge_parent.clear()
+	if _current_seed.is_empty() or not _nodes_by_seed.has(_current_seed):
+		return
+	var queue: Array[String] = [_current_seed]
+	_bridge_parent[_current_seed] = ""
+	while not queue.is_empty():
+		var cursor: String = String(queue.pop_front())
+		for neighbor: String in _neighbors(cursor):
+			if _bridge_parent.has(neighbor):
+				continue
+			_bridge_parent[neighbor] = cursor
+			queue.append(neighbor)
+
+
+func _neighbors(seed: String) -> Array[String]:
+	if not _adjacency.has(seed):
+		return super._neighbors(seed)
+	var result: Array[String] = []
+	for raw_neighbor in _adjacency[seed] as Array:
+		result.append(String(raw_neighbor))
+	return result
 
 
 func center_on(seed: String) -> void:
@@ -91,27 +178,23 @@ func _apply_fit_transform() -> void:
 	_has_centered = true
 
 
-func _animate_relayout(new_seeds: Array[String], source_seed: String) -> void:
-	if _initializing_chart:
-		for raw_seed in _buttons.keys():
-			var button := _buttons[raw_seed] as Button
-			if button != null:
-				button.modulate.a = 1.0
-				button.scale = Vector2.ONE * _zoom
-		_refresh_layout()
-		return
-
+func _animate_relayout(_new_seeds: Array[String], _source_seed: String) -> void:
+	# Navigation should react on the same frame as the click. The previous tween
+	# intentionally delayed the final state and amplified the cost of creating new
+	# preview cards in Web builds. Framing and card positions now update atomically.
 	_apply_fit_transform()
-	super._animate_relayout(new_seeds, source_seed)
+	for raw_seed in _buttons.keys():
+		var button := _buttons[raw_seed] as Button
+		if button != null:
+			button.modulate.a = 1.0
+	_refresh_layout()
 
 
 func _activate_node(seed: String) -> void:
 	if not _buttons.has(seed):
 		return
 
-	# Capture the currently rendered lane before rebuilding. This is side memory:
-	# a branch that was above remains an upper branch, and one below remains lower.
-	_focus_lane = _lane_for_seed(seed)
+	_focus_lane = _rendered_lane_for_seed(seed)
 	_selected_seed = seed
 	_refresh_focus_bridge()
 	_trail.clear()
@@ -121,13 +204,55 @@ func _activate_node(seed: String) -> void:
 	node_selected.emit(seed)
 
 
+func _rebuild_visible_nodes(source_seed: String) -> void:
+	var visible_seeds := _visible_seeds_for_state()
+	var visible_lookup: Dictionary = {}
+	for seed: String in visible_seeds:
+		visible_lookup[seed] = true
+
+	# Hide instead of destroying cards. DigimonWalkPreview setup is one of the most
+	# expensive parts of branch navigation in Web builds, so explored forms are kept
+	# as dormant controls and reused when the player comes back to them.
+	for raw_seed in _buttons.keys().duplicate():
+		var seed := String(raw_seed)
+		if visible_lookup.has(seed):
+			continue
+		var old_button := _buttons[seed] as Button
+		_buttons.erase(seed)
+		if old_button != null:
+			old_button.hide()
+			old_button.process_mode = Node.PROCESS_MODE_DISABLED
+
+	_recalculate_positions(visible_seeds)
+	var new_seeds: Array[String] = []
+	for seed: String in visible_seeds:
+		if _buttons.has(seed):
+			continue
+		var button := _button_cache.get(seed) as Button
+		if button == null or not is_instance_valid(button):
+			var node := _nodes_by_seed.get(seed, {}) as Dictionary
+			if node.is_empty():
+				continue
+			button = _create_node_button(node)
+			_button_cache[seed] = button
+			add_child(button)
+			new_seeds.append(seed)
+		else:
+			button.process_mode = Node.PROCESS_MODE_INHERIT
+			button.show()
+		_buttons[seed] = button
+
+	_refresh_node_styles()
+	_animate_relayout(new_seeds, source_seed)
+	_configure_focus_neighbors()
+	queue_redraw()
+
+
 func _visible_seeds_for_state() -> Array[String]:
 	var result: Array[String] = []
 	for seed: String in _primary_route:
 		_add_unique_seed(result, seed)
 
-	# Keep a continuous bridge from the inspected form to the current form. This
-	# prevents the current Digimon from ever appearing as a disconnected island.
 	for seed: String in _focus_bridge_path:
 		_add_unique_seed(result, seed)
 
@@ -158,6 +283,19 @@ func _find_connection_path(start_seed: String, target_seed: String) -> Array[Str
 	if not _nodes_by_seed.has(start_seed) or not _nodes_by_seed.has(target_seed):
 		return empty
 
+	# Normal chart navigation always targets the current form, so this is usually a
+	# simple O(path length) lookup instead of a new BFS over the full evolution graph.
+	if target_seed == _current_seed and _bridge_parent.has(start_seed):
+		var path: Array[String] = []
+		var cursor := start_seed
+		while not cursor.is_empty():
+			path.append(cursor)
+			if cursor == target_seed:
+				return path
+			cursor = String(_bridge_parent.get(cursor, ""))
+		return empty
+
+	# Generic fallback for callers that request another target.
 	var queue: Array[String] = [start_seed]
 	var previous: Dictionary = {start_seed: ""}
 	while not queue.is_empty():
@@ -174,8 +312,6 @@ func _find_connection_path(start_seed: String, target_seed: String) -> Array[Str
 					if path_cursor == start_seed:
 						break
 					path_cursor = String(previous.get(path_cursor, ""))
-				if reversed.is_empty() or reversed[reversed.size() - 1] != start_seed:
-					return empty
 				reversed.reverse()
 				return reversed
 			queue.append(neighbor)
@@ -234,16 +370,20 @@ func _rank_index_for(seed: String) -> int:
 	return int(node.get("rank_index", 99)) if not node.is_empty() else 99
 
 
+func _rendered_lane_for_seed(seed: String) -> int:
+	if _base_positions.has(seed):
+		return int(round(Vector2(_base_positions[seed]).y / ROW_GAP))
+	return int(_branch_lanes.get(seed, 0))
+
+
 func _lane_for_seed(seed: String) -> int:
 	if _primary_route.has(seed):
 		return 0
-	if _branch_lanes.has(seed):
-		return int(_branch_lanes[seed])
+	if seed == _selected_seed and _focus_lane != 0:
+		return _focus_lane
 	if _base_positions.has(seed):
-		var y := Vector2(_base_positions[seed]).y
-		var inferred := int(round(y / ROW_GAP))
-		return inferred
-	return 0
+		return int(round(Vector2(_base_positions[seed]).y / ROW_GAP))
+	return int(_branch_lanes.get(seed, 0))
 
 
 func _lane_side(lane: int) -> int:
@@ -254,108 +394,59 @@ func _lane_side(lane: int) -> int:
 	return 0
 
 
-func _balanced_lane_for_index(index: int) -> int:
-	var distance := int(index / 2) + 1
-	return -distance if index % 2 == 0 else distance
+func _lane_counts(occupied: Dictionary) -> Vector2i:
+	var above := 0
+	var below := 0
+	for raw_lane in occupied.keys():
+		var lane := int(raw_lane)
+		if lane < 0:
+			above += 1
+		elif lane > 0:
+			below += 1
+	return Vector2i(above, below)
 
 
 func _nearest_open_lane(occupied: Dictionary, preferred_lane: int, side: int) -> int:
-	if preferred_lane != 0 and not occupied.has(preferred_lane):
+	# Straight ahead is always the best layout when that row is actually free.
+	if not occupied.has(preferred_lane):
 		return preferred_lane
 
-	if side == 0:
-		for distance in range(1, 64):
-			var above := -distance
-			if not occupied.has(above):
-				return above
-			var below := distance
-			if not occupied.has(below):
-				return below
-		return occupied.size() + 1
+	if side != 0:
+		var magnitude := maxi(1, absi(preferred_lane))
+		for radius in range(1, 64):
+			var inner_magnitude := magnitude - radius
+			if inner_magnitude >= 1:
+				var inner := side * inner_magnitude
+				if not occupied.has(inner):
+					return inner
+			var outer := side * (magnitude + radius)
+			if not occupied.has(outer):
+				return outer
+		return side * (occupied.size() + 1)
 
-	var preferred_magnitude := maxi(1, absi(preferred_lane))
-	for radius in range(0, 64):
-		if radius == 0:
-			var exact := side * preferred_magnitude
-			if not occupied.has(exact):
-				return exact
-			continue
-
-		var inner_magnitude := preferred_magnitude - radius
-		if inner_magnitude >= 1:
-			var inner := side * inner_magnitude
-			if not occupied.has(inner):
-				return inner
-
-		var outer := side * (preferred_magnitude + radius)
-		if not occupied.has(outer):
-			return outer
-
-	return side * (occupied.size() + 1)
+	# With no committed side, pick the closest row and balance ties based on what is
+	# already in this column instead of always biasing upward.
+	var counts := _lane_counts(occupied)
+	var first_side := -1 if counts.x <= counts.y else 1
+	for distance in range(1, 64):
+		var first := first_side * distance
+		var second := -first_side * distance
+		if not occupied.has(first):
+			return first
+		if not occupied.has(second):
+			return second
+	return occupied.size() + 1
 
 
 func _claim_lane(seed: String, occupied: Dictionary, preferred_lane: int, side: int) -> int:
-	var resolved_side := side
-	if resolved_side == 0:
-		resolved_side = _lane_side(preferred_lane)
-	var lane := preferred_lane
-	if lane == 0:
-		lane = resolved_side if resolved_side != 0 else _nearest_open_lane(occupied, 0, 0)
-	lane = _nearest_open_lane(occupied, lane, resolved_side)
+	var lane := _nearest_open_lane(occupied, preferred_lane, side)
 	occupied[lane] = true
 	_branch_lanes[seed] = lane
 	return lane
 
 
-func _prepare_focus_neighbor_lanes(visible_seeds: Array[String]) -> void:
-	var focus_seed := _selected_seed if _nodes_by_seed.has(_selected_seed) else _current_seed
-	var focus_lane := _lane_for_seed(focus_seed)
-	var focus_side := _lane_side(focus_lane)
-	var candidates: Array[String] = []
-
-	for neighbor: String in _neighbors(focus_seed):
-		if not visible_seeds.has(neighbor):
-			continue
-		if _primary_route.has(neighbor) or neighbor == _current_seed:
-			continue
-		candidates.append(neighbor)
-
-	candidates.sort_custom(func(a: String, b: String) -> bool:
-		var ar := _rank_index_for(a)
-		var br := _rank_index_for(b)
-		if ar == br:
-			return String((_nodes_by_seed.get(a, {}) as Dictionary).get("name", "")) < String((_nodes_by_seed.get(b, {}) as Dictionary).get("name", ""))
-		return ar < br
-	)
-
-	if candidates.is_empty():
-		return
-
-	if focus_side == 0:
-		# A main-line form always opens its alternatives on BOTH sides. We recompute
-		# these lanes deterministically every time, so stale exploration state can
-		# never collapse every option above or below the selected Digimon.
-		for index in range(candidates.size()):
-			_branch_lanes[candidates[index]] = _balanced_lane_for_index(index)
-		return
-
-	# A branch keeps growing on the side where it was opened. The bridge back to
-	# the current form keeps its existing lane; newly revealed choices start at the
-	# focus row and only move one row farther out when siblings need space.
-	var next_offset := 0
-	var focus_magnitude := maxi(1, absi(focus_lane))
-	for seed: String in candidates:
-		var edge_key := _edge_key(focus_seed, seed)
-		if _focus_bridge_edges.has(edge_key) and _branch_lanes.has(seed):
-			continue
-		var existing_lane := int(_branch_lanes.get(seed, 0))
-		if _lane_side(existing_lane) == focus_side and existing_lane != 0:
-			continue
-		_branch_lanes[seed] = focus_side * (focus_magnitude + next_offset)
-		next_offset += 1
-
-
 func _recalculate_positions(visible_seeds: Array[String]) -> void:
+	var previous_positions := _base_positions.duplicate(true)
 	_base_positions.clear()
 	if visible_seeds.is_empty():
 		return
@@ -363,9 +454,13 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 	for seed: String in _primary_route:
 		_branch_lanes[seed] = 0
 
-	_prepare_focus_neighbor_lanes(visible_seeds)
-
 	var current_rank := _rank_index_for(_current_seed)
+	var focus_seed := _selected_seed if _nodes_by_seed.has(_selected_seed) else _current_seed
+	var focus_lane := _focus_lane if focus_seed == _selected_seed else _rendered_lane_for_seed(focus_seed)
+	if _primary_route.has(focus_seed):
+		focus_lane = 0
+	var focus_side := _lane_side(focus_lane)
+
 	var by_rank: Dictionary = {}
 	for seed: String in visible_seeds:
 		var rank_index := _rank_index_for(seed)
@@ -380,46 +475,63 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 			return String((_nodes_by_seed.get(String(a), {}) as Dictionary).get("name", "")) < String((_nodes_by_seed.get(String(b), {}) as Dictionary).get("name", ""))
 		)
 
-		# Lane zero remains reserved for the active lineage even at ranks where the
-		# current focused subset has no lineage card. This keeps route semantics clear.
-		var occupied: Dictionary = {0: true}
+		var occupied: Dictionary = {}
 		var x := float(rank_index - current_rank) * COLUMN_GAP
 		var lineage_seed := _primary_seed_at_rank(rank_index, group)
 		if not lineage_seed.is_empty():
+			occupied[0] = true
 			_base_positions[lineage_seed] = Vector2(x, 0.0)
+			_branch_lanes[lineage_seed] = 0
 
-		# The selected branch receives its preferred row first, then bridge nodes,
-		# then other branches. This prevents a temporary sibling from pushing the
-		# important selected/current connection several rows away.
+		# The selected card keeps its side when it is already in a branch, but can use
+		# the center row when there is genuinely no main-line card occupying it.
 		if group.has(_selected_seed) and _selected_seed != lineage_seed:
-			var selected_preferred := int(_branch_lanes.get(_selected_seed, _focus_lane))
+			var selected_preferred := _focus_lane
 			var selected_side := _lane_side(selected_preferred)
+			if selected_preferred == 0 and previous_positions.has(_selected_seed):
+				selected_preferred = int(round(Vector2(previous_positions[_selected_seed]).y / ROW_GAP))
+				selected_side = _lane_side(selected_preferred)
 			var selected_lane := _claim_lane(_selected_seed, occupied, selected_preferred, selected_side)
 			_base_positions[_selected_seed] = Vector2(x, float(selected_lane) * ROW_GAP)
 
+		# Keep the route back to CURRENT FORM compact before placing decorative/direct
+		# alternatives, so context nodes cannot be pushed out by a sibling choice.
 		for raw_seed in group:
 			var seed := String(raw_seed)
-			if _base_positions.has(seed) or not _focus_bridge_path.has(seed) or not _branch_lanes.has(seed):
+			if _base_positions.has(seed) or not _focus_bridge_path.has(seed):
 				continue
-			var preferred := int(_branch_lanes[seed])
+			var preferred := int(_branch_lanes.get(seed, focus_lane))
 			var side := _lane_side(preferred)
 			var lane := _claim_lane(seed, occupied, preferred, side)
 			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
 
+		# Direct options prefer a straight horizontal continuation. Only move them one
+		# row up/down when that exact slot is occupied. A non-main branch never crosses
+		# the center: it searches the closest free row on its established side.
 		for raw_seed in group:
 			var seed := String(raw_seed)
-			if _base_positions.has(seed) or not _branch_lanes.has(seed):
+			if _base_positions.has(seed) or not _are_neighbors(focus_seed, seed):
 				continue
-			var preferred := int(_branch_lanes[seed])
-			var side := _lane_side(preferred)
+			var preferred := focus_lane
+			var side := focus_side
+			if focus_side == 0:
+				preferred = 0
+				side = 0
+			elif _lane_side(int(_branch_lanes.get(seed, focus_lane))) == focus_side:
+				preferred = focus_lane
 			var lane := _claim_lane(seed, occupied, preferred, side)
 			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
 
+		# Remaining visible context uses its last side as a preference, but exact row
+		# offsets are compacted every rebuild instead of accumulating indefinitely.
 		for raw_seed in group:
 			var seed := String(raw_seed)
 			if _base_positions.has(seed):
 				continue
-			var lane := _claim_lane(seed, occupied, _nearest_open_lane(occupied, 0, 0), 0)
+			var remembered := int(_branch_lanes.get(seed, 0))
+			var remembered_side := _lane_side(remembered)
+			var preferred := remembered_side if remembered_side != 0 else 0
+			var lane := _claim_lane(seed, occupied, preferred, remembered_side)
 			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
 
 
@@ -536,9 +648,6 @@ func _draw() -> void:
 			var pulse_t := fmod(_phase * speed + float(abs(key.hash()) % 100) / 100.0, 1.0)
 			_draw_signal_packet(p1, p2, pulse_t, Color(color.r, color.g, color.b, minf(0.86, color.a + 0.06)), average_scale)
 
-	# Calm digital-fire activity rises from behind the highlighted cards. The
-	# fragments are drawn by this parent before Button children, so the card itself
-	# masks the effect and the sprite/name/status stay completely readable.
 	if _buttons.has(_current_seed):
 		_draw_digital_flame(_current_seed, UI.GOLD, UI.CYAN, 11, CURRENT_FLAME_SPEED, 1.0)
 	if _selected_seed != _current_seed and _buttons.has(_selected_seed):
@@ -595,8 +704,6 @@ func _draw_digital_flame(seed: String, primary: Color, secondary: Color, count: 
 		)
 		draw_rect(main_rect, color, true)
 
-		# A smaller offset block beneath each fragment creates a stepped, pixel-like
-		# flame silhouette instead of generic spark/confetti particles.
 		var trail_color := color
 		trail_color.a *= 0.42
 		var trail_width := maxf(1.0 * scale_factor, block_width * 0.62)
@@ -608,8 +715,6 @@ func _draw_digital_flame(seed: String, primary: Color, secondary: Color, count: 
 		)
 		draw_rect(trail_rect, trail_color, true)
 
-	# A very subtle segmented source line makes the fragments read as energy/flame
-	# coming from behind the card rather than unrelated floating pixels.
 	for segment in range(5):
 		var segment_t := (float(segment) + 0.5) / 5.0
 		var segment_width := rect.size.x * 0.095
