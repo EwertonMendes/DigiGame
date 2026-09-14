@@ -99,12 +99,17 @@ func route_direction(from_seed: String, to_seed: String, database: DigimonDataba
 
 func history_edge_keys(history: Array[Dictionary]) -> Dictionary:
 	var keys: Dictionary = {}
-	for record: Dictionary in history:
+	for index in range(history.size()):
+		var record := history[index] as Dictionary
 		var from_seed := String(record.get("fromSeed", ""))
 		var to_seed := String(record.get("toSeed", ""))
 		if from_seed.is_empty() or to_seed.is_empty():
 			continue
-		keys[_undirected_key(from_seed, to_seed)] = true
+		# Keep the most recent traversal index as lightweight metadata. Existing
+		# consumers only need key membership, while focused graph views can use
+		# recency to reconstruct the active lineage without treating old branches
+		# or degeneration loops as the player's current route.
+		keys[_undirected_key(from_seed, to_seed)] = index + 1
 	return keys
 
 
