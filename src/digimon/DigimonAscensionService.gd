@@ -4,6 +4,7 @@ class_name DigimonAscensionService
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const ExpansionQuestCatalogScript = preload("res://src/quests/ExpansionQuestCatalog.gd")
 
 const RANK_POWER := {
 	"Fresh": 0,
@@ -102,6 +103,9 @@ func promote(collection: PlayerCollection, database: DigimonDatabase, target_id:
 	_preserve_resource_ratios(target, species, old_hp_max, old_sp_max)
 	preview["new_tier"] = target.tier
 	preview["techniques_merged"] = donor != null
+	var expansion_tier := _balance.expansion_string("requiredTier", "S")
+	if _balance.tier_index(target.tier) >= _balance.tier_index(expansion_tier):
+		preview["expansion_quest_active"] = ExpansionQuestCatalogScript.unlock_for_tier_s(collection)
 	return preview
 
 
