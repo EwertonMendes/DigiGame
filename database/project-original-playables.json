@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "source_kind": "project_original",
+  "count": 1,
+  "species": [
+    {
+      "name": "Grass Agumon",
+      "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
+      "portrait_key": "grassagumon",
+      "source_sheet": "res://assets/characters/grassagumon/source/sheet.png",
+      "source_sha256": "2f8d75a3fca0a93e71fc6a6eaad4569e064caee9fe7050aefd14d08c3ccba342",
+      "background_rgb": [
+        0,
+        0,
+        0
+      ],
+      "database_entry": {
+        "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
+        "name": "Grass Agumon",
+        "img": "/assets/digimons/GrassAgumon.png",
+        "rank": "Rookie",
+        "species": "Dragon",
+        "attribute": "Data",
+        "element": "plant",
+        "hp": 108,
+        "mp": 124,
+        "atk": 76,
+        "def": 69,
+        "speed": 56,
+        "bitFarmingRate": 27,
+        "digiEvolutionSeedList": [],
+        "degenerateSeedList": [
+          "edc9812f-82a6-487f-9a4d-52b845643176"
+        ],
+        "evolutionRequirements": [],
+        "checked": true,
+        "MOV": 4,
+        "movementType": "ground"
+      },
+      "evolves_from_seed": "edc9812f-82a6-487f-9a4d-52b845643176",
+      "learnset": [
+        {
+          "skill": "adhesive_bubble",
+          "level": 1
+        },
+        {
+          "skill": "guard_charge",
+          "level": 12
+        }
+      ],
+      "field": {
+        "source_boxes": [
+          [0, 0, 48, 48],
+          [48, 0, 48, 48],
+          [96, 0, 48, 48],
+          [144, 0, 48, 48],
+          [192, 0, 48, 48],
+          [240, 0, 48, 48],
+          [0, 48, 48, 48],
+          [48, 48, 48, 48],
+          [96, 48, 48, 48],
+          [144, 48, 48, 48],
+          [192, 48, 48, 48],
+          [240, 48, 48, 48]
+        ],
+        "runtime_frame_indices": [0, 1, 2, 5, 4, 3, 11, 10, 9, 6, 7, 8],
+        "directions": ["down_left", "down_right", "up_left", "up_right"],
+        "phases": ["idle", "step_a", "step_b"],
+        "cell_width": 66,
+        "cell_height": 66,
+        "max_sprite_width": 46,
+        "max_sprite_height": 46,
+        "runtime_scale": 0.5
+      },
+      "portrait": {
+        "source_boxes": [
+          [0, 0, 48, 48],
+          [48, 0, 48, 48],
+          [96, 0, 48, 48]
+        ],
+        "frame_width": 64,
+        "frame_height": 64,
+        "max_sprite_width": 46,
+        "max_sprite_height": 46,
+        "durations_ms": [220, 140, 220]
+      }
+    }
+  ]
+}
