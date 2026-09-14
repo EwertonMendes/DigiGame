@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 23,
+  "count": 30,
   "species": [
     {
       "name": "Geo Greymon",
@@ -470,6 +470,146 @@
       "field_cell": [
         36,
         41
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "BlackWarGrowlmon",
+      "seed": "fcda1569-46f3-4ccd-8838-a55e447a005c",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/blackwargrowlmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/blackwargrowlmon/field.png",
+      "field_metadata": "res://assets/characters/blackwargrowlmon/field.json",
+      "portrait_strip": "res://assets/characters/blackwargrowlmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/blackwargrowlmon/portrait_frames.json",
+      "source_id": 248,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "War Growlmon",
+      "seed": "070340f1-64a6-4b2a-a068-47d00e4de3a1",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/war growlmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/wargrowlmon/field.png",
+      "field_metadata": "res://assets/characters/wargrowlmon/field.json",
+      "portrait_strip": "res://assets/characters/wargrowlmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/wargrowlmon/portrait_frames.json",
+      "source_id": 229,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Chaos Gallantmon",
+      "seed": "859bce6e-ced6-4864-8a32-b4690e499b37",
+      "rank": "Mega",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/chaos gallantmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/chaosgallantmon/field.png",
+      "field_metadata": "res://assets/characters/chaosgallantmon/field.json",
+      "portrait_strip": "res://assets/characters/chaosgallantmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/chaosgallantmon/portrait_frames.json",
+      "source_id": 358,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        46
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Megidramon",
+      "seed": "0d320f41-5176-4d9d-88ea-59b037d5bc6b",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/megidramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/megidramon/field.png",
+      "field_metadata": "res://assets/characters/megidramon/field.json",
+      "portrait_strip": "res://assets/characters/megidramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/megidramon/portrait_frames.json",
+      "source_id": 372,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Gallantmon",
+      "seed": "7b3a9d1e-2c8f-4a5b-9e6d-1f0c7b8a9d2e",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/gallantmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/gallantmon/field.png",
+      "field_metadata": "res://assets/characters/gallantmon/field.json",
+      "portrait_strip": "res://assets/characters/gallantmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/gallantmon/portrait_frames.json",
+      "source_id": 323,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        46
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Triceramon",
+      "seed": "60205c40-0925-406f-93aa-511df01826bf",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/triceramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/triceramon/field.png",
+      "field_metadata": "res://assets/characters/triceramon/field.json",
+      "portrait_strip": "res://assets/characters/triceramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/triceramon/portrait_frames.json",
+      "source_id": 244,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "field_cell": [
+        36,
+        40
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Cannondramon",
+      "seed": "8e081427-8054-4a05-bfa0-200d5f471a8b",
+      "rank": "Mega",
+      "attribute": "Data",
+      "resource": "res://assets/resources/cannondramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/cannondramon/field.png",
+      "field_metadata": "res://assets/characters/cannondramon/field.json",
+      "portrait_strip": "res://assets/characters/cannondramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/cannondramon/portrait_frames.json",
+      "source_id": 344,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
       ],
       "portrait_frames": 4
     }

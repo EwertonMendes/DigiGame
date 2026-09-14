@@ -1,12 +1,12 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 113,
+  "directional_resource_count": 120,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 23,
+  "additional_source_rebuilt_resource_count": 30,
   "project_original_resource_count": 1,
-  "audited_resource_count": 113,
+  "audited_resource_count": 120,
   "directional_resources": [
     {
       "name": "Agumon",
@@ -63,6 +63,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "BlackWarGrowlmon",
+      "resource": "assets/resources/blackwargrowlmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Botamon",
       "resource": "assets/resources/botamon.tres",
       "layout_source": "explicit",
@@ -85,6 +91,18 @@
       "resource": "assets/resources/candlemon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Cannondramon",
+      "resource": "assets/resources/cannondramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Chaos Gallantmon",
+      "resource": "assets/resources/chaos gallantmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Chibomon",
@@ -181,6 +199,12 @@
       "resource": "assets/resources/gabumon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Gallantmon",
+      "resource": "assets/resources/gallantmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Gaomon",
@@ -377,6 +401,12 @@
     {
       "name": "Megadramon",
       "resource": "assets/resources/megadramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Megidramon",
+      "resource": "assets/resources/megidramon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -627,6 +657,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Triceramon",
+      "resource": "assets/resources/triceramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Tsukaimon",
       "resource": "assets/resources/tsukaimon.tres",
       "layout_source": "explicit",
@@ -671,6 +707,12 @@
     {
       "name": "War Greymon",
       "resource": "assets/resources/war greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "War Growlmon",
+      "resource": "assets/resources/war growlmon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },

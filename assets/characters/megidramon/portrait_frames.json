@@ -1,0 +1,14 @@
+{
+  "source": "Megidramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Megidramon.webp",
+  "frame_width": 143,
+  "frame_height": 166,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "b8dd889a0d74c874d4dcb9e49693947b978230ed18ccb4b3f960c1903afef35e"
+}
