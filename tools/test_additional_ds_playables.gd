@@ -11,8 +11,11 @@ const FACINGS := ["down_left", "down_right", "up_left", "up_right"]
 func _ready() -> void:
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST_PATH))
 	assert(parsed is Dictionary, "Additional DS manifest must be a dictionary")
-	var rows: Array = (parsed as Dictionary).get("species", [])
-	assert(rows.size() == 5, "Additional DS regression must cover the five requested species")
+	var manifest := parsed as Dictionary
+	var rows: Array = manifest.get("species", [])
+	var expected_count := int(manifest.get("count", -1))
+	assert(expected_count > 0, "Additional DS manifest must contain at least one species")
+	assert(rows.size() == expected_count, "Additional DS regression must cover every generated species")
 
 	var runtime := RuntimeControllerScript.new()
 	runtime.name = "AdditionalDSBattleRuntime"
@@ -76,7 +79,7 @@ func _ready() -> void:
 		actor.free()
 		await get_tree().process_frame
 
-	print("additional DS playable regression passed: battle, overworld, walk preview and portrait assets for 5 species")
+	print("additional DS playable regression passed: battle, overworld, walk preview and portrait assets for %d species" % expected_count)
 	get_tree().quit()
 
 

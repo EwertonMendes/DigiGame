@@ -1,0 +1,14 @@
+{
+  "source": "Were Garurumon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Were%20Garurumon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "b36f889d357340dd2308b04eaeade22d9b80ee3f41d9aa8c72344615e3f43435"
+}

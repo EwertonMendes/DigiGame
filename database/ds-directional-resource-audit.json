@@ -1,17 +1,23 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 94,
+  "directional_resource_count": 100,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 5,
-  "audited_resource_count": 94,
+  "additional_source_rebuilt_resource_count": 11,
+  "audited_resource_count": 100,
   "directional_resources": [
     {
       "name": "Agumon",
       "resource": "assets/resources/agumon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "AncientGarurumon",
+      "resource": "assets/resources/ancientgarurumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Armadillomon",
@@ -158,6 +164,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Garurumon",
+      "resource": "assets/resources/garurumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Geo Greymon",
       "resource": "assets/resources/geo greymon.tres",
       "layout_source": "explicit",
@@ -228,6 +240,12 @@
       "resource": "assets/resources/impmon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "JungleMojyamon",
+      "resource": "assets/resources/junglemojyamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Kamemon",
@@ -314,6 +332,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Metal Garurumon",
+      "resource": "assets/resources/metal garurumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Metal Greymon",
       "resource": "assets/resources/metal greymon.tres",
       "layout_source": "explicit",
@@ -354,6 +378,12 @@
       "resource": "assets/resources/mushroomon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Omnimon",
+      "resource": "assets/resources/omnimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Otamamon",
@@ -562,6 +592,12 @@
     {
       "name": "War Greymon",
       "resource": "assets/resources/war greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Were Garurumon",
+      "resource": "assets/resources/were garurumon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
