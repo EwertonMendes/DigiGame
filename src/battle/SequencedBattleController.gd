@@ -208,10 +208,12 @@ func _update_combat_preview_for_grid(aim_grid: Vector2i, primary_target: Node, l
 	# clicked. Including the complete footprint keeps pointer, keyboard and touch
 	# previews consistent without applying the action more than once.
 	if primary_target != null and primary_target.has_method("get_occupied_grids"):
-		var occupied: Array[Vector2i] = primary_target.call("get_occupied_grids")
-		for grid: Vector2i in occupied:
-			if not effect_grids.has(grid):
-				effect_grids.append(grid)
+		var occupied_raw = primary_target.call("get_occupied_grids")
+		if occupied_raw is Array:
+			for raw_grid in occupied_raw:
+				var grid := Vector2i(raw_grid)
+				if not effect_grids.has(grid):
+					effect_grids.append(grid)
 	if _field != null and _field.has_method("set_target_preview_grids"):
 		_field.call("set_target_preview_grids", effect_grids, aim_grid)
 	elif _field != null and _field.has_method("set_target_preview_grid"):
