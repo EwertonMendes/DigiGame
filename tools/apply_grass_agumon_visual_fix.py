@@ -2,120 +2,89 @@
 from __future__ import annotations
 
 import base64
-import hashlib
-import json
 from pathlib import Path
 
+from PIL import Image
+
 ROOT = Path(__file__).resolve().parents[1]
+PARTS_ROOT = ROOT / "tools/bootstrap-assets"
+GRASS_ROOT = ROOT / "assets/characters/grassagumon"
+FIELD_SOURCE = GRASS_ROOT / "source/field.png"
+PORTRAIT_SOURCE = GRASS_ROOT / "source/portrait_frames.png"
+
+FIELD_CELL = 66
+SOURCE_CELL = 48
+FIELD_ORDER = [0, 1, 2, 5, 4, 3, 11, 10, 9, 6, 7, 8]
 
 
-def replace_once(path: Path, old: str, new: str) -> None:
-    text = path.read_text(encoding="utf-8")
-    if old not in text:
-        raise RuntimeError(f"patch marker not found in {path}: {old[:100]!r}")
-    path.write_text(text.replace(old, new, 1), encoding="utf-8")
-
-
-def decode_parts(prefix: str, output: Path) -> str:
-    parts = sorted((ROOT / "tools/bootstrap-assets").glob(f"{prefix}.part*"))
+def decode_parts(prefix: str) -> bytes:
+    parts = sorted(PARTS_ROOT.glob(f"{prefix}.part*"))
     if not parts:
         raise RuntimeError(f"missing bootstrap parts for {prefix}")
-    payload = base64.b64decode("".join(p.read_text(encoding="ascii").strip() for p in parts))
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_bytes(payload)
-    return hashlib.sha256(payload).hexdigest()
+    encoded = "".join(part.read_text(encoding="ascii").strip() for part in parts)
+    return base64.b64decode(encoded, validate=True)
 
 
-field_path = ROOT / "assets/characters/grassagumon/source/sheet.png"
-portrait_source_path = ROOT / "assets/characters/grassagumon/source/portrait.png"
-field_sha = decode_parts("field.b64", field_path)
-portrait_sha = decode_parts("portrait.b64", portrait_source_path)
+def crop_visible(frame: Image.Image) -> Image.Image:
+    bbox = frame.getbbox()
+    if bbox is None:
+        raise RuntimeError("field source contains an empty authored frame")
+    return frame.crop(bbox)
 
-manifest_path = ROOT / "database/project-original-playables.json"
-manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-spec = next(row for row in manifest["species"] if row.get("name") == "Grass Agumon")
-spec["source_sha256"] = field_sha
-spec["portrait_source_sheet"] = "res://assets/characters/grassagumon/source/portrait.png"
-spec["portrait_source_sha256"] = portrait_sha
-spec["portrait"] = {
-    "source_boxes": [[0, 0, 160, 180], [160, 0, 160, 180], [320, 0, 160, 180]],
-    "frame_width": 160,
-    "frame_height": 180,
-    "max_sprite_width": 150,
-    "max_sprite_height": 170,
-    "durations_ms": [220, 140, 220],
-}
-manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
-builder = ROOT / "tools/build_project_original_playables.py"
-replace_once(
-    builder,
-    '    portrait = dict(spec["portrait"])\n    portrait_frames = [_crop_box(keyed, box) for box in portrait["source_boxes"]]\n',
-    '    portrait = dict(spec["portrait"])\n'
-    '    portrait_source_path = _res_path_to_local(str(spec.get("portrait_source_sheet", spec["source_sheet"])))\n'
-    '    if not portrait_source_path.is_file():\n'
-    '        raise RuntimeError(f"{name}: missing portrait source {portrait_source_path.relative_to(ROOT)}")\n'
-    '    portrait_actual_sha = _sha256(portrait_source_path)\n'
-    '    portrait_expected_sha = str(spec.get("portrait_source_sha256", expected_sha))\n'
-    '    if portrait_actual_sha != portrait_expected_sha:\n'
-    '        raise RuntimeError(f"{name}: portrait source SHA-256 mismatch: {portrait_actual_sha} != {portrait_expected_sha}")\n'
-    '    portrait_source = Image.open(portrait_source_path).convert("RGBA")\n'
-    '    portrait_keyed = _key_background(portrait_source, list(spec["background_rgb"]))\n'
-    '    portrait_frames = [_crop_box(portrait_keyed, box) for box in portrait["source_boxes"]]\n',
-)
-replace_once(
-    builder,
-    '        "source": Path(str(spec["source_sheet"])).name,\n        "source_path": "source/sheet.png",\n',
-    '        "source": portrait_source_path.name,\n        "source_path": str(portrait_source_path.relative_to(directory)).replace("\\\\", "/"),\n',
-)
-replace_once(
-    builder,
-    '        "source_sha256": actual_sha,\n    }\n    (directory / "portrait_frames.json")',
-    '        "source_sha256": portrait_actual_sha,\n    }\n    (directory / "portrait_frames.json")',
-)
+def build_field_source() -> None:
+    compact_path = ROOT / ".grass-agumon-field-input.png"
+    compact_path.write_bytes(decode_parts("field.b64"))
+    try:
+        source = Image.open(compact_path).convert("RGBA")
+        if source.size != (288, 96):
+            raise RuntimeError(f"unexpected compact field source size: {source.size}")
 
-for relative in ["src/TurnOrderHUD.gd", "src/BattleHUD.gd"]:
-    path = ROOT / relative
-    replace_once(
-        path,
-        'const UI = preload("res://src/ui/TacticalTheme.gd")\n',
-        'const UI = preload("res://src/ui/TacticalTheme.gd")\nconst PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")\n',
-    )
-    replace_once(
-        path,
-        '\tif digimon_key.is_empty():\n\t\treturn null\n\tvar metadata_path := "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, digimon_key]\n',
-        '\tif digimon_key.is_empty():\n\t\treturn null\n\tvar resolved_key := PortraitResolver.resolve_key(digimon_key)\n\tif resolved_key.is_empty():\n\t\treturn null\n\tdigimon_key = resolved_key\n\tvar metadata_path := "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, digimon_key]\n',
-    )
+        authored: list[Image.Image] = []
+        for row in range(2):
+            for column in range(6):
+                left = column * SOURCE_CELL
+                top = row * SOURCE_CELL
+                authored.append(crop_visible(source.crop((left, top, left + SOURCE_CELL, top + SOURCE_CELL))))
 
-info = ROOT / "src/DigimonInfoPanel.gd"
-replace_once(
-    info,
-    'const UI = preload("res://src/ui/TacticalTheme.gd")\n',
-    'const UI = preload("res://src/ui/TacticalTheme.gd")\nconst PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")\n',
-)
-replace_once(
-    info,
-    '\tif digimon_key.is_empty():\n\t\treturn\n\tvar metadata_path: String = "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, digimon_key]\n',
-    '\tif digimon_key.is_empty():\n\t\treturn\n\tvar resolved_key := PortraitResolver.resolve_key(digimon_key)\n\tif resolved_key.is_empty():\n\t\treturn\n\tdigimon_key = resolved_key\n\tvar metadata_path: String = "%s/%s/portrait_frames.json" % [PORTRAIT_ROOT, digimon_key]\n',
-)
+        runtime = [authored[index] for index in FIELD_ORDER]
+        max_width = max(frame.width for frame in runtime)
+        max_height = max(frame.height for frame in runtime)
+        scale = min(46.0 / max_width, 46.0 / max_height)
+        runtime = [
+            frame.resize(
+                (max(1, round(frame.width * scale)), max(1, round(frame.height * scale))),
+                Image.Resampling.NEAREST,
+            )
+            for frame in runtime
+        ]
 
-for relative in ["tools/test_early_rank_playables.gd", "tools/test_additional_ds_playables.gd"]:
-    path = ROOT / relative
-    replace_once(
-        path,
-        'const DirectionalContractScript = preload("res://src/sprites/DirectionalSpriteContract.gd")\n',
-        'const DirectionalContractScript = preload("res://src/sprites/DirectionalSpriteContract.gd")\nconst PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")\n',
-    )
+        strip = Image.new("RGBA", (FIELD_CELL * 12, FIELD_CELL), (0, 0, 0, 0))
+        for index, frame in enumerate(runtime):
+            x = index * FIELD_CELL + (FIELD_CELL - frame.width) // 2
+            y = FIELD_CELL - frame.height - 1
+            strip.alpha_composite(frame, (x, y))
 
-replace_once(
-    ROOT / "tools/test_early_rank_playables.gd",
-    '\t\tassert(String(actor.get("digimon_key")) == species_name.to_lower(), "%s must keep its canonical battle key" % species_name)\n',
-    '\t\tassert(String(actor.get("digimon_key")) == species_name.to_lower(), "%s must keep its canonical battle key" % species_name)\n\t\tassert(not PortraitResolver.resolve_key(species_name).is_empty(), "%s battle UI portrait must resolve from the canonical species name" % species_name)\n',
-)
-replace_once(
-    ROOT / "tools/test_additional_ds_playables.gd",
-    '\t\tvar portrait_key := _compact_key(species_name)\n',
-    '\t\tassert(not PortraitResolver.resolve_key(species_name).is_empty(), "%s battle UI portrait must resolve from the canonical species name" % species_name)\n\t\tvar portrait_key := _compact_key(species_name)\n',
-)
+        alpha = strip.getchannel("A")
+        lo, hi = alpha.getextrema()
+        if lo != 0 or hi != 255:
+            raise RuntimeError(f"normalized field alpha range is invalid: {(lo, hi)}")
+        FIELD_SOURCE.parent.mkdir(parents=True, exist_ok=True)
+        strip.save(FIELD_SOURCE, "PNG", optimize=True)
+    finally:
+        compact_path.unlink(missing_ok=True)
 
-print("Grass Agumon visual fix sources and code patches applied")
+
+def validate_portrait_source() -> None:
+    portrait = Image.open(PORTRAIT_SOURCE).convert("RGBA")
+    if portrait.size != (480, 180):
+        raise RuntimeError(f"unexpected Grass Agumon portrait source size: {portrait.size}")
+    alpha = portrait.getchannel("A")
+    lo, hi = alpha.getextrema()
+    if lo != 0 or hi != 255:
+        raise RuntimeError(f"Grass Agumon portrait alpha range is invalid: {(lo, hi)}")
+
+
+build_field_source()
+validate_portrait_source()
+print("materialized transparent Grass Agumon field strip and validated profile portrait source")
