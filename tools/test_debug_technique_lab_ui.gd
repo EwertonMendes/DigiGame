@@ -36,6 +36,9 @@ func _ready() -> void:
 	toolkit._refresh_skill_lab()
 
 	assert(tabs.get_tab_count() == 1 and tabs.get_tab_title(0) == "SKILLS", "Technique lab must register as a real Developer Toolkit tab")
+	assert(toolkit._skill_target_select != null, "Technique lab must expose an explicit target Digimon selector")
+	assert(toolkit._skill_target_select.item_count == OverworldState.get_collection_instances().size(), "Target selector must expose every owned Digimon")
+	assert(String(toolkit._skill_target_select.get_item_metadata(toolkit._skill_target_select.selected)) == selected.id, "Target selector must track the currently selected Digimon")
 	assert(toolkit._skill_list != null and toolkit._skill_list.get_child_count() > 0, "Technique lab must render catalog rows")
 	assert(toolkit._skill_details != null and not toolkit._skill_details.text.is_empty(), "Technique lab must render selected-technique details")
 	assert(toolkit._skill_results_summary.text.contains("matching"), "Technique lab must expose paginated result counts")
@@ -54,10 +57,11 @@ func _ready() -> void:
 	assert(not unlearned_id.is_empty(), "Technique lab UI regression requires an unlearned technique")
 	toolkit._selected_skill_id = unlearned_id
 	toolkit._refresh_skill_details()
-	assert(toolkit._skill_learn_button.text == "LEARN", "Unlearned catalog entries must offer the Learn action")
+	assert(not toolkit._skill_learn_button.disabled, "An unlearned selected technique must always expose an enabled Teach action")
+	assert(toolkit._skill_learn_button.text == "TEACH TO %s" % toolkit._progression.display_name(selected).to_upper(), "Teach action must clearly name the target Digimon")
 	toolkit._toggle_selected_skill_learned()
-	assert(selected.learned_skills.has(unlearned_id), "Technique lab Learn button must mutate the selected real Digimon")
-	assert(toolkit._skill_learn_button.text == "FORGET", "Learned catalog entries must switch to the Forget action")
+	assert(selected.learned_skills.has(unlearned_id), "Technique lab Teach button must mutate the selected real Digimon")
+	assert(toolkit._skill_learn_button.text == "REMOVE SKILL FROM %s" % toolkit._progression.display_name(selected).to_upper(), "Learned catalog entries must expose an explicit remove action")
 	toolkit._set_selected_skill_mastery(DigimonInstance.MAX_SKILL_MASTERY_POINTS)
 	assert(selected.get_skill_mastery_grade(unlearned_id) == "mastered", "Technique lab mastery controls must reach Mastered")
 
