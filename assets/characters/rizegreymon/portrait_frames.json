@@ -1,0 +1,14 @@
+{
+  "source": "RizeGreymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/RizeGreymon.webp",
+  "frame_width": 200,
+  "frame_height": 200,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "17c7d26c5b1ca9faefbbbd5bff33bde4805e5ba3a8f6653e0faa4ecccbd65000"
+}

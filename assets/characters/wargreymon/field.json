@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 309,
+  "source_archive_file": "sprite thread/309_WarGreymon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/309_WarGreymon.png",
+  "source_sha256": "b1539843fde32a68b9e4901facb7c01ae1ba3ec3f4a27ea27db0ad8f96646d65",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "four_rows_rightmost_triples",
+  "review_pattern": "compact_interleaved_horizontal_reversed",
+  "runtime_group_indices": [
+    2,
+    0,
+    3,
+    1
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 164014,
+      "confidence_margin": 314312
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 280282,
+      "confidence_margin": 145084
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 212,
+        "y": 218,
+        "w": 29,
+        "h": 37
+      },
+      {
+        "x": 250,
+        "y": 219,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 295,
+        "y": 219,
+        "w": 30,
+        "h": 39
+      }
+    ],
+    "down_right": [
+      {
+        "x": 294,
+        "y": 125,
+        "w": 29,
+        "h": 37
+      },
+      {
+        "x": 255,
+        "y": 126,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 210,
+        "y": 126,
+        "w": 30,
+        "h": 39
+      }
+    ],
+    "up_left": [
+      {
+        "x": 212,
+        "y": 262,
+        "w": 26,
+        "h": 36
+      },
+      {
+        "x": 253,
+        "y": 262,
+        "w": 26,
+        "h": 37
+      },
+      {
+        "x": 296,
+        "y": 261,
+        "w": 27,
+        "h": 38
+      }
+    ],
+    "up_right": [
+      {
+        "x": 297,
+        "y": 169,
+        "w": 26,
+        "h": 36
+      },
+      {
+        "x": 256,
+        "y": 169,
+        "w": 26,
+        "h": 37
+      },
+      {
+        "x": 212,
+        "y": 168,
+        "w": 27,
+        "h": 38
+      }
+    ]
+  },
+  "cell_width": 34,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/wargreymon/field.png"
+}

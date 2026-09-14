@@ -1,455 +1,575 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 89,
+  "directional_resource_count": 94,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "audited_resource_count": 89,
+  "additional_source_rebuilt_resource_count": 5,
+  "audited_resource_count": 94,
   "directional_resources": [
     {
       "name": "Agumon",
       "resource": "assets/resources/agumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Armadillomon",
       "resource": "assets/resources/armadillomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Aruraumon",
       "resource": "assets/resources/aruraumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Betamon",
       "resource": "assets/resources/betamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Biyomon",
       "resource": "assets/resources/biyomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "BlackAgumon",
       "resource": "assets/resources/blackagumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Botamon",
       "resource": "assets/resources/botamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Budmon",
       "resource": "assets/resources/budmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Calumon",
       "resource": "assets/resources/calumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Candlemon",
       "resource": "assets/resources/candlemon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Chibomon",
       "resource": "assets/resources/chibomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Chicchimon",
       "resource": "assets/resources/chicchimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Coronamon",
       "resource": "assets/resources/coronamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Crabmon",
       "resource": "assets/resources/crabmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "DemiDevimon",
       "resource": "assets/resources/demidevimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "DoKunemon",
       "resource": "assets/resources/dokunemon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Dodomon",
       "resource": "assets/resources/dodomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Dorimon",
       "resource": "assets/resources/dorimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Dorumon",
       "resource": "assets/resources/dorumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Dracmon",
       "resource": "assets/resources/dracmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Falcomon",
       "resource": "assets/resources/falcomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Flamon",
       "resource": "assets/resources/flamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Floramon",
       "resource": "assets/resources/floramon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Gabumon",
       "resource": "assets/resources/gabumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Gaomon",
       "resource": "assets/resources/gaomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
+    },
+    {
+      "name": "Geo Greymon",
+      "resource": "assets/resources/geo greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Gigimon",
       "resource": "assets/resources/gigimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Gizamon",
       "resource": "assets/resources/gizamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Goburimon",
       "resource": "assets/resources/goburimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Gomamon",
       "resource": "assets/resources/gomamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Gotsumon",
       "resource": "assets/resources/gotsumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Greymon",
       "resource": "assets/resources/greymon.tres",
-      "layout_source": "Digimon.gd default"
+      "layout_source": "Digimon.gd default",
+      "coverage": "early_ds"
     },
     {
       "name": "Guilmon",
       "resource": "assets/resources/guilmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Gummymon",
       "resource": "assets/resources/gummymon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Hagurumon",
       "resource": "assets/resources/hagurumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Hawkmon",
       "resource": "assets/resources/hawkmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Impmon",
       "resource": "assets/resources/impmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kamemon",
       "resource": "assets/resources/kamemon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kapurimon",
       "resource": "assets/resources/kapurimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Keramon",
       "resource": "assets/resources/keramon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kokomon",
       "resource": "assets/resources/kokomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kokuwamon",
       "resource": "assets/resources/kokuwamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Koromon",
       "resource": "assets/resources/koromon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kotemon",
       "resource": "assets/resources/kotemon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kudamon",
       "resource": "assets/resources/kudamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kumamon",
       "resource": "assets/resources/kumamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kunemon",
       "resource": "assets/resources/kunemon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Kuramon",
       "resource": "assets/resources/kuramon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Lalamon",
       "resource": "assets/resources/lalamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Lopmon",
       "resource": "assets/resources/lopmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Lunamon",
       "resource": "assets/resources/lunamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Metal Greymon",
       "resource": "assets/resources/metal greymon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Minomon",
       "resource": "assets/resources/minomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Mochimon",
       "resource": "assets/resources/mochimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Monodramon",
       "resource": "assets/resources/monodramon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Moonmon",
       "resource": "assets/resources/moonmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Muchomon",
       "resource": "assets/resources/muchomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Mushroomon",
       "resource": "assets/resources/mushroomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Otamamon",
       "resource": "assets/resources/otamamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Pagumon",
       "resource": "assets/resources/pagumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Palmon",
       "resource": "assets/resources/palmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Patamon",
       "resource": "assets/resources/patamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "PawnChessmon (Black)",
       "resource": "assets/resources/pawnchessmon (black).tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "PawnChessmon (White)",
       "resource": "assets/resources/pawnchessmon (white).tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Penguinmon",
       "resource": "assets/resources/penguinmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Pitchmon",
       "resource": "assets/resources/pitchmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Poyomon",
       "resource": "assets/resources/poyomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Pukamon",
       "resource": "assets/resources/pukamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Puttimon",
       "resource": "assets/resources/puttimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Renamon",
       "resource": "assets/resources/renamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
+    },
+    {
+      "name": "Rize Greymon",
+      "resource": "assets/resources/rize greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Salamon",
       "resource": "assets/resources/salamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Shamamon",
       "resource": "assets/resources/shamamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
+    },
+    {
+      "name": "Shine Greymon",
+      "resource": "assets/resources/shine greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Skull Greymon",
+      "resource": "assets/resources/skull greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "SnowAgumon",
       "resource": "assets/resources/snowagumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "SnowGoburimon",
       "resource": "assets/resources/snowgoburimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Solarmon",
       "resource": "assets/resources/solarmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Sunmon",
       "resource": "assets/resources/sunmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Syakomon",
       "resource": "assets/resources/syakomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Tanemon",
       "resource": "assets/resources/tanemon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Tapirmon",
       "resource": "assets/resources/tapirmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Tentomon",
       "resource": "assets/resources/tentomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Terriermon",
       "resource": "assets/resources/terriermon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Tokomon",
       "resource": "assets/resources/tokomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "ToyAgumon",
       "resource": "assets/resources/toyagumon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "ToyAgumon (Black)",
       "resource": "assets/resources/toyagumon (black).tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Tsukaimon",
       "resource": "assets/resources/tsukaimon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Tsumemon",
       "resource": "assets/resources/tsumemon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Tsunomon",
       "resource": "assets/resources/tsunomon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Veemon",
       "resource": "assets/resources/veemon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     },
     {
       "name": "Wanyamon",
       "resource": "assets/resources/wanyamon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
+    },
+    {
+      "name": "War Greymon",
+      "resource": "assets/resources/war greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Wormmon",
       "resource": "assets/resources/wormmon.tres",
-      "layout_source": "explicit"
+      "layout_source": "explicit",
+      "coverage": "early_ds"
     }
   ],
   "unknown_directional_resources": [],
