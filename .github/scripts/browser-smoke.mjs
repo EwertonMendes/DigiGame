@@ -174,6 +174,15 @@ async function runDesktopSuite() {
   watchRuntimeErrors(page, 'desktop');
   await openHub(page);
 
+  const beforeDigimonMenu = await page.screenshot();
+  await page.keyboard.press('KeyM');
+  await settleFrames(page, 3);
+  const techniqueLibrary = await page.screenshot();
+  assertScreensDiffer(beforeDigimonMenu, techniqueLibrary, 'Digimon technique library opening');
+  await page.screenshot({ path: 'build/digimon-technique-library.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await settleFrames(page, 2);
+
   const hubBaseline = await page.screenshot();
   await page.keyboard.down('KeyA');
   await page.waitForTimeout(350);
@@ -315,6 +324,15 @@ async function runMobileSuite() {
   await openHub(page);
   assertViewportFill(await readLayout(page));
   await page.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
+
+  const beforeMobileMenu = await page.screenshot();
+  await page.keyboard.press('KeyM');
+  await settleFrames(page, 3);
+  const mobileTechniqueLibrary = await page.screenshot();
+  assertScreensDiffer(beforeMobileMenu, mobileTechniqueLibrary, 'Mobile Digimon technique library opening');
+  await page.screenshot({ path: 'build/digimon-technique-library-mobile.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await settleFrames(page, 2);
 
   const client = await page.context().newCDPSession(page);
   const hubTouchStarted = waitForConsole(page, '[Hub] TOUCH_MOVE direction=right pressed=true');

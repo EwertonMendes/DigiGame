@@ -30,6 +30,9 @@ def main() -> None:
     balance = load("battle-balance.json")
     techniques = load("techniques.json")
     learnsets = load("digimon-learnsets.json")
+    records = load("technique-records.json")
+    source_audit = load("technique-source-audit.json")
+    species_database = load("base-digimon-list.json")
     statuses = load("statuses.json")
     vfx_library = load("vfx-library.json")
     presentations = load("combat-presentations.json")
@@ -44,7 +47,15 @@ def main() -> None:
         assert action_id and action_id not in action_ids, f"invalid/duplicate action id: {action_id!r}"
         action_ids.add(action_id)
         assert action.get("name"), f"{action_id}: missing name"
+        names = action.get("names", {})
+        assert isinstance(names, dict) and names.get("en") and names.get("pt_BR"), f"{action_id}: missing localized names"
+        assert isinstance(action.get("aliases", []), list), f"{action_id}: aliases must be a list"
+        assert isinstance(action.get("sourceGames", []), list) and action["sourceGames"], f"{action_id}: missing source provenance"
+        assert action.get("category") in {"damage", "healing", "support", "control", "mobility"}, f"{action_id}: invalid category"
         assert action.get("damageClass") in {"physical", "special", "none"}, f"{action_id}: invalid damageClass"
+        assert action.get("element") in {"neutral", "fire", "plant", "water", "electric", "wind", "earth", "light", "dark"}, f"{action_id}: invalid element"
+        assert action.get("masteryProfile") in {"efficient", "swift", "precise", "reliable_effect", "potent"}, f"{action_id}: invalid mastery profile"
+        assert action.get("availability") in {"ready", "requires_digixros"}, f"{action_id}: invalid availability"
         assert 0 <= float(action.get("accuracy", 0)) <= 100, f"{action_id}: invalid accuracy"
         assert int(action.get("spCost", -1)) >= 0, f"{action_id}: invalid spCost"
         assert float(action.get("recoveryCost", 0)) > 0, f"{action_id}: invalid recoveryCost"
@@ -67,13 +78,74 @@ def main() -> None:
                 assert effect.get("status") in status_ids, f"{action['id']}: unknown status {effect.get('status')}"
 
     species_seen: set[str] = set()
+    species_seeds = {str(entry.get("seed", "")) for entry in species_database}
+    level_rules = {
+        "fresh": [3], "in-training": [5], "rookie": [8, 16], "champion": [10, 20],
+        "ultimate": [12, 24], "mega": [15, 30], "ultra": [15, 30],
+    }
+    signature_ids: set[str] = set()
     for learnset in learnsets:
-        species = str(learnset.get("species", "")).strip().lower()
-        assert species and species not in species_seen, f"invalid/duplicate learnset species: {species!r}"
-        species_seen.add(species)
+        species = str(learnset.get("species", "")).strip()
+        seed = str(learnset.get("speciesSeed", "")).strip()
+        assert seed in species_seeds and seed not in species_seen, f"invalid/duplicate learnset seed: {seed!r}"
+        species_seen.add(seed)
+        signatures = [entry for entry in learnset.get("skills", []) if entry.get("acquisition") == "signature"]
+        inherited = [entry for entry in learnset.get("skills", []) if entry.get("acquisition") == "level"]
+        assert len(signatures) == 1 and int(signatures[0].get("level", 0)) == 1, f"{species}: must have one level-1 signature"
+        signature_ids.add(str(signatures[0].get("skill", "")))
+        expected_levels = level_rules.get(str(learnset.get("rank", "")).lower(), [8, 16])
+        assert [int(entry.get("level", 0)) for entry in inherited] == expected_levels, f"{species}: inherited levels must be {expected_levels}"
         for entry in learnset.get("skills", []):
             assert entry.get("skill") in action_ids, f"{species}: unknown skill {entry.get('skill')}"
             assert int(entry.get("level", 0)) >= 1, f"{species}: invalid skill level"
+    assert species_seen == species_seeds and len(species_seen) == 408, "every current species must have one learnset"
+
+    record_ids: set[str] = set()
+    costs = {"common": 300, "uncommon": 900, "rare": 2500, "legendary": 6000}
+    for record in records:
+        skill_id = str(record.get("skill", ""))
+        assert skill_id in action_ids and skill_id not in record_ids, f"invalid/duplicate record: {skill_id}"
+        record_ids.add(skill_id)
+        level = str(record.get("recordLevel", ""))
+        assert level in costs and int(record.get("bitsCost", -1)) == costs[level], f"{skill_id}: invalid record price"
+        if not bool(record.get("teachable", False)):
+            assert not record.get("unlockSources"), f"{skill_id}: unteachable record cannot have unlock sources"
+    assert record_ids == action_ids, "every canonical technique must have record metadata"
+    record_by_id = {str(record.get("skill", "")): record for record in records}
+    for signature_id in signature_ids:
+        assert not bool(record_by_id[signature_id].get("teachable", True)), f"signature {signature_id} cannot be teachable"
+
+    assert len(source_audit) == 2260, f"source audit must contain 2260 rows, found {len(source_audit)}"
+    assert all(str(row.get("sourceName", "")).strip() for row in source_audit), "source audit must not contain blank or advertisement rows"
+    decisions = {"mapped", "requires_mechanic", "dummy_excluded", "alias"}
+    dummy_count = 0
+    for row in source_audit:
+        assert row.get("decision") in decisions, f"invalid source decision: {row.get('decision')}"
+        if row.get("decision") == "dummy_excluded":
+            dummy_count += 1
+            assert row.get("canonicalId") is None, "dummy source row cannot enter runtime database"
+        else:
+            assert row.get("canonicalId") in action_ids, f"broken canonical reference: {row.get('canonicalId')}"
+    assert dummy_count == 54, f"source audit must exclude exactly 54 dummy rows, found {dummy_count}"
+
+    dominance_groups: dict[tuple, list[dict]] = {}
+    for action in techniques:
+        effects_key = tuple(
+            sorted((str(effect.get("type", "")), str(effect.get("status", ""))) for effect in action.get("effects", []))
+        )
+        key = (
+            action.get("category"), action.get("element"), tuple(action.get("targets", [])),
+            action.get("area", {}).get("shape"), action.get("range", {}).get("max"), effects_key,
+        )
+        dominance_groups.setdefault(key, []).append(action)
+    for comparable in dominance_groups.values():
+        for left_index, left in enumerate(comparable):
+            for right in comparable[left_index + 1:]:
+                left_values = (float(left.get("power", 0)), -float(left.get("spCost", 0)), -float(left.get("recoveryCost", 0)), float(left.get("accuracy", 0)))
+                right_values = (float(right.get("power", 0)), -float(right.get("spCost", 0)), -float(right.get("recoveryCost", 0)), float(right.get("accuracy", 0)))
+                left_dominates = all(a >= b for a, b in zip(left_values, right_values)) and any(a > b for a, b in zip(left_values, right_values))
+                right_dominates = all(b >= a for a, b in zip(left_values, right_values)) and any(b > a for a, b in zip(left_values, right_values))
+                assert not left_dominates and not right_dominates, f"direct dominance: {left['id']} versus {right['id']}"
 
     assert vfx_library.get("schema") == "digigame.vfx-library/1"
     effects = vfx_library.get("effects", {})
@@ -93,9 +165,7 @@ def main() -> None:
     assert presentations.get("schema") == "digigame.combat-presentations/1"
     presentation_actions = presentations.get("actions", {})
     assert isinstance(presentation_actions, dict)
-    expected_presentations = action_ids | {"basic_attack"}
-    missing_presentations = expected_presentations - set(presentation_actions)
-    assert not missing_presentations, f"missing explicit combat presentations: {sorted(missing_presentations)}"
+    assert "basic_attack" in presentation_actions, "basic attack needs an explicit presentation"
 
     audio_profiles = presentations.get("audioProfiles", {})
     assert isinstance(audio_profiles, dict) and {"normal", "technique"}.issubset(audio_profiles)
@@ -134,8 +204,9 @@ def main() -> None:
             assert effect_id in effects, f"fallback {element}/{phase}: unknown VFX {effect_id}"
 
     print(
-        f"validated combat data: {len(action_ids)} techniques, {len(status_ids)} statuses, "
-        f"{len(species_seen)} learnsets, {len(effects)} VFX, {len(presentation_actions)} presentations"
+        f"validated combat data: {len(action_ids)} techniques, 2260 audited source rows, "
+        f"{len(status_ids)} statuses, {len(species_seen)} learnsets, {len(effects)} VFX, "
+        f"{len(presentation_actions)} curated presentations plus elemental fallbacks"
     )
 
 

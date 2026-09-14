@@ -47,6 +47,17 @@ func remove(actor: Node, status_id: String) -> bool:
 	return removed
 
 
+func has_status(actor: Node, status_id: String) -> bool:
+	return remaining_duration(actor, status_id) > 0
+
+
+func remaining_duration(actor: Node, status_id: String) -> int:
+	for status: Dictionary in get_statuses(actor):
+		if String(status.get("id", "")) == status_id:
+			return int(status.get("duration", 0))
+	return 0
+
+
 func on_turn_start(actor: Node) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	if actor == null:
@@ -61,6 +72,17 @@ func on_turn_start(actor: Node) -> Array[Dictionary]:
 		var definition = status.get("definition", {})
 		if not definition is Dictionary:
 			continue
+		if bool(definition.get("executesOnFinalTurn", false)) and int(status.get("duration", 0)) <= 1:
+			var species_raw = actor.get("species_data")
+			var species: Dictionary = species_raw if species_raw is Dictionary else {}
+			var encounter_profile := String(actor.get_meta("encounter_profile", "")).to_lower()
+			var is_boss := encounter_profile == "boss" or bool(species.get("isBoss", species.get("boss", false)))
+			var execution_damage := int(battle_state.current_hp)
+			if is_boss:
+				execution_damage = maxi(1, int(round(float(max_hp) * float(definition.get("bossMaxHpDamagePercent", 12.0)) / 100.0)))
+			battle_state.current_hp = maxi(0, int(battle_state.current_hp) - execution_damage)
+			events.append({"type": "doom", "status": String(status.get("id", "")), "damage": execution_damage, "target": actor})
+			continue
 		var percent := float(definition.get("turnDamagePercentMaxHp", 0.0))
 		if percent <= 0.0:
 			continue
@@ -68,6 +90,23 @@ func on_turn_start(actor: Node) -> Array[Dictionary]:
 		battle_state.current_hp = maxi(0, int(battle_state.current_hp) - damage)
 		events.append({"type": "status_damage", "status": String(status.get("id", "")), "damage": damage, "target": actor})
 	return events
+
+
+func prevents_action(actor: Node) -> bool:
+	for status: Dictionary in get_statuses(actor):
+		var definition = status.get("definition", {})
+		if definition is Dictionary and bool((definition as Dictionary).get("preventsAction", false)):
+			return true
+	return false
+
+
+func accuracy_modifier(actor: Node) -> float:
+	return _numeric_status_total(actor, "accuracyPercent")
+
+
+func reaction_percent(actor: Node, damage_class: String) -> float:
+	var key := "reflectPercent" if damage_class.to_lower() == "special" else "counterPercent"
+	return maxf(0.0, _numeric_status_total(actor, key))
 
 
 func on_turn_end(actor: Node) -> Array[String]:
@@ -89,6 +128,15 @@ func get_statuses(actor: Node) -> Array[Dictionary]:
 	if battle_state != null and battle_state.has_method("get_statuses"):
 		return battle_state.call("get_statuses")
 	return []
+
+
+func _numeric_status_total(actor: Node, key: String) -> float:
+	var total := 0.0
+	for status: Dictionary in get_statuses(actor):
+		var definition = status.get("definition", {})
+		if definition is Dictionary:
+			total += float((definition as Dictionary).get(key, 0.0))
+	return total
 
 
 func _refresh_modifiers(actor: Node) -> void:

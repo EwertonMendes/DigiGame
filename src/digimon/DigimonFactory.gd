@@ -79,17 +79,20 @@ func _create_instance(species: Dictionary, level: int, initial_potential: int, s
 	instance.potential = clampi(initial_potential, 0, DigimonInstance.MAX_POTENTIAL)
 	instance.origin = source
 	_randomize_aptitudes(instance)
-	_sync_level_skills(instance, species)
+	_sync_level_skills(instance, source == "digilab")
 	_calculator.refill_instance(instance, species)
 	return instance
 
 
-func _sync_level_skills(instance: DigimonInstance, species: Dictionary) -> void:
+func _sync_level_skills(instance: DigimonInstance, signature_only: bool = false) -> void:
 	if instance == null:
 		return
-	var available: Array[Dictionary] = _action_database.get_known_actions(String(species.get("name", "")), instance.level)
-	for action: Dictionary in available:
-		instance.learn_skill(String(action.get("id", "")), true)
+	for entry: Dictionary in _action_database.get_learnset_entries(instance.species_seed):
+		if signature_only and String(entry.get("acquisition", "level")) != "signature":
+			continue
+		if int(entry.get("level", 1)) > instance.level:
+			continue
+		instance.learn_skill(String(entry.get("skill", "")), true)
 
 
 func _randomize_aptitudes(instance: DigimonInstance) -> void:

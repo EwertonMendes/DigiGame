@@ -1,8 +1,8843 @@
 [
-  {"species": "Agumon", "skills": [{"skill": "pepper_breath", "level": 1}, {"skill": "guard_charge", "level": 12}]},
-  {"species": "Gabumon", "skills": [{"skill": "blue_blaster", "level": 1}, {"skill": "speed_charge", "level": 12}]},
-  {"species": "Greymon", "skills": [{"skill": "mega_flame", "level": 1}, {"skill": "guard_charge", "level": 10}]},
-  {"species": "Koromon", "skills": [{"skill": "bubbles", "level": 1}]},
-  {"species": "Tanemon", "skills": [{"skill": "adhesive_bubble", "level": 1}]},
-  {"species": "Veemon", "skills": [{"skill": "vee_headbutt", "level": 1}, {"skill": "speed_charge", "level": 12}]}
+  {
+    "speciesSeed": "b5ac222a-e653-4543-923e-77355dd24686",
+    "species": "Botamon",
+    "rank": "Fresh",
+    "skills": [
+      {
+        "skill": "heat_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 3,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e7f074b5-2979-4a45-b6a3-3b07f6965f7d",
+    "species": "Pitchmon",
+    "rank": "Fresh",
+    "skills": [
+      {
+        "skill": "normal_blade",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "great_wall",
+        "level": 3,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "9fb1302d-6916-4237-a80f-fa4e5e69decc",
+    "species": "Dodomon",
+    "rank": "Fresh",
+    "skills": [
+      {
+        "skill": "beast_coat",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 3,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "edc9812f-82a6-487f-9a4d-52b845643176",
+    "species": "Koromon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "bubbles",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "heat_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "277edb81-7051-4a5e-8f5d-369e70cd18e5",
+    "species": "Pukamon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_2",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hard_shell",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "25acac95-1107-484a-8dfc-f4f8139bc164",
+    "species": "Dorimon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "bite",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "4f2a5a34-f37e-4e2e-9429-5fa6a7b36c1b",
+    "species": "Puttimon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "crazyiceblast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "electric_shock",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1e42aedf-c746-44aa-8163-52abe272521a",
+    "species": "Mochimon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "flower_necklace",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "calumon_s_prayer",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "794bdb0d-eb9b-450b-bbc6-bbee53bd163e",
+    "species": "Minomon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "body_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "60a9abac-e232-458d-a137-353e6ce15d03",
+    "species": "Gigimon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "bite",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5f42c392-4f8e-4fc2-9202-44225bc0936b",
+    "species": "Tsunomon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "body_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hard_bubbles",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b9931f5c-fc66-4c4a-babd-7b38b994f5b5",
+    "species": "Chicchimon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "petit_holy_flare",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c32edbfb-fd41-40dc-95c3-ded5a6b89e99",
+    "species": "Poyomon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "acid_bubbles",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2c011b3c-727f-4f36-aeb7-18e94eb4801e",
+    "species": "Tokomon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "bite",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "light_bubbles",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ed20a627-e7f5-4ab1-bbfd-2a7c2df1d0b6",
+    "species": "Tanemon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "adhesive_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "body_blow",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ed622fc4-832a-4f67-a7e4-b08ad63f92cf",
+    "species": "Pagumon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "dark_bubbles",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "body_blow",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b18ad2e7-5a8b-43c3-990e-5f00ea8e3ae7",
+    "species": "Kapurimon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "electric_bubbles",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "658aaf6d-9296-4011-8989-cbfbc2970d35",
+    "species": "Kuramon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "glare_eye",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dark_bubbles",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "048cb7ff-ec92-47e3-bc1d-73f89d73b0cb",
+    "species": "Chibomon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "air_gun",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "electric_shock",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2768be8f-6bb1-4626-a2e5-2e76c8275e38",
+    "species": "Calumon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_8",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "saint_heal",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "df0ec13c-fc18-4a32-8536-0049016c9f10",
+    "species": "Gummymon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "body_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1cc110d2-b626-49a5-918f-fda429e06760",
+    "species": "Kokomon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "holy_cannon",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_7",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2b418d80-1f34-4868-ace2-e62a38e9b9cd",
+    "species": "Tsumemon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "nail_scratch",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "02d705e7-f87c-45e6-861c-ef9cd0df04f2",
+    "species": "Wanyamon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "rainbow_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hard_bubbles",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7dbd69e3-62f3-4433-a8de-12c8ae5c1ea6",
+    "species": "Budmon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "body_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f254a601-0c96-46b1-9514-f08f3f4d74f3",
+    "species": "Sunmon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "body_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5bd6823a-72cb-408e-abe5-e0e91a1e6002",
+    "species": "Moonmon",
+    "rank": "In-Training",
+    "skills": [
+      {
+        "skill": "rainbow_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "body_blow",
+        "level": 5,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "96c23ff9-d6b4-43da-91e6-f0c9799c65d7",
+    "species": "Agumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "pepper_breath",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "guard_charge",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "baby_flame",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "67307a7e-681f-4b3b-a71e-16baae4ea11f",
+    "species": "Betamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hydro_water",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "thunder",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "55121c1b-5f45-4f28-ad8f-d1a5573c3101",
+    "species": "Goburimon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "goburi_strike",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gatling_punch",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "dfeeb1ca-a077-4e90-84ae-8a8a6490a992",
+    "species": "Falcomon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "kamaitachi",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "metal_star",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6ce78264-cbb0-4e10-8f55-89336f93d8dd",
+    "species": "Gomamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "sharp_claws",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hydro_water",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "083241cc-fcf8-4101-a58d-09b0e6b375b6",
+    "species": "Armadillomon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_6",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "rainbow_spit",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "986f4b59-c234-44fa-b5bc-456736578f67",
+    "species": "Salamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "ragingdarkness",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cure_poison",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ocean_wave",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "935f8d3f-e4b9-47d6-b168-a80eb4dae568",
+    "species": "Tentomon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_thunder",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "sharp_claws",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "4e6904cc-d3c0-4363-b8a8-bebc1da167ab",
+    "species": "Kunemon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "mental_cure",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_beast",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "claw_attack",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ac35cc98-95f2-46d4-bcfb-a1633de6161e",
+    "species": "Kokuwamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "thunder",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "scissor_arms_mini",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "42e8ce3c-0f51-4238-866e-a195628b165c",
+    "species": "Guilmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "sharp_claws",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "fireball",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "768e6d1a-5c3b-4ed2-991f-e4a1c16357a6",
+    "species": "Gabumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "blue_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "speed_charge",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gatling_punch",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d9a452f3-71d0-4b1a-9bee-8e4c36b9e1a3",
+    "species": "Monodramon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gatling_punch",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bite",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3c827fbe-aa3d-4b2b-9cb3-5a6d4fc8e47f",
+    "species": "Veemon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "vee_headbutt",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "speed_charge",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gatling_punch",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1e4a6cd2-b5f2-40c9-abc1-e2d4f5b6a789",
+    "species": "Dorumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "sharp_claws",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_metal",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e5c3b6f1-ae43-4d5e-9f0a-1b2c3d4e5f67",
+    "species": "Patamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_shine",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "air_shot",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_tornado",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f",
+    "species": "Biyomon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "raging_wind",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cure_poison",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "celestial_hand",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6a7b8c9d-e0f1-4a2b-8c3d-4e5f6a7b8c9d",
+    "species": "Palmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "drain_whip",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "poison_ivy",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7b8c9d0e-f1a2-4b3c-9d4e-5f6a7b8c9d0e",
+    "species": "Gotsumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "gatling_punch",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "angry_rock",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b61f8053-a7e7-4a30-80ab-64d494ba6c24",
+    "species": "Otamamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "frothier_spit",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "auroraangelr",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "screwd_claw",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "0ba4bbe8-1f8f-4252-a7c5-6380981d6567",
+    "species": "Tapirmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "gaia_healing",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "calumon_s_prayer",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nanomachine_heal",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7db14a16-d501-421f-a403-f00ef6bdbeda",
+    "species": "DemiDevimon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "rainbow_spit",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "beast_coat",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "twin_neptune",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "be1f2a3b-c4d5-4e6f-8a9b-0c1d2e3f4a5b",
+    "species": "ToyAgumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "tiny_bomb",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gatling_punch",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "cf2a3b4c-d5e6-4f7a-9b0c-1d2e3f4a5b6c",
+    "species": "Hagurumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "dark_crusher",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "nanomachine_break",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_dark",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "0bb2202b-a2a0-45db-b9a9-f1a80b74d682",
+    "species": "Wormmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "sticky_net",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "light_tackle",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2fb84d71-5d4b-4cbf-a0bb-f1ce33f2f2de",
+    "species": "Hawkmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "kamaitachi",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "feather_slash",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_shine",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ab31784f-d09b-473a-ad58-27c40b50ae53",
+    "species": "Terriermon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_twister",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "mega_napalm",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b1905950-9981-4544-a642-69f106e4889d",
+    "species": "Lopmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "tear_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_water",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_twister",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d948e2f9-e282-4c59-8a0b-0d761f649922",
+    "species": "Renamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "koyousetsu",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "kamaitachi",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "30478c8e-4673-4526-a502-5160536d0ac5",
+    "species": "Impmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "night_fire",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_dark",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mega_napalm",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "116e09ec-921e-42e3-9de6-05681965d7af",
+    "species": "Keramon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "crazy_giggle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dark_crusher",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_dark",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2f06b76f-a29b-415c-86be-05cc8dbaef17",
+    "species": "Penguinmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "bubble_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "purifying_light",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "beastking_fist",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "56b1d2e3-f4a5-4b6c-8d9e-0f1a2b3c4d5e",
+    "species": "Kumamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "junk_attack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "black_coat",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_flame",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "67c2e3f4-a5b6-4c7d-9e0f-1a2b3c4d5e6f",
+    "species": "Kotemon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "frz_blizzard",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_tackle",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "58278402-c731-40ae-aea6-40ad6263465c",
+    "species": "Shamamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "healing_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "omegar_force",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_wind",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "866066a0-da28-4baa-ba13-f5259d24e39c",
+    "species": "SnowGoburimon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "bigbangtackle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "fuushikaden",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "current_of_life",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ff9c95dd-3f18-418a-8a69-5ae3d038dec8",
+    "species": "Syakomon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_metal",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hydro_water",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "02e00ed9-be0c-4e24-9e6a-1bce6407ba67",
+    "species": "SnowAgumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "blazing_power",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "royal_cannon",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "boost_tackle",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "605568d6-840c-4cd0-bdf4-b7d04819f149",
+    "species": "BlackAgumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "shadow_nail",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "baby_flame",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "9c64088a-5693-4583-ba0d-47b117d2ab79",
+    "species": "Muchomon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "forlorn_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ragingdarkness",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "current_of_life",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "9c7bdff5-ad50-4cc5-ac80-805e59e2da57",
+    "species": "Crabmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "royal_blizzard",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rain_of_pollen",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "love_hug",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "354d34aa-d686-434c-b2ef-fdc7ce403c25",
+    "species": "Floramon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "drain_whip",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "poison_powder",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a5d75ad2-b8ce-487d-9a15-f26d8b78fce9",
+    "species": "Gizamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "beast_whack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_water",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "tera_hydro_breath",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "067c13d4-e5f6-4a8b-8c9d-1e2f3a4b5c6d",
+    "species": "Lalamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "tiny_bomb",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "sing_a_song",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "178d24e5-f6a7-4b9c-9d0e-2f3a4b5c6d7e",
+    "species": "Aruraumon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "gain_attack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gashingbreeze",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "crescentcutter",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "264ecbe7-d857-48dc-94d5-418f1dd5ac4b",
+    "species": "ToyAgumon (Black)",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "tiny_bomb",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gatling_punch",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "05be89f5-5da3-4026-afcf-443ee072e0eb",
+    "species": "Tsukaimon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "flower_necklace",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "boost_tackle",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "celestialcross",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a05f17f2-7f47-44dd-ae69-b46896e08043",
+    "species": "PawnChessmon (Black)",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "celestialcross",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_tackle",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "b_smiley_bomb",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8f1df616-ba64-456a-8ebd-2f18e17c07f3",
+    "species": "Gaomon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gatling_punch",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_tornado",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f4bf9c27-147a-46ed-b069-c13e8d934be2",
+    "species": "Kudamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "light_tackle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "holy_shot",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_shine",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "59051cd2-4842-49ff-b95f-8f529f5070b0",
+    "species": "Kamemon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "petit_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "double_wave",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "tiny_bomb",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "08f6ce0c-91ad-409a-aa7e-31c35623c37d",
+    "species": "Dracmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "shadow_nail",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dark_crusher",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_dark",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8d68e936-fcc3-478b-bcc7-0160ef26c4df",
+    "species": "PawnChessmon (White)",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "giga_missile",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gatling_bomb",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "great_wall",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a016bd5e-c5d6-4e7f-8a9b-1c2d3e4f5a6b",
+    "species": "Mushroomon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "celestialcross",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "g_maelstrom",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "rising_ray_15462efd",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b127ce6f-d6e7-4f8a-9b0c-2d3e4f5a6b7c",
+    "species": "Solarmon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "burst_breath",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_wind",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "82a4f7b8-e302-4771-8d58-927c2d34e717",
+    "species": "Candlemon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "absolutehealing",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cure_poison",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "air_gun",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8bbb294e-b9dd-4ab9-8629-f46872e9cbd4",
+    "species": "DoKunemon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "electrowhipping",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_2",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d8b07898-1585-41b6-bcde-2f571243f424",
+    "species": "Coronamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "mega_napalm",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gatling_punch",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "489e2e68-fb20-4aa9-bb97-dbfbcf03b2ba",
+    "species": "Lunamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "tear_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "shadow_nail",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_water",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b87f2b55-1e7b-49d5-8b21-0ef4a4c645e2",
+    "species": "Flamon",
+    "rank": "Rookie",
+    "skills": [
+      {
+        "skill": "dm_hole",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_water",
+        "level": 8,
+        "acquisition": "level"
+      },
+      {
+        "skill": "great_wall",
+        "level": 16,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "70dbb38a-690e-45b3-bfc5-eccba64fbd9b",
+    "species": "Greymon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "mega_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "guard_charge",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a351a4ab-a5bf-42df-8a27-bb2d8ce06d0b",
+    "species": "Blue Greymon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "celestial_hand",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "nature_heal",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_beast",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "fa3e15c0-4a3f-45e1-b75e-1b2d1b16a377",
+    "species": "Peckmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "kasane_kamaitachi",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "kunai_feathers",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "assassin_star",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b7f8c97d-1e9f-42a7-bbf1-d3e67a54f799",
+    "species": "Ikkakumon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_guard",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "harpoon_vulcan",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "cd52bdf0-80a8-4b19-b738-ed6acf1f0b14",
+    "species": "Apemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "claw_attack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "beast_whack",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f3d8e2e9-316a-412b-91f9-678d1e6e9a56",
+    "species": "Gatomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "raging_wind",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "crazy_ice_arrow",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "67cd2d63-4299-446e-a851-6f04e9b51bc5",
+    "species": "Geo Greymon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "black_coat",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "celestialcross",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "fdb6bc88-8ab6-4d27-af65-8c26b7df9c86",
+    "species": "Kabuterimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "cross_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "thunder_claw",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "9f207e7b-2e92-4cfc-8e44-94cf25e0fdb5",
+    "species": "Flymon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "ext_war",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "tear_bubble",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f4cbbd45-9e42-4b43-b9b0-4f8e1b9b9d21",
+    "species": "Guardromon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "double_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "warning_laser",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b7569307-7fd2-4ebb-a05f-6b1b30410921",
+    "species": "Airdramon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "thunder_needle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_shine",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "god_tornado",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6f43524a-b8fd-4514-b5f9-03dbc7710b85",
+    "species": "Dokugumon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "poison_sting",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "thunder_claw",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "124e3f9c-0f48-402c-9f29-b92ff742a965",
+    "species": "Growlmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "volcano_napalm",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "high_sonic_voice",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "80c6f1b9-648a-49b3-92c9-01d6e2f4bc8e",
+    "species": "Garurumon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "freeze_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_speed",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "blue_flame",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a03b8672-59d7-4f2e-9b5d-b0e2a3e7f9b8",
+    "species": "Seadramon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "water_breath",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ice_arrow",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "double_wave",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f3c12345-6b7d-4e89-9ef7-89c4672c34ab",
+    "species": "Fugamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "hyper_tornado_97db9365",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "megaton_hydro",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "burst_tackle",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "87a9e123-4f23-42b3-9d83-3c7e4382c3d5",
+    "species": "Ogremon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "haouken",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "strong_maul",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f8d2c6e9-4b1a-4e9f-8c7d-3a5e9b2f1d0c",
+    "species": "Mekanorimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "current_of_life",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "frz_blizzard",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "twin_neptune",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d7e9f1a3-5b2c-4d8a-9c6e-1f0b3a5d7e2c",
+    "species": "Tyrannomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "volcano_napalm",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "g_cross_freezer",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c4a7b9d2-1e5f-4c8a-9b3e-6d0f2a5e7c1b",
+    "species": "Devimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "darkness_blast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_dark",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dark_eye",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b3e6a9c5-2d1f-4e7a-8c9b-0f5d3a7e2b6c",
+    "species": "Numemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "nume_rain",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hydro_water",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a5d8e0b7-3c1f-4e9a-8b2d-6f0c3a5e7d1b",
+    "species": "Angemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "big_tornado",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_air",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_shine",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e2c5a9b7-1d3f-4e6a-8c9b-0f5d3a7e2b6c",
+    "species": "Veggiemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "purge_shine",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "poweroflove",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "tear_bubble",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d9a3c6e0-2f5b-4e7a-8c1b-9f0d5a3e7b2c",
+    "species": "Bakemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_dark",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dark_nail",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "darkness_blast",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c6e9a3b7-1f5d-4e8a-9c2b-0d3a5e7f9b6c",
+    "species": "Sukamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "celestialcross",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hard_shell",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "fire_coat",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b5e9c2f0-3a1d-4e6b-8c7b-9f0d5a3e2d7c",
+    "species": "Kokatorimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "air_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petrifier",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a7c0f3e9-1d5b-4e6a-8c2b-9f3a5e0d7b6c",
+    "species": "Leomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "soulful_kick",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "shishioumaru",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f0b7e9c5-2a1d-4e6b-8c3b-9d5a3e0f7c2b",
+    "species": "Kuwagamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "scissor_arms",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cross_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "thunder_claw",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e3a5c9b7-3d1f-4e6a-8c2b-9f0d5a3e7b6c",
+    "species": "Raremon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "grand_cross",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "holy_hand",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hyp_bulldozer",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d9e3c6b5-2f1a-4e7b-8c9d-0f5a3e7b2d6c",
+    "species": "Gekomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "mental_cure",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "current_of_life",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bubble_blow",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c6b9e0f3-2a5d-4e7b-8c1d-9f0a3e5d7b2c",
+    "species": "Wizardmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "volcano_napalm",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "thunder_cloud",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b2a5c9e0-3d1f-4e6a-8c7b-9f0d3a5e7c6b",
+    "species": "Togemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "prickly_bang_bang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "thunder_needle",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a7d0f3e9-1c5b-4e6a-8c2b-9f3a5e0d7b6c",
+    "species": "ExVeemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "power_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "powerful_punch",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f0c7e9b3-1a5d-4e6b-8c2b-9d3a5e0f7c6b",
+    "species": "Stingmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "air_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "spiking_fn",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e3b9c6f0-2d5a-4e7b-8c1d-9f0a5e3d7b2c",
+    "species": "Birdramon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "big_tornado",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d6e3a9c0-2f5b-4e7a-8c1d-9f0a3e5d7b2c",
+    "species": "Ankylomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cross_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "comet_hammer",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c9f0e3a7-1d5b-4e6a-8c2b-9f3a5e0d7b6c",
+    "species": "Gargomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "shock_gatling",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "soulful_kick",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b3c9f0e7-1a5d-4e6b-8c2b-9f0d5a3e7c6b",
+    "species": "Kyubimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "healing_air",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "blue_flame",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a5d7b9c0-2f1a-4e6b-8c3d-9f0a5e3d7b2c",
+    "species": "Kurisarimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "pit_crusher",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "highsonicvoice",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f0a5d7b9-2c1f-4e6a-8c3d-9f0e3a5d7b2c",
+    "species": "Seasarmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "giga_missile",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ragingmachine",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "blaze_power",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e3c9f0b7-1a5d-4e6b-8c2d-9f0a3e5d7c6b",
+    "species": "Vilemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "healing_spring",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "mjollnir_hammer",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gatling_bomb",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d7b9c0e3-1a5f-4e6b-8c2d-9f0a3e5d7c6b",
+    "species": "Aquilamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "big_tornado",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_shine",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "thunder_claw",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c0f3a7b9-2d5a-4e6b-8c1d-9f0e3a5d7b2c",
+    "species": "Roachmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "aguichant_levres",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "calumon_s_prayer",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ice_arrow",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b9c0f3a7-2d5a-4e6b-8c1d-9f0e3a5d7b2c",
+    "species": "Dinohumon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "crescentcutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "brachio_bubble",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "beast_coat",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a5d7b9c0-3f1a-4e6b-8c2d-9f0e3a5d7b6c",
+    "species": "Hookmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "cross_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "captain_cannon",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f3a7b9c0-1d5a-4e6b-8c2d-9f0e3a5d7c6b",
+    "species": "Grizzmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "burst_tackle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gashingbreeze",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "great_wall",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e7b9c0f3-1a5d-4e6b-8c2d-9f0a3e5d7c6b",
+    "species": "Dorugamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "middle_tackle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "comet_hammer",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f604d614-12f3-4f68-8582-779e561fcd91",
+    "species": "Reptiledramon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "bishop_laser",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "pit_crusher",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hard_shell",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c3f0a7b9-2d5a-4e6b-8c1d-9f0e3a5d7b2c",
+    "species": "Starmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "meteor_squall",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "comet_hammer",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_shine",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b7e9c0f3-1a5d-4e6b-8c2d-9f0a3e5d7c6b",
+    "species": "BomberNanimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "normal_bomb",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "powerful_punch",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "free_throw_bomb",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a9d5e7b0-3f1a-4e6b-8c2d-9f0e3a5d7c6b",
+    "species": "Kiwimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "gigaton_hydro",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "megaton_hydro",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "17d0f8b3-4e1a-49c7-9cf2-e03d7a2b5f64",
+    "species": "Unimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "raging_beast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "double_wave",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_flame",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f2d0c814-95f4-4eb2-9491-519b62a3c9de",
+    "species": "Sorcerymon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "gaia_healing",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hyper_tornado_97db9365",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "tera_hydro_breath",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d0c5e9b7-3f1a-4e6b-8c2d-9f0e3a5d7c6b",
+    "species": "DKTyrannomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "frothier_spit",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ice_arrow",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "boost_tackle",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ae4c3d8f-0a9b-4950-8c3d-2b9f1f0871e5",
+    "species": "Akatorimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "rainbow_spit",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "saint_heal",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_7",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5b7a39c4-812d-42c1-8e07-3c9a8e5f6f10",
+    "species": "PlatinumSukamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "twin_neptune",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "royal_cannon",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_water",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e3f9c4b1-8a2d-4d91-97c1-5378c5f78e0b",
+    "species": "Minotarumon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "crazyiceblast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "frothier_spit",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "n_cross_bomber",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f5a7b9c0-2d5a-4e6b-8c1d-9f0e3a5d7b2c",
+    "species": "Icemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "raging_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_water",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "black_coat",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "61b72dc8-3fe7-4ea9-9e4c-ff718ba1477a",
+    "species": "DarkLizardmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "rain_of_pollen",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_spit",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "acid_bubbles",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "bd2c0a93-4d8f-4f6e-b3a9-761f40ed38b7",
+    "species": "Flarerizamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "n_cross_bomber",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "normal_blade",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "purifying_light",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "19f74d0b-2eac-4398-b7d3-ecf25198a302",
+    "species": "Gaogamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "power_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "blade_claw",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "12bfe8d3-7c6e-4e0f-9a2b-f1d3c87b20f5",
+    "species": "Diatrymon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "glory_thunder",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "charge",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "holy_cannon",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c2a7e1d0-1f93-48b0-bcd2-79e3a4f6d105",
+    "species": "Reppamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "kasane_kamaitachi",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "juuga_rangeki",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2d83fa14-b1ae-44fa-9a1c-046af2d2306c",
+    "species": "Sunflowmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "sunshine_beam",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_blaster",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "powerful_punch",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c849a173-f2d4-4700-88e3-1bc4a9f7e5d2",
+    "species": "Gawappamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "healing_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "powerful_punch",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_water",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "72a04c6f-3b9c-4821-a7f1-c83d4d0f6e89",
+    "species": "Sangloupmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "sticker_bld",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dark_nail",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7d9e3f2c-5f9a-4c1d-8124-0a3d4e6f9b2c",
+    "species": "Drimogemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "celestial_hand",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_blaster",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "fire_coat",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "35d9c2a4-9b1f-4e6c-82a3-f0e5c7d8b193",
+    "species": "NiseDrimogemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "royal_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "sorrow_blue",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "rainbow_spit",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "09c174de-84df-4208-946b-9bc624871631",
+    "species": "MoriShellmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "acid_bubbles",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "g_maelstrom",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dark_saviour",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e01c59b2-8f7a-49f2-914d-6ac9d3ef2b84",
+    "species": "Wendigomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_dark",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "holy_cannon",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "shining_heal",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b3e9c0f7-1a5d-4e6b-8c2d-9f0a3e5d7c6b",
+    "species": "Tsuchidarumon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "sorrow_blue",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "crescentcutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "water_breath",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "93c1a5e7-1f0d-48b9-aeb2-6f8c5d4e3b1a",
+    "species": "Tortamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "acid_bubbles",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_spit",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "frothier_spit",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "91a2e3f7-7f0b-446d-81e2-3d9c7f1a5e40",
+    "species": "Ebidramon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "twin_neptune",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_speed",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_water",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3fdea691-d2ae-44a4-bc02-59de09cf2049",
+    "species": "Octomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "cross_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_water",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "kaimei_bokujuu",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "03de2f94-6a3b-457a-a0f1-fb2c9e57c8a3",
+    "species": "Gesomon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "celestialcross",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_beast",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bone_spear",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "de3f9b70-2c4a-45f1-83bd-ae170d8c9f1e",
+    "species": "Coelamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "blade_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_water",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "healing_water",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b1e4c7f8-6d5a-4e91-8c2f-30a9e7b0f3c2",
+    "species": "Shellmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "dark_saviour",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "bishop_laser",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d4b6f7c0-3f19-482a-a5e1-b0c2d7e3f849",
+    "species": "Frigimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "electric_shock",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "healing_water",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "cbf5e879-4074-40de-89fc-4317e4b59338",
+    "species": "Geremon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "raging_light",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "medical_care_system",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ocean_wave",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "78c5f193-d4a0-42be-b0cd-3f7e91c608d4",
+    "species": "Hyogamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "pummel_whack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cursed_slash",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "celestialcross",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6a2e1c34-91f0-4bcd-9827-04d6f9b13a87",
+    "species": "KaratsukiNumemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "acid_bubbles",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dmag_square",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "beastking_fist",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8d2e5f3b-2a9c-47b0-91f3-e6c4d5b7a081",
+    "species": "IceDevimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "omegar_force",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_spring",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ftemptation",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "76c5f4e2-1a0b-42f7-9e4d-b3f0d8a1c2e6",
+    "species": "Dolphmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "current_of_life",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hyper_tornado_97db9365",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "blazing_power",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a3c9e71d-b581-4aef-bc7f-0e1db4956f32",
+    "species": "Saberdramon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "big_ice_blast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "flower_necklace",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "healing_water",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "934b0e2f-807c-4c3a-b1f9-60edc7f4a59e",
+    "species": "Woodmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "branch_drain",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cross_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_guard",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f71c8e04-3b7d-4d20-86f1-efb9403a19d6",
+    "species": "Snimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "nanomachine_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "purifying_light",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "crazy_ice_arrow",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "0a1d3e9f-b7c2-4f8a-84e1-d0c9f27b1356",
+    "species": "Yanmamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "healing_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cyclone_claw",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bubble_blow",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f0e2b4d1-59c3-41a7-9d2e-85c7f31b06a4",
+    "species": "SandYanmamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "bubble_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_guard",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7cd90fd2-0182-4973-aab7-1ff1162b83ec",
+    "species": "RedVegiemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "dlgashbreeze",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "current_of_life",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "prickly_bang_bang",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "14fa2d8e-a930-4eb1-bc27-ef19d3f0c475",
+    "species": "Weedmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "mental_cure",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_beast",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bunny_pummel",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "0d4e78c1-2a3f-45f0-a7b9-9152ce0db654",
+    "species": "Ninjamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "current_of_life",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_tackle",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "blazing_power",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f7b0c8e1-96a2-4e0f-b3c9-524d8f7a03e1",
+    "species": "Kogamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "gashingbreeze",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_guard",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_6",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8b7f0e3d-3c2a-4671-b9f1-e0d5a4c78b20",
+    "species": "Omekamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "royal_blizzard",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "highsonicvoice",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "darkknowledge",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3e04bb4b-6e1a-4c57-9f7d-bd9e21048c5d",
+    "species": "Clockmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "high_sonic_voice",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "chrono_breaker",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "28e7b03d-c49a-431b-81f2-d3a0f8c197e0",
+    "species": "Thunderballmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "hard_shell",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "highsonicvoice",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "charge",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "bc8f1703-4769-4c3b-b8a2-e4f1d7ce9a02",
+    "species": "Tankmon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "petit_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "normal_missile",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "shock_gatling",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "46c1f3e9-5a4d-4b7c-8e1f-cb7a0f9d2e3c",
+    "species": "Nanimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "pummel_whack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_3",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "battle_stamp",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a3d5f4e1-92b0-4fc8-ae1c-6d7e9c203f5b",
+    "species": "Golemon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "hyper_tornado_97db9365",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dark_counter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "charge",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ecb85eb6-9dd6-4997-b4b0-2f5bfa778712",
+    "species": "Monochromon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "g_cross_freezer",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rising_ray_15462efd",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c2d84f3e-0b97-402d-9ef1-b38f7051c4ad",
+    "species": "Mojyamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "bubble_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "celestial_hand",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "41d20f3e-c798-4e3d-b0f2-718b49f305d7",
+    "species": "JungleMojyamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "love_hug",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dm_hole",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "charge",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a5d4e9f7-c830-4f2d-b6a1-1e0f4c3b9d58",
+    "species": "Deputymon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "g_maelstrom",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "pollen_spray",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "big_ice_blast",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c7e0f2d9-b5a3-4b18-91f2-8d9c0e7a6f13",
+    "species": "Centarumon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "megaton_hydro",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cure_poison",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "crazyiceblast",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "56a2e212-2c89-46c4-b7b4-36bba1dbd7b7",
+    "species": "Devidramon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "power_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dark_eye",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_dark",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c7b9e0f3-2d5a-4e6b-8c1d-9f0e3a5d7b2c",
+    "species": "Veedramon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "air_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1449e5fc-0412-44f2-8b2d-b005419ea5c6",
+    "species": "Musyamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "gain_attack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_cutter",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "curse_slash",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "09f69899-b91d-4ec5-9a4e-74641b692291",
+    "species": "KnightChessmon (White)",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "gashingbreeze",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "glory_thunder",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_water",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5a9c1a2a-79b5-4de4-bc0a-d0fcd149e9d6",
+    "species": "KnightChessmon (Black)",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "mental_cure",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gashingbreeze",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "blaze_power",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f1d36141-5f0e-40e3-9ad4-ccdbbffb65fd",
+    "species": "Firamon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "normal_bomb",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "petit_flame",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3c0a1f29-0f53-41e6-a6fc-4d0b1d9811d6",
+    "species": "Lekismon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "soulful_kick",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "petit_water",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ice_arrow",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8f1d1fbb-3c4d-4b95-9437-889af207f7a0",
+    "species": "Agnimon",
+    "rank": "Champion",
+    "skills": [
+      {
+        "skill": "shining_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_spit",
+        "level": 10,
+        "acquisition": "level"
+      },
+      {
+        "skill": "claw_attack",
+        "level": 20,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "25fc7b61-17ae-453b-94f7-4fa4f9171633",
+    "species": "Metal Greymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "battle_stamp",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gr_snow_blow",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "charge",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "66e5a6ea-93a5-47f8-91d9-8601857496f6",
+    "species": "Skull Greymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "boost_tackle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_tackle",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "flash_punch",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e5a57e68-7e23-4314-bd93-ea8c7d5fca85",
+    "species": "Yatagaramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "shippuu_no_tsume",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_shine",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "starlight",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "fd9a8a5e-7e23-4c1b-b6b8-f2ec5f0c82e1",
+    "species": "Zudomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "winning_punch",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hammer_spark",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c67f1a0b-f889-438b-9cc0-885f9f711a26",
+    "species": "Kyukimon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "call_cat",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_wind",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "fd_trident",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "28228629-5abc-4fdb-b94d-360783b2ff2c",
+    "species": "Angewomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_shine",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "saint_heal",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "heaven_s_charm",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "529f424a-7efe-49bd-90dc-58286aaa9fb5",
+    "species": "Rize Greymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "raging_light",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "black_coat",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "air_gun",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "77399b55-9e54-4ed3-8fc5-e20ee7d7dc9a",
+    "species": "Mega Kabuterimon (Blue)",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "purifying_light",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "highsonicvoice",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_water",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5f18edb4-a732-41e4-93e6-e65164091ea6",
+    "species": "Mega Kabuterimon (Red)",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "shining_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "battle_stamp",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "claw_attack",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2f1a57b3-4fc2-4a7b-97a5-8b5f6886ec14",
+    "species": "Okuwamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "wild_td_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "s_arms_omega",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a7e2f3b1-03e4-40fc-b80b-8db60f4f616b",
+    "species": "Andromon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "twin_missile",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "spiral_sword",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "40ed91a1-d2e3-47dc-8c18-64a55757e6b1",
+    "species": "Megadramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "genocide_attack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "twin_missile",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "metal_arm",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e49a85fa-77ea-4a06-9a65-bd3133e2c1e4",
+    "species": "Arukenimon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "spider_thread",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bloody_whip",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "070340f1-64a6-4b2a-a068-47d00e4de3a1",
+    "species": "War Growlmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "fatal_cannon",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cursed_slash",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "black_coat",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a5e0bfb7-8d2a-4ef1-9636-cbb9db1fe1d0",
+    "species": "Were Garurumon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "current_of_life",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_spring",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "calumon_s_prayer",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "34af8b92-9237-4f39-b45d-0d6c073d98c1",
+    "species": "Blue Metal Greymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "water_breath",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ocean_wave",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nume_rain",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a2fd5cd4-16dc-4422-8e94-7129b75478ce",
+    "species": "MegaSeadramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "megaton_hydro",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "air_thunder",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a1b2c3d4-e5f6-4789-9012-34567890abcd",
+    "species": "Volcanomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "raging_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "twin_neptune",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bigbangtackle",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "bcdefa01-2345-4678-9abc-def012345678",
+    "species": "Monzaemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "love_hug",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_shine",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "holy_knuckle",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f697c01b-7394-41b3-a374-34a6a1ff27f6",
+    "species": "MetalMamemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "energy_bomb",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "blue_blaze",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "metal_arm",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8f14e45f-ceea-41d4-9a3d-3e8d2e9f6b2c",
+    "species": "Etemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "celestial_hand",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "final_heal",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "freeze_bolt",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2645815a-a9a0-4e53-b0a9-28cbfc7d5e61",
+    "species": "Piximon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "megaton_hydro",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "crazyiceblast",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "sorrow_blue",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d991c296-78da-46e4-82a7-a4ae997f5a98",
+    "species": "Digitamamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "nightmare_sdm",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "enigma",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_guard",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2b8a73da-3f0a-4fe3-b6c7-b8c1b06673ba",
+    "species": "Mammothmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "kaimei_bokujuu",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "love_hug",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_flame",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b7e2c9d4-1f6a-4d3b-8e5c-9a2f7d6b3c1e",
+    "species": "ShogunGekomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "crystal_billow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "water_breath",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_water",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c4f8a2d6-9b3e-4e1f-8d7c-5a9f2b6e3d1c",
+    "species": "Tylomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "purification",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "mighty_td_claw",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dark_storm",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d9e3b7f2-5c1a-4f6d-8e9b-2a7c6d3f1e4b",
+    "species": "Scorpiomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "sand_shower",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "triple_wave",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "stinger_spr",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e8f4c6a1-3d2b-4e5f-9a8c-7b6d5e4f3a2c",
+    "species": "Dragomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "horn_buster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "love_hug",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_10",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "4aa02e4b-b20a-4faf-9269-0ba18a1e7d08",
+    "species": "Black Were Garurumon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "celestial_hand",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "beastking_fist",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "fef29128-0270-4e25-befc-bc9f2c4dd853",
+    "species": "Myotismon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "kaimei_bokujuu",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hard_shell",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dino_burst",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a49fd2ae-e98d-4c4b-9c53-708e6f019af2",
+    "species": "LadyDevimon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "bloody_whip",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_dark",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "death_nail",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5d236da1-b31c-445d-b819-fa8154273dd6",
+    "species": "Garudamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "nature_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "shippuu_no_tsume",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2b8020e1-2f70-4e7e-92e5-d89d54e131a5",
+    "species": "Blossomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "charm_whip",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "poison_mist",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1d47f42d-b6b5-4896-b205-cd648f25c444",
+    "species": "Lillymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "flower_bomb",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ragingmachine",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dark_saviour",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "707cf9e9-48a1-4087-87d9-f3c53447e100",
+    "species": "Datamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "dmag_square",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hard_shell",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gr_snow_blow",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "0fc5bcd7-7cbe-4aa7-8c60-1225d2b297d9",
+    "species": "Cyberdramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "master_d_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "erase_claw",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f6d38895-6836-4e09-90fd-e6a63b2e4a27",
+    "species": "MagnaAngemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "forlorn_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "grand_cross",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "water_breath",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "36fad7a1-ec3c-4781-bc2b-db41f0d79e01",
+    "species": "Paildramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "esgrima",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_blaster",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "desperado_brt",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "9799592e-7012-4855-b1a8-2f5d1e27e196",
+    "species": "Dinobeemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "irritant_buzz",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "shippuu_no_tsume",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_blaster",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "952a2766-db94-4c37-9c25-efee8bfdc9a3",
+    "species": "Antylamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_speed",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "asipatravana",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7f6e3b3b-5e12-4e29-9f57-4b9a6c34b1f8",
+    "species": "Grademon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "holy_slash",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "holy_cross",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "9288669d-6431-4bbf-9ffd-916280cd1c3f",
+    "species": "Mummymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "snake_bandage",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "chaos_blast",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "necrophobia",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1df7c621-07e1-4db9-9922-b7664b6306a0",
+    "species": "Rapidmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_shine",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rapid_fire",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gl_triangle",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "aa2232d5-12ee-4538-b7d3-63d95977137a",
+    "species": "Taomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_dark",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "blue_blaze",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "kofuusatsu",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1ec3c641-3763-4c9e-8834-26f7aaf3fd09",
+    "species": "Parrotmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "air_thunder",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "shippuu_no_tsume",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mjollnir_thunder",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6c695951-a9dc-4fea-aab4-792814356e9f",
+    "species": "Infermon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_dark",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "heavy_tackle",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "chaos_blast",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "afaf7d25-99b6-498b-80bb-70cd4a278189",
+    "species": "BlackRapidmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "brachio_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "boost_tackle",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "flower_necklace",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f525814d-b2a1-4988-b767-ccb7cdb61454",
+    "species": "Pandamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "unnanshou",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nature_heal",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b4cf1769-9b50-4aeb-be2b-f0aaaad4d5e0",
+    "species": "Marine Devimon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "raging_light",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "boost_tackle",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ea1c73e6-dca5-405c-a89d-983e495a89b3",
+    "species": "Karatenmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "enlightenment",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "chaos_slash",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3806f254-dcf8-44b7-9384-edddef3c6bba",
+    "species": "Sinduramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "hard_shell",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "fd_trident",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "normal_blade",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "11431f1e-5428-4cd4-a0de-559e4e7e0f64",
+    "species": "Pipismon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "glory_thunder",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_water",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_7",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "0cd5fdf6-ff56-4196-92f7-79f0c32bcc31",
+    "species": "DoruGreymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "shippuu_no_tsume",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "49896ce6-92dd-46ff-af5f-699bc73a9507",
+    "species": "Divermon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "celestialcross",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "claw_attack",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dark_claw",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8c0f5a17-16a5-409a-bac1-1c63aeaa611a",
+    "species": "Kimeramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "terror_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "hyb_arms",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_flame",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "60205c40-0925-406f-93aa-511df01826bf",
+    "species": "Triceramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "mental_cure",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_tackle",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "acid_rain",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b5a7b775-04b8-436a-b17a-29f7307c682e",
+    "species": "Deramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "freeze_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "twin_neptune",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "g_maelstrom",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "de7c5e6e-92fc-4f99-98b1-abe628acedd2",
+    "species": "Silphymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "dual_sonic",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "blizzard",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_shine",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "4b81a3d1-02d9-433b-8591-eeef611f6a02",
+    "species": "SuperStarmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "planet_hammer",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_shine",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "starlight",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "fcda1569-46f3-4ccd-8838-a55e447a005c",
+    "species": "BlackWarGrowlmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "electric_shock",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "crazyiceblast",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "bdc9e5c4-49b1-4ee5-9b86-9b52c76b3b6f",
+    "species": "Whamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "current_of_life",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "medical_care_system",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "final_heal",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2f601348-8b9f-456e-98e5-b2133a734203",
+    "species": "Mamemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "winning_punch",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "smiley_bomb",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_flame",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1fc3d08b-7a62-4c3e-bf9d-3a179f5a3642",
+    "species": "Toucanmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "bubble_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gaia_healing",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "beast_whack",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "75c6c6ce-68c9-4c32-a678-d9f59406d3a0",
+    "species": "Aurumon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "rainbow_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "claw_attack",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "glory_thunder",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "61eb3964-e387-42d0-83aa-2e2b60f38008",
+    "species": "Meteormon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "shining_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "great_wall",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "rain_of_pollen",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e11a28bb-64a3-49bc-8770-065728c1d8fa",
+    "species": "Gigadramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "energy_shot",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "metal_arm",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_dark",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "43bfe4a9-f09e-4016-b26c-7a0d6948f58d",
+    "species": "MachGaogamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "winning_punch",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mega_sonic_voice",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1dc4e899-b0db-435f-a9e3-6fa7c94836aa",
+    "species": "Tyilinmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_shine",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "holy_slash",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_speed",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "978dfa7e-4c2e-4390-b40f-ac1cd8f0bbea",
+    "species": "Lilamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "un_deux_pollen",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "charm_whip",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e7db2137-9d39-40f4-9fef-8ef42bcff938",
+    "species": "Shadramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "flare_buster",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_speed",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "68de0bbe-a11d-4452-bdb6-f6b4478d06ad",
+    "species": "Matadormon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "gale_kick",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "chaos_slash",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d9652444-162c-4443-8001-d29b9d23c57b",
+    "species": "Kabukimon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "bubble_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_6",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "black_coat",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "52112c31-2f69-435d-bc56-69f4be1e508d",
+    "species": "Cherrymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "holy_hand",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_2",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "battle_stamp",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8f22778f-d315-42f9-8eb9-83c63c8603ba",
+    "species": "Garbagemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "black_coat",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "blaze_power",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "geomgmnapalm",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "9450b4b1-b3e2-4b66-9055-b2923d2e6236",
+    "species": "Lucemon Chaos Mode",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "forlorn_fang",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_light",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "black_blast",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3481f925-3014-43ed-8f3a-715232b923f3",
+    "species": "MameTyramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "met_lariat",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e88b06f2-180d-4cb7-926a-8c215d717e5b",
+    "species": "Giromon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "big_ice_blast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dark_saviour",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b651ef8e-ee49-40e6-8854-434a5e6217db",
+    "species": "Vademon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_dark",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "chaos_blast",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "energy_shot",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "86661f39-b878-4321-9533-0b95d434ef43",
+    "species": "MetalTyrannomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "g_destroyer_2",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_flame",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nuclear_laser",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "823fd608-feb2-415c-99be-f144a51fbd91",
+    "species": "Tekkamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "healing_air",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gatling_bomb",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "water_breath",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b7d29106-ee09-4b38-913f-cdb1ef06b347",
+    "species": "Big Mamemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "crescentcutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "g_maelstrom",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "rainbow_bubble",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1b765eb3-b253-4266-a449-f48cc1713dac",
+    "species": "EXTyrannomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "hell_crusher",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "pretty_attack",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_dark",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "88a7bd2c-77fb-469e-abc8-bd67c4ea5924",
+    "species": "Vermilimon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "dark_savior",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "healing_water",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "01cf1fc3-911e-4a79-a14a-c2de553edecb",
+    "species": "Phantomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "hell_counter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_dark",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "chaos_slash",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a5598598-d29a-4858-8f30-ec5f2acf107b",
+    "species": "Vajiramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "shining_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "crescentcutter",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "glory_thunder",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a43b028d-860e-4b36-93f9-c3d3b52db64c",
+    "species": "AeroVeedramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "v_wing_blade",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_shine",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "winning_punch",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "64eecdac-3722-4999-941c-eb21a60fd301",
+    "species": "GrapLeomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gale_kick",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2dd48272-ac88-4367-a6d6-59b6dc3de237",
+    "species": "Knightmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "gain_guard",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "holy_slash",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "db096107-34c6-4f22-b8a1-8b5c7265edb2",
+    "species": "Brachiomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "power_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_guard",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nature_heal",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2b4b8b25-e810-45a2-a7f1-3e6642b50352",
+    "species": "Allomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "double_blade",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "beastking_fist",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gatling_bomb",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "43cdb81a-3316-4e2b-8c6d-4bc9f8aa99f0",
+    "species": "Lanksmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "nanomachine_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "beast_coat",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nature_heal",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "965f036a-e7a9-4a59-b192-db5b57636af8",
+    "species": "Shaujinmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "celestial_hand",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "current_of_life",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "shining_heal",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d8bbebbb-b512-4ae6-a499-cfe208cce34b",
+    "species": "BishopChessmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "big_ice_blast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "double_wave",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "celestialcross",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6c121f02-4c0e-46a2-b2c7-f0b602267107",
+    "species": "RockChessmon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "flash_punch",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ice_blast",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "geomgmnapalm",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "622e72a1-7f0f-465e-b4f4-2ba9fb6a73a0",
+    "species": "Flaremon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "seisei_no_houkou",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_flame",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "burst_counter",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c77b7715-f25c-4b3a-b77f-199188d1e7f7",
+    "species": "Crescemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "hell_crusher",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_water",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ice_archery",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "49d6dd17-71b4-41ae-844c-2f18410a8d31",
+    "species": "Flamedramon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "flower_necklace",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "g_cross_freezer",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "038b0f79-2341-4c3b-8c77-7984c3341ab1",
+    "species": "Magnamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "plasma_shoot",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "shining_heal",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_shine",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c4cfed7d-2b3b-4fa4-8a4f-09ef2b709c7e",
+    "species": "Prairiemon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "sonic_ear",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "sonic_counter",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "846e2f00-60d3-4d9a-bb62-792154622ea6",
+    "species": "Kongoumon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "black_blast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "bdeath_cloud",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "healing_air",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e9371c75-61b2-4645-938b-41b87588ae83",
+    "species": "Seahomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "final_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "great_wall",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "black_coat",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "24772f7f-d86c-4e77-bc3b-c9f4b0ef7f9c",
+    "species": "Shurimon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "kusanagi",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "momiji_oroshi",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "enlightenment",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7a27b835-293f-46db-9606-7a2aab66b0be",
+    "species": "Kenkimon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "hyp_bulldozer",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_guard",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "cbc465d6-5f37-466c-a5d0-2cb2c48878e6",
+    "species": "Ponchomon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "petit_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_spring",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "celestial_hand",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d957cf56-107d-4523-96cb-2aeffadbc64a",
+    "species": "Argomon Ultimate",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "megaton_hydro",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "fire_coat",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "water_breath",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "528427d9-196e-4b85-9680-ccf401515ff7",
+    "species": "Shakkoumon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "gain_guard",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_flame",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nigimitama",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6d7a3c5b-f3f8-4ab8-a55a-0a9e3cda3c62",
+    "species": "BurningGreymon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "nature_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_water",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mental_cure",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3e4dca61-915d-4cf9-91b5-36a9462c4b9d",
+    "species": "Aldamon",
+    "rank": "Ultimate",
+    "skills": [
+      {
+        "skill": "sorrow_blue",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "claw_attack",
+        "level": 12,
+        "acquisition": "level"
+      },
+      {
+        "skill": "fatal_cross",
+        "level": 24,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "df67cc96-4a69-4f26-88d6-2c98ccaecfe6",
+    "species": "War Greymon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "blazing_power",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "flash_ray",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_beast",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c2b04d58-6c74-49ea-902f-b7fc16a1e342",
+    "species": "Ravemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "dark_thunder",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "spiral_r_claw",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8e58f41d-2d7f-4f3a-b94d-21a37f4ec691",
+    "species": "Vikemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "great_blizzard",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_guard",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mjollnir_hammer",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8f89a3d4-7b14-45dc-88ae-c5f0d44637d3",
+    "species": "Kuzuhamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_2",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "double_wave",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hard_shell",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3452a6f7-80f7-4c3e-9a78-0ba44f8c56a2",
+    "species": "Ophanimon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_shine",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "shine_slash",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "final_heal",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "198db8dd-fe31-40a7-8d52-b25fc617fd47",
+    "species": "Holydramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "shining_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_shine",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "great_blizzard",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f1b3b3b4-1b3b-4b3b-8b3b-3b3b3b3b3b3b",
+    "species": "Machinedramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "cyclone_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "saint_heal",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1a2b3c4d-5e6f-4a8b-9c1d-2e3f4a5b6c7d",
+    "species": "Black War Greymon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "instant_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "black_coat",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hard_shell",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e3f58de4-75f0-4e38-81a0-ad1c32367f97",
+    "species": "Shine Greymon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "dark_saviour",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "triple_wave",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dlgashbreeze",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "63a998c8-6ffd-4727-b324-7bac55f75275",
+    "species": "Hercules Kabuterimon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "crazyiceblast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "claw_attack",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dbl_crescent",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "cd380816-9fcf-42a0-8260-17a962fd536f",
+    "species": "GranKuwagamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "mega_meteor_fall",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dm_scissor",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5c59bdf1-0288-4a39-bfbc-3d513a6dfe4c",
+    "species": "Darkdramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "death_blast",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "giga_stick_l",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_dark",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b2dbcc35-8eeb-4f16-97aa-3f2e7a1a3df9",
+    "species": "Beelzemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "heavy_metal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_air",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "rising_ray_15462efd",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "0d320f41-5176-4d9d-88ea-59b037d5bc6b",
+    "species": "Megidramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "fang_of_desperation",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d9f9c182-731b-4f21-8e2f-167b2d663e34",
+    "species": "Metal Garurumon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "black_coat",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "claw_attack",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "48b7a3e5-3e43-4819-96b8-673bfe67d5c1",
+    "species": "Zeke Greymon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_7",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "pollen_spray",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hard_shell",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ec5a734e-fb3d-4aeb-9f6d-487d5db59ed9",
+    "species": "MetalSeadramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "ulti_stream",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_blaster",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ocean_wave",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2a9a5124-3a0a-4d1f-92cb-f1b7b99cf4e0",
+    "species": "GigaSeadramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "giga_bolt_shot",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "geo_magma_napalm",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_blaster",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "550e8400-e29b-41d4-a716-446655440000",
+    "species": "Lampmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "tear_bubble",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "celestial_hand",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ragingmachine",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "89a74286-d589-4f93-ae34-d456bf9e693f",
+    "species": "SaberLeomon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "nail_crusher",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "infinity_a",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_speed",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "species": "MetalEtemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "burst_tackle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gashingbreeze",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "purification",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b39a9a43-d7b6-4c24-91f2-0ebb53dd8258",
+    "species": "MarineAngemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "current_of_life",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "lovely_impact",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_water",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d1c5f6b8-2f3e-4e9b-8c2d-7a9e5f6d3b1a",
+    "species": "Piedmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "beast_whack",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "flash_punch",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "flower_necklace",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e6b9d4f2-8c7a-4d3e-9f2b-5c1d8e3a6f9b",
+    "species": "Creepymon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "illusion_m",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "g_cross_freezer",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "rainbow_spit",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a3d9f7c2-5e8b-4f1d-9c3a-7b2e6d4f8a1c",
+    "species": "Phoenixmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "crimson_flare",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "celestial_hand",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mental_cure",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "30a2feb7-e2c9-4094-aa4e-b3b307a44581",
+    "species": "Puppetmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "fatal_cross",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_wind",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_flame",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b54f3c5a-6af7-46de-abcb-92e4521d2a0c",
+    "species": "Rosemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "electro_whip",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_blaster",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "f_temptation",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "854269a7-33fa-47ca-94b7-a07e8c4da1bf",
+    "species": "VenomMyotismon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "blazing_power",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_2",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "frothier_spit",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "49d973b4-549f-45ff-9c41-e43dcc8b43f6",
+    "species": "Omnimon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "raging_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "highsonicvoice",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mjollnir_hammer",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f9a2b8c3-4e5d-4f7b-9c1e-8d6f3a2b5c7e",
+    "species": "Imperialdramon (Dragon Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "king_s_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "positron_laser",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_dark",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a1b3c5d7-6e8f-4a2b-9c4d-5e7f8a9b1c2d",
+    "species": "Imperialdramon (Fighter Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "king_s_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "positron_laser",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_dark",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b2c4d6e8-7f9a-4b3c-8d5e-6f8a9b1c2d3e",
+    "species": "Imperialdramon (Paladin Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_dark",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "king_s_claw",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "positron_laser",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c3d5e7f9-8a1b-4c2d-9e6f-7a9b1c2d3e4f",
+    "species": "Ghoulmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "shining_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "g_maelstrom",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_light",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d4e6f8a1-9b2c-4d3e-8f7a-6b1c2d3e4f5a",
+    "species": "Seraphimon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_shine",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "heaven_s_thunder",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "final_heal",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e5f7a9b1-2c3d-4e6f-8a7b-9c1d2e3f4a5b",
+    "species": "HiAndromon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "nanomachine_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "sonic_counter",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_flame",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f6a8b1c2-3d4e-4f7a-9b8c-1d2e3f4a5b6c",
+    "species": "Devitamamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "b_death_cloud",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "chaos_eye",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_dark",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a7b9c2d3-4e5f-4a8b-9c1d-2e3f4a5b6c7d",
+    "species": "Cherubimon (Good)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "dark_lightning",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dark_thunder",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "heaven_s_thunder",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "b8c1d3e4-5f6a-4b9c-8d2e-3f4a5b6c7d8e",
+    "species": "Cherubimon (Evil)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "love_hug",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "heaven_s_thunder",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "dark_lightning",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7b3a9d1e-2c8f-4a5b-9e6d-1f0c7b8a9d2e",
+    "species": "Gallantmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "n_cross_bomber",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "charge",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e218ca43-f503-407a-beae-0e208594c4bf",
+    "species": "Gallantmon (Crimson Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "bubble_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "junk_attack",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "blaze_power",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "601ab91e-bae5-4177-bc6e-3974fd13ca2c",
+    "species": "Mega Gargomon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "dbl_crescent",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "crazyiceblast",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_6",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "70534944-b963-476c-92e0-8cd37e6cf32d",
+    "species": "Sakuyamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "shining_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "light_mandala",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_shine",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "fb4c9abd-426d-44aa-b06f-6a3dfa21196a",
+    "species": "Diaboromon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "death_cannon",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_dark",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "catastrophic_c",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "610af57b-d922-4d43-bb51-9c884875709e",
+    "species": "Neptunmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "current_of_life",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "twin_neptune",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ulti_stream",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "70a0a853-63c1-4f47-855d-e8fb27625ce3",
+    "species": "Pukumon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "solar_hammer",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "needle_squall",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "crusher_punch",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "388ffee3-92ff-453b-bc5d-fae5d69801d0",
+    "species": "Gryphonmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "healing_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "saint_heal",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nano_break",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f6c16216-77a5-4b56-ae37-1f9e33b3abfd",
+    "species": "Preciomon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "aguichant_levres",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_2",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "kaimei_bokujuu",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "86d24d95-9244-48cd-94e0-be4e74f9ddf1",
+    "species": "Armageddemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "psychic_wave",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "cyclone_claw",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "fd_trident",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "53885aa6-dd9b-4667-b582-422d76781132",
+    "species": "MaloMyotismon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "gatling_bomb",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "absolute_zero_p",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e40a8d93-221c-4bd5-8bec-e574d0c1b087",
+    "species": "Imperialdramon (Dragon Mode) (Black)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "king_s_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_dark",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "positron_laser",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6c3b5d02-1a9b-4b1d-a8ee-84a6eebc3e1a",
+    "species": "Boltmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "electric_shock",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "tomahawk_stn",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gain_attack",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5ae9417e-592a-446b-874e-cf46575efd9b",
+    "species": "PrinceMamemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "purple_rain",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "smiley_w_head",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "nanomachine_heal",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c461ea05-0599-49d9-81cc-e2f27373b763",
+    "species": "Zanbamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "dark_thunder",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "death_slash",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f5eee0ae-a180-46a7-a6bb-70d72f0e78a5",
+    "species": "Black SaintGargomon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_2",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "bubble_blow",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "g_cross_freezer",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2d8e7094-e209-49af-ac57-b24ca1a26415",
+    "species": "Jijimon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "mental_cure",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hang_on_death",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2cb8232c-c35f-4a7b-b3a5-fa7ed495e33b",
+    "species": "Babamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "empress_haze",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "love_hug",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mental_cure",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "03277ace-25c2-404f-b975-f71ac309c8b0",
+    "species": "Anubismon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "boost_tackle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "fire_coat",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_7",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d31306f8-a586-461e-ac6a-03774baa9f40",
+    "species": "Parasimon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "electro_whip",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "crimson_whip",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8e081427-8054-4a05-bfa0-200d5f471a8b",
+    "species": "Cannondramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "gaia_healing",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "blast_shot",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "raging_water",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "5b3c2e1f-7b8a-4d1c-9e6a-2e1f0b9a8a7d",
+    "species": "SL Angemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "mjollnir_hammer",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ulti_guard",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bubble_blow",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a6d2f9a9-f8e8-4bc4-b137-0db50a8fa500",
+    "species": "Eaglemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "current_of_life",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "boost_tackle",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "burst_breath",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "bd9ff932-4112-4307-bbbd-36aa78bc130d",
+    "species": "Dorugoramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_flame",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_flame",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "king_s_claw",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "600cfcc7-2b9e-4be1-b0f7-81cf1ef9a70c",
+    "species": "Bantyo Leomon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "dark_saviour",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "poison_rain",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "mental_cure",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "cd02d04b-219d-4bc9-a92a-7580da263ac0",
+    "species": "Apocalymon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "gravity_ball",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "g_death_big_bang",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_dark",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "259b5023-6f5c-4543-879d-c5e73f09680d",
+    "species": "Ebemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "death_cannon",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burning_ray",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "br_rupture",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "186679a0-9fd2-4f85-af92-78085cf216bf",
+    "species": "Gulfmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "cursed_slash",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ice_blast",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "great_wall",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "48756847-94ea-46e6-aae4-ed75c0dd8e1f",
+    "species": "Goldramon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "raging_wind",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "burst_tackle",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "purification",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "37d122c0-59c8-4638-a8f6-75972a7a9cd6",
+    "species": "ZeedMillenniummon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "megaton_hydro",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "giga_breath",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "glory_thunder",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "8f9dec20-c882-4aba-8689-c408e5422d95",
+    "species": "Ghoulmon (Black)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "omegar_force",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "beak_attack",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "medical_care_system",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "859bce6e-ced6-4864-8a32-b4690e499b37",
+    "species": "Chaos Gallantmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "mental_cure",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_7",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "healing_spring",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e30d7b71-6e51-45af-a30e-b53b4a04735a",
+    "species": "Valkyrimon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "raging_light",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "water_breath",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "n_cross_bomber",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "03598e86-91f9-4afa-ad89-6e4bc8511eac",
+    "species": "Justimon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "trinity_arm",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "shine_cross",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3fbcadc8-da96-4739-b2e9-f285952aa689",
+    "species": "Skull Mammothmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "ice_arrow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "royal_blizzard",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "call_bat",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "fe69ceaa-854f-450d-b494-386b263b24a5",
+    "species": "Pharaohmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "shine_knuckle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "pyramid_power",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_dark",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2b224086-a176-4d0e-8b71-d710a22cc26d",
+    "species": "Susanoomon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "yakusa_no_ikazuchi",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_shine",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "shine_knuckle",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1c8626b0-da18-489f-83ee-83d27199fe02",
+    "species": "Alphamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "digi_of_soul",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "s_gradalpha",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "chrono_force",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "42528387-e8e5-4a69-adaa-7089aeb620a1",
+    "species": "Millenniummon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "cursed_slash",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "crescentcutter",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "highsonicvoice",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "cb130bef-eec8-4f09-8b50-f5c66118fe5f",
+    "species": "MoonMillenniummon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "electric_shock",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "healing_air",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "shining_heal",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "02cb1173-7e3d-477a-b388-6e46acb9aa65",
+    "species": "Sleipmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "odin_s_breath",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "gain_speed",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "bifrost",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f0bc93ba-8d0f-478a-b731-671cefb2b5c9",
+    "species": "MirageGaogamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "gale_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "full_moon_bst",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "2e1f9e6a-7b8a-4d1c-9d2e-8a7d1f0c5b3c",
+    "species": "JumboGamemon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "m_hydro_laser",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "jumbo_crater",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gigaton_hydro",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "7a3a7560-bdec-405b-94bb-18f5b2d3ca58",
+    "species": "QueenChessmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "cure_poison",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "bantyo_blade",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "giga_missile",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "6813bc53-5bea-424c-8dc1-ec0a1e7f381c",
+    "species": "KingChessmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "shining_heal",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "rainbow_aura",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "celestialcross",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "758a1f48-da44-47bc-8c0d-101759d6eef1",
+    "species": "Chronomon (Holy Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "ragingdarkness",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "celestialcross",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "healing_spring",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "c3d5e7f8-9a1b-4c2d-9e6f-7a8b9c1d2e3f",
+    "species": "Lilithmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_dark",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "lovely_impact",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "phantom_pain",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d182efd5-f240-4aaf-bb6b-3ef0afa6bc43",
+    "species": "Varodurumon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "double_wave",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "shining_heal",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "medical_care_system",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "ff254538-4f21-4cb1-84d9-f60fbd757893",
+    "species": "Apollomon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "phoebus_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_flame",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "solar_hammer",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "9d2afd12-c1fe-49e9-8691-f5060c2abc07",
+    "species": "Dianamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_water",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "crazy_ice_arrow",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "goodnight_moon",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "247abd72-4ecd-4dfd-9df3-26176ae99e07",
+    "species": "Shine Greymon (Burst Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "absolute_zero_p",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "black_blast",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "ice_blast",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "0705ba66-a64c-4fc6-9716-2c24a03e6eff",
+    "species": "Shine Greymon (Ruin Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "flash_ray",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "current_of_life",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "geomgmnapalm",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "d57bf83d-9d9d-4ea0-8f8d-b9474a49098a",
+    "species": "MirageGaogamon (Burst Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "full_moon_bst",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "double_crescent",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "057388fa-c9be-4ec9-9907-0e261ec538e4",
+    "species": "Ravemon (Burst Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "dark_thunder",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "spiral_r_claw",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "70dc0025-a6fd-4659-8a6d-77f8ce051054",
+    "species": "Lotosmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "crescentcutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_2",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "great_wall",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f6cbf477-f888-4c55-9f5e-04c563e471fc",
+    "species": "Beelzemon (Blast Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "gr_snow_blow",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "double_wave",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "air_gun",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "a2c3bfbc-0c7a-4a43-9671-066d2dcfd247",
+    "species": "Rosemon (Burst Mode)",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_blaster",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "roses_rapier",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "f_temptation",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "3f2bf06d-1081-4c12-ac9d-f0d04e27aecc",
+    "species": "Argomon Mega",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "glory_thunder",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "raging_flame",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "tear_bubble",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e3006fe9-b0b7-403c-85f6-109da77d4dd2",
+    "species": "Minervamon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_cutter",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "nature_heal",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "hyper_tornado",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e5205de4-2a24-4e30-b940-e6537def8e11",
+    "species": "Duftmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "aussterben",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "ernste_welle",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "power_cutter",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "4e9ee336-86e1-43aa-bb62-93a10f82a0f6",
+    "species": "Chaosmon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "power_shine",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "bancho_blade",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "destroy_cannon",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "1f8b2c41-6d7a-4f1d-8a79-1d3c2a96c1b7",
+    "species": "AncientGreymon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "great_d_claw",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_flame",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "gaia_tornado",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "e6a29e6f-9a3d-41a3-87c3-7c0c573b42de",
+    "species": "AncientGarurumon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "absolute_zero",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "power_shine",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "spn_claymore",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  },
+  {
+    "speciesSeed": "f7c2e60f-0a0d-4f87-95fc-1de3929b0b8a",
+    "species": "KaiserGreymon",
+    "rank": "Mega",
+    "skills": [
+      {
+        "skill": "bigbangtackle",
+        "level": 1,
+        "acquisition": "signature"
+      },
+      {
+        "skill": "beast_whack",
+        "level": 15,
+        "acquisition": "level"
+      },
+      {
+        "skill": "cursed_slash",
+        "level": 30,
+        "acquisition": "level"
+      }
+    ]
+  }
 ]

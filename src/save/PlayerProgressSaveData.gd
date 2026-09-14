@@ -1,7 +1,7 @@
 extends RefCounted
 class_name PlayerProgressSaveData
 
-const CURRENT_VERSION := 2
+const CURRENT_VERSION := 3
 
 var save_version: int = CURRENT_VERSION
 var collection: Dictionary = {}

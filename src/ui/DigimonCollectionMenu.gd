@@ -5,11 +5,17 @@ signal close_requested
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
+const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
+const FAVORITE_OFF_ICON = preload("res://assets/ui/icons/favorite_off.svg")
+const FAVORITE_ON_ICON = preload("res://assets/ui/icons/favorite_on.svg")
+const MOVE_DOWN_ICON = preload("res://assets/ui/icons/move_down.svg")
+const MOVE_UP_ICON = preload("res://assets/ui/icons/move_up.svg")
 
 var _database: DigimonDatabase
 var _progression: DigimonProgressionService
+var _technique_actions = ActionDatabaseScript.new()
 var _backdrop: ColorRect
 var _panel: PanelContainer
 var _title: Label
@@ -32,6 +38,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_database = OverworldState.get_database() as DigimonDatabase
 	_progression = ProgressionServiceScript.new(_database) as DigimonProgressionService
+	_technique_actions.load_default()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
@@ -352,13 +359,85 @@ func _build_development_card(instance: DigimonInstance) -> Control:
 	return card
 
 func _build_skills_card(instance: DigimonInstance) -> Control:
-	var card := _section_card("SKILLS", UI.GOLD)
+	var card := _section_card("TECHNIQUE LIBRARY", UI.GOLD)
 	var body := card.get_meta("body") as VBoxContainer
-	body.add_child(_subheading("EQUIPPED", UI.GOLD))
-	body.add_child(_wrapped_value(", ".join(instance.equipped_skills) if not instance.equipped_skills.is_empty() else "None equipped", UI.TEXT))
-	body.add_child(_subheading("LEARNED", UI.CYAN))
-	body.add_child(_wrapped_value(", ".join(instance.learned_skills) if not instance.learned_skills.is_empty() else "No learned techniques", UI.MUTED))
+	body.add_child(_subheading("FAVORITES %d / %d · SHORTCUTS ONLY" % [instance.favorite_skills.size(), DigimonInstance.MAX_FAVORITE_SKILLS], UI.GOLD))
+	if instance.learned_skills.is_empty():
+		body.add_child(_wrapped_value("No learned techniques", UI.MUTED))
+		return card
+	var ordered := instance.favorite_skills.duplicate()
+	for skill_id: String in instance.learned_skills:
+		if not ordered.has(skill_id) and not instance.archived_skills.has(skill_id):
+			ordered.append(skill_id)
+	for skill_id: String in instance.archived_skills:
+		if not ordered.has(skill_id):
+			ordered.append(skill_id)
+	for skill_id: String in ordered:
+		body.add_child(_technique_row(instance, skill_id))
 	return card
+
+
+func _technique_row(instance: DigimonInstance, skill_id: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var action := _technique_actions.get_action(skill_id, instance.get_skill_mastery_points(skill_id))
+	var name := String(action.get("name", skill_id.replace("_", " ").capitalize()))
+	var grade := instance.get_skill_mastery_grade(skill_id).capitalize()
+	var archived := instance.archived_skills.has(skill_id)
+	var info := _label("%s\n%s · %d / 24%s" % [name, grade, instance.get_skill_mastery_points(skill_id), " · Archived" if archived else ""], 10, UI.MUTED if archived else UI.TEXT, true)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(info)
+	var favorite := instance.favorite_skills.has(skill_id)
+	var favorite_button := _button("", UI.GOLD)
+	favorite_button.icon = FAVORITE_ON_ICON if favorite else FAVORITE_OFF_ICON
+	favorite_button.expand_icon = true
+	favorite_button.custom_minimum_size = Vector2(38, 34)
+	favorite_button.tooltip_text = "Remove favorite" if favorite else "Add favorite shortcut"
+	favorite_button.disabled = archived or (not favorite and instance.favorite_skills.size() >= DigimonInstance.MAX_FAVORITE_SKILLS)
+	favorite_button.pressed.connect(_toggle_favorite.bind(instance.id, skill_id, favorite))
+	row.add_child(favorite_button)
+	if favorite:
+		var favorite_index := instance.favorite_skills.find(skill_id)
+		var up := _button("", UI.CYAN)
+		up.icon = MOVE_UP_ICON
+		up.expand_icon = true
+		up.custom_minimum_size = Vector2(34, 34)
+		up.disabled = favorite_index <= 0
+		up.pressed.connect(_move_favorite.bind(instance.id, skill_id, favorite_index - 1))
+		row.add_child(up)
+		var down := _button("", UI.CYAN)
+		down.icon = MOVE_DOWN_ICON
+		down.expand_icon = true
+		down.custom_minimum_size = Vector2(34, 34)
+		down.disabled = favorite_index >= instance.favorite_skills.size() - 1
+		down.pressed.connect(_move_favorite.bind(instance.id, skill_id, favorite_index + 1))
+		row.add_child(down)
+	var archive_button := _button("RESTORE" if archived else "ARCHIVE", UI.CYAN)
+	archive_button.custom_minimum_size = Vector2(76, 34)
+	archive_button.pressed.connect(_toggle_archive.bind(instance.id, skill_id, archived))
+	row.add_child(archive_button)
+	return row
+
+
+func _toggle_favorite(instance_id: String, skill_id: String, was_favorite: bool) -> void:
+	if was_favorite:
+		OverworldState.unfavorite_technique(instance_id, skill_id)
+	else:
+		OverworldState.favorite_technique(instance_id, skill_id)
+	_refresh_details()
+
+
+func _toggle_archive(instance_id: String, skill_id: String, was_archived: bool) -> void:
+	if was_archived:
+		OverworldState.restore_technique(instance_id, skill_id)
+	else:
+		OverworldState.archive_technique(instance_id, skill_id)
+	_refresh_details()
+
+
+func _move_favorite(instance_id: String, skill_id: String, new_index: int) -> void:
+	OverworldState.move_favorite_technique(instance_id, skill_id, new_index)
+	_refresh_details()
 
 func _build_evolution_card(instance: DigimonInstance) -> Control:
 	var card := _section_card("EVOLUTION PATHS", UI.GREEN)

@@ -42,6 +42,9 @@ var _combat_preview: Dictionary = {}
 var _battle_over := false
 var _battle_result: Dictionary = {}
 var _defeated_enemy_ids: Array[String] = []
+var _effective_skill_uses_by_instance: Dictionary = {}
+var _observed_enemy_skill_ids: Array[String] = []
+var _recent_skill_ids: Array[String] = []
 
 
 func _ready() -> void:
@@ -123,6 +126,9 @@ func _start_battle() -> void:
 	_battle_over = false
 	_battle_result.clear()
 	_defeated_enemy_ids.clear()
+	_effective_skill_uses_by_instance.clear()
+	_observed_enemy_skill_ids.clear()
+	_recent_skill_ids.clear()
 	_start_next_turn()
 
 
@@ -159,6 +165,11 @@ func _start_next_turn() -> void:
 		_handle_knockout(current_actor)
 		if not _check_battle_end():
 			call_deferred("_start_next_turn")
+		return
+	if _status_system.prevents_action(current_actor):
+		_event_bus.emit_event("turn_skipped", {"actor_id": _instance_id(current_actor), "reason": "status"})
+		phase = Phase.ACTION_RESOLVE
+		call_deferred("_end_turn")
 		return
 
 	phase = Phase.COMMAND
@@ -289,8 +300,10 @@ func begin_basic_attack() -> bool:
 func begin_skill(skill_id: String) -> bool:
 	if not _can_act_now():
 		return false
-	var action: Dictionary = _action_database.get_action(skill_id)
+	var action: Dictionary = _action_for_actor(current_actor, skill_id)
 	if action.is_empty() or not _actor_knows_skill(current_actor, skill_id):
+		return false
+	if String(action.get("availability", "ready")) != "ready":
 		return false
 	if _current_sp(current_actor) < int(action.get("spCost", 0)):
 		return false
@@ -428,8 +441,8 @@ func _update_combat_preview(target: Node, locked: bool) -> void:
 
 func _execute_selected_action() -> void:
 	var action: Dictionary = _selected_action.duplicate(true)
-	var target: Node = _selected_target
-	if action.is_empty() or target == null:
+	var aim_target: Node = _selected_target
+	if action.is_empty() or aim_target == null:
 		return
 	_input_locked = true
 	phase = Phase.ACTION_RESOLVE
@@ -441,55 +454,35 @@ func _execute_selected_action() -> void:
 
 	_event_bus.emit_event("action_started", {
 		"actor_id": _instance_id(current_actor),
-		"target_id": _instance_id(target),
+		"target_id": _instance_id(aim_target),
 		"action_id": String(action.get("id", "")),
 	})
-	var hit: bool = _battle_rng.roll_percent(float(action.get("accuracy", 100.0)))
+	var resolved_targets: Array[Node] = _targeting_system.valid_targets_for_aim(_field, current_actor, _turn_order, action, _grid_for_actor(aim_target))
+	if resolved_targets.is_empty():
+		resolved_targets.append(aim_target)
+	var any_hit := false
 	var critical := false
 	var applied_damage := 0
-	if hit:
-		var effects = action.get("effects", [])
-		if effects is Array:
-			for raw_effect in effects:
-				if not raw_effect is Dictionary:
-					continue
-				var effect: Dictionary = raw_effect
-				match String(effect.get("type", "")):
-					"damage":
-						var preview: Dictionary = _damage_calculator.preview(current_actor, target, action)
-						critical = bool(action.get("canCrit", false)) and _battle_rng.roll_percent(float(preview.get("crit_chance", 0.0)))
-						var raw_damage: int = int(preview.get("critical_damage" if critical else "damage", 0))
-						applied_damage = int(target.call("take_damage", raw_damage)) if target.has_method("take_damage") else 0
-						_event_bus.emit_event("damage_applied", {
-							"actor_id": _instance_id(current_actor),
-							"target_id": _instance_id(target),
-							"action_id": String(action.get("id", "")),
-							"damage": applied_damage,
-							"critical": critical,
-							"type_modifier": float(preview.get("type_modifier", 1.0)),
-							"element_modifier": float(preview.get("element_modifier", 1.0)),
-						})
-					"status":
-						var chance: float = float(effect.get("chance", 100.0))
-						if _battle_rng.roll_percent(chance):
-							var status_id: String = String(effect.get("status", ""))
-							var duration: int = int(effect.get("duration", -1))
-							if _status_system.apply(target, status_id, duration, _instance_id(current_actor)):
-								_event_bus.emit_event("status_applied", {
-									"actor_id": _instance_id(current_actor),
-									"target_id": _instance_id(target),
-									"status": status_id,
-								})
-								notify_speed_changed()
-	else:
-		_event_bus.emit_event("action_missed", {
-			"actor_id": _instance_id(current_actor),
-			"target_id": _instance_id(target),
-			"action_id": String(action.get("id", "")),
-		})
+	var effective := false
+	for target: Node in resolved_targets:
+		var hit := _battle_rng.roll_percent(float(action.get("accuracy", 100.0)))
+		any_hit = any_hit or hit
+		if not hit:
+			_event_bus.emit_event("action_missed", {"actor_id": _instance_id(current_actor), "target_id": _instance_id(target), "action_id": String(action.get("id", ""))})
+			continue
+		var outcome := _resolve_action_effects(action, target)
+		applied_damage += int(outcome.get("damage", 0))
+		critical = critical or bool(outcome.get("critical", false))
+		effective = effective or bool(outcome.get("effective", false))
+		if not _actor_available(target):
+			_handle_knockout(target)
 
-	if not _actor_available(target):
-		_handle_knockout(target)
+	var action_id := String(action.get("id", ""))
+	if action_id != "basic_attack":
+		_recent_skill_ids.erase(action_id)
+		_recent_skill_ids.push_front(action_id)
+	if effective and action_id != "basic_attack":
+		_record_effective_skill_use(current_actor, action_id)
 
 	_has_acted = true
 	_action_recovery_added = float(action.get("recoveryCost", 30.0))
@@ -497,13 +490,14 @@ func _execute_selected_action() -> void:
 	_preview_recovery_cost = _pending_recovery_cost
 	_event_bus.emit_event("action_finished", {
 		"actor_id": _instance_id(current_actor),
-		"target_id": _instance_id(target),
+		"target_id": _instance_id(aim_target),
 		"action_id": String(action.get("id", "")),
-		"hit": hit,
+		"hit": any_hit,
 		"critical": critical,
 		"damage": applied_damage,
 		"sp_cost": sp_cost,
 		"recovery_added": _action_recovery_added,
+		"effective": effective,
 	})
 	_clear_action_selection(false)
 	_input_locked = false
@@ -517,6 +511,79 @@ func _execute_selected_action() -> void:
 	else:
 		phase = Phase.COMMAND
 		_refresh_hud()
+
+
+func _resolve_action_effects(action: Dictionary, target: Node) -> Dictionary:
+	var outcome := {"damage": 0, "critical": false, "effective": false}
+	var effects = action.get("effects", [])
+	if not effects is Array:
+		return outcome
+	for raw_effect in effects:
+		if not raw_effect is Dictionary:
+			continue
+		var effect := raw_effect as Dictionary
+		match String(effect.get("type", "")):
+			"damage":
+				var hit_count := maxi(1, int(effect.get("hits", 1)))
+				for hit_index in range(hit_count):
+					if not _actor_available(target):
+						break
+					var hit_action := action.duplicate(true)
+					if hit_count > 1:
+						hit_action["power"] = maxi(1, int(round(float(action.get("power", 0)) / float(hit_count))))
+					var preview: Dictionary = _damage_calculator.preview(current_actor, target, hit_action)
+					var hit_critical := bool(action.get("canCrit", false)) and _battle_rng.roll_percent(float(preview.get("crit_chance", 0.0)))
+					var raw_damage: int = int(preview.get("critical_damage" if hit_critical else "damage", 0))
+					var hit_damage := int(target.call("take_damage", raw_damage)) if target.has_method("take_damage") else 0
+					outcome["damage"] = int(outcome["damage"]) + hit_damage
+					outcome["critical"] = bool(outcome["critical"]) or hit_critical
+					outcome["effective"] = bool(outcome["effective"]) or hit_damage > 0
+					_event_bus.emit_event("damage_applied", {"actor_id": _instance_id(current_actor), "target_id": _instance_id(target), "action_id": String(action.get("id", "")), "damage": hit_damage, "hit_index": hit_index, "hit_count": hit_count, "critical": hit_critical, "type_modifier": float(preview.get("type_modifier", 1.0)), "element_modifier": float(preview.get("element_modifier", 1.0))})
+					_apply_damage_reaction(target, action, hit_damage)
+					if not _actor_available(current_actor):
+						break
+			"heal":
+				var maximum_hp: int = int(target.call("get_final_stat", "hp")) if target.has_method("get_final_stat") else 1
+				var heal_amount: int = int(effect.get("amount", 0))
+				if effect.has("percentMaxHp"):
+					heal_amount = int(round(float(maximum_hp) * float(effect.get("percentMaxHp", 0.0)) / 100.0))
+				elif heal_amount <= 0:
+					heal_amount = maxi(1, int(action.get("power", 0)))
+				var restored: int = int(target.call("heal", heal_amount)) if target.has_method("heal") else 0
+				outcome["effective"] = bool(outcome["effective"]) or restored > 0
+				_event_bus.emit_event("healing_applied", {"actor_id": _instance_id(current_actor), "target_id": _instance_id(target), "action_id": String(action.get("id", "")), "healing": restored})
+			"restore_sp":
+				var restored_sp := int(target.call("restore_sp", maxi(0, int(effect.get("amount", 0))))) if target.has_method("restore_sp") else 0
+				outcome["effective"] = bool(outcome["effective"]) or restored_sp > 0
+			"cleanse":
+				var status_ids = effect.get("statuses", [])
+				if status_ids is Array:
+					for raw_status_id in status_ids:
+						outcome["effective"] = _status_system.remove(target, String(raw_status_id)) or bool(outcome["effective"])
+			"revive":
+				var revived := int(target.call("revive", float(effect.get("percentMaxHp", 25.0)))) if target.has_method("revive") else 0
+				outcome["effective"] = bool(outcome["effective"]) or revived > 0
+				if revived > 0:
+					_event_bus.emit_event("unit_revived", {"actor_id": _instance_id(current_actor), "target_id": _instance_id(target), "healing": revived})
+			"drain_hp":
+				var drained_hp := int(round(float(outcome["damage"]) * float(effect.get("percentOfDamage", 35.0)) / 100.0))
+				if current_actor.has_method("heal"):
+					outcome["effective"] = int(current_actor.call("heal", drained_hp)) > 0 or bool(outcome["effective"])
+			"drain_sp":
+				if current_actor.has_method("restore_sp"):
+					outcome["effective"] = int(current_actor.call("restore_sp", maxi(0, int(effect.get("amount", 0))))) > 0 or bool(outcome["effective"])
+			"push", "pull":
+				outcome["effective"] = _apply_forced_movement(target, String(effect.get("type", "")), maxi(1, int(effect.get("distance", 1)))) or bool(outcome["effective"])
+			"status":
+				if _battle_rng.roll_percent(float(effect.get("chance", 100.0))):
+					var status_id := String(effect.get("status", ""))
+					var duration := int(effect.get("duration", -1))
+					var was_useful := not _status_system.has_status(target, status_id) or _status_system.remaining_duration(target, status_id) < duration
+					if _status_system.apply(target, status_id, duration, _instance_id(current_actor)):
+						outcome["effective"] = bool(outcome["effective"]) or was_useful
+						_event_bus.emit_event("status_applied", {"actor_id": _instance_id(current_actor), "target_id": _instance_id(target), "status": status_id})
+						notify_speed_changed()
+	return outcome
 
 
 func _show_action_range() -> void:
@@ -573,25 +640,35 @@ func get_available_skills() -> Array[Dictionary]:
 	if current_actor == null:
 		return result
 	var skill_ids: Array[String] = []
-	if current_actor.has_method("get_equipped_skill_ids"):
-		var raw_skill_ids = current_actor.call("get_equipped_skill_ids")
+	if current_actor.has_method("get_learned_skill_ids"):
+		var raw_skill_ids = current_actor.call("get_learned_skill_ids")
 		if raw_skill_ids is Array:
 			for raw_id in raw_skill_ids:
 				var skill_id := String(raw_id)
 				if not skill_id.is_empty() and not skill_ids.has(skill_id):
 					skill_ids.append(skill_id)
 	if skill_ids.is_empty():
-		var species_name: String = _display_name(current_actor)
+		var species_name: String = String(current_actor.call("get_species_seed")) if current_actor.has_method("get_species_seed") else _display_name(current_actor)
 		var level: int = int(current_actor.call("get_level")) if current_actor.has_method("get_level") else 1
 		var fallback: Array[Dictionary] = _action_database.get_known_actions(species_name, level)
 		for action: Dictionary in fallback:
 			skill_ids.append(String(action.get("id", "")))
 	for skill_id: String in skill_ids:
-		var action: Dictionary = _action_database.get_action(skill_id)
+		var action: Dictionary = _action_for_actor(current_actor, skill_id)
 		if action.is_empty():
 			continue
 		action["affordable"] = _current_sp(current_actor) >= int(action.get("spCost", 0))
+		action["available"] = String(action.get("availability", "ready")) == "ready"
+		action["unavailableReason"] = "Requires DigiXros" if not bool(action["available"]) else ""
+		var favorites := _actor_string_list(current_actor, "get_favorite_skill_ids")
+		action["favorite"] = favorites.has(skill_id)
+		action["favoriteIndex"] = favorites.find(skill_id)
+		action["archived"] = _actor_string_list(current_actor, "get_archived_skill_ids").has(skill_id)
+		action["currentSignature"] = _action_database.get_signature_action_ids(String(current_actor.call("get_species_seed")) if current_actor.has_method("get_species_seed") else "").has(skill_id)
+		action["libraryIndex"] = skill_ids.find(skill_id)
+		action["recentIndex"] = _recent_skill_ids.find(skill_id) if _recent_skill_ids.has(skill_id) else 999999
 		result.append(action)
+	result.sort_custom(_sort_available_skills)
 	return result
 
 
@@ -606,7 +683,7 @@ func get_selected_action() -> Dictionary:
 func preview_skill_recovery(skill_id: String) -> void:
 	if _has_acted or current_actor == null:
 		return
-	var action: Dictionary = _action_database.get_action(skill_id)
+	var action: Dictionary = _action_for_actor(current_actor, skill_id)
 	if action.is_empty():
 		return
 	_preview_recovery_cost = clampf(_pending_recovery_cost + float(action.get("recoveryCost", 30.0)), MIN_RECOVERY_COST, MAX_RECOVERY_COST)
@@ -706,13 +783,13 @@ func _distance_to_nearest(grid: Vector2i, actors: Array[Node]) -> int:
 func _enemy_actions(actor: Node) -> Array[Dictionary]:
 	var result: Array[Dictionary] = [_basic_attack_definition()]
 	var ids: Array[String] = []
-	if actor != null and actor.has_method("get_equipped_skill_ids"):
-		var raw_ids = actor.call("get_equipped_skill_ids")
+	if actor != null and actor.has_method("get_learned_skill_ids"):
+		var raw_ids = actor.call("get_learned_skill_ids")
 		if raw_ids is Array:
 			for raw_id in raw_ids:
 				ids.append(String(raw_id))
 	for skill_id: String in ids:
-		var action: Dictionary = _action_database.get_action(skill_id)
+		var action: Dictionary = _action_for_actor(actor, skill_id)
 		if not action.is_empty() and _current_sp(actor) >= int(action.get("spCost", 0)):
 			result.append(action)
 	return result
@@ -721,8 +798,8 @@ func _enemy_actions(actor: Node) -> Array[Dictionary]:
 func _actor_knows_skill(actor: Node, skill_id: String) -> bool:
 	if actor == null:
 		return false
-	if actor.has_method("get_equipped_skill_ids"):
-		var raw_ids = actor.call("get_equipped_skill_ids")
+	if actor.has_method("get_learned_skill_ids"):
+		var raw_ids = actor.call("get_learned_skill_ids")
 		return raw_ids is Array and (raw_ids as Array).has(skill_id)
 	return false
 
@@ -811,6 +888,8 @@ func _build_battle_result(victory: bool) -> Dictionary:
 			var species_name := String(species.get("name", "Unknown"))
 			var rank := String(species.get("rank", "Rookie"))
 			var data_gain := _digi_data_for_rank(rank) + maxi(0, level - 1)
+			if _status_system.has_status(actor, "data_mark"):
+				data_gain = int(ceil(float(data_gain) * 1.25))
 			digi_data[species_name] = int(digi_data.get(species_name, 0)) + data_gain
 	return {
 		"victory": victory,
@@ -819,7 +898,106 @@ func _build_battle_result(victory: bool) -> Dictionary:
 		"bits": bits,
 		"digi_data": digi_data,
 		"defeated_enemy_count": _defeated_enemy_ids.size(),
+		"mastery_uses": _effective_skill_uses_by_instance.duplicate(true) if victory else {},
+		"observed_techniques": _observed_enemy_skill_ids.duplicate() if victory else [],
 	}
+
+
+func _action_for_actor(actor: Node, skill_id: String) -> Dictionary:
+	var points := 0
+	if actor != null and actor.has_method("get_skill_mastery_points"):
+		points = int(actor.call("get_skill_mastery_points", skill_id))
+	var action := _action_database.get_action(skill_id, points)
+	if not action.is_empty():
+		action["accuracy"] = clampf(float(action.get("accuracy", 100.0)) + _status_system.accuracy_modifier(actor), 0.0, 100.0)
+	return action
+
+
+func _apply_damage_reaction(target: Node, action: Dictionary, received_damage: int) -> void:
+	if received_damage <= 0 or not _actor_available(target) or not _actor_available(current_actor):
+		return
+	var damage_class := String(action.get("damageClass", "physical"))
+	var percent := _status_system.reaction_percent(target, damage_class)
+	if percent <= 0.0 or not current_actor.has_method("take_damage"):
+		return
+	var reaction_damage := maxi(1, int(round(float(received_damage) * percent / 100.0)))
+	var applied := int(current_actor.call("take_damage", reaction_damage))
+	_event_bus.emit_event("damage_reacted", {
+		"actor_id": _instance_id(target),
+		"target_id": _instance_id(current_actor),
+		"action_id": String(action.get("id", "")),
+		"reaction": "reflect" if damage_class.to_lower() == "special" else "counter",
+		"damage": applied,
+	})
+	if not _actor_available(current_actor):
+		_handle_knockout(current_actor)
+
+
+func _actor_string_list(actor: Node, method_name: StringName) -> Array[String]:
+	var result: Array[String] = []
+	if actor == null or not actor.has_method(method_name):
+		return result
+	var raw_values = actor.call(method_name)
+	if raw_values is Array:
+		for raw_value in raw_values:
+			result.append(String(raw_value))
+	return result
+
+
+func _record_effective_skill_use(actor: Node, skill_id: String) -> void:
+	if actor == null or skill_id.is_empty():
+		return
+	if bool(actor.get("is_player_controlled")):
+		var instance_id := _instance_id(actor)
+		var instance_uses: Dictionary = _effective_skill_uses_by_instance.get(instance_id, {})
+		instance_uses[skill_id] = mini(2, int(instance_uses.get(skill_id, 0)) + 1)
+		_effective_skill_uses_by_instance[instance_id] = instance_uses
+	elif not _observed_enemy_skill_ids.has(skill_id):
+		_observed_enemy_skill_ids.append(skill_id)
+
+
+func _apply_forced_movement(target: Node, mode: String, distance: int) -> bool:
+	if target == null or current_actor == null or _field == null or not target.has_method("debug_relocate_to_grid"):
+		return false
+	var source_grid := _grid_for_actor(current_actor)
+	var target_grid := _grid_for_actor(target)
+	var delta := target_grid - source_grid
+	if delta == Vector2i.ZERO:
+		return false
+	var direction := Vector2i(signi(delta.x), 0) if absi(delta.x) >= absi(delta.y) else Vector2i(0, signi(delta.y))
+	if mode == "pull":
+		direction = -direction
+	var destination := target_grid
+	for _step in range(distance):
+		var candidate := destination + direction
+		if _field.has_method("get_tile_block_reason") and not String(_field.call("get_tile_block_reason", candidate, target)).is_empty():
+			break
+		destination = candidate
+	if destination == target_grid:
+		return false
+	return bool(target.call("debug_relocate_to_grid", destination, _field))
+
+
+func _sort_available_skills(a: Dictionary, b: Dictionary) -> bool:
+	var a_favorite := bool(a.get("favorite", false))
+	var b_favorite := bool(b.get("favorite", false))
+	if a_favorite != b_favorite:
+		return a_favorite
+	if a_favorite and int(a.get("favoriteIndex", 0)) != int(b.get("favoriteIndex", 0)):
+		return int(a.get("favoriteIndex", 0)) < int(b.get("favoriteIndex", 0))
+	var a_signature := bool(a.get("currentSignature", false))
+	var b_signature := bool(b.get("currentSignature", false))
+	if a_signature != b_signature:
+		return a_signature
+	var a_affordable := bool(a.get("affordable", false))
+	var b_affordable := bool(b.get("affordable", false))
+	if a_affordable != b_affordable:
+		return a_affordable
+	var a_category := String(a.get("category", ""))
+	var b_category := String(b.get("category", ""))
+	if a_category != b_category:
+		return a_category < b_category
+	return String(a.get("name", "")) < String(b.get("name", ""))
 
 
 func _digi_data_for_rank(rank: String) -> int:
