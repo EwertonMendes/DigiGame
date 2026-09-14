@@ -42,12 +42,10 @@ func _run(field: Node2D, controller: Node2D) -> void:
 	if greymon == null or enemy == null:
 		return
 
-	# Runtime deployment is intentionally randomized. This regression verifies tile
-	# ownership / pointer resolution, not deployment randomness, so establish the
-	# overlapping pair on two known valid central tiles. Otherwise an unrelated
-	# randomly spawned Digimon can already occupy the adjacent tile (or Koromon can
-	# spawn on the map edge), making the test nondeterministic while gameplay is
-	# still correct.
+	# Footprint ownership is anchored by grid_anchor. Test relocation therefore uses
+	# the actor relocation contract instead of moving only its visual transform.
+	# This keeps the occupancy index and rendered position in sync exactly as real
+	# movement does.
 	var map_data_variant = field.get("tile_map_data")
 	var map_data: Dictionary = map_data_variant if map_data_variant is Dictionary else {}
 	_assert(map_data.has(TEST_ENEMY_GRID), "Deterministic enemy test tile is missing from the field")
@@ -56,12 +54,19 @@ func _run(field: Node2D, controller: Node2D) -> void:
 		return
 
 	_move_other_actors_out_of_test_tiles(field, controller, greymon, enemy)
+	_assert(enemy.has_method("debug_relocate_to_grid"), "Battle actor must expose grid-aware debug relocation")
+	_assert(greymon.has_method("debug_relocate_to_grid"), "Battle actor must expose grid-aware debug relocation")
+	if not enemy.has_method("debug_relocate_to_grid") or not greymon.has_method("debug_relocate_to_grid"):
+		return
+	_assert(bool(enemy.call("debug_relocate_to_grid", TEST_ENEMY_GRID, field)), "Koromon test actor could not relocate to its reserved grid anchor")
+	controller.call("refresh_occupancy_index")
+	_assert(bool(greymon.call("debug_relocate_to_grid", TEST_GREYMON_GRID, field)), "Greymon test actor could not relocate to its reserved grid anchor")
+	controller.call("refresh_occupancy_index")
+
 	var enemy_local := Vector2(field.call("grid_to_world", TEST_ENEMY_GRID))
 	var enemy_tile_world := field.to_global(enemy_local)
 	var greymon_local := Vector2(field.call("grid_to_world", TEST_GREYMON_GRID))
 	var greymon_tile_world := field.to_global(greymon_local)
-	enemy.global_position = enemy_tile_world + Vector2(enemy.get("PLAYER_POSITION_DEVIATION"))
-	greymon.global_position = greymon_tile_world + Vector2(greymon.get("PLAYER_POSITION_DEVIATION"))
 
 	# Every sampled point inside the occupied diamond must resolve to the Digimon
 	# standing on that tile, independent of sprite size, transparent pixels, or
@@ -100,18 +105,37 @@ func _run(field: Node2D, controller: Node2D) -> void:
 
 func _move_other_actors_out_of_test_tiles(field: Node2D, controller: Node2D, greymon: Node, enemy: Node) -> void:
 	var reserved := {TEST_ENEMY_GRID: true, TEST_GREYMON_GRID: true}
-	var evacuation_index := 0
+	var map_data_variant = field.get("tile_map_data")
+	var map_data: Dictionary = map_data_variant if map_data_variant is Dictionary else {}
 	for actor: Node in controller.call("get_battle_digimons"):
-		if actor == greymon or actor == enemy or not actor.has_method("get_tile_world_position"):
+		if actor == greymon or actor == enemy or not actor.has_method("get_occupied_grids"):
 			continue
-		var actor_tile_world := Vector2(actor.call("get_tile_world_position"))
-		var actor_grid := Vector2i(field.call("world_to_grid", field.to_local(actor_tile_world)))
-		if not reserved.has(actor_grid):
+		var overlaps_reserved := false
+		for occupied_grid: Vector2i in actor.call("get_occupied_grids"):
+			if reserved.has(occupied_grid):
+				overlaps_reserved = true
+				break
+		if not overlaps_reserved:
 			continue
-		# Move only test contaminants well outside the map. Their battle state is
-		# irrelevant to this isolated pointer-selection regression.
-		actor.global_position = Vector2(100000.0 + evacuation_index * 128.0, 100000.0)
-		evacuation_index += 1
+		_assert(actor.has_method("debug_relocate_to_grid"), "Contaminating battle actor must support grid-aware relocation")
+		if not actor.has_method("debug_relocate_to_grid"):
+			continue
+		var relocated := false
+		var candidates: Array[Vector2i] = []
+		for raw_grid in map_data.keys():
+			if raw_grid is Vector2i:
+				candidates.append(Vector2i(raw_grid))
+		candidates.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			return a.y < b.y if a.y != b.y else a.x < b.x
+		)
+		for candidate in candidates:
+			if reserved.has(candidate):
+				continue
+			if bool(actor.call("debug_relocate_to_grid", candidate, field)):
+				controller.call("refresh_occupancy_index")
+				relocated = true
+				break
+		_assert(relocated, "Could not clear reserved tile-selection regression cells without violating occupancy rules")
 
 
 func _assert(condition: bool, message: String) -> void:
