@@ -1,0 +1,59 @@
+name: Audit Garurumon-line DS sources
+
+on:
+  push:
+    branches:
+      - feat/garurumon-line-ds-sprites
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install sprite tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+      - name: Audit matching WtW archive sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, io, json
+          from pathlib import Path
+          from PIL import Image
+          from tools.build_early_rank_ds_fields import load_wtw_archive, _components, _group_by_y
+
+          archive = load_wtw_archive()
+          terms = ('garuru', 'mojya', 'omnimon', 'omegamon')
+          names = [n for n in archive.namelist() if n.lower().endswith(('.png','.gif')) and any(t in n.lower() for t in terms)]
+          print('MATCHING MEMBERS')
+          for name in names:
+              payload = archive.read(name)
+              with Image.open(io.BytesIO(payload)) as image:
+                  rgba = image.convert('RGBA')
+                  bg, comps = _components(rgba)
+                  candidates = [c for c in comps if 10 <= c['w'] <= 70 and 7 <= c['h'] <= 80 and c['area'] >= 60]
+                  rows = _group_by_y(candidates, tolerance=8.0)
+                  print(json.dumps({
+                      'member': name,
+                      'sha256': hashlib.sha256(payload).hexdigest(),
+                      'size': list(rgba.size),
+                      'background': list(bg),
+                      'row_counts': [len(r) for r in rows],
+                      'row_centers': [round(sum(c['cy'] for c in r)/len(r),1) for r in rows],
+                      'row_x_centers': [[round(c['cx'],1) for c in sorted(r,key=lambda x:x['cx'])] for r in rows],
+                  }))
+                  out = Path('audit_sources') / Path(name).name
+                  out.parent.mkdir(exist_ok=True)
+                  out.write_bytes(payload)
+          PY
+      - name: Upload audited source sheets
+        uses: actions/upload-artifact@v4
+        with:
+          name: garurumon-source-audit
+          path: audit_sources/*
+          if-no-files-found: error
+          retention-days: 3
