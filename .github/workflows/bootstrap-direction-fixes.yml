@@ -28,21 +28,14 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import json
           from pathlib import Path
-          import re
 
           path = Path('database/ds-additional-sources.json')
-          text = path.read_text(encoding='utf-8')
+          data = json.loads(path.read_text(encoding='utf-8'))
 
-          anchor = '    "rear_rows_first": [2, 3, 0, 1],\n'
-          additions = (
-              '    "canonical_rows_front_reversed": [1, 0, 3, 2],\n'
-              '    "rear_rows_first_horizontal_reversed": [3, 2, 1, 0],\n'
-          )
-          if '"canonical_rows_front_reversed"' not in text:
-              if anchor not in text:
-                  raise SystemExit('Pattern insertion anchor not found')
-              text = text.replace(anchor, anchor + additions, 1)
+          data['patterns']['canonical_rows_front_reversed'] = [1, 0, 3, 2]
+          data['patterns']['rear_rows_first_horizontal_reversed'] = [3, 2, 1, 0]
 
           corrections = {
               'DKTyrannomon': 'canonical_rows',
@@ -52,21 +45,11 @@ jobs:
               'Darkdramon': 'rear_rows_first_horizontal_reversed',
           }
           for species, pattern in corrections.items():
-              rx = re.compile(r'("' + re.escape(species) + r'"\s*:\s*\{.*?"pattern"\s*:\s*")[^"]+(" )?', re.S)
-              match = rx.search(text)
-              if match is None:
-                  # Same expression without a trailing-space capture; kept explicit for readable failure.
-                  rx = re.compile(r'("' + re.escape(species) + r'"\s*:\s*\{.*?"pattern"\s*:\s*")[^"]+(" )', re.S)
-                  match = rx.search(text)
-              if match is None:
-                  # Normal JSON line ends immediately after the quote.
-                  rx = re.compile(r'("' + re.escape(species) + r'"\s*:\s*\{.*?"pattern"\s*:\s*")[^"]+(")', re.S)
-                  match = rx.search(text)
-              if match is None:
-                  raise SystemExit(f'Could not find pattern for {species}')
-              text = text[:match.start()] + match.group(1) + pattern + match.group(2) + text[match.end():]
+              if species not in data['species']:
+                  raise SystemExit(f'Missing species in directional source manifest: {species}')
+              data['species'][species]['pattern'] = pattern
 
-          path.write_text(text, encoding='utf-8')
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
           PY
 
       - name: Rebuild generated DS assets
