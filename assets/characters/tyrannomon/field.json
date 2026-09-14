@@ -8,10 +8,10 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "two_rows_of_six",
-  "review_pattern": "canonical_rows_rear_reversed",
+  "review_pattern": "canonical_rows_front_reversed",
   "runtime_group_indices": [
-    0,
     1,
+    0,
     3,
     2
   ],
@@ -80,29 +80,9 @@
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 3,
-        "y": 228,
-        "w": 28,
-        "h": 39
-      },
-      {
-        "x": 50,
-        "y": 229,
-        "w": 29,
-        "h": 38
-      },
-      {
-        "x": 96,
-        "y": 228,
-        "w": 29,
-        "h": 39
-      }
-    ],
-    "down_right": [
-      {
-        "x": 250,
+        "x": 156,
         "y": 226,
-        "w": 28,
+        "w": 29,
         "h": 39
       },
       {
@@ -112,9 +92,29 @@
         "h": 38
       },
       {
-        "x": 156,
+        "x": 250,
         "y": 226,
+        "w": 28,
+        "h": 39
+      }
+    ],
+    "down_right": [
+      {
+        "x": 96,
+        "y": 228,
         "w": 29,
+        "h": 39
+      },
+      {
+        "x": 50,
+        "y": 229,
+        "w": 29,
+        "h": 38
+      },
+      {
+        "x": 3,
+        "y": 228,
+        "w": 28,
         "h": 39
       }
     ],
