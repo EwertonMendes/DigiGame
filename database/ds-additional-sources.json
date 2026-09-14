@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "canonical_runtime_order": ["down_left", "down_right", "up_left", "up_right"],
+  "canonical_runtime_phases": ["idle", "step_a", "step_b"],
+  "patterns": {
+    "canonical_rows": [0, 1, 2, 3],
+    "rear_rows_first": [2, 3, 0, 1],
+    "compact_interleaved": [0, 2, 1, 3]
+  },
+  "profiles": {
+    "two_rows_of_six": {"kind": "two_rows_of_six"},
+    "single_row_four_triples": {"kind": "single_row_four_triples"},
+    "four_rows_rightmost_triples": {"kind": "four_rows_rightmost_triples"}
+  },
+  "species": {
+    "Geo Greymon": {
+      "source_id": 139,
+      "source_member": "sprite thread/139_GeoGreymon.png",
+      "source_sha256": "ea13b663b0b6e748f06db99d0f9f40aafed0926d7586788c03a514ebba3c8f72",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/139_GeoGreymon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Rize Greymon": {
+      "source_id": 256,
+      "source_member": "sprite thread/256_RiseGreymon.png",
+      "source_sha256": "7d6d498cc10538307be88f1c8c0b22dcfaf4c7536b623e108b2dc87ed0b6b4c0",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/256_RiseGreymon.png",
+      "profile": "single_row_four_triples",
+      "pattern": "canonical_rows"
+    },
+    "War Greymon": {
+      "source_id": 309,
+      "source_member": "sprite thread/309_WarGreymon.png",
+      "source_sha256": "b1539843fde32a68b9e4901facb7c01ae1ba3ec3f4a27ea27db0ad8f96646d65",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/309_WarGreymon.png",
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved"
+    },
+    "Skull Greymon": {
+      "source_id": 197,
+      "source_member": "sprite thread/197_SkullGreymon.png",
+      "source_sha256": "b4a8090142abf1c0b962e24de57e1d2538913fabf8ed07c380d2a37e5b1fb239",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/197_SkullGreymon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Shine Greymon": {
+      "source_id": 374,
+      "source_member": "sprite thread/374_ShineGreymonGarmmon.png",
+      "source_sha256": "6c8df2d3526eade16d6acb5c5bd6c7142f1c4a8838b8720396a61c4f84a1632f",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/ShineGreymonGarmmon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    }
+  }
+}
