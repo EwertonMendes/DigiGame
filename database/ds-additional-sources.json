@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "canonical_runtime_order": ["down_left", "down_right", "up_left", "up_right"],
   "canonical_runtime_phases": ["idle", "step_a", "step_b"],
   "patterns": {
@@ -10,6 +10,7 @@
   },
   "profiles": {
     "two_rows_of_six": {"kind": "two_rows_of_six"},
+    "two_rows_right_region_of_six": {"kind": "two_rows_of_six", "min_cx_ratio": 0.37},
     "single_row_four_triples": {"kind": "single_row_four_triples"},
     "four_rows_rightmost_triples": {"kind": "four_rows_rightmost_triples"}
   },
@@ -51,6 +52,54 @@
       "source_member": "sprite thread/374_ShineGreymonGarmmon.png",
       "source_sha256": "6c8df2d3526eade16d6acb5c5bd6c7142f1c4a8838b8720396a61c4f84a1632f",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/ShineGreymonGarmmon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Garurumon": {
+      "source_id": 93,
+      "source_member": "sprite thread/093_Garurumon.png",
+      "source_sha256": "c1ed6a013f9bf8f1b2a8c6fdf56c6a98e57a875700b1249639f11876160128a6",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/093_Garurumon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows"
+    },
+    "Were Garurumon": {
+      "source_id": 214,
+      "source_member": "sprite thread/214_WereGarurumon.png",
+      "source_sha256": "6b888f84e0453df312693816b5257d4202e15f914b631bae5ce122a297aaf170",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/214_WereGarurumon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows"
+    },
+    "Metal Garurumon": {
+      "source_id": 310,
+      "source_member": "sprite thread/310_MetalGarurumon.png",
+      "source_sha256": "44d540a954c28b7e98dfab49d79fcf9c4b14a3106a2608859fd191238fb35a2f",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/310_MetalGarurumon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "AncientGarurumon": {
+      "source_id": null,
+      "source_member": "sprite thread/AncientGarurumon.png",
+      "source_sha256": "798dc9bbdc2fa8c44eb0783d92560d68860d186800fc9a8627a938dec5854da9",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/AncientGarurumon.png",
+      "profile": "two_rows_right_region_of_six",
+      "pattern": "canonical_rows"
+    },
+    "Omnimon": {
+      "source_id": 313,
+      "source_member": "sprite thread/313_Omegamon.png",
+      "source_sha256": "c037c43c4651b38943fcda94fb41f8c65feba429aadd85608f2ec25f538d9dd4",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/313_Omegamon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows"
+    },
+    "JungleMojyamon": {
+      "source_id": 183,
+      "source_member": "sprite thread/183_J-Mojyamon.png",
+      "source_sha256": "97a9206f6b833dc402f92d617bf337392dda69924a2c0e6871e44fa270d9cabf",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/183_J-Mojyamon.png",
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first"
     }
