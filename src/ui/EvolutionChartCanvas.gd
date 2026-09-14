@@ -3,30 +3,27 @@ class_name EvolutionChartCanvas
 
 # Focused exploration keeps the active lineage permanently visible while only
 # revealing the direct routes around the form the player is currently inspecting.
-# The active lineage owns the horizontal center lane. Alternative branches keep a
-# stable vertical lane while the player explores them, so an upper branch continues
-# upward and a lower branch continues downward instead of crossing the graph.
-
-const DIGITAL_SPARK_TEXTURE = preload("res://assets/ui/evolution/digital_spark.svg")
+# The active lineage owns the horizontal center lane. Alternative branches retain
+# their vertical side while being explored, which keeps the graph readable without
+# flattening every route into the same direction.
 
 var _initializing_chart := false
 var _ignore_center_requests := false
 var _primary_route: Array[String] = []
 var _primary_edges: Dictionary = {}
+var _focus_bridge_path: Array[String] = []
+var _focus_bridge_edges: Dictionary = {}
 var _branch_lanes: Dictionary = {}
 var _focus_lane := 0
 
-var _current_gold_vfx: CPUParticles2D = null
-var _current_cyan_vfx: CPUParticles2D = null
-var _selected_vfx: CPUParticles2D = null
-
 
 func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionary, goal_seed: String = "", goal_edges: Dictionary = {}) -> void:
-	# Suppress the parent canvas' deferred centering/tween during first build.
 	_initializing_chart = true
 	_ignore_center_requests = true
 	_primary_route.clear()
 	_primary_edges.clear()
+	_focus_bridge_path.clear()
+	_focus_bridge_edges.clear()
 	_branch_lanes.clear()
 	_focus_lane = 0
 	super.set_graph(graph, current_seed, history_edges, goal_seed, goal_edges)
@@ -35,10 +32,10 @@ func set_graph(graph: Dictionary, current_seed: String, history_edges: Dictionar
 	for seed: String in _primary_route:
 		_branch_lanes[seed] = 0
 	_selected_seed = current_seed
+	_refresh_focus_bridge()
 	_branch_open = true
 	_rebuild_visible_nodes(current_seed)
 	_initializing_chart = false
-	_ensure_focus_vfx()
 	call_deferred("_finish_initial_layout")
 
 
@@ -48,18 +45,11 @@ func center_on(seed: String) -> void:
 	super.center_on(seed)
 
 
-func _process(delta: float) -> void:
-	super._process(delta)
-	_sync_focus_vfx()
-
-
 func _finish_initial_layout() -> void:
-	# Wait until EvolutionChart has assigned the real canvas rectangle.
 	await get_tree().process_frame
 	_ignore_center_requests = false
 	_fit_visible_graph()
 	_refresh_node_styles()
-	_sync_focus_vfx()
 	queue_redraw()
 
 
@@ -106,9 +96,6 @@ func _animate_relayout(new_seeds: Array[String], source_seed: String) -> void:
 		_refresh_layout()
 		return
 
-	# Calculate the final framing before the inherited tween creates its targets.
-	# Existing cards therefore glide into the new focused composition instead of
-	# snapping when the visible branch changes.
 	_apply_fit_transform()
 	super._animate_relayout(new_seeds, source_seed)
 
@@ -117,16 +104,16 @@ func _activate_node(seed: String) -> void:
 	if not _buttons.has(seed):
 		return
 
-	# Capture the lane before rebuilding. This is the key to branch continuity:
-	# selecting a card above the lineage keeps all newly revealed routes above it,
-	# while a lower branch keeps growing downward.
+	# Capture the card's existing lane before the graph is rebuilt. A branch that
+	# already lives above/below the main lineage therefore keeps expanding on that
+	# side instead of jumping across the chart when it becomes the focus.
 	_focus_lane = _lane_for_seed(seed)
 	_selected_seed = seed
+	_refresh_focus_bridge()
 	_trail.clear()
 	_trail.append(seed)
 	_branch_open = true
 	_rebuild_visible_nodes(seed)
-	_sync_focus_vfx()
 	node_selected.emit(seed)
 
 
@@ -134,8 +121,14 @@ func _visible_seeds_for_state() -> Array[String]:
 	var result: Array[String] = []
 	for seed: String in _primary_route:
 		_add_unique_seed(result, seed)
-	_add_unique_seed(result, _current_seed)
 
+	# Never leave the current form floating by itself. While the player explores
+	# backwards or sideways, keep a continuous shortest connection from the focused
+	# form back to the current form visible on the chart.
+	for seed: String in _focus_bridge_path:
+		_add_unique_seed(result, seed)
+
+	_add_unique_seed(result, _current_seed)
 	var focus_seed := _selected_seed if _nodes_by_seed.has(_selected_seed) else _current_seed
 	_add_unique_seed(result, focus_seed)
 	for neighbor: String in _neighbors(focus_seed):
@@ -148,15 +141,49 @@ func _add_unique_seed(target: Array[String], seed: String) -> void:
 		target.append(seed)
 
 
+func _refresh_focus_bridge() -> void:
+	_focus_bridge_path = _find_connection_path(_selected_seed, _current_seed)
+	_focus_bridge_edges = _edge_keys_for_path(_focus_bridge_path)
+
+
+func _find_connection_path(start_seed: String, target_seed: String) -> Array[String]:
+	var empty: Array[String] = []
+	if start_seed.is_empty() or target_seed.is_empty():
+		return empty
+	if start_seed == target_seed:
+		return [start_seed]
+	if not _nodes_by_seed.has(start_seed) or not _nodes_by_seed.has(target_seed):
+		return empty
+
+	var queue: Array[String] = [start_seed]
+	var previous: Dictionary = {start_seed: ""}
+	while not queue.is_empty():
+		var cursor := queue.pop_front()
+		for neighbor: String in _neighbors(cursor):
+			if previous.has(neighbor):
+				continue
+			previous[neighbor] = cursor
+			if neighbor == target_seed:
+				var reversed: Array[String] = []
+				var path_cursor := target_seed
+				while not path_cursor.is_empty():
+					reversed.append(path_cursor)
+					if path_cursor == start_seed:
+						break
+					path_cursor = String(previous.get(path_cursor, ""))
+				if reversed.is_empty() or reversed[reversed.size() - 1] != start_seed:
+					return empty
+				reversed.reverse()
+				return reversed
+			queue.append(neighbor)
+	return empty
+
+
 func _derive_primary_route() -> Array[String]:
 	var route: Array[String] = []
 	if _current_seed.is_empty() or not _nodes_by_seed.has(_current_seed):
 		return route
 
-	# EvolutionGraphService stores the most recent traversal index in each
-	# experienced edge. Walking backwards through lower ranks with a decreasing
-	# history index reconstructs the active lineage while naturally discarding old
-	# branches and degeneration loops.
 	route.append(_current_seed)
 	var visited: Dictionary = {_current_seed: true}
 	var cursor := _current_seed
@@ -259,10 +286,69 @@ func _next_balanced_lane(occupied: Dictionary) -> int:
 	return occupied.size() + 1
 
 
+func _prepare_focus_neighbor_lanes(visible_seeds: Array[String]) -> void:
+	var focus_seed := _selected_seed if _nodes_by_seed.has(_selected_seed) else _current_seed
+	var focus_lane := _lane_for_seed(focus_seed)
+	var candidates: Array[String] = []
+	for neighbor: String in _neighbors(focus_seed):
+		if not visible_seeds.has(neighbor):
+			continue
+		if _primary_route.has(neighbor) or neighbor == _current_seed:
+			continue
+		if _branch_lanes.has(neighbor):
+			continue
+		candidates.append(neighbor)
+
+	candidates.sort_custom(func(a: String, b: String) -> bool:
+		var ar := _rank_index_for(a)
+		var br := _rank_index_for(b)
+		if ar == br:
+			return String((_nodes_by_seed.get(a, {}) as Dictionary).get("name", "")) < String((_nodes_by_seed.get(b, {}) as Dictionary).get("name", ""))
+		return ar < br
+	)
+
+	if candidates.is_empty():
+		return
+
+	if focus_lane != 0:
+		# Once a branch has a side, everything newly revealed from it inherits that
+		# side. Per-rank collision resolution may move siblings farther outward, but
+		# never across the center lane.
+		for seed: String in candidates:
+			_branch_lanes[seed] = focus_lane
+		return
+
+	# A focus on the main lineage should still fan alternatives both above and
+	# below. The starting side is deterministic per focus, while subsequent choices
+	# alternate, restoring the balanced look of the original chart without losing
+	# branch continuity after the player commits to one side.
+	var start_side := -1 if abs(focus_seed.hash()) % 2 == 0 else 1
+	for index in range(candidates.size()):
+		var distance := int(index / 2) + 1
+		var side := start_side if index % 2 == 0 else -start_side
+		_branch_lanes[candidates[index]] = side * distance
+
+
 func _recalculate_positions(visible_seeds: Array[String]) -> void:
+	var previous_positions := _base_positions.duplicate(true)
 	_base_positions.clear()
 	if visible_seeds.is_empty():
 		return
+
+	for seed: String in _primary_route:
+		_branch_lanes[seed] = 0
+
+	# If a visible branch card predates the lane-memory system, preserve the side
+	# the player already saw instead of reassigning it arbitrarily.
+	for seed: String in visible_seeds:
+		if _primary_route.has(seed) or _branch_lanes.has(seed) or not previous_positions.has(seed):
+			continue
+		var prior_y := Vector2(previous_positions[seed]).y
+		var prior_lane := int(round(prior_y / ROW_GAP))
+		if prior_lane != 0:
+			_branch_lanes[seed] = prior_lane
+
+	_prepare_focus_neighbor_lanes(visible_seeds)
 
 	var current_rank := _rank_index_for(_current_seed)
 	var by_rank: Dictionary = {}
@@ -272,12 +358,6 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 			by_rank[rank_index] = []
 		(by_rank[rank_index] as Array).append(seed)
 
-	# The horizontal center lane belongs exclusively to the Digimon's active
-	# lineage. Every alternative branch receives a persistent non-zero lane.
-	for seed: String in _primary_route:
-		_branch_lanes[seed] = 0
-
-	var focus_side := _lane_side(_focus_lane)
 	for raw_rank in by_rank.keys():
 		var rank_index := int(raw_rank)
 		var group: Array = by_rank[raw_rank]
@@ -285,26 +365,18 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 			return String((_nodes_by_seed.get(String(a), {}) as Dictionary).get("name", "")) < String((_nodes_by_seed.get(String(b), {}) as Dictionary).get("name", ""))
 		)
 
-		# Reserve lane zero even when this rank has no active-lineage node. This
-		# prevents an alternative route from visually impersonating the main route.
 		var occupied: Dictionary = {0: true}
 		var x := float(rank_index - current_rank) * COLUMN_GAP
 		var lineage_seed := _primary_seed_at_rank(rank_index, group)
 		if not lineage_seed.is_empty():
 			_base_positions[lineage_seed] = Vector2(x, 0.0)
 
-		# Selection has priority over other branch cards so it never jumps to the
-		# opposite side simply because a sibling was revealed.
 		if group.has(_selected_seed) and _selected_seed != lineage_seed:
 			var selected_preferred := int(_branch_lanes.get(_selected_seed, _focus_lane))
 			var selected_side := _lane_side(selected_preferred)
-			if selected_side == 0:
-				selected_side = focus_side
 			var selected_lane := _claim_lane(_selected_seed, occupied, selected_preferred, selected_side)
 			_base_positions[_selected_seed] = Vector2(x, float(selected_lane) * ROW_GAP)
 
-		# Reuse established lanes before assigning any new cards. Navigation now
-		# has spatial memory: a branch the player saw above remains above later.
 		for raw_seed in group:
 			var seed := String(raw_seed)
 			if _base_positions.has(seed) or not _branch_lanes.has(seed):
@@ -314,18 +386,11 @@ func _recalculate_positions(visible_seeds: Array[String]) -> void:
 			var lane := _claim_lane(seed, occupied, preferred, side)
 			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
 
-		# New direct routes inherit the side of the focused branch. Multiple choices
-		# fan farther outward on that same side instead of alternating across the
-		# center line and creating avoidable edge crossings.
 		for raw_seed in group:
 			var seed := String(raw_seed)
 			if _base_positions.has(seed):
 				continue
-			var lane := 0
-			if focus_side != 0 and _are_neighbors(_selected_seed, seed):
-				lane = _claim_lane(seed, occupied, _focus_lane, focus_side)
-			else:
-				lane = _claim_lane(seed, occupied, _next_balanced_lane(occupied), 0)
+			var lane := _claim_lane(seed, occupied, _next_balanced_lane(occupied), 0)
 			_base_positions[seed] = Vector2(x, float(lane) * ROW_GAP)
 
 
@@ -417,6 +482,10 @@ func _draw() -> void:
 		if _history_edges.has(key):
 			color = Color(0.28, 0.60, 0.68, 0.36)
 			width = 1.7
+		if _focus_bridge_edges.has(key):
+			color = Color(0.34, 0.66, 0.94, 0.74)
+			width = 2.3
+			emphasized = true
 		if from_seed == _selected_seed or to_seed == _selected_seed:
 			color = Color(0.38, 0.72, 1.0, 0.88)
 			width = 2.7
@@ -436,10 +505,86 @@ func _draw() -> void:
 		if emphasized:
 			var speed := 0.32 if _primary_edges.has(key) or _goal_edges.has(key) else 0.24
 			var pulse_t := fmod(_phase * speed + float(abs(key.hash()) % 100) / 100.0, 1.0)
-			var pulse := p1.lerp(p2, pulse_t)
-			var spark_size := 10.0 * average_scale
-			var spark_rect := Rect2(pulse - Vector2.ONE * spark_size * 0.5, Vector2.ONE * spark_size)
-			draw_texture_rect(DIGITAL_SPARK_TEXTURE, spark_rect, false, Color(color.r, color.g, color.b, minf(1.0, color.a + 0.12)))
+			_draw_signal_packet(p1, p2, pulse_t, Color(color.r, color.g, color.b, minf(1.0, color.a + 0.10)), average_scale)
+
+	# Digital focus particles live only around the card perimeter, never over the
+	# sprite/name/status content. They read as data activity rather than decorative
+	# stars and require no runtime texture asset.
+	if _buttons.has(_current_seed):
+		_draw_card_data_particles(_current_seed, UI.GOLD, UI.CYAN, 13, 0.19, 1.0)
+	if _selected_seed != _current_seed and _buttons.has(_selected_seed):
+		_draw_card_data_particles(_selected_seed, Color(0.42, 0.78, 1.0, 1.0), Color(0.30, 0.60, 0.92, 1.0), 7, 0.15, 0.72)
+
+
+func _draw_signal_packet(p1: Vector2, p2: Vector2, t: float, color: Color, scale_factor: float) -> void:
+	var direction := (p2 - p1).normalized()
+	if direction == Vector2.ZERO:
+		return
+	var normal := Vector2(-direction.y, direction.x)
+	var center := p1.lerp(p2, t)
+	var half_length := 4.0 * scale_factor
+	var half_width := 1.1 * scale_factor
+	var points := PackedVector2Array([
+		center - direction * half_length - normal * half_width,
+		center + direction * half_length - normal * half_width,
+		center + direction * half_length + normal * half_width,
+		center - direction * half_length + normal * half_width,
+	])
+	draw_colored_polygon(points, color)
+
+
+func _draw_card_data_particles(seed: String, primary: Color, secondary: Color, count: int, speed: float, intensity: float) -> void:
+	var button := _buttons.get(seed) as Button
+	if button == null:
+		return
+	var scale_factor := _button_scale(seed)
+	var margin := 4.0 * scale_factor
+	var rect := Rect2(
+		button.position - Vector2.ONE * margin,
+		NODE_SIZE * scale_factor + Vector2.ONE * margin * 2.0
+	)
+	var seed_offset := float(abs(seed.hash()) % 997) / 997.0
+	for index in range(count):
+		var phase := fmod(_phase * speed + seed_offset + float(index) / float(count), 1.0)
+		var color := primary if index % 3 != 1 else secondary
+		var pulse := 0.52 + 0.34 * sin(_phase * 2.6 + float(index) * 1.41)
+		color.a = clampf(pulse * intensity, 0.18, 0.82)
+		var length := (3.0 + float((index * 5) % 5)) * scale_factor
+		var thickness := (0.9 + float(index % 2) * 0.7) * scale_factor
+		_draw_perimeter_dash(rect, phase, color, length, thickness)
+
+
+func _draw_perimeter_dash(rect: Rect2, t: float, color: Color, length: float, thickness: float) -> void:
+	var width := rect.size.x
+	var height := rect.size.y
+	var perimeter := maxf(1.0, 2.0 * (width + height))
+	var distance := fmod(t, 1.0) * perimeter
+	var point := rect.position
+	var tangent := Vector2.RIGHT
+
+	if distance < width:
+		point = rect.position + Vector2(distance, 0.0)
+		tangent = Vector2.RIGHT
+	elif distance < width + height:
+		point = rect.position + Vector2(width, distance - width)
+		tangent = Vector2.DOWN
+	elif distance < width * 2.0 + height:
+		point = rect.position + Vector2(width - (distance - width - height), height)
+		tangent = Vector2.LEFT
+	else:
+		point = rect.position + Vector2(0.0, height - (distance - width * 2.0 - height))
+		tangent = Vector2.UP
+
+	var normal := Vector2(-tangent.y, tangent.x)
+	var half_length := length * 0.5
+	var half_width := thickness * 0.5
+	var points := PackedVector2Array([
+		point - tangent * half_length - normal * half_width,
+		point + tangent * half_length - normal * half_width,
+		point + tangent * half_length + normal * half_width,
+		point - tangent * half_length + normal * half_width,
+	])
+	draw_colored_polygon(points, color)
 
 
 func _button_screen_center(seed: String) -> Vector2:
@@ -452,113 +597,3 @@ func _button_screen_center(seed: String) -> Vector2:
 func _button_scale(seed: String) -> float:
 	var button := _buttons.get(seed) as Button
 	return maxf(0.01, button.scale.x) if button != null else maxf(0.01, _zoom)
-
-
-func _ensure_focus_vfx() -> void:
-	if _current_gold_vfx == null:
-		_current_gold_vfx = _create_focus_emitter(
-			"CurrentFormGoldSparks",
-			Color(1.0, 0.76, 0.22, 0.92),
-			18,
-			0.92,
-			Vector2(NODE_SIZE.x * 0.55, NODE_SIZE.y * 0.58),
-			7.0,
-			22.0,
-			0.16,
-			0.34
-		)
-	if _current_cyan_vfx == null:
-		_current_cyan_vfx = _create_focus_emitter(
-			"CurrentFormDataSparks",
-			Color(0.30, 0.86, 1.0, 0.72),
-			11,
-			1.18,
-			Vector2(NODE_SIZE.x * 0.50, NODE_SIZE.y * 0.52),
-			4.0,
-			14.0,
-			0.10,
-			0.24
-		)
-	if _selected_vfx == null:
-		_selected_vfx = _create_focus_emitter(
-			"SelectedFormSparks",
-			Color(0.42, 0.76, 1.0, 0.72),
-			9,
-			1.10,
-			Vector2(NODE_SIZE.x * 0.52, NODE_SIZE.y * 0.54),
-			4.0,
-			13.0,
-			0.10,
-			0.22
-		)
-
-
-func _create_focus_emitter(
-	emitter_name: String,
-	accent: Color,
-	particle_count: int,
-	particle_lifetime: float,
-	extents: Vector2,
-	velocity_min: float,
-	velocity_max: float,
-	scale_min: float,
-	scale_max: float
-) -> CPUParticles2D:
-	var emitter := CPUParticles2D.new()
-	emitter.name = emitter_name
-	emitter.texture = DIGITAL_SPARK_TEXTURE
-	emitter.amount = particle_count
-	emitter.lifetime = particle_lifetime
-	emitter.lifetime_randomness = 0.34
-	emitter.preprocess = particle_lifetime
-	emitter.randomness = 0.82
-	emitter.local_coords = true
-	emitter.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	emitter.emission_rect_extents = extents
-	emitter.direction = Vector2(0.0, -1.0)
-	emitter.spread = 180.0
-	emitter.gravity = Vector2.ZERO
-	emitter.initial_velocity_min = velocity_min
-	emitter.initial_velocity_max = velocity_max
-	emitter.angular_velocity_min = -75.0
-	emitter.angular_velocity_max = 75.0
-	emitter.scale_amount_min = scale_min
-	emitter.scale_amount_max = scale_max
-	emitter.color = accent
-	emitter.z_index = 8
-
-	var fade := Gradient.new()
-	fade.offsets = PackedFloat32Array([0.0, 0.16, 0.72, 1.0])
-	fade.colors = PackedColorArray([
-		Color(1.0, 1.0, 1.0, 0.0),
-		Color(1.0, 1.0, 1.0, 1.0),
-		Color(1.0, 1.0, 1.0, 0.72),
-		Color(1.0, 1.0, 1.0, 0.0),
-	])
-	emitter.color_ramp = fade
-
-	var additive := CanvasItemMaterial.new()
-	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	emitter.material = additive
-	add_child(emitter)
-	return emitter
-
-
-func _sync_focus_vfx() -> void:
-	_ensure_focus_vfx()
-	var can_render := is_visible_in_tree()
-	_sync_emitter_to_seed(_current_gold_vfx, _current_seed, can_render and _buttons.has(_current_seed))
-	_sync_emitter_to_seed(_current_cyan_vfx, _current_seed, can_render and _buttons.has(_current_seed))
-	var show_selected := can_render and _selected_seed != _current_seed and _buttons.has(_selected_seed)
-	_sync_emitter_to_seed(_selected_vfx, _selected_seed, show_selected)
-
-
-func _sync_emitter_to_seed(emitter: CPUParticles2D, seed: String, enabled: bool) -> void:
-	if emitter == null:
-		return
-	emitter.visible = enabled
-	emitter.emitting = enabled
-	if not enabled:
-		return
-	emitter.position = _button_screen_center(seed)
-	emitter.scale = Vector2.ONE * _button_scale(seed)
