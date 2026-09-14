@@ -159,8 +159,8 @@ func _build_hero(instance: DigimonInstance, species: Dictionary) -> Control:
 func _build_skills_card(instance: DigimonInstance) -> Control:
 	var card := _section_card("SKILLS", ProgressionUI.GOLD)
 	var body := card.get_meta("body") as VBoxContainer
-	body.add_child(_subheading("EQUIPPED", ProgressionUI.GOLD))
-	body.add_child(_wrapped_value(_skill_list_copy(instance.equipped_skills, "None equipped"), ProgressionUI.TEXT))
+	body.add_child(_subheading("FAVORITES", ProgressionUI.GOLD))
+	body.add_child(_wrapped_value(_skill_list_copy(instance.favorite_skills, "No favorites"), ProgressionUI.TEXT))
 	if not instance.learned_skills.is_empty():
 		body.add_child(_subheading("LEARNED", ProgressionUI.CYAN))
 		body.add_child(_wrapped_value(_skill_list_copy(instance.learned_skills, ""), ProgressionUI.MUTED))

@@ -2,10 +2,19 @@ extends Control
 class_name CombatOverlayHUD
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
+const TECHNIQUE_PAGE_SIZE := 40
 
 var _controller: Node = null
 var _skill_panel: Panel = null
+var _skill_scroll: ScrollContainer = null
 var _skill_list: VBoxContainer = null
+var _skill_view: OptionButton = null
+var _skill_role: OptionButton = null
+var _skill_element: OptionButton = null
+var _skill_pattern: OptionButton = null
+var _skill_sort: OptionButton = null
+var _skill_affordable: CheckButton = null
+var _skill_archived: CheckButton = null
 var _preview_panel: Panel = null
 var _preview_title: Label = null
 var _preview_target: Label = null
@@ -19,6 +28,7 @@ var _result_return: Button = null
 var _toast: Label = null
 var _toast_tween: Tween = null
 var _skill_panel_tween: Tween = null
+var _skill_page := 0
 var _previous_focus: Control = null
 var _last_viewport_size := Vector2.ZERO
 var _last_window_size := Vector2i.ZERO
@@ -84,8 +94,12 @@ func show_skills() -> void:
 	# numeric shortcut while another command happened to own focus.
 	var parent_focus := _skill_parent_focus()
 	_previous_focus = parent_focus if parent_focus != null else get_viewport().gui_get_focus_owner()
+	_skill_page = 0
+	var available: Array[Dictionary] = _controller.call("get_available_skills")
+	if _skill_view.selected == 0 and not available.any(func(action: Dictionary): return bool(action.get("favorite", false))):
+		_skill_view.select(1)
 	_rebuild_skill_list()
-	_skill_panel.visible = _skill_list.get_child_count() > 0
+	_skill_panel.visible = not available.is_empty()
 	_layout()
 	if _skill_panel.visible:
 		_animate_skill_panel_in()
@@ -146,11 +160,44 @@ func _build_ui() -> void:
 	UI.apply_body_font(skill_hint)
 	_skill_panel.add_child(skill_hint)
 
+	var filters := HFlowContainer.new()
+	filters.name = "Filters"
+	filters.add_theme_constant_override("separation", 5)
+	_skill_panel.add_child(filters)
+	_skill_view = _filter_option(["Favorites", "All Techniques"])
+	_skill_role = _filter_option(["All Roles", "Damage", "Healing", "Support", "Control", "Mobility"])
+	_skill_element = _filter_option(["All Elements", "Neutral", "Fire", "Plant", "Water", "Electric", "Wind", "Earth", "Light", "Dark"])
+	_skill_pattern = _filter_option(["All Patterns", "Single", "Line", "Cone", "Cross", "Diamond", "Ring", "Self"])
+	_skill_sort = _filter_option(["Default", "Recent", "Name", "SP Cost"])
+	_skill_affordable = CheckButton.new()
+	_skill_affordable.text = "Affordable"
+	_skill_affordable.focus_mode = Control.FOCUS_ALL
+	_skill_archived = CheckButton.new()
+	_skill_archived.text = "Archived"
+	_skill_archived.focus_mode = Control.FOCUS_ALL
+	for control: Control in [_skill_view, _skill_role, _skill_element, _skill_pattern, _skill_sort, _skill_affordable, _skill_archived]:
+		control.add_theme_font_size_override("font_size", 10)
+		filters.add_child(control)
+	_skill_view.item_selected.connect(func(_index: int): _reset_skill_page())
+	_skill_role.item_selected.connect(func(_index: int): _reset_skill_page())
+	_skill_element.item_selected.connect(func(_index: int): _reset_skill_page())
+	_skill_pattern.item_selected.connect(func(_index: int): _reset_skill_page())
+	_skill_sort.item_selected.connect(func(_index: int): _reset_skill_page())
+	_skill_affordable.toggled.connect(func(_pressed: bool): _reset_skill_page())
+	_skill_archived.toggled.connect(func(_pressed: bool): _reset_skill_page())
+
+	_skill_scroll = ScrollContainer.new()
+	_skill_scroll.name = "TechniqueScroll"
+	_skill_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_skill_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_skill_scroll.follow_focus = true
+	_skill_panel.add_child(_skill_scroll)
+
 	_skill_list = VBoxContainer.new()
 	_skill_list.name = "List"
 	_skill_list.add_theme_constant_override("separation", 3)
 	_skill_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_skill_panel.add_child(_skill_list)
+	_skill_scroll.add_child(_skill_list)
 
 	_preview_panel = Panel.new()
 	_preview_panel.name = "ActionPreview"
@@ -214,6 +261,19 @@ func _label(text_value: String, size: int, color: Color) -> Label:
 	return label
 
 
+func _filter_option(labels: Array[String]) -> OptionButton:
+	var option := OptionButton.new()
+	option.focus_mode = Control.FOCUS_ALL
+	for label_text: String in labels:
+		option.add_item(label_text)
+	return option
+
+
+func _reset_skill_page() -> void:
+	_skill_page = 0
+	_rebuild_skill_list()
+
+
 func _rebuild_skill_list() -> void:
 	# Remove stale buttons from the container immediately. queue_free() alone
 	# keeps them in get_children() until the frame ends, which could make the old
@@ -223,7 +283,35 @@ func _rebuild_skill_list() -> void:
 		child.queue_free()
 
 	var actions: Array[Dictionary] = _controller.call("get_available_skills")
+	match _skill_sort.selected:
+		1: actions.sort_custom(func(a: Dictionary, b: Dictionary): return int(a.get("recentIndex", 999999)) < int(b.get("recentIndex", 999999)))
+		2: actions.sort_custom(func(a: Dictionary, b: Dictionary): return String(a.get("name", "")) < String(b.get("name", "")))
+		3: actions.sort_custom(func(a: Dictionary, b: Dictionary): return int(a.get("spCost", 0)) < int(b.get("spCost", 0)))
+	var filtered: Array[Dictionary] = []
 	for action: Dictionary in actions:
+		if _skill_view.selected == 0 and not bool(action.get("favorite", false)):
+			continue
+		if bool(action.get("archived", false)) and not _skill_archived.button_pressed:
+			continue
+		if _skill_affordable.button_pressed and not bool(action.get("affordable", false)):
+			continue
+		var selected_role := _skill_role.get_item_text(_skill_role.selected).to_lower()
+		if selected_role != "all roles" and String(action.get("category", "")).to_lower() != selected_role:
+			continue
+		var selected_element := _skill_element.get_item_text(_skill_element.selected).to_lower()
+		if selected_element != "all elements" and String(action.get("element", "neutral")).to_lower() != selected_element:
+			continue
+		var selected_pattern := _skill_pattern.get_item_text(_skill_pattern.selected).to_lower()
+		var area_data = action.get("area", {})
+		if selected_pattern != "all patterns" and (not area_data is Dictionary or String(area_data.get("shape", "single")).to_lower() != selected_pattern):
+			continue
+		filtered.append(action)
+	var page_count := maxi(1, ceili(float(filtered.size()) / float(TECHNIQUE_PAGE_SIZE)))
+	_skill_page = clampi(_skill_page, 0, page_count - 1)
+	var page_start := _skill_page * TECHNIQUE_PAGE_SIZE
+	var page_end := mini(filtered.size(), page_start + TECHNIQUE_PAGE_SIZE)
+	for action: Dictionary in filtered.slice(page_start, page_end):
+		var area_data = action.get("area", {})
 		var button := Button.new()
 		var action_id := String(action.get("id", ""))
 		var action_name := String(action.get("name", action_id))
@@ -231,9 +319,13 @@ func _rebuild_skill_list() -> void:
 		var recovery := int(round(float(action.get("recoveryCost", 30.0))))
 		var range_data = action.get("range", {})
 		var max_range := int(range_data.get("max", 0)) if range_data is Dictionary else 0
-		button.text = "%s\n%d SP   •   Range %d   •   Recovery %d" % [action_name, sp_cost, max_range, recovery]
+		var mastery := String(action.get("masteryGrade", "learned")).capitalize()
+		var element := String(action.get("element", "neutral")).capitalize()
+		var area := String(area_data.get("shape", "single")).capitalize() if area_data is Dictionary else "Single"
+		button.text = "%s\n%s   •   %d SP   •   %s   •   %s   •   Range %d   •   Recovery %d" % [action_name, element, sp_cost, area, mastery, max_range, recovery]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.disabled = not bool(action.get("affordable", true))
+		button.disabled = not bool(action.get("affordable", true)) or not bool(action.get("available", true))
+		button.tooltip_text = String(action.get("unavailableReason", "")) if not bool(action.get("available", true)) else ("Not enough SP" if not bool(action.get("affordable", true)) else "")
 		button.focus_mode = Control.FOCUS_ALL
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		button.add_theme_font_size_override("font_size", 14)
@@ -254,6 +346,30 @@ func _rebuild_skill_list() -> void:
 		button.focus_entered.connect(Callable(self, "_on_skill_hover").bind(action_id))
 		button.focus_exited.connect(_on_skill_hover_exit)
 		_skill_list.add_child(button)
+	if page_count > 1:
+		var pager := HBoxContainer.new()
+		pager.alignment = BoxContainer.ALIGNMENT_CENTER
+		var previous := Button.new()
+		previous.text = "← PREVIOUS"
+		previous.disabled = _skill_page <= 0
+		previous.pressed.connect(_change_skill_page.bind(-1))
+		pager.add_child(previous)
+		var page_label := _label("%d / %d" % [_skill_page + 1, page_count], 11, UI.MUTED)
+		page_label.custom_minimum_size.x = 58
+		page_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		pager.add_child(page_label)
+		var next := Button.new()
+		next.text = "NEXT →"
+		next.disabled = _skill_page >= page_count - 1
+		next.pressed.connect(_change_skill_page.bind(1))
+		pager.add_child(next)
+		_skill_list.add_child(pager)
+
+
+func _change_skill_page(delta: int) -> void:
+	_skill_page += delta
+	_rebuild_skill_list()
+	_focus_first_skill()
 
 
 func _focus_first_skill() -> void:
@@ -268,7 +384,7 @@ func _focus_first_skill() -> void:
 
 
 func _is_skill_focus(owner: Control) -> bool:
-	return owner != null and _skill_list != null and _skill_list.is_ancestor_of(owner)
+	return owner != null and _skill_panel != null and _skill_panel.is_ancestor_of(owner)
 
 
 func _skill_parent_focus() -> Control:
@@ -417,7 +533,7 @@ func _layout() -> void:
 		skill_width = minf(330.0, physical.x - 280.0)
 	else:
 		skill_width = minf(390.0, physical.x - 310.0)
-	var skill_height := minf(330.0, 70.0 + float(_skill_list.get_child_count()) * 60.0)
+	var skill_height := minf(430.0, 148.0 + float(_skill_list.get_child_count()) * 60.0)
 	_skill_panel.scale = Vector2.ONE * ui_scale
 	if portrait_mobile:
 		_skill_panel.position = Vector2((physical.x - skill_width) * 0.5 * ui_scale, maxf(205.0, physical.y - 382.0 - skill_height) * ui_scale)
@@ -434,8 +550,12 @@ func _layout() -> void:
 	skill_hint.position = Vector2(14.0, 30.0)
 	skill_hint.size = Vector2(skill_width - 28.0, 20.0)
 	skill_hint.add_theme_font_size_override("font_size", 9 if compact else 10)
-	_skill_list.position = Vector2(10.0, 54.0)
-	_skill_list.size = Vector2(skill_width - 20.0, skill_height - 64.0)
+	var filters := _skill_panel.get_node("Filters") as HFlowContainer
+	filters.position = Vector2(10.0, 52.0)
+	filters.size = Vector2(skill_width - 20.0, 70.0)
+	_skill_scroll.position = Vector2(10.0, 124.0)
+	_skill_scroll.size = Vector2(skill_width - 20.0, skill_height - 134.0)
+	_skill_list.custom_minimum_size.x = skill_width - 36.0
 	for child in _skill_list.get_children():
 		if child is Button:
 			child.custom_minimum_size = Vector2(0.0, 56.0)

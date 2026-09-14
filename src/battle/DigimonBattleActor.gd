@@ -107,16 +107,44 @@ func heal(amount: int) -> int:
 	return battle_state.heal(amount, get_final_stat("hp")) if battle_state != null else 0
 
 
-func get_equipped_skill_ids() -> Array[String]:
+func restore_sp(amount: int) -> int:
+	return battle_state.restore_sp(amount, get_final_stat("mp")) if battle_state != null else 0
+
+
+func revive(percent_max_hp: float = 25.0) -> int:
+	if battle_state == null or not battle_state.is_knocked_out():
+		return 0
+	var amount := maxi(1, int(round(float(get_final_stat("hp")) * percent_max_hp / 100.0)))
+	var restored := battle_state.heal(amount, get_final_stat("hp"))
+	if restored > 0:
+		visible = true
+		modulate = Color.WHITE
+		_knockout_started = false
+		if sprite != null:
+			sprite.modulate = Color.WHITE
+	return restored
+
+
+func get_favorite_skill_ids() -> Array[String]:
 	if digimon_instance == null:
 		return []
-	return digimon_instance.equipped_skills.duplicate()
+	return digimon_instance.favorite_skills.duplicate()
 
 
 func get_learned_skill_ids() -> Array[String]:
 	if digimon_instance == null:
 		return []
 	return digimon_instance.learned_skills.duplicate()
+
+
+func get_archived_skill_ids() -> Array[String]:
+	if digimon_instance == null:
+		return []
+	return digimon_instance.archived_skills.duplicate()
+
+
+func get_skill_mastery_points(skill_id: String) -> int:
+	return digimon_instance.get_skill_mastery_points(skill_id) if digimon_instance != null else 0
 
 
 func get_statuses() -> Array[Dictionary]:

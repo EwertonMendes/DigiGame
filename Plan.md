@@ -103,6 +103,20 @@ Terrain effects should remain visible and understandable rather than becoming hi
 
 There is no permanent death. A Digimon reduced to 0 HP is incapacitated for that battle. Optional light post-battle consequences such as fatigue can be explored later, but they should not make experimentation punishing.
 
+### Permanent technique library
+
+Each owned Digimon has an individual, permanent technique library. Basic Attack remains a universal command outside that library. A learned technique is never forgotten and remains usable after every digivolution and degeneration, regardless of whether the current form could have learned it originally.
+
+Each form has exactly one signature technique at level 1 and normally one or two inherited techniques at later levels. A Digimon reconstructed directly in any rank begins with only Basic Attack and its current form's signature. Fresh forms learn one inherited technique at level 3, In-Training forms at level 5, Rookie forms at levels 8 and 16, Champion forms at levels 10 and 20, Ultimate forms at levels 12 and 24, and Mega/Ultra forms at levels 15 and 30. Entering a form immediately learns its signature without duplicating notifications or mastery progress.
+
+Favorites are six ordered shortcuts, not equipment slots. The complete learned library remains available in battle. Players may archive techniques to hide them from the normal view without deleting knowledge or mastery. Combat must provide Favorites and All Techniques views plus role, element, affordability, target-pattern, name, recency, and SP-cost organization as the library grows.
+
+Every technique has Learned (0–7), Experienced (8–23), and Mastered (24) mastery. Only effective uses count, with at most two points for one technique in a won battle. Each technique uses one mastery profile: Efficient reduces SP by 1/2, Swift reduces recovery by 5/10, Precise adds 5/10 accuracy, Reliable Effect adds 5/10 percentage points to effect chance, and Potent adds 5/10 percent damage or healing. Mastery never changes a technique's targets, range, area, element, or tactical identity.
+
+Technique Records are permanent account unlocks used by the DigiLab tutor. Teaching costs 300/900/2,500/6,000 Bits for Common/Uncommon/Rare/Legendary Records. Signatures and DigiXros techniques cannot be taught. Compatibility is checked against the current form's elemental and execution tags only when teaching; once learned, the technique is permanently unrestricted. Common Records can also be researched by witnessing an enemy use the technique effectively and then winning. Each victory grants at most one insight per observed technique, and three insights unlock its Record.
+
+The canonical catalogue covers all 2,260 named source rows inventoried from Digimon Story (201), Dawn/Dusk (513), Lost Evolution (546), and Super Xros Wars (1,000). Dawn/Dusk has 204 named normal techniques and 309 named special techniques; dynamic advertisement rows must never be counted as source techniques. Every source row must be audited as mapped, alias, requires-mechanic, or dummy-excluded. The 54 source-declared Super Xros Wars dummy entries remain in the audit but never enter runtime data. Runtime techniques are data-driven compositions of reusable damage, healing, status, movement, terrain, guard, counter, reflect, drain, revival, and Digi Data handlers; technique-specific scripts are not allowed. DigiXros itself is outside the current implementation and dependent techniques remain unavailable until that mechanic exists.
+
 ## 5. Link system
 
 Link is a signature team-synergy mechanic.
@@ -404,9 +418,7 @@ These are intentionally not finalized yet:
 - Exact Digi Data percentages by rank.
 - Whether Digi Data can exceed 100% and whether conversion consumes exactly 100%.
 - Exact stat inheritance or long-term benefit created by repeated digivolution/degeneration cycles.
-- Ability learning and inheritance rules across forms.
 - Equipment depth.
-- Status-effect list and duration rules.
 - Height/elevation complexity.
 - Optional fatigue system.
 - Exact number of species/forms in the first complete release.

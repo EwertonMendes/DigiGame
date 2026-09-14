@@ -24,6 +24,9 @@ func _ready() -> void:
 	var splash := {"area": {"shape": "diamond", "radius": 1}}
 	var splash_grids := resolver.effect_grids(field, origin, origin + Vector2i(2, 0), splash)
 	_assert(splash_grids.size() == 5, "radius-one diamond must affect center plus four neighbours")
+	var ring := {"area": {"shape": "ring", "innerRadius": 1, "radius": 2}}
+	var ring_grids := resolver.effect_grids(field, origin, origin, ring)
+	_assert(ring_grids.size() == 12 and not ring_grids.has(origin), "ring must preserve its empty center and both configured radii")
 
 	var beam := {"area": {"shape": "line", "length": 4}}
 	var beam_grids := resolver.effect_grids(field, origin, origin + Vector2i(1, 0), beam)

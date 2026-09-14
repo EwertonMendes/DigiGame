@@ -44,4 +44,15 @@ func _build_battle_result(victory: bool) -> Dictionary:
 		result["money"] = int(rewards.get("money", 0))
 		result["other_rewards"] = (rewards.get("other_rewards", {}) as Dictionary).duplicate(true) if rewards.get("other_rewards", {}) is Dictionary else {}
 	result["digi_data_progress"] = OverworldState.apply_account_rewards(int(result.get("bits", 0)), result.get("digi_data", {}))
+	var observed: Array[String] = []
+	var raw_observed = result.get("observed_techniques", [])
+	if raw_observed is Array:
+		for raw_skill_id in raw_observed:
+			observed.append(String(raw_skill_id))
+	var technique_progress: Dictionary = OverworldState.apply_technique_battle_progress(
+		result.get("mastery_uses", {}) if result.get("mastery_uses", {}) is Dictionary else {},
+		observed
+	)
+	result["mastery_progress"] = technique_progress.get("mastery", [])
+	result["technique_research"] = technique_progress.get("research", [])
 	return result

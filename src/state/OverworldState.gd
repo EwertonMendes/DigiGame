@@ -3,6 +3,7 @@ extends Node
 signal active_party_changed(active_party: Array)
 signal collection_changed
 signal account_rewards_changed(bits: int, digi_data: Dictionary)
+signal technique_progress_changed
 signal progress_saved
 
 const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
@@ -12,6 +13,7 @@ const PartyServiceScript = preload("res://src/collection/PartyService.gd")
 const TrainingServiceScript = preload("res://src/digimon/DigimonTrainingService.gd")
 const SaveServiceScript = preload("res://src/save/SaveService.gd")
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
+const TechniqueRecordServiceScript = preload("res://src/collection/TechniqueRecordService.gd")
 
 const DEFAULT_ACTIVE_PARTY := ["agumon", "gabumon", "greymon"]
 
@@ -22,6 +24,7 @@ var _party_service: PartyService = PartyServiceScript.new()
 var _training_service: DigimonTrainingService = TrainingServiceScript.new()
 var _save_service: SaveService = SaveServiceScript.new()
 var _balance = BalanceScript.new()
+var _technique_records = TechniqueRecordServiceScript.new()
 var _persistence_enabled := true
 
 func _ready() -> void:
@@ -189,6 +192,109 @@ func get_database():
 
 func get_bits() -> int:
 	return _collection.bits
+
+
+func has_technique_record(skill_id: String) -> bool:
+	return _collection.has_technique_record(skill_id)
+
+
+func unlock_technique_record(skill_id: String) -> bool:
+	if not _collection.unlock_technique_record(skill_id):
+		return false
+	technique_progress_changed.emit()
+	_save_after_mutation()
+	return true
+
+
+func get_technique_research(skill_id: String) -> int:
+	return _collection.get_technique_research(skill_id)
+
+
+func get_teachable_techniques(instance_id: String) -> Array[Dictionary]:
+	var instance := get_instance_by_id(instance_id)
+	if instance == null:
+		return []
+	var species := _database.get_by_seed(instance.species_seed)
+	return _technique_records.get_teachable_records(_collection, instance, species)
+
+
+func teach_technique(instance_id: String, skill_id: String) -> Dictionary:
+	var instance := get_instance_by_id(instance_id)
+	var species := _database.get_by_seed(instance.species_seed) if instance != null else {}
+	var result: Dictionary = _technique_records.teach(_collection, instance, species, skill_id)
+	if bool(result.get("success", false)):
+		collection_changed.emit()
+		account_rewards_changed.emit(_collection.bits, get_digi_data())
+		technique_progress_changed.emit()
+		_save_after_mutation()
+	return result
+
+
+func apply_technique_battle_progress(mastery_uses: Dictionary, observed_techniques: Array[String]) -> Dictionary:
+	var mastery_results: Array[Dictionary] = []
+	for raw_instance_id in mastery_uses.keys():
+		var instance := _collection.get_instance(String(raw_instance_id))
+		var uses = mastery_uses[raw_instance_id]
+		if instance == null or not uses is Dictionary:
+			continue
+		for raw_skill_id in uses.keys():
+			var skill_id := String(raw_skill_id)
+			var before := instance.get_skill_mastery_points(skill_id)
+			var after := instance.record_effective_skill_uses(skill_id, mini(2, maxi(0, int(uses[raw_skill_id]))))
+			if after > before:
+				mastery_results.append({
+					"instance_id": instance.id,
+					"skill_id": skill_id,
+					"before": before,
+					"after": after,
+					"grade": instance.get_skill_mastery_grade(skill_id),
+				})
+	var research_results := _technique_records.apply_research_insights(_collection, observed_techniques)
+	if not mastery_results.is_empty() or not research_results.is_empty():
+		collection_changed.emit()
+		technique_progress_changed.emit()
+		_save_after_mutation()
+	return {"mastery": mastery_results, "research": research_results}
+
+
+func favorite_technique(instance_id: String, skill_id: String) -> bool:
+	var instance := get_instance_by_id(instance_id)
+	if instance == null or not instance.favorite_skill(skill_id):
+		return false
+	notify_collection_changed()
+	return true
+
+
+func unfavorite_technique(instance_id: String, skill_id: String) -> bool:
+	var instance := get_instance_by_id(instance_id)
+	if instance == null or not instance.unfavorite_skill(skill_id):
+		return false
+	notify_collection_changed()
+	return true
+
+
+func move_favorite_technique(instance_id: String, skill_id: String, new_index: int) -> bool:
+	var instance := get_instance_by_id(instance_id)
+	if instance == null or not instance.move_favorite(skill_id, new_index):
+		return false
+	notify_collection_changed()
+	return true
+
+
+func archive_technique(instance_id: String, skill_id: String) -> bool:
+	var instance := get_instance_by_id(instance_id)
+	if instance == null or not instance.archive_skill(skill_id):
+		return false
+	notify_collection_changed()
+	return true
+
+
+func restore_technique(instance_id: String, skill_id: String) -> bool:
+	var instance := get_instance_by_id(instance_id)
+	if instance == null or not instance.restore_skill(skill_id):
+		return false
+	notify_collection_changed()
+	return true
 
 func get_digi_data() -> Dictionary:
 	_ensure_database()

@@ -4,6 +4,8 @@ class_name PlayerCollection
 var bits: int = 0
 var progression_flags: Dictionary = {}
 var quest_states: Dictionary = {}
+var unlocked_technique_records: Array[String] = []
+var technique_research: Dictionary = {}
 
 var _instances_by_id: Dictionary = {}
 var _instance_id_by_key: Dictionary = {}
@@ -133,6 +135,40 @@ func get_digi_data(species_seed: String) -> int:
 func get_all_digi_data() -> Dictionary:
 	return _digi_data_by_seed.duplicate(true)
 
+
+func has_technique_record(skill_id: String) -> bool:
+	return unlocked_technique_records.has(skill_id.strip_edges())
+
+
+func unlock_technique_record(skill_id: String) -> bool:
+	var clean_id := skill_id.strip_edges()
+	if clean_id.is_empty() or unlocked_technique_records.has(clean_id):
+		return false
+	unlocked_technique_records.append(clean_id)
+	technique_research.erase(clean_id)
+	return true
+
+
+func get_technique_research(skill_id: String) -> int:
+	return clampi(int(technique_research.get(skill_id.strip_edges(), 0)), 0, 3)
+
+
+func add_technique_research(skill_id: String, amount: int = 1) -> Dictionary:
+	var clean_id := skill_id.strip_edges()
+	var result := {"skill_id": clean_id, "old_points": 0, "new_points": 0, "unlocked": false}
+	if clean_id.is_empty() or amount <= 0 or has_technique_record(clean_id):
+		return result
+	var old_points := get_technique_research(clean_id)
+	var new_points := clampi(old_points + amount, 0, 3)
+	result["old_points"] = old_points
+	result["new_points"] = new_points
+	if new_points >= 3:
+		unlock_technique_record(clean_id)
+		result["unlocked"] = true
+	else:
+		technique_research[clean_id] = new_points
+	return result
+
 func to_dict() -> Dictionary:
 	var entries: Array[Dictionary] = []
 	for instance: DigimonInstance in get_instances():
@@ -144,6 +180,8 @@ func to_dict() -> Dictionary:
 		"digiData": get_all_digi_data(),
 		"progressionFlags": progression_flags.duplicate(true),
 		"questStates": quest_states.duplicate(true),
+		"unlockedTechniqueRecords": unlocked_technique_records.duplicate(),
+		"techniqueResearch": technique_research.duplicate(true),
 	}
 
 func load_dict(data: Dictionary) -> void:
@@ -152,9 +190,24 @@ func load_dict(data: Dictionary) -> void:
 	_collection_key_by_id.clear()
 	_active_party_ids.clear()
 	_digi_data_by_seed.clear()
+	unlocked_technique_records.clear()
+	technique_research.clear()
 	bits = maxi(0, int(data.get("bits", 0)))
 	progression_flags = _safe_dictionary(data.get("progressionFlags", {}))
 	quest_states = _safe_dictionary(data.get("questStates", {}))
+	var raw_records = data.get("unlockedTechniqueRecords", [])
+	if raw_records is Array:
+		for raw_record in raw_records:
+			var record_id := String(raw_record).strip_edges()
+			if not record_id.is_empty() and not unlocked_technique_records.has(record_id):
+				unlocked_technique_records.append(record_id)
+	var raw_research = data.get("techniqueResearch", {})
+	if raw_research is Dictionary:
+		for raw_skill_id in raw_research.keys():
+			var skill_id := String(raw_skill_id).strip_edges()
+			var points := clampi(int(raw_research[raw_skill_id]), 0, 2)
+			if not skill_id.is_empty() and points > 0 and not unlocked_technique_records.has(skill_id):
+				technique_research[skill_id] = points
 	var entries = data.get("instances", [])
 	if entries is Array:
 		for raw_entry in entries:
