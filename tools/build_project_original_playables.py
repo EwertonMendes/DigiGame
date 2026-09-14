@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Build and synchronize project-original Digimon playable assets.
 
-Project-original species are intentionally kept out of the audited official/community
-DS extraction pipelines. Their source sheets, crop boxes, frame ordering, stats,
-progression links and learnsets are declared in database/project-original-playables.json.
+Project-original art is kept outside the official/community DS extraction pipeline.
+Schema v2 stores already-normalized field and profile sources separately so a field
+sprite can never accidentally become a details portrait and transparent runtime art
+is reproduced byte-for-byte.
 """
-
 from __future__ import annotations
 
 import argparse
@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image
-import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "database/project-original-playables.json"
@@ -23,7 +22,8 @@ DATABASE_PATH = ROOT / "database/base-digimon-list.json"
 EARLY_MANIFEST_PATH = ROOT / "database/early-rank-playables.json"
 LEARNSETS_PATH = ROOT / "database/digimon-learnsets.json"
 EARLY_RANKS = ("Fresh", "In-Training", "Rookie")
-BACKGROUND_TOLERANCE = 85.0
+CANONICAL_DIRECTIONS = ["down_left", "down_right", "up_left", "up_right"]
+CANONICAL_PHASES = ["idle", "step_a", "step_b"]
 
 
 def _res_path_to_local(value: str) -> Path:
@@ -36,135 +36,104 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _key_background(image: Image.Image, background_rgb: list[int]) -> Image.Image:
-    rgba = np.asarray(image.convert("RGBA"), dtype=np.uint8).copy()
-    if np.any(rgba[:, :, 3] < 255):
-        return Image.fromarray(rgba, "RGBA")
-    bg = np.asarray(background_rgb, dtype=np.int32)
-    rgb = rgba[:, :, :3].astype(np.int32)
-    distance = np.sqrt(np.sum((rgb - bg) ** 2, axis=2))
-    rgba[distance <= BACKGROUND_TOLERANCE, 3] = 0
-    return Image.fromarray(rgba, "RGBA")
+def _load_transparent_png(path: Path, expected_size: tuple[int, int], label: str) -> Image.Image:
+    if not path.is_file():
+        raise RuntimeError(f"{label}: missing source {path.relative_to(ROOT)}")
+    image = Image.open(path).convert("RGBA")
+    if image.size != expected_size:
+        raise RuntimeError(f"{label}: expected source size {expected_size}, got {image.size}")
+    alpha = image.getchannel("A")
+    lo, hi = alpha.getextrema()
+    if lo >= 255:
+        raise RuntimeError(f"{label}: source has no transparent pixels")
+    if hi <= 0:
+        raise RuntimeError(f"{label}: source contains no visible pixels")
+    return image
 
 
-def _crop_box(keyed: Image.Image, box: list[int]) -> Image.Image:
-    if len(box) != 4:
-        raise RuntimeError(f"Invalid source box: {box}")
-    x, y, w, h = map(int, box)
-    if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > keyed.width or y + h > keyed.height:
-        raise RuntimeError(f"Source box outside sheet {keyed.size}: {box}")
-    crop = keyed.crop((x, y, x + w, y + h))
-    bbox = crop.getbbox()
-    if bbox is None:
-        raise RuntimeError(f"Source box contains no foreground pixels: {box}")
-    return crop.crop(bbox)
-
-
-def _uniform_scale(frames: list[Image.Image], max_width: int, max_height: int) -> float:
-    if not frames:
-        raise RuntimeError("No frames supplied")
-    source_width = max(frame.width for frame in frames)
-    source_height = max(frame.height for frame in frames)
-    return min(max_width / float(source_width), max_height / float(source_height))
-
-
-def _resize(frame: Image.Image, scale: float) -> Image.Image:
-    width = max(1, int(round(frame.width * scale)))
-    height = max(1, int(round(frame.height * scale)))
-    return frame.resize((width, height), Image.Resampling.NEAREST)
-
-
-def _compose_strip(
-    frames: list[Image.Image],
-    cell_width: int,
-    cell_height: int,
-    max_sprite_width: int,
-    max_sprite_height: int,
-) -> Image.Image:
-    scale = _uniform_scale(frames, max_sprite_width, max_sprite_height)
-    resized = [_resize(frame, scale) for frame in frames]
-    strip = Image.new("RGBA", (cell_width * len(resized), cell_height), (0, 0, 0, 0))
-    for index, frame in enumerate(resized):
-        x = index * cell_width + (cell_width - frame.width) // 2
-        y = cell_height - frame.height - 1
-        strip.alpha_composite(frame, (x, y))
-    return strip
+def _copy_source(source: Path, destination: Path) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(source.read_bytes())
 
 
 def _build_species_assets(spec: dict[str, Any]) -> dict[str, Any]:
     name = str(spec["name"])
     key = str(spec["portrait_key"])
-    source_path = _res_path_to_local(str(spec["source_sheet"]))
-    if not source_path.is_file():
-        raise RuntimeError(f"{name}: missing source sheet {source_path.relative_to(ROOT)}")
-    actual_sha = _sha256(source_path)
-    expected_sha = str(spec["source_sha256"])
-    if actual_sha != expected_sha:
-        raise RuntimeError(f"{name}: source sheet SHA-256 mismatch: {actual_sha} != {expected_sha}")
+    field = dict(spec["field"])
+    portrait = dict(spec["portrait"])
 
-    source = Image.open(source_path).convert("RGBA")
-    keyed = _key_background(source, list(spec["background_rgb"]))
+    directions = list(field.get("directions", []))
+    phases = list(field.get("phases", []))
+    if directions != CANONICAL_DIRECTIONS or phases != CANONICAL_PHASES:
+        raise RuntimeError(f"{name}: field direction/phase contract is not canonical")
+    frame_count = int(field.get("frame_count", 0))
+    if frame_count != 12:
+        raise RuntimeError(f"{name}: field source must contain exactly 12 frames")
+    order = [int(value) for value in field.get("runtime_frame_indices", [])]
+    if order != list(range(12)):
+        raise RuntimeError(f"{name}: normalized field source must already be in canonical runtime order")
+
+    field_source_value = str(spec["field_source"])
+    portrait_source_value = str(spec["portrait_source"])
+    field_source = _res_path_to_local(field_source_value)
+    portrait_source = _res_path_to_local(portrait_source_value)
+    cell_width = int(field["cell_width"])
+    cell_height = int(field["cell_height"])
+    portrait_width = int(portrait["frame_width"])
+    portrait_height = int(portrait["frame_height"])
+    portrait_count = int(portrait["frame_count"])
+
+    _load_transparent_png(field_source, (cell_width * 12, cell_height), f"{name} field")
+    _load_transparent_png(
+        portrait_source,
+        (portrait_width * portrait_count, portrait_height),
+        f"{name} portrait",
+    )
+
     directory = ROOT / "assets/characters" / key
     directory.mkdir(parents=True, exist_ok=True)
-
-    field = dict(spec["field"])
-    authored_frames = [_crop_box(keyed, box) for box in field["source_boxes"]]
-    order = [int(index) for index in field["runtime_frame_indices"]]
-    if sorted(order) != list(range(12)):
-        raise RuntimeError(f"{name}: runtime frame indices must be a permutation of 0..11")
-    runtime_frames = [authored_frames[index] for index in order]
-    field_strip = _compose_strip(
-        runtime_frames,
-        int(field["cell_width"]),
-        int(field["cell_height"]),
-        int(field["max_sprite_width"]),
-        int(field["max_sprite_height"]),
-    )
     field_path = directory / "field.png"
-    field_strip.save(field_path, "PNG", optimize=True)
+    portrait_path = directory / "portrait_frames.png"
+    _copy_source(field_source, field_path)
+    _copy_source(portrait_source, portrait_path)
 
+    field_digest = _sha256(field_source)
+    portrait_digest = _sha256(portrait_source)
     field_metadata = {
         "source_kind": "project_original",
-        "source_variant": "grass_agumon_concept_sheet",
+        "source_variant": "normalized_transparent_field_strip",
         "source_name": name,
-        "source_sheet": str(spec["source_sheet"]),
-        "source_sha256": actual_sha,
-        "background_rgb": list(spec["background_rgb"]),
-        "background_tolerance": BACKGROUND_TOLERANCE,
-        "authored_source_boxes": field["source_boxes"],
+        "source_sheet": field_source_value,
+        "source_sha256": field_digest,
+        "authored_source_boxes": [
+            [index * cell_width, 0, cell_width, cell_height]
+            for index in range(12)
+        ],
         "runtime_frame_indices": order,
-        "canonical_runtime_phases": list(field["phases"]),
-        "cell_width": int(field["cell_width"]),
-        "cell_height": int(field["cell_height"]),
+        "canonical_runtime_phases": phases,
+        "cell_width": cell_width,
+        "cell_height": cell_height,
         "frame_count": 12,
         "frames_per_direction": 3,
-        "directions": list(field["directions"]),
+        "directions": directions,
         "runtime_scale": float(field["runtime_scale"]),
         "field_path": f"res://assets/characters/{key}/field.png",
         "anchor_policy": "bottom_center",
     }
     (directory / "field.json").write_text(json.dumps(field_metadata, indent=2) + "\n", encoding="utf-8")
 
-    portrait = dict(spec["portrait"])
-    portrait_frames = [_crop_box(keyed, box) for box in portrait["source_boxes"]]
-    portrait_strip = _compose_strip(
-        portrait_frames,
-        int(portrait["frame_width"]),
-        int(portrait["frame_height"]),
-        int(portrait["max_sprite_width"]),
-        int(portrait["max_sprite_height"]),
-    )
-    portrait_path = directory / "portrait_frames.png"
-    portrait_strip.save(portrait_path, "PNG", optimize=True)
+    durations = [int(value) for value in portrait.get("durations_ms", [])]
+    if len(durations) != portrait_count:
+        raise RuntimeError(f"{name}: portrait duration count must equal frame count")
     portrait_metadata = {
-        "source": Path(str(spec["source_sheet"])).name,
-        "source_path": "source/sheet.png",
+        "source": portrait_source.name,
+        "source_path": str(portrait_source.relative_to(directory)),
         "source_kind": "project_original",
-        "frame_width": int(portrait["frame_width"]),
-        "frame_height": int(portrait["frame_height"]),
-        "frame_count": len(portrait_frames),
-        "durations_ms": [int(value) for value in portrait["durations_ms"]],
-        "source_sha256": actual_sha,
+        "frame_width": portrait_width,
+        "frame_height": portrait_height,
+        "frame_count": portrait_count,
+        "durations_ms": durations,
+        "source_sha256": portrait_digest,
     }
     (directory / "portrait_frames.json").write_text(json.dumps(portrait_metadata, indent=2) + "\n", encoding="utf-8")
 
@@ -181,11 +150,11 @@ def _build_species_assets(spec: dict[str, Any]) -> dict[str, Any]:
         "attribute": str(entry["attribute"]),
         "database_image": str(entry["img"]),
         "portrait_key": key,
-        "portrait_source": str(spec["source_sheet"]),
+        "portrait_source": portrait_source_value,
         "portrait_strip": f"res://assets/characters/{key}/portrait_frames.png",
         "resource": f"res://assets/resources/{name.lower()}.tres",
         "visual_mode": "directional_12",
-        "frame_count": len(portrait_frames),
+        "frame_count": portrait_count,
         "field_sprite": f"res://assets/characters/{key}/field.png",
         "field_metadata": f"res://assets/characters/{key}/field.json",
         "field_source_kind": "project_original",
@@ -295,8 +264,10 @@ def main() -> int:
     args = parser.parse_args()
 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-    if int(manifest.get("schema_version", 0)) != 1:
+    if int(manifest.get("schema_version", 0)) != 2:
         raise RuntimeError("Unsupported project-original playable manifest schema")
+    if manifest.get("source_kind") != "project_original":
+        raise RuntimeError("Project-original manifest source kind is invalid")
     specs = [row for row in manifest.get("species", []) if isinstance(row, dict)]
     if not specs:
         raise RuntimeError("Project-original playable manifest contains no species")
@@ -307,10 +278,7 @@ def main() -> int:
         _sync_early_manifest(rows)
         _sync_learnsets(specs)
 
-    print(
-        "project-original playables built: "
-        + ", ".join(str(spec["name"]) for spec in specs)
-    )
+    print("project-original playables built: " + ", ".join(str(spec["name"]) for spec in specs))
     return 0
 
 
