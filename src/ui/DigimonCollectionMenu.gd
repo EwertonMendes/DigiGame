@@ -391,7 +391,6 @@ func _technique_row(instance: DigimonInstance, skill_id: String) -> Control:
 	var favorite_button := _button("", UI.GOLD)
 	favorite_button.icon = FAVORITE_ON_ICON if favorite else FAVORITE_OFF_ICON
 	favorite_button.expand_icon = true
-	favorite_button.icon_max_width = 18
 	favorite_button.custom_minimum_size = Vector2(38, 34)
 	favorite_button.tooltip_text = "Remove favorite" if favorite else "Add favorite shortcut"
 	favorite_button.disabled = archived or (not favorite and instance.favorite_skills.size() >= DigimonInstance.MAX_FAVORITE_SKILLS)
@@ -402,7 +401,6 @@ func _technique_row(instance: DigimonInstance, skill_id: String) -> Control:
 		var up := _button("", UI.CYAN)
 		up.icon = MOVE_UP_ICON
 		up.expand_icon = true
-		up.icon_max_width = 17
 		up.custom_minimum_size = Vector2(34, 34)
 		up.disabled = favorite_index <= 0
 		up.pressed.connect(_move_favorite.bind(instance.id, skill_id, favorite_index - 1))
@@ -410,7 +408,6 @@ func _technique_row(instance: DigimonInstance, skill_id: String) -> Control:
 		var down := _button("", UI.CYAN)
 		down.icon = MOVE_DOWN_ICON
 		down.expand_icon = true
-		down.icon_max_width = 17
 		down.custom_minimum_size = Vector2(34, 34)
 		down.disabled = favorite_index >= instance.favorite_skills.size() - 1
 		down.pressed.connect(_move_favorite.bind(instance.id, skill_id, favorite_index + 1))
@@ -720,4 +717,3 @@ func _route_style(accent: Color, active: bool) -> StyleBoxFlat:
 	style.corner_radius_bottom_left = 6
 	style.corner_radius_bottom_right = 6
 	return style
-
