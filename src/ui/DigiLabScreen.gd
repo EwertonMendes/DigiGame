@@ -24,6 +24,7 @@ var _title: Label
 var _subtitle: Label
 var _close_button: Button
 var _list_panel: PanelContainer
+var _list_title: Label
 var _list_scroll: ScrollContainer
 var _list_box: VBoxContainer
 var _detail_panel: PanelContainer
@@ -46,6 +47,9 @@ func _ready() -> void:
 
 func open_lab() -> void:
 	visible = true
+	# Size the safe frame before dynamic content is rebuilt. This avoids the
+	# first-open overflow that can otherwise happen before Godot's next layout pass.
+	_layout()
 	_refresh()
 	call_deferred("_layout")
 	call_deferred("_focus_selected_data")
@@ -93,7 +97,7 @@ func _build() -> void:
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_theme_constant_override("separation", 2)
 	header.add_child(heading)
-	_title = _label("DIGILAB", 25, UI.TEXT, true)
+	_title = _label("CONVERT DIGI DATA", 25, UI.TEXT, true)
 	heading.add_child(_title)
 	_subtitle = _label("Reconstruct Digimon from species Digi Data", 11, UI.MUTED)
 	heading.add_child(_subtitle)
@@ -134,7 +138,8 @@ func _build() -> void:
 	var list_root := VBoxContainer.new()
 	list_root.add_theme_constant_override("separation", 8)
 	list_margin.add_child(list_root)
-	list_root.add_child(_section_label("DIGI DATA ARCHIVE", UI.CYAN))
+	_list_title = _section_label("DIGI DATA ARCHIVE", UI.CYAN)
+	list_root.add_child(_list_title)
 	_list_scroll = ScrollContainer.new()
 	_list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_list_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
@@ -180,9 +185,13 @@ func _refresh() -> void:
 	_refresh_list()
 	_refresh_detail()
 
-func _refresh_list() -> void:
-	for child in _list_box.get_children():
+func _clear_children_now(container: Node) -> void:
+	for child in container.get_children():
+		container.remove_child(child)
 		child.queue_free()
+
+func _refresh_list() -> void:
+	_clear_children_now(_list_box)
 	_data_buttons.clear()
 	if _lab_mode == "records":
 		_refresh_record_roster()
@@ -267,8 +276,7 @@ func _focus_selected_data() -> void:
 		_data_buttons[0].grab_focus()
 
 func _refresh_detail() -> void:
-	for child in _detail_body.get_children():
-		child.queue_free()
+	_clear_children_now(_detail_body)
 	if _lab_mode == "records":
 		_refresh_record_detail()
 		return
@@ -351,17 +359,20 @@ func _on_data_changed(_bits: int, _data: Dictionary) -> void:
 	if visible:
 		_refresh()
 
-
 func _set_lab_mode(mode: String) -> void:
 	if mode == _lab_mode:
 		return
 	_lab_mode = mode
 	_selected_name = ""
-	_record_search.visible = mode == "records"
-	_subtitle.text = "Teach permanent techniques with account-wide Records" if mode == "records" else "Reconstruct Digimon from species Digi Data"
+	var records_mode := mode == "records"
+	_title.text = "TECHNIQUE RECORDS" if records_mode else "CONVERT DIGI DATA"
+	_subtitle.text = "Teach permanent techniques with account-wide Records" if records_mode else "Reconstruct Digimon from species Digi Data"
+	_list_title.text = "OWNED DIGIMON" if records_mode else "DIGI DATA ARCHIVE"
+	_list_title.add_theme_color_override("font_color", (UI.GOLD if records_mode else UI.CYAN).lightened(0.08))
+	_record_search.visible = records_mode
+	_layout()
 	_refresh()
 	call_deferred("_focus_selected_data")
-
 
 func _refresh_record_roster() -> void:
 	var instances := OverworldState.get_collection_instances()
@@ -385,14 +396,12 @@ func _refresh_record_roster() -> void:
 		_selected_name = instances[0].id
 	_style_selection()
 
-
 func _select_record_instance(instance_id: String) -> void:
 	if _selected_name == instance_id and _detail_body.get_child_count() > 0:
 		return
 	_selected_name = instance_id
 	_style_selection()
 	_refresh_detail()
-
 
 func _refresh_record_detail() -> void:
 	var instance := OverworldState.get_instance_by_id(_selected_name)
@@ -434,7 +443,6 @@ func _refresh_record_detail() -> void:
 		shown += 1
 	if shown == 0:
 		_detail_body.add_child(_label("No unlocked or researched Records match this search.", 12, UI.MUTED))
-
 
 func _teach_record(instance_id: String, skill_id: String) -> void:
 	var result := OverworldState.teach_technique(instance_id, skill_id)
