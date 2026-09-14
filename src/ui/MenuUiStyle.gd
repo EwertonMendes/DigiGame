@@ -3,6 +3,10 @@ class_name MenuUiStyle
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
+const SAFE_FRAME_GUARD_META := &"_menu_ui_safe_frame_guard"
+const SAFE_FRAME_MAX_META := &"_menu_ui_safe_frame_max"
+const SAFE_FRAME_BREAKPOINT_META := &"_menu_ui_safe_frame_breakpoint"
+const SAFE_FRAME_REFLOW_META := &"_menu_ui_safe_frame_reflow"
 
 static func screen_frame() -> StyleBox:
 	return SKIN.frame_style(UI.FRAME_DARK, Vector4.ZERO, 14.0)
@@ -93,7 +97,39 @@ static func close_button(texture: Texture2D, tooltip: String) -> Button:
 	button.custom_minimum_size = Vector2(44.0, 44.0)
 	return button
 
+# Shared hard boundary for service/modal frames. PanelContainer derives its
+# minimum size from dynamic descendants, so a late font/portrait/list update can
+# make the very first opening larger than the viewport even after callers set an
+# explicit size. We fit the *combined* minimum size into the safe viewport and
+# subscribe to minimum-size changes so late first-frame layout cannot escape.
 static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vector2, compact_breakpoint: float = 840.0) -> Dictionary:
+	if frame == null or viewport == null:
+		return {}
+	frame.set_meta(SAFE_FRAME_MAX_META, max_size)
+	frame.set_meta(SAFE_FRAME_BREAKPOINT_META, compact_breakpoint)
+	_ensure_safe_frame_guard(frame, viewport)
+	return _apply_safe_frame_now(frame, viewport, max_size, compact_breakpoint)
+
+static func _ensure_safe_frame_guard(frame: Control, viewport: Viewport) -> void:
+	if bool(frame.get_meta(SAFE_FRAME_GUARD_META, false)):
+		return
+	frame.set_meta(SAFE_FRAME_GUARD_META, true)
+	var reflow := func() -> void:
+		if not is_instance_valid(frame) or not is_instance_valid(viewport):
+			return
+		if not frame.visible:
+			return
+		if bool(frame.get_meta(SAFE_FRAME_REFLOW_META, false)):
+			return
+		frame.set_meta(SAFE_FRAME_REFLOW_META, true)
+		var stored_max := Vector2(frame.get_meta(SAFE_FRAME_MAX_META, Vector2(1240, 720)))
+		var stored_breakpoint := float(frame.get_meta(SAFE_FRAME_BREAKPOINT_META, 840.0))
+		_apply_safe_frame_now(frame, viewport, stored_max, stored_breakpoint)
+		frame.set_meta(SAFE_FRAME_REFLOW_META, false)
+	frame.minimum_size_changed.connect(reflow)
+	frame.visibility_changed.connect(reflow)
+
+static func _apply_safe_frame_now(frame: Control, viewport: Viewport, max_size: Vector2, compact_breakpoint: float) -> Dictionary:
 	var physical_size := UI.physical_window_size(viewport)
 	var canvas_scale := UI.ui_scale(viewport)
 	var compact := UI.is_compact(viewport, compact_breakpoint)
@@ -103,20 +139,32 @@ static func apply_safe_frame(frame: Control, viewport: Viewport, max_size: Vecto
 		maxf(1.0, physical_size.y - safe_margin * 2.0)
 	)
 	var requested := Vector2(minf(max_size.x, available.x), minf(max_size.y, available.y))
-	frame.scale = Vector2.ONE * canvas_scale
+	var minimum := frame.get_combined_minimum_size()
+	var content_size := Vector2(
+		maxf(requested.x, minimum.x),
+		maxf(requested.y, minimum.y)
+	)
+	var fit := minf(1.0, minf(
+		available.x / maxf(1.0, content_size.x),
+		available.y / maxf(1.0, content_size.y)
+	))
+	var effective_size := content_size * fit
+	var final_scale := canvas_scale * fit
+
+	frame.scale = Vector2.ONE * final_scale
 	frame.position = Vector2(
-		(physical_size.x - requested.x) * 0.5,
-		(physical_size.y - requested.y) * 0.5
+		(physical_size.x - effective_size.x) * 0.5,
+		(physical_size.y - effective_size.y) * 0.5
 	) * canvas_scale
-	frame.size = requested
+	frame.size = content_size
 	frame.clip_contents = true
 	return {
 		"compact": compact,
-		"scale": canvas_scale,
-		"fit": 1.0,
+		"scale": final_scale,
+		"fit": fit,
 		"position": frame.position,
-		"size": requested,
-		"effective_size": requested,
+		"size": content_size,
+		"effective_size": effective_size,
 	}
 
 static func margin(left: int, top: int, right: int, bottom: int) -> MarginContainer:
