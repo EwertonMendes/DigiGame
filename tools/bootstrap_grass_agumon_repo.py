@@ -162,4 +162,40 @@ replace_once(
     'f"additional={len(additional)} project_original={len(project_original)} audited={len(covered)} unknown={len(unknown)} missing={len(missing)}"',
 )
 
+# Keep the permanent technique catalogue generator deterministic for the custom
+# Rookie. Regenerating the canonical catalogue after adding Grass Agumon must
+# preserve the same signature/inherited techniques declared by this feature.
+replace_once(
+    "tools/build_technique_catalog.mjs",
+    '''  const signatureOverrides = new Map([
+    ["agumon", "pepper_breath"], ["gabumon", "blue_blaster"], ["greymon", "mega_flame"],
+    ["koromon", "bubbles"], ["tanemon", "adhesive_bubble"], ["veemon", "vee_headbutt"],
+  ]);''',
+    '''  const signatureOverrides = new Map([
+    ["agumon", "pepper_breath"], ["gabumon", "blue_blaster"], ["greymon", "mega_flame"],
+    ["koromon", "bubbles"], ["tanemon", "adhesive_bubble"], ["veemon", "vee_headbutt"],
+    ["grass agumon", "adhesive_bubble"],
+  ]);''',
+)
+replace_once(
+    "tools/build_technique_catalog.mjs",
+    '''  const inheritedOverrides = new Map([
+    ["agumon", ["guard_charge"]], ["gabumon", ["speed_charge"]],
+    ["greymon", ["guard_charge"]], ["veemon", ["speed_charge"]],
+  ]);''',
+    '''  const inheritedOverrides = new Map([
+    ["agumon", ["guard_charge"]], ["gabumon", ["speed_charge"]],
+    ["greymon", ["guard_charge"]], ["veemon", ["speed_charge"]],
+    ["grass agumon", ["guard_charge", "speed_charge"]],
+  ]);''',
+)
+
+# The catalogue validator is count-driven rather than frozen to the original
+# 408 upstream species because DigiGame owns project-original species too.
+replace_once(
+    "tools/validate_combat_data.py",
+    '    assert species_seen == species_seeds and len(species_seen) == 408, "every current species must have one learnset"',
+    '    assert species_seen == species_seeds and len(species_seen) == len(species_database), "every current species must have one learnset"',
+)
+
 print("Grass Agumon repository integration patches applied")
