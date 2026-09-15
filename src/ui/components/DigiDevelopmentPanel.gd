@@ -9,10 +9,10 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE, Color(V2.PURPLE.r, V2.PURPLE.g, V2.PURPLE.b, 0.24), 10))
-	var margin := _margin(10, 9, 10, 9)
+	var margin := _margin(9, 6, 9, 6)
 	add_child(margin)
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 4)
+	body.add_theme_constant_override("separation", 2)
 	margin.add_child(body)
 	body.add_child(_label("DEVELOPMENT", 11, V2.PURPLE, true))
 	body.add_child(_label("Innate aptitude + permanent training", 9, V2.MUTED))
@@ -22,10 +22,11 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	grid.columns = 4
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 2)
+	grid.add_theme_constant_override("v_separation", 1)
 	body.add_child(grid)
 	for header in ["STAT", "APT", "TRAIN", "TOTAL"]:
 		var header_label := _label(header, 8, V2.SUBTLE, true)
+		header_label.custom_minimum_size.y = 16.0
 		if header != "STAT":
 			header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		grid.add_child(header_label)
@@ -50,7 +51,7 @@ func _total_copy(aptitude: int, training: int) -> String:
 
 func _table_label(text: String, color: Color, heading: bool, right: bool) -> Label:
 	var label := _label(text, 9, color, heading)
-	label.custom_minimum_size.y = 20.0
+	label.custom_minimum_size.y = 17.0
 	if right:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	return label
