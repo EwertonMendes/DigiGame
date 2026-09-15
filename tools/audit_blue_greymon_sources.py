@@ -11,13 +11,13 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from build_early_rank_ds_fields import _components, _group_by_y, load_wtw_archive
+from build_early_rank_ds_fields import _components, _group_by_y, fetch
 from build_additional_ds_fields import movement_groups
 from materialize_ds_direction_registry import crop_component, keyed_source
 
 REQUESTED = {
-    "Blue Greymon": "GreymonXrosBlue.png",
-    "Blue Metal Greymon": "MetalGreymonXros.png",
+    "Blue Greymon": "https://i874.photobucket.com/albums/ab308/WtWSprites/Super%20Xros%20Wars/GreymonXrosBlue.png",
+    "Blue Metal Greymon": "https://i874.photobucket.com/albums/ab308/WtWSprites/Super%20Xros%20Wars/MetalGreymonXros.png",
 }
 
 PROFILES = {
@@ -38,18 +38,11 @@ def slug(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
 
 
-def find_member(names: list[str], basename: str) -> str:
-    matches = [name for name in names if Path(name).name.lower() == basename.lower()]
-    if len(matches) != 1:
-        raise RuntimeError(f"{basename}: expected one archive member, got {matches}")
-    return matches[0]
-
-
-def manager_matches(basename: str) -> list[dict]:
+def manager_matches(source_url: str) -> list[dict]:
     root = Path("/tmp/digimon-sprite-manager/specs/digimon")
     if not root.is_dir():
         return []
-    wanted = Path(basename).stem.lower()
+    wanted = Path(source_url).stem.lower()
     matches: list[dict] = []
     for path in sorted(root.glob("*.extract.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -101,12 +94,9 @@ def main() -> None:
     raw_dir.mkdir(parents=True, exist_ok=True)
     candidates_dir.mkdir(parents=True, exist_ok=True)
 
-    archive = load_wtw_archive()
-    names = archive.namelist()
     report = []
-    for canonical_name, basename in REQUESTED.items():
-        member = find_member(names, basename)
-        payload = archive.read(member)
+    for canonical_name, source_url in REQUESTED.items():
+        payload = fetch(source_url)
         with Image.open(io.BytesIO(payload)) as image:
             source = image.convert("RGBA")
         raw_name = f"{slug(canonical_name)}.png"
@@ -131,8 +121,7 @@ def main() -> None:
 
         report.append({
             "name": canonical_name,
-            "basename": basename,
-            "member": member,
+            "source_url": source_url,
             "source_sha256": sha256(payload),
             "size": list(source.size),
             "raw_file": raw_name,
@@ -145,7 +134,7 @@ def main() -> None:
                 for row in rows
             ],
             "profiles": profiles,
-            "sprite_manager": manager_matches(basename),
+            "sprite_manager": manager_matches(source_url),
         })
 
     OUT.mkdir(parents=True, exist_ok=True)
