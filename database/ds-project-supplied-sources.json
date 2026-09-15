@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "explicit_four_triples": {
+      "kind": "explicit_four_triples"
+    }
+  },
+  "patterns": {},
+  "species": {
+    "Zeke Greymon": {
+      "source_kind": "project_supplied",
+      "source_variant": "custom_directional_sheet",
+      "source_path": "assets/characters/zekegreymon/source/movement-sheet.webp",
+      "source_sha256": "372a4c7e48f574c154e9aeeb5017f393c7ba194bd59506a01076931edd5b4f03",
+      "source_dimensions": [1086, 640],
+      "profile": "explicit_four_triples",
+      "pattern": "canonical_rows",
+      "source_boxes": [
+        [13, 21, 167, 226],
+        [193, 22, 165, 233],
+        [371, 22, 165, 239],
+        [563, 21, 160, 227],
+        [737, 19, 165, 236],
+        [915, 19, 162, 238],
+        [13, 383, 159, 229],
+        [185, 379, 171, 233],
+        [366, 390, 169, 223],
+        [569, 382, 162, 235],
+        [750, 382, 166, 241],
+        [927, 384, 149, 230]
+      ],
+      "phase_orders": {
+        "down_left": [0, 1, 2],
+        "down_right": [0, 1, 2],
+        "up_left": [0, 1, 2],
+        "up_right": [0, 1, 2]
+      },
+      "background_policy": {
+        "mode": "relative_rgb_chroma_key",
+        "blue_over_red": 20,
+        "blue_over_green": 5,
+        "green_over_red": 10,
+        "min_blue": 90,
+        "min_green": 70
+      },
+      "cell_padding": 12,
+      "runtime_scale": 0.25,
+      "original_attachment_sha256": "73c784c9dfcec9d74a6763f96f63409b370d078429f1b55e94ef55ff1d19a290",
+      "source_crop": [0, 250, 1086, 640]
+    }
+  }
+}

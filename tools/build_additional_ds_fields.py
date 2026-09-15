@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build higher-rank DS field sprites into DigiGame's canonical directional_12 contract.
+"""Build higher-rank directional sprites into DigiGame's canonical directional_12 contract.
 
-The source manifest describes reusable sheet layouts and semantic direction patterns.
-No runtime code knows individual species quirks: every generated field strip is
-DL, DR, UL, UR x idle, step_a, step_b with a uniform bottom-center anchor.
+Official DS sources and project-supplied source sheets enter through the same
+normalization pipeline. Source layout, background cleanup, direction mapping,
+phase order and display scale are data. Runtime code never branches by species.
 """
 from __future__ import annotations
 
@@ -15,13 +15,19 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import quote
 
+import numpy as np
 from PIL import Image, ImageSequence
 
 from build_early_rank_ds_fields import _components, _group_by_y, load_wtw_archive
-from materialize_ds_direction_registry import crop_component, keyed_source, pose_match_candidates
+from materialize_ds_direction_registry import (
+    crop_component,
+    keyed_source as uniform_keyed_source,
+    pose_match_candidates,
+)
 from sync_digimon_database_assets import fetch
 
 CONFIG_PATH = Path("database/ds-additional-sources.json")
+PROJECT_SOURCES_PATH = Path("database/ds-project-supplied-sources.json")
 DATABASE_PATH = Path("database/base-digimon-list.json")
 MANIFEST_PATH = Path("database/additional-ds-playables.json")
 DIRECTIONS = ("down_left", "down_right", "up_left", "up_right")
@@ -46,6 +52,18 @@ def exact_box(component: dict[str, float]) -> dict[str, int]:
     return {key: int(component[key]) for key in ("x", "y", "w", "h")}
 
 
+def normalize_box(value: object) -> dict[str, int]:
+    if isinstance(value, dict):
+        box = {key: int(value[key]) for key in ("x", "y", "w", "h")}
+    elif isinstance(value, list) and len(value) == 4:
+        box = dict(zip(("x", "y", "w", "h"), (int(part) for part in value)))
+    else:
+        raise RuntimeError(f"Invalid explicit source box: {value!r}")
+    if box["x"] < 0 or box["y"] < 0 or box["w"] <= 0 or box["h"] <= 0:
+        raise RuntimeError(f"Invalid explicit source box: {box}")
+    return box
+
+
 def optional_source_id(spec: dict[str, Any]) -> int | None:
     value = spec.get("source_id")
     return None if value is None else int(value)
@@ -57,7 +75,38 @@ def source_member(archive, expected: str) -> bytes:
     return archive.read(expected)
 
 
-def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[dict[str, int]]]:
+def load_config() -> dict[str, Any]:
+    config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    if PROJECT_SOURCES_PATH.is_file():
+        extension = json.loads(PROJECT_SOURCES_PATH.read_text(encoding="utf-8"))
+        for section in ("profiles", "patterns", "species"):
+            target = config.setdefault(section, {})
+            additions = extension.get(section, {})
+            overlap = set(target) & set(additions)
+            if overlap:
+                raise RuntimeError(
+                    f"Project-supplied additional DS config duplicates {section}: {sorted(overlap)}"
+                )
+            target.update(additions)
+    return config
+
+
+def movement_groups(
+    image: Image.Image,
+    profile: dict[str, Any],
+    spec: dict[str, Any],
+) -> list[list[dict[str, int]]]:
+    kind = str(profile.get("kind", ""))
+
+    if kind == "explicit_four_triples":
+        boxes = [normalize_box(value) for value in spec.get("source_boxes", [])]
+        if len(boxes) != 12:
+            raise RuntimeError(f"Expected 12 explicit movement boxes, got {len(boxes)}")
+        for box in boxes:
+            if box["x"] + box["w"] > image.width or box["y"] + box["h"] > image.height:
+                raise RuntimeError(f"Explicit source box outside {image.size}: {box}")
+        return [boxes[index : index + 3] for index in range(0, 12, 3)]
+
     _background, components = _components(image)
     min_cx_ratio = float(profile.get("min_cx_ratio", 0.0))
     max_cx_ratio = float(profile.get("max_cx_ratio", 1.0))
@@ -76,15 +125,15 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
     min_cy = image.height * min_cy_ratio
     max_cy = image.height * max_cy_ratio
     candidates = [
-        item for item in components
-        if 10 <= item["w"] <= 50
-        and 7 <= item["h"] <= 50
-        and item["area"] >= 60
+        item
+        for item in components
+        if int(profile.get("min_width", 10)) <= item["w"] <= int(profile.get("max_width", 50))
+        and int(profile.get("min_height", 7)) <= item["h"] <= int(profile.get("max_height", 50))
+        and item["area"] >= int(profile.get("min_area", 60))
         and min_cx <= item["cx"] <= max_cx
         and min_cy <= item["cy"] <= max_cy
     ]
-    rows = _group_by_y(candidates, tolerance=8.0)
-    kind = str(profile.get("kind", ""))
+    rows = _group_by_y(candidates, tolerance=float(profile.get("row_tolerance", 8.0)))
 
     if kind == "two_rows_of_six":
         six_rows = [sorted(row, key=lambda item: item["cx"]) for row in rows if len(row) >= 6]
@@ -111,7 +160,56 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
     return [[exact_box(item) for item in group] for group in groups]
 
 
-def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
+def prepare_source(
+    image: Image.Image,
+    spec: dict[str, Any],
+) -> tuple[Image.Image, tuple[int, int, int] | None, dict[str, Any] | None]:
+    policy = spec.get("background_policy")
+    if not policy:
+        background, _ = _components(image)
+        return uniform_keyed_source(image, background), background, None
+
+    mode = str(policy.get("mode", ""))
+    if mode != "relative_rgb_chroma_key":
+        raise RuntimeError(f"Unknown source background policy: {mode}")
+
+    rgba = np.array(image.convert("RGBA"), copy=True)
+    red = rgba[:, :, 0].astype(np.int16)
+    green = rgba[:, :, 1].astype(np.int16)
+    blue = rgba[:, :, 2].astype(np.int16)
+    mask = (
+        (blue - red >= int(policy.get("blue_over_red", 20)))
+        & (blue - green >= int(policy.get("blue_over_green", 5)))
+        & (green - red >= int(policy.get("green_over_red", 10)))
+        & (blue >= int(policy.get("min_blue", 90)))
+        & (green >= int(policy.get("min_green", 70)))
+    )
+    rgba[mask, 3] = 0
+    return Image.fromarray(rgba, "RGBA"), None, dict(policy)
+
+
+def _declared_phase_orders(spec: dict[str, Any]) -> dict[str, list[int]] | None:
+    raw = spec.get("phase_orders")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict) or set(raw) != set(DIRECTIONS):
+        raise RuntimeError("phase_orders must define every canonical direction")
+    result: dict[str, list[int]] = {}
+    for direction in DIRECTIONS:
+        order = [int(value) for value in raw[direction]]
+        if sorted(order) != [0, 1, 2]:
+            raise RuntimeError(f"Invalid phase order for {direction}: {order}")
+        result[direction] = order
+    return result
+
+
+def build_field(
+    name: str,
+    source: Image.Image,
+    source_bytes: bytes,
+    spec: dict[str, Any],
+    config: dict[str, Any],
+) -> dict[str, Any]:
     profile_name = str(spec["profile"])
     pattern_name = str(spec["pattern"])
     profile = config["profiles"][profile_name]
@@ -119,46 +217,78 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     if sorted(permutation) != [0, 1, 2, 3]:
         raise RuntimeError(f"{name}: invalid direction permutation {permutation}")
 
-    raw_groups = movement_groups(source, profile)
-    raw_frames = {direction: raw_groups[permutation[index]] for index, direction in enumerate(DIRECTIONS)}
-    background, _ = _components(source)
-    source_frame_order: dict[str, list[int]] = {
-        "down_left": [0, 1, 2],
-        "up_left": [0, 1, 2],
-        "down_right": [],
-        "up_right": [],
-    }
-    pose_alignment: dict[str, Any] = {}
-    for left_direction, right_direction in (("down_left", "down_right"), ("up_left", "up_right")):
-        candidates = pose_match_candidates(
-            source,
-            background,
-            raw_frames[left_direction],
-            raw_frames[right_direction],
+    expected_dimensions = spec.get("source_dimensions")
+    if expected_dimensions and [source.width, source.height] != [int(value) for value in expected_dimensions]:
+        raise RuntimeError(
+            f"{name}: source dimensions changed from {expected_dimensions} to {[source.width, source.height]}"
         )
-        best_cost, best_order = candidates[0]
-        source_frame_order[right_direction] = list(best_order)
-        pose_alignment[right_direction] = {
-            "compared_with": left_direction,
-            "policy": "deterministic_mirror_pose_match",
-            "source_phase_order": list(best_order),
-            "pixel_error": int(best_cost),
-            "confidence_margin": int(candidates[1][0] - best_cost),
-        }
 
-    keyed = keyed_source(source, background)
+    raw_groups = movement_groups(source, profile, spec)
+    raw_frames = {
+        direction: raw_groups[permutation[index]]
+        for index, direction in enumerate(DIRECTIONS)
+    }
+    prepared_source, uniform_background, background_policy = prepare_source(source, spec)
+
+    declared_orders = _declared_phase_orders(spec)
+    pose_alignment: dict[str, Any] = {}
+    if declared_orders is not None:
+        source_frame_order = declared_orders
+        for direction in DIRECTIONS:
+            pose_alignment[direction] = {
+                "policy": "declared_authored_phase_order",
+                "source_phase_order": list(source_frame_order[direction]),
+            }
+    else:
+        if uniform_background is None:
+            raise RuntimeError(
+                f"{name}: chroma-keyed source must declare phase_orders instead of using uniform-background pose matching"
+            )
+        source_frame_order = {
+            "down_left": [0, 1, 2],
+            "up_left": [0, 1, 2],
+            "down_right": [],
+            "up_right": [],
+        }
+        for left_direction, right_direction in (
+            ("down_left", "down_right"),
+            ("up_left", "up_right"),
+        ):
+            candidates = pose_match_candidates(
+                source,
+                uniform_background,
+                raw_frames[left_direction],
+                raw_frames[right_direction],
+            )
+            best_cost, best_order = candidates[0]
+            source_frame_order[right_direction] = list(best_order)
+            pose_alignment[right_direction] = {
+                "compared_with": left_direction,
+                "policy": "deterministic_mirror_pose_match",
+                "source_phase_order": list(best_order),
+                "pixel_error": int(best_cost),
+                "confidence_margin": int(candidates[1][0] - best_cost),
+            }
+
     frames: list[Image.Image] = []
     audited_boxes: dict[str, list[dict[str, int]]] = {}
     for direction in DIRECTIONS:
-        ordered_boxes = [raw_frames[direction][index] for index in source_frame_order[direction]]
+        ordered_boxes = [
+            raw_frames[direction][index]
+            for index in source_frame_order[direction]
+        ]
         audited_boxes[direction] = ordered_boxes
-        frames.extend(crop_component(keyed, box) for box in ordered_boxes)
+        frames.extend(crop_component(prepared_source, box) for box in ordered_boxes)
 
-    cell_w = max(32, max(frame.width for frame in frames) + 4)
-    cell_h = max(32, max(frame.height for frame in frames) + 4)
+    cell_padding = max(4, int(spec.get("cell_padding", 4)))
+    cell_w = max(32, max(frame.width for frame in frames) + cell_padding)
+    cell_h = max(32, max(frame.height for frame in frames) + cell_padding)
     strip = Image.new("RGBA", (cell_w * FRAME_COUNT, cell_h), (0, 0, 0, 0))
     for index, frame in enumerate(frames):
-        strip.alpha_composite(frame, (index * cell_w + (cell_w - frame.width) // 2, cell_h - frame.height - 1))
+        strip.alpha_composite(
+            frame,
+            (index * cell_w + (cell_w - frame.width) // 2, cell_h - frame.height - 1),
+        )
     for index in range(FRAME_COUNT):
         if strip.crop((index * cell_w, 0, (index + 1) * cell_w, cell_h)).getbbox() is None:
             raise RuntimeError(f"{name}: generated empty runtime frame {index}")
@@ -168,12 +298,15 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     directory.mkdir(parents=True, exist_ok=True)
     field_path = directory / "field.png"
     strip.save(field_path, "PNG", optimize=True)
-    metadata = {
-        "source_kind": "official_ds",
-        "source_variant": "withthewill_additional_audited",
+
+    source_url = str(spec.get("source_url") or spec.get("source_path") or "")
+    runtime_scale = float(spec.get("runtime_scale", 1.0))
+    metadata: dict[str, Any] = {
+        "source_kind": str(spec.get("source_kind", "official_ds")),
+        "source_variant": str(spec.get("source_variant", "withthewill_additional_audited")),
         "source_id": optional_source_id(spec),
         "source_archive_file": spec.get("source_member"),
-        "source_url": str(spec["source_url"]),
+        "source_url": source_url,
         "source_sha256": sha256(source_bytes),
         "rebuilt_from_source": True,
         "existing_runtime_strip_used_as_input": False,
@@ -193,7 +326,20 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "frames_per_direction": 3,
         "field_path": f"res://assets/characters/{key}/field.png",
     }
-    (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+    if spec.get("source_path"):
+        metadata["source_path"] = str(spec["source_path"])
+    if spec.get("original_attachment_sha256"):
+        metadata["original_attachment_sha256"] = str(spec["original_attachment_sha256"])
+    if spec.get("source_crop"):
+        metadata["source_crop"] = [int(value) for value in spec["source_crop"]]
+    if background_policy is not None:
+        metadata["background_policy"] = background_policy
+    if runtime_scale != 1.0:
+        metadata["runtime_scale"] = runtime_scale
+    (directory / "field.json").write_text(
+        json.dumps(metadata, indent=2) + "\n",
+        encoding="utf-8",
+    )
     return metadata
 
 
@@ -228,7 +374,10 @@ def build_portrait(entry: dict[str, Any]) -> dict[str, Any]:
         "durations_ms": durations,
         "source_sha256": sha256(payload),
     }
-    (directory / "portrait_frames.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+    (directory / "portrait_frames.json").write_text(
+        json.dumps(metadata, indent=2) + "\n",
+        encoding="utf-8",
+    )
     return metadata
 
 
@@ -237,13 +386,61 @@ def write_resource(entry: dict[str, Any], field: dict[str, Any]) -> str:
     key = compact_key(name)
     path = Path("assets/resources") / resource_filename(name)
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = f'''[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]\n\n[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1_script"]\n[ext_resource type="Texture2D" path="res://assets/characters/{key}/field.png" id="2_texture"]\n\n[resource]\nscript = ExtResource("1_script")\ntexture = ExtResource("2_texture")\ninitial_frame = 0\ninitial_facing = "down_left"\nsprite_hframes = 12\nsprite_vframes = 1\nsprite_layout = "directional_12"\nsprite_scale = Vector2(1.0000, 1.0000)\nsprite_frame_duration = 0.120\nsprite_deviation = Vector2(0, 20)\nparticle_deviation = Vector2(0, 10)\ninitial_position = Vector2i(0, 0)\ntype = {json.dumps(str(entry.get("attribute", "Free")))}\ndisplay_name = {json.dumps(name)}\nlevel = 1\nhp = {max(1, int(entry.get("hp", 1)))}\nmp = {max(0, int(entry.get("mp", entry.get("sp", 0))))}\nattack = {max(1, int(entry.get("atk", entry.get("attack", 1))))}\ndefense = {max(1, int(entry.get("def", entry.get("defense", 1))))}\nage = 1\nbattles = 0\nvictories = 0\ndefeats = 0\n'''
+    runtime_scale = float(field.get("runtime_scale", 1.0))
+    text = f"""[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/characters/{key}/field.png" id="2_texture"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("2_texture")
+initial_frame = 0
+initial_facing = "down_left"
+sprite_hframes = 12
+sprite_vframes = 1
+sprite_layout = "directional_12"
+sprite_scale = Vector2({runtime_scale:.4f}, {runtime_scale:.4f})
+sprite_frame_duration = 0.120
+sprite_deviation = Vector2(0, 20)
+particle_deviation = Vector2(0, 10)
+initial_position = Vector2i(0, 0)
+type = {json.dumps(str(entry.get("attribute", "Free")))}
+display_name = {json.dumps(name)}
+level = 1
+hp = {max(1, int(entry.get("hp", 1)))}
+mp = {max(0, int(entry.get("mp", entry.get("sp", 0))))}
+attack = {max(1, int(entry.get("atk", entry.get("attack", 1))))}
+defense = {max(1, int(entry.get("def", entry.get("defense", 1))))}
+age = 1
+battles = 0
+victories = 0
+defeats = 0
+"""
     path.write_text(text, encoding="utf-8")
     return f"res://assets/resources/{resource_filename(name)}"
 
 
+def load_source_bytes(spec: dict[str, Any], archive) -> bytes:
+    source_path = str(spec.get("source_path") or "").strip()
+    if source_path:
+        path = Path(source_path)
+        if not path.is_file():
+            raise RuntimeError(f"Project-supplied source missing: {source_path}")
+        return path.read_bytes()
+
+    pinned_member = spec.get("source_member")
+    if pinned_member:
+        return source_member(archive, str(pinned_member))
+
+    source_url = str(spec.get("source_url") or "").strip()
+    if not source_url:
+        raise RuntimeError("source_path, source_member or source_url is required")
+    return fetch(source_url)
+
+
 def main() -> None:
-    config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    config = load_config()
     if config.get("canonical_runtime_order") != list(DIRECTIONS):
         raise RuntimeError("Additional DS config runtime direction order is not canonical")
     if config.get("canonical_runtime_phases") != list(PHASES):
@@ -252,30 +449,28 @@ def main() -> None:
     by_name = {str(entry["name"]): entry for entry in database}
     requested = config.get("species", {})
     if set(requested) - set(by_name):
-        raise RuntimeError(f"Additional DS species missing from canonical database: {sorted(set(requested) - set(by_name))}")
+        raise RuntimeError(
+            f"Additional DS species missing from canonical database: {sorted(set(requested) - set(by_name))}"
+        )
 
     archive = load_wtw_archive()
     manifest_rows = []
     for name, spec in requested.items():
         if spec["profile"] not in config["profiles"] or spec["pattern"] not in config["patterns"]:
             raise RuntimeError(f"{name}: unknown profile/pattern")
-        pinned_member = spec.get("source_member")
-        if pinned_member:
-            payload = source_member(archive, str(pinned_member))
-        else:
-            source_url = str(spec.get("source_url") or "").strip()
-            if not source_url:
-                raise RuntimeError(f"{name}: source_member or source_url is required")
-            payload = fetch(source_url)
+
+        payload = load_source_bytes(spec, archive)
         actual_sha = sha256(payload)
         if actual_sha != str(spec["source_sha256"]):
-            raise RuntimeError(f"{name}: source SHA changed ({actual_sha}); refusing to infer from changed art")
+            raise RuntimeError(
+                f"{name}: source SHA changed ({actual_sha}); refusing to infer from changed art"
+            )
         source = Image.open(io.BytesIO(payload)).convert("RGBA")
         field = build_field(name, source, payload, spec, config)
         portrait = build_portrait(by_name[name])
         resource = write_resource(by_name[name], field)
         key = compact_key(name)
-        manifest_rows.append({
+        row = {
             "name": name,
             "seed": str(by_name[name]["seed"]),
             "rank": str(by_name[name]["rank"]),
@@ -291,8 +486,14 @@ def main() -> None:
             "pattern": str(spec["pattern"]),
             "field_cell": [int(field["cell_width"]), int(field["cell_height"])],
             "portrait_frames": int(portrait["frame_count"]),
-        })
-        print(f"built {name}: profile={spec['profile']} pattern={spec['pattern']} cell={field['cell_width']}x{field['cell_height']}")
+        }
+        if str(spec.get("source_kind", "official_ds")) != "official_ds":
+            row["source_kind"] = str(spec["source_kind"])
+        manifest_rows.append(row)
+        print(
+            f"built {name}: profile={spec['profile']} pattern={spec['pattern']} "
+            f"cell={field['cell_width']}x{field['cell_height']} scale={field.get('runtime_scale', 1.0)}"
+        )
 
     manifest = {
         "schema_version": 1,
