@@ -1,0 +1,16 @@
+{
+  "source": "portrait.webp",
+  "source_path": "res://assets/characters/zekegreymon/source/portrait.webp",
+  "source_kind": "project_supplied_animated_webp",
+  "source_sha256": "ccb07f59e93947bb78a668a7a03085849d964b592c562f7087c5aacb271a7c04",
+  "source_git_blob_sha": "e15f66493db661e6c384fe66545fe9bab87b6a16",
+  "frame_width": 200,
+  "frame_height": 159,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ]
+}

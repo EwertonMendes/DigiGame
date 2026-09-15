@@ -2,14 +2,14 @@ extends Control
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const ICON_ROOT := "res://assets/ui/icons"
-const PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")
+const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 
 var _controller: Node = null
 var _dock: Panel = null
 var _status_panel: Panel = null
 var _status_accent: ColorRect = null
 var _portrait_frame: Panel = null
-var _portrait: TextureRect = null
+var _portrait: DigimonPortraitPreview = null
 var _actor_label: Label = null
 var _hp_caption: Label = null
 var _sp_caption: Label = null
@@ -117,10 +117,7 @@ func _build_status_panel() -> void:
 	_portrait_frame.add_theme_stylebox_override("panel", UI.turn_node_style(UI.GOLD, true))
 	_status_panel.add_child(_portrait_frame)
 
-	_portrait = TextureRect.new()
-	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_portrait = PortraitPreviewScript.new() as DigimonPortraitPreview
 	_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_portrait_frame.add_child(_portrait)
 
@@ -368,7 +365,7 @@ func refresh_from_controller() -> void:
 
 	if actor_key != _last_actor_key:
 		_last_actor_key = actor_key
-		_portrait.texture = _load_portrait(actor_key)
+		_portrait.set_species(actor_key)
 		_animate_actor_change()
 	_layout_dock()
 
@@ -606,30 +603,6 @@ func _layout_command(panel_size: Vector2, compact: bool, contextual: bool, user_
 	_nav_hint.size = Vector2(panel_size.x - pad * 2.0, nav_h)
 	_nav_hint.text = "D-pad / Arrows  Navigate   •   A / Enter  Select"
 	_nav_hint.add_theme_font_size_override("font_size", 9 if compact else 10)
-
-
-func _load_portrait(digimon_key: String) -> Texture2D:
-	var portrait_key := PortraitResolver.resolve_key(digimon_key)
-	if portrait_key.is_empty():
-		return null
-	var metadata_path := PortraitResolver.metadata_path(portrait_key)
-	var strip_path := PortraitResolver.strip_path(portrait_key)
-	if not FileAccess.file_exists(metadata_path) or not ResourceLoader.exists(strip_path):
-		return null
-	var metadata = JSON.parse_string(FileAccess.get_file_as_string(metadata_path))
-	if not metadata is Dictionary:
-		return null
-	var strip := load(strip_path) as Texture2D
-	if strip == null:
-		return null
-	var frame_width := float(metadata.get("frame_width", 0))
-	var frame_height := float(metadata.get("frame_height", 0))
-	if frame_width <= 0.0 or frame_height <= 0.0:
-		return null
-	var atlas := AtlasTexture.new()
-	atlas.atlas = strip
-	atlas.region = Rect2(0.0, 0.0, frame_width, frame_height)
-	return atlas
 
 
 func _is_our_focus(owner: Control) -> bool:
