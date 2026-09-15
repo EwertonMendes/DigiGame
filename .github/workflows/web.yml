@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: read
 
 concurrency:
@@ -115,3 +116,42 @@ jobs:
           path: build/web
           if-no-files-found: error
           retention-days: 30
+
+      - name: Start Post-Web QA after successful build
+        if: >-
+          github.event_name == 'pull_request' ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/master')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_EVENT: ${{ github.event_name }}
+          SOURCE_HEAD_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          SOURCE_TESTED_SHA: ${{ github.sha }}
+          SOURCE_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+        run: |
+          set -euo pipefail
+
+          for attempt in 1 2 3; do
+            if gh workflow run post-web.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref master \
+              -f source_run_id="$GITHUB_RUN_ID" \
+              -f source_event="$SOURCE_EVENT" \
+              -f source_head_branch="$SOURCE_HEAD_BRANCH" \
+              -f source_head_sha="$SOURCE_HEAD_SHA" \
+              -f tested_sha="$SOURCE_TESTED_SHA" \
+              -f source_head_repo="$SOURCE_HEAD_REPO" \
+              -f pr_number="$PR_NUMBER"; then
+              echo "Post-Web QA dispatched for Web run ${GITHUB_RUN_ID}."
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 2))
+            fi
+          done
+
+          echo "Failed to dispatch Post-Web QA after 3 attempts." >&2
+          exit 1
