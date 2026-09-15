@@ -9,6 +9,7 @@ var _variant := "floating"
 var _content_padding := Vector4.ZERO
 var _radius := 10
 var _glass_material: ShaderMaterial = null
+var _bound_viewport: Viewport = null
 
 
 func _init() -> void:
@@ -20,6 +21,18 @@ func _init() -> void:
 
 func _ready() -> void:
 	_refresh_glass()
+	_bound_viewport = get_viewport()
+	if _bound_viewport != null:
+		if not _bound_viewport.size_changed.is_connected(_refresh_screen_pixel_size):
+			_bound_viewport.size_changed.connect(_refresh_screen_pixel_size)
+	_refresh_screen_pixel_size()
+
+
+func _exit_tree() -> void:
+	if _bound_viewport != null and is_instance_valid(_bound_viewport):
+		if _bound_viewport.size_changed.is_connected(_refresh_screen_pixel_size):
+			_bound_viewport.size_changed.disconnect(_refresh_screen_pixel_size)
+	_bound_viewport = null
 
 
 func configure_glass(
@@ -60,7 +73,23 @@ func _refresh_glass() -> void:
 		V2.glass_style(_accent, _variant, _content_padding, _radius)
 	)
 	_apply_blur_profile()
+	_refresh_screen_pixel_size()
 	queue_redraw()
+
+
+func _refresh_screen_pixel_size() -> void:
+	if _glass_material == null or not is_inside_tree():
+		return
+	var viewport := get_viewport()
+	if viewport == null:
+		return
+	var viewport_size := viewport.get_visible_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	_glass_material.set_shader_parameter(
+		"screen_pixel_size",
+		Vector2(1.0 / viewport_size.x, 1.0 / viewport_size.y)
+	)
 
 
 func _apply_blur_profile() -> void:
