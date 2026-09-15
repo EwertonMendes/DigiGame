@@ -15,6 +15,8 @@ var _subtitle: Label
 var _bits_badge: PanelContainer
 var _bits_value: Label
 var _close_button: Button
+var _title_text := "DIGIMON"
+var _subtitle_text := ""
 var _bits := 0
 var _show_bits := true
 
@@ -27,11 +29,13 @@ func _ready() -> void:
 
 
 func configure(title: String, subtitle: String, bits: int = 0, show_bits: bool = true) -> DigiModalHeader:
+	_title_text = title
+	_subtitle_text = subtitle
 	_bits = maxi(0, bits)
 	_show_bits = show_bits
 	if _title != null:
-		_title.text = title
-		_subtitle.text = subtitle
+		_title.text = _title_text
+		_subtitle.text = _subtitle_text
 		_bits_value.text = "%d BITS" % _bits
 		_layout()
 	return self
@@ -49,7 +53,7 @@ func get_close_button() -> Button:
 
 func _build() -> void:
 	_title = Label.new()
-	_title.text = "DIGIMON"
+	_title.text = _title_text
 	_title.add_theme_font_size_override("font_size", 27)
 	_title.add_theme_color_override("font_color", V2.TEXT)
 	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -58,7 +62,7 @@ func _build() -> void:
 	add_child(_title)
 
 	_subtitle = Label.new()
-	_subtitle.text = ""
+	_subtitle.text = _subtitle_text
 	_subtitle.add_theme_font_size_override("font_size", 11)
 	_subtitle.add_theme_color_override("font_color", V2.MUTED)
 	_subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
