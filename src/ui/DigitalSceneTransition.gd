@@ -9,6 +9,8 @@ const HUB_SCENE_PATH := "res://scenes/world/hub.tscn"
 const CONTEXT_BATTLE := "battle"
 const CONTEXT_HUB := "hub"
 const LOAD_TIMEOUT_MS := 8000
+const VISUAL_TWEEN_MIN_WATCHDOG_MS := 1500
+const VISUAL_TWEEN_DURATION_MULTIPLIER := 4.0
 
 var _root: Control = null
 var _screen: ColorRect = null
@@ -101,12 +103,15 @@ func _run_transition(scene_path: String, context: String) -> void:
 
 	# Most of the cover happens while the destination scene is loading. Even if a
 	# slower device needs a little longer, the mosaic keeps moving because all of
-	# its life comes from shader TIME rather than CPU-created squares.
+	# its life comes from shader TIME rather than CPU-created squares. Presentation
+	# must never own scene-flow completion, so every visual tween has a wall-clock
+	# watchdog and its terminal state is applied explicitly afterward.
 	var cover := create_tween()
 	cover.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	cover.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 	cover.tween_method(_set_progress, 0.0, 0.94, 0.42)
-	await cover.finished
+	await _await_visual_tween(cover, 0.42, "cover")
+	_set_progress(0.94)
 
 	var packed_scene := await _await_threaded_scene(scene_path)
 	if packed_scene == null:
@@ -121,7 +126,9 @@ func _run_transition(scene_path: String, context: String) -> void:
 	seal.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	seal.tween_method(_set_progress, 0.94, 1.0, 0.085)
 	seal.tween_method(_set_flash, 0.0, 0.52, 0.085)
-	await seal.finished
+	await _await_visual_tween(seal, 0.085, "seal")
+	_set_progress(1.0)
+	_set_flash(0.52)
 
 	var change_error := get_tree().change_scene_to_packed(packed_scene)
 	if change_error != OK:
@@ -140,7 +147,9 @@ func _run_transition(scene_path: String, context: String) -> void:
 	reveal.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	reveal.tween_method(_set_progress, 1.0, 0.0, 0.44)
 	reveal.tween_method(_set_flash, 0.52, 0.0, 0.16)
-	await reveal.finished
+	await _await_visual_tween(reveal, 0.44, "reveal")
+	_set_progress(0.0)
+	_set_flash(0.0)
 
 	_finish_transition(scene_path, context)
 
@@ -161,17 +170,32 @@ func _await_threaded_scene(scene_path: String) -> PackedScene:
 	return null
 
 
+func _await_visual_tween(tween: Tween, expected_duration: float, stage: String) -> void:
+	if tween == null:
+		return
+	var watchdog_ms := maxi(
+		VISUAL_TWEEN_MIN_WATCHDOG_MS,
+		ceili(maxf(expected_duration, 0.0) * 1000.0 * VISUAL_TWEEN_DURATION_MULTIPLIER)
+	)
+	var deadline_ms := Time.get_ticks_msec() + watchdog_ms
+	while tween.is_valid() and tween.is_running() and Time.get_ticks_msec() < deadline_ms:
+		await get_tree().process_frame
+	if tween.is_valid() and tween.is_running():
+		tween.kill()
+		print("[Transition] WATCHDOG stage=%s elapsed_ms=%d" % [stage, watchdog_ms])
+
+
 func _abort_transition() -> void:
 	var tween := create_tween().set_parallel(true)
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_method(_set_progress, _progress, 0.0, 0.24)
 	tween.tween_method(_set_flash, float(_material.get_shader_parameter("flash")), 0.0, 0.16)
-	await tween.finished
-	_root.visible = false
-	_busy = false
+	await _await_visual_tween(tween, 0.24, "abort")
 	_set_progress(0.0)
 	_set_flash(0.0)
+	_root.visible = false
+	_busy = false
 
 
 func _finish_transition(scene_path: String, context: String) -> void:
