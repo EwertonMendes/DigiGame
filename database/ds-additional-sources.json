@@ -369,7 +369,7 @@
       "source_sha256": "78a317d064a199ce629ee9093dacfe4c7713f3744e56dff21e03db76c5a652ae",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/120_Dinohumon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows"
+      "pattern": "canonical_rows_rear_reversed"
     },
     "Paildramon": {
       "source_id": 224,

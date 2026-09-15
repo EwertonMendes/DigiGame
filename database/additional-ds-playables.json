@@ -746,7 +746,7 @@
       "portrait_metadata": "res://assets/characters/dinohumon/portrait_frames.json",
       "source_id": 120,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         33,
         39
