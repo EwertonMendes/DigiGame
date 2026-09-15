@@ -97,8 +97,7 @@ func _tier_panel(instance: DigimonInstance) -> Control:
 	var promote := _button("ASCEND", V2.PURPLE)
 	promote.name = "PromoteButton"
 	promote.icon = TierIconScript.texture_for(next_tier)
-	promote.expand_icon = true
-	promote.icon_max_width = 38
+	promote.expand_icon = false
 	promote.custom_minimum_size.y = 48
 	promote.tooltip_text = "Ascend to Tier %s after reviewing all permanent requirements." % next_tier
 	promote.pressed.connect(_request_promotion.bind(donor_picker))
