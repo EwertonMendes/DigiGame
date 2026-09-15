@@ -1,12 +1,13 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 134,
+  "directional_resource_count": 135,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
   "additional_source_rebuilt_resource_count": 44,
   "project_original_resource_count": 1,
-  "audited_resource_count": 134,
+  "project_supplied_resource_count": 1,
+  "audited_resource_count": 135,
   "directional_resources": [
     {
       "name": "AeroVeedramon",
@@ -811,6 +812,12 @@
       "resource": "assets/resources/wormmon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Zeke Greymon",
+      "resource": "assets/resources/zeke greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "project_supplied"
     }
   ],
   "unknown_directional_resources": [],
