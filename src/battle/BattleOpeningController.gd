@@ -11,6 +11,7 @@ func _start_battle() -> void:
 	if _controller == null:
 		return
 
+	print("[BattleIntroTrace] START_BATTLE_BEGIN")
 	_turn_order.clear()
 	for child in _controller.get_children():
 		if child is CharacterBody2D:
@@ -30,6 +31,7 @@ func _start_battle() -> void:
 	_turn_index = -1
 	_opening_running = true
 	_set_gameplay_ui_visible(false)
+	print("[BattleIntroTrace] START_BATTLE_STATE_READY actors=%d" % _turn_order.size())
 
 	await _play_opening_sequence()
 
@@ -40,13 +42,16 @@ func _start_battle() -> void:
 
 
 func _play_opening_sequence() -> void:
+	print("[BattleIntroTrace] OPENING_BEGIN")
 	var camera := get_viewport().get_camera_2d()
 
 	# Re-evaluate facing only after both rosters exist. This makes every actor look
 	# toward a real opposing Digimon instead of relying on a generic map-center
 	# direction while the encounter is still being instantiated.
 	if _controller != null and _controller.has_method("orient_battle_actors_toward_opponents"):
+		print("[BattleIntroTrace] ORIENT_BEGIN")
 		_controller.call("orient_battle_actors_toward_opponents")
+		print("[BattleIntroTrace] ORIENT_DONE")
 
 	var player_team: Array[Node] = []
 	var enemy_team: Array[Node] = []
@@ -60,10 +65,13 @@ func _play_opening_sequence() -> void:
 
 	player_team.sort_custom(_sort_actor_left_to_right)
 	enemy_team.sort_custom(_sort_actor_left_to_right)
+	print("[BattleIntroTrace] TEAMS_READY players=%d enemies=%d" % [player_team.size(), enemy_team.size()])
 
 	var first_focus := true
+	print("[BattleIntroTrace] PLAYER_REVEAL_BEGIN")
 	first_focus = await _reveal_team(player_team, camera, first_focus)
 	await get_tree().create_timer(TEAM_SWITCH_GAP).timeout
+	print("[BattleIntroTrace] ENEMY_REVEAL_BEGIN")
 	first_focus = await _reveal_team(enemy_team, camera, first_focus)
 	await get_tree().create_timer(0.10).timeout
 
@@ -73,12 +81,14 @@ func _play_opening_sequence() -> void:
 	# snapping back to a distant whole-board overview.
 	var first_turn_actor := _preview_first_turn_actor()
 	if first_turn_actor != null and camera != null:
+		print("[BattleIntroTrace] FIRST_TURN_CAMERA_BEGIN actor=%s" % first_turn_actor.name)
 		if camera.has_method("animate_gameplay_focus"):
 			await camera.call("animate_gameplay_focus", first_turn_actor.global_position)
 		elif camera.has_method("focus_on"):
 			camera.call("focus_on", first_turn_actor.global_position)
 		print("[BattleIntro] FIRST_TURN_FOCUS actor=%s" % first_turn_actor.name)
 
+	print("[BattleIntroTrace] BANNER_BEGIN")
 	await _play_battle_start_banner()
 
 
@@ -92,19 +102,23 @@ func _reveal_team(team: Array[Node], camera: Camera2D, first_focus: bool) -> boo
 		# move finishes first, then the Digimon materializes while actually centered
 		# on screen. This produces a readable roster introduction instead of six
 		# simultaneous effects on a distant board.
+		print("[BattleIntroTrace] ACTOR_BEGIN actor=%s" % actor.name)
 		if _controller != null and _controller.has_method("face_actor_toward_nearest_opponent"):
 			_controller.call("face_actor_toward_nearest_opponent", actor)
+		print("[BattleIntroTrace] CAMERA_BEGIN actor=%s first=%s" % [actor.name, str(is_first_focus)])
 		if camera != null and camera.has_method("animate_intro_focus"):
 			await camera.call("animate_intro_focus", actor.global_position, is_first_focus)
 		elif camera != null and camera.has_method("focus_on"):
 			camera.call("focus_on", actor.global_position)
 		print("[BattleIntro] CAMERA actor=%s team=%s" % [actor.name, "player" if bool(actor.get("is_player_controlled")) else "enemy"])
 
+		print("[BattleIntroTrace] SPAWN_BEGIN actor=%s" % actor.name)
 		if actor.has_method("play_battle_spawn_animation"):
 			await actor.call("play_battle_spawn_animation")
 		else:
 			actor.visible = true
 			actor.modulate = Color.WHITE
+		print("[BattleIntroTrace] SPAWN_DONE actor=%s" % actor.name)
 
 		is_first_focus = false
 		await get_tree().create_timer(TEAM_SPAWN_GAP).timeout
