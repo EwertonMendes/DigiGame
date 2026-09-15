@@ -24,9 +24,9 @@ var _camera_move_start_position := Vector2.ZERO
 var _camera_move_target_position := Vector2.ZERO
 var _camera_move_start_zoom := 1.0
 var _camera_move_target_zoom := 1.0
-var _web_world_motion := false
-var _web_base_position := Vector2.ZERO
-var _web_base_zoom := 1.0
+var _web_intro_virtualized := false
+var _web_physical_position := Vector2.ZERO
+var _web_physical_zoom := 1.0
 var _web_view_position := Vector2.ZERO
 var _web_view_zoom := 1.0
 var _web_world_roots: Array[Node2D] = []
@@ -37,16 +37,24 @@ func _ready() -> void:
 	# Camera2D's native position smoother enabled would run a second transform
 	# interpolation path on the same frames, which is unstable in Web builds.
 	position_smoothing_enabled = false
+	_web_intro_virtualized = OS.has_feature("web")
 	super._ready()
 	_battle_default_zoom = _preferred_battle_zoom()
-	zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
-	_web_world_motion = OS.has_feature("web")
-	if _web_world_motion:
+	if _web_intro_virtualized:
+		# MainCamera establishes the physical Web camera once during _ready(). From
+		# this point until the opening completes, never touch Camera2D's canvas
+		# transform. The intro is presented by the world roots instead.
+		_web_physical_position = global_position
+		_web_physical_zoom = zoom.x
+		_web_view_position = global_position
+		_web_view_zoom = minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
 		_collect_web_world_roots()
+		_apply_web_world_view(_web_view_position, _web_view_zoom)
+	else:
+		zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
 
 func _exit_tree() -> void:
-	if _web_world_motion:
-		_reset_web_world_roots()
+	_reset_web_world_roots()
 
 func _process(delta: float) -> void:
 	if not _camera_move_active:
@@ -66,7 +74,7 @@ func _process(delta: float) -> void:
 		_camera_move_target_position,
 		eased_progress
 	)
-	if _web_world_motion:
+	if _web_intro_virtualized:
 		_apply_web_world_view(current_position, current_zoom)
 	else:
 		zoom = Vector2.ONE * current_zoom
@@ -75,7 +83,7 @@ func _process(delta: float) -> void:
 		return
 
 	_camera_move_active = false
-	if _web_world_motion:
+	if _web_intro_virtualized:
 		_apply_web_world_view(_camera_move_target_position, _camera_move_target_zoom)
 	else:
 		zoom = Vector2.ONE * _camera_move_target_zoom
@@ -84,7 +92,7 @@ func _process(delta: float) -> void:
 	camera_move_finished.emit(_camera_move_generation)
 
 func _physics_process(delta: float) -> void:
-	if _camera_move_active:
+	if _web_intro_virtualized or _camera_move_active:
 		_is_panning = false
 		_touch_positions.clear()
 		return
@@ -96,6 +104,10 @@ func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _web_intro_virtualized:
+		_is_panning = false
+		_touch_positions.clear()
+		return
 	if _post_battle_locked():
 		_is_panning = false
 		_touch_positions.clear()
@@ -103,12 +115,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	super._unhandled_input(event)
 
 func zoom_in() -> void:
-	if _post_battle_locked():
+	if _web_intro_virtualized or _post_battle_locked():
 		return
 	super.zoom_in()
 
 func zoom_out() -> void:
-	if _post_battle_locked():
+	if _web_intro_virtualized or _post_battle_locked():
 		return
 	super.zoom_out()
 
@@ -130,31 +142,38 @@ func animate_gameplay_focus(world_position: Vector2, duration: float = GAMEPLAY_
 	var target_position := _safe_focus_position(world_position, _battle_default_zoom)
 	await _animate_camera_to(target_position, _battle_default_zoom, duration)
 
-func prepare_web_intro_base(world_position: Vector2) -> void:
-	if not _web_world_motion:
+func prepare_web_intro_base(_world_position: Vector2) -> void:
+	if not _web_intro_virtualized:
 		return
+	# Refreshing the bounds is safe because _clamp_to_pan_bounds() virtualizes the
+	# clamp while the opening is active. Do not write Camera2D position/zoom here:
+	# this call happens immediately after [Battle] READY, the exact unstable Web
+	# window identified by the browser regression.
 	_refresh_pan_bounds()
 	_battle_default_zoom = _preferred_battle_zoom()
-	_web_base_zoom = _battle_default_zoom
-	_web_base_position = _safe_focus_position(world_position, _web_base_zoom)
-	_web_view_position = _web_base_position
-	_web_view_zoom = _web_base_zoom
-	# Web keeps Camera2D fixed at the exact post-intro gameplay view. The opening
-	# motion is presented through ordinary Node2D root transforms instead of the
-	# viewport canvas or RenderingServer RID APIs that can trap in Wasm.
-	zoom = Vector2.ONE * _web_base_zoom
-	global_position = _web_base_position
-	_reset_web_world_roots()
 
 func finish_web_intro() -> void:
-	if not _web_world_motion:
+	if not _web_intro_virtualized:
 		return
-	_web_view_position = _web_base_position
-	_web_view_zoom = _web_base_zoom
+
+	# The opening has now naturally completed all roster focuses. Transfer the
+	# already-visible final framing to Camera2D in the same frame and immediately
+	# restore identity transforms before combat starts, so gameplay world/global
+	# coordinates remain untouched.
+	var final_position := _web_view_position
+	var final_zoom := _web_view_zoom
+	zoom = Vector2.ONE * final_zoom
+	global_position = final_position
+	_web_intro_virtualized = false
 	_reset_web_world_roots()
+	_clamp_to_pan_bounds()
 
 func focus_on(world_position: Vector2) -> void:
 	_refresh_pan_bounds()
+	if _web_intro_virtualized:
+		_web_view_position = _safe_focus_position(world_position, _web_view_zoom)
+		_clamp_to_pan_bounds()
+		return
 	global_position = _safe_focus_position(world_position, zoom.x)
 	_clamp_to_pan_bounds()
 
@@ -163,6 +182,11 @@ func reset_view() -> void:
 		return
 	_refresh_pan_bounds()
 	_battle_default_zoom = _preferred_battle_zoom()
+	if _web_intro_virtualized:
+		_web_view_zoom = _battle_default_zoom
+		_web_view_position = _overview_center_for_zoom(_battle_default_zoom)
+		_clamp_to_pan_bounds()
+		return
 	zoom = Vector2.ONE * _battle_default_zoom
 	global_position = _overview_center_for_zoom(_battle_default_zoom)
 	_clamp_to_pan_bounds()
@@ -199,14 +223,15 @@ func _preferred_intro_zoom() -> float:
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
 	# Camera2D property Tweens can hit an intermittent native Web/Wasm failure
 	# during battle-scene startup. Native builds update Camera2D per frame; Web
-	# keeps Camera2D fixed and applies the same cubic presentation to world roots.
+	# keeps Camera2D physically static for the whole opening and applies the same
+	# cubic presentation to visual world roots.
 	_camera_move_generation += 1
 	var generation := _camera_move_generation
 	_camera_move_elapsed = 0.0
 	_camera_move_duration = maxf(0.05, duration)
-	_camera_move_start_position = _web_view_position if _web_world_motion else global_position
+	_camera_move_start_position = _web_view_position if _web_intro_virtualized else global_position
 	_camera_move_target_position = target_position
-	_camera_move_start_zoom = _web_view_zoom if _web_world_motion else zoom.x
+	_camera_move_start_zoom = _web_view_zoom if _web_intro_virtualized else zoom.x
 	_camera_move_target_zoom = target_zoom
 	_camera_move_active = true
 	await camera_move_finished
@@ -221,7 +246,7 @@ func _collect_web_world_roots() -> void:
 		return
 	# Spawn VFX are children of the Digimon actors during the opening, so moving
 	# these two visual roots keeps field, actors and their intro effects coherent.
-	# Combat presentation starts only after this transform has returned to identity.
+	# The roots return to their exact base transforms before combat input unlocks.
 	for node_name in ["Blocks", "DigimonController"]:
 		var root := main.get_node_or_null(node_name) as Node2D
 		if root == null:
@@ -232,9 +257,9 @@ func _collect_web_world_roots() -> void:
 func _apply_web_world_view(view_position: Vector2, view_zoom: float) -> void:
 	_web_view_position = view_position
 	_web_view_zoom = view_zoom
-	var scale_factor := view_zoom / maxf(_web_base_zoom, 0.01)
+	var scale_factor := view_zoom / maxf(_web_physical_zoom, 0.01)
 	var presentation_transform := Transform2D.IDENTITY.scaled(Vector2.ONE * scale_factor)
-	presentation_transform.origin = _web_base_position - view_position * scale_factor
+	presentation_transform.origin = _web_physical_position - view_position * scale_factor
 	for root: Node2D in _web_world_roots:
 		if not is_instance_valid(root):
 			continue
@@ -280,12 +305,19 @@ func _overview_center_for_zoom(target_zoom: float) -> Vector2:
 func _clamp_to_pan_bounds() -> void:
 	if not _has_pan_bounds:
 		return
-	var zoom_value := maxf(zoom.x, 0.01)
+	var zoom_value := maxf(_web_view_zoom if _web_intro_virtualized else zoom.x, 0.01)
 	var margin_world := PAN_EDGE_MARGIN_SCREEN / zoom_value
 	var min_x := _pan_bounds.position.x - margin_world.x
 	var max_x := _pan_bounds.end.x + margin_world.x
 	var min_y := _pan_bounds.position.y - margin_world.y
 	var max_y := _pan_bounds.end.y + margin_world.y
+	if _web_intro_virtualized:
+		_web_view_position = Vector2(
+			clampf(_web_view_position.x, min_x, max_x),
+			clampf(_web_view_position.y, min_y, max_y)
+		)
+		_apply_web_world_view(_web_view_position, _web_view_zoom)
+		return
 	global_position = Vector2(
 		clampf(global_position.x, min_x, max_x),
 		clampf(global_position.y, min_y, max_y)
