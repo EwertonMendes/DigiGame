@@ -4,6 +4,20 @@ on:
   pull_request:
     branches:
       - master
+    paths:
+      - '.github/workflows/project-original-regression.yml'
+      - 'project.godot'
+      - 'assets/characters/**'
+      - 'assets/resources/**'
+      - 'database/**'
+      - 'tools/build_project_original_playables.py'
+      - 'tools/build_technique_catalog.mjs'
+      - 'tools/enrich_digimon_database.py'
+      - 'tools/validate_combat_data.py'
+      - 'tools/validate_digimon_progression.py'
+      - 'tools/validate_project_original_playables.py'
+      - 'tools/validate_early_rank_playables.py'
+      - 'tools/validate_all_ds_directional_facings.py'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +26,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v6
 
