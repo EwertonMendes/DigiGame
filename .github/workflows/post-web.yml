@@ -6,13 +6,44 @@ on:
       - DigiGame Web
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Web workflow run ID that produced the tested artifact
+        required: true
+        type: string
+      source_event:
+        description: Source Web event (pull_request or push)
+        required: true
+        type: string
+      source_head_branch:
+        description: Source branch name
+        required: true
+        type: string
+      source_head_sha:
+        description: Source branch commit SHA used for preview identity
+        required: true
+        type: string
+      tested_sha:
+        description: Exact revision tested by the Web build
+        required: true
+        type: string
+      source_head_repo:
+        description: Source repository in owner/name form
+        required: true
+        type: string
+      pr_number:
+        description: Pull request number when source_event is pull_request
+        required: false
+        default: ''
+        type: string
 
 permissions:
   actions: read
   contents: read
 
 concurrency:
-  group: digigame-post-web-${{ github.event.workflow_run.id }}
+  group: digigame-post-web-${{ github.event_name == 'workflow_dispatch' && inputs.source_run_id || github.event.workflow_run.id }}
   cancel-in-progress: false
 
 env:
@@ -22,9 +53,13 @@ jobs:
   browser-smoke:
     name: Browser regression · ${{ matrix.suite }}
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      (github.event.workflow_run.event == 'pull_request' ||
-       (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'master'))
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.event == 'pull_request' ||
+        (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'master'))) ||
+      (github.event_name == 'workflow_dispatch' &&
+       (inputs.source_event == 'pull_request' ||
+        (inputs.source_event == 'push' && inputs.source_head_branch == 'master')))
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
@@ -38,7 +73,7 @@ jobs:
       - name: Checkout tested revision
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tested_sha || github.event.workflow_run.head_sha }}
 
       - name: Download tested Web build
         uses: actions/download-artifact@v5
@@ -46,7 +81,7 @@ jobs:
           name: digigame-web-build
           path: build/web
           github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.source_run_id || github.event.workflow_run.id }}
 
       - name: Restore npm download cache
         uses: actions/cache@v4
@@ -79,7 +114,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: smoke-${{ matrix.suite }}-${{ github.event.workflow_run.id }}
+          name: smoke-${{ matrix.suite }}-${{ github.event_name == 'workflow_dispatch' && inputs.source_run_id || github.event.workflow_run.id }}
           path: build/*.png
           if-no-files-found: warn
           retention-days: 7
@@ -87,9 +122,14 @@ jobs:
   deploy-pr-preview:
     name: Deploy PR preview
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.head_repository.full_name == github.repository
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'pull_request' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' &&
+       inputs.source_event == 'pull_request' &&
+       inputs.source_head_repo == github.repository &&
+       inputs.pr_number != '')
     runs-on: ubuntu-latest
     timeout-minutes: 8
     concurrency:
@@ -105,23 +145,30 @@ jobs:
       - name: Checkout deployment scripts
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tested_sha || github.event.workflow_run.head_sha }}
 
       - name: Resolve pull request number
         id: pr
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          HEAD_BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.source_head_branch || github.event.workflow_run.head_branch }}
         run: |
           set -euo pipefail
-          PR_NUMBER="$(gh pr list \
-            --repo "$GITHUB_REPOSITORY" \
-            --head "$HEAD_BRANCH" \
-            --state open \
-            --limit 1 \
-            --json number \
-            --jq '.[0].number')"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            PR_NUMBER="$INPUT_PR_NUMBER"
+          else
+            PR_NUMBER="$(gh pr list \
+              --repo "$GITHUB_REPOSITORY" \
+              --head "$HEAD_BRANCH" \
+              --state open \
+              --limit 1 \
+              --json number \
+              --jq '.[0].number')"
+          fi
+
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
             echo "Could not resolve the open PR for branch ${HEAD_BRANCH}." >&2
             exit 1
@@ -134,7 +181,7 @@ jobs:
           name: digigame-web-build
           path: preview
           github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.source_run_id || github.event.workflow_run.id }}
 
       - name: Download latest successful master build
         shell: bash
@@ -166,7 +213,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          CURRENT_PREVIEW_SHA: ${{ github.event.workflow_run.head_sha }}
+          CURRENT_PREVIEW_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_head_sha || github.event.workflow_run.head_sha }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
           set -euo pipefail
@@ -191,7 +238,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
           PREVIEW_URL: ${{ steps.pages.outputs.base_url }}/pr-${{ steps.pr.outputs.number }}/
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_head_sha || github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           MARKER='<!-- digigame-playable-preview -->'
@@ -224,9 +271,13 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'master'
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'master') ||
+      (github.event_name == 'workflow_dispatch' &&
+       inputs.source_event == 'push' &&
+       inputs.source_head_branch == 'master')
     needs:
       - browser-smoke
     runs-on: ubuntu-latest
@@ -246,7 +297,7 @@ jobs:
       - name: Checkout deployment scripts
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tested_sha || github.event.workflow_run.head_sha }}
 
       - name: Download tested Web build
         uses: actions/download-artifact@v5
@@ -254,7 +305,7 @@ jobs:
           name: digigame-web-build
           path: production
           github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.source_run_id || github.event.workflow_run.id }}
 
       - name: Compose production and all open PR previews
         shell: bash
