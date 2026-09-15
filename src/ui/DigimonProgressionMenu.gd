@@ -12,13 +12,14 @@ const DevelopmentPanelScript = preload("res://src/ui/components/DigiDevelopmentP
 const EvolutionChartScript = preload("res://src/ui/EvolutionChart.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
 
+const COLLECTION_CAPACITY := 32
+
 var _constellation: EvolutionChart
 var _menu_root: Control
 var _header: DigiModalHeader
 var _header_rule: ColorRect
-var _hint_bar: Control
+var _hint_bar: DigiInputHintBar
 var _collection_header: DigiSectionHeader
-var _detail_header: DigiSectionHeader
 var _body_grid: GridContainer
 var _action_grid: GridContainer
 var _action_panel: PanelContainer
@@ -28,6 +29,7 @@ var _technique_panel: Control
 var _development_panel: Control
 var _action_cards: Array[Control] = []
 var _techniques_expanded := false
+var _desktop_body_height := 0.0
 
 
 func _build() -> void:
@@ -36,7 +38,7 @@ func _build() -> void:
 	_panel.clip_contents = true
 	_panel.add_theme_stylebox_override(
 		"panel",
-		V2.surface_style(V2.BASE, Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.82), 14, Vector4.ZERO, 0.22)
+		V2.surface_style(Color(V2.BACKDROP.r, V2.BACKDROP.g, V2.BACKDROP.b, 1.0), Color.TRANSPARENT, 0)
 	)
 
 	_menu_root = Control.new()
@@ -47,8 +49,6 @@ func _build() -> void:
 		remove_child(control)
 		_menu_root.add_child(control)
 
-	# Keep legacy controls alive for base-class compatibility, while the V2
-	# header becomes the reusable navigation shell for this and future screens.
 	_title.visible = false
 	_account.visible = false
 	_close_button.visible = false
@@ -58,41 +58,24 @@ func _build() -> void:
 	_header.name = "ModalHeader"
 	_header.configure("DIGI", "Digital Monsters", OverworldState.get_bits(), true)
 	_header.configure_tabs([
-		{"id": "digimon", "label": "Digimon", "enabled": true},
-		{"id": "digipedia", "label": "Digipedia", "enabled": false},
-		{"id": "system", "label": "System", "enabled": false},
+		{"id": "digimon", "label": "Digimon", "icon": "digimon", "enabled": true},
+		{"id": "digipedia", "label": "Digipedia", "icon": "book", "enabled": false},
+		{"id": "system", "label": "System", "icon": "gear", "enabled": false},
 	], "digimon")
 	_header.close_requested.connect(func(): close_requested.emit())
 	_menu_root.add_child(_header)
+
 	_header_rule = ColorRect.new()
-	_header_rule.color = V2.separator_color(0.48)
+	_header_rule.color = Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.62)
 	_header_rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_root.add_child(_header_rule)
 
 	_collection_panel.clip_contents = true
-	_collection_panel.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(
-			Color(V2.SURFACE_SOFT.r, V2.SURFACE_SOFT.g, V2.SURFACE_SOFT.b, 0.95),
-			Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.24),
-			12,
-			Vector4.ZERO,
-			0.08
-		)
-	)
+	_collection_panel.add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.74), 8))
 	_detail_panel.clip_contents = true
-	_detail_panel.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(
-			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.76),
-			Color(V2.BLUE.r, V2.BLUE.g, V2.BLUE.b, 0.24),
-			12,
-			Vector4.ZERO,
-			0.08
-		)
-	)
-	_set_panel_content_margin(_collection_panel, 7)
-	_set_panel_content_margin(_detail_panel, 7)
+	_detail_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
+	_set_panel_content_margin(_collection_panel, 0)
+	_set_panel_content_margin(_detail_panel, 0)
 	_install_container_headers()
 
 	_detail_list.add_theme_constant_override("separation", 10)
@@ -104,8 +87,9 @@ func _build() -> void:
 	SmoothScrollScript.attach(_collection_scroll)
 	SmoothScrollScript.attach(_detail_scroll)
 
-	_hint_bar = InputHintBarScript.new()
+	_hint_bar = InputHintBarScript.new() as DigiInputHintBar
 	_hint_bar.name = "InputHints"
+	_hint_bar.set_description("Manage your Digimon and view their information.")
 	_menu_root.add_child(_hint_bar)
 
 	_constellation = EvolutionChartScript.new() as EvolutionChart
@@ -123,17 +107,23 @@ func _install_container_headers() -> void:
 		var collection_stack := VBoxContainer.new()
 		collection_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		collection_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		collection_stack.add_theme_constant_override("separation", 7)
+		collection_stack.add_theme_constant_override("separation", 0)
 		collection_margin.add_child(collection_stack)
-		_collection_header = SectionHeaderScript.new() as DigiSectionHeader
-		_collection_header.configure("DIGIMON", "", V2.CYAN, "link")
-		collection_stack.add_child(_collection_header)
-		_collection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		collection_stack.add_child(_collection_scroll)
 
-		# Leave breathing room between cards and the native vertical scrollbar.
+		_collection_header = SectionHeaderScript.new() as DigiSectionHeader
+		_collection_header.configure("DIGIMON", "0 / %d" % COLLECTION_CAPACITY, V2.CYAN, "")
+		collection_stack.add_child(_collection_header)
+
+		var list_inset := _margin(10, 10, 5, 10)
+		list_inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		list_inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		collection_stack.add_child(list_inset)
+		_collection_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_collection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		list_inset.add_child(_collection_scroll)
+
 		_collection_scroll.remove_child(_collection_grid)
-		var roster_inset := _margin(0, 0, 7, 0)
+		var roster_inset := _margin(0, 0, 6, 0)
 		roster_inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		roster_inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		_collection_scroll.add_child(roster_inset)
@@ -142,16 +132,9 @@ func _install_container_headers() -> void:
 	var detail_margin := _detail_panel.get_child(0) as MarginContainer
 	if detail_margin != null:
 		detail_margin.remove_child(_detail_scroll)
-		var detail_stack := VBoxContainer.new()
-		detail_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		detail_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		detail_stack.add_theme_constant_override("separation", 7)
-		detail_margin.add_child(detail_stack)
-		_detail_header = SectionHeaderScript.new() as DigiSectionHeader
-		_detail_header.configure("DIGIMON DATA", "A SMALL LIFE FOR A BIGGER TOMORROW", V2.BLUE, "info")
-		detail_stack.add_child(_detail_header)
+		detail_margin.add_child(_detail_scroll)
+		_detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		detail_stack.add_child(_detail_scroll)
 
 
 func open_menu() -> void:
@@ -177,8 +160,33 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _refresh_collection() -> void:
 	super._refresh_collection()
+	var count := OverworldState.get_collection_instances().size()
 	if _collection_header != null:
-		_collection_header.set_trailing("%d OWNED" % OverworldState.get_collection_instances().size())
+		_collection_header.set_trailing("%d / %d" % [count, COLLECTION_CAPACITY])
+	if _collection_grid != null and count < COLLECTION_CAPACITY:
+		_collection_grid.add_child(_empty_slot_card())
+
+
+func _empty_slot_card() -> Control:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(226.0, 72.0)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.66), Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.48), 7)
+	)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(row)
+	var plus := _label("+", 28, V2.SUBTLE, true)
+	plus.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(plus)
+	var copy := _label("Empty Slot", 13, V2.MUTED, true)
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(copy)
+	return panel
 
 
 func _select_index(index: int) -> void:
@@ -196,24 +204,24 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	button.text = ""
 	button.focus_mode = Control.FOCUS_ALL
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(226.0, 82.0)
+	button.custom_minimum_size = Vector2(226.0, 84.0)
 	button.clip_contents = true
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.pressed.connect(_select_index.bind(index))
 	button.focus_entered.connect(_select_index.bind(index))
 	_style_collection_button(button, selected, rank_color)
 
-	var margin := _margin(10, 7, 10, 7)
+	var margin := _margin(11, 8, 11, 8)
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(margin)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 11)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
 	var preview := WalkPreviewScript.new() as DigimonWalkPreview
-	preview.custom_minimum_size = Vector2(56.0, 56.0)
+	preview.custom_minimum_size = Vector2(58.0, 58.0)
 	preview.set_species(String(species.get("name", "")))
 	preview.set_active(selected)
 	row.add_child(preview)
@@ -222,7 +230,7 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	var copy := VBoxContainer.new()
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	copy.add_theme_constant_override("separation", 2)
+	copy.add_theme_constant_override("separation", 3)
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
 	var display_name := instance.get_display_name(String(species.get("name", "Unknown")))
@@ -237,10 +245,10 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	xp_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(xp_gap)
 	var xp_required := _progression.exp_to_next_level(instance)
-	var progress := _mini_progress(V2.AMBER if selected else rank_color)
+	var progress := _mini_progress(V2.CYAN if selected else rank_color)
 	progress.max_value = maxf(1.0, float(xp_required))
 	progress.value = float(instance.exp if xp_required > 0 else xp_required)
-	progress.custom_minimum_size = Vector2(90.0, 6.0)
+	progress.custom_minimum_size = Vector2(100.0, 6.0)
 	copy.add_child(progress)
 	_buttons.append(button)
 	return button
@@ -265,7 +273,7 @@ func _refresh_details() -> void:
 	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
 	if collection.is_empty():
 		var empty := _label("No Digimon yet. Convert Digi Data to create your first partner.", 15, V2.MUTED)
-		empty.custom_minimum_size.y = 150.0
+		empty.custom_minimum_size.y = 180.0
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -280,20 +288,26 @@ func _refresh_details() -> void:
 	_body_grid = GridContainer.new()
 	_body_grid.columns = 2
 	_body_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body_grid.add_theme_constant_override("h_separation", 12)
+	_body_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body_grid.add_theme_constant_override("h_separation", 10)
 	_body_grid.add_theme_constant_override("v_separation", 10)
+	if not compact and _desktop_body_height > 0.0:
+		_body_grid.custom_minimum_size.y = _desktop_body_height
 	_detail_list.add_child(_body_grid)
 
 	_primary_column = VBoxContainer.new()
 	_primary_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_primary_column.size_flags_stretch_ratio = 1.72
-	_primary_column.custom_minimum_size.x = 500.0
+	_primary_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_primary_column.size_flags_stretch_ratio = 2.28
+	_primary_column.custom_minimum_size.x = 540.0
 	_primary_column.add_theme_constant_override("separation", 10)
 	_body_grid.add_child(_primary_column)
+
 	_sidebar_column = VBoxContainer.new()
 	_sidebar_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_sidebar_column.size_flags_stretch_ratio = 0.84
-	_sidebar_column.custom_minimum_size.x = 286.0
+	_sidebar_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_sidebar_column.size_flags_stretch_ratio = 1.0
+	_sidebar_column.custom_minimum_size.x = 270.0
 	_sidebar_column.add_theme_constant_override("separation", 10)
 	_body_grid.add_child(_sidebar_column)
 
@@ -319,33 +333,30 @@ func _refresh_details() -> void:
 func _build_action_area(instance: DigimonInstance) -> void:
 	_action_panel = PanelContainer.new()
 	_action_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_action_panel.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(
-			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.90),
-			Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.26),
-			10,
-			Vector4(6.0, 6.0, 6.0, 7.0),
-			0.08
-		)
-	)
+	_action_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_action_panel.size_flags_stretch_ratio = 1.0
+	_action_panel.custom_minimum_size.y = 188.0
+	_action_panel.add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 	_primary_column.add_child(_action_panel)
 
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.add_theme_constant_override("separation", 7)
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 0)
 	_action_panel.add_child(stack)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
 	header.configure("ACTIONS", "Help your Digimon grow stronger", V2.CYAN, "evolution")
 	stack.add_child(header)
 
-	var inner := _margin(4, 0, 4, 1)
+	var inner := _margin(12, 10, 12, 12)
+	inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(inner)
 	_action_grid = GridContainer.new()
 	_action_grid.columns = 3
 	_action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_action_grid.add_theme_constant_override("h_separation", 9)
-	_action_grid.add_theme_constant_override("v_separation", 9)
+	_action_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_action_grid.add_theme_constant_override("h_separation", 10)
+	_action_grid.add_theme_constant_override("v_separation", 10)
 	inner.add_child(_action_grid)
 
 	var learned := instance.learned_skills.size()
@@ -383,14 +394,12 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	_action_grid.add_child(evolution)
 	_action_cards.append(evolution)
 
-	# Items is intentionally present as part of the final information architecture
-	# but disabled until the inventory/item loop is implemented.
 	var items := ActionCardScript.new()
 	items.configure(
 		"ITEMS",
 		"View carried items and prepare useful tools for your Digimon.",
 		"Coming later",
-		"info",
+		"items",
 		V2.AMBER
 	)
 	items.disabled = true
@@ -401,22 +410,19 @@ func _build_action_area(instance: DigimonInstance) -> void:
 func _section_card(title: String, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(V2.SURFACE, Color(accent.r, accent.g, accent.b, 0.24), 10, Vector4(6.0, 6.0, 6.0, 7.0))
-	)
+	panel.add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.add_theme_constant_override("separation", 6)
+	stack.add_theme_constant_override("separation", 0)
 	panel.add_child(stack)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
 	header.configure(title, "", accent, "info")
 	stack.add_child(header)
-	var margin := _margin(5, 0, 5, 1)
+	var margin := _margin(12, 10, 12, 12)
 	stack.add_child(margin)
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 6)
+	body.add_theme_constant_override("separation", 7)
 	margin.add_child(body)
 	panel.set_meta("body", body)
 	return panel
@@ -430,12 +436,12 @@ func _button(text: String, accent: Color) -> Button:
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_size_override("font_size", 11)
-	button.add_theme_stylebox_override("normal", V2.button_style(accent, "normal", 9))
-	button.add_theme_stylebox_override("hover", V2.button_style(accent, "hover", 9))
-	button.add_theme_stylebox_override("focus", V2.button_style(accent, "focus", 9))
-	button.add_theme_stylebox_override("pressed", V2.button_style(accent, "pressed", 9))
-	button.add_theme_stylebox_override("hover_pressed", V2.button_style(accent, "pressed", 9))
-	button.add_theme_stylebox_override("disabled", V2.button_style(accent, "disabled", 9))
+	button.add_theme_stylebox_override("normal", V2.button_style(accent, "normal", 7))
+	button.add_theme_stylebox_override("hover", V2.button_style(accent, "hover", 7))
+	button.add_theme_stylebox_override("focus", V2.button_style(accent, "focus", 7))
+	button.add_theme_stylebox_override("pressed", V2.button_style(accent, "pressed", 7))
+	button.add_theme_stylebox_override("hover_pressed", V2.button_style(accent, "pressed", 7))
+	button.add_theme_stylebox_override("disabled", V2.button_style(accent, "disabled", 7))
 	button.add_theme_color_override("font_color", V2.TEXT)
 	button.add_theme_color_override("font_hover_color", V2.WHITE)
 	button.add_theme_color_override("font_focus_color", V2.WHITE)
@@ -448,12 +454,17 @@ func _button(text: String, accent: Color) -> Button:
 	return button
 
 
-func _style_collection_button(button: Button, selected: bool, rank_color: Color) -> void:
-	var accent := V2.AMBER if selected else rank_color
-	button.add_theme_stylebox_override("normal", V2.button_style(accent, "selected" if selected else "normal", 10))
-	button.add_theme_stylebox_override("hover", V2.button_style(accent, "hover", 10))
-	button.add_theme_stylebox_override("focus", V2.button_style(V2.CYAN, "focus", 10))
-	button.add_theme_stylebox_override("pressed", V2.button_style(accent, "pressed", 10))
+func _style_collection_button(button: Button, selected: bool, _rank_color: Color) -> void:
+	if selected:
+		button.add_theme_stylebox_override("normal", V2.outlined_surface(V2.CYAN, true, 7))
+		button.add_theme_stylebox_override("hover", V2.button_style(V2.CYAN, "hover", 7))
+		button.add_theme_stylebox_override("focus", V2.button_style(V2.CYAN, "focus", 7))
+		button.add_theme_stylebox_override("pressed", V2.button_style(V2.CYAN, "pressed", 7))
+	else:
+		button.add_theme_stylebox_override("normal", V2.surface_style(Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.76), Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.58), 7))
+		button.add_theme_stylebox_override("hover", V2.button_style(V2.CYAN, "hover", 7))
+		button.add_theme_stylebox_override("focus", V2.button_style(V2.CYAN, "focus", 7))
+		button.add_theme_stylebox_override("pressed", V2.button_style(V2.CYAN, "pressed", 7))
 	button.add_theme_color_override("font_color", V2.TEXT)
 
 
@@ -560,10 +571,14 @@ func _focusable_descendants(root: Node) -> Array[Control]:
 func _apply_adaptive_detail_layout(compact: bool) -> void:
 	if _body_grid != null:
 		_body_grid.columns = 1 if compact else 2
+		if compact:
+			_body_grid.custom_minimum_size.y = 0.0
+		elif _desktop_body_height > 0.0:
+			_body_grid.custom_minimum_size.y = _desktop_body_height
 	if _primary_column != null:
-		_primary_column.custom_minimum_size.x = 0.0 if compact else 500.0
+		_primary_column.custom_minimum_size.x = 0.0 if compact else 540.0
 	if _sidebar_column != null:
-		_sidebar_column.custom_minimum_size.x = 0.0 if compact else 286.0
+		_sidebar_column.custom_minimum_size.x = 0.0 if compact else 270.0
 	if _action_grid != null:
 		var physical := V2.physical_window_size(get_viewport())
 		_action_grid.columns = 1 if physical.x < 560.0 else (2 if compact else 3)
@@ -575,45 +590,50 @@ func _layout() -> void:
 	var physical := V2.physical_window_size(get_viewport())
 	var scale_factor := V2.ui_scale(get_viewport())
 	var compact := V2.is_compact(get_viewport(), 900.0)
-	var edge := 10.0 if compact else 22.0
-	var width := minf(1680.0, maxf(320.0, physical.x - edge * 2.0))
-	var height := minf(940.0, maxf(300.0, physical.y - edge * 2.0))
-	var origin := Vector2((physical.x - width) * 0.5, (physical.y - height) * 0.5) * scale_factor
+	var width := maxf(320.0, physical.x)
+	var height := maxf(300.0, physical.y)
 
 	_panel.scale = Vector2.ONE * scale_factor
-	_panel.position = origin
+	_panel.position = Vector2.ZERO
 	_panel.size = Vector2(width, height)
 	_menu_root.position = Vector2.ZERO
 	_menu_root.size = Vector2(width, height)
 
-	var header_h := 66.0 if not compact else 58.0
-	var footer_h := 52.0 if not compact else 46.0
-	_header.position = Vector2(22.0, 8.0)
-	_header.size = Vector2(maxf(0.0, width - 44.0), 50.0)
-	_header_rule.position = Vector2(20.0, header_h - 1.0)
-	_header_rule.size = Vector2(maxf(0.0, width - 40.0), 1.0)
-	_hint_bar.position = Vector2(16.0, height - footer_h + 4.0)
-	_hint_bar.size = Vector2(maxf(0.0, width - 32.0), footer_h - 8.0)
+	var header_h := 60.0 if not compact else 56.0
+	var footer_h := 76.0 if not compact else 58.0
+	var top_gap := 18.0 if not compact else 10.0
+	var bottom_gap := 18.0 if not compact else 10.0
+	_header.position = Vector2.ZERO
+	_header.size = Vector2(width, header_h)
+	_header_rule.position = Vector2(0.0, header_h - 1.0)
+	_header_rule.size = Vector2(width, 1.0)
+	_hint_bar.position = Vector2(0.0, height - footer_h)
+	_hint_bar.size = Vector2(width, footer_h)
 
-	var body_top := header_h + 7.0
-	var body_bottom := height - footer_h - 4.0
+	var body_top := header_h + top_gap
+	var body_bottom := height - footer_h - bottom_gap
 	var body_h := maxf(100.0, body_bottom - body_top)
+	_desktop_body_height = body_h
+
 	if compact:
-		var collection_h := clampf(body_h * 0.27, 82.0, 180.0)
-		_collection_panel.position = Vector2(14.0, body_top)
-		_collection_panel.size = Vector2(width - 28.0, collection_h)
-		_detail_panel.position = Vector2(14.0, body_top + collection_h + 9.0)
-		_detail_panel.size = Vector2(width - 28.0, maxf(90.0, body_h - collection_h - 9.0))
+		var edge := 10.0
+		var collection_h := clampf(body_h * 0.27, 92.0, 184.0)
+		_collection_panel.position = Vector2(edge, body_top)
+		_collection_panel.size = Vector2(width - edge * 2.0, collection_h)
+		_detail_panel.position = Vector2(edge, body_top + collection_h + 10.0)
+		_detail_panel.size = Vector2(width - edge * 2.0, maxf(90.0, body_h - collection_h - 10.0))
 		_collection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		_collection_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		_collection_grid.columns = 1 if width < 520.0 else (2 if width < 760.0 else 3)
 	else:
-		var collection_w := clampf(width * 0.205, 270.0, 310.0)
-		var detail_x := 16.0 + collection_w + 12.0
-		_collection_panel.position = Vector2(16.0, body_top)
+		var edge := 22.0
+		var gap := 10.0
+		var collection_w := clampf(width * 0.230, 272.0, 360.0)
+		var detail_x := edge + collection_w + gap
+		_collection_panel.position = Vector2(edge, body_top)
 		_collection_panel.size = Vector2(collection_w, body_h)
 		_detail_panel.position = Vector2(detail_x, body_top)
-		_detail_panel.size = Vector2(width - detail_x - 16.0, body_h)
+		_detail_panel.size = Vector2(width - detail_x - edge, body_h)
 		_collection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		_collection_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		_collection_grid.columns = 1
@@ -623,6 +643,8 @@ func _layout() -> void:
 	if compact != _last_compact:
 		_last_compact = compact
 		call_deferred("_refresh_details")
+	elif not compact and _body_grid != null:
+		_body_grid.custom_minimum_size.y = body_h
 
 
 func _update_account() -> void:
