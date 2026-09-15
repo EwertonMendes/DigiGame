@@ -3,6 +3,8 @@ extends Node
 const RuntimeControllerScript = preload("res://src/DigimonRuntimeController.gd")
 const FollowerScript = preload("res://src/world/OverworldDigimonFollower.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
+const SpriteTestLabScript = preload("res://src/ui/DigimonSpriteTestLab.gd")
+const DebugRosterToolsScript = preload("res://src/debug/DebugRosterTools.gd")
 const DirectionalContractScript = preload("res://src/sprites/DirectionalSpriteContract.gd")
 const PortraitResolverScript = preload("res://src/ui/DigimonPortraitResolver.gd")
 const MANIFEST_PATH := "res://database/project-supplied-playables.json"
@@ -27,6 +29,17 @@ func _ready() -> void:
 		demo_actor.free()
 	await get_tree().process_frame
 
+	# These are the two developer-facing entry points used to test/spawn any
+	# playable species. Keep project-supplied species on the same generic paths
+	# as every other Digimon instead of special-casing them in runtime code.
+	var sprite_lab := SpriteTestLabScript.new() as DigimonSpriteTestLab
+	add_child(sprite_lab)
+	await get_tree().process_frame
+	var sprite_test_names := sprite_lab.get_testable_species_names()
+
+	var roster_tools := DebugRosterToolsScript.new() as DebugRosterTools
+	var spawn_catalog := roster_tools.catalog()
+
 	for raw_row in rows:
 		var row := raw_row as Dictionary
 		var species_name := String(row.get("name", ""))
@@ -36,6 +49,14 @@ func _ready() -> void:
 		assert(resource != null and resource.texture != null, "%s directional resource must load" % species_name)
 		assert(resource.sprite_layout == "directional_12", "%s must use directional_12" % species_name)
 		assert(resource.sprite_hframes == 12 and resource.sprite_vframes == 1, "%s must expose 12 frames" % species_name)
+
+		assert(sprite_test_names.has(species_name), "%s must be discoverable in Sprite Test" % species_name)
+		var spawn_catalog_has_species := false
+		for catalog_entry in spawn_catalog:
+			if String((catalog_entry as Dictionary).get("name", "")) == species_name:
+				spawn_catalog_has_species = true
+				break
+		assert(spawn_catalog_has_species, "%s must be selectable in Spawn Digimon" % species_name)
 
 		var actor := runtime.instantiate_player_digimon(species_name, 1, 100)
 		assert(actor != null, "%s must instantiate in battle" % species_name)
@@ -82,7 +103,9 @@ func _ready() -> void:
 		actor.free()
 		await get_tree().process_frame
 
-	print("project-supplied directional regression passed: battle, overworld, walk preview and portrait assets for %d species" % expected_count)
+	sprite_lab.queue_free()
+	await get_tree().process_frame
+	print("project-supplied directional regression passed: Sprite Test, Spawn Digimon, battle, overworld, walk preview and portrait assets for %d species" % expected_count)
 	get_tree().quit()
 
 
