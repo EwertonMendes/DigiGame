@@ -10,29 +10,26 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 	for child in get_children():
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(
-			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.92),
-			Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.30),
-			10,
-			Vector4(6.0, 6.0, 6.0, 7.0),
-			0.08
-		)
-	)
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
+	size_flags_stretch_ratio = 0.78
+	custom_minimum_size.y = 228.0
+	add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 5)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 0)
 	add_child(body)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
 	header.configure("COMBAT STATS", "", V2.CYAN, "sword")
 	body.add_child(header)
 
-	var content := _margin(4, 1, 4, 1)
+	var content := _margin(10, 8, 10, 8)
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(content)
 	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 4)
+	rows.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	rows.add_theme_constant_override("separation", 2)
 	content.add_child(rows)
 
 	var max_hp := maxi(1, int(stats.get("hp", 0)))
@@ -47,8 +44,6 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 	rows.add_child(sp_row)
 	rows.add_child(_separator())
 
-	# Only resources that deplete during play use bars. Secondary stats keep the
-	# same value column as HP/SP so the numbers read as one disciplined table.
 	var entries := [
 		["ATK", "atk", "sword", V2.ORANGE],
 		["DEF", "def", "shield", V2.CYAN],
@@ -67,7 +62,7 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 func _separator() -> ColorRect:
 	var rule := ColorRect.new()
 	rule.custom_minimum_size.y = 1.0
-	rule.color = V2.separator_color(0.24)
+	rule.color = V2.separator_color(0.36)
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return rule
 
