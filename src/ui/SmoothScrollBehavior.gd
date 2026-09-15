@@ -1,12 +1,15 @@
 extends Node
 class_name SmoothScrollBehavior
 
-# Comfortable mouse-wheel scrolling while preserving ScrollContainer's native
-# focus behavior. Touch drag is also handled inside the container so mobile
-# users can swipe anywhere in its content instead of targeting the scrollbar.
+# Shared scrolling behavior for every scrollable game UI. Mouse wheel keeps a
+# soft eased feel, touch can drag anywhere inside the container, and gamepads
+# use the right stick so scrolling does not compete with focus navigation.
 
 const WHEEL_STEP := 56.0
 const DURATION := 0.30
+const STICK_DEADZONE := 0.22
+const STICK_SCROLL_SPEED := 540.0
+const STICK_HORIZONTAL_SPEED := 500.0
 
 var _scroll: ScrollContainer = null
 var _target_vertical := 0.0
@@ -32,6 +35,70 @@ func _install(scroll: ScrollContainer) -> void:
 	_scroll.scroll_deadzone = 8
 	if not scroll.gui_input.is_connected(_on_gui_input):
 		scroll.gui_input.connect(_on_gui_input)
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	if _scroll == null or not _scroll.is_visible_in_tree() or not _owns_controller_focus():
+		return
+	var axes := _right_stick_axes()
+	if absf(axes.y) > 0.001:
+		_kill_tween()
+		var vbar := _scroll.get_v_scroll_bar()
+		var v_max := maxf(0.0, vbar.max_value - vbar.page)
+		if v_max > 0.0:
+			var next_vertical := clampf(
+				float(_scroll.scroll_vertical) + axes.y * STICK_SCROLL_SPEED * delta,
+				0.0,
+				v_max
+			)
+			_scroll.scroll_vertical = int(round(next_vertical))
+			_target_vertical = next_vertical
+	if _scroll.horizontal_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED and absf(axes.x) > 0.001:
+		var hbar := _scroll.get_h_scroll_bar()
+		var h_max := maxf(0.0, hbar.max_value - hbar.page)
+		if h_max > 0.0:
+			_scroll.scroll_horizontal = int(round(clampf(
+				float(_scroll.scroll_horizontal) + axes.x * STICK_HORIZONTAL_SPEED * delta,
+				0.0,
+				h_max
+			)))
+
+
+func _right_stick_axes() -> Vector2:
+	var best := Vector2.ZERO
+	for device in Input.get_connected_joypads():
+		var raw := Vector2(
+			Input.get_joy_axis(device, JOY_AXIS_RIGHT_X),
+			Input.get_joy_axis(device, JOY_AXIS_RIGHT_Y)
+		)
+		var filtered := Vector2(_apply_deadzone(raw.x), _apply_deadzone(raw.y))
+		if filtered.length_squared() > best.length_squared():
+			best = filtered
+	return best
+
+
+func _apply_deadzone(value: float) -> float:
+	var magnitude := absf(value)
+	if magnitude <= STICK_DEADZONE:
+		return 0.0
+	var normalized := (magnitude - STICK_DEADZONE) / (1.0 - STICK_DEADZONE)
+	return normalized if value >= 0.0 else -normalized
+
+
+func _owns_controller_focus() -> bool:
+	var viewport := get_viewport()
+	if viewport == null:
+		return false
+	var focus := viewport.gui_get_focus_owner()
+	if focus == null:
+		return false
+	var cursor: Node = focus
+	while cursor != null:
+		if cursor is ScrollContainer:
+			return cursor == _scroll
+		cursor = cursor.get_parent()
+	return false
 
 
 func _on_gui_input(event: InputEvent) -> void:
@@ -43,6 +110,7 @@ func _on_gui_input(event: InputEvent) -> void:
 		var vbar := _scroll.get_v_scroll_bar()
 		var v_max := maxf(0.0, vbar.max_value - vbar.page)
 		_scroll.scroll_vertical = int(round(clampf(float(_scroll.scroll_vertical) - drag.relative.y, 0.0, v_max)))
+		_target_vertical = float(_scroll.scroll_vertical)
 		if _scroll.horizontal_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
 			var hbar := _scroll.get_h_scroll_bar()
 			var h_max := maxf(0.0, hbar.max_value - hbar.page)
