@@ -12,7 +12,6 @@ const DevelopmentPanelScript = preload("res://src/ui/components/DigiDevelopmentP
 const EvolutionChartScript = preload("res://src/ui/EvolutionChart.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
 
-const COLLECTION_CAPACITY := 32
 const DESKTOP_BREAKPOINT := 1100.0
 
 var _constellation: EvolutionChart
@@ -31,6 +30,13 @@ var _development_panel: Control
 var _action_cards: Array[Control] = []
 var _techniques_expanded := false
 var _desktop_body_height := 0.0
+
+
+func _ready() -> void:
+	super._ready()
+	var party_changed := Callable(self, "_on_active_party_changed")
+	if not OverworldState.active_party_changed.is_connected(party_changed):
+		OverworldState.active_party_changed.connect(party_changed)
 
 
 func _build() -> void:
@@ -112,7 +118,7 @@ func _install_container_headers() -> void:
 		collection_margin.add_child(collection_stack)
 
 		_collection_header = SectionHeaderScript.new() as DigiSectionHeader
-		_collection_header.configure("DIGIMON", "0 / %d" % COLLECTION_CAPACITY, V2.CYAN, "")
+		_collection_header.configure("DIGIMON", "", V2.CYAN, "")
 		collection_stack.add_child(_collection_header)
 
 		var list_inset := _margin(10, 10, 5, 10)
@@ -159,41 +165,45 @@ func _unhandled_input(event: InputEvent) -> void:
 	super._unhandled_input(event)
 
 
+func _party_instances() -> Array[DigimonInstance]:
+	return OverworldState.get_active_instances()
+
+
 func _refresh_collection() -> void:
-	super._refresh_collection()
-	var count := OverworldState.get_collection_instances().size()
-	if _collection_header != null:
-		_collection_header.set_trailing("%d / %d" % [count, COLLECTION_CAPACITY])
-	if _collection_grid != null and count < COLLECTION_CAPACITY:
-		_collection_grid.add_child(_empty_slot_card())
+	if _collection_grid == null:
+		return
+	for child in _collection_grid.get_children():
+		child.queue_free()
+	_buttons.clear()
+	_walk_previews.clear()
+	var party := _party_instances()
+	_selected_index = clampi(_selected_index, 0, maxi(0, party.size() - 1))
+	for index in range(party.size()):
+		var instance: DigimonInstance = party[index]
+		var species: Dictionary = _database.get_by_seed(instance.species_seed)
+		var card := _collection_button(instance, species, index)
+		_collection_grid.add_child(card)
+	_update_account()
+	_refresh_details()
+	_style_collection_selection()
 
 
-func _empty_slot_card() -> Control:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(226.0, 72.0)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.66), Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.48), 7)
-	)
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 10)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(row)
-	var plus := _label("+", 28, V2.SUBTLE, true)
-	plus.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(plus)
-	var copy := _label("Empty Slot", 13, V2.MUTED, true)
-	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(copy)
-	return panel
+func _on_active_party_changed(_active_party: Array) -> void:
+	_refresh_collection()
 
 
 func _select_index(index: int) -> void:
+	var party := _party_instances()
+	if index < 0 or index >= party.size():
+		return
 	if index != _selected_index:
 		_techniques_expanded = false
-	super._select_index(index)
+	if _selected_index == index and _detail_list.get_child_count() > 0:
+		_style_collection_selection()
+		return
+	_selected_index = index
+	_style_collection_selection()
+	_refresh_details()
 
 
 func _collection_button(instance: DigimonInstance, species: Dictionary, index: int) -> Button:
@@ -276,9 +286,9 @@ func _refresh_details() -> void:
 	_development_panel = null
 	_action_cards.clear()
 
-	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
-	if collection.is_empty():
-		var empty := _label("No Digimon yet. Convert Digi Data to create your first partner.", 15, V2.MUTED)
+	var party := _party_instances()
+	if party.is_empty():
+		var empty := _label("No Digimon in your party.", 15, V2.MUTED)
 		empty.custom_minimum_size.y = 180.0
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -286,7 +296,7 @@ func _refresh_details() -> void:
 		_detail_list.add_child(empty)
 		return
 
-	var instance: DigimonInstance = collection[clampi(_selected_index, 0, collection.size() - 1)]
+	var instance: DigimonInstance = party[clampi(_selected_index, 0, party.size() - 1)]
 	var species: Dictionary = _database.get_by_seed(instance.species_seed)
 	var compact := V2.is_compact(get_viewport(), DESKTOP_BREAKPOINT)
 	var compact_hero := V2.physical_window_size(get_viewport()).x < 680.0
@@ -341,7 +351,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	_action_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_action_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_action_panel.size_flags_stretch_ratio = 1.0
-	_action_panel.custom_minimum_size.y = 188.0
+	_action_panel.custom_minimum_size.y = 184.0
 	_action_panel.add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 	_primary_column.add_child(_action_panel)
 
@@ -351,7 +361,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	stack.add_theme_constant_override("separation", 0)
 	_action_panel.add_child(stack)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
-	header.configure("ACTIONS", "Help your Digimon grow stronger", V2.CYAN, "evolution")
+	header.configure("ACTIONS", "", V2.CYAN, "evolution")
 	stack.add_child(header)
 
 	var inner := _margin(12, 10, 12, 12)
@@ -370,7 +380,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	var techniques := ActionCardScript.new()
 	techniques.configure(
 		"TECHNIQUES",
-		"View and manage learned techniques, favorites and mastery.",
+		"Manage learned techniques and favorites.",
 		"%d learned · %d favorite%s" % [learned, favorites, "" if favorites == 1 else "s"],
 		"techniques",
 		V2.CYAN
@@ -391,7 +401,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	var evolution := ActionCardScript.new()
 	evolution.configure(
 		"EVOLUTION",
-		"Explore Digivolution and Degeneration routes and requirements.",
+		"View Digivolution and Degeneration routes.",
 		"%d route%s available" % [ready, "" if ready == 1 else "s"],
 		"evolution",
 		V2.GREEN
@@ -403,7 +413,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	var items := ActionCardScript.new()
 	items.configure(
 		"ITEMS",
-		"View carried items and prepare useful tools for your Digimon.",
+		"Review carried items and useful tools.",
 		"Coming later",
 		"items",
 		V2.AMBER
@@ -458,6 +468,19 @@ func _button(text: String, accent: Color) -> Button:
 	button.add_theme_color_override("icon_pressed_color", accent)
 	V2.apply_body(button)
 	return button
+
+
+func _style_collection_selection() -> void:
+	var party := _party_instances()
+	for index in range(_buttons.size()):
+		var rank_color := V2.CYAN
+		if index < party.size():
+			var species := _database.get_by_seed(party[index].species_seed)
+			rank_color = V2.rank_color(String(species.get("rank", "Unknown")))
+		var selected := index == _selected_index
+		_style_collection_button(_buttons[index], selected, rank_color)
+		if index < _walk_previews.size():
+			_walk_previews[index].set_active(selected)
 
 
 func _style_collection_button(button: Button, selected: bool, _rank_color: Color) -> void:

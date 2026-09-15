@@ -26,7 +26,7 @@ func configure(instance: DigimonInstance, species: Dictionary, progression: Digi
 	shell.add_theme_constant_override("separation", 0)
 	add_child(shell)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
-	header.configure("DIGIMON DATA", "A SMALL LIFE FOR A BIGGER TOMORROW", V2.BLUE, "digimon")
+	header.configure("DIGIMON DATA", "", V2.BLUE, "digimon")
 	shell.add_child(header)
 
 	var margin := _margin(16, 14, 16, 14)
