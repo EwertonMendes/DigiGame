@@ -21,6 +21,7 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - `DigiProfileHero.gd`: reusable Digimon identity card with portrait, rank/type chips, level, XP, Potential and Link.
 - `DigiStatsPanel.gd`: semantic combat-stat presentation using the reusable stat rows.
 - `DigiDevelopmentPanel.gd`: reusable aptitude/training summary with readable semantic colors.
+- `DigiModalHeader.gd` and `DigiSectionHeader.gd`: shared screen/section hierarchy now used by the Digimon, DigiLab, Party / Storage and Training flows.
 
 ## Interaction rules
 
@@ -30,6 +31,7 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - Touch never depends on hover-only information.
 - The Digimon screen keeps keyboard/controller spatial focus navigation while mouse and touch use the same underlying controls.
 - Input hints follow the last active input family and avoid font-dependent symbol glyphs that can render inconsistently on Web/mobile builds.
+- Screens that rebuild dynamic content after an action must explicitly restore focus to the equivalent control instead of dropping keyboard/controller focus.
 
 ## Responsive layout
 
@@ -40,4 +42,12 @@ The Digimon screen uses the physical-size helpers already proven by the Web buil
 - Very narrow screens: the identity and action grids collapse to one column instead of shrinking fonts to unreadable sizes.
 - Existing scroll containers remain the overflow mechanism, so information is never intentionally clipped to fit a smaller viewport.
 
-Other screens should adopt these components gradually; this change deliberately does not restyle DigiLab, Training, Party / Storage, Evolution Chart or battle UI.
+The Training Center follows the same responsive rules: a persistent roster column beside the training workspace on desktop, a compact roster above the workspace on smaller screens, and one-column stat/budget grids when horizontal space is constrained.
+
+## Migrated screens
+
+- Digimon / progression menu: original Digi UI V2 reference implementation.
+- DigiLab and Party / Storage: shared modal hierarchy and V2 surfaces/components.
+- Training Center: V2 modal header, responsive roster, training budget, semantic attribute steppers, mobility planning, plan summary, adaptive input hints and focus restoration after dynamic updates.
+
+Other screens should adopt these components gradually rather than forcing a project-wide rewrite.
