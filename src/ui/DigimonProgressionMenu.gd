@@ -5,6 +5,7 @@ const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const ActionCardScript = preload("res://src/ui/components/DigiActionCard.gd")
 const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
 const ModalHeaderScript = preload("res://src/ui/components/DigiModalHeader.gd")
+const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 const ProfileHeroScript = preload("res://src/ui/components/DigiProfileHero.gd")
 const StatsPanelScript = preload("res://src/ui/components/DigiStatsPanel.gd")
 const DevelopmentPanelScript = preload("res://src/ui/components/DigiDevelopmentPanel.gd")
@@ -16,8 +17,11 @@ var _menu_root: Control
 var _header: DigiModalHeader
 var _header_rule: ColorRect
 var _hint_bar: Control
+var _collection_header: DigiSectionHeader
+var _detail_header: DigiSectionHeader
 var _body_grid: GridContainer
 var _action_grid: GridContainer
+var _action_panel: PanelContainer
 var _primary_column: VBoxContainer
 var _sidebar_column: VBoxContainer
 var _technique_panel: Control
@@ -43,8 +47,8 @@ func _build() -> void:
 		remove_child(control)
 		_menu_root.add_child(control)
 
-	# The legacy header controls remain alive for base-class compatibility, but
-	# V2 uses one reusable header component shared by future modal migrations.
+	# Keep legacy controls alive for base-class compatibility, while the V2
+	# header becomes the reusable navigation shell for this and future screens.
 	_title.visible = false
 	_account.visible = false
 	_close_button.visible = false
@@ -52,7 +56,12 @@ func _build() -> void:
 
 	_header = ModalHeaderScript.new() as DigiModalHeader
 	_header.name = "ModalHeader"
-	_header.configure("DIGIMON", "Choose how you want to develop your Digimon.", OverworldState.get_bits(), true)
+	_header.configure("DIGI", "Digital Monsters", OverworldState.get_bits(), true)
+	_header.configure_tabs([
+		{"id": "digimon", "label": "Digimon", "enabled": true},
+		{"id": "digipedia", "label": "Digipedia", "enabled": false},
+		{"id": "system", "label": "System", "enabled": false},
+	], "digimon")
 	_header.close_requested.connect(func(): close_requested.emit())
 	_menu_root.add_child(_header)
 	_header_rule = ColorRect.new()
@@ -61,11 +70,31 @@ func _build() -> void:
 	_menu_root.add_child(_header_rule)
 
 	_collection_panel.clip_contents = true
-	_collection_panel.add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE_SOFT, V2.BORDER_SOFT, 12))
+	_collection_panel.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(
+			Color(V2.SURFACE_SOFT.r, V2.SURFACE_SOFT.g, V2.SURFACE_SOFT.b, 0.95),
+			Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.24),
+			12,
+			Vector4.ZERO,
+			0.08
+		)
+	)
 	_detail_panel.clip_contents = true
-	_detail_panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.76), V2.BORDER_SOFT, 12))
-	_set_panel_content_margin(_collection_panel, 10)
-	_set_panel_content_margin(_detail_panel, 10)
+	_detail_panel.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(
+			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.76),
+			Color(V2.BLUE.r, V2.BLUE.g, V2.BLUE.b, 0.24),
+			12,
+			Vector4.ZERO,
+			0.08
+		)
+	)
+	_set_panel_content_margin(_collection_panel, 7)
+	_set_panel_content_margin(_detail_panel, 7)
+	_install_container_headers()
+
 	_detail_list.add_theme_constant_override("separation", 10)
 	_collection_scroll.follow_focus = true
 	_detail_scroll.follow_focus = true
@@ -87,6 +116,44 @@ func _build() -> void:
 	add_child(_constellation)
 
 
+func _install_container_headers() -> void:
+	var collection_margin := _collection_panel.get_child(0) as MarginContainer
+	if collection_margin != null:
+		collection_margin.remove_child(_collection_scroll)
+		var collection_stack := VBoxContainer.new()
+		collection_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		collection_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		collection_stack.add_theme_constant_override("separation", 7)
+		collection_margin.add_child(collection_stack)
+		_collection_header = SectionHeaderScript.new() as DigiSectionHeader
+		_collection_header.configure("DIGIMON", "", V2.CYAN, "link")
+		collection_stack.add_child(_collection_header)
+		_collection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		collection_stack.add_child(_collection_scroll)
+
+		# Leave breathing room between cards and the native vertical scrollbar.
+		_collection_scroll.remove_child(_collection_grid)
+		var roster_inset := _margin(0, 0, 7, 0)
+		roster_inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		roster_inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_collection_scroll.add_child(roster_inset)
+		roster_inset.add_child(_collection_grid)
+
+	var detail_margin := _detail_panel.get_child(0) as MarginContainer
+	if detail_margin != null:
+		detail_margin.remove_child(_detail_scroll)
+		var detail_stack := VBoxContainer.new()
+		detail_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		detail_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		detail_stack.add_theme_constant_override("separation", 7)
+		detail_margin.add_child(detail_stack)
+		_detail_header = SectionHeaderScript.new() as DigiSectionHeader
+		_detail_header.configure("DIGIMON DATA", "A SMALL LIFE FOR A BIGGER TOMORROW", V2.BLUE, "info")
+		detail_stack.add_child(_detail_header)
+		_detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		detail_stack.add_child(_detail_scroll)
+
+
 func open_menu() -> void:
 	if _constellation != null:
 		_constellation.visible = false
@@ -106,6 +173,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	super._unhandled_input(event)
+
+
+func _refresh_collection() -> void:
+	super._refresh_collection()
+	if _collection_header != null:
+		_collection_header.set_trailing("%d OWNED" % OverworldState.get_collection_instances().size())
 
 
 func _select_index(index: int) -> void:
@@ -159,6 +232,10 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	var sub := _label("Lv %d  ·  %s" % [instance.level, rank], 10, rank_color.lightened(0.08), true)
 	sub.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	copy.add_child(sub)
+	var xp_gap := Control.new()
+	xp_gap.custom_minimum_size.y = 2.0
+	xp_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	copy.add_child(xp_gap)
 	var xp_required := _progression.exp_to_next_level(instance)
 	var progress := _mini_progress(V2.AMBER if selected else rank_color)
 	progress.max_value = maxf(1.0, float(xp_required))
@@ -178,6 +255,7 @@ func _refresh_details() -> void:
 	_section_grid = null
 	_body_grid = null
 	_action_grid = null
+	_action_panel = null
 	_primary_column = null
 	_sidebar_column = null
 	_technique_panel = null
@@ -199,8 +277,6 @@ func _refresh_details() -> void:
 	var compact := V2.is_compact(get_viewport(), 900.0)
 	var compact_hero := V2.physical_window_size(get_viewport()).x < 680.0
 
-	# Desktop mirrors the approved prototype: identity + actions on the left and
-	# compact combat/development information beside it from the very top.
 	_body_grid = GridContainer.new()
 	_body_grid.columns = 2
 	_body_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -241,15 +317,36 @@ func _refresh_details() -> void:
 
 
 func _build_action_area(instance: DigimonInstance) -> void:
-	_primary_column.add_child(_label("ACTIONS", 11, V2.MUTED, true))
-	var prompt := _label("What would you like to work on?", 9, V2.SUBTLE)
-	_primary_column.add_child(prompt)
+	_action_panel = PanelContainer.new()
+	_action_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_action_panel.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(
+			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.90),
+			Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.26),
+			10,
+			Vector4(6.0, 6.0, 6.0, 7.0),
+			0.08
+		)
+	)
+	_primary_column.add_child(_action_panel)
+
+	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 7)
+	_action_panel.add_child(stack)
+	var header := SectionHeaderScript.new() as DigiSectionHeader
+	header.configure("ACTIONS", "Help your Digimon grow stronger", V2.CYAN, "evolution")
+	stack.add_child(header)
+
+	var inner := _margin(4, 0, 4, 1)
+	stack.add_child(inner)
 	_action_grid = GridContainer.new()
 	_action_grid.columns = 3
 	_action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_action_grid.add_theme_constant_override("h_separation", 9)
 	_action_grid.add_theme_constant_override("v_separation", 9)
-	_primary_column.add_child(_action_grid)
+	inner.add_child(_action_grid)
 
 	var learned := instance.learned_skills.size()
 	var favorites := instance.favorite_skills.size()
@@ -286,35 +383,41 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	_action_grid.add_child(evolution)
 	_action_cards.append(evolution)
 
-	var development := ActionCardScript.new()
-	development.configure(
-		"DEVELOPMENT",
-		"Review aptitude, permanent training and Potential at a glance.",
-		"Potential %d / %d" % [instance.potential, DigimonInstance.MAX_POTENTIAL],
-		"training",
+	# Items is intentionally present as part of the final information architecture
+	# but disabled until the inventory/item loop is implemented.
+	var items := ActionCardScript.new()
+	items.configure(
+		"ITEMS",
+		"View carried items and prepare useful tools for your Digimon.",
+		"Coming later",
+		"info",
 		V2.AMBER
 	)
-	development.pressed.connect(_show_development)
-	_action_grid.add_child(development)
-	_action_cards.append(development)
+	items.disabled = true
+	items.tooltip_text = "Items will be available in a future update."
+	_action_grid.add_child(items)
 
 
 func _section_card(title: String, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE, Color(accent.r, accent.g, accent.b, 0.24), 10))
-	var margin := _margin(11, 9, 11, 9)
-	panel.add_child(margin)
+	panel.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(V2.SURFACE, Color(accent.r, accent.g, accent.b, 0.24), 10, Vector4(6.0, 6.0, 6.0, 7.0))
+	)
+	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 6)
+	panel.add_child(stack)
+	var header := SectionHeaderScript.new() as DigiSectionHeader
+	header.configure(title, "", accent, "info")
+	stack.add_child(header)
+	var margin := _margin(5, 0, 5, 1)
+	stack.add_child(margin)
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 6)
 	margin.add_child(body)
-	body.add_child(_label(title, 11, accent, true))
-	var divider := ColorRect.new()
-	divider.custom_minimum_size.y = 1.0
-	divider.color = V2.separator_color(0.26)
-	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body.add_child(divider)
 	panel.set_meta("body", body)
 	return panel
 
@@ -423,11 +526,17 @@ func _wire_focus_navigation() -> void:
 				card.focus_neighbor_left = card.get_path_to(selected_button)
 
 	var close_button := _header.get_close_button() if _header != null else null
-	if close_button != null and is_instance_valid(close_button):
-		close_button.focus_neighbor_bottom = close_button.get_path_to(first_action)
+	var active_tab := _header.get_tab_button("digimon") if _header != null else null
+	if active_tab != null and is_instance_valid(active_tab):
+		active_tab.focus_neighbor_bottom = active_tab.get_path_to(first_action)
 		for card in _action_cards:
 			if card != null and is_instance_valid(card):
-				card.focus_neighbor_top = card.get_path_to(close_button)
+				card.focus_neighbor_top = card.get_path_to(active_tab)
+	if close_button != null and is_instance_valid(close_button):
+		close_button.focus_neighbor_bottom = close_button.get_path_to(first_action)
+		if active_tab != null and is_instance_valid(active_tab):
+			close_button.focus_neighbor_left = close_button.get_path_to(active_tab)
+			active_tab.focus_neighbor_right = active_tab.get_path_to(close_button)
 
 	if _techniques_expanded and _technique_panel != null:
 		var technique_controls := _focusable_descendants(_technique_panel)
