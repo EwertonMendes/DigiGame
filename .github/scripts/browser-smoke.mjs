@@ -371,10 +371,13 @@ async function runMobileSuite() {
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
   const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
-  // This is the touch suite: activate the visible affirmative action by touch
-  // instead of relying on a synthetic keyboard focus change after a touch tap.
-  const dialogLayout = await readLayout(page);
-  await page.touchscreen.tap(dialogLayout.viewportWidth * 0.70, dialogLayout.viewportHeight * 0.555);
+  // The touch that opened the modal may leave the Web canvas without DOM focus.
+  // Restore canvas focus before exercising the same safe-default keyboard/gamepad
+  // navigation contract that desktop uses.
+  await page.locator('canvas').focus();
+  await page.keyboard.press('ArrowRight');
+  await settleFrames(page, 1);
+  await page.keyboard.press('Enter');
   await Promise.all([battleStarted, battleReady, introReady]);
   await settleFrames(page, 4);
 
