@@ -1,7 +1,7 @@
 extends Control
 class_name AreaTitleOverlay
 
-const UI = preload("res://src/ui/TacticalTheme.gd")
+const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 var _card: PanelContainer = null
 var _title: Label = null
@@ -13,7 +13,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	z_index = 45
+	# Area identification belongs above the world, but below every interactive
+	# HUD/modal sibling in the Hub CanvasLayer. This prevents a freshly presented
+	# area title from crossing a dialog opened immediately after scene load.
+	z_index = -10
 	_build_ui()
 	resized.connect(_layout)
 	_layout()
@@ -29,7 +32,7 @@ func present(area_title: String, area_subtitle: String, hold_seconds: float = 1.
 	_subtitle.text = area_subtitle
 	visible = true
 	modulate = Color(1.0, 1.0, 1.0, 0.0)
-	_card.scale = Vector2(0.985, 0.985)
+	_card.scale = Vector2(0.975, 0.975)
 	call_deferred("_start_presentation", maxf(0.8, hold_seconds))
 
 
@@ -44,53 +47,56 @@ func get_area_subtitle() -> String:
 func _build_ui() -> void:
 	_card = PanelContainer.new()
 	_card.name = "AreaTitleCard"
+	_card.set_meta("digi_ui_v2_component", true)
 	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.004, 0.010, 0.016, 0.78)
-	style.border_color = Color(UI.CYAN.r, UI.CYAN.g, UI.CYAN.b, 0.38)
-	style.border_width_top = 1
-	style.border_width_bottom = 1
-	style.corner_radius_top_left = 2
-	style.corner_radius_top_right = 2
-	style.corner_radius_bottom_left = 2
-	style.corner_radius_bottom_right = 2
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.34)
-	style.shadow_size = 10
-	_card.add_theme_stylebox_override("panel", style)
+	_card.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(
+			Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.94),
+			Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.42),
+			V2.CARD_RADIUS,
+			Vector4.ZERO,
+			0.14
+		)
+	)
 	add_child(_card)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 34)
-	margin.add_theme_constant_override("margin_top", 17)
+	margin.add_theme_constant_override("margin_top", 15)
 	margin.add_theme_constant_override("margin_right", 34)
-	margin.add_theme_constant_override("margin_bottom", 17)
+	margin.add_theme_constant_override("margin_bottom", 16)
 	_card.add_child(margin)
 
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
-	stack.add_theme_constant_override("separation", 4)
+	stack.add_theme_constant_override("separation", 5)
 	margin.add_child(stack)
+
+	var eyebrow := Label.new()
+	eyebrow.text = "DIGITAL AREA"
+	eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	eyebrow.add_theme_font_size_override("font_size", 10)
+	eyebrow.add_theme_color_override("font_color", V2.CYAN)
+	V2.apply_heading(eyebrow)
+	stack.add_child(eyebrow)
 
 	_title = Label.new()
 	_title.name = "AreaTitle"
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_title.add_theme_font_size_override("font_size", 30)
-	_title.add_theme_color_override("font_color", UI.TEXT)
-	_title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.90))
-	_title.add_theme_constant_override("outline_size", 3)
-	UI.apply_heading_font(_title)
+	_title.add_theme_font_size_override("font_size", 27)
+	_title.add_theme_color_override("font_color", V2.WHITE)
+	V2.apply_heading(_title)
 	stack.add_child(_title)
 
 	_subtitle = Label.new()
 	_subtitle.name = "AreaSubtitle"
 	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_subtitle.add_theme_font_size_override("font_size", 13)
-	_subtitle.add_theme_color_override("font_color", UI.CYAN)
-	_subtitle.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
-	_subtitle.add_theme_constant_override("outline_size", 2)
-	UI.apply_body_font(_subtitle)
+	_subtitle.add_theme_font_size_override("font_size", 12)
+	_subtitle.add_theme_color_override("font_color", V2.MUTED)
+	V2.apply_body(_subtitle)
 	stack.add_child(_subtitle)
 
 
@@ -100,8 +106,9 @@ func _layout() -> void:
 	var viewport_size := size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		viewport_size = get_viewport().get_visible_rect().size
-	var width := clampf(viewport_size.x - 48.0, 300.0, 620.0)
-	var height := 112.0
+	var compact := viewport_size.x < 760.0 or viewport_size.y < 560.0
+	var width := clampf(viewport_size.x - 36.0, 286.0, 600.0)
+	var height := 116.0 if compact else 124.0
 	_card.position = Vector2(
 		(viewport_size.x - width) * 0.5,
 		(viewport_size.y - height) * 0.5 - minf(28.0, viewport_size.y * 0.035)
@@ -117,10 +124,10 @@ func _start_presentation(hold_seconds: float) -> void:
 	_animation = create_tween()
 	_animation.set_trans(Tween.TRANS_QUAD)
 	_animation.set_ease(Tween.EASE_OUT)
-	_animation.tween_property(self, "modulate:a", 1.0, 0.22)
-	_animation.parallel().tween_property(_card, "scale", Vector2.ONE, 0.22)
+	_animation.tween_property(self, "modulate:a", 1.0, 0.18)
+	_animation.parallel().tween_property(_card, "scale", Vector2.ONE, 0.20)
 	_animation.tween_interval(hold_seconds)
 	_animation.set_ease(Tween.EASE_IN)
-	_animation.tween_property(self, "modulate:a", 0.0, 0.42)
-	_animation.parallel().tween_property(_card, "scale", Vector2(1.012, 1.012), 0.42)
+	_animation.tween_property(self, "modulate:a", 0.0, 0.34)
+	_animation.parallel().tween_property(_card, "scale", Vector2(1.008, 1.008), 0.34)
 	_animation.tween_callback(Callable(self, "hide"))

@@ -69,6 +69,13 @@ func _ready() -> void:
 	assert(player.get("facing_direction") == "north", "Player must face north toward the operator in dialogue")
 	assert(operator.get("facing_direction") == "south", "Operator must face south toward the player in dialogue")
 
+	# Let the real Hub release scene-owned resources before terminating Godot.
+	# Immediate quit after the success marker can otherwise report live resources
+	# from deferred cleanup as a false regression failure.
+	hub.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
 	print("hub foundation regression passed")
 	get_tree().quit()
 
