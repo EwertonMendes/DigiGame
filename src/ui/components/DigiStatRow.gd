@@ -44,7 +44,7 @@ func _ready() -> void:
 func _build_content() -> void:
 	for child in get_children():
 		child.queue_free()
-	custom_minimum_size.y = 32.0 if _show_bar else 24.0
+	custom_minimum_size.y = 28.0 if _show_bar else 20.0
 	add_theme_stylebox_override(
 		"panel",
 		V2.surface_style(Color(V2.SURFACE_SOFT.r, V2.SURFACE_SOFT.g, V2.SURFACE_SOFT.b, 0.42), Color.TRANSPARENT, 7)
@@ -52,9 +52,9 @@ func _build_content() -> void:
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 7)
-	margin.add_theme_constant_override("margin_top", 3 if _show_bar else 1)
+	margin.add_theme_constant_override("margin_top", 2 if _show_bar else 0)
 	margin.add_theme_constant_override("margin_right", 7)
-	margin.add_theme_constant_override("margin_bottom", 3 if _show_bar else 1)
+	margin.add_theme_constant_override("margin_bottom", 2 if _show_bar else 0)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(margin)
 
@@ -64,9 +64,9 @@ func _build_content() -> void:
 	margin.add_child(row)
 
 	var icon := IconScript.new() as DigiProceduralIcon
-	icon.custom_minimum_size = Vector2(19.0, 19.0)
+	icon.custom_minimum_size = Vector2(17.0, 17.0)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.configure(_icon_kind, _accent, 1.9)
+	icon.configure(_icon_kind, _accent, 1.75)
 	row.add_child(icon)
 
 	var label := Label.new()
@@ -87,7 +87,7 @@ func _build_content() -> void:
 	value_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	value_label.add_theme_font_size_override("font_size", 12 if _show_bar else 11)
+	value_label.add_theme_font_size_override("font_size", 11)
 	value_label.add_theme_color_override("font_color", V2.TEXT)
 	V2.apply_heading(value_label)
 	value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
