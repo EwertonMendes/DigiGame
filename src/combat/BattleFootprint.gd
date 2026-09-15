@@ -14,6 +14,8 @@ const _OFFSETS := {
 	],
 }
 
+const _CARDINALS: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]
+
 
 static func normalize_id(footprint_id: String) -> String:
 	var clean_id := footprint_id.to_lower().strip_edges()
@@ -63,6 +65,39 @@ static func minimum_distance(first: Array[Vector2i], second: Array[Vector2i], me
 	return result
 
 
+static func are_cardinally_adjacent(first: Array[Vector2i], second: Array[Vector2i]) -> bool:
+	return minimum_distance(first, second, "manhattan") == 1
+
+
+static func contact_pairs(first: Array[Vector2i], second: Array[Vector2i]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	for first_grid: Vector2i in first:
+		for direction: Vector2i in _CARDINALS:
+			var second_grid := first_grid + direction
+			if not second.has(second_grid):
+				continue
+			var key := "%d,%d>%d,%d" % [first_grid.x, first_grid.y, second_grid.x, second_grid.y]
+			if seen.has(key):
+				continue
+			seen[key] = true
+			result.append({"first": first_grid, "second": second_grid, "direction": direction})
+	return result
+
+
+static func perimeter(grids: Array[Vector2i]) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	var seen: Dictionary = {}
+	for grid: Vector2i in grids:
+		for direction: Vector2i in _CARDINALS:
+			var adjacent := grid + direction
+			if grids.has(adjacent) or seen.has(adjacent):
+				continue
+			seen[adjacent] = true
+			result.append(adjacent)
+	return result
+
+
 static func center_world(field: Node, anchor: Vector2i, footprint_id: String) -> Vector2:
 	if field == null or not field.has_method("grid_to_world"):
 		return Vector2(anchor)
@@ -87,6 +122,13 @@ static func front_edge(grids: Array[Vector2i], direction: Vector2i) -> Array[Vec
 		elif projection == best_projection:
 			result.append(grid)
 	return result
+
+
+static func isometric_front_depth(grids: Array[Vector2i]) -> int:
+	var depth := -1_000_000
+	for grid: Vector2i in grids:
+		depth = maxi(depth, grid.x + grid.y)
+	return depth if not grids.is_empty() else 0
 
 
 static func intersects(first: Array[Vector2i], second: Array[Vector2i]) -> bool:
