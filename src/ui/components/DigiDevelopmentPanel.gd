@@ -32,7 +32,7 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	for key in ["hp", "mp", "atk", "def", "int", "speed", "mov"]:
 		var aptitude := int(instance.aptitudes.get(key, 0))
 		var training := int(instance.training.get(key, 0))
-		var stat_name := "SP" if key == "mp" else ("SPD" if key == "speed" else key.to_upper())
+		var stat_name: String = "SP" if key == "mp" else ("SPD" if key == "speed" else String(key).to_upper())
 		grid.add_child(_table_label(stat_name, V2.TEXT, true, false))
 		grid.add_child(_table_label("%+d%%" % aptitude, V2.CYAN if aptitude >= 0 else V2.RED, true, true))
 		grid.add_child(_table_label("%+d" % training, V2.AMBER if training > 0 else V2.MUTED, true, true))
