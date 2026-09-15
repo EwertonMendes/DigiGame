@@ -2,10 +2,12 @@ extends ProgressionDigiLabCreateScreen
 class_name DigiLabConvertScreen
 
 const PrimaryTabs = preload("res://src/ui/components/DigiLabPrimaryTabs.gd")
+const AssetIcons = preload("res://src/ui/components/DigiUiAssetIcons.gd")
 
 
 func open_lab() -> void:
 	super.open_lab()
+	AssetIcons.apply_bits_icon(_header)
 	_header.configure_tabs(PrimaryTabs.specs(), "convert")
 	_header.set_active_tab("convert")
 	_hint_bar.set_primary_tabs_enabled(true)
