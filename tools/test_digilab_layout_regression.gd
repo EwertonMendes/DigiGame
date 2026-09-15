@@ -68,6 +68,8 @@ func _ready() -> void:
 		return
 	print("[digilab-layout] ascension deep-link ok")
 
+	# DigiModalHeader uses the same adjacent-tab method for LB/RB and L1/R1.
+	# Moving left from Ascension must therefore return to Party / Storage.
 	var ascension_header: DigiModalHeader = ascension.get("_header") as DigiModalHeader
 	if not _check(ascension_header != null and ascension_header.select_adjacent_tab(-1), "Previous shoulder tab navigation must work from Ascension"):
 		return
@@ -113,7 +115,12 @@ func _layout_text_is_usable(root: Control) -> bool:
 		if text.length() < 3:
 			continue
 		if label.autowrap_mode == TextServer.AUTOWRAP_OFF:
-			if label.size.x < 18.0:
+			# Very short semantic values such as 1×1, 2×2 and Lv 1 are legitimately
+			# compact. The failure we care about is a label collapsing to a one-character
+			# column, so use a smaller floor for short values and a stricter floor for
+			# normal words/status labels.
+			var width_floor := 8.0 if text.length() <= 4 else 18.0
+			if label.size.x < width_floor:
 				print("[digilab-layout] collapsed single-line label: %s (%.1f px)" % [text, label.size.x])
 				return false
 		elif label.size.x < 42.0:
