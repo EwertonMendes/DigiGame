@@ -3,7 +3,6 @@ extends "res://src/battle/DigimonBattleActor.gd"
 const SPAWN_RISE := Vector2(0.0, 18.0)
 const SPAWN_IN_TIME := 0.16
 const SPAWN_SETTLE_TIME := 0.20
-const VISUAL_TWEEN_WATCHDOG_MS := 900
 
 var _spawn_prepared := false
 var _spawn_base_position := Vector2.ZERO
@@ -43,7 +42,7 @@ func play_battle_spawn_animation() -> void:
 	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(sprite, "position", _spawn_base_position, SPAWN_SETTLE_TIME)
 	tween.parallel().tween_property(sprite, "scale", _spawn_base_scale, SPAWN_SETTLE_TIME)
-	await _await_visual_tween(tween, "spawn-%s" % name)
+	await tween.finished
 
 	modulate = Color.WHITE
 	sprite.position = _spawn_base_position
@@ -117,14 +116,3 @@ func _spawn_arrival_diamond(color: Color) -> void:
 	tween.tween_property(diamond, "scale", Vector2.ONE * 1.62, 0.42)
 	tween.tween_property(diamond, "modulate:a", 0.0, 0.42)
 	tween.finished.connect(diamond.queue_free)
-
-
-func _await_visual_tween(tween: Tween, label: String) -> void:
-	if tween == null:
-		return
-	var deadline_ms := Time.get_ticks_msec() + VISUAL_TWEEN_WATCHDOG_MS
-	while tween.is_valid() and tween.is_running() and Time.get_ticks_msec() < deadline_ms:
-		await get_tree().process_frame
-	if tween.is_valid() and tween.is_running():
-		tween.kill()
-		print("[BattleIntro] WATCHDOG stage=%s elapsed_ms=%d" % [label, VISUAL_TWEEN_WATCHDOG_MS])
