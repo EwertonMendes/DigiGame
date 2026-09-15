@@ -116,7 +116,34 @@ func _build_mobile_controls() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if _transitioning or not event is InputEventScreenTouch:
+	if _transitioning:
+		return
+
+	# Handle modal navigation before Control/Button GUI dispatch. On Web, a
+	# focused Button may consume directional or accept input before
+	# _unhandled_input runs. Resolving the focused action here keeps keyboard and
+	# gamepad behavior deterministic while preserving NOT NOW as the safe default.
+	if _dialog_open:
+		if event.is_action_pressed("ui_right"):
+			_focus_dialog_start()
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("ui_left"):
+			_focus_dialog_cancel()
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("ui_accept"):
+			var focus_owner := get_viewport().gui_get_focus_owner()
+			if focus_owner == _start_battle_button:
+				_start_test_battle()
+				get_viewport().set_input_as_handled()
+				return
+			if focus_owner == _mobile_dialog_cancel:
+				_close_dialog()
+				get_viewport().set_input_as_handled()
+				return
+
+	if not event is InputEventScreenTouch:
 		return
 	var touch := event as InputEventScreenTouch
 	if touch.pressed:
@@ -146,9 +173,8 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _dialog_open and not _transitioning:
-		# Fallback for events not consumed by the focused Control. The focused
-		# buttons also handle these actions in gui_input so native and Web builds
-		# behave identically even when Control consumes spatial navigation first.
+		# Fallback for synthetic/custom events that bypass _input. Ordinary
+		# keyboard/gamepad navigation is handled earlier in _input.
 		if event.is_action_pressed("ui_right"):
 			_focus_dialog_start()
 			get_viewport().set_input_as_handled()
