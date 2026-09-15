@@ -19,6 +19,7 @@ func _ready() -> void:
 	super._ready()
 	_battle_default_zoom = _preferred_battle_zoom()
 	zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
+	_trace_web("ready zoom=%.3f" % zoom.x)
 
 func _physics_process(delta: float) -> void:
 	if _post_battle_locked():
@@ -52,10 +53,13 @@ func animate_opening_overview(duration: float = OPENING_ZOOM_TIME) -> void:
 	await _animate_camera_to(target_position, OPENING_BOOT_ZOOM, duration)
 
 func animate_intro_focus(world_position: Vector2, first_focus: bool = false) -> void:
+	_trace_web("intro-focus-enter first=%s" % str(first_focus))
 	_refresh_pan_bounds()
 	var target_zoom := _preferred_intro_zoom()
 	var duration := FIRST_FOCUS_MOVE_TIME if first_focus else FOCUS_MOVE_TIME
+	_trace_web("intro-focus-target zoom=%.3f duration=%.3f" % [target_zoom, duration])
 	await _animate_camera_to(world_position, target_zoom, duration)
+	_trace_web("intro-focus-exit")
 
 func animate_gameplay_focus(world_position: Vector2, duration: float = GAMEPLAY_FOCUS_TIME) -> void:
 	_refresh_pan_bounds()
@@ -107,11 +111,14 @@ func _preferred_intro_zoom() -> float:
 	return DESKTOP_INTRO_ZOOM
 
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
+	_trace_web("tween-create target_zoom=%.3f duration=%.3f" % [target_zoom, duration])
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(self, "zoom", Vector2.ONE * target_zoom, maxf(0.05, duration))
 	tween.tween_property(self, "global_position", target_position, maxf(0.05, duration))
+	_trace_web("tween-running")
 	await tween.finished
+	_trace_web("tween-finished")
 	zoom = Vector2.ONE * target_zoom
 	global_position = target_position
 	_clamp_to_pan_bounds()
@@ -145,3 +152,7 @@ func _clamp_to_pan_bounds() -> void:
 		clampf(global_position.x, min_x, max_x),
 		clampf(global_position.y, min_y, max_y)
 	)
+
+func _trace_web(message: String) -> void:
+	if OS.has_feature("web"):
+		push_error("[CameraTrace] %s" % message)
