@@ -2,6 +2,7 @@ extends "res://src/world/HubVisualRedesign.gd"
 
 const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
 const HUB_V2 = preload("res://src/ui/components/DigiUiTheme.gd")
+const GlassPanelScript = preload("res://src/ui/components/DigiGlassPanel.gd")
 
 const PORTRAIT_EDGE := 24.0
 const PORTRAIT_BOTTOM := 30.0
@@ -23,22 +24,12 @@ var _fallback_action_touch := -1
 # desktop and mobile Web exports. Its presentation follows Digi UI V2 and its
 # focus graph is explicit because the actions live in a free-form Control.
 func _build_dialog() -> void:
-	_dialog_panel = PanelContainer.new()
+	_dialog_panel = GlassPanelScript.new() as PanelContainer
 	_dialog_panel.name = "BattleDialog"
 	_dialog_panel.visible = false
 	_dialog_panel.clip_contents = true
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	_dialog_panel.set_meta("digi_ui_v2_component", true)
-	_dialog_panel.add_theme_stylebox_override(
-		"panel",
-		HUB_V2.surface_style(
-			Color(HUB_V2.PANEL_DEEP.r, HUB_V2.PANEL_DEEP.g, HUB_V2.PANEL_DEEP.b, 0.985),
-			Color(HUB_V2.AMBER.r, HUB_V2.AMBER.g, HUB_V2.AMBER.b, 0.48),
-			HUB_V2.CARD_RADIUS,
-			Vector4.ZERO,
-			0.14
-		)
-	)
+	_dialog_panel.call("configure_glass", HUB_V2.AMBER, "modal", Vector4.ZERO, 12)
 	_ui_root.add_child(_dialog_panel)
 
 	_mobile_dialog_content = Control.new()
@@ -377,9 +368,9 @@ func _apply_v2_dialog_button(button: Button, accent: Color) -> void:
 	button.add_theme_color_override("font_focus_color", HUB_V2.WHITE)
 	button.add_theme_color_override("font_pressed_color", HUB_V2.WHITE)
 	button.add_theme_color_override("font_disabled_color", Color(HUB_V2.MUTED.r, HUB_V2.MUTED.g, HUB_V2.MUTED.b, 0.46))
-	button.add_theme_stylebox_override("normal", HUB_V2.button_style(accent, "normal"))
-	button.add_theme_stylebox_override("hover", HUB_V2.button_style(accent, "hover"))
-	button.add_theme_stylebox_override("focus", HUB_V2.button_style(accent, "focus"))
-	button.add_theme_stylebox_override("pressed", HUB_V2.button_style(accent, "pressed"))
-	button.add_theme_stylebox_override("disabled", HUB_V2.button_style(accent, "disabled"))
+	button.add_theme_stylebox_override("normal", HUB_V2.glass_button_style(accent, "normal"))
+	button.add_theme_stylebox_override("hover", HUB_V2.glass_button_style(accent, "hover"))
+	button.add_theme_stylebox_override("focus", HUB_V2.glass_button_style(accent, "focus"))
+	button.add_theme_stylebox_override("pressed", HUB_V2.glass_button_style(accent, "pressed"))
+	button.add_theme_stylebox_override("disabled", HUB_V2.glass_button_style(accent, "disabled"))
 	HUB_V2.apply_heading(button)

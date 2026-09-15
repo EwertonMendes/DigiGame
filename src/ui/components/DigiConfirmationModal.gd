@@ -5,9 +5,11 @@ signal confirmed
 signal cancelled
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
+const GlassPanelScript = preload("res://src/ui/components/DigiGlassPanel.gd")
 
 var _backdrop: ColorRect
-var _panel: Panel
+var _panel: PanelContainer
+var _content: Control
 var _eyebrow: Label
 var _title: Label
 var _body: Label
@@ -78,7 +80,7 @@ func close_dialog(restore_focus: bool = true) -> void:
 	_previous_focus = null
 
 
-func get_panel() -> Panel:
+func get_panel() -> Control:
 	return _panel
 
 
@@ -102,40 +104,47 @@ func _build_ui() -> void:
 	_backdrop = ColorRect.new()
 	_backdrop.name = "Backdrop"
 	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_backdrop.color = Color(0.004, 0.012, 0.020, 0.78)
+	_backdrop.color = Color(0.004, 0.012, 0.020, 0.56)
 	_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_backdrop)
 
-	_panel = Panel.new()
+	_panel = GlassPanelScript.new() as PanelContainer
 	_panel.name = "ConfirmationPanel"
 	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_panel.clip_contents = true
 	add_child(_panel)
 
+	_content = Control.new()
+	_content.name = "Content"
+	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_panel.add_child(_content)
+
 	_eyebrow = _label("CONFIRM ACTION", 10, V2.CYAN, true)
 	_eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_panel.add_child(_eyebrow)
+	_content.add_child(_eyebrow)
 
 	_title = _label("ARE YOU SURE?", 24, V2.WHITE, true)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_panel.add_child(_title)
+	_content.add_child(_title)
 
 	_body = _label("Review this action before continuing.", 14, V2.MUTED, false)
 	_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_panel.add_child(_body)
+	_content.add_child(_body)
 
 	_cancel_button = _button("NO", V2.MUTED)
 	_cancel_button.name = "CancelConfirmation"
 	_cancel_button.pressed.connect(_on_cancel_pressed)
-	_panel.add_child(_cancel_button)
+	_content.add_child(_cancel_button)
 
 	_confirm_button = _button("YES", V2.CYAN)
 	_confirm_button.name = "ConfirmConfirmation"
 	_confirm_button.pressed.connect(_on_confirm_pressed)
-	_panel.add_child(_confirm_button)
+	_content.add_child(_confirm_button)
 
 	_cancel_button.focus_neighbor_left = _cancel_button.get_path()
 	_cancel_button.focus_neighbor_right = _confirm_button.get_path()
@@ -179,16 +188,7 @@ func _layout() -> void:
 func _apply_accent() -> void:
 	if _panel == null:
 		return
-	_panel.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(
-			Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.995),
-			Color(_accent.r, _accent.g, _accent.b, 0.56),
-			10,
-			Vector4.ZERO,
-			0.16
-		)
-	)
+	_panel.call("configure_glass", _accent, "modal", Vector4.ZERO, 12)
 	_eyebrow.add_theme_color_override("font_color", _accent)
 	_apply_button_style(_confirm_button, _accent)
 	_apply_button_style(_cancel_button, V2.MUTED)
@@ -212,11 +212,11 @@ func _apply_button_style(button: Button, accent: Color) -> void:
 	button.add_theme_color_override("font_focus_color", V2.WHITE)
 	button.add_theme_color_override("font_pressed_color", V2.WHITE)
 	button.add_theme_color_override("font_disabled_color", Color(V2.MUTED.r, V2.MUTED.g, V2.MUTED.b, 0.46))
-	button.add_theme_stylebox_override("normal", V2.button_style(accent, "normal"))
-	button.add_theme_stylebox_override("hover", V2.button_style(accent, "hover"))
-	button.add_theme_stylebox_override("focus", V2.button_style(accent, "focus"))
-	button.add_theme_stylebox_override("pressed", V2.button_style(accent, "pressed"))
-	button.add_theme_stylebox_override("disabled", V2.button_style(accent, "disabled"))
+	button.add_theme_stylebox_override("normal", V2.glass_button_style(accent, "normal"))
+	button.add_theme_stylebox_override("hover", V2.glass_button_style(accent, "hover"))
+	button.add_theme_stylebox_override("focus", V2.glass_button_style(accent, "focus"))
+	button.add_theme_stylebox_override("pressed", V2.glass_button_style(accent, "pressed"))
+	button.add_theme_stylebox_override("disabled", V2.glass_button_style(accent, "disabled"))
 
 
 func _label(text_value: String, font_size: int, color: Color, heading: bool) -> Label:

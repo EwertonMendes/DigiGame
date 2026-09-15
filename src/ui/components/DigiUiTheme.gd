@@ -112,6 +112,50 @@ static func outlined_surface(accent: Color, selected: bool = false, radius: int 
 	return style
 
 
+static func glass_style(
+	accent: Color = CYAN,
+	variant: String = "floating",
+	content: Vector4 = Vector4.ZERO,
+	radius: int = 10
+) -> StyleBoxFlat:
+	var fill_alpha := 0.72
+	var tint_strength := 0.055
+	var border_alpha := 0.42
+	var shadow_alpha := 0.20
+	var shadow_size := 10
+	match variant:
+		"modal":
+			fill_alpha = 0.82
+			tint_strength = 0.040
+			border_alpha = 0.36
+			shadow_alpha = 0.26
+			shadow_size = 14
+		"subtle":
+			fill_alpha = 0.58
+			tint_strength = 0.075
+			border_alpha = 0.28
+			shadow_alpha = 0.12
+			shadow_size = 7
+	var base := PANEL_DEEP
+	var fill := Color(
+		lerpf(base.r, accent.r, tint_strength),
+		lerpf(base.g, accent.g, tint_strength),
+		lerpf(base.b, accent.b, tint_strength),
+		fill_alpha
+	)
+	var style := surface_style(
+		fill,
+		Color(accent.r, accent.g, accent.b, border_alpha),
+		radius,
+		content
+	)
+	style.border_blend = true
+	style.shadow_color = Color(0.0, 0.0, 0.0, shadow_alpha)
+	style.shadow_size = shadow_size
+	style.shadow_offset = Vector2(0.0, 4.0 if variant == "modal" else 3.0)
+	return style
+
+
 static func button_style(accent: Color, state: String, radius: int = CARD_RADIUS) -> StyleBoxFlat:
 	var fill := SURFACE
 	var border := BORDER_SOFT
@@ -144,6 +188,50 @@ static func button_style(accent: Color, state: String, radius: int = CARD_RADIUS
 	if shadow_alpha > 0.0:
 		style.shadow_color = Color(accent.r, accent.g, accent.b, shadow_alpha)
 		style.shadow_size = 6
+	return style
+
+
+static func glass_button_style(accent: Color, state: String, radius: int = CARD_RADIUS) -> StyleBoxFlat:
+	var fill_alpha := 0.40
+	var accent_mix := 0.035
+	var border_alpha := 0.32
+	var border_width := 1
+	var shadow_alpha := 0.0
+	match state:
+		"hover":
+			fill_alpha = 0.54
+			accent_mix = 0.060
+			border_alpha = 0.58
+		"focus":
+			fill_alpha = 0.60
+			accent_mix = 0.12
+			border_alpha = 0.92
+			border_width = 2
+			shadow_alpha = 0.14
+		"pressed":
+			fill_alpha = 0.64
+			accent_mix = 0.15
+			border_alpha = 0.78
+		"disabled":
+			fill_alpha = 0.22
+			accent_mix = 0.0
+			border_alpha = 0.16
+	var fill := Color(
+		lerpf(SURFACE.r, accent.r, accent_mix),
+		lerpf(SURFACE.g, accent.g, accent_mix),
+		lerpf(SURFACE.b, accent.b, accent_mix),
+		fill_alpha
+	)
+	var style := surface_style(
+		fill,
+		Color(accent.r, accent.g, accent.b, border_alpha),
+		radius
+	)
+	style.set_border_width_all(border_width)
+	style.border_blend = true
+	if shadow_alpha > 0.0:
+		style.shadow_color = Color(accent.r, accent.g, accent.b, shadow_alpha)
+		style.shadow_size = 7
 	return style
 
 

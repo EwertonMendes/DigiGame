@@ -1,4 +1,4 @@
-extends PanelContainer
+extends "res://src/ui/components/DigiGlassPanel.gd"
 class_name DigiInteractionPrompt
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
@@ -18,22 +18,20 @@ var _last_touch_msec := -10000
 
 
 func _init() -> void:
+	super._init()
 	set_meta("digi_ui_v2_component", true)
 
 
 func _ready() -> void:
+	super._ready()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	custom_minimum_size = Vector2(190.0, V2.TOUCH_TARGET)
-	add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(
-			Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.97),
-			Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.74),
-			V2.CARD_RADIUS,
-			Vector4(12.0, 8.0, 14.0, 8.0),
-			0.14
-		)
+	configure_glass(
+		V2.AMBER,
+		"floating",
+		Vector4(12.0, 8.0, 14.0, 8.0),
+		10
 	)
 
 	var row := HBoxContainer.new()
@@ -46,7 +44,15 @@ func _ready() -> void:
 	_key_badge = PanelContainer.new()
 	_key_badge.custom_minimum_size = Vector2(44.0, 34.0)
 	_key_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_key_badge.add_theme_stylebox_override("panel", V2.pill_style(V2.AMBER, true))
+	_key_badge.add_theme_stylebox_override(
+		"panel",
+		V2.glass_style(
+			V2.AMBER,
+			"subtle",
+			Vector4(8.0, 3.0, 8.0, 3.0),
+			6
+		)
+	)
 	row.add_child(_key_badge)
 
 	_key_label = Label.new()

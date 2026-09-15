@@ -1,11 +1,23 @@
 extends Node
 
 const HUB_SCENE = preload("res://scenes/world/hub.tscn")
+const GlassPanelScript = preload("res://src/ui/components/DigiGlassPanel.gd")
 const InteractionPromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
 const ConfirmationModalScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
 
 
 func _ready() -> void:
+	var glass := GlassPanelScript.new() as PanelContainer
+	add_child(glass)
+	glass.call("configure_glass", DigiUiTheme.CYAN, "floating", Vector4.ZERO, 10)
+	await _frames(2)
+	var glass_style := glass.get_theme_stylebox("panel") as StyleBoxFlat
+	if not _check(glass.has_meta("digi_glass_surface") and glass_style != null, "Glass surface must be reusable as a standalone V2 component"):
+		return
+	if not _check(glass_style.bg_color.a < 0.90 and glass_style.bg_color.a > 0.50, "Glass surface must stay translucent without sacrificing readability"):
+		return
+	glass.queue_free()
+
 	var prompt := InteractionPromptScript.new() as DigiInteractionPrompt
 	add_child(prompt)
 	await _frames(2)
@@ -13,6 +25,8 @@ func _ready() -> void:
 	if not _check(prompt.get_action_label() != null and prompt.get_action_label().text == "OPEN DIGILAB", "Interaction prompt must separate the action from the input badge"):
 		return
 	if not _check(prompt.custom_minimum_size.y >= DigiUiTheme.TOUCH_TARGET, "Interaction prompt must keep a touch-safe height"):
+		return
+	if not _check(prompt.has_meta("digi_glass_surface"), "Interaction prompt must use the shared glass surface instead of a duplicated local style"):
 		return
 	var joy := InputEventJoypadButton.new()
 	joy.device = 0
@@ -29,6 +43,8 @@ func _ready() -> void:
 	modal.open_dialog()
 	await _frames(2)
 	if not _check(modal.visible, "Confirmation modal must open as a blocking overlay"):
+		return
+	if not _check(modal.get_panel().has_meta("digi_glass_surface"), "Confirmation modal must compose the shared glass surface"):
 		return
 	if not _check(get_viewport().gui_get_focus_owner() == modal.get_cancel_button(), "Confirmation modal must focus the safe cancel action by default"):
 		return
@@ -57,6 +73,8 @@ func _ready() -> void:
 	var cancel := hub.find_child("CancelBattleDialog", true, false) as Button
 	var start := hub.find_child("StartBattle", true, false) as Button
 	if not _check(battle_dialog != null and battle_dialog.visible, "Battle Operator dialog must open near the NPC"):
+		return
+	if not _check(battle_dialog.has_meta("digi_glass_surface"), "Battle Operator dialog must use the shared glass panel foundation"):
 		return
 	if not _check(cancel != null and get_viewport().gui_get_focus_owner() == cancel, "Battle Operator dialog must default to NOT NOW"):
 		return

@@ -8,18 +8,20 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - Cyan is the neutral navigation accent; amber marks the selected/important state.
 - Green, blue, orange, purple and red are semantic stat/action colors.
 - Glows are limited to short, low-alpha progress/focus shadows.
+- Floating prompts and decision surfaces use the shared frosted-glass treatment: translucent slate fill, restrained semantic border, soft shadow and a procedural inner highlight. The effect avoids external assets and screen-reading blur shaders so it stays predictable on Web/mobile.
 - Typography reuses the existing vector font stack from `TacticalTheme` so text stays crisp at Full HD and browser scaling.
 - Layout is built from Godot `Control`, `Container`, `StyleBoxFlat`, `ProgressBar` and procedural `_draw()` icons. No new external UI art is required.
 
 ## Reusable components
 
-- `DigiUiTheme.gd`: palette, responsive helpers, surface/button/pill/progress styles and shared sizing tokens.
+- `DigiUiTheme.gd`: palette, responsive helpers, surface/button/pill/progress styles, shared glass styles and sizing tokens.
+- `DigiGlassPanel.gd`: reusable glassmorphism foundation for floating panels and modal cards. It centralizes translucency, semantic border tint, shadow, radius and procedural inner highlight. Use `configure_glass(accent, variant, padding, radius)` instead of recreating per-screen styleboxes.
 - `DigiProceduralIcon.gd`: anti-aliased vector icons drawn by Godot for stats and major actions.
 - `DigiActionCard.gd`: focusable/touch-safe action card with icon, title, description and status footer.
 - `DigiStatRow.gd`: compact stat/value/progress presentation.
 - `DigiInputHintBar.gd`: last-input-aware keyboard/mouse, Xbox, PlayStation and touch hints.
-- `DigiInteractionPrompt.gd`: contextual world prompt with separate input badge and concise action copy. It follows the active input family instead of embedding keyboard-only text in the action.
-- `DigiConfirmationModal.gd`: reusable blocking decision modal with dimmed backdrop, responsive centered card, minimum 52 px actions and safe cancel/no focus by default.
+- `DigiInteractionPrompt.gd`: contextual world prompt with separate input badge and concise action copy. It follows the active input family instead of embedding keyboard-only text in the action and composes `DigiGlassPanel` for its floating surface.
+- `DigiConfirmationModal.gd`: reusable blocking decision modal with dimmed backdrop, responsive centered glass card, minimum 52 px actions and safe cancel/no focus by default.
 - `DigiProfileHero.gd`: reusable Digimon identity card with portrait, rank/type chips, level, XP, Potential and Link.
 - `DigiStatsPanel.gd`: semantic combat-stat presentation using the reusable stat rows.
 - `DigiDevelopmentPanel.gd`: reusable aptitude/training summary with readable semantic colors.
@@ -56,7 +58,7 @@ Global overlays follow the same physical-size helpers. Confirmation cards remain
 - Digimon / progression menu: original Digi UI V2 reference implementation.
 - DigiLab and Party / Storage: shared modal hierarchy and V2 surfaces/components.
 - Training Center: V2 modal header, responsive roster, training budget, semantic attribute steppers, mobility planning, plan summary, adaptive input hints and focus restoration after dynamic updates.
-- Hub chrome: V2 location surface, contextual interaction prompt, contextual mobile action labels and safe-default Battle Operator decision flow.
+- Hub chrome: V2 location surface, contextual glass interaction prompt, contextual mobile action labels and safe-default glass Battle Operator decision flow.
 - Confirmation flows: shared V2 confirmation component is used by battle retreat, while specialized evolution confirmation is normalized by the V2 runtime and keeps its richer transition summary.
 - Transient overlays: area-title and battle-start presentation use V2 slate surfaces, typography and restrained semantic accents.
 - Remaining named legacy battle/dialog surfaces are normalized by `DigiUiRuntime` so player-facing chrome no longer falls back to the old Kenney-frame presentation while deeper screens are migrated structurally.
