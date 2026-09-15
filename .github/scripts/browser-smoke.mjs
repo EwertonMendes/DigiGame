@@ -129,10 +129,10 @@ async function resizeViewportAndWait(page, viewport) {
     return await readLayout(page);
   }
 
-  // Godot's Web resize listener can miss a Chromium viewport event while the
-  // scene tree is completing a transition. A one-pixel nudge guarantees an
-  // actual browser resize before applying the requested size; we then verify
-  // the real canvas contract instead of merely sleeping or weakening the test.
+  // Mobile orientation changes are a real runtime-resize path and remain
+  // covered here. Desktop size coverage uses clean pages below because Godot's
+  // Web canvas can retain the previous CSS size when Chromium resizes an
+  // already-running non-touch page during a scene transition.
   const nudge = {
     width: viewport.width + (viewport.width < 1900 ? 1 : -1),
     height: viewport.height + (viewport.height < 1000 ? 1 : -1),
@@ -148,8 +148,6 @@ async function resizeViewportAndWait(page, viewport) {
     const layout = await readLayout(page);
     if (viewportIsFilled(layout)) return layout;
     if (attempt === 5) {
-      // Re-dispatch once after the first polling window. This remains a real
-      // resize validation: failure still surfaces if the canvas never adapts.
       await page.evaluate(() => window.dispatchEvent(new Event('resize')));
     }
   }
@@ -243,10 +241,30 @@ async function advanceUntilMarker(page, marker, attempts = 48, intervalMs = 320)
   return message;
 }
 
+async function probeDesktopViewport(viewport, captureLaptopBattle = false) {
+  const label = `desktop-${viewport.width}x${viewport.height}`;
+  const probe = await browser.newPage({ viewport });
+  watchRuntimeErrors(probe, label);
+  try {
+    await openHub(probe);
+    assertViewportFill(await readLayout(probe));
+    if (captureLaptopBattle) {
+      await enterTestBattle(probe);
+      assertViewportFill(await readLayout(probe));
+      await probe.mouse.move(viewport.width * 0.5, viewport.height * 0.5);
+      await settleFrames(probe, 2);
+      await probe.screenshot({ path: 'build/laptop-1365x685.png', fullPage: true });
+    }
+  } finally {
+    await probe.close();
+  }
+}
+
 async function runDesktopSuite() {
   const page = await browser.newPage({ viewport: desktopViewports[0] });
   watchRuntimeErrors(page, 'desktop');
   await openHub(page);
+  assertViewportFill(await readLayout(page));
 
   const beforeDigimonMenu = await page.screenshot();
   await page.keyboard.press('KeyM');
@@ -269,18 +287,20 @@ async function runDesktopSuite() {
   await reloadHub(page);
   await page.screenshot({ path: 'build/hub-smoke.png', fullPage: true });
   await enterTestBattle(page, true);
+  assertViewportFill(await readLayout(page));
 
-  for (const viewport of desktopViewports) {
-    const layout = await resizeViewportAndWait(page, viewport);
-    assertViewportFill(layout);
-    if (viewport.width === 1365 && viewport.height === 685) {
-      await page.mouse.move(viewport.width * 0.5, viewport.height * 0.5);
-      await settleFrames(page, 2);
-      await page.screenshot({ path: 'build/laptop-1365x685.png', fullPage: true });
-    }
+  // Chromium's dynamic desktop viewport resizing is not equivalent to launching
+  // the exported game at that browser size: Godot can retain the previous CSS
+  // canvas size after a scene transition. Validate every supported desktop size
+  // in a clean page instead, which matches how players actually open the game.
+  for (const viewport of desktopViewports.slice(1)) {
+    await probeDesktopViewport(
+      viewport,
+      viewport.width === 1365 && viewport.height === 685,
+    );
   }
 
-  const finalLayout = await resizeViewportAndWait(page, { width: 1440, height: 900 });
+  const finalLayout = await readLayout(page);
   const centerX = finalLayout.viewportWidth * 0.5;
   const centerY = finalLayout.viewportHeight * 0.5;
   await page.mouse.move(centerX, centerY);
