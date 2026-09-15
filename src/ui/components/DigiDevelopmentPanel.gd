@@ -11,7 +11,7 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	size_flags_stretch_ratio = 1.22
-	custom_minimum_size.y = 294.0
+	custom_minimum_size.y = 264.0
 	add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 
 	var body := VBoxContainer.new()
@@ -23,18 +23,15 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	header.configure("DEVELOPMENT", "", V2.TEXT, "training")
 	body.add_child(header)
 
-	var content := _margin(10, 8, 10, 8)
+	var content := _margin(10, 5, 10, 5)
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(content)
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_theme_constant_override("separation", 4)
+	stack.add_theme_constant_override("separation", 2)
 	content.add_child(stack)
 
-	var caption := _label("Innate aptitude + permanent training", 10, V2.MUTED)
-	caption.custom_minimum_size.y = 22.0
-	stack.add_child(caption)
 	stack.add_child(_header_row())
 
 	var keys := ["hp", "mp", "atk", "def", "int", "speed", "mov"]
@@ -49,7 +46,7 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 
 func _header_row() -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 27.0
+	panel.custom_minimum_size.y = 25.0
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override(
 		"panel",
@@ -73,7 +70,7 @@ func _header_row() -> PanelContainer:
 
 func _development_row(stat_name: String, aptitude: int, training: int, index: int) -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 27.0
+	panel.custom_minimum_size.y = 25.0
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill := Color.TRANSPARENT
 	if index % 2 == 1:
