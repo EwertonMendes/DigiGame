@@ -1,6 +1,7 @@
 extends "res://src/world/HubVisualRedesign.gd"
 
 const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
+const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 const PORTRAIT_EDGE := 24.0
 const PORTRAIT_BOTTOM := 30.0
@@ -18,16 +19,26 @@ var _mobile_dialog_cancel: Button = null
 var _fallback_action_touch := -1
 
 
-# Keep the battle prompt independent from content-driven Container minimum sizes.
-# The explicit layout below gives the Kenney frame a real safe area so buttons
-# never touch or cross the decorative border on desktop or mobile Web exports.
+# The Battle Operator prompt is laid out explicitly so it stays predictable on
+# desktop and mobile Web exports. Its presentation follows Digi UI V2 and its
+# focus graph is explicit because the actions live in a free-form Control.
 func _build_dialog() -> void:
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.name = "BattleDialog"
 	_dialog_panel.visible = false
 	_dialog_panel.clip_contents = true
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	_dialog_panel.add_theme_stylebox_override("panel", UI.panel_strong(UI.CYAN, 12))
+	_dialog_panel.set_meta("digi_ui_v2_component", true)
+	_dialog_panel.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(
+			Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.985),
+			Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.48),
+			V2.CARD_RADIUS,
+			Vector4.ZERO,
+			0.14
+		)
+	)
 	_ui_root.add_child(_dialog_panel)
 
 	_mobile_dialog_content = Control.new()
@@ -36,23 +47,37 @@ func _build_dialog() -> void:
 	_mobile_dialog_content.custom_minimum_size = Vector2.ZERO
 	_dialog_panel.add_child(_mobile_dialog_content)
 
-	_mobile_dialog_title = _label("BATTLE OPERATOR", 13, UI.CYAN)
+	_mobile_dialog_title = _label("BATTLE OPERATOR", 13, V2.AMBER)
 	_mobile_dialog_title.name = "Title"
+	V2.apply_heading(_mobile_dialog_title)
 	_mobile_dialog_content.add_child(_mobile_dialog_title)
 
-	_mobile_dialog_body = _label("START A TEST BATTLE?", 19, UI.TEXT)
+	_mobile_dialog_body = _label("START A TEST BATTLE?", 19, V2.TEXT)
 	_mobile_dialog_body.name = "Prompt"
+	V2.apply_heading(_mobile_dialog_body)
 	_mobile_dialog_content.add_child(_mobile_dialog_body)
 
-	_mobile_dialog_cancel = _dialog_button("NOT NOW", UI.MUTED)
+	_mobile_dialog_cancel = _dialog_button("NOT NOW", V2.MUTED)
 	_mobile_dialog_cancel.name = "CancelBattleDialog"
+	_mobile_dialog_cancel.custom_minimum_size.y = V2.TOUCH_TARGET
 	_mobile_dialog_cancel.pressed.connect(_close_dialog)
 	_mobile_dialog_content.add_child(_mobile_dialog_cancel)
+	_apply_v2_dialog_button(_mobile_dialog_cancel, V2.MUTED)
 
-	_start_battle_button = _dialog_button("START TEST BATTLE", UI.GOLD)
+	_start_battle_button = _dialog_button("START TEST BATTLE", V2.AMBER)
 	_start_battle_button.name = "StartBattle"
+	_start_battle_button.custom_minimum_size.y = V2.TOUCH_TARGET
 	_start_battle_button.pressed.connect(_start_test_battle)
 	_mobile_dialog_content.add_child(_start_battle_button)
+	_apply_v2_dialog_button(_start_battle_button, V2.AMBER)
+
+	# Manual positioning prevents Godot's automatic spatial focus heuristic from
+	# being deterministic across viewport sizes. Define the two-way graph so
+	# keyboard and gamepad always move from the safe default to confirmation.
+	_mobile_dialog_cancel.focus_neighbor_left = _mobile_dialog_cancel.get_path()
+	_mobile_dialog_cancel.focus_neighbor_right = _start_battle_button.get_path()
+	_start_battle_button.focus_neighbor_left = _mobile_dialog_cancel.get_path()
+	_start_battle_button.focus_neighbor_right = _start_battle_button.get_path()
 
 
 func _build_mobile_controls() -> void:
@@ -68,21 +93,23 @@ func _build_mobile_controls() -> void:
 	_touch_joystick.direction_changed.connect(_on_touch_joystick_changed)
 	_mobile_controls.add_child(_touch_joystick)
 
-	_mobile_talk_button = _dialog_button("TALK", UI.GOLD)
+	_mobile_talk_button = _dialog_button("TALK", V2.AMBER)
 	_mobile_talk_button.name = "Talk"
 	_mobile_talk_button.custom_minimum_size = Vector2(120.0, 72.0)
 	_mobile_talk_button.size = Vector2(120.0, 72.0)
 	_mobile_talk_button.focus_mode = Control.FOCUS_NONE
+	_apply_v2_dialog_button(_mobile_talk_button, V2.AMBER)
 	# button_down reacts on contact instead of waiting for a synthesized click on
 	# mobile Web. The explicit ScreenTouch fallback below covers browsers/devices
 	# that do not synthesize the GUI press consistently.
 	_mobile_talk_button.button_down.connect(_on_mobile_interact)
 	_mobile_controls.add_child(_mobile_talk_button)
 
-	var move_label := _label("MOVE", 11, UI.MUTED)
+	var move_label := _label("MOVE", 11, V2.MUTED)
 	move_label.name = "MoveLabel"
 	move_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	move_label.size = Vector2(164.0, 18.0)
+	V2.apply_heading(move_label)
 	_mobile_controls.add_child(move_label)
 
 
@@ -165,7 +192,7 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 		return
 
 	var dialog_width := minf(620.0 if landscape else 660.0, physical.x - edge * 2.0)
-	var desired_height := 184.0 if landscape else 196.0
+	var desired_height := 190.0 if landscape else 200.0
 	var dialog_height := minf(desired_height, physical.y - edge * 2.0)
 	_dialog_panel.scale = Vector2.ONE * ui_scale
 	_dialog_panel.position = Vector2(
@@ -187,20 +214,20 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	_mobile_dialog_body.size = Vector2(dialog_width - side_pad * 2.0, 32.0)
 	_mobile_dialog_body.add_theme_font_size_override("font_size", 17 if landscape else 19)
 
-	var button_height := 48.0 if not landscape else 44.0
-	var bottom_pad := 30.0 if not landscape else 34.0
+	var button_height := V2.TOUCH_TARGET
+	var bottom_pad := 28.0 if not landscape else 30.0
 	var gap := 14.0
 	var group_width := minf(dialog_width - side_pad * 2.0, 500.0)
 	var button_width := (group_width - gap) * 0.5
 	var actions_x := (dialog_width - group_width) * 0.5
 	var actions_y := dialog_height - bottom_pad - button_height
 
-	_mobile_dialog_cancel.custom_minimum_size = Vector2.ZERO
+	_mobile_dialog_cancel.custom_minimum_size.y = V2.TOUCH_TARGET
 	_mobile_dialog_cancel.position = Vector2(actions_x, actions_y)
 	_mobile_dialog_cancel.size = Vector2(button_width, button_height)
 	_mobile_dialog_cancel.add_theme_font_size_override("font_size", 13 if landscape else 14)
 
-	_start_battle_button.custom_minimum_size = Vector2.ZERO
+	_start_battle_button.custom_minimum_size.y = V2.TOUCH_TARGET
 	_start_battle_button.position = Vector2(actions_x + button_width + gap, actions_y)
 	_start_battle_button.size = Vector2(button_width, button_height)
 	_start_battle_button.add_theme_font_size_override("font_size", 13 if landscape else 14)
@@ -268,3 +295,21 @@ func _control_contains_viewport_point(control: Control, viewport_pos: Vector2, p
 		Vector2(-padding, -padding),
 		control.size + Vector2.ONE * padding * 2.0
 	).has_point(local_pos)
+
+
+func _apply_v2_dialog_button(button: Button, accent: Color) -> void:
+	if button == null:
+		return
+	button.set_meta("digi_ui_v2_component", true)
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_color_override("font_color", V2.TEXT)
+	button.add_theme_color_override("font_hover_color", V2.WHITE)
+	button.add_theme_color_override("font_focus_color", V2.WHITE)
+	button.add_theme_color_override("font_pressed_color", V2.WHITE)
+	button.add_theme_color_override("font_disabled_color", Color(V2.MUTED.r, V2.MUTED.g, V2.MUTED.b, 0.46))
+	button.add_theme_stylebox_override("normal", V2.button_style(accent, "normal"))
+	button.add_theme_stylebox_override("hover", V2.button_style(accent, "hover"))
+	button.add_theme_stylebox_override("focus", V2.button_style(accent, "focus"))
+	button.add_theme_stylebox_override("pressed", V2.button_style(accent, "pressed"))
+	button.add_theme_stylebox_override("disabled", V2.button_style(accent, "disabled"))
+	V2.apply_heading(button)
