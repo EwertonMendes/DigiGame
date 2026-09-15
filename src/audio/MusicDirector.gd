@@ -88,11 +88,6 @@ func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECOND
 	if _current_track_id == track_id and _player.playing:
 		return
 
-	var stream := _stream_for(track_id)
-	if stream == null:
-		push_error("[Music] Could not load track: %s" % track_id)
-		return
-
 	var target_volume := float((TRACKS[track_id] as Dictionary).get("volume_db", -3.0))
 	var duration := maxf(fade_seconds, 0.0)
 	_cancel_transition()
@@ -101,17 +96,22 @@ func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECOND
 	# With no active decoder there is nothing to fade out. Start immediately so
 	# initial scene music and one-shot result themes retain their previous timing.
 	if duration <= 0.0 or not _player.playing:
+		var stream := _stream_for(track_id)
+		if stream == null:
+			push_error("[Music] Could not load track: %s" % track_id)
+			return
 		_start_stream(track_id, stream, target_volume)
 		return
 
-	# Fade through silence rather than crossfading two AudioStreamPlayers. Only one
-	# native decoder is alive at any moment, which keeps scene transitions stable on
-	# Web and reduces the peak resource cost on every platform.
+	# Fade through silence rather than crossfading two AudioStreamPlayers. Load the
+	# replacement only after the current player has released its stream: carrying an
+	# Ogg resource in the Tween callback would keep both compressed streams alive
+	# during the exact scene-start window that is fragile on Web.
 	var leg_duration := maxf(0.01, duration * 0.5)
 	_transition = create_tween()
 	_transition.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	_transition.tween_property(_player, "volume_db", SILENT_VOLUME_DB, leg_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_transition.tween_callback(_swap_stream.bind(generation, track_id, stream))
+	_transition.tween_callback(_swap_track.bind(generation, track_id))
 	_transition.tween_property(_player, "volume_db", target_volume, leg_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_transition.tween_callback(_finish_transition.bind(generation))
 
@@ -179,10 +179,14 @@ func _start_stream(track_id: String, stream: AudioStream, target_volume: float) 
 	track_changed.emit(track_id)
 
 
-func _swap_stream(generation: int, track_id: String, stream: AudioStream) -> void:
+func _swap_track(generation: int, track_id: String) -> void:
 	if generation != _transition_generation or _player == null:
 		return
-	_player.stop()
+	_release_player_stream()
+	var stream := _stream_for(track_id)
+	if stream == null:
+		push_error("[Music] Could not load track: %s" % track_id)
+		return
 	_player.stream = stream
 	_player.volume_db = SILENT_VOLUME_DB
 	_player.play()
