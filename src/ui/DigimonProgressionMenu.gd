@@ -346,7 +346,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	_action_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_action_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_action_panel.size_flags_stretch_ratio = 1.0
-	_action_panel.custom_minimum_size.y = 204.0
+	_action_panel.custom_minimum_size.y = 184.0
 	_action_panel.add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 	_primary_column.add_child(_action_panel)
 
