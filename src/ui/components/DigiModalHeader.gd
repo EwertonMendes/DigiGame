@@ -212,11 +212,12 @@ func _rebuild_tabs() -> void:
 		var enabled := bool(spec.get("enabled", true))
 		var active := tab_id == _active_tab
 		var icon_kind := String(spec.get("icon", _tab_icon_for(tab_id)))
+		var min_width := float(spec.get("min_width", 126.0))
 
 		var button := Button.new()
 		button.name = "Tab_%s" % tab_id
 		button.text = ""
-		button.custom_minimum_size = Vector2(126.0, 58.0)
+		button.custom_minimum_size = Vector2(min_width, 58.0)
 		button.focus_mode = Control.FOCUS_ALL
 		button.disabled = not enabled
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
@@ -259,6 +260,10 @@ func _tab_icon_for(tab_id: String) -> String:
 			return "book"
 		"system":
 			return "gear"
+		"convert":
+			return "database"
+		"party":
+			return "party"
 		_:
 			return "info"
 
