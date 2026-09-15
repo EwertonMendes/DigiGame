@@ -208,9 +208,14 @@ func _refresh() -> void:
 	call_deferred("_wire_focus_navigation")
 
 
-func _refresh_list() -> void:
-	for child in _list.get_children():
+func _clear_children_now(container: Node) -> void:
+	for child in container.get_children():
+		container.remove_child(child)
 		child.queue_free()
+
+
+func _refresh_list() -> void:
+	_clear_children_now(_list)
 	_list_buttons.clear()
 	_list_ids.clear()
 	_list_previews.clear()
@@ -317,12 +322,13 @@ func _select(instance_id: String) -> void:
 	_status_text = ""
 	_style_list_selection()
 	_refresh_detail()
+	if _detail_scroll != null:
+		_detail_scroll.scroll_vertical = 0
 	call_deferred("_wire_focus_navigation")
 
 
 func _refresh_detail() -> void:
-	for child in _detail.get_children():
-		child.queue_free()
+	_clear_children_now(_detail)
 	var instance: DigimonInstance = OverworldState.get_instance_by_id(_selected_id)
 	if instance == null:
 		_detail.add_child(_empty_state("Select a Digimon from your collection."))
@@ -360,6 +366,7 @@ func _identity_card(instance: DigimonInstance, species: Dictionary, display_name
 	var narrow := _detail_panel != null and _detail_panel.size.x < 660.0
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", V2.surface_style(V2.PANEL_DEEP, Color(accent.r, accent.g, accent.b, 0.42), 8))
 	var margin := _margin(16, 14, 16, 14)
 	panel.add_child(margin)
@@ -391,6 +398,7 @@ func _identity_card(instance: DigimonInstance, species: Dictionary, display_name
 	var name_label := _single_line_label(display_name.to_upper(), 27, V2.TEXT, true)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.add_child(name_label)
+
 	var chips := HFlowContainer.new()
 	chips.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	chips.add_theme_constant_override("h_separation", 7)
@@ -407,9 +415,9 @@ func _identity_card(instance: DigimonInstance, species: Dictionary, display_name
 	status_row.add_theme_constant_override("h_separation", 14)
 	status_row.add_theme_constant_override("v_separation", 5)
 	info.add_child(status_row)
-	status_row.add_child(_single_line_label("Lv %d" % instance.level, 19, V2.AMBER, true))
-	status_row.add_child(_single_line_label("POTENTIAL %d" % instance.potential, 10, V2.PURPLE, true))
-	status_row.add_child(_single_line_label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, V2.CYAN, true))
+	status_row.add_child(_semantic_label("Lv %d" % instance.level, 19, V2.AMBER, true))
+	status_row.add_child(_semantic_label("POTENTIAL %d" % instance.potential, 10, V2.PURPLE, true))
+	status_row.add_child(_semantic_label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, V2.CYAN, true))
 	var location := "ACTIVE PARTY · SLOT %d" % (party_index + 1) if active else "STORAGE"
 	info.add_child(_pill(location, V2.AMBER if active else V2.CYAN))
 	var id_label := _single_line_label("ID %s" % instance.id.substr(0, mini(8, instance.id.length())), 9, V2.SUBTLE)
@@ -627,7 +635,7 @@ func _button(text: String, accent: Color) -> Button:
 
 
 func _pill(text: String, accent: Color) -> Label:
-	var label := _single_line_label(text, 9, accent, true)
+	var label := _semantic_label(text, 9, accent, true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	label.add_theme_stylebox_override("normal", V2.pill_style(accent, true))
@@ -661,6 +669,13 @@ func _single_line_label(text: String, size: int, color: Color, bold: bool = fals
 	var label := _label(text, size, color, bold)
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	return label
+
+
+func _semantic_label(text: String, size: int, color: Color, bold: bool = false) -> Label:
+	var label := _single_line_label(text, size, color, bold)
+	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	label.clip_text = false
 	return label
 
 
