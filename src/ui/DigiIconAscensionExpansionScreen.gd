@@ -187,13 +187,20 @@ func _tier_info_card(title: String, tier: String, body_text: String, accent: Col
 	var margin := _margin(11, 8, 11, 8)
 	panel.add_child(margin)
 	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation", 4)
 	margin.add_child(stack)
 	var title_row := HBoxContainer.new()
+	title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_theme_constant_override("separation", 8)
 	stack.add_child(title_row)
-	title_row.add_child(_single_line_label(title, 11, accent, true))
-	title_row.add_child(_tier_icon(tier, Vector2(34.0, 22.0)))
+	var title_label := _single_line_label(title, 11, accent, true)
+	title_label.custom_minimum_size.x = 80.0
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(title_label)
+	var tier_icon := _tier_icon(tier, Vector2(34.0, 22.0))
+	tier_icon.size_flags_horizontal = Control.SIZE_SHRINK_END
+	title_row.add_child(tier_icon)
 	var body := _label(body_text, 9, V2.MUTED)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_child(body)
