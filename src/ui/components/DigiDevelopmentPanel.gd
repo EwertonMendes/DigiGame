@@ -15,36 +15,36 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.92),
 			Color(V2.PURPLE.r, V2.PURPLE.g, V2.PURPLE.b, 0.30),
 			10,
-			Vector4(6.0, 6.0, 6.0, 7.0),
+			Vector4(6.0, 6.0, 6.0, 6.0),
 			0.08
 		)
 	)
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 4)
+	body.add_theme_constant_override("separation", 3)
 	add_child(body)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
 	header.configure("DEVELOPMENT", "", V2.PURPLE, "training")
 	body.add_child(header)
 
-	var content := _margin(5, 0, 5, 1)
+	var content := _margin(5, 0, 5, 0)
 	body.add_child(content)
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 2)
+	stack.add_theme_constant_override("separation", 1)
 	content.add_child(stack)
-	stack.add_child(_label("Innate aptitude + permanent training", 9, V2.MUTED))
+	stack.add_child(_label("Innate aptitude + permanent training", 8, V2.MUTED))
 	stack.add_child(_separator())
 
 	var grid := GridContainer.new()
 	grid.columns = 4
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 1)
+	grid.add_theme_constant_override("v_separation", 0)
 	stack.add_child(grid)
 	for header_text in ["STAT", "APT", "TRAIN", "TOTAL"]:
 		var header_label := _label(header_text, 8, V2.SUBTLE, true)
-		header_label.custom_minimum_size.y = 16.0
+		header_label.custom_minimum_size.y = 14.0
 		if header_text != "STAT":
 			header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		grid.add_child(header_label)
@@ -68,8 +68,8 @@ func _total_copy(aptitude: int, training: int) -> String:
 
 
 func _table_label(text: String, color: Color, heading: bool, right: bool) -> Label:
-	var label := _label(text, 9, color, heading)
-	label.custom_minimum_size.y = 17.0
+	var label := _label(text, 8, color, heading)
+	label.custom_minimum_size.y = 15.0
 	if right:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	return label
