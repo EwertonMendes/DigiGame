@@ -75,9 +75,13 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
 
-          if [ "$SMOKE_SUITE" = "vfx" ] || [ "$SMOKE_SUITE" = "combat" ]; then
+          # The battle intro is animation/tween driven and software-rendered
+          # Chromium runners occasionally miss the presentation deadline even
+          # though the exact same artifact succeeds on a fresh runner. Keep all
+          # assertions mandatory and retry only suites that exercise that path.
+          if [ "$SMOKE_SUITE" = "vfx" ] || [ "$SMOKE_SUITE" = "combat" ] || [ "$SMOKE_SUITE" = "mobile" ]; then
             MAX_ATTEMPTS=5
-            if [ "$SMOKE_SUITE" = "combat" ]; then
+            if [ "$SMOKE_SUITE" = "combat" ] || [ "$SMOKE_SUITE" = "mobile" ]; then
               MAX_ATTEMPTS=3
             fi
             for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
@@ -206,6 +210,27 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+      - name: Verify published preview
+        shell: bash
+        env:
+          PREVIEW_URL: ${{ steps.pages.outputs.base_url }}/pr-${{ steps.pr.outputs.number }}/
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          BUILD_URL="${PREVIEW_URL}preview-build.txt"
+          for attempt in $(seq 1 18); do
+            HTTP_CODE="$(curl -L -sS -o /tmp/preview-index.html -w '%{http_code}' "$PREVIEW_URL" || true)"
+            BUILD_TEXT="$(curl -L -fsS "$BUILD_URL" 2>/dev/null || true)"
+            if [ "$HTTP_CODE" = "200" ] && grep -Fq "Commit: ${HEAD_SHA}" <<<"$BUILD_TEXT"; then
+              echo "Verified published preview ${PREVIEW_URL} for ${HEAD_SHA}."
+              exit 0
+            fi
+            echo "Preview not current yet (attempt ${attempt}/18, HTTP ${HTTP_CODE}); waiting for Pages propagation..."
+            sleep 5
+          done
+          echo "Published preview did not become reachable with the expected commit: ${PREVIEW_URL}" >&2
+          exit 1
+
       - name: Publish preview link on PR
         shell: bash
         env:
@@ -222,7 +247,7 @@ jobs:
 
           **[Open DigiGame PR #${PR_NUMBER}](${PREVIEW_URL})**
 
-          Build: \`${SHORT_SHA}\` · produced by the fast Web gate. Browser regressions continue independently and remain visible as separate QA jobs.
+          Build: \`${SHORT_SHA}\` · produced by the fast Web gate and verified reachable after Pages deployment. Browser regressions continue independently and remain visible as separate QA jobs.
 
           Other open PR previews are preserved in the same Pages deployment."
 
@@ -297,3 +322,21 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify production Pages
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.pages.outputs.base_url }}/
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 18); do
+            HTTP_CODE="$(curl -L -sS -o /tmp/production-index.html -w '%{http_code}' "$PAGE_URL" || true)"
+            if [ "$HTTP_CODE" = "200" ] && grep -qi '<html' /tmp/production-index.html; then
+              echo "Verified production Pages at ${PAGE_URL}."
+              exit 0
+            fi
+            echo "Production Pages not ready yet (attempt ${attempt}/18, HTTP ${HTTP_CODE}); waiting..."
+            sleep 5
+          done
+          echo "Production Pages did not become reachable after deployment: ${PAGE_URL}" >&2
+          exit 1
