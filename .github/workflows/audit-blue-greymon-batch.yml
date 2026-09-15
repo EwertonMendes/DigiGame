@@ -1,0 +1,31 @@
+name: Audit Blue Greymon batch
+
+on:
+  push:
+    branches:
+      - fix/ds-sprite-agumon-line-veemon-batch
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install image tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+      - name: Audit Blue Greymon source sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/digimon-sprite-manager
+          PYTHONPATH=tools python3 tools/audit_blue_greymon_sources.py | tee /tmp/blue-greymon-audit-output.json
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: blue-greymon-batch-audit
+          path: /tmp/blue-greymon-audit
+          retention-days: 3
