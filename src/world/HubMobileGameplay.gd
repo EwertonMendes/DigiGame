@@ -142,6 +142,24 @@ func _input(event: InputEvent) -> void:
 		_fallback_action_touch = -1
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if _dialog_open and not _transitioning:
+		# Free-form Controls do not always receive identical spatial-focus behavior
+		# in native and Web builds. Keep the two-choice dialog deterministic at the
+		# gameplay layer as well as through focus_neighbor_* metadata.
+		if event.is_action_pressed("ui_right"):
+			if _start_battle_button != null and not _start_battle_button.disabled:
+				_start_battle_button.grab_focus()
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("ui_left"):
+			if _mobile_dialog_cancel != null and not _mobile_dialog_cancel.disabled:
+				_mobile_dialog_cancel.grab_focus()
+			get_viewport().set_input_as_handled()
+			return
+	super._unhandled_input(event)
+
+
 func _layout_ui() -> void:
 	super._layout_ui()
 	if _ui_root == null or _mobile_controls == null:
