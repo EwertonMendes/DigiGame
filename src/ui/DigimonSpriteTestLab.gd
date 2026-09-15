@@ -66,9 +66,21 @@ func close_lab() -> void:
 	set_process(false)
 	_auto = false
 	_release_touch_joystick()
-	if _follower != null:
-		_follower.set_idle()
+	_dispose_follower()
 	close_requested.emit()
+
+
+func _exit_tree() -> void:
+	_dispose_follower()
+
+
+func _dispose_follower() -> void:
+	var follower := _follower
+	_follower = null
+	if follower == null or not is_instance_valid(follower):
+		return
+	follower.set_idle()
+	follower.queue_free()
 
 
 func _input(event: InputEvent) -> void:
@@ -298,9 +310,7 @@ func get_testable_species_names() -> Array[String]:
 func _spawn_selected() -> void:
 	if not visible or _entries.is_empty():
 		return
-	if _follower != null:
-		_follower.queue_free()
-		_follower = null
+	_dispose_follower()
 	var entry := _entries[_index]
 	var resource := load(String(entry.get("path", ""))) as Digimon
 	if resource == null:
