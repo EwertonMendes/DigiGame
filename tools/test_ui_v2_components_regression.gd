@@ -19,7 +19,9 @@ func _ready() -> void:
 	var glass_material := glass.call("get_glass_material") as ShaderMaterial
 	if not _check(glass.has_meta("digi_glass_blur") and glass_material != null and glass_material.shader != null, "Glass surface must use the shared backdrop-blur shader, not transparency alone"):
 		return
-	if not _check(float(glass_material.get_shader_parameter("blur_lod")) >= 1.5, "Glass surface must apply a visible frosted blur profile"):
+	if not _check(float(glass_material.get_shader_parameter("blur_lod")) >= 3.0, "Floating glass must apply a clearly visible frosted blur profile"):
+		return
+	if not _check(float(glass_material.get_shader_parameter("glass_opacity")) >= 0.85, "Frosted glass must keep the sharp framebuffer from bleeding back through ordinary alpha"):
 		return
 	glass.queue_free()
 
@@ -50,6 +52,9 @@ func _ready() -> void:
 	if not _check(modal.visible, "Confirmation modal must open as a blocking overlay"):
 		return
 	if not _check(modal.get_panel().has_meta("digi_glass_surface") and modal.get_panel().has_meta("digi_glass_blur"), "Confirmation modal must compose the shared blurred-glass surface"):
+		return
+	var modal_material := modal.get_panel().call("get_glass_material") as ShaderMaterial
+	if not _check(modal_material != null and float(modal_material.get_shader_parameter("blur_lod")) >= 3.8 and float(modal_material.get_shader_parameter("glass_opacity")) >= 0.93, "Modal glass must use the stronger frosted profile"):
 		return
 	if not _check(get_viewport().gui_get_focus_owner() == modal.get_cancel_button(), "Confirmation modal must focus the safe cancel action by default"):
 		return
