@@ -1,0 +1,31 @@
+name: Audit requested DS batch
+
+on:
+  push:
+    branches:
+      - fix/ds-sprite-agumon-line-veemon-batch
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install image tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+      - name: Audit requested DS source sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/digimon-sprite-manager
+          PYTHONPATH=tools python3 tools/audit_requested_ds_sources.py | tee /tmp/requested-ds-audit-output.json
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: requested-ds-batch-audit
+          path: /tmp/requested-ds-audit
+          retention-days: 3
