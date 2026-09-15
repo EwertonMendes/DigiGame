@@ -1,7 +1,8 @@
 import { chromium } from 'playwright';
 
 const url = process.env.DIGIGAME_URL ?? 'http://127.0.0.1:8000';
-const suite = process.env.SMOKE_SUITE ?? 'desktop';
+const requestedSuite = process.env.SMOKE_SUITE ?? 'desktop';
+const suite = requestedSuite === 'combat' || requestedSuite === 'vfx' ? 'combat-vfx' : requestedSuite;
 const runtimeErrors = [];
 const browser = await chromium.launch({
   headless: true,
@@ -420,7 +421,7 @@ const suites = {
 try {
   const runner = suites[suite];
   if (!runner) {
-    throw new Error(`Unknown SMOKE_SUITE '${suite}'. Expected one of: ${Object.keys(suites).join(', ')}`);
+    throw new Error(`Unknown SMOKE_SUITE '${requestedSuite}'. Expected one of: desktop, combat-vfx, mobile.`);
   }
   const startedAt = Date.now();
   await runner();
