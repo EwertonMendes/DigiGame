@@ -33,6 +33,15 @@ function waitForConsole(page, marker, timeout = 15000) {
   });
 }
 
+function reportBattlePreload(message, readyMs) {
+  const text = message.text();
+  const match = text.match(/wait_ms=(\d+)/);
+  if (!match) {
+    throw new Error(`Battle preload log is missing wait_ms: ${text}`);
+  }
+  console.log(`[Smoke] ${suite} battle preload_wait_ms=${match[1]} battle_ready_ms=${readyMs}`);
+}
+
 async function settleFrames(page, frames = 3) {
   await page.evaluate(async frameCount => {
     for (let index = 0; index < frameCount; index += 1) {
@@ -95,9 +104,12 @@ async function enterTestBattle(page, captureDialogue = false) {
   }
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
+  const preloadReady = waitForConsole(page, '[Transition] PRELOAD_READY', 10000);
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
+  const startedAt = Date.now();
   await confirmBattleDialog(page);
-  await Promise.all([battleStarted, battleReady]);
+  const [, preloadMessage] = await Promise.all([battleStarted, preloadReady, battleReady]);
+  reportBattlePreload(preloadMessage, Date.now() - startedAt);
   await waitForBattlePresentation(page);
 }
 
@@ -235,9 +247,12 @@ async function runMobileSuite() {
   await page.screenshot({ path: 'build/hub-mobile-dialog.png', fullPage: true });
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
+  const preloadReady = waitForConsole(page, '[Transition] PRELOAD_READY', 10000);
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
+  const startedAt = Date.now();
   await confirmBattleDialog(page);
-  await Promise.all([battleStarted, battleReady]);
+  const [, preloadMessage] = await Promise.all([battleStarted, preloadReady, battleReady]);
+  reportBattlePreload(preloadMessage, Date.now() - startedAt);
   await waitForBattlePresentation(page);
   await page.screenshot({ path: 'build/mobile-portrait.png', fullPage: true });
 
