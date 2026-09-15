@@ -3,6 +3,7 @@ class_name ExpansionQuestCatalog
 
 const QuestDefinitionScript = preload("res://src/quests/QuestDefinition.gd")
 const QuestServiceScript = preload("res://src/quests/QuestService.gd")
+const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 
 const TUTORIAL_QUEST_ID := "expansion_breakthrough"
 const ADVANCED_QUEST_ID := "expansion_fragment_hunt"
@@ -37,6 +38,30 @@ static func advanced_definition() -> QuestDefinition:
 		"items": {FRAGMENT_ITEM_ID: 1},
 	}
 	return definition
+
+
+static func sync_progression_unlocks(collection: PlayerCollection) -> Dictionary:
+	var result := {
+		"tutorial_active": false,
+		"advanced_active": false,
+		"has_tier_s_eligible": false,
+	}
+	if collection == null:
+		return result
+
+	var balance = BalanceScript.new()
+	var required_tier := balance.expansion_string("requiredTier", "S")
+	var required_index := balance.tier_index(required_tier)
+	for instance: DigimonInstance in collection.get_instances():
+		if balance.tier_index(instance.tier) >= required_index:
+			result["has_tier_s_eligible"] = true
+			break
+
+	if bool(collection.progression_flags.get(TUTORIAL_COMPLETED_FLAG, false)):
+		result["advanced_active"] = ensure_advanced_unlocked(collection)
+	elif bool(result["has_tier_s_eligible"]):
+		result["tutorial_active"] = unlock_for_tier_s(collection)
+	return result
 
 
 static func unlock_for_tier_s(collection: PlayerCollection) -> bool:
@@ -76,6 +101,12 @@ static func record_victory(collection: PlayerCollection, advanced_encounter: boo
 	}
 	if collection == null:
 		return result
+
+	# Reconcile quest availability from persistent roster state before rewards are
+	# processed. This covers migrated saves, debug-created Tier S+ Digimon and any
+	# future acquisition path that does not go through the normal promotion call.
+	sync_progression_unlocks(collection)
+
 	var service: QuestService = QuestServiceScript.new()
 	var tutorial := tutorial_definition()
 	var tutorial_state := service.get_state(collection, tutorial)
@@ -100,6 +131,7 @@ static func record_victory(collection: PlayerCollection, advanced_encounter: boo
 static func quest_status(collection: PlayerCollection) -> Dictionary:
 	if collection == null:
 		return {}
+	sync_progression_unlocks(collection)
 	var service: QuestService = QuestServiceScript.new()
 	var tutorial := tutorial_definition()
 	var advanced := advanced_definition()
