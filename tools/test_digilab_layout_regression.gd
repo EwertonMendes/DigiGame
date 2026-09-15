@@ -63,15 +63,15 @@ func _ready() -> void:
 
 	# DigiModalHeader uses the same adjacent-tab method for LB/RB and L1/R1.
 	# Moving left from Ascension must therefore return to Party / Storage.
-	var ascension_header := ascension_screen.get("_header")
+	var ascension_header: DigiModalHeader = ascension_screen.get("_header") as DigiModalHeader
 	assert(ascension_header != null, "Ascension / Expansion must expose the shared primary-tab header")
-	assert(bool(ascension_header.call("select_adjacent_tab", -1)), "Primary tabs must support previous-tab shoulder navigation")
+	assert(ascension_header.select_adjacent_tab(-1), "Primary tabs must support previous-tab shoulder navigation")
 	await _frames(4)
 	assert(party_screen.visible and not ascension_screen.visible, "Previous-tab shoulder navigation must move from Ascension to Party / Storage")
 
-	var party_header := party_screen.get("_header")
+	var party_header: DigiModalHeader = party_screen.get("_header") as DigiModalHeader
 	assert(party_header != null, "Party / Storage must expose the shared primary-tab header")
-	assert(bool(party_header.call("select_adjacent_tab", 1)), "Primary tabs must support next-tab shoulder navigation")
+	assert(party_header.select_adjacent_tab(1), "Primary tabs must support next-tab shoulder navigation")
 	await _frames(4)
 	assert(ascension_screen.visible and not party_screen.visible, "Next-tab shoulder navigation must move from Party / Storage to Ascension")
 	assert(String(ascension_screen.call("get_selected_instance_id")) == selected_party_id, "Shoulder navigation from Party must preserve the selected Digimon context")
@@ -84,13 +84,13 @@ func _ready() -> void:
 
 
 func _assert_primary_tabs(screen: Control, active_id: String, label_name: String) -> void:
-	var header := screen.get("_header")
+	var header: DigiModalHeader = screen.get("_header") as DigiModalHeader
 	assert(header != null, "%s must expose the shared DigiModalHeader" % label_name)
 	for tab_id in ["convert", "party", "ascension"]:
-		var button := header.call("get_tab_button", tab_id) as Button
+		var button := header.get_tab_button(tab_id)
 		assert(button != null, "%s must expose the '%s' primary tab" % [label_name, tab_id])
 		assert(not button.disabled, "%s primary tab '%s' must be enabled" % [label_name, tab_id])
-	var active_button := header.call("get_tab_button", active_id) as Button
+	var active_button := header.get_tab_button(active_id)
 	assert(active_button != null, "%s active primary tab must exist" % label_name)
 
 
