@@ -1,13 +1,19 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 120,
+  "directional_resource_count": 132,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 30,
+  "additional_source_rebuilt_resource_count": 42,
   "project_original_resource_count": 1,
-  "audited_resource_count": 120,
+  "audited_resource_count": 132,
   "directional_resources": [
+    {
+      "name": "AeroVeedramon",
+      "resource": "assets/resources/aeroveedramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
     {
       "name": "Agumon",
       "resource": "assets/resources/agumon.tres",
@@ -129,6 +135,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Cyberdramon",
+      "resource": "assets/resources/cyberdramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "DKTyrannomon",
       "resource": "assets/resources/dktyrannomon.tres",
       "layout_source": "explicit",
@@ -145,6 +157,12 @@
       "resource": "assets/resources/demidevimon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Dinohumon",
+      "resource": "assets/resources/dinohumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "DoKunemon",
@@ -177,10 +195,22 @@
       "coverage": "early_ds"
     },
     {
+      "name": "ExVeemon",
+      "resource": "assets/resources/exveemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Falcomon",
       "resource": "assets/resources/falcomon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Flamedramon",
+      "resource": "assets/resources/flamedramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Flamon",
@@ -243,6 +273,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Goldramon",
+      "resource": "assets/resources/goldramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Gomamon",
       "resource": "assets/resources/gomamon.tres",
       "layout_source": "explicit",
@@ -297,6 +333,18 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Imperialdramon (Dragon Mode)",
+      "resource": "assets/resources/imperialdramon (dragon mode).tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Imperialdramon (Fighter Mode)",
+      "resource": "assets/resources/imperialdramon (fighter mode).tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Impmon",
       "resource": "assets/resources/impmon.tres",
       "layout_source": "explicit",
@@ -305,6 +353,12 @@
     {
       "name": "JungleMojyamon",
       "resource": "assets/resources/junglemojyamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Justimon",
+      "resource": "assets/resources/justimon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -395,6 +449,12 @@
     {
       "name": "Machinedramon",
       "resource": "assets/resources/machinedramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Magnamon",
+      "resource": "assets/resources/magnamon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -493,6 +553,12 @@
       "resource": "assets/resources/pagumon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Paildramon",
+      "resource": "assets/resources/paildramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Palmon",
@@ -683,6 +749,12 @@
     {
       "name": "Tyrannomon",
       "resource": "assets/resources/tyrannomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Veedramon",
+      "resource": "assets/resources/veedramon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },

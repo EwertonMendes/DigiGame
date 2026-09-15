@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 354,
+  "source_archive_file": "sprite thread/354_Goddramon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/354_Goddramon.png",
+  "source_sha256": "e17f8438ef1f03aac3979a776a4d18a0f27c10f74a18bd08fd69e92e1a5637d1",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_lower_region_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 480374
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 161226,
+      "confidence_margin": 337046
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    43
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 69,
+        "y": 393,
+        "w": 32,
+        "h": 40
+      },
+      {
+        "x": 116,
+        "y": 394,
+        "w": 30,
+        "h": 38
+      },
+      {
+        "x": 161,
+        "y": 393,
+        "w": 32,
+        "h": 38
+      }
+    ],
+    "down_right": [
+      {
+        "x": 308,
+        "y": 393,
+        "w": 32,
+        "h": 40
+      },
+      {
+        "x": 263,
+        "y": 394,
+        "w": 30,
+        "h": 38
+      },
+      {
+        "x": 216,
+        "y": 393,
+        "w": 32,
+        "h": 38
+      }
+    ],
+    "up_left": [
+      {
+        "x": 69,
+        "y": 341,
+        "w": 31,
+        "h": 40
+      },
+      {
+        "x": 116,
+        "y": 342,
+        "w": 30,
+        "h": 38
+      },
+      {
+        "x": 161,
+        "y": 341,
+        "w": 31,
+        "h": 37
+      }
+    ],
+    "up_right": [
+      {
+        "x": 309,
+        "y": 341,
+        "w": 31,
+        "h": 40
+      },
+      {
+        "x": 263,
+        "y": 342,
+        "w": 30,
+        "h": 38
+      },
+      {
+        "x": 217,
+        "y": 341,
+        "w": 31,
+        "h": 37
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 44,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/goldramon/field.png"
+}

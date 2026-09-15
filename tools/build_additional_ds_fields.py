@@ -61,18 +61,27 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
     _background, components = _components(image)
     min_cx_ratio = float(profile.get("min_cx_ratio", 0.0))
     max_cx_ratio = float(profile.get("max_cx_ratio", 1.0))
+    min_cy_ratio = float(profile.get("min_cy_ratio", 0.0))
+    max_cy_ratio = float(profile.get("max_cy_ratio", 1.0))
     if not 0.0 <= min_cx_ratio < max_cx_ratio <= 1.0:
         raise RuntimeError(
             f"Invalid structural profile x-range: min_cx_ratio={min_cx_ratio} max_cx_ratio={max_cx_ratio}"
         )
+    if not 0.0 <= min_cy_ratio < max_cy_ratio <= 1.0:
+        raise RuntimeError(
+            f"Invalid structural profile y-range: min_cy_ratio={min_cy_ratio} max_cy_ratio={max_cy_ratio}"
+        )
     min_cx = image.width * min_cx_ratio
     max_cx = image.width * max_cx_ratio
+    min_cy = image.height * min_cy_ratio
+    max_cy = image.height * max_cy_ratio
     candidates = [
         item for item in components
         if 10 <= item["w"] <= 50
         and 7 <= item["h"] <= 50
         and item["area"] >= 60
         and min_cx <= item["cx"] <= max_cx
+        and min_cy <= item["cy"] <= max_cy
     ]
     rows = _group_by_y(candidates, tolerance=8.0)
     kind = str(profile.get("kind", ""))

@@ -1,0 +1,14 @@
+{
+  "source": "ExVeemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/ExVeemon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "0561fc95489b23e24cefd6a35e625d800d24bc3c6bd5fde8692b6d585f6194ee"
+}

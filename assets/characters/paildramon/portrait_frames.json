@@ -1,0 +1,14 @@
+{
+  "source": "Paildramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Paildramon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "0adf6f90dba3fbcc53e00d799c471d32908ef16d6fe448f0a23078c3c2ea5b1d"
+}
