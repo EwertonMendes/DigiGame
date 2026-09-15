@@ -32,9 +32,8 @@ jobs:
       matrix:
         suite:
           - desktop
-          - combat
+          - combat-vfx
           - mobile
-          - vfx
     steps:
       - name: Checkout tested revision
         uses: actions/checkout@v6
@@ -74,30 +73,10 @@ jobs:
           python3 -m http.server 8000 --directory build/web >/tmp/digigame-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
+          node .github/scripts/browser-smoke.mjs
 
-          if [ "$SMOKE_SUITE" = "vfx" ] || [ "$SMOKE_SUITE" = "combat" ]; then
-            MAX_ATTEMPTS=5
-            if [ "$SMOKE_SUITE" = "combat" ]; then
-              MAX_ATTEMPTS=3
-            fi
-            for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-              echo "${SMOKE_SUITE} smoke attempt ${attempt}/${MAX_ATTEMPTS}"
-              if node .github/scripts/browser-smoke.mjs; then
-                exit 0
-              fi
-              if [ "$attempt" -eq "$MAX_ATTEMPTS" ]; then
-                echo "${SMOKE_SUITE} smoke failed after ${MAX_ATTEMPTS} independent browser runs." >&2
-                exit 1
-              fi
-              echo "::warning::${SMOKE_SUITE} smoke hit a timing/randomized battle path; retrying with a fresh browser."
-              sleep 1
-            done
-          else
-            node .github/scripts/browser-smoke.mjs
-          fi
-
-      - name: Upload ${{ matrix.suite }} diagnostics
-        if: always()
+      - name: Upload ${{ matrix.suite }} failure diagnostics
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-${{ matrix.suite }}-${{ github.event.workflow_run.id }}
