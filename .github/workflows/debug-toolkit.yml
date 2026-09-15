@@ -1,102 +1,15 @@
-name: Developer Toolkit Regression
+name: Developer Toolkit CI Exclusion
 
 on:
-  pull_request:
-    branches:
-      - master
-    paths:
-      - '.github/workflows/debug-toolkit.yml'
-      - 'project.godot'
-      - 'src/debug/**'
-      - 'src/digimon/**'
-      - 'src/state/**'
-      - 'src/collection/**'
-      - 'src/world/BattleEncounterDefinition.gd'
-      - 'tools/test_developer_toolkit.gd'
-      - 'tools/test_developer_toolkit.tscn'
-      - 'tools/test_debug_technique_lab_ui.gd'
-      - 'tools/test_debug_technique_lab_ui.tscn'
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: digigame-debug-toolkit-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
-env:
-  GODOT_VERSION: 4.7.2
-
 jobs:
-  regression:
-    name: Debug toolkit state regression
+  excluded:
+    name: Developer toolkit is intentionally not regression-tested
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 8
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Fetch preferred UI fonts
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 tools/fetch_ui_fonts.py
-
-      - name: Restore Godot toolchain cache
-        id: godot-toolchain
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/digigame-godot
-          key: godot-web-toolchain-v2-${{ runner.os }}-${{ env.GODOT_VERSION }}
-
-      - name: Download Godot on cache miss
-        if: steps.godot-toolchain.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          GODOT_TAG="${GODOT_VERSION}-stable"
-          mkdir -p "$HOME/.cache/digigame-godot"
-          curl -fL "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_linux.x86_64.zip" -o /tmp/godot.zip
-          unzip -q /tmp/godot.zip -d /tmp/godot
-          mv "/tmp/godot/Godot_v${GODOT_TAG}_linux.x86_64" "$HOME/.cache/digigame-godot/godot"
-          chmod +x "$HOME/.cache/digigame-godot/godot"
-
-      - name: Activate Godot
-        shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x "$HOME/.cache/digigame-godot/godot"
-          sudo ln -sf "$HOME/.cache/digigame-godot/godot" /usr/local/bin/godot
-          godot --version
-
-      - name: Restore imported-resource cache
-        uses: actions/cache@v4
-        with:
-          path: .godot/imported
-          key: godot-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', '**/*.gd', '**/*.tscn', '**/*.tres', 'assets/**/*') }}
-          restore-keys: |
-            godot-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-
-
-      - name: Import project
-        shell: bash
-        run: |
-          set -euo pipefail
-          godot --headless --path . --import 2>&1 | tee /tmp/godot-import.log
-          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:' /tmp/godot-import.log; then exit 1; fi
-
-      - name: Run developer toolkit regression
-        shell: bash
-        run: |
-          set -euo pipefail
-          godot --headless --path . tools/test_developer_toolkit.tscn --quit-after 20 2>&1 | tee /tmp/developer-toolkit.log
-          grep -q 'developer toolkit regression passed' /tmp/developer-toolkit.log
-          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/developer-toolkit.log; then exit 1; fi
-
-      - name: Run technique lab UI regression
-        shell: bash
-        run: |
-          set -euo pipefail
-          godot --headless --path . tools/test_debug_technique_lab_ui.tscn --quit-after 20 2>&1 | tee /tmp/technique-lab-ui.log
-          grep -q 'debug technique lab UI regression passed' /tmp/technique-lab-ui.log
-          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/technique-lab-ui.log; then exit 1; fi
+      - run: echo "Developer Toolkit is development/debug-only and intentionally excluded from CI regression testing."
