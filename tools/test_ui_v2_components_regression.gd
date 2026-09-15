@@ -55,9 +55,14 @@ func _ready() -> void:
 	await _frames(3)
 	var battle_dialog := hub.find_child("BattleDialog", true, false) as Control
 	var cancel := hub.find_child("CancelBattleDialog", true, false) as Button
+	var start := hub.find_child("StartBattle", true, false) as Button
 	if not _check(battle_dialog != null and battle_dialog.visible, "Battle Operator dialog must open near the NPC"):
 		return
 	if not _check(cancel != null and get_viewport().gui_get_focus_owner() == cancel, "Battle Operator dialog must default to NOT NOW"):
+		return
+	if not _check(start != null and cancel.focus_neighbor_right == start.get_path() and start.focus_neighbor_left == cancel.get_path(), "Battle Operator dialog must expose a deterministic horizontal focus graph"):
+		return
+	if not _check(cancel.custom_minimum_size.y >= DigiUiTheme.TOUCH_TARGET and start.custom_minimum_size.y >= DigiUiTheme.TOUCH_TARGET, "Battle Operator dialog actions must remain touch-safe"):
 		return
 
 	hub.queue_free()
