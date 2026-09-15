@@ -21,7 +21,7 @@ script = ExtResource("1_field")
 y_sort_enabled = true
 script = ExtResource("3_digimon")
 
-[node name="MainCamera" type="Camera2D" parent="DigimonController"]
+[node name="MainCamera" type="Camera2D" parent="."]
 position = Vector2(0, 0)
 zoom = Vector2(0.94, 0.94)
 script = ExtResource("2_camera")

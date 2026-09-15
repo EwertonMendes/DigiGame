@@ -24,7 +24,7 @@ permissions:
   contents: read
 
 env:
-  GODOT_VERSION: 4.5.1
+  GODOT_VERSION: 4.7.2
 
 jobs:
   validate:

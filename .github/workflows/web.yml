@@ -18,9 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Godot 4.6+ has a confirmed intermittent memory-access trap in Web release
-  # exports. Keep production Web builds on the last unaffected stable runtime.
-  GODOT_VERSION: 4.5.1
+  GODOT_VERSION: 4.7.2
 
 jobs:
   build-web:
