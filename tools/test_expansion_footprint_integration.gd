@@ -1,4 +1,4 @@
-extends SceneTree
+extends Node
 
 const BattleControllerDomainScript = preload("res://src/BattleControllerDomain.gd")
 const CombatRuntimeScript = preload("res://src/battle/CombatDigimonRuntimeController.gd")
@@ -69,7 +69,7 @@ class TerrainField:
 	var tile_map_data: Dictionary = {}
 
 
-func _init() -> void:
+func _ready() -> void:
 	_test_forced_movement_contract()
 	_test_story_map_validation()
 	_test_expansion_quest_loop()
@@ -77,11 +77,11 @@ func _init() -> void:
 
 	if _failures.is_empty():
 		print("[ExpansionFootprintIntegrationTest] PASS")
-		quit(0)
+		get_tree().quit()
 		return
 	for failure in _failures:
 		push_error("[ExpansionFootprintIntegrationTest] %s" % failure)
-	quit(1)
+	get_tree().quit(1)
 
 
 func _test_forced_movement_contract() -> void:
