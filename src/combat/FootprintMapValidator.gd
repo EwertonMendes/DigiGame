@@ -4,6 +4,8 @@ class_name FootprintMapValidator
 const BattleFootprintScript = preload("res://src/combat/BattleFootprint.gd")
 const DeploymentPlannerScript = preload("res://src/combat/FootprintDeploymentPlanner.gd")
 
+const OBJECTIVE_MODE_REGION := "region"
+const OBJECTIVE_MODE_ALL := "all"
 const CARDINAL_DIRECTIONS: Array[Vector2i] = [
 	Vector2i.RIGHT,
 	Vector2i.LEFT,
@@ -12,13 +14,20 @@ const CARDINAL_DIRECTIONS: Array[Vector2i] = [
 ]
 
 
-static func validate_story_layout(walkable_cells: Array[Vector2i], deployment_cells: Array[Vector2i], objective_cells: Array[Vector2i], team_size: int = 3) -> Dictionary:
+static func validate_story_layout(
+	walkable_cells: Array[Vector2i],
+	deployment_cells: Array[Vector2i],
+	objective_cells: Array[Vector2i],
+	team_size: int = 3,
+	objective_mode: String = OBJECTIVE_MODE_REGION
+) -> Dictionary:
 	var result := {
 		"ok": false,
 		"deployment_ok": false,
 		"route_ok": false,
 		"deployment_anchors": [],
 		"reachable_objectives": [],
+		"objective_mode": _normalized_objective_mode(objective_mode),
 		"errors": [],
 	}
 	if walkable_cells.is_empty():
@@ -77,11 +86,35 @@ static func validate_story_layout(walkable_cells: Array[Vector2i], deployment_ce
 		if _objective_reachable(objective, visited):
 			reachable_objectives.append(objective)
 	result["reachable_objectives"] = reachable_objectives
-	result["route_ok"] = reachable_objectives.size() == objective_cells.size()
+
+	# Runtime battle validation supplies the opponent deployment area as one target
+	# region, so one reachable cell proves that a full-size actor can enter it. For
+	# authored maps with several independent mandatory objective cells, callers can
+	# explicitly use OBJECTIVE_MODE_ALL.
+	if String(result["objective_mode"]) == OBJECTIVE_MODE_ALL:
+		result["route_ok"] = reachable_objectives.size() == objective_cells.size()
+	else:
+		result["route_ok"] = not reachable_objectives.is_empty()
 	if not bool(result["route_ok"]):
-		(result["errors"] as Array).append("At least one objective has no continuous 2-tile-wide route from deployment.")
+		var error := "No continuous 2-tile-wide route reaches the objective region."
+		if String(result["objective_mode"]) == OBJECTIVE_MODE_ALL:
+			error = "At least one required objective has no continuous 2-tile-wide route from deployment."
+		(result["errors"] as Array).append(error)
 	result["ok"] = bool(result["deployment_ok"]) and bool(result["route_ok"])
 	return result
+
+
+static func validate_required_objectives(
+	walkable_cells: Array[Vector2i],
+	deployment_cells: Array[Vector2i],
+	objective_cells: Array[Vector2i],
+	team_size: int = 3
+) -> Dictionary:
+	return validate_story_layout(walkable_cells, deployment_cells, objective_cells, team_size, OBJECTIVE_MODE_ALL)
+
+
+static func _normalized_objective_mode(value: String) -> String:
+	return OBJECTIVE_MODE_ALL if value.strip_edges().to_lower() == OBJECTIVE_MODE_ALL else OBJECTIVE_MODE_REGION
 
 
 static func _legal_large_anchors(walkable_cells: Array[Vector2i]) -> Array[Vector2i]:
