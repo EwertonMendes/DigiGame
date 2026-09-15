@@ -141,7 +141,7 @@ Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 EOF
 
   test -s "$preview_dir/index.html"
-test -s "$preview_dir/index.wasm"
+  test -s "$preview_dir/index.wasm"
   echo "Restored PR #${pr_number} from workflow run ${run_id}."
 done < <(
   gh api \
