@@ -9,7 +9,6 @@ const HUB_SCENE_PATH := "res://scenes/world/hub.tscn"
 const CONTEXT_BATTLE := "battle"
 const CONTEXT_HUB := "hub"
 const LOAD_TIMEOUT_MS := 8000
-const USE_DISTRIBUTED_LOAD_SUBTHREADS := false
 
 var _root: Control = null
 var _screen: ColorRect = null
@@ -87,15 +86,10 @@ func _run_transition(scene_path: String, context: String) -> void:
 	if focus_owner != null:
 		focus_owner.release_focus()
 
-	# Keep the destination preload asynchronous, but keep dependency loading on
-	# the stable loader path. The Web export deliberately runs without thread
-	# support, so distributing dependencies to extra subthreads adds race risk
-	# without changing the player-facing transition flow.
-	var request_error := ResourceLoader.load_threaded_request(
-		scene_path,
-		"PackedScene",
-		USE_DISTRIBUTED_LOAD_SUBTHREADS
-	)
+	# Begin loading before the effect becomes visually dense. The previous
+	# implementation loaded synchronously at the midpoint, which could freeze the
+	# shader and make a deliberately smooth transition feel like a loading screen.
+	var request_error := ResourceLoader.load_threaded_request(scene_path, "PackedScene", true)
 	if request_error != OK:
 		var existing_status := ResourceLoader.load_threaded_get_status(scene_path)
 		if existing_status != ResourceLoader.THREAD_LOAD_IN_PROGRESS and existing_status != ResourceLoader.THREAD_LOAD_LOADED:

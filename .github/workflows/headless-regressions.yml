@@ -54,6 +54,9 @@ jobs:
           - name: global-ui-v2
             command: godot --headless --path . tools/test_ui_v2_components_regression.tscn --quit-after 30
             success: global ui v2 components regression passed
+          - name: battle-ui-lifecycle
+            command: godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn --quit-after 30
+            success: battle ui lifecycle regression passed
           - name: digimon-progression
             command: godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8
             success: digimon progression regression passed
