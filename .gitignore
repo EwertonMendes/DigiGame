@@ -254,7 +254,7 @@ bld/
 .vs/
 
 # Visual Studio 2017 auto generated files
-Generated\ Files/
+Generated\\ Files/
 
 # Files built by Visual Studio
 *_i.c
@@ -366,3 +366,132 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+
+########################################
+### DigiGame local / sensitive files ###
+########################################
+
+# Environment files and local overrides
+.env
+.env.*
+!.env.example
+!.env.sample
+*.local
+*.local.*
+
+# Secrets, credentials and private keys
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+*.credentials
+*.credentials.*
+credentials.json
+service-account*.json
+service_account*.json
+secrets.json
+secrets.*.json
+
+# SSH / signing material accidentally copied into the project
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.asc
+*.gpg
+*.kdbx
+
+# Local Godot / editor state and imported caches
+.godot/editor/
+.godot/imported/
+.godot/mono/
+
+# Local runtime state, user saves and temporary captures
+user_data/
+userdata/
+saves/
+savegames/
+*.save
+*.sav
+*.bak
+*.backup
+*.orig
+*.rej
+*.temp
+*.cache
+*.pid
+*.seed
+
+# Test / coverage / diagnostic output
+coverage/
+coverage-*/
+.nyc_output/
+.junit/
+test-results/
+test-results-*/
+playwright-report/
+blob-report/
+artifacts/
+artifacts-*/
+screenshots/
+recordings/
+traces/
+
+# Node / package-manager local state used by tooling
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Generic local build/export directories
+build/
+builds/
+dist/
+out/
+export/
+exports/
+.tmp/
+tmp/
+temp/
+
+# Editor-specific local state not covered above
+*.sublime-workspace
+*.sublime-project
+.vscode-test/
+
+# Crash dumps and profiling output
+core
+core.*
+*.core
+*.dmp
+*.dump
+*.prof
+*.trace
+
+# Local archives and ad-hoc exports; keep deliberately versioned archives explicit
+*.7z
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# Never ignore project source/assets/data by broad extension patterns.
+# Add any future generated/private project-specific paths explicitly below.
