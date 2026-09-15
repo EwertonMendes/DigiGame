@@ -53,15 +53,19 @@ func _play_opening_sequence() -> void:
 			await DigitalSceneTransition.transition_finished
 		if not is_inside_tree():
 			return
+		print("[BattleIntro] WEB_TRANSITION_SYNCED")
 		await RenderingServer.frame_post_draw
 		if not is_inside_tree():
 			return
+		print("[BattleIntro] WEB_RENDER_SYNCED")
 
 	# Re-evaluate facing only after both rosters exist. This makes every actor look
 	# toward a real opposing Digimon instead of relying on a generic map-center
 	# direction while the encounter is still being instantiated.
 	if _controller != null and _controller.has_method("orient_battle_actors_toward_opponents"):
 		_controller.call("orient_battle_actors_toward_opponents")
+	if OS.has_feature("web"):
+		print("[BattleIntro] WEB_ROSTER_READY")
 
 	var player_team: Array[Node] = []
 	var enemy_team: Array[Node] = []
@@ -83,7 +87,11 @@ func _play_opening_sequence() -> void:
 	var first_turn_actor := _preview_first_turn_actor()
 	var first_turn_position := _opening_position_for(first_turn_actor, opening_positions)
 	if first_turn_actor != null and camera != null and camera.has_method("prepare_web_intro_base"):
+		if OS.has_feature("web"):
+			print("[BattleIntro] WEB_PREPARE_START")
 		camera.call("prepare_web_intro_base", first_turn_position)
+		if OS.has_feature("web"):
+			print("[BattleIntro] WEB_PREPARE_DONE")
 
 	var first_focus := true
 	first_focus = await _reveal_team(player_team, camera, first_focus, opening_positions)
@@ -129,6 +137,8 @@ func _reveal_team(
 			_controller.call("face_actor_toward_nearest_opponent", actor)
 		var actor_position := _opening_position_for(actor, opening_positions)
 		if camera != null and camera.has_method("animate_intro_focus"):
+			if OS.has_feature("web"):
+				print("[BattleIntro] CAMERA_START actor=%s" % actor.name)
 			await camera.call("animate_intro_focus", actor_position, is_first_focus)
 		elif camera != null and camera.has_method("focus_on"):
 			camera.call("focus_on", actor_position)
