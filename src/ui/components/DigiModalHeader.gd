@@ -272,19 +272,31 @@ func _layout() -> void:
 	if _title == null:
 		return
 	var compact := size.x < 760.0
+	var compact_two_tabs := compact and _tab_specs.size() <= 2 and not _tab_specs.is_empty()
 	var show_bits_now := _show_bits and not compact
 	_bits_badge.visible = show_bits_now
 	var brand_row := _brand_icon.get_parent() as HBoxContainer
 	if brand_row != null:
+		brand_row.visible = not compact_two_tabs
 		brand_row.position = Vector2(28.0, 10.0)
 		brand_row.size = Vector2(TITLE_BLOCK_WIDTH - 28.0, 42.0)
-	_subtitle.visible = not compact
+	_subtitle.visible = not compact and not compact_two_tabs
 
 	var controls_right := 18.0 + CLOSE_SIZE + (140.0 if show_bits_now else 0.0)
-	_tabs_root.visible = not compact and not _tab_specs.is_empty()
+	_tabs_root.visible = not _tab_specs.is_empty() and (not compact or compact_two_tabs)
 	if _tabs_root.visible:
-		_tabs_root.position = Vector2(TITLE_BLOCK_WIDTH, 0.0)
-		_tabs_root.size = Vector2(maxf(0.0, size.x - TITLE_BLOCK_WIDTH - controls_right - 12.0), HEADER_HEIGHT)
+		if compact_two_tabs:
+			_tabs_root.position = Vector2(8.0, 0.0)
+			_tabs_root.size = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 32.0), HEADER_HEIGHT)
+			var available := maxf(230.0, _tabs_root.size.x - 4.0)
+			var per_tab := available / float(maxi(1, _tab_specs.size()))
+			for value in _tab_buttons.values():
+				var tab_button := value as Button
+				if tab_button != null:
+					tab_button.custom_minimum_size.x = maxf(112.0, per_tab)
+		else:
+			_tabs_root.position = Vector2(TITLE_BLOCK_WIDTH, 0.0)
+			_tabs_root.size = Vector2(maxf(0.0, size.x - TITLE_BLOCK_WIDTH - controls_right - 12.0), HEADER_HEIGHT)
 
 	_close_button.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 16.0), 10.0)
 	_close_button.size = Vector2(CLOSE_SIZE, CLOSE_SIZE)
