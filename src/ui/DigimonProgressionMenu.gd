@@ -248,9 +248,8 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	var name_label := _label(display_name, 15, V2.TEXT, true)
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	copy.add_child(name_label)
-	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
 	var sub := _label(
-		"Lv %d  ·  %s  ·  TIER %s  ·  %s" % [instance.level, rank, instance.tier, footprint_badge],
+		"Lv %d  ·  %s  ·  TIER %s" % [instance.level, rank, instance.tier],
 		10,
 		rank_color.lightened(0.08),
 		true
