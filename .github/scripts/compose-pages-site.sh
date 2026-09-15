@@ -10,22 +10,42 @@ CURRENT_PREVIEW_SHA="${CURRENT_PREVIEW_SHA:-}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
 : "${GH_TOKEN:?GH_TOKEN is required}"
 
-find_validated_run() {
+find_usable_web_run() {
   local head_sha="$1"
   local run_id
-  local success_count
+  local jobs_json
+  local fast_gate_success
+  local legacy_success_count
 
   while IFS= read -r run_id; do
     if [ -z "$run_id" ]; then
       continue
     fi
 
-    success_count="$(gh api \
+    jobs_json="$(gh api \
       "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=latest&per_page=100" \
-      --jq '[.jobs[] | select(.conclusion == "success") | .name | select(. == "Validate and build Web" or . == "Browser smoke · desktop" or . == "Browser smoke · combat" or . == "Browser smoke · mobile" or . == "Browser smoke · vfx")] | unique | length' \
-      2>/dev/null || echo 0)"
+      2>/dev/null || printf '%s' '{"jobs":[]}')"
 
-    if [ "$success_count" = "5" ]; then
+    # Current architecture: the Web workflow is intentionally only the fast
+    # build/data gate. Browser QA is dispatched separately after this succeeds.
+    fast_gate_success="$(jq '[.jobs[] | select(.name == "Fast Web gate" and .conclusion == "success")] | length' <<<"$jobs_json")"
+    if [ "$fast_gate_success" -ge 1 ]; then
+      printf '%s\n' "$run_id"
+      return 0
+    fi
+
+    # Keep previews produced by the older all-in-one Web pipeline restorable
+    # while those PRs remain open.
+    legacy_success_count="$(jq '[.jobs[] | select(
+      .conclusion == "success" and
+      (.name == "Validate and build Web" or
+       .name == "Browser smoke · desktop" or
+       .name == "Browser smoke · combat" or
+       .name == "Browser smoke · mobile" or
+       .name == "Browser smoke · vfx")
+    ) | .name] | unique | length' <<<"$jobs_json")"
+
+    if [ "$legacy_success_count" = "5" ]; then
       printf '%s\n' "$run_id"
       return 0
     fi
@@ -59,9 +79,9 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
     continue
   fi
 
-  run_id="$(find_validated_run "$head_sha" || true)"
+  run_id="$(find_usable_web_run "$head_sha" || true)"
   if [ -z "$run_id" ]; then
-    echo "::warning::No Web workflow with a successful build and all four browser smoke suites was found for open PR #${pr_number} at ${head_sha}; skipping its preview for this deployment."
+    echo "::warning::No successful Web build was found for open PR #${pr_number} at ${head_sha}; skipping its preview for this deployment."
     continue
   fi
 
@@ -73,7 +93,7 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
     --name digigame-web-build \
     --dir "$preview_dir"; then
     rm -rf "$preview_dir"
-    echo "::warning::Could not restore the Web artifact for PR #${pr_number} from validated run ${run_id}; its artifact may have expired."
+    echo "::warning::Could not restore the Web artifact for PR #${pr_number} from run ${run_id}; its artifact may have expired."
     continue
   fi
 
@@ -81,13 +101,13 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
 DigiGame pull request preview
 PR: #${pr_number}
 Commit: ${head_sha}
-Restored from validated workflow run: ${run_id}
+Restored from Web workflow run: ${run_id}
 Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 EOF
 
   test -s "$preview_dir/index.html"
   test -s "$preview_dir/index.wasm"
-  echo "Restored PR #${pr_number} from validated workflow run ${run_id}."
+  echo "Restored PR #${pr_number} from Web workflow run ${run_id}."
 done < <(
   gh api \
     --paginate \
