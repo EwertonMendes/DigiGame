@@ -42,30 +42,11 @@ func _start_battle() -> void:
 func _play_opening_sequence() -> void:
 	var camera := get_viewport().get_camera_2d()
 
-	# The destination scene becomes ready while DigitalSceneTransition is still
-	# revealing it. On Web, changing battle-world presentation transforms during
-	# that reveal makes two canvas presentation paths mutate the same viewport in
-	# the scene-swap window. Wait for the real transition lifecycle event first,
-	# then for the renderer to complete a draw of the uncovered battle scene. This
-	# is event-driven synchronization, not an arbitrary startup delay.
-	if OS.has_feature("web"):
-		if DigitalSceneTransition.is_transitioning():
-			await DigitalSceneTransition.transition_finished
-		if not is_inside_tree():
-			return
-		print("[BattleIntro] WEB_TRANSITION_SYNCED")
-		await RenderingServer.frame_post_draw
-		if not is_inside_tree():
-			return
-		print("[BattleIntro] WEB_RENDER_SYNCED")
-
 	# Re-evaluate facing only after both rosters exist. This makes every actor look
 	# toward a real opposing Digimon instead of relying on a generic map-center
 	# direction while the encounter is still being instantiated.
 	if _controller != null and _controller.has_method("orient_battle_actors_toward_opponents"):
 		_controller.call("orient_battle_actors_toward_opponents")
-	if OS.has_feature("web"):
-		print("[BattleIntro] WEB_ROSTER_READY")
 
 	var player_team: Array[Node] = []
 	var enemy_team: Array[Node] = []
@@ -80,50 +61,28 @@ func _play_opening_sequence() -> void:
 	player_team.sort_custom(_sort_actor_left_to_right)
 	enemy_team.sort_custom(_sort_actor_left_to_right)
 
-	# Cache world-space actor positions before Web applies any temporary visual
-	# transform to the field/roster roots. The intro can then move presentation
-	# roots freely without feeding transformed coordinates back into camera targets.
-	var opening_positions := _cache_opening_positions()
-	var first_turn_actor := _preview_first_turn_actor()
-	var first_turn_position := _opening_position_for(first_turn_actor, opening_positions)
-	if first_turn_actor != null and camera != null and camera.has_method("prepare_web_intro_base"):
-		if OS.has_feature("web"):
-			print("[BattleIntro] WEB_PREPARE_START")
-		camera.call("prepare_web_intro_base", first_turn_position)
-		if OS.has_feature("web"):
-			print("[BattleIntro] WEB_PREPARE_DONE")
-
 	var first_focus := true
-	first_focus = await _reveal_team(player_team, camera, first_focus, opening_positions)
+	first_focus = await _reveal_team(player_team, camera, first_focus)
 	await get_tree().create_timer(TEAM_SWITCH_GAP).timeout
-	first_focus = await _reveal_team(enemy_team, camera, first_focus, opening_positions)
+	first_focus = await _reveal_team(enemy_team, camera, first_focus)
 	await get_tree().create_timer(0.10).timeout
 
 	# The scheduler can preview turn one without mutating CT. Move from the last
 	# roster reveal to the actual first-turn Digimon at the gameplay zoom before
 	# showing BATTLE START, so combat begins already framed for play instead of
 	# snapping back to a distant whole-board overview.
+	var first_turn_actor := _preview_first_turn_actor()
 	if first_turn_actor != null and camera != null:
 		if camera.has_method("animate_gameplay_focus"):
-			await camera.call("animate_gameplay_focus", first_turn_position)
+			await camera.call("animate_gameplay_focus", first_turn_actor.global_position)
 		elif camera.has_method("focus_on"):
-			camera.call("focus_on", first_turn_position)
+			camera.call("focus_on", first_turn_actor.global_position)
 		print("[BattleIntro] FIRST_TURN_FOCUS actor=%s" % first_turn_actor.name)
-
-	# Web's temporary presentation transform must be exactly identity before the
-	# banner hands control to combat. Native builds treat this as a no-op.
-	if camera != null and camera.has_method("finish_web_intro"):
-		camera.call("finish_web_intro")
 
 	await _play_battle_start_banner()
 
 
-func _reveal_team(
-	team: Array[Node],
-	camera: Camera2D,
-	first_focus: bool,
-	opening_positions: Dictionary
-) -> bool:
+func _reveal_team(team: Array[Node], camera: Camera2D, first_focus: bool) -> bool:
 	var is_first_focus := first_focus
 	for actor: Node in team:
 		if actor == null or not is_instance_valid(actor):
@@ -135,13 +94,10 @@ func _reveal_team(
 		# simultaneous effects on a distant board.
 		if _controller != null and _controller.has_method("face_actor_toward_nearest_opponent"):
 			_controller.call("face_actor_toward_nearest_opponent", actor)
-		var actor_position := _opening_position_for(actor, opening_positions)
 		if camera != null and camera.has_method("animate_intro_focus"):
-			if OS.has_feature("web"):
-				print("[BattleIntro] CAMERA_START actor=%s" % actor.name)
-			await camera.call("animate_intro_focus", actor_position, is_first_focus)
+			await camera.call("animate_intro_focus", actor.global_position, is_first_focus)
 		elif camera != null and camera.has_method("focus_on"):
-			camera.call("focus_on", actor_position)
+			camera.call("focus_on", actor.global_position)
 		print("[BattleIntro] CAMERA actor=%s team=%s" % [actor.name, "player" if bool(actor.get("is_player_controlled")) else "enemy"])
 
 		if actor.has_method("play_battle_spawn_animation"):
@@ -153,24 +109,6 @@ func _reveal_team(
 		is_first_focus = false
 		await get_tree().create_timer(TEAM_SPAWN_GAP).timeout
 	return is_first_focus
-
-
-func _cache_opening_positions() -> Dictionary:
-	var positions := {}
-	for actor: Node in _turn_order:
-		var actor_2d := actor as Node2D
-		if actor_2d == null or not is_instance_valid(actor_2d):
-			continue
-		positions[actor_2d.get_instance_id()] = actor_2d.global_position
-	return positions
-
-
-func _opening_position_for(actor: Node, opening_positions: Dictionary) -> Vector2:
-	var actor_2d := actor as Node2D
-	if actor_2d == null or not is_instance_valid(actor_2d):
-		return Vector2.ZERO
-	var stored = opening_positions.get(actor_2d.get_instance_id(), actor_2d.global_position)
-	return Vector2(stored)
 
 
 func _preview_first_turn_actor() -> Node:
