@@ -23,46 +23,92 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	header.configure("DEVELOPMENT", "", V2.TEXT, "training")
 	body.add_child(header)
 
-	var content := _margin(12, 9, 12, 10)
+	var content := _margin(10, 8, 10, 8)
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(content)
 	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_theme_constant_override("separation", 6)
+	stack.add_theme_constant_override("separation", 4)
 	content.add_child(stack)
-	stack.add_child(_label("Innate aptitude + permanent training", 10, V2.MUTED))
 
-	var header_panel := PanelContainer.new()
-	header_panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.SURFACE_ALT.r, V2.SURFACE_ALT.g, V2.SURFACE_ALT.b, 0.62), Color.TRANSPARENT, 2, Vector4(7.0, 3.0, 7.0, 3.0)))
-	stack.add_child(header_panel)
-	var header_grid := GridContainer.new()
-	header_grid.columns = 4
-	header_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header_grid.add_theme_constant_override("h_separation", 10)
-	header_panel.add_child(header_grid)
-	for header_text in ["STAT", "APT", "TRAIN", "TOTAL"]:
-		var header_label := _label(header_text, 9, V2.MUTED, true)
-		header_label.custom_minimum_size.y = 20.0
-		if header_text != "STAT":
-			header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		header_grid.add_child(header_label)
+	var caption := _label("Innate aptitude + permanent training", 10, V2.MUTED)
+	caption.custom_minimum_size.y = 22.0
+	stack.add_child(caption)
+	stack.add_child(_header_row())
 
-	var grid := GridContainer.new()
-	grid.columns = 4
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 2)
-	stack.add_child(grid)
-	for key in ["hp", "mp", "atk", "def", "int", "speed", "mov"]:
+	var keys := ["hp", "mp", "atk", "def", "int", "speed", "mov"]
+	for index in range(keys.size()):
+		var key := String(keys[index])
 		var aptitude := int(instance.aptitudes.get(key, 0))
 		var training := int(instance.training.get(key, 0))
-		var stat_name: String = "SP" if key == "mp" else ("SPD" if key == "speed" else String(key).to_upper())
-		grid.add_child(_table_label(stat_name, V2.TEXT, true, false))
-		grid.add_child(_table_label("%+d%%" % aptitude, V2.CYAN if aptitude >= 0 else V2.RED, true, true))
-		grid.add_child(_table_label("%+d" % training, V2.AMBER if training > 0 else V2.MUTED, true, true))
-		grid.add_child(_table_label(_total_copy(aptitude, training), V2.GREEN if aptitude >= 0 and training >= 0 else V2.RED, true, true))
+		var stat_name := "SP" if key == "mp" else ("SPD" if key == "speed" else key.to_upper())
+		stack.add_child(_development_row(stat_name, aptitude, training, index))
 	return self
+
+
+func _header_row() -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size.y = 27.0
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(
+			Color(V2.SURFACE_ALT.r, V2.SURFACE_ALT.g, V2.SURFACE_ALT.b, 0.66),
+			Color.TRANSPARENT,
+			3,
+			Vector4(8.0, 2.0, 8.0, 2.0)
+		)
+	)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(row)
+	row.add_child(_cell("STAT", 9, V2.MUTED, true, false))
+	row.add_child(_cell("APT", 9, V2.MUTED, true, true))
+	row.add_child(_cell("TRAIN", 9, V2.MUTED, true, true))
+	row.add_child(_cell("TOTAL", 9, V2.MUTED, true, true))
+	return panel
+
+
+func _development_row(stat_name: String, aptitude: int, training: int, index: int) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size.y = 27.0
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fill := Color.TRANSPARENT
+	if index % 2 == 1:
+		fill = Color(V2.SURFACE_ALT.r, V2.SURFACE_ALT.g, V2.SURFACE_ALT.b, 0.18)
+	panel.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(fill, Color.TRANSPARENT, 2, Vector4(7.0, 1.0, 7.0, 1.0))
+	)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(row)
+
+	row.add_child(_cell(stat_name, 11, V2.MUTED, true, false))
+	row.add_child(_cell("%+d%%" % aptitude, 11, V2.CYAN if aptitude >= 0 else V2.RED, true, true))
+	row.add_child(_cell("%+d" % training, 11, V2.AMBER if training > 0 else V2.MUTED, true, true))
+	row.add_child(_cell(
+		_total_copy(aptitude, training),
+		11,
+		V2.GREEN if aptitude >= 0 and training >= 0 else V2.RED,
+		true,
+		true
+	))
+	return panel
+
+
+func _cell(text: String, font_size: int, color: Color, heading: bool, centered: bool) -> Label:
+	var label := _label(text, font_size, color, heading)
+	label.custom_minimum_size.x = 52.0 if not centered else 46.0
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL if centered else Control.SIZE_SHRINK_BEGIN
+	label.size_flags_stretch_ratio = 1.0
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if centered else HORIZONTAL_ALIGNMENT_LEFT
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	return label
 
 
 func _total_copy(aptitude: int, training: int) -> String:
@@ -71,14 +117,6 @@ func _total_copy(aptitude: int, training: int) -> String:
 	if aptitude == 0:
 		return "%+d" % training
 	return "%+d%% %+d" % [aptitude, training]
-
-
-func _table_label(text: String, color: Color, heading: bool, right: bool) -> Label:
-	var label := _label(text, 10, color, heading)
-	label.custom_minimum_size.y = 24.0
-	if right:
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	return label
 
 
 func _label(text: String, font_size: int, color: Color, heading: bool = false) -> Label:
