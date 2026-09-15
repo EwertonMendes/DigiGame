@@ -18,7 +18,6 @@ find_validated_run() {
   local integrated_success
   local legacy_total
   local legacy_success
-  local browser_regression_total
   local fast_gate_success
 
   while IFS= read -r run_id; do
@@ -75,14 +74,13 @@ find_validated_run() {
       return 0
     fi
 
-    # Rollout compatibility for the short-lived split architecture where Web
-    # contained only Fast Web gate and browser QA lived in post-web.yml. Preview
-    # deployment in that architecture depended on the successful Web gate, so
-    # preserving those artifacts matches the behavior users already had.
-    browser_regression_total="$(jq '[.jobs[] | select(.name | startswith("Browser regression · "))] | length' <<<"$jobs_json")"
+    # PR previews have always been build-gated rather than browser-QA-gated.
+    # Browser suites remain visible diagnostics on PRs and become mandatory on
+    # master before production Pages deployment. Accepting a successful fast gate
+    # here preserves previews for both the split rollout and the integrated flow.
     fast_gate_success="$(jq '[.jobs[] | select(.name == "Fast Web gate" and .conclusion == "success")] | length' <<<"$jobs_json")"
 
-    if [ "$browser_regression_total" = "0" ] && [ "$fast_gate_success" -ge 1 ]; then
+    if [ "$fast_gate_success" -ge 1 ]; then
       printf '%s\n' "$run_id"
       return 0
     fi
@@ -118,7 +116,7 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
 
   run_id="$(find_validated_run "$head_sha" || true)"
   if [ -z "$run_id" ]; then
-    echo "::warning::No validated Web workflow was found for open PR #${pr_number} at ${head_sha}; skipping its preview for this deployment."
+    echo "::warning::No usable Web workflow was found for open PR #${pr_number} at ${head_sha}; skipping its preview for this deployment."
     continue
   fi
 
@@ -130,7 +128,7 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
     --name digigame-web-build \
     --dir "$preview_dir"; then
     rm -rf "$preview_dir"
-    echo "::warning::Could not restore the Web artifact for PR #${pr_number} from validated run ${run_id}; its artifact may have expired."
+    echo "::warning::Could not restore the Web artifact for PR #${pr_number} from workflow run ${run_id}; its artifact may have expired."
     continue
   fi
 
@@ -138,13 +136,13 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
 DigiGame pull request preview
 PR: #${pr_number}
 Commit: ${head_sha}
-Restored from validated workflow run: ${run_id}
+Restored from workflow run: ${run_id}
 Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 EOF
 
   test -s "$preview_dir/index.html"
-  test -s "$preview_dir/index.wasm"
-  echo "Restored PR #${pr_number} from validated workflow run ${run_id}."
+test -s "$preview_dir/index.wasm"
+  echo "Restored PR #${pr_number} from workflow run ${run_id}."
 done < <(
   gh api \
     --paginate \
