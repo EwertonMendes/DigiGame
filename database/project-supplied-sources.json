@@ -17,7 +17,7 @@
       "name": "Zeke Greymon",
       "seed": "48b7a3e5-3e43-4819-96b8-673bfe67d5c1",
       "source_sheet": "res://assets/characters/zekegreymon/source/normalized-sheet.png",
-      "source_sha256": "d5b94a9852b1d7e2b58b59e5a3332c4b5b0ddb62549896ac2a5cdbd225ab117f",
+      "source_sha256": "0ae93d8c40009d1b25e25cd0c7ff6ddc0c5daa65e6bab59a67589d20ecd74402",
       "background": {
         "mode": "hsv_range",
         "hue_min": 195.0,
