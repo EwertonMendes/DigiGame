@@ -22,6 +22,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_input(true)
+	clip_contents = true
 	var style := V2.surface_style(Color(V2.BASE.r, V2.BASE.g, V2.BASE.b, 0.995), Color.TRANSPARENT, 0)
 	style.border_color = Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.60)
 	style.border_width_top = 1
@@ -35,8 +36,10 @@ func _ready() -> void:
 	add_child(margin)
 	_row = HBoxContainer.new()
 	_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_row.add_theme_constant_override("separation", 12)
 	_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_row.clip_contents = true
 	margin.add_child(_row)
 	_refresh()
 
@@ -122,12 +125,16 @@ func _refresh() -> void:
 	if _row == null:
 		return
 	for child in _row.get_children():
+		_row.remove_child(child)
 		child.queue_free()
 
 	_description = Label.new()
 	_description.text = _description_text
 	_description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_description.custom_minimum_size.x = 0.0
 	_description.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_description.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_description.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_description.add_theme_font_size_override("font_size", 12)
 	_description.add_theme_color_override("font_color", V2.MUTED)
 	V2.apply_body(_description)
@@ -156,6 +163,7 @@ func _refresh() -> void:
 		var copy := Label.new()
 		copy.text = String(hint.get("label", ""))
 		copy.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		copy.autowrap_mode = TextServer.AUTOWRAP_OFF
 		copy.add_theme_font_size_override("font_size", 11)
 		copy.add_theme_color_override("font_color", V2.MUTED)
 		V2.apply_body(copy)
