@@ -114,28 +114,51 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	await get_tree().process_frame
 
 	assert(digilab.visible, "Pressing E at the DigiLab terminal must open the DigiLab")
-	var root_frame := digilab.get("_frame") as Control
 	var create_screen := digilab.get("_create_screen") as Control
 	var party_screen := digilab.get("_party_screen") as Control
-	var digimon_screen := digilab.get("_digimon_menu") as Control
-	assert(root_frame != null and root_frame.visible, "DigiLab must open on its root service menu")
-	assert(create_screen != null and not create_screen.visible, "Create Digimon must stay hidden until explicitly selected")
-	assert(party_screen != null and not party_screen.visible, "Party / Storage must stay hidden until explicitly selected")
-	assert(digimon_screen != null and not digimon_screen.visible, "Digimon details must not open automatically with DigiLab")
-	var service_buttons: Array = digilab.get("_service_buttons")
-	assert(service_buttons.size() == 3, "DigiLab root must expose exactly three service cards")
-	for raw_button in service_buttons:
-		var service_button := raw_button as Button
-		assert(service_button != null and service_button.focus_mode == Control.FOCUS_ALL, "The whole DigiLab service card must be selectable with keyboard/gamepad")
-		assert(service_button.text.is_empty(), "DigiLab service cards must not depend on a separate OPEN button")
-	_assert_safe_service_frame(root_frame, "DigiLab")
+	assert(create_screen != null and create_screen.visible, "DigiLab must open directly on Convert Digi Data")
+	assert(party_screen != null and not party_screen.visible, "Party / Storage must stay hidden until its tab is selected")
+
+	var create_frame := create_screen.get("_frame") as Control
+	var create_header := create_screen.get("_header") as Control
+	var convert_tab := create_header.call("get_tab_button", "convert") as Button
+	var party_tab := create_header.call("get_tab_button", "party") as Button
+	assert(create_frame != null and create_frame.visible, "Convert Digi Data must expose the V2 full-screen workspace")
+	assert(convert_tab != null and party_tab != null, "DigiLab must expose Convert Digi Data and Party / Storage as its two primary tabs")
+	assert(convert_tab.focus_mode == Control.FOCUS_ALL and party_tab.focus_mode == Control.FOCUS_ALL, "DigiLab tabs must be keyboard/gamepad focusable")
+	var create_list_scroll := create_screen.get("_list_scroll") as ScrollContainer
+	var create_detail_scroll := create_screen.get("_detail_scroll") as ScrollContainer
+	assert(create_list_scroll != null and create_list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Digi Data Archive must use shared smooth/right-stick scrolling")
+	assert(create_detail_scroll != null and create_detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Digi Data details must use shared smooth/right-stick scrolling")
+	_assert_fullscreen_service_frame(create_frame, "Convert Digi Data")
+
+	digilab.call("_switch_tab", "party")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert(not create_screen.visible and party_screen.visible, "Selecting Party / Storage must switch workspaces without returning to a service-card menu")
+	var party_frame := party_screen.get("_frame") as Control
+	var party_header := party_screen.get("_header") as Control
+	assert(party_header.call("get_tab_button", "convert") != null and party_header.call("get_tab_button", "party") != null, "Party / Storage must retain the same two primary DigiLab tabs")
+	var party_list_scroll := party_screen.get("_list_scroll") as ScrollContainer
+	var party_detail_scroll := party_screen.get("_detail_scroll") as ScrollContainer
+	assert(party_list_scroll != null and party_list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Party collection must use shared smooth/right-stick scrolling")
+	assert(party_detail_scroll != null and party_detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Party details must use shared smooth/right-stick scrolling")
+	_assert_fullscreen_service_frame(party_frame, "Party / Storage")
 
 	hub.call("_close_digilab")
 	await get_tree().process_frame
-	assert(not digilab.visible, "Closing the root DigiLab must return to the Hub")
+	assert(not digilab.visible, "Closing DigiLab must return to the Hub")
 	assert(bool(player.get("movement_enabled")), "Closing DigiLab must restore overworld movement")
 	player.position = original_position
 	await get_tree().process_frame
+
+func _assert_fullscreen_service_frame(frame: Control, label: String) -> void:
+	assert(frame != null, "%s must expose its V2 workspace frame" % label)
+	var viewport_size := get_viewport().get_visible_rect().size
+	var effective_size := frame.size * frame.scale
+	assert(frame.position.x <= 1.0 and frame.position.y <= 1.0, "%s must align to the viewport origin" % label)
+	assert(effective_size.x >= viewport_size.x - 2.0, "%s must use the available viewport width" % label)
+	assert(effective_size.y >= viewport_size.y - 2.0, "%s must use the available viewport height" % label)
 
 func _assert_safe_service_frame(frame: Control, label: String) -> void:
 	assert(frame != null, "%s must expose a framed modal" % label)
