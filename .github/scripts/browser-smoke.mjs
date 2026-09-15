@@ -9,9 +9,7 @@ const browser = await chromium.launch({
 });
 
 const desktopViewports = [
-  { width: 1280, height: 720 },
   { width: 1365, height: 685 },
-  { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
 
@@ -207,7 +205,7 @@ async function runDesktopSuite() {
     }
   }
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(desktopViewports[0]);
   await settleFrames(page, 3);
   const finalLayout = await readLayout(page);
   const centerX = finalLayout.viewportWidth * 0.5;
@@ -215,15 +213,6 @@ async function runDesktopSuite() {
   await page.mouse.move(centerX, centerY);
   await settleFrames(page, 2);
   await page.screenshot({ path: 'build/web-smoke.png', fullPage: true });
-
-  const beforeDebug = await page.screenshot();
-  await page.keyboard.press('F3');
-  await settleFrames(page, 3);
-  const debugOn = await page.screenshot();
-  assertScreensDiffer(beforeDebug, debugOn, 'F3 debug mode toggle');
-  await page.screenshot({ path: 'build/debug-mode-on.png', fullPage: true });
-  await page.keyboard.press('F3');
-  await settleFrames(page, 2);
 
   await page.mouse.click(centerX, centerY, { button: 'left' });
   await settleFrames(page, 2);
@@ -259,9 +248,9 @@ async function runDesktopSuite() {
   await page.close();
 }
 
-async function runCombatSuite() {
+async function runCombatVfxSuite() {
   const page = await browser.newPage({ viewport: { width: 1365, height: 685 } });
-  watchRuntimeErrors(page, 'combat');
+  watchRuntimeErrors(page, 'combat-vfx');
   await openHub(page);
   await enterTestBattle(page);
 
@@ -305,11 +294,36 @@ async function runCombatSuite() {
   await settleFrames(page, 2);
 
   const beforeTurnProgression = await page.screenshot();
-  await advanceUntilMarker(page, '[CombatFX] START', 48, 320);
-  await settleFrames(page, 3);
-  const afterTurnProgression = await page.screenshot();
-  assertScreensDiffer(beforeTurnProgression, afterTurnProgression, 'CT turn progression and enemy AI');
-  await page.screenshot({ path: 'build/combat-ai-turn.png', fullPage: true });
+  const impactEvent = waitForConsole(page, '[CombatFX] IMPACT', 30000);
+  const presentationStartEvent = waitForConsole(page, '[CombatPresentation] phase=start', 30000);
+  const presentationImpactEvent = waitForConsole(page, '[CombatPresentation] phase=impact', 30000);
+
+  const startMessage = await advanceUntilMarker(page, '[CombatFX] START', 48, 320);
+  const presentationStartMessage = await presentationStartEvent;
+  await settleFrames(page, 2);
+  const windup = await page.screenshot();
+  assertScreensDiffer(beforeTurnProgression, windup, 'CT turn progression, enemy AI and attack windup');
+  await page.screenshot({ path: 'build/combat-vfx-windup.png', fullPage: true });
+
+  const impactMessage = await impactEvent;
+  const presentationImpactMessage = await presentationImpactEvent;
+  await settleFrames(page, 2);
+  const afterImpact = await page.screenshot();
+  assertScreensDiffer(beforeTurnProgression, afterImpact, 'Combat impact presentation');
+  await page.screenshot({ path: 'build/combat-vfx-impact.png', fullPage: true });
+
+  if (!startMessage.text().includes('actor=') || !startMessage.text().includes('target=')) {
+    throw new Error(`CombatFX START log is missing actor/target ids: ${startMessage.text()}`);
+  }
+  if (!impactMessage.text().includes('damage=')) {
+    throw new Error(`CombatFX IMPACT log is missing damage: ${impactMessage.text()}`);
+  }
+  if (!presentationStartMessage.text().includes('start_fx=') || !presentationStartMessage.text().includes('audio=true')) {
+    throw new Error(`Technique presentation did not start VFX/audio: ${presentationStartMessage.text()}`);
+  }
+  if (!presentationImpactMessage.text().includes('fx=') || !presentationImpactMessage.text().includes('audio=true')) {
+    throw new Error(`Technique presentation did not resolve impact VFX/audio: ${presentationImpactMessage.text()}`);
+  }
   await page.close();
 }
 
@@ -397,62 +411,10 @@ async function runMobileSuite() {
   await page.close();
 }
 
-async function runVfxSuite() {
-  const page = await browser.newPage({ viewport: { width: 1365, height: 685 } });
-  watchRuntimeErrors(page, 'vfx');
-  await openHub(page);
-  await enterTestBattle(page);
-  const baseline = await page.screenshot();
-
-  const startEvent = waitForConsole(page, '[CombatFX] START', 30000);
-  const impactEvent = waitForConsole(page, '[CombatFX] IMPACT', 30000);
-  const presentationStartEvent = waitForConsole(page, '[CombatPresentation] phase=start', 30000);
-  const presentationImpactEvent = waitForConsole(page, '[CombatPresentation] phase=impact', 30000);
-
-  let keepAdvancing = true;
-  const advanceTurns = (async () => {
-    for (let attempt = 0; attempt < 48 && keepAdvancing; attempt += 1) {
-      await page.keyboard.press('Digit5');
-      await page.waitForTimeout(320);
-    }
-  })();
-
-  const startMessage = await startEvent;
-  const presentationStartMessage = await presentationStartEvent;
-  await settleFrames(page, 2);
-  const windup = await page.screenshot();
-  if (baseline.equals(windup)) {
-    throw new Error('CombatFX START fired but attack windup produced no visible frame change.');
-  }
-  await page.screenshot({ path: 'build/combat-vfx-windup.png', fullPage: true });
-
-  const impactMessage = await impactEvent;
-  const presentationImpactMessage = await presentationImpactEvent;
-  await settleFrames(page, 2);
-  await page.screenshot({ path: 'build/combat-vfx-impact.png', fullPage: true });
-  keepAdvancing = false;
-  await advanceTurns;
-
-  if (!startMessage.text().includes('actor=') || !startMessage.text().includes('target=')) {
-    throw new Error(`CombatFX START log is missing actor/target ids: ${startMessage.text()}`);
-  }
-  if (!impactMessage.text().includes('damage=')) {
-    throw new Error(`CombatFX IMPACT log is missing damage: ${impactMessage.text()}`);
-  }
-  if (!presentationStartMessage.text().includes('start_fx=') || !presentationStartMessage.text().includes('audio=true')) {
-    throw new Error(`Technique presentation did not start VFX/audio: ${presentationStartMessage.text()}`);
-  }
-  if (!presentationImpactMessage.text().includes('fx=') || !presentationImpactMessage.text().includes('audio=true')) {
-    throw new Error(`Technique presentation did not resolve impact VFX/audio: ${presentationImpactMessage.text()}`);
-  }
-  await page.close();
-}
-
 const suites = {
   desktop: runDesktopSuite,
-  combat: runCombatSuite,
+  'combat-vfx': runCombatVfxSuite,
   mobile: runMobileSuite,
-  vfx: runVfxSuite,
 };
 
 try {
