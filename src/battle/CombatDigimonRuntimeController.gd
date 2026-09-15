@@ -16,6 +16,7 @@ func _spawn_demo_rosters() -> void:
 	if field == null or not field.has_method("grid_to_world"):
 		super._spawn_demo_rosters()
 		_prepare_existing_actors_for_intro()
+		refresh_occupancy_index()
 		orient_battle_actors_toward_opponents()
 		return
 
@@ -61,8 +62,8 @@ func _spawn_demo_rosters() -> void:
 	_spawn_team_from_plan(enemy_entries, false, enemy_plan.get("anchors", []), field)
 	refresh_occupancy_index()
 
-	# Initial facing is only authoritative after both teams have been created.
-	# Face each actor toward a real opponent rather than a fixed screen direction.
+	# Initial facing is only authoritative after both teams have been created. Face
+	# each actor toward a real opponent rather than a fixed screen direction.
 	orient_battle_actors_toward_opponents()
 
 
@@ -89,9 +90,6 @@ func _spawn_team_from_plan(entries: Array[Dictionary], player_controlled: bool, 
 		if actor != null:
 			var profile := String(entry.get("profile", ""))
 			if not profile.is_empty():
-				# Encounter profile is battle metadata, not a species property. Escape and
-				# future mission rules can inspect it without coupling those systems to the
-				# roster descriptor or DigimonFactory internals.
 				actor.set_meta("encounter_profile", profile)
 		_prepare_actor_for_intro(actor, field)
 
@@ -164,13 +162,8 @@ func _spawn_zone_candidates(field: Node2D, player_side: bool) -> Array[Vector2i]
 func _prepare_actor_for_intro(actor: CharacterBody2D, field: Node2D) -> void:
 	if actor == null:
 		return
-	# Center-facing is only a temporary fallback while the opposite roster may not
-	# exist yet. A second pass below replaces it with nearest-opponent facing.
 	if actor.has_method("face_toward_world_position"):
 		actor.call("face_toward_world_position", field.to_global(Vector2.ZERO))
-	# Only the real battle scene owns the cinematic opening. Isolated controller
-	# tests intentionally omit BattleController and need actors at their normal
-	# scale/opacity for pointer and overlap regressions.
 	if get_node_or_null("../BattleController") != null and actor.has_method("prepare_battle_spawn"):
 		actor.call("prepare_battle_spawn")
 
@@ -195,10 +188,10 @@ func face_actor_toward_nearest_opponent(actor: Node) -> void:
 	if not actor.has_method("face_toward_world_position"):
 		return
 
-	var actor_2d := actor as Node2D
 	var actor_team := bool(actor.get("is_player_controlled"))
+	var actor_cells := _actor_cells(actor)
 	var nearest: Node2D = null
-	var nearest_distance := INF
+	var nearest_distance := 999999
 	for candidate: Node in get_battle_digimons():
 		if candidate == actor or not candidate is Node2D:
 			continue
@@ -206,14 +199,16 @@ func face_actor_toward_nearest_opponent(actor: Node) -> void:
 			continue
 		if candidate.has_method("is_available_for_turn") and not bool(candidate.call("is_available_for_turn")):
 			continue
-		var candidate_2d := candidate as Node2D
-		var distance := actor_2d.global_position.distance_squared_to(candidate_2d.global_position)
+		var distance := FootprintScript.minimum_distance(actor_cells, _actor_cells(candidate))
 		if distance < nearest_distance:
 			nearest_distance = distance
-			nearest = candidate_2d
+			nearest = candidate as Node2D
 
 	if nearest != null:
-		actor.call("face_toward_world_position", nearest.global_position)
+		var target_world := nearest.global_position
+		if nearest.has_method("get_footprint_center_world"):
+			target_world = Vector2(nearest.call("get_footprint_center_world"))
+		actor.call("face_toward_world_position", target_world)
 		return
 
 	var field := get_node_or_null("../Blocks") as Node2D
@@ -244,10 +239,32 @@ func refresh_occupancy_index() -> void:
 	for actor: Node in get_battle_digimons():
 		if actor.has_method("is_available_for_turn") and not bool(actor.call("is_available_for_turn")):
 			continue
-		if not actor.has_method("get_occupied_grids"):
-			continue
-		for grid: Vector2i in actor.call("get_occupied_grids"):
+		var cells := _actor_cells(actor)
+		_update_actor_front_depth(actor, cells)
+		for grid: Vector2i in cells:
 			_occupancy_by_grid[grid] = actor
+
+
+func _actor_cells(actor: Node) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	if actor == null or not actor.has_method("get_occupied_grids"):
+		return result
+	var raw_cells = actor.call("get_occupied_grids")
+	if not raw_cells is Array:
+		return result
+	for raw_cell in raw_cells:
+		if raw_cell is Vector2i:
+			result.append(Vector2i(raw_cell))
+	return result
+
+
+func _update_actor_front_depth(actor: Node, cells: Array[Vector2i]) -> void:
+	if not actor is CanvasItem or cells.is_empty():
+		return
+	# Isometric world depth grows with x+y. Using the foremost occupied cell rather
+	# than the anchor/visual center keeps 2x2 bodies correctly layered against 1x1
+	# actors and terrain while they move.
+	(actor as CanvasItem).z_index = FootprintScript.isometric_front_depth(cells)
 
 
 func is_tile_occupied(tile_world_position: Vector2, ignored_digimon: Node = null) -> bool:
@@ -256,8 +273,8 @@ func is_tile_occupied(tile_world_position: Vector2, ignored_digimon: Node = null
 
 func get_digimon_under_pointer(world_position: Vector2) -> Node:
 	# Tactical interaction belongs to the occupied grid tile, not to a sprite's
-	# rectangular texture bounds. Large sprites (notably Greymon) can overlap the
-	# visual area of neighboring units and must never steal hover/target input.
+	# rectangular texture bounds. Large sprites can overlap neighboring visuals
+	# without stealing hover/target input.
 	var field := get_node_or_null("../Blocks") as Node2D
 	if field == null or not field.has_method("world_to_grid") or not field.has_method("grid_to_world"):
 		return null
