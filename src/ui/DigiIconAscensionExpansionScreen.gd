@@ -182,9 +182,13 @@ func _tier_info_card(title: String, tier: String, body_text: String, accent: Col
 	stack.add_theme_constant_override("separation", 4)
 	margin.add_child(stack)
 	var title_row := HBoxContainer.new()
+	title_row.custom_minimum_size.y = 24.0
 	title_row.add_theme_constant_override("separation", 8)
 	stack.add_child(title_row)
-	title_row.add_child(_single_line_label(title, 11, accent, true))
+	var title_label := _single_line_label(title, 11, accent, true)
+	title_label.custom_minimum_size = Vector2(72.0, 22.0)
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_row.add_child(title_label)
 	title_row.add_child(_tier_icon(tier, Vector2(34.0, 22.0)))
 	var body := _label(body_text, 9, V2.MUTED)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
