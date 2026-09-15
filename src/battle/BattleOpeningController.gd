@@ -42,11 +42,17 @@ func _start_battle() -> void:
 func _play_opening_sequence() -> void:
 	var camera := get_viewport().get_camera_2d()
 
-	# SceneTree's deferred battle bootstrap can run before the Web renderer has
-	# completed the first draw of the newly swapped scene. Wait for the renderer's
-	# real frame boundary rather than a timer before starting any presentation
-	# transforms. Native builds do not need this synchronization point.
+	# The destination scene becomes ready while DigitalSceneTransition is still
+	# revealing it. On Web, changing battle-world presentation transforms during
+	# that reveal makes two canvas presentation paths mutate the same viewport in
+	# the scene-swap window. Wait for the real transition lifecycle event first,
+	# then for the renderer to complete a draw of the uncovered battle scene. This
+	# is event-driven synchronization, not an arbitrary startup delay.
 	if OS.has_feature("web"):
+		if DigitalSceneTransition.is_transitioning():
+			await DigitalSceneTransition.transition_finished
+		if not is_inside_tree():
+			return
 		await RenderingServer.frame_post_draw
 		if not is_inside_tree():
 			return
