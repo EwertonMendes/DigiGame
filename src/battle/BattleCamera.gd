@@ -24,6 +24,12 @@ var _camera_move_start_position := Vector2.ZERO
 var _camera_move_target_position := Vector2.ZERO
 var _camera_move_start_zoom := 1.0
 var _camera_move_target_zoom := 1.0
+var _web_world_motion := false
+var _web_base_position := Vector2.ZERO
+var _web_base_zoom := 1.0
+var _web_view_position := Vector2.ZERO
+var _web_view_zoom := 1.0
+var _web_world_items: Array[CanvasItem] = []
 
 func _ready() -> void:
 	# The scripted cubic motion already provides the intended smoothing. Keeping
@@ -33,6 +39,9 @@ func _ready() -> void:
 	super._ready()
 	_battle_default_zoom = _preferred_battle_zoom()
 	zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
+	_web_world_motion = OS.has_feature("web")
+	if _web_world_motion:
+		_collect_web_world_items()
 
 func _process(delta: float) -> void:
 	if not _camera_move_active:
@@ -43,25 +52,37 @@ func _process(delta: float) -> void:
 	)
 	var progress := _camera_move_elapsed / _camera_move_duration
 	var eased_progress := _cubic_ease_in_out(progress)
-	zoom = Vector2.ONE * lerpf(
+	var current_zoom := lerpf(
 		_camera_move_start_zoom,
 		_camera_move_target_zoom,
 		eased_progress
 	)
-	global_position = _camera_move_start_position.lerp(
+	var current_position := _camera_move_start_position.lerp(
 		_camera_move_target_position,
 		eased_progress
 	)
+	if _web_world_motion:
+		_apply_web_world_view(current_position, current_zoom)
+	else:
+		zoom = Vector2.ONE * current_zoom
+		global_position = current_position
 	if _camera_move_elapsed < _camera_move_duration:
 		return
 
 	_camera_move_active = false
-	zoom = Vector2.ONE * _camera_move_target_zoom
-	global_position = _camera_move_target_position
-	_clamp_to_pan_bounds()
+	if _web_world_motion:
+		_apply_web_world_view(_camera_move_target_position, _camera_move_target_zoom)
+	else:
+		zoom = Vector2.ONE * _camera_move_target_zoom
+		global_position = _camera_move_target_position
+		_clamp_to_pan_bounds()
 	camera_move_finished.emit(_camera_move_generation)
 
 func _physics_process(delta: float) -> void:
+	if _camera_move_active:
+		_is_panning = false
+		_touch_positions.clear()
+		return
 	if _post_battle_locked():
 		_is_panning = false
 		_touch_positions.clear()
@@ -103,6 +124,19 @@ func animate_gameplay_focus(world_position: Vector2, duration: float = GAMEPLAY_
 	_battle_default_zoom = _preferred_battle_zoom()
 	var target_position := _safe_focus_position(world_position, _battle_default_zoom)
 	await _animate_camera_to(target_position, _battle_default_zoom, duration)
+
+func prepare_web_intro_base(world_position: Vector2) -> void:
+	if not _web_world_motion:
+		return
+	_refresh_pan_bounds()
+	_battle_default_zoom = _preferred_battle_zoom()
+	_web_base_zoom = _battle_default_zoom
+	_web_base_position = _safe_focus_position(world_position, _web_base_zoom)
+	_web_view_position = _web_base_position
+	_web_view_zoom = _web_base_zoom
+	zoom = Vector2.ONE * _web_base_zoom
+	global_position = _web_base_position
+	_apply_web_world_view(_web_base_position, _web_base_zoom)
 
 func focus_on(world_position: Vector2) -> void:
 	_refresh_pan_bounds()
@@ -150,20 +184,40 @@ func _preferred_intro_zoom() -> float:
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
 	# Camera2D property Tweens can hit an intermittent native Web/Wasm failure
 	# during battle-scene startup. Drive the same cubic ease directly from rendered
-	# frames with native Camera2D smoothing disabled, without changing the visible
-	# timing or introducing delay timers.
+	# frames; Web moves only the world presentation branches while native targets
+	# update Camera2D normally. Timing stays identical without delay timers.
 	_camera_move_generation += 1
 	var generation := _camera_move_generation
 	_camera_move_elapsed = 0.0
 	_camera_move_duration = maxf(0.05, duration)
-	_camera_move_start_position = global_position
+	_camera_move_start_position = _web_view_position if _web_world_motion else global_position
 	_camera_move_target_position = target_position
-	_camera_move_start_zoom = zoom.x
+	_camera_move_start_zoom = _web_view_zoom if _web_world_motion else zoom.x
 	_camera_move_target_zoom = target_zoom
 	_camera_move_active = true
 	await camera_move_finished
 	if generation != _camera_move_generation:
 		return
+
+func _collect_web_world_items() -> void:
+	_web_world_items.clear()
+	var main := get_tree().root.get_node_or_null("Main")
+	if main == null:
+		return
+	for node_name in ["Blocks", "DigimonController", "BattlePresentationFX"]:
+		var item := main.get_node_or_null(node_name) as CanvasItem
+		if item != null:
+			_web_world_items.append(item)
+
+func _apply_web_world_view(view_position: Vector2, view_zoom: float) -> void:
+	_web_view_position = view_position
+	_web_view_zoom = view_zoom
+	var scale_factor := view_zoom / maxf(_web_base_zoom, 0.01)
+	var render_transform := Transform2D.IDENTITY.scaled(Vector2.ONE * scale_factor)
+	render_transform.origin = _web_base_position - view_position * scale_factor
+	for item: CanvasItem in _web_world_items:
+		if is_instance_valid(item):
+			RenderingServer.canvas_item_set_transform(item.get_canvas_item(), render_transform)
 
 func _cubic_ease_in_out(value: float) -> float:
 	var progress := clampf(value, 0.0, 1.0)

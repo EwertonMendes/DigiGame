@@ -60,6 +60,9 @@ func _play_opening_sequence() -> void:
 
 	player_team.sort_custom(_sort_actor_left_to_right)
 	enemy_team.sort_custom(_sort_actor_left_to_right)
+	var first_turn_actor := _preview_first_turn_actor()
+	if first_turn_actor != null and camera != null and camera.has_method("prepare_web_intro_base"):
+		camera.call("prepare_web_intro_base", first_turn_actor.global_position)
 
 	var first_focus := true
 	first_focus = await _reveal_team(player_team, camera, first_focus)
@@ -71,7 +74,6 @@ func _play_opening_sequence() -> void:
 	# roster reveal to the actual first-turn Digimon at the gameplay zoom before
 	# showing BATTLE START, so combat begins already framed for play instead of
 	# snapping back to a distant whole-board overview.
-	var first_turn_actor := _preview_first_turn_actor()
 	if first_turn_actor != null and camera != null:
 		if camera.has_method("animate_gameplay_focus"):
 			await camera.call("animate_gameplay_focus", first_turn_actor.global_position)
