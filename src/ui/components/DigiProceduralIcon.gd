@@ -50,6 +50,8 @@ func _draw() -> void:
 			_draw_training(center, side, width)
 		"link":
 			_draw_link(center, side, width)
+		"bits":
+			_draw_bits(center, side, width)
 		_:
 			draw_circle(center, side * 0.18, _accent, false, width, true)
 			draw_line(center + Vector2(0.0, side * 0.03), center + Vector2(0.0, side * 0.20), _accent, width, true)
@@ -169,3 +171,17 @@ func _draw_link(center: Vector2, side: float, width: float) -> void:
 	draw_arc(center + Vector2(-s * 0.52, 0.0), s * 0.62, -0.9, 0.9, 18, _accent, width, true)
 	draw_arc(center + Vector2(s * 0.52, 0.0), s * 0.62, 2.25, 4.03, 18, _accent, width, true)
 	draw_line(center + Vector2(-s * 0.20, -s * 0.16), center + Vector2(s * 0.20, s * 0.16), _accent, width, true)
+
+
+func _draw_bits(center: Vector2, side: float, width: float) -> void:
+	var rx := side * 0.27
+	var ry := side * 0.095
+	var top_y := center.y - side * 0.17
+	for layer in range(3):
+		var y := top_y + float(layer) * side * 0.14
+		draw_arc(Vector2(center.x, y), rx, 0.0, TAU, 28, _accent, width, true)
+		if layer < 2:
+			draw_line(Vector2(center.x - rx, y), Vector2(center.x - rx, y + side * 0.14), _accent, width, true)
+			draw_line(Vector2(center.x + rx, y), Vector2(center.x + rx, y + side * 0.14), _accent, width, true)
+	# Small inner mark keeps the icon readable even at compact header sizes.
+	draw_arc(Vector2(center.x, top_y), maxf(1.0, rx * 0.42), 0.0, TAU, 20, _accent, width * 0.75, true)
