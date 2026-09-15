@@ -245,16 +245,18 @@ async function advanceUntilMarker(page, marker, attempts = 48, intervalMs = 320)
   return message;
 }
 
-async function probeDesktopViewport(viewport, captureLaptopBattle = false) {
+async function probeDesktopViewport(viewport, captureLaptopScreenshot = false) {
   const label = `desktop-${viewport.width}x${viewport.height}`;
   const probe = await browser.newPage({ viewport });
   watchRuntimeErrors(probe, label);
   try {
     await openHub(probe);
     assertViewportFill(await readLayout(probe));
-    if (captureLaptopBattle) {
-      await enterTestBattle(probe);
-      assertViewportFill(await readLayout(probe));
+    if (captureLaptopScreenshot) {
+      // This probe owns viewport/layout coverage only. Combat and VFX suites
+      // already validate a complete battle at 1365x685, so starting another
+      // cinematic here duplicates expensive randomized work without increasing
+      // functional coverage.
       await probe.mouse.move(viewport.width * 0.5, viewport.height * 0.5);
       await settleFrames(probe, 2);
       await probe.screenshot({ path: 'build/laptop-1365x685.png', fullPage: true });
@@ -297,6 +299,7 @@ async function runDesktopSuite() {
   // the exported game at that browser size: Godot can retain the previous CSS
   // canvas size after a scene transition. Validate every supported desktop size
   // in a clean page instead, which matches how players actually open the game.
+  // Battle behavior at 1365x685 is covered independently by combat and VFX.
   for (const viewport of desktopViewports.slice(1)) {
     await probeDesktopViewport(
       viewport,
