@@ -33,7 +33,7 @@ static func validate_story_layout(walkable_cells: Array[Vector2i], deployment_ce
 
 	var footprints: Array = []
 	for _index in range(maxi(1, team_size)):
-		footprints.append(BattleFootprint.LARGE_2X2)
+		footprints.append(BattleFootprintScript.LARGE_2X2)
 	var deployment := DeploymentPlannerScript.plan(footprints, deployment_cells)
 	result["deployment_ok"] = bool(deployment.get("ok", false))
 	result["deployment_anchors"] = (deployment.get("anchors", []) as Array).duplicate() if deployment.get("anchors", []) is Array else []
@@ -55,9 +55,6 @@ static func validate_story_layout(walkable_cells: Array[Vector2i], deployment_ce
 		if legal_set.has(anchor) and not visited.has(anchor):
 			visited[anchor] = true
 			frontier.append(anchor)
-	# Deployment planning may choose anchors valid inside the deployment mask but
-	# not inside the complete map mask. Fall back to every legal deployment anchor
-	# so authoring validation describes the map rather than planner ordering.
 	if frontier.is_empty():
 		for anchor: Vector2i in legal_anchors:
 			if _footprint_is_subset(anchor, deployment_cells):
@@ -94,7 +91,7 @@ static func _legal_large_anchors(walkable_cells: Array[Vector2i]) -> Array[Vecto
 	var result: Array[Vector2i] = []
 	for anchor: Vector2i in walkable_cells:
 		var valid := true
-		for occupied: Vector2i in BattleFootprintScript.occupied_grids(anchor, BattleFootprint.LARGE_2X2):
+		for occupied: Vector2i in BattleFootprintScript.occupied_grids(anchor, BattleFootprintScript.LARGE_2X2):
 			if not walkable.has(occupied):
 				valid = false
 				break
@@ -107,7 +104,7 @@ static func _footprint_is_subset(anchor: Vector2i, cells: Array[Vector2i]) -> bo
 	var cell_set: Dictionary = {}
 	for cell: Vector2i in cells:
 		cell_set[cell] = true
-	for occupied: Vector2i in BattleFootprintScript.occupied_grids(anchor, BattleFootprint.LARGE_2X2):
+	for occupied: Vector2i in BattleFootprintScript.occupied_grids(anchor, BattleFootprintScript.LARGE_2X2):
 		if not cell_set.has(occupied):
 			return false
 	return true
@@ -118,7 +115,7 @@ static func _objective_reachable(objective: Vector2i, visited_anchors: Dictionar
 		if not raw_anchor is Vector2i:
 			continue
 		var anchor := Vector2i(raw_anchor)
-		for occupied: Vector2i in BattleFootprintScript.occupied_grids(anchor, BattleFootprint.LARGE_2X2):
+		for occupied: Vector2i in BattleFootprintScript.occupied_grids(anchor, BattleFootprintScript.LARGE_2X2):
 			if occupied == objective:
 				return true
 	return false
