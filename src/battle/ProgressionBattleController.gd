@@ -7,11 +7,10 @@ var _reward_service = null
 
 
 func _ready() -> void:
-	# Diagnostic A/B: keep the current world track on Web so we can prove whether
-	# the intermittent WASM trap is caused by the music transition or by battle
-	# presentation. This branch-only probe is reverted after the diagnostic run.
-	if not OS.has_feature("web"):
-		MusicDirector.play_battle_1()
+	# The persistent director crossfades the current area theme into Battle 1 and
+	# keeps it alive for the encounter. Result themes replace it immediately when
+	# the battle ends; returning to the Hub asks the same director for Zone 1.
+	MusicDirector.play_battle_1()
 	_reward_service = BattleRewardServiceScript.new(OverworldState.get_database())
 	super._ready()
 

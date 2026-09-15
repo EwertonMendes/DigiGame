@@ -14,12 +14,12 @@ const GAMEPLAY_FOCUS_TIME := 0.46
 const PAN_EDGE_MARGIN_SCREEN := Vector2(168.0, 112.0)
 
 var _battle_default_zoom := DESKTOP_BATTLE_ZOOM
+var _camera_move_generation := 0
 
 func _ready() -> void:
 	super._ready()
 	_battle_default_zoom = _preferred_battle_zoom()
 	zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
-	_trace_web("ready zoom=%.3f" % zoom.x)
 
 func _physics_process(delta: float) -> void:
 	if _post_battle_locked():
@@ -53,13 +53,10 @@ func animate_opening_overview(duration: float = OPENING_ZOOM_TIME) -> void:
 	await _animate_camera_to(target_position, OPENING_BOOT_ZOOM, duration)
 
 func animate_intro_focus(world_position: Vector2, first_focus: bool = false) -> void:
-	_trace_web("intro-focus-enter first=%s" % str(first_focus))
 	_refresh_pan_bounds()
 	var target_zoom := _preferred_intro_zoom()
 	var duration := FIRST_FOCUS_MOVE_TIME if first_focus else FOCUS_MOVE_TIME
-	_trace_web("intro-focus-target zoom=%.3f duration=%.3f" % [target_zoom, duration])
 	await _animate_camera_to(world_position, target_zoom, duration)
-	_trace_web("intro-focus-exit")
 
 func animate_gameplay_focus(world_position: Vector2, duration: float = GAMEPLAY_FOCUS_TIME) -> void:
 	_refresh_pan_bounds()
@@ -111,17 +108,37 @@ func _preferred_intro_zoom() -> float:
 	return DESKTOP_INTRO_ZOOM
 
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
-	_trace_web("tween-create target_zoom=%.3f duration=%.3f" % [target_zoom, duration])
-	var tween := create_tween().set_parallel(true)
-	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(self, "zoom", Vector2.ONE * target_zoom, maxf(0.05, duration))
-	tween.tween_property(self, "global_position", target_position, maxf(0.05, duration))
-	_trace_web("tween-running")
-	await tween.finished
-	_trace_web("tween-finished")
+	# Camera2D property Tweens can hit an intermittent native Web/Wasm failure
+	# during battle-scene startup. Drive the same cubic ease directly from rendered
+	# frames so position and zoom stay on the normal Camera2D property path on every
+	# platform, without changing the visible timing or introducing delay timers.
+	_camera_move_generation += 1
+	var generation := _camera_move_generation
+	var start_position := global_position
+	var start_zoom := zoom.x
+	var move_duration := maxf(0.05, duration)
+	var elapsed := 0.0
+
+	while elapsed < move_duration:
+		await get_tree().process_frame
+		if generation != _camera_move_generation or not is_inside_tree():
+			return
+		elapsed = minf(move_duration, elapsed + maxf(get_process_delta_time(), 0.0))
+		var progress := elapsed / move_duration
+		var eased_progress := _cubic_ease_in_out(progress)
+		zoom = Vector2.ONE * lerpf(start_zoom, target_zoom, eased_progress)
+		global_position = start_position.lerp(target_position, eased_progress)
+
 	zoom = Vector2.ONE * target_zoom
 	global_position = target_position
 	_clamp_to_pan_bounds()
+
+func _cubic_ease_in_out(value: float) -> float:
+	var progress := clampf(value, 0.0, 1.0)
+	if progress < 0.5:
+		return 4.0 * progress * progress * progress
+	var inverse := -2.0 * progress + 2.0
+	return 1.0 - inverse * inverse * inverse * 0.5
 
 func _safe_focus_position(world_position: Vector2, target_zoom: float) -> Vector2:
 	var target := world_position
@@ -152,7 +169,3 @@ func _clamp_to_pan_bounds() -> void:
 		clampf(global_position.x, min_x, max_x),
 		clampf(global_position.y, min_y, max_y)
 	)
-
-func _trace_web(message: String) -> void:
-	if OS.has_feature("web"):
-		push_error("[CameraTrace] %s" % message)

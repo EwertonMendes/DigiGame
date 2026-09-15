@@ -4,7 +4,6 @@ const url = process.env.DIGIGAME_URL ?? 'http://127.0.0.1:8000';
 const requestedSuite = process.env.SMOKE_SUITE ?? 'desktop';
 const suite = requestedSuite === 'combat' || requestedSuite === 'vfx' ? 'combat-vfx' : requestedSuite;
 const runtimeErrors = [];
-let smokeStage = 'bootstrap';
 const browser = await chromium.launch({
   headless: true,
   executablePath: process.env.CHROME_BIN ?? '/usr/bin/google-chrome',
@@ -20,23 +19,10 @@ const mobileViewports = [
   { width: 844, height: 390 },
 ];
 
-function setStage(stage) {
-  smokeStage = stage;
-  console.log(`[Smoke] ${suite} stage=${stage}`);
-}
-
 function watchRuntimeErrors(page, label) {
-  page.on('pageerror', error => {
-    const detail = `${label} pageerror stage=${smokeStage}: ${error.stack || error.message}`;
-    runtimeErrors.push(detail);
-    console.log(`[Smoke] runtime-error ${detail}`);
-  });
+  page.on('pageerror', error => runtimeErrors.push(`${label} pageerror: ${error.message}`));
   page.on('console', message => {
-    if (message.type() === 'error') {
-      const detail = `${label} console stage=${smokeStage}: ${message.text()}`;
-      runtimeErrors.push(detail);
-      console.log(`[Smoke] runtime-error ${detail}`);
-    }
+    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${message.text()}`);
   });
 }
 
@@ -73,23 +59,19 @@ async function waitForCanvas(page) {
 }
 
 async function openHub(page) {
-  setStage('hub-open');
   const ready = waitForConsole(page, '[Hub] READY', 60000);
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForCanvas(page);
   await ready;
   await settleFrames(page, 3);
-  setStage('hub-ready');
 }
 
 async function reloadHub(page) {
-  setStage('hub-reload');
   const ready = waitForConsole(page, '[Hub] READY', 60000);
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForCanvas(page);
   await ready;
   await settleFrames(page, 3);
-  setStage('hub-reloaded');
 }
 
 async function confirmBattleDialog(page) {
@@ -101,21 +83,18 @@ async function confirmBattleDialog(page) {
 }
 
 async function waitForBattlePresentation(page) {
-  setStage('battle-intro');
   // The intro animation is presentation, not the browser test contract. Prefer
   // its completion marker, but do not fail solely because a throttled headless
-  // renderer delivers Tween.finished late. Combat QA below still proves that
+  // renderer delivers frame updates late. Combat QA below still proves that
   // the battle loop is interactive, and page/WASM errors remain hard failures.
   await Promise.race([
     waitForConsole(page, '[BattleIntro] BATTLE_START', 9000).catch(() => null),
     page.waitForTimeout(7000),
   ]);
   await settleFrames(page, 3);
-  setStage('battle-intro-complete');
 }
 
 async function enterTestBattle(page, captureDialogue = false) {
-  setStage('battle-dialog-open');
   const dialogueOpened = waitForConsole(page, '[Hub] DIALOGUE_OPEN');
   await page.keyboard.press('KeyE');
   await dialogueOpened;
@@ -128,12 +107,9 @@ async function enterTestBattle(page, captureDialogue = false) {
   const preloadReady = waitForConsole(page, '[Transition] PRELOAD_READY', 10000);
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
   const startedAt = Date.now();
-  setStage('battle-confirm');
   await confirmBattleDialog(page);
-  setStage('battle-loading');
   const [, preloadMessage] = await Promise.all([battleStarted, preloadReady, battleReady]);
   reportBattlePreload(preloadMessage, Date.now() - startedAt);
-  setStage('battle-ready');
   await waitForBattlePresentation(page);
 }
 
@@ -171,14 +147,12 @@ async function runDesktopSuite() {
   watchRuntimeErrors(page, 'desktop');
   await openHub(page);
 
-  setStage('desktop-menu');
   // Smoke the V2 menu surface without asserting exact pixels/layout values.
   await page.keyboard.press('KeyM');
   await settleFrames(page, 3);
   await page.screenshot({ path: 'build/digimon-technique-library.png', fullPage: true });
   await page.keyboard.press('Escape');
 
-  setStage('desktop-hub-movement');
   // Keep a real keyboard movement interaction in coverage.
   await page.keyboard.down('KeyA');
   await page.waitForTimeout(300);
@@ -189,20 +163,16 @@ async function runDesktopSuite() {
   await reloadHub(page);
   await page.screenshot({ path: 'build/hub-smoke.png', fullPage: true });
   await enterTestBattle(page, true);
-  setStage('desktop-battle-screenshot');
   await page.screenshot({ path: 'build/web-smoke.png', fullPage: true });
 
   // Resizing itself is the contract here. Godot/Web may update the backing
   // canvas on a later renderer tick, so exact CSS pixel equality is too brittle.
   for (const viewport of desktopViewports) {
-    setStage(`desktop-resize-${viewport.width}x${viewport.height}`);
     await page.setViewportSize(viewport);
     await settleFrames(page, 4);
-    setStage(`desktop-screenshot-${viewport.width}x${viewport.height}`);
     await page.screenshot({ path: `build/desktop-${viewport.width}x${viewport.height}.png`, fullPage: true });
   }
 
-  setStage('desktop-close');
   await page.close();
 }
 
@@ -212,7 +182,6 @@ async function runCombatVfxSuite() {
   await openHub(page);
   await enterTestBattle(page);
 
-  setStage('combat-vfx-turns');
   // Validate the battle itself, not fragile command-menu pixels. Advancing turns
   // must produce a real attack and its presentation/VFX/audio markers.
   const impactEvent = waitForConsole(page, '[CombatFX] IMPACT', 30000);
@@ -240,7 +209,6 @@ async function runCombatVfxSuite() {
     throw new Error(`Technique presentation did not resolve impact VFX/audio: ${presentationImpactMessage.text()}`);
   }
 
-  setStage('combat-vfx-close');
   await page.close();
 }
 
@@ -255,7 +223,6 @@ async function runMobileSuite() {
   await openHub(page);
   await page.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
 
-  setStage('mobile-menu');
   // V2 menu should open/close on the mobile-sized viewport, but exact pixels are
   // deliberately not part of this regression contract.
   await page.keyboard.press('KeyM');
@@ -263,7 +230,6 @@ async function runMobileSuite() {
   await page.screenshot({ path: 'build/digimon-technique-library-mobile.png', fullPage: true });
   await page.keyboard.press('Escape');
 
-  setStage('mobile-hub-movement');
   const client = await page.context().newCDPSession(page);
   const hubTouchStarted = waitForConsole(page, '[Hub] TOUCH_MOVE direction=right pressed=true');
   await dispatchTouch(client, 'touchStart', [{ x: 163, y: 739 }]);
@@ -274,7 +240,6 @@ async function runMobileSuite() {
   await page.screenshot({ path: 'build/hub-mobile-movement.png', fullPage: true });
 
   await reloadHub(page);
-  setStage('mobile-battle-dialog');
   const mobileDialogueOpened = waitForConsole(page, '[Hub] DIALOGUE_OPEN');
   await page.touchscreen.tap(320, 776);
   await mobileDialogueOpened;
@@ -285,21 +250,15 @@ async function runMobileSuite() {
   const preloadReady = waitForConsole(page, '[Transition] PRELOAD_READY', 10000);
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
   const startedAt = Date.now();
-  setStage('mobile-battle-confirm');
   await confirmBattleDialog(page);
-  setStage('mobile-battle-loading');
   const [, preloadMessage] = await Promise.all([battleStarted, preloadReady, battleReady]);
   reportBattlePreload(preloadMessage, Date.now() - startedAt);
-  setStage('mobile-battle-ready');
   await waitForBattlePresentation(page);
-  setStage('mobile-battle-screenshot');
   await page.screenshot({ path: 'build/mobile-portrait.png', fullPage: true });
 
-  setStage(`mobile-resize-${mobileViewports[1].width}x${mobileViewports[1].height}`);
   await page.setViewportSize(mobileViewports[1]);
   await settleFrames(page, 4);
   await page.screenshot({ path: 'build/mobile-landscape.png', fullPage: true });
-  setStage('mobile-close');
   await page.close();
 }
 

@@ -8,16 +8,13 @@ var _opening_running := false
 
 
 func _start_battle() -> void:
-	_trace_web("start_battle-enter")
 	if _controller == null:
-		_trace_web("start_battle-no-controller")
 		return
 
 	_turn_order.clear()
 	for child in _controller.get_children():
 		if child is CharacterBody2D:
 			_turn_order.append(child)
-	_trace_web("turn-order-ready count=%d" % _turn_order.size())
 	if _turn_order.is_empty():
 		return
 
@@ -33,11 +30,9 @@ func _start_battle() -> void:
 	_turn_index = -1
 	_opening_running = true
 	_set_gameplay_ui_visible(false)
-	_trace_web("opening-state-ready")
 
 	await _play_opening_sequence()
 
-	_trace_web("opening-sequence-finished")
 	_opening_running = false
 	_input_locked = false
 	_set_gameplay_ui_visible(true)
@@ -45,17 +40,13 @@ func _start_battle() -> void:
 
 
 func _play_opening_sequence() -> void:
-	_trace_web("opening-enter")
 	var camera := get_viewport().get_camera_2d()
-	_trace_web("camera-resolved valid=%s" % str(camera != null))
 
 	# Re-evaluate facing only after both rosters exist. This makes every actor look
 	# toward a real opposing Digimon instead of relying on a generic map-center
 	# direction while the encounter is still being instantiated.
 	if _controller != null and _controller.has_method("orient_battle_actors_toward_opponents"):
-		_trace_web("orient-all-begin")
 		_controller.call("orient_battle_actors_toward_opponents")
-		_trace_web("orient-all-end")
 
 	var player_team: Array[Node] = []
 	var enemy_team: Array[Node] = []
@@ -69,7 +60,6 @@ func _play_opening_sequence() -> void:
 
 	player_team.sort_custom(_sort_actor_left_to_right)
 	enemy_team.sort_custom(_sort_actor_left_to_right)
-	_trace_web("teams-ready player=%d enemy=%d" % [player_team.size(), enemy_team.size()])
 
 	var first_focus := true
 	first_focus = await _reveal_team(player_team, camera, first_focus)
@@ -83,12 +73,10 @@ func _play_opening_sequence() -> void:
 	# snapping back to a distant whole-board overview.
 	var first_turn_actor := _preview_first_turn_actor()
 	if first_turn_actor != null and camera != null:
-		_trace_web("first-turn-focus-begin actor=%s" % first_turn_actor.name)
 		if camera.has_method("animate_gameplay_focus"):
 			await camera.call("animate_gameplay_focus", first_turn_actor.global_position)
 		elif camera.has_method("focus_on"):
 			camera.call("focus_on", first_turn_actor.global_position)
-		_trace_web("first-turn-focus-end actor=%s" % first_turn_actor.name)
 		print("[BattleIntro] FIRST_TURN_FOCUS actor=%s" % first_turn_actor.name)
 
 	await _play_battle_start_banner()
@@ -100,27 +88,20 @@ func _reveal_team(team: Array[Node], camera: Camera2D, first_focus: bool) -> boo
 		if actor == null or not is_instance_valid(actor):
 			continue
 
-		_trace_web("reveal-begin actor=%s" % actor.name)
 		# Keep the logical facing fresh immediately before the close-up. The camera
 		# move finishes first, then the Digimon materializes while actually centered
 		# on screen. This produces a readable roster introduction instead of six
 		# simultaneous effects on a distant board.
 		if _controller != null and _controller.has_method("face_actor_toward_nearest_opponent"):
-			_trace_web("face-begin actor=%s" % actor.name)
 			_controller.call("face_actor_toward_nearest_opponent", actor)
-			_trace_web("face-end actor=%s" % actor.name)
 		if camera != null and camera.has_method("animate_intro_focus"):
-			_trace_web("camera-focus-await-begin actor=%s" % actor.name)
 			await camera.call("animate_intro_focus", actor.global_position, is_first_focus)
-			_trace_web("camera-focus-await-end actor=%s" % actor.name)
 		elif camera != null and camera.has_method("focus_on"):
 			camera.call("focus_on", actor.global_position)
 		print("[BattleIntro] CAMERA actor=%s team=%s" % [actor.name, "player" if bool(actor.get("is_player_controlled")) else "enemy"])
 
 		if actor.has_method("play_battle_spawn_animation"):
-			_trace_web("spawn-await-begin actor=%s" % actor.name)
 			await actor.call("play_battle_spawn_animation")
-			_trace_web("spawn-await-end actor=%s" % actor.name)
 		else:
 			actor.visible = true
 			actor.modulate = Color.WHITE
@@ -169,11 +150,6 @@ func _sort_actor_left_to_right(a: Node, b: Node) -> bool:
 	if is_equal_approx(a_node.global_position.x, b_node.global_position.x):
 		return a_node.global_position.y < b_node.global_position.y
 	return a_node.global_position.x < b_node.global_position.x
-
-
-func _trace_web(message: String) -> void:
-	if OS.has_feature("web"):
-		push_error("[BattleTrace] %s" % message)
 
 
 func is_opening_sequence_active() -> bool:

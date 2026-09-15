@@ -18,11 +18,13 @@ const SILENT_VOLUME_DB := -60.0
 const TRACKS := {
 	TRACK_ZONE_1: {
 		"path": "res://assets/audio/music/zone_1.ogg",
+		# Exploration music stays present while gameplay SFX remain slightly ahead.
 		"volume_db": -3.0,
 		"loop": true,
 	},
 	TRACK_BATTLE_1: {
 		"path": "res://assets/audio/music/battle_1.ogg",
+		# Battle music has more perceived density, so leave a little extra headroom.
 		"volume_db": -6.0,
 		"loop": true,
 	},
@@ -51,7 +53,6 @@ func _ready() -> void:
 	_player.volume_db = SILENT_VOLUME_DB
 	_player.finished.connect(_on_player_finished)
 	add_child(_player)
-	_trace_web("ready")
 
 
 func _exit_tree() -> void:
@@ -79,18 +80,15 @@ func play_game_over(fade_seconds: float = 0.0) -> void:
 
 
 func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
-	_trace_web("play-track-begin id=%s current=%s" % [track_id, _current_track_id])
 	if not TRACKS.has(track_id):
 		push_warning("[Music] Unknown track: %s" % track_id)
 		return
 	if _player == null:
 		return
 	if _current_track_id == track_id and _player.playing:
-		_trace_web("play-track-same-active id=%s" % track_id)
 		return
 
 	var stream := _stream_for(track_id)
-	_trace_web("stream-loaded id=%s valid=%s" % [track_id, str(stream != null)])
 	if stream == null:
 		push_error("[Music] Could not load track: %s" % track_id)
 		return
@@ -100,13 +98,16 @@ func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECOND
 	_cancel_transition()
 	var generation := _transition_generation
 
+	# With no active decoder there is nothing to fade out. Start immediately so
+	# initial scene music and one-shot result themes retain their previous timing.
 	if duration <= 0.0 or not _player.playing:
-		_trace_web("start-immediate id=%s" % track_id)
 		_start_stream(track_id, stream, target_volume)
 		return
 
+	# Fade through silence rather than crossfading two AudioStreamPlayers. Only one
+	# native decoder is alive at any moment, which keeps scene transitions stable on
+	# Web and reduces the peak resource cost on every platform.
 	var leg_duration := maxf(0.01, duration * 0.5)
-	_trace_web("fade-through-begin id=%s leg=%.3f" % [track_id, leg_duration])
 	_transition = create_tween()
 	_transition.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	_transition.tween_property(_player, "volume_db", SILENT_VOLUME_DB, leg_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -125,6 +126,7 @@ func stop(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
 	if duration <= 0.0 or not _player.playing:
 		_release_player_stream()
 		return
+
 	_transition = create_tween()
 	_transition.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	_transition.tween_property(_player, "volume_db", SILENT_VOLUME_DB, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -144,26 +146,35 @@ func _stream_for(track_id: String) -> AudioStream:
 	var path := str(definition.get("path", ""))
 	if path.is_empty():
 		return null
+
+	# Runtime loading is intentional: during a clean Godot import the Ogg importer
+	# is not yet registered when autoload scripts are first parsed. By runtime the
+	# imported stream is available on desktop and Web. ResourceLoader owns reuse;
+	# MusicDirector deliberately keeps no additional strong cache reference so an
+	# inactive music stream can be released as soon as the player lets it go.
 	var stream := ResourceLoader.load(path) as AudioStream
 	if stream == null:
 		return null
+
+	# Configure the imported resource directly instead of duplicating the complete
+	# compressed stream. Each semantic track owns a distinct resource path, so this
+	# is safe and avoids a second in-memory copy of large music files.
 	var should_loop := bool(definition.get("loop", true))
 	if stream is AudioStreamOggVorbis:
 		(stream as AudioStreamOggVorbis).loop = should_loop
 	elif stream is AudioStreamMP3:
 		(stream as AudioStreamMP3).loop = should_loop
+
 	return stream
 
 
 func _start_stream(track_id: String, stream: AudioStream, target_volume: float) -> void:
 	if _player == null:
 		return
-	_trace_web("player-start-before id=%s" % track_id)
 	_player.stop()
 	_player.stream = stream
 	_player.volume_db = target_volume
 	_player.play()
-	_trace_web("player-start-after id=%s" % track_id)
 	_current_track_id = track_id
 	track_changed.emit(track_id)
 
@@ -171,12 +182,10 @@ func _start_stream(track_id: String, stream: AudioStream, target_volume: float) 
 func _swap_stream(generation: int, track_id: String, stream: AudioStream) -> void:
 	if generation != _transition_generation or _player == null:
 		return
-	_trace_web("swap-before id=%s" % track_id)
 	_player.stop()
 	_player.stream = stream
 	_player.volume_db = SILENT_VOLUME_DB
 	_player.play()
-	_trace_web("swap-after id=%s" % track_id)
 	_current_track_id = track_id
 	track_changed.emit(track_id)
 
@@ -184,7 +193,6 @@ func _swap_stream(generation: int, track_id: String, stream: AudioStream) -> voi
 func _finish_transition(generation: int) -> void:
 	if generation != _transition_generation:
 		return
-	_trace_web("transition-finished current=%s" % _current_track_id)
 	_transition = null
 
 
@@ -216,8 +224,3 @@ func _on_player_finished() -> void:
 		_player.volume_db = SILENT_VOLUME_DB
 	_current_track_id = ""
 	track_changed.emit("")
-
-
-func _trace_web(message: String) -> void:
-	if OS.has_feature("web"):
-		push_error("[MusicTrace] %s" % message)
