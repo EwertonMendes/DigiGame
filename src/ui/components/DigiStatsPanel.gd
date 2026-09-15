@@ -3,21 +3,37 @@ class_name DigiStatsPanel
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const StatRowScript = preload("res://src/ui/components/DigiStatRow.gd")
-const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
+const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 
 
 func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) -> DigiStatsPanel:
 	for child in get_children():
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE, Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.24), 10))
-	var margin := _margin(9, 7, 9, 7)
-	add_child(margin)
+	add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(
+			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.92),
+			Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.30),
+			10,
+			Vector4(6.0, 6.0, 6.0, 7.0),
+			0.08
+		)
+	)
+
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 3)
-	margin.add_child(body)
-	body.add_child(_label("COMBAT STATS", 11, V2.CYAN, true))
-	body.add_child(_separator())
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 5)
+	add_child(body)
+	var header := SectionHeaderScript.new() as DigiSectionHeader
+	header.configure("COMBAT STATS", "", V2.CYAN, "sword")
+	body.add_child(header)
+
+	var content := _margin(4, 1, 4, 1)
+	body.add_child(content)
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 4)
+	content.add_child(rows)
 
 	var max_hp := maxi(1, int(stats.get("hp", 0)))
 	var max_sp := maxi(1, int(stats.get("sp", stats.get("mp", 0))))
@@ -25,15 +41,14 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 	var sp_now := clampi(max_sp if current_sp < 0 else current_sp, 0, max_sp)
 	var hp_row := StatRowScript.new() as DigiStatRow
 	hp_row.configure("HP", hp_now, float(max_hp), "heart", V2.GREEN, true, "%d / %d" % [hp_now, max_hp])
-	body.add_child(hp_row)
+	rows.add_child(hp_row)
 	var sp_row := StatRowScript.new() as DigiStatRow
 	sp_row.configure("SP", sp_now, float(max_sp), "bolt", V2.BLUE, true, "%d / %d" % [sp_now, max_sp])
-	body.add_child(sp_row)
-	body.add_child(_separator())
+	rows.add_child(sp_row)
+	rows.add_child(_separator())
 
-	# Secondary combat stats deliberately stay numeric-only. Apart from matching
-	# the prototype, this keeps the hierarchy meaningful: only resources that
-	# deplete during play (HP/SP) use progress bars.
+	# Only resources that deplete during play use bars. Secondary stats keep the
+	# same value column as HP/SP so the numbers read as one disciplined table.
 	var entries := [
 		["ATK", "atk", "sword", V2.ORANGE],
 		["DEF", "def", "shield", V2.CYAN],
@@ -43,35 +58,10 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 	]
 	for entry in entries:
 		var value := int(stats.get(String(entry[1]), 0))
-		body.add_child(_numeric_row(String(entry[0]), value, String(entry[2]), entry[3] as Color))
+		var row := StatRowScript.new() as DigiStatRow
+		row.configure(String(entry[0]), value, 1.0, String(entry[2]), entry[3] as Color, false, str(value))
+		rows.add_child(row)
 	return self
-
-
-func _numeric_row(label_text: String, value: int, icon_kind: String, accent: Color) -> Control:
-	var row := HBoxContainer.new()
-	row.custom_minimum_size.y = 21.0
-	row.add_theme_constant_override("separation", 7)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var icon := IconScript.new() as DigiProceduralIcon
-	icon.custom_minimum_size = Vector2(17.0, 17.0)
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.configure(icon_kind, accent, 1.7)
-	row.add_child(icon)
-
-	var name_label := _label(label_text, 10, V2.MUTED, false)
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(name_label)
-
-	var value_label := _label(str(value), 11, V2.TEXT, true)
-	value_label.custom_minimum_size.x = 48.0
-	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(value_label)
-	return row
 
 
 func _separator() -> ColorRect:
@@ -80,18 +70,6 @@ func _separator() -> ColorRect:
 	rule.color = V2.separator_color(0.24)
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return rule
-
-
-func _label(text: String, font_size: int, color: Color, heading: bool = false) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	if heading:
-		V2.apply_heading(label)
-	else:
-		V2.apply_body(label)
-	return label
 
 
 func _margin(left: int, top: int, right: int, bottom: int) -> MarginContainer:
