@@ -2,6 +2,7 @@ extends "res://src/ui/DigiLabPartyStorageScreen.gd"
 class_name DigiIconPartyStorageScreen
 
 const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
+const AttributeChip = preload("res://src/ui/components/DigiAttributeChip.gd")
 const AssetIcons = preload("res://src/ui/components/DigiUiAssetIcons.gd")
 
 
@@ -66,6 +67,13 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, active: 
 
 func _identity_card(instance: DigimonInstance, species: Dictionary, display_name: String, rank: String, accent: Color, active: bool, party_index: int) -> Control:
 	var panel := super._identity_card(instance, species, display_name, rank, accent, active, party_index)
+	var attribute := String(species.get("attribute", "Free"))
+	var family := String(species.get("species", species.get("family", "Unknown")))
+	AttributeChip.replace_text_pill(panel, attribute)
+	AttributeChip.normalize_text_pill_height(panel, rank.to_upper())
+	AttributeChip.normalize_text_pill_height(panel, attribute.to_upper())
+	AttributeChip.normalize_text_pill_height(panel, family.to_upper())
+
 	var tier_label := _find_label_starting_with(panel, "TIER ")
 	if tier_label != null:
 		var parent := tier_label.get_parent()
