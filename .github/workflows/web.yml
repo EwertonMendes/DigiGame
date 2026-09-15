@@ -241,9 +241,11 @@ jobs:
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository
+    # PR previews are review environments. Publish every validated/exported build
+    # even while browser smoke jobs continue independently; production remains
+    # fully gated by browser-smoke below.
     needs:
       - build-web
-      - browser-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 8
     concurrency:
@@ -334,7 +336,7 @@ jobs:
 
           **[Open DigiGame PR #${PR_NUMBER}](${PREVIEW_URL})**
 
-          Build: \`${SHORT_SHA}\` · validated by the Web, desktop, mobile, combat and VFX jobs before deployment.
+          Build: \`${SHORT_SHA}\` · validated, exported and published for manual review. Desktop, mobile, combat and VFX smoke jobs continue independently and remain required before production merge/deploy.
 
           Other open PR previews are preserved in the same Pages deployment."
 
