@@ -2,9 +2,6 @@ extends Control
 class_name BattleStartBanner
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
-const WEB_REVEAL_TIME := 0.20
-const WEB_HOLD_TIME := 0.62
-const WEB_FADE_TIME := 0.15
 
 var _banner: Control = null
 var _backdrop: Panel = null
@@ -35,71 +32,19 @@ func play() -> void:
 	_left_rule.modulate.a = 0.0
 	_right_rule.modulate.a = 0.0
 
-	if OS.has_feature("web"):
-		await _play_frame_driven_web()
-	else:
-		var tween := create_tween()
-		tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tween.tween_property(_banner, "modulate:a", 1.0, 0.10)
-		tween.parallel().tween_property(_kicker, "modulate:a", 1.0, 0.13).set_delay(0.02)
-		tween.parallel().tween_property(_title, "modulate:a", 1.0, 0.15).set_delay(0.03)
-		tween.parallel().tween_property(_title, "scale", Vector2.ONE, 0.16).set_delay(0.03)
-		tween.parallel().tween_property(_left_rule, "modulate:a", 1.0, 0.14).set_delay(0.04)
-		tween.parallel().tween_property(_right_rule, "modulate:a", 1.0, 0.14).set_delay(0.04)
-		tween.tween_interval(0.62)
-		tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tween.tween_property(_banner, "modulate:a", 0.0, 0.15)
-		await tween.finished
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_banner, "modulate:a", 1.0, 0.10)
+	tween.parallel().tween_property(_kicker, "modulate:a", 1.0, 0.13).set_delay(0.02)
+	tween.parallel().tween_property(_title, "modulate:a", 1.0, 0.15).set_delay(0.03)
+	tween.parallel().tween_property(_title, "scale", Vector2.ONE, 0.16).set_delay(0.03)
+	tween.parallel().tween_property(_left_rule, "modulate:a", 1.0, 0.14).set_delay(0.04)
+	tween.parallel().tween_property(_right_rule, "modulate:a", 1.0, 0.14).set_delay(0.04)
+	tween.tween_interval(0.62)
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(_banner, "modulate:a", 0.0, 0.15)
+	await tween.finished
 
-	_reset_visual_state()
-	print("[BattleIntro] BATTLE_START")
-
-
-func _play_frame_driven_web() -> void:
-	# The Web battle opening deliberately avoids awaiting render-owned Tweens while
-	# the scene is settling. Reproduce the same reveal/hold/fade timing from normal
-	# process frames so completing the banner cannot block the combat hand-off.
-	var elapsed := 0.0
-	while elapsed < WEB_REVEAL_TIME:
-		await get_tree().process_frame
-		elapsed = minf(WEB_REVEAL_TIME, elapsed + maxf(get_process_delta_time(), 0.0))
-		_banner.modulate.a = _quad_ease_out(elapsed, 0.10)
-		_kicker.modulate.a = _quad_ease_out(maxf(0.0, elapsed - 0.02), 0.13)
-		_title.modulate.a = _quad_ease_out(maxf(0.0, elapsed - 0.03), 0.15)
-		var title_scale_progress := _quad_ease_out(maxf(0.0, elapsed - 0.03), 0.16)
-		_title.scale = (Vector2.ONE * 0.96).lerp(Vector2.ONE, title_scale_progress)
-		_left_rule.modulate.a = _quad_ease_out(maxf(0.0, elapsed - 0.04), 0.14)
-		_right_rule.modulate.a = _quad_ease_out(maxf(0.0, elapsed - 0.04), 0.14)
-
-	_banner.modulate.a = 1.0
-	_kicker.modulate.a = 1.0
-	_title.modulate.a = 1.0
-	_title.scale = Vector2.ONE
-	_left_rule.modulate.a = 1.0
-	_right_rule.modulate.a = 1.0
-
-	elapsed = 0.0
-	while elapsed < WEB_HOLD_TIME:
-		await get_tree().process_frame
-		elapsed = minf(WEB_HOLD_TIME, elapsed + maxf(get_process_delta_time(), 0.0))
-
-	elapsed = 0.0
-	while elapsed < WEB_FADE_TIME:
-		await get_tree().process_frame
-		elapsed = minf(WEB_FADE_TIME, elapsed + maxf(get_process_delta_time(), 0.0))
-		var progress := _quad_ease_in(elapsed, WEB_FADE_TIME)
-		_banner.modulate.a = lerpf(1.0, 0.0, progress)
-
-
-func _quad_ease_out(elapsed: float, duration: float) -> float:
-	return float(Tween.interpolate_value(0.0, 1.0, elapsed, duration, Tween.TRANS_QUAD, Tween.EASE_OUT))
-
-
-func _quad_ease_in(elapsed: float, duration: float) -> float:
-	return float(Tween.interpolate_value(0.0, 1.0, elapsed, duration, Tween.TRANS_QUAD, Tween.EASE_IN))
-
-
-func _reset_visual_state() -> void:
 	visible = false
 	_banner.modulate = Color.WHITE
 	_kicker.modulate = Color.WHITE
@@ -107,6 +52,7 @@ func _reset_visual_state() -> void:
 	_title.scale = Vector2.ONE
 	_left_rule.modulate = Color.WHITE
 	_right_rule.modulate = Color.WHITE
+	print("[BattleIntro] BATTLE_START")
 
 
 func _build_ui() -> void:
