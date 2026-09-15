@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 30,
+  "count": 44,
   "species": [
     {
       "name": "Geo Greymon",
@@ -610,6 +610,286 @@
       "field_cell": [
         36,
         43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Veedramon",
+      "seed": "c7b9e0f3-2d5a-4e6b-8c1d-9f0e3a5d7b2c",
+      "rank": "Champion",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/veedramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/veedramon/field.png",
+      "field_metadata": "res://assets/characters/veedramon/field.json",
+      "portrait_strip": "res://assets/characters/veedramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/veedramon/portrait_frames.json",
+      "source_id": 188,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        34,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "AeroVeedramon",
+      "seed": "a43b028d-860e-4b36-93f9-c3d3b52db64c",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/aeroveedramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/aeroveedramon/field.png",
+      "field_metadata": "res://assets/characters/aeroveedramon/field.json",
+      "portrait_strip": "res://assets/characters/aeroveedramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/aeroveedramon/portrait_frames.json",
+      "source_id": 276,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        36
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Goldramon",
+      "seed": "48756847-94ea-46e6-aae4-ed75c0dd8e1f",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/goldramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/goldramon/field.png",
+      "field_metadata": "res://assets/characters/goldramon/field.json",
+      "portrait_strip": "res://assets/characters/goldramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/goldramon/portrait_frames.json",
+      "source_id": 354,
+      "profile": "two_rows_lower_region_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "ExVeemon",
+      "seed": "a7d0f3e9-1c5b-4e6a-8c2b-9f3a5e0d7b6c",
+      "rank": "Champion",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/exveemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/exveemon/field.png",
+      "field_metadata": "res://assets/characters/exveemon/field.json",
+      "portrait_strip": "res://assets/characters/exveemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/exveemon/portrait_frames.json",
+      "source_id": 108,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        36,
+        41
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Magnamon",
+      "seed": "038b0f79-2341-4c3b-8c77-7984c3341ab1",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/magnamon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/magnamon/field.png",
+      "field_metadata": "res://assets/characters/magnamon/field.json",
+      "portrait_strip": "res://assets/characters/magnamon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/magnamon/portrait_frames.json",
+      "source_id": 289,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        33,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Flamedramon",
+      "seed": "49d6dd17-71b4-41ae-844c-2f18410a8d31",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/flamedramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/flamedramon/field.png",
+      "field_metadata": "res://assets/characters/flamedramon/field.json",
+      "portrait_strip": "res://assets/characters/flamedramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/flamedramon/portrait_frames.json",
+      "source_id": 288,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        33,
+        41
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Dinohumon",
+      "seed": "b9c0f3a7-2d5a-4e6b-8c1d-9f0e3a5d7b2c",
+      "rank": "Champion",
+      "attribute": "Data",
+      "resource": "res://assets/resources/dinohumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/dinohumon/field.png",
+      "field_metadata": "res://assets/characters/dinohumon/field.json",
+      "portrait_strip": "res://assets/characters/dinohumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/dinohumon/portrait_frames.json",
+      "source_id": 120,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "field_cell": [
+        33,
+        39
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Paildramon",
+      "seed": "36fad7a1-ec3c-4781-bc2b-db41f0d79e01",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/paildramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/paildramon/field.png",
+      "field_metadata": "res://assets/characters/paildramon/field.json",
+      "portrait_strip": "res://assets/characters/paildramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/paildramon/portrait_frames.json",
+      "source_id": 224,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Imperialdramon (Dragon Mode)",
+      "seed": "f9a2b8c3-4e5d-4f7b-9c1e-8d6f3a2b5c7e",
+      "rank": "Mega",
+      "attribute": "Data",
+      "resource": "res://assets/resources/imperialdramon (dragon mode).tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/imperialdramondragonmode/field.png",
+      "field_metadata": "res://assets/characters/imperialdramondragonmode/field.json",
+      "portrait_strip": "res://assets/characters/imperialdramondragonmode/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/imperialdramondragonmode/portrait_frames.json",
+      "source_id": 314,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        47
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Imperialdramon (Fighter Mode)",
+      "seed": "a1b3c5d7-6e8f-4a2b-9c4d-5e7f8a9b1c2d",
+      "rank": "Mega",
+      "attribute": "Data",
+      "resource": "res://assets/resources/imperialdramon (fighter mode).tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/imperialdramonfightermode/field.png",
+      "field_metadata": "res://assets/characters/imperialdramonfightermode/field.json",
+      "portrait_strip": "res://assets/characters/imperialdramonfightermode/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/imperialdramonfightermode/portrait_frames.json",
+      "source_id": 315,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        46
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Cyberdramon",
+      "seed": "0fc5bcd7-7cbe-4aa7-8c60-1225d2b297d9",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/cyberdramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/cyberdramon/field.png",
+      "field_metadata": "res://assets/characters/cyberdramon/field.json",
+      "portrait_strip": "res://assets/characters/cyberdramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/cyberdramon/portrait_frames.json",
+      "source_id": 222,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Justimon",
+      "seed": "03598e86-91f9-4afa-ad89-6e4bc8511eac",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/justimon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/justimon/field.png",
+      "field_metadata": "res://assets/characters/justimon/field.json",
+      "portrait_strip": "res://assets/characters/justimon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/justimon/portrait_frames.json",
+      "source_id": 361,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        34,
+        46
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Blue Greymon",
+      "seed": "a351a4ab-a5bf-42df-8a27-bb2d8ce06d0b",
+      "rank": "Champion",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/blue greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/bluegreymon/field.png",
+      "field_metadata": "res://assets/characters/bluegreymon/field.json",
+      "portrait_strip": "res://assets/characters/bluegreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/bluegreymon/portrait_frames.json",
+      "source_id": null,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        45
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Blue Metal Greymon",
+      "seed": "34af8b92-9237-4f39-b45d-0d6c073d98c1",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/blue metal greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/bluemetalgreymon/field.png",
+      "field_metadata": "res://assets/characters/bluemetalgreymon/field.json",
+      "portrait_strip": "res://assets/characters/bluemetalgreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/bluemetalgreymon/portrait_frames.json",
+      "source_id": null,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        37,
+        55
       ],
       "portrait_frames": 4
     }

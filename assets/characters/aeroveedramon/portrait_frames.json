@@ -1,0 +1,14 @@
+{
+  "source": "AeroVeedramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/AeroVeedramon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "faa96aa7c447d4be59ead81fbaed1c98561c5187f8c82cbbfe3a6cbbabfb1e26"
+}
