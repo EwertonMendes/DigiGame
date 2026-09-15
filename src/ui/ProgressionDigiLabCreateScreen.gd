@@ -10,12 +10,18 @@ func open_lab() -> void:
 	super.open_lab()
 
 
+func _select_species(species_name: String) -> void:
+	var changed := _selected_name.to_lower() != species_name.to_lower()
+	super._select_species(species_name)
+	if changed and _detail_scroll != null:
+		_detail_scroll.scroll_vertical = 0
+
+
 func _refresh_list() -> void:
 	if _lab_mode == "records":
 		super._refresh_list()
 		return
-	for child in _list_box.get_children():
-		child.queue_free()
+	_clear_children_now(_list_box)
 	_data_buttons.clear()
 
 	var known_names: Dictionary = {}
@@ -119,8 +125,7 @@ func _data_button(species_name: String, amount: int) -> Button:
 	copy.add_theme_constant_override("separation", 3)
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
-	var name_label := _single_line_label(species_name, 15, V2.TEXT, true)
-	copy.add_child(name_label)
+	copy.add_child(_single_line_label(species_name, 15, V2.TEXT, true))
 	copy.add_child(_single_line_label("%s  ·  %d / %d DATA" % [rank, amount, required], 10, accent, true))
 	var progress_row := HBoxContainer.new()
 	progress_row.add_theme_constant_override("separation", 8)
@@ -155,8 +160,7 @@ func _refresh_detail() -> void:
 	if _lab_mode == "records":
 		super._refresh_detail()
 		return
-	for child in _detail_body.get_children():
-		child.queue_free()
+	_clear_children_now(_detail_body)
 	if _selected_name.is_empty():
 		_detail_body.add_child(_empty_state("Choose a species from the Digi Data Archive to inspect its reconstruction progress."))
 		return
@@ -176,6 +180,7 @@ func _refresh_detail() -> void:
 
 	var hero := PanelContainer.new()
 	hero.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hero.clip_contents = true
 	hero.add_theme_stylebox_override("panel", V2.surface_style(V2.PANEL_DEEP, Color(accent.r, accent.g, accent.b, 0.42), 8))
 	_detail_body.add_child(hero)
 	var hero_margin := _margin(16, 14, 16, 14)
@@ -224,16 +229,16 @@ func _refresh_detail() -> void:
 	var description := String(species.get("description", "")).strip_edges()
 	if not description.is_empty():
 		var description_label := _label(description, 10, V2.MUTED)
+		description_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		description_label.max_lines_visible = 2
 		description_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		info.add_child(description_label)
 
-	var data_row := HFlowContainer.new()
+	var data_row := HBoxContainer.new()
 	data_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	data_row.add_theme_constant_override("h_separation", 12)
-	data_row.add_theme_constant_override("v_separation", 6)
+	data_row.add_theme_constant_override("separation", 12)
 	info.add_child(data_row)
-	var data_value := _single_line_label("%d / %d DIGI DATA" % [available, required], 20, V2.AMBER, true)
+	var data_value := _semantic_label("%d / %d DIGI DATA" % [available, required], 20, V2.AMBER, true)
 	data_value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	data_row.add_child(data_value)
 	data_row.add_child(_pill("%d%% · %s" % [int(round(percent)), state], state_color))
@@ -241,6 +246,7 @@ func _refresh_detail() -> void:
 
 	_detail_body.add_child(_subsection("RECONSTRUCTION OPTIONS", "Data is consumed when a new Digimon is created.", V2.CYAN))
 	var explainer := _label("Choose the amount of Digi Data to invest. Spending beyond the species threshold grants a small starting Potential bonus to the new individual.", 10, V2.MUTED)
+	explainer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	explainer.custom_minimum_size.y = 34
 	_detail_body.add_child(explainer)
 
@@ -265,6 +271,7 @@ func _refresh_detail() -> void:
 
 	_detail_body.add_child(_subsection("NEW INDIVIDUAL", "Persistent collection member", V2.PURPLE))
 	var note := _label("The reconstructed Digimon joins Storage at Level 1 with its own persistent identity. Multiple individuals of the same species are allowed.", 10, V2.MUTED)
+	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	note.custom_minimum_size.y = 34
 	_detail_body.add_child(note)
 
@@ -307,6 +314,25 @@ func _reconstruction_option(species_name: String, amount: int, available: int, r
 	return button
 
 
+func _subsection(title: String, subtitle: String, accent: Color) -> Control:
+	var panel := PanelContainer.new()
+	panel.clip_contents = true
+	panel.add_theme_stylebox_override("panel", V2.header_strip_style(6))
+	var margin := _margin(12, 7, 12, 7)
+	panel.add_child(margin)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	margin.add_child(row)
+	var title_label := _semantic_label(title, 11, accent, true)
+	title_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	row.add_child(title_label)
+	var subtitle_label := _single_line_label(subtitle, 9, V2.SUBTLE)
+	subtitle_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(subtitle_label)
+	return panel
+
+
 func _single_line_label(text: String, size: int, color: Color, bold: bool = false) -> Label:
 	var label := _label(text, size, color, bold)
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -314,8 +340,15 @@ func _single_line_label(text: String, size: int, color: Color, bold: bool = fals
 	return label
 
 
+func _semantic_label(text: String, size: int, color: Color, bold: bool = false) -> Label:
+	var label := _single_line_label(text, size, color, bold)
+	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	label.clip_text = false
+	return label
+
+
 func _pill(text: String, accent: Color) -> Label:
-	var label := _single_line_label(text, 9, accent, true)
+	var label := _semantic_label(text, 9, accent, true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	label.add_theme_stylebox_override("normal", V2.pill_style(accent, true))
