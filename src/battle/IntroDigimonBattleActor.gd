@@ -3,7 +3,7 @@ extends "res://src/battle/DigimonBattleActor.gd"
 const SPAWN_RISE := Vector2(0.0, 18.0)
 const SPAWN_IN_TIME := 0.16
 const SPAWN_SETTLE_TIME := 0.20
-const VISUAL_TWEEN_WATCHDOG_MS := 1500
+const VISUAL_TWEEN_WATCHDOG_MS := 900
 
 var _spawn_prepared := false
 var _spawn_base_position := Vector2.ZERO
