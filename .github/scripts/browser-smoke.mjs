@@ -2,10 +2,21 @@ import { chromium } from 'playwright';
 
 const url = process.env.DIGIGAME_URL ?? 'http://127.0.0.1:8000';
 const suite = process.env.SMOKE_SUITE ?? 'desktop';
+const introTimeoutMs = Number(process.env.BATTLE_INTRO_TIMEOUT_MS ?? 90000);
 const runtimeErrors = [];
 const browser = await chromium.launch({
   headless: true,
   executablePath: process.env.CHROME_BIN ?? '/usr/bin/google-chrome',
+  // Godot's opening sequence is animation/tween driven. Headless Chromium can
+  // aggressively throttle RAF/timers when it considers a surface backgrounded
+  // or occluded, turning a ~5s presentation into a false 60s CI timeout. Keep
+  // the renderer active instead of weakening any gameplay assertions.
+  args: [
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
+    '--disable-features=CalculateNativeWinOcclusion',
+  ],
 });
 
 const desktopViewports = [
@@ -78,10 +89,9 @@ async function enterTestBattle(page, captureDialogue = false) {
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
   // The opening is intentionally sequential (camera reveals, six spawn
-  // presentations, first-turn focus and the banner). Shared CI runners can
-  // render that sequence much slower than real hardware, so keep the final
-  // marker mandatory while allowing enough time for the full presentation.
-  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 60000);
+  // presentations, first-turn focus and the banner). Keep its completion
+  // mandatory, but allow a conservative ceiling for shared software renderers.
+  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', introTimeoutMs);
   // Confirmation dialogs now default to the safe/cancel action. Explicitly
   // navigate to the affirmative action before accepting it.
   await page.keyboard.press('ArrowRight');
@@ -450,10 +460,9 @@ async function runMobileSuite() {
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
-  // Same sequential opening contract as desktop; keep BATTLE_START mandatory,
-  // but do not fail a loaded battle solely because a headless runner renders
-  // the cinematic presentation slower than 30 seconds.
-  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 60000);
+  // Same sequential opening contract as desktop. This remains mandatory; the
+  // launch flags above prevent headless Chromium from throttling its tweens.
+  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', introTimeoutMs);
   const dialogLayout = await readLayout(page);
   const confirmPoint = mobileBattleConfirmPoint(dialogLayout);
   await page.touchscreen.tap(confirmPoint.x, confirmPoint.y);
