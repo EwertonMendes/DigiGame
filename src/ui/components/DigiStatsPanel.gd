@@ -3,6 +3,7 @@ class_name DigiStatsPanel
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const StatRowScript = preload("res://src/ui/components/DigiStatRow.gd")
+const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
 
 
 func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) -> DigiStatsPanel:
@@ -10,10 +11,10 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE, Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.24), 10))
-	var margin := _margin(10, 9, 10, 9)
+	var margin := _margin(9, 7, 9, 7)
 	add_child(margin)
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 4)
+	body.add_theme_constant_override("separation", 3)
 	margin.add_child(body)
 	body.add_child(_label("COMBAT STATS", 11, V2.CYAN, true))
 	body.add_child(_separator())
@@ -30,6 +31,9 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 	body.add_child(sp_row)
 	body.add_child(_separator())
 
+	# Secondary combat stats deliberately stay numeric-only. Apart from matching
+	# the prototype, this keeps the hierarchy meaningful: only resources that
+	# deplete during play (HP/SP) use progress bars.
 	var entries := [
 		["ATK", "atk", "sword", V2.ORANGE],
 		["DEF", "def", "shield", V2.CYAN],
@@ -39,10 +43,35 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 	]
 	for entry in entries:
 		var value := int(stats.get(String(entry[1]), 0))
-		var row := StatRowScript.new() as DigiStatRow
-		row.configure(String(entry[0]), value, 1.0, String(entry[2]), entry[3] as Color, false, str(value))
-		body.add_child(row)
+		body.add_child(_numeric_row(String(entry[0]), value, String(entry[2]), entry[3] as Color))
 	return self
+
+
+func _numeric_row(label_text: String, value: int, icon_kind: String, accent: Color) -> Control:
+	var row := HBoxContainer.new()
+	row.custom_minimum_size.y = 21.0
+	row.add_theme_constant_override("separation", 7)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var icon := IconScript.new() as DigiProceduralIcon
+	icon.custom_minimum_size = Vector2(17.0, 17.0)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.configure(icon_kind, accent, 1.7)
+	row.add_child(icon)
+
+	var name_label := _label(label_text, 10, V2.MUTED, false)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(name_label)
+
+	var value_label := _label(str(value), 11, V2.TEXT, true)
+	value_label.custom_minimum_size.x = 48.0
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(value_label)
+	return row
 
 
 func _separator() -> ColorRect:
