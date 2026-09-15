@@ -112,6 +112,22 @@ function assertViewportFill(layout) {
   }
 }
 
+async function resizeViewportAndWait(page, viewport) {
+  await page.setViewportSize(viewport);
+  // Chromium normally emits resize synchronously, but a resize can land while
+  // Godot is finishing a scene transition. Dispatching once after the viewport
+  // change and waiting for the canvas contract avoids racing that transition
+  // without weakening the fill assertion itself.
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return false;
+    const rect = canvas.getBoundingClientRect();
+    return rect.width / window.innerWidth >= 0.98 && rect.height / window.innerHeight >= 0.98;
+  }, null, { timeout: 4000 });
+  await settleFrames(page, 2);
+}
+
 function assertScreensDiffer(before, after, description) {
   if (before.equals(after)) {
     throw new Error(`${description} did not visibly change the rendered game.`);
@@ -201,8 +217,7 @@ async function runDesktopSuite() {
   await enterTestBattle(page, true);
 
   for (const viewport of desktopViewports) {
-    await page.setViewportSize(viewport);
-    await settleFrames(page, 3);
+    await resizeViewportAndWait(page, viewport);
     assertViewportFill(await readLayout(page));
     if (viewport.width === 1365 && viewport.height === 685) {
       await page.mouse.move(viewport.width * 0.5, viewport.height * 0.5);
@@ -211,8 +226,7 @@ async function runDesktopSuite() {
     }
   }
 
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await settleFrames(page, 3);
+  await resizeViewportAndWait(page, { width: 1440, height: 900 });
   const finalLayout = await readLayout(page);
   const centerX = finalLayout.viewportWidth * 0.5;
   const centerY = finalLayout.viewportHeight * 0.5;
@@ -357,9 +371,10 @@ async function runMobileSuite() {
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
   const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
-  await page.keyboard.press('ArrowRight');
-  await settleFrames(page, 1);
-  await page.keyboard.press('Enter');
+  // This is the touch suite: activate the visible affirmative action by touch
+  // instead of relying on a synthetic keyboard focus change after a touch tap.
+  const dialogLayout = await readLayout(page);
+  await page.touchscreen.tap(dialogLayout.viewportWidth * 0.70, dialogLayout.viewportHeight * 0.555);
   await Promise.all([battleStarted, battleReady, introReady]);
   await settleFrames(page, 4);
 
@@ -396,8 +411,7 @@ async function runMobileSuite() {
   assertScreensDiffer(beforePinch, afterPinch, 'Pinch zoom');
   await page.screenshot({ path: 'build/mobile-pinch-zoom.png', fullPage: true });
 
-  await page.setViewportSize(mobileViewports[1]);
-  await settleFrames(page, 4);
+  await resizeViewportAndWait(page, mobileViewports[1]);
   assertViewportFill(await readLayout(page));
   await page.screenshot({ path: 'build/mobile-landscape.png', fullPage: true });
   await page.close();
