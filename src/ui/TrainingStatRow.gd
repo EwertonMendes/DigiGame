@@ -23,7 +23,7 @@ var _accent := Color.WHITE
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	clip_contents = true
-	custom_minimum_size.y = 58.0
+	custom_minimum_size.y = 66.0
 	_build()
 
 
@@ -143,7 +143,7 @@ func _build() -> void:
 func _step_button(text: String, accent: Color, tooltip: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(48.0, 42.0)
+	button.custom_minimum_size = Vector2(52.0, 52.0)
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.tooltip_text = tooltip
