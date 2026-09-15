@@ -2,10 +2,9 @@ extends Node
 
 ## Persistent background-music coordinator shared by world and battle scenes.
 ##
-## Two AudioStreamPlayers stay alive as an autoload so scene changes can
-## crossfade instead of cutting music abruptly. Track selection is centralized
-## here so future areas, bosses, and story scenes only request a semantic track
-## id instead of owning their own music players.
+## Music transitions intentionally keep a single decoder active at a time.
+## This avoids overlapping native Ogg decoders during scene changes while still
+## providing a smooth fade-through-silence transition between semantic tracks.
 
 signal track_changed(track_id: String)
 
@@ -41,22 +40,29 @@ const TRACKS := {
 	},
 }
 
-var _players: Array[AudioStreamPlayer] = []
-var _active_index := -1
+var _player: AudioStreamPlayer = null
 var _current_track_id := ""
-var _crossfade: Tween = null
+var _transition: Tween = null
+var _transition_generation := 0
 var _stream_cache: Dictionary = {}
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for index in range(2):
-		var player := AudioStreamPlayer.new()
-		player.name = "MusicPlayer%d" % (index + 1)
-		player.volume_db = SILENT_VOLUME_DB
-		player.finished.connect(_on_player_finished.bind(index))
-		add_child(player)
-		_players.append(player)
+	_player = AudioStreamPlayer.new()
+	_player.name = "MusicPlayer"
+	_player.volume_db = SILENT_VOLUME_DB
+	_player.finished.connect(_on_player_finished)
+	add_child(_player)
+
+
+func _exit_tree() -> void:
+	_cancel_transition()
+	if _player != null:
+		_player.stop()
+		_player.stream = null
+	_stream_cache.clear()
+	_current_track_id = ""
 
 
 func play_zone_1(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
@@ -76,77 +82,57 @@ func play_game_over(fade_seconds: float = 0.0) -> void:
 
 
 func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
-	print("[MusicTrace] REQUEST track=%s current=%s" % [track_id, _current_track_id])
 	if not TRACKS.has(track_id):
 		push_warning("[Music] Unknown track: %s" % track_id)
 		return
-	if _current_track_id == track_id and _active_index >= 0 and _players[_active_index].playing:
-		print("[MusicTrace] ALREADY_PLAYING track=%s" % track_id)
+	if _player == null:
+		return
+	if _current_track_id == track_id and _player.playing:
 		return
 
 	var stream := _stream_for(track_id)
 	if stream == null:
 		push_error("[Music] Could not load track: %s" % track_id)
 		return
-	print("[MusicTrace] STREAM_READY track=%s type=%s" % [track_id, stream.get_class()])
 
-	if _crossfade != null and is_instance_valid(_crossfade):
-		_crossfade.kill()
-		_crossfade = null
-
-	var previous_index := _active_index
-	var next_index := 0 if previous_index != 0 else 1
-	var next_player := _players[next_index]
-	var previous_player: AudioStreamPlayer = _players[previous_index] if previous_index >= 0 else null
 	var target_volume := float((TRACKS[track_id] as Dictionary).get("volume_db", -3.0))
-
-	if next_player.playing:
-		next_player.stop()
-	next_player.stream = stream
-	next_player.volume_db = SILENT_VOLUME_DB
-	next_player.play()
-	print("[MusicTrace] PLAYER_STARTED track=%s player=%d" % [track_id, next_index])
-
-	_active_index = next_index
-	_current_track_id = track_id
-	track_changed.emit(track_id)
-
 	var duration := maxf(fade_seconds, 0.0)
-	if duration <= 0.0:
-		next_player.volume_db = target_volume
-		if previous_player != null and previous_player != next_player:
-			previous_player.stop()
+	_cancel_transition()
+	var generation := _transition_generation
+
+	# With no active decoder there is nothing to fade out. Start immediately so
+	# initial scene music and one-shot result themes retain their previous timing.
+	if duration <= 0.0 or not _player.playing:
+		_start_stream(track_id, stream, target_volume)
 		return
 
-	_crossfade = create_tween()
-	_crossfade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	_crossfade.set_parallel(true)
-	_crossfade.tween_property(next_player, "volume_db", target_volume, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	if previous_player != null and previous_player.playing and previous_player != next_player:
-		_crossfade.tween_property(previous_player, "volume_db", SILENT_VOLUME_DB, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_crossfade.set_parallel(false)
-	_crossfade.tween_callback(_finish_crossfade.bind(previous_player, next_player))
+	# Fade through silence rather than crossfading two AudioStreamPlayers. Only one
+	# native decoder is alive at any moment, which keeps scene transitions stable on
+	# Web and reduces the peak resource cost on every platform.
+	var leg_duration := maxf(0.01, duration * 0.5)
+	_transition = create_tween()
+	_transition.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_transition.tween_property(_player, "volume_db", SILENT_VOLUME_DB, leg_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_transition.tween_callback(_swap_stream.bind(generation, track_id, stream))
+	_transition.tween_property(_player, "volume_db", target_volume, leg_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_transition.tween_callback(_finish_transition.bind(generation))
 
 
 func stop(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
-	if _active_index < 0:
+	if _player == null:
 		return
-	var active := _players[_active_index]
 	_current_track_id = ""
-	if _crossfade != null and is_instance_valid(_crossfade):
-		_crossfade.kill()
-		_crossfade = null
-	if fade_seconds <= 0.0 or not active.playing:
-		active.stop()
-		_active_index = -1
+	_cancel_transition()
+	var generation := _transition_generation
+	var duration := maxf(fade_seconds, 0.0)
+	if duration <= 0.0 or not _player.playing:
+		_release_player_stream()
 		return
-	_crossfade = create_tween()
-	_crossfade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	_crossfade.tween_property(active, "volume_db", SILENT_VOLUME_DB, fade_seconds).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_crossfade.tween_callback(func():
-		active.stop()
-		_active_index = -1
-	)
+
+	_transition = create_tween()
+	_transition.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_transition.tween_property(_player, "volume_db", SILENT_VOLUME_DB, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_transition.tween_callback(_finish_stop.bind(generation))
 
 
 func current_track_id() -> String:
@@ -159,7 +145,6 @@ func has_track(track_id: String) -> bool:
 
 func _stream_for(track_id: String) -> AudioStream:
 	if _stream_cache.has(track_id):
-		print("[MusicTrace] CACHE_HIT track=%s" % track_id)
 		return _stream_cache[track_id] as AudioStream
 
 	var definition := TRACKS[track_id] as Dictionary
@@ -167,37 +152,79 @@ func _stream_for(track_id: String) -> AudioStream:
 	if path.is_empty():
 		return null
 
-	# Keep loading runtime-based instead of preload-based: during a clean Godot
-	# import, the Ogg importer has not registered the resource yet when autoload
-	# scripts are first parsed. By _ready/runtime the import exists and ResourceLoader
-	# can resolve the file normally on desktop and Web.
-	print("[MusicTrace] LOAD_BEGIN track=%s path=%s" % [track_id, path])
-	var source := ResourceLoader.load(path) as AudioStream
-	if source == null:
+	# Runtime loading is intentional: during a clean Godot import the Ogg importer
+	# is not yet registered when autoload scripts are first parsed. By runtime the
+	# imported stream is available on desktop and Web.
+	var stream := ResourceLoader.load(path) as AudioStream
+	if stream == null:
 		return null
-	print("[MusicTrace] LOAD_DONE track=%s" % track_id)
 
-	var stream := source.duplicate() as AudioStream
+	# Configure the imported resource directly instead of duplicating the complete
+	# compressed stream. Each semantic track owns a distinct resource path, so this
+	# is safe and avoids a second in-memory copy of large music files.
 	var should_loop := bool(definition.get("loop", true))
 	if stream is AudioStreamOggVorbis:
 		(stream as AudioStreamOggVorbis).loop = should_loop
 	elif stream is AudioStreamMP3:
 		(stream as AudioStreamMP3).loop = should_loop
-	print("[MusicTrace] DUPLICATE_READY track=%s loop=%s" % [track_id, str(should_loop)])
 
 	_stream_cache[track_id] = stream
 	return stream
 
 
-func _finish_crossfade(previous_player: AudioStreamPlayer, active_player: AudioStreamPlayer) -> void:
-	if previous_player != null and previous_player != active_player and previous_player.playing:
-		previous_player.stop()
-	_crossfade = null
-
-
-func _on_player_finished(index: int) -> void:
-	if index != _active_index:
+func _start_stream(track_id: String, stream: AudioStream, target_volume: float) -> void:
+	if _player == null:
 		return
-	_active_index = -1
+	_player.stop()
+	_player.stream = stream
+	_player.volume_db = target_volume
+	_player.play()
+	_current_track_id = track_id
+	track_changed.emit(track_id)
+
+
+func _swap_stream(generation: int, track_id: String, stream: AudioStream) -> void:
+	if generation != _transition_generation or _player == null:
+		return
+	_player.stop()
+	_player.stream = stream
+	_player.volume_db = SILENT_VOLUME_DB
+	_player.play()
+	_current_track_id = track_id
+	track_changed.emit(track_id)
+
+
+func _finish_transition(generation: int) -> void:
+	if generation != _transition_generation:
+		return
+	_transition = null
+
+
+func _finish_stop(generation: int) -> void:
+	if generation != _transition_generation:
+		return
+	_release_player_stream()
+	_transition = null
+
+
+func _release_player_stream() -> void:
+	if _player == null:
+		return
+	_player.stop()
+	_player.stream = null
+	_player.volume_db = SILENT_VOLUME_DB
+
+
+func _cancel_transition() -> void:
+	_transition_generation += 1
+	if _transition != null and is_instance_valid(_transition):
+		_transition.kill()
+	_transition = null
+
+
+func _on_player_finished() -> void:
+	if _player != null:
+		_player.stream = null
+		_player.volume_db = SILENT_VOLUME_DB
 	_current_track_id = ""
 	track_changed.emit("")
