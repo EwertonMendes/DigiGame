@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Install image tooling
         run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
-      - name: Audit Blue Greymon source sheets
+      - name: Audit direct Super Xros Wars source sheets
         shell: bash
         run: |
           set -euo pipefail
