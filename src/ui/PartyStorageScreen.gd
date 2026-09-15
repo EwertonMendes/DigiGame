@@ -189,6 +189,7 @@ func _build() -> void:
 	_hint_bar = InputHintBarScript.new() as DigiInputHintBar
 	_hint_bar.name = "InputHints"
 	_hint_bar.set_description("Build your active party, reorder slots and manage reserve Digimon.")
+	_hint_bar.set_primary_tabs_enabled(true)
 	_root.add_child(_hint_bar)
 
 
@@ -342,7 +343,7 @@ func _refresh_detail() -> void:
 	_detail.add_child(_identity_card(instance, species, display_name, rank, accent, active, party_index))
 
 	var lower_grid := GridContainer.new()
-	lower_grid.columns = 2
+	lower_grid.columns = 1 if _detail_panel.size.x < 720.0 else 2
 	lower_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lower_grid.add_theme_constant_override("h_separation", 10)
 	lower_grid.add_theme_constant_override("v_separation", 10)
@@ -356,21 +357,29 @@ func _refresh_detail() -> void:
 
 
 func _identity_card(instance: DigimonInstance, species: Dictionary, display_name: String, rank: String, accent: Color, active: bool, party_index: int) -> Control:
+	var narrow := _detail_panel != null and _detail_panel.size.x < 660.0
 	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", V2.surface_style(V2.PANEL_DEEP, Color(accent.r, accent.g, accent.b, 0.42), 8))
 	var margin := _margin(16, 14, 16, 14)
 	panel.add_child(margin)
-	var row := HBoxContainer.new()
+	var row: BoxContainer
+	if narrow:
+		row = VBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+	else:
+		row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 18)
 	margin.add_child(row)
 	var portrait_frame := PanelContainer.new()
-	portrait_frame.custom_minimum_size = Vector2(174, 166)
+	portrait_frame.custom_minimum_size = Vector2(158, 150) if narrow else Vector2(174, 166)
+	portrait_frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER if narrow else Control.SIZE_SHRINK_BEGIN
 	portrait_frame.add_theme_stylebox_override("panel", V2.surface_style(Color(0.015, 0.030, 0.044, 1.0), Color(accent.r, accent.g, accent.b, 0.54), 8))
 	row.add_child(portrait_frame)
 	var portrait_margin := _margin(8, 8, 8, 8)
 	portrait_frame.add_child(portrait_margin)
 	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
-	portrait.custom_minimum_size = Vector2(158, 150)
+	portrait.custom_minimum_size = Vector2(142, 134) if narrow else Vector2(158, 150)
 	portrait.set_species(String(species.get("name", "")))
 	portrait_margin.add_child(portrait)
 
@@ -379,9 +388,13 @@ func _identity_card(instance: DigimonInstance, species: Dictionary, display_name
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
 	info.add_theme_constant_override("separation", 7)
 	row.add_child(info)
-	info.add_child(_label(display_name.to_upper(), 27, V2.TEXT, true))
-	var chips := HBoxContainer.new()
-	chips.add_theme_constant_override("separation", 7)
+	var name_label := _single_line_label(display_name.to_upper(), 27, V2.TEXT, true)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_child(name_label)
+	var chips := HFlowContainer.new()
+	chips.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chips.add_theme_constant_override("h_separation", 7)
+	chips.add_theme_constant_override("v_separation", 6)
 	info.add_child(chips)
 	chips.add_child(_pill(rank.to_upper(), accent))
 	var attribute := String(species.get("attribute", "Free"))
@@ -389,15 +402,17 @@ func _identity_card(instance: DigimonInstance, species: Dictionary, display_name
 	chips.add_child(_pill(attribute.to_upper(), SemanticPalette.data_attribute_color(attribute)))
 	chips.add_child(_pill(family.to_upper(), SemanticPalette.family_color(family)))
 
-	var status_row := HBoxContainer.new()
-	status_row.add_theme_constant_override("separation", 14)
+	var status_row := HFlowContainer.new()
+	status_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	status_row.add_theme_constant_override("h_separation", 14)
+	status_row.add_theme_constant_override("v_separation", 5)
 	info.add_child(status_row)
-	status_row.add_child(_label("Lv %d" % instance.level, 19, V2.AMBER, true))
-	status_row.add_child(_label("POTENTIAL %d" % instance.potential, 10, V2.PURPLE, true))
-	status_row.add_child(_label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, V2.CYAN, true))
+	status_row.add_child(_single_line_label("Lv %d" % instance.level, 19, V2.AMBER, true))
+	status_row.add_child(_single_line_label("POTENTIAL %d" % instance.potential, 10, V2.PURPLE, true))
+	status_row.add_child(_single_line_label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, V2.CYAN, true))
 	var location := "ACTIVE PARTY · SLOT %d" % (party_index + 1) if active else "STORAGE"
 	info.add_child(_pill(location, V2.AMBER if active else V2.CYAN))
-	var id_label := _label("ID %s" % instance.id.substr(0, mini(8, instance.id.length())), 9, V2.SUBTLE)
+	var id_label := _single_line_label("ID %s" % instance.id.substr(0, mini(8, instance.id.length())), 9, V2.SUBTLE)
 	info.add_child(id_label)
 	return panel
 
@@ -612,8 +627,9 @@ func _button(text: String, accent: Color) -> Button:
 
 
 func _pill(text: String, accent: Color) -> Label:
-	var label := _label(text, 9, accent, true)
+	var label := _single_line_label(text, 9, accent, true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	label.add_theme_stylebox_override("normal", V2.pill_style(accent, true))
 	return label
 
