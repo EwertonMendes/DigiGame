@@ -85,9 +85,9 @@ async function enterTestBattle(page, captureDialogue = false) {
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
-  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
+  const gameplayReady = waitForConsole(page, '[Battle] GAMEPLAY_READY', 30000);
   await confirmBattleDialog(page);
-  await Promise.all([battleStarted, battleReady, introReady]);
+  await Promise.all([battleStarted, battleReady, gameplayReady]);
   await settleFrames(page, 4);
 }
 
@@ -376,9 +376,9 @@ async function runMobileSuite() {
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
-  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
+  const gameplayReady = waitForConsole(page, '[Battle] GAMEPLAY_READY', 30000);
   await confirmBattleDialog(page);
-  await Promise.all([battleStarted, battleReady, introReady]);
+  await Promise.all([battleStarted, battleReady, gameplayReady]);
   await settleFrames(page, 4);
 
   let layout = await readLayout(page);
