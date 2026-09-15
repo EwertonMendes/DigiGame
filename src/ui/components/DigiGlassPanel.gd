@@ -10,27 +10,17 @@ var _content_padding := Vector4.ZERO
 var _radius := 10
 var _glass_material: ShaderMaterial = null
 var _bound_viewport: Viewport = null
-var _use_backdrop_blur := true
 
 
 func _init() -> void:
 	set_meta("digi_ui_v2_component", true)
 	set_meta("digi_glass_surface", true)
-	# The Compatibility/Web renderer is not stable when a mipmapped
-	# hint_screen_texture is sampled while scenes are being replaced. Keep the
-	# same V2 translucent glass surface on Web, but use the procedural treatment
-	# that predates the screen-reading shader. Native builds retain the full
-	# renderer-backed frosted blur.
-	_use_backdrop_blur = not OS.has_feature("web")
-	set_meta("digi_glass_blur", _use_backdrop_blur)
-	if _use_backdrop_blur:
-		_ensure_glass_material()
+	set_meta("digi_glass_blur", true)
+	_ensure_glass_material()
 
 
 func _ready() -> void:
 	_refresh_glass()
-	if not _use_backdrop_blur:
-		return
 	_bound_viewport = get_viewport()
 	if _bound_viewport != null:
 		if not _bound_viewport.size_changed.is_connected(_refresh_screen_pixel_size):
@@ -43,10 +33,6 @@ func _exit_tree() -> void:
 		if _bound_viewport.size_changed.is_connected(_refresh_screen_pixel_size):
 			_bound_viewport.size_changed.disconnect(_refresh_screen_pixel_size)
 	_bound_viewport = null
-	# Release the CanvasItem reference before this node leaves the tree so native
-	# renderer resources cannot outlive the component that owns them.
-	material = null
-	_glass_material = null
 
 
 func configure_glass(
@@ -68,14 +54,12 @@ func get_glass_variant() -> String:
 
 
 func get_glass_material() -> ShaderMaterial:
-	if not _use_backdrop_blur:
-		return null
 	_ensure_glass_material()
 	return _glass_material
 
 
 func _ensure_glass_material() -> void:
-	if not _use_backdrop_blur or _glass_material != null:
+	if _glass_material != null:
 		return
 	_glass_material = ShaderMaterial.new()
 	_glass_material.shader = GLASS_SHADER
@@ -83,49 +67,18 @@ func _ensure_glass_material() -> void:
 
 
 func _refresh_glass() -> void:
+	_ensure_glass_material()
 	add_theme_stylebox_override(
 		"panel",
 		V2.glass_style(_accent, _variant, _content_padding, _radius)
 	)
-	if not _use_backdrop_blur:
-		material = null
-		queue_redraw()
-		return
-	_ensure_glass_material()
 	_apply_blur_profile()
 	_refresh_screen_pixel_size()
 	queue_redraw()
 
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED and not _use_backdrop_blur:
-		queue_redraw()
-
-
-func _draw() -> void:
-	if _use_backdrop_blur or size.x <= 0.0 or size.y <= 0.0:
-		return
-	# Web keeps the original procedural glass highlight. This preserves the V2
-	# material language without reading the current framebuffer during scene churn.
-	var alpha := 0.085
-	match _variant:
-		"modal":
-			alpha = 0.105
-		"subtle":
-			alpha = 0.060
-	var inset := float(_radius + 7)
-	if size.x > inset * 2.0:
-		draw_line(
-			Vector2(inset, 1.5),
-			Vector2(size.x - inset, 1.5),
-			Color(1.0, 1.0, 1.0, alpha),
-			1.0,
-			true
-		)
-
-
 func _refresh_screen_pixel_size() -> void:
-	if not _use_backdrop_blur or _glass_material == null or not is_inside_tree():
+	if _glass_material == null or not is_inside_tree():
 		return
 	var viewport := get_viewport()
 	if viewport == null:
@@ -140,7 +93,7 @@ func _refresh_screen_pixel_size() -> void:
 
 
 func _apply_blur_profile() -> void:
-	if not _use_backdrop_blur or _glass_material == null:
+	if _glass_material == null:
 		return
 	var profile := _blur_profile(_variant)
 	var base_tint := V2.PANEL_DEEP
