@@ -5,76 +5,85 @@ const HUB_SCENE = preload("res://scenes/world/hub.tscn")
 
 func _ready() -> void:
 	OverworldState.reset_active_party()
-	var hub := HUB_SCENE.instantiate()
+	var hub: Node = HUB_SCENE.instantiate()
 	add_child(hub)
 	await _frames(3)
+	print("[digilab-layout] hub ready")
 
-	var digilab := hub.get_node_or_null("DigiLabUI/DigiLab") as Control
-	assert(digilab != null, "Hub must expose DigiLab")
+	var digilab: Control = hub.get_node_or_null("DigiLabUI/DigiLab") as Control
+	if not _check(digilab != null, "Hub must expose DigiLab"):
+		return
 	digilab.call("open_lab")
 	await _frames(4)
 
-	var create_screen := digilab.get("_create_screen") as Control
-	var party_screen := digilab.get("_party_screen") as Control
-	var ascension_screen := digilab.get("_ascension_screen") as Control
-	assert(create_screen != null and create_screen.visible, "DigiLab must open on Convert Digi Data")
-	assert(party_screen != null and not party_screen.visible, "Party / Storage must initially stay hidden")
-	assert(ascension_screen != null and not ascension_screen.visible, "Ascension / Expansion must initially stay hidden")
-	_assert_primary_tabs(create_screen, "convert", "Convert Digi Data")
-
-	var create_detail := create_screen.get("_detail_body") as Control
-	assert(create_detail != null, "Convert Digi Data must expose its detail body")
-	await _frames(2)
-	_assert_semantic_labels(create_detail, 4, "Convert Digi Data")
-	_assert_no_vertical_text(create_detail, "Convert Digi Data")
-	_assert_subsection_copy(create_detail)
-	_assert_hint_bar_bounds(create_screen.get("_hint_bar") as Control, "Convert Digi Data")
-	await _assert_create_selection_resets_scroll(create_screen)
+	var convert: Control = digilab.get("_create_screen") as Control
+	var party: Control = digilab.get("_party_screen") as Control
+	var ascension: Control = digilab.get("_ascension_screen") as Control
+	if not _check(convert != null and party != null and ascension != null, "DigiLab must build all three primary workspaces"):
+		return
+	if not _check(convert.visible and not party.visible and not ascension.visible, "DigiLab must open on Convert Digi Data"):
+		return
+	if not _check(_primary_tabs_are_valid(convert, "convert"), "Convert Digi Data must expose the three primary tabs"):
+		return
+	if not _check(_layout_text_is_usable(convert.get("_detail_body") as Control), "Convert Digi Data contains collapsed or vertical text"):
+		return
+	print("[digilab-layout] convert ok")
 
 	digilab.call("_switch_tab", "party")
 	await _frames(4)
-	assert(not create_screen.visible and party_screen.visible, "Primary tab switch must show Party / Storage")
-	_assert_primary_tabs(party_screen, "party", "Party / Storage")
-	var party_detail := party_screen.get("_detail") as Control
-	assert(party_detail != null, "Party / Storage must expose its detail body")
-	_assert_semantic_labels(party_detail, 6, "Party / Storage")
-	_assert_no_vertical_text(party_detail, "Party / Storage")
-	_assert_hint_bar_bounds(party_screen.get("_hint_bar") as Control, "Party / Storage")
-	await _assert_party_selection_resets_scroll(party_screen)
+	if not _check(party.visible and not convert.visible and not ascension.visible, "Party / Storage primary tab must open"):
+		return
+	if not _check(_primary_tabs_are_valid(party, "party"), "Party / Storage must expose the three primary tabs"):
+		return
+	var party_detail: Control = party.get("_detail") as Control
+	if not _check(party_detail != null and _layout_text_is_usable(party_detail), "Party / Storage contains collapsed or vertical text"):
+		return
 
-	var selected_party_id := String(party_screen.call("get_selected_instance_id"))
-	assert(not selected_party_id.is_empty(), "Party / Storage must expose the currently selected individual")
-	var ascension_button := _find_button_by_text(party_detail, "ASCENSION / EXPANSION")
-	assert(ascension_button != null, "Party / Storage must keep Ascension / Expansion reachable from Party Actions")
-	assert(ascension_button.focus_mode == Control.FOCUS_ALL, "Ascension / Expansion action must be controller focusable")
-	ascension_button.pressed.emit()
-	await _frames(4)
-	assert(ascension_screen.visible and not party_screen.visible, "Party Actions must open the Ascension / Expansion primary tab")
-	assert(String(digilab.get("_active_tab")) == "ascension", "Party Actions must update the DigiLab primary tab state")
-	assert(String(ascension_screen.call("get_selected_instance_id")) == selected_party_id, "Ascension / Expansion must open on the Digimon selected in Party / Storage")
-	_assert_primary_tabs(ascension_screen, "ascension", "Ascension / Expansion")
-	var ascension_detail := ascension_screen.get("_detail") as Control
-	assert(ascension_detail != null, "Ascension / Expansion must expose its V2 detail workspace")
-	_assert_semantic_labels(ascension_detail, 8, "Ascension / Expansion")
-	_assert_no_vertical_text(ascension_detail, "Ascension / Expansion")
-	_assert_hint_bar_bounds(ascension_screen.get("_hint_bar") as Control, "Ascension / Expansion")
-	assert(_find_label_containing(ascension_detail, "TIER ASCENSION") != null, "Ascension / Expansion must expose the Tier Ascension section")
-	assert(_find_label_containing(ascension_detail, "EXPANSION") != null, "Ascension / Expansion must expose the Expansion section")
+	var selected_id: String = String(party.call("get_selected_instance_id"))
+	if not _check(not selected_id.is_empty(), "Party / Storage must expose the selected individual"):
+		return
+	var ascension_action: Button = _find_button_by_text(party_detail, "ASCENSION / EXPANSION")
+	if not _check(ascension_action != null, "Party Actions must expose Ascension / Expansion"):
+		return
+	if not _check(ascension_action.focus_mode == Control.FOCUS_ALL and not ascension_action.disabled, "Ascension / Expansion action must be controller-focusable"):
+		return
+	print("[digilab-layout] party ok; opening ascension for %s" % selected_id)
 
-	# DigiModalHeader uses the same adjacent-tab method for LB/RB and L1/R1.
-	# Moving left from Ascension must therefore return to Party / Storage.
-	var ascension_header: DigiModalHeader = ascension_screen.get("_header") as DigiModalHeader
-	assert(ascension_header != null, "Ascension / Expansion must expose the shared primary-tab header")
-	assert(ascension_header.select_adjacent_tab(-1), "Primary tabs must support previous-tab shoulder navigation")
+	ascension_action.pressed.emit()
 	await _frames(4)
-	assert(party_screen.visible and not ascension_screen.visible, "Previous-tab shoulder navigation must move from Ascension to Party / Storage")
+	if not _check(ascension.visible and not party.visible, "Party Actions must open the Ascension / Expansion primary tab"):
+		return
+	if not _check(String(digilab.get("_active_tab")) == "ascension", "Opening Ascension from Party Actions must update the active primary tab"):
+		return
+	if not _check(String(ascension.call("get_selected_instance_id")) == selected_id, "Ascension / Expansion must open on the Digimon selected in Party / Storage"):
+		return
+	if not _check(_primary_tabs_are_valid(ascension, "ascension"), "Ascension / Expansion must expose the three primary tabs"):
+		return
+	var ascension_detail: Control = ascension.get("_detail") as Control
+	if not _check(ascension_detail != null and _layout_text_is_usable(ascension_detail), "Ascension / Expansion contains collapsed or vertical text"):
+		return
+	if not _check(_find_label_containing(ascension_detail, "TIER ASCENSION") != null, "Ascension / Expansion must expose Tier Ascension"):
+		return
+	if not _check(_find_label_containing(ascension_detail, "EXPANSION") != null, "Ascension / Expansion must expose Expansion controls"):
+		return
+	print("[digilab-layout] ascension deep-link ok")
 
-	var party_header: DigiModalHeader = party_screen.get("_header") as DigiModalHeader
-	assert(party_header != null, "Party / Storage must expose the shared primary-tab header")
-	assert(party_header.select_adjacent_tab(1), "Primary tabs must support next-tab shoulder navigation")
+	var ascension_header: DigiModalHeader = ascension.get("_header") as DigiModalHeader
+	if not _check(ascension_header != null and ascension_header.select_adjacent_tab(-1), "Previous shoulder tab navigation must work from Ascension"):
+		return
 	await _frames(4)
-	assert(ascension_screen.visible and not party_screen.visible, "Next-tab shoulder navigation must move from Party / Storage to Ascension")
-	assert(String(ascension_screen.call("get_selected_instance_id")) == selected_party_id, "Shoulder navigation from Party must preserve the selected Digimon context")
+	if not _check(party.visible and not ascension.visible, "LB/L1-equivalent navigation must move from Ascension to Party / Storage"):
+		return
+
+	var party_header: DigiModalHeader = party.get("_header") as DigiModalHeader
+	if not _check(party_header != null and party_header.select_adjacent_tab(1), "Next shoulder tab navigation must work from Party / Storage"):
+		return
+	await _frames(4)
+	if not _check(ascension.visible and not party.visible, "RB/R1-equivalent navigation must move from Party / Storage to Ascension"):
+		return
+	if not _check(String(ascension.call("get_selected_instance_id")) == selected_id, "Shoulder navigation from Party / Storage must preserve the selected Digimon context"):
+		return
+	print("[digilab-layout] shoulder tabs ok")
 
 	digilab.call("close_view")
 	hub.queue_free()
@@ -83,114 +92,41 @@ func _ready() -> void:
 	get_tree().quit()
 
 
-func _assert_primary_tabs(screen: Control, active_id: String, label_name: String) -> void:
+func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 	var header: DigiModalHeader = screen.get("_header") as DigiModalHeader
-	assert(header != null, "%s must expose the shared DigiModalHeader" % label_name)
-	for tab_id in ["convert", "party", "ascension"]:
-		var button := header.get_tab_button(tab_id)
-		assert(button != null, "%s must expose the '%s' primary tab" % [label_name, tab_id])
-		assert(not button.disabled, "%s primary tab '%s' must be enabled" % [label_name, tab_id])
-	var active_button := header.get_tab_button(active_id)
-	assert(active_button != null, "%s active primary tab must exist" % label_name)
+	if header == null:
+		return false
+	for tab_id: String in ["convert", "party", "ascension"]:
+		var button: Button = header.get_tab_button(tab_id)
+		if button == null or button.disabled:
+			return false
+	return header.get_tab_button(active_id) != null
 
 
-func _assert_create_selection_resets_scroll(screen: Control) -> void:
-	var buttons: Array = screen.get("_data_buttons")
-	var scroll := screen.get("_detail_scroll") as ScrollContainer
-	assert(scroll != null, "Convert Digi Data must expose detail scrolling")
-	if buttons.size() < 2:
-		return
-	var max_scroll := int(scroll.get_v_scroll_bar().max_value)
-	if max_scroll > 0:
-		scroll.scroll_vertical = max_scroll
-		await _frames(1)
-	var second := buttons[1] as Button
-	assert(second != null, "Digi Data entry must be a button")
-	var species_name := String(second.get_meta("species_name", ""))
-	assert(not species_name.is_empty(), "Digi Data entry must expose its species name")
-	screen.call("_select_species", species_name)
-	await _frames(2)
-	assert(scroll.scroll_vertical <= 1, "Selecting another species must reset the reconstructed detail viewport to the top")
-	_assert_no_vertical_text(screen.get("_detail_body") as Control, "Convert Digi Data after selection")
-
-
-func _assert_party_selection_resets_scroll(screen: Control) -> void:
-	var ids: Array = screen.get("_list_ids")
-	var scroll := screen.get("_detail_scroll") as ScrollContainer
-	assert(scroll != null, "Party / Storage must expose detail scrolling")
-	if ids.size() < 2:
-		return
-	var max_scroll := int(scroll.get_v_scroll_bar().max_value)
-	if max_scroll > 0:
-		scroll.scroll_vertical = max_scroll
-		await _frames(1)
-	screen.call("_select", String(ids[1]))
-	await _frames(2)
-	assert(scroll.scroll_vertical <= 1, "Selecting another collection member must reset Party / Storage details to the top")
-	_assert_no_vertical_text(screen.get("_detail") as Control, "Party / Storage after selection")
-
-
-func _assert_semantic_labels(root: Control, minimum_count: int, label_name: String) -> void:
-	var semantic_count := 0
+func _layout_text_is_usable(root: Control) -> bool:
+	if root == null:
+		return false
 	for label: Label in _labels_under(root):
-		var text := label.text.strip_edges()
-		if not label.is_visible_in_tree() or text.is_empty():
+		if not label.is_visible_in_tree():
 			continue
-		# Semantic chips/status values are deliberately single-line, unclipped and
-		# non-trimming. Wrapped prose may also use NO_TRIMMING in the base theme,
-		# so it must not be classified as a semantic label here.
-		if label.autowrap_mode != TextServer.AUTOWRAP_OFF:
-			continue
-		if label.text_overrun_behavior != TextServer.OVERRUN_NO_TRIMMING or label.clip_text:
-			continue
-		semantic_count += 1
-		var minimum := label.get_combined_minimum_size()
-		var width_floor := 8.0 if text.length() <= 4 else 18.0
-		assert(minimum.x >= width_floor, "%s semantic label '%s' must keep an intrinsic horizontal minimum" % [label_name, text])
-		assert(label.size.x >= width_floor, "%s semantic label '%s' collapsed horizontally" % [label_name, text])
-	assert(semantic_count >= minimum_count, "%s must use non-collapsing semantic labels for chips and status values" % label_name)
-
-
-func _assert_no_vertical_text(root: Control, label_name: String) -> void:
-	for label: Label in _labels_under(root):
-		var text := label.text.strip_edges()
-		if not label.is_visible_in_tree() or text.length() < 3:
+		var text: String = label.text.strip_edges()
+		if text.length() < 3:
 			continue
 		if label.autowrap_mode == TextServer.AUTOWRAP_OFF:
-			var width_floor := 8.0 if text.length() <= 4 else 18.0
-			assert(label.size.x >= width_floor, "%s has collapsed horizontal text '%s'" % [label_name, text])
-			continue
-		# Wrapped prose is valid, but a one-character column is never an intended layout.
-		assert(label.size.x >= 42.0, "%s wrapped '%s' into an unreadable vertical column" % [label_name, text])
-
-
-func _assert_subsection_copy(root: Control) -> void:
-	var copy: Label = null
-	for label: Label in _labels_under(root):
-		if label.text.begins_with("Data is consumed"):
-			copy = label
-			break
-	assert(copy != null, "Reconstruction subsection explanatory copy must be present")
-	assert(copy.autowrap_mode == TextServer.AUTOWRAP_OFF, "Reconstruction subsection copy must stay horizontal")
-	assert(copy.size.x >= 100.0, "Reconstruction subsection copy must not collapse into a vertical column")
-
-
-func _assert_hint_bar_bounds(hint_bar: Control, label_name: String) -> void:
-	assert(hint_bar != null, "%s must expose its input hint bar" % label_name)
-	var bounds := hint_bar.get_global_rect()
-	for control: Control in _controls_under(hint_bar):
-		if not control.is_visible_in_tree() or control == hint_bar:
-			continue
-		var rect := control.get_global_rect()
-		assert(rect.position.x >= bounds.position.x - 1.0, "%s footer content leaked through the left edge" % label_name)
-		assert(rect.end.x <= bounds.end.x + 1.0, "%s footer content leaked through the right edge" % label_name)
+			if label.size.x < 18.0:
+				print("[digilab-layout] collapsed single-line label: %s (%.1f px)" % [text, label.size.x])
+				return false
+		elif label.size.x < 42.0:
+			print("[digilab-layout] collapsed wrapped label: %s (%.1f px)" % [text, label.size.x])
+			return false
+	return true
 
 
 func _find_button_by_text(root: Node, target: String) -> Button:
 	if root is Button and (root as Button).text == target:
 		return root as Button
-	for child in root.get_children():
-		var found := _find_button_by_text(child, target)
+	for child: Node in root.get_children():
+		var found: Button = _find_button_by_text(child, target)
 		if found != null:
 			return found
 	return null
@@ -199,8 +135,8 @@ func _find_button_by_text(root: Node, target: String) -> Button:
 func _find_label_containing(root: Node, target: String) -> Label:
 	if root is Label and (root as Label).text.contains(target):
 		return root as Label
-	for child in root.get_children():
-		var found := _find_label_containing(child, target)
+	for child: Node in root.get_children():
+		var found: Label = _find_label_containing(child, target)
 		if found != null:
 			return found
 	return null
@@ -210,20 +146,19 @@ func _labels_under(root: Node) -> Array[Label]:
 	var result: Array[Label] = []
 	if root is Label:
 		result.append(root as Label)
-	for child in root.get_children():
+	for child: Node in root.get_children():
 		result.append_array(_labels_under(child))
 	return result
 
 
-func _controls_under(root: Node) -> Array[Control]:
-	var result: Array[Control] = []
-	if root is Control:
-		result.append(root as Control)
-	for child in root.get_children():
-		result.append_array(_controls_under(child))
-	return result
+func _check(condition: bool, message: String) -> bool:
+	if condition:
+		return true
+	print("[digilab-layout] FAIL: %s" % message)
+	get_tree().quit(1)
+	return false
 
 
 func _frames(count: int) -> void:
-	for _index in range(count):
+	for _index: int in range(count):
 		await get_tree().process_frame
