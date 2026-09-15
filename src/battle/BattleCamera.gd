@@ -29,7 +29,8 @@ var _web_base_position := Vector2.ZERO
 var _web_base_zoom := 1.0
 var _web_view_position := Vector2.ZERO
 var _web_view_zoom := 1.0
-var _web_world_items: Array[CanvasItem] = []
+var _web_world_roots: Array[Node2D] = []
+var _web_world_base_transforms: Dictionary = {}
 
 func _ready() -> void:
 	# The scripted cubic motion already provides the intended smoothing. Keeping
@@ -41,7 +42,11 @@ func _ready() -> void:
 	zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
 	_web_world_motion = OS.has_feature("web")
 	if _web_world_motion:
-		_collect_web_world_items()
+		_collect_web_world_roots()
+
+func _exit_tree() -> void:
+	if _web_world_motion:
+		_reset_web_world_roots()
 
 func _process(delta: float) -> void:
 	if not _camera_move_active:
@@ -134,9 +139,19 @@ func prepare_web_intro_base(world_position: Vector2) -> void:
 	_web_base_position = _safe_focus_position(world_position, _web_base_zoom)
 	_web_view_position = _web_base_position
 	_web_view_zoom = _web_base_zoom
+	# Web keeps Camera2D fixed at the exact post-intro gameplay view. The opening
+	# motion is presented through ordinary Node2D root transforms instead of the
+	# viewport canvas or RenderingServer RID APIs that can trap in Wasm.
 	zoom = Vector2.ONE * _web_base_zoom
 	global_position = _web_base_position
-	_apply_web_world_view(_web_base_position, _web_base_zoom)
+	_reset_web_world_roots()
+
+func finish_web_intro() -> void:
+	if not _web_world_motion:
+		return
+	_web_view_position = _web_base_position
+	_web_view_zoom = _web_base_zoom
+	_reset_web_world_roots()
 
 func focus_on(world_position: Vector2) -> void:
 	_refresh_pan_bounds()
@@ -183,9 +198,8 @@ func _preferred_intro_zoom() -> float:
 
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
 	# Camera2D property Tweens can hit an intermittent native Web/Wasm failure
-	# during battle-scene startup. Drive the same cubic ease directly from rendered
-	# frames; Web moves only the world presentation branches while native targets
-	# update Camera2D normally. Timing stays identical without delay timers.
+	# during battle-scene startup. Native builds update Camera2D per frame; Web
+	# keeps Camera2D fixed and applies the same cubic presentation to world roots.
 	_camera_move_generation += 1
 	var generation := _camera_move_generation
 	_camera_move_elapsed = 0.0
@@ -199,25 +213,46 @@ func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: 
 	if generation != _camera_move_generation:
 		return
 
-func _collect_web_world_items() -> void:
-	_web_world_items.clear()
+func _collect_web_world_roots() -> void:
+	_web_world_roots.clear()
+	_web_world_base_transforms.clear()
 	var main := get_tree().root.get_node_or_null("Main")
 	if main == null:
 		return
-	for node_name in ["Blocks", "DigimonController", "BattlePresentationFX"]:
-		var item := main.get_node_or_null(node_name) as CanvasItem
-		if item != null:
-			_web_world_items.append(item)
+	# Spawn VFX are children of the Digimon actors during the opening, so moving
+	# these two visual roots keeps field, actors and their intro effects coherent.
+	# Combat presentation starts only after this transform has returned to identity.
+	for node_name in ["Blocks", "DigimonController"]:
+		var root := main.get_node_or_null(node_name) as Node2D
+		if root == null:
+			continue
+		_web_world_roots.append(root)
+		_web_world_base_transforms[root.get_instance_id()] = root.transform
 
 func _apply_web_world_view(view_position: Vector2, view_zoom: float) -> void:
 	_web_view_position = view_position
 	_web_view_zoom = view_zoom
 	var scale_factor := view_zoom / maxf(_web_base_zoom, 0.01)
-	var render_transform := Transform2D.IDENTITY.scaled(Vector2.ONE * scale_factor)
-	render_transform.origin = _web_base_position - view_position * scale_factor
-	for item: CanvasItem in _web_world_items:
-		if is_instance_valid(item):
-			RenderingServer.canvas_item_set_transform(item.get_canvas_item(), render_transform)
+	var presentation_transform := Transform2D.IDENTITY.scaled(Vector2.ONE * scale_factor)
+	presentation_transform.origin = _web_base_position - view_position * scale_factor
+	for root: Node2D in _web_world_roots:
+		if not is_instance_valid(root):
+			continue
+		var base_transform: Transform2D = _web_world_base_transforms.get(
+			root.get_instance_id(),
+			Transform2D.IDENTITY
+		)
+		root.transform = presentation_transform * base_transform
+
+func _reset_web_world_roots() -> void:
+	for root: Node2D in _web_world_roots:
+		if not is_instance_valid(root):
+			continue
+		var base_transform: Transform2D = _web_world_base_transforms.get(
+			root.get_instance_id(),
+			Transform2D.IDENTITY
+		)
+		root.transform = base_transform
 
 func _cubic_ease_in_out(value: float) -> float:
 	var progress := clampf(value, 0.0, 1.0)
