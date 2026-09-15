@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageSequence
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "database/project-supplied-sources.json"
@@ -17,6 +17,7 @@ DATABASE_PATH = ROOT / "database/base-digimon-list.json"
 MANIFEST_PATH = ROOT / "database/project-supplied-playables.json"
 DIRECTIONS = ["down_left", "down_right", "up_left", "up_right"]
 PHASES = ["idle", "step_a", "step_b"]
+DEFAULT_FRAME_DURATION_MS = 120
 
 
 def compact_key(value: str) -> str:
@@ -35,6 +36,11 @@ def local_res(value: str) -> Path:
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def git_blob_sha(path: Path) -> str:
+    payload = path.read_bytes()
+    return hashlib.sha1(f"blob {len(payload)}\0".encode("ascii") + payload).hexdigest()
 
 
 def rgb_to_hsv(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -171,7 +177,7 @@ def compose_field(groups: list[list[Image.Image]], cfg: dict[str, Any], runtime:
     return strip, scale, cell_w, cell_h, scaled
 
 
-def build_portrait(keyed: Image.Image, cfg: dict[str, Any], rows: list[tuple[int, int]]) -> tuple[Image.Image, dict[str, Any]]:
+def build_sheet_portrait(keyed: Image.Image, cfg: dict[str, Any], rows: list[tuple[int, int]], source_path: Path, source_sha: str) -> tuple[Image.Image, dict[str, Any]]:
     projection = int(cfg.get("projection_min_pixels", 5))
     minimum_span = int(cfg.get("minimum_span", 16))
     padding = int(cfg.get("crop_padding", 2))
@@ -184,12 +190,78 @@ def build_portrait(keyed: Image.Image, cfg: dict[str, Any], rows: list[tuple[int
         raise RuntimeError(f"Portrait frame {frame_index} unavailable in row columns {columns}")
     portrait, source_box = crop_box(keyed, columns[frame_index], rows[row_index], padding)
     return portrait, {
+        "source": source_path.name,
+        "source_path": str(cfg.get("source_path", "")),
+        "source_kind": "project_supplied_sheet_frame",
+        "source_sha256": source_sha,
         "frame_width": portrait.width,
         "frame_height": portrait.height,
         "frame_count": 1,
         "durations_ms": [int(cfg.get("duration_ms", 220))],
         "source_box": source_box,
     }
+
+
+def build_animated_webp_portrait(cfg: dict[str, Any]) -> tuple[Image.Image, dict[str, Any]]:
+    source_value = str(cfg.get("source_webp", ""))
+    if not source_value:
+        raise RuntimeError("animated_webp portrait requires source_webp")
+    source_path = local_res(source_value)
+    if not source_path.is_file():
+        raise RuntimeError(f"Missing animated portrait source {source_path}; materialize project-supplied sources first")
+    expected_blob_sha = str(cfg.get("source_git_blob_sha", ""))
+    if expected_blob_sha and git_blob_sha(source_path) != expected_blob_sha:
+        raise RuntimeError(f"Animated portrait source Git blob changed for {source_value}")
+
+    default_duration = max(20, int(cfg.get("default_duration_ms", DEFAULT_FRAME_DURATION_MS)))
+    with Image.open(source_path) as image:
+        expected_count = max(1, int(getattr(image, "n_frames", 1)))
+        frames: list[Image.Image] = []
+        durations_ms: list[int] = []
+        for frame in ImageSequence.Iterator(image):
+            rgba = frame.convert("RGBA")
+            frames.append(rgba.copy())
+            durations_ms.append(max(20, int(frame.info.get("duration", image.info.get("duration", default_duration)))))
+        if not frames:
+            frames.append(image.convert("RGBA").copy())
+            durations_ms.append(default_duration)
+        if len(frames) != expected_count:
+            expected_count = len(frames)
+
+    width, height = frames[0].size
+    if width <= 0 or height <= 0:
+        raise RuntimeError(f"{source_path.name}: invalid animated portrait frame size {width}x{height}")
+    if any(frame.size != (width, height) for frame in frames):
+        raise RuntimeError(f"{source_path.name}: animated portrait frames do not share one canvas size")
+    minimum_frames = max(1, int(cfg.get("minimum_frames", 1)))
+    if expected_count < minimum_frames:
+        raise RuntimeError(f"{source_path.name}: expected at least {minimum_frames} animated frames, got {expected_count}")
+
+    strip = Image.new("RGBA", (width * len(frames), height), (0, 0, 0, 0))
+    for index, frame in enumerate(frames):
+        strip.alpha_composite(frame, (index * width, 0))
+    return strip, {
+        "source": source_path.name,
+        "source_path": source_value,
+        "source_kind": "project_supplied_animated_webp",
+        "source_sha256": sha256(source_path),
+        "source_git_blob_sha": git_blob_sha(source_path),
+        "frame_width": width,
+        "frame_height": height,
+        "frame_count": len(frames),
+        "durations_ms": durations_ms,
+    }
+
+
+def build_portrait(keyed: Image.Image, cfg: dict[str, Any], rows: list[tuple[int, int]], source_path: Path, source_sha: str) -> tuple[Image.Image, dict[str, Any]]:
+    mode = str(cfg.get("mode", "sheet_frame"))
+    if mode == "animated_webp":
+        return build_animated_webp_portrait(cfg)
+    if mode == "sheet_frame":
+        enriched = dict(cfg)
+        enriched["source_path"] = enriched.get("source_path", "") or f"res://{source_path.relative_to(ROOT).as_posix()}"
+        return build_sheet_portrait(keyed, enriched, rows, source_path, source_sha)
+    raise RuntimeError(f"Unsupported project-supplied portrait mode: {mode}")
 
 
 def write_resource(entry: dict[str, Any], field_path: str) -> str:
@@ -223,7 +295,7 @@ def main() -> None:
         keyed = key_background(source, dict(spec["background"]))
         groups, raw_boxes, detected_rows = movement_groups(keyed, dict(spec["movement"]))
         strip, scale, cell_w, cell_h, _scaled = compose_field(groups, dict(spec["movement"]), dict(spec["runtime"]))
-        portrait, portrait_meta = build_portrait(keyed, dict(spec["portrait"]), detected_rows)
+        portrait, portrait_meta = build_portrait(keyed, dict(spec["portrait"]), detected_rows, source_path, actual_sha)
 
         key = compact_key(name)
         directory = ROOT / "assets/characters" / key
@@ -262,12 +334,6 @@ def main() -> None:
             "field_path": f"res://assets/characters/{key}/field.png"
         }
         (directory / "field.json").write_text(json.dumps(field_meta, indent=2) + "\n", encoding="utf-8")
-        portrait_meta.update({
-            "source": source_path.name,
-            "source_path": str(spec["source_sheet"]),
-            "source_kind": "project_supplied_directional",
-            "source_sha256": actual_sha,
-        })
         (directory / "portrait_frames.json").write_text(json.dumps(portrait_meta, indent=2) + "\n", encoding="utf-8")
 
         resource = write_resource(entry, f"res://assets/characters/{key}/field.png")
@@ -282,11 +348,12 @@ def main() -> None:
             "field_metadata": f"res://assets/characters/{key}/field.json",
             "portrait_strip": f"res://assets/characters/{key}/portrait_frames.png",
             "portrait_metadata": f"res://assets/characters/{key}/portrait_frames.json",
+            "portrait_source": str(portrait_meta.get("source_path", "")),
             "source_sheet": str(spec["source_sheet"]),
             "field_cell": [cell_w, cell_h],
-            "portrait_frames": 1,
+            "portrait_frames": int(portrait_meta["frame_count"]),
         })
-        print(f"built {name}: 12 canonical frames, cell={cell_w}x{cell_h}, scale={scale:.4f}")
+        print(f"built {name}: 12 canonical field frames + {portrait_meta['frame_count']} portrait frames, cell={cell_w}x{cell_h}, scale={scale:.4f}")
 
     manifest = {
         "schema_version": 1,

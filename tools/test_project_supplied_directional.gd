@@ -3,6 +3,7 @@ extends Node
 const RuntimeControllerScript = preload("res://src/DigimonRuntimeController.gd")
 const FollowerScript = preload("res://src/world/OverworldDigimonFollower.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
+const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 const SpriteTestLabScript = preload("res://src/ui/DigimonSpriteTestLab.gd")
 const DebugRosterToolsScript = preload("res://src/debug/DebugRosterTools.gd")
 const DirectionalContractScript = preload("res://src/sprites/DirectionalSpriteContract.gd")
@@ -99,13 +100,39 @@ func _ready() -> void:
 		assert(FileAccess.file_exists(PortraitResolverScript.metadata_path(portrait_key)), "%s portrait metadata must be packaged" % species_name)
 		assert(ResourceLoader.exists(PortraitResolverScript.strip_path(portrait_key)), "%s portrait strip must be packaged" % species_name)
 
+		# Exercise the same shared animated portrait component used by Details,
+		# Evolution screens, storage and other UI surfaces. This catches the exact
+		# failure where a project-supplied Digimon had a valid field sprite but a
+		# one-frame/static UI portrait.
+		var portrait_preview := PortraitPreviewScript.new() as DigimonPortraitPreview
+		portrait_preview.size = Vector2(128, 128)
+		add_child(portrait_preview)
+		portrait_preview.set_species(species_name)
+		await get_tree().process_frame
+		var expected_portrait_frames := int(row.get("portrait_frames", 0))
+		assert(expected_portrait_frames > 0, "%s manifest must expose portrait frame count" % species_name)
+		assert(int(portrait_preview.get("_frame_count")) == expected_portrait_frames, "%s shared portrait preview must load every generated frame" % species_name)
+		var portrait_node := portrait_preview.get_node_or_null("Portrait") as TextureRect
+		assert(portrait_node != null and portrait_node.texture != null, "%s shared portrait preview must render" % species_name)
+		if expected_portrait_frames > 1:
+			assert(portrait_preview.is_processing(), "%s animated portrait must actively process frames" % species_name)
+			var durations := portrait_preview.get("_durations") as Array
+			var before_frame := int(portrait_preview.get("_frame_index"))
+			var first_duration := 0.12
+			if not durations.is_empty():
+				first_duration = maxf(0.02, float(durations[0]) / 1000.0)
+			portrait_preview.call("_process", first_duration + 0.001)
+			assert(int(portrait_preview.get("_frame_index")) != before_frame, "%s animated portrait must advance frames" % species_name)
+		portrait_preview.queue_free()
+		await get_tree().process_frame
+
 		runtime.remove_child(actor)
 		actor.free()
 		await get_tree().process_frame
 
 	sprite_lab.queue_free()
 	await get_tree().process_frame
-	print("project-supplied directional regression passed: Sprite Test, Spawn Digimon, battle, overworld, walk preview and portrait assets for %d species" % expected_count)
+	print("project-supplied directional regression passed: Sprite Test, Spawn Digimon, battle, overworld, walk preview and animated UI portraits for %d species" % expected_count)
 	get_tree().quit()
 
 

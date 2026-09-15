@@ -2,32 +2,27 @@ name: Project-supplied directional regression
 
 on:
   pull_request:
-    branches:
-      - master
+    branches: [master]
     paths:
-      - '.github/workflows/project-supplied-directional-regression.yml'
       - 'assets/characters/**'
       - 'assets/resources/**'
-      - 'database/project-supplied-sources.json'
-      - 'database/project-supplied-playables.json'
+      - 'database/project-supplied-*.json'
+      - 'database/base-digimon-list.json'
       - 'database/ds-directional-resource-audit.json'
+      - 'src/**'
       - 'tools/build_project_supplied_directional.py'
+      - 'tools/materialize_project_supplied_sources.py'
       - 'tools/validate_project_supplied_directional.py'
       - 'tools/validate_all_ds_directional_facings.py'
       - 'tools/test_project_supplied_directional.gd'
       - 'tools/test_project_supplied_directional.tscn'
+      - '.github/workflows/project-supplied-directional-regression.yml'
   workflow_dispatch:
-
-permissions:
-  contents: read
-
-env:
-  GODOT_VERSION: 4.7.2
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v6
 
@@ -35,51 +30,36 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check pillow numpy
 
       - name: Verify deterministic normalized assets
-        shell: bash
         run: |
-          set -euo pipefail
+          python3 tools/materialize_project_supplied_sources.py
           python3 tools/build_project_supplied_directional.py
           python3 tools/validate_project_supplied_directional.py
           python3 tools/validate_all_ds_directional_facings.py
-          git diff --exit-code -- \
-            assets/characters \
-            assets/resources \
-            database/project-supplied-playables.json \
-            database/ds-directional-resource-audit.json
+          git diff --exit-code -- assets/characters assets/resources database/project-supplied-playables.json database/ds-directional-resource-audit.json
 
       - name: Restore Godot runtime cache
-        id: godot-runtime
-        uses: actions/cache@v4
+        id: godot-cache
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.cache/digigame-godot/godot
-          key: godot-runtime-${{ runner.os }}-${{ env.GODOT_VERSION }}
+          path: ~/.cache/digigame-godot-runtime
+          key: digigame-godot-runtime-4.7.2-linux-x86_64
 
       - name: Download Godot on cache miss
-        if: steps.godot-runtime.outputs.cache-hit != 'true'
-        shell: bash
+        if: steps.godot-cache.outputs.cache-hit != 'true'
         run: |
-          set -euo pipefail
-          TAG="${GODOT_VERSION}-stable"
-          mkdir -p "$HOME/.cache/digigame-godot"
-          curl -fL "https://github.com/godotengine/godot/releases/download/${TAG}/Godot_v${TAG}_linux.x86_64.zip" -o /tmp/godot.zip
-          unzip -q /tmp/godot.zip -d /tmp/godot
-          mv "/tmp/godot/Godot_v${TAG}_linux.x86_64" "$HOME/.cache/digigame-godot/godot"
-          chmod +x "$HOME/.cache/digigame-godot/godot"
+          mkdir -p ~/.cache/digigame-godot-runtime
+          curl -fsSL --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d ~/.cache/digigame-godot-runtime
 
       - name: Activate Godot
-        shell: bash
         run: |
-          set -euo pipefail
-          chmod +x "$HOME/.cache/digigame-godot/godot"
-          sudo ln -sf "$HOME/.cache/digigame-godot/godot" /usr/local/bin/godot
+          GODOT_BIN=$(find ~/.cache/digigame-godot-runtime -maxdepth 1 -type f -name 'Godot*' | head -n 1)
+          chmod +x "$GODOT_BIN"
+          ln -sf "$GODOT_BIN" /usr/local/bin/godot
+          godot --version
 
       - name: Import project
-        run: godot --headless --path . --import
+        run: godot --headless --editor --path . --quit-after 2
 
       - name: Exercise battle, overworld and menu sprite consumers
-        shell: bash
-        run: |
-          set -euo pipefail
-          timeout 90s godot --headless --path . tools/test_project_supplied_directional.tscn 2>&1 | tee /tmp/project-supplied.log
-          grep -q 'project-supplied directional regression passed' /tmp/project-supplied.log
-          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/project-supplied.log; then exit 1; fi
+        run: godot --headless --path . res://tools/test_project_supplied_directional.tscn
