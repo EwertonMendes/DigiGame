@@ -26,7 +26,8 @@ func configure(title: String, description: String, footer: String, icon_kind: St
 func _ready() -> void:
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	custom_minimum_size = Vector2(176.0, 132.0)
+	custom_minimum_size = Vector2(176.0, 138.0)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	clip_contents = true
 	text = ""
@@ -59,6 +60,8 @@ func _rebuild_content() -> void:
 	add_child(margin)
 
 	var body := VBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
 	body.add_theme_constant_override("separation", 5)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(body)
