@@ -254,7 +254,7 @@ bld/
 .vs/
 
 # Visual Studio 2017 auto generated files
-Generated\\ Files/
+Generated\ Files/
 
 # Files built by Visual Studio
 *_i.c
