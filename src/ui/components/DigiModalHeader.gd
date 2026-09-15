@@ -66,6 +66,7 @@ func set_active_tab(tab_id: String) -> void:
 	_active_tab = tab_id
 	if _tabs_root != null:
 		_rebuild_tabs()
+		_layout()
 
 
 func set_tab_enabled(tab_id: String, enabled: bool) -> void:
@@ -75,6 +76,7 @@ func set_tab_enabled(tab_id: String, enabled: bool) -> void:
 			break
 	if _tabs_root != null:
 		_rebuild_tabs()
+		_layout()
 
 
 func set_bits(bits: int) -> void:
@@ -250,6 +252,7 @@ func _rebuild_tabs() -> void:
 	for spec: Dictionary in _tab_specs:
 		var tab_id := String(spec.get("id", ""))
 		var label_text := String(spec.get("label", tab_id.capitalize()))
+		var compact_label := String(spec.get("compact_label", label_text))
 		var enabled := bool(spec.get("enabled", true))
 		var active := tab_id == _active_tab
 		var icon_kind := String(spec.get("icon", _tab_icon_for(tab_id)))
@@ -287,6 +290,12 @@ func _rebuild_tabs() -> void:
 		V2.apply_heading(label)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(label)
+		button.set_meta("tab_label", label)
+		button.set_meta("tab_icon", icon)
+		button.set_meta("tab_row", row)
+		button.set_meta("full_label", label_text)
+		button.set_meta("compact_label", compact_label)
+		button.set_meta("preferred_min_width", min_width)
 		if enabled:
 			button.pressed.connect(func(): tab_selected.emit(tab_id))
 		_tabs_root.add_child(button)
@@ -305,6 +314,8 @@ func _tab_icon_for(tab_id: String) -> String:
 			return "database"
 		"party":
 			return "party"
+		"ascension":
+			return "evolution"
 		_:
 			return "info"
 
@@ -313,31 +324,61 @@ func _layout() -> void:
 	if _title == null:
 		return
 	var compact := size.x < 760.0
-	var compact_two_tabs := compact and _tab_specs.size() <= 2 and not _tab_specs.is_empty()
+	var has_tabs := not _tab_specs.is_empty()
+	var compact_tabs := compact and has_tabs
 	var show_bits_now := _show_bits and not compact
 	_bits_badge.visible = show_bits_now
 	var brand_row := _brand_icon.get_parent() as HBoxContainer
 	if brand_row != null:
-		brand_row.visible = not compact_two_tabs
+		brand_row.visible = not compact_tabs
 		brand_row.position = Vector2(28.0, 10.0)
 		brand_row.size = Vector2(TITLE_BLOCK_WIDTH - 28.0, 42.0)
-	_subtitle.visible = not compact and not compact_two_tabs
+	_subtitle.visible = not compact and not compact_tabs
 
 	var controls_right := 18.0 + CLOSE_SIZE + (140.0 if show_bits_now else 0.0)
-	_tabs_root.visible = not _tab_specs.is_empty() and (not compact or compact_two_tabs)
+	_tabs_root.visible = has_tabs
 	if _tabs_root.visible:
-		if compact_two_tabs:
+		if compact_tabs:
 			_tabs_root.position = Vector2(8.0, 0.0)
 			_tabs_root.size = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 32.0), HEADER_HEIGHT)
-			var available := maxf(230.0, _tabs_root.size.x - 4.0)
+			var available := maxf(180.0, _tabs_root.size.x - float(maxi(0, _tab_specs.size() - 1)) * 4.0)
 			var per_tab := available / float(maxi(1, _tab_specs.size()))
+			var icon_only := size.x < 390.0 or per_tab < 92.0
 			for value in _tab_buttons.values():
 				var tab_button := value as Button
-				if tab_button != null:
-					tab_button.custom_minimum_size.x = maxf(112.0, per_tab)
+				if tab_button == null:
+					continue
+				tab_button.custom_minimum_size.x = maxf(72.0, per_tab)
+				var label := tab_button.get_meta("tab_label") as Label
+				var icon := tab_button.get_meta("tab_icon") as DigiProceduralIcon
+				var row := tab_button.get_meta("tab_row") as HBoxContainer
+				if label != null:
+					label.visible = not icon_only
+					label.text = String(tab_button.get_meta("compact_label", tab_button.get_meta("full_label", "")))
+					label.add_theme_font_size_override("font_size", 11)
+				if icon != null:
+					icon.custom_minimum_size = Vector2(19.0, 19.0)
+				if row != null:
+					row.add_theme_constant_override("separation", 6 if not icon_only else 0)
 		else:
 			_tabs_root.position = Vector2(TITLE_BLOCK_WIDTH, 0.0)
 			_tabs_root.size = Vector2(maxf(0.0, size.x - TITLE_BLOCK_WIDTH - controls_right - 12.0), HEADER_HEIGHT)
+			for value in _tab_buttons.values():
+				var tab_button := value as Button
+				if tab_button == null:
+					continue
+				tab_button.custom_minimum_size.x = float(tab_button.get_meta("preferred_min_width", 126.0))
+				var label := tab_button.get_meta("tab_label") as Label
+				var icon := tab_button.get_meta("tab_icon") as DigiProceduralIcon
+				var row := tab_button.get_meta("tab_row") as HBoxContainer
+				if label != null:
+					label.visible = true
+					label.text = String(tab_button.get_meta("full_label", ""))
+					label.add_theme_font_size_override("font_size", 13)
+				if icon != null:
+					icon.custom_minimum_size = Vector2(22.0, 22.0)
+				if row != null:
+					row.add_theme_constant_override("separation", 9)
 
 	_close_button.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 16.0), 10.0)
 	_close_button.size = Vector2(CLOSE_SIZE, CLOSE_SIZE)
