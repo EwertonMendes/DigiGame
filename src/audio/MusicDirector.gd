@@ -76,16 +76,19 @@ func play_game_over(fade_seconds: float = 0.0) -> void:
 
 
 func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
+	print("[MusicTrace] REQUEST track=%s current=%s" % [track_id, _current_track_id])
 	if not TRACKS.has(track_id):
 		push_warning("[Music] Unknown track: %s" % track_id)
 		return
 	if _current_track_id == track_id and _active_index >= 0 and _players[_active_index].playing:
+		print("[MusicTrace] ALREADY_PLAYING track=%s" % track_id)
 		return
 
 	var stream := _stream_for(track_id)
 	if stream == null:
 		push_error("[Music] Could not load track: %s" % track_id)
 		return
+	print("[MusicTrace] STREAM_READY track=%s type=%s" % [track_id, stream.get_class()])
 
 	if _crossfade != null and is_instance_valid(_crossfade):
 		_crossfade.kill()
@@ -102,6 +105,7 @@ func play_track(track_id: String, fade_seconds: float = DEFAULT_CROSSFADE_SECOND
 	next_player.stream = stream
 	next_player.volume_db = SILENT_VOLUME_DB
 	next_player.play()
+	print("[MusicTrace] PLAYER_STARTED track=%s player=%d" % [track_id, next_index])
 
 	_active_index = next_index
 	_current_track_id = track_id
@@ -155,6 +159,7 @@ func has_track(track_id: String) -> bool:
 
 func _stream_for(track_id: String) -> AudioStream:
 	if _stream_cache.has(track_id):
+		print("[MusicTrace] CACHE_HIT track=%s" % track_id)
 		return _stream_cache[track_id] as AudioStream
 
 	var definition := TRACKS[track_id] as Dictionary
@@ -166,9 +171,11 @@ func _stream_for(track_id: String) -> AudioStream:
 	# import, the Ogg importer has not registered the resource yet when autoload
 	# scripts are first parsed. By _ready/runtime the import exists and ResourceLoader
 	# can resolve the file normally on desktop and Web.
+	print("[MusicTrace] LOAD_BEGIN track=%s path=%s" % [track_id, path])
 	var source := ResourceLoader.load(path) as AudioStream
 	if source == null:
 		return null
+	print("[MusicTrace] LOAD_DONE track=%s" % track_id)
 
 	var stream := source.duplicate() as AudioStream
 	var should_loop := bool(definition.get("loop", true))
@@ -176,6 +183,7 @@ func _stream_for(track_id: String) -> AudioStream:
 		(stream as AudioStreamOggVorbis).loop = should_loop
 	elif stream is AudioStreamMP3:
 		(stream as AudioStreamMP3).loop = should_loop
+	print("[MusicTrace] DUPLICATE_READY track=%s loop=%s" % [track_id, str(should_loop)])
 
 	_stream_cache[track_id] = stream
 	return stream
