@@ -2,7 +2,6 @@ extends Control
 class_name BattleStartBanner
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
-const VISUAL_TWEEN_WATCHDOG_MS := 1600
 
 var _banner: Control = null
 var _backdrop: Panel = null
@@ -44,7 +43,7 @@ func play() -> void:
 	tween.tween_interval(0.62)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_property(_banner, "modulate:a", 0.0, 0.15)
-	await _await_visual_tween(tween)
+	await tween.finished
 
 	visible = false
 	_banner.modulate = Color.WHITE
@@ -54,17 +53,6 @@ func play() -> void:
 	_left_rule.modulate = Color.WHITE
 	_right_rule.modulate = Color.WHITE
 	print("[BattleIntro] BATTLE_START")
-
-
-func _await_visual_tween(tween: Tween) -> void:
-	if tween == null:
-		return
-	var deadline_ms := Time.get_ticks_msec() + VISUAL_TWEEN_WATCHDOG_MS
-	while tween.is_valid() and tween.is_running() and Time.get_ticks_msec() < deadline_ms:
-		await get_tree().process_frame
-	if tween.is_valid() and tween.is_running():
-		tween.kill()
-		print("[BattleIntro] WATCHDOG stage=battle-start-banner elapsed_ms=%d" % VISUAL_TWEEN_WATCHDOG_MS)
 
 
 func _build_ui() -> void:
