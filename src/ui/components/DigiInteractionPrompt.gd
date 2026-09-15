@@ -1,7 +1,7 @@
 extends "res://src/ui/components/DigiGlassPanel.gd"
 class_name DigiInteractionPrompt
 
-const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
+const PROMPT_V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 enum InputMode {
 	KEYBOARD_MOUSE,
@@ -26,9 +26,9 @@ func _ready() -> void:
 	super._ready()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(190.0, V2.TOUCH_TARGET)
+	custom_minimum_size = Vector2(190.0, PROMPT_V2.TOUCH_TARGET)
 	configure_glass(
-		V2.AMBER,
+		PROMPT_V2.AMBER,
 		"floating",
 		Vector4(12.0, 8.0, 14.0, 8.0),
 		10
@@ -46,8 +46,8 @@ func _ready() -> void:
 	_key_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_key_badge.add_theme_stylebox_override(
 		"panel",
-		V2.glass_style(
-			V2.AMBER,
+		PROMPT_V2.glass_style(
+			PROMPT_V2.AMBER,
 			"subtle",
 			Vector4(8.0, 3.0, 8.0, 3.0),
 			6
@@ -59,8 +59,8 @@ func _ready() -> void:
 	_key_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_key_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_key_label.add_theme_font_size_override("font_size", 11)
-	_key_label.add_theme_color_override("font_color", V2.WHITE)
-	V2.apply_heading(_key_label)
+	_key_label.add_theme_color_override("font_color", PROMPT_V2.WHITE)
+	PROMPT_V2.apply_heading(_key_label)
 	_key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_key_badge.add_child(_key_label)
 
@@ -69,8 +69,8 @@ func _ready() -> void:
 	_action_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_action_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_action_label.add_theme_font_size_override("font_size", 13)
-	_action_label.add_theme_color_override("font_color", V2.TEXT)
-	V2.apply_heading(_action_label)
+	_action_label.add_theme_color_override("font_color", PROMPT_V2.TEXT)
+	PROMPT_V2.apply_heading(_action_label)
 	_action_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_action_label)
 
