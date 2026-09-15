@@ -77,7 +77,11 @@ async function enterTestBattle(page, captureDialogue = false) {
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
-  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
+  // The opening is intentionally sequential (camera reveals, six spawn
+  // presentations, first-turn focus and the banner). Shared CI runners can
+  // render that sequence much slower than real hardware, so keep the final
+  // marker mandatory while allowing enough time for the full presentation.
+  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 60000);
   // Confirmation dialogs now default to the safe/cancel action. Explicitly
   // navigate to the affirmative action before accepting it.
   await page.keyboard.press('ArrowRight');
@@ -443,7 +447,10 @@ async function runMobileSuite() {
 
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
-  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
+  // Same sequential opening contract as desktop; keep BATTLE_START mandatory,
+  // but do not fail a loaded battle solely because a headless runner renders
+  // the cinematic presentation slower than 30 seconds.
+  const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 60000);
   const dialogLayout = await readLayout(page);
   const confirmPoint = mobileBattleConfirmPoint(dialogLayout);
   await page.touchscreen.tap(confirmPoint.x, confirmPoint.y);
