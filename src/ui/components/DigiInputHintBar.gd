@@ -15,6 +15,7 @@ var _description: Label
 var _description_text := "Manage your Digimon and view their information."
 var _mode := InputMode.TOUCH if DisplayServer.is_touchscreen_available() else InputMode.KEYBOARD_MOUSE
 var _last_touch_msec := -10000
+var _primary_tabs_enabled := false
 
 
 func _ready() -> void:
@@ -46,6 +47,14 @@ func set_description(text: String) -> void:
 		_description.text = text
 
 
+func set_primary_tabs_enabled(enabled: bool) -> void:
+	if _primary_tabs_enabled == enabled:
+		return
+	_primary_tabs_enabled = enabled
+	if _row != null:
+		_refresh()
+
+
 func _input(event: InputEvent) -> void:
 	var next_mode := _mode
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
@@ -75,19 +84,27 @@ func _joypad_mode(device: int) -> int:
 func _menu_hints() -> Array[Dictionary]:
 	match _mode:
 		InputMode.PLAYSTATION:
-			return [
+			var hints: Array[Dictionary] = []
+			if _primary_tabs_enabled:
+				hints.append({"key": "L1/R1", "label": "Tabs", "accent": V2.CYAN})
+			hints.append_array([
 				{"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED},
 				{"key": "RS", "label": "Scroll", "accent": V2.MUTED},
 				{"key": "X", "label": "Select", "accent": V2.BLUE},
 				{"key": "O", "label": "Back", "accent": V2.RED},
-			]
+			])
+			return hints
 		InputMode.XBOX:
-			return [
+			var hints: Array[Dictionary] = []
+			if _primary_tabs_enabled:
+				hints.append({"key": "LB/RB", "label": "Tabs", "accent": V2.CYAN})
+			hints.append_array([
 				{"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED},
 				{"key": "RS", "label": "Scroll", "accent": V2.MUTED},
 				{"key": "A", "label": "Select", "accent": V2.GREEN},
 				{"key": "B", "label": "Back", "accent": V2.RED},
-			]
+			])
+			return hints
 		InputMode.TOUCH:
 			return [
 				{"key": "TAP", "label": "Select", "accent": V2.CYAN},
