@@ -66,8 +66,11 @@ func _ready() -> void:
 	if not _check(refreshed_row != null, "Dynamic refresh must recreate the edited stat row"):
 		return
 	var refreshed_buttons := refreshed_row.get_focus_buttons()
+	if not _check(refreshed_buttons.size() >= 2, "Refreshed stat row must preserve both step controls"):
+		return
+	var expected_focus: Control = refreshed_buttons[1] if not refreshed_buttons[1].disabled else refreshed_buttons[0]
 	var focus_owner := get_viewport().gui_get_focus_owner()
-	if not _check(refreshed_buttons.size() >= 2 and focus_owner == refreshed_buttons[1], "Dynamic stat refresh must restore focus to the equivalent control"):
+	if not _check(focus_owner == expected_focus, "Dynamic stat refresh must restore focus to the equivalent available control"):
 		return
 	if not _check(_find_label_containing(detail, "%s +1" % _stat_label(target_key)) != null, "Training plan must summarize the pending attribute change"):
 		return
