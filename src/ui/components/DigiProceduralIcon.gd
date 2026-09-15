@@ -63,6 +63,10 @@ func _draw() -> void:
 			_draw_gear(center, side, width)
 		"items":
 			_draw_items(center, side, width)
+		"database":
+			_draw_database(center, side, width)
+		"party":
+			_draw_party(center, side, width)
 		_:
 			draw_circle(center, side * 0.18, _accent, false, width, true)
 			draw_line(center + Vector2(0.0, side * 0.03), center + Vector2(0.0, side * 0.20), _accent, width, true)
@@ -249,3 +253,28 @@ func _draw_items(center: Vector2, side: float, width: float) -> void:
 	var body := Rect2(center + Vector2(-s * 0.75, -s * 0.20), Vector2(s * 1.50, s * 1.15))
 	draw_rect(body, _accent, false, width, true)
 	draw_arc(center + Vector2(0.0, -s * 0.18), s * 0.45, PI, TAU, 18, _accent, width, true)
+
+
+func _draw_database(center: Vector2, side: float, width: float) -> void:
+	var rx := side * 0.28
+	var ry := side * 0.105
+	var top_y := center.y - side * 0.22
+	var bottom_y := center.y + side * 0.22
+	draw_arc(Vector2(center.x, top_y), rx, 0.0, TAU, 28, _accent, width, true)
+	draw_line(Vector2(center.x - rx, top_y), Vector2(center.x - rx, bottom_y), _accent, width, true)
+	draw_line(Vector2(center.x + rx, top_y), Vector2(center.x + rx, bottom_y), _accent, width, true)
+	draw_arc(Vector2(center.x, center.y), rx, 0.0, PI, 18, _accent, width, true)
+	draw_arc(Vector2(center.x, bottom_y), rx, 0.0, PI, 18, _accent, width, true)
+	draw_line(Vector2(center.x - rx, center.y - ry), Vector2(center.x - rx, center.y + ry), _accent, width, true)
+
+
+func _draw_party(center: Vector2, side: float, width: float) -> void:
+	var r := side * 0.105
+	var top := center + Vector2(0.0, -side * 0.16)
+	var left := center + Vector2(-side * 0.19, side * 0.02)
+	var right := center + Vector2(side * 0.19, side * 0.02)
+	for point: Vector2 in [top, left, right]:
+		draw_circle(point, r, _accent, false, width, true)
+	draw_arc(top + Vector2(0.0, side * 0.16), side * 0.14, PI, TAU, 18, _accent, width, true)
+	draw_arc(left + Vector2(0.0, side * 0.15), side * 0.13, PI, TAU, 18, _accent, width, true)
+	draw_arc(right + Vector2(0.0, side * 0.15), side * 0.13, PI, TAU, 18, _accent, width, true)
