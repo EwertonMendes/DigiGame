@@ -1,5 +1,6 @@
 extends "res://src/MainCamera.gd"
 
+const TweenGuardScript = preload("res://src/ui/components/DigiTweenGuard.gd")
 const OPENING_BOOT_ZOOM := 1.10
 const DESKTOP_BATTLE_ZOOM := 1.34
 const LAPTOP_BATTLE_ZOOM := 1.28
@@ -12,6 +13,8 @@ const FOCUS_MOVE_TIME := 0.30
 const FIRST_FOCUS_MOVE_TIME := 0.40
 const GAMEPLAY_FOCUS_TIME := 0.46
 const PAN_EDGE_MARGIN_SCREEN := Vector2(168.0, 112.0)
+const VISUAL_TWEEN_MIN_TIMEOUT := 0.90
+const VISUAL_TWEEN_TIMEOUT_SCALE := 3.0
 
 var _battle_default_zoom := DESKTOP_BATTLE_ZOOM
 
@@ -109,9 +112,18 @@ func _preferred_intro_zoom() -> float:
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(self, "zoom", Vector2.ONE * target_zoom, maxf(0.05, duration))
-	tween.tween_property(self, "global_position", target_position, maxf(0.05, duration))
-	await tween.finished
+	var authored_duration := maxf(0.05, duration)
+	tween.tween_property(self, "zoom", Vector2.ONE * target_zoom, authored_duration)
+	tween.tween_property(self, "global_position", target_position, authored_duration)
+
+	var guard := TweenGuardScript.new() as DigiTweenGuard
+	var timeout := maxf(VISUAL_TWEEN_MIN_TIMEOUT, authored_duration * VISUAL_TWEEN_TIMEOUT_SCALE)
+	var timed_out := await guard.await_tween(get_tree(), tween, timeout)
+	if timed_out:
+		print("[BattleIntro] VISUAL_FALLBACK stage=camera timeout=%.2f" % timeout)
+
+	# Gameplay owns the terminal camera state. Even if a browser renderer misses
+	# Tween.finished, a presentation animation can never hold the battle hostage.
 	zoom = Vector2.ONE * target_zoom
 	global_position = target_position
 	_clamp_to_pan_bounds()
