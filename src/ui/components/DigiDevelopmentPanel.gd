@@ -2,32 +2,50 @@ extends PanelContainer
 class_name DigiDevelopmentPanel
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
+const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 
 
 func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	for child in get_children():
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE, Color(V2.PURPLE.r, V2.PURPLE.g, V2.PURPLE.b, 0.24), 10))
-	var margin := _margin(9, 6, 9, 6)
-	add_child(margin)
+	add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(
+			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.92),
+			Color(V2.PURPLE.r, V2.PURPLE.g, V2.PURPLE.b, 0.30),
+			10,
+			Vector4(6.0, 6.0, 6.0, 7.0),
+			0.08
+		)
+	)
+
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 2)
-	margin.add_child(body)
-	body.add_child(_label("DEVELOPMENT", 11, V2.PURPLE, true))
-	body.add_child(_label("Innate aptitude + permanent training", 9, V2.MUTED))
-	body.add_child(_separator())
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 4)
+	add_child(body)
+	var header := SectionHeaderScript.new() as DigiSectionHeader
+	header.configure("DEVELOPMENT", "", V2.PURPLE, "training")
+	body.add_child(header)
+
+	var content := _margin(5, 0, 5, 1)
+	body.add_child(content)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 2)
+	content.add_child(stack)
+	stack.add_child(_label("Innate aptitude + permanent training", 9, V2.MUTED))
+	stack.add_child(_separator())
 
 	var grid := GridContainer.new()
 	grid.columns = 4
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 1)
-	body.add_child(grid)
-	for header in ["STAT", "APT", "TRAIN", "TOTAL"]:
-		var header_label := _label(header, 8, V2.SUBTLE, true)
+	stack.add_child(grid)
+	for header_text in ["STAT", "APT", "TRAIN", "TOTAL"]:
+		var header_label := _label(header_text, 8, V2.SUBTLE, true)
 		header_label.custom_minimum_size.y = 16.0
-		if header != "STAT":
+		if header_text != "STAT":
 			header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		grid.add_child(header_label)
 	for key in ["hp", "mp", "atk", "def", "int", "speed", "mov"]:
