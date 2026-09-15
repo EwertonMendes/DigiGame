@@ -184,6 +184,7 @@ func _refresh_detail() -> void:
 	], 10, UI.CYAN, true))
 
 	_detail.add_child(_section("TIER ASCENSION", UI.PURPLE))
+	_detail.add_child(_label("CURRENT BONUS  ·  %s" % _tier_bonus_copy(instance.tier), 10, UI.MUTED, true))
 	var donors := OverworldState.get_tier_donors(instance.id)
 	var donor_picker := OptionButton.new()
 	donor_picker.name = "DonorPicker"
@@ -208,6 +209,7 @@ func _refresh_detail() -> void:
 			String(initial_preview.get("minimum_rank", "Fresh")),
 			fusion_copy,
 		], 11, UI.TEXT, true))
+		_detail.add_child(_label("NEXT BONUS  ·  %s" % _tier_bonus_copy(next_tier), 10, UI.PURPLE.lightened(0.18), true))
 	var promote := MENU.action_button("ASCEND TO %s" % (next_tier if not next_tier.is_empty() else "MAX"), UI.PURPLE)
 	promote.name = "PromoteButton"
 	promote.disabled = next_tier.is_empty()
@@ -230,6 +232,12 @@ func _refresh_detail() -> void:
 	var craft := MENU.action_button("CRAFT CORE · 5 FRAGMENTS + 50,000 BITS", UI.CYAN)
 	craft.pressed.connect(_craft_core)
 	_detail.add_child(craft)
+
+
+func _tier_bonus_copy(tier: String) -> String:
+	var primary := _balance.tier_stat_multiplier(tier, "hp")
+	var secondary := _balance.tier_stat_multiplier(tier, "speed")
+	return "HP/ATK/DEF/INT ×%.3f  ·  SP/SPD ×%.3f  ·  MOV unchanged" % [primary, secondary]
 
 
 func _select(instance_id: String) -> void:

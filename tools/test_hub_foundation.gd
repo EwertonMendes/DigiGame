@@ -69,6 +69,12 @@ func _ready() -> void:
 	assert(player.get("facing_direction") == "north", "Player must face north toward the operator in dialogue")
 	assert(operator.get("facing_direction") == "south", "Operator must face south toward the player in dialogue")
 
+	# Exercise a real teardown rather than relying on SceneTree shutdown to dispose
+	# the Hub. This keeps the regression sensitive to genuine leaks while avoiding
+	# false failures from resources that are still legitimately owned by the scene.
+	hub.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	print("hub foundation regression passed")
 	get_tree().quit()
 

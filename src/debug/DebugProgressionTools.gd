@@ -8,6 +8,7 @@ const EvolutionServiceScript = preload("res://src/digimon/DigimonEvolutionServic
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const AscensionScript = preload("res://src/digimon/DigimonAscensionService.gd")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const ExpansionQuestCatalogScript = preload("res://src/quests/ExpansionQuestCatalog.gd")
 
 const MAX_DEBUG_TRAINING_POINTS := 5000
 
@@ -98,8 +99,24 @@ func set_tier_and_expansion(instance_id: String, tier: String, expansion_unlocke
 	var new_sp_max := maxi(0, calculator.get_stat(value, species, "mp"))
 	value.current_hp = clampi(int(round(hp_ratio * float(new_hp_max))), 0, new_hp_max)
 	value.current_mp = clampi(int(round(sp_ratio * float(new_sp_max))), 0, new_sp_max)
+	var collection := _collection()
+	var required_tier := balance.expansion_string("requiredTier", "S")
+	if collection != null and balance.tier_index(value.tier) >= balance.tier_index(required_tier):
+		ExpansionQuestCatalogScript.unlock_for_tier_s(collection)
 	OverworldState.notify_collection_changed()
 	return true
+
+func expansion_quest_status() -> Dictionary:
+	var collection := _collection()
+	return ExpansionQuestCatalogScript.quest_status(collection) if collection != null else {}
+
+func record_expansion_test_victory(advanced_encounter: bool = true) -> Dictionary:
+	var collection := _collection()
+	if collection == null:
+		return {}
+	var result: Dictionary = ExpansionQuestCatalogScript.record_victory(collection, advanced_encounter)
+	OverworldState.notify_collection_changed()
+	return result
 
 func get_item_count(item_id: String) -> int:
 	var collection := _collection()
