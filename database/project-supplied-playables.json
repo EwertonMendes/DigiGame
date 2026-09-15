@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "source_kind": "project_supplied_directional",
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "count": 1,
+  "species": [
+    {
+      "name": "Zeke Greymon",
+      "seed": "48b7a3e5-3e43-4819-96b8-673bfe67d5c1",
+      "rank": "Mega",
+      "attribute": "Data",
+      "resource": "res://assets/resources/zeke greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/zekegreymon/field.png",
+      "field_metadata": "res://assets/characters/zekegreymon/field.json",
+      "portrait_strip": "res://assets/characters/zekegreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/zekegreymon/portrait_frames.json",
+      "portrait_source": "res://assets/characters/zekegreymon/source/portrait.webp",
+      "source_sheet": "res://assets/characters/zekegreymon/source/normalized-sheet.png",
+      "field_cell": [
+        50,
+        64
+      ],
+      "portrait_frames": 4
+    }
+  ]
+}

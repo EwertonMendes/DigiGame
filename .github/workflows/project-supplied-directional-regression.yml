@@ -1,0 +1,65 @@
+name: Project-supplied directional regression
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'assets/characters/**'
+      - 'assets/resources/**'
+      - 'database/project-supplied-*.json'
+      - 'database/base-digimon-list.json'
+      - 'database/ds-directional-resource-audit.json'
+      - 'src/**'
+      - 'tools/build_project_supplied_directional.py'
+      - 'tools/materialize_project_supplied_sources.py'
+      - 'tools/validate_project_supplied_directional.py'
+      - 'tools/validate_all_ds_directional_facings.py'
+      - 'tools/test_project_supplied_directional.gd'
+      - 'tools/test_project_supplied_directional.tscn'
+      - '.github/workflows/project-supplied-directional-regression.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install sprite tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy
+
+      - name: Verify deterministic normalized assets
+        run: |
+          python3 tools/materialize_project_supplied_sources.py
+          python3 tools/build_project_supplied_directional.py
+          python3 tools/validate_project_supplied_directional.py
+          python3 tools/validate_all_ds_directional_facings.py
+          git diff --exit-code -- assets/characters assets/resources database/project-supplied-playables.json database/ds-directional-resource-audit.json
+
+      - name: Restore Godot runtime cache
+        id: godot-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/digigame-godot-runtime
+          key: digigame-godot-runtime-4.7.2-linux-x86_64
+
+      - name: Download Godot on cache miss
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.cache/digigame-godot-runtime
+          curl -fsSL --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d ~/.cache/digigame-godot-runtime
+
+      - name: Activate Godot
+        run: |
+          GODOT_BIN=$(find ~/.cache/digigame-godot-runtime -maxdepth 1 -type f -name 'Godot*' | head -n 1)
+          chmod +x "$GODOT_BIN"
+          ln -sf "$GODOT_BIN" /usr/local/bin/godot
+          godot --version
+
+      - name: Import project
+        run: godot --headless --editor --path . --quit-after 2
+
+      - name: Exercise battle, overworld and menu sprite consumers
+        run: godot --headless --path . res://tools/test_project_supplied_directional.tscn

@@ -2,7 +2,7 @@ extends Control
 class_name TurnOrderHUD
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
-const PortraitResolver = preload("res://src/ui/DigimonPortraitResolver.gd")
+const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 const DESKTOP_SLOTS := 6
 const COMPACT_BREAKPOINT := 760.0
 
@@ -144,15 +144,13 @@ func _create_turn_node(entry: Dictionary, compact: bool) -> Button:
 	avatar.add_theme_stylebox_override("panel", _avatar_style(accent, current))
 	card.add_child(avatar)
 
-	var portrait := TextureRect.new()
+	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
+	portrait.name = "Portrait"
 	var inset := 5.0 if current else 4.0
 	portrait.position = Vector2(inset, inset)
 	portrait.size = Vector2(avatar_side - inset * 2.0, avatar_side - inset * 2.0)
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait.texture = _load_portrait(digimon_key)
+	portrait.set_species(digimon_key)
 	avatar.add_child(portrait)
 
 	if current:
@@ -203,30 +201,6 @@ func _label(text_value: String, font_size: int, color: Color) -> Label:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	UI.apply_body_font(label)
 	return label
-
-
-func _load_portrait(digimon_key: String) -> Texture2D:
-	var portrait_key := PortraitResolver.resolve_key(digimon_key)
-	if portrait_key.is_empty():
-		return null
-	var metadata_path := PortraitResolver.metadata_path(portrait_key)
-	var strip_path := PortraitResolver.strip_path(portrait_key)
-	if not FileAccess.file_exists(metadata_path) or not ResourceLoader.exists(strip_path):
-		return null
-	var metadata = JSON.parse_string(FileAccess.get_file_as_string(metadata_path))
-	if not metadata is Dictionary:
-		return null
-	var strip := load(strip_path) as Texture2D
-	if strip == null:
-		return null
-	var frame_width := float(metadata.get("frame_width", 0))
-	var frame_height := float(metadata.get("frame_height", 0))
-	if frame_width <= 0.0 or frame_height <= 0.0:
-		return null
-	var atlas := AtlasTexture.new()
-	atlas.atlas = strip
-	atlas.region = Rect2(0.0, 0.0, frame_width, frame_height)
-	return atlas
 
 
 func _on_card_mouse_entered(card: Control) -> void:
