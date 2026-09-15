@@ -70,161 +70,203 @@ func _ready() -> void:
 	assert(operator.get("facing_direction") == "south", "Operator must face south toward the player in dialogue")
 
 	# Let the real Hub release scene-owned resources before terminating Godot.
+	# Immediate quit after the success marker can otherwise report live resources
+	# from deferred cleanup as a false regression failure.
 	hub.queue_free()
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	# The Hub deliberately starts persistent world music through an autoload. In a
-	# real application that resource lives across scene changes and is released at
-	# application shutdown; this isolated regression quits immediately after the
-	# Hub fixture is freed. Queue the autoload itself before quit so its existing
-	# _exit_tree cleanup runs deterministically and the engine leak check measures
-	# scene/test leaks rather than an intentionally persistent music service.
-	if is_instance_valid(MusicDirector):
-		MusicDirector.queue_free()
-		await get_tree().process_frame
-		await get_tree().process_frame
-
 	print("hub foundation regression passed")
 	get_tree().quit()
 
+func _assert_training_center_entry(hub: Node, player: Node2D, trainer: Node2D, training_screen: Control) -> void:
+	var original_position := player.position
+	player.position = trainer.position
+	await get_tree().process_frame
+	assert(bool(hub.call("_trainer_has_interaction_priority")), "Training Specialist must win interaction priority when the player is closest to that NPC")
+	hub.call("_open_training")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert(training_screen.visible, "Talking to the Training Specialist must open the Training Center")
+	assert(not bool(player.get("movement_enabled")), "Training Center must pause overworld movement")
+	var collection_list := training_screen.get("_collection_list") as Container
+	assert(collection_list != null and collection_list.get_child_count() >= 3, "Training Center must load the persistent Digimon Collection")
+	for child in collection_list.get_children():
+		var card := child as Button
+		assert(card != null and card.focus_mode == Control.FOCUS_ALL, "Training Digimon cards must be keyboard/gamepad focusable")
+		assert(card.find_child("DigimonWalkPreview", true, false) != null or card.find_child("WalkPreview", true, false) != null, "Training selection cards must show a DS field preview")
+	var detail_scroll := training_screen.get("_detail_scroll") as ScrollContainer
+	assert(detail_scroll != null and detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Training details must use smooth scrolling")
+	_assert_safe_service_frame(training_screen.get("_frame") as Control, "Training Center")
+	hub.call("_close_training")
+	await get_tree().process_frame
+	assert(not training_screen.visible, "Closing Training Center must return to the Hub")
+	assert(bool(player.get("movement_enabled")), "Closing Training Center must restore overworld movement")
+	player.position = original_position
+	await get_tree().process_frame
+
+func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> void:
+	var original_position := player.position
+	var terminal := hub.get_node_or_null("Actors/DigiLabTerminal") as Node2D
+	assert(terminal != null, "Hub must expose the DigiLab terminal actor")
+	player.position = terminal.position
+	await get_tree().process_frame
+
+	var interact := InputEventKey.new()
+	interact.keycode = KEY_E
+	interact.physical_keycode = KEY_E
+	interact.pressed = true
+	hub.call("_unhandled_input", interact)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert(digilab.visible, "Pressing E at the DigiLab terminal must open the DigiLab")
+	var create_screen := digilab.get("_create_screen") as Control
+	var party_screen := digilab.get("_party_screen") as Control
+	assert(create_screen != null and create_screen.visible, "DigiLab must open directly on Convert Digi Data")
+	assert(party_screen != null and not party_screen.visible, "Party / Storage must stay hidden until its tab is selected")
+
+	var create_frame := create_screen.get("_frame") as Control
+	var create_header := create_screen.get("_header") as Control
+	var convert_tab := create_header.call("get_tab_button", "convert") as Button
+	var party_tab := create_header.call("get_tab_button", "party") as Button
+	assert(create_frame != null and create_frame.visible, "Convert Digi Data must expose the V2 full-screen workspace")
+	assert(convert_tab != null and party_tab != null, "DigiLab must expose Convert Digi Data and Party / Storage as its two primary tabs")
+	assert(convert_tab.focus_mode == Control.FOCUS_ALL and party_tab.focus_mode == Control.FOCUS_ALL, "DigiLab tabs must be keyboard/gamepad focusable")
+	var create_list_scroll := create_screen.get("_list_scroll") as ScrollContainer
+	var create_detail_scroll := create_screen.get("_detail_scroll") as ScrollContainer
+	assert(create_list_scroll != null and create_list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Digi Data Archive must use shared smooth/right-stick scrolling")
+	assert(create_detail_scroll != null and create_detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Digi Data details must use shared smooth/right-stick scrolling")
+	_assert_fullscreen_service_frame(create_frame, "Convert Digi Data")
+
+	digilab.call("_switch_tab", "party")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert(not create_screen.visible and party_screen.visible, "Selecting Party / Storage must switch workspaces without returning to a service-card menu")
+	var party_frame := party_screen.get("_frame") as Control
+	var party_header := party_screen.get("_header") as Control
+	assert(party_header.call("get_tab_button", "convert") != null and party_header.call("get_tab_button", "party") != null, "Party / Storage must retain the same two primary DigiLab tabs")
+	var party_list_scroll := party_screen.get("_list_scroll") as ScrollContainer
+	var party_detail_scroll := party_screen.get("_detail_scroll") as ScrollContainer
+	assert(party_list_scroll != null and party_list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Party collection must use shared smooth/right-stick scrolling")
+	assert(party_detail_scroll != null and party_detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Party details must use shared smooth/right-stick scrolling")
+	_assert_fullscreen_service_frame(party_frame, "Party / Storage")
+
+	hub.call("_close_digilab")
+	await get_tree().process_frame
+	assert(not digilab.visible, "Closing DigiLab must return to the Hub")
+	assert(bool(player.get("movement_enabled")), "Closing DigiLab must restore overworld movement")
+	player.position = original_position
+	await get_tree().process_frame
+
+func _assert_fullscreen_service_frame(frame: Control, label: String) -> void:
+	assert(frame != null, "%s must expose its V2 workspace frame" % label)
+	var viewport_size := get_viewport().get_visible_rect().size
+	var effective_size := frame.size * frame.scale
+	assert(frame.position.x <= 1.0 and frame.position.y <= 1.0, "%s must align to the viewport origin" % label)
+	assert(effective_size.x >= viewport_size.x - 2.0, "%s must use the available viewport width" % label)
+	assert(effective_size.y >= viewport_size.y - 2.0, "%s must use the available viewport height" % label)
+
+func _assert_safe_service_frame(frame: Control, label: String) -> void:
+	assert(frame != null, "%s must expose a framed modal" % label)
+	var viewport_size := get_viewport().get_visible_rect().size
+	var effective_size := frame.size * frame.scale
+	assert(frame.position.x >= 10.0 and frame.position.y >= 10.0, "%s must keep a visible safe margin from the top/left edges" % label)
+	assert(frame.position.x + effective_size.x <= viewport_size.x - 10.0, "%s must stay inside the right safe margin" % label)
+	assert(frame.position.y + effective_size.y <= viewport_size.y - 10.0, "%s must stay inside the bottom safe margin" % label)
+
+func _assert_character_sheet_padding(path: String) -> void:
+	var image := Image.load_from_file(path)
+	assert(image.get_width() == FRAME_WIDTH * FRAME_COLUMNS, "%s must be a 3-column 24px atlas" % path)
+	assert(image.get_height() == FRAME_HEIGHT * FRAME_ROWS, "%s must be a 5-row 32px atlas" % path)
+
+	for frame_row in range(FRAME_ROWS):
+		for frame_column in range(FRAME_COLUMNS):
+			var frame_x := frame_column * FRAME_WIDTH
+			var frame_y := frame_row * FRAME_HEIGHT
+			var opaque_pixels := 0
+			for local_y in range(FRAME_HEIGHT):
+				assert(
+					image.get_pixel(frame_x, frame_y + local_y).a == 0.0,
+					"%s frame (%d,%d) leaks into its left gutter" % [path, frame_column, frame_row]
+				)
+				assert(
+					image.get_pixel(frame_x + FRAME_WIDTH - 1, frame_y + local_y).a == 0.0,
+					"%s frame (%d,%d) leaks into its right gutter" % [path, frame_column, frame_row]
+				)
+			for local_y in range(FRAME_HEIGHT):
+				for local_x in range(FRAME_WIDTH):
+					if image.get_pixel(frame_x + local_x, frame_y + local_y).a > 0.0:
+						opaque_pixels += 1
+			assert(opaque_pixels > 150, "%s frame (%d,%d) must contain a complete pose" % [path, frame_column, frame_row])
 
 func _assert_authored_and_mirrored_rows(player: Node) -> void:
-	var directions := ["south", "south_west", "west", "north_west", "north"]
-	for direction in directions:
-		var frames: Array[int] = player.call("get_authored_frame_sequence", direction)
-		assert(frames.size() == 3, "%s must expose three authored source frames" % direction)
-		var row := int(player.call("get_authored_row_for_direction", direction))
-		assert(row >= 0 and row < FRAME_ROWS, "%s must resolve to an authored spritesheet row" % direction)
-		for frame in frames:
-			assert(frame >= 0 and frame < FRAME_COLUMNS * FRAME_ROWS, "%s frame %d must stay inside the 3x5 spritesheet" % [direction, frame])
-			assert(int(floor(float(frame) / float(FRAME_COLUMNS))) == row, "%s frame %d must stay on row %d" % [direction, frame, row])
-		assert(not bool(player.call("is_mirrored_direction", direction)), "%s must use authored pixels directly" % direction)
-
-	assert(bool(player.call("is_mirrored_direction", "east")), "east must mirror the authored west row")
-	assert(bool(player.call("is_mirrored_direction", "south_east")), "south_east must mirror south_west")
-	assert(bool(player.call("is_mirrored_direction", "north_east")), "north_east must mirror north_west")
-	assert(player.call("get_authored_frame_sequence", "east") == player.call("get_authored_frame_sequence", "west"), "east must reuse west authored frames")
-	assert(player.call("get_authored_frame_sequence", "south_east") == player.call("get_authored_frame_sequence", "south_west"), "south_east must reuse south_west authored frames")
-	assert(player.call("get_authored_frame_sequence", "north_east") == player.call("get_authored_frame_sequence", "north_west"), "north_east must reuse north_west authored frames")
-
+	var sprite := player.get_node("CharacterSprite") as Sprite2D
+	var cases := [
+		["south", 0, false],
+		["southwest", 3, false],
+		["west", 6, false],
+		["northwest", 9, false],
+		["north", 12, false],
+		["northeast", 9, true],
+		["east", 6, true],
+		["southeast", 3, true],
+	]
+	for test_case in cases:
+		player.call("set_facing", String(test_case[0]))
+		assert(sprite.frame == int(test_case[1]), "%s must start on frame %d" % [test_case[0], test_case[1]])
+		assert(sprite.flip_h == bool(test_case[2]), "%s horizontal mirror state is wrong" % test_case[0])
 
 func _assert_eight_direction_facing(player: Node) -> void:
 	var cases := [
-		{"direction": "south", "input": Vector2(0.0, 1.0)},
-		{"direction": "south_west", "input": Vector2(-1.0, 1.0).normalized()},
-		{"direction": "west", "input": Vector2(-1.0, 0.0)},
-		{"direction": "north_west", "input": Vector2(-1.0, -1.0).normalized()},
-		{"direction": "north", "input": Vector2(0.0, -1.0)},
-		{"direction": "north_east", "input": Vector2(1.0, -1.0).normalized()},
-		{"direction": "east", "input": Vector2(1.0, 0.0)},
-		{"direction": "south_east", "input": Vector2(1.0, 1.0).normalized()},
+		[Vector2.DOWN, "south"],
+		[Vector2(-1.0, 1.0).normalized(), "southwest"],
+		[Vector2.LEFT, "west"],
+		[Vector2(-1.0, -1.0).normalized(), "northwest"],
+		[Vector2.UP, "north"],
+		[Vector2(1.0, -1.0).normalized(), "northeast"],
+		[Vector2.RIGHT, "east"],
+		[Vector2(1.0, 1.0).normalized(), "southeast"],
 	]
-	for case in cases:
-		player.call("update_visual_from_input", case["input"], true)
-		assert(player.get("facing_direction") == case["direction"], "input %s must resolve to %s" % [case["input"], case["direction"]])
-		var expected_flip := bool(player.call("is_mirrored_direction", case["direction"]))
-		assert(bool(player.call("is_sprite_flipped")) == expected_flip, "%s flip state must match authored/mirrored contract" % case["direction"])
-
+	for test_case in cases:
+		player.call("set_facing", "south")
+		player.call("_face_direction", Vector2(test_case[0]))
+		assert(
+			player.get("facing_direction") == String(test_case[1]),
+			"Movement %s must select %s" % [test_case[0], test_case[1]]
+		)
 
 func _assert_walk_sequence(player: Node) -> void:
-	for direction in ["south", "west", "north", "east", "south_east"]:
-		var expected: Array[int] = player.call("get_authored_frame_sequence", direction)
-		player.call("update_visual_from_input", player.call("get_direction_vector", direction), true)
-		var observed: Array[int] = []
-		for step in range(3):
-			player.call("set_walk_frame_for_test", step)
-			observed.append(int(player.call("get_current_frame")))
-		assert(observed == expected, "%s walk cycle must follow the authored source order" % direction)
-
+	var sprite := player.get_node("CharacterSprite") as Sprite2D
+	player.call("set_facing", "east")
+	assert(sprite.frame == 6 and sprite.flip_h, "East idle must mirror authored west frame 6")
+	player.call("_advance_walk_animation", 0.11)
+	assert(sprite.frame == 7 and sprite.flip_h, "East first walk step must mirror frame 7")
+	player.call("_advance_walk_animation", 0.10)
+	assert(sprite.frame == 6 and sprite.flip_h, "East walk midpoint must return to frame 6")
+	player.call("_advance_walk_animation", 0.10)
+	assert(sprite.frame == 8 and sprite.flip_h, "East opposite walk step must mirror frame 8")
 
 func _assert_legacy_hub_facings(player: Node) -> void:
-	player.call("face_towards", Vector2(0.0, -1.0))
-	assert(player.get("facing_direction") == "north", "north-facing scripted interactions must remain north")
-	player.call("face_towards", Vector2(-1.0, 0.0))
-	assert(player.get("facing_direction") == "west", "west-facing scripted interactions must remain west")
-	player.call("face_towards", Vector2(1.0, 0.0))
-	assert(player.get("facing_direction") == "east", "east-facing scripted interactions must remain east")
-	player.call("face_towards", Vector2(0.0, 1.0))
-	assert(player.get("facing_direction") == "south", "south-facing scripted interactions must remain south")
+	player.call("set_facing", "down_left")
+	assert(player.get("facing_direction") == "south", "Legacy down_left must preserve the hub's south-facing pose")
+	player.call("set_facing", "up_right")
+	assert(player.get("facing_direction") == "north", "Legacy up_right must preserve the hub's north-facing pose")
 
+func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> void:
+	var default_party := ["agumon", "gabumon", "greymon"]
+	assert(OverworldState.get_active_party() == default_party, "Default overworld party must be Agumon, Gabumon and Greymon")
+	assert(OverworldState.get_max_active_party_size() == 3, "Active overworld party must cap at three Digimon")
+	assert(int(party_followers.call("get_follower_count")) == 3, "Default active party must render three followers")
+	assert(Array(party_followers.call("get_active_party_keys")) == default_party, "Follower order must match active-party order")
 
-func _assert_character_sheet_padding(sheet_path: String) -> void:
-	var image := Image.load_from_file(sheet_path)
-	assert(image != null and not image.is_empty(), "Character sheet must be readable: %s" % sheet_path)
-	assert(image.get_width() == FRAME_COLUMNS * FRAME_WIDTH, "Character sheet must keep three 24px columns")
-	assert(image.get_height() == FRAME_ROWS * FRAME_HEIGHT, "Character sheet must keep five 32px rows")
-	for row in range(FRAME_ROWS):
-		for column in range(FRAME_COLUMNS):
-			var frame := Rect2i(column * FRAME_WIDTH, row * FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT)
-			var alpha_bounds := _alpha_bounds(image, frame)
-			assert(alpha_bounds.size.x > 0 and alpha_bounds.size.y > 0, "Every character frame must contain visible pixels")
-			assert(alpha_bounds.position.x >= 1 and alpha_bounds.end.x <= FRAME_WIDTH - 1, "Character frame must preserve horizontal padding")
-			assert(alpha_bounds.position.y >= 1 and alpha_bounds.end.y <= FRAME_HEIGHT - 1, "Character frame must preserve vertical padding")
-
-
-func _alpha_bounds(image: Image, frame: Rect2i) -> Rect2i:
-	var min_x := FRAME_WIDTH
-	var min_y := FRAME_HEIGHT
-	var max_x := -1
-	var max_y := -1
-	for local_y in range(FRAME_HEIGHT):
-		for local_x in range(FRAME_WIDTH):
-			var pixel := image.get_pixel(frame.position.x + local_x, frame.position.y + local_y)
-			if pixel.a <= 0.01:
-				continue
-			min_x = mini(min_x, local_x)
-			min_y = mini(min_y, local_y)
-			max_x = maxi(max_x, local_x)
-			max_y = maxi(max_y, local_y)
-	if max_x < min_x or max_y < min_y:
-		return Rect2i()
-	return Rect2i(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
-
-
-func _assert_training_center_entry(hub: Node, player: Node, trainer: Node, training_screen: Control) -> void:
-	assert(trainer != null, "Training Specialist must exist")
-	assert(training_screen != null, "Training Center screen must exist")
-	player.position = trainer.position + Vector2(0.0, 40.0)
-	assert(bool(hub.call("can_interact_with", trainer)), "Training Specialist must be interactable from the service counter")
-	hub.call("interact_with_actor", trainer)
-	await get_tree().process_frame
-	assert(training_screen.visible, "Training Specialist must open the Training Center screen")
-	assert(not bool(player.get("movement_enabled")), "Training Center must pause Hub movement while open")
-	hub.call("close_training_center")
-	await get_tree().process_frame
-	assert(not training_screen.visible, "Closing Training Center must hide the service screen")
-	assert(bool(player.get("movement_enabled")), "Closing Training Center must restore Hub movement")
-
-
-func _assert_digilab_root_entry(hub: Node, player: Node, digilab: Control) -> void:
-	assert(digilab != null, "DigiLab root UI must exist")
-	var lab_anchor := hub.get_node_or_null("Actors/BattleOperator") as Node2D
-	assert(lab_anchor != null, "Hub needs an authored interaction anchor near the service terminals")
-	player.position = lab_anchor.position + Vector2(20.0, 0.0)
-	hub.call("open_digilab")
-	await get_tree().process_frame
-	assert(digilab.visible, "Opening DigiLab must reveal the root DigiLab screen")
-	assert(not bool(player.get("movement_enabled")), "DigiLab must pause Hub movement while open")
-	hub.call("close_digilab")
-	await get_tree().process_frame
-	assert(not digilab.visible, "Closing DigiLab must hide the root screen")
-	assert(bool(player.get("movement_enabled")), "Closing DigiLab must restore Hub movement")
-
-
-func _assert_overworld_active_party(player: Node, party_followers: Node) -> void:
-	assert(party_followers != null, "Hub must expose PartyFollowers")
-	OverworldState.reset_active_party()
-	await get_tree().process_frame
-	await get_tree().process_frame
-
-	var active_party := OverworldState.get_active_party()
-	assert(active_party == ["agumon", "gabumon", "greymon"], "Default overworld party must contain the three starter Digimon")
-	assert(int(party_followers.call("get_follower_count")) == 3, "Hub must spawn one follower per active-party member")
-
+	var followers_root := party_followers.get_node_or_null("Followers")
+	assert(followers_root != null, "Follower system must expose a stable Followers container")
+	var follower_nodes := followers_root.get_children()
+	assert(follower_nodes.size() == 3, "Exactly the three active Digimon must exist in the hub")
+	var minimum_separation := float(party_followers.call("get_minimum_team_separation"))
 	var occupied: Array[Vector2] = [player.global_position]
-	var minimum_separation := 10.0
-	for follower in party_followers.call("get_followers"):
+	for follower in follower_nodes:
 		var follower_node := follower as Node2D
 		assert(follower_node != null, "Every active-party follower must be a Node2D")
 		for point in occupied:
