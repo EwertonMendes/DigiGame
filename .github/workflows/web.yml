@@ -124,6 +124,7 @@ jobs:
     if: >-
       github.event_name == 'pull_request' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
@@ -279,7 +280,7 @@ jobs:
 
           **[Open DigiGame PR #${PR_NUMBER}](${PREVIEW_URL})**
 
-          Build: \`${SHORT_SHA}\` · produced by the fast Web gate. Browser regressions run in parallel after the gate and remain visible as separate jobs in this same workflow.
+          Build: \`${SHORT_SHA}\` · produced by the fast Web gate. Browser regressions run in parallel after the gate; on PRs they are diagnostic, while `master` still requires them before production Pages deploys.
 
           Other open PR previews are preserved in the same Pages deployment."
 
