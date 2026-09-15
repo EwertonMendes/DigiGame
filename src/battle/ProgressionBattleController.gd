@@ -7,10 +7,11 @@ var _reward_service = null
 
 
 func _ready() -> void:
-	# The persistent director crossfades the current area theme into Battle 1 and
-	# keeps it alive for the encounter. Result themes replace it immediately when
-	# the battle ends; returning to the Hub asks the same director for Zone 1.
-	MusicDirector.play_battle_1()
+	# Diagnostic A/B: keep the current world track on Web so we can prove whether
+	# the intermittent WASM trap is caused by the music transition or by battle
+	# presentation. This branch-only probe is reverted after the diagnostic run.
+	if not OS.has_feature("web"):
+		MusicDirector.play_battle_1()
 	_reward_service = BattleRewardServiceScript.new(OverworldState.get_database())
 	super._ready()
 
@@ -118,33 +119,32 @@ func _is_advanced_expansion_encounter(defeated_enemies: Array[Node]) -> bool:
 		if actor == null or not is_instance_valid(actor):
 			continue
 		var profile := String(actor.get_meta("encounter_profile", "wild")).to_lower().strip_edges()
-		if ["trainer", "elite", "boss", "advanced"].has(profile):
+		if profile in ["boss", "elite", "champion"]:
 			return true
-		if actor.has_method("get_level") and int(actor.call("get_level")) >= 20:
+		var species_rank := String(actor.get("species_data").get("rank", "")) if actor.get("species_data") is Dictionary else ""
+		if species_rank.to_lower() in ["perfect", "ultimate", "mega"]:
 			return true
 	return false
 
 
 func _encounter_guaranteed_items() -> Dictionary:
-	if _controller == null:
+	var encounter = OverworldState.consume_active_battle_encounter()
+	if not encounter is Dictionary:
 		return {}
-	var definition = _controller.get("encounter_definition")
-	if definition == null:
-		return {}
-	var raw_items = definition.get("guaranteed_items")
-	return (raw_items as Dictionary).duplicate(true) if raw_items is Dictionary else {}
+	var items = (encounter as Dictionary).get("guaranteed_items", {})
+	return items.duplicate(true) if items is Dictionary else {}
 
 
-func _item_totals(raw_items) -> Dictionary:
-	var result: Dictionary = {}
-	if not raw_items is Array:
-		return result
-	for raw_item in raw_items:
-		if not raw_item is Dictionary:
+func _item_totals(items_value) -> Dictionary:
+	var totals: Dictionary = {}
+	if not items_value is Array:
+		return totals
+	for entry in items_value as Array:
+		if not entry is Dictionary:
 			continue
-		var item := raw_item as Dictionary
-		var item_id := String(item.get("id", item.get("item_id", ""))).strip_edges()
-		var amount := maxi(0, int(item.get("amount", 1)))
-		if not item_id.is_empty() and amount > 0:
-			result[item_id] = int(result.get(item_id, 0)) + amount
-	return result
+		var item_id := String((entry as Dictionary).get("id", "")).strip_edges()
+		var amount := maxi(0, int((entry as Dictionary).get("amount", 0)))
+		if item_id.is_empty() or amount <= 0:
+			continue
+		totals[item_id] = int(totals.get(item_id, 0)) + amount
+	return totals
