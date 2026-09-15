@@ -36,13 +36,15 @@ func _start_battle() -> void:
 	_opening_running = false
 	_input_locked = false
 	_set_gameplay_ui_visible(true)
-	print("[Battle] GAMEPLAY_READY")
 	_start_next_turn()
 
 
 func _play_opening_sequence() -> void:
 	var camera := get_viewport().get_camera_2d()
 
+	# Re-evaluate facing only after both rosters exist. This makes every actor look
+	# toward a real opposing Digimon instead of relying on a generic map-center
+	# direction while the encounter is still being instantiated.
 	if _controller != null and _controller.has_method("orient_battle_actors_toward_opponents"):
 		_controller.call("orient_battle_actors_toward_opponents")
 
@@ -65,6 +67,10 @@ func _play_opening_sequence() -> void:
 	first_focus = await _reveal_team(enemy_team, camera, first_focus)
 	await get_tree().create_timer(0.10).timeout
 
+	# The scheduler can preview turn one without mutating CT. Move from the last
+	# roster reveal to the actual first-turn Digimon at the gameplay zoom before
+	# showing BATTLE START, so combat begins already framed for play instead of
+	# snapping back to a distant whole-board overview.
 	var first_turn_actor := _preview_first_turn_actor()
 	if first_turn_actor != null and camera != null:
 		if camera.has_method("animate_gameplay_focus"):
@@ -82,6 +88,10 @@ func _reveal_team(team: Array[Node], camera: Camera2D, first_focus: bool) -> boo
 		if actor == null or not is_instance_valid(actor):
 			continue
 
+		# Keep the logical facing fresh immediately before the close-up. The camera
+		# move finishes first, then the Digimon materializes while actually centered
+		# on screen. This produces a readable roster introduction instead of six
+		# simultaneous effects on a distant board.
 		if _controller != null and _controller.has_method("face_actor_toward_nearest_opponent"):
 			_controller.call("face_actor_toward_nearest_opponent", actor)
 		if camera != null and camera.has_method("animate_intro_focus"):

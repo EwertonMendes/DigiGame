@@ -86,6 +86,9 @@ func _run_transition(scene_path: String, context: String) -> void:
 	if focus_owner != null:
 		focus_owner.release_focus()
 
+	# Begin loading before the effect becomes visually dense. The previous
+	# implementation loaded synchronously at the midpoint, which could freeze the
+	# shader and make a deliberately smooth transition feel like a loading screen.
 	var request_error := ResourceLoader.load_threaded_request(scene_path, "PackedScene", true)
 	if request_error != OK:
 		var existing_status := ResourceLoader.load_threaded_get_status(scene_path)
@@ -96,6 +99,9 @@ func _run_transition(scene_path: String, context: String) -> void:
 
 	_root.visible = true
 
+	# Most of the cover happens while the destination scene is loading. Even if a
+	# slower device needs a little longer, the mosaic keeps moving because all of
+	# its life comes from shader TIME rather than CPU-created squares.
 	var cover := create_tween()
 	cover.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	cover.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
@@ -108,6 +114,8 @@ func _run_transition(scene_path: String, context: String) -> void:
 		await _abort_transition()
 		return
 
+	# Seal only for a few frames. This is the sole fully opaque part of the effect
+	# and it exists only to hide the actual scene-tree replacement.
 	var seal := create_tween().set_parallel(true)
 	seal.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	seal.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -125,6 +133,8 @@ func _run_transition(scene_path: String, context: String) -> void:
 	print("[Transition] MIDPOINT context=%s" % context)
 	await get_tree().process_frame
 
+	# Reveal immediately. There is no status card or artificial hold: the new
+	# scene simply reconstructs through the same moving cells in reverse.
 	var reveal := create_tween().set_parallel(true)
 	reveal.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	reveal.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -185,6 +195,8 @@ func _set_flash(value: float) -> void:
 
 
 func _configure_palette(context: String) -> void:
+	# Keep the palette luminous and cohesive with the game without falling back to
+	# the previous cyan/orange loading-screen look.
 	if context == CONTEXT_BATTLE:
 		_material.set_shader_parameter("primary_color", Color(0.40, 0.82, 1.0, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.60, 0.48, 1.0, 1.0))

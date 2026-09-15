@@ -1,10 +1,8 @@
 extends "res://src/battle/DigimonBattleActor.gd"
 
-const TweenGuardScript = preload("res://src/ui/components/DigiTweenGuard.gd")
 const SPAWN_RISE := Vector2(0.0, 18.0)
 const SPAWN_IN_TIME := 0.16
 const SPAWN_SETTLE_TIME := 0.20
-const SPAWN_TWEEN_TIMEOUT := 1.10
 
 var _spawn_prepared := false
 var _spawn_base_position := Vector2.ZERO
@@ -44,11 +42,7 @@ func play_battle_spawn_animation() -> void:
 	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(sprite, "position", _spawn_base_position, SPAWN_SETTLE_TIME)
 	tween.parallel().tween_property(sprite, "scale", _spawn_base_scale, SPAWN_SETTLE_TIME)
-
-	var guard := TweenGuardScript.new() as DigiTweenGuard
-	var timed_out := await guard.await_tween(get_tree(), tween, SPAWN_TWEEN_TIMEOUT)
-	if timed_out:
-		print("[BattleIntro] VISUAL_FALLBACK stage=spawn actor=%s" % name)
+	await tween.finished
 
 	modulate = Color.WHITE
 	sprite.position = _spawn_base_position
