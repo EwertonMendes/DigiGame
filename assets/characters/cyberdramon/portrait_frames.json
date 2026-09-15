@@ -1,0 +1,14 @@
+{
+  "source": "Cyberdramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Cyberdramon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "671d18ca95f1c995d4133622283646800cc8f0d7611dfb1dfefe30c4bc242d27"
+}

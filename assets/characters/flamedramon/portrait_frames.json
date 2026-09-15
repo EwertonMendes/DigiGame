@@ -1,0 +1,14 @@
+{
+  "source": "Flamedramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Flamedramon.webp",
+  "frame_width": 85,
+  "frame_height": 110,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "45b5dbc870e6df277b46bb954faa2326f87cdacfef27f46abac22c2e23c40aba"
+}

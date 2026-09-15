@@ -1,0 +1,14 @@
+{
+  "source": "BlueMetalGreymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/BlueMetalGreymon.webp",
+  "frame_width": 123,
+  "frame_height": 104,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2059a47d67b5e11eb474ecd669ff00ceabd17f7f0953b39fa2a38029860bcd9b"
+}

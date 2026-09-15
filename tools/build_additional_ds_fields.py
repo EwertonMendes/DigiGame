@@ -61,18 +61,27 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
     _background, components = _components(image)
     min_cx_ratio = float(profile.get("min_cx_ratio", 0.0))
     max_cx_ratio = float(profile.get("max_cx_ratio", 1.0))
+    min_cy_ratio = float(profile.get("min_cy_ratio", 0.0))
+    max_cy_ratio = float(profile.get("max_cy_ratio", 1.0))
     if not 0.0 <= min_cx_ratio < max_cx_ratio <= 1.0:
         raise RuntimeError(
             f"Invalid structural profile x-range: min_cx_ratio={min_cx_ratio} max_cx_ratio={max_cx_ratio}"
         )
+    if not 0.0 <= min_cy_ratio < max_cy_ratio <= 1.0:
+        raise RuntimeError(
+            f"Invalid structural profile y-range: min_cy_ratio={min_cy_ratio} max_cy_ratio={max_cy_ratio}"
+        )
     min_cx = image.width * min_cx_ratio
     max_cx = image.width * max_cx_ratio
+    min_cy = image.height * min_cy_ratio
+    max_cy = image.height * max_cy_ratio
     candidates = [
         item for item in components
         if 10 <= item["w"] <= 50
         and 7 <= item["h"] <= 50
         and item["area"] >= 60
         and min_cx <= item["cx"] <= max_cx
+        and min_cy <= item["cy"] <= max_cy
     ]
     rows = _group_by_y(candidates, tolerance=8.0)
     kind = str(profile.get("kind", ""))
@@ -163,7 +172,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "source_kind": "official_ds",
         "source_variant": "withthewill_additional_audited",
         "source_id": optional_source_id(spec),
-        "source_archive_file": str(spec["source_member"]),
+        "source_archive_file": spec.get("source_member"),
         "source_url": str(spec["source_url"]),
         "source_sha256": sha256(source_bytes),
         "rebuilt_from_source": True,
@@ -250,7 +259,14 @@ def main() -> None:
     for name, spec in requested.items():
         if spec["profile"] not in config["profiles"] or spec["pattern"] not in config["patterns"]:
             raise RuntimeError(f"{name}: unknown profile/pattern")
-        payload = source_member(archive, str(spec["source_member"]))
+        pinned_member = spec.get("source_member")
+        if pinned_member:
+            payload = source_member(archive, str(pinned_member))
+        else:
+            source_url = str(spec.get("source_url") or "").strip()
+            if not source_url:
+                raise RuntimeError(f"{name}: source_member or source_url is required")
+            payload = fetch(source_url)
         actual_sha = sha256(payload)
         if actual_sha != str(spec["source_sha256"]):
             raise RuntimeError(f"{name}: source SHA changed ({actual_sha}); refusing to infer from changed art")

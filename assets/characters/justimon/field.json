@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 361,
+  "source_archive_file": "sprite thread/361_Justimon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/361_Justimon.png",
+  "source_sha256": "1b6ccc1105ccb25fedb949f676421c257f9696f5e7a3a2a5a4550fde2aeec10b",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 138940,
+      "confidence_margin": 290394
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 328914
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    45
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 0,
+        "y": 233,
+        "w": 29,
+        "h": 41
+      },
+      {
+        "x": 43,
+        "y": 232,
+        "w": 24,
+        "h": 42
+      },
+      {
+        "x": 80,
+        "y": 233,
+        "w": 30,
+        "h": 41
+      }
+    ],
+    "down_right": [
+      {
+        "x": 310,
+        "y": 233,
+        "w": 29,
+        "h": 41
+      },
+      {
+        "x": 272,
+        "y": 232,
+        "w": 24,
+        "h": 42
+      },
+      {
+        "x": 229,
+        "y": 233,
+        "w": 30,
+        "h": 41
+      }
+    ],
+    "up_left": [
+      {
+        "x": 4,
+        "y": 278,
+        "w": 24,
+        "h": 41
+      },
+      {
+        "x": 43,
+        "y": 277,
+        "w": 24,
+        "h": 42
+      },
+      {
+        "x": 80,
+        "y": 278,
+        "w": 30,
+        "h": 41
+      }
+    ],
+    "up_right": [
+      {
+        "x": 311,
+        "y": 278,
+        "w": 24,
+        "h": 41
+      },
+      {
+        "x": 272,
+        "y": 277,
+        "w": 24,
+        "h": 42
+      },
+      {
+        "x": 229,
+        "y": 278,
+        "w": 30,
+        "h": 41
+      }
+    ]
+  },
+  "cell_width": 34,
+  "cell_height": 46,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/justimon/field.png"
+}

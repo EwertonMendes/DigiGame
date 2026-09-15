@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 276,
+  "source_archive_file": "sprite thread/276_AeroV-Dramon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/276_AeroV-Dramon.png",
+  "source_sha256": "c2b930245dbb17a66969caec47bb90cadcb9edadab3c22cdfd6b796018903c63",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 145900,
+      "confidence_margin": 211168
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 298308
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    35
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 71,
+        "y": 297,
+        "w": 32,
+        "h": 28
+      },
+      {
+        "x": 112,
+        "y": 296,
+        "w": 30,
+        "h": 30
+      },
+      {
+        "x": 151,
+        "y": 295,
+        "w": 31,
+        "h": 32
+      }
+    ],
+    "down_right": [
+      {
+        "x": 269,
+        "y": 297,
+        "w": 32,
+        "h": 28
+      },
+      {
+        "x": 230,
+        "y": 296,
+        "w": 30,
+        "h": 30
+      },
+      {
+        "x": 190,
+        "y": 295,
+        "w": 31,
+        "h": 32
+      }
+    ],
+    "up_left": [
+      {
+        "x": 71,
+        "y": 257,
+        "w": 32,
+        "h": 30
+      },
+      {
+        "x": 112,
+        "y": 255,
+        "w": 30,
+        "h": 31
+      },
+      {
+        "x": 152,
+        "y": 256,
+        "w": 30,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 269,
+        "y": 257,
+        "w": 32,
+        "h": 30
+      },
+      {
+        "x": 230,
+        "y": 255,
+        "w": 30,
+        "h": 31
+      },
+      {
+        "x": 190,
+        "y": 256,
+        "w": 30,
+        "h": 30
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 36,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/aeroveedramon/field.png"
+}

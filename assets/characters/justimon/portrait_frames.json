@@ -1,0 +1,14 @@
+{
+  "source": "Justimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Justimon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "4c995253ceb6f4e19bd7983cb7577f4ce1fcebeb5861d427479ad8222ae9327d"
+}
