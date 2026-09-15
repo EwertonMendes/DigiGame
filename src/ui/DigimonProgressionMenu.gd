@@ -424,17 +424,17 @@ func _wire_focus_navigation() -> void:
 
 	var close_button := _header.get_close_button() if _header != null else null
 	if close_button != null and is_instance_valid(close_button):
-		close_button.focus_neighbor_down = close_button.get_path_to(first_action)
+		close_button.focus_neighbor_bottom = close_button.get_path_to(first_action)
 		for card in _action_cards:
 			if card != null and is_instance_valid(card):
-				card.focus_neighbor_up = card.get_path_to(close_button)
+				card.focus_neighbor_top = card.get_path_to(close_button)
 
 	if _techniques_expanded and _technique_panel != null:
 		var technique_controls := _focusable_descendants(_technique_panel)
 		if not technique_controls.is_empty():
 			var first_technique := technique_controls[0]
-			first_action.focus_neighbor_down = first_action.get_path_to(first_technique)
-			first_technique.focus_neighbor_up = first_technique.get_path_to(first_action)
+			first_action.focus_neighbor_bottom = first_action.get_path_to(first_technique)
+			first_technique.focus_neighbor_top = first_technique.get_path_to(first_action)
 
 
 func _focusable_descendants(root: Node) -> Array[Control]:
