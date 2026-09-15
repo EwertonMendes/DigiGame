@@ -11,7 +11,7 @@
       "source_kind": "project_supplied",
       "source_variant": "custom_directional_sheet",
       "source_path": "assets/characters/zekegreymon/source/movement-sheet.webp",
-      "source_sha256": "372a4c7e48f574c154e9aeeb5017f393c7ba194bd59506a01076931edd5b4f03",
+      "source_sha256": "6cdd6bacc44fd74bef5d8f9649964f3422ffc0ec5499b6faa5c49c61b76d80cc",
       "source_dimensions": [1086, 640],
       "profile": "explicit_four_triples",
       "pattern": "canonical_rows",
