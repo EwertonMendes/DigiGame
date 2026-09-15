@@ -32,11 +32,8 @@ func _update_unit_summary(actor: Node, state: Dictionary) -> void:
 		actor_name = String(actor.call("get_display_name"))
 	var level := int(state.get("level", 1))
 	var size_badge := String(state.get("size_badge", ""))
-	_actor_label.text = "%s   Lv.%d%s" % [
-		actor_name,
-		level,
-		"   %s" % size_badge if not size_badge.is_empty() else "",
-	]
+	var size_suffix := "   %s" % size_badge if not size_badge.is_empty() else ""
+	_actor_label.text = "%s   Lv.%d%s" % [actor_name, level, size_suffix]
 
 
 func _layout_status(panel_size: Vector2, compact: bool) -> void:
@@ -51,4 +48,7 @@ func _layout_status(panel_size: Vector2, compact: bool) -> void:
 	_tier_icon.position = Vector2(panel_size.x - pad - icon_size.x, top)
 	_tier_icon.size = icon_size
 	_tier_icon.custom_minimum_size = icon_size
-	_actor_label.size.x = maxf(80.0, panel_size.x - info_x - pad - icon_size.x - 8.0)
+	_actor_label.size = Vector2(
+		maxf(80.0, panel_size.x - info_x - pad - icon_size.x - 8.0),
+		_actor_label.size.y
+	)
