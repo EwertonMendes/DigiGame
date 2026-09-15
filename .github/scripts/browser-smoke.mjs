@@ -4,6 +4,7 @@ const url = process.env.DIGIGAME_URL ?? 'http://127.0.0.1:8000';
 const requestedSuite = process.env.SMOKE_SUITE ?? 'desktop';
 const suite = requestedSuite === 'combat' || requestedSuite === 'vfx' ? 'combat-vfx' : requestedSuite;
 const runtimeErrors = [];
+const battleDiagnostics = [];
 const browser = await chromium.launch({
   headless: true,
   executablePath: process.env.CHROME_BIN ?? '/usr/bin/google-chrome',
@@ -22,7 +23,17 @@ const mobileViewports = [
 function watchRuntimeErrors(page, label) {
   page.on('pageerror', error => runtimeErrors.push(`${label} pageerror: ${error.message}`));
   page.on('console', message => {
-    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${message.text()}`);
+    const text = message.text();
+    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${text}`);
+    if (
+      text.includes('[BattleIntro]') ||
+      text.includes('[Battle]') ||
+      text.includes('[Transition]') ||
+      text.includes('[Music]')
+    ) {
+      battleDiagnostics.push(`${label}: ${text}`);
+      if (battleDiagnostics.length > 80) battleDiagnostics.shift();
+    }
   });
 }
 
@@ -85,7 +96,16 @@ async function confirmBattleDialog(page) {
 async function waitForBattlePresentation(page) {
   // A loaded scene is not enough: every browser suite must prove that the
   // frame-driven camera intro completed and handed control to the battle loop.
-  await waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
+  try {
+    await waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
+  } catch (error) {
+    console.error(`[Smoke] ${suite} battle intro diagnostics:\n${battleDiagnostics.join('\n') || '(no battle markers captured)'}`);
+    if (runtimeErrors.length > 0) {
+      console.error(`[Smoke] ${suite} runtime errors:\n${runtimeErrors.join('\n')}`);
+    }
+    await page.screenshot({ path: `build/${suite}-battle-timeout.png`, fullPage: true });
+    throw error;
+  }
   await settleFrames(page, 3);
 }
 
