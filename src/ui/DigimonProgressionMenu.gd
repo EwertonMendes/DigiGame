@@ -346,7 +346,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	_action_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_action_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_action_panel.size_flags_stretch_ratio = 1.0
-	_action_panel.custom_minimum_size.y = 188.0
+	_action_panel.custom_minimum_size.y = 204.0
 	_action_panel.add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 	_primary_column.add_child(_action_panel)
 
@@ -356,7 +356,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	stack.add_theme_constant_override("separation", 0)
 	_action_panel.add_child(stack)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
-	header.configure("ACTIONS", "Help your Digimon grow stronger", V2.CYAN, "evolution")
+	header.configure("ACTIONS", "", V2.CYAN, "evolution")
 	stack.add_child(header)
 
 	var inner := _margin(12, 10, 12, 12)
@@ -375,7 +375,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	var techniques := ActionCardScript.new()
 	techniques.configure(
 		"TECHNIQUES",
-		"View and manage learned techniques, favorites and mastery.",
+		"Manage learned techniques and favorites.",
 		"%d learned · %d favorite%s" % [learned, favorites, "" if favorites == 1 else "s"],
 		"techniques",
 		V2.CYAN
@@ -396,7 +396,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	var evolution := ActionCardScript.new()
 	evolution.configure(
 		"EVOLUTION",
-		"Explore Digivolution and Degeneration routes and requirements.",
+		"View Digivolution and Degeneration routes.",
 		"%d route%s available" % [ready, "" if ready == 1 else "s"],
 		"evolution",
 		V2.GREEN
@@ -408,7 +408,7 @@ func _build_action_area(instance: DigimonInstance) -> void:
 	var items := ActionCardScript.new()
 	items.configure(
 		"ITEMS",
-		"View carried items and prepare useful tools for your Digimon.",
+		"Review carried items and useful tools.",
 		"Coming later",
 		"items",
 		V2.AMBER
