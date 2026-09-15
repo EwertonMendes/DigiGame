@@ -71,8 +71,15 @@ func _build_battle_result(victory: bool) -> Dictionary:
 			_is_advanced_expansion_encounter(defeated_enemies)
 		)
 		result["expansion_quests"] = quest_result
+		(result["other_rewards"] as Dictionary)["expansion_quests"] = quest_result.duplicate(true)
 		var quest_items = quest_result.get("rewarded_items", {})
 		if quest_items is Dictionary and not (quest_items as Dictionary).is_empty():
+			for raw_item_id in (quest_items as Dictionary).keys():
+				(result["items"] as Array).append({
+					"id": String(raw_item_id),
+					"amount": int((quest_items as Dictionary)[raw_item_id]),
+					"source": "quest",
+				})
 			OverworldState.inventory_changed.emit(OverworldState.get_inventory())
 			OverworldState.account_rewards_changed.emit(OverworldState.get_bits(), OverworldState.get_digi_data())
 
