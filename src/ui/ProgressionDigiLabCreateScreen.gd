@@ -307,6 +307,13 @@ func _reconstruction_option(species_name: String, amount: int, available: int, r
 	return button
 
 
+func _single_line_label(text: String, size: int, color: Color, bold: bool = false) -> Label:
+	var label := _label(text, size, color, bold)
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	return label
+
+
 func _pill(text: String, accent: Color) -> Label:
 	var label := _single_line_label(text, 9, accent, true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
