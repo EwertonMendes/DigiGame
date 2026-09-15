@@ -100,12 +100,13 @@ func _apply_blur_profile() -> void:
 	var tint_mix := float(profile.get("accent_tint", 0.04))
 	var glass_tint := base_tint.lerp(_accent, tint_mix)
 	_glass_material.set_shader_parameter("glass_tint", glass_tint)
-	_glass_material.set_shader_parameter("blur_lod", float(profile.get("blur_lod", 2.6)))
-	_glass_material.set_shader_parameter("blur_spread", float(profile.get("blur_spread", 1.25)))
-	_glass_material.set_shader_parameter("saturation", float(profile.get("saturation", 0.72)))
+	_glass_material.set_shader_parameter("blur_lod", float(profile.get("blur_lod", 3.2)))
+	_glass_material.set_shader_parameter("blur_spread", float(profile.get("blur_spread", 1.35)))
+	_glass_material.set_shader_parameter("saturation", float(profile.get("saturation", 0.64)))
 	_glass_material.set_shader_parameter("brightness", float(profile.get("brightness", 0.80)))
-	_glass_material.set_shader_parameter("frost", float(profile.get("frost", 0.20)))
+	_glass_material.set_shader_parameter("frost", float(profile.get("frost", 0.24)))
 	_glass_material.set_shader_parameter("edge_style", float(profile.get("edge_style", 0.56)))
+	_glass_material.set_shader_parameter("glass_opacity", float(profile.get("glass_opacity", 0.90)))
 
 
 func _blur_profile(variant: String) -> Dictionary:
@@ -114,31 +115,34 @@ func _blur_profile(variant: String) -> Dictionary:
 	match variant:
 		"modal":
 			return {
-				"blur_lod": 3.15,
-				"blur_spread": 1.45,
-				"saturation": 0.62,
-				"brightness": 0.72,
-				"frost": 0.27,
-				"edge_style": 0.58,
+				"blur_lod": 4.00,
+				"blur_spread": 1.65,
+				"saturation": 0.52,
+				"brightness": 0.76,
+				"frost": 0.31,
+				"edge_style": 0.60,
 				"accent_tint": 0.035,
+				"glass_opacity": 0.95,
 			}
 		"subtle":
 			return {
-				"blur_lod": 1.90,
-				"blur_spread": 1.00,
-				"saturation": 0.82,
-				"brightness": 0.86,
-				"frost": 0.15,
+				"blur_lod": 2.45,
+				"blur_spread": 1.10,
+				"saturation": 0.74,
+				"brightness": 0.84,
+				"frost": 0.18,
 				"edge_style": 0.50,
 				"accent_tint": 0.045,
+				"glass_opacity": 0.82,
 			}
 		_:
 			return {
-				"blur_lod": 2.60,
-				"blur_spread": 1.25,
-				"saturation": 0.70,
-				"brightness": 0.79,
-				"frost": 0.21,
-				"edge_style": 0.55,
+				"blur_lod": 3.35,
+				"blur_spread": 1.40,
+				"saturation": 0.60,
+				"brightness": 0.80,
+				"frost": 0.25,
+				"edge_style": 0.56,
 				"accent_tint": 0.04,
+				"glass_opacity": 0.91,
 			}
