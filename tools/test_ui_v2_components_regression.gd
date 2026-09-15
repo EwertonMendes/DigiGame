@@ -65,6 +65,21 @@ func _ready() -> void:
 	if not _check(cancel.custom_minimum_size.y >= DigiUiTheme.TOUCH_TARGET and start.custom_minimum_size.y >= DigiUiTheme.TOUCH_TARGET, "Battle Operator dialog actions must remain touch-safe"):
 		return
 
+	var move_right := InputEventAction.new()
+	move_right.action = "ui_right"
+	move_right.pressed = true
+	hub.call("_unhandled_input", move_right)
+	await _frames(1)
+	if not _check(get_viewport().gui_get_focus_owner() == start, "Battle Operator dialog must navigate from NOT NOW to START TEST BATTLE"):
+		return
+	var move_left := InputEventAction.new()
+	move_left.action = "ui_left"
+	move_left.pressed = true
+	hub.call("_unhandled_input", move_left)
+	await _frames(1)
+	if not _check(get_viewport().gui_get_focus_owner() == cancel, "Battle Operator dialog must navigate back to NOT NOW"):
+		return
+
 	hub.queue_free()
 	await _frames(2)
 	print("global ui v2 components regression passed")
