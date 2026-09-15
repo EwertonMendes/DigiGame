@@ -5,6 +5,7 @@ const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const SemanticPalette = preload("res://src/ui/components/DigiSemanticPalette.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
+const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
 const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 
 
@@ -86,7 +87,7 @@ func configure(instance: DigimonInstance, species: Dictionary, progression: Digi
 	summary.add_child(chips)
 	chips.add_child(_pill(rank.to_upper(), accent))
 	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
-	chips.add_child(_pill("TIER %s · %s" % [instance.tier, footprint_badge], V2.AMBER))
+	chips.add_child(_tier_pill(instance.tier, footprint_badge))
 	var attribute := String(species.get("attribute", "Free"))
 	var family := String(species.get("species", species.get("family", "Unknown")))
 	chips.add_child(_pill(attribute.to_upper(), SemanticPalette.data_attribute_color(attribute)))
@@ -173,6 +174,25 @@ func _pill(text: String, accent: Color) -> Label:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_stylebox_override("normal", V2.pill_style(accent, true))
 	return label
+
+
+func _tier_pill(tier: String, footprint: String) -> Control:
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", V2.pill_style(V2.AMBER, true))
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 5)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(row)
+	var tier_icon := TierIconScript.new() as DigiTierIcon
+	tier_icon.configure(tier, Vector2(30.0, 19.0))
+	row.add_child(tier_icon)
+	var footprint_label := _label(footprint, 9, V2.AMBER, true)
+	footprint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(footprint_label)
+	panel.tooltip_text = "Tier %s · %s tactical footprint" % [tier.to_upper(), footprint]
+	return panel
 
 
 func _progress(accent: Color, height: float) -> ProgressBar:
