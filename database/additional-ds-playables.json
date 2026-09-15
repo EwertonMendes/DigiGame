@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 42,
+  "count": 44,
   "species": [
     {
       "name": "Geo Greymon",
@@ -850,6 +850,46 @@
       "field_cell": [
         34,
         46
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Blue Greymon",
+      "seed": "a351a4ab-a5bf-42df-8a27-bb2d8ce06d0b",
+      "rank": "Champion",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/blue greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/bluegreymon/field.png",
+      "field_metadata": "res://assets/characters/bluegreymon/field.json",
+      "portrait_strip": "res://assets/characters/bluegreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/bluegreymon/portrait_frames.json",
+      "source_id": null,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        45
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Blue Metal Greymon",
+      "seed": "34af8b92-9237-4f39-b45d-0d6c073d98c1",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/blue metal greymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/bluemetalgreymon/field.png",
+      "field_metadata": "res://assets/characters/bluemetalgreymon/field.json",
+      "portrait_strip": "res://assets/characters/bluemetalgreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/bluemetalgreymon/portrait_frames.json",
+      "source_id": null,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        37,
+        55
       ],
       "portrait_frames": 4
     }

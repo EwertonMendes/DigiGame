@@ -410,6 +410,22 @@
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/361_Justimon.png",
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows"
+    },
+    "Blue Greymon": {
+      "source_id": null,
+      "source_member": null,
+      "source_sha256": "4e232dff3b5855ba59f0f77dae583aa9110d6c89edd3fc45a9ca5dac68469278",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Super%20Xros%20Wars/GreymonXrosBlue.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows"
+    },
+    "Blue Metal Greymon": {
+      "source_id": null,
+      "source_member": null,
+      "source_sha256": "9312fefc9131db7fbb819dde611a1abe482b3ab10c026ded4532d4f7e9788bed",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Super%20Xros%20Wars/MetalGreymonXros.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows"
     }
   }
 }
