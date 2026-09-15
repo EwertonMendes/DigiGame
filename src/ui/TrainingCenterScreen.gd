@@ -472,6 +472,7 @@ func _build_capacity(instance: DigimonInstance) -> void:
 
 func _metric_block(title: String, value: String, accent: Color, maximum: int, current: int) -> Control:
 	var panel := PanelContainer.new()
+	panel.custom_minimum_size.x = 160.0
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE_SOFT, Color(accent.r, accent.g, accent.b, 0.24), 7))
 	var margin := _margin(10, 7, 10, 7)
@@ -480,12 +481,15 @@ func _metric_block(title: String, value: String, accent: Color, maximum: int, cu
 	body.add_theme_constant_override("separation", 4)
 	margin.add_child(body)
 	var top := HBoxContainer.new()
+	top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_theme_constant_override("separation", 8)
 	body.add_child(top)
 	var label := _single_line_label(title, 9, V2.MUTED, true)
+	label.custom_minimum_size.x = 72.0
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(label)
 	var value_label := _single_line_label(value, 12, accent, true)
+	value_label.custom_minimum_size.x = 74.0
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	top.add_child(value_label)
 	body.add_child(_progress(accent, maximum, current))
