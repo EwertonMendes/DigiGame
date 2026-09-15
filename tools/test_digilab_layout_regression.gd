@@ -19,7 +19,8 @@ func _ready() -> void:
 	var ascension_screen := digilab.get("_ascension_screen") as Control
 	assert(create_screen != null and create_screen.visible, "DigiLab must open on Convert Digi Data")
 	assert(party_screen != null and not party_screen.visible, "Party / Storage must initially stay hidden")
-	assert(ascension_screen != null and not ascension_screen.visible, "Ascension / Expansion must stay hidden until requested")
+	assert(ascension_screen != null and not ascension_screen.visible, "Ascension / Expansion must initially stay hidden")
+	_assert_primary_tabs(create_screen, "convert", "Convert Digi Data")
 
 	var create_detail := create_screen.get("_detail_body") as Control
 	assert(create_detail != null, "Convert Digi Data must expose its detail body")
@@ -33,6 +34,7 @@ func _ready() -> void:
 	digilab.call("_switch_tab", "party")
 	await _frames(4)
 	assert(not create_screen.visible and party_screen.visible, "Primary tab switch must show Party / Storage")
+	_assert_primary_tabs(party_screen, "party", "Party / Storage")
 	var party_detail := party_screen.get("_detail") as Control
 	assert(party_detail != null, "Party / Storage must expose its detail body")
 	_assert_semantic_labels(party_detail, 6, "Party / Storage")
@@ -40,21 +42,56 @@ func _ready() -> void:
 	_assert_hint_bar_bounds(party_screen.get("_hint_bar") as Control, "Party / Storage")
 	await _assert_party_selection_resets_scroll(party_screen)
 
+	var selected_party_id := String(party_screen.call("get_selected_instance_id"))
+	assert(not selected_party_id.is_empty(), "Party / Storage must expose the currently selected individual")
 	var ascension_button := _find_button_by_text(party_detail, "ASCENSION / EXPANSION")
-	assert(ascension_button != null, "Party / Storage must keep Ascension / Expansion reachable after the V2 migration")
+	assert(ascension_button != null, "Party / Storage must keep Ascension / Expansion reachable from Party Actions")
 	assert(ascension_button.focus_mode == Control.FOCUS_ALL, "Ascension / Expansion action must be controller focusable")
 	ascension_button.pressed.emit()
-	await _frames(3)
-	assert(ascension_screen.visible and not party_screen.visible, "Ascension / Expansion must open from Party / Storage")
-	ascension_screen.call("close_view")
-	await _frames(3)
-	assert(party_screen.visible and not ascension_screen.visible, "Closing Ascension / Expansion must return to Party / Storage")
+	await _frames(4)
+	assert(ascension_screen.visible and not party_screen.visible, "Party Actions must open the Ascension / Expansion primary tab")
+	assert(String(digilab.get("_active_tab")) == "ascension", "Party Actions must update the DigiLab primary tab state")
+	assert(String(ascension_screen.call("get_selected_instance_id")) == selected_party_id, "Ascension / Expansion must open on the Digimon selected in Party / Storage")
+	_assert_primary_tabs(ascension_screen, "ascension", "Ascension / Expansion")
+	var ascension_detail := ascension_screen.get("_detail") as Control
+	assert(ascension_detail != null, "Ascension / Expansion must expose its V2 detail workspace")
+	_assert_semantic_labels(ascension_detail, 8, "Ascension / Expansion")
+	_assert_no_vertical_text(ascension_detail, "Ascension / Expansion")
+	_assert_hint_bar_bounds(ascension_screen.get("_hint_bar") as Control, "Ascension / Expansion")
+	assert(_find_label_containing(ascension_detail, "TIER ASCENSION") != null, "Ascension / Expansion must expose the Tier Ascension section")
+	assert(_find_label_containing(ascension_detail, "EXPANSION") != null, "Ascension / Expansion must expose the Expansion section")
+
+	# DigiModalHeader uses the same adjacent-tab method for LB/RB and L1/R1.
+	# Moving left from Ascension must therefore return to Party / Storage.
+	var ascension_header := ascension_screen.get("_header")
+	assert(ascension_header != null, "Ascension / Expansion must expose the shared primary-tab header")
+	assert(bool(ascension_header.call("select_adjacent_tab", -1)), "Primary tabs must support previous-tab shoulder navigation")
+	await _frames(4)
+	assert(party_screen.visible and not ascension_screen.visible, "Previous-tab shoulder navigation must move from Ascension to Party / Storage")
+
+	var party_header := party_screen.get("_header")
+	assert(party_header != null, "Party / Storage must expose the shared primary-tab header")
+	assert(bool(party_header.call("select_adjacent_tab", 1)), "Primary tabs must support next-tab shoulder navigation")
+	await _frames(4)
+	assert(ascension_screen.visible and not party_screen.visible, "Next-tab shoulder navigation must move from Party / Storage to Ascension")
+	assert(String(ascension_screen.call("get_selected_instance_id")) == selected_party_id, "Shoulder navigation from Party must preserve the selected Digimon context")
 
 	digilab.call("close_view")
 	hub.queue_free()
 	await _frames(2)
 	print("digilab layout regression passed")
 	get_tree().quit()
+
+
+func _assert_primary_tabs(screen: Control, active_id: String, label_name: String) -> void:
+	var header := screen.get("_header")
+	assert(header != null, "%s must expose the shared DigiModalHeader" % label_name)
+	for tab_id in ["convert", "party", "ascension"]:
+		var button := header.call("get_tab_button", tab_id) as Button
+		assert(button != null, "%s must expose the '%s' primary tab" % [label_name, tab_id])
+		assert(not button.disabled, "%s primary tab '%s' must be enabled" % [label_name, tab_id])
+	var active_button := header.call("get_tab_button", active_id) as Button
+	assert(active_button != null, "%s active primary tab must exist" % label_name)
 
 
 func _assert_create_selection_resets_scroll(screen: Control) -> void:
@@ -154,6 +191,16 @@ func _find_button_by_text(root: Node, target: String) -> Button:
 		return root as Button
 	for child in root.get_children():
 		var found := _find_button_by_text(child, target)
+		if found != null:
+			return found
+	return null
+
+
+func _find_label_containing(root: Node, target: String) -> Label:
+	if root is Label and (root as Label).text.contains(target):
+		return root as Label
+	for child in root.get_children():
+		var found := _find_label_containing(child, target)
 		if found != null:
 			return found
 	return null
