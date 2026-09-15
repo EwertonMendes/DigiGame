@@ -78,6 +78,10 @@ async function enterTestBattle(page, captureDialogue = false) {
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
   const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
+  // Confirmation dialogs now default to the safe/cancel action. Explicitly
+  // navigate to the affirmative action before accepting it.
+  await page.keyboard.press('ArrowRight');
+  await settleFrames(page, 1);
   await page.keyboard.press('Enter');
   await Promise.all([battleStarted, battleReady, introReady]);
   await settleFrames(page, 4);
@@ -353,6 +357,8 @@ async function runMobileSuite() {
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
   const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
+  await page.keyboard.press('ArrowRight');
+  await settleFrames(page, 1);
   await page.keyboard.press('Enter');
   await Promise.all([battleStarted, battleReady, introReady]);
   await settleFrames(page, 4);
