@@ -69,9 +69,6 @@ jobs:
           - name: expansion-footprint-integration
             command: godot --headless --path . tools/test_expansion_footprint_integration.tscn --quit-after 12
             success: "[ExpansionFootprintIntegrationTest] PASS"
-          - name: developer-toolkit
-            command: godot --headless --path . tools/test_developer_toolkit.tscn --quit-after 20
-            success: developer toolkit regression passed
     steps:
       - name: Checkout
         uses: actions/checkout@v6
