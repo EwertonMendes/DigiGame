@@ -61,6 +61,7 @@ func _build_dialog() -> void:
 	_mobile_dialog_cancel.name = "CancelBattleDialog"
 	_mobile_dialog_cancel.custom_minimum_size.y = HUB_V2.TOUCH_TARGET
 	_mobile_dialog_cancel.pressed.connect(_close_dialog)
+	_mobile_dialog_cancel.gui_input.connect(_on_dialog_cancel_gui_input)
 	_mobile_dialog_content.add_child(_mobile_dialog_cancel)
 	_apply_v2_dialog_button(_mobile_dialog_cancel, HUB_V2.MUTED)
 
@@ -68,6 +69,7 @@ func _build_dialog() -> void:
 	_start_battle_button.name = "StartBattle"
 	_start_battle_button.custom_minimum_size.y = HUB_V2.TOUCH_TARGET
 	_start_battle_button.pressed.connect(_start_test_battle)
+	_start_battle_button.gui_input.connect(_on_dialog_start_gui_input)
 	_mobile_dialog_content.add_child(_start_battle_button)
 	_apply_v2_dialog_button(_start_battle_button, HUB_V2.AMBER)
 
@@ -144,20 +146,44 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _dialog_open and not _transitioning:
-		# Free-form Controls do not always receive identical spatial-focus behavior
-		# in native and Web builds. Keep the two-choice dialog deterministic at the
-		# gameplay layer as well as through focus_neighbor_* metadata.
+		# Fallback for events not consumed by the focused Control. The focused
+		# buttons also handle these actions in gui_input so native and Web builds
+		# behave identically even when Control consumes spatial navigation first.
 		if event.is_action_pressed("ui_right"):
-			if _start_battle_button != null and not _start_battle_button.disabled:
-				_start_battle_button.grab_focus()
+			_focus_dialog_start()
 			get_viewport().set_input_as_handled()
 			return
 		if event.is_action_pressed("ui_left"):
-			if _mobile_dialog_cancel != null and not _mobile_dialog_cancel.disabled:
-				_mobile_dialog_cancel.grab_focus()
+			_focus_dialog_cancel()
 			get_viewport().set_input_as_handled()
 			return
 	super._unhandled_input(event)
+
+
+func _on_dialog_cancel_gui_input(event: InputEvent) -> void:
+	if not _dialog_open or _transitioning:
+		return
+	if event.is_action_pressed("ui_right"):
+		_focus_dialog_start()
+		_mobile_dialog_cancel.accept_event()
+
+
+func _on_dialog_start_gui_input(event: InputEvent) -> void:
+	if not _dialog_open or _transitioning:
+		return
+	if event.is_action_pressed("ui_left"):
+		_focus_dialog_cancel()
+		_start_battle_button.accept_event()
+
+
+func _focus_dialog_start() -> void:
+	if _start_battle_button != null and not _start_battle_button.disabled:
+		_start_battle_button.grab_focus()
+
+
+func _focus_dialog_cancel() -> void:
+	if _mobile_dialog_cancel != null and not _mobile_dialog_cancel.disabled:
+		_mobile_dialog_cancel.grab_focus()
 
 
 func _layout_ui() -> void:
