@@ -59,6 +59,24 @@ func _ready() -> void:
 		_players.append(player)
 
 
+func _exit_tree() -> void:
+	# Autoloads can be torn down while a headless test or the application itself
+	# still has music playing. Release the duplicated streams explicitly so the
+	# engine does not report live audio resources after SceneTree shutdown.
+	if _crossfade != null and is_instance_valid(_crossfade):
+		_crossfade.kill()
+		_crossfade = null
+	for player: AudioStreamPlayer in _players:
+		if not is_instance_valid(player):
+			continue
+		player.stop()
+		player.stream = null
+	_players.clear()
+	_stream_cache.clear()
+	_active_index = -1
+	_current_track_id = ""
+
+
 func play_zone_1(fade_seconds: float = DEFAULT_CROSSFADE_SECONDS) -> void:
 	play_track(TRACK_ZONE_1, fade_seconds)
 
