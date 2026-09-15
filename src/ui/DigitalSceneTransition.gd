@@ -9,7 +9,6 @@ const HUB_SCENE_PATH := "res://scenes/world/hub.tscn"
 const CONTEXT_BATTLE := "battle"
 const CONTEXT_HUB := "hub"
 const LOAD_TIMEOUT_MS := 8000
-const WEB_REVEAL_TIME := 0.44
 # Keep scene loading asynchronous, but avoid distributing dependencies across
 # additional loader subthreads. The Web export intentionally runs without thread
 # support, and the battle scene is small enough that nested workers add risk
@@ -135,12 +134,9 @@ func _run_transition(scene_path: String, context: String) -> void:
 	seal.tween_method(_set_flash, 0.0, 0.52, 0.085)
 	await seal.finished
 
-	# On Web, detach the animated shader before the scene-tree replacement. The
-	# same persistent CanvasLayer otherwise keeps evaluating and receiving shader
-	# parameter writes while the new scene's canvas items are being registered,
-	# which can intermittently trap the Wasm renderer. The digital mosaic cover is
-	# still fully visible up to this exact point; only the post-swap reveal uses a
-	# plain canvas item.
+	# Keep the full digital cover on the outgoing scene, but detach the shader
+	# before a Web scene swap. The persistent autoload must not keep evaluating the
+	# shader while the destination scene registers a new set of canvas items.
 	if OS.has_feature("web"):
 		_prepare_web_swap_overlay()
 
@@ -152,21 +148,25 @@ func _run_transition(scene_path: String, context: String) -> void:
 
 	transition_midpoint.emit(scene_path, context)
 	print("[Transition] MIDPOINT context=%s" % context)
-	await get_tree().process_frame
 
 	if OS.has_feature("web"):
-		# Reveal the new scene with a simple frame-driven alpha fade. This preserves
-		# the transition's timing and visual continuity without a custom shader or
-		# Tween mutating render state during the Web scene-swap window.
-		await _reveal_web_safe()
-	else:
-		# Native keeps the full moving-cell reveal.
-		var reveal := create_tween().set_parallel(true)
-		reveal.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-		reveal.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		reveal.tween_method(_set_progress, 1.0, 0.0, 0.44)
-		reveal.tween_method(_set_flash, 0.52, 0.0, 0.16)
-		await reveal.finished
+		# Do not animate any persistent overlay property after the scene swap. Wait
+		# until the renderer has completed the first draw of the destination scene,
+		# then remove the opaque cover in one state change. The outgoing scene still
+		# gets the complete digital mosaic effect; only the Web reveal is simplified.
+		await RenderingServer.frame_post_draw
+		if not is_inside_tree():
+			return
+		_finish_web_transition(scene_path, context)
+		return
+
+	await get_tree().process_frame
+	var reveal := create_tween().set_parallel(true)
+	reveal.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	reveal.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	reveal.tween_method(_set_progress, 1.0, 0.0, 0.44)
+	reveal.tween_method(_set_flash, 0.52, 0.0, 0.16)
+	await reveal.finished
 
 	_finish_transition(scene_path, context)
 
@@ -188,23 +188,38 @@ func _await_threaded_scene(scene_path: String) -> PackedScene:
 
 
 func _abort_transition() -> void:
-	# An aborted Web transition may already have switched to the plain overlay.
-	# In that case fade the plain canvas item; otherwise preserve the native mosaic
-	# abort animation.
+	# If Web already detached the shader but the swap itself failed, the original
+	# scene is still alive. Hide the plain cover immediately and restore the shader
+	# for the next request instead of starting another post-swap animation path.
 	if OS.has_feature("web") and _screen != null and _screen.material == null:
-		await _reveal_web_safe(0.24)
-	else:
-		var tween := create_tween().set_parallel(true)
-		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-		tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tween.tween_method(_set_progress, _progress, 0.0, 0.24)
-		tween.tween_method(_set_flash, float(_material.get_shader_parameter("flash")), 0.0, 0.16)
-		await tween.finished
+		_root.visible = false
+		_busy = false
+		_restore_shader_overlay()
+		_set_progress(0.0)
+		_set_flash(0.0)
+		return
+
+	var tween := create_tween().set_parallel(true)
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_method(_set_progress, _progress, 0.0, 0.24)
+	tween.tween_method(_set_flash, float(_material.get_shader_parameter("flash")), 0.0, 0.16)
+	await tween.finished
 	_root.visible = false
 	_busy = false
 	_restore_shader_overlay()
 	_set_progress(0.0)
 	_set_flash(0.0)
+
+
+func _finish_web_transition(scene_path: String, context: String) -> void:
+	# Keep the shader detached and do not rewrite its parameters here. `_run_transition`
+	# restores the visual state at the beginning of the next request, outside the
+	# scene-swap window.
+	_root.visible = false
+	_busy = false
+	transition_finished.emit(scene_path, context)
+	print("[Transition] FINISH context=%s" % context)
 
 
 func _finish_transition(scene_path: String, context: String) -> void:
@@ -224,22 +239,6 @@ func _prepare_web_swap_overlay() -> void:
 	_screen.material = null
 	_screen.color = flashed_cover
 	_screen.modulate = Color.WHITE
-
-
-func _reveal_web_safe(duration: float = WEB_REVEAL_TIME) -> void:
-	if _screen == null:
-		return
-	var reveal_duration := maxf(duration, 0.01)
-	var elapsed := 0.0
-	while elapsed < reveal_duration:
-		await get_tree().process_frame
-		if not is_inside_tree():
-			return
-		elapsed = minf(reveal_duration, elapsed + maxf(get_process_delta_time(), 0.0))
-		var progress := clampf(elapsed / reveal_duration, 0.0, 1.0)
-		var eased := 1.0 - (1.0 - progress) * (1.0 - progress)
-		_screen.modulate.a = 1.0 - eased
-	_screen.modulate.a = 0.0
 
 
 func _restore_shader_overlay() -> void:
