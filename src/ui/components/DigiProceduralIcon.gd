@@ -8,7 +8,11 @@ var _line_width := 2.4
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(32.0, 32.0)
+	# 32x32 is the standalone default, but callers such as compact stat rows and
+	# section headers deliberately request smaller icons. Do not overwrite those
+	# sizes when the node enters the tree.
+	if custom_minimum_size.x <= 0.0 and custom_minimum_size.y <= 0.0:
+		custom_minimum_size = Vector2(32.0, 32.0)
 	queue_redraw()
 
 
@@ -175,7 +179,6 @@ func _draw_link(center: Vector2, side: float, width: float) -> void:
 
 func _draw_bits(center: Vector2, side: float, width: float) -> void:
 	var rx := side * 0.27
-	var ry := side * 0.095
 	var top_y := center.y - side * 0.17
 	for layer in range(3):
 		var y := top_y + float(layer) * side * 0.14
@@ -183,5 +186,6 @@ func _draw_bits(center: Vector2, side: float, width: float) -> void:
 		if layer < 2:
 			draw_line(Vector2(center.x - rx, y), Vector2(center.x - rx, y + side * 0.14), _accent, width, true)
 			draw_line(Vector2(center.x + rx, y), Vector2(center.x + rx, y + side * 0.14), _accent, width, true)
-	# Small inner mark keeps the icon readable even at compact header sizes.
+	# Kept for backwards compatibility with any remaining callers; the modal
+	# header now uses the dedicated vector asset at assets/ui/icons/bits.svg.
 	draw_arc(Vector2(center.x, top_y), maxf(1.0, rx * 0.42), 0.0, TAU, 20, _accent, width * 0.75, true)
