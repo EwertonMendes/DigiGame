@@ -16,6 +16,7 @@ var _screen: ColorRect = null
 var _material: ShaderMaterial = null
 var _busy := false
 var _progress := 0.0
+var _cover_color := Color(0.03, 0.07, 0.13, 1.0)
 
 
 func _ready() -> void:
@@ -78,6 +79,7 @@ func _build_overlay() -> void:
 func _run_transition(scene_path: String, context: String) -> void:
 	transition_started.emit(scene_path, context)
 	print("[Transition] START context=%s target=%s" % [context, scene_path])
+	_restore_shader_overlay()
 	_configure_palette(context)
 	_material.set_shader_parameter("phase_seed", fmod(float(Time.get_ticks_msec()) * 0.001, 97.0))
 	_set_progress(0.0)
@@ -129,6 +131,13 @@ func _run_transition(scene_path: String, context: String) -> void:
 	seal.tween_method(_set_flash, 0.0, 0.52, 0.085)
 	await seal.finished
 
+	# Web keeps an opaque cover during the exact scene-replacement window, but
+	# temporarily detaches the transition shader. This prevents a persistent
+	# CanvasLayer from updating shader state while the destination scene is
+	# registering its new canvas items with the renderer.
+	if OS.has_feature("web"):
+		_prepare_web_swap_overlay()
+
 	var change_error := get_tree().change_scene_to_packed(packed_scene)
 	if change_error != OK:
 		push_error("DigitalSceneTransition: failed to change scene to %s (error %d)" % [scene_path, change_error])
@@ -137,7 +146,19 @@ func _run_transition(scene_path: String, context: String) -> void:
 
 	transition_midpoint.emit(scene_path, context)
 	print("[Transition] MIDPOINT context=%s" % context)
-	await get_tree().process_frame
+
+	if OS.has_feature("web"):
+		# Resume the authored reveal only after the destination scene has completed
+		# its first real draw. This synchronizes with renderer readiness instead of
+		# adding a guessed timer, and keeps the same visual effect for the player.
+		await RenderingServer.frame_post_draw
+		if not is_inside_tree():
+			return
+		_restore_shader_overlay()
+		_set_progress(1.0)
+		_set_flash(0.52)
+	else:
+		await get_tree().process_frame
 
 	# Reveal immediately. There is no status card or artificial hold: the new
 	# scene simply reconstructs through the same moving cells in reverse.
@@ -168,6 +189,10 @@ func _await_threaded_scene(scene_path: String) -> PackedScene:
 
 
 func _abort_transition() -> void:
+	if _screen != null and _screen.material == null:
+		_restore_shader_overlay()
+		_set_progress(1.0)
+		_set_flash(0.52)
 	var tween := create_tween().set_parallel(true)
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -176,6 +201,7 @@ func _abort_transition() -> void:
 	await tween.finished
 	_root.visible = false
 	_busy = false
+	_restore_shader_overlay()
 	_set_progress(0.0)
 	_set_flash(0.0)
 
@@ -187,6 +213,22 @@ func _finish_transition(scene_path: String, context: String) -> void:
 	_busy = false
 	transition_finished.emit(scene_path, context)
 	print("[Transition] FINISH context=%s" % context)
+
+
+func _prepare_web_swap_overlay() -> void:
+	if _screen == null:
+		return
+	_screen.material = null
+	_screen.color = _cover_color.lerp(Color(0.92, 0.97, 1.0, 1.0), 0.24)
+	_screen.modulate = Color.WHITE
+
+
+func _restore_shader_overlay() -> void:
+	if _screen == null:
+		return
+	_screen.material = _material
+	_screen.color = Color.WHITE
+	_screen.modulate = Color.WHITE
 
 
 func _set_progress(value: float) -> void:
@@ -204,14 +246,15 @@ func _configure_palette(context: String) -> void:
 	# Keep the palette luminous and cohesive with the game without falling back to
 	# the previous cyan/orange loading-screen look.
 	if context == CONTEXT_BATTLE:
+		_cover_color = Color(0.035, 0.070, 0.145, 1.0)
 		_material.set_shader_parameter("primary_color", Color(0.40, 0.82, 1.0, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.60, 0.48, 1.0, 1.0))
-		_material.set_shader_parameter("cover_color", Color(0.035, 0.070, 0.145, 1.0))
 	elif context == CONTEXT_HUB:
+		_cover_color = Color(0.025, 0.080, 0.115, 1.0)
 		_material.set_shader_parameter("primary_color", Color(0.35, 0.93, 0.84, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.38, 0.66, 1.0, 1.0))
-		_material.set_shader_parameter("cover_color", Color(0.025, 0.080, 0.115, 1.0))
 	else:
+		_cover_color = Color(0.03, 0.07, 0.13, 1.0)
 		_material.set_shader_parameter("primary_color", Color(0.42, 0.84, 1.0, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.55, 0.55, 1.0, 1.0))
-		_material.set_shader_parameter("cover_color", Color(0.03, 0.07, 0.13, 1.0))
+	_material.set_shader_parameter("cover_color", _cover_color)
