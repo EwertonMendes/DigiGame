@@ -28,3 +28,9 @@ func _start_test_battle() -> void:
 		if _start_battle_button != null:
 			_start_battle_button.disabled = false
 		_layout_ui()
+		return
+
+	# Complete the decoder handoff while the existing digital cover is animating.
+	# The battle controller repeats this semantic request after the scene change,
+	# where it becomes a no-op because the correct track is already playing.
+	MusicDirector.play_battle_1()
