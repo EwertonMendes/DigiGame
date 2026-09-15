@@ -33,19 +33,16 @@ func play_battle_spawn_animation() -> void:
 	_spawn_burst(Color(0.90, 0.98, 1.0, 1.0), 10, 68.0, 0.42, 1.1)
 	_spawn_arrival_diamond(team_color)
 
-	if OS.has_feature("web"):
-		await _play_battle_spawn_frame_driven()
-	else:
-		var tween := create_tween()
-		tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
-		tween.tween_property(self, "modulate:a", 1.0, SPAWN_IN_TIME)
-		tween.parallel().tween_property(sprite, "position", _spawn_base_position + Vector2(0.0, -4.0), SPAWN_IN_TIME)
-		tween.parallel().tween_property(sprite, "scale", _spawn_base_scale * 1.16, SPAWN_IN_TIME)
-		tween.parallel().tween_property(sprite, "modulate", Color.WHITE, SPAWN_IN_TIME)
-		tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tween.tween_property(sprite, "position", _spawn_base_position, SPAWN_SETTLE_TIME)
-		tween.parallel().tween_property(sprite, "scale", _spawn_base_scale, SPAWN_SETTLE_TIME)
-		await tween.finished
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "modulate:a", 1.0, SPAWN_IN_TIME)
+	tween.parallel().tween_property(sprite, "position", _spawn_base_position + Vector2(0.0, -4.0), SPAWN_IN_TIME)
+	tween.parallel().tween_property(sprite, "scale", _spawn_base_scale * 1.16, SPAWN_IN_TIME)
+	tween.parallel().tween_property(sprite, "modulate", Color.WHITE, SPAWN_IN_TIME)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "position", _spawn_base_position, SPAWN_SETTLE_TIME)
+	tween.parallel().tween_property(sprite, "scale", _spawn_base_scale, SPAWN_SETTLE_TIME)
+	await tween.finished
 
 	modulate = Color.WHITE
 	sprite.position = _spawn_base_position
@@ -53,40 +50,6 @@ func play_battle_spawn_animation() -> void:
 	sprite.modulate = Color.WHITE
 	_spawn_prepared = false
 	print("[BattleIntro] SPAWN actor=%s team=%s" % [name, "player" if is_player_controlled else "enemy"])
-
-
-func _play_battle_spawn_frame_driven() -> void:
-	# Web battle startup already uses frame-driven camera presentation to avoid an
-	# intermittent Wasm renderer failure. Keep the awaited actor reveal on the same
-	# deterministic path so the opening cannot stall on Tween.finished while the
-	# renderer is settling the newly-instantiated battle scene.
-	var initial_position := _spawn_base_position + SPAWN_RISE
-	var overshoot_position := _spawn_base_position + Vector2(0.0, -4.0)
-	var initial_scale := _spawn_base_scale * 0.36
-	var overshoot_scale := _spawn_base_scale * 1.16
-	var initial_modulate := sprite.modulate
-	var elapsed := 0.0
-
-	while elapsed < SPAWN_IN_TIME:
-		await get_tree().process_frame
-		elapsed = minf(SPAWN_IN_TIME, elapsed + maxf(get_process_delta_time(), 0.0))
-		var progress := _frame_ease(elapsed, SPAWN_IN_TIME, Tween.TRANS_EXPO, Tween.EASE_OUT)
-		modulate.a = lerpf(0.0, 1.0, progress)
-		sprite.position = initial_position.lerp(overshoot_position, progress)
-		sprite.scale = initial_scale.lerp(overshoot_scale, progress)
-		sprite.modulate = initial_modulate.lerp(Color.WHITE, progress)
-
-	elapsed = 0.0
-	while elapsed < SPAWN_SETTLE_TIME:
-		await get_tree().process_frame
-		elapsed = minf(SPAWN_SETTLE_TIME, elapsed + maxf(get_process_delta_time(), 0.0))
-		var progress := _frame_ease(elapsed, SPAWN_SETTLE_TIME, Tween.TRANS_BACK, Tween.EASE_OUT)
-		sprite.position = overshoot_position.lerp(_spawn_base_position, progress)
-		sprite.scale = overshoot_scale.lerp(_spawn_base_scale, progress)
-
-
-func _frame_ease(elapsed: float, duration: float, transition: Tween.TransitionType, easing: Tween.EaseType) -> float:
-	return float(Tween.interpolate_value(0.0, 1.0, elapsed, duration, transition, easing))
 
 
 func play_battle_escape_animation() -> void:
