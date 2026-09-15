@@ -56,7 +56,8 @@ func open_dialog(previous_focus: Control = null) -> void:
 	_layout()
 	_backdrop.modulate.a = 0.0
 	_panel.modulate.a = 0.0
-	_panel.scale = Vector2.ONE * 0.965
+	var target_scale := Vector2.ONE * V2.ui_scale(get_viewport())
+	_panel.scale = target_scale * 0.965
 	_panel.pivot_offset = _panel.size * 0.5
 	if _open_tween != null and _open_tween.is_valid():
 		_open_tween.kill()
@@ -64,7 +65,7 @@ func open_dialog(previous_focus: Control = null) -> void:
 	_open_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_open_tween.tween_property(_backdrop, "modulate:a", 1.0, 0.12)
 	_open_tween.tween_property(_panel, "modulate:a", 1.0, 0.14)
-	_open_tween.tween_property(_panel, "scale", Vector2.ONE, 0.14)
+	_open_tween.tween_property(_panel, "scale", target_scale, 0.14)
 	call_deferred("_focus_safe_default")
 
 
