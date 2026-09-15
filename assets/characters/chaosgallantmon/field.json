@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 358,
+  "source_archive_file": "sprite thread/358_ChaosDukemon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/358_ChaosDukemon.png",
+  "source_sha256": "a0bbdc47cdd7e3b91d468cf796ac5207032e68c46041dd11f2e98c6aa13b1a9e",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 237230,
+      "confidence_margin": 136204
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 104768,
+      "confidence_margin": 214430
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    45
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 90,
+        "y": 276,
+        "w": 30,
+        "h": 41
+      },
+      {
+        "x": 131,
+        "y": 275,
+        "w": 29,
+        "h": 42
+      },
+      {
+        "x": 171,
+        "y": 275,
+        "w": 29,
+        "h": 41
+      }
+    ],
+    "down_right": [
+      {
+        "x": 279,
+        "y": 276,
+        "w": 30,
+        "h": 41
+      },
+      {
+        "x": 244,
+        "y": 276,
+        "w": 29,
+        "h": 42
+      },
+      {
+        "x": 207,
+        "y": 276,
+        "w": 29,
+        "h": 41
+      }
+    ],
+    "up_left": [
+      {
+        "x": 98,
+        "y": 224,
+        "w": 27,
+        "h": 41
+      },
+      {
+        "x": 131,
+        "y": 223,
+        "w": 30,
+        "h": 42
+      },
+      {
+        "x": 168,
+        "y": 225,
+        "w": 32,
+        "h": 41
+      }
+    ],
+    "up_right": [
+      {
+        "x": 279,
+        "y": 225,
+        "w": 27,
+        "h": 41
+      },
+      {
+        "x": 244,
+        "y": 224,
+        "w": 30,
+        "h": 42
+      },
+      {
+        "x": 208,
+        "y": 225,
+        "w": 32,
+        "h": 41
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 46,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/chaosgallantmon/field.png"
+}
