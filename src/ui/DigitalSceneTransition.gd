@@ -9,12 +9,18 @@ const HUB_SCENE_PATH := "res://scenes/world/hub.tscn"
 const CONTEXT_BATTLE := "battle"
 const CONTEXT_HUB := "hub"
 const LOAD_TIMEOUT_MS := 8000
+# Keep scene loading asynchronous, but avoid distributing dependencies across
+# additional loader subthreads. The Web export intentionally runs without thread
+# support, and the battle scene is small enough that nested workers add risk
+# without a meaningful latency win. This also avoids known Godot 4.7 loader races.
+const USE_DISTRIBUTED_LOAD_SUBTHREADS := false
 
 var _root: Control = null
 var _screen: ColorRect = null
 var _material: ShaderMaterial = null
 var _busy := false
 var _progress := 0.0
+var _cover_color := Color(0.03, 0.07, 0.13, 1.0)
 
 
 func _ready() -> void:
@@ -77,6 +83,7 @@ func _build_overlay() -> void:
 func _run_transition(scene_path: String, context: String) -> void:
 	transition_started.emit(scene_path, context)
 	print("[Transition] START context=%s target=%s" % [context, scene_path])
+	_restore_shader_overlay()
 	_configure_palette(context)
 	_material.set_shader_parameter("phase_seed", fmod(float(Time.get_ticks_msec()) * 0.001, 97.0))
 	_set_progress(0.0)
@@ -86,10 +93,14 @@ func _run_transition(scene_path: String, context: String) -> void:
 	if focus_owner != null:
 		focus_owner.release_focus()
 
-	# Begin loading before the effect becomes visually dense. The previous
-	# implementation loaded synchronously at the midpoint, which could freeze the
-	# shader and make a deliberately smooth transition feel like a loading screen.
-	var request_error := ResourceLoader.load_threaded_request(scene_path, "PackedScene", true)
+	# Begin loading before the effect becomes visually dense. The request remains
+	# asynchronous, but dependency loading stays on the stable loader path instead
+	# of fanning out into extra subthreads.
+	var request_error := ResourceLoader.load_threaded_request(
+		scene_path,
+		"PackedScene",
+		USE_DISTRIBUTED_LOAD_SUBTHREADS
+	)
 	if request_error != OK:
 		var existing_status := ResourceLoader.load_threaded_get_status(scene_path)
 		if existing_status != ResourceLoader.THREAD_LOAD_IN_PROGRESS and existing_status != ResourceLoader.THREAD_LOAD_LOADED:
@@ -123,6 +134,12 @@ func _run_transition(scene_path: String, context: String) -> void:
 	seal.tween_method(_set_flash, 0.0, 0.52, 0.085)
 	await seal.finished
 
+	# Keep the full digital cover on the outgoing scene, but detach the shader
+	# before a Web scene swap. The persistent autoload must not keep evaluating the
+	# shader while the destination scene registers a new set of canvas items.
+	if OS.has_feature("web"):
+		_prepare_web_swap_overlay()
+
 	var change_error := get_tree().change_scene_to_packed(packed_scene)
 	if change_error != OK:
 		push_error("DigitalSceneTransition: failed to change scene to %s (error %d)" % [scene_path, change_error])
@@ -131,10 +148,19 @@ func _run_transition(scene_path: String, context: String) -> void:
 
 	transition_midpoint.emit(scene_path, context)
 	print("[Transition] MIDPOINT context=%s" % context)
-	await get_tree().process_frame
 
-	# Reveal immediately. There is no status card or artificial hold: the new
-	# scene simply reconstructs through the same moving cells in reverse.
+	if OS.has_feature("web"):
+		# Do not animate any persistent overlay property after the scene swap. Wait
+		# until the renderer has completed the first draw of the destination scene,
+		# then remove the opaque cover in one state change. The outgoing scene still
+		# gets the complete digital mosaic effect; only the Web reveal is simplified.
+		await RenderingServer.frame_post_draw
+		if not is_inside_tree():
+			return
+		_finish_web_transition(scene_path, context)
+		return
+
+	await get_tree().process_frame
 	var reveal := create_tween().set_parallel(true)
 	reveal.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	reveal.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -162,6 +188,17 @@ func _await_threaded_scene(scene_path: String) -> PackedScene:
 
 
 func _abort_transition() -> void:
+	# If Web already detached the shader but the swap itself failed, the original
+	# scene is still alive. Hide the plain cover immediately and restore the shader
+	# for the next request instead of starting another post-swap animation path.
+	if OS.has_feature("web") and _screen != null and _screen.material == null:
+		_root.visible = false
+		_busy = false
+		_restore_shader_overlay()
+		_set_progress(0.0)
+		_set_flash(0.0)
+		return
+
 	var tween := create_tween().set_parallel(true)
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -170,17 +207,46 @@ func _abort_transition() -> void:
 	await tween.finished
 	_root.visible = false
 	_busy = false
+	_restore_shader_overlay()
 	_set_progress(0.0)
 	_set_flash(0.0)
+
+
+func _finish_web_transition(scene_path: String, context: String) -> void:
+	# Keep the shader detached and do not rewrite its parameters here. `_run_transition`
+	# restores the visual state at the beginning of the next request, outside the
+	# scene-swap window.
+	_root.visible = false
+	_busy = false
+	transition_finished.emit(scene_path, context)
+	print("[Transition] FINISH context=%s" % context)
 
 
 func _finish_transition(scene_path: String, context: String) -> void:
 	_root.visible = false
+	_busy = false
+	_restore_shader_overlay()
 	_set_progress(0.0)
 	_set_flash(0.0)
-	_busy = false
 	transition_finished.emit(scene_path, context)
 	print("[Transition] FINISH context=%s" % context)
+
+
+func _prepare_web_swap_overlay() -> void:
+	if _screen == null:
+		return
+	var flashed_cover := _cover_color.lerp(Color(0.92, 0.97, 1.0, 1.0), 0.24)
+	_screen.material = null
+	_screen.color = flashed_cover
+	_screen.modulate = Color.WHITE
+
+
+func _restore_shader_overlay() -> void:
+	if _screen == null:
+		return
+	_screen.material = _material
+	_screen.color = Color.WHITE
+	_screen.modulate = Color.WHITE
 
 
 func _set_progress(value: float) -> void:
@@ -198,14 +264,15 @@ func _configure_palette(context: String) -> void:
 	# Keep the palette luminous and cohesive with the game without falling back to
 	# the previous cyan/orange loading-screen look.
 	if context == CONTEXT_BATTLE:
+		_cover_color = Color(0.035, 0.070, 0.145, 1.0)
 		_material.set_shader_parameter("primary_color", Color(0.40, 0.82, 1.0, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.60, 0.48, 1.0, 1.0))
-		_material.set_shader_parameter("cover_color", Color(0.035, 0.070, 0.145, 1.0))
 	elif context == CONTEXT_HUB:
+		_cover_color = Color(0.025, 0.080, 0.115, 1.0)
 		_material.set_shader_parameter("primary_color", Color(0.35, 0.93, 0.84, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.38, 0.66, 1.0, 1.0))
-		_material.set_shader_parameter("cover_color", Color(0.025, 0.080, 0.115, 1.0))
 	else:
+		_cover_color = Color(0.03, 0.07, 0.13, 1.0)
 		_material.set_shader_parameter("primary_color", Color(0.42, 0.84, 1.0, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.55, 0.55, 1.0, 1.0))
-		_material.set_shader_parameter("cover_color", Color(0.03, 0.07, 0.13, 1.0))
+	_material.set_shader_parameter("cover_color", _cover_color)

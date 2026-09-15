@@ -18,7 +18,7 @@ var _last_window_size := Vector2i.ZERO
 
 
 func _ready() -> void:
-	_camera = get_tree().root.get_node_or_null("Main/DigimonController/MainCamera") as Camera2D
+	_camera = get_tree().root.get_node_or_null("Main/MainCamera") as Camera2D
 	_battle_controller = get_tree().root.get_node_or_null("Main/BattleController")
 	debug_button.button_pressed = GlobalVariables.DebugMode
 	debug_button.toggled.connect(_on_debug_toggled)
