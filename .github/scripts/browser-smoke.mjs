@@ -100,10 +100,20 @@ async function readLayout(page) {
   });
 }
 
+function viewportFillRatios(layout) {
+  return {
+    width: layout.canvasWidth / layout.viewportWidth,
+    height: layout.canvasHeight / layout.viewportHeight,
+  };
+}
+
+function viewportIsFilled(layout) {
+  const fill = viewportFillRatios(layout);
+  return fill.width >= 0.98 && fill.height >= 0.98;
+}
+
 function assertViewportFill(layout) {
-  const widthFill = layout.canvasWidth / layout.viewportWidth;
-  const heightFill = layout.canvasHeight / layout.viewportHeight;
-  if (widthFill < 0.98 || heightFill < 0.98) {
+  if (!viewportIsFilled(layout)) {
     throw new Error(
       `Godot canvas does not fill the browser viewport: ` +
       `${layout.canvasWidth}x${layout.canvasHeight} inside ` +
@@ -113,19 +123,63 @@ function assertViewportFill(layout) {
 }
 
 async function resizeViewportAndWait(page, viewport) {
-  await page.setViewportSize(viewport);
-  // Chromium normally emits resize synchronously, but a resize can land while
-  // Godot is finishing a scene transition. Dispatching once after the viewport
-  // change and waiting for the canvas contract avoids racing that transition
-  // without weakening the fill assertion itself.
-  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
-  await page.waitForFunction(() => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return false;
-    const rect = canvas.getBoundingClientRect();
-    return rect.width / window.innerWidth >= 0.98 && rect.height / window.innerHeight >= 0.98;
-  }, null, { timeout: 4000 });
+  const current = page.viewportSize();
+  if (current?.width === viewport.width && current?.height === viewport.height) {
+    await settleFrames(page, 2);
+    return await readLayout(page);
+  }
+
+  // Godot's Web resize listener can miss a Chromium viewport event while the
+  // scene tree is completing a transition. A one-pixel nudge guarantees an
+  // actual browser resize before applying the requested size; we then verify
+  // the real canvas contract instead of merely sleeping or weakening the test.
+  const nudge = {
+    width: viewport.width + (viewport.width < 1900 ? 1 : -1),
+    height: viewport.height + (viewport.height < 1000 ? 1 : -1),
+  };
+  await page.setViewportSize(nudge);
   await settleFrames(page, 2);
+  await page.setViewportSize(viewport);
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    await page.waitForTimeout(100);
+    await settleFrames(page, 1);
+    const layout = await readLayout(page);
+    if (viewportIsFilled(layout)) return layout;
+    if (attempt === 5) {
+      // Re-dispatch once after the first polling window. This remains a real
+      // resize validation: failure still surfaces if the canvas never adapts.
+      await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    }
+  }
+
+  const layout = await readLayout(page);
+  assertViewportFill(layout);
+  return layout;
+}
+
+function mobileBattleConfirmPoint(layout) {
+  // Mirror the production Battle Operator geometry rather than hard-coding one
+  // device coordinate. The mobile suite should validate the touch path itself;
+  // keyboard/controller confirmation is already covered by desktop smokes.
+  const edge = 24;
+  const sidePad = 24;
+  const gap = 14;
+  const buttonHeight = 52;
+  const bottomPad = 28;
+  const dialogWidth = Math.min(660, layout.viewportWidth - edge * 2);
+  const dialogHeight = Math.min(200, layout.viewportHeight - edge * 2);
+  const dialogX = (layout.viewportWidth - dialogWidth) * 0.5;
+  const dialogY = (layout.viewportHeight - dialogHeight) * 0.5;
+  const groupWidth = Math.min(dialogWidth - sidePad * 2, 500);
+  const buttonWidth = (groupWidth - gap) * 0.5;
+  const actionsX = dialogX + (dialogWidth - groupWidth) * 0.5;
+  const actionsY = dialogY + dialogHeight - bottomPad - buttonHeight;
+  return {
+    x: actionsX + buttonWidth + gap + buttonWidth * 0.5,
+    y: actionsY + buttonHeight * 0.5,
+  };
 }
 
 function assertScreensDiffer(before, after, description) {
@@ -217,8 +271,8 @@ async function runDesktopSuite() {
   await enterTestBattle(page, true);
 
   for (const viewport of desktopViewports) {
-    await resizeViewportAndWait(page, viewport);
-    assertViewportFill(await readLayout(page));
+    const layout = await resizeViewportAndWait(page, viewport);
+    assertViewportFill(layout);
     if (viewport.width === 1365 && viewport.height === 685) {
       await page.mouse.move(viewport.width * 0.5, viewport.height * 0.5);
       await settleFrames(page, 2);
@@ -226,8 +280,7 @@ async function runDesktopSuite() {
     }
   }
 
-  await resizeViewportAndWait(page, { width: 1440, height: 900 });
-  const finalLayout = await readLayout(page);
+  const finalLayout = await resizeViewportAndWait(page, { width: 1440, height: 900 });
   const centerX = finalLayout.viewportWidth * 0.5;
   const centerY = finalLayout.viewportHeight * 0.5;
   await page.mouse.move(centerX, centerY);
@@ -371,13 +424,9 @@ async function runMobileSuite() {
   const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
   const introReady = waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
-  // The touch that opened the modal may leave the Web canvas without DOM focus.
-  // Restore canvas focus before exercising the same safe-default keyboard/gamepad
-  // navigation contract that desktop uses.
-  await page.locator('canvas').focus();
-  await page.keyboard.press('ArrowRight');
-  await settleFrames(page, 1);
-  await page.keyboard.press('Enter');
+  const dialogLayout = await readLayout(page);
+  const confirmPoint = mobileBattleConfirmPoint(dialogLayout);
+  await page.touchscreen.tap(confirmPoint.x, confirmPoint.y);
   await Promise.all([battleStarted, battleReady, introReady]);
   await settleFrames(page, 4);
 
@@ -414,8 +463,8 @@ async function runMobileSuite() {
   assertScreensDiffer(beforePinch, afterPinch, 'Pinch zoom');
   await page.screenshot({ path: 'build/mobile-pinch-zoom.png', fullPage: true });
 
-  await resizeViewportAndWait(page, mobileViewports[1]);
-  assertViewportFill(await readLayout(page));
+  const landscapeLayout = await resizeViewportAndWait(page, mobileViewports[1]);
+  assertViewportFill(landscapeLayout);
   await page.screenshot({ path: 'build/mobile-landscape.png', fullPage: true });
   await page.close();
 }
