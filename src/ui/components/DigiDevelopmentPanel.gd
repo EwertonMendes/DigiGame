@@ -8,41 +8,58 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	for child in get_children():
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE, Color(V2.PURPLE.r, V2.PURPLE.g, V2.PURPLE.b, 0.24), 11))
-	var margin := _margin(13, 12, 13, 12)
+	add_theme_stylebox_override("panel", V2.surface_style(V2.SURFACE, Color(V2.PURPLE.r, V2.PURPLE.g, V2.PURPLE.b, 0.24), 10))
+	var margin := _margin(10, 9, 10, 9)
 	add_child(margin)
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 7)
+	body.add_theme_constant_override("separation", 4)
 	margin.add_child(body)
 	body.add_child(_label("DEVELOPMENT", 11, V2.PURPLE, true))
 	body.add_child(_label("Innate aptitude + permanent training", 9, V2.MUTED))
 	body.add_child(_separator())
 
 	var grid := GridContainer.new()
-	grid.columns = 3
+	grid.columns = 4
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 12)
-	grid.add_theme_constant_override("v_separation", 5)
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 2)
 	body.add_child(grid)
-	for header in ["STAT", "APT", "TRAIN"]:
-		grid.add_child(_label(header, 9, V2.SUBTLE, true))
+	for header in ["STAT", "APT", "TRAIN", "TOTAL"]:
+		var header_label := _label(header, 8, V2.SUBTLE, true)
+		if header != "STAT":
+			header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		grid.add_child(header_label)
 	for key in ["hp", "mp", "atk", "def", "int", "speed", "mov"]:
 		var aptitude := int(instance.aptitudes.get(key, 0))
 		var training := int(instance.training.get(key, 0))
-		grid.add_child(_label("SP" if key == "mp" else key.to_upper(), 10, V2.TEXT, true))
-		grid.add_child(_label("%+d%%" % aptitude, 10, V2.CYAN if aptitude >= 0 else V2.RED, true))
-		grid.add_child(_label("+%d" % training, 10, V2.AMBER if training > 0 else V2.MUTED, true))
-
-	var note := _label("Potential can be spent at the Training Center. Training remains with this individual through form changes.", 9, V2.MUTED)
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.add_child(note)
+		var stat_name := "SP" if key == "mp" else ("SPD" if key == "speed" else key.to_upper())
+		grid.add_child(_table_label(stat_name, V2.TEXT, true, false))
+		grid.add_child(_table_label("%+d%%" % aptitude, V2.CYAN if aptitude >= 0 else V2.RED, true, true))
+		grid.add_child(_table_label("%+d" % training, V2.AMBER if training > 0 else V2.MUTED, true, true))
+		grid.add_child(_table_label(_total_copy(aptitude, training), V2.GREEN if aptitude >= 0 and training >= 0 else V2.RED, true, true))
 	return self
+
+
+func _total_copy(aptitude: int, training: int) -> String:
+	if training == 0:
+		return "%+d%%" % aptitude
+	if aptitude == 0:
+		return "%+d" % training
+	return "%+d%% %+d" % [aptitude, training]
+
+
+func _table_label(text: String, color: Color, heading: bool, right: bool) -> Label:
+	var label := _label(text, 9, color, heading)
+	label.custom_minimum_size.y = 20.0
+	if right:
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	return label
 
 
 func _separator() -> ColorRect:
 	var rule := ColorRect.new()
 	rule.custom_minimum_size.y = 1.0
-	rule.color = V2.separator_color(0.28)
+	rule.color = V2.separator_color(0.24)
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return rule
 
