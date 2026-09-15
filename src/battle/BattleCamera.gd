@@ -1,5 +1,6 @@
 extends "res://src/MainCamera.gd"
 
+const GameInputBootstrapForBattle = preload("res://src/input/GameInputBootstrap.gd")
 const OPENING_BOOT_ZOOM := 1.10
 const DESKTOP_BATTLE_ZOOM := 1.34
 const LAPTOP_BATTLE_ZOOM := 1.28
@@ -32,19 +33,25 @@ func _ready() -> void:
 	# path on the same frames.
 	position_smoothing_enabled = false
 	_web_intro_virtualized = OS.has_feature("web")
-	super._ready()
-	_battle_default_zoom = _preferred_battle_zoom()
 	if _web_intro_virtualized:
-		# Do not touch world transforms during scene _ready(). The Web renderer can
-		# still be creating canvas items at this point. BattleOpeningController waits
-		# for the first completed draw before prepare_web_intro_base() virtualizes the
-		# opening presentation.
+		# MainCamera._ready() writes Camera2D.zoom and schedules a clamp that can write
+		# global_position. Both are exactly the native transform path we must keep out
+		# of the Web scene-startup window. Reproduce the non-transform setup here and
+		# keep the authored scene transform immutable until the battle is established.
+		GameInputBootstrapForBattle.configure_gamepad_actions()
+		_shake_rng.randomize()
+		get_viewport().size_changed.connect(_clamp_to_pan_bounds)
+		call_deferred("_refresh_pan_bounds")
+		_battle_default_zoom = _preferred_battle_zoom()
 		_web_physical_position = global_position
 		_web_physical_zoom = zoom.x
 		_web_view_position = global_position
 		_web_view_zoom = zoom.x
-	else:
-		zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
+		return
+
+	super._ready()
+	_battle_default_zoom = _preferred_battle_zoom()
+	zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
 
 
 func _exit_tree() -> void:
@@ -318,7 +325,7 @@ func _overview_center_for_zoom(target_zoom: float) -> Vector2:
 func _clamp_to_pan_bounds() -> void:
 	if not _has_pan_bounds:
 		return
-	var virtual_clamp := _web_intro_virtualized and _web_intro_prepared
+	var virtual_clamp := _web_intro_virtualized
 	var zoom_value := maxf(_web_view_zoom if virtual_clamp else zoom.x, 0.01)
 	var margin_world := PAN_EDGE_MARGIN_SCREEN / zoom_value
 	var min_x := _pan_bounds.position.x - margin_world.x
@@ -330,7 +337,8 @@ func _clamp_to_pan_bounds() -> void:
 			clampf(_web_view_position.x, min_x, max_x),
 			clampf(_web_view_position.y, min_y, max_y)
 		)
-		_apply_web_world_view(_web_view_position, _web_view_zoom)
+		if _web_intro_prepared:
+			_apply_web_world_view(_web_view_position, _web_view_zoom)
 		return
 	global_position = Vector2(
 		clampf(global_position.x, min_x, max_x),
