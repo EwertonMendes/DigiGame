@@ -1,0 +1,14 @@
+{
+  "source": "Gallantmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Gallantmon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2daece760cacce522e891e1d524b0f1a72ddea72b560b7bf8df0851dc286fbbf"
+}

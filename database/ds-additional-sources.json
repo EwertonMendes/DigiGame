@@ -254,6 +254,62 @@
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/089_Airdramon.png",
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows_rear_reversed"
+    },
+    "BlackWarGrowlmon": {
+      "source_id": 248,
+      "source_member": "sprite thread/248_BlackMegaloGrowlmon.png",
+      "source_sha256": "d1e2f9a1117a8851590cd03bf1e6e390d0f7cf380e2923a4cfc101877357d391",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/248_BlackMegaloGrowlmon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "War Growlmon": {
+      "source_id": 229,
+      "source_member": "sprite thread/229_MegaloGrowlmon.png",
+      "source_sha256": "f76aad377690ae77bc609ad1a1c7098173597385757bc4a601ee33dcacb0da1e",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/229_MegaloGrowlmon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed"
+    },
+    "Chaos Gallantmon": {
+      "source_id": 358,
+      "source_member": "sprite thread/358_ChaosDukemon.png",
+      "source_sha256": "a0bbdc47cdd7e3b91d468cf796ac5207032e68c46041dd11f2e98c6aa13b1a9e",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/358_ChaosDukemon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Megidramon": {
+      "source_id": 372,
+      "source_member": "sprite thread/372_Megidramon.png",
+      "source_sha256": "7606823f6509d27c63602cf6b0d31f6db88dc2ae7edf071834ebe5aeda856555",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/372_Megidramon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Gallantmon": {
+      "source_id": 323,
+      "source_member": "sprite thread/323_Dukemon.png",
+      "source_sha256": "8208583fe1eaf8f510550a3b2f93d3559ce61e894f0aa8cb912fb90dc6b852cb",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/323_Dukemon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Triceramon": {
+      "source_id": 244,
+      "source_member": "sprite thread/244_Triceramon.png",
+      "source_sha256": "f3a62f012ad27fd2dd18f96c42da6a916d5d22f987cf15313b24b39d8af117d2",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/244_Triceramon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed"
+    },
+    "Cannondramon": {
+      "source_id": 344,
+      "source_member": "sprite thread/344_Cannondramon-1.png",
+      "source_sha256": "319a51fb00e36f310819429046084aeaff946c6eca54f70db85cb7374ab33595",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/344_Cannondramon-1.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
     }
   }
 }
