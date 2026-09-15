@@ -534,6 +534,7 @@ func _build_mobility(instance: DigimonInstance, current_stats: Dictionary, previ
 	margin.add_child(root)
 
 	var line := HBoxContainer.new()
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_theme_constant_override("separation", 10)
 	root.add_child(line)
 	var icon := ProceduralIconScript.new() as DigiProceduralIcon
@@ -547,19 +548,22 @@ func _build_mobility(instance: DigimonInstance, current_stats: Dictionary, previ
 		mov.add_theme_color_override("font_color", V2.GREEN)
 	line.add_child(mov)
 	var target_level := _training.mobility_level(instance) + _pending_mobility
-	line.add_child(_single_line_label("MOBILITY %d / 2" % target_level, 10, V2.AMBER, true))
+	var mobility_level_label := _single_line_label("MOBILITY %d / 2" % target_level, 10, V2.AMBER, true)
+	mobility_level_label.custom_minimum_size.x = 112.0
+	mobility_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	line.add_child(mobility_level_label)
 
 	var actions := GridContainer.new()
 	actions.columns = 2
 	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_theme_constant_override("h_separation", 8)
 	root.add_child(actions)
-	_mobility_minus = _action_button("UNDO MOV", V2.MUTED, 42)
+	_mobility_minus = _action_button("UNDO MOV", V2.MUTED)
 	_mobility_minus.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_mobility_minus.disabled = _pending_mobility <= 0
 	_mobility_minus.pressed.connect(_remove_mobility)
 	actions.add_child(_mobility_minus)
-	_mobility_plus = _action_button("TRAIN MOV +1", V2.AMBER, 42)
+	_mobility_plus = _action_button("TRAIN MOV +1", V2.AMBER)
 	_mobility_plus.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_mobility_plus.disabled = not _training.can_apply_plan(instance, _pending_stats, _pending_mobility + 1)
 	_mobility_plus.pressed.connect(_add_mobility)
@@ -846,7 +850,7 @@ func _progress(accent: Color, maximum: int, value: int) -> ProgressBar:
 	return bar
 
 
-func _action_button(text: String, accent: Color, height: float = 42.0) -> Button:
+func _action_button(text: String, accent: Color, height: float = 52.0) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size.y = height
@@ -868,7 +872,7 @@ func _action_button(text: String, accent: Color, height: float = 42.0) -> Button
 
 
 func _icon_text_button(texture: Texture2D, text: String, accent: Color) -> Button:
-	var button := _action_button(text, accent, 44.0)
+	var button := _action_button(text, accent)
 	button.icon = texture
 	button.expand_icon = false
 	button.add_theme_color_override("icon_normal_color", accent)
