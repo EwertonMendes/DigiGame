@@ -42,6 +42,15 @@ func _start_battle() -> void:
 func _play_opening_sequence() -> void:
 	var camera := get_viewport().get_camera_2d()
 
+	# SceneTree's deferred battle bootstrap can run before the Web renderer has
+	# completed the first draw of the newly swapped scene. Wait for the renderer's
+	# real frame boundary rather than a timer before starting any presentation
+	# transforms. Native builds do not need this synchronization point.
+	if OS.has_feature("web"):
+		await RenderingServer.frame_post_draw
+		if not is_inside_tree():
+			return
+
 	# Re-evaluate facing only after both rosters exist. This makes every actor look
 	# toward a real opposing Digimon instead of relying on a generic map-center
 	# direction while the encounter is still being instantiated.

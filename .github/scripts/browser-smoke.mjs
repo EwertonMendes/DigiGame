@@ -94,8 +94,10 @@ async function confirmBattleDialog(page) {
 }
 
 async function waitForBattlePresentation(page) {
-  // A loaded scene is not enough: every browser suite must prove that the
-  // frame-driven camera intro completed and handed control to the battle loop.
+  // A loaded scene is not enough: every browser suite must prove that the intro
+  // completed and handed control to the battle loop. Keep this assertion strict;
+  // renderer screenshots are intentionally not attempted on timeout because a
+  // hung canvas can mask the original failure with a second screenshot timeout.
   try {
     await waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
   } catch (error) {
@@ -103,7 +105,6 @@ async function waitForBattlePresentation(page) {
     if (runtimeErrors.length > 0) {
       console.error(`[Smoke] ${suite} runtime errors:\n${runtimeErrors.join('\n')}`);
     }
-    await page.screenshot({ path: `build/${suite}-battle-timeout.png`, fullPage: true });
     throw error;
   }
   await settleFrames(page, 3);
