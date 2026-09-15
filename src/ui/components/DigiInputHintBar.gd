@@ -15,12 +15,14 @@ var _description: Label
 var _description_text := "Manage your Digimon and view their information."
 var _mode := InputMode.TOUCH if DisplayServer.is_touchscreen_available() else InputMode.KEYBOARD_MOUSE
 var _last_touch_msec := -10000
+var _primary_tabs_enabled := false
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_input(true)
+	clip_contents = true
 	var style := V2.surface_style(Color(V2.BASE.r, V2.BASE.g, V2.BASE.b, 0.995), Color.TRANSPARENT, 0)
 	style.border_color = Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.60)
 	style.border_width_top = 1
@@ -34,8 +36,10 @@ func _ready() -> void:
 	add_child(margin)
 	_row = HBoxContainer.new()
 	_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_row.add_theme_constant_override("separation", 12)
 	_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_row.clip_contents = true
 	margin.add_child(_row)
 	_refresh()
 
@@ -44,6 +48,14 @@ func set_description(text: String) -> void:
 	_description_text = text
 	if _description != null:
 		_description.text = text
+
+
+func set_primary_tabs_enabled(enabled: bool) -> void:
+	if _primary_tabs_enabled == enabled:
+		return
+	_primary_tabs_enabled = enabled
+	if _row != null:
+		_refresh()
 
 
 func _input(event: InputEvent) -> void:
@@ -75,19 +87,27 @@ func _joypad_mode(device: int) -> int:
 func _menu_hints() -> Array[Dictionary]:
 	match _mode:
 		InputMode.PLAYSTATION:
-			return [
+			var hints: Array[Dictionary] = []
+			if _primary_tabs_enabled:
+				hints.append({"key": "L1/R1", "label": "Tabs", "accent": V2.CYAN})
+			hints.append_array([
 				{"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED},
 				{"key": "RS", "label": "Scroll", "accent": V2.MUTED},
 				{"key": "X", "label": "Select", "accent": V2.BLUE},
 				{"key": "O", "label": "Back", "accent": V2.RED},
-			]
+			])
+			return hints
 		InputMode.XBOX:
-			return [
+			var hints: Array[Dictionary] = []
+			if _primary_tabs_enabled:
+				hints.append({"key": "LB/RB", "label": "Tabs", "accent": V2.CYAN})
+			hints.append_array([
 				{"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED},
 				{"key": "RS", "label": "Scroll", "accent": V2.MUTED},
 				{"key": "A", "label": "Select", "accent": V2.GREEN},
 				{"key": "B", "label": "Back", "accent": V2.RED},
-			]
+			])
+			return hints
 		InputMode.TOUCH:
 			return [
 				{"key": "TAP", "label": "Select", "accent": V2.CYAN},
@@ -105,12 +125,16 @@ func _refresh() -> void:
 	if _row == null:
 		return
 	for child in _row.get_children():
+		_row.remove_child(child)
 		child.queue_free()
 
 	_description = Label.new()
 	_description.text = _description_text
 	_description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_description.custom_minimum_size.x = 0.0
 	_description.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_description.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_description.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_description.add_theme_font_size_override("font_size", 12)
 	_description.add_theme_color_override("font_color", V2.MUTED)
 	V2.apply_body(_description)
@@ -139,6 +163,7 @@ func _refresh() -> void:
 		var copy := Label.new()
 		copy.text = String(hint.get("label", ""))
 		copy.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		copy.autowrap_mode = TextServer.AUTOWRAP_OFF
 		copy.add_theme_font_size_override("font_size", 11)
 		copy.add_theme_color_override("font_color", V2.MUTED)
 		V2.apply_body(copy)

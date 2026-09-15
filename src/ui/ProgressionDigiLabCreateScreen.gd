@@ -1,11 +1,27 @@
 extends "res://src/ui/DigiLabScreen.gd"
 class_name ProgressionDigiLabCreateScreen
 
-const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
+const SemanticPalette = preload("res://src/ui/components/DigiSemanticPalette.gd")
+
+
+func open_lab() -> void:
+	if _hint_bar != null:
+		_hint_bar.set_primary_tabs_enabled(true)
+	super.open_lab()
+
+
+func _select_species(species_name: String) -> void:
+	var changed := _selected_name.to_lower() != species_name.to_lower()
+	super._select_species(species_name)
+	if changed and _detail_scroll != null:
+		_detail_scroll.scroll_vertical = 0
+
 
 func _refresh_list() -> void:
-	for child in _list_box.get_children():
-		child.queue_free()
+	if _lab_mode == "records":
+		super._refresh_list()
+		return
+	_clear_children_now(_list_box)
 	_data_buttons.clear()
 
 	var known_names: Dictionary = {}
@@ -44,11 +60,10 @@ func _refresh_list() -> void:
 			return amount_a > amount_b
 		return String(a.get("name", "")) < String(b.get("name", ""))
 	)
+	_list_header.set_trailing("%d KNOWN" % entries.size())
 
 	if entries.is_empty():
-		_empty_label = _label("No known Digimon yet.\nDefeat Digimon in battle to discover their reconstruction data.", 13, UI.MUTED)
-		_empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_empty_label = _empty_state("No known Digimon yet.\nDefeat Digimon in battle to discover reconstruction data.")
 		_empty_label.custom_minimum_size.y = 160
 		_list_box.add_child(_empty_label)
 		_selected_name = ""
@@ -57,8 +72,7 @@ func _refresh_list() -> void:
 	var selection_still_exists := false
 	for entry: Dictionary in entries:
 		var species_name := String(entry.get("name", ""))
-		if species_name.to_lower() == _selected_name.to_lower():
-			selection_still_exists = true
+		selection_still_exists = selection_still_exists or species_name.to_lower() == _selected_name.to_lower()
 		var button := _data_button(species_name, int(entry.get("amount", 0)))
 		_list_box.add_child(button)
 		_data_buttons.append(button)
@@ -66,113 +80,174 @@ func _refresh_list() -> void:
 		_selected_name = String(entries[0].get("name", ""))
 	_style_selection()
 
+
 func _data_button(species_name: String, amount: int) -> Button:
 	var species := _database.get_by_name(species_name)
 	var rank := String(species.get("rank", "Unknown"))
-	var accent := UI.rank_color(rank)
+	var accent := V2.rank_color(rank)
 	var required := OverworldState.get_reconstruction_requirement(species_name)
 	var percent := minf(100.0, float(amount) * 100.0 / float(maxi(1, required)))
 	var state := "READY" if amount >= required else "COLLECTING" if amount > 0 else "LOCKED"
+	var state_color := V2.GREEN if state == "READY" else V2.CYAN if state == "COLLECTING" else V2.MUTED
 
 	var button := Button.new()
 	button.text = ""
 	button.focus_mode = Control.FOCUS_ALL
-	button.custom_minimum_size = Vector2(280, 82)
+	button.custom_minimum_size = Vector2(0, 88)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.clip_contents = true
 	button.pressed.connect(_select_species.bind(species_name))
 	button.focus_entered.connect(_select_species.bind(species_name))
 	button.set_meta("species_name", species_name)
 	button.tooltip_text = "Inspect reconstruction data for %s" % species_name
-	MENU.style_action_button(button, accent)
+	_style_roster_button(button, species_name.to_lower() == _selected_name.to_lower(), accent)
 
-	var margin := MENU.margin(9, 7, 10, 7)
+	var margin := _margin(11, 8, 11, 8)
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(margin)
 	var row := HBoxContainer.new()
-	row.name = "Row"
-	row.add_theme_constant_override("separation", 9)
+	row.add_theme_constant_override("separation", 11)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
+
 	var preview := WalkPreviewScript.new() as DigimonWalkPreview
 	preview.name = "WalkPreview"
-	preview.custom_minimum_size = Vector2(60, 60)
+	preview.custom_minimum_size = Vector2(62, 62)
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	preview.set_species(String(species.get("name", species_name)))
+	preview.set_active(species_name.to_lower() == _selected_name.to_lower())
 	row.add_child(preview)
+
 	var copy := VBoxContainer.new()
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	copy.add_theme_constant_override("separation", 2)
+	copy.add_theme_constant_override("separation", 3)
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
-	copy.add_child(_label(species_name.to_upper(), 13, UI.TEXT, true))
-	copy.add_child(_label("%s  ·  %d / %d DATA" % [rank.to_upper(), amount, required], 10, accent.lightened(0.10), true))
-	copy.add_child(_label("%d%%  ·  %s" % [int(round(percent)), state], 9, UI.GREEN if state == "READY" else UI.CYAN if state == "COLLECTING" else UI.MUTED, true))
+	copy.add_child(_single_line_label(species_name, 15, V2.TEXT, true))
+	copy.add_child(_single_line_label("%s  ·  %d / %d DATA" % [rank, amount, required], 10, accent, true))
+	var progress_row := HBoxContainer.new()
+	progress_row.add_theme_constant_override("separation", 8)
+	copy.add_child(progress_row)
+	var progress := _progress_bar(state_color, required, amount)
+	progress.custom_minimum_size = Vector2(96, 6)
+	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress_row.add_child(progress)
+	var state_label := _single_line_label("%d%% · %s" % [int(round(percent)), state], 9, state_color, true)
+	state_label.custom_minimum_size.x = 94
+	state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	progress_row.add_child(state_label)
 	return button
 
+
 func _style_selection() -> void:
+	if _lab_mode == "records":
+		super._style_selection()
+		return
 	for button: Button in _data_buttons:
 		var species_name := String(button.get_meta("species_name", ""))
 		var species := _database.get_by_name(species_name)
-		var accent := UI.rank_color(String(species.get("rank", "Unknown")))
+		var accent := V2.rank_color(String(species.get("rank", "Unknown")))
 		var selected := species_name.to_lower() == _selected_name.to_lower()
-		MENU.style_action_button(button, UI.GOLD if selected else accent, selected)
+		_style_roster_button(button, selected, accent)
 		var preview := button.find_child("WalkPreview", true, false) as DigimonWalkPreview
 		if preview != null:
 			preview.set_active(selected)
 
+
 func _refresh_detail() -> void:
-	for child in _detail_body.get_children():
-		child.queue_free()
+	if _lab_mode == "records":
+		super._refresh_detail()
+		return
+	_clear_children_now(_detail_body)
 	if _selected_name.is_empty():
-		_detail_body.add_child(_label("DIGI DATA ARCHIVE", 14, UI.CYAN, true))
-		_detail_body.add_child(_label("Known species remain visible here as Locked, Collecting or Ready.", 11, UI.MUTED))
+		_detail_body.add_child(_empty_state("Choose a species from the Digi Data Archive to inspect its reconstruction progress."))
 		return
 	var species := _database.get_by_name(_selected_name)
 	if species.is_empty():
 		return
 	var canonical_name := String(species.get("name", _selected_name))
 	var rank := String(species.get("rank", "Unknown"))
-	var accent := UI.rank_color(rank)
+	var accent := V2.rank_color(rank)
 	var available := OverworldState.get_digi_data_for(canonical_name)
 	var required := OverworldState.get_reconstruction_requirement(canonical_name)
 	var percent := minf(100.0, float(available) * 100.0 / float(maxi(1, required)))
 	var state := "READY" if available >= required else "COLLECTING" if available > 0 else "LOCKED"
+	var state_color := V2.GREEN if state == "READY" else V2.CYAN if state == "COLLECTING" else V2.MUTED
+	var detail_width := _detail_panel.size.x if _detail_panel != null else 900.0
+	var narrow_hero := detail_width < 660.0
 
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", MENU.card(accent, true))
-	_detail_body.add_child(card)
-	var card_margin := MENU.margin(12, 10, 12, 10)
-	card.add_child(card_margin)
-	var hero := HBoxContainer.new()
-	hero.add_theme_constant_override("separation", 14)
-	card_margin.add_child(hero)
+	var hero := PanelContainer.new()
+	hero.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hero.clip_contents = true
+	hero.add_theme_stylebox_override("panel", V2.surface_style(V2.PANEL_DEEP, Color(accent.r, accent.g, accent.b, 0.42), 8))
+	_detail_body.add_child(hero)
+	var hero_margin := _margin(16, 14, 16, 14)
+	hero.add_child(hero_margin)
+	var hero_row: BoxContainer
+	if narrow_hero:
+		hero_row = VBoxContainer.new()
+		hero_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	else:
+		hero_row = HBoxContainer.new()
+	hero_row.add_theme_constant_override("separation", 20)
+	hero_margin.add_child(hero_row)
+
 	var portrait_frame := PanelContainer.new()
-	portrait_frame.custom_minimum_size = Vector2(164, 146)
-	portrait_frame.add_theme_stylebox_override("panel", MENU.portrait(accent))
-	hero.add_child(portrait_frame)
-	var portrait_margin := MENU.margin(7, 7, 7, 7)
+	portrait_frame.custom_minimum_size = Vector2(166, 158) if narrow_hero else Vector2(190, 182)
+	portrait_frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER if narrow_hero else Control.SIZE_SHRINK_BEGIN
+	portrait_frame.add_theme_stylebox_override("panel", V2.surface_style(Color(0.015, 0.030, 0.044, 1.0), Color(accent.r, accent.g, accent.b, 0.54), 8))
+	hero_row.add_child(portrait_frame)
+	var portrait_margin := _margin(8, 8, 8, 8)
 	portrait_frame.add_child(portrait_margin)
 	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
-	portrait.custom_minimum_size = Vector2(150, 132)
+	portrait.custom_minimum_size = Vector2(150, 142) if narrow_hero else Vector2(174, 166)
 	portrait.set_species(canonical_name)
 	portrait_margin.add_child(portrait)
+
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
-	info.add_theme_constant_override("separation", 6)
-	hero.add_child(info)
-	info.add_child(_label(canonical_name.to_upper(), 23, UI.TEXT, true))
-	info.add_child(_label(rank.to_upper(), 11, accent.lightened(0.14), true))
-	info.add_child(_label("%d / %d DIGI DATA" % [available, required], 19, UI.GOLD, true))
-	info.add_child(_label("%d%%  ·  %s" % [int(round(percent)), state], 11, UI.GREEN if state == "READY" else UI.CYAN if state == "COLLECTING" else UI.MUTED, true))
+	info.add_theme_constant_override("separation", 8)
+	hero_row.add_child(info)
+	var name_label := _single_line_label(canonical_name.to_upper(), 28, V2.TEXT, true)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_child(name_label)
 
-	_detail_body.add_child(_progress_bar(accent, required, available))
-	_detail_body.add_child(_section_label("RECONSTRUCTION", UI.CYAN))
-	var explainer := _label("Create a new individual when this species reaches its Digi Data threshold. Required Data is consumed; extra Data can be spent for a small starting Potential bonus.", 10, UI.MUTED)
-	explainer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var chips := HFlowContainer.new()
+	chips.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chips.add_theme_constant_override("h_separation", 7)
+	chips.add_theme_constant_override("v_separation", 6)
+	info.add_child(chips)
+	chips.add_child(_pill(rank.to_upper(), accent))
+	var attribute := String(species.get("attribute", "Free"))
+	var family := String(species.get("species", species.get("family", "Unknown")))
+	chips.add_child(_pill(attribute.to_upper(), SemanticPalette.data_attribute_color(attribute)))
+	chips.add_child(_pill(family.to_upper(), SemanticPalette.family_color(family)))
+
+	var description := String(species.get("description", "")).strip_edges()
+	if not description.is_empty():
+		var description_label := _label(description, 10, V2.MUTED)
+		description_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		description_label.max_lines_visible = 2
+		description_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		info.add_child(description_label)
+
+	var data_row := HBoxContainer.new()
+	data_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	data_row.add_theme_constant_override("separation", 12)
+	info.add_child(data_row)
+	var data_value := _semantic_label("%d / %d DIGI DATA" % [available, required], 20, V2.AMBER, true)
+	data_value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	data_row.add_child(data_value)
+	data_row.add_child(_pill("%d%% · %s" % [int(round(percent)), state], state_color))
+	info.add_child(_progress_bar(state_color, required, available))
+
+	_detail_body.add_child(_subsection("RECONSTRUCTION OPTIONS", "Data is consumed when a new Digimon is created.", V2.CYAN))
+	var explainer := _label("Choose the amount of Digi Data to invest. Spending beyond the species threshold grants a small starting Potential bonus to the new individual.", 10, V2.MUTED)
+	explainer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	explainer.custom_minimum_size.y = 34
 	_detail_body.add_child(explainer)
 
 	var spend_options: Array[int] = [required]
@@ -180,47 +255,101 @@ func _refresh_detail() -> void:
 		var candidate := required + int(bonus_step)
 		if candidate <= 200 and not spend_options.has(candidate):
 			spend_options.append(candidate)
-	var grid := GridContainer.new()
-	grid.columns = mini(3, spend_options.size())
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
-	_detail_body.add_child(grid)
+	var option_grid := GridContainer.new()
+	if detail_width < 520.0:
+		option_grid.columns = 1
+	elif detail_width < 760.0:
+		option_grid.columns = mini(2, spend_options.size())
+	else:
+		option_grid.columns = mini(3, spend_options.size())
+	option_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	option_grid.add_theme_constant_override("h_separation", 10)
+	option_grid.add_theme_constant_override("v_separation", 10)
+	_detail_body.add_child(option_grid)
 	for amount: int in spend_options:
-		var potential := _factory.potential_from_scan_percent(clampi(amount, 100, 200))
-		var caption := "%d DATA" % amount
-		if potential > 0:
-			caption += "\n+%d POTENTIAL" % potential
-		var button := _button(caption, UI.GOLD if amount == required else UI.CYAN)
-		button.custom_minimum_size = Vector2(128, 62)
-		button.disabled = available < amount
-		button.tooltip_text = "Need %d more Digi Data." % (amount - available) if available < amount else "Reconstruct a new %s using %d Digi Data." % [canonical_name, amount]
-		button.pressed.connect(_reconstruct.bind(canonical_name, amount))
-		grid.add_child(button)
+		option_grid.add_child(_reconstruction_option(canonical_name, amount, available, required))
 
-	_detail_body.add_child(_section_label("NEW INDIVIDUAL", UI.PURPLE))
-	_detail_body.add_child(_label("The reconstructed Digimon joins Storage at Level 1 with its own persistent UUID. Multiple individuals of the same species are allowed.", 10, UI.MUTED))
+	_detail_body.add_child(_subsection("NEW INDIVIDUAL", "Persistent collection member", V2.PURPLE))
+	var note := _label("The reconstructed Digimon joins Storage at Level 1 with its own persistent identity. Multiple individuals of the same species are allowed.", 10, V2.MUTED)
+	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	note.custom_minimum_size.y = 34
+	_detail_body.add_child(note)
 
-func _progress_bar(accent: Color, maximum: int, value: int) -> ProgressBar:
-	var bar := ProgressBar.new()
-	bar.max_value = float(maxi(1, maximum))
-	bar.value = float(clampi(value, 0, maxi(1, maximum)))
-	bar.show_percentage = false
-	bar.custom_minimum_size.y = 8
-	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var bg := StyleBoxFlat.new()
-	bg.bg_color = Color(0.01, 0.01, 0.015, 0.88)
-	bg.corner_radius_top_left = 4
-	bg.corner_radius_top_right = 4
-	bg.corner_radius_bottom_left = 4
-	bg.corner_radius_bottom_right = 4
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = accent
-	fill.corner_radius_top_left = 4
-	fill.corner_radius_top_right = 4
-	fill.corner_radius_bottom_left = 4
-	fill.corner_radius_bottom_right = 4
-	bar.add_theme_stylebox_override("background", bg)
-	bar.add_theme_stylebox_override("fill", fill)
-	return bar
+
+func _reconstruction_option(species_name: String, amount: int, available: int, required: int) -> Button:
+	var potential := _factory.potential_from_scan_percent(clampi(amount, 100, 200))
+	var accent := V2.AMBER if amount == required else V2.CYAN
+	var button := Button.new()
+	button.text = ""
+	button.focus_mode = Control.FOCUS_ALL
+	button.custom_minimum_size = Vector2(150, 86)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.disabled = available < amount
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if not button.disabled else Control.CURSOR_ARROW
+	button.add_theme_stylebox_override("normal", V2.action_card_style(accent, "normal"))
+	button.add_theme_stylebox_override("hover", V2.action_card_style(accent, "hover"))
+	button.add_theme_stylebox_override("focus", V2.action_card_style(accent, "focus"))
+	button.add_theme_stylebox_override("pressed", V2.action_card_style(accent, "pressed"))
+	button.add_theme_stylebox_override("disabled", V2.action_card_style(accent, "disabled"))
+	button.tooltip_text = "Need %d more Digi Data." % (amount - available) if available < amount else "Reconstruct a new %s using %d Digi Data." % [species_name, amount]
+	button.pressed.connect(_reconstruct.bind(species_name, amount))
+	var margin := _margin(12, 10, 12, 10)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override("separation", 4)
+	margin.add_child(stack)
+	var amount_label := _single_line_label("%d DATA" % amount, 15, V2.TEXT, true)
+	amount_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stack.add_child(amount_label)
+	var bonus_copy := "STANDARD RECONSTRUCTION" if potential <= 0 else "+%d STARTING POTENTIAL" % potential
+	var bonus := _single_line_label(bonus_copy, 9, accent, true)
+	bonus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stack.add_child(bonus)
+	var status := _single_line_label("READY" if available >= amount else "%d MORE NEEDED" % (amount - available), 9, V2.GREEN if available >= amount else V2.SUBTLE, true)
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stack.add_child(status)
+	return button
+
+
+func _subsection(title: String, subtitle: String, accent: Color) -> Control:
+	var panel := PanelContainer.new()
+	panel.clip_contents = true
+	panel.add_theme_stylebox_override("panel", V2.header_strip_style(6))
+	var margin := _margin(12, 7, 12, 7)
+	panel.add_child(margin)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	margin.add_child(row)
+	var title_label := _semantic_label(title, 11, accent, true)
+	title_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	row.add_child(title_label)
+	var subtitle_label := _single_line_label(subtitle, 9, V2.SUBTLE)
+	subtitle_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(subtitle_label)
+	return panel
+
+
+func _single_line_label(text: String, size: int, color: Color, bold: bool = false) -> Label:
+	var label := _label(text, size, color, bold)
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	return label
+
+
+func _semantic_label(text: String, size: int, color: Color, bold: bool = false) -> Label:
+	var label := _single_line_label(text, size, color, bold)
+	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	label.clip_text = false
+	return label
+
+
+func _pill(text: String, accent: Color) -> Label:
+	var label := _semantic_label(text, 9, accent, true)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	label.add_theme_stylebox_override("normal", V2.pill_style(accent, true))
+	return label
