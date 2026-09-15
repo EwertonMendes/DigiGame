@@ -13,7 +13,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	z_index = 45
+	# Area identification belongs above the world, but below every interactive
+	# HUD/modal sibling in the Hub CanvasLayer. This prevents a freshly presented
+	# area title from crossing a dialog opened immediately after scene load.
+	z_index = -10
 	_build_ui()
 	resized.connect(_layout)
 	_layout()
