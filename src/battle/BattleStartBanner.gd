@@ -2,6 +2,8 @@ extends Control
 class_name BattleStartBanner
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
+const TweenGuardScript = preload("res://src/ui/components/DigiTweenGuard.gd")
+const BANNER_TWEEN_TIMEOUT := 2.0
 
 var _banner: Control = null
 var _backdrop: Panel = null
@@ -43,7 +45,11 @@ func play() -> void:
 	tween.tween_interval(0.62)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_property(_banner, "modulate:a", 0.0, 0.15)
-	await tween.finished
+
+	var guard := TweenGuardScript.new() as DigiTweenGuard
+	var timed_out := await guard.await_tween(get_tree(), tween, BANNER_TWEEN_TIMEOUT)
+	if timed_out:
+		print("[BattleIntro] VISUAL_FALLBACK stage=battle-start-banner")
 
 	visible = false
 	_banner.modulate = Color.WHITE
