@@ -44,14 +44,14 @@ func _ready() -> void:
 func _build_content() -> void:
 	for child in get_children():
 		child.queue_free()
-	custom_minimum_size.y = 38.0 if _show_bar else 28.0
+	custom_minimum_size.y = 30.0 if _show_bar else 22.0
 	add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 7)
-	margin.add_theme_constant_override("margin_top", 3 if _show_bar else 1)
+	margin.add_theme_constant_override("margin_top", 1 if _show_bar else 0)
 	margin.add_theme_constant_override("margin_right", 7)
-	margin.add_theme_constant_override("margin_bottom", 3 if _show_bar else 1)
+	margin.add_theme_constant_override("margin_bottom", 1 if _show_bar else 0)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(margin)
 
@@ -61,9 +61,9 @@ func _build_content() -> void:
 	margin.add_child(row)
 
 	var icon := IconScript.new() as DigiProceduralIcon
-	icon.custom_minimum_size = Vector2(21.0, 21.0)
+	icon.custom_minimum_size = Vector2(19.0, 19.0)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.configure(_icon_kind, _accent, 1.9)
+	icon.configure(_icon_kind, _accent, 1.8)
 	row.add_child(icon)
 
 	var label := Label.new()
@@ -94,7 +94,7 @@ func _build_content() -> void:
 		bar.max_value = _max_value
 		bar.value = clampf(float(_value), 0.0, _max_value)
 		bar.show_percentage = false
-		bar.custom_minimum_size = Vector2(92.0, 9.0)
+		bar.custom_minimum_size = Vector2(92.0, 8.0)
 		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		bar.add_theme_stylebox_override("background", V2.progress_track_style())
