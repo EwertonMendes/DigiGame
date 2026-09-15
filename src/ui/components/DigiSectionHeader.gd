@@ -11,7 +11,6 @@ var _icon_kind := ""
 var _title_label: Label
 var _trailing_label: Label
 var _icon: DigiProceduralIcon
-var _accent_bar: ColorRect
 var _built := false
 
 
@@ -35,35 +34,23 @@ func set_trailing(text: String) -> void:
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	custom_minimum_size.y = 32.0
-	_build()
-	_built = true
-	_apply_content()
+	custom_minimum_size.y = 34.0
+	add_theme_stylebox_override("panel", V2.header_strip_style(7))
 
-
-func _build() -> void:
-	var style := V2.surface_style(
-		Color(V2.SURFACE_ALT.r, V2.SURFACE_ALT.g, V2.SURFACE_ALT.b, 0.74),
-		Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.28),
-		8,
-		Vector4(9.0, 3.0, 10.0, 3.0)
-	)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.12)
-	style.shadow_size = 3
-	style.shadow_offset = Vector2(0.0, 1.0)
-	add_theme_stylebox_override("panel", style)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 5)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(margin)
 
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 7)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(row)
-
-	_accent_bar = ColorRect.new()
-	_accent_bar.custom_minimum_size = Vector2(3.0, 16.0)
-	_accent_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(_accent_bar)
+	margin.add_child(row)
 
 	_icon = IconScript.new() as DigiProceduralIcon
 	_icon.custom_minimum_size = Vector2(16.0, 16.0)
@@ -73,7 +60,7 @@ func _build() -> void:
 	_title_label = Label.new()
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_title_label.add_theme_font_size_override("font_size", 11)
+	_title_label.add_theme_font_size_override("font_size", 12)
 	_title_label.add_theme_color_override("font_color", V2.TEXT)
 	V2.apply_heading(_title_label)
 	_title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -88,6 +75,9 @@ func _build() -> void:
 	_trailing_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_trailing_label)
 
+	_built = true
+	_apply_content()
+
 
 func _apply_content() -> void:
 	if _title_label == null:
@@ -95,7 +85,6 @@ func _apply_content() -> void:
 	_title_label.text = _title_text.to_upper()
 	_trailing_label.text = _trailing_text
 	_trailing_label.visible = not _trailing_text.is_empty()
-	_accent_bar.color = Color(_accent.r, _accent.g, _accent.b, 0.90)
 	_icon.visible = not _icon_kind.is_empty()
 	if _icon.visible:
-		_icon.configure(_icon_kind, _accent, 1.45)
+		_icon.configure(_icon_kind, Color(_accent.r, _accent.g, _accent.b, 0.82), 1.45)
