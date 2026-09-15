@@ -57,12 +57,12 @@
         "cell_padding_y": 2
       },
       "portrait": {
-        "row_index": 0,
-        "frame_index": 0,
-        "duration_ms": 220,
-        "projection_min_pixels": 5,
-        "minimum_span": 20,
-        "crop_padding": 2
+        "mode": "animated_webp",
+        "source_webp": "res://assets/characters/zekegreymon/source/portrait.webp",
+        "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/d584416076940db566e81e1c4fe0a4c610ad3bdb/public/assets/digimons/ZekeGreymon.webp",
+        "source_git_blob_sha": "e15f66493db661e6c384fe66545fe9bab87b6a16",
+        "minimum_frames": 2,
+        "default_duration_ms": 120
       }
     }
   ]
