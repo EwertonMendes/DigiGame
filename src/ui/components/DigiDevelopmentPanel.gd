@@ -9,45 +9,51 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	for child in get_children():
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(
-			Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.92),
-			Color(V2.PURPLE.r, V2.PURPLE.g, V2.PURPLE.b, 0.30),
-			10,
-			Vector4(6.0, 6.0, 6.0, 6.0),
-			0.08
-		)
-	)
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
+	size_flags_stretch_ratio = 1.22
+	custom_minimum_size.y = 294.0
+	add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 3)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 0)
 	add_child(body)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
-	header.configure("DEVELOPMENT", "", V2.PURPLE, "training")
+	header.configure("DEVELOPMENT", "", V2.TEXT, "training")
 	body.add_child(header)
 
-	var content := _margin(5, 0, 5, 0)
+	var content := _margin(12, 9, 12, 10)
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(content)
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 1)
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 6)
 	content.add_child(stack)
-	stack.add_child(_label("Innate aptitude + permanent training", 8, V2.MUTED))
-	stack.add_child(_separator())
+	stack.add_child(_label("Innate aptitude + permanent training", 10, V2.MUTED))
+
+	var header_panel := PanelContainer.new()
+	header_panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.SURFACE_ALT.r, V2.SURFACE_ALT.g, V2.SURFACE_ALT.b, 0.62), Color.TRANSPARENT, 2, Vector4(7.0, 3.0, 7.0, 3.0)))
+	stack.add_child(header_panel)
+	var header_grid := GridContainer.new()
+	header_grid.columns = 4
+	header_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_grid.add_theme_constant_override("h_separation", 10)
+	header_panel.add_child(header_grid)
+	for header_text in ["STAT", "APT", "TRAIN", "TOTAL"]:
+		var header_label := _label(header_text, 9, V2.MUTED, true)
+		header_label.custom_minimum_size.y = 20.0
+		if header_text != "STAT":
+			header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		header_grid.add_child(header_label)
 
 	var grid := GridContainer.new()
 	grid.columns = 4
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 0)
+	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 2)
 	stack.add_child(grid)
-	for header_text in ["STAT", "APT", "TRAIN", "TOTAL"]:
-		var header_label := _label(header_text, 8, V2.SUBTLE, true)
-		header_label.custom_minimum_size.y = 14.0
-		if header_text != "STAT":
-			header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(header_label)
 	for key in ["hp", "mp", "atk", "def", "int", "speed", "mov"]:
 		var aptitude := int(instance.aptitudes.get(key, 0))
 		var training := int(instance.training.get(key, 0))
@@ -68,19 +74,11 @@ func _total_copy(aptitude: int, training: int) -> String:
 
 
 func _table_label(text: String, color: Color, heading: bool, right: bool) -> Label:
-	var label := _label(text, 8, color, heading)
-	label.custom_minimum_size.y = 15.0
+	var label := _label(text, 10, color, heading)
+	label.custom_minimum_size.y = 24.0
 	if right:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	return label
-
-
-func _separator() -> ColorRect:
-	var rule := ColorRect.new()
-	rule.custom_minimum_size.y = 1.0
-	rule.color = V2.separator_color(0.24)
-	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return rule
 
 
 func _label(text: String, font_size: int, color: Color, heading: bool = false) -> Label:
