@@ -506,7 +506,7 @@
       "portrait_metadata": "res://assets/characters/wargrowlmon/portrait_frames.json",
       "source_id": 229,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         36,
         43
