@@ -12,6 +12,8 @@ const FOCUS_MOVE_TIME := 0.30
 const FIRST_FOCUS_MOVE_TIME := 0.40
 const GAMEPLAY_FOCUS_TIME := 0.46
 const PAN_EDGE_MARGIN_SCREEN := Vector2(168.0, 112.0)
+const VISUAL_TWEEN_MIN_WATCHDOG_MS := 1200
+const VISUAL_TWEEN_DURATION_MULTIPLIER := 4.0
 
 var _battle_default_zoom := DESKTOP_BATTLE_ZOOM
 
@@ -107,14 +109,29 @@ func _preferred_intro_zoom() -> float:
 	return DESKTOP_INTRO_ZOOM
 
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
+	var tween_duration := maxf(0.05, duration)
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(self, "zoom", Vector2.ONE * target_zoom, maxf(0.05, duration))
-	tween.tween_property(self, "global_position", target_position, maxf(0.05, duration))
-	await tween.finished
+	tween.tween_property(self, "zoom", Vector2.ONE * target_zoom, tween_duration)
+	tween.tween_property(self, "global_position", target_position, tween_duration)
+	await _await_visual_tween(tween, tween_duration, "camera-focus")
 	zoom = Vector2.ONE * target_zoom
 	global_position = target_position
 	_clamp_to_pan_bounds()
+
+func _await_visual_tween(tween: Tween, expected_duration: float, label: String) -> void:
+	if tween == null:
+		return
+	var watchdog_ms := maxi(
+		VISUAL_TWEEN_MIN_WATCHDOG_MS,
+		ceili(expected_duration * 1000.0 * VISUAL_TWEEN_DURATION_MULTIPLIER)
+	)
+	var deadline_ms := Time.get_ticks_msec() + watchdog_ms
+	while tween.is_valid() and tween.is_running() and Time.get_ticks_msec() < deadline_ms:
+		await get_tree().process_frame
+	if tween.is_valid() and tween.is_running():
+		tween.kill()
+		print("[BattleIntro] WATCHDOG stage=%s elapsed_ms=%d" % [label, watchdog_ms])
 
 func _safe_focus_position(world_position: Vector2, target_zoom: float) -> Vector2:
 	var target := world_position

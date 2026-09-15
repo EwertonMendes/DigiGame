@@ -30,6 +30,7 @@ func _start_battle() -> void:
 	_turn_index = -1
 	_opening_running = true
 	_set_gameplay_ui_visible(false)
+	print("[BattleIntro] BEGIN actors=%d" % _turn_order.size())
 
 	await _play_opening_sequence()
 
@@ -63,9 +64,9 @@ func _play_opening_sequence() -> void:
 
 	var first_focus := true
 	first_focus = await _reveal_team(player_team, camera, first_focus)
-	await get_tree().create_timer(TEAM_SWITCH_GAP).timeout
+	await _wait_visual_gap(TEAM_SWITCH_GAP)
 	first_focus = await _reveal_team(enemy_team, camera, first_focus)
-	await get_tree().create_timer(0.10).timeout
+	await _wait_visual_gap(0.10)
 
 	# The scheduler can preview turn one without mutating CT. Move from the last
 	# roster reveal to the actual first-turn Digimon at the gameplay zoom before
@@ -107,7 +108,7 @@ func _reveal_team(team: Array[Node], camera: Camera2D, first_focus: bool) -> boo
 			actor.modulate = Color.WHITE
 
 		is_first_focus = false
-		await get_tree().create_timer(TEAM_SPAWN_GAP).timeout
+		await _wait_visual_gap(TEAM_SPAWN_GAP)
 	return is_first_focus
 
 
@@ -130,6 +131,15 @@ func _play_battle_start_banner() -> void:
 	await get_tree().process_frame
 	await banner.call("play")
 	layer.queue_free()
+
+
+func _wait_visual_gap(seconds: float) -> void:
+	# Presentation gaps are wall-clock based so an extremely slow Web renderer
+	# cannot stretch a sub-second cinematic pause into tens of seconds and block
+	# gameplay. The next rendered frame is still required, preserving sequencing.
+	var deadline_usec := Time.get_ticks_usec() + int(maxf(seconds, 0.0) * 1000000.0)
+	while Time.get_ticks_usec() < deadline_usec:
+		await get_tree().process_frame
 
 
 func _set_gameplay_ui_visible(value: bool) -> void:
