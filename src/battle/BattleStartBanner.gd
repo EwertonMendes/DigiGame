@@ -2,7 +2,7 @@ extends Control
 class_name BattleStartBanner
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
-const VISUAL_TWEEN_WATCHDOG_MS := 2500
+const VISUAL_TWEEN_WATCHDOG_MS := 1600
 
 var _banner: Control = null
 var _backdrop: Panel = null
