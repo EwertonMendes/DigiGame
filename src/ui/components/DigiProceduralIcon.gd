@@ -8,9 +8,6 @@ var _line_width := 2.4
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# 32x32 is the standalone default, but callers such as compact stat rows and
-	# section headers deliberately request smaller icons. Do not overwrite those
-	# sizes when the node enters the tree.
 	if custom_minimum_size.x <= 0.0 and custom_minimum_size.y <= 0.0:
 		custom_minimum_size = Vector2(32.0, 32.0)
 	queue_redraw()
@@ -56,6 +53,16 @@ func _draw() -> void:
 			_draw_link(center, side, width)
 		"bits":
 			_draw_bits(center, side, width)
+		"brand":
+			_draw_brand(center, side)
+		"digimon":
+			_draw_digimon(center, side, width)
+		"book":
+			_draw_book(center, side, width)
+		"gear":
+			_draw_gear(center, side, width)
+		"items":
+			_draw_items(center, side, width)
 		_:
 			draw_circle(center, side * 0.18, _accent, false, width, true)
 			draw_line(center + Vector2(0.0, side * 0.03), center + Vector2(0.0, side * 0.20), _accent, width, true)
@@ -186,6 +193,59 @@ func _draw_bits(center: Vector2, side: float, width: float) -> void:
 		if layer < 2:
 			draw_line(Vector2(center.x - rx, y), Vector2(center.x - rx, y + side * 0.14), _accent, width, true)
 			draw_line(Vector2(center.x + rx, y), Vector2(center.x + rx, y + side * 0.14), _accent, width, true)
-	# Kept for backwards compatibility with any remaining callers; the modal
-	# header now uses the dedicated vector asset at assets/ui/icons/bits.svg.
 	draw_arc(Vector2(center.x, top_y), maxf(1.0, rx * 0.42), 0.0, TAU, 20, _accent, width * 0.75, true)
+
+
+func _draw_brand(center: Vector2, side: float) -> void:
+	var block := side * 0.19
+	var gap := side * 0.02
+	var step := block + gap
+	for offset: Vector2 in [Vector2.ZERO, Vector2(-step, 0.0), Vector2(step, 0.0), Vector2(0.0, -step), Vector2(0.0, step)]:
+		var rect := Rect2(center + offset - Vector2.ONE * block * 0.5, Vector2.ONE * block)
+		draw_rect(rect, _accent, true)
+
+
+func _draw_digimon(center: Vector2, side: float, width: float) -> void:
+	var s := side * 0.28
+	draw_circle(center + Vector2(0.0, s * 0.12), s * 0.62, _accent, false, width, true)
+	draw_circle(center + Vector2(-s * 0.60, -s * 0.62), s * 0.25, _accent, true, -1.0, true)
+	draw_circle(center + Vector2(0.0, -s * 0.82), s * 0.25, _accent, true, -1.0, true)
+	draw_circle(center + Vector2(s * 0.60, -s * 0.62), s * 0.25, _accent, true, -1.0, true)
+
+
+func _draw_book(center: Vector2, side: float, width: float) -> void:
+	var s := side * 0.28
+	var left := PackedVector2Array([
+		center + Vector2(-s * 0.95, -s * 0.75),
+		center + Vector2(-s * 0.12, -s * 0.52),
+		center + Vector2(-s * 0.12, s * 0.78),
+		center + Vector2(-s * 0.95, s * 0.55),
+		center + Vector2(-s * 0.95, -s * 0.75),
+	])
+	var right := PackedVector2Array([
+		center + Vector2(s * 0.95, -s * 0.75),
+		center + Vector2(s * 0.12, -s * 0.52),
+		center + Vector2(s * 0.12, s * 0.78),
+		center + Vector2(s * 0.95, s * 0.55),
+		center + Vector2(s * 0.95, -s * 0.75),
+	])
+	draw_polyline(left, _accent, width, true)
+	draw_polyline(right, _accent, width, true)
+	draw_line(center + Vector2(0.0, -s * 0.55), center + Vector2(0.0, s * 0.78), _accent, width, true)
+
+
+func _draw_gear(center: Vector2, side: float, width: float) -> void:
+	var outer := side * 0.28
+	draw_circle(center, outer * 0.68, _accent, false, width, true)
+	draw_circle(center, outer * 0.22, _accent, false, width, true)
+	for i in range(8):
+		var angle := TAU * float(i) / 8.0
+		var direction := Vector2(cos(angle), sin(angle))
+		draw_line(center + direction * outer * 0.64, center + direction * outer, _accent, width * 1.35, true)
+
+
+func _draw_items(center: Vector2, side: float, width: float) -> void:
+	var s := side * 0.28
+	var body := Rect2(center + Vector2(-s * 0.75, -s * 0.20), Vector2(s * 1.50, s * 1.15))
+	draw_rect(body, _accent, false, width, true)
+	draw_arc(center + Vector2(0.0, -s * 0.18), s * 0.45, PI, TAU, 18, _accent, width, true)
