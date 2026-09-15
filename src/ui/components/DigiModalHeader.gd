@@ -2,21 +2,27 @@ extends Control
 class_name DigiModalHeader
 
 signal close_requested
+signal tab_selected(tab_id: String)
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
-const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
 const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
+const BITS_ICON = preload("res://assets/ui/icons/bits.svg")
 
 const HEADER_HEIGHT := 58.0
 const CLOSE_SIZE := 44.0
+const TITLE_BLOCK_WIDTH := 214.0
 
 var _title: Label
 var _subtitle: Label
+var _tabs_root: HBoxContainer
+var _tab_buttons: Dictionary = {}
+var _tab_specs: Array[Dictionary] = []
+var _active_tab := ""
 var _bits_badge: PanelContainer
 var _bits_value: Label
 var _close_button: Button
-var _title_text := "DIGIMON"
-var _subtitle_text := ""
+var _title_text := "DIGI"
+var _subtitle_text := "Digital Monsters"
 var _bits := 0
 var _show_bits := true
 
@@ -25,6 +31,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 	resized.connect(_layout)
+	_rebuild_tabs()
 	_layout()
 
 
@@ -41,6 +48,30 @@ func configure(title: String, subtitle: String, bits: int = 0, show_bits: bool =
 	return self
 
 
+func configure_tabs(specs: Array[Dictionary], active_id: String) -> DigiModalHeader:
+	_tab_specs = specs.duplicate(true)
+	_active_tab = active_id
+	if _tabs_root != null:
+		_rebuild_tabs()
+		_layout()
+	return self
+
+
+func set_active_tab(tab_id: String) -> void:
+	_active_tab = tab_id
+	if _tabs_root != null:
+		_rebuild_tabs()
+
+
+func set_tab_enabled(tab_id: String, enabled: bool) -> void:
+	for spec: Dictionary in _tab_specs:
+		if String(spec.get("id", "")) == tab_id:
+			spec["enabled"] = enabled
+			break
+	if _tabs_root != null:
+		_rebuild_tabs()
+
+
 func set_bits(bits: int) -> void:
 	_bits = maxi(0, bits)
 	if _bits_value != null:
@@ -51,10 +82,14 @@ func get_close_button() -> Button:
 	return _close_button
 
 
+func get_tab_button(tab_id: String) -> Button:
+	return _tab_buttons.get(tab_id) as Button
+
+
 func _build() -> void:
 	_title = Label.new()
 	_title.text = _title_text
-	_title.add_theme_font_size_override("font_size", 27)
+	_title.add_theme_font_size_override("font_size", 25)
 	_title.add_theme_color_override("font_color", V2.TEXT)
 	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	V2.apply_heading(_title)
@@ -63,7 +98,7 @@ func _build() -> void:
 
 	_subtitle = Label.new()
 	_subtitle.text = _subtitle_text
-	_subtitle.add_theme_font_size_override("font_size", 11)
+	_subtitle.add_theme_font_size_override("font_size", 10)
 	_subtitle.add_theme_color_override("font_color", V2.MUTED)
 	_subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_subtitle.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -71,13 +106,20 @@ func _build() -> void:
 	_subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_subtitle)
 
+	_tabs_root = HBoxContainer.new()
+	_tabs_root.name = "HeaderTabs"
+	_tabs_root.add_theme_constant_override("separation", 6)
+	_tabs_root.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_tabs_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_tabs_root)
+
 	_bits_badge = PanelContainer.new()
 	_bits_badge.custom_minimum_size = Vector2(148.0, 38.0)
 	_bits_badge.add_theme_stylebox_override(
 		"panel",
 		V2.surface_style(
-			Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.09),
-			Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.40),
+			Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.085),
+			Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.38),
 			9,
 			Vector4(10.0, 5.0, 12.0, 5.0)
 		)
@@ -89,9 +131,13 @@ func _build() -> void:
 	bits_row.add_theme_constant_override("separation", 7)
 	bits_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bits_badge.add_child(bits_row)
-	var bit_icon := IconScript.new() as DigiProceduralIcon
+	var bit_icon := TextureRect.new()
 	bit_icon.custom_minimum_size = Vector2(22.0, 22.0)
-	bit_icon.configure("bits", V2.AMBER, 1.8)
+	bit_icon.texture = BITS_ICON
+	bit_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bit_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	bit_icon.self_modulate = V2.AMBER
+	bit_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bits_row.add_child(bit_icon)
 	_bits_value = Label.new()
 	_bits_value.text = "%d BITS" % _bits
@@ -125,18 +171,79 @@ func _build() -> void:
 	add_child(_close_button)
 
 
+func _rebuild_tabs() -> void:
+	if _tabs_root == null:
+		return
+	for child in _tabs_root.get_children():
+		child.queue_free()
+	_tab_buttons.clear()
+	for spec: Dictionary in _tab_specs:
+		var tab_id := String(spec.get("id", ""))
+		var label := String(spec.get("label", tab_id.capitalize()))
+		var enabled := bool(spec.get("enabled", true))
+		var active := tab_id == _active_tab
+		var button := Button.new()
+		button.name = "Tab_%s" % tab_id
+		button.text = label
+		button.custom_minimum_size = Vector2(108.0, 40.0)
+		button.focus_mode = Control.FOCUS_ALL
+		button.disabled = not enabled
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
+		button.tooltip_text = label if enabled else "%s — coming later" % label
+		button.add_theme_font_size_override("font_size", 12)
+		button.add_theme_color_override("font_color", V2.TEXT if active else V2.MUTED)
+		button.add_theme_color_override("font_hover_color", V2.WHITE)
+		button.add_theme_color_override("font_focus_color", V2.WHITE)
+		button.add_theme_color_override("font_disabled_color", Color(V2.SUBTLE.r, V2.SUBTLE.g, V2.SUBTLE.b, 0.50))
+		button.add_theme_stylebox_override("normal", _tab_style(active, false, false))
+		button.add_theme_stylebox_override("hover", _tab_style(active, true, false))
+		button.add_theme_stylebox_override("focus", _tab_style(active, true, false))
+		button.add_theme_stylebox_override("pressed", _tab_style(active, true, false))
+		button.add_theme_stylebox_override("disabled", _tab_style(false, false, true))
+		V2.apply_heading(button)
+		if enabled:
+			button.pressed.connect(func(): tab_selected.emit(tab_id))
+		_tabs_root.add_child(button)
+		_tab_buttons[tab_id] = button
+
+
+func _tab_style(active: bool, emphasized: bool, disabled: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(V2.SURFACE_ALT.r, V2.SURFACE_ALT.g, V2.SURFACE_ALT.b, 0.48 if active else (0.34 if emphasized else 0.0))
+	if disabled:
+		style.bg_color = Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.12)
+	style.border_color = Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.92 if active else (0.48 if emphasized else 0.0))
+	style.border_width_bottom = 3 if active else (1 if emphasized else 0)
+	style.corner_radius_top_left = 7
+	style.corner_radius_top_right = 7
+	style.corner_radius_bottom_left = 3
+	style.corner_radius_bottom_right = 3
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 5.0
+	style.content_margin_bottom = 5.0
+	return style
+
+
 func _layout() -> void:
 	if _title == null:
 		return
-	var compact := size.x < 620.0
+	var compact := size.x < 760.0
 	var show_bits_now := _show_bits and not compact
 	_bits_badge.visible = show_bits_now
 	var controls_right := 52.0 + (156.0 if show_bits_now else 0.0)
+	var title_w := 155.0 if compact else TITLE_BLOCK_WIDTH
 	_title.position = Vector2.ZERO
-	_title.size = Vector2(maxf(120.0, size.x - controls_right - 10.0), 31.0)
-	_subtitle.position = Vector2(0.0, 29.0)
-	_subtitle.size = Vector2(maxf(100.0, size.x - controls_right - 10.0), 20.0)
+	_title.size = Vector2(title_w, 29.0)
+	_subtitle.position = Vector2(0.0, 27.0)
+	_subtitle.size = Vector2(title_w, 18.0)
 	_subtitle.visible = not compact
+
+	_tabs_root.visible = not compact and not _tab_specs.is_empty()
+	if _tabs_root.visible:
+		_tabs_root.position = Vector2(title_w + 16.0, 2.0)
+		_tabs_root.size = Vector2(maxf(0.0, size.x - title_w - controls_right - 26.0), 42.0)
+
 	_close_button.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE), 0.0)
 	_close_button.size = Vector2(CLOSE_SIZE, CLOSE_SIZE)
 	if show_bits_now:
