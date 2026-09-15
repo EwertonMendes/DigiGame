@@ -79,10 +79,12 @@ func _build_content() -> void:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(label)
 
+	# Every stat uses the same fixed value column. That keeps ATK/DEF/INT/SPD/MOV
+	# aligned exactly with the HP/SP numbers instead of drifting to the far edge.
 	var value_label := Label.new()
 	value_label.text = _value_text if not _value_text.is_empty() else str(_value)
-	value_label.custom_minimum_size.x = 66.0 if _show_bar else 72.0
-	value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL if not _show_bar else Control.SIZE_SHRINK_END
+	value_label.custom_minimum_size.x = 70.0
+	value_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	value_label.add_theme_font_size_override("font_size", 12 if _show_bar else 11)
@@ -104,3 +106,8 @@ func _build_content() -> void:
 		bar.add_theme_stylebox_override("fill", V2.progress_fill_style(_accent, true))
 		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(bar)
+	else:
+		var spacer := Control.new()
+		spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(spacer)
