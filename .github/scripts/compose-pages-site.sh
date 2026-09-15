@@ -13,19 +13,76 @@ CURRENT_PREVIEW_SHA="${CURRENT_PREVIEW_SHA:-}"
 find_validated_run() {
   local head_sha="$1"
   local run_id
-  local success_count
+  local jobs_json
+  local integrated_total
+  local integrated_success
+  local legacy_total
+  local legacy_success
+  local browser_regression_total
+  local fast_gate_success
 
   while IFS= read -r run_id; do
     if [ -z "$run_id" ]; then
       continue
     fi
 
-    success_count="$(gh api \
+    jobs_json="$(gh api \
       "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=latest&per_page=100" \
-      --jq '[.jobs[] | select(.conclusion == "success") | .name | select(. == "Validate and build Web" or . == "Browser smoke · desktop" or . == "Browser smoke · combat" or . == "Browser smoke · mobile" or . == "Browser smoke · vfx")] | unique | length' \
-      2>/dev/null || echo 0)"
+      2>/dev/null || printf '%s' '{"jobs":[]}')"
 
-    if [ "$success_count" = "5" ]; then
+    # Current pipeline: one fast build gate followed by the three browser suites
+    # in parallel inside DigiGame Web.
+    integrated_total="$(jq '[.jobs[] | select(
+      .name == "Fast Web gate" or
+      .name == "Browser regression · desktop" or
+      .name == "Browser regression · combat-vfx" or
+      .name == "Browser regression · mobile"
+    )] | unique_by(.name) | length' <<<"$jobs_json")"
+    integrated_success="$(jq '[.jobs[] | select(
+      (.name == "Fast Web gate" or
+       .name == "Browser regression · desktop" or
+       .name == "Browser regression · combat-vfx" or
+       .name == "Browser regression · mobile") and
+      .conclusion == "success"
+    )] | unique_by(.name) | length' <<<"$jobs_json")"
+
+    if [ "$integrated_total" = "4" ] && [ "$integrated_success" = "4" ]; then
+      printf '%s\n' "$run_id"
+      return 0
+    fi
+
+    # Compatibility with the older all-in-one browser workflow used before the
+    # fast-gate/post-Web split. Keeping this allows existing open PR previews to
+    # survive the CI migration without forcing commits onto their branches.
+    legacy_total="$(jq '[.jobs[] | select(
+      .name == "Validate and build Web" or
+      .name == "Browser smoke · desktop" or
+      .name == "Browser smoke · combat" or
+      .name == "Browser smoke · mobile" or
+      .name == "Browser smoke · vfx"
+    )] | unique_by(.name) | length' <<<"$jobs_json")"
+    legacy_success="$(jq '[.jobs[] | select(
+      (.name == "Validate and build Web" or
+       .name == "Browser smoke · desktop" or
+       .name == "Browser smoke · combat" or
+       .name == "Browser smoke · mobile" or
+       .name == "Browser smoke · vfx") and
+      .conclusion == "success"
+    )] | unique_by(.name) | length' <<<"$jobs_json")"
+
+    if [ "$legacy_total" = "5" ] && [ "$legacy_success" = "5" ]; then
+      printf '%s\n' "$run_id"
+      return 0
+    fi
+
+    # Rollout compatibility for the short-lived split architecture where Web
+    # contained only Fast Web gate and browser QA lived in post-web.yml. Preview
+    # deployment in that architecture depended on the successful Web gate, so
+    # preserving those artifacts matches the behavior users already had.
+    browser_regression_total="$(jq '[.jobs[] | select(.name | startswith("Browser regression · "))] | length' <<<"$jobs_json")"
+    fast_gate_success="$(jq '[.jobs[] | select(.name == "Fast Web gate" and .conclusion == "success")] | length' <<<"$jobs_json")"
+
+    if [ "$browser_regression_total" = "0" ] && [ "$fast_gate_success" -ge 1 ]; then
       printf '%s\n' "$run_id"
       return 0
     fi
@@ -61,7 +118,7 @@ while IFS=$'\t' read -r pr_number head_sha head_repo; do
 
   run_id="$(find_validated_run "$head_sha" || true)"
   if [ -z "$run_id" ]; then
-    echo "::warning::No Web workflow with a successful build and all four browser smoke suites was found for open PR #${pr_number} at ${head_sha}; skipping its preview for this deployment."
+    echo "::warning::No validated Web workflow was found for open PR #${pr_number} at ${head_sha}; skipping its preview for this deployment."
     continue
   fi
 
