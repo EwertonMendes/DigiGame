@@ -1,5 +1,7 @@
 extends "res://src/MainCamera.gd"
 
+signal camera_move_finished(generation: int)
+
 const OPENING_BOOT_ZOOM := 1.10
 const DESKTOP_BATTLE_ZOOM := 1.34
 const LAPTOP_BATTLE_ZOOM := 1.28
@@ -15,11 +17,45 @@ const PAN_EDGE_MARGIN_SCREEN := Vector2(168.0, 112.0)
 
 var _battle_default_zoom := DESKTOP_BATTLE_ZOOM
 var _camera_move_generation := 0
+var _camera_move_active := false
+var _camera_move_elapsed := 0.0
+var _camera_move_duration := 0.0
+var _camera_move_start_position := Vector2.ZERO
+var _camera_move_target_position := Vector2.ZERO
+var _camera_move_start_zoom := 1.0
+var _camera_move_target_zoom := 1.0
 
 func _ready() -> void:
 	super._ready()
 	_battle_default_zoom = _preferred_battle_zoom()
 	zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
+
+func _process(delta: float) -> void:
+	if not _camera_move_active:
+		return
+	_camera_move_elapsed = minf(
+		_camera_move_duration,
+		_camera_move_elapsed + maxf(delta, 0.0)
+	)
+	var progress := _camera_move_elapsed / _camera_move_duration
+	var eased_progress := _cubic_ease_in_out(progress)
+	zoom = Vector2.ONE * lerpf(
+		_camera_move_start_zoom,
+		_camera_move_target_zoom,
+		eased_progress
+	)
+	global_position = _camera_move_start_position.lerp(
+		_camera_move_target_position,
+		eased_progress
+	)
+	if _camera_move_elapsed < _camera_move_duration:
+		return
+
+	_camera_move_active = false
+	zoom = Vector2.ONE * _camera_move_target_zoom
+	global_position = _camera_move_target_position
+	_clamp_to_pan_bounds()
+	camera_move_finished.emit(_camera_move_generation)
 
 func _physics_process(delta: float) -> void:
 	if _post_battle_locked():
@@ -114,24 +150,16 @@ func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: 
 	# platform, without changing the visible timing or introducing delay timers.
 	_camera_move_generation += 1
 	var generation := _camera_move_generation
-	var start_position := global_position
-	var start_zoom := zoom.x
-	var move_duration := maxf(0.05, duration)
-	var elapsed := 0.0
-
-	while elapsed < move_duration:
-		await get_tree().process_frame
-		if generation != _camera_move_generation or not is_inside_tree():
-			return
-		elapsed = minf(move_duration, elapsed + maxf(get_process_delta_time(), 0.0))
-		var progress := elapsed / move_duration
-		var eased_progress := _cubic_ease_in_out(progress)
-		zoom = Vector2.ONE * lerpf(start_zoom, target_zoom, eased_progress)
-		global_position = start_position.lerp(target_position, eased_progress)
-
-	zoom = Vector2.ONE * target_zoom
-	global_position = target_position
-	_clamp_to_pan_bounds()
+	_camera_move_elapsed = 0.0
+	_camera_move_duration = maxf(0.05, duration)
+	_camera_move_start_position = global_position
+	_camera_move_target_position = target_position
+	_camera_move_start_zoom = zoom.x
+	_camera_move_target_zoom = target_zoom
+	_camera_move_active = true
+	await camera_move_finished
+	if generation != _camera_move_generation:
+		return
 
 func _cubic_ease_in_out(value: float) -> float:
 	var progress := clampf(value, 0.0, 1.0)

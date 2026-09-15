@@ -83,14 +83,9 @@ async function confirmBattleDialog(page) {
 }
 
 async function waitForBattlePresentation(page) {
-  // The intro animation is presentation, not the browser test contract. Prefer
-  // its completion marker, but do not fail solely because a throttled headless
-  // renderer delivers frame updates late. Combat QA below still proves that
-  // the battle loop is interactive, and page/WASM errors remain hard failures.
-  await Promise.race([
-    waitForConsole(page, '[BattleIntro] BATTLE_START', 9000).catch(() => null),
-    page.waitForTimeout(7000),
-  ]);
+  // A loaded scene is not enough: every browser suite must prove that the
+  // frame-driven camera intro completed and handed control to the battle loop.
+  await waitForConsole(page, '[BattleIntro] BATTLE_START', 15000);
   await settleFrames(page, 3);
 }
 
