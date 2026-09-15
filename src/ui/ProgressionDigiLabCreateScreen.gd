@@ -4,6 +4,12 @@ class_name ProgressionDigiLabCreateScreen
 const SemanticPalette = preload("res://src/ui/components/DigiSemanticPalette.gd")
 
 
+func open_lab() -> void:
+	if _hint_bar != null:
+		_hint_bar.set_primary_tabs_enabled(true)
+	super.open_lab()
+
+
 func _refresh_list() -> void:
 	if _lab_mode == "records":
 		super._refresh_list()
@@ -113,10 +119,9 @@ func _data_button(species_name: String, amount: int) -> Button:
 	copy.add_theme_constant_override("separation", 3)
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
-	var name_label := _label(species_name, 15, V2.TEXT, true)
-	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var name_label := _single_line_label(species_name, 15, V2.TEXT, true)
 	copy.add_child(name_label)
-	copy.add_child(_label("%s  ·  %d / %d DATA" % [rank, amount, required], 10, accent, true))
+	copy.add_child(_single_line_label("%s  ·  %d / %d DATA" % [rank, amount, required], 10, accent, true))
 	var progress_row := HBoxContainer.new()
 	progress_row.add_theme_constant_override("separation", 8)
 	copy.add_child(progress_row)
@@ -124,7 +129,7 @@ func _data_button(species_name: String, amount: int) -> Button:
 	progress.custom_minimum_size = Vector2(96, 6)
 	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress_row.add_child(progress)
-	var state_label := _label("%d%% · %s" % [int(round(percent)), state], 9, state_color, true)
+	var state_label := _single_line_label("%d%% · %s" % [int(round(percent)), state], 9, state_color, true)
 	state_label.custom_minimum_size.x = 94
 	state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	progress_row.add_child(state_label)
@@ -166,24 +171,33 @@ func _refresh_detail() -> void:
 	var percent := minf(100.0, float(available) * 100.0 / float(maxi(1, required)))
 	var state := "READY" if available >= required else "COLLECTING" if available > 0 else "LOCKED"
 	var state_color := V2.GREEN if state == "READY" else V2.CYAN if state == "COLLECTING" else V2.MUTED
+	var detail_width := _detail_panel.size.x if _detail_panel != null else 900.0
+	var narrow_hero := detail_width < 660.0
 
 	var hero := PanelContainer.new()
+	hero.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hero.add_theme_stylebox_override("panel", V2.surface_style(V2.PANEL_DEEP, Color(accent.r, accent.g, accent.b, 0.42), 8))
 	_detail_body.add_child(hero)
 	var hero_margin := _margin(16, 14, 16, 14)
 	hero.add_child(hero_margin)
-	var hero_row := HBoxContainer.new()
+	var hero_row: BoxContainer
+	if narrow_hero:
+		hero_row = VBoxContainer.new()
+		hero_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	else:
+		hero_row = HBoxContainer.new()
 	hero_row.add_theme_constant_override("separation", 20)
 	hero_margin.add_child(hero_row)
 
 	var portrait_frame := PanelContainer.new()
-	portrait_frame.custom_minimum_size = Vector2(190, 182)
+	portrait_frame.custom_minimum_size = Vector2(166, 158) if narrow_hero else Vector2(190, 182)
+	portrait_frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER if narrow_hero else Control.SIZE_SHRINK_BEGIN
 	portrait_frame.add_theme_stylebox_override("panel", V2.surface_style(Color(0.015, 0.030, 0.044, 1.0), Color(accent.r, accent.g, accent.b, 0.54), 8))
 	hero_row.add_child(portrait_frame)
 	var portrait_margin := _margin(8, 8, 8, 8)
 	portrait_frame.add_child(portrait_margin)
 	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
-	portrait.custom_minimum_size = Vector2(174, 166)
+	portrait.custom_minimum_size = Vector2(150, 142) if narrow_hero else Vector2(174, 166)
 	portrait.set_species(canonical_name)
 	portrait_margin.add_child(portrait)
 
@@ -192,10 +206,14 @@ func _refresh_detail() -> void:
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
 	info.add_theme_constant_override("separation", 8)
 	hero_row.add_child(info)
-	info.add_child(_label(canonical_name.to_upper(), 28, V2.TEXT, true))
+	var name_label := _single_line_label(canonical_name.to_upper(), 28, V2.TEXT, true)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_child(name_label)
 
-	var chips := HBoxContainer.new()
-	chips.add_theme_constant_override("separation", 7)
+	var chips := HFlowContainer.new()
+	chips.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chips.add_theme_constant_override("h_separation", 7)
+	chips.add_theme_constant_override("v_separation", 6)
 	info.add_child(chips)
 	chips.add_child(_pill(rank.to_upper(), accent))
 	var attribute := String(species.get("attribute", "Free"))
@@ -210,10 +228,12 @@ func _refresh_detail() -> void:
 		description_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		info.add_child(description_label)
 
-	var data_row := HBoxContainer.new()
-	data_row.add_theme_constant_override("separation", 12)
+	var data_row := HFlowContainer.new()
+	data_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	data_row.add_theme_constant_override("h_separation", 12)
+	data_row.add_theme_constant_override("v_separation", 6)
 	info.add_child(data_row)
-	var data_value := _label("%d / %d DIGI DATA" % [available, required], 20, V2.AMBER, true)
+	var data_value := _single_line_label("%d / %d DIGI DATA" % [available, required], 20, V2.AMBER, true)
 	data_value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	data_row.add_child(data_value)
 	data_row.add_child(_pill("%d%% · %s" % [int(round(percent)), state], state_color))
@@ -230,7 +250,12 @@ func _refresh_detail() -> void:
 		if candidate <= 200 and not spend_options.has(candidate):
 			spend_options.append(candidate)
 	var option_grid := GridContainer.new()
-	option_grid.columns = mini(3, spend_options.size())
+	if detail_width < 520.0:
+		option_grid.columns = 1
+	elif detail_width < 760.0:
+		option_grid.columns = mini(2, spend_options.size())
+	else:
+		option_grid.columns = mini(3, spend_options.size())
 	option_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	option_grid.add_theme_constant_override("h_separation", 10)
 	option_grid.add_theme_constant_override("v_separation", 10)
@@ -269,21 +294,22 @@ func _reconstruction_option(species_name: String, amount: int, available: int, r
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 4)
 	margin.add_child(stack)
-	var amount_label := _label("%d DATA" % amount, 15, V2.TEXT, true)
+	var amount_label := _single_line_label("%d DATA" % amount, 15, V2.TEXT, true)
 	amount_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(amount_label)
 	var bonus_copy := "STANDARD RECONSTRUCTION" if potential <= 0 else "+%d STARTING POTENTIAL" % potential
-	var bonus := _label(bonus_copy, 9, accent, true)
+	var bonus := _single_line_label(bonus_copy, 9, accent, true)
 	bonus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(bonus)
-	var status := _label("READY" if available >= amount else "%d MORE NEEDED" % (amount - available), 9, V2.GREEN if available >= amount else V2.SUBTLE, true)
+	var status := _single_line_label("READY" if available >= amount else "%d MORE NEEDED" % (amount - available), 9, V2.GREEN if available >= amount else V2.SUBTLE, true)
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(status)
 	return button
 
 
 func _pill(text: String, accent: Color) -> Label:
-	var label := _label(text, 9, accent, true)
+	var label := _single_line_label(text, 9, accent, true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	label.add_theme_stylebox_override("normal", V2.pill_style(accent, true))
 	return label
