@@ -6,6 +6,7 @@ render_mode unshaded;
 // world behind the panel is optically blurred instead of merely darkened by
 // transparency. This stays renderer-native and requires no external assets.
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear_mipmap;
+uniform vec2 screen_pixel_size = vec2(0.0005208333, 0.0009259259);
 uniform vec4 glass_tint : source_color = vec4(0.03, 0.06, 0.09, 1.0);
 uniform float blur_lod : hint_range(0.0, 5.0, 0.05) = 2.6;
 uniform float blur_spread : hint_range(0.0, 3.0, 0.05) = 1.25;
@@ -21,7 +22,9 @@ float _max_channel(vec3 value) {
 vec3 _sample_frosted(vec2 uv) {
 	// The mip level supplies the broad blur. Four inexpensive offset taps soften
 	// recognizable sprites/tiles further without a large mobile/Web shader cost.
-	vec2 spread = SCREEN_PIXEL_SIZE * exp2(blur_lod) * blur_spread;
+	// screen_pixel_size is supplied by the component because GLES3/Web does not
+	// expose SCREEN_PIXEL_SIZE for this canvas shader path.
+	vec2 spread = screen_pixel_size * exp2(blur_lod) * blur_spread;
 	vec3 blurred = textureLod(screen_texture, uv, blur_lod).rgb * 0.36;
 	blurred += textureLod(screen_texture, uv + vec2(spread.x, spread.y), blur_lod).rgb * 0.16;
 	blurred += textureLod(screen_texture, uv + vec2(-spread.x, spread.y), blur_lod).rgb * 0.16;
