@@ -50,7 +50,7 @@ jobs:
             command: godot --headless --path . -s tools/test_footprint_deployment.gd
             success: "[FootprintDeploymentTest] PASS"
           - name: expansion-footprint-integration
-            command: godot --headless --path . -s tools/test_expansion_footprint_integration.gd
+            command: godot --headless --path . tools/test_expansion_footprint_integration.tscn --quit-after 12
             success: "[ExpansionFootprintIntegrationTest] PASS"
           - name: developer-toolkit
             command: godot --headless --path . tools/test_developer_toolkit.tscn --quit-after 20
