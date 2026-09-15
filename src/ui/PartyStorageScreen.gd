@@ -3,6 +3,7 @@ class_name PartyStorageScreen
 
 signal close_requested
 signal tab_requested(tab_id: String)
+signal ascension_requested
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const SemanticPalette = preload("res://src/ui/components/DigiSemanticPalette.gd")
@@ -276,6 +277,7 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, active: 
 	var name := instance.get_display_name(String(species.get("name", "Unknown")))
 	var location := "PARTY SLOT %d" % (active_ids.find(instance.id) + 1) if active else "STORAGE"
 	var location_color := V2.AMBER if active else V2.CYAN
+	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
 	copy.add_child(_single_line_label(name, 15, V2.TEXT, true))
 	copy.add_child(_single_line_label("Lv %d  ·  %s" % [instance.level, rank], 10, rank_color, true))
 	var meta_row := HBoxContainer.new()
@@ -284,7 +286,7 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, active: 
 	var location_label := _single_line_label(location, 9, location_color, true)
 	location_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	meta_row.add_child(location_label)
-	meta_row.add_child(_single_line_label("POT %d · LINK %d" % [instance.potential, instance.link], 9, V2.MUTED, true))
+	meta_row.add_child(_single_line_label("TIER %s · %s · POT %d · LINK %d" % [instance.tier, footprint_badge, instance.potential, instance.link], 9, V2.MUTED, true))
 	return button
 
 
@@ -415,7 +417,10 @@ func _identity_card(instance: DigimonInstance, species: Dictionary, display_name
 	status_row.add_theme_constant_override("h_separation", 14)
 	status_row.add_theme_constant_override("v_separation", 5)
 	info.add_child(status_row)
+	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
 	status_row.add_child(_semantic_label("Lv %d" % instance.level, 19, V2.AMBER, true))
+	status_row.add_child(_semantic_label("TIER %s" % instance.tier, 10, V2.GREEN, true))
+	status_row.add_child(_semantic_label(footprint_badge, 10, V2.ORANGE, true))
 	status_row.add_child(_semantic_label("POTENTIAL %d" % instance.potential, 10, V2.PURPLE, true))
 	status_row.add_child(_semantic_label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, V2.CYAN, true))
 	var location := "ACTIVE PARTY · SLOT %d" % (party_index + 1) if active else "STORAGE"
@@ -440,6 +445,12 @@ func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], 
 	var actions := VBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	inset.add_child(actions)
+
+	var ascension := _button("ASCENSION / EXPANSION", V2.PURPLE)
+	ascension.custom_minimum_size.y = 44
+	ascension.tooltip_text = "Raise Tier, assimilate duplicate techniques and configure tactical size."
+	ascension.pressed.connect(func(): ascension_requested.emit())
+	actions.add_child(ascension)
 
 	if active:
 		var remove := _button("MOVE TO STORAGE", V2.ORANGE)

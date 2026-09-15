@@ -145,7 +145,7 @@ func _sync_party() -> void:
 			continue
 
 		var follower := FOLLOWER_SCRIPT.new() as Node2D
-		follower.call("configure", digimon, visual_key, party_slot)
+		follower.call("configure", digimon, visual_key, party_slot, instance.is_expanded())
 		_followers_root.add_child(follower)
 		var spawn_position := _find_safe_spawn_position(party_slot, occupied)
 		follower.call("teleport_to", spawn_position, _initial_digimon_facing())

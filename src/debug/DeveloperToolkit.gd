@@ -12,6 +12,7 @@ const BATTLE_SCENE := "res://scenes/main.tscn"
 const CLOSED_LAYER := 60
 const OPEN_LAYER := 180
 const MAX_FRAME_SIZE := Vector2(1180, 720)
+const BATTLE_FOOTPRINTS := ["single", "large_2x2"]
 
 var _available := false
 var _open := false
@@ -44,6 +45,9 @@ var _potential: SpinBox
 var _link: SpinBox
 var _current_hp: SpinBox
 var _current_sp: SpinBox
+var _tier: OptionButton
+var _expansion_unlocked: CheckButton
+var _expanded: CheckButton
 var _training_fields: Dictionary = {}
 
 var _route_mode: OptionButton
@@ -58,12 +62,15 @@ var _spawn_level: SpinBox
 var _spawn_exp: SpinBox
 var _spawn_potential: SpinBox
 var _spawn_link: SpinBox
+var _spawn_tier: OptionButton
+var _spawn_expanded: CheckButton
 var _spawn_resource_state: OptionButton
 var _spawn_hp: SpinBox
 var _spawn_sp: SpinBox
 
 var _bits: SpinBox
 var _data: SpinBox
+var _inventory_summary: Label
 var _flag_id: LineEdit
 var _flag_value: CheckButton
 var _snapshot_name: LineEdit
@@ -288,12 +295,28 @@ func _build_digimon_tab(tabs: TabContainer) -> void:
 	_link = _spin(0, 100, 1)
 	_current_hp = _spin(0, 9999999, 1)
 	_current_sp = _spin(0, 9999999, 1)
+	_tier = OptionButton.new()
+	for tier_name: String in _progression.tier_options():
+		_tier.add_item(tier_name)
+	_style_field(_tier)
+	_expansion_unlocked = CheckButton.new()
+	_expansion_unlocked.text = "Unlocked"
+	UI.apply_body_font(_expansion_unlocked)
+	_expanded = CheckButton.new()
+	_expanded.text = "Active 2×2"
+	UI.apply_body_font(_expanded)
+	var expansion_flags := HBoxContainer.new()
+	expansion_flags.add_theme_constant_override("separation", 8)
+	expansion_flags.add_child(_expansion_unlocked)
+	expansion_flags.add_child(_expanded)
 	state_grid.add_child(_field_card("LEVEL", _level, UI.CYAN))
 	state_grid.add_child(_field_card("XP", _exp, UI.CYAN))
 	state_grid.add_child(_field_card("POTENTIAL", _potential, UI.PURPLE))
 	state_grid.add_child(_field_card("LINK", _link, UI.GOLD))
 	state_grid.add_child(_field_card("CURRENT HP", _current_hp, UI.GREEN))
 	state_grid.add_child(_field_card("CURRENT SP", _current_sp, UI.BLUE))
+	state_grid.add_child(_field_card("TIER", _tier, UI.GOLD))
+	state_grid.add_child(_field_card("EXPANSION", expansion_flags, UI.PURPLE))
 	page.add_child(_button_row([_action("APPLY EXACT STATE", _apply_exact_state, UI.GOLD), _action("+100 XP", _add_xp.bind(100), UI.CYAN), _action("+1000 XP", _add_xp.bind(1000), UI.CYAN), _action("HEAL", _heal, UI.GREEN), _action("CRITICAL", _critical, UI.ORANGE), _action("KNOCK OUT", _knock_out, UI.RED)]))
 
 	page.add_child(_section_label("TRAINING", UI.PURPLE))
@@ -377,10 +400,19 @@ func _build_spawn_tab(tabs: TabContainer) -> void:
 	_spawn_exp = _spin(0, 9999999, 1)
 	_spawn_potential = _spin(0, 100, 1)
 	_spawn_link = _spin(0, 100, 1)
+	_spawn_tier = OptionButton.new()
+	for tier_name: String in _progression.tier_options():
+		_spawn_tier.add_item(tier_name)
+	_style_field(_spawn_tier)
+	_spawn_expanded = CheckButton.new()
+	_spawn_expanded.text = "Start expanded 2×2"
+	UI.apply_body_font(_spawn_expanded)
 	config_grid.add_child(_field_card("LEVEL", _spawn_level, UI.CYAN))
 	config_grid.add_child(_field_card("XP", _spawn_exp, UI.CYAN))
 	config_grid.add_child(_field_card("POTENTIAL", _spawn_potential, UI.PURPLE))
 	config_grid.add_child(_field_card("LINK", _spawn_link, UI.GOLD))
+	config_grid.add_child(_field_card("TIER", _spawn_tier, UI.GOLD))
+	config_grid.add_child(_field_card("EXPANSION", _spawn_expanded, UI.PURPLE))
 	_spawn_resource_state = OptionButton.new()
 	for label in ["FULL", "CRITICAL (1 HP / 0 SP)", "KNOCKED OUT", "CUSTOM"]:
 		_spawn_resource_state.add_item(label)
@@ -398,6 +430,10 @@ func _build_state_tab(tabs: TabContainer) -> void:
 	page.add_child(_field_row("BITS", _bits, [_action("SET", _set_bits, UI.CYAN)]))
 	_data = _spin(0, 9999, 10)
 	page.add_child(_field_row("SELECTED SPECIES DATA", _data, [_action("SET", _set_data, UI.CYAN)]))
+	page.add_child(_section_label("EXPANSION INVENTORY", UI.PURPLE))
+	_inventory_summary = _label("Core 0 · Fragments 0", 10, UI.TEXT, true)
+	page.add_child(_inventory_summary)
+	page.add_child(_button_row([_action("+ CORE", _grant_expansion_core, UI.PURPLE), _action("+ 5 FRAGMENTS", _grant_expansion_fragments, UI.CYAN), _action("CRAFT CORE", _craft_expansion_core, UI.GOLD)]))
 	_flag_id = LineEdit.new()
 	_flag_id.placeholder_text = "progression flag id"
 	_style_field(_flag_id)
@@ -426,7 +462,7 @@ func _build_scenarios_tab(tabs: TabContainer) -> void:
 func _build_battle_tab(tabs: TabContainer) -> void:
 	var page := _page(tabs, "BATTLE")
 	page.add_child(_section_label("BATTLE SANDBOX ROSTER", UI.RED))
-	var intro := _label("Build the enemy team slot by slot. Every row can use a different Digimon, level and profile. The real persistent player party and battle runtime are used.", 10, UI.SUBTLE)
+	var intro := _label("Build the enemy team slot by slot. Every row can use a different Digimon, level, profile, Tier and tactical footprint. The real persistent player party and battle runtime are used.", 10, UI.SUBTLE)
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(intro)
 	var toolbar := HBoxContainer.new()
@@ -482,7 +518,7 @@ func _initialize_defaults() -> void:
 		var species := _roster.database.get_by_name(String(entry[0]))
 		if species.is_empty():
 			continue
-		var descriptor := _roster.make_enemy_descriptor(String(species.get("seed", "")), int(entry[1]), String(entry[2]))
+		var descriptor := _roster.make_enemy_descriptor(String(species.get("seed", "")), int(entry[1]), String(entry[2]), "E", "single")
 		if not descriptor.is_empty():
 			_battle_roster.append(descriptor)
 	_refresh_spawn_identity()
@@ -491,6 +527,7 @@ func _initialize_defaults() -> void:
 func _refresh_all() -> void:
 	_refresh_collection()
 	_refresh_selected()
+	_refresh_account_inventory()
 	_refresh_snapshots()
 	_refresh_battle_roster()
 	_refresh_diagnostics()
@@ -548,8 +585,8 @@ func _refresh_collection() -> void:
 		copy.add_theme_constant_override("separation", 1)
 		row.add_child(copy)
 		copy.add_child(_single_line_label(_progression.display_name(value).to_upper(), 11, UI.TEXT, true))
-		copy.add_child(_single_line_label("LV %d · %s" % [value.level, "PARTY" if active else "STORAGE"], 9, UI.GOLD if active else UI.CYAN, true))
-		copy.add_child(_single_line_label("POT %d · LINK %d" % [value.potential, value.link], 8, UI.SUBTLE))
+		copy.add_child(_single_line_label("TIER %s · %s · %s" % [value.tier, "2×2" if value.is_expanded() else "1×1", "PARTY" if active else "STORAGE"], 9, UI.GOLD if active else UI.CYAN, true))
+		copy.add_child(_single_line_label("LV %d · POT %d · LINK %d" % [value.level, value.potential, value.link], 8, UI.SUBTLE))
 		_collection_list.add_child(button)
 		_collection_buttons.append(button)
 		_collection_ids.append(value.id)
@@ -577,8 +614,8 @@ func _refresh_selected() -> void:
 	var rank := String(species.get("rank", "Unknown"))
 	var stats := _progression.final_stats(value.id)
 	_replace_preview(_digimon_preview_host, species_name, true)
-	_digimon_summary.text = "%s\n%s · UUID %s\nLV %d · XP %d · POT %d · LINK %d\nHP %d/%d · SP %d/%d · ATK %d · DEF %d · INT %d · SPD %d · MOV %d" % [
-		_progression.display_name(value).to_upper(), rank.to_upper(), value.id.substr(0, mini(12, value.id.length())), value.level, value.exp, value.potential, value.link,
+	_digimon_summary.text = "%s\n%s · TIER %s · %s%s · UUID %s\nLV %d · XP %d · POT %d · LINK %d\nHP %d/%d · SP %d/%d · ATK %d · DEF %d · INT %d · SPD %d · MOV %d" % [
+		_progression.display_name(value).to_upper(), rank.to_upper(), value.tier, "2×2" if value.is_expanded() else "1×1", " · EXPANSION UNLOCKED" if value.expansion_unlocked else "", value.id.substr(0, mini(12, value.id.length())), value.level, value.exp, value.potential, value.link,
 		value.current_hp, int(stats.get("hp", 0)), value.current_mp, int(stats.get("mp", stats.get("sp", 0))), int(stats.get("atk", 0)), int(stats.get("def", 0)), int(stats.get("int", 0)), int(stats.get("speed", 0)), int(stats.get("mov", 0))
 	]
 	_level.value = value.level
@@ -589,11 +626,20 @@ func _refresh_selected() -> void:
 	_current_sp.max_value = maxi(0, int(stats.get("mp", stats.get("sp", 0))))
 	_current_hp.value = value.current_hp
 	_current_sp.value = value.current_mp
+	var tier_index := _progression.tier_options().find(value.tier)
+	_tier.select(maxi(0, tier_index))
+	_expansion_unlocked.button_pressed = value.expansion_unlocked
+	_expanded.button_pressed = value.is_expanded()
 	for key in _training_fields.keys():
 		(_training_fields[key] as SpinBox).value = int(value.training.get(String(key), 0))
 	_bits.value = OverworldState.get_bits()
 	_data.value = OverworldState.get_digi_data_for(value.species_seed)
 	_refresh_routes()
+
+func _refresh_account_inventory() -> void:
+	if _inventory_summary == null:
+		return
+	_inventory_summary.text = "Expansion Core ×%d · Expansion Fragment ×%d · Recipe: 5 Fragments + 50,000 Bits" % [_progression.get_item_count("expansion_core"), _progression.get_item_count("expansion_fragment")]
 
 func _refresh_routes() -> void:
 	if _route_select == null:
@@ -672,30 +718,29 @@ func _refresh_battle_roster() -> void:
 		var margin := _margin(8, 6, 8, 6)
 		card.add_child(margin)
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
+		row.add_theme_constant_override("separation", 6)
 		margin.add_child(row)
 		var preview := WalkPreviewScript.new() as DigimonWalkPreview
-		preview.custom_minimum_size = Vector2(58, 58)
+		preview.custom_minimum_size = Vector2(52, 52)
 		preview.set_species(name)
 		preview.set_active(false)
 		row.add_child(preview)
 		var identity := VBoxContainer.new()
-		identity.custom_minimum_size.x = 150
+		identity.custom_minimum_size.x = 125
 		identity.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		identity.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_child(identity)
-		identity.add_child(_single_line_label("%02d · %s" % [index + 1, name.to_upper()], 11, UI.TEXT, true))
-		identity.add_child(_single_line_label(rank.to_upper(), 9, accent, true))
-		var change := _action("CHANGE", _change_battle_species.bind(index), accent, 36)
-		row.add_child(change)
+		identity.add_child(_single_line_label("%02d · %s" % [index + 1, name.to_upper()], 10, UI.TEXT, true))
+		identity.add_child(_single_line_label("%s · TIER %s · %s" % [rank.to_upper(), String(descriptor.get("tier", "E")), "2×2" if String(descriptor.get("footprint", "single")) == "large_2x2" else "1×1"], 8, accent, true))
+		row.add_child(_action("CHANGE", _change_battle_species.bind(index), accent, 34))
 		var level := _spin(1, 99, 1)
-		level.custom_minimum_size.x = 90
+		level.custom_minimum_size.x = 72
 		level.value = int(descriptor.get("level", 1))
 		level.tooltip_text = "Enemy level"
 		level.value_changed.connect(_on_battle_level_changed.bind(index))
 		row.add_child(level)
 		var profile := OptionButton.new()
-		profile.custom_minimum_size = Vector2(115, 36)
+		profile.custom_minimum_size = Vector2(96, 34)
 		for profile_name: String in DebugRosterTools.BATTLE_PROFILES:
 			profile.add_item(profile_name.to_upper())
 			if profile_name == String(descriptor.get("profile", "wild")):
@@ -703,8 +748,25 @@ func _refresh_battle_roster() -> void:
 		_style_field(profile)
 		profile.item_selected.connect(_on_battle_profile_changed.bind(index))
 		row.add_child(profile)
-		row.add_child(_action("DUP", _duplicate_battle_enemy.bind(index), UI.CYAN, 36))
-		row.add_child(_action("REMOVE", _remove_battle_enemy.bind(index), UI.RED, 36))
+		var tier := OptionButton.new()
+		tier.custom_minimum_size = Vector2(68, 34)
+		for tier_name: String in _progression.tier_options():
+			tier.add_item(tier_name)
+			if tier_name == String(descriptor.get("tier", "E")):
+				tier.select(tier.item_count - 1)
+		_style_field(tier)
+		tier.item_selected.connect(_on_battle_tier_changed.bind(index))
+		row.add_child(tier)
+		var footprint := OptionButton.new()
+		footprint.custom_minimum_size = Vector2(74, 34)
+		footprint.add_item("1×1")
+		footprint.add_item("2×2")
+		footprint.select(1 if String(descriptor.get("footprint", "single")) == "large_2x2" else 0)
+		_style_field(footprint)
+		footprint.item_selected.connect(_on_battle_footprint_changed.bind(index))
+		row.add_child(footprint)
+		row.add_child(_action("DUP", _duplicate_battle_enemy.bind(index), UI.CYAN, 34))
+		row.add_child(_action("REMOVE", _remove_battle_enemy.bind(index), UI.RED, 34))
 
 func _refresh_diagnostics() -> void:
 	if _diagnostics == null:
@@ -735,12 +797,14 @@ func _apply_exact_state() -> void:
 	var value := _selected_instance()
 	if value == null:
 		return
+	var tier_name := _tier.get_item_text(_tier.selected) if _tier.selected >= 0 else "E"
 	_progression.set_level(value.id, int(_level.value))
 	_progression.set_exp(value.id, int(_exp.value))
 	_progression.set_potential(value.id, int(_potential.value))
 	_progression.set_link(value.id, int(_link.value))
+	_progression.set_tier_and_expansion(value.id, tier_name, _expansion_unlocked.button_pressed, _expanded.button_pressed)
 	_progression.set_resources(value.id, int(_current_hp.value), int(_current_sp.value))
-	_state.log_action("Set exact state", "%s · Lv.%d · XP %d · POT %d · LINK %d" % [_selected_name(), int(_level.value), int(_exp.value), int(_potential.value), int(_link.value)])
+	_state.log_action("Set exact state", "%s · Lv.%d · Tier %s · %s · XP %d · POT %d · LINK %d" % [_selected_name(), int(_level.value), tier_name, "2×2" if _expanded.button_pressed else "1×1", int(_exp.value), int(_potential.value), int(_link.value)])
 	_status.text = "Exact Digimon state applied."
 	_refresh_all()
 
@@ -814,12 +878,16 @@ func _create_storage_digimon() -> void:
 		_status.text = "Choose a Digimon species first."
 		return
 	var resource_state: String = String(["full", "critical", "empty", "custom"][_spawn_resource_state.selected])
+	var tier_name := _spawn_tier.get_item_text(_spawn_tier.selected) if _spawn_tier.selected >= 0 else "E"
 	var instance := _roster.create_storage_instance({
 		"species_seed": _spawn_species_seed,
 		"level": int(_spawn_level.value),
 		"exp": int(_spawn_exp.value),
 		"potential": int(_spawn_potential.value),
 		"link": int(_spawn_link.value),
+		"tier": tier_name,
+		"expansion_unlocked": _spawn_expanded.button_pressed,
+		"footprint": "large_2x2" if _spawn_expanded.button_pressed else "single",
 		"resource_state": resource_state,
 		"current_hp": int(_spawn_hp.value),
 		"current_sp": int(_spawn_sp.value),
@@ -829,8 +897,8 @@ func _create_storage_digimon() -> void:
 		return
 	_selected_id = instance.id
 	var species := _roster.species(instance.species_seed)
-	_status.text = "%s Lv.%d added directly to Storage." % [String(species.get("name", "Digimon")), instance.level]
-	_state.log_action("Create storage Digimon", "%s · Lv.%d · POT %d · LINK %d" % [String(species.get("name", "Digimon")), instance.level, instance.potential, instance.link])
+	_status.text = "%s Lv.%d · Tier %s · %s added directly to Storage." % [String(species.get("name", "Digimon")), instance.level, instance.tier, "2×2" if instance.is_expanded() else "1×1"]
+	_state.log_action("Create storage Digimon", "%s · Lv.%d · Tier %s · %s · POT %d · LINK %d" % [String(species.get("name", "Digimon")), instance.level, instance.tier, "2×2" if instance.is_expanded() else "1×1", instance.potential, instance.link])
 	_refresh_all()
 
 func _set_bits() -> void:
@@ -841,6 +909,25 @@ func _set_data() -> void:
 	var value := _selected_instance()
 	if value != null:
 		_state.set_digi_data(value.species_seed, int(_data.value))
+	_refresh_all()
+
+func _grant_expansion_core() -> void:
+	var count := _progression.grant_expansion_core(1)
+	_status.text = "Expansion Core granted. Inventory: %d." % count
+	_state.log_action("Grant item", "Expansion Core ×1")
+	_refresh_all()
+
+func _grant_expansion_fragments() -> void:
+	var count := _progression.grant_expansion_fragments(5)
+	_status.text = "Five Expansion Fragments granted. Inventory: %d." % count
+	_state.log_action("Grant item", "Expansion Fragment ×5")
+	_refresh_all()
+
+func _craft_expansion_core() -> void:
+	var result := _progression.craft_expansion_core()
+	_status.text = "Expansion Core crafted." if bool(result.get("success", false)) else "Craft blocked: %s" % String(result.get("reason", "invalid"))
+	if bool(result.get("success", false)):
+		_state.log_action("Craft item", "Expansion Core · 5 fragments + 50,000 Bits")
 	_refresh_all()
 
 func _set_flag() -> void:
@@ -914,6 +1001,19 @@ func _on_battle_profile_changed(selected: int, index: int) -> void:
 	var profile_index := clampi(selected, 0, DebugRosterTools.BATTLE_PROFILES.size() - 1)
 	_battle_roster[index]["profile"] = DebugRosterTools.BATTLE_PROFILES[profile_index]
 
+func _on_battle_tier_changed(selected: int, index: int) -> void:
+	if index < 0 or index >= _battle_roster.size():
+		return
+	var tiers := _progression.tier_options()
+	if tiers.is_empty():
+		return
+	_battle_roster[index]["tier"] = tiers[clampi(selected, 0, tiers.size() - 1)]
+
+func _on_battle_footprint_changed(selected: int, index: int) -> void:
+	if index < 0 or index >= _battle_roster.size():
+		return
+	_battle_roster[index]["footprint"] = String(BATTLE_FOOTPRINTS[clampi(selected, 0, BATTLE_FOOTPRINTS.size() - 1)])
+
 func _start_debug_battle() -> void:
 	if _battle_roster.is_empty():
 		_status.text = "Add at least one enemy before starting the sandbox battle."
@@ -926,7 +1026,7 @@ func _start_debug_battle() -> void:
 	var names: Array[String] = []
 	for descriptor: Dictionary in enemies:
 		var species := _roster.species(String(descriptor.get("species_seed", "")))
-		names.append("%s Lv.%d" % [String(species.get("name", "?")), int(descriptor.get("level", 1))])
+		names.append("%s Lv.%d · T%s · %s" % [String(species.get("name", "?")), int(descriptor.get("level", 1)), String(descriptor.get("tier", "E")), "2×2" if String(descriptor.get("footprint", "single")) == "large_2x2" else "1×1"])
 	_state.log_action("Battle sandbox", "%d enemies · %s" % [enemies.size(), ", ".join(names)])
 	close()
 	if not DigitalSceneTransition.enter_battle(BATTLE_SCENE):
@@ -940,7 +1040,7 @@ func _on_species_picked(seed: String) -> void:
 		_refresh_spawn_identity()
 		return
 	if context == "battle_add":
-		var descriptor := _roster.make_enemy_descriptor(seed, 5, "wild")
+		var descriptor := _roster.make_enemy_descriptor(seed, 5, "wild", "E", "single")
 		if not descriptor.is_empty():
 			_battle_roster.append(descriptor)
 			_refresh_battle_roster()

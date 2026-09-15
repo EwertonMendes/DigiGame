@@ -1,7 +1,7 @@
 extends RefCounted
 class_name SaveMigration
 
-const CURRENT_VERSION := 3
+const CURRENT_VERSION := 4
 
 func migrate(raw_data: Dictionary) -> Dictionary:
 	if raw_data.is_empty():
@@ -20,9 +20,12 @@ func migrate(raw_data: Dictionary) -> Dictionary:
 	if version == 2:
 		data = _migrate_v2_to_v3(data)
 		version = 3
+	if version == 3:
+		data = _migrate_v3_to_v4(data)
+		version = 4
 	data["save_version"] = version
 	data.erase("saveVersion")
-	return _normalize_v3(data)
+	return _normalize_v4(data)
 
 func _migrate_unversioned(data: Dictionary) -> Dictionary:
 	var legacy_collection: Dictionary = {}
@@ -99,9 +102,32 @@ func _migrate_v2_to_v3(data: Dictionary) -> Dictionary:
 	return result
 
 
-func _normalize_v3(data: Dictionary) -> Dictionary:
+func _migrate_v3_to_v4(data: Dictionary) -> Dictionary:
+	var result := data.duplicate(true)
+	var raw_collection = result.get("collection", {})
+	if not raw_collection is Dictionary:
+		return {"save_version": 4, "collection": {}}
+	var collection := raw_collection as Dictionary
+	collection["inventory"] = collection.get("inventory", {})
+	var raw_entries = collection.get("instances", [])
+	if raw_entries is Array:
+		for raw_entry in raw_entries:
+			if not raw_entry is Dictionary:
+				continue
+			var raw_instance = (raw_entry as Dictionary).get("instance", {})
+			if not raw_instance is Dictionary:
+				continue
+			var instance := raw_instance as Dictionary
+			instance["tier"] = String(instance.get("tier", "E")).to_upper()
+			instance["expansionUnlocked"] = bool(instance.get("expansionUnlocked", false))
+			instance["battleFootprintId"] = String(instance.get("battleFootprintId", "single"))
+	result["save_version"] = 4
+	return result
+
+
+func _normalize_v4(data: Dictionary) -> Dictionary:
 	var result := {
-		"save_version": 3,
+		"save_version": 4,
 		"collection": {
 			"instances": [],
 			"activePartyIds": [],
@@ -111,6 +137,7 @@ func _normalize_v3(data: Dictionary) -> Dictionary:
 			"questStates": {},
 			"unlockedTechniqueRecords": [],
 			"techniqueResearch": {},
+			"inventory": {},
 		},
 	}
 	var raw_collection = data.get("collection", {})
@@ -123,7 +150,7 @@ func _normalize_v3(data: Dictionary) -> Dictionary:
 	if source.get("activePartyIds", []) is Array:
 		collection["activePartyIds"] = (source.get("activePartyIds", []) as Array).duplicate()
 	collection["bits"] = maxi(0, int(source.get("bits", 0)))
-	for dictionary_key: String in ["digiData", "progressionFlags", "questStates", "techniqueResearch"]:
+	for dictionary_key: String in ["digiData", "progressionFlags", "questStates", "techniqueResearch", "inventory"]:
 		var raw_value = source.get(dictionary_key, {})
 		if raw_value is Dictionary:
 			collection[dictionary_key] = (raw_value as Dictionary).duplicate(true)

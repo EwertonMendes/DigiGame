@@ -1,6 +1,8 @@
 extends RefCounted
 class_name MovementSystem
 
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+
 const CARDINAL_NEIGHBORS: Array[Vector2i] = [
 	Vector2i(1, 0),
 	Vector2i(-1, 0),
@@ -62,8 +64,10 @@ func find_path(
 
 func get_path_cost(field: Node, moving_digimon: Node, path: Array[Vector2i]) -> int:
 	var total: int = 0
+	var previous := _anchor_for_actor(field, moving_digimon)
 	for grid: Vector2i in path:
-		total += _movement_cost(field, moving_digimon, grid)
+		total += _movement_cost(field, moving_digimon, previous, grid)
+		previous = grid
 	return total
 
 
@@ -89,7 +93,7 @@ func get_valid_next_steps(
 			continue
 		if not _can_traverse(field, controller, moving_digimon, candidate):
 			continue
-		var next_cost: int = spent + _movement_cost(field, moving_digimon, candidate)
+		var next_cost: int = spent + _movement_cost(field, moving_digimon, endpoint, candidate)
 		if next_cost <= movement_points:
 			options[candidate] = next_cost
 	return options
@@ -111,8 +115,11 @@ func can_confirm_manual_path(
 
 func _path_cost_through_index(field: Node, moving_digimon: Node, path: Array[Vector2i], index: int) -> int:
 	var total: int = 0
+	var previous := _anchor_for_actor(field, moving_digimon)
 	for path_index in range(index + 1):
-		total += _movement_cost(field, moving_digimon, path[path_index])
+		var grid: Vector2i = path[path_index]
+		total += _movement_cost(field, moving_digimon, previous, grid)
+		previous = grid
 	return total
 
 
@@ -136,7 +143,7 @@ func _search(
 			if not _can_traverse(field, controller, moving_digimon, neighbor):
 				continue
 
-			var step_cost: int = _movement_cost(field, moving_digimon, neighbor)
+			var step_cost: int = _movement_cost(field, moving_digimon, current, neighbor)
 			if step_cost <= 0:
 				continue
 
@@ -173,23 +180,32 @@ func _pop_lowest_cost(frontier: Array[Vector2i], distances: Dictionary) -> Vecto
 func _can_traverse(field: Node, controller: Node, moving_digimon: Node, grid: Vector2i) -> bool:
 	if field == null or not field.has_method("get_static_tile_block_reason"):
 		return false
-	if not String(field.call("get_static_tile_block_reason", grid)).is_empty():
-		return false
-
-	var occupant: Node = _occupant_at(controller, field, grid, moving_digimon)
-	if occupant == null:
-		return true
-	return _same_team(occupant, moving_digimon)
+	for occupied_grid: Vector2i in _footprint_grids(moving_digimon, grid):
+		if not String(field.call("get_static_tile_block_reason", occupied_grid)).is_empty():
+			return false
+		var occupant: Node = _occupant_at_grid(controller, field, occupied_grid, moving_digimon)
+		if occupant != null and not _same_team(occupant, moving_digimon):
+			return false
+	return true
 
 
 func _can_end_on(controller: Node, field: Node, moving_digimon: Node, grid: Vector2i) -> bool:
-	return _occupant_at(controller, field, grid, moving_digimon) == null
+	for occupied_grid: Vector2i in _footprint_grids(moving_digimon, grid):
+		if _occupant_at_grid(controller, field, occupied_grid, moving_digimon) != null:
+			return false
+	return true
 
 
-func _occupant_at(controller: Node, field: Node, grid: Vector2i, ignored: Node) -> Node:
-	if controller == null or field == null or not controller.has_method("get_digimon_at_tile"):
+func _occupant_at_grid(controller: Node, field: Node, grid: Vector2i, ignored: Node) -> Node:
+	if controller == null or field == null:
+		return null
+	if controller.has_method("get_digimon_at_grid"):
+		return controller.call("get_digimon_at_grid", grid, ignored) as Node
+	if not controller.has_method("get_digimon_at_tile"):
 		return null
 	var world_position: Vector2 = Vector2(field.call("grid_to_world", grid))
+	if field is Node2D:
+		world_position = (field as Node2D).to_global(world_position)
 	return controller.call("get_digimon_at_tile", world_position, ignored) as Node
 
 
@@ -197,7 +213,26 @@ func _same_team(first: Node, second: Node) -> bool:
 	return bool(first.get("is_player_controlled")) == bool(second.get("is_player_controlled"))
 
 
-func _movement_cost(field: Node, moving_digimon: Node, grid: Vector2i) -> int:
-	if field.has_method("get_movement_cost"):
-		return maxi(1, int(field.call("get_movement_cost", grid, moving_digimon)))
-	return 1
+func _movement_cost(field: Node, moving_digimon: Node, previous_anchor: Vector2i, next_anchor: Vector2i) -> int:
+	if not field.has_method("get_movement_cost"):
+		return 1
+	var result := 1
+	var footprint := String(moving_digimon.call("get_battle_footprint_id")) if moving_digimon != null and moving_digimon.has_method("get_battle_footprint_id") else FootprintScript.SINGLE
+	for grid: Vector2i in FootprintScript.newly_entered_grids(previous_anchor, next_anchor, footprint):
+		result = maxi(result, int(field.call("get_movement_cost", grid, moving_digimon)))
+	return result
+
+
+func _footprint_grids(actor: Node, anchor: Vector2i) -> Array[Vector2i]:
+	if actor != null and actor.has_method("get_occupied_grids"):
+		return actor.call("get_occupied_grids", anchor)
+	return [anchor]
+
+
+func _anchor_for_actor(field: Node, actor: Node) -> Vector2i:
+	if actor != null and actor.has_method("get_grid_anchor"):
+		return Vector2i(actor.call("get_grid_anchor"))
+	if actor != null and field != null and actor.has_method("get_tile_world_position") and field.has_method("world_to_grid"):
+		var world := Vector2(actor.call("get_tile_world_position"))
+		return Vector2i(field.call("world_to_grid", (field as Node2D).to_local(world) if field is Node2D else world))
+	return Vector2i.ZERO

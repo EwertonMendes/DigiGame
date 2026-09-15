@@ -1,6 +1,7 @@
 extends CharacterBody2D
 
 const TurnIndicatorScript = preload("res://src/TurnIndicator.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 const VEEMON_SPACED_9_IDLE_FRAME := {
 	"down_left": 3,
 	"down_right": 5,
@@ -41,6 +42,8 @@ var is_turn_active := false
 var is_defending := false
 var selected_tile_coords := Vector2i.ZERO
 var facing_direction := "up_right"
+var grid_anchor := Vector2i.ZERO
+var footprint_id := BattleFootprint.SINGLE
 var _selected_animation_time := 0.0
 var _selected_animation_frame := 0
 var _is_path_moving := false
@@ -50,9 +53,14 @@ var _turn_indicator: Node2D
 
 func _ready() -> void:
 	global_position = Vector2(initialTileCoords) + PLAYER_POSITION_DEVIATION
+	var field := _get_field()
+	if field != null and field.has_method("world_to_grid"):
+		grid_anchor = Vector2i(field.call("world_to_grid", field.to_local(Vector2(initialTileCoords))))
+		global_position = get_footprint_center_world(field) + PLAYER_POSITION_DEVIATION
 	facing_direction = initial_facing if DirectionalSpriteContract.has_direction(initial_facing) else "up_right"
 	_create_turn_indicator()
 	_show_current_facing(false)
+	_notify_occupancy_changed()
 
 
 func _physics_process(delta: float) -> void:
@@ -165,7 +173,10 @@ func move_along_grid_path(path: Array[Vector2i], field: Node) -> void:
 		_selected_animation_time = 0.0
 		_selected_animation_frame = 0
 	for grid in path:
-		var target_world := Vector2(field.call("grid_to_world", grid)) + PLAYER_POSITION_DEVIATION
+		var target_world := FootprintScript.center_world(field, grid, footprint_id)
+		if field is Node2D:
+			target_world = (field as Node2D).to_global(target_world)
+		target_world += PLAYER_POSITION_DEVIATION
 		face_toward_world_position(target_world)
 		var tween := create_tween()
 		tween.set_trans(Tween.TRANS_LINEAR)
@@ -173,6 +184,8 @@ func move_along_grid_path(path: Array[Vector2i], field: Node) -> void:
 		tween.tween_property(self, "global_position", target_world, MOVE_STEP_DURATION)
 		_focus_camera_on(target_world)
 		await tween.finished
+		grid_anchor = grid
+		_notify_occupancy_changed()
 
 	_is_path_moving = false
 	if sprite_layout != "portrait_strip":
@@ -185,17 +198,22 @@ func debug_relocate_to_grid(grid: Vector2i, field: Node) -> bool:
 	if field == null or not field.has_method("grid_to_world"):
 		return false
 	var tile_world_position := Vector2(field.call("grid_to_world", grid))
-	if field.has_method("can_digimon_move_to_world"):
+	if field.has_method("can_actor_occupy_anchor"):
+		if not bool(field.call("can_actor_occupy_anchor", grid, self)):
+			return false
+	elif field.has_method("can_digimon_move_to_world"):
 		if not bool(field.call("can_digimon_move_to_world", tile_world_position, self)):
 			return false
 
-	var target_position := tile_world_position + PLAYER_POSITION_DEVIATION
+	grid_anchor = grid
+	var target_position := get_footprint_center_world(field) + PLAYER_POSITION_DEVIATION
 	face_toward_world_position(target_position)
 	global_position = target_position
 	if sprite_layout != "portrait_strip":
 		_selected_animation_time = 0.0
 		_selected_animation_frame = 0
 	_show_current_facing(is_selected or is_debug_selected)
+	_notify_occupancy_changed()
 	return true
 
 
@@ -210,20 +228,76 @@ func _can_control() -> bool:
 
 
 func is_digimon_position_clicked() -> bool:
-	return Vector2(selected_tile_coords) == get_tile_world_position()
+	for tile_world: Vector2 in get_occupied_tile_world_positions():
+		if Vector2(selected_tile_coords).distance_squared_to(tile_world) < 0.25:
+			return true
+	return false
 
 
 func get_tile_world_position() -> Vector2:
+	var field := _get_field()
+	if field != null and field.has_method("grid_to_world"):
+		var local_position := Vector2(field.call("grid_to_world", grid_anchor))
+		return (field as Node2D).to_global(local_position) if field is Node2D else local_position
 	return global_position - PLAYER_POSITION_DEVIATION
+
+
+func configure_battle_footprint(value: String) -> void:
+	footprint_id = FootprintScript.normalize_id(value)
+
+
+func get_battle_footprint_id() -> String:
+	return footprint_id
+
+
+func get_grid_anchor() -> Vector2i:
+	return grid_anchor
+
+
+func get_occupied_grids(anchor_override = null) -> Array[Vector2i]:
+	var anchor := Vector2i(anchor_override) if anchor_override is Vector2i else grid_anchor
+	return FootprintScript.occupied_grids(anchor, footprint_id)
+
+
+func occupies_grid(grid: Vector2i) -> bool:
+	return get_occupied_grids().has(grid)
+
+
+func get_occupied_tile_world_positions() -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	var field := _get_field()
+	if field == null or not field.has_method("grid_to_world"):
+		result.append(get_tile_world_position())
+		return result
+	for grid: Vector2i in get_occupied_grids():
+		var local_position := Vector2(field.call("grid_to_world", grid))
+		result.append((field as Node2D).to_global(local_position) if field is Node2D else local_position)
+	return result
+
+
+func get_footprint_center_world(field: Node = null) -> Vector2:
+	var resolved_field := field if field != null else _get_field()
+	if resolved_field == null:
+		return global_position - PLAYER_POSITION_DEVIATION
+	var local_center := FootprintScript.center_world(resolved_field, grid_anchor, footprint_id)
+	return (resolved_field as Node2D).to_global(local_center) if resolved_field is Node2D else local_center
 
 
 func move_digimon_position() -> bool:
 	var tile_world_position := Vector2(selected_tile_coords)
 	var field := _get_field()
-	if field != null and field.has_method("can_digimon_move_to_world"):
+	var next_anchor := grid_anchor
+	if field != null and field.has_method("world_to_grid"):
+		next_anchor = Vector2i(field.call("world_to_grid", field.to_local(tile_world_position)))
+	if field != null and field.has_method("can_actor_occupy_anchor"):
+		if not bool(field.call("can_actor_occupy_anchor", next_anchor, self)):
+			return false
+	elif field != null and field.has_method("can_digimon_move_to_world"):
 		if not bool(field.call("can_digimon_move_to_world", tile_world_position, self)):
 			return false
-	global_position = tile_world_position + PLAYER_POSITION_DEVIATION
+	grid_anchor = next_anchor
+	global_position = get_footprint_center_world(field) + PLAYER_POSITION_DEVIATION
+	_notify_occupancy_changed()
 	return true
 
 
@@ -352,7 +426,7 @@ func _update_turn_indicator() -> void:
 
 
 func move_camera_to_selected_digimon() -> void:
-	_focus_camera_on(global_position)
+	_focus_camera_on(get_footprint_center_world())
 
 
 func _focus_camera_on(world_position: Vector2) -> void:
@@ -363,4 +437,10 @@ func _focus_camera_on(world_position: Vector2) -> void:
 		camera.call("focus_on", world_position)
 	else:
 		camera.global_position = world_position
+
+
+func _notify_occupancy_changed() -> void:
+	var controller := get_parent()
+	if controller != null and controller.has_method("refresh_occupancy_index"):
+		controller.call_deferred("refresh_occupancy_index")
 

@@ -283,7 +283,10 @@ func _build_hero(instance: DigimonInstance, species: Dictionary) -> Control:
 	var rank_chip := _chip(rank.to_upper(), accent)
 	heading_row.add_child(rank_chip)
 
-	var identity := _label("%s  ·  %s" % [
+	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
+	var identity := _label("TIER %s  ·  %s  ·  %s  ·  %s" % [
+		instance.tier,
+		footprint_badge,
 		String(species.get("type", species.get("attribute", "Free"))).to_upper(),
 		String(species.get("family", species.get("species", "Unknown"))).to_upper(),
 	], 11, UI.MUTED, true)

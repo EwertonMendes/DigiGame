@@ -35,35 +35,13 @@ func start(collection: PlayerCollection, definition: QuestDefinition) -> bool:
 	return true
 
 func record_species_defeat(collection: PlayerCollection, definition: QuestDefinition, species_seed: String, amount: int = 1) -> Dictionary:
-	var result := {"changed": false, "completed": false, "state": get_state(collection, definition), "rewards": {}}
-	if collection == null or definition == null or amount <= 0 or get_state(collection, definition) != STATE_ACTIVE:
-		return result
 	var seed := species_seed.strip_edges()
 	if seed.is_empty():
-		return result
-	var entry := _entry(collection, definition)
-	var progress := _safe_dictionary(entry.get("objective_progress", {}))
-	var changed := false
-	for objective: Dictionary in definition.objectives:
-		if String(objective.get("type", "")).to_lower() != "species_defeated":
-			continue
-		var target_seed := String(objective.get("species_seed", objective.get("species_id", ""))).strip_edges()
-		if target_seed != seed:
-			continue
-		var key := _objective_key(objective)
-		progress[key] = maxi(0, int(progress.get(key, 0))) + amount
-		changed = true
-	if not changed:
-		return result
-	entry["objective_progress"] = progress
-	result["changed"] = true
-	if _all_objectives_complete(definition, progress):
-		entry["state"] = STATE_COMPLETED
-		result["completed"] = true
-		result["rewards"] = _apply_rewards(collection, definition.rewards)
-	_store_entry(collection, definition.quest_id, entry)
-	result["state"] = String(entry.get("state", STATE_ACTIVE))
-	return result
+		return _empty_result(collection, definition)
+	return _record_objective_progress(collection, definition, "species_defeated", seed, amount)
+
+func record_battle_win(collection: PlayerCollection, definition: QuestDefinition, amount: int = 1) -> Dictionary:
+	return _record_objective_progress(collection, definition, "battle_wins", "", amount)
 
 func objective_status(collection: PlayerCollection, definition: QuestDefinition) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
@@ -75,8 +53,67 @@ func objective_status(collection: PlayerCollection, definition: QuestDefinition)
 		var kind := String(objective.get("type", "")).to_lower()
 		var required := maxi(1, int(objective.get("amount", objective.get("value", 1))))
 		var current := int(progress.get(_objective_key(objective), 0))
-		result.append({"type": kind, "species_seed": String(objective.get("species_seed", objective.get("species_id", ""))), "current": current, "required": required, "is_met": current >= required})
+		result.append({
+			"type": kind,
+			"species_seed": String(objective.get("species_seed", objective.get("species_id", ""))),
+			"current": current,
+			"required": required,
+			"is_met": current >= required,
+		})
 	return result
+
+func completion_count(collection: PlayerCollection, definition: QuestDefinition) -> int:
+	if collection == null or definition == null:
+		return 0
+	return maxi(0, int(_entry(collection, definition).get("completion_count", 0)))
+
+func _record_objective_progress(collection: PlayerCollection, definition: QuestDefinition, kind: String, discriminator: String, amount: int) -> Dictionary:
+	var result := _empty_result(collection, definition)
+	if collection == null or definition == null or amount <= 0 or get_state(collection, definition) != STATE_ACTIVE:
+		return result
+	var entry := _entry(collection, definition)
+	var progress := _safe_dictionary(entry.get("objective_progress", {}))
+	var changed := false
+	for objective: Dictionary in definition.objectives:
+		var objective_kind := String(objective.get("type", "")).to_lower()
+		if objective_kind != kind:
+			continue
+		if kind == "species_defeated":
+			var target_seed := String(objective.get("species_seed", objective.get("species_id", ""))).strip_edges()
+			if target_seed != discriminator:
+				continue
+		var key := _objective_key(objective)
+		progress[key] = maxi(0, int(progress.get(key, 0))) + amount
+		changed = true
+	if not changed:
+		return result
+	entry["objective_progress"] = progress
+	result["changed"] = true
+	if _all_objectives_complete(definition, progress):
+		var count := maxi(0, int(entry.get("completion_count", 0))) + 1
+		entry["completion_count"] = count
+		result["completed"] = true
+		result["completion_count"] = count
+		result["rewards"] = _apply_rewards(collection, definition.rewards)
+		if definition.repeatable:
+			entry["state"] = STATE_ACTIVE
+			entry["objective_progress"] = {}
+			result["repeatable_reset"] = true
+		else:
+			entry["state"] = STATE_COMPLETED
+	_store_entry(collection, definition.quest_id, entry)
+	result["state"] = String(entry.get("state", STATE_ACTIVE))
+	return result
+
+func _empty_result(collection: PlayerCollection, definition: QuestDefinition) -> Dictionary:
+	return {
+		"changed": false,
+		"completed": false,
+		"state": get_state(collection, definition),
+		"rewards": {},
+		"completion_count": completion_count(collection, definition) if collection != null and definition != null else 0,
+		"repeatable_reset": false,
+	}
 
 func _all_objectives_complete(definition: QuestDefinition, progress: Dictionary) -> bool:
 	if definition.objectives.is_empty():
@@ -88,7 +125,7 @@ func _all_objectives_complete(definition: QuestDefinition, progress: Dictionary)
 	return true
 
 func _apply_rewards(collection: PlayerCollection, rewards: Dictionary) -> Dictionary:
-	var applied := {"bits": 0, "digi_data": {}, "flags": {}, "unsupported": {}}
+	var applied := {"bits": 0, "digi_data": {}, "items": {}, "flags": {}, "unsupported": {}}
 	var bits := maxi(0, int(rewards.get("bits", rewards.get("money", 0))))
 	if bits > 0:
 		collection.bits += bits
@@ -103,6 +140,16 @@ func _apply_rewards(collection: PlayerCollection, rewards: Dictionary) -> Dictio
 				collection.add_digi_data(seed, amount)
 				data_applied[seed] = amount
 		applied["digi_data"] = data_applied
+	var raw_items = rewards.get("items", {})
+	if raw_items is Dictionary:
+		var items_applied: Dictionary = {}
+		for raw_item_id in raw_items.keys():
+			var item_id := String(raw_item_id).strip_edges()
+			var amount := maxi(0, int(raw_items[raw_item_id]))
+			if not item_id.is_empty() and amount > 0:
+				collection.add_item(item_id, amount)
+				items_applied[item_id] = amount
+		applied["items"] = items_applied
 	var raw_flags = rewards.get("flags", {})
 	if raw_flags is Dictionary:
 		var flags_applied: Dictionary = {}
@@ -115,7 +162,7 @@ func _apply_rewards(collection: PlayerCollection, rewards: Dictionary) -> Dictio
 		applied["flags"] = flags_applied
 	for raw_key in rewards.keys():
 		var key := String(raw_key)
-		if not ["bits", "money", "digi_data", "flags"].has(key):
+		if not ["bits", "money", "digi_data", "items", "flags"].has(key):
 			(applied["unsupported"] as Dictionary)[key] = rewards[raw_key]
 	return applied
 
@@ -126,6 +173,8 @@ func _entry(collection: PlayerCollection, definition: QuestDefinition) -> Dictio
 		entry["state"] = definition.initial_state
 	if not entry.has("objective_progress"):
 		entry["objective_progress"] = {}
+	if not entry.has("completion_count"):
+		entry["completion_count"] = 0
 	return entry
 
 func _store_entry(collection: PlayerCollection, quest_id: String, entry: Dictionary) -> void:

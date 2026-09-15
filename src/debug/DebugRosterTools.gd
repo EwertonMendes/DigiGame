@@ -5,6 +5,8 @@ const DATABASE_PATH := "res://database/base-digimon-list.json"
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const ProgressionScript = preload("res://src/digimon/DigimonProgression.gd")
+const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 const BATTLE_PROFILES: Array[String] = ["wild", "trained", "elite", "boss"]
 const MAX_SANDBOX_ENEMIES := 12
@@ -13,6 +15,7 @@ var database: DigimonDatabase
 var factory: DigimonFactory
 var calculator: DigimonStatCalculator = StatCalculatorScript.new()
 var curve: DigimonProgression = ProgressionScript.new()
+var balance: ProgressionBalance = BalanceScript.new()
 var _catalog_cache: Array[Dictionary] = []
 
 func _init() -> void:
@@ -43,14 +46,20 @@ func catalog() -> Array[Dictionary]:
 func species(seed: String) -> Dictionary:
 	return database.get_by_seed(seed) if database != null else {}
 
-func make_enemy_descriptor(seed: String, level: int, profile: String = "wild") -> Dictionary:
+func make_enemy_descriptor(seed: String, level: int, profile: String = "wild", tier: String = "E", footprint: String = BattleFootprint.SINGLE) -> Dictionary:
 	var species_data := species(seed)
 	if species_data.is_empty():
 		return {}
 	var normalized_profile := profile.to_lower().strip_edges()
 	if not BATTLE_PROFILES.has(normalized_profile):
 		normalized_profile = "wild"
-	return {"species_seed": String(species_data.get("seed", seed)), "level": clampi(level, 1, curve.max_level()), "profile": normalized_profile}
+	return {
+		"species_seed": String(species_data.get("seed", seed)),
+		"level": clampi(level, 1, curve.max_level()),
+		"profile": normalized_profile,
+		"tier": balance.normalize_tier(tier),
+		"footprint": FootprintScript.normalize_id(footprint),
+	}
 
 func create_storage_instance(config: Dictionary) -> DigimonInstance:
 	var seed := String(config.get("species_seed", "")).strip_edges()
@@ -63,6 +72,14 @@ func create_storage_instance(config: Dictionary) -> DigimonInstance:
 	instance.exp = maxi(0, int(config.get("exp", 0)))
 	instance.potential = clampi(int(config.get("potential", 0)), 0, DigimonInstance.MAX_POTENTIAL)
 	instance.link = clampi(int(config.get("link", 0)), 0, DigimonInstance.MAX_LINK)
+	instance.tier = balance.normalize_tier(String(config.get("tier", "E")))
+	instance.expansion_unlocked = bool(config.get("expansion_unlocked", false))
+	var requested_footprint := FootprintScript.normalize_id(String(config.get("footprint", FootprintScript.SINGLE)))
+	if requested_footprint == FootprintScript.LARGE_2X2:
+		instance.expansion_unlocked = true
+		instance.set_battle_footprint(FootprintScript.LARGE_2X2)
+	else:
+		instance.set_battle_footprint(FootprintScript.SINGLE)
 	var training = config.get("training", {})
 	if training is Dictionary:
 		for stat_key: String in DigimonInstance.STAT_KEYS:

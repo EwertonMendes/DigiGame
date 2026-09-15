@@ -5,6 +5,10 @@ const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionSe
 const ProgressionScript = preload("res://src/digimon/DigimonProgression.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const EvolutionServiceScript = preload("res://src/digimon/DigimonEvolutionService.gd")
+const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
+const AscensionScript = preload("res://src/digimon/DigimonAscensionService.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const ExpansionQuestCatalogScript = preload("res://src/quests/ExpansionQuestCatalog.gd")
 
 const MAX_DEBUG_TRAINING_POINTS := 5000
 
@@ -13,6 +17,8 @@ var progression: DigimonProgressionService
 var curve: DigimonProgression = ProgressionScript.new()
 var calculator: DigimonStatCalculator = StatCalculatorScript.new()
 var evolution: DigimonEvolutionService = EvolutionServiceScript.new()
+var balance: ProgressionBalance = BalanceScript.new()
+var ascension: DigimonAscensionService = AscensionScript.new()
 var contexts: Dictionary = {}
 
 func _init() -> void:
@@ -27,6 +33,9 @@ func display_name(value: DigimonInstance) -> String:
 		return "Unknown"
 	var species := database.get_by_seed(value.species_seed)
 	return value.get_display_name(String(species.get("name", value.species_seed)))
+
+func tier_options() -> Array[String]:
+	return balance.tier_order()
 
 func set_level(instance_id: String, level: int) -> bool:
 	var value := instance(instance_id)
@@ -70,6 +79,71 @@ func set_link(instance_id: String, amount: int) -> bool:
 	value.link = clampi(amount, 0, DigimonInstance.MAX_LINK)
 	OverworldState.notify_collection_changed()
 	return true
+
+func set_tier_and_expansion(instance_id: String, tier: String, expansion_unlocked: bool, expanded: bool) -> bool:
+	var value := instance(instance_id)
+	if value == null:
+		return false
+	var species := database.get_by_seed(value.species_seed)
+	if species.is_empty():
+		return false
+	var old_hp_max := maxi(1, calculator.get_stat(value, species, "hp"))
+	var old_sp_max := maxi(0, calculator.get_stat(value, species, "mp"))
+	var hp_ratio := float(value.current_hp) / float(old_hp_max)
+	var sp_ratio := float(value.current_mp) / float(maxi(1, old_sp_max)) if old_sp_max > 0 else 0.0
+	value.tier = balance.normalize_tier(tier)
+	value.expansion_unlocked = expansion_unlocked or expanded
+	if not value.set_battle_footprint(FootprintScript.LARGE_2X2 if expanded else FootprintScript.SINGLE):
+		return false
+	var new_hp_max := maxi(1, calculator.get_stat(value, species, "hp"))
+	var new_sp_max := maxi(0, calculator.get_stat(value, species, "mp"))
+	value.current_hp = clampi(int(round(hp_ratio * float(new_hp_max))), 0, new_hp_max)
+	value.current_mp = clampi(int(round(sp_ratio * float(new_sp_max))), 0, new_sp_max)
+	var collection := _collection()
+	var required_tier := balance.expansion_string("requiredTier", "S")
+	if collection != null and balance.tier_index(value.tier) >= balance.tier_index(required_tier):
+		ExpansionQuestCatalogScript.unlock_for_tier_s(collection)
+	OverworldState.notify_collection_changed()
+	return true
+
+func expansion_quest_status() -> Dictionary:
+	var collection := _collection()
+	return ExpansionQuestCatalogScript.quest_status(collection) if collection != null else {}
+
+func record_expansion_test_victory(advanced_encounter: bool = true) -> Dictionary:
+	var collection := _collection()
+	if collection == null:
+		return {}
+	var result: Dictionary = ExpansionQuestCatalogScript.record_victory(collection, advanced_encounter)
+	OverworldState.notify_collection_changed()
+	return result
+
+func get_item_count(item_id: String) -> int:
+	var collection := _collection()
+	return collection.get_item_count(item_id) if collection != null else 0
+
+func grant_item(item_id: String, amount: int = 1) -> int:
+	var collection := _collection()
+	if collection == null or item_id.strip_edges().is_empty() or amount <= 0:
+		return get_item_count(item_id)
+	var count := collection.add_item(item_id, amount)
+	OverworldState.notify_collection_changed()
+	return count
+
+func grant_expansion_core(amount: int = 1) -> int:
+	return grant_item(balance.expansion_string("coreItemId", "expansion_core"), amount)
+
+func grant_expansion_fragments(amount: int = 1) -> int:
+	return grant_item(balance.expansion_string("fragmentItemId", "expansion_fragment"), amount)
+
+func craft_expansion_core() -> Dictionary:
+	var collection := _collection()
+	if collection == null:
+		return {"success": false, "reason": "collection_unavailable"}
+	var result := ascension.craft_expansion_core(collection)
+	if bool(result.get("success", false)):
+		OverworldState.notify_collection_changed()
+	return result
 
 func set_resources(instance_id: String, hp: int, sp: int) -> bool:
 	var value := instance(instance_id)
@@ -281,6 +355,10 @@ func _context(instance_id: String) -> Dictionary:
 		if collection != null:
 			result["flags"] = _as_dict(collection.get("progression_flags"))
 	return result
+
+func _collection() -> PlayerCollection:
+	var raw = OverworldState.get("_collection")
+	return raw as PlayerCollection if raw is PlayerCollection else null
 
 func _refill(value: DigimonInstance) -> void:
 	calculator.refill_instance(value, database.get_by_seed(value.species_seed))

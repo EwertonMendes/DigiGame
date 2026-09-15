@@ -81,7 +81,10 @@ func _refresh_context() -> void:
 	var species_data: Dictionary = raw_species if raw_species is Dictionary else {}
 	var rank := String(species_data.get("rank", "Unknown"))
 	var rank_accent := CompactUI.rank_color(rank)
-	_rank_label.text = rank.capitalize()
+	var tier := String(hovered.call("get_tier")) if hovered.has_method("get_tier") else "E"
+	var footprint := String(hovered.call("get_battle_footprint_id")) if hovered.has_method("get_battle_footprint_id") else "single"
+	_rank_label.text = "%s · %s" % [tier, "2×2" if footprint == "large_2x2" else "1×1"]
+	_rank_label.tooltip_text = "%s rank · Tier %s" % [rank, tier]
 	_rank_label.visible = true
 	_rank_label.add_theme_stylebox_override("normal", CompactUI.pill(rank_accent, 0.14))
 	_rank_label.add_theme_color_override("font_color", rank_accent.lightened(0.16))
@@ -181,7 +184,7 @@ func _layout_card() -> void:
 
 	var info_x := 96.0
 	var info_w := width - info_x - 10.0
-	var rank_w := 72.0
+	var rank_w := 86.0
 
 	_name_label.position = Vector2(info_x, 9.0)
 	_name_label.size = Vector2(maxf(92.0, info_w - rank_w - 8.0), 27.0)

@@ -1,6 +1,8 @@
 extends RefCounted
 class_name TargetPatternResolver
 
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+
 const DIRS_8: Array[Vector2i] = [
 	Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1),
 	Vector2i(-1, 0), Vector2i(1, 0),
@@ -13,35 +15,85 @@ func selection_mode(action: Dictionary) -> String:
 
 
 func cast_grids(field: Node, source_grid: Vector2i, action: Dictionary) -> Array[Vector2i]:
+	var source_grids: Array[Vector2i] = [source_grid]
+	return cast_grids_for_footprint(field, source_grids, action)
+
+
+func cast_grids_for_footprint(field: Node, source_grids: Array[Vector2i], action: Dictionary) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
+	if source_grids.is_empty():
+		return result
 	var range_data = action.get("range", {})
 	if not range_data is Dictionary:
 		return result
 	var min_range := maxi(0, int(range_data.get("min", 0)))
 	var max_range := maxi(min_range, int(range_data.get("max", min_range)))
 	var shape := String(range_data.get("shape", "diamond"))
-	for x in range(source_grid.x - max_range, source_grid.x + max_range + 1):
-		for y in range(source_grid.y - max_range, source_grid.y + max_range + 1):
-			var grid := Vector2i(x, y)
-			if not _grid_exists(field, grid):
-				continue
-			if _matches_cast_shape(grid - source_grid, shape, min_range, max_range):
-				result.append(grid)
+	var candidates: Dictionary = {}
+	for source_grid: Vector2i in source_grids:
+		for x in range(source_grid.x - max_range, source_grid.x + max_range + 1):
+			for y in range(source_grid.y - max_range, source_grid.y + max_range + 1):
+				candidates[Vector2i(x, y)] = true
+	for raw_grid in candidates.keys():
+		var grid := Vector2i(raw_grid)
+		if _grid_exists(field, grid) and _matches_cast_from_footprint(grid, source_grids, shape, min_range, max_range):
+			result.append(grid)
 	return result
 
 
 func is_valid_aim_grid(field: Node, source_grid: Vector2i, action: Dictionary, aim_grid: Vector2i) -> bool:
+	var source_grids: Array[Vector2i] = [source_grid]
+	return is_valid_aim_grid_for_footprint(field, source_grids, action, aim_grid)
+
+
+func is_valid_aim_grid_for_footprint(field: Node, source_grids: Array[Vector2i], action: Dictionary, aim_grid: Vector2i) -> bool:
 	if not _grid_exists(field, aim_grid):
 		return false
 	var range_data = action.get("range", {})
 	if not range_data is Dictionary:
-		return aim_grid == source_grid
+		return source_grids.has(aim_grid)
 	var min_range := maxi(0, int(range_data.get("min", 0)))
 	var max_range := maxi(min_range, int(range_data.get("max", min_range)))
-	return _matches_cast_shape(aim_grid - source_grid, String(range_data.get("shape", "diamond")), min_range, max_range)
+	return _matches_cast_from_footprint(aim_grid, source_grids, String(range_data.get("shape", "diamond")), min_range, max_range)
+
+
+func is_valid_target_footprint(field: Node, source_grids: Array[Vector2i], target_grids: Array[Vector2i], action: Dictionary) -> bool:
+	if source_grids.is_empty() or target_grids.is_empty():
+		return false
+	for grid: Vector2i in target_grids:
+		if not _grid_exists(field, grid):
+			return false
+	var range_data = action.get("range", {})
+	if not range_data is Dictionary:
+		return FootprintScript.intersects(source_grids, target_grids)
+	var min_range := maxi(0, int(range_data.get("min", 0)))
+	var max_range := maxi(min_range, int(range_data.get("max", min_range)))
+	var shape := String(range_data.get("shape", "diamond"))
+	var metric := "chebyshev" if ["adjacent_8", "square", "line"].has(shape) else "manhattan"
+	var distance := FootprintScript.minimum_distance(source_grids, target_grids, metric)
+	if distance < min_range or distance > max_range:
+		return false
+	if shape == "self":
+		return FootprintScript.intersects(source_grids, target_grids)
+	if shape == "line":
+		for source_grid: Vector2i in source_grids:
+			for target_grid: Vector2i in target_grids:
+				var delta := target_grid - source_grid
+				if delta.x == 0 or delta.y == 0 or absi(delta.x) == absi(delta.y):
+					return true
+		return false
+	return true
 
 
 func effect_grids(field: Node, source_grid: Vector2i, aim_grid: Vector2i, action: Dictionary) -> Array[Vector2i]:
+	var source_grids: Array[Vector2i] = [source_grid]
+	return effect_grids_for_footprint(field, source_grids, aim_grid, action)
+
+
+func effect_grids_for_footprint(field: Node, source_grids: Array[Vector2i], aim_grid: Vector2i, action: Dictionary) -> Array[Vector2i]:
+	if source_grids.is_empty():
+		return []
+	var source_grid := source_grids[0]
 	var area_data = action.get("area", {})
 	if not area_data is Dictionary:
 		return [aim_grid] if _grid_exists(field, aim_grid) else []
@@ -49,7 +101,8 @@ func effect_grids(field: Node, source_grid: Vector2i, aim_grid: Vector2i, action
 	var result: Array[Vector2i] = []
 	match shape:
 		"self":
-			_append_if_valid(result, field, source_grid)
+			for occupied_grid: Vector2i in source_grids:
+				_append_if_valid(result, field, occupied_grid)
 		"single":
 			_append_if_valid(result, field, aim_grid)
 		"diamond":
@@ -82,15 +135,34 @@ func effect_grids(field: Node, source_grid: Vector2i, aim_grid: Vector2i, action
 		"line":
 			var direction := _quantized_direction(aim_grid - source_grid)
 			var length := maxi(1, int(area_data.get("length", _chebyshev(aim_grid - source_grid))))
-			for step in range(1, length + 1):
-				_append_if_valid(result, field, source_grid + direction * step)
+			for edge_grid: Vector2i in FootprintScript.front_edge(source_grids, direction):
+				for step in range(1, length + 1):
+					_append_if_valid(result, field, edge_grid + direction * step)
 		"cone":
 			var length := maxi(1, int(area_data.get("length", 3)))
 			var angle := clampf(float(area_data.get("angle", 90.0)), 10.0, 170.0)
-			_append_cone(result, field, source_grid, aim_grid, length, angle)
+			var cone_direction := _quantized_direction(aim_grid - source_grid)
+			for edge_grid: Vector2i in FootprintScript.front_edge(source_grids, cone_direction):
+				_append_cone(result, field, edge_grid, edge_grid + cone_direction, length, angle)
 		_:
 			_append_if_valid(result, field, aim_grid)
 	return result
+
+
+func _matches_cast_from_footprint(aim_grid: Vector2i, source_grids: Array[Vector2i], shape: String, min_range: int, max_range: int) -> bool:
+	if shape == "self":
+		return source_grids.has(aim_grid) and min_range == 0
+	if shape == "line":
+		var nearest_aligned := 999999
+		for source_grid: Vector2i in source_grids:
+			var delta := aim_grid - source_grid
+			if delta.x == 0 or delta.y == 0 or absi(delta.x) == absi(delta.y):
+				nearest_aligned = mini(nearest_aligned, _chebyshev(delta))
+		return nearest_aligned >= min_range and nearest_aligned <= max_range
+	var metric := "chebyshev" if ["adjacent_8", "square"].has(shape) else "manhattan"
+	var target_grids: Array[Vector2i] = [aim_grid]
+	var distance := FootprintScript.minimum_distance(source_grids, target_grids, metric)
+	return distance >= min_range and distance <= max_range
 
 
 func relationship_matches(source: Node, target: Node, action: Dictionary) -> bool:

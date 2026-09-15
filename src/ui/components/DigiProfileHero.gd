@@ -85,6 +85,8 @@ func configure(instance: DigimonInstance, species: Dictionary, progression: Digi
 	chips.add_theme_constant_override("separation", 7)
 	summary.add_child(chips)
 	chips.add_child(_pill(rank.to_upper(), accent))
+	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
+	chips.add_child(_pill("TIER %s · %s" % [instance.tier, footprint_badge], V2.AMBER))
 	var attribute := String(species.get("attribute", "Free"))
 	var family := String(species.get("species", species.get("family", "Unknown")))
 	chips.add_child(_pill(attribute.to_upper(), SemanticPalette.data_attribute_color(attribute)))

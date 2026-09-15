@@ -5,10 +5,13 @@ signal close_requested
 
 const CreateScreenScript = preload("res://src/ui/ProgressionDigiLabCreateScreen.gd")
 const PartyStorageScript = preload("res://src/ui/PartyStorageScreen.gd")
+const AscensionExpansionScript = preload("res://src/ui/AscensionExpansionScreen.gd")
 
 var _create_screen: DigiLabScreen
 var _party_screen: PartyStorageScreen
+var _ascension_screen: AscensionExpansionScreen
 var _active_tab := "convert"
+var _ascension_open := false
 
 
 func _ready() -> void:
@@ -32,15 +35,24 @@ func _build() -> void:
 	_party_screen.visible = false
 	_party_screen.close_requested.connect(close_view)
 	_party_screen.tab_requested.connect(_switch_tab)
+	_party_screen.ascension_requested.connect(_open_ascension)
 	add_child(_party_screen)
+
+	_ascension_screen = AscensionExpansionScript.new() as AscensionExpansionScreen
+	_ascension_screen.name = "AscensionExpansion"
+	_ascension_screen.visible = false
+	_ascension_screen.close_requested.connect(_close_ascension)
+	add_child(_ascension_screen)
 
 
 func open_lab() -> void:
 	visible = true
+	_ascension_open = false
 	_switch_tab(_active_tab, true)
 
 
 func close_view() -> void:
+	_ascension_open = false
 	_hide_screens()
 	visible = false
 	close_requested.emit()
@@ -52,16 +64,38 @@ func is_open() -> bool:
 
 func _switch_tab(tab_id: String, force: bool = false) -> void:
 	var next_tab := tab_id if tab_id in ["convert", "party"] else "convert"
-	if not force and next_tab == _active_tab:
+	if not force and not _ascension_open and next_tab == _active_tab:
 		return
 	_active_tab = next_tab
+	_ascension_open = false
 	_hide_screens()
 	if not visible:
 		return
+	_open_active_workspace()
+
+
+func _open_active_workspace() -> void:
 	if _active_tab == "party":
 		_party_screen.open_screen()
 	else:
 		_create_screen.open_lab()
+
+
+func _open_ascension() -> void:
+	if not visible or _ascension_screen == null:
+		return
+	_active_tab = "party"
+	_ascension_open = true
+	_hide_screens()
+	_ascension_screen.open_screen()
+
+
+func _close_ascension() -> void:
+	if not visible:
+		return
+	_ascension_open = false
+	_hide_screens()
+	_open_active_workspace()
 
 
 func _hide_screens() -> void:
@@ -69,3 +103,5 @@ func _hide_screens() -> void:
 		_create_screen.visible = false
 	if _party_screen != null:
 		_party_screen.visible = false
+	if _ascension_screen != null:
+		_ascension_screen.visible = false

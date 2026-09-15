@@ -18,7 +18,18 @@ func get_stat(instance: DigimonInstance, species: Dictionary, stat_key: String) 
 	var aptitude_factor := 1.0 + float(clampi(int(instance.aptitudes.get(normalized_key, 0)), -3, 3)) / 100.0
 	var training_bonus := _balance.training_number("bonusPerPoint", 0.004)
 	var training_factor := 1.0 + float(maxi(0, int(instance.training.get(normalized_key, 0)))) * training_bonus
-	return maxi(1 if normalized_key != "mp" else 0, int(round(float(base_value) * level_factor * aptitude_factor * training_factor)))
+	var tier_factor := _balance.tier_stat_multiplier(instance.tier, normalized_key)
+	var minimum := 1 if normalized_key != "mp" else 0
+	# Resolve the normal final stat first. Expansion is a modifier of the actual
+	# max HP the individual has in 1x1 mode, so +20% must remain exact even when
+	# the base/tier/training calculation lands between integers.
+	var normal_final := maxi(
+		minimum,
+		int(round(float(base_value) * level_factor * aptitude_factor * training_factor * tier_factor))
+	)
+	if normalized_key == "hp" and instance.is_expanded():
+		return maxi(minimum, int(round(float(normal_final) * _balance.expansion_number("hpMultiplier", 1.2))))
+	return normal_final
 
 
 func get_all_stats(instance: DigimonInstance, species: Dictionary) -> Dictionary:
