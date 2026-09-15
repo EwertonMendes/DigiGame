@@ -29,9 +29,6 @@ jobs:
       - name: Build normalized project-supplied assets
         run: python3 tools/build_project_supplied_directional.py
 
-      - name: Refactor remaining static portrait consumer
-        run: python3 tools/refactor_animated_portrait_consumers.py
-
       - name: Validate normalized assets and source ownership
         run: |
           python3 tools/validate_project_supplied_directional.py
@@ -51,7 +48,6 @@ jobs:
             assets/characters \
             assets/resources \
             database/project-supplied-playables.json \
-            database/ds-directional-resource-audit.json \
-            src/BattleHUD.gd
-          git commit -m 'refactor: animate battle HUD portraits through shared preview [skip project-supplied-rebuild]'
+            database/ds-directional-resource-audit.json
+          git commit -m 'feat: regenerate project-supplied directional sprites [skip project-supplied-rebuild]'
           git push origin "HEAD:${GITHUB_REF_NAME}"
