@@ -15,9 +15,9 @@ const PLAYER_ROSTER := [
 	{"species": "greymon", "level": 1, "scan": 100},
 ]
 const ENEMY_ENCOUNTER := [
-	{"species": "koromon", "level_min": 1, "level_max": 2, "profile": "wild"},
-	{"species": "tanemon", "level_min": 1, "level_max": 2, "profile": "wild"},
-	{"species": "veemon", "level_min": 2, "level_max": 3, "profile": "wild"},
+	{"species": "koromon", "level_min": 1, "level_max": 2, "profile": "wild", "tier": "E", "footprint": "single"},
+	{"species": "tanemon", "level_min": 1, "level_max": 2, "profile": "wild", "tier": "E", "footprint": "single"},
+	{"species": "veemon", "level_min": 2, "level_max": 3, "profile": "wild", "tier": "E", "footprint": "single"},
 ]
 
 var player_digimons := ["agumon", "gabumon", "greymon"]
