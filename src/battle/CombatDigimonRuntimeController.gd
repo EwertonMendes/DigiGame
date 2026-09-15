@@ -93,6 +93,8 @@ func _spawn_team_from_plan(entries: Array[Dictionary], player_controlled: bool, 
 				# future mission rules can inspect it without coupling those systems to the
 				# roster descriptor or DigimonFactory internals.
 				actor.set_meta("encounter_profile", profile)
+			if entry.has("reward_modifier"):
+				actor.set_meta("reward_modifier", maxf(0.0, float(entry.get("reward_modifier", 1.0))))
 		_prepare_actor_for_intro(actor, field)
 
 

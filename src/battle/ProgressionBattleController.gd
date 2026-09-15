@@ -77,9 +77,9 @@ func _build_battle_result(victory: bool) -> Dictionary:
 
 
 func _encounter_guaranteed_items() -> Dictionary:
-	if _digimon_controller == null:
+	if _controller == null:
 		return {}
-	var definition = _digimon_controller.get("encounter_definition")
+	var definition = _controller.get("encounter_definition")
 	if definition == null:
 		return {}
 	var raw_items = definition.get("guaranteed_items")
