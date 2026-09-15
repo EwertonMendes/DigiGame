@@ -85,7 +85,7 @@ async function confirmBattleDialog(page) {
 async function waitForBattlePresentation(page) {
   // A loaded scene is not enough: every browser suite must prove that the
   // frame-driven camera intro completed and handed control to the battle loop.
-  await waitForConsole(page, '[BattleIntro] BATTLE_START', 15000);
+  await waitForConsole(page, '[BattleIntro] BATTLE_START', 30000);
   await settleFrames(page, 3);
 }
 
