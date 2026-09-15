@@ -26,6 +26,10 @@ var _camera_move_start_zoom := 1.0
 var _camera_move_target_zoom := 1.0
 
 func _ready() -> void:
+	# The scripted cubic motion already provides the intended smoothing. Keeping
+	# Camera2D's native position smoother enabled would run a second transform
+	# interpolation path on the same frames, which is unstable in Web builds.
+	position_smoothing_enabled = false
 	super._ready()
 	_battle_default_zoom = _preferred_battle_zoom()
 	zoom = Vector2.ONE * minf(OPENING_BOOT_ZOOM, _battle_default_zoom)
@@ -146,8 +150,8 @@ func _preferred_intro_zoom() -> float:
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
 	# Camera2D property Tweens can hit an intermittent native Web/Wasm failure
 	# during battle-scene startup. Drive the same cubic ease directly from rendered
-	# frames so position and zoom stay on the normal Camera2D property path on every
-	# platform, without changing the visible timing or introducing delay timers.
+	# frames with native Camera2D smoothing disabled, without changing the visible
+	# timing or introducing delay timers.
 	_camera_move_generation += 1
 	var generation := _camera_move_generation
 	_camera_move_elapsed = 0.0
