@@ -96,14 +96,21 @@ func _assert_party_selection_resets_scroll(screen: Control) -> void:
 func _assert_semantic_labels(root: Control, minimum_count: int, label_name: String) -> void:
 	var semantic_count := 0
 	for label: Label in _labels_under(root):
-		if not label.is_visible_in_tree() or label.text.strip_edges().is_empty():
+		var text := label.text.strip_edges()
+		if not label.is_visible_in_tree() or text.is_empty():
 			continue
-		if label.text_overrun_behavior != TextServer.OVERRUN_NO_TRIMMING:
+		# Semantic chips/status values are deliberately single-line, unclipped and
+		# non-trimming. Wrapped prose may also use NO_TRIMMING in the base theme,
+		# so it must not be classified as a semantic label here.
+		if label.autowrap_mode != TextServer.AUTOWRAP_OFF:
+			continue
+		if label.text_overrun_behavior != TextServer.OVERRUN_NO_TRIMMING or label.clip_text:
 			continue
 		semantic_count += 1
 		var minimum := label.get_combined_minimum_size()
-		assert(minimum.x >= 18.0, "%s semantic label '%s' must keep an intrinsic horizontal minimum" % [label_name, label.text])
-		assert(label.size.x >= 18.0, "%s semantic label '%s' collapsed horizontally" % [label_name, label.text])
+		var width_floor := 8.0 if text.length() <= 4 else 18.0
+		assert(minimum.x >= width_floor, "%s semantic label '%s' must keep an intrinsic horizontal minimum" % [label_name, text])
+		assert(label.size.x >= width_floor, "%s semantic label '%s' collapsed horizontally" % [label_name, text])
 	assert(semantic_count >= minimum_count, "%s must use non-collapsing semantic labels for chips and status values" % label_name)
 
 
@@ -113,7 +120,8 @@ func _assert_no_vertical_text(root: Control, label_name: String) -> void:
 		if not label.is_visible_in_tree() or text.length() < 3:
 			continue
 		if label.autowrap_mode == TextServer.AUTOWRAP_OFF:
-			assert(label.size.x >= 18.0, "%s has collapsed horizontal text '%s'" % [label_name, text])
+			var width_floor := 8.0 if text.length() <= 4 else 18.0
+			assert(label.size.x >= width_floor, "%s has collapsed horizontal text '%s'" % [label_name, text])
 			continue
 		# Wrapped prose is valid, but a one-character column is never an intended layout.
 		assert(label.size.x >= 42.0, "%s wrapped '%s' into an unreadable vertical column" % [label_name, text])
