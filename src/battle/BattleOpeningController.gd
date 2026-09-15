@@ -40,15 +40,6 @@ func _start_battle() -> void:
 
 
 func _play_opening_sequence() -> void:
-	# On Web, keep battle presentation changes out of the persistent transition's
-	# renderer window. The transition already covers the scene swap and first draw;
-	# the intro starts as soon as its authored reveal completes, with no guessed
-	# delay and no change to the native flow.
-	if OS.has_feature("web") and DigitalSceneTransition.is_transitioning():
-		await DigitalSceneTransition.transition_finished
-		if not is_inside_tree():
-			return
-
 	var camera := get_viewport().get_camera_2d()
 
 	# Re-evaluate facing only after both rosters exist. This makes every actor look
