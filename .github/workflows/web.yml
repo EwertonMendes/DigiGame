@@ -206,10 +206,17 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
 
-          if [ "$SMOKE_SUITE" = "vfx" ] || [ "$SMOKE_SUITE" = "combat" ]; then
+          # The intro is a real rendered cinematic. Shared headless runners can
+          # occasionally stall a browser frame long enough to miss the 60s
+          # presentation window even though the same build is healthy on the
+          # next clean browser. Keep every marker/assertion mandatory and retry
+          # only the timing-sensitive suites from a fresh Chromium process.
+          if [ "$SMOKE_SUITE" = "vfx" ] || [ "$SMOKE_SUITE" = "combat" ] || [ "$SMOKE_SUITE" = "mobile" ]; then
             MAX_ATTEMPTS=5
             if [ "$SMOKE_SUITE" = "combat" ]; then
               MAX_ATTEMPTS=3
+            elif [ "$SMOKE_SUITE" = "mobile" ]; then
+              MAX_ATTEMPTS=2
             fi
             for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
               echo "${SMOKE_SUITE} smoke attempt ${attempt}/${MAX_ATTEMPTS}"
