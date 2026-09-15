@@ -26,7 +26,7 @@ func configure(title: String, description: String, footer: String, icon_kind: St
 func _ready() -> void:
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	custom_minimum_size = Vector2(184.0, 146.0)
+	custom_minimum_size = Vector2(176.0, 128.0)
 	clip_contents = true
 	text = ""
 	_apply_styles()
@@ -50,54 +50,45 @@ func _rebuild_content() -> void:
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_bottom", 13)
+	margin.add_theme_constant_override("margin_left", 13)
+	margin.add_theme_constant_override("margin_top", 11)
+	margin.add_theme_constant_override("margin_right", 13)
+	margin.add_theme_constant_override("margin_bottom", 10)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(margin)
 
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 8)
+	body.add_theme_constant_override("separation", 6)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(body)
 
 	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 10)
+	top.add_theme_constant_override("separation", 8)
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_child(top)
 
 	var icon := IconScript.new() as DigiProceduralIcon
-	icon.custom_minimum_size = Vector2(38.0, 38.0)
-	icon.configure(_icon_kind, _accent, 2.2)
+	icon.custom_minimum_size = Vector2(32.0, 32.0)
+	icon.configure(_icon_kind, _accent, 2.1)
 	top.add_child(icon)
 
 	var title := Label.new()
 	title.text = _title_text
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", 15)
 	title.add_theme_color_override("font_color", V2.TEXT)
 	V2.apply_heading(title)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_child(title)
 
-	var arrow := Label.new()
-	arrow.text = ">"
-	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	arrow.custom_minimum_size.x = 20.0
-	arrow.add_theme_font_size_override("font_size", 18)
-	arrow.add_theme_color_override("font_color", _accent)
-	V2.apply_heading(arrow)
-	arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_child(arrow)
-
 	var description := Label.new()
 	description.text = _description_text
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	description.add_theme_font_size_override("font_size", 11)
+	description.max_lines_visible = 3
+	description.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	description.add_theme_font_size_override("font_size", 10)
 	description.add_theme_color_override("font_color", V2.MUTED)
 	V2.apply_reading(description)
 	description.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -105,7 +96,7 @@ func _rebuild_content() -> void:
 
 	var separator := ColorRect.new()
 	separator.custom_minimum_size.y = 1.0
-	separator.color = V2.separator_color(0.30)
+	separator.color = V2.separator_color(0.28)
 	separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_child(separator)
 
