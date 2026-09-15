@@ -13,6 +13,7 @@ const EvolutionChartScript = preload("res://src/ui/EvolutionChart.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
 
 const COLLECTION_CAPACITY := 32
+const DESKTOP_BREAKPOINT := 1100.0
 
 var _constellation: EvolutionChart
 var _menu_root: Control
@@ -282,7 +283,7 @@ func _refresh_details() -> void:
 
 	var instance: DigimonInstance = collection[clampi(_selected_index, 0, collection.size() - 1)]
 	var species: Dictionary = _database.get_by_seed(instance.species_seed)
-	var compact := V2.is_compact(get_viewport(), 900.0)
+	var compact := V2.is_compact(get_viewport(), DESKTOP_BREAKPOINT)
 	var compact_hero := V2.physical_window_size(get_viewport()).x < 680.0
 
 	_body_grid = GridContainer.new()
@@ -299,7 +300,7 @@ func _refresh_details() -> void:
 	_primary_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_primary_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_primary_column.size_flags_stretch_ratio = 2.28
-	_primary_column.custom_minimum_size.x = 540.0
+	_primary_column.custom_minimum_size.x = 610.0
 	_primary_column.add_theme_constant_override("separation", 10)
 	_body_grid.add_child(_primary_column)
 
@@ -307,7 +308,7 @@ func _refresh_details() -> void:
 	_sidebar_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_sidebar_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_sidebar_column.size_flags_stretch_ratio = 1.0
-	_sidebar_column.custom_minimum_size.x = 270.0
+	_sidebar_column.custom_minimum_size.x = 265.0
 	_sidebar_column.add_theme_constant_override("separation", 10)
 	_body_grid.add_child(_sidebar_column)
 
@@ -456,7 +457,11 @@ func _button(text: String, accent: Color) -> Button:
 
 func _style_collection_button(button: Button, selected: bool, _rank_color: Color) -> void:
 	if selected:
-		button.add_theme_stylebox_override("normal", V2.outlined_surface(V2.CYAN, true, 7))
+		var selected_style := V2.surface_style(Color(0.055, 0.145, 0.180, 0.985), Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.96), 7)
+		selected_style.set_border_width_all(2)
+		selected_style.shadow_color = Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.16)
+		selected_style.shadow_size = 6
+		button.add_theme_stylebox_override("normal", selected_style)
 		button.add_theme_stylebox_override("hover", V2.button_style(V2.CYAN, "hover", 7))
 		button.add_theme_stylebox_override("focus", V2.button_style(V2.CYAN, "focus", 7))
 		button.add_theme_stylebox_override("pressed", V2.button_style(V2.CYAN, "pressed", 7))
@@ -527,7 +532,7 @@ func _wire_focus_navigation() -> void:
 		return
 	var selected_button := _buttons[clampi(_selected_index, 0, _buttons.size() - 1)]
 	var first_action := _action_cards[0]
-	var compact := V2.is_compact(get_viewport(), 900.0)
+	var compact := V2.is_compact(get_viewport(), DESKTOP_BREAKPOINT)
 	if not compact:
 		for button in _buttons:
 			if button != null and is_instance_valid(button):
@@ -576,9 +581,9 @@ func _apply_adaptive_detail_layout(compact: bool) -> void:
 		elif _desktop_body_height > 0.0:
 			_body_grid.custom_minimum_size.y = _desktop_body_height
 	if _primary_column != null:
-		_primary_column.custom_minimum_size.x = 0.0 if compact else 540.0
+		_primary_column.custom_minimum_size.x = 0.0 if compact else 610.0
 	if _sidebar_column != null:
-		_sidebar_column.custom_minimum_size.x = 0.0 if compact else 270.0
+		_sidebar_column.custom_minimum_size.x = 0.0 if compact else 265.0
 	if _action_grid != null:
 		var physical := V2.physical_window_size(get_viewport())
 		_action_grid.columns = 1 if physical.x < 560.0 else (2 if compact else 3)
@@ -589,7 +594,7 @@ func _layout() -> void:
 		return
 	var physical := V2.physical_window_size(get_viewport())
 	var scale_factor := V2.ui_scale(get_viewport())
-	var compact := V2.is_compact(get_viewport(), 900.0)
+	var compact := V2.is_compact(get_viewport(), DESKTOP_BREAKPOINT)
 	var width := maxf(320.0, physical.x)
 	var height := maxf(300.0, physical.y)
 
