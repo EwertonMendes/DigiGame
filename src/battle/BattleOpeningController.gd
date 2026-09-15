@@ -30,22 +30,19 @@ func _start_battle() -> void:
 	_turn_index = -1
 	_opening_running = true
 	_set_gameplay_ui_visible(false)
-	print("[BattleIntro] BEGIN actors=%d" % _turn_order.size())
 
 	await _play_opening_sequence()
 
 	_opening_running = false
 	_input_locked = false
 	_set_gameplay_ui_visible(true)
+	print("[Battle] GAMEPLAY_READY")
 	_start_next_turn()
 
 
 func _play_opening_sequence() -> void:
 	var camera := get_viewport().get_camera_2d()
 
-	# Re-evaluate facing only after both rosters exist. This makes every actor look
-	# toward a real opposing Digimon instead of relying on a generic map-center
-	# direction while the encounter is still being instantiated.
 	if _controller != null and _controller.has_method("orient_battle_actors_toward_opponents"):
 		_controller.call("orient_battle_actors_toward_opponents")
 
@@ -64,14 +61,10 @@ func _play_opening_sequence() -> void:
 
 	var first_focus := true
 	first_focus = await _reveal_team(player_team, camera, first_focus)
-	await _wait_visual_gap(TEAM_SWITCH_GAP)
+	await get_tree().create_timer(TEAM_SWITCH_GAP).timeout
 	first_focus = await _reveal_team(enemy_team, camera, first_focus)
-	await _wait_visual_gap(0.10)
+	await get_tree().create_timer(0.10).timeout
 
-	# The scheduler can preview turn one without mutating CT. Move from the last
-	# roster reveal to the actual first-turn Digimon at the gameplay zoom before
-	# showing BATTLE START, so combat begins already framed for play instead of
-	# snapping back to a distant whole-board overview.
 	var first_turn_actor := _preview_first_turn_actor()
 	if first_turn_actor != null and camera != null:
 		if camera.has_method("animate_gameplay_focus"):
@@ -89,10 +82,6 @@ func _reveal_team(team: Array[Node], camera: Camera2D, first_focus: bool) -> boo
 		if actor == null or not is_instance_valid(actor):
 			continue
 
-		# Keep the logical facing fresh immediately before the close-up. The camera
-		# move finishes first, then the Digimon materializes while actually centered
-		# on screen. This produces a readable roster introduction instead of six
-		# simultaneous effects on a distant board.
 		if _controller != null and _controller.has_method("face_actor_toward_nearest_opponent"):
 			_controller.call("face_actor_toward_nearest_opponent", actor)
 		if camera != null and camera.has_method("animate_intro_focus"):
@@ -108,7 +97,7 @@ func _reveal_team(team: Array[Node], camera: Camera2D, first_focus: bool) -> boo
 			actor.modulate = Color.WHITE
 
 		is_first_focus = false
-		await _wait_visual_gap(TEAM_SPAWN_GAP)
+		await get_tree().create_timer(TEAM_SPAWN_GAP).timeout
 	return is_first_focus
 
 
@@ -131,15 +120,6 @@ func _play_battle_start_banner() -> void:
 	await get_tree().process_frame
 	await banner.call("play")
 	layer.queue_free()
-
-
-func _wait_visual_gap(seconds: float) -> void:
-	# Presentation gaps are wall-clock based so an extremely slow Web renderer
-	# cannot stretch a sub-second cinematic pause into tens of seconds and block
-	# gameplay. The next rendered frame is still required, preserving sequencing.
-	var deadline_usec := Time.get_ticks_usec() + int(maxf(seconds, 0.0) * 1000000.0)
-	while Time.get_ticks_usec() < deadline_usec:
-		await get_tree().process_frame
 
 
 func _set_gameplay_ui_visible(value: bool) -> void:
