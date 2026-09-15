@@ -16,8 +16,8 @@
     {
       "name": "Zeke Greymon",
       "seed": "48b7a3e5-3e43-4819-96b8-673bfe67d5c1",
-      "source_sheet": "res://assets/characters/zekegreymon/source/sheet.png",
-      "source_sha256": "2ab214f7c2f10e3f0db3aa9865d8dd1644fd5e422ae4e86bbb79cb5ef60101ad",
+      "source_sheet": "res://assets/characters/zekegreymon/source/movement-sheet.webp",
+      "source_sha256": "6cdd6bacc44fd74bef5d8f9649964f3422ffc0ec5499b6faa5c49c61b76d80cc",
       "background": {
         "mode": "hsv_range",
         "hue_min": 195.0,
@@ -57,7 +57,7 @@
         "cell_padding_y": 2
       },
       "portrait": {
-        "row_index": 2,
+        "row_index": 0,
         "frame_index": 0,
         "duration_ms": 220,
         "projection_min_pixels": 5,
