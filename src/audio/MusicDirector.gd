@@ -44,7 +44,6 @@ var _player: AudioStreamPlayer = null
 var _current_track_id := ""
 var _transition: Tween = null
 var _transition_generation := 0
-var _stream_cache: Dictionary = {}
 
 
 func _ready() -> void:
@@ -61,7 +60,6 @@ func _exit_tree() -> void:
 	if _player != null:
 		_player.stop()
 		_player.stream = null
-	_stream_cache.clear()
 	_current_track_id = ""
 
 
@@ -144,9 +142,6 @@ func has_track(track_id: String) -> bool:
 
 
 func _stream_for(track_id: String) -> AudioStream:
-	if _stream_cache.has(track_id):
-		return _stream_cache[track_id] as AudioStream
-
 	var definition := TRACKS[track_id] as Dictionary
 	var path := str(definition.get("path", ""))
 	if path.is_empty():
@@ -154,7 +149,9 @@ func _stream_for(track_id: String) -> AudioStream:
 
 	# Runtime loading is intentional: during a clean Godot import the Ogg importer
 	# is not yet registered when autoload scripts are first parsed. By runtime the
-	# imported stream is available on desktop and Web.
+	# imported stream is available on desktop and Web. ResourceLoader owns reuse;
+	# MusicDirector deliberately keeps no additional strong cache reference so an
+	# inactive music stream can be released as soon as the player lets it go.
 	var stream := ResourceLoader.load(path) as AudioStream
 	if stream == null:
 		return null
@@ -168,7 +165,6 @@ func _stream_for(track_id: String) -> AudioStream:
 	elif stream is AudioStreamMP3:
 		(stream as AudioStreamMP3).loop = should_loop
 
-	_stream_cache[track_id] = stream
 	return stream
 
 
