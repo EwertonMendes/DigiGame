@@ -16,6 +16,7 @@ var _bits_badge: PanelContainer
 var _bits_value: Label
 var _close_button: Button
 var _bits := 0
+var _show_bits := true
 
 
 func _ready() -> void:
@@ -27,11 +28,12 @@ func _ready() -> void:
 
 func configure(title: String, subtitle: String, bits: int = 0, show_bits: bool = true) -> DigiModalHeader:
 	_bits = maxi(0, bits)
+	_show_bits = show_bits
 	if _title != null:
 		_title.text = title
 		_subtitle.text = subtitle
-		_bits_badge.visible = show_bits
 		_bits_value.text = "%d BITS" % _bits
+		_layout()
 	return self
 
 
@@ -123,9 +125,9 @@ func _layout() -> void:
 	if _title == null:
 		return
 	var compact := size.x < 620.0
-	var controls_right := 52.0
-	if _bits_badge.visible:
-		controls_right += 156.0
+	var show_bits_now := _show_bits and not compact
+	_bits_badge.visible = show_bits_now
+	var controls_right := 52.0 + (156.0 if show_bits_now else 0.0)
 	_title.position = Vector2.ZERO
 	_title.size = Vector2(maxf(120.0, size.x - controls_right - 10.0), 31.0)
 	_subtitle.position = Vector2(0.0, 29.0)
@@ -133,7 +135,6 @@ func _layout() -> void:
 	_subtitle.visible = not compact
 	_close_button.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE), 0.0)
 	_close_button.size = Vector2(CLOSE_SIZE, CLOSE_SIZE)
-	_bits_badge.visible = _bits_badge.visible and not compact
-	if _bits_badge.visible:
+	if show_bits_now:
 		_bits_badge.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 156.0), 3.0)
 		_bits_badge.size = Vector2(148.0, 38.0)
