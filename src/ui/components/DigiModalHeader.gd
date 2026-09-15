@@ -32,6 +32,8 @@ var _show_bits := true
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	set_process_unhandled_input(true)
 	_build()
 	resized.connect(_layout)
 	_rebuild_tabs()
@@ -87,6 +89,45 @@ func get_close_button() -> Button:
 
 func get_tab_button(tab_id: String) -> Button:
 	return _tab_buttons.get(tab_id) as Button
+
+
+func select_adjacent_tab(direction: int) -> bool:
+	if direction == 0:
+		return false
+	var enabled_tabs: Array[String] = []
+	for spec: Dictionary in _tab_specs:
+		if not bool(spec.get("enabled", true)):
+			continue
+		var tab_id := String(spec.get("id", ""))
+		if not tab_id.is_empty():
+			enabled_tabs.append(tab_id)
+	if enabled_tabs.size() < 2:
+		return false
+	var current_index := enabled_tabs.find(_active_tab)
+	if current_index < 0:
+		current_index = 0
+	var step := -1 if direction < 0 else 1
+	var next_index := posmod(current_index + step, enabled_tabs.size())
+	var next_tab := enabled_tabs[next_index]
+	if next_tab == _active_tab:
+		return false
+	tab_selected.emit(next_tab)
+	return true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or not (event is InputEventJoypadButton):
+		return
+	var joy_button := event as InputEventJoypadButton
+	if not joy_button.pressed:
+		return
+	var direction := 0
+	if joy_button.button_index == JOY_BUTTON_LEFT_SHOULDER:
+		direction = -1
+	elif joy_button.button_index == JOY_BUTTON_RIGHT_SHOULDER:
+		direction = 1
+	if direction != 0 and select_adjacent_tab(direction):
+		get_viewport().set_input_as_handled()
 
 
 func _build() -> void:
