@@ -9,8 +9,8 @@ const HUB_SCENE_PATH := "res://scenes/world/hub.tscn"
 const CONTEXT_BATTLE := "battle"
 const CONTEXT_HUB := "hub"
 const LOAD_TIMEOUT_MS := 8000
-const VISUAL_TWEEN_MIN_WATCHDOG_MS := 1500
-const VISUAL_TWEEN_DURATION_MULTIPLIER := 4.0
+const VISUAL_TWEEN_MIN_WATCHDOG_MS := 500
+const VISUAL_TWEEN_DURATION_MULTIPLIER := 2.5
 
 var _root: Control = null
 var _screen: ColorRect = null
@@ -173,6 +173,9 @@ func _await_threaded_scene(scene_path: String) -> PackedScene:
 func _await_visual_tween(tween: Tween, expected_duration: float, stage: String) -> void:
 	if tween == null:
 		return
+	# The watchdog is intentionally close to the authored duration. A renderer may
+	# miss a tween completion, but presentation must not accumulate multi-second
+	# stalls across cover/seal/reveal before gameplay can continue.
 	var watchdog_ms := maxi(
 		VISUAL_TWEEN_MIN_WATCHDOG_MS,
 		ceili(maxf(expected_duration, 0.0) * 1000.0 * VISUAL_TWEEN_DURATION_MULTIPLIER)
@@ -226,7 +229,7 @@ func _configure_palette(context: String) -> void:
 		_material.set_shader_parameter("accent_color", Color(0.60, 0.48, 1.0, 1.0))
 		_material.set_shader_parameter("cover_color", Color(0.035, 0.070, 0.145, 1.0))
 	elif context == CONTEXT_HUB:
-		_material.set_shader_parameter("primary_color", Color(0.35, 0.93, 0.84, 1.0))
+		_material.set_shader_parameter("primary_color", Color(0.35, 0.93, 0.84, 1.0, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.38, 0.66, 1.0, 1.0))
 		_material.set_shader_parameter("cover_color", Color(0.025, 0.080, 0.115, 1.0))
 	else:
