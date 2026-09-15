@@ -49,7 +49,7 @@ jobs:
             command: godot --headless --path . tools/test_digilab_layout_regression.tscn --quit-after 30
             success: digilab layout regression passed
           - name: training-ui-v2
-            command: godot --headless --path . tools/test_training_ui_v2_regression.tscn --quit-after 30
+            command: godot --verbose --headless --path . tools/test_training_ui_v2_regression.tscn --quit-after 30
             success: training ui v2 regression passed
           - name: global-ui-v2
             command: godot --headless --path . tools/test_ui_v2_components_regression.tscn --quit-after 30
