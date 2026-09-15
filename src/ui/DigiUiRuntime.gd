@@ -82,7 +82,16 @@ func _decorate_branch(node: Node) -> void:
 
 
 func _on_node_added(node: Node) -> void:
-	call_deferred("_decorate_node", node)
+	# Never defer a raw Object reference: nodes may be freed before the message
+	# queue runs (common during Web scene churn), which turns the deferred typed
+	# argument into an invalid Object and produces runtime conversion errors.
+	call_deferred("_decorate_instance_id", node.get_instance_id())
+
+
+func _decorate_instance_id(instance_id: int) -> void:
+	var candidate := instance_from_id(instance_id)
+	if candidate is Node:
+		_decorate_node(candidate as Node)
 
 
 func _decorate_node(node: Node) -> void:
