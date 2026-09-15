@@ -69,6 +69,12 @@ func _ready() -> void:
 	assert(player.get("facing_direction") == "north", "Player must face north toward the operator in dialogue")
 	assert(operator.get("facing_direction") == "south", "Operator must face south toward the player in dialogue")
 
+	# Exercise a real teardown rather than relying on SceneTree shutdown to dispose
+	# the Hub. This keeps the regression sensitive to genuine leaks while avoiding
+	# false failures from resources that are still legitimately owned by the scene.
+	hub.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	print("hub foundation regression passed")
 	get_tree().quit()
 
@@ -118,12 +124,14 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	var create_screen := digilab.get("_create_screen") as Control
 	var party_screen := digilab.get("_party_screen") as Control
 	var digimon_screen := digilab.get("_digimon_menu") as Control
+	var ascension_screen := digilab.get("_ascension_screen") as Control
 	assert(root_frame != null and root_frame.visible, "DigiLab must open on its root service menu")
-	assert(create_screen != null and not create_screen.visible, "Create Digimon must stay hidden until explicitly selected")
+	assert(create_screen != null and not create_screen.visible, "Convert Digi Data must stay hidden until explicitly selected")
 	assert(party_screen != null and not party_screen.visible, "Party / Storage must stay hidden until explicitly selected")
 	assert(digimon_screen != null and not digimon_screen.visible, "Digimon details must not open automatically with DigiLab")
+	assert(ascension_screen != null and not ascension_screen.visible, "Ascension / Expansion must stay hidden until explicitly selected")
 	var service_buttons: Array = digilab.get("_service_buttons")
-	assert(service_buttons.size() == 3, "DigiLab root must expose exactly three service cards")
+	assert(service_buttons.size() == 4, "DigiLab root must expose Digimon, Ascension / Expansion, Convert Digi Data and Party / Storage")
 	for raw_button in service_buttons:
 		var service_button := raw_button as Button
 		assert(service_button != null and service_button.focus_mode == Control.FOCUS_ALL, "The whole DigiLab service card must be selectable with keyboard/gamepad")

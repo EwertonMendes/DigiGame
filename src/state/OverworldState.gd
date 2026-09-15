@@ -4,6 +4,7 @@ signal active_party_changed(active_party: Array)
 signal collection_changed
 signal account_rewards_changed(bits: int, digi_data: Dictionary)
 signal technique_progress_changed
+signal inventory_changed(inventory: Dictionary)
 signal progress_saved
 
 const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
@@ -14,6 +15,7 @@ const TrainingServiceScript = preload("res://src/digimon/DigimonTrainingService.
 const SaveServiceScript = preload("res://src/save/SaveService.gd")
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const TechniqueRecordServiceScript = preload("res://src/collection/TechniqueRecordService.gd")
+const AscensionServiceScript = preload("res://src/digimon/DigimonAscensionService.gd")
 
 const DEFAULT_ACTIVE_PARTY := ["agumon", "gabumon", "greymon"]
 
@@ -25,6 +27,7 @@ var _training_service: DigimonTrainingService = TrainingServiceScript.new()
 var _save_service: SaveService = SaveServiceScript.new()
 var _balance = BalanceScript.new()
 var _technique_records = TechniqueRecordServiceScript.new()
+var _ascension = AscensionServiceScript.new()
 var _persistence_enabled := true
 
 func _ready() -> void:
@@ -194,6 +197,63 @@ func get_bits() -> int:
 	return _collection.bits
 
 
+func get_inventory() -> Dictionary:
+	return _collection.get_inventory()
+
+
+func get_item_count(item_id: String) -> int:
+	return _collection.get_item_count(item_id)
+
+
+func get_tier_promotion_preview(target_id: String, donor_id: String = "") -> Dictionary:
+	_ensure_database()
+	return _ascension.promotion_preview(_collection, _database, target_id, donor_id)
+
+
+func get_tier_donors(target_id: String) -> Array[DigimonInstance]:
+	return _ascension.eligible_donors(_collection, target_id)
+
+
+func promote_digimon_tier(target_id: String, donor_id: String = "") -> Dictionary:
+	_ensure_database()
+	var result: Dictionary = _ascension.promote(_collection, _database, target_id, donor_id)
+	if bool(result.get("success", false)):
+		collection_changed.emit()
+		account_rewards_changed.emit(_collection.bits, get_digi_data())
+		_save_after_mutation()
+	return result
+
+
+func craft_expansion_core() -> Dictionary:
+	var result: Dictionary = _ascension.craft_expansion_core(_collection)
+	if bool(result.get("success", false)):
+		inventory_changed.emit(get_inventory())
+		account_rewards_changed.emit(_collection.bits, get_digi_data())
+		_save_after_mutation()
+	return result
+
+
+func unlock_digimon_expansion(target_id: String) -> Dictionary:
+	_ensure_database()
+	var result: Dictionary = _ascension.unlock_expansion(_collection, _database, target_id)
+	if bool(result.get("success", false)):
+		collection_changed.emit()
+		inventory_changed.emit(get_inventory())
+		_save_after_mutation()
+	return result
+
+
+func set_digimon_expanded(target_id: String, expanded: bool) -> Dictionary:
+	_ensure_database()
+	var target := _collection.get_instance(target_id)
+	var result: Dictionary = _ascension.set_expanded(_database, target, expanded)
+	if bool(result.get("success", false)):
+		collection_changed.emit()
+		active_party_changed.emit(get_active_party())
+		_save_after_mutation()
+	return result
+
+
 func has_technique_record(skill_id: String) -> bool:
 	return _collection.has_technique_record(skill_id)
 
@@ -318,7 +378,7 @@ func get_reconstruction_requirement(species_name_or_seed: String) -> int:
 	var species := _database.get_by_seed(seed)
 	return maxi(1, int(species.get("dataRequired", _balance.reconstruction_int("defaultRequired", 100))))
 
-func apply_account_rewards(bits: int, digi_data: Dictionary) -> Dictionary:
+func apply_account_rewards(bits: int, digi_data: Dictionary, items: Dictionary = {}) -> Dictionary:
 	_ensure_database()
 	_collection.bits += maxi(0, bits)
 	var progress: Dictionary = {}
@@ -344,7 +404,14 @@ func apply_account_rewards(bits: int, digi_data: Dictionary) -> Dictionary:
 			"ready": after >= required,
 			"newly_ready": before < required and after >= required,
 		}
+	for raw_item_id in items.keys():
+		var item_id := String(raw_item_id).strip_edges()
+		var amount := maxi(0, int(items[raw_item_id]))
+		if not item_id.is_empty() and amount > 0:
+			_collection.add_item(item_id, amount)
 	account_rewards_changed.emit(_collection.bits, get_digi_data())
+	if not items.is_empty():
+		inventory_changed.emit(get_inventory())
 	_save_after_mutation()
 	return progress
 
@@ -415,6 +482,7 @@ func reset_progress_for_tests(delete_disk_save: bool = false) -> void:
 	active_party_changed.emit(get_active_party())
 	collection_changed.emit()
 	account_rewards_changed.emit(_collection.bits, get_digi_data())
+	inventory_changed.emit(get_inventory())
 
 func _ensure_starter_collection() -> void:
 	if not _collection.is_empty():

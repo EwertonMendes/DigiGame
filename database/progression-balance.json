@@ -101,5 +101,65 @@
     "mobilityTwoPotential": 70,
     "mobilityOneCapacityCost": 20,
     "mobilityTwoAdditionalCost": 30
+  },
+  "tiers": {
+    "order": ["E", "D", "C", "B", "A", "S", "SS", "SSS"],
+    "primaryStatMultipliers": {
+      "E": 1.0,
+      "D": 1.05,
+      "C": 1.1,
+      "B": 1.16,
+      "A": 1.23,
+      "S": 1.31,
+      "SS": 1.4,
+      "SSS": 1.5
+    },
+    "secondaryStatMultipliers": {
+      "E": 1.0,
+      "D": 1.025,
+      "C": 1.05,
+      "B": 1.08,
+      "A": 1.115,
+      "S": 1.155,
+      "SS": 1.2,
+      "SSS": 1.25
+    },
+    "promotionBits": {
+      "D": 300,
+      "C": 1500,
+      "B": 5000,
+      "A": 15000,
+      "S": 50000,
+      "SS": 125000,
+      "SSS": 300000
+    },
+    "minimumRank": {
+      "D": "Fresh",
+      "C": "Rookie",
+      "B": "Champion",
+      "A": "Ultimate",
+      "S": "Mega",
+      "SS": "Mega",
+      "SSS": "Mega"
+    },
+    "fusionRequired": {
+      "D": false,
+      "C": true,
+      "B": true,
+      "A": true,
+      "S": true,
+      "SS": false,
+      "SSS": true
+    }
+  },
+  "expansion": {
+    "requiredTier": "S",
+    "hpMultiplier": 1.2,
+    "battleVisualScale": 1.75,
+    "hubVisualScale": 1.25,
+    "coreItemId": "expansion_core",
+    "fragmentItemId": "expansion_fragment",
+    "fragmentCraftCost": 5,
+    "craftBitsCost": 50000
   }
 }

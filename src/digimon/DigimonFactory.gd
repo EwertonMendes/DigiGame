@@ -5,6 +5,7 @@ const InstanceScript = preload("res://src/digimon/DigimonInstance.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 const STAT_KEYS: Array[String] = ["hp", "mp", "atk", "def", "int", "speed"]
 
 var _database
@@ -35,22 +36,24 @@ func create_player_by_seed(seed: String, level: int = 1, scan_percent: int = 100
 	return _create_instance(species, level, potential_from_scan_percent(scan_percent), "digilab")
 
 
-func create_enemy_by_name(name: String, level: int, profile: String = "wild") -> DigimonInstance:
+func create_enemy_by_name(name: String, level: int, profile: String = "wild", tier: String = "E", footprint_id: String = "single") -> DigimonInstance:
 	var species: Dictionary = _database.get_by_name(name) if _database != null else {}
 	if species.is_empty():
 		return null
 	var instance := _create_instance(species, level, _profile_potential(profile), "encounter:%s" % profile)
 	_apply_enemy_profile(instance, profile)
+	_apply_encounter_progression(instance, tier, footprint_id)
 	_calculator.refill_instance(instance, species)
 	return instance
 
 
-func create_enemy_by_seed(seed: String, level: int, profile: String = "wild") -> DigimonInstance:
+func create_enemy_by_seed(seed: String, level: int, profile: String = "wild", tier: String = "E", footprint_id: String = "single") -> DigimonInstance:
 	var species: Dictionary = _database.get_by_seed(seed) if _database != null else {}
 	if species.is_empty():
 		return null
 	var instance := _create_instance(species, level, _profile_potential(profile), "encounter:%s" % profile)
 	_apply_enemy_profile(instance, profile)
+	_apply_encounter_progression(instance, tier, footprint_id)
 	_calculator.refill_instance(instance, species)
 	return instance
 
@@ -125,3 +128,12 @@ func _apply_enemy_profile(instance: DigimonInstance, profile: String) -> void:
 			instance.training["def"] = 10
 			instance.training["int"] = 10
 			instance.training["mov"] = 1
+
+
+func _apply_encounter_progression(instance: DigimonInstance, tier: String, footprint_id: String) -> void:
+	if instance == null:
+		return
+	instance.tier = _balance.normalize_tier(tier)
+	var normalized_footprint := FootprintScript.normalize_id(footprint_id)
+	instance.expansion_unlocked = normalized_footprint == FootprintScript.LARGE_2X2
+	instance.battle_footprint_id = normalized_footprint

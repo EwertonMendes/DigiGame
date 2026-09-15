@@ -12,6 +12,7 @@ const MIN_SEPARATION := 40.0
 const FACING_DEADZONE := 0.08
 const SPRITE_SCALE := 1.5
 const SPRITE_POSITION := Vector2(0.0, -24.0)
+const EXPANDED_VISUAL_SCALE := 1.25
 
 const SPACED_9_IDLE_FRAME := {
 	"down_left": 3,
@@ -44,12 +45,14 @@ var _walk_time := 0.0
 var _walk_sequence_index := 0
 var _walking := false
 var _stationary_time := 0.0
+var _expanded_visual := false
 
 
-func configure(digimon: Digimon, key: String, party_slot: int) -> void:
+func configure(digimon: Digimon, key: String, party_slot: int, expanded_visual: bool = false) -> void:
 	_digimon = digimon
 	digimon_key = key
 	slot_index = party_slot
+	_expanded_visual = expanded_visual
 	name = "Follower_%d_%s" % [party_slot + 1, key.capitalize()]
 	if _digimon != null and DirectionalSpriteContract.has_direction(_digimon.initial_facing):
 		facing_direction = _digimon.initial_facing
@@ -141,7 +144,8 @@ func _apply_digimon_visuals() -> void:
 	if _sprite == null or _digimon == null:
 		return
 	_sprite.texture = _digimon.texture
-	_sprite.scale = Vector2.ONE * SPRITE_SCALE * _digimon.sprite_scale
+	var expansion_scale := EXPANDED_VISUAL_SCALE if _expanded_visual else 1.0
+	_sprite.scale = Vector2.ONE * SPRITE_SCALE * _digimon.sprite_scale * expansion_scale
 	_sprite.flip_h = false
 	_sprite.region_enabled = false
 	if _digimon.sprite_layout == "spaced_9_32":

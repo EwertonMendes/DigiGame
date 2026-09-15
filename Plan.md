@@ -245,6 +245,53 @@ The game should provide several simultaneous forms of progression:
 
 A mission should usually advance at least one meaningful layer so rewards do not feel like experience points with no visible consequence.
 
+### Individual Tier ascension
+
+Every reconstructed owned Digimon starts at Tier E. Tier belongs to the individual, persists through both Digivolution and Degeneration, and contributes to the final stats used by visible evolution requirements. It supplements level, species, form, techniques, terrain, Link and positioning rather than replacing them.
+
+The final Tier multipliers are:
+
+| Tier | HP / ATK / DEF / INT | SP / SPD |
+| --- | ---: | ---: |
+| E | 1.00 | 1.00 |
+| D | 1.05 | 1.025 |
+| C | 1.10 | 1.05 |
+| B | 1.16 | 1.08 |
+| A | 1.23 | 1.115 |
+| S | 1.31 | 1.155 |
+| SS | 1.40 | 1.20 |
+| SSS | 1.50 | 1.25 |
+
+MOV never receives a Tier multiplier. Reaching D/C/B/A/S/SS/SSS costs 300 / 1,500 / 5,000 / 15,000 / 50,000 / 125,000 / 300,000 Bits. D has no minimum form and needs no fusion. C requires Rookie or higher, B Champion or higher, A Ultimate or higher, and S/SS/SSS Mega or Ultra. C, B, A, S and SSS require a duplicate fusion; SS does not.
+
+A fusion donor must be the exact current species, be in Storage, and have no equipment. Confirmation must identify the exact individual that will be consumed, and the complete transaction must validate before removing either Bits or the donor. The target retains its identity, nickname, favorite shortcuts, training, Potential and history. It assimilates the union of both permanent technique libraries; shared techniques retain the higher mastery instead of adding mastery, and donor-only techniques enter archived. No other donor state transfers.
+
+### Individual Expansion
+
+Tier S makes an individual eligible for permanent Expansion. Consuming one Expansion Core unlocks the individual; after unlocking, switching between 1×1 and 2×2 is free but only available in the DigiLab outside combat. Switching preserves current HP and SP proportions. All three active party members may be expanded simultaneously, and a unit never changes size during a mission.
+
+While the 2×2 footprint is active, the Digimon gains 20% maximum HP and immunity to normal-class forced movement. Heavy forced movement continues to work; colossal is reserved for future footprints. Expansion gives no direct damage, defense, SP, SPD or MOV bonus. In the hub, an expanded follower uses 1.25× additional visual scale while retaining normal hub collision. In battle it uses 1.75× base visual scale, nearest-neighbor filtering and may later receive data-driven species adjustments.
+
+The first Expansion Core is a guaranteed reward from a late story mission that introduces the system. Additional Cores are unlimited: an advanced repeatable mission guarantees one Expansion Fragment, and five fragments plus 50,000 Bits craft one Core. Inventory and encounter/quest item rewards must remain generic rather than hard-coded around Expansion items.
+
+### Tactical footprints
+
+Every battle actor has an explicit grid anchor and a data-defined set of occupied-cell offsets. Occupation is never inferred from the sprite. The initial supported footprints are 1×1 and 2×2, while the geometry foundation must accept future footprints such as 3×3 without rewriting combat.
+
+- Movement remains cardinal. Every occupied cell must exist and pass static terrain validation. Each step costs the highest movement cost among cells newly entered during that step.
+- Allies may be crossed during pathfinding, but a unit may never finish overlapping another unit. Enemy footprints block traversal. A 2×2 unit cannot use a one-cell corridor or temporarily shrink. Incapacitated units cease occupying cells.
+- Terrain defense uses the least favorable modifier among occupied cells. A hazard activates once per unit when any occupied cell is affected. A future height system must require compatible support under every occupied cell.
+- Clicking or touching any occupied cell selects the complete unit. Range and minimum range use the smallest distance between footprint edges. An area applies to an intersected unit at most once.
+- Self areas and auras originate from the full body/perimeter. Lines and cones originate from the facing edge, so a 2×2 body creates a two-cell front. Line of sight succeeds when at least one unobstructed line exists between an attacker cell and a target cell.
+- Link adjacency accepts any contact between allied footprints, with at most one opportunity per allied pair for each action.
+- Pushes and pulls move the anchor one cell at a time, validate the complete footprint, and stop before units, obstacles or map limits.
+- AI, keyboard/touch selection, cameras, VFX, previews and sprite depth must use occupied cells, footprint edges and visual centers rather than assuming one tile.
+- Combat maintains a cell-to-actor index and refreshes it on spawn, movement and incapacitation for Web performance.
+
+Encounter descriptors explicitly support Tier and footprint values; omitted values mean Tier E and 1×1. Enemy Tier is authored, never silently scaled, and appears in the battle HUD. Deployment is footprint-aware and must refuse battle start with a clear explanation when the selected team cannot fit.
+
+Every main-story map must accommodate three allied 2×2 units and provide at least one two-cell-wide route from deployment to objectives. One-cell corridors may remain optional shortcuts for 1×1 units. Story-map validation must automatically check 2×2 connectivity. Boss-specific body parts, phases and footprints larger than 2×2 are intentionally outside this first delivery.
+
 ## 11. World structure and maps
 
 ### Story maps

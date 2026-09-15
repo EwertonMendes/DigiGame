@@ -18,16 +18,12 @@ func _spawn_demo_rosters() -> void:
 		super._spawn_demo_rosters()
 		return
 
-	var player_candidates := _spawn_zone_candidates(field, true)
-	var enemy_candidates := _spawn_zone_candidates(field, false)
-	_shuffle_grids(player_candidates)
-	_shuffle_grids(enemy_candidates)
-
+	var player_entries: Array[Dictionary] = []
 	var persistent_party: Array[DigimonInstance] = OverworldState.get_active_instances()
 	for instance: DigimonInstance in persistent_party:
-		var actor := _spawn_instance_in_zone(instance, true, player_candidates, field)
-		_prepare_actor_for_intro(actor, field)
+		player_entries.append({"instance": instance, "profile": ""})
 
+	var enemy_entries: Array[Dictionary] = []
 	for descriptor: Dictionary in _enemy_descriptors():
 		var species_name := String(descriptor.get("species", ""))
 		var species_seed := String(descriptor.get("species_seed", ""))
@@ -35,16 +31,38 @@ func _spawn_demo_rosters() -> void:
 		var max_level := maxi(min_level, int(descriptor.get("level_max", descriptor.get("level", min_level))))
 		var level := _encounter_rng.randi_range(min_level, max_level)
 		var profile := String(descriptor.get("profile", "wild"))
+		var tier := String(descriptor.get("tier", "E"))
+		var footprint := String(descriptor.get("footprint", "single"))
 		var instance: DigimonInstance = null
 		if not species_seed.is_empty():
-			instance = _factory.create_enemy_by_seed(species_seed, level, profile)
+			instance = _factory.create_enemy_by_seed(species_seed, level, profile, tier, footprint)
 		else:
-			instance = _factory.create_enemy_by_name(species_name, level, profile)
-		var actor := _spawn_instance_in_zone(instance, false, enemy_candidates, field)
-		if actor != null:
-			actor.set_meta("encounter_profile", profile.to_lower())
-			actor.set_meta("reward_modifier", _encounter_reward_modifier())
-		_prepare_actor_for_intro(actor, field)
+			instance = _factory.create_enemy_by_name(species_name, level, profile, tier, footprint)
+		enemy_entries.append({
+			"instance": instance,
+			"profile": profile.to_lower(),
+			"reward_modifier": _encounter_reward_modifier(),
+		})
+
+	var player_candidates := _spawn_zone_candidates(field, true)
+	var enemy_candidates := _spawn_zone_candidates(field, false)
+	var initially_occupied := _current_occupied_grids()
+	var player_plan := _plan_team_deployment(player_entries, player_candidates, initially_occupied)
+	if not bool(player_plan.get("ok", false)):
+		_report_deployment_failure("player", player_plan)
+		return
+
+	var player_anchors: Array = player_plan.get("anchors", [])
+	var enemy_blocked := initially_occupied.duplicate()
+	enemy_blocked.append_array(_planned_occupied_grids(player_entries, player_anchors))
+	var enemy_plan := _plan_team_deployment(enemy_entries, enemy_candidates, enemy_blocked)
+	if not bool(enemy_plan.get("ok", false)):
+		_report_deployment_failure("enemy", enemy_plan)
+		return
+
+	_spawn_team_from_plan(player_entries, true, player_anchors, field)
+	_spawn_team_from_plan(enemy_entries, false, enemy_plan.get("anchors", []), field)
+	refresh_occupancy_index()
 
 	orient_battle_actors_toward_opponents()
 

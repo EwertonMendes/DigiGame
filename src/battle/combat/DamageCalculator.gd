@@ -18,7 +18,12 @@ func preview(source: Node, target: Node, action: Dictionary) -> Dictionary:
 	var offense_key := "int" if damage_class == "special" else "atk"
 	var defense_key := "int" if damage_class == "special" else "def"
 	var offense := maxi(1, _stat(source, offense_key))
-	var defense := maxi(1, _stat(target, defense_key))
+	var base_defense := maxi(1, _stat(target, defense_key))
+	# Runtime terrain context is aggregated over the whole tactical body. For a
+	# multi-cell Digimon the controller stores the least favorable occupied-cell
+	# modifier, so a 2x2 unit never cherry-picks the best tile under its body.
+	var terrain_defense_modifier := float(target.get_meta("terrain_defense_modifier", 0.0))
+	var defense := maxi(1, int(round(float(base_defense) * maxf(0.0, 1.0 + terrain_defense_modifier))))
 	var power := maxi(0, int(action.get("power", 0)))
 	var stat_factor := (2.0 * float(offense)) / maxf(1.0, float(offense + defense))
 	var base_damage := float(power) * stat_factor
@@ -55,7 +60,9 @@ func preview(source: Node, target: Node, action: Dictionary) -> Dictionary:
 		"power": power,
 		"damage_class": damage_class,
 		"offense": offense,
+		"base_defense": base_defense,
 		"defense": defense,
+		"terrain_defense_modifier": terrain_defense_modifier,
 		"type_modifier": type_mod,
 		"element_modifier": element_mod,
 		"guard_modifier": guard_mod,

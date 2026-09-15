@@ -2,12 +2,13 @@ extends Resource
 class_name QuestDefinition
 
 const VALID_STATES: Array[String] = ["locked", "available", "active", "completed"]
-const SUPPORTED_OBJECTIVES: Array[String] = ["species_defeated"]
+const SUPPORTED_OBJECTIVES: Array[String] = ["species_defeated", "battle_wins"]
 
 @export var quest_id: String = ""
 @export var initial_state: String = "locked"
 @export var objectives: Array[Dictionary] = []
 @export var rewards: Dictionary = {}
+@export var repeatable: bool = false
 
 
 func validate(database: DigimonDatabase = null) -> Array[String]:
@@ -30,8 +31,8 @@ func validate(database: DigimonDatabase = null) -> Array[String]:
 				errors.append("objective %d is missing species_seed" % index)
 			elif database != null and database.get_by_seed(seed).is_empty():
 				errors.append("objective %d references unknown species: %s" % [index, seed])
-			if int(objective.get("amount", objective.get("value", 0))) < 1:
-				errors.append("objective %d amount must be at least 1" % index)
+		if int(objective.get("amount", objective.get("value", 0))) < 1:
+			errors.append("objective %d amount must be at least 1" % index)
 	return errors
 
 
@@ -41,6 +42,7 @@ func to_dict() -> Dictionary:
 		"initial_state": initial_state,
 		"objectives": objectives.duplicate(true),
 		"rewards": rewards.duplicate(true),
+		"repeatable": repeatable,
 	}
 
 
@@ -48,6 +50,7 @@ static func from_dict(data: Dictionary) -> QuestDefinition:
 	var definition := QuestDefinition.new()
 	definition.quest_id = String(data.get("quest_id", data.get("id", "")))
 	definition.initial_state = String(data.get("initial_state", data.get("state", "locked")))
+	definition.repeatable = bool(data.get("repeatable", false))
 	var raw_objectives = data.get("objectives", [])
 	if raw_objectives is Array:
 		for raw_objective in raw_objectives:

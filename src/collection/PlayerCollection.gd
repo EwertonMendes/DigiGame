@@ -6,6 +6,7 @@ var progression_flags: Dictionary = {}
 var quest_states: Dictionary = {}
 var unlocked_technique_records: Array[String] = []
 var technique_research: Dictionary = {}
+var inventory: Dictionary = {}
 
 var _instances_by_id: Dictionary = {}
 var _instance_id_by_key: Dictionary = {}
@@ -80,6 +81,17 @@ func get_key_for_instance(instance_id: String) -> String:
 func has_instance(instance_id: String) -> bool:
 	return _instances_by_id.has(instance_id)
 
+func remove_reserve_instance(instance_id: String) -> bool:
+	var clean_id := instance_id.strip_edges()
+	if clean_id.is_empty() or not _instances_by_id.has(clean_id) or _active_party_ids.has(clean_id):
+		return false
+	var key := String(_collection_key_by_id.get(clean_id, ""))
+	_instances_by_id.erase(clean_id)
+	_collection_key_by_id.erase(clean_id)
+	if not key.is_empty():
+		_instance_id_by_key.erase(key)
+	return true
+
 func get_active_party_ids() -> Array[String]:
 	return _active_party_ids.duplicate()
 
@@ -135,6 +147,31 @@ func get_digi_data(species_seed: String) -> int:
 func get_all_digi_data() -> Dictionary:
 	return _digi_data_by_seed.duplicate(true)
 
+func get_item_count(item_id: String) -> int:
+	return maxi(0, int(inventory.get(item_id.strip_edges(), 0)))
+
+func add_item(item_id: String, amount: int = 1) -> int:
+	var clean_id := item_id.strip_edges()
+	if clean_id.is_empty() or amount <= 0:
+		return get_item_count(clean_id)
+	inventory[clean_id] = get_item_count(clean_id) + amount
+	return int(inventory[clean_id])
+
+func consume_item(item_id: String, amount: int = 1) -> bool:
+	var clean_id := item_id.strip_edges()
+	var cost := maxi(0, amount)
+	if clean_id.is_empty() or cost <= 0 or get_item_count(clean_id) < cost:
+		return false
+	var remaining := get_item_count(clean_id) - cost
+	if remaining == 0:
+		inventory.erase(clean_id)
+	else:
+		inventory[clean_id] = remaining
+	return true
+
+func get_inventory() -> Dictionary:
+	return inventory.duplicate(true)
+
 
 func has_technique_record(skill_id: String) -> bool:
 	return unlocked_technique_records.has(skill_id.strip_edges())
@@ -182,6 +219,7 @@ func to_dict() -> Dictionary:
 		"questStates": quest_states.duplicate(true),
 		"unlockedTechniqueRecords": unlocked_technique_records.duplicate(),
 		"techniqueResearch": technique_research.duplicate(true),
+		"inventory": get_inventory(),
 	}
 
 func load_dict(data: Dictionary) -> void:
@@ -192,6 +230,7 @@ func load_dict(data: Dictionary) -> void:
 	_digi_data_by_seed.clear()
 	unlocked_technique_records.clear()
 	technique_research.clear()
+	inventory.clear()
 	bits = maxi(0, int(data.get("bits", 0)))
 	progression_flags = _safe_dictionary(data.get("progressionFlags", {}))
 	quest_states = _safe_dictionary(data.get("questStates", {}))
@@ -208,6 +247,13 @@ func load_dict(data: Dictionary) -> void:
 			var points := clampi(int(raw_research[raw_skill_id]), 0, 2)
 			if not skill_id.is_empty() and points > 0 and not unlocked_technique_records.has(skill_id):
 				technique_research[skill_id] = points
+	var raw_inventory = data.get("inventory", {})
+	if raw_inventory is Dictionary:
+		for raw_item_id in raw_inventory.keys():
+			var item_id := String(raw_item_id).strip_edges()
+			var amount := maxi(0, int(raw_inventory[raw_item_id]))
+			if not item_id.is_empty() and amount > 0:
+				inventory[item_id] = amount
 	var entries = data.get("instances", [])
 	if entries is Array:
 		for raw_entry in entries:

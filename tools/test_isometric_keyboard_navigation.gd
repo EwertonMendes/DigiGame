@@ -10,6 +10,11 @@ func _ready() -> void:
 	var field := FieldScript.new()
 	var controller := ControllerScript.new()
 	_run(field, controller)
+	# These test doubles are instantiated outside the scene tree. Free them
+	# explicitly before quitting so the headless regression also validates clean
+	# ownership instead of leaking CanvasItem/resources at engine shutdown.
+	controller.free()
+	field.free()
 	if _failed:
 		get_tree().quit(1)
 		return

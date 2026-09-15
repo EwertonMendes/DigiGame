@@ -99,3 +99,62 @@ func reconstruction_int(key: String, fallback: int) -> int:
 
 func reconstruction_bool(key: String, fallback: bool) -> bool:
 	return bool(section("reconstruction").get(key, fallback))
+
+
+func tier_order() -> Array[String]:
+	var result: Array[String] = []
+	var raw = section("tiers").get("order", ["E", "D", "C", "B", "A", "S", "SS", "SSS"])
+	if raw is Array:
+		for raw_tier in raw:
+			var tier := String(raw_tier).to_upper().strip_edges()
+			if not tier.is_empty() and not result.has(tier):
+				result.append(tier)
+	return result
+
+
+func normalize_tier(tier: String) -> String:
+	var normalized := tier.to_upper().strip_edges()
+	return normalized if tier_order().has(normalized) else "E"
+
+
+func tier_index(tier: String) -> int:
+	return tier_order().find(normalize_tier(tier))
+
+
+func next_tier(tier: String) -> String:
+	var order := tier_order()
+	var index := order.find(normalize_tier(tier))
+	return order[index + 1] if index >= 0 and index + 1 < order.size() else ""
+
+
+func tier_stat_multiplier(tier: String, stat_key: String) -> float:
+	var group := "secondaryStatMultipliers" if ["mp", "sp", "speed"].has(stat_key.to_lower()) else "primaryStatMultipliers"
+	var raw = section("tiers").get(group, {})
+	return float((raw as Dictionary).get(normalize_tier(tier), 1.0)) if raw is Dictionary else 1.0
+
+
+func tier_promotion_bits(target_tier: String) -> int:
+	var raw = section("tiers").get("promotionBits", {})
+	return maxi(0, int((raw as Dictionary).get(normalize_tier(target_tier), 0))) if raw is Dictionary else 0
+
+
+func tier_minimum_rank(target_tier: String) -> String:
+	var raw = section("tiers").get("minimumRank", {})
+	return String((raw as Dictionary).get(normalize_tier(target_tier), "Fresh")) if raw is Dictionary else "Fresh"
+
+
+func tier_fusion_required(target_tier: String) -> bool:
+	var raw = section("tiers").get("fusionRequired", {})
+	return bool((raw as Dictionary).get(normalize_tier(target_tier), false)) if raw is Dictionary else false
+
+
+func expansion_number(key: String, fallback: float) -> float:
+	return float(section("expansion").get(key, fallback))
+
+
+func expansion_int(key: String, fallback: int) -> int:
+	return int(section("expansion").get(key, fallback))
+
+
+func expansion_string(key: String, fallback: String) -> String:
+	return String(section("expansion").get(key, fallback))

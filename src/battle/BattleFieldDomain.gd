@@ -34,13 +34,16 @@ const HOVER_BLOCKED_GLOW_V2 := Color(1.0, 0.12, 0.12, 0.26)
 
 var _action_range_indicators: Array[Node] = []
 var _target_indicators: Array[Node] = []
+var _hover_footprint_indicators: Array[Node] = []
 var _hover_glow: Line2D
 
 
 func _process(_delta: float) -> void:
 	_update_hover()
-	if _last_hovered_grid == INVALID_GRID and _hover_glow != null:
-		_hover_glow.visible = false
+	if _last_hovered_grid == INVALID_GRID:
+		if _hover_glow != null:
+			_hover_glow.visible = false
+		_clear_hover_footprint()
 
 
 func set_movement_range(reachable: Dictionary, origin: Vector2i, moving_actor: Node) -> void:
@@ -50,32 +53,45 @@ func set_movement_range(reachable: Dictionary, origin: Vector2i, moving_actor: N
 	_movement_actor = moving_actor
 	_movement_reachable = reachable.duplicate()
 
+	var origin_cells := _occupied_cells_for_anchor(origin, moving_actor)
+	var highlighted: Dictionary = {}
 	for key in _movement_reachable.keys():
-		var grid := Vector2i(key)
-		if grid == origin:
-			continue
-		var indicator := _create_tactical_indicator(
-			"MoveRange_%02d_%02d" % [grid.x, grid.y], grid,
-			MOVE_RANGE_FILL, MOVE_RANGE_OUTLINE, MOVE_RANGE_GLOW,
-			Vector2(-1.5, -0.75), 1.35, 4.25, -36
-		)
-		_range_indicators.append(indicator)
+		var anchor := Vector2i(key)
+		for grid: Vector2i in _occupied_cells_for_anchor(anchor, moving_actor):
+			if origin_cells.has(grid) or highlighted.has(grid):
+				continue
+			highlighted[grid] = true
+			var indicator := _create_tactical_indicator(
+				"MoveRange_%02d_%02d" % [grid.x, grid.y], grid,
+				MOVE_RANGE_FILL, MOVE_RANGE_OUTLINE, MOVE_RANGE_GLOW,
+				Vector2(-1.5, -0.75), 1.35, 4.25, -36
+			)
+			_range_indicators.append(indicator)
 
 	_last_hovered_grid = INVALID_GRID
 	_last_hover_block_reason = ""
 
 
+func clear_movement_range() -> void:
+	super.clear_movement_range()
+	_clear_hover_footprint()
+
+
 func set_movement_path(path: Array[Vector2i]) -> void:
 	clear_movement_path()
-	for grid in path:
-		if grid == _movement_origin:
-			continue
-		var indicator := _create_tactical_indicator(
-			"MovePath_%02d_%02d" % [grid.x, grid.y], grid,
-			MOVE_PATH_FILL, MOVE_PATH_OUTLINE, MOVE_PATH_GLOW,
-			Vector2(-5.0, -2.5), 1.8, 5.0, -34
-		)
-		_path_indicators.append(indicator)
+	var origin_cells := _occupied_cells_for_anchor(_movement_origin, _movement_actor)
+	var highlighted: Dictionary = {}
+	for anchor: Vector2i in path:
+		for grid: Vector2i in _occupied_cells_for_anchor(anchor, _movement_actor):
+			if origin_cells.has(grid) or highlighted.has(grid):
+				continue
+			highlighted[grid] = true
+			var indicator := _create_tactical_indicator(
+				"MovePath_%02d_%02d" % [grid.x, grid.y], grid,
+				MOVE_PATH_FILL, MOVE_PATH_OUTLINE, MOVE_PATH_GLOW,
+				Vector2(-5.0, -2.5), 1.8, 5.0, -34
+			)
+			_path_indicators.append(indicator)
 
 
 func set_action_range(grids: Array[Vector2i], kind: String = "attack") -> void:
@@ -117,6 +133,7 @@ func set_target_preview_grids(grids: Array[Vector2i], center_grid: Vector2i) -> 
 func set_targeting_hover_state(grid: Vector2i, valid: bool) -> void:
 	if _hover_fill == null or _hover_outline == null or _hover_glow == null:
 		return
+	_clear_hover_footprint()
 	var world_position := grid_to_world(grid)
 	_hover_glow.position = world_position
 	_hover_fill.position = world_position
@@ -193,7 +210,45 @@ func _apply_selected_grid(grid: Vector2i, block_reason := "") -> void:
 	_hover_glow.visible = true
 	_hover_fill.visible = true
 	_hover_outline.visible = true
+	_update_hover_footprint(grid, blocked)
 	hovered_grid_changed.emit(grid, block_reason)
+
+
+func _update_hover_footprint(anchor: Vector2i, blocked: bool) -> void:
+	_clear_hover_footprint()
+	if _movement_actor == null:
+		return
+	var cells := _occupied_cells_for_anchor(anchor, _movement_actor)
+	for grid: Vector2i in cells:
+		if grid == anchor:
+			continue
+		var indicator := _create_tactical_indicator(
+			"HoverFootprint_%02d_%02d" % [grid.x, grid.y],
+			grid,
+			HOVER_BLOCKED_FILL_V2 if blocked else HOVER_AVAILABLE_FILL_V2,
+			HOVER_BLOCKED_OUTLINE_V2 if blocked else HOVER_AVAILABLE_OUTLINE_V2,
+			HOVER_BLOCKED_GLOW_V2 if blocked else HOVER_AVAILABLE_GLOW_V2,
+			Vector2(-1.5, -0.75), 2.6, 7.0, -32
+		)
+		_hover_footprint_indicators.append(indicator)
+
+
+func _clear_hover_footprint() -> void:
+	_free_combat_indicators(_hover_footprint_indicators)
+
+
+func _occupied_cells_for_anchor(anchor: Vector2i, actor: Node) -> Array[Vector2i]:
+	var result: Array[Vector2i] = [anchor]
+	if actor == null or not actor.has_method("get_occupied_grids"):
+		return result
+	var raw_cells = actor.call("get_occupied_grids", anchor)
+	if not raw_cells is Array:
+		return result
+	result.clear()
+	for raw_cell in raw_cells:
+		if raw_cell is Vector2i:
+			result.append(Vector2i(raw_cell))
+	return result if not result.is_empty() else [anchor]
 
 
 func _create_tactical_indicator(

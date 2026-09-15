@@ -29,6 +29,7 @@ func bind_digimon_instance(instance: DigimonInstance, species: Dictionary, playe
 	species_data = species.duplicate(true)
 	is_player_controlled = player_controlled
 	digimon_key = String(species_data.get("name", "")).to_lower()
+	configure_battle_footprint(instance.battle_footprint_id)
 	battle_state = BattleDigimonScript.new(instance, "player" if player_controlled else "enemy")
 
 
@@ -53,6 +54,10 @@ func get_level() -> int:
 
 func get_potential() -> int:
 	return digimon_instance.potential if digimon_instance != null else 0
+
+
+func get_tier() -> String:
+	return digimon_instance.tier if digimon_instance != null else "E"
 
 
 func get_final_stat(stat_key: String) -> int:

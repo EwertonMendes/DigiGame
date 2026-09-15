@@ -225,7 +225,8 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, active: 
 	var location := "PARTY SLOT %d" % (active_ids.find(instance.id) + 1) if active else "STORAGE"
 	copy.add_child(_single_line_label(name.to_upper(), 13, UI.TEXT, true))
 	copy.add_child(_single_line_label("LV %d  ·  %s" % [instance.level, location], 10, accent.lightened(0.08), true))
-	copy.add_child(_single_line_label("POT %d  ·  LINK %d" % [instance.potential, instance.link], 9, UI.SUBTLE, true))
+	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
+	copy.add_child(_single_line_label("TIER %s  ·  %s  ·  POT %d  ·  LINK %d" % [instance.tier, footprint_badge, instance.potential, instance.link], 9, UI.SUBTLE, true))
 	return button
 
 func _style_list_selection() -> void:
@@ -303,7 +304,8 @@ func _refresh_detail() -> void:
 	identity.add_theme_constant_override("separation", 4)
 	hero.add_child(identity)
 	identity.add_child(_label(instance.get_display_name(species_name).to_upper(), 22, UI.TEXT, true))
-	identity.add_child(_label("%s  ·  LV %d" % [rank.to_upper(), instance.level], 11, accent.lightened(0.10), true))
+	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
+	identity.add_child(_label("%s  ·  LV %d  ·  TIER %s  ·  %s" % [rank.to_upper(), instance.level, instance.tier, footprint_badge], 11, accent.lightened(0.10), true))
 	identity.add_child(_label("ACTIVE PARTY  ·  SLOT %d" % (party_index + 1) if active else "STORAGE", 10, UI.GOLD if active else UI.CYAN, true))
 	identity.add_child(_label("ID %s" % instance.id.substr(0, mini(8, instance.id.length())), 9, UI.SUBTLE))
 

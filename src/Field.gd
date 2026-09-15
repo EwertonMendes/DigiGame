@@ -240,6 +240,31 @@ func get_tile_block_reason(grid: Vector2i, moving_digimon: Node = null) -> Strin
 	return ""
 
 
+func get_actor_anchor_block_reason(anchor: Vector2i, moving_digimon: Node = null) -> String:
+	var grids: Array[Vector2i] = [anchor]
+	if moving_digimon != null and moving_digimon.has_method("get_occupied_grids"):
+		grids = moving_digimon.call("get_occupied_grids", anchor)
+	var controller := _get_digimon_controller()
+	for grid: Vector2i in grids:
+		var static_reason := get_static_tile_block_reason(grid)
+		if not static_reason.is_empty():
+			return static_reason
+		if moving_digimon == null or controller == null:
+			continue
+		var occupant: Node = null
+		if controller.has_method("get_digimon_at_grid"):
+			occupant = controller.call("get_digimon_at_grid", grid, moving_digimon) as Node
+		elif controller.has_method("get_digimon_at_tile"):
+			occupant = controller.call("get_digimon_at_tile", to_global(grid_to_world(grid)), moving_digimon) as Node
+		if occupant != null:
+			return "occupied"
+	return ""
+
+
+func can_actor_occupy_anchor(anchor: Vector2i, moving_digimon: Node = null) -> bool:
+	return get_actor_anchor_block_reason(anchor, moving_digimon).is_empty()
+
+
 func get_movement_cost(grid: Vector2i, _moving_digimon: Node = null) -> int:
 	if not _is_valid_grid(grid):
 		return 999999
