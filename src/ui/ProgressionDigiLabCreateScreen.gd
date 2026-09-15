@@ -1,7 +1,6 @@
 extends "res://src/ui/DigiLabScreen.gd"
 class_name ProgressionDigiLabCreateScreen
 
-const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const SemanticPalette = preload("res://src/ui/components/DigiSemanticPalette.gd")
 
 
