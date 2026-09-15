@@ -6,6 +6,7 @@ const SemanticPalette = preload("res://src/ui/components/DigiSemanticPalette.gd"
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
 const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
+const AttributeChip = preload("res://src/ui/components/DigiAttributeChip.gd")
 const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 
 
@@ -82,15 +83,18 @@ func configure(instance: DigimonInstance, species: Dictionary, progression: Digi
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	summary.add_child(name_label)
 
-	var chips := HBoxContainer.new()
-	chips.add_theme_constant_override("separation", 7)
+	var chips := HFlowContainer.new()
+	chips.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chips.add_theme_constant_override("h_separation", 7)
+	chips.add_theme_constant_override("v_separation", 6)
 	summary.add_child(chips)
 	chips.add_child(_pill(rank.to_upper(), accent))
+	chips.add_child(_tier_pill(instance.tier))
 	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
-	chips.add_child(_tier_pill(instance.tier, footprint_badge))
+	chips.add_child(_pill(footprint_badge, V2.AMBER))
 	var attribute := String(species.get("attribute", "Free"))
 	var family := String(species.get("species", species.get("family", "Unknown")))
-	chips.add_child(_pill(attribute.to_upper(), SemanticPalette.data_attribute_color(attribute)))
+	chips.add_child(AttributeChip.build(attribute))
 	chips.add_child(_pill(family.to_upper(), SemanticPalette.family_color(family)))
 
 	var description := String(species.get("description", "")).strip_edges()
@@ -171,27 +175,25 @@ func _thin_line() -> Control:
 
 func _pill(text: String, accent: Color) -> Label:
 	var label := _label(text, 9, accent, true)
+	label.custom_minimum_size.y = AttributeChip.CHIP_HEIGHT
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_stylebox_override("normal", V2.pill_style(accent, true))
 	return label
 
 
-func _tier_pill(tier: String, footprint: String) -> Control:
+func _tier_pill(tier: String) -> Control:
 	var panel := PanelContainer.new()
+	panel.custom_minimum_size.y = AttributeChip.CHIP_HEIGHT
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override("panel", V2.pill_style(V2.AMBER, true))
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 5)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(row)
+	var center := CenterContainer.new()
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(center)
 	var tier_icon := TierIconScript.new() as DigiTierIcon
-	tier_icon.configure(tier, Vector2(30.0, 19.0))
-	row.add_child(tier_icon)
-	var footprint_label := _label(footprint, 9, V2.AMBER, true)
-	footprint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(footprint_label)
-	panel.tooltip_text = "Tier %s · %s tactical footprint" % [tier.to_upper(), footprint]
+	tier_icon.configure(tier, AttributeChip.ICON_SIZE)
+	center.add_child(tier_icon)
+	panel.tooltip_text = "Tier %s" % tier.to_upper()
 	return panel
 
 
