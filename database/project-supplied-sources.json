@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "source_kind": "project_supplied_directional",
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "species": [
+    {
+      "name": "Zeke Greymon",
+      "seed": "48b7a3e5-3e43-4819-96b8-673bfe67d5c1",
+      "source_sheet": "res://assets/characters/zekegreymon/source/sheet.webp",
+      "source_sha256": "9a901459aaf920619cd74a4561bec9b03f0fffd8b45169b37c8d57c5236271e9",
+      "background": {
+        "mode": "hsv_range",
+        "hue_min": 195.0,
+        "hue_max": 210.0,
+        "saturation_min": 0.3,
+        "saturation_max": 0.8,
+        "value_min": 0.6,
+        "value_max": 1.0
+      },
+      "movement": {
+        "layout": "two_rows_of_six",
+        "row_indices": [
+          0,
+          1
+        ],
+        "direction_group_pattern": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "phase_order": [
+          0,
+          1,
+          2
+        ],
+        "projection_min_pixels": 5,
+        "minimum_span": 20,
+        "crop_padding": 2
+      },
+      "runtime": {
+        "max_sprite_width": 46,
+        "max_sprite_height": 60,
+        "minimum_cell_width": 50,
+        "minimum_cell_height": 64,
+        "cell_padding_x": 2,
+        "cell_padding_y": 2
+      },
+      "portrait": {
+        "row_index": 2,
+        "frame_index": 0,
+        "duration_ms": 220,
+        "projection_min_pixels": 5,
+        "minimum_span": 20,
+        "crop_padding": 2
+      }
+    }
+  ]
+}
