@@ -23,6 +23,9 @@ jobs:
       - name: Install sprite tooling
         run: python3 -m pip install --disable-pip-version-check pillow numpy
 
+      - name: Materialize pinned project-supplied sources
+        run: python3 tools/materialize_project_supplied_sources.py
+
       - name: Build normalized project-supplied assets
         run: python3 tools/build_project_supplied_directional.py
 
@@ -35,7 +38,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet; then
+          if [[ -z "$(git status --porcelain)" ]]; then
             echo 'Project-supplied rebuild is deterministic: committed outputs already match.'
             exit 0
           fi
