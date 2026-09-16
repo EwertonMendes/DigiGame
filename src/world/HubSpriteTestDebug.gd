@@ -2,15 +2,18 @@ extends Node
 class_name HubSpriteTestDebug
 
 const UI = preload("res://src/ui/TacticalTheme.gd")
+const AccessScript = preload("res://src/debug/DebugToolkitAccess.gd")
 const SpriteTestLabScript = preload("res://src/ui/DigimonSpriteTestLab.gd")
 
 var _layer: CanvasLayer
 var _button: Button
 var _lab: DigimonSpriteTestLab
 var _open := false
+var _debug_available := false
 
 
 func _ready() -> void:
+	_debug_available = AccessScript.is_available()
 	call_deferred("_build_debug_ui")
 
 
@@ -34,6 +37,7 @@ func _build_debug_ui() -> void:
 	_button.add_theme_stylebox_override("normal", UI.action_style(UI.PURPLE, "normal"))
 	_button.add_theme_stylebox_override("hover", UI.action_style(UI.PURPLE, "hover"))
 	_button.add_theme_stylebox_override("pressed", UI.action_style(UI.PURPLE, "pressed"))
+	_button.visible = _debug_available
 	_button.pressed.connect(_open_lab)
 	_layer.add_child(_button)
 
@@ -47,7 +51,7 @@ func _build_debug_ui() -> void:
 
 
 func _open_lab() -> void:
-	if _open or _lab == null:
+	if not _debug_available or _open or _lab == null:
 		return
 	var hub := get_parent()
 	if bool(hub.get("_transitioning")) or bool(hub.get("_dialog_open")):
@@ -70,7 +74,7 @@ func _close_lab() -> void:
 	if player != null:
 		var can_move := not bool(hub.get("_transitioning")) and not bool(hub.get("_dialog_open"))
 		player.set("movement_enabled", can_move)
-	_button.visible = true
+	_button.visible = _debug_available
 	_layout_button()
 
 
