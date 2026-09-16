@@ -76,7 +76,24 @@ def main() -> None:
             skill_id = str(skill.get("skill", "")).strip()
             if skill_id not in action_ids:
                 raise RuntimeError(f"Curated learnset {seed} references unknown technique {skill_id!r}")
-        upsert(learnsets, "speciesSeed", learnset)
+
+        legacy_aliases = learnset.get("legacySkillAliases", {})
+        if not isinstance(legacy_aliases, dict):
+            raise RuntimeError(f"Curated learnset {seed} legacySkillAliases must be an object")
+        for legacy_id, replacement_id in legacy_aliases.items():
+            clean_legacy_id = str(legacy_id).strip()
+            clean_replacement_id = str(replacement_id).strip()
+            if not clean_legacy_id or not clean_replacement_id:
+                raise RuntimeError(f"Curated learnset {seed} contains an empty legacy skill alias")
+            if clean_replacement_id not in action_ids:
+                raise RuntimeError(
+                    f"Curated learnset {seed} maps legacy technique {clean_legacy_id!r} "
+                    f"to unknown technique {clean_replacement_id!r}"
+                )
+
+        runtime_learnset = json.loads(json.dumps(learnset, ensure_ascii=False))
+        runtime_learnset.pop("legacySkillAliases", None)
+        upsert(learnsets, "speciesSeed", runtime_learnset)
 
     for record in curation.get("records", []):
         if not isinstance(record, dict):
