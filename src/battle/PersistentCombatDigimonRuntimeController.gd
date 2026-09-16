@@ -3,6 +3,7 @@ extends "res://src/battle/CombatDigimonRuntimeController.gd"
 const EncounterDefinitionScript = preload("res://src/world/BattleEncounterDefinition.gd")
 
 var encounter_definition: BattleEncounterDefinition = null
+var _invalid_battle_abort_pending := false
 
 
 func configure_encounter(definition: BattleEncounterDefinition) -> void:
@@ -13,7 +14,7 @@ func _spawn_demo_rosters() -> void:
 	_apply_pending_debug_encounter()
 	var party_error := OverworldState.battle_party_validation_error()
 	if not party_error.is_empty():
-		push_error("Battle cannot start: %s" % party_error)
+		_abort_invalid_battle(party_error)
 		return
 	var field := get_node_or_null("../Blocks") as Node2D
 	if field == null or not field.has_method("grid_to_world"):
@@ -24,6 +25,9 @@ func _spawn_demo_rosters() -> void:
 
 	var player_entries: Array[Dictionary] = []
 	var persistent_party: Array[DigimonInstance] = OverworldState.get_active_instances()
+	if persistent_party.is_empty():
+		_abort_invalid_battle("You need at least one Digimon in your party to start a battle.")
+		return
 	for instance: DigimonInstance in persistent_party:
 		player_entries.append({"instance": instance, "profile": ""})
 
@@ -54,6 +58,7 @@ func _spawn_demo_rosters() -> void:
 	var player_plan := _plan_team_deployment(player_entries, player_candidates, initially_occupied)
 	if not bool(player_plan.get("ok", false)):
 		_report_deployment_failure("player", player_plan)
+		_abort_invalid_battle("The player party could not be deployed safely.")
 		return
 
 	var player_anchors: Array = player_plan.get("anchors", [])
@@ -62,6 +67,7 @@ func _spawn_demo_rosters() -> void:
 	var enemy_plan := _plan_team_deployment(enemy_entries, enemy_candidates, enemy_blocked)
 	if not bool(enemy_plan.get("ok", false)):
 		_report_deployment_failure("enemy", enemy_plan)
+		_abort_invalid_battle("The enemy party could not be deployed safely.")
 		return
 
 	_spawn_team_from_plan(player_entries, true, player_anchors, field)
@@ -69,6 +75,26 @@ func _spawn_demo_rosters() -> void:
 	refresh_occupancy_index()
 
 	orient_battle_actors_toward_opponents()
+
+
+func _abort_invalid_battle(reason: String) -> void:
+	if _invalid_battle_abort_pending:
+		return
+	_invalid_battle_abort_pending = true
+	push_error("Battle runtime aborted safely: %s" % reason)
+	if DigitalSceneTransition.is_transitioning():
+		DigitalSceneTransition.transition_finished.connect(_on_transition_finished_after_invalid_battle, CONNECT_ONE_SHOT)
+		return
+	_return_to_hub_after_invalid_battle()
+
+
+func _on_transition_finished_after_invalid_battle(_scene_path: String, _context: String) -> void:
+	_return_to_hub_after_invalid_battle()
+
+
+func _return_to_hub_after_invalid_battle() -> void:
+	if not DigitalSceneTransition.return_to_hub():
+		push_error("Battle runtime could not return to Hub after invalid combat data.")
 
 
 func _apply_pending_debug_encounter() -> void:
