@@ -91,13 +91,26 @@ func get_key_for_instance(instance_id: String) -> String:
 func has_instance(instance_id: String) -> bool:
 	return _instances_by_id.has(instance_id)
 
+func remove_instance(instance_id: String) -> bool:
+	var clean_id := instance_id.strip_edges()
+	if clean_id.is_empty() or not _instances_by_id.has(clean_id):
+		return false
+	_active_party_ids.erase(clean_id)
+	_hospital_ids.erase(clean_id)
+	return _erase_instance_record(clean_id)
+
 func remove_reserve_instance(instance_id: String) -> bool:
 	var clean_id := instance_id.strip_edges()
 	if clean_id.is_empty() or not _instances_by_id.has(clean_id) or _active_party_ids.has(clean_id) or _hospital_ids.has(clean_id):
 		return false
-	var key := String(_collection_key_by_id.get(clean_id, ""))
-	_instances_by_id.erase(clean_id)
-	_collection_key_by_id.erase(clean_id)
+	return _erase_instance_record(clean_id)
+
+func _erase_instance_record(instance_id: String) -> bool:
+	if not _instances_by_id.has(instance_id):
+		return false
+	var key := String(_collection_key_by_id.get(instance_id, ""))
+	_instances_by_id.erase(instance_id)
+	_collection_key_by_id.erase(instance_id)
 	if not key.is_empty():
 		_instance_id_by_key.erase(key)
 	return true
