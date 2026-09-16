@@ -24,6 +24,11 @@ func _ready() -> void:
 	var continue_button := screen.get("_continue_button") as Button
 	_check(continue_button != null and continue_button.custom_minimum_size.y >= V2.TOUCH_TARGET, "Result action must remain touch-safe")
 	_check(screen.find_child("KenneyResultDivider", true, false) == null, "Battle result must not recreate legacy Kenney chrome")
+	var party_grid := screen.get("_party_grid") as GridContainer
+	var content := screen.get("_content") as VBoxContainer
+	_check(party_grid != null and party_grid.get_parent() == content, "Squad report must participate directly in the result layout")
+	_check(screen.find_child("SquadReportScrollV2", true, false) == null, "Squad report must not use an internal scroll viewport")
+	await _verify_card_layout_stability(screen)
 
 	# Victory is intentionally verified first and also reproduces the first-open
 	# late-minimum-size case that caused the production overflow.
@@ -37,7 +42,6 @@ func _ready() -> void:
 	await _frames(2)
 	_check_frame_inside_viewport(screen, viewport, "compact")
 	_check_frame_centered(screen, viewport, "compact")
-	var party_grid := screen.get("_party_grid") as GridContainer
 	_check(party_grid != null and party_grid.columns == 1, "Compact result layout must collapse squad cards to one column")
 
 	screen.queue_free()
@@ -50,6 +54,59 @@ func _ready() -> void:
 	for failure in _failures:
 		push_error("[battle-result-ui-v2] %s" % failure)
 	get_tree().quit(1)
+
+
+func _verify_card_layout_stability(screen: BattleResultScreen) -> void:
+	screen.set("_result", {"outcome": "victory", "victory": true})
+	var reward := {
+		"instance_id": "layout-stability",
+		"display_name": "Agumon",
+		"species_name": "Agumon",
+		"rank": "Rookie",
+		"xp_gained": 96,
+		"old_level": 4,
+		"new_level": 5,
+		"levels_gained": 1,
+		"old_exp": 90,
+		"new_exp": 101,
+		"old_xp_required": 120,
+		"new_xp_required": 229,
+		"level_steps": [{
+			"level": 4,
+			"required": 120,
+			"start_exp": 90,
+			"end_exp": 120,
+			"leveled_up": true,
+			"next_level": 5,
+		}],
+		"learned_skills": ["pepper_breath", "baby_flame"],
+		"unlocked_evolutions": [{"name": "Greymon"}],
+	}
+	var created = screen.call("_create_party_card", reward, V2.GREEN, true)
+	if not _check(created is Dictionary, "Card stability regression requires a synthetic reward card"):
+		return
+	var card: Dictionary = created as Dictionary
+	await _frames(2)
+	var panel := card.get("panel") as PanelContainer
+	var unlocks := card.get("unlocks") as Label
+	var badge := card.get("level_up") as Label
+	if not _check(panel != null and unlocks != null and badge != null, "Synthetic reward card must expose its dynamic presentation nodes"):
+		return
+	var initial_height := panel.get_combined_minimum_size().y
+	_check(not unlocks.text.is_empty(), "Final unlock copy must be reserved before reward animation starts")
+	_check(is_zero_approx(unlocks.modulate.a), "Reserved unlock copy should start visually hidden")
+	_check(badge.visible and is_zero_approx(badge.modulate.a), "Level-up feedback must reserve its slot without changing card height")
+
+	# Revealing final reward copy and level-up feedback must be purely visual. If
+	# either changes minimum size, the grid will visibly bounce during animation.
+	screen.call("_set_unlock_text", card)
+	badge.modulate.a = 1.0
+	await _frames(2)
+	var revealed_height := panel.get_combined_minimum_size().y
+	_check(absf(revealed_height - initial_height) <= 0.5, "Reward animation must not change Digimon card height")
+
+	panel.queue_free()
+	await _frames(2)
 
 
 func _verify_outcome(
