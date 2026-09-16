@@ -414,7 +414,7 @@ func _refresh_tabs() -> void:
 		var button := _tab_buttons[key] as Button
 		var count := OverworldState.get_active_instances().size() if key == "party" else OverworldState.get_hospital_instances().size()
 		button.text = "%s  %d" % [key.to_upper(), count]
-		var active := key == _tab
+		var active: bool = String(key) == _tab
 		button.add_theme_stylebox_override("normal", V2.hospital_button_style(V2.CYAN, "focus" if active else "normal"))
 		button.add_theme_color_override("font_color", V2.WHITE if active else V2.MUTED)
 
