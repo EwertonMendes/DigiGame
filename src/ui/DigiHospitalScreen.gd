@@ -4,7 +4,7 @@ extends "res://src/ui/HospitalScreen.gd"
 # HospitalScreen/OverworldState; this layer owns the final interaction polish.
 
 const CommandButtonStyle = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
-const PATIENT_CARD_HEIGHT := 116.0
+const PATIENT_CARD_HEIGHT := 124.0
 const PATIENT_STATUS_TOP_GAP := 4
 const ANALOG_NAV_PRESS_THRESHOLD := 0.62
 const ANALOG_NAV_RELEASE_THRESHOLD := 0.34
@@ -134,6 +134,13 @@ func _build_hero() -> void:
 	if meta == null or _hero_status == null:
 		return
 
+	# Rank and level stay visible before the health-state chip on the same line.
+	# Give the metadata label an authored minimum width so the expanding spacer
+	# can never collapse it away when the row is laid out.
+	_hero_info.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_hero_info.custom_minimum_size = Vector2(190, 28)
+	_hero_info.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+
 	# Health state belongs to the same semantic line as rank/level/tier. Keeping
 	# it here also frees the portrait area from a dedicated status row.
 	var previous_parent := _hero_status.get_parent()
@@ -142,7 +149,6 @@ func _build_hero() -> void:
 	meta.add_child(_hero_status)
 	meta.move_child(_hero_status, _hero_info.get_index() + 1)
 	meta.add_theme_constant_override("separation", 10)
-	_hero_info.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_hero_status.custom_minimum_size = Vector2(0, 28)
 	_hero_status.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_hero_status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -202,17 +208,16 @@ func _rebuild_cards() -> void:
 
 func _create_patient_card(instance: DigimonInstance) -> Button:
 	var card := super._create_patient_card(instance)
-	# Pages are designed around three authored cards. A page with one or two
-	# patients keeps the exact same card height and leaves the remaining slot area
-	# empty instead of stretching the existing cards to fill it.
+	# Pages are designed around three authored cards. The slightly taller slot
+	# keeps the status chip completely inside the card while still fitting three
+	# patients comfortably above the pager.
 	card.custom_minimum_size.y = PATIENT_CARD_HEIGHT
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	card.size_flags_stretch_ratio = 0.0
 	card.gui_input.connect(_on_patient_card_gui_input.bind(instance.id))
 
-	# The status chip needs an external breathing space after the HP bar. A margin
-	# container expresses that spacing structurally without changing the rhythm of
-	# the Level and HP text rows or increasing the fixed card height.
+	# The status chip needs breathing space after the HP bar. A margin container
+	# expresses that spacing structurally while keeping the card content grouped.
 	var info := card.find_child("CardInfo", true, false) as VBoxContainer
 	var status := card.find_child("Status", true, false) as Label
 	if info != null and status != null and status.get_parent() == info:
@@ -226,12 +231,25 @@ func _create_patient_card(instance: DigimonInstance) -> Button:
 		info.add_child(status_spacing)
 		info.move_child(status_spacing, status_index)
 		status_spacing.add_child(status)
-		status.custom_minimum_size.y = 20
+		status.custom_minimum_size.y = 25
 	return card
 
 
 func _refresh_detail() -> void:
 	super._refresh_detail()
+
+	# Keep rank and level explicitly authored in this refined metadata row rather
+	# than relying on the legacy separator string from the base screen.
+	var instance := OverworldState.get_instance_by_id(_preview_id)
+	if instance != null and _hero_info != null:
+		var species := _database.get_by_seed(instance.species_seed)
+		var rank := String(species.get("rank", "Unknown")).strip_edges()
+		if rank.is_empty():
+			rank = "Unknown"
+		_hero_info.visible = true
+		_hero_info.text = "RANK %s   ·   LV. %d" % [rank.to_upper(), instance.level]
+		_hero_info.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+
 	# Instant Recovery is a Party decision. Once a Digimon is admitted, the paid
 	# instant-recovery option is no longer relevant to the Hospital-side summary.
 	if _cost_panel != null:
