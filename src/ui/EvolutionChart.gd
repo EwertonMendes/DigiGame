@@ -72,7 +72,6 @@ func _build() -> void:
 	_close_button.name = "CloseEvolutionChart"
 	_close_button.icon = CLOSE_ICON
 	_close_button.expand_icon = true
-	_close_button.icon_max_width = 18
 	_close_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_close_button.tooltip_text = "Close Evolution Chart"
 	_close_button.custom_minimum_size = Vector2(V2.TOUCH_TARGET, V2.TOUCH_TARGET)
