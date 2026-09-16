@@ -65,10 +65,18 @@ async function reloadHub(page) {
   await settleFrames(page, 3);
 }
 
-async function confirmBattleDialog(page) {
-  // NOT NOW intentionally owns initial focus. Move explicitly to the affirmative
-  // action so QA exercises the same safe keyboard/gamepad contract as players.
-  await page.keyboard.press('ArrowRight');
+async function confirmBasicBattleProgram(page) {
+  // NOT NOW intentionally owns initial focus. The Battle Operator grid is
+  // responsive (2 or 4 columns), so avoid coupling browser QA to one layout.
+  // Hub navigation clamps at the top/left edges; saturating both directions
+  // deterministically lands on the top-left BASIC BATTLE action.
+  for (let index = 0; index < 8; index += 1) {
+    await page.keyboard.press('ArrowUp');
+  }
+  await settleFrames(page, 1);
+  for (let index = 0; index < 8; index += 1) {
+    await page.keyboard.press('ArrowLeft');
+  }
   await settleFrames(page, 1);
   await page.keyboard.press('Enter');
 }
@@ -94,9 +102,9 @@ async function enterTestBattle(page, captureDialogue = false) {
     await page.screenshot({ path: 'build/hub-battle-dialog.png', fullPage: true });
   }
 
-  const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
+  const battleStarted = waitForConsole(page, '[Hub] START_BATTLE_PROGRAM program=basic');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
-  await confirmBattleDialog(page);
+  await confirmBasicBattleProgram(page);
   await Promise.all([battleStarted, battleReady]);
   await waitForBattlePresentation(page);
 }
@@ -234,9 +242,9 @@ async function runMobileSuite() {
   await settleFrames(page, 2);
   await page.screenshot({ path: 'build/hub-mobile-dialog.png', fullPage: true });
 
-  const battleStarted = waitForConsole(page, '[Hub] START_TEST_BATTLE');
+  const battleStarted = waitForConsole(page, '[Hub] START_BATTLE_PROGRAM program=basic');
   const battleReady = waitForConsole(page, '[Battle] READY', 30000);
-  await confirmBattleDialog(page);
+  await confirmBasicBattleProgram(page);
   await Promise.all([battleStarted, battleReady]);
   await waitForBattlePresentation(page);
   await page.screenshot({ path: 'build/mobile-portrait.png', fullPage: true });
