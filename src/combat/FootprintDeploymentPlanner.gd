@@ -4,7 +4,12 @@ class_name FootprintDeploymentPlanner
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 
-static func plan(footprint_ids: Array, allowed_cells: Array[Vector2i], blocked_cells: Array[Vector2i] = []) -> Dictionary:
+static func plan(
+	footprint_ids: Array,
+	allowed_cells: Array[Vector2i],
+	blocked_cells: Array[Vector2i] = [],
+	rng: RandomNumberGenerator = null
+) -> Dictionary:
 	var anchors: Array[Vector2i] = []
 	anchors.resize(footprint_ids.size())
 	if footprint_ids.is_empty():
@@ -17,11 +22,17 @@ static func plan(footprint_ids: Array, allowed_cells: Array[Vector2i], blocked_c
 	var allowed_lookup := _grid_lookup(allowed_cells)
 	var blocked_lookup := _grid_lookup(blocked_cells)
 	var candidates := allowed_cells.duplicate()
-	candidates.sort_custom(func(first: Vector2i, second: Vector2i) -> bool:
-		if first.y == second.y:
-			return first.x < second.x
-		return first.y < second.y
-	)
+	if rng != null:
+		_shuffle_candidates(candidates, rng)
+	else:
+		# Keep non-runtime callers deterministic. Story-map validation and focused
+		# regression tests do not need battle randomness and are easier to diagnose
+		# when they always traverse anchors in the same order.
+		candidates.sort_custom(func(first: Vector2i, second: Vector2i) -> bool:
+			if first.y == second.y:
+				return first.x < second.x
+			return first.y < second.y
+		)
 
 	var actor_order: Array[int] = []
 	for actor_index in range(footprint_ids.size()):
@@ -56,6 +67,9 @@ static func can_place_footprint(
 	blocked_lookup: Dictionary,
 	reserved_lookup: Dictionary
 ) -> bool:
+	# Validate the complete occupied-cell set, not just the anchor. This keeps
+	# deployment correct for every registered footprint shape (1x1, 2x2 and
+	# future larger shapes such as 3x3) without dimension-specific edge rules.
 	for grid: Vector2i in FootprintScript.occupied_grids(anchor, footprint_id):
 		if not allowed_lookup.has(grid):
 			return false
@@ -95,6 +109,16 @@ static func _search_plan(
 			reserved.erase(grid)
 
 	return false
+
+
+static func _shuffle_candidates(candidates: Array[Vector2i], rng: RandomNumberGenerator) -> void:
+	for index in range(candidates.size() - 1, 0, -1):
+		var swap_index := rng.randi_range(0, index)
+		if swap_index == index:
+			continue
+		var value := candidates[index]
+		candidates[index] = candidates[swap_index]
+		candidates[swap_index] = value
 
 
 static func _grid_lookup(grids: Array[Vector2i]) -> Dictionary:

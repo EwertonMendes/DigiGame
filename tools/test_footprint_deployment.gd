@@ -12,6 +12,8 @@ func _init() -> void:
 	_test_footprint_cannot_extend_outside_deployment_zone()
 	_test_existing_occupancy_is_respected()
 	_test_single_and_large_footprints_share_zone_without_overlap()
+	_test_seeded_randomization_is_reproducible_and_varied()
+	_test_randomized_large_footprints_remain_inside_zone()
 
 	if _failures.is_empty():
 		print("[FootprintDeploymentTest] PASS")
@@ -82,6 +84,47 @@ func _test_single_and_large_footprints_share_zone_without_overlap() -> void:
 	_assert_plan_is_valid(plan.get("anchors", []), footprints, zone, [])
 
 
+func _test_seeded_randomization_is_reproducible_and_varied() -> void:
+	var zone := _rect_cells(0, 0, 9, 5)
+	var footprints := [Footprint.SINGLE, Footprint.SINGLE, Footprint.SINGLE]
+	var blocked: Array[Vector2i] = []
+
+	var first_rng := RandomNumberGenerator.new()
+	first_rng.seed = 1729
+	var first_plan := Planner.plan(footprints, zone, blocked, first_rng)
+	var repeated_rng := RandomNumberGenerator.new()
+	repeated_rng.seed = 1729
+	var repeated_plan := Planner.plan(footprints, zone, blocked, repeated_rng)
+	_expect(bool(first_plan.get("ok", false)), "Seeded randomized deployment must produce a valid plan.")
+	_expect(first_plan.get("anchors", []) == repeated_plan.get("anchors", []), "The same spawn seed must reproduce the same deployment layout.")
+
+	var layouts: Dictionary = {}
+	for seed_value in [11, 29, 47, 83, 131, 197]:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var plan := Planner.plan(footprints, zone, blocked, rng)
+		_expect(bool(plan.get("ok", false)), "Randomized deployment must remain solvable for seed %d." % seed_value)
+		if not bool(plan.get("ok", false)):
+			continue
+		var anchors: Array = plan.get("anchors", [])
+		_assert_plan_is_valid(anchors, footprints, zone, blocked)
+		layouts[_anchors_signature(anchors)] = true
+	_expect(layouts.size() > 1, "Different spawn seeds must not collapse to the same deterministic side-by-side layout.")
+
+
+func _test_randomized_large_footprints_remain_inside_zone() -> void:
+	var zone := _rect_cells(0, 0, 8, 5)
+	var footprints := [Footprint.LARGE_2X2, Footprint.SINGLE, Footprint.LARGE_2X2]
+	var blocked: Array[Vector2i] = [Vector2i(3, 2), Vector2i(4, 2)]
+	for seed_value in [3, 7, 13, 31, 61]:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var plan := Planner.plan(footprints, zone, blocked, rng)
+		_expect(bool(plan.get("ok", false)), "Footprint-aware randomized deployment must find a legal layout for seed %d." % seed_value)
+		if bool(plan.get("ok", false)):
+			_assert_plan_is_valid(plan.get("anchors", []), footprints, zone, blocked)
+
+
 func _assert_plan_is_valid(anchors: Array, footprints: Array, allowed: Array[Vector2i], blocked: Array[Vector2i]) -> void:
 	_expect(anchors.size() == footprints.size(), "Deployment plan must preserve one anchor per party member.")
 	if anchors.size() != footprints.size():
@@ -93,6 +136,14 @@ func _assert_plan_is_valid(anchors: Array, footprints: Array, allowed: Array[Vec
 			_expect(not blocked.has(grid), "Planned occupied cell %s must not be blocked." % grid)
 			_expect(not occupied_lookup.has(grid), "Two deployed Digimon must never overlap at %s." % grid)
 			occupied_lookup[grid] = true
+
+
+func _anchors_signature(anchors: Array) -> String:
+	var parts := PackedStringArray()
+	for raw_anchor in anchors:
+		var anchor := Vector2i(raw_anchor)
+		parts.append("%d,%d" % [anchor.x, anchor.y])
+	return ";".join(parts)
 
 
 func _rect_cells(start_x: int, start_y: int, width: int, height: int) -> Array[Vector2i]:
