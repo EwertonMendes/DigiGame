@@ -50,7 +50,7 @@
   },
   "party": {
     "minActive": 1,
-    "maxActive": 3,
+    "maxActive": 6,
     "participantXpMultiplier": 1.0,
     "reserveXpMultiplier": 0.0,
     "knockedOutReceivesXp": true
