@@ -94,6 +94,9 @@
       "speciesSeed": "48b7a3e5-3e43-4819-96b8-673bfe67d5c1",
       "species": "Zeke Greymon",
       "rank": "Mega",
+      "legacySkillAliases": {
+        "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_7": "zeke_flame"
+      },
       "skills": [
         {"skill": "zeke_flame", "level": 1, "acquisition": "signature"},
         {"skill": "trident_fang", "level": 15, "acquisition": "level"},
