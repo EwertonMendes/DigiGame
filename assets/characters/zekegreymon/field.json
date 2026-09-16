@@ -144,14 +144,14 @@
       ]
     ]
   },
-  "normalization_scale": 1.0,
+  "normalization_scale": 0.7333333333333333,
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
-    25,
-    63
+    22,
+    47
   ],
-  "cell_width": 50,
-  "cell_height": 64,
+  "cell_width": 44,
+  "cell_height": 48,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/zekegreymon/field.png"

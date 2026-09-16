@@ -29326,5 +29326,47 @@
     ],
     "allowSpeciesSeeds": [],
     "denySpeciesSeeds": []
+  },
+  {
+    "skill": "zeke_flame",
+    "teachable": false,
+    "recordLevel": "legendary",
+    "bitsCost": 6000,
+    "unlockSources": [],
+    "allOf": [],
+    "anyOf": [
+      "fire",
+      "breath"
+    ],
+    "allowSpeciesSeeds": [],
+    "denySpeciesSeeds": []
+  },
+  {
+    "skill": "trident_fang",
+    "teachable": false,
+    "recordLevel": "legendary",
+    "bitsCost": 6000,
+    "unlockSources": [],
+    "allOf": [],
+    "anyOf": [
+      "claw",
+      "melee"
+    ],
+    "allowSpeciesSeeds": [],
+    "denySpeciesSeeds": []
+  },
+  {
+    "skill": "plasma_railgun",
+    "teachable": false,
+    "recordLevel": "legendary",
+    "bitsCost": 6000,
+    "unlockSources": [],
+    "allOf": [],
+    "anyOf": [
+      "electric",
+      "projectile"
+    ],
+    "allowSpeciesSeeds": [],
+    "denySpeciesSeeds": []
   }
 ]

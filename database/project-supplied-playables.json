@@ -28,8 +28,8 @@
       "portrait_source": "res://assets/characters/zekegreymon/source/portrait.webp",
       "source_sheet": "res://assets/characters/zekegreymon/source/normalized-sheet.png",
       "field_cell": [
-        50,
-        64
+        44,
+        48
       ],
       "portrait_frames": 4
     }
