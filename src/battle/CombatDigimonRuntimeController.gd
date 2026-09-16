@@ -6,9 +6,11 @@ const DeploymentPlanner = preload("res://src/combat/FootprintDeploymentPlanner.g
 const FootprintMapValidatorScript = preload("res://src/combat/FootprintMapValidator.gd")
 
 var _occupancy_by_grid: Dictionary = {}
+var _spawn_rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+	_spawn_rng.randomize()
 	super._ready()
 
 
@@ -96,7 +98,7 @@ func _plan_team_deployment(entries: Array[Dictionary], candidates: Array[Vector2
 		if instance == null:
 			return {"ok": false, "anchors": [], "reason": "Encounter contains an invalid Digimon instance."}
 		footprints.append(instance.battle_footprint_id)
-	return DeploymentPlanner.plan(footprints, candidates, blocked_cells)
+	return DeploymentPlanner.plan(footprints, candidates, blocked_cells, _spawn_rng)
 
 
 func _spawn_team_from_plan(entries: Array[Dictionary], player_controlled: bool, anchors: Array, field: Node2D) -> void:
