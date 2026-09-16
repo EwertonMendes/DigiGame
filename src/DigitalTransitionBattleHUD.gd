@@ -7,17 +7,14 @@ var _v2_escape_modal: DigiConfirmationModal = null
 
 
 func _build_escape_ui() -> void:
+	# EscapeBattleHUD owns the legacy confirmation subtree as well as its layout
+	# references. Keep that subtree intact and hidden instead of removing nodes
+	# that the base class still owns. The V2 modal is an independent overlay.
 	super._build_escape_ui()
-	# Replace the legacy flee prompt with the shared V2 confirmation component.
-	# Announcements and result handling remain owned by EscapeBattleHUD.
-	if _escape_modal_layer != null:
-		var old_parent := _escape_modal_layer.get_parent()
-		if old_parent != null:
-			old_parent.remove_child(_escape_modal_layer)
-		_escape_modal_layer.queue_free()
 
 	_v2_escape_modal = ConfirmationModalScript.new() as DigiConfirmationModal
-	_v2_escape_modal.name = "EscapeConfirmation"
+	_v2_escape_modal.name = "EscapeConfirmationV2"
+	add_child(_v2_escape_modal)
 	_v2_escape_modal.configure(
 		"FLEE FROM BATTLE?",
 		"Are you sure you want to flee? If the attempt succeeds, the battle ends immediately.",
@@ -26,13 +23,8 @@ func _build_escape_ui() -> void:
 		V2.RED,
 		"RETREAT"
 	)
-	_v2_escape_modal.confirmed.connect(_on_escape_confirmed)
+	_v2_escape_modal.confirmed.connect(_on_v2_escape_confirmed)
 	_v2_escape_modal.cancelled.connect(_focus_flee_command)
-	add_child(_v2_escape_modal)
-	_escape_modal_layer = _v2_escape_modal
-	_escape_modal_panel = _v2_escape_modal.get_panel()
-	_escape_confirm = _v2_escape_modal.get_confirm_button()
-	_escape_cancel = _v2_escape_modal.get_cancel_button()
 
 	# The shared BattleResultScreen is the single source of truth once a battle
 	# ends. Keep the legacy retreat result node permanently hidden so it can never
@@ -42,14 +34,26 @@ func _build_escape_ui() -> void:
 		_escape_result.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+func _input(event: InputEvent) -> void:
+	if _v2_escape_modal != null and is_instance_valid(_v2_escape_modal) and _v2_escape_modal.visible:
+		# While the V2 modal is open, do not forward battle commands to the legacy
+		# HUD input path. Focused buttons still receive ui_accept normally.
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu"):
+			_v2_escape_modal.close_dialog()
+			_focus_flee_command()
+			get_viewport().set_input_as_handled()
+		return
+	super._input(event)
+
+
 func _open_escape_modal() -> void:
-	if _v2_escape_modal == null:
+	if _v2_escape_modal == null or not is_instance_valid(_v2_escape_modal):
 		return
 	_v2_escape_modal.open_dialog(_flee_button)
 
 
 func _close_escape_modal() -> void:
-	if _v2_escape_modal != null and _v2_escape_modal.visible:
+	if _v2_escape_modal != null and is_instance_valid(_v2_escape_modal) and _v2_escape_modal.visible:
 		_v2_escape_modal.close_dialog()
 	_focus_flee_command()
 
@@ -57,6 +61,14 @@ func _close_escape_modal() -> void:
 func _focus_flee_command() -> void:
 	if _flee_button != null and _flee_button.visible and not _flee_button.disabled:
 		_flee_button.grab_focus()
+
+
+func _on_v2_escape_confirmed() -> void:
+	# DigiConfirmationModal hides itself before emitting confirmed, so the legacy
+	# handler's `visible` guard cannot be reused here. Delegate directly to the
+	# battle controller once the V2 action is confirmed.
+	if _controller != null and _controller.has_method("attempt_flee"):
+		_controller.call("attempt_flee")
 
 
 func _show_escape_result(_result: Dictionary) -> void:

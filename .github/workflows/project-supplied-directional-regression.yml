@@ -59,7 +59,17 @@ jobs:
           godot --version
 
       - name: Import project
-        run: godot --headless --editor --path . --quit-after 2
+        # --import waits until pending resources are imported before it exits.
+        # A fixed two-frame editor run can stop while generated sprite textures
+        # are still importing, making the consumer regression nondeterministic.
+        run: godot --headless --path . --import
 
       - name: Exercise battle, overworld and menu sprite consumers
-        run: godot --headless --path . res://tools/test_project_supplied_directional.tscn
+        run: |
+          set -o pipefail
+          LOG_PATH="$RUNNER_TEMP/project-supplied-directional.log"
+          # The scene exits itself with a non-zero code on failed invariants.
+          # --quit-after is a final safety net for engine/startup failures so a
+          # broken regression can never occupy the runner until the job timeout.
+          godot --headless --path . res://tools/test_project_supplied_directional.tscn --quit-after 1800 2>&1 | tee "$LOG_PATH"
+          grep -Fq "project-supplied directional regression passed:" "$LOG_PATH"
