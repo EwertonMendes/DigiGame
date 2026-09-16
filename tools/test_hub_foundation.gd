@@ -183,7 +183,10 @@ func _assert_hospital_entry(hub: Node, player: Node2D, hospital_npc: Node2D, hos
 	assert(hospital_screen.get("_hint_bar") is DigiInputHintBar, "Hospital must expose adaptive V2 input hints")
 	assert(hospital_screen.get("_confirmation") is DigiConfirmationModal, "Hospital treatments must use the shared safe-default confirmation modal")
 	var patient_buttons := hospital_screen.get("_collection_buttons") as Dictionary
-	assert(patient_buttons.size() == OverworldState.get_collection_instances().size(), "Hospital must list Party and Storage Digimon from the persistent collection")
+	var expected_visible := OverworldState.get_active_instances().size() + OverworldState.get_hospital_instances().size()
+	assert(patient_buttons.size() == expected_visible, "Hospital must list only Party members and admitted Hospital patients")
+	for reserve: DigimonInstance in OverworldState.get_reserve_instances():
+		assert(not patient_buttons.has(reserve.id), "Storage Digimon must not appear as Hospital treatment candidates")
 	var list_scroll := hospital_screen.get("_collection_scroll") as ScrollContainer
 	var detail_scroll := hospital_screen.get("_detail_scroll") as ScrollContainer
 	assert(list_scroll != null and list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Hospital patient list must use shared smooth scrolling")
@@ -294,7 +297,7 @@ func _assert_legacy_hub_facings(player: Node) -> void:
 func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> void:
 	var default_party := ["agumon", "gabumon", "greymon"]
 	assert(OverworldState.get_active_party() == default_party, "Default overworld party must be Agumon, Gabumon and Greymon")
-	assert(OverworldState.get_max_active_party_size() == 3, "Active overworld party must cap at three Digimon")
+	assert(OverworldState.get_max_active_party_size() == 6, "Active overworld party must support up to six Digimon")
 	assert(int(party_followers.call("get_follower_count")) == 3, "Default active party must render three followers")
 	assert(Array(party_followers.call("get_active_party_keys")) == default_party, "Follower order must match active-party order")
 
@@ -323,9 +326,8 @@ func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> vo
 	assert(int(party_followers.call("get_follower_count")) == 2, "Two-Digimon parties must render exactly two followers")
 
 	var two_member_party := OverworldState.get_active_party()
-	assert(not OverworldState.set_active_party([]), "An empty active party must be rejected")
+	assert(not OverworldState.set_active_party([]), "An empty active party must be rejected by ordinary party editing")
 	assert(OverworldState.get_active_party() == two_member_party, "Rejected party changes must leave state untouched")
-	assert(not OverworldState.set_active_party(["agumon", "gabumon", "greymon", "veemon"]), "Active party must reject more than three Digimon")
 	assert(not OverworldState.set_active_party(["missing_digimon"]), "Active party must reject Digimon without a runtime resource")
 
 	OverworldState.reset_active_party()
