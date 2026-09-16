@@ -42,13 +42,16 @@ func wait_for_current_impact() -> void:
 		await get_tree().create_timer(remaining).timeout
 
 
-func wait_for_current_resolution() -> void:
-	var remaining: float = maxf(
+func current_resolution_wait_seconds() -> float:
+	# Keep coroutine ownership in the battle controller. Dynamic `Node.call()` is
+	# intentionally used only for this synchronous query; awaiting a dynamically
+	# invoked coroutine does not propagate its suspension reliably in Godot 4.
+	# Returning the remaining presentation budget gives the controller one clear
+	# value to await without duplicating presentation timing rules.
+	return maxf(
 		0.0,
 		float(_resolution_deadline_msec - Time.get_ticks_msec()) / 1000.0
 	)
-	if remaining > 0.001:
-		await get_tree().create_timer(remaining).timeout
 
 
 func _extend_resolution_deadline(duration: float) -> void:
