@@ -3,6 +3,10 @@ class_name PlayerCollection
 
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
 
+const LOCATION_PARTY := "party"
+const LOCATION_STORAGE := "storage"
+const LOCATION_HOSPITAL := "hospital"
+
 var bits: int = 0
 var progression_flags: Dictionary = {}
 var quest_states: Dictionary = {}
@@ -14,6 +18,7 @@ var _instances_by_id: Dictionary = {}
 var _instance_id_by_key: Dictionary = {}
 var _collection_key_by_id: Dictionary = {}
 var _active_party_ids: Array[String] = []
+var _hospital_ids: Array[String] = []
 var _digi_data_by_seed: Dictionary = {}
 
 func is_empty() -> bool:
@@ -54,6 +59,9 @@ func replace_at_key(instance: DigimonInstance, collection_key: String, species_n
 	var active_index := _active_party_ids.find(old_id)
 	if active_index >= 0:
 		_active_party_ids[active_index] = instance.id
+	var hospital_index := _hospital_ids.find(old_id)
+	if hospital_index >= 0:
+		_hospital_ids[hospital_index] = instance.id
 	return true
 
 func get_instances() -> Array[DigimonInstance]:
@@ -85,7 +93,7 @@ func has_instance(instance_id: String) -> bool:
 
 func remove_reserve_instance(instance_id: String) -> bool:
 	var clean_id := instance_id.strip_edges()
-	if clean_id.is_empty() or not _instances_by_id.has(clean_id) or _active_party_ids.has(clean_id):
+	if clean_id.is_empty() or not _instances_by_id.has(clean_id) or _active_party_ids.has(clean_id) or _hospital_ids.has(clean_id):
 		return false
 	var key := String(_collection_key_by_id.get(clean_id, ""))
 	_instances_by_id.erase(clean_id)
@@ -105,12 +113,36 @@ func get_active_instances() -> Array[DigimonInstance]:
 			result.append(instance)
 	return result
 
+func get_hospital_ids() -> Array[String]:
+	return _hospital_ids.duplicate()
+
+func get_hospital_instances() -> Array[DigimonInstance]:
+	var result: Array[DigimonInstance] = []
+	for instance_id: String in _hospital_ids:
+		var instance := get_instance(instance_id)
+		if instance != null:
+			result.append(instance)
+	return result
+
 func get_reserve_instances() -> Array[DigimonInstance]:
 	var result: Array[DigimonInstance] = []
 	for instance: DigimonInstance in get_instances():
-		if not _active_party_ids.has(instance.id):
+		if not _active_party_ids.has(instance.id) and not _hospital_ids.has(instance.id):
 			result.append(instance)
 	return result
+
+func get_location(instance_id: String) -> String:
+	var clean_id := instance_id.strip_edges()
+	if not _instances_by_id.has(clean_id):
+		return ""
+	if _hospital_ids.has(clean_id):
+		return LOCATION_HOSPITAL
+	if _active_party_ids.has(clean_id):
+		return LOCATION_PARTY
+	return LOCATION_STORAGE
+
+func is_hospitalized(instance_id: String) -> bool:
+	return get_location(instance_id) == LOCATION_HOSPITAL
 
 func set_active_party_ids(instance_ids: Array[String], minimum_size: int, maximum_size: int) -> bool:
 	if instance_ids.size() < minimum_size or instance_ids.size() > maximum_size:
@@ -118,16 +150,52 @@ func set_active_party_ids(instance_ids: Array[String], minimum_size: int, maximu
 	var normalized: Array[String] = []
 	for instance_id: String in instance_ids:
 		var clean_id := instance_id.strip_edges()
-		if clean_id.is_empty() or not _instances_by_id.has(clean_id) or normalized.has(clean_id):
+		if clean_id.is_empty() or not _instances_by_id.has(clean_id) or _hospital_ids.has(clean_id) or normalized.has(clean_id):
 			return false
 		normalized.append(clean_id)
 	_active_party_ids = normalized
 	return true
 
+func admit_to_hospital(instance_id: String) -> bool:
+	var clean_id := instance_id.strip_edges()
+	var party_index := _active_party_ids.find(clean_id)
+	if clean_id.is_empty() or party_index < 0 or _hospital_ids.has(clean_id) or not _instances_by_id.has(clean_id):
+		return false
+	_active_party_ids.remove_at(party_index)
+	_hospital_ids.append(clean_id)
+	return true
+
+func discharge_from_hospital(instance_id: String, maximum_party_size: int) -> String:
+	var clean_id := instance_id.strip_edges()
+	var hospital_index := _hospital_ids.find(clean_id)
+	if clean_id.is_empty() or hospital_index < 0 or not _instances_by_id.has(clean_id):
+		return ""
+	_hospital_ids.remove_at(hospital_index)
+	if _active_party_ids.size() < maxi(0, maximum_party_size):
+		_active_party_ids.append(clean_id)
+		return LOCATION_PARTY
+	return LOCATION_STORAGE
+
+func location_invariant_error() -> String:
+	var seen: Dictionary = {}
+	for instance_id: String in _active_party_ids:
+		if not _instances_by_id.has(instance_id):
+			return "Party contains an unknown Digimon UUID."
+		if seen.has(instance_id):
+			return "A Digimon UUID occupies more than one collection location."
+		seen[instance_id] = LOCATION_PARTY
+	for instance_id: String in _hospital_ids:
+		if not _instances_by_id.has(instance_id):
+			return "Hospital contains an unknown Digimon UUID."
+		if seen.has(instance_id):
+			return "A Digimon UUID occupies more than one collection location."
+		seen[instance_id] = LOCATION_HOSPITAL
+	return ""
+
 func add_digi_data(species_seed: String, amount: int) -> int:
+	if species_seed.strip_edges().is_empty() or amount <= 0:
+		return get_digi_data(species_seed)
 	var seed := species_seed.strip_edges()
-	if seed.is_empty() or amount <= 0:
-		return get_digi_data(seed)
 	_digi_data_by_seed[seed] = get_digi_data(seed) + amount
 	return int(_digi_data_by_seed[seed])
 
@@ -215,6 +283,7 @@ func to_dict() -> Dictionary:
 	return {
 		"instances": entries,
 		"activePartyIds": get_active_party_ids(),
+		"hospitalIds": get_hospital_ids(),
 		"bits": bits,
 		"digiData": get_all_digi_data(),
 		"progressionFlags": progression_flags.duplicate(true),
@@ -229,6 +298,7 @@ func load_dict(data: Dictionary) -> void:
 	_instance_id_by_key.clear()
 	_collection_key_by_id.clear()
 	_active_party_ids.clear()
+	_hospital_ids.clear()
 	_digi_data_by_seed.clear()
 	unlocked_technique_records.clear()
 	technique_research.clear()
@@ -274,11 +344,24 @@ func load_dict(data: Dictionary) -> void:
 			if action_database_ready:
 				_migrate_instance_skill_ids(instance, action_database)
 			add_instance(instance, String(entry.get("collectionKey", "")), "digimon")
+
+	var has_explicit_hospital_ids := data.has("hospitalIds")
+	var raw_hospital = data.get("hospitalIds", [])
+	if raw_hospital is Array:
+		for raw_id in raw_hospital:
+			var instance_id := String(raw_id).strip_edges()
+			if _instances_by_id.has(instance_id) and not _hospital_ids.has(instance_id):
+				_hospital_ids.append(instance_id)
+	if not has_explicit_hospital_ids:
+		for instance: DigimonInstance in get_instances():
+			if instance.has_hospital_recovery() and not _hospital_ids.has(instance.id):
+				_hospital_ids.append(instance.id)
+
 	var raw_party = data.get("activePartyIds", [])
 	if raw_party is Array:
 		for raw_id in raw_party:
-			var instance_id := String(raw_id)
-			if _instances_by_id.has(instance_id) and not _active_party_ids.has(instance_id):
+			var instance_id := String(raw_id).strip_edges()
+			if _instances_by_id.has(instance_id) and not _hospital_ids.has(instance_id) and not _active_party_ids.has(instance_id):
 				_active_party_ids.append(instance_id)
 	var raw_data = data.get("digiData", {})
 	if raw_data is Dictionary:
