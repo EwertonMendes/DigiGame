@@ -19,6 +19,7 @@ var _instance_id_by_key: Dictionary = {}
 var _collection_key_by_id: Dictionary = {}
 var _active_party_ids: Array[String] = []
 var _hospital_ids: Array[String] = []
+var _hospital_party_indices: Dictionary = {}
 var _digi_data_by_seed: Dictionary = {}
 
 func is_empty() -> bool:
@@ -62,6 +63,10 @@ func replace_at_key(instance: DigimonInstance, collection_key: String, species_n
 	var hospital_index := _hospital_ids.find(old_id)
 	if hospital_index >= 0:
 		_hospital_ids[hospital_index] = instance.id
+	if _hospital_party_indices.has(old_id):
+		var original_party_index := int(_hospital_party_indices.get(old_id, 0))
+		_hospital_party_indices.erase(old_id)
+		_hospital_party_indices[instance.id] = original_party_index
 	return true
 
 func get_instances() -> Array[DigimonInstance]:
@@ -97,6 +102,7 @@ func remove_instance(instance_id: String) -> bool:
 		return false
 	_active_party_ids.erase(clean_id)
 	_hospital_ids.erase(clean_id)
+	_hospital_party_indices.erase(clean_id)
 	return _erase_instance_record(clean_id)
 
 func remove_reserve_instance(instance_id: String) -> bool:
@@ -174,6 +180,7 @@ func admit_to_hospital(instance_id: String) -> bool:
 	var party_index := _active_party_ids.find(clean_id)
 	if clean_id.is_empty() or party_index < 0 or _hospital_ids.has(clean_id) or not _instances_by_id.has(clean_id):
 		return false
+	_hospital_party_indices[clean_id] = party_index
 	_active_party_ids.remove_at(party_index)
 	_hospital_ids.append(clean_id)
 	return true
@@ -183,9 +190,11 @@ func discharge_from_hospital(instance_id: String, maximum_party_size: int) -> St
 	var hospital_index := _hospital_ids.find(clean_id)
 	if clean_id.is_empty() or hospital_index < 0 or not _instances_by_id.has(clean_id):
 		return ""
+	var original_party_index := int(_hospital_party_indices.get(clean_id, _active_party_ids.size()))
 	_hospital_ids.remove_at(hospital_index)
+	_hospital_party_indices.erase(clean_id)
 	if _active_party_ids.size() < maxi(0, maximum_party_size):
-		_active_party_ids.append(clean_id)
+		_active_party_ids.insert(clampi(original_party_index, 0, _active_party_ids.size()), clean_id)
 		return LOCATION_PARTY
 	return LOCATION_STORAGE
 
@@ -203,6 +212,12 @@ func location_invariant_error() -> String:
 		if seen.has(instance_id):
 			return "A Digimon UUID occupies more than one collection location."
 		seen[instance_id] = LOCATION_HOSPITAL
+	for raw_id in _hospital_party_indices.keys():
+		var instance_id := String(raw_id)
+		if not _hospital_ids.has(instance_id):
+			return "Hospital Party position metadata references a Digimon outside the Hospital."
+		if int(_hospital_party_indices[raw_id]) < 0:
+			return "Hospital Party position metadata contains an invalid index."
 	return ""
 
 func add_digi_data(species_seed: String, amount: int) -> int:
@@ -297,6 +312,7 @@ func to_dict() -> Dictionary:
 		"instances": entries,
 		"activePartyIds": get_active_party_ids(),
 		"hospitalIds": get_hospital_ids(),
+		"hospitalPartyIndices": _hospital_party_indices.duplicate(true),
 		"bits": bits,
 		"digiData": get_all_digi_data(),
 		"progressionFlags": progression_flags.duplicate(true),
@@ -312,6 +328,7 @@ func load_dict(data: Dictionary) -> void:
 	_collection_key_by_id.clear()
 	_active_party_ids.clear()
 	_hospital_ids.clear()
+	_hospital_party_indices.clear()
 	_digi_data_by_seed.clear()
 	unlocked_technique_records.clear()
 	technique_research.clear()
@@ -369,6 +386,12 @@ func load_dict(data: Dictionary) -> void:
 		for instance: DigimonInstance in get_instances():
 			if instance.has_hospital_recovery() and not _hospital_ids.has(instance.id):
 				_hospital_ids.append(instance.id)
+	var raw_hospital_party_indices = data.get("hospitalPartyIndices", {})
+	if raw_hospital_party_indices is Dictionary:
+		for raw_id in (raw_hospital_party_indices as Dictionary).keys():
+			var instance_id := String(raw_id).strip_edges()
+			if _hospital_ids.has(instance_id):
+				_hospital_party_indices[instance_id] = maxi(0, int((raw_hospital_party_indices as Dictionary)[raw_id]))
 
 	var raw_party = data.get("activePartyIds", [])
 	if raw_party is Array:
