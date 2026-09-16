@@ -2,8 +2,10 @@ extends Node
 
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
 const DamageCalculatorScript = preload("res://src/battle/combat/DamageCalculator.gd")
+const CollectionScript = preload("res://src/collection/PlayerCollection.gd")
 const HudScript = preload("res://src/DigiIconBattleHUD.gd")
 const ZEKE_SEED := "48b7a3e5-3e43-4819-96b8-673bfe67d5c1"
+const LEGACY_ZEKE_ACTION_ID := "relevantdigital_cmd_push_function_rdsmartload_div_gpt_ad_auto_inline_7"
 const ZEKE_ACTION_IDS := ["zeke_flame", "trident_fang", "plasma_railgun"]
 
 
@@ -41,6 +43,8 @@ class ActorStub:
 func _ready() -> void:
 	if not _test_technique_contract():
 		return
+	if not _test_legacy_save_migration():
+		return
 	if not _test_sprite_contract():
 		return
 	if not await _test_responsive_identity_layout():
@@ -52,6 +56,25 @@ func _ready() -> void:
 func _test_technique_contract() -> bool:
 	var database = ActionDatabaseScript.new()
 	if not _check(database.load_default(), "Battle action database must load"):
+		return false
+
+	if not _check(database.resolve_skill_id(ZEKE_SEED, LEGACY_ZEKE_ACTION_ID) == "zeke_flame", "Legacy scraped Zeke skill id must resolve to the canonical signature"):
+		return false
+	var legacy_actions: Array[Dictionary] = database.get_known_actions(
+		ZEKE_SEED,
+		3,
+		[LEGACY_ZEKE_ACTION_ID],
+		{LEGACY_ZEKE_ACTION_ID: 8}
+	)
+	if not _check(legacy_actions.size() == 1, "A stale Zeke learned-skill id must collapse into one canonical runtime technique"):
+		return false
+	if not _check(String(legacy_actions[0].get("id", "")) == "zeke_flame", "Stale learned Zeke data must resolve to zeke_flame"):
+		return false
+	if not _check(String(legacy_actions[0].get("name", "")) == "Zeke Flame", "Stale learned Zeke data must display the canonical skill name"):
+		return false
+	if not _check(int(legacy_actions[0].get("masteryPoints", 0)) == 8, "Legacy mastery points must follow the migrated canonical skill"):
+		return false
+	if not _check(_action_resolves_damage(legacy_actions[0]), "Migrated Zeke Flame must resolve positive battle damage"):
 		return false
 
 	var early_actions: Array[Dictionary] = database.get_known_actions(ZEKE_SEED, 3)
@@ -74,6 +97,46 @@ func _test_technique_contract() -> bool:
 		if not _check(_action_resolves_damage(actions_by_id[action_id]), "%s must resolve through the standard battle damage path" % action_id):
 			return false
 	return true
+
+
+func _test_legacy_save_migration() -> bool:
+	var collection = CollectionScript.new()
+	collection.load_dict({
+		"instances": [
+			{
+				"collectionKey": "zeke_greymon",
+				"instance": {
+					"id": "legacy-zeke-regression",
+					"speciesSeed": ZEKE_SEED,
+					"level": 3,
+					"currentHp": 306,
+					"currentSp": 331,
+					"learnedSkills": [LEGACY_ZEKE_ACTION_ID],
+					"favoriteSkills": [LEGACY_ZEKE_ACTION_ID],
+					"archivedSkills": [],
+					"skillMastery": {LEGACY_ZEKE_ACTION_ID: 8}
+				}
+			}
+		],
+		"activePartyIds": ["legacy-zeke-regression"]
+	})
+	var instance = collection.get_instance("legacy-zeke-regression")
+	if not _check(instance != null, "Legacy Zeke save must load"):
+		return false
+	if not _check(instance.learned_skills == ["zeke_flame"], "Legacy learned skill must migrate in-memory to zeke_flame"):
+		return false
+	if not _check(instance.favorite_skills == ["zeke_flame"], "Legacy favorite skill must follow the canonical migrated id"):
+		return false
+	if not _check(instance.get_skill_mastery_points("zeke_flame") == 8, "Legacy mastery must be preserved on zeke_flame"):
+		return false
+
+	var database = ActionDatabaseScript.new()
+	if not _check(database.load_default(), "Battle action database must load after legacy save migration"):
+		return false
+	var migrated_action := database.get_action(instance.learned_skills[0], instance.get_skill_mastery_points(instance.learned_skills[0]))
+	if not _check(String(migrated_action.get("name", "")) == "Zeke Flame", "Migrated save must feed the canonical display name into battle"):
+		return false
+	return _check(_action_resolves_damage(migrated_action), "Migrated save must feed a damaging Zeke Flame into battle")
 
 
 func _action_resolves_damage(action: Dictionary) -> bool:
