@@ -65,10 +65,11 @@ func _focus_flee_command() -> void:
 
 func _on_v2_escape_confirmed() -> void:
 	# DigiConfirmationModal hides itself before emitting confirmed, so the legacy
-	# handler's `visible` guard cannot be reused here. Delegate directly to the
-	# battle controller once the V2 action is confirmed.
+	# handler's `visible` guard cannot be reused here. More importantly,
+	# attempt_flee() is asynchronous: await it here so the HUD owns the command
+	# lifecycle until the controller finishes the roll/animation/result flow.
 	if _controller != null and _controller.has_method("attempt_flee"):
-		_controller.call("attempt_flee")
+		await _controller.call("attempt_flee")
 
 
 func _show_escape_result(_result: Dictionary) -> void:
