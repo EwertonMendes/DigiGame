@@ -1,10 +1,23 @@
 extends "res://src/battle/BattleOpeningController.gd"
 
 const BattleEscapeResolverScript = preload("res://src/battle/BattleEscapeResolver.gd")
+const EscapeRNGScript = preload("res://src/battle/BattleRNG.gd")
 
 var _escape_resolver = BattleEscapeResolverScript.new()
+var _escape_rng = EscapeRNGScript.new()
+var _escape_rng_seed := 1
 var _escape_policy_override: Dictionary = {}
 var _flee_failures := 0
+
+
+func _ready() -> void:
+	# Escape uses its own RNG stream so retreat odds are independent from attack,
+	# accuracy and critical rolls. The stream is randomized per battle instance,
+	# while its seed is retained for diagnostics/replay and can be overridden by
+	# deterministic regression tests.
+	_escape_rng.randomize()
+	_escape_rng_seed = _escape_rng.snapshot_seed()
+	super._ready()
 
 
 func set_escape_policy(policy: Dictionary) -> void:
@@ -15,6 +28,15 @@ func set_escape_policy(policy: Dictionary) -> void:
 func clear_escape_policy_override() -> void:
 	_escape_policy_override.clear()
 	_notify_turn_order_changed()
+
+
+func set_escape_rng_seed(seed: int) -> void:
+	_escape_rng.reset(seed)
+	_escape_rng_seed = _escape_rng.snapshot_seed()
+
+
+func get_escape_rng_seed() -> int:
+	return _escape_rng_seed
 
 
 func get_flee_preview() -> Dictionary:
@@ -60,6 +82,7 @@ func attempt_flee() -> bool:
 		"actor_name": _display_name(current_actor),
 		"chance": float(escape_preview.get("chance", 0.0)),
 		"failed_attempts": _flee_failures,
+		"escape_seed": _escape_rng_seed,
 	})
 
 	await get_tree().create_timer(0.14).timeout
@@ -67,13 +90,14 @@ func attempt_flee() -> bool:
 		return false
 
 	var mode := String(escape_preview.get("mode", "allowed"))
-	var escaped := mode == "guaranteed" or _battle_rng.roll_percent(float(escape_preview.get("chance", 0.0)))
+	var escaped := mode == "guaranteed" or _escape_rng.roll_percent(float(escape_preview.get("chance", 0.0)))
 	if escaped:
 		_event_bus.emit_event("flee_success", {
 			"actor_id": _instance_id(current_actor),
 			"actor_name": _display_name(current_actor),
 			"chance": float(escape_preview.get("chance", 100.0)),
 			"attempt": _flee_failures + 1,
+			"escape_seed": _escape_rng_seed,
 		})
 		await _play_retreat_success_animation()
 		_commit_player_resources()
@@ -93,6 +117,7 @@ func attempt_flee() -> bool:
 		"next_chance": float(next_preview.get("chance", 0.0)),
 		"attempt": _flee_failures,
 		"recovery": _pending_recovery_cost,
+		"escape_seed": _escape_rng_seed,
 	})
 	if current_actor.has_method("play_battle_escape_failed_animation"):
 		await current_actor.call("play_battle_escape_failed_animation")
@@ -129,6 +154,8 @@ func _build_battle_result(victory: bool) -> Dictionary:
 	var result: Dictionary = super._build_battle_result(victory)
 	result["outcome"] = "victory" if victory else "defeat"
 	result["escaped"] = false
+	result["flee_attempts"] = _flee_failures
+	result["escape_seed"] = _escape_rng_seed
 	return result
 
 
@@ -193,6 +220,7 @@ func _finish_escape(escape_preview: Dictionary) -> void:
 		"outcome": "escaped",
 		"acts": _battle_act_number,
 		"battle_seed": _battle_rng.snapshot_seed(),
+		"escape_seed": _escape_rng_seed,
 		"bits": 0,
 		"digi_data": {},
 		"defeated_enemy_count": _defeated_enemy_ids.size(),
