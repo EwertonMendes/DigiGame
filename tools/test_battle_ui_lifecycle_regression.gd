@@ -2,6 +2,8 @@ extends Node
 
 const BATTLE_SCENE = preload("res://scenes/main.tscn")
 const EscapeRNGScript = preload("res://src/battle/BattleRNG.gd")
+const BATTLE_READY_TIMEOUT_MSEC := 12000
+const FLEE_RESULT_TIMEOUT_MSEC := 5000
 
 
 func _ready() -> void:
@@ -56,9 +58,10 @@ func _ready() -> void:
 	if not _check(v2_modal.name == "EscapeConfirmationV2", "V2 flee modal must have independent ownership from the legacy subtree"):
 		return
 
-	# Wait for a real player command turn. This makes the regression exercise the
-	# same controller/HUD path used in playable builds instead of a synchronous spy.
-	if not await _wait_until_can_flee(controller, 240):
+	# Battle startup deliberately contains camera/spawn/banner animations driven by
+	# real elapsed time. Wait on the actual gameplay predicate with a bounded
+	# deadline rather than assuming an arbitrary number of process frames.
+	if not await _wait_until_can_flee(controller, BATTLE_READY_TIMEOUT_MSEC):
 		_check(false, "Battle must reach a player turn where flee can be attempted")
 		return
 
@@ -99,7 +102,7 @@ func _ready() -> void:
 	confirm.emit_signal("pressed")
 	if not _check(not v2_modal.visible, "V2 flee modal must close after confirmation"):
 		return
-	if not await _wait_until_escaped(controller, 240):
+	if not await _wait_until_escaped(controller, FLEE_RESULT_TIMEOUT_MSEC):
 		_check(false, "Confirming YES must complete a successful first flee attempt")
 		return
 
@@ -119,8 +122,9 @@ func _ready() -> void:
 	get_tree().quit()
 
 
-func _wait_until_can_flee(controller: Node, max_frames: int) -> bool:
-	for _index: int in range(max_frames):
+func _wait_until_can_flee(controller: Node, timeout_msec: int) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_msec
+	while Time.get_ticks_msec() < deadline:
 		if controller != null and is_instance_valid(controller) and controller.has_method("get_hud_state"):
 			var state: Dictionary = controller.call("get_hud_state")
 			if bool(state.get("can_flee", false)):
@@ -129,8 +133,9 @@ func _wait_until_can_flee(controller: Node, max_frames: int) -> bool:
 	return false
 
 
-func _wait_until_escaped(controller: Node, max_frames: int) -> bool:
-	for _index: int in range(max_frames):
+func _wait_until_escaped(controller: Node, timeout_msec: int) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_msec
+	while Time.get_ticks_msec() < deadline:
 		if controller != null and is_instance_valid(controller) and controller.has_method("get_hud_state"):
 			var state: Dictionary = controller.call("get_hud_state")
 			var result_variant = state.get("battle_result", {})
