@@ -74,13 +74,14 @@ func _layout_status(panel_size: Vector2, compact: bool) -> void:
 	# underneath the Tier icon.
 	var identity_right := _tier_icon.position.x - identity_gap
 	var identity_w := maxf(56.0, identity_right - info_x)
-	var name_y := 4.0 if compact else 7.0
-	var name_h := 20.0 if compact else 23.0
+	var name_y := 3.0 if compact else 7.0
+	var name_h := 18.0 if compact else 23.0
+	var meta_h := 13.0 if compact else 15.0
 	_actor_label.position = Vector2(info_x, name_y)
 	_actor_label.size = Vector2(identity_w, name_h)
 	_actor_label.add_theme_font_size_override("font_size", 14 if compact else 16)
-	_actor_meta_label.position = Vector2(info_x, name_y + name_h - 1.0)
-	_actor_meta_label.size = Vector2(identity_w, 15.0)
+	_actor_meta_label.position = Vector2(info_x, name_y + name_h)
+	_actor_meta_label.size = Vector2(identity_w, meta_h)
 	_actor_meta_label.add_theme_font_size_override("font_size", 10 if compact else 11)
 
 	# Resource rows live below the complete identity block instead of sharing its
