@@ -54,6 +54,9 @@ jobs:
           - name: global-ui-v2
             command: godot --headless --path . tools/test_ui_v2_components_regression.tscn --quit-after 30
             success: global ui v2 components regression passed
+          - name: evolution-chart-ui-v2
+            command: godot --headless --path . tools/test_evolution_chart_ui_v2_regression.tscn --quit-after 20
+            success: evolution chart ui v2 regression passed
           - name: battle-result-ui-v2
             command: godot --headless --path . tools/test_battle_result_ui_v2_regression.tscn --quit-after 20
             success: battle result ui v2 regression passed
