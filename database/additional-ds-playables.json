@@ -906,7 +906,7 @@
       "portrait_metadata": "res://assets/characters/ancientgreymon/portrait_frames.json",
       "source_id": null,
       "profile": "two_rows_right_region_of_six",
-      "pattern": "canonical_rows_rear_reversed",
+      "pattern": "canonical_rows",
       "field_cell": [
         36,
         44
