@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://tools/test_hospital_ui_regression.gd" type="Script" id="1_hospital_ui"]
+
+[node name="HospitalUIRegression" type="Node"]
+script = ExtResource("1_hospital_ui")
