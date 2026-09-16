@@ -1,0 +1,14 @@
+{
+  "source": "AncientGreymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/AncientGreymon.webp",
+  "frame_width": 155,
+  "frame_height": 124,
+  "frame_count": 4,
+  "durations_ms": [
+    300,
+    300,
+    300,
+    300
+  ],
+  "source_sha256": "543039cf0e3a243d125a643d4e8c4f71e8179a5fbfd634d54aafe6a5f28f1e03"
+}

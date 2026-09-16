@@ -1,13 +1,13 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 135,
+  "directional_resource_count": 136,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 44,
+  "additional_source_rebuilt_resource_count": 45,
   "project_original_resource_count": 1,
   "project_supplied_resource_count": 1,
-  "audited_resource_count": 135,
+  "audited_resource_count": 136,
   "directional_resources": [
     {
       "name": "AeroVeedramon",
@@ -30,6 +30,12 @@
     {
       "name": "AncientGarurumon",
       "resource": "assets/resources/ancientgarurumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "AncientGreymon",
+      "resource": "assets/resources/ancientgreymon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },

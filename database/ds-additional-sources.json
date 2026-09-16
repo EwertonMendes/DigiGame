@@ -426,6 +426,14 @@
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Super%20Xros%20Wars/MetalGreymonXros.png",
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows"
+    },
+    "AncientGreymon": {
+      "source_id": null,
+      "source_sha256": "77ecb658634617a4b993fa774c9879768b0f624fcf397663966be817ccf5a455",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/AncientGreymon.png",
+      "profile": "two_rows_right_region_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "source_member": "sprite thread/AncientGreymon.png"
     }
   }
 }

@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 44,
+  "count": 45,
   "species": [
     {
       "name": "Geo Greymon",
@@ -890,6 +890,26 @@
       "field_cell": [
         37,
         55
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "AncientGreymon",
+      "seed": "1f8b2c41-6d7a-4f1d-8a79-1d3c2a96c1b7",
+      "rank": "Mega",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/ancientgreymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/ancientgreymon/field.png",
+      "field_metadata": "res://assets/characters/ancientgreymon/field.json",
+      "portrait_strip": "res://assets/characters/ancientgreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/ancientgreymon/portrait_frames.json",
+      "source_id": null,
+      "profile": "two_rows_right_region_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "field_cell": [
+        36,
+        44
       ],
       "portrait_frames": 4
     }
