@@ -173,7 +173,9 @@ func _test_technique_library(database: DigimonDatabase, factory: DigimonFactory,
 	var known_before := agumon.learned_skills.duplicate()
 	var route := progression.get_evolution_routes(agumon).filter(func(candidate: Dictionary): return bool(candidate.get("unlocked", false)))
 	if not route.is_empty():
+		agumon.current_hp = 1
 		assert(evolution.digivolve(agumon, String((route[0] as Dictionary).get("targetSeed", "")), database, calculator), "Technique persistence evolution fixture must evolve")
+		assert(agumon.current_hp == 1, "Evolution must preserve current HP instead of acting as free Hospital treatment")
 		for known_skill: String in known_before:
 			assert(agumon.learned_skills.has(known_skill), "Evolution must preserve every learned technique")
 		assert(agumon.level == 1, "Evolution still resets level to one")
