@@ -2,9 +2,9 @@ extends SceneTree
 
 const PresentationScript = preload("res://src/battle/SequencedBattlePresentationFX.gd")
 const HOLD_SECONDS := 0.10
-const MIN_EXPECTED_WAIT_MSEC := 65
-const MAX_EXPECTED_WAIT_MSEC := 500
-const MAX_EXPIRED_WAIT_MSEC := 60
+const MIN_INITIAL_BUDGET := 0.06
+const MAX_INITIAL_BUDGET := 0.11
+const MAX_EXPIRED_BUDGET := 0.01
 
 var _failures: Array[String] = []
 
@@ -18,21 +18,19 @@ func _run() -> void:
 	root.add_child(presentation)
 	await process_frame
 
-	var started := Time.get_ticks_msec()
 	presentation.call("_extend_resolution_deadline", HOLD_SECONDS)
-	await presentation.call("wait_for_current_resolution")
-	var elapsed := Time.get_ticks_msec() - started
+	var remaining := float(presentation.call("current_resolution_wait_seconds"))
 	_expect(
-		elapsed >= MIN_EXPECTED_WAIT_MSEC and elapsed <= MAX_EXPECTED_WAIT_MSEC,
-		"Resolution gate must wait for the active readability window (elapsed=%dms)." % elapsed
+		remaining >= MIN_INITIAL_BUDGET and remaining <= MAX_INITIAL_BUDGET,
+		"Active readability deadline must expose its remaining presentation budget (remaining=%.3fs)." % remaining
 	)
 
-	started = Time.get_ticks_msec()
-	await presentation.call("wait_for_current_resolution")
-	elapsed = Time.get_ticks_msec() - started
+	if remaining > 0.0:
+		await create_timer(remaining + 0.02).timeout
+	var expired := float(presentation.call("current_resolution_wait_seconds"))
 	_expect(
-		elapsed <= MAX_EXPIRED_WAIT_MSEC,
-		"An expired presentation deadline must not add a stale delay (elapsed=%dms)." % elapsed
+		expired <= MAX_EXPIRED_BUDGET,
+		"Expired presentation deadline must not leak a stale delay (remaining=%.3fs)." % expired
 	)
 
 	presentation.queue_free()
