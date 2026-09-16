@@ -64,7 +64,7 @@ func _ready() -> void:
 	OverworldState.collection_changed.connect(_on_state_changed)
 	OverworldState.account_rewards_changed.connect(_on_account_rewards_changed)
 	OverworldState.hospital_state_changed.connect(_on_hospital_state_changed)
-	get_viewport().size_changed.connect(_layout)
+	get_viewport().size_changed.connect(_on_viewport_resized)
 	visible = false
 	set_process(false)
 
@@ -270,9 +270,14 @@ func _layout() -> void:
 		_hero.visible = _compact_detail
 		_overview.visible = _compact_detail
 		if _compact_detail:
-			var hero_h := minf(content_h * 0.32, 235.0)
-			_place(_hero, pad, top + 52, full_w, hero_h)
-			_place(_overview, pad, top + 58 + hero_h, full_w, content_h - hero_h - 58)
+			if w >= 700.0 and h < 700.0:
+				var detail_w := (full_w - gap) * 0.45
+				_place(_hero, pad, top + 52, detail_w, content_h - 52)
+				_place(_overview, pad + detail_w + gap, top + 52, full_w - detail_w - gap, content_h - 52)
+			else:
+				var hero_h := minf(content_h * 0.25, 190.0)
+				_place(_hero, pad, top + 52, full_w, hero_h)
+				_place(_overview, pad, top + 58 + hero_h, full_w, content_h - hero_h - 58)
 		else:
 			_place(_roster, pad, top, full_w, content_h)
 	else:
@@ -303,7 +308,8 @@ func _layout_roster() -> void:
 	_place(_tab_buttons["hospital"], pad * 2.0 + tab_w, 10, tab_w, 56)
 	_place(_card_area, pad, 78, w - pad * 2.0, h - 139)
 	var card_gap := 9.0
-	var card_h := (_card_area.size.y - card_gap * 2.0) / 3.0
+	var capacity := _page_capacity()
+	var card_h := (_card_area.size.y - card_gap * float(capacity - 1)) / float(capacity)
 	for i in _card_order.size():
 		var card := _card_order[i]
 		_place(card, 0, i * (card_h + card_gap), _card_area.size.x, card_h)
@@ -428,7 +434,8 @@ func _refresh_cards() -> void:
 	_cards.clear()
 	_card_order.clear()
 	var roster := _current_roster()
-	var total_pages := maxi(1, ceili(float(roster.size()) / PAGE_SIZE))
+	var capacity := _page_capacity()
+	var total_pages := maxi(1, ceili(float(roster.size()) / capacity))
 	_page = clampi(_page, 0, total_pages - 1)
 	_page_back.disabled = _page == 0
 	_page_next.disabled = _page >= total_pages - 1
@@ -436,7 +443,7 @@ func _refresh_cards() -> void:
 	if roster.is_empty():
 		_label(_card_area, "No Digimon in %s." % _tab.capitalize(), 19, V2.MUTED, true, Vector2(12, 22), Vector2(_card_area.size.x - 24, 38))
 		return
-	for index in range(_page * PAGE_SIZE, mini(roster.size(), (_page + 1) * PAGE_SIZE)):
+	for index in range(_page * capacity, mini(roster.size(), (_page + 1) * capacity)):
 		var instance := roster[index]
 		var species := _database.get_by_seed(instance.species_seed)
 		var name := instance.get_display_name(String(species.get("name", instance.species_seed)))
@@ -526,12 +533,13 @@ func _switch_tab(next_tab: String) -> void:
 
 func _turn_page(direction: int) -> void:
 	var roster := _current_roster()
-	var pages := maxi(1, ceili(float(roster.size()) / PAGE_SIZE))
+	var capacity := _page_capacity()
+	var pages := maxi(1, ceili(float(roster.size()) / capacity))
 	var next_page := clampi(_page + direction, 0, pages - 1)
 	if next_page == _page:
 		return
 	_page = next_page
-	_selected_id = roster[_page * PAGE_SIZE].id
+	_selected_id = roster[_page * capacity].id
 	_refresh()
 	call_deferred("_focus_entry")
 
@@ -591,6 +599,13 @@ func _confirm_action() -> void:
 func _on_state_changed() -> void:
 	if visible:
 		_refresh()
+
+
+func _on_viewport_resized() -> void:
+	if visible:
+		_refresh()
+	else:
+		_layout()
 
 
 func _on_account_rewards_changed(_bits: int, _data: Dictionary) -> void:
@@ -662,6 +677,15 @@ func _focus_detail() -> void:
 func _is_compact() -> bool:
 	var viewport_size := V2.physical_window_size(get_viewport())
 	return viewport_size.x < 980.0 or viewport_size.y < 600.0
+
+
+func _page_capacity() -> int:
+	var viewport_size := V2.physical_window_size(get_viewport())
+	if viewport_size.y < 560.0:
+		return 1
+	if viewport_size.y < 680.0:
+		return 2
+	return PAGE_SIZE
 
 
 func _status_text(preview: Dictionary) -> String:
