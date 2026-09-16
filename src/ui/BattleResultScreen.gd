@@ -4,6 +4,7 @@ class_name BattleResultScreen
 signal return_requested
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
+const MenuUiStyleScript = preload("res://src/ui/MenuUiStyle.gd")
 const GlassPanelScript = preload("res://src/ui/components/DigiGlassPanel.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
@@ -451,13 +452,10 @@ func _animate_entrance(sequence_id: int) -> bool:
 		return false
 	_backdrop.modulate.a = 0.0
 	_shell.modulate.a = 0.0
-	_shell.scale *= 0.975
-	_shell.pivot_offset = _shell.size * 0.5
 	_active_tween = create_tween().set_parallel(true)
 	_active_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_active_tween.tween_property(_backdrop, "modulate:a", 1.0, 0.16)
 	_active_tween.tween_property(_shell, "modulate:a", 1.0, 0.22)
-	_active_tween.tween_property(_shell, "scale", _layout_scale(), 0.24)
 	await _active_tween.finished
 	if sequence_id != _sequence_id:
 		return false
@@ -627,7 +625,6 @@ func _apply_final_state() -> void:
 		panel.add_theme_stylebox_override("panel", _card_style(card["accent"] as Color, false))
 	_bits_value.text = "+%d Bits" % int(_result.get("bits", 0)) if outcome == "victory" else "NO REWARDS"
 	_shell.modulate.a = 1.0
-	_shell.scale = _layout_scale()
 	_backdrop.modulate.a = 1.0
 
 
@@ -653,7 +650,6 @@ func _layout() -> void:
 		return
 	var viewport := get_viewport()
 	var physical := V2.physical_window_size(viewport)
-	var ui_scale := V2.ui_scale(viewport)
 	_last_viewport_size = viewport.get_visible_rect().size
 	_last_window_size = DisplayServer.window_get_size()
 
@@ -680,40 +676,17 @@ func _layout() -> void:
 	_subtitle.add_theme_font_size_override("font_size", 10 if compact else 12)
 	_continue_button.custom_minimum_size.y = V2.TOUCH_TARGET
 
-	var outer_margin := 12.0 if compact else 28.0
-	var available := Vector2(
-		maxf(1.0, physical.x - outer_margin * 2.0),
-		maxf(1.0, physical.y - outer_margin * 2.0)
+	var desired_height := minf(MAX_FRAME_SIZE.y, 340.0 + party_height)
+	MenuUiStyleScript.apply_safe_frame(
+		_shell,
+		viewport,
+		Vector2(MAX_FRAME_SIZE.x, desired_height),
+		900.0
 	)
-	var desired_height := 340.0 + party_height
-	var requested := Vector2(
-		minf(MAX_FRAME_SIZE.x, available.x),
-		minf(minf(MAX_FRAME_SIZE.y, desired_height), available.y)
-	)
-
-	_shell.size = requested
-	var minimum := _shell.get_combined_minimum_size()
-	var content_size := Vector2(
-		maxf(requested.x, minimum.x),
-		maxf(requested.y, minimum.y)
-	)
-	var fit := minf(1.0, minf(
-		available.x / maxf(1.0, content_size.x),
-		available.y / maxf(1.0, content_size.y)
-	))
-	var effective := content_size * fit
-	var final_scale := ui_scale * fit
-	_shell.scale = Vector2.ONE * final_scale
-	_shell.position = Vector2(
-		(physical.x - effective.x) * 0.5,
-		(physical.y - effective.y) * 0.5
-	) * ui_scale
-	_shell.size = content_size
-	_shell.pivot_offset = _shell.size * 0.5
-
-
-func _layout_scale() -> Vector2:
-	return _shell.scale if _shell != null else Vector2.ONE
+	# Safe-frame positioning assumes scaling around the top-left. Keep the layout
+	# pivot at zero so fit scaling stays mathematically centered and cannot drift
+	# down/right when first-frame content grows beyond the available viewport.
+	_shell.pivot_offset = Vector2.ZERO
 
 
 func _label(text_value: String, size: int, color: Color, heading: bool = false) -> Label:
