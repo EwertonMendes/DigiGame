@@ -383,12 +383,8 @@ func _spawn_burst(color: Color, amount: int, velocity: float, lifetime: float, p
 	particles.z_index = 75
 	parent_node.add_child(particles)
 	particles.global_position = global_position + Vector2(0.0, -30.0)
+	particles.finished.connect(particles.queue_free, CONNECT_ONE_SHOT)
 	particles.emitting = true
-	var cleanup_timer: SceneTreeTimer = get_tree().create_timer(particles.lifetime + 0.45)
-	cleanup_timer.timeout.connect(func():
-		if is_instance_valid(particles):
-			particles.queue_free()
-	)
 
 
 func get_instance_snapshot() -> Dictionary:
