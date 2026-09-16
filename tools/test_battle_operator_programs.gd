@@ -12,7 +12,7 @@ var _failures: Array[String] = []
 func _ready() -> void:
 	OverworldState.reset_active_party()
 	BattleEncounterSession.clear_pending_encounter()
-	var database := OverworldState.get_database()
+	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
 	_expect(database != null and database.is_loaded(), "Persistent Digimon database must be loaded")
 	if not _failures.is_empty():
 		_finish()
@@ -47,7 +47,9 @@ func _ready() -> void:
 			var level := int(descriptor.get("level", 1))
 			_expect(not action_database.get_default_action_for_species(seed, level).is_empty(), "%s generated enemy must have a ready battle action at its selected level" % String(species.get("name", seed)))
 			var resource_path := "res://assets/resources/%s.tres" % String(species.get("name", "")).to_lower()
-			var resource := load(resource_path) as Digimon if ResourceLoader.exists(resource_path) else null
+			var resource: Digimon = null
+			if ResourceLoader.exists(resource_path):
+				resource = load(resource_path) as Digimon
 			_expect(resource != null and resource.texture != null, "%s generated enemy must have a packaged battle resource" % String(species.get("name", seed)))
 			if resource != null:
 				_expect(resource.sprite_layout == "directional_12" and resource.sprite_hframes == 12 and resource.sprite_vframes == 1, "%s generated enemy must have the complete 12-frame directional sprite contract" % String(species.get("name", seed)))
@@ -86,7 +88,7 @@ func _test_operator_menu() -> void:
 		await get_tree().process_frame
 
 	var dialog := hub.find_child("BattleDialog", true, false) as Control
-	var buttons = hub.get("_battle_program_buttons") as Dictionary
+	var buttons := hub.get("_battle_program_buttons") as Dictionary
 	_expect(dialog != null and dialog.visible, "Battle Operator program menu must open")
 	_expect(buttons.size() == 8, "Battle Operator must expose Basic, six random-rank programs, and Not Now")
 	var expected_labels := {
