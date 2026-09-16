@@ -4,6 +4,7 @@ const HUB_SCENE = preload("res://scenes/world/hub.tscn")
 const GlassPanelScript = preload("res://src/ui/components/DigiGlassPanel.gd")
 const InteractionPromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
 const ConfirmationModalScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
+const AttributeChipScript = preload("res://src/ui/components/DigiAttributeChip.gd")
 
 
 func _ready() -> void:
@@ -15,6 +16,39 @@ func _ready() -> void:
 	glass.call("configure_glass", DigiUiTheme.CYAN, "floating", Vector4.ZERO, 10)
 	await _frames(2)
 	if not _check(glass.has_meta("digi_glass_surface") and glass.get_theme_stylebox("panel") != null, "Glass surface must instantiate as a reusable V2 component"):
+		return
+
+	# Classification chips may render either as styled text labels or as
+	# icon-backed panels. Their outer height is a shared player-facing contract:
+	# mixed rows must not look staggered just because one classification has an
+	# icon. Also guard against normalizing the nested attribute label and thereby
+	# applying the panel's vertical inset twice.
+	var classification_row := HBoxContainer.new()
+	add_child(classification_row)
+	var text_chip := Label.new()
+	text_chip.text = "ROOKIE"
+	text_chip.add_theme_font_size_override("font_size", 9)
+	text_chip.add_theme_color_override("font_color", DigiUiTheme.CYAN)
+	text_chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	text_chip.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	text_chip.add_theme_stylebox_override("normal", DigiUiTheme.pill_style(DigiUiTheme.CYAN, true))
+	DigiUiTheme.apply_heading(text_chip)
+	classification_row.add_child(text_chip)
+	var icon_chip := AttributeChipScript.build("Vaccine")
+	classification_row.add_child(icon_chip)
+	var text_attribute_chip := AttributeChipScript.build("Free")
+	classification_row.add_child(text_attribute_chip)
+	AttributeChipScript.normalize_text_pill_height(classification_row, "ROOKIE")
+	await _frames(2)
+	var icon_height_before := icon_chip.get_combined_minimum_size().y
+	AttributeChipScript.normalize_text_pill_height(classification_row, "VACCINE")
+	await _frames(1)
+	var icon_height_after := icon_chip.get_combined_minimum_size().y
+	if not _check(is_equal_approx(text_chip.get_combined_minimum_size().y, icon_height_after), "Text classification chips must match icon-backed chip height"):
+		return
+	if not _check(is_equal_approx(text_attribute_chip.get_combined_minimum_size().y, icon_height_after), "Classification chips without an icon must keep the shared chip height"):
+		return
+	if not _check(is_equal_approx(icon_height_before, icon_height_after), "Normalizing a classification row must not enlarge the nested attribute label"):
 		return
 
 	var prompt := InteractionPromptScript.new() as DigiInteractionPrompt
@@ -76,6 +110,7 @@ func _ready() -> void:
 	hub.queue_free()
 	modal.queue_free()
 	prompt.queue_free()
+	classification_row.queue_free()
 	glass.queue_free()
 	await _frames(3)
 	print("global ui v2 components regression passed")
