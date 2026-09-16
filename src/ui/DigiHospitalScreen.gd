@@ -3,6 +3,11 @@ extends "res://src/ui/HospitalScreen.gd"
 # Presentation/input refinement for the Digi Hospital. Domain actions remain in
 # HospitalScreen/OverworldState; this layer owns the final interaction polish.
 
+const CommandButtonStyle = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
+const PATIENT_CARD_HEIGHT := 154.0
+const COMPACT_PATIENT_CARD_HEIGHT := 136.0
+const PATIENT_INFO_GAP := 6
+
 var _pointer_patient_selection := false
 
 
@@ -34,6 +39,43 @@ func _build_header() -> void:
 	_bits_label.z_index = 4
 
 
+func _build_hero() -> void:
+	super._build_hero()
+	var meta := _hero.find_child("PatientMeta", true, false) as HBoxContainer
+	if meta == null or _hero_status == null:
+		return
+
+	# Health state belongs to the same semantic line as rank/level/tier. Keeping
+	# it here also frees the portrait area from a dedicated status row.
+	var previous_parent := _hero_status.get_parent()
+	if previous_parent != null:
+		previous_parent.remove_child(_hero_status)
+	meta.add_child(_hero_status)
+	meta.move_child(_hero_status, _hero_info.get_index() + 1)
+	meta.add_theme_constant_override("separation", 10)
+	_hero_info.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_hero_status.custom_minimum_size = Vector2(0, 28)
+	_hero_status.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_hero_status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_hero_status.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+
+	var spacer := Control.new()
+	spacer.name = "PatientMetaSpacer"
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	meta.add_child(spacer)
+	meta.move_child(spacer, _hero_status.get_index() + 1)
+
+	# The tier artwork already communicates the tier. Hiding the redundant caption
+	# and location keeps Rank · Level · Status · Tier on one clean responsive row.
+	for child in meta.get_children():
+		if child is Label and child != _hero_info and child != _hero_status:
+			var label := child as Label
+			if label.text == "Tier":
+				label.visible = false
+	_hero_location.visible = false
+
+
 func _build_overview() -> void:
 	super._build_overview()
 	_overview_stack.alignment = BoxContainer.ALIGNMENT_BEGIN
@@ -48,7 +90,17 @@ func _information_panel(parent: Node, node_name: String, accent: Color, minimum_
 
 func _create_patient_card(instance: DigimonInstance) -> Button:
 	var card := super._create_patient_card(instance)
+	# Cards are paged in sets of up to three. Their authored height must never
+	# expand to consume unused roster space when a page contains only one or two.
+	card.custom_minimum_size.y = COMPACT_PATIENT_CARD_HEIGHT if _is_compact() else PATIENT_CARD_HEIGHT
+	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	card.gui_input.connect(_on_patient_card_gui_input.bind(instance.id))
+
+	var info := card.find_child("CardInfo", true, false) as VBoxContainer
+	if info != null:
+		# One rhythm for Level -> HP -> bar -> status keeps the chip visually
+		# separated from the HP bar instead of appearing glued to it.
+		info.add_theme_constant_override("separation", PATIENT_INFO_GAP)
 	return card
 
 
@@ -100,6 +152,15 @@ func _on_overview_gui_input(_event: InputEvent) -> void:
 	pass
 
 
+func _status_color(status: String) -> Color:
+	match status:
+		"injured": return V2.AMBER
+		"critical": return V2.RED
+		"recovering": return V2.CYAN
+		"ready", "healthy": return V2.GREEN
+		_: return V2.MUTED
+
+
 func _apply_status_chip(label: Label, preview: Dictionary) -> void:
 	var accent := _status_color(String(preview.get("status", "healthy")))
 	label.text = _status_text(preview)
@@ -145,18 +206,9 @@ func _create_action_button(key: String, title_text: String, subtitle_text: Strin
 
 
 func _action_style(accent: Color, state: String) -> StyleBoxFlat:
-	if state != "disabled":
-		return super._action_style(accent, state)
-	var style := V2.surface_style(
-		Color(0.010, 0.020, 0.029, 0.98),
-		Color(V2.SUBTLE.r, V2.SUBTLE.g, V2.SUBTLE.b, 0.72),
-		10
-	)
-	style.set_border_width_all(2)
-	style.border_blend = true
-	style.shadow_color = Color.TRANSPARENT
-	style.shadow_size = 0
-	return style
+	# Centralised, reusable command styling keeps action buttons visibly distinct
+	# from informational cards without duplicating state-specific paint logic.
+	return CommandButtonStyle.style(accent, state)
 
 
 func _update_action_visibility(preview: Dictionary) -> void:
@@ -192,17 +244,18 @@ func _apply_action_state(key: String, button: Button, action_mode: bool, allowed
 		subtitle.text = String(button.get_meta("default_subtitle", subtitle.text))
 
 	var unavailable := button.visible and action_mode and not allowed
+	var disabled_visual := button.visible and button.disabled
 	if state != null:
 		state.visible = unavailable
-	if unavailable:
-		var insufficient_bits := key == "recover" and OverworldState.get_bits() < int(preview.get("instant_cost", 0))
-		if state != null:
+	if disabled_visual:
+		var insufficient_bits := unavailable and key == "recover" and OverworldState.get_bits() < int(preview.get("instant_cost", 0))
+		if state != null and unavailable:
 			state.text = "INSUFFICIENT BITS" if insufficient_bits else "UNAVAILABLE"
 			state.add_theme_color_override("font_color", V2.AMBER if insufficient_bits else V2.MUTED)
 			state.add_theme_stylebox_override("normal", V2.pill_style(V2.AMBER if insufficient_bits else V2.MUTED, false))
 		if subtitle != null and insufficient_bits:
 			subtitle.text = "Need %d more Bits" % maxi(0, int(preview.get("instant_cost", 0)) - OverworldState.get_bits())
-		button.mouse_default_cursor_shape = Control.CURSOR_FORBIDDEN
+		button.mouse_default_cursor_shape = Control.CURSOR_FORBIDDEN if unavailable else Control.CURSOR_ARROW
 		if title != null:
 			title.add_theme_color_override("font_color", V2.SUBTLE)
 		if subtitle != null:
@@ -210,7 +263,7 @@ func _apply_action_state(key: String, button: Button, action_mode: bool, allowed
 		if icon != null:
 			icon.modulate = Color(0.45, 0.50, 0.55, 0.72)
 	else:
-		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if not button.disabled else Control.CURSOR_ARROW
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		if title != null:
 			title.add_theme_color_override("font_color", V2.WHITE)
 		if subtitle != null:
