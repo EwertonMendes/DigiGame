@@ -1,6 +1,8 @@
 extends RefCounted
 class_name PlayerCollection
 
+const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
+
 var bits: int = 0
 var progression_flags: Dictionary = {}
 var quest_states: Dictionary = {}
@@ -254,6 +256,9 @@ func load_dict(data: Dictionary) -> void:
 			var amount := maxi(0, int(raw_inventory[raw_item_id]))
 			if not item_id.is_empty() and amount > 0:
 				inventory[item_id] = amount
+
+	var action_database = ActionDatabaseScript.new()
+	var action_database_ready := action_database.load_default()
 	var entries = data.get("instances", [])
 	if entries is Array:
 		for raw_entry in entries:
@@ -266,6 +271,8 @@ func load_dict(data: Dictionary) -> void:
 			var instance := DigimonInstance.from_dict(raw_instance as Dictionary)
 			if instance.species_seed.is_empty() or _instances_by_id.has(instance.id):
 				continue
+			if action_database_ready:
+				_migrate_instance_skill_ids(instance, action_database)
 			add_instance(instance, String(entry.get("collectionKey", "")), "digimon")
 	var raw_party = data.get("activePartyIds", [])
 	if raw_party is Array:
@@ -280,6 +287,47 @@ func load_dict(data: Dictionary) -> void:
 			var amount := maxi(0, int(raw_data[raw_seed]))
 			if not seed.is_empty() and amount > 0:
 				_digi_data_by_seed[seed] = amount
+
+func _migrate_instance_skill_ids(instance: DigimonInstance, action_database) -> void:
+	if instance == null or action_database == null:
+		return
+	var species_key := instance.species_seed
+	var old_learned := instance.learned_skills.duplicate()
+	var old_favorites := instance.favorite_skills.duplicate()
+	var old_archived := instance.archived_skills.duplicate()
+	var old_mastery := instance.skill_mastery.duplicate(true)
+	var migrated_learned: Array[String] = []
+	var migrated_mastery: Dictionary = {}
+
+	for raw_skill_id in old_learned:
+		var old_id := String(raw_skill_id).strip_edges()
+		if old_id.is_empty():
+			continue
+		var resolved_id := String(action_database.resolve_skill_id(species_key, old_id)).strip_edges()
+		if resolved_id.is_empty():
+			resolved_id = old_id
+		if not migrated_learned.has(resolved_id):
+			migrated_learned.append(resolved_id)
+		var old_points := clampi(int(old_mastery.get(old_id, old_mastery.get(resolved_id, 0))), 0, DigimonInstance.MAX_SKILL_MASTERY_POINTS)
+		migrated_mastery[resolved_id] = maxi(int(migrated_mastery.get(resolved_id, 0)), old_points)
+
+	var migrated_favorites: Array[String] = []
+	for raw_skill_id in old_favorites:
+		var resolved_id := String(action_database.resolve_skill_id(species_key, String(raw_skill_id))).strip_edges()
+		if migrated_learned.has(resolved_id) and not migrated_favorites.has(resolved_id) and migrated_favorites.size() < DigimonInstance.MAX_FAVORITE_SKILLS:
+			migrated_favorites.append(resolved_id)
+
+	var migrated_archived: Array[String] = []
+	for raw_skill_id in old_archived:
+		var resolved_id := String(action_database.resolve_skill_id(species_key, String(raw_skill_id))).strip_edges()
+		if migrated_learned.has(resolved_id) and not migrated_archived.has(resolved_id):
+			migrated_archived.append(resolved_id)
+			migrated_favorites.erase(resolved_id)
+
+	instance.learned_skills = migrated_learned
+	instance.favorite_skills = migrated_favorites
+	instance.archived_skills = migrated_archived
+	instance.skill_mastery = migrated_mastery
 
 func _unique_key(base_key: String) -> String:
 	var clean := base_key.to_lower().strip_edges()
