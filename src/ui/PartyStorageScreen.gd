@@ -425,8 +425,6 @@ func _identity_card(instance: DigimonInstance, species: Dictionary, display_name
 	status_row.add_child(_semantic_label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, V2.CYAN, true))
 	var location := "ACTIVE PARTY · SLOT %d" % (party_index + 1) if active else "STORAGE"
 	info.add_child(_pill(location, V2.AMBER if active else V2.CYAN))
-	var id_label := _single_line_label("ID %s" % instance.id.substr(0, mini(8, instance.id.length())), 9, V2.SUBTLE)
-	info.add_child(id_label)
 	return panel
 
 
