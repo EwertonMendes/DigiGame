@@ -251,9 +251,14 @@ func _refresh() -> void:
 	_refresh_detail()
 
 
-func _refresh_collection() -> void:
-	for child in _collection_list.get_children():
+func _clear_children_now(container: Node) -> void:
+	for child in container.get_children():
+		container.remove_child(child)
 		child.queue_free()
+
+
+func _refresh_collection() -> void:
+	_clear_children_now(_collection_list)
 	_collection_buttons.clear()
 	_collection_ids.clear()
 	_collection_previews.clear()
@@ -353,8 +358,8 @@ func _focus_selected_collection() -> void:
 
 
 func _refresh_detail() -> void:
-	for child in _detail.get_children():
-		child.queue_free()
+	var previous_scroll := _detail_scroll.scroll_vertical if _detail_scroll != null else 0
+	_clear_children_now(_detail)
 	_stat_rows.clear()
 	_mobility_minus = null
 	_mobility_plus = null
@@ -363,10 +368,12 @@ func _refresh_detail() -> void:
 	var instance := OverworldState.get_instance_by_id(_selected_id)
 	if instance == null:
 		_detail.add_child(_empty_state("Select a Digimon from your collection."))
+		call_deferred("_restore_detail_scroll", previous_scroll)
 		return
 	var species := _database.get_by_seed(instance.species_seed)
 	if species.is_empty():
 		_detail.add_child(_empty_state("Species data unavailable.", V2.RED))
+		call_deferred("_restore_detail_scroll", previous_scroll)
 		return
 
 	var preview := DigimonInstance.from_dict(instance.to_dict())
@@ -397,6 +404,15 @@ func _refresh_detail() -> void:
 
 	_build_mobility(instance, current_stats, preview_stats)
 	_build_plan_actions(instance)
+	call_deferred("_restore_detail_scroll", previous_scroll)
+
+
+func _restore_detail_scroll(position: int) -> void:
+	if _detail_scroll == null or not is_instance_valid(_detail_scroll):
+		return
+	var scroll_bar := _detail_scroll.get_v_scroll_bar()
+	var maximum := maxi(0, int(round(scroll_bar.max_value - scroll_bar.page)))
+	_detail_scroll.scroll_vertical = clampi(position, 0, maximum)
 
 
 func _build_identity(instance: DigimonInstance, species: Dictionary) -> void:
