@@ -88,8 +88,12 @@ func _ready() -> void:
 	print("[digilab-layout] shoulder tabs ok")
 
 	digilab.call("close_view")
+	# queue_free() is deferred. Wait for the Hub to actually leave the tree before
+	# ending the process so every child-owned Resource is released deterministically.
+	# This avoids racing Godot's shutdown cleanup as the Hub grows new services.
 	hub.queue_free()
-	await _frames(2)
+	await hub.tree_exited
+	await get_tree().process_frame
 	print("digilab layout regression passed")
 	get_tree().quit()
 
