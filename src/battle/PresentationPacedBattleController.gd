@@ -31,13 +31,21 @@ func _wait_for_resolution_presentation() -> void:
 	if main == null:
 		return
 	var presentation := main.get_node_or_null("BattlePresentationFX")
-	if presentation == null or not presentation.has_method("current_resolution_wait_seconds"):
+	if presentation == null:
 		return
 
-	# The presentation layer owns the deadline; this controller owns suspension
-	# of the turn scheduler. Keeping those responsibilities separate prevents the
-	# camera/HUD/current-actor state from advancing while the result is still being
-	# shown, without hiding a gameplay timer in the camera itself.
+	# Prefer a presentation-owned awaitable so the deadline can still grow while
+	# multi-target/KO feedback is being scheduled. This is especially important for
+	# enemy turns, which request handoff automatically in the same frame as their
+	# attack finishes.
+	if presentation.has_method("wait_for_current_resolution"):
+		await presentation.call("wait_for_current_resolution")
+		return
+
+	# Compatibility fallback for presentation implementations that only expose a
+	# snapshot budget.
+	if not presentation.has_method("current_resolution_wait_seconds"):
+		return
 	var remaining := maxf(0.0, float(presentation.call("current_resolution_wait_seconds")))
 	if remaining > 0.001:
 		await get_tree().create_timer(remaining).timeout
