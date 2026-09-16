@@ -24,8 +24,15 @@ func _ready() -> void:
 	var continue_button := screen.get("_continue_button") as Button
 	_check(continue_button != null and continue_button.custom_minimum_size.y >= V2.TOUCH_TARGET, "Result action must remain touch-safe")
 	_check(screen.find_child("KenneyResultDivider", true, false) == null, "Battle result must not recreate legacy Kenney chrome")
+	var party_grid := screen.get("_party_grid") as GridContainer
+	var content := screen.get("_content") as VBoxContainer
+	_check(party_grid != null and party_grid.get_parent() == content, "Squad report must participate directly in the result layout")
+	_check(screen.find_child("SquadReportScrollV2", true, false) == null, "Squad report must not use an internal scroll viewport")
+	_verify_reward_layout_contract(screen)
 
-	await _verify_outcome(screen, viewport, "victory", "VICTORY")
+	# Victory is intentionally verified first and also reproduces the first-open
+	# late-minimum-size case that caused the production overflow.
+	await _verify_outcome(screen, viewport, "victory", "VICTORY", true)
 	await _verify_outcome(screen, viewport, "escaped", "RETREATED")
 	await _verify_outcome(screen, viewport, "defeat", "DEFEAT")
 
@@ -34,7 +41,7 @@ func _ready() -> void:
 	screen.call("_layout")
 	await _frames(2)
 	_check_frame_inside_viewport(screen, viewport, "compact")
-	var party_grid := screen.get("_party_grid") as GridContainer
+	_check_frame_centered(screen, viewport, "compact")
 	_check(party_grid != null and party_grid.columns == 1, "Compact result layout must collapse squad cards to one column")
 
 	screen.queue_free()
@@ -49,7 +56,33 @@ func _ready() -> void:
 	get_tree().quit(1)
 
 
-func _verify_outcome(screen: BattleResultScreen, viewport: SubViewport, outcome: String, expected_title: String) -> void:
+func _verify_reward_layout_contract(screen: BattleResultScreen) -> void:
+	# Keep this contract headless-safe: constructing a synthetic portrait card
+	# outside the normal OverworldState lifecycle can terminate the renderer on
+	# headless runners. The actual outcome flows below still exercise real result
+	# cards; here we verify the data needed to reserve their final footprint exists
+	# before animation starts.
+	var reward := {
+		"old_level": 4,
+		"new_level": 5,
+		"levels_gained": 1,
+		"level_steps": [{"leveled_up": true, "next_level": 5}],
+		"learned_skills": ["pepper_breath", "baby_flame"],
+		"unlocked_evolutions": [{"name": "Greymon"}],
+	}
+	var unlock_text := String(screen.call("_unlock_text_for_reward", reward))
+	_check(unlock_text.contains("New technique:"), "Reward card must know learned-technique copy before animation")
+	_check(unlock_text.contains("Digivolution ready:"), "Reward card must know evolution copy before animation")
+	_check(bool(screen.call("_reward_has_level_up", reward)), "Reward card must know whether to reserve level-up feedback before animation")
+
+
+func _verify_outcome(
+	screen: BattleResultScreen,
+	viewport: SubViewport,
+	outcome: String,
+	expected_title: String,
+	simulate_first_open_growth: bool = false
+) -> void:
 	screen.show_result({
 		"battle_seed": "ui-v2-%s" % outcome,
 		"outcome": outcome,
@@ -60,10 +93,28 @@ func _verify_outcome(screen: BattleResultScreen, viewport: SubViewport, outcome:
 		"digi_data_progress": {},
 		"xp_rewards": {"digimon": []},
 	})
-	await _frames(3)
+
+	var reward_panel := screen.get("_reward_panel") as Control
+	var original_minimum := Vector2.ZERO
+	if simulate_first_open_growth and _check(reward_panel != null, "First-open regression requires the rewards panel"):
+		original_minimum = reward_panel.custom_minimum_size
+		# Reproduce the real failure mode: descendants report a larger minimum after
+		# the first layout pass. The shared safe-frame guard must re-fit/recenter it.
+		await _frames(1)
+		reward_panel.custom_minimum_size = Vector2(original_minimum.x, 420.0)
+		await _frames(2)
+		_check_frame_inside_viewport(screen, viewport, "first-open late growth")
+		_check_frame_centered(screen, viewport, "first-open late growth")
+	else:
+		await _frames(3)
+
 	var title := screen.get("_title") as Label
 	_check(title != null and title.text == expected_title, "%s result must communicate its outcome clearly" % expected_title)
 	_check_frame_inside_viewport(screen, viewport, outcome)
+	_check_frame_centered(screen, viewport, outcome)
+
+	if simulate_first_open_growth and reward_panel != null:
+		reward_panel.custom_minimum_size = original_minimum
 	screen.hide_result()
 	await _frames(1)
 
@@ -72,12 +123,41 @@ func _check_frame_inside_viewport(screen: BattleResultScreen, viewport: SubViewp
 	var shell := screen.get("_shell") as Control
 	if not _check(shell != null, "%s result requires a shell" % context):
 		return
-	var effective_size := shell.size * shell.scale
-	var bottom_right := shell.position + effective_size
-	_check(shell.position.x >= -1.0 and shell.position.y >= -1.0, "%s result frame must not begin outside the viewport" % context)
-	_check(bottom_right.x <= float(viewport.size.x) + 1.0, "%s result frame must not overflow horizontally" % context)
-	_check(bottom_right.y <= float(viewport.size.y) + 1.0, "%s result frame must not overflow vertically" % context)
+	var bounds := _control_bounds(shell)
+	_check(bounds.position.x >= -1.0 and bounds.position.y >= -1.0, "%s result frame must not begin outside the viewport" % context)
+	_check(bounds.end.x <= float(viewport.size.x) + 1.0, "%s result frame must not overflow horizontally" % context)
+	_check(bounds.end.y <= float(viewport.size.y) + 1.0, "%s result frame must not overflow vertically" % context)
 	_check(shell.clip_contents, "%s result frame must clip late dynamic content safely" % context)
+
+
+func _check_frame_centered(screen: BattleResultScreen, viewport: SubViewport, context: String) -> void:
+	var shell := screen.get("_shell") as Control
+	if shell == null:
+		return
+	var bounds := _control_bounds(shell)
+	var viewport_center := Vector2(viewport.size) * 0.5
+	_check(
+		bounds.get_center().distance_to(viewport_center) <= 1.5,
+		"%s result frame must remain centered after fitting" % context
+	)
+
+
+func _control_bounds(control: Control) -> Rect2:
+	var transform := control.get_global_transform()
+	var points := [
+		transform * Vector2.ZERO,
+		transform * Vector2(control.size.x, 0.0),
+		transform * control.size,
+		transform * Vector2(0.0, control.size.y),
+	]
+	var min_point: Vector2 = points[0]
+	var max_point: Vector2 = points[0]
+	for point: Vector2 in points:
+		min_point.x = minf(min_point.x, point.x)
+		min_point.y = minf(min_point.y, point.y)
+		max_point.x = maxf(max_point.x, point.x)
+		max_point.y = maxf(max_point.y, point.y)
+	return Rect2(min_point, max_point - min_point)
 
 
 func _check(condition: bool, message: String) -> bool:
