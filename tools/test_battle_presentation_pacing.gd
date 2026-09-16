@@ -1,9 +1,9 @@
 extends SceneTree
 
 const PresentationScript = preload("res://src/battle/SequencedBattlePresentationFX.gd")
-const HOLD_SECONDS := 0.10
-const MIN_INITIAL_BUDGET := 0.06
-const MAX_INITIAL_BUDGET := 0.11
+const HOLD_SECONDS := 0.16
+const MIN_INITIAL_BUDGET := 0.09
+const MAX_INITIAL_BUDGET := 0.17
 const MAX_EXPIRED_BUDGET := 0.01
 
 var _failures: Array[String] = []
@@ -18,19 +18,19 @@ func _run() -> void:
 	root.add_child(presentation)
 	await process_frame
 
-	presentation.call("_extend_resolution_deadline", HOLD_SECONDS)
+	presentation.call("_extend_resolution_hold", HOLD_SECONDS)
 	var remaining := float(presentation.call("current_resolution_wait_seconds"))
 	_expect(
 		remaining >= MIN_INITIAL_BUDGET and remaining <= MAX_INITIAL_BUDGET,
-		"Active readability deadline must expose its remaining presentation budget (remaining=%.3fs)." % remaining
+		"Active readability hold must expose its remaining presentation budget (remaining=%.3fs)." % remaining
 	)
 
 	if remaining > 0.0:
-		await create_timer(remaining + 0.02).timeout
+		await create_timer(remaining + 0.04).timeout
 	var expired := float(presentation.call("current_resolution_wait_seconds"))
 	_expect(
 		expired <= MAX_EXPIRED_BUDGET,
-		"Expired presentation deadline must not leak a stale delay (remaining=%.3fs)." % expired
+		"Expired presentation hold must not leak a stale delay (remaining=%.3fs)." % expired
 	)
 
 	presentation.queue_free()
