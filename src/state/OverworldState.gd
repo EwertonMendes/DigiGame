@@ -61,6 +61,14 @@ func get_active_instances() -> Array[DigimonInstance]:
 	_ensure_starter_collection()
 	return _collection.get_active_instances()
 
+
+func get_battle_ready_active_instances() -> Array[DigimonInstance]:
+	var result: Array[DigimonInstance] = []
+	for instance: DigimonInstance in get_active_instances():
+		if not instance.is_fainted():
+			result.append(instance)
+	return result
+
 func get_hospital_instances() -> Array[DigimonInstance]:
 	_ensure_starter_collection()
 	return _collection.get_hospital_instances()
@@ -287,15 +295,13 @@ func battle_party_validation_error(now_unix: int = -1) -> String:
 	if not invariant_error.is_empty():
 		return invariant_error
 	var active_ids := _collection.get_active_party_ids()
+	if active_ids.is_empty():
+		return "You need at least one available Digimon in your party to start a battle."
 	var party_error := _party_service.validation_error(_collection, active_ids)
 	if not party_error.is_empty():
 		return party_error
-	for instance: DigimonInstance in _collection.get_active_instances():
-		var species := _database.get_by_seed(instance.species_seed)
-		var display_name := instance.get_display_name(String(species.get("name", instance.species_seed)))
-		var eligibility_error := _hospital_service.battle_eligibility_error(instance, _max_hp_for(instance), display_name, now_unix, _collection.get_location(instance.id))
-		if not eligibility_error.is_empty():
-			return eligibility_error
+	if get_battle_ready_active_instances().is_empty():
+		return "You need at least one available Digimon in your party to start a battle."
 	return ""
 
 

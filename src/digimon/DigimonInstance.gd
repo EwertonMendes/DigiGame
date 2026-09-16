@@ -69,6 +69,10 @@ func set_current_sp(value: int) -> void:
 	current_mp = maxi(0, value)
 
 
+func is_fainted() -> bool:
+	return current_hp <= 0
+
+
 func has_hospital_recovery() -> bool:
 	return get_hospital_recovery_end_time() > 0
 

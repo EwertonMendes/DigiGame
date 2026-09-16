@@ -208,7 +208,7 @@ func _set_battle_program_buttons_disabled(disabled: bool) -> void:
 
 
 func _active_party_level() -> int:
-	var party: Array[DigimonInstance] = OverworldState.get_active_instances()
+	var party: Array[DigimonInstance] = OverworldState.get_battle_ready_active_instances()
 	if party.is_empty():
 		return 1
 	var total := 0

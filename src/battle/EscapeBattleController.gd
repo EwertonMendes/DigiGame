@@ -101,6 +101,7 @@ func attempt_flee() -> bool:
 		})
 		await _play_retreat_success_animation()
 		_commit_player_resources()
+		OverworldState.save_progress()
 		_finish_escape(escape_preview)
 		return true
 

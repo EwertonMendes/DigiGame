@@ -24,9 +24,9 @@ func _spawn_demo_rosters() -> void:
 		return
 
 	var player_entries: Array[Dictionary] = []
-	var persistent_party: Array[DigimonInstance] = OverworldState.get_active_instances()
+	var persistent_party: Array[DigimonInstance] = OverworldState.get_battle_ready_active_instances()
 	if persistent_party.is_empty():
-		_abort_invalid_battle("You need at least one Digimon in your party to start a battle.")
+		_abort_invalid_battle("You need at least one available Digimon in your party to start a battle.")
 		return
 	for instance: DigimonInstance in persistent_party:
 		player_entries.append({"instance": instance, "profile": ""})

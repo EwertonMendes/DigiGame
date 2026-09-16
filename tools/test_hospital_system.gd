@@ -5,6 +5,7 @@ const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const HospitalCalculatorScript = preload("res://src/hospital/HospitalRecoveryCalculator.gd")
 const HospitalServiceScript = preload("res://src/hospital/HospitalService.gd")
+const BattleDigimonScript = preload("res://src/battle/BattleDigimon.gd")
 const CollectionScript = preload("res://src/collection/PlayerCollection.gd")
 const SaveServiceScript = preload("res://src/save/SaveService.gd")
 const MigrationScript = preload("res://src/save/SaveMigration.gd")
@@ -21,6 +22,7 @@ func _ready() -> void:
 	var hospital: HospitalService = HospitalServiceScript.new(calculator)
 
 	_test_derived_health_and_scaling(database, factory, stats, calculator, hospital)
+	_test_battle_damage_commits_fainted_state(database, factory, stats)
 	_test_party_storage_and_admission(database, factory, stats, hospital)
 	_test_last_party_member_can_be_admitted(database, factory, stats, hospital)
 	_test_offline_completion_waits_for_discharge(database, factory, stats, hospital)
@@ -46,12 +48,28 @@ func _test_derived_health_and_scaling(database: DigimonDatabase, factory: Digimo
 	assert(hospital.status_for(critical, max_hp, 1000, PlayerCollection.LOCATION_PARTY) == "critical", "Zero HP outside battle must derive Critical")
 	assert(calculator.instant_cost(critical, max_hp) > calculator.instant_cost(injured, max_hp), "Instant cost must increase with missing HP")
 	assert(calculator.recovery_seconds(critical, max_hp) > calculator.recovery_seconds(injured, max_hp), "Recovery time must increase with missing HP")
+	var moderately_injured := factory.create_player_by_name("veemon", 3, 100)
+	moderately_injured.current_hp = 64
+	assert(calculator.instant_cost(moderately_injured, 100) == 234, "A level 3 Digimon missing 36% HP must have a meaningful 234 Bits instant cost")
+	var lightly_injured := factory.create_player_by_name("agumon", 4, 100)
+	lightly_injured.current_hp = 93
+	assert(calculator.instant_cost(lightly_injured, 100) == 100, "Minor injuries must still pay the 100 Bits instant-service minimum")
 	injured.current_hp = max_hp
 	var healthy_preview := hospital.preview(injured, max_hp, 9999, 1000, PlayerCollection.LOCATION_PARTY)
 	assert(String(healthy_preview.get("status", "")) == "healthy", "Full HP must derive Healthy")
 	assert(not bool(healthy_preview.get("can_admit", true)) and int(healthy_preview.get("instant_cost", -1)) == 0, "Healthy Digimon must not expose treatment")
 	var serialized := critical.to_dict()
 	assert(not serialized.has("dead") and not serialized.has("isDead") and not serialized.has("critical"), "Health must not create persistent death or condition flags")
+
+
+func _test_battle_damage_commits_fainted_state(database: DigimonDatabase, factory: DigimonFactory, stats: DigimonStatCalculator) -> void:
+	var instance := factory.create_player_by_name("agumon", 5, 100)
+	var max_hp := stats.get_stat(instance, database.get_by_seed(instance.species_seed), "hp")
+	var battle_state: BattleDigimon = BattleDigimonScript.new(instance, "player")
+	battle_state.take_damage(max_hp)
+	assert(instance.current_hp == max_hp, "Battle damage must remain isolated until the battle state is committed")
+	battle_state.commit_resources_to_instance()
+	assert(instance.is_fainted() and instance.current_hp == 0, "Committed knockout damage must persist as the canonical fainted state")
 
 
 func _test_party_storage_and_admission(database: DigimonDatabase, factory: DigimonFactory, stats: DigimonStatCalculator, hospital: HospitalService) -> void:
@@ -159,7 +177,7 @@ func _test_discharge_destinations(database: DigimonDatabase, factory: DigimonFac
 	hospital.complete_if_ready(patient, max_hp, completes_at, PlayerCollection.LOCATION_HOSPITAL)
 	var discharge := hospital.discharge(collection, patient, max_hp, 2, completes_at)
 	assert(discharge.get("success", false) and String(discharge.get("destination", "")) == PlayerCollection.LOCATION_PARTY, "Recovered patient must return to Party when a slot is free")
-	assert(collection.get_active_party_ids().has(patient.id) and not collection.get_hospital_ids().has(patient.id), "Discharge to Party must transfer the UUID exactly once")
+	assert(collection.get_active_party_ids() == [patient.id, teammate.id] and not collection.get_hospital_ids().has(patient.id), "Discharge must restore the UUID to its original Party position exactly once")
 	assert(not patient.has_hospital_recovery(), "Discharge must clear recovery timing")
 
 	patient.current_hp = 0
@@ -187,6 +205,7 @@ func _test_save_load_preserves_locations(database: DigimonDatabase, factory: Dig
 	collection.set_active_party_ids([patient.id, party_member.id], 1, 6)
 	var admission := hospital.admit(collection, patient, max_hp, 11000)
 	assert(admission.get("success", false), "Save test patient must be admitted")
+	assert(int((collection.to_dict().get("hospitalPartyIndices", {}) as Dictionary).get(patient.id, -1)) == 0, "Hospital save data must remember the original Party position")
 
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
@@ -206,6 +225,16 @@ func _test_overworld_battle_gate_and_runtime_roster() -> void:
 	OverworldState.reset_progress_for_tests()
 	var initial_ids := OverworldState.get_active_party_ids()
 	assert(not initial_ids.is_empty(), "Starter Party is required for battle gate regression")
+	var active_instances := OverworldState.get_active_instances()
+	for instance: DigimonInstance in active_instances:
+		instance.current_hp = 0
+	assert(OverworldState.get_active_party_ids() == initial_ids, "Fainted Digimon must remain assigned to the active Party")
+	assert(OverworldState.get_battle_ready_active_instances().is_empty(), "Fainted Party members must be excluded from the deployable battle roster")
+	assert(OverworldState.battle_party_validation_error(11999) == "You need at least one available Digimon in your party to start a battle.", "An all-fainted Party must block battle before transition")
+	active_instances[0].current_hp = 1
+	assert(OverworldState.get_battle_ready_active_instances() == [active_instances[0]], "Healthy Party members must remain deployable when teammates are fainted")
+	assert(OverworldState.battle_party_validation_error(11999).is_empty(), "A mixed Party must battle using only available members")
+	active_instances[0].current_hp = 0
 	var hospitalized_ids: Array[String] = []
 	while not OverworldState.get_active_instances().is_empty():
 		var patient := OverworldState.get_active_instances()[0]
@@ -215,7 +244,7 @@ func _test_overworld_battle_gate_and_runtime_roster() -> void:
 		hospitalized_ids.append(patient.id)
 		assert(not OverworldState.get_active_party_ids().has(patient.id), "Hospitalized UUID must disappear from battle Party immediately")
 	assert(OverworldState.get_active_party_ids().is_empty(), "Admitting every member must leave the Party empty")
-	assert(OverworldState.battle_party_validation_error(12001) == "You need at least one Digimon in your party to start a battle.", "Empty Party must block battle before transition with clear copy")
+	assert(OverworldState.battle_party_validation_error(12001) == "You need at least one available Digimon in your party to start a battle.", "Empty Party must block battle before transition with clear copy")
 	for hospital_id: String in hospitalized_ids:
 		assert(OverworldState.get_hospital_ids().has(hospital_id), "Hospitalized UUID must remain outside the battle runtime roster")
 

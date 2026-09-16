@@ -118,17 +118,19 @@ func _sync_party() -> void:
 	_followers.clear()
 	_active_party_keys.clear()
 
-	var party := OverworldState.get_active_party()
+	var visible_party := OverworldState.get_battle_ready_active_instances()
 	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
 	var occupied: Array[Vector2] = []
 	if _player != null:
 		occupied.append(_player.global_position)
 
-	for party_slot in range(party.size()):
-		var key := String(party[party_slot])
-		var instance := OverworldState.get_instance_for_party_key(key)
-		if instance == null:
-			push_warning("Active party instance is missing: %s" % key)
+	# The Party keeps its persistent order, while visual slots are compacted from
+	# battle-ready members only. A fainted member therefore creates no empty gap.
+	for visual_slot in range(visible_party.size()):
+		var instance: DigimonInstance = visible_party[visual_slot]
+		var key := OverworldState.get_collection_key(instance.id)
+		if key.is_empty():
+			push_warning("Active party collection key is missing: %s" % instance.id)
 			continue
 		var species: Dictionary = database.get_by_seed(instance.species_seed) if database != null else {}
 		if species.is_empty():
@@ -145,9 +147,9 @@ func _sync_party() -> void:
 			continue
 
 		var follower := FOLLOWER_SCRIPT.new() as Node2D
-		follower.call("configure", digimon, visual_key, party_slot, instance.is_expanded())
+		follower.call("configure", digimon, visual_key, visual_slot, instance.is_expanded())
 		_followers_root.add_child(follower)
-		var spawn_position := _find_safe_spawn_position(party_slot, occupied)
+		var spawn_position := _find_safe_spawn_position(visual_slot, occupied)
 		follower.call("teleport_to", spawn_position, _initial_digimon_facing())
 		_followers.append(follower)
 		_active_party_keys.append(key)

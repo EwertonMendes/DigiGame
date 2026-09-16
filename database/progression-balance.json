@@ -105,9 +105,9 @@
   "hospital": {
     "minimumRecoverySeconds": 60,
     "maximumRecoverySeconds": 1200,
-    "baseInstantCost": 50.0,
-    "levelInstantCost": 5.0,
-    "minimumInstantCost": 10
+    "baseInstantCost": 500.0,
+    "levelInstantCost": 50.0,
+    "minimumInstantCost": 100
   },
   "tiers": {
     "order": ["E", "D", "C", "B", "A", "S", "SS", "SSS"],

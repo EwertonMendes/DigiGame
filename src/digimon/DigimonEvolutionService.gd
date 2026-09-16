@@ -186,7 +186,9 @@ func _apply_transition(instance: DigimonInstance, target_seed: String, database:
 	instance.exp = 0
 	_progression.add_potential(instance, potential_gain)
 	_sync_form_skills(instance, target_species)
-	calculator.refill_instance(instance, target_species)
+	# Evolution changes maximum resources but must not act as free treatment.
+	# Preserve the current HP/SP and only clamp values that exceed the new form.
+	calculator.clamp_resources(instance, target_species)
 	if OS.is_debug_build():
 		print("[Evolution] %s -> %s · %s" % [String(old_species.get("name", old_seed)), String(target_species.get("name", target_seed)), direction])
 	return true
