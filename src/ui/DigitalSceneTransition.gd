@@ -211,7 +211,7 @@ func _configure_palette(context: String) -> void:
 		_material.set_shader_parameter("accent_color", Color(0.60, 0.48, 1.0, 1.0))
 		_material.set_shader_parameter("cover_color", Color(0.035, 0.070, 0.145, 1.0))
 	elif context == CONTEXT_HUB:
-		_material.set_shader_parameter("primary_color", Color(0.35, 0.93, 0.84, 1.0, 1.0))
+		_material.set_shader_parameter("primary_color", Color(0.35, 0.93, 0.84, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.38, 0.66, 1.0, 1.0))
 		_material.set_shader_parameter("cover_color", Color(0.025, 0.080, 0.115, 1.0))
 	else:
