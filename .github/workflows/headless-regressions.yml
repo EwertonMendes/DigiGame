@@ -45,6 +45,9 @@ jobs:
           - name: hub-foundation
             command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 30
             success: hub foundation regression passed
+          - name: battle-operator-programs
+            command: godot --headless --path . tools/test_battle_operator_programs.tscn --quit-after 30
+            success: battle operator programs regression passed
           - name: digilab-layout
             command: godot --headless --path . tools/test_digilab_layout_regression.tscn --quit-after 30
             success: digilab layout regression passed
