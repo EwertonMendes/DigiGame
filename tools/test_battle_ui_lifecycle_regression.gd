@@ -1,15 +1,7 @@
 extends Node
 
 const BATTLE_SCENE = preload("res://scenes/main.tscn")
-
-
-class FleeControllerSpy:
-	extends Node
-	var attempts := 0
-
-	func attempt_flee() -> bool:
-		attempts += 1
-		return true
+const EscapeRNGScript = preload("res://src/battle/BattleRNG.gd")
 
 
 func _ready() -> void:
@@ -19,6 +11,9 @@ func _ready() -> void:
 
 	var hud := battle.get_node_or_null("BattleUI/Root") as Control
 	if not _check(hud != null, "Battle HUD must exist after battle startup"):
+		return
+	var controller := battle.get_node_or_null("BattleController")
+	if not _check(controller != null, "Battle controller must exist after battle startup"):
 		return
 
 	# Regression contract for PR #118: EscapeBattleHUD owns these legacy controls
@@ -61,6 +56,35 @@ func _ready() -> void:
 	if not _check(v2_modal.name == "EscapeConfirmationV2", "V2 flee modal must have independent ownership from the legacy subtree"):
 		return
 
+	# Wait for a real player command turn. This makes the regression exercise the
+	# same controller/HUD path used in playable builds instead of a synchronous spy.
+	if not await _wait_until_can_flee(controller, 240):
+		_check(false, "Battle must reach a player turn where flee can be attempted")
+		return
+
+	# Use a normal probabilistic policy rather than guaranteed escape. The preview
+	# is intentionally below 100%, and the RNG seeds below prove that the exact
+	# first-attempt probability admits both success and failure outcomes.
+	controller.call("set_escape_policy", {
+		"mode": "allowed",
+		"baseChance": 75.0,
+		"failureBonus": 15.0,
+		"failureBonusCap": 30.0,
+		"failureRecovery": 120.0,
+	})
+	await _frames(1)
+	var preview: Dictionary = controller.call("get_flee_preview")
+	var chance := float(preview.get("chance", 0.0))
+	if not _check(chance > 0.0 and chance < 100.0, "First flee attempt must remain genuinely probabilistic"):
+		return
+	var success_seed := _find_first_roll_seed(chance, true)
+	var failure_seed := _find_first_roll_seed(chance, false)
+	if not _check(success_seed != 0, "First flee attempt must have at least one deterministic success seed"):
+		return
+	if not _check(failure_seed != 0, "First flee attempt must still have at least one deterministic failure seed"):
+		return
+	controller.call("set_escape_rng_seed", success_seed)
+
 	hud.call("_open_escape_modal")
 	await _frames(2)
 	if not _check(v2_modal.visible, "V2 flee modal must open normally"):
@@ -68,25 +92,62 @@ func _ready() -> void:
 	if not _check(get_viewport().gui_get_focus_owner() == v2_modal.get_cancel_button(), "V2 flee modal must default focus to the safe NO action"):
 		return
 
-	# DigiConfirmationModal hides itself before emitting `confirmed`. Verify the
-	# HUD uses a dedicated V2 handler rather than the legacy handler's visibility
-	# guard, otherwise confirmation silently stops calling attempt_flee().
-	var spy := FleeControllerSpy.new()
-	add_child(spy)
-	hud.set("_controller", spy)
+	# DigiConfirmationModal hides itself before emitting `confirmed`. The HUD must
+	# await the real asynchronous attempt_flee() lifecycle so the roll, retreat
+	# animation and battle result all complete after pressing YES.
 	var confirm := v2_modal.get_confirm_button()
 	confirm.emit_signal("pressed")
-	await _frames(1)
-	if not _check(spy.attempts == 1, "Confirming the V2 flee modal must call attempt_flee exactly once"):
-		return
 	if not _check(not v2_modal.visible, "V2 flee modal must close after confirmation"):
+		return
+	if not await _wait_until_escaped(controller, 240):
+		_check(false, "Confirming YES must complete a successful first flee attempt")
+		return
+
+	var final_state: Dictionary = controller.call("get_hud_state")
+	var result_variant = final_state.get("battle_result", {})
+	var result: Dictionary = result_variant if result_variant is Dictionary else {}
+	if not _check(bool(result.get("escaped", false)), "Successful flee must mark the battle result as escaped"):
+		return
+	if not _check(int(result.get("flee_attempts", 0)) == 1, "A successful first flee must finish on attempt one"):
+		return
+	if not _check(int(result.get("escape_seed", 0)) == success_seed, "Escape result must retain the RNG seed used for replay/debugging"):
 		return
 
 	battle.queue_free()
-	spy.queue_free()
 	await _frames(3)
 	print("battle ui lifecycle regression passed")
 	get_tree().quit()
+
+
+func _wait_until_can_flee(controller: Node, max_frames: int) -> bool:
+	for _index: int in range(max_frames):
+		if controller != null and is_instance_valid(controller) and controller.has_method("get_hud_state"):
+			var state: Dictionary = controller.call("get_hud_state")
+			if bool(state.get("can_flee", false)):
+				return true
+		await get_tree().process_frame
+	return false
+
+
+func _wait_until_escaped(controller: Node, max_frames: int) -> bool:
+	for _index: int in range(max_frames):
+		if controller != null and is_instance_valid(controller) and controller.has_method("get_hud_state"):
+			var state: Dictionary = controller.call("get_hud_state")
+			var result_variant = state.get("battle_result", {})
+			var result: Dictionary = result_variant if result_variant is Dictionary else {}
+			if bool(result.get("escaped", false)):
+				return true
+		await get_tree().process_frame
+	return false
+
+
+func _find_first_roll_seed(chance: float, expected_success: bool) -> int:
+	var rng = EscapeRNGScript.new()
+	for seed: int in range(1, 2049):
+		rng.reset(seed)
+		if rng.roll_percent(chance) == expected_success:
+			return seed
+	return 0
 
 
 func _check(condition: bool, message: String) -> bool:
