@@ -25,8 +25,9 @@ func _ready() -> void:
 	_check(continue_button != null and continue_button.custom_minimum_size.y >= V2.TOUCH_TARGET, "Result action must remain touch-safe")
 	_check(screen.find_child("KenneyResultDivider", true, false) == null, "Battle result must not recreate legacy Kenney chrome")
 
-	await _verify_first_open_reflow(screen, viewport)
-	await _verify_outcome(screen, viewport, "victory", "VICTORY")
+	# Victory is intentionally verified first and also reproduces the first-open
+	# late-minimum-size case that caused the production overflow.
+	await _verify_outcome(screen, viewport, "victory", "VICTORY", true)
 	await _verify_outcome(screen, viewport, "escaped", "RETREATED")
 	await _verify_outcome(screen, viewport, "defeat", "DEFEAT")
 
@@ -51,38 +52,13 @@ func _ready() -> void:
 	get_tree().quit(1)
 
 
-func _verify_first_open_reflow(screen: BattleResultScreen, viewport: SubViewport) -> void:
-	screen.show_result({
-		"battle_seed": "ui-v2-first-open-reflow",
-		"outcome": "victory",
-		"victory": true,
-		"acts": 12,
-		"bits": 120,
-		"digi_data": {"Agumon": 8},
-		"digi_data_progress": {},
-		"xp_rewards": {"digimon": []},
-	})
-	await _frames(1)
-
-	# Reproduce the real first-open failure mode: descendants can report a larger
-	# minimum size after the initial layout pass (fonts, portraits and reward rows
-	# all participate in that minimum). The shell must re-fit and remain centered
-	# without relying on a resize event or a second battle opening.
-	var reward_panel := screen.get("_reward_panel") as Control
-	if _check(reward_panel != null, "First-open regression requires the rewards panel"):
-		var original_minimum := reward_panel.custom_minimum_size
-		reward_panel.custom_minimum_size = Vector2(original_minimum.x, 420.0)
-		await _frames(2)
-		_check_frame_inside_viewport(screen, viewport, "first-open late growth")
-		_check_frame_centered(screen, viewport, "first-open late growth")
-		reward_panel.custom_minimum_size = original_minimum
-		await _frames(2)
-
-	screen.hide_result()
-	await _frames(1)
-
-
-func _verify_outcome(screen: BattleResultScreen, viewport: SubViewport, outcome: String, expected_title: String) -> void:
+func _verify_outcome(
+	screen: BattleResultScreen,
+	viewport: SubViewport,
+	outcome: String,
+	expected_title: String,
+	simulate_first_open_growth: bool = false
+) -> void:
 	screen.show_result({
 		"battle_seed": "ui-v2-%s" % outcome,
 		"outcome": outcome,
@@ -93,11 +69,28 @@ func _verify_outcome(screen: BattleResultScreen, viewport: SubViewport, outcome:
 		"digi_data_progress": {},
 		"xp_rewards": {"digimon": []},
 	})
-	await _frames(3)
+
+	var reward_panel := screen.get("_reward_panel") as Control
+	var original_minimum := Vector2.ZERO
+	if simulate_first_open_growth and _check(reward_panel != null, "First-open regression requires the rewards panel"):
+		original_minimum = reward_panel.custom_minimum_size
+		# Reproduce the real failure mode: descendants report a larger minimum after
+		# the first layout pass. The shared safe-frame guard must re-fit/recenter it.
+		await _frames(1)
+		reward_panel.custom_minimum_size = Vector2(original_minimum.x, 420.0)
+		await _frames(2)
+		_check_frame_inside_viewport(screen, viewport, "first-open late growth")
+		_check_frame_centered(screen, viewport, "first-open late growth")
+	else:
+		await _frames(3)
+
 	var title := screen.get("_title") as Label
 	_check(title != null and title.text == expected_title, "%s result must communicate its outcome clearly" % expected_title)
 	_check_frame_inside_viewport(screen, viewport, outcome)
 	_check_frame_centered(screen, viewport, outcome)
+
+	if simulate_first_open_growth and reward_panel != null:
+		reward_panel.custom_minimum_size = original_minimum
 	screen.hide_result()
 	await _frames(1)
 
