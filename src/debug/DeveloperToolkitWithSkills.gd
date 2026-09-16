@@ -1,11 +1,9 @@
 extends "res://src/debug/DeveloperToolkit.gd"
 
 const TechniqueToolsScript = preload("res://src/debug/DebugTechniqueTools.gd")
-const CollectionToolsScript = preload("res://src/debug/DebugCollectionTools.gd")
 const TECHNIQUE_PAGE_SIZE := 24
 
 var _techniques: DebugTechniqueTools
-var _collection_tools: DebugCollectionTools
 var _skill_catalog: Array[Dictionary] = []
 var _selected_skill_id := ""
 var _skill_page := 0
@@ -33,9 +31,7 @@ func _ready() -> void:
 	if not _available:
 		return
 	_techniques = TechniqueToolsScript.new() as DebugTechniqueTools
-	_collection_tools = CollectionToolsScript.new() as DebugCollectionTools
 	_skill_catalog = _techniques.catalog(true)
-	_install_delete_digimon_action()
 	_build_skills_tab(_tabs)
 	_refresh_skill_lab()
 
@@ -48,59 +44,6 @@ func _refresh_all() -> void:
 func _refresh_selected() -> void:
 	super._refresh_selected()
 	_refresh_skill_lab()
-
-
-func _install_delete_digimon_action() -> void:
-	if _tabs == null:
-		return
-	var digimon_tab := _tabs.get_node_or_null("DIGIMON")
-	if digimon_tab == null:
-		push_error("Developer Toolkit could not find the DIGIMON tab for Delete Digimon.")
-		return
-	var knock_out_button: Button = null
-	for node in digimon_tab.find_children("*", "Button", true, false):
-		if node is Button and (node as Button).text == "KNOCK OUT":
-			knock_out_button = node as Button
-			break
-	if knock_out_button == null:
-		push_error("Developer Toolkit could not find KNOCK OUT for Delete Digimon placement.")
-		return
-	var row := knock_out_button.get_parent()
-	if not row is HBoxContainer:
-		push_error("Developer Toolkit expected KNOCK OUT to be inside an action row.")
-		return
-	var delete_button := _action("DELETE DIGIMON", _delete_selected_digimon, UI.RED)
-	delete_button.tooltip_text = "Permanently remove the selected Digimon from player data. Debug only."
-	row.add_child(delete_button)
-	row.move_child(delete_button, knock_out_button.get_index() + 1)
-
-
-func _delete_selected_digimon() -> void:
-	var value := _selected_instance()
-	if value == null or _collection_tools == null:
-		_status.text = "Select an owned Digimon first."
-		return
-	var deleted_id := value.id
-	var deleted_name := _selected_name()
-	var result := _collection_tools.delete_instance(deleted_id)
-	if bool(result.get("success", false)):
-		_progression.contexts.erase(deleted_id)
-		_selected_id = ""
-		_selected_skill_id = ""
-		var previous_location := String(result.get("previous_location", "collection")).capitalize()
-		_status.text = "%s permanently deleted from player data." % deleted_name
-		_state.log_action("Delete Digimon", "%s · %s · UUID %s" % [deleted_name, previous_location, deleted_id])
-	else:
-		match String(result.get("reason", "remove_failed")):
-			"last_owned_digimon":
-				_status.text = "Delete blocked: at least one owned Digimon must remain."
-			"invalid_collection_state":
-				_status.text = "Delete blocked: collection state is inconsistent."
-			"instance_not_found":
-				_status.text = "Delete blocked: the selected Digimon no longer exists."
-			_:
-				_status.text = "Delete failed without changing player data."
-	_refresh_all()
 
 
 func _build_skills_tab(tabs: TabContainer) -> void:
