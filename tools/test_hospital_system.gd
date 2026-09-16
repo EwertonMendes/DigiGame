@@ -177,7 +177,7 @@ func _test_discharge_destinations(database: DigimonDatabase, factory: DigimonFac
 	hospital.complete_if_ready(patient, max_hp, completes_at, PlayerCollection.LOCATION_HOSPITAL)
 	var discharge := hospital.discharge(collection, patient, max_hp, 2, completes_at)
 	assert(discharge.get("success", false) and String(discharge.get("destination", "")) == PlayerCollection.LOCATION_PARTY, "Recovered patient must return to Party when a slot is free")
-	assert(collection.get_active_party_ids().has(patient.id) and not collection.get_hospital_ids().has(patient.id), "Discharge to Party must transfer the UUID exactly once")
+	assert(collection.get_active_party_ids() == [patient.id, teammate.id] and not collection.get_hospital_ids().has(patient.id), "Discharge must restore the UUID to its original Party position exactly once")
 	assert(not patient.has_hospital_recovery(), "Discharge must clear recovery timing")
 
 	patient.current_hp = 0
@@ -205,6 +205,7 @@ func _test_save_load_preserves_locations(database: DigimonDatabase, factory: Dig
 	collection.set_active_party_ids([patient.id, party_member.id], 1, 6)
 	var admission := hospital.admit(collection, patient, max_hp, 11000)
 	assert(admission.get("success", false), "Save test patient must be admitted")
+	assert(int((collection.to_dict().get("hospitalPartyIndices", {}) as Dictionary).get(patient.id, -1)) == 0, "Hospital save data must remember the original Party position")
 
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
