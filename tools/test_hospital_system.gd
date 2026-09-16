@@ -46,6 +46,12 @@ func _test_derived_health_and_scaling(database: DigimonDatabase, factory: Digimo
 	assert(hospital.status_for(critical, max_hp, 1000, PlayerCollection.LOCATION_PARTY) == "critical", "Zero HP outside battle must derive Critical")
 	assert(calculator.instant_cost(critical, max_hp) > calculator.instant_cost(injured, max_hp), "Instant cost must increase with missing HP")
 	assert(calculator.recovery_seconds(critical, max_hp) > calculator.recovery_seconds(injured, max_hp), "Recovery time must increase with missing HP")
+	var moderately_injured := factory.create_player_by_name("veemon", 3, 100)
+	moderately_injured.current_hp = 64
+	assert(calculator.instant_cost(moderately_injured, 100) == 234, "A level 3 Digimon missing 36% HP must have a meaningful 234 Bits instant cost")
+	var lightly_injured := factory.create_player_by_name("agumon", 4, 100)
+	lightly_injured.current_hp = 93
+	assert(calculator.instant_cost(lightly_injured, 100) == 100, "Minor injuries must still pay the 100 Bits instant-service minimum")
 	injured.current_hp = max_hp
 	var healthy_preview := hospital.preview(injured, max_hp, 9999, 1000, PlayerCollection.LOCATION_PARTY)
 	assert(String(healthy_preview.get("status", "")) == "healthy", "Full HP must derive Healthy")
