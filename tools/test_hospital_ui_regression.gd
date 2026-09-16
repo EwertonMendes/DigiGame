@@ -4,6 +4,7 @@ const HospitalScreenScript = preload("res://src/ui/HospitalScreen.gd")
 
 
 func _ready() -> void:
+	GameInputBootstrap.configure_gamepad_actions()
 	OverworldState.set_persistence_enabled(false)
 	OverworldState.reset_progress_for_tests(false)
 
