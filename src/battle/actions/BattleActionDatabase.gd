@@ -4,6 +4,7 @@ class_name BattleActionDatabase
 const TECHNIQUES_PATH := "res://database/techniques.json"
 const LEARNSETS_PATH := "res://database/digimon-learnsets.json"
 const RECORDS_PATH := "res://database/technique-records.json"
+const CURATION_PATH := "res://database/technique-curation.json"
 const EXPERIENCED_POINTS := 8
 const MASTERED_POINTS := 24
 
@@ -11,6 +12,8 @@ var _actions: Dictionary = {}
 var _learnsets_by_seed: Dictionary = {}
 var _legacy_learnsets_by_name: Dictionary = {}
 var _records: Dictionary = {}
+var _legacy_skill_aliases_by_seed: Dictionary = {}
+var _legacy_skill_aliases_by_name: Dictionary = {}
 
 
 func load_default() -> bool:
@@ -18,10 +21,13 @@ func load_default() -> bool:
 	_learnsets_by_seed.clear()
 	_legacy_learnsets_by_name.clear()
 	_records.clear()
+	_legacy_skill_aliases_by_seed.clear()
+	_legacy_skill_aliases_by_name.clear()
 	if not _load_actions():
 		return false
 	_load_learnsets()
 	_load_records()
+	_load_legacy_skill_aliases()
 	return true
 
 
@@ -43,20 +49,41 @@ func get_all_actions(include_unavailable: bool = false) -> Array[Dictionary]:
 	return result
 
 
+func resolve_skill_id(species_seed_or_name: String, skill_id: String) -> String:
+	var clean_id := skill_id.strip_edges()
+	if clean_id.is_empty():
+		return ""
+	var species_key := species_seed_or_name.to_lower().strip_edges()
+	var aliases = _legacy_skill_aliases_by_seed.get(
+		species_key,
+		_legacy_skill_aliases_by_name.get(species_key, {})
+	)
+	if aliases is Dictionary:
+		var replacement := String((aliases as Dictionary).get(clean_id, clean_id)).strip_edges()
+		if not replacement.is_empty():
+			return replacement
+	return clean_id
+
+
 func get_known_actions(species_seed: String, level: int, learned_ids: Array[String] = [], mastery: Dictionary = {}) -> Array[Dictionary]:
 	var ids: Array[String] = []
 	for learned_id: String in learned_ids:
-		if _actions.has(learned_id) and not ids.has(learned_id):
-			ids.append(learned_id)
+		var resolved_id := resolve_skill_id(species_seed, learned_id)
+		if _actions.has(resolved_id) and not ids.has(resolved_id):
+			ids.append(resolved_id)
 	for entry: Dictionary in get_learnset_entries(species_seed):
 		if int(entry.get("level", 1)) > level:
 			continue
-		var action_id := String(entry.get("skill", ""))
+		var action_id := resolve_skill_id(species_seed, String(entry.get("skill", "")))
 		if _actions.has(action_id) and not ids.has(action_id):
 			ids.append(action_id)
 	var result: Array[Dictionary] = []
 	for action_id: String in ids:
-		var action := get_action(action_id, int(mastery.get(action_id, 0)))
+		var mastery_points := int(mastery.get(action_id, 0))
+		for raw_mastery_id in mastery.keys():
+			if resolve_skill_id(species_seed, String(raw_mastery_id)) == action_id:
+				mastery_points = maxi(mastery_points, int(mastery[raw_mastery_id]))
+		var action := get_action(action_id, mastery_points)
 		if String(action.get("availability", "ready")) == "ready":
 			result.append(action)
 	return result
@@ -78,7 +105,7 @@ func get_signature_action_ids(species_seed: String) -> Array[String]:
 	for entry: Dictionary in get_learnset_entries(species_seed):
 		if String(entry.get("acquisition", "level")) != "signature":
 			continue
-		var skill_id := String(entry.get("skill", ""))
+		var skill_id := resolve_skill_id(species_seed, String(entry.get("skill", "")))
 		if _actions.has(skill_id) and not result.has(skill_id):
 			result.append(skill_id)
 	return result
@@ -176,6 +203,38 @@ func _load_records() -> void:
 		var skill_id := String(raw_record.get("skill", "")).strip_edges()
 		if not skill_id.is_empty() and _actions.has(skill_id):
 			_records[skill_id] = raw_record.duplicate(true)
+
+
+func _load_legacy_skill_aliases() -> void:
+	if not FileAccess.file_exists(CURATION_PATH):
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(CURATION_PATH))
+	if not parsed is Dictionary:
+		return
+	var curated_learnsets = (parsed as Dictionary).get("learnsets", [])
+	if not curated_learnsets is Array:
+		return
+	for raw_learnset in curated_learnsets:
+		if not raw_learnset is Dictionary:
+			continue
+		var raw_aliases = (raw_learnset as Dictionary).get("legacySkillAliases", {})
+		if not raw_aliases is Dictionary:
+			continue
+		var aliases: Dictionary = {}
+		for raw_legacy_id in (raw_aliases as Dictionary).keys():
+			var legacy_id := String(raw_legacy_id).strip_edges()
+			var replacement_id := String((raw_aliases as Dictionary)[raw_legacy_id]).strip_edges()
+			if legacy_id.is_empty() or replacement_id.is_empty() or not _actions.has(replacement_id):
+				continue
+			aliases[legacy_id] = replacement_id
+		if aliases.is_empty():
+			continue
+		var seed := String((raw_learnset as Dictionary).get("speciesSeed", "")).to_lower().strip_edges()
+		if not seed.is_empty():
+			_legacy_skill_aliases_by_seed[seed] = aliases.duplicate(true)
+		var species_name := String((raw_learnset as Dictionary).get("species", "")).to_lower().strip_edges()
+		if not species_name.is_empty():
+			_legacy_skill_aliases_by_name[species_name] = aliases.duplicate(true)
 
 
 func _apply_localized_fallbacks(action: Dictionary) -> void:
