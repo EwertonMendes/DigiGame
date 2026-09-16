@@ -86,6 +86,13 @@ func _ready() -> void:
 	var focus_owner := get_viewport().gui_get_focus_owner()
 	if not _check(focus_owner == expected_focus, "Dynamic stat refresh must restore focus to the equivalent available control"):
 		return
+	var points_label := refreshed_row.get_training_points_label()
+	if not _check(points_label != null and points_label.text.contains("+1"), "Edited stat row must expose its pending training amount"):
+		return
+	if not _check(points_label.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING, "Training point totals must never render with ellipsis"):
+		return
+	if not _check(points_label.size.x >= 103.0, "Training point totals must reserve enough width for the complete value"):
+		return
 	if not _check(_find_label_containing(detail, "%s +1" % _stat_label(target_key)) != null, "Training plan must summarize the pending attribute change"):
 		return
 
