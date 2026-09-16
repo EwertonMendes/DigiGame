@@ -10,6 +10,17 @@ func reset(seed: int) -> void:
 	_rng.seed = seed_value
 
 
+func randomize() -> void:
+	# Use Godot's platform entropy for gameplay streams that should differ between
+	# battle instances. Keep the chosen seed so the result can still be recorded
+	# and replayed deterministically when needed.
+	_rng.randomize()
+	seed_value = int(_rng.seed)
+	if seed_value == 0:
+		seed_value = 1
+		_rng.seed = seed_value
+
+
 func roll_percent(chance: float) -> bool:
 	if chance <= 0.0:
 		return false

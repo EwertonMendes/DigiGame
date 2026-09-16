@@ -55,7 +55,11 @@ jobs:
             command: godot --headless --path . tools/test_ui_v2_components_regression.tscn --quit-after 30
             success: global ui v2 components regression passed
           - name: battle-ui-lifecycle
-            command: godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn --quit-after 30
+            # This integration regression waits for the real battle-opening
+            # animations and owns a bounded predicate timeout internally. A
+            # frame-count --quit-after would terminate it before gameplay on
+            # fast headless runners and would not represent the playable flow.
+            command: godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn
             success: battle ui lifecycle regression passed
           - name: zeke-greymon
             command: godot --headless --path . tools/test_zeke_greymon_regression.tscn --quit-after 30
