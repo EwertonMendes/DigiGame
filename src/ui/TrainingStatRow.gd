@@ -7,6 +7,7 @@ signal remove_requested(stat_key: String)
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
 const CHANGE_ICON := preload("res://assets/ui/icons/hp_change_arrow.svg")
+const TRAINING_TEXT_MIN_WIDTH := 104.0
 
 var stat_key := ""
 var _name: Label
@@ -73,6 +74,10 @@ func get_focus_buttons() -> Array[Button]:
 	return [_minus, _plus]
 
 
+func get_training_points_label() -> Label:
+	return _points
+
+
 func focus_minus() -> void:
 	if _minus != null and not _minus.disabled:
 		_minus.grab_focus()
@@ -100,7 +105,7 @@ func _build() -> void:
 	row.add_child(_icon)
 
 	var identity := VBoxContainer.new()
-	identity.custom_minimum_size.x = 58.0
+	identity.custom_minimum_size.x = TRAINING_TEXT_MIN_WIDTH
 	identity.alignment = BoxContainer.ALIGNMENT_CENTER
 	identity.add_theme_constant_override("separation", -1)
 	identity.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -108,6 +113,8 @@ func _build() -> void:
 	_name = _single_line_label("STAT", 11, V2.CYAN, true)
 	identity.add_child(_name)
 	_points = _single_line_label("TRAIN 0 / 30", 8, V2.MUTED, true)
+	_points.custom_minimum_size.x = TRAINING_TEXT_MIN_WIDTH
+	_points.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	identity.add_child(_points)
 
 	var values := HBoxContainer.new()
