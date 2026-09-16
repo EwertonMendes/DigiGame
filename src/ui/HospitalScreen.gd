@@ -316,7 +316,9 @@ func _layout_roster() -> void:
 func _layout_card(card: Button) -> void:
 	var h := card.size.y
 	var icon_side := minf(100.0, h - 14.0)
-	var portrait := card.get_node("Walk") as DigimonWalkPreview
+	var portrait := card.get_node_or_null("Walk") as DigimonWalkPreview
+	if portrait == null:
+		return
 	_place(portrait, 8, 7, icon_side, icon_side)
 	var x := icon_side + 17.0
 	for spec in [["Name", 9.0, 31.0], ["Level", 40.0, 23.0], ["Health", 64.0, 22.0], ["Status", h - 35.0, 28.0]]:
@@ -421,6 +423,7 @@ func _refresh_tabs() -> void:
 
 func _refresh_cards() -> void:
 	for child in _card_area.get_children():
+		_card_area.remove_child(child)
 		child.queue_free()
 	_cards.clear()
 	_card_order.clear()
@@ -614,25 +617,25 @@ func _wire_focus() -> void:
 			enabled.append(action)
 	for i in enabled.size():
 		var action := enabled[i]
-		action.focus_neighbor_up = (enabled[i - 1] if i > 0 else _card_order[0] if not _card_order.is_empty() else _detail_back).get_path()
-		action.focus_neighbor_down = enabled[(i + 1) % enabled.size()].get_path()
+		action.focus_neighbor_top = (enabled[i - 1] if i > 0 else _card_order[0] if not _card_order.is_empty() else _detail_back).get_path()
+		action.focus_neighbor_bottom = enabled[(i + 1) % enabled.size()].get_path()
 		if not _card_order.is_empty():
 			action.focus_neighbor_left = _card_order[0].get_path()
 	for i in _card_order.size():
 		var card := _card_order[i]
-		card.focus_neighbor_up = (_card_order[i - 1] if i > 0 else _tab_buttons[_tab]).get_path()
-		card.focus_neighbor_down = (_card_order[i + 1] if i + 1 < _card_order.size() else _page_next if not _page_next.disabled else _tab_buttons[_tab]).get_path()
+		card.focus_neighbor_top = (_card_order[i - 1] if i > 0 else _tab_buttons[_tab]).get_path()
+		card.focus_neighbor_bottom = (_card_order[i + 1] if i + 1 < _card_order.size() else _page_next if not _page_next.disabled else _tab_buttons[_tab]).get_path()
 		card.focus_neighbor_right = (enabled[0] if not enabled.is_empty() else _tab_buttons[_tab]).get_path()
 		card.focus_neighbor_left = _tab_buttons[_tab].get_path()
-	party.focus_neighbor_down = (_card_order[0] if not _card_order.is_empty() else _page_next).get_path()
-	hospital.focus_neighbor_down = party.focus_neighbor_down
-	_page_back.focus_neighbor_up = (_card_order.back() if not _card_order.is_empty() else party).get_path()
-	_page_next.focus_neighbor_up = _page_back.focus_neighbor_up
+	party.focus_neighbor_bottom = (_card_order[0] if not _card_order.is_empty() else _page_next).get_path()
+	hospital.focus_neighbor_bottom = party.focus_neighbor_bottom
+	_page_back.focus_neighbor_top = (_card_order.back() if not _card_order.is_empty() else party).get_path()
+	_page_next.focus_neighbor_top = _page_back.focus_neighbor_top
 	_page_back.focus_neighbor_right = _page_next.get_path()
 	_page_next.focus_neighbor_left = _page_back.get_path()
-	_detail_back.focus_neighbor_down = (enabled[0] if not enabled.is_empty() else _close_button).get_path()
+	_detail_back.focus_neighbor_bottom = (enabled[0] if not enabled.is_empty() else _close_button).get_path()
 	if not enabled.is_empty():
-		enabled[0].focus_neighbor_up = _detail_back.get_path() if _is_compact() else enabled[0].focus_neighbor_up
+		enabled[0].focus_neighbor_top = _detail_back.get_path() if _is_compact() else enabled[0].focus_neighbor_top
 
 
 func _focus_entry() -> void:

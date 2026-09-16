@@ -179,19 +179,18 @@ func _assert_hospital_entry(hub: Node, player: Node2D, hospital_npc: Node2D, hos
 
 	assert(hospital_screen.visible, "Pressing E at the Hospital specialist must open the Hospital")
 	assert(not bool(player.get("movement_enabled")), "Hospital must pause overworld movement")
-	assert(hospital_screen.get("_header") is DigiModalHeader, "Hospital must use the shared Digi UI V2 modal header")
-	assert(hospital_screen.get("_hint_bar") is DigiInputHintBar, "Hospital must expose adaptive V2 input hints")
+	assert(hospital_screen.get("_header") is Panel, "Hospital must show its full-width treatment header")
 	assert(hospital_screen.get("_confirmation") is DigiConfirmationModal, "Hospital treatments must use the shared safe-default confirmation modal")
-	var patient_buttons := hospital_screen.get("_collection_buttons") as Dictionary
-	var expected_visible := OverworldState.get_active_instances().size() + OverworldState.get_hospital_instances().size()
-	assert(patient_buttons.size() == expected_visible, "Hospital must list only Party members and admitted Hospital patients")
+	var tabs := hospital_screen.get("_tab_buttons") as Dictionary
+	assert(tabs.has("party") and tabs.has("hospital"), "Hospital must expose Party and Hospital tabs")
+	var patient_buttons := hospital_screen.get("_cards") as Dictionary
+	assert(patient_buttons.size() == mini(3, OverworldState.get_active_instances().size()), "Party tab must show at most three patients without scrolling")
 	for reserve: DigimonInstance in OverworldState.get_reserve_instances():
 		assert(not patient_buttons.has(reserve.id), "Storage Digimon must not appear as Hospital treatment candidates")
-	var list_scroll := hospital_screen.get("_collection_scroll") as ScrollContainer
-	var detail_scroll := hospital_screen.get("_detail_scroll") as ScrollContainer
-	assert(list_scroll != null and list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Hospital patient list must use shared smooth scrolling")
-	assert(detail_scroll != null and detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Hospital treatment details must use shared smooth scrolling")
-	_assert_safe_service_frame(hospital_screen.get("_frame") as Control, "Digi Hospital")
+	hospital_screen.call("_switch_tab", "hospital")
+	patient_buttons = hospital_screen.get("_cards") as Dictionary
+	assert(patient_buttons.size() == mini(3, OverworldState.get_hospital_instances().size()), "Hospital tab must page admitted patients without scrolling")
+	_assert_fullscreen_service_frame(hospital_screen.get("_canvas") as Control, "Digi Hospital")
 
 	hub.call("_close_hospital")
 	await get_tree().process_frame
