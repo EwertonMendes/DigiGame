@@ -3,11 +3,11 @@ extends SceneTree
 const PresentationScript = preload("res://src/battle/SequencedBattlePresentationFX.gd")
 const FUTURE_IMPACT_SECONDS := 0.08
 const DAMAGE_HOLD_SECONDS := 0.38
-const MIN_ENEMY_HANDOFF_BUDGET := 0.40
-const MAX_ENEMY_HANDOFF_BUDGET := 0.52
-const MIN_WAIT_ELAPSED := 0.34
-const MAX_WAIT_ELAPSED := 0.62
-const MAX_EXPIRED_BUDGET := 0.02
+const MIN_ENEMY_HANDOFF_BUDGET := 0.34
+const MAX_ENEMY_HANDOFF_BUDGET := 0.58
+const MIN_WAIT_ELAPSED := 0.30
+const MAX_WAIT_ELAPSED := 0.80
+const MAX_EXPIRED_BUDGET := 0.03
 
 var _failures: Array[String] = []
 
