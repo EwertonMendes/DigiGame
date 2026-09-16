@@ -106,7 +106,7 @@ func _open_dialog() -> void:
 
 
 func _refresh_battle_program_availability(party_error: String) -> void:
-	var database := OverworldState.get_database()
+	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
 	_battle_catalog.prepare(database)
 	for program_id: String in PROGRAM_ORDER:
 		if program_id == "cancel":
@@ -304,7 +304,7 @@ func _focus_battle_program_delta(column_delta: int, row_delta: int) -> void:
 		current_index = PROGRAM_ORDER.find("cancel")
 	var columns := maxi(1, _battle_program_columns)
 	var rows := int(ceil(float(PROGRAM_ORDER.size()) / float(columns)))
-	var row := current_index / columns
+	var row := int(current_index / columns)
 	var column := current_index % columns
 	row = clampi(row + row_delta, 0, rows - 1)
 	column = clampi(column + column_delta, 0, columns - 1)
@@ -387,7 +387,7 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 		var button := _battle_program_buttons.get(program_id) as Button
 		if button == null:
 			continue
-		var row := index / columns
+		var row := int(index / columns)
 		var column := index % columns
 		button.custom_minimum_size.y = HUB_V2.TOUCH_TARGET
 		button.position = Vector2(
@@ -407,7 +407,7 @@ func _wire_battle_program_focus() -> void:
 		var button := _battle_program_buttons.get(PROGRAM_ORDER[index]) as Button
 		if button == null:
 			continue
-		var row := index / columns
+		var row := int(index / columns)
 		var column := index % columns
 		var left_index := row * columns + maxi(0, column - 1)
 		var right_index := mini(row * columns + mini(columns - 1, column + 1), PROGRAM_ORDER.size() - 1)
