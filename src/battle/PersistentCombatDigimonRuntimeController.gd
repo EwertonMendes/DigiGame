@@ -11,6 +11,10 @@ func configure_encounter(definition: BattleEncounterDefinition) -> void:
 
 func _spawn_demo_rosters() -> void:
 	_apply_pending_debug_encounter()
+	var party_error := OverworldState.battle_party_validation_error()
+	if not party_error.is_empty():
+		push_error("Battle cannot start: %s" % party_error)
+		return
 	var field := get_node_or_null("../Blocks") as Node2D
 	if field == null or not field.has_method("grid_to_world"):
 		# The full battle scene always has a field. Keep the inherited fallback for

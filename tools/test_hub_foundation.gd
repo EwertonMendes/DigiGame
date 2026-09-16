@@ -21,15 +21,19 @@ func _ready() -> void:
 	var player := hub.get_node_or_null("Actors/Player")
 	var operator := hub.get_node_or_null("Actors/BattleOperator")
 	var trainer := hub.get_node_or_null("Actors/TrainingSpecialist")
+	var hospital_npc := hub.get_node_or_null("Actors/HospitalSpecialist")
 	var portal := hub.get_node_or_null("Actors/TestBattlePortal")
 	var dialog := hub.get_node_or_null("HubUI/Root/BattleDialog")
 	var training_screen := hub.get_node_or_null("TrainingCenterUI/TrainingCenter")
+	var hospital_screen := hub.get_node_or_null("HospitalUI/Hospital")
 	var digilab := hub.get_node_or_null("DigiLabUI/DigiLab")
 	var party_followers := hub.get_node_or_null("PartyFollowers")
 	assert(player != null, "Hub must create the controllable player")
 	assert(operator != null, "Hub must create the nearby battle operator")
 	assert(trainer != null, "Hub must create the Training Specialist near the service terminals")
+	assert(hospital_npc != null, "Hub must create the Digi Hospital specialist")
 	assert(training_screen != null, "Hub must create the Training Center UI")
+	assert(hospital_screen != null, "Hub must create the Digi Hospital UI")
 	assert(digilab != null, "Hub must create the DigiLab root UI")
 	assert(portal != null, "Hub must create the animated test battle portal")
 	assert(dialog != null, "Hub must expose the test battle conversation")
@@ -61,6 +65,7 @@ func _ready() -> void:
 	await _assert_overworld_active_party(player, party_followers)
 	await _assert_training_center_entry(hub, player, trainer, training_screen)
 	await _assert_digilab_root_entry(hub, player, digilab)
+	await _assert_hospital_entry(hub, player, hospital_npc, hospital_screen)
 
 	hub.call("open_test_battle_dialog")
 	await get_tree().process_frame
@@ -111,7 +116,6 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	assert(terminal != null, "Hub must expose the DigiLab terminal actor")
 	player.position = terminal.position
 	await get_tree().process_frame
-
 	var interact := InputEventKey.new()
 	interact.keycode = KEY_E
 	interact.physical_keycode = KEY_E
@@ -156,6 +160,40 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	await get_tree().process_frame
 	assert(not digilab.visible, "Closing DigiLab must return to the Hub")
 	assert(bool(player.get("movement_enabled")), "Closing DigiLab must restore overworld movement")
+	player.position = original_position
+	await get_tree().process_frame
+
+func _assert_hospital_entry(hub: Node, player: Node2D, hospital_npc: Node2D, hospital_screen: Control) -> void:
+	var original_position := player.position
+	player.position = hospital_npc.position
+	await get_tree().process_frame
+	assert(bool(hub.call("_hospital_has_interaction_priority")), "Digi Hospital must win interaction priority when its specialist is closest")
+
+	var interact := InputEventKey.new()
+	interact.keycode = KEY_E
+	interact.physical_keycode = KEY_E
+	interact.pressed = true
+	hub.call("_unhandled_input", interact)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert(hospital_screen.visible, "Pressing E at the Hospital specialist must open the Hospital")
+	assert(not bool(player.get("movement_enabled")), "Hospital must pause overworld movement")
+	assert(hospital_screen.get("_header") is DigiModalHeader, "Hospital must use the shared Digi UI V2 modal header")
+	assert(hospital_screen.get("_hint_bar") is DigiInputHintBar, "Hospital must expose adaptive V2 input hints")
+	assert(hospital_screen.get("_confirmation") is DigiConfirmationModal, "Hospital treatments must use the shared safe-default confirmation modal")
+	var patient_buttons := hospital_screen.get("_collection_buttons") as Dictionary
+	assert(patient_buttons.size() == OverworldState.get_collection_instances().size(), "Hospital must list Party and Storage Digimon from the persistent collection")
+	var list_scroll := hospital_screen.get("_collection_scroll") as ScrollContainer
+	var detail_scroll := hospital_screen.get("_detail_scroll") as ScrollContainer
+	assert(list_scroll != null and list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Hospital patient list must use shared smooth scrolling")
+	assert(detail_scroll != null and detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Hospital treatment details must use shared smooth scrolling")
+	_assert_safe_service_frame(hospital_screen.get("_frame") as Control, "Digi Hospital")
+
+	hub.call("_close_hospital")
+	await get_tree().process_frame
+	assert(not hospital_screen.visible, "Closing Hospital must return to the Hub")
+	assert(bool(player.get("movement_enabled")), "Closing Hospital must restore overworld movement")
 	player.position = original_position
 	await get_tree().process_frame
 

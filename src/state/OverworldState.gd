@@ -5,6 +5,7 @@ signal collection_changed
 signal account_rewards_changed(bits: int, digi_data: Dictionary)
 signal technique_progress_changed
 signal inventory_changed(inventory: Dictionary)
+signal hospital_state_changed(instance_id: String, status: String)
 signal progress_saved
 
 const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
@@ -16,6 +17,9 @@ const SaveServiceScript = preload("res://src/save/SaveService.gd")
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 const TechniqueRecordServiceScript = preload("res://src/collection/TechniqueRecordService.gd")
 const AscensionServiceScript = preload("res://src/digimon/DigimonAscensionService.gd")
+const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
+const HospitalCalculatorScript = preload("res://src/hospital/HospitalRecoveryCalculator.gd")
+const HospitalServiceScript = preload("res://src/hospital/HospitalService.gd")
 
 const DEFAULT_ACTIVE_PARTY := ["agumon", "gabumon", "greymon"]
 
@@ -28,6 +32,9 @@ var _save_service: SaveService = SaveServiceScript.new()
 var _balance = BalanceScript.new()
 var _technique_records = TechniqueRecordServiceScript.new()
 var _ascension = AscensionServiceScript.new()
+var _stat_calculator: DigimonStatCalculator = StatCalculatorScript.new()
+var _hospital_calculator: HospitalRecoveryCalculator = HospitalCalculatorScript.new()
+var _hospital_service: HospitalService = HospitalServiceScript.new(_hospital_calculator)
 var _persistence_enabled := true
 
 func _ready() -> void:
@@ -37,6 +44,7 @@ func _ready() -> void:
 		save_progress()
 	else:
 		_repair_loaded_collection()
+		process_hospital_recoveries()
 
 func get_active_party() -> Array[String]:
 	_ensure_starter_collection()
@@ -195,6 +203,72 @@ func get_database():
 
 func get_bits() -> int:
 	return _collection.bits
+
+
+func get_hospital_preview(instance_id: String, now_unix: int = -1) -> Dictionary:
+	_ensure_starter_collection()
+	var instance := _collection.get_instance(instance_id)
+	if instance == null:
+		return {"status": "unavailable", "can_admit": false, "can_recover_now": false}
+	return _hospital_service.preview(instance, _max_hp_for(instance), _collection.bits, now_unix)
+
+
+func admit_to_hospital(instance_id: String, now_unix: int = -1) -> Dictionary:
+	_ensure_starter_collection()
+	process_hospital_recoveries(now_unix)
+	var instance := _collection.get_instance(instance_id)
+	var result := _hospital_service.admit(instance, _max_hp_for(instance), now_unix)
+	if bool(result.get("success", false)):
+		collection_changed.emit()
+		hospital_state_changed.emit(instance_id, "recovering")
+		_save_after_mutation()
+	return result
+
+
+func recover_from_hospital_now(instance_id: String) -> Dictionary:
+	_ensure_starter_collection()
+	var instance := _collection.get_instance(instance_id)
+	var result := _hospital_service.recover_now(_collection, instance, _max_hp_for(instance))
+	if bool(result.get("success", false)):
+		collection_changed.emit()
+		active_party_changed.emit(get_active_party())
+		account_rewards_changed.emit(_collection.bits, get_digi_data())
+		hospital_state_changed.emit(instance_id, "healthy")
+		_save_after_mutation()
+	return result
+
+
+func process_hospital_recoveries(now_unix: int = -1, persist: bool = true) -> Array[String]:
+	_ensure_starter_collection()
+	var completed: Array[String] = []
+	for instance: DigimonInstance in _collection.get_instances():
+		if _hospital_service.complete_if_ready(instance, _max_hp_for(instance), now_unix):
+			completed.append(instance.id)
+	if completed.is_empty():
+		return completed
+	collection_changed.emit()
+	active_party_changed.emit(get_active_party())
+	for instance_id: String in completed:
+		hospital_state_changed.emit(instance_id, "healthy")
+	if persist:
+		_save_after_mutation()
+	return completed
+
+
+func battle_party_validation_error(now_unix: int = -1) -> String:
+	_ensure_starter_collection()
+	process_hospital_recoveries(now_unix)
+	var active_ids := _collection.get_active_party_ids()
+	var party_error := _party_service.validation_error(_collection, active_ids)
+	if not party_error.is_empty():
+		return party_error
+	for instance: DigimonInstance in _collection.get_active_instances():
+		var species := _database.get_by_seed(instance.species_seed)
+		var display_name := instance.get_display_name(String(species.get("name", instance.species_seed)))
+		var eligibility_error := _hospital_service.battle_eligibility_error(instance, _max_hp_for(instance), display_name, now_unix)
+		if not eligibility_error.is_empty():
+			return eligibility_error
+	return ""
 
 
 func get_inventory() -> Dictionary:
@@ -542,6 +616,14 @@ func _resolve_species_seed(species_name_or_seed: String) -> String:
 		return token
 	var species := _database.get_by_name(token)
 	return String(species.get("seed", "")) if not species.is_empty() else ""
+
+
+func _max_hp_for(instance: DigimonInstance) -> int:
+	if instance == null:
+		return 1
+	_ensure_database()
+	var species := _database.get_by_seed(instance.species_seed)
+	return maxi(1, _stat_calculator.get_stat(instance, species, "hp"))
 
 func _save_after_mutation() -> void:
 	if not save_progress() and _persistence_enabled:

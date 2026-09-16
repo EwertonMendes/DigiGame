@@ -1,4 +1,4 @@
-extends "res://src/world/HubTrainingGameplay.gd"
+extends "res://src/world/HubHospitalGameplay.gd"
 
 
 func _ready() -> void:
@@ -9,8 +9,30 @@ func _ready() -> void:
 	MusicDirector.play_zone_1()
 
 
+func _open_dialog() -> void:
+	super._open_dialog()
+	if not _dialog_open:
+		return
+	var party_error := OverworldState.battle_party_validation_error()
+	if _mobile_dialog_body != null:
+		_mobile_dialog_body.text = party_error if not party_error.is_empty() else "START A TEST BATTLE?"
+	if _start_battle_button != null:
+		_start_battle_button.disabled = not party_error.is_empty()
+	if not party_error.is_empty() and _mobile_dialog_cancel != null:
+		_mobile_dialog_cancel.grab_focus()
+
+
 func _start_test_battle() -> void:
 	if _transitioning or DigitalSceneTransition.is_transitioning():
+		return
+	var party_error := OverworldState.battle_party_validation_error()
+	if not party_error.is_empty():
+		if _mobile_dialog_body != null:
+			_mobile_dialog_body.text = party_error
+		if _start_battle_button != null:
+			_start_battle_button.disabled = true
+		if _mobile_dialog_cancel != null:
+			_mobile_dialog_cancel.grab_focus()
 		return
 	_transitioning = true
 	_dialog_open = false

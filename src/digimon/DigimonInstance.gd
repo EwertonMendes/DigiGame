@@ -29,6 +29,9 @@ var training: Dictionary = {}
 var current_hp: int = 1
 # Internally kept as current_mp for save compatibility. UI/gameplay calls it SP.
 var current_mp: int = 0
+# The recovery interval is the only persisted Hospital state. Health labels are
+# derived from HP and these timestamps instead of competing status flags.
+var hospital_recovery: Dictionary = {}
 var learned_skills: Array[String] = []
 var favorite_skills: Array[String] = []
 var archived_skills: Array[String] = []
@@ -64,6 +67,31 @@ func get_current_sp() -> int:
 
 func set_current_sp(value: int) -> void:
 	current_mp = maxi(0, value)
+
+
+func has_hospital_recovery() -> bool:
+	return get_hospital_recovery_end_time() > 0
+
+
+func get_hospital_recovery_start_time() -> int:
+	return maxi(0, int(hospital_recovery.get("startedAt", 0)))
+
+
+func get_hospital_recovery_end_time() -> int:
+	return maxi(0, int(hospital_recovery.get("completesAt", 0)))
+
+
+func start_hospital_recovery(started_at: int, completes_at: int) -> bool:
+	var normalized_start := maxi(0, started_at)
+	var normalized_end := maxi(0, completes_at)
+	if normalized_end <= normalized_start:
+		return false
+	hospital_recovery = {"startedAt": normalized_start, "completesAt": normalized_end}
+	return true
+
+
+func clear_hospital_recovery() -> void:
+	hospital_recovery.clear()
 
 
 func is_expanded() -> bool:
@@ -177,6 +205,7 @@ func to_dict() -> Dictionary:
 		"currentHp": current_hp,
 		"currentSp": current_mp,
 		"currentMp": current_mp,
+		"hospitalRecovery": hospital_recovery.duplicate(true),
 		"learnedSkills": learned_skills.duplicate(),
 		"favoriteSkills": favorite_skills.duplicate(),
 		"archivedSkills": archived_skills.duplicate(),
@@ -220,6 +249,12 @@ static func from_dict(data: Dictionary) -> DigimonInstance:
 
 	instance.current_hp = maxi(0, int(data.get("currentHp", 1)))
 	instance.current_mp = maxi(0, int(data.get("currentSp", data.get("currentMp", 0))))
+	var raw_hospital_recovery = data.get("hospitalRecovery", {})
+	if raw_hospital_recovery is Dictionary:
+		var started_at := maxi(0, int((raw_hospital_recovery as Dictionary).get("startedAt", 0)))
+		var completes_at := maxi(0, int((raw_hospital_recovery as Dictionary).get("completesAt", 0)))
+		if completes_at > started_at:
+			instance.hospital_recovery = {"startedAt": started_at, "completesAt": completes_at}
 
 	instance.learned_skills.clear()
 	var skills = data.get("learnedSkills", [])

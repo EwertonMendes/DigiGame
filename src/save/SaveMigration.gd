@@ -1,7 +1,7 @@
 extends RefCounted
 class_name SaveMigration
 
-const CURRENT_VERSION := 4
+const CURRENT_VERSION := 5
 
 func migrate(raw_data: Dictionary) -> Dictionary:
 	if raw_data.is_empty():
@@ -23,9 +23,12 @@ func migrate(raw_data: Dictionary) -> Dictionary:
 	if version == 3:
 		data = _migrate_v3_to_v4(data)
 		version = 4
+	if version == 4:
+		data = _migrate_v4_to_v5(data)
+		version = 5
 	data["save_version"] = version
 	data.erase("saveVersion")
-	return _normalize_v4(data)
+	return _normalize_v5(data)
 
 func _migrate_unversioned(data: Dictionary) -> Dictionary:
 	var legacy_collection: Dictionary = {}
@@ -125,9 +128,26 @@ func _migrate_v3_to_v4(data: Dictionary) -> Dictionary:
 	return result
 
 
-func _normalize_v4(data: Dictionary) -> Dictionary:
+func _migrate_v4_to_v5(data: Dictionary) -> Dictionary:
+	var result := data.duplicate(true)
+	var raw_collection = result.get("collection", {})
+	if not raw_collection is Dictionary:
+		return {"save_version": 5, "collection": {}}
+	var raw_entries = (raw_collection as Dictionary).get("instances", [])
+	if raw_entries is Array:
+		for raw_entry in raw_entries:
+			if not raw_entry is Dictionary:
+				continue
+			var raw_instance = (raw_entry as Dictionary).get("instance", {})
+			if raw_instance is Dictionary:
+				(raw_instance as Dictionary)["hospitalRecovery"] = (raw_instance as Dictionary).get("hospitalRecovery", {})
+	result["save_version"] = 5
+	return result
+
+
+func _normalize_v5(data: Dictionary) -> Dictionary:
 	var result := {
-		"save_version": 4,
+		"save_version": 5,
 		"collection": {
 			"instances": [],
 			"activePartyIds": [],
