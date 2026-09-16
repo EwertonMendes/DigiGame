@@ -1,136 +1,87 @@
-extends Node2D
-class_name BattleDigimon
+extends "res://src/Player.gd"
 
-const DigimonInstanceScript = preload("res://src/domain/digimon/DigimonInstance.gd")
-const DigimonStatCalculatorScript = preload("res://src/domain/digimon/DigimonStatCalculator.gd")
-const DirectionalSpriteContractScript = preload("res://src/presentation/DirectionalSpriteContract.gd")
+const BattleDigimonScript = preload("res://src/battle/BattleDigimon.gd")
+const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 
-@onready var sprite: Sprite2D = $Sprite2D
-@onready var selection_marker: Polygon2D = $SelectionMarker
-@onready var health_bar: ProgressBar = $HealthBar
-@onready var health_label: Label = $HealthLabel
-@onready var name_label: Label = $NameLabel
-@onready var status_container: HBoxContainer = $StatusContainer
-
-var digimon_instance = null
-var species_data: Dictionary = {}
-var is_player_controlled := false
-var current_hp := 1
-var current_sp := 0
-var grid_position := Vector2i.ZERO
-var size := Vector2i.ONE
-var battle_state = null
-var movement_type := "ground"
-var footprint_shape := "single"
-var occupied_cells: Array[Vector2i] = []
-var _stat_calculator = DigimonStatCalculatorScript.new()
-var _status_badges: Array[Label] = []
-var _active_tweens: Array[Tween] = []
-var _base_sprite_scale := Vector2.ONE
-var _base_sprite_modulate := Color.WHITE
-var _base_sprite_position := Vector2.ZERO
-var _base_z_index := 0
-
-const DAMAGE_FLASH_TIME := 0.28
-const HEAL_FLASH_TIME := 0.30
+const ATTACK_WINDUP_TIME := 0.085
+const ATTACK_LUNGE_TIME := 0.135
+const ATTACK_HOLD_TIME := 0.045
+const ATTACK_RETURN_TIME := 0.175
+const RANGED_WINDUP_TIME := 0.10
+const RANGED_RELEASE_TIME := 0.105
+const RANGED_RETURN_TIME := 0.13
+const HIT_RECOIL_TIME := 0.06
+const HIT_HOLD_TIME := 0.035
+const HIT_RETURN_TIME := 0.15
 const FLOATING_TEXT_TIME := 0.72
 
-
-func _ready() -> void:
-	if sprite != null:
-		_base_sprite_scale = sprite.scale
-		_base_sprite_modulate = sprite.modulate
-		_base_sprite_position = sprite.position
-		_base_z_index = sprite.z_index
-	_apply_visuals()
-	_refresh_hud()
+var digimon_instance: DigimonInstance = null
+var battle_state: BattleDigimon = null
+var species_data: Dictionary = {}
+var _stat_calculator = StatCalculatorScript.new()
+var _attack_tween: Tween = null
+var _hit_tween: Tween = null
+var _knockout_started := false
 
 
-func setup(instance, species: Dictionary, player_controlled: bool, start_grid: Vector2i) -> void:
+func bind_digimon_instance(instance: DigimonInstance, species: Dictionary, player_controlled: bool) -> void:
 	digimon_instance = instance
 	species_data = species.duplicate(true)
 	is_player_controlled = player_controlled
-	grid_position = start_grid
-	movement_type = String(species_data.get("movementType", "ground"))
-	footprint_shape = String(species_data.get("footprint", "single"))
-	if digimon_instance != null:
-		var instance_footprint := String(digimon_instance.get("footprint_shape"))
-		if not instance_footprint.is_empty():
-			footprint_shape = instance_footprint
-	var shape := String(footprint_shape).to_lower()
-	if shape == "2x2" or shape == "large_square":
-		size = Vector2i(2, 2)
-	else:
-		size = Vector2i.ONE
-	if digimon_instance != null:
-		current_hp = maxi(1, int(digimon_instance.get("current_hp")))
-		current_sp = maxi(0, int(digimon_instance.get("current_sp")))
-	else:
-		current_hp = get_max_hp()
-		current_sp = get_max_sp()
-	_refresh_hud()
+	digimon_key = String(species_data.get("name", "")).to_lower()
+	configure_battle_footprint(instance.battle_footprint_id)
+	battle_state = BattleDigimonScript.new(instance, "player" if player_controlled else "enemy")
 
 
-func set_battle_state(state) -> void:
-	battle_state = state
-	_refresh_hud()
-
-
-func set_occupied_cells(cells: Array[Vector2i]) -> void:
-	occupied_cells = cells.duplicate()
-
-
-func get_occupied_cells() -> Array[Vector2i]:
-	if not occupied_cells.is_empty():
-		return occupied_cells.duplicate()
-	var fallback: Array[Vector2i] = []
-	for y: int in range(size.y):
-		for x: int in range(size.x):
-			fallback.append(grid_position + Vector2i(x, y))
-	return fallback
-
-
-func get_footprint_shape() -> String:
-	return footprint_shape
-
-
-func set_turn_active(active: bool) -> void:
-	if selection_marker != null:
-		selection_marker.visible = active
-
-
-func get_instance_id_string() -> String:
-	if digimon_instance == null:
-		return ""
-	return String(digimon_instance.get("instance_id"))
+func get_digimon_instance_id() -> String:
+	return digimon_instance.id if digimon_instance != null else ""
 
 
 func get_species_seed() -> String:
-	if digimon_instance == null:
-		return ""
-	return String(digimon_instance.get("species_seed"))
+	return digimon_instance.species_seed if digimon_instance != null else ""
 
 
 func get_display_name() -> String:
-	if digimon_instance != null:
-		var nickname := String(digimon_instance.get("nickname"))
-		if not nickname.is_empty():
-			return nickname
-	return String(species_data.get("name", "Digimon"))
+	var species_name := String(species_data.get("name", digimon_key.capitalize()))
+	if digimon_instance == null:
+		return species_name
+	return digimon_instance.get_display_name(species_name)
 
 
 func get_level() -> int:
+	return digimon_instance.level if digimon_instance != null else 1
+
+
+func get_potential() -> int:
+	return digimon_instance.potential if digimon_instance != null else 0
+
+
+func get_tier() -> String:
+	return digimon_instance.tier if digimon_instance != null else "E"
+
+
+func get_final_stat(stat_key: String) -> int:
 	if digimon_instance == null:
-		return 1
-	return int(digimon_instance.get("level"))
+		return 0
+	if battle_state != null:
+		return battle_state.get_stat(_stat_calculator, species_data, stat_key)
+	return _stat_calculator.get_stat(digimon_instance, species_data, stat_key)
 
 
-func get_rank() -> String:
-	return String(species_data.get("rank", "Rookie"))
+func get_final_mov() -> int:
+	if digimon_instance == null:
+		return 4
+	if battle_state != null:
+		return battle_state.get_mov(_stat_calculator, species_data)
+	return _stat_calculator.get_mov(digimon_instance, species_data)
+
+
+func get_movement_type() -> String:
+	return String(species_data.get("movementType", "ground"))
 
 
 func get_combat_type() -> String:
-	return String(species_data.get("type", "Data"))
+	return String(species_data.get("type", species_data.get("attribute", "Free")))
 
 
 func get_combat_element() -> String:
@@ -138,275 +89,246 @@ func get_combat_element() -> String:
 
 
 func get_family() -> String:
-	return String(species_data.get("family", "Nature Spirits"))
-
-
-func get_max_hp() -> int:
-	return maxi(1, int(get_final_stat("hp")))
-
-
-func get_max_sp() -> int:
-	return maxi(0, int(get_final_stat("sp")))
+	return String(species_data.get("family", species_data.get("species", "Unknown")))
 
 
 func get_current_hp() -> int:
-	return current_hp
+	return battle_state.current_hp if battle_state != null else 0
 
 
 func get_current_sp() -> int:
-	return current_sp
-
-
-func get_final_mov() -> int:
-	if digimon_instance != null:
-		var mov_value = digimon_instance.get("final_mov")
-		if mov_value != null:
-			return maxi(1, int(mov_value))
-	return maxi(1, int(species_data.get("MOV", 4)))
-
-
-func get_movement_type() -> String:
-	return movement_type
-
-
-func get_final_stat(stat_name: String) -> int:
-	if digimon_instance != null:
-		return int(_stat_calculator.calculate_stat(digimon_instance, species_data, stat_name))
-	return int(species_data.get(stat_name, 1))
-
-
-func get_initiative() -> float:
-	if battle_state != null and battle_state.has_method("get_initiative"):
-		return float(battle_state.call("get_initiative"))
-	return float(get_final_stat("speed"))
-
-
-func get_statuses() -> Array:
-	if battle_state != null and battle_state.has_method("get_statuses"):
-		return battle_state.call("get_statuses")
-	return []
-
-
-func is_defeated() -> bool:
-	return current_hp <= 0
-
-
-func apply_damage(amount: int) -> int:
-	if amount <= 0 or is_defeated():
-		return 0
-	var before := current_hp
-	current_hp = maxi(0, current_hp - amount)
-	var applied := before - current_hp
-	if digimon_instance != null:
-		digimon_instance.set("current_hp", current_hp)
-	_refresh_hud()
-	if applied > 0:
-		play_damage_feedback(applied)
-	return applied
-
-
-func heal(amount: int) -> int:
-	if amount <= 0 or is_defeated():
-		return 0
-	var before := current_hp
-	current_hp = mini(get_max_hp(), current_hp + amount)
-	var applied := current_hp - before
-	if digimon_instance != null:
-		digimon_instance.set("current_hp", current_hp)
-	_refresh_hud()
-	if applied > 0:
-		play_heal_feedback(applied)
-	return applied
+	return battle_state.current_mp if battle_state != null else 0
 
 
 func spend_sp(amount: int) -> bool:
-	if amount <= 0:
-		return true
-	if current_sp < amount:
-		return false
-	current_sp -= amount
-	if digimon_instance != null:
-		digimon_instance.set("current_sp", current_sp)
-	_refresh_hud()
-	return true
+	return battle_state != null and battle_state.spend_sp(amount)
+
+
+func take_damage(amount: int) -> int:
+	return battle_state.take_damage(amount) if battle_state != null else 0
+
+
+func heal(amount: int) -> int:
+	return battle_state.heal(amount, get_final_stat("hp")) if battle_state != null else 0
 
 
 func restore_sp(amount: int) -> int:
-	if amount <= 0:
+	return battle_state.restore_sp(amount, get_final_stat("mp")) if battle_state != null else 0
+
+
+func revive(percent_max_hp: float = 25.0) -> int:
+	if battle_state == null or not battle_state.is_knocked_out():
 		return 0
-	var before := current_sp
-	current_sp = mini(get_max_sp(), current_sp + amount)
-	var applied := current_sp - before
-	if digimon_instance != null:
-		digimon_instance.set("current_sp", current_sp)
-	_refresh_hud()
-	return applied
+	var amount := maxi(1, int(round(float(get_final_stat("hp")) * percent_max_hp / 100.0)))
+	var restored := battle_state.heal(amount, get_final_stat("hp"))
+	if restored > 0:
+		visible = true
+		modulate = Color.WHITE
+		_knockout_started = false
+		if sprite != null:
+			sprite.modulate = Color.WHITE
+	return restored
 
 
-func refresh_from_state() -> void:
-	_refresh_hud()
+func get_favorite_skill_ids() -> Array[String]:
+	if digimon_instance == null:
+		return []
+	return digimon_instance.favorite_skills.duplicate()
 
 
-func play_damage_feedback(amount: int) -> void:
-	if is_defeated():
+func get_learned_skill_ids() -> Array[String]:
+	if digimon_instance == null:
+		return []
+	return digimon_instance.learned_skills.duplicate()
+
+
+func get_archived_skill_ids() -> Array[String]:
+	if digimon_instance == null:
+		return []
+	return digimon_instance.archived_skills.duplicate()
+
+
+func get_skill_mastery_points(skill_id: String) -> int:
+	return digimon_instance.get_skill_mastery_points(skill_id) if digimon_instance != null else 0
+
+
+func get_statuses() -> Array[Dictionary]:
+	return battle_state.get_statuses() if battle_state != null else []
+
+
+func get_initiative() -> float:
+	return battle_state.initiative if battle_state != null else 0.0
+
+
+func set_initiative(value: float) -> void:
+	if battle_state != null:
+		battle_state.set_initiative(value)
+
+
+func consume_initiative(recovery_cost: float) -> void:
+	if battle_state != null:
+		battle_state.consume_initiative(recovery_cost)
+
+
+func is_available_for_turn() -> bool:
+	return battle_state != null and not battle_state.is_knocked_out()
+
+
+func is_pointer_over(world_position: Vector2) -> bool:
+	if not visible or not is_available_for_turn():
+		return false
+	return super.is_pointer_over(world_position)
+
+
+func get_combat_fx_anchor_world() -> Vector2:
+	if sprite == null:
+		return global_position + Vector2(0.0, -28.0)
+	var visual_height: float = _sprite_visual_height()
+	return sprite.global_position + Vector2(0.0, -maxf(12.0, visual_height * 0.18))
+
+
+func get_damage_number_anchor_world() -> Vector2:
+	if sprite == null:
+		return global_position + Vector2(0.0, -54.0)
+	var visual_height: float = _sprite_visual_height()
+	return sprite.global_position + Vector2(0.0, -maxf(44.0, visual_height * 0.62))
+
+
+func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = false) -> void:
+	if target == null or not is_instance_valid(target) or not visible or sprite == null:
 		return
-	_kill_feedback_tweens()
+	if _attack_tween != null and _attack_tween.is_valid():
+		_attack_tween.kill()
+
+	var origin: Vector2 = sprite.position
+	var base_scale: Vector2 = sprite.scale
+	var base_z: int = sprite.z_index
+	var direction: Vector2 = target.global_position - global_position
+	if direction.length_squared() < 1.0:
+		return
+	face_toward_world_position(target.global_position)
+	var normalized: Vector2 = direction.normalized()
+	sprite.z_index = maxi(base_z, 70)
+
+	_attack_tween = create_tween()
+	if ranged:
+		var recoil_distance: float = clampf(5.0 + intensity * 0.9, 7.0, 12.0)
+		var release_distance: float = clampf(8.0 + intensity * 1.5, 12.0, 19.0)
+		var recoil_position: Vector2 = origin - normalized * recoil_distance
+		var release_position: Vector2 = origin + normalized * release_distance
+		_attack_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_attack_tween.tween_property(sprite, "position", recoil_position, RANGED_WINDUP_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(0.92, 1.08), RANGED_WINDUP_TIME)
+		_attack_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_attack_tween.tween_property(sprite, "position", release_position, RANGED_RELEASE_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.12, 0.90), RANGED_RELEASE_TIME)
+		_attack_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		_attack_tween.tween_property(sprite, "position", origin, RANGED_RETURN_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale, RANGED_RETURN_TIME)
+	else:
+		var windup_distance: float = clampf(5.0 + intensity, 8.0, 13.0)
+		var lunge_distance: float = minf(
+			direction.length() * 0.72,
+			clampf(46.0 + intensity * 6.0, 58.0, 86.0)
+		)
+		var windup_position: Vector2 = origin - normalized * windup_distance
+		var strike_position: Vector2 = origin + normalized * lunge_distance
+		_attack_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_attack_tween.tween_property(sprite, "position", windup_position, ATTACK_WINDUP_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(0.93, 1.08), ATTACK_WINDUP_TIME)
+		_attack_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+		_attack_tween.tween_property(sprite, "position", strike_position, ATTACK_LUNGE_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.18, 0.86), ATTACK_LUNGE_TIME)
+		_attack_tween.tween_interval(ATTACK_HOLD_TIME)
+		_attack_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_attack_tween.tween_property(sprite, "position", origin, ATTACK_RETURN_TIME)
+		_attack_tween.parallel().tween_property(sprite, "scale", base_scale, ATTACK_RETURN_TIME)
+
+	await _attack_tween.finished
 	if sprite != null:
-		var tween := create_tween()
-		_active_tweens.append(tween)
-		tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_property(sprite, "modulate", Color(1.0, 0.3, 0.25, 1.0), 0.06)
-		tween.tween_property(sprite, "position:x", _base_sprite_position.x - 4.0, 0.04)
-		tween.tween_property(sprite, "position:x", _base_sprite_position.x + 4.0, 0.04)
-		tween.tween_property(sprite, "position:x", _base_sprite_position.x, 0.04)
-		tween.parallel().tween_property(sprite, "modulate", _base_sprite_modulate, DAMAGE_FLASH_TIME)
-	_spawn_floating_text("-%d" % amount, Color(1.0, 0.48, 0.38), 22)
-	_spawn_burst(Color(1.0, 0.26, 0.18, 0.95), 18, 90.0, 0.48, 1.6)
+		sprite.position = origin
+		sprite.scale = base_scale
+		sprite.z_index = base_z
 
 
-func play_heal_feedback(amount: int) -> void:
-	if is_defeated():
+func play_hit_reaction(source: Node, intensity: float = 4.0) -> void:
+	if sprite == null or not visible:
 		return
-	_kill_feedback_tweens()
-	if sprite != null:
-		var tween := create_tween()
-		_active_tweens.append(tween)
-		tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_property(sprite, "modulate", Color(0.45, 1.0, 0.67, 1.0), 0.08)
-		tween.tween_property(sprite, "scale", _base_sprite_scale * 1.08, 0.10)
-		tween.tween_property(sprite, "scale", _base_sprite_scale, 0.14)
-		tween.parallel().tween_property(sprite, "modulate", _base_sprite_modulate, HEAL_FLASH_TIME)
-	_spawn_floating_text("+%d" % amount, Color(0.48, 1.0, 0.68), 22)
-	_spawn_burst(Color(0.34, 1.0, 0.60, 0.95), 16, 76.0, 0.62, 1.5)
+	if _hit_tween != null and _hit_tween.is_valid():
+		_hit_tween.kill()
+	var base_position: Vector2 = sprite.position
+	var base_scale: Vector2 = sprite.scale
+	var recoil_direction: Vector2 = Vector2.RIGHT
+	if source != null and is_instance_valid(source):
+		var delta: Vector2 = global_position - source.global_position
+		if delta.length_squared() > 1.0:
+			recoil_direction = delta.normalized()
+	var recoil: Vector2 = recoil_direction * clampf(5.0 + intensity * 1.0, 8.0, 14.0)
+	_hit_tween = create_tween()
+	_hit_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	_hit_tween.tween_property(sprite, "position", base_position + recoil, HIT_RECOIL_TIME)
+	_hit_tween.parallel().tween_property(sprite, "scale", base_scale * Vector2(1.13, 0.87), HIT_RECOIL_TIME)
+	_hit_tween.parallel().tween_property(sprite, "modulate", Color(1.0, 0.42, 0.36, 1.0), HIT_RECOIL_TIME)
+	_hit_tween.tween_interval(HIT_HOLD_TIME)
+	_hit_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_hit_tween.tween_property(sprite, "position", base_position, HIT_RETURN_TIME)
+	_hit_tween.parallel().tween_property(sprite, "scale", base_scale, HIT_RETURN_TIME)
+	_hit_tween.parallel().tween_property(sprite, "modulate", Color.WHITE, HIT_RETURN_TIME)
 
 
-func play_status_feedback(label_text: String, positive: bool) -> void:
-	if is_defeated():
+func show_damage_number(amount: int, critical: bool = false) -> void:
+	# Compatibility fallback. BattlePresentationFX now owns the real screen-space
+	# floating damage so the number stays anchored to the struck Digimon.
+	var damage: int = maxi(0, amount)
+	var text: String = "CRIT  %d" % damage if critical else "%d" % damage
+	var color: Color = Color(1.0, 0.82, 0.20, 1.0) if critical else Color(1.0, 0.96, 0.90, 1.0)
+	_spawn_floating_text(text, color, 31 if critical else 25)
+
+
+func show_miss_feedback() -> void:
+	_spawn_floating_text("MISS", Color(0.70, 0.90, 1.0, 1.0), 23)
+
+
+func emit_hit_particles(element_color: Color, critical: bool = false, intensity: float = 4.0) -> void:
+	var amount: int = 24 if critical else int(clampf(10.0 + intensity * 2.0, 14.0, 22.0))
+	_spawn_burst(element_color, amount, 78.0 + intensity * 10.0, 0.38, 2.1 if critical else 1.55)
+	if critical:
+		_spawn_burst(Color(1.0, 0.92, 0.48, 1.0), 12, 145.0, 0.28, 2.4)
+
+
+func play_knockout_animation() -> void:
+	if _knockout_started or not visible:
 		return
-	var tint := Color(0.42, 0.78, 1.0, 1.0) if positive else Color(0.92, 0.46, 1.0, 1.0)
-	_spawn_floating_text(label_text, tint, 18)
-	_spawn_burst(tint, 10, 54.0, 0.44, 1.25)
-
-
-func play_defeat_feedback() -> void:
-	_kill_feedback_tweens()
-	if sprite != null:
-		var tween := create_tween()
-		_active_tweens.append(tween)
-		tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tween.tween_property(sprite, "modulate", Color(0.18, 0.18, 0.2, 0.0), 0.34)
-		tween.parallel().tween_property(sprite, "position:y", _base_sprite_position.y + 10.0, 0.34)
-	_spawn_burst(Color(0.58, 0.62, 0.72, 0.8), 12, 62.0, 0.40, 1.2)
-
-
-func play_normal_attack_animation(target: Node) -> void:
-	if target == null or sprite == null:
+	_knockout_started = true
+	set_tactical_selected(false)
+	set_debug_selected(false)
+	modulate = Color.WHITE
+	if sprite == null:
+		visible = false
 		return
-	var original_position := sprite.position
-	var target_direction := Vector2.RIGHT
-	if target is Node2D:
-		target_direction = (target.global_position - global_position).normalized()
-	if target_direction.length_squared() < 0.01:
-		target_direction = Vector2.RIGHT
-	var lunge := target_direction * 10.0
-	var tween := create_tween()
-	_active_tweens.append(tween)
+	if _attack_tween != null and _attack_tween.is_valid():
+		_attack_tween.kill()
+	if _hit_tween != null and _hit_tween.is_valid():
+		_hit_tween.kill()
+	var base_position: Vector2 = sprite.position
+	var base_scale: Vector2 = sprite.scale
+	var defeat_color: Color = Color(0.30, 0.92, 1.0, 1.0) if is_player_controlled else Color(1.0, 0.34, 0.45, 1.0)
+	_spawn_burst(defeat_color, 30, 128.0, 0.58, 2.0)
+	_spawn_burst(Color(0.86, 0.96, 1.0, 1.0), 18, 88.0, 0.72, 1.35)
+	var tween: Tween = create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(sprite, "position", original_position + lunge, 0.08)
-	tween.tween_property(sprite, "position", original_position, 0.11)
+	tween.tween_property(sprite, "scale", base_scale * Vector2(1.13, 0.90), 0.09)
+	tween.parallel().tween_property(sprite, "modulate", Color(1.0, 0.68, 0.72, 1.0), 0.09)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(sprite, "scale", base_scale * 0.48, 0.42)
+	tween.parallel().tween_property(sprite, "position", base_position + Vector2(0.0, -18.0), 0.42)
+	tween.parallel().tween_property(self, "modulate:a", 0.0, 0.42)
 	await tween.finished
-
-
-func play_cast_animation(_action: Dictionary) -> void:
-	if sprite == null:
-		return
-	var tween := create_tween()
-	_active_tweens.append(tween)
-	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(sprite, "modulate", Color(0.72, 0.92, 1.0, 1.0), 0.08)
-	tween.tween_property(sprite, "scale", _base_sprite_scale * 1.08, 0.08)
-	tween.tween_property(sprite, "scale", _base_sprite_scale, 0.09)
-	tween.parallel().tween_property(sprite, "modulate", _base_sprite_modulate, 0.16)
-	await tween.finished
-
-
-func play_impact_animation() -> void:
-	if sprite == null:
-		return
-	var tween := create_tween()
-	_active_tweens.append(tween)
-	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(sprite, "modulate", Color(1.0, 0.78, 0.34, 1.0), 0.05)
-	tween.tween_property(sprite, "modulate", _base_sprite_modulate, 0.12)
-	await tween.finished
-
-
-func _apply_visuals() -> void:
-	if sprite == null:
-		return
-	var texture_path := String(species_data.get("sprite", ""))
-	if texture_path.is_empty():
-		texture_path = String(species_data.get("fieldSprite", ""))
-	if not texture_path.is_empty() and ResourceLoader.exists(texture_path):
-		var loaded = load(texture_path)
-		if loaded is Texture2D:
-			sprite.texture = loaded
-	var frame_coords := DirectionalSpriteContractScript.frame_coords_from_species(species_data)
-	if not frame_coords.is_empty():
-		var contract := DirectionalSpriteContractScript.resolve_for_species(species_data)
-		sprite.hframes = int(contract.get("hframes", 1))
-		sprite.vframes = int(contract.get("vframes", 1))
-		sprite.frame_coords = frame_coords[0]
-	var requested_scale := float(species_data.get("battleScale", 1.0))
-	var base_scale := Vector2(requested_scale, requested_scale)
-	if size.x > 1 or size.y > 1:
-		base_scale *= 1.32
+	visible = false
+	modulate = Color.WHITE
+	sprite.position = base_position
 	sprite.scale = base_scale
-	_base_sprite_scale = sprite.scale
-	_base_sprite_modulate = sprite.modulate
-	_base_sprite_position = sprite.position
-	_base_z_index = sprite.z_index
-
-
-func _refresh_hud() -> void:
-	if health_bar != null:
-		health_bar.max_value = get_max_hp()
-		health_bar.value = current_hp
-	if health_label != null:
-		health_label.text = "%d/%d" % [current_hp, get_max_hp()]
-	if name_label != null:
-		name_label.text = get_display_name()
-	_refresh_status_badges()
-
-
-func _refresh_status_badges() -> void:
-	if status_container == null:
-		return
-	for badge: Label in _status_badges:
-		if badge != null and is_instance_valid(badge):
-			badge.queue_free()
-	_status_badges.clear()
-	for status_variant in get_statuses():
-		if not (status_variant is Dictionary):
-			continue
-		var status := status_variant as Dictionary
-		var badge := Label.new()
-		badge.text = String(status.get("id", "status")).to_upper()
-		badge.add_theme_font_size_override("font_size", 10)
-		badge.add_theme_color_override("font_color", Color(0.88, 0.9, 0.96, 1.0))
-		status_container.add_child(badge)
-		_status_badges.append(badge)
-
-
-func _kill_feedback_tweens() -> void:
-	for tween: Tween in _active_tweens:
-		if tween != null and tween.is_valid():
-			tween.kill()
-	_active_tweens.clear()
-	if sprite != null:
-		sprite.position = _base_sprite_position
-		sprite.scale = _base_sprite_scale
-		sprite.modulate = _base_sprite_modulate
+	sprite.modulate = Color.WHITE
 
 
 func _sprite_visual_height() -> float:
