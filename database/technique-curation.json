@@ -21,7 +21,10 @@
       "area": {"shape": "cone", "radius": 0, "length": 3, "angle": 90},
       "targets": ["enemy"],
       "canCrit": true,
-      "effects": [{"type": "damage"}],
+      "effects": [
+        {"type": "damage"},
+        {"type": "status", "status": "burn", "chance": 25, "duration": 3}
+      ],
       "masteryProfile": "potent",
       "availability": "ready",
       "tacticalRole": "damage",
@@ -47,7 +50,10 @@
       "area": {"shape": "single", "radius": 0},
       "targets": ["enemy"],
       "canCrit": true,
-      "effects": [{"type": "damage"}],
+      "effects": [
+        {"type": "damage"},
+        {"type": "status", "status": "def_down", "chance": 20, "duration": 2}
+      ],
       "masteryProfile": "swift",
       "availability": "ready",
       "tacticalRole": "damage",
@@ -73,7 +79,10 @@
       "area": {"shape": "line", "radius": 0, "length": 4},
       "targets": ["enemy"],
       "canCrit": true,
-      "effects": [{"type": "damage"}],
+      "effects": [
+        {"type": "damage"},
+        {"type": "status", "status": "speed_down", "chance": 30, "duration": 2}
+      ],
       "masteryProfile": "precise",
       "availability": "ready",
       "tacticalRole": "damage",
