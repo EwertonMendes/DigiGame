@@ -874,11 +874,21 @@ func _finish_battle(victory: bool) -> void:
 	_clear_action_selection(false)
 	if current_actor != null and current_actor.has_method("set_turn_active"):
 		current_actor.call("set_turn_active", false)
+	_commit_player_resources()
 	_battle_result = _build_battle_result(victory)
 	_event_bus.emit_event("battle_finished", _battle_result)
 	battle_finished.emit(_battle_result.duplicate(true))
 	turn_order_changed.emit()
 	_refresh_hud()
+
+
+func _commit_player_resources() -> void:
+	for actor: Node in _turn_order:
+		if actor == null or not is_instance_valid(actor) or not bool(actor.get("is_player_controlled")):
+			continue
+		var battle_state = actor.get("battle_state")
+		if battle_state != null and battle_state.has_method("commit_resources_to_instance"):
+			battle_state.call("commit_resources_to_instance")
 
 
 func _build_battle_result(victory: bool) -> Dictionary:
