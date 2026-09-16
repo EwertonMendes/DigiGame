@@ -49,10 +49,10 @@
         "crop_padding": 2
       },
       "runtime": {
-        "max_sprite_width": 46,
-        "max_sprite_height": 60,
-        "minimum_cell_width": 50,
-        "minimum_cell_height": 64,
+        "max_sprite_width": 40,
+        "max_sprite_height": 44,
+        "minimum_cell_width": 44,
+        "minimum_cell_height": 48,
         "cell_padding_x": 2,
         "cell_padding_y": 2
       },

@@ -12,6 +12,7 @@ on:
       - 'database/**'
       - 'tools/build_project_original_playables.py'
       - 'tools/build_technique_catalog.mjs'
+      - 'tools/apply_technique_curation.py'
       - 'tools/enrich_digimon_database.py'
       - 'tools/validate_combat_data.py'
       - 'tools/validate_digimon_progression.py'
@@ -38,6 +39,9 @@ jobs:
 
       - name: Rebuild permanent technique catalogue deterministically
         run: node tools/build_technique_catalog.mjs
+
+      - name: Apply reviewed technique curation deterministically
+        run: python3 tools/apply_technique_curation.py
 
       - name: Validate data, source contracts and runtime coverage
         shell: bash

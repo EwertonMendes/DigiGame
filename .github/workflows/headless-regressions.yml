@@ -57,6 +57,9 @@ jobs:
           - name: battle-ui-lifecycle
             command: godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn --quit-after 30
             success: battle ui lifecycle regression passed
+          - name: zeke-greymon
+            command: godot --headless --path . tools/test_zeke_greymon_regression.tscn --quit-after 30
+            success: zeke greymon regression passed
           - name: digimon-progression
             command: godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8
             success: digimon progression regression passed
