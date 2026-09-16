@@ -1,22 +1,38 @@
 extends Node
 
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
+const DamageCalculatorScript = preload("res://src/battle/combat/DamageCalculator.gd")
 const HudScript = preload("res://src/DigiIconBattleHUD.gd")
 const ZEKE_SEED := "48b7a3e5-3e43-4819-96b8-673bfe67d5c1"
+const ZEKE_ACTION_IDS := ["zeke_flame", "trident_fang", "plasma_railgun"]
 
 
 class ActorStub:
 	extends Node
 	var digimon_key := "zeke greymon"
 	var is_player_controlled := true
+	var is_defending := false
 	var battle_state = null
 	var display_name := "Zeke Greymon"
+	var species_data: Dictionary = {"type": "Data", "attribute": "Data", "element": "fire"}
 
 	func get_display_name() -> String:
 		return display_name
 
 	func get_final_stat(stat_key: String) -> int:
-		return 355 if stat_key == "hp" else 350
+		match stat_key:
+			"hp":
+				return 355
+			"sp":
+				return 350
+			"atk":
+				return 178
+			"def":
+				return 152
+			"int":
+				return 170
+			_:
+				return 100
 
 	func get_current_hp() -> int:
 		return 306
@@ -37,20 +53,48 @@ func _test_technique_contract() -> bool:
 	var database = ActionDatabaseScript.new()
 	if not _check(database.load_default(), "Battle action database must load"):
 		return false
-	var actions: Array[Dictionary] = database.get_known_actions(ZEKE_SEED, 3)
-	if not _check(actions.size() == 1, "Level-3 Zeke Greymon must expose exactly its signature technique"):
+
+	var early_actions: Array[Dictionary] = database.get_known_actions(ZEKE_SEED, 3)
+	if not _check(early_actions.size() == 1, "Level-3 Zeke Greymon must expose exactly its signature technique"):
 		return false
-	var action := actions[0]
-	if not _check(String(action.get("id", "")) == "zeke_flame", "Zeke signature must resolve to the curated canonical id"):
+	if not _check(String(early_actions[0].get("id", "")) == "zeke_flame", "Zeke signature must resolve to the curated canonical id"):
 		return false
-	if not _check(String(action.get("name", "")) == "Zeke Flame", "Zeke signature must expose its proper display name"):
+	if not _check(String(early_actions[0].get("name", "")) == "Zeke Flame", "Zeke signature must expose its proper display name"):
 		return false
-	if not _check(int(action.get("power", 0)) > 0, "Zeke signature must carry positive power"):
+
+	var all_actions: Array[Dictionary] = database.get_known_actions(ZEKE_SEED, 30)
+	if not _check(all_actions.size() == ZEKE_ACTION_IDS.size(), "Level-30 Zeke Greymon must expose the complete curated technique set"):
 		return false
+	var actions_by_id: Dictionary = {}
+	for action: Dictionary in all_actions:
+		actions_by_id[String(action.get("id", ""))] = action
+	for action_id: String in ZEKE_ACTION_IDS:
+		if not _check(actions_by_id.has(action_id), "Zeke curated learnset is missing %s" % action_id):
+			return false
+		if not _check(_action_resolves_damage(actions_by_id[action_id]), "%s must resolve through the standard battle damage path" % action_id):
+			return false
+	return true
+
+
+func _action_resolves_damage(action: Dictionary) -> bool:
+	if int(action.get("power", 0)) <= 0:
+		return false
+	var has_damage_effect := false
 	for effect in action.get("effects", []):
 		if effect is Dictionary and String(effect.get("type", "")) == "damage":
-			return true
-	return _check(false, "Zeke signature must use the standard battle resolution effect")
+			has_damage_effect = true
+			break
+	if not has_damage_effect:
+		return false
+
+	var source := ActorStub.new()
+	var target := ActorStub.new()
+	target.species_data = {"type": "Vaccine", "attribute": "Vaccine", "element": "neutral"}
+	var calculator = DamageCalculatorScript.new()
+	var preview: Dictionary = calculator.preview(source, target, action)
+	source.free()
+	target.free()
+	return int(preview.get("damage", 0)) > 0
 
 
 func _test_sprite_contract() -> bool:
