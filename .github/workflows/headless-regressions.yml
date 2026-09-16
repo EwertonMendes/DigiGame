@@ -61,6 +61,9 @@ jobs:
             # fast headless runners and would not represent the playable flow.
             command: godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn
             success: battle ui lifecycle regression passed
+          - name: battle-presentation-pacing
+            command: godot --headless --path . -s tools/test_battle_presentation_pacing.gd
+            success: "[BattlePresentationPacingTest] PASS"
           - name: zeke-greymon
             command: godot --headless --path . tools/test_zeke_greymon_regression.tscn --quit-after 30
             success: zeke greymon regression passed

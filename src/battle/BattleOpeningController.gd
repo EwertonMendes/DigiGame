@@ -1,4 +1,4 @@
-extends "res://src/battle/StableSequencedBattleController.gd"
+extends "res://src/battle/PresentationPacedBattleController.gd"
 
 const BattleStartBannerScript = preload("res://src/battle/BattleStartBanner.gd")
 const TEAM_SPAWN_GAP := 0.08
