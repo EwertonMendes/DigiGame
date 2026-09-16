@@ -15,6 +15,7 @@ var _screen: ColorRect = null
 var _material: ShaderMaterial = null
 var _busy := false
 var _progress := 0.0
+var _last_battle_rejection := ""
 
 
 func _ready() -> void:
@@ -33,6 +34,10 @@ func is_transitioning() -> bool:
 	return _busy
 
 
+func get_last_battle_rejection() -> String:
+	return _last_battle_rejection
+
+
 func request_scene(scene_path: String, context: String = "generic") -> bool:
 	if _busy:
 		return false
@@ -49,6 +54,10 @@ func return_to_hub() -> bool:
 
 
 func enter_battle(scene_path: String) -> bool:
+	_last_battle_rejection = OverworldState.battle_party_validation_error()
+	if not _last_battle_rejection.is_empty():
+		push_warning("Battle transition rejected before preload: %s" % _last_battle_rejection)
+		return false
 	return request_scene(scene_path, CONTEXT_BATTLE)
 
 

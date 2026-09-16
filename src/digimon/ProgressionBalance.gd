@@ -63,6 +63,14 @@ func training_number(key: String, fallback: float) -> float:
 	return float(section("training").get(key, fallback))
 
 
+func hospital_int(key: String, fallback: int) -> int:
+	return int(section("hospital").get(key, fallback))
+
+
+func hospital_number(key: String, fallback: float) -> float:
+	return float(section("hospital").get(key, fallback))
+
+
 func party_int(key: String, fallback: int) -> int:
 	return int(section("party").get(key, fallback))
 

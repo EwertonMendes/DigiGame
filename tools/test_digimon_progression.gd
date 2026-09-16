@@ -207,6 +207,9 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	var second := factory.create_player_by_name("agumon", 7, 100)
 	var third := factory.create_player_by_name("gabumon", 6, 100)
 	var fourth := factory.create_player_by_name("veemon", 5, 100)
+	var fifth := factory.create_player_by_name("agumon", 5, 100)
+	var sixth := factory.create_player_by_name("gabumon", 5, 100)
+	var seventh := factory.create_player_by_name("veemon", 5, 100)
 	assert(first.id != second.id, "Same-species Digimon need unique UUIDs")
 	first.exp = 33
 	first.link = 42
@@ -216,19 +219,25 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	collection.add_instance(second, "agumon", "Agumon")
 	collection.add_instance(third, "gabumon", "Gabumon")
 	collection.add_instance(fourth, "veemon", "Veemon")
+	collection.add_instance(fifth, "agumon", "Agumon")
+	collection.add_instance(sixth, "gabumon", "Gabumon")
+	collection.add_instance(seventh, "veemon", "Veemon")
 	var party_ids: Array[String] = [first.id, second.id, third.id]
 	assert(party_service.set_party(collection, party_ids), "Valid party must be accepted")
 	var duplicates: Array[String] = [first.id, first.id]
 	assert(not party_service.set_party(collection, duplicates), "Duplicate individual must be rejected")
-	assert(not party_service.add_to_party(collection, fourth.id), "Party limit must be enforced")
-	assert(party_service.remove_from_party(collection, third.id) and party_service.add_to_party(collection, fourth.id), "Party swap flow must work")
-	assert(collection.get_reserve_instances().size() == 1, "Non-active Digimon must remain in Storage")
+	assert(party_service.add_to_party(collection, fourth.id), "Fourth Party member must be accepted")
+	assert(party_service.add_to_party(collection, fifth.id), "Fifth Party member must be accepted")
+	assert(party_service.add_to_party(collection, sixth.id), "Sixth Party member must be accepted")
+	assert(not party_service.add_to_party(collection, seventh.id), "A seventh Party member must be rejected")
+	assert(party_service.remove_from_party(collection, third.id) and party_service.add_to_party(collection, seventh.id), "Six-slot Party swap flow must work")
+	assert(collection.get_active_party_ids().size() == 6 and collection.get_reserve_instances().size() == 1, "Exactly six Digimon may be active and the remainder must stay in Storage")
 	collection.bits = 321
 	collection.add_digi_data(first.species_seed, 87)
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
 	collection.add_item("expansion_fragment", 4)
-	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Collection save v4 must write")
+	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Collection save v6 must write")
 	var loaded: PlayerCollection = save_service.load_collection(TEST_SAVE_PATH)
 	assert(loaded != null and loaded.get_instances().size() == collection.get_instances().size(), "Save/load must preserve collection")
 	var restored := loaded.get_instance(first.id)
@@ -238,30 +247,34 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	assert(loaded.get_active_party_ids() == collection.get_active_party_ids(), "Save/load must preserve party order")
 	assert(loaded.get_item_count("expansion_fragment") == 4, "Save/load must preserve generic inventory")
 	var save_data := save_service.load_data(TEST_SAVE_PATH)
-	assert(save_data != null and save_data.save_version == 4 and not save_data.collection.is_empty(), "New saves must use v4 collection schema")
+	assert(save_data != null and save_data.save_version == 6 and not save_data.collection.is_empty(), "New saves must use v6 collection schema")
 	assert(save_service.delete_save(TEST_SAVE_PATH), "Regression save must be removable")
 
 	# Legacy vocabulary exists only in this fixture because it verifies that real
-	# v1 saves are migrated without data loss. New v4 data must never write it.
+	# v1 saves are migrated without data loss. New v6 data must never write it.
 	var migration: SaveMigration = MigrationScript.new()
 	var legacy_v1_instance := first.to_dict()
 	legacy_v1_instance.erase("tier")
 	legacy_v1_instance.erase("expansionUnlocked")
 	legacy_v1_instance.erase("battleFootprintId")
+	legacy_v1_instance.erase("hospitalRecovery")
 	var legacy_entry := {"rosterKey": "legacy_agumon", "instance": legacy_v1_instance}
 	var migrated := migration.migrate({"save_version": 1, "roster": {"instances": [legacy_entry], "activePartyIds": [first.id], "bits": 19, "digiData": {first.species_seed: 4}}})
-	assert(int(migrated.get("save_version", 0)) == 4, "v1 save must migrate through v4")
+	assert(int(migrated.get("save_version", 0)) == 6, "v1 save must migrate through v6")
 	var migrated_collection := migrated.get("collection", {}) as Dictionary
 	assert(int(migrated_collection.get("bits", 0)) == 19, "Migration must retain legacy values")
 	var migrated_entries := migrated_collection.get("instances", []) as Array
 	assert(migrated_entries.size() == 1 and String((migrated_entries[0] as Dictionary).get("collectionKey", "")) == "legacy_agumon", "Migration must rename legacy entry key")
-	assert(not (migrated_entries[0] as Dictionary).has("rosterKey"), "v4 save must not write legacy key names")
+	assert(not (migrated_entries[0] as Dictionary).has("rosterKey"), "v6 save must not write legacy key names")
 	var migrated_individual := (migrated_entries[0] as Dictionary).get("instance", {}) as Dictionary
 	assert(String(migrated_individual.get("tier", "")) == "E" and not bool(migrated_individual.get("expansionUnlocked", true)) and String(migrated_individual.get("battleFootprintId", "")) == "single", "Old saves must initialize Tier E and a locked 1x1 footprint")
+	assert((migrated_individual.get("hospitalRecovery", {}) as Dictionary).is_empty(), "Old saves must initialize without active Hospital recovery")
+	assert((migrated_collection.get("hospitalIds", []) as Array).is_empty(), "Legacy saves without recovery must initialize with no Hospital occupants")
 	var legacy_v2_instance := first.to_dict()
 	legacy_v2_instance.erase("tier")
 	legacy_v2_instance.erase("expansionUnlocked")
 	legacy_v2_instance.erase("battleFootprintId")
+	legacy_v2_instance.erase("hospitalRecovery")
 	legacy_v2_instance["equippedSkills"] = ["pepper_breath", "guard_charge"]
 	legacy_v2_instance.erase("favoriteSkills")
 	legacy_v2_instance.erase("archivedSkills")
@@ -274,6 +287,8 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	assert((migrated_instance.get("favoriteSkills", []) as Array) == ["pepper_breath", "guard_charge"], "v2 equipped order must become v3 Favorites")
 	assert(not migrated_instance.has("equippedSkills") and (migrated_instance.get("archivedSkills", []) as Array).is_empty(), "v3 migration must remove slots and initialize Archive")
 	assert(String(migrated_instance.get("tier", "")) == "E" and not bool(migrated_instance.get("expansionUnlocked", true)) and String(migrated_instance.get("battleFootprintId", "")) == "single", "v2 migration must initialize v4 individual defaults")
+	assert((migrated_instance.get("hospitalRecovery", {}) as Dictionary).is_empty(), "v2 migration must initialize Hospital recovery defaults")
+	assert((migrated_v2_collection.get("hospitalIds", []) as Array).is_empty(), "v2 migration must initialize v6 Hospital location defaults")
 
 func _test_overworld_digi_data() -> void:
 	assert(OverworldState.get_active_instances().size() == 3, "Production flow must start with three active instances")

@@ -50,7 +50,7 @@
   },
   "party": {
     "minActive": 1,
-    "maxActive": 3,
+    "maxActive": 6,
     "participantXpMultiplier": 1.0,
     "reserveXpMultiplier": 0.0,
     "knockedOutReceivesXp": true
@@ -101,6 +101,13 @@
     "mobilityTwoPotential": 70,
     "mobilityOneCapacityCost": 20,
     "mobilityTwoAdditionalCost": 30
+  },
+  "hospital": {
+    "minimumRecoverySeconds": 60,
+    "maximumRecoverySeconds": 1200,
+    "baseInstantCost": 50.0,
+    "levelInstantCost": 5.0,
+    "minimumInstantCost": 10
   },
   "tiers": {
     "order": ["E", "D", "C", "B", "A", "S", "SS", "SSS"],

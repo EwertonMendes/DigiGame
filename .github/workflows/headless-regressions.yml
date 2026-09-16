@@ -73,6 +73,9 @@ jobs:
           - name: digimon-progression
             command: godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8
             success: digimon progression regression passed
+          - name: hospital-system
+            command: godot --headless --path . tools/test_hospital_system.tscn --quit-after 8
+            success: hospital system regression passed
           - name: progression-loop-e2e
             command: godot --headless --path . tools/test_progression_loop_e2e.tscn --quit-after 20
             success: complete progression loop e2e regression passed

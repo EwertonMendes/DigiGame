@@ -17,7 +17,7 @@ func set_party(collection: PlayerCollection, instance_ids: Array[String]) -> boo
 	return collection.set_active_party_ids(instance_ids, minimum_size(), maximum_size())
 
 func add_to_party(collection: PlayerCollection, instance_id: String) -> bool:
-	if collection == null or not collection.has_instance(instance_id):
+	if collection == null or not collection.has_instance(instance_id) or collection.is_hospitalized(instance_id):
 		return false
 	var party := collection.get_active_party_ids()
 	if party.has(instance_id) or party.size() >= maximum_size():
@@ -36,7 +36,7 @@ func remove_from_party(collection: PlayerCollection, instance_id: String) -> boo
 	return set_party(collection, party)
 
 func swap_with_reserve(collection: PlayerCollection, active_instance_id: String, reserve_instance_id: String) -> bool:
-	if collection == null or not collection.has_instance(reserve_instance_id):
+	if collection == null or not collection.has_instance(reserve_instance_id) or collection.is_hospitalized(reserve_instance_id):
 		return false
 	var party := collection.get_active_party_ids()
 	var active_index := party.find(active_instance_id)
@@ -62,6 +62,8 @@ func move(collection: PlayerCollection, instance_id: String, new_index: int) -> 
 func validation_error(collection: PlayerCollection, instance_ids: Array[String]) -> String:
 	if collection == null:
 		return "Collection is unavailable."
+	if instance_ids.is_empty():
+		return "You need at least one Digimon in your party to start a battle."
 	if instance_ids.size() < minimum_size():
 		return "Keep at least %d Digimon in the active party." % minimum_size()
 	if instance_ids.size() > maximum_size():
@@ -70,6 +72,8 @@ func validation_error(collection: PlayerCollection, instance_ids: Array[String])
 	for instance_id: String in instance_ids:
 		if not collection.has_instance(instance_id):
 			return "The selected Digimon is no longer in your collection."
+		if collection.get_location(instance_id) != PlayerCollection.LOCATION_PARTY:
+			return "The active party contains a Digimon that is not currently in the party."
 		if seen.has(instance_id):
 			return "The same Digimon instance cannot occupy two party slots."
 		seen[instance_id] = true
