@@ -4,9 +4,8 @@ extends "res://src/ui/HospitalScreen.gd"
 # HospitalScreen/OverworldState; this layer owns the final interaction polish.
 
 const CommandButtonStyle = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
-const PATIENT_CARD_HEIGHT := 154.0
-const COMPACT_PATIENT_CARD_HEIGHT := 136.0
-const PATIENT_INFO_GAP := 6
+const PATIENT_CARD_HEIGHT := 116.0
+const PATIENT_STATUS_TOP_GAP := 4
 
 var _pointer_patient_selection := false
 
@@ -90,17 +89,30 @@ func _information_panel(parent: Node, node_name: String, accent: Color, minimum_
 
 func _create_patient_card(instance: DigimonInstance) -> Button:
 	var card := super._create_patient_card(instance)
-	# Cards are paged in sets of up to three. Their authored height must never
-	# expand to consume unused roster space when a page contains only one or two.
-	card.custom_minimum_size.y = COMPACT_PATIENT_CARD_HEIGHT if _is_compact() else PATIENT_CARD_HEIGHT
+	# Pages are designed around three authored cards. A page with one or two
+	# patients keeps the exact same card height and leaves the remaining slot area
+	# empty instead of stretching the existing cards to fill it.
+	card.custom_minimum_size.y = PATIENT_CARD_HEIGHT
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	card.gui_input.connect(_on_patient_card_gui_input.bind(instance.id))
 
+	# The status chip needs an external breathing space after the HP bar. A margin
+	# container expresses that spacing structurally without changing the rhythm of
+	# the Level and HP text rows or increasing the fixed card height.
 	var info := card.find_child("CardInfo", true, false) as VBoxContainer
-	if info != null:
-		# One rhythm for Level -> HP -> bar -> status keeps the chip visually
-		# separated from the HP bar instead of appearing glued to it.
-		info.add_theme_constant_override("separation", PATIENT_INFO_GAP)
+	var status := card.find_child("Status", true, false) as Label
+	if info != null and status != null and status.get_parent() == info:
+		var status_index := status.get_index()
+		info.remove_child(status)
+		var status_spacing := MarginContainer.new()
+		status_spacing.name = "StatusSpacing"
+		status_spacing.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		status_spacing.add_theme_constant_override("margin_top", PATIENT_STATUS_TOP_GAP)
+		status_spacing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(status_spacing)
+		info.move_child(status_spacing, status_index)
+		status_spacing.add_child(status)
+		status.custom_minimum_size.y = 20
 	return card
 
 
