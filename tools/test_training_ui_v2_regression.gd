@@ -36,6 +36,9 @@ func _ready() -> void:
 	if not _check(_find_label_containing(detail, "TRAINING PLAN") != null, "Training Center must expose the plan summary"):
 		return
 
+	var detail_scroll := training.get("_detail_scroll") as ScrollContainer
+	if not _check(detail_scroll != null, "Training detail must expose its scroll viewport"):
+		return
 	var rows: Dictionary = training.get("_stat_rows") as Dictionary
 	if not _check(rows.size() == 6, "Training Center must build all six trainable stat rows"):
 		return
@@ -45,6 +48,7 @@ func _ready() -> void:
 		return
 
 	var target_key := ""
+	var target_plus: Button = null
 	for stat_key: String in ["hp", "mp", "atk", "def", "int", "speed"]:
 		var row := rows.get(stat_key) as TrainingStatRow
 		if row == null:
@@ -52,14 +56,24 @@ func _ready() -> void:
 		var buttons := row.get_focus_buttons()
 		if buttons.size() >= 2 and not buttons[1].disabled:
 			target_key = stat_key
-			buttons[1].pressed.emit()
+			target_plus = buttons[1]
 			break
-	if not _check(not target_key.is_empty(), "At least one attribute must be trainable for the default individual"):
+	if not _check(not target_key.is_empty() and target_plus != null, "At least one attribute must be trainable for the default individual"):
 		return
+
+	# Focus the same control a mouse/gamepad interaction would leave active and
+	# capture the viewport after Godot has made that row visible. Rebuilding the
+	# detail must not append a second pending tree and drag focus/scroll downward.
+	target_plus.grab_focus()
+	await _frames(2)
+	var scroll_before := detail_scroll.scroll_vertical
+	target_plus.pressed.emit()
 	await _frames(3)
 
 	var pending: Dictionary = training.get("_pending_stats") as Dictionary
 	if not _check(int(pending.get(target_key, 0)) == 1, "Attribute stepper must add a point to the pending plan"):
+		return
+	if not _check(abs(detail_scroll.scroll_vertical - scroll_before) <= 2, "Attribute refresh must preserve the user's training scroll position"):
 		return
 	rows = training.get("_stat_rows") as Dictionary
 	var refreshed_row := rows.get(target_key) as TrainingStatRow
