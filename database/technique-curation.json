@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "techniques": [
+    {
+      "id": "zeke_flame",
+      "name": "Zeke Flame",
+      "names": {"en": "Zeke Flame", "pt_BR": "Zeke Flame"},
+      "descriptions": {"en": "A wide fire technique for enemies ahead.", "pt_BR": "Uma técnica de fogo em área contra inimigos à frente."},
+      "aliases": ["Zeig Flame"],
+      "sourceGames": ["digigame_curated"],
+      "sourceMetadata": [{"game": "digigame_curated", "sourceIndex": 0, "source": "canonical_species_move"}],
+      "category": "damage",
+      "damageClass": "special",
+      "element": "fire",
+      "power": 63,
+      "accuracy": 95,
+      "spCost": 18,
+      "recoveryCost": 44,
+      "selection": "direction",
+      "range": {"shape": "diamond", "min": 1, "max": 3, "requiresLineOfSight": false},
+      "area": {"shape": "cone", "radius": 0, "length": 3, "angle": 90},
+      "targets": ["enemy"],
+      "canCrit": true,
+      "effects": [{"type": "damage"}],
+      "masteryProfile": "potent",
+      "availability": "ready",
+      "tacticalRole": "damage",
+      "tags": ["fire", "breath"]
+    },
+    {
+      "id": "trident_fang",
+      "name": "Trident Fang",
+      "names": {"en": "Trident Fang", "pt_BR": "Trident Fang"},
+      "descriptions": {"en": "A powerful close-range claw technique.", "pt_BR": "Uma poderosa técnica de garras a curta distância."},
+      "aliases": [],
+      "sourceGames": ["digigame_curated"],
+      "sourceMetadata": [{"game": "digigame_curated", "sourceIndex": 1, "source": "canonical_species_move"}],
+      "category": "damage",
+      "damageClass": "physical",
+      "element": "neutral",
+      "power": 70,
+      "accuracy": 100,
+      "spCost": 14,
+      "recoveryCost": 40,
+      "selection": "unit",
+      "range": {"shape": "adjacent_8", "min": 1, "max": 1, "requiresLineOfSight": false},
+      "area": {"shape": "single", "radius": 0},
+      "targets": ["enemy"],
+      "canCrit": true,
+      "effects": [{"type": "damage"}],
+      "masteryProfile": "swift",
+      "availability": "ready",
+      "tacticalRole": "damage",
+      "tags": ["neutral", "claw", "melee"]
+    },
+    {
+      "id": "plasma_railgun",
+      "name": "Plasma Railgun",
+      "names": {"en": "Plasma Railgun", "pt_BR": "Plasma Railgun"},
+      "descriptions": {"en": "A focused long-range plasma technique.", "pt_BR": "Uma técnica concentrada de plasma a longa distância."},
+      "aliases": [],
+      "sourceGames": ["digigame_curated"],
+      "sourceMetadata": [{"game": "digigame_curated", "sourceIndex": 2, "source": "canonical_species_move"}],
+      "category": "damage",
+      "damageClass": "special",
+      "element": "electric",
+      "power": 58,
+      "accuracy": 100,
+      "spCost": 16,
+      "recoveryCost": 38,
+      "selection": "direction",
+      "range": {"shape": "line", "min": 1, "max": 4, "requiresLineOfSight": false},
+      "area": {"shape": "line", "radius": 0, "length": 4},
+      "targets": ["enemy"],
+      "canCrit": true,
+      "effects": [{"type": "damage"}],
+      "masteryProfile": "precise",
+      "availability": "ready",
+      "tacticalRole": "damage",
+      "tags": ["electric", "projectile"]
+    }
+  ],
+  "learnsets": [
+    {
+      "speciesSeed": "48b7a3e5-3e43-4819-96b8-673bfe67d5c1",
+      "species": "Zeke Greymon",
+      "rank": "Mega",
+      "skills": [
+        {"skill": "zeke_flame", "level": 1, "acquisition": "signature"},
+        {"skill": "trident_fang", "level": 15, "acquisition": "level"},
+        {"skill": "plasma_railgun", "level": 30, "acquisition": "level"}
+      ]
+    }
+  ],
+  "records": [
+    {"skill": "zeke_flame", "teachable": false, "recordLevel": "legendary", "bitsCost": 6000, "unlockSources": [], "allOf": [], "anyOf": ["fire", "breath"], "allowSpeciesSeeds": [], "denySpeciesSeeds": []},
+    {"skill": "trident_fang", "teachable": false, "recordLevel": "legendary", "bitsCost": 6000, "unlockSources": [], "allOf": [], "anyOf": ["claw", "melee"], "allowSpeciesSeeds": [], "denySpeciesSeeds": []},
+    {"skill": "plasma_railgun", "teachable": false, "recordLevel": "legendary", "bitsCost": 6000, "unlockSources": [], "allOf": [], "anyOf": ["electric", "projectile"], "allowSpeciesSeeds": [], "denySpeciesSeeds": []}
+  ]
+}
