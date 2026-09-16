@@ -4,7 +4,7 @@ extends "res://src/ui/HospitalScreen.gd"
 # HospitalScreen/OverworldState; this layer owns the final interaction polish.
 
 const CommandButtonStyle = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
-const PATIENT_CARD_HEIGHT := 124.0
+const PATIENT_CARD_HEIGHT := 132.0
 const PATIENT_STATUS_TOP_GAP := 4
 const ANALOG_NAV_PRESS_THRESHOLD := 0.62
 const ANALOG_NAV_RELEASE_THRESHOLD := 0.34
@@ -247,7 +247,7 @@ func _refresh_detail() -> void:
 		if rank.is_empty():
 			rank = "Unknown"
 		_hero_info.visible = true
-		_hero_info.text = "RANK %s   ·   LV. %d" % [rank.to_upper(), instance.level]
+		_hero_info.text = "%s   ·   LV. %d" % [rank.to_upper(), instance.level]
 		_hero_info.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 
 	# Instant Recovery is a Party decision. Once a Digimon is admitted, the paid
