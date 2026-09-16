@@ -11,7 +11,7 @@ func configure_encounter(definition: BattleEncounterDefinition) -> void:
 
 
 func _spawn_demo_rosters() -> void:
-	_apply_pending_debug_encounter()
+	_apply_pending_encounter_override()
 	var party_error := OverworldState.battle_party_validation_error()
 	if not party_error.is_empty():
 		_abort_invalid_battle(party_error)
@@ -97,26 +97,36 @@ func _return_to_hub_after_invalid_battle() -> void:
 		push_error("Battle runtime could not return to Hub after invalid combat data.")
 
 
-func _apply_pending_debug_encounter() -> void:
-	if not Engine.has_singleton("DeveloperToolkit") and get_node_or_null("/root/DeveloperToolkit") == null:
+func _apply_pending_encounter_override() -> void:
+	var config := BattleEncounterSession.consume_pending_encounter()
+	var source := "Battle Operator"
+	if config.is_empty():
+		config = _consume_pending_debug_encounter()
+		source = "DebugToolkit"
+	if config.is_empty():
 		return
-	var toolkit := get_node_or_null("/root/DeveloperToolkit")
-	if toolkit == null or not toolkit.has_method("consume_pending_battle_config"):
-		return
-	var raw_config = toolkit.call("consume_pending_battle_config")
-	if not raw_config is Dictionary or (raw_config as Dictionary).is_empty():
-		return
-	var config := raw_config as Dictionary
 	var definition := EncounterDefinitionScript.from_dict(config) as BattleEncounterDefinition
 	var errors := definition.validate(OverworldState.get_database())
 	if not errors.is_empty():
-		push_warning("Debug battle encounter rejected: %s" % "; ".join(errors))
+		push_warning("%s battle encounter rejected: %s" % [source, "; ".join(errors)])
 		return
 	encounter_definition = definition
-	var debug_seed := int(config.get("seed", 0))
-	if debug_seed != 0:
-		_encounter_rng.seed = debug_seed
-	print("[DebugToolkit] Battle sandbox loaded · %d enemies · seed %d" % [definition.enemy_party.size(), debug_seed])
+	var encounter_seed := int(config.get("seed", 0))
+	if encounter_seed != 0:
+		_encounter_rng.seed = encounter_seed
+	print("[%s] Battle encounter loaded · %d enemies · %s" % [source, definition.enemy_party.size(), definition.encounter_id])
+
+
+func _consume_pending_debug_encounter() -> Dictionary:
+	if not Engine.has_singleton("DeveloperToolkit") and get_node_or_null("/root/DeveloperToolkit") == null:
+		return {}
+	var toolkit := get_node_or_null("/root/DeveloperToolkit")
+	if toolkit == null or not toolkit.has_method("consume_pending_battle_config"):
+		return {}
+	var raw_config = toolkit.call("consume_pending_battle_config")
+	if not raw_config is Dictionary:
+		return {}
+	return (raw_config as Dictionary).duplicate(true)
 
 
 func _enemy_descriptors() -> Array[Dictionary]:
