@@ -22,7 +22,6 @@ var _eyebrow: Label = null
 var _title: Label = null
 var _subtitle: Label = null
 var _party_heading_value: Label = null
-var _party_scroll: ScrollContainer = null
 var _party_grid: GridContainer = null
 var _reward_panel: PanelContainer = null
 var _reward_title: Label = null
@@ -165,22 +164,16 @@ func _build_ui() -> void:
 	_party_heading_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	party_heading.add_child(_party_heading_value)
 
-	_party_scroll = ScrollContainer.new()
-	_party_scroll.name = "SquadReportScrollV2"
-	_party_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_party_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	_party_scroll.follow_focus = true
-	_party_scroll.scroll_deadzone = 8
-	_party_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_party_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_party_scroll.mouse_filter = Control.MOUSE_FILTER_PASS
-	_content.add_child(_party_scroll)
+	# The squad is part of the result document, not an independently scrollable
+	# viewport. Its full minimum size participates in the modal safe-frame fit so
+	# cards are never clipped or partially hidden behind an internal scrollbar.
 	_party_grid = GridContainer.new()
+	_party_grid.name = "SquadReportGridV2"
 	_party_grid.columns = DESKTOP_COLUMNS
 	_party_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_party_grid.add_theme_constant_override("h_separation", 10)
 	_party_grid.add_theme_constant_override("v_separation", 10)
-	_party_scroll.add_child(_party_grid)
+	_content.add_child(_party_grid)
 
 	_reward_panel = PanelContainer.new()
 	_reward_panel.name = "BattleRewardsV2"
@@ -403,14 +396,27 @@ func _create_party_card(reward: Dictionary, accent: Color, rewards_enabled: bool
 		true
 	)
 	info.add_child(gained)
-	var unlocks := _label("", 9, V2.GREEN)
+
+	# Dynamic reward copy is present from frame one and revealed only through
+	# modulation. That reserves its final layout footprint before the animation
+	# starts, so text appearing later cannot make the card jump in height.
+	var unlock_text := _unlock_text_for_reward(reward)
+	var unlocks := _label(unlock_text, 9, V2.GREEN)
 	unlocks.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	unlocks.modulate.a = 0.0 if rewards_enabled and not unlock_text.is_empty() else 1.0
 	info.add_child(unlocks)
-	var level_up := _label("LEVEL UP!", 14, V2.AMBER, true)
+
+	# Level-up feedback also keeps its layout slot for the whole result sequence.
+	# We animate opacity/scale only; toggling visibility would alter VBox minimum
+	# size and produce the visible up/down bounce reported in the result cards.
+	var reserves_level_up := rewards_enabled and _reward_has_level_up(reward)
+	var final_level := int(reward.get("new_level", reward.get("old_level", 1)))
+	var level_up := _label("LEVEL UP!  Lv. %d" % final_level, 14, V2.AMBER, true)
 	level_up.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	level_up.add_theme_stylebox_override("normal", V2.pill_style(V2.AMBER, true))
 	level_up.custom_minimum_size = Vector2(0.0, 28.0)
-	level_up.visible = false
+	level_up.visible = reserves_level_up
+	level_up.modulate.a = 0.0
 	info.add_child(level_up)
 
 	card.modulate.a = 0.0
@@ -528,7 +534,6 @@ func _celebrate_level_up(card: Dictionary, new_level: int, sequence_id: int) -> 
 	var rank := String((card["reward"] as Dictionary).get("rank", ""))
 	level_label.text = "Lv. %d  •  %s" % [new_level, rank]
 	badge.text = "LEVEL UP!  Lv. %d" % new_level
-	badge.visible = true
 	badge.modulate.a = 0.0
 	badge.scale = Vector2(0.82, 0.82)
 	badge.pivot_offset = badge.size * 0.5
@@ -543,7 +548,7 @@ func _celebrate_level_up(card: Dictionary, new_level: int, sequence_id: int) -> 
 	await _active_tween.finished
 	if sequence_id != _sequence_id:
 		return
-	badge.visible = false
+	badge.scale = Vector2.ONE
 	panel.add_theme_stylebox_override("panel", _card_style(card["accent"] as Color, false))
 
 
@@ -590,7 +595,12 @@ func _set_card_final(card: Dictionary) -> void:
 
 
 func _set_unlock_text(card: Dictionary) -> void:
-	var reward: Dictionary = card["reward"] as Dictionary
+	var unlocks := card["unlocks"] as Label
+	if unlocks != null:
+		unlocks.modulate.a = 1.0
+
+
+func _unlock_text_for_reward(reward: Dictionary) -> String:
 	var messages: Array[String] = []
 	var learned = reward.get("learned_skills", [])
 	if learned is Array and not learned.is_empty():
@@ -605,7 +615,16 @@ func _set_unlock_text(card: Dictionary) -> void:
 			if raw_evo is Dictionary:
 				evo_names.append(String((raw_evo as Dictionary).get("name", "Evolution")))
 		messages.append("Digivolution ready: %s" % ", ".join(evo_names))
-	(card["unlocks"] as Label).text = "\n".join(messages)
+	return "\n".join(messages)
+
+
+func _reward_has_level_up(reward: Dictionary) -> bool:
+	var steps = reward.get("level_steps", [])
+	if steps is Array:
+		for raw_step in steps:
+			if raw_step is Dictionary and bool((raw_step as Dictionary).get("leveled_up", false)):
+				return true
+	return int(reward.get("levels_gained", 0)) > 0
 
 
 func _apply_final_state() -> void:
@@ -621,7 +640,9 @@ func _apply_final_state() -> void:
 			if outcome == "victory"
 			else _non_victory_status(outcome)
 		)
-		(card["level_up"] as Label).visible = false
+		var level_up := card["level_up"] as Label
+		level_up.modulate.a = 0.0
+		level_up.scale = Vector2.ONE
 		panel.add_theme_stylebox_override("panel", _card_style(card["accent"] as Color, false))
 	_bits_value.text = "+%d Bits" % int(_result.get("bits", 0)) if outcome == "victory" else "NO REWARDS"
 	_shell.modulate.a = 1.0
@@ -665,12 +686,7 @@ func _layout() -> void:
 			panel.custom_minimum_size = Vector2(0.0, card_height)
 
 	var row_count := maxi(1, ceili(float(maxi(1, _cards.size())) / float(columns)))
-	var party_height := card_height
-	if row_count > 1:
-		party_height = minf(card_height * 2.0 + 10.0, card_height * float(row_count) + 10.0 * float(row_count - 1))
-	if narrow:
-		party_height = minf(maxf(176.0, physical.y * 0.34), 300.0)
-	_party_scroll.custom_minimum_size = Vector2(0.0, party_height)
+	var party_height := card_height * float(row_count) + 10.0 * float(maxi(0, row_count - 1))
 
 	_title.add_theme_font_size_override("font_size", 31 if compact else 40)
 	_subtitle.add_theme_font_size_override("font_size", 10 if compact else 12)
