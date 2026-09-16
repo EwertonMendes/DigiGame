@@ -52,7 +52,9 @@ func _ready() -> void:
 		get_tree().quit()
 		return
 	for failure in _failures:
-		push_error("[battle-result-ui-v2] %s" % failure)
+		# Keep an explicit stdout diagnostic before the non-zero quit. GitHub's
+		# headless runner can terminate before push_error output is flushed.
+		print("[battle-result-ui-v2] FAILURE: %s" % failure)
 	get_tree().quit(1)
 
 
