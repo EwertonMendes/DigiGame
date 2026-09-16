@@ -3,6 +3,7 @@ extends CanvasLayer
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const AccessScript = preload("res://src/debug/DebugToolkitAccess.gd")
 const ProgressionToolsScript = preload("res://src/debug/DebugProgressionTools.gd")
+const CollectionToolsScript = preload("res://src/debug/DebugCollectionTools.gd")
 const StateToolsScript = preload("res://src/debug/DebugStateTools.gd")
 const RosterToolsScript = preload("res://src/debug/DebugRosterTools.gd")
 const SpeciesPickerScript = preload("res://src/debug/DebugSpeciesPicker.gd")
@@ -18,6 +19,7 @@ var _available := false
 var _open := false
 var _paused_before_open := false
 var _progression: DebugProgressionTools
+var _collection_tools: DebugCollectionTools
 var _state: DebugStateTools
 var _roster: DebugRosterTools
 var _pending_battle_config: Dictionary = {}
@@ -93,6 +95,7 @@ func _ready() -> void:
 		set_process_input(false)
 		return
 	_progression = ProgressionToolsScript.new() as DebugProgressionTools
+	_collection_tools = CollectionToolsScript.new() as DebugCollectionTools
 	_state = StateToolsScript.new() as DebugStateTools
 	_roster = RosterToolsScript.new() as DebugRosterTools
 	_build_ui()
@@ -317,7 +320,7 @@ func _build_digimon_tab(tabs: TabContainer) -> void:
 	state_grid.add_child(_field_card("CURRENT SP", _current_sp, UI.BLUE))
 	state_grid.add_child(_field_card("TIER", _tier, UI.GOLD))
 	state_grid.add_child(_field_card("EXPANSION", expansion_flags, UI.PURPLE))
-	page.add_child(_button_row([_action("APPLY EXACT STATE", _apply_exact_state, UI.GOLD), _action("+100 XP", _add_xp.bind(100), UI.CYAN), _action("+1000 XP", _add_xp.bind(1000), UI.CYAN), _action("HEAL", _heal, UI.GREEN), _action("CRITICAL", _critical, UI.ORANGE), _action("KNOCK OUT", _knock_out, UI.RED)]))
+	page.add_child(_button_row([_action("APPLY EXACT STATE", _apply_exact_state, UI.GOLD), _action("+100 XP", _add_xp.bind(100), UI.CYAN), _action("+1000 XP", _add_xp.bind(1000), UI.CYAN), _action("HEAL", _heal, UI.GREEN), _action("CRITICAL", _critical, UI.ORANGE), _action("KNOCK OUT", _knock_out, UI.RED), _action("DELETE DIGIMON", _delete_digimon, UI.RED)]))
 
 	page.add_child(_section_label("TRAINING", UI.PURPLE))
 	var training_grid := GridContainer.new()
@@ -826,6 +829,32 @@ func _critical() -> void:
 func _knock_out() -> void:
 	if _progression.set_knocked_out(_selected_id):
 		_state.log_action("Knock out", _selected_name())
+	_refresh_all()
+
+func _delete_digimon() -> void:
+	var value := _selected_instance()
+	if value == null or _collection_tools == null:
+		_status.text = "Select an owned Digimon first."
+		return
+	var deleted_id := value.id
+	var deleted_name := _selected_name()
+	var result := _collection_tools.delete_instance(deleted_id)
+	if bool(result.get("success", false)):
+		_progression.contexts.erase(deleted_id)
+		_selected_id = ""
+		var previous_location := String(result.get("previous_location", "collection")).capitalize()
+		_status.text = "%s permanently deleted from player data." % deleted_name
+		_state.log_action("Delete Digimon", "%s · %s · UUID %s" % [deleted_name, previous_location, deleted_id])
+	else:
+		match String(result.get("reason", "remove_failed")):
+			"last_owned_digimon":
+				_status.text = "Delete blocked: at least one owned Digimon must remain."
+			"invalid_collection_state":
+				_status.text = "Delete blocked: collection state is inconsistent."
+			"instance_not_found":
+				_status.text = "Delete blocked: the selected Digimon no longer exists."
+			_:
+				_status.text = "Delete failed."
 	_refresh_all()
 
 func _apply_training() -> void:
