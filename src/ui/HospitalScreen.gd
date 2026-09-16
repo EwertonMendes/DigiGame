@@ -42,6 +42,7 @@ var _countdown_labels: Dictionary = {}
 var _detail_countdown: Label
 var _admit_button: Button
 var _recover_button: Button
+var _discharge_button: Button
 
 
 func _ready() -> void:
@@ -60,10 +61,8 @@ func _ready() -> void:
 
 func open_screen() -> void:
 	OverworldState.process_hospital_recoveries()
-	var owned := OverworldState.get_collection_instances()
-	if (_selected_id.is_empty() or OverworldState.get_instance_by_id(_selected_id) == null) and not owned.is_empty():
-		_selected_id = owned[0].id
-	_notice_text = "Select a Digimon to review its condition."
+	_ensure_visible_selection()
+	_notice_text = "Select a Party member to admit, or a Hospital patient to review."
 	_notice_color = V2.CYAN
 	visible = true
 	set_process(true)
@@ -137,7 +136,7 @@ func _build_ui() -> void:
 
 	_hint_bar = InputHintBarScript.new() as DigiInputHintBar
 	_hint_bar.name = "HospitalInputHints"
-	_hint_bar.set_description("Treat injured Digimon over time or spend Bits for immediate recovery.")
+	_hint_bar.set_description("Party members can be admitted. Recovered patients stay in Hospital until you discharge them.")
 	_content_root.add_child(_hint_bar)
 
 	_confirmation = ConfirmationModalScript.new() as DigiConfirmationModal
@@ -161,12 +160,14 @@ func _build_collection_panel() -> void:
 	_collection_panel.add_child(root)
 
 	_collection_header = SectionHeaderScript.new() as DigiSectionHeader
-	_collection_header.configure("PATIENTS", "", V2.CYAN, "heart")
+	_collection_header.configure("PARTY & HOSPITAL", "", V2.CYAN, "heart")
 	root.add_child(_collection_header)
 
 	var intro_margin := _margin(12, 9, 12, 7)
 	root.add_child(intro_margin)
-	intro_margin.add_child(_label("Party and Storage", 10, V2.MUTED, false))
+	var intro := _label("Only current Party members can be admitted. Storage Digimon are not shown.", 10, V2.MUTED, false)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	intro_margin.add_child(intro)
 
 	var scroll_margin := _margin(8, 2, 5, 8)
 	scroll_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -231,8 +232,30 @@ func _build_detail_panel() -> void:
 
 func _refresh() -> void:
 	_header.set_bits(OverworldState.get_bits())
+	_ensure_visible_selection()
 	_refresh_collection()
 	_refresh_detail()
+
+
+func _visible_roster() -> Array[DigimonInstance]:
+	var result: Array[DigimonInstance] = []
+	for instance: DigimonInstance in OverworldState.get_active_instances():
+		result.append(instance)
+	for instance: DigimonInstance in OverworldState.get_hospital_instances():
+		result.append(instance)
+	return result
+
+
+func _ensure_visible_selection() -> void:
+	var roster := _visible_roster()
+	var still_visible := false
+	for instance: DigimonInstance in roster:
+		if instance.id == _selected_id:
+			still_visible = true
+			break
+	if still_visible:
+		return
+	_selected_id = roster[0].id if not roster.is_empty() else ""
 
 
 func _refresh_collection() -> void:
@@ -241,66 +264,87 @@ func _refresh_collection() -> void:
 	_collection_buttons.clear()
 	_status_labels.clear()
 	_countdown_labels.clear()
-	var owned := OverworldState.get_collection_instances()
-	_collection_header.set_trailing("%d OWNED" % owned.size())
-	for instance: DigimonInstance in owned:
-		var species := _database.get_by_seed(instance.species_seed)
-		var species_name := String(species.get("name", instance.species_seed))
-		var display_name := instance.get_display_name(species_name)
-		var preview := OverworldState.get_hospital_preview(instance.id)
-		var accent := _status_color(String(preview.get("status", "healthy")))
+	var party := OverworldState.get_active_instances()
+	var hospital := OverworldState.get_hospital_instances()
+	_collection_header.set_trailing("%d PARTY · %d HOSPITAL" % [party.size(), hospital.size()])
+	_add_roster_group("PARTY", party, "No Digimon are currently in your Party.")
+	_add_roster_group("HOSPITAL", hospital, "No Digimon are currently admitted.")
 
-		var card := Button.new()
-		card.name = "Patient_%s" % instance.id
-		card.custom_minimum_size = Vector2(0.0, 92.0)
-		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		card.focus_mode = Control.FOCUS_ALL
-		card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		card.pressed.connect(_select_instance.bind(instance.id))
-		_style_patient_button(card, instance.id == _selected_id, accent)
-		_collection_list.add_child(card)
-		_collection_buttons[instance.id] = card
 
-		var margin := _margin(10, 8, 10, 8)
-		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.add_child(margin)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		margin.add_child(row)
+func _add_roster_group(title: String, instances: Array[DigimonInstance], empty_text: String) -> void:
+	var heading := _label(title, 10, V2.CYAN if title == "PARTY" else V2.GREEN, true)
+	heading.custom_minimum_size.y = 24.0
+	_collection_list.add_child(heading)
+	if instances.is_empty():
+		var empty := _label(empty_text, 10, V2.MUTED, false)
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty.custom_minimum_size.y = 32.0
+		_collection_list.add_child(empty)
+		return
+	for instance: DigimonInstance in instances:
+		_add_patient_card(instance)
 
-		var preview_box := PanelContainer.new()
-		preview_box.custom_minimum_size = Vector2(72.0, 72.0)
-		preview_box.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.9), Color(accent.r, accent.g, accent.b, 0.32), 7))
-		preview_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(preview_box)
-		var walk := WalkPreviewScript.new() as DigimonWalkPreview
-		walk.name = "DigimonWalkPreview"
-		walk.custom_minimum_size = Vector2(68.0, 68.0)
-		walk.set_species(species_name)
-		walk.set_active(instance.id == _selected_id)
-		preview_box.add_child(walk)
 
-		var copy := VBoxContainer.new()
-		copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		copy.alignment = BoxContainer.ALIGNMENT_CENTER
-		copy.add_theme_constant_override("separation", 2)
-		copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(copy)
-		var name_label := _label(display_name, 13, V2.TEXT, true)
-		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		copy.add_child(name_label)
-		copy.add_child(_label("Lv. %d  ·  HP %d / %d" % [instance.level, int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1))], 10, V2.MUTED, false))
-		var status_row := HBoxContainer.new()
-		status_row.add_theme_constant_override("separation", 7)
-		status_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		copy.add_child(status_row)
-		var status := _label(_status_text(preview), 10, accent, true)
-		status_row.add_child(status)
-		_status_labels[instance.id] = status
-		var countdown := _label(_countdown_text(preview), 10, V2.MUTED, false)
-		status_row.add_child(countdown)
-		_countdown_labels[instance.id] = countdown
+func _add_patient_card(instance: DigimonInstance) -> void:
+	var species := _database.get_by_seed(instance.species_seed)
+	var species_name := String(species.get("name", instance.species_seed))
+	var display_name := instance.get_display_name(species_name)
+	var preview := OverworldState.get_hospital_preview(instance.id)
+	var accent := _status_color(String(preview.get("status", "healthy")))
+	var location := String(preview.get("location", ""))
+
+	var card := Button.new()
+	card.name = "Patient_%s" % instance.id
+	card.custom_minimum_size = Vector2(0.0, 92.0)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.focus_mode = Control.FOCUS_ALL
+	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	card.pressed.connect(_select_instance.bind(instance.id))
+	_style_patient_button(card, instance.id == _selected_id, accent)
+	_collection_list.add_child(card)
+	_collection_buttons[instance.id] = card
+
+	var margin := _margin(10, 8, 10, 8)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(margin)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	var preview_box := PanelContainer.new()
+	preview_box.custom_minimum_size = Vector2(72.0, 72.0)
+	preview_box.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.9), Color(accent.r, accent.g, accent.b, 0.32), 7))
+	preview_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(preview_box)
+	var walk := WalkPreviewScript.new() as DigimonWalkPreview
+	walk.name = "DigimonWalkPreview"
+	walk.custom_minimum_size = Vector2(68.0, 68.0)
+	walk.set_species(species_name)
+	walk.set_active(instance.id == _selected_id)
+	preview_box.add_child(walk)
+
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.add_theme_constant_override("separation", 2)
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(copy)
+	var name_label := _label(display_name, 13, V2.TEXT, true)
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	copy.add_child(name_label)
+	copy.add_child(_label("Lv. %d  ·  HP %d / %d" % [instance.level, int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1))], 10, V2.MUTED, false))
+	var status_row := HBoxContainer.new()
+	status_row.add_theme_constant_override("separation", 7)
+	status_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	copy.add_child(status_row)
+	status_row.add_child(_label(location.to_upper(), 9, V2.SUBTLE, true))
+	var status := _label(_status_text(preview), 10, accent, true)
+	status_row.add_child(status)
+	_status_labels[instance.id] = status
+	var countdown := _label(_countdown_text(preview), 10, V2.MUTED, false)
+	status_row.add_child(countdown)
+	_countdown_labels[instance.id] = countdown
 
 
 func _refresh_detail() -> void:
@@ -309,15 +353,17 @@ func _refresh_detail() -> void:
 	_detail_countdown = null
 	_admit_button = null
 	_recover_button = null
+	_discharge_button = null
 	var instance := OverworldState.get_instance_by_id(_selected_id)
-	if instance == null:
-		_detail.add_child(_empty_state("No Digimon are available for treatment."))
+	if instance == null or not _collection_buttons.has(_selected_id):
+		_detail.add_child(_empty_state("No Party or Hospital Digimon are available."))
 		return
 	var species := _database.get_by_seed(instance.species_seed)
 	var species_name := String(species.get("name", instance.species_seed))
 	var display_name := instance.get_display_name(species_name)
 	var preview := OverworldState.get_hospital_preview(instance.id)
 	var status_key := String(preview.get("status", "healthy"))
+	var location := String(preview.get("location", ""))
 	var accent := _status_color(status_key)
 
 	var notice := PanelContainer.new()
@@ -343,7 +389,7 @@ func _refresh_detail() -> void:
 	hero_copy.add_theme_constant_override("separation", 5)
 	hero_row.add_child(hero_copy)
 	hero_copy.add_child(_label(display_name, 24, V2.WHITE, true))
-	hero_copy.add_child(_label("%s  ·  Level %d  ·  Tier %s" % [String(species.get("rank", "Unknown")), instance.level, instance.tier], 11, V2.MUTED, false))
+	hero_copy.add_child(_label("%s  ·  Level %d  ·  Tier %s  ·  %s" % [String(species.get("rank", "Unknown")), instance.level, instance.tier, location.to_upper()], 11, V2.MUTED, false))
 	hero_copy.add_child(_status_pill(_status_text(preview), accent))
 
 	var health_section := _section("HEALTH", V2.GREEN, "heart")
@@ -369,24 +415,32 @@ func _refresh_detail() -> void:
 	comparison.add_child(_label("%d Bits" % int(preview.get("instant_cost", 0)), 18, V2.AMBER, true))
 
 	var actions := GridContainer.new()
-	actions.columns = 1 if _frame.size.x < 650.0 else 2
+	actions.columns = 1 if _frame.size.x < 760.0 else 3
 	actions.add_theme_constant_override("h_separation", 10)
 	actions.add_theme_constant_override("v_separation", 10)
 	treatment_body.add_child(actions)
 	_admit_button = _action_button("ADMIT · FREE", V2.CYAN)
 	_admit_button.disabled = not bool(preview.get("can_admit", false))
-	if status_key == "recovering":
-		_admit_button.text = "ALREADY ADMITTED"
+	if location == PlayerCollection.LOCATION_HOSPITAL:
+		_admit_button.text = "IN HOSPITAL"
 	_admit_button.pressed.connect(_request_admission)
 	actions.add_child(_admit_button)
 	_recover_button = _action_button("RECOVER NOW · %d BITS" % int(preview.get("instant_cost", 0)), V2.AMBER)
 	_recover_button.disabled = not bool(preview.get("can_recover_now", false))
 	_recover_button.pressed.connect(_request_instant_recovery)
 	actions.add_child(_recover_button)
+	_discharge_button = _action_button("DISCHARGE", V2.GREEN)
+	_discharge_button.disabled = not bool(preview.get("can_discharge", false))
+	_discharge_button.pressed.connect(_request_discharge)
+	actions.add_child(_discharge_button)
 
-	var rule_copy := "Admitted Digimon recover from persistent timestamps, even while the game is closed. They remain in your roster but cannot enter battle until recovery is complete."
-	if status_key == "healthy":
-		rule_copy = "This Digimon is already at full HP and does not need treatment."
+	var rule_copy := "Party Digimon can be admitted for free timed recovery or moved into Hospital for immediate paid recovery."
+	if location == PlayerCollection.LOCATION_HOSPITAL and status_key == "recovering":
+		rule_copy = "This Digimon is recovering from persistent timestamps, including while the game is closed. It stays out of the Party until discharged."
+	elif location == PlayerCollection.LOCATION_HOSPITAL and status_key == "ready":
+		rule_copy = "Recovery is complete. This Digimon remains in Hospital until you discharge it. It will return to Party if there is room, otherwise to Storage."
+	elif status_key == "healthy":
+		rule_copy = "This Party Digimon is already at full HP and does not need treatment."
 	elif int(preview.get("instant_cost", 0)) > OverworldState.get_bits():
 		rule_copy += " You need more Bits for immediate recovery."
 	var rule := _label(rule_copy, 10, V2.MUTED, false)
@@ -427,7 +481,7 @@ func _request_admission() -> void:
 	_pending_action = "admit"
 	_confirmation.configure(
 		"ADMIT THIS DIGIMON?",
-		"Recovery will take %s. The Digimon will remain in your roster but cannot enter battle during treatment." % _format_duration(int(preview.get("recovery_seconds", 0))),
+		"Recovery will take %s. This Digimon will leave the Party immediately and remain in Hospital until you discharge it after recovery." % _format_duration(int(preview.get("recovery_seconds", 0))),
 		"ADMIT",
 		"NOT NOW",
 		V2.CYAN,
@@ -444,13 +498,31 @@ func _request_instant_recovery() -> void:
 	_pending_action = "recover_now"
 	_confirmation.configure(
 		"RECOVER NOW?",
-		"Spend %d Bits to restore this Digimon from %d / %d HP to full health immediately?" % [int(preview.get("instant_cost", 0)), int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1))],
+		"Spend %d Bits to restore this Digimon from %d / %d HP to full health immediately? It will remain in Hospital until discharged." % [int(preview.get("instant_cost", 0)), int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1))],
 		"SPEND BITS",
 		"NOT NOW",
 		V2.AMBER,
 		"CONFIRM TREATMENT"
 	)
 	_confirmation.open_dialog(_recover_button)
+
+
+func _request_discharge() -> void:
+	var instance := OverworldState.get_instance_by_id(_selected_id)
+	var preview := OverworldState.get_hospital_preview(_selected_id)
+	if instance == null or not bool(preview.get("can_discharge", false)):
+		return
+	var destination := "Party" if OverworldState.get_active_instances().size() < OverworldState.get_max_active_party_size() else "Storage"
+	_pending_action = "discharge"
+	_confirmation.configure(
+		"DISCHARGE THIS DIGIMON?",
+		"Recovery is complete. This Digimon will be sent to %s." % destination,
+		"DISCHARGE",
+		"NOT NOW",
+		V2.GREEN,
+		"DIGI HOSPITAL"
+	)
+	_confirmation.open_dialog(_discharge_button)
 
 
 func _confirm_pending_action() -> void:
@@ -461,8 +533,16 @@ func _confirm_pending_action() -> void:
 		result = OverworldState.admit_to_hospital(_selected_id)
 	elif action == "recover_now":
 		result = OverworldState.recover_from_hospital_now(_selected_id)
+	elif action == "discharge":
+		result = OverworldState.discharge_from_hospital(_selected_id)
 	if bool(result.get("success", false)):
-		_notice_text = "Treatment started." if action == "admit" else "Recovery complete. HP restored to maximum."
+		if action == "admit":
+			_notice_text = "Treatment started. The Digimon has left the Party and is now in Hospital."
+		elif action == "recover_now":
+			_notice_text = "Recovery complete. HP restored; the Digimon is ready for discharge."
+		else:
+			var destination := String(result.get("destination", "storage"))
+			_notice_text = "Discharged successfully to %s." % ("Party" if destination == PlayerCollection.LOCATION_PARTY else "Storage")
 		_notice_color = V2.GREEN
 	else:
 		_notice_text = _failure_text(String(result.get("reason", "invalid")))
@@ -517,14 +597,13 @@ func _layout() -> void:
 		_collection_panel.size = Vector2(width - 20.0, list_h)
 		_detail_panel.position = Vector2(10.0, content_y + list_h + 10.0)
 		_detail_panel.size = Vector2(width - 20.0, content_h - list_h - 10.0)
-		_collection_list.columns = 1 if width < 650.0 else 2
 	else:
 		var list_w := clampf(width * 0.30, 330.0, 410.0)
 		_collection_panel.position = Vector2(12.0, content_y)
 		_collection_panel.size = Vector2(list_w, content_h)
 		_detail_panel.position = Vector2(24.0 + list_w, content_y)
 		_detail_panel.size = Vector2(width - list_w - 36.0, content_h)
-		_collection_list.columns = 1
+	_collection_list.columns = 1
 
 
 func _section(title: String, accent: Color, icon: String) -> PanelContainer:
@@ -608,7 +687,7 @@ func _status_text(preview: Dictionary) -> String:
 		"injured": return "INJURED"
 		"critical": return "CRITICAL"
 		"recovering": return "RECOVERING"
-		"ready": return "READY"
+		"ready": return "READY FOR DISCHARGE"
 		"unavailable": return "UNAVAILABLE"
 		_: return "HEALTHY"
 
@@ -628,8 +707,11 @@ func _countdown_text(preview: Dictionary) -> String:
 
 
 func _detail_time_text(preview: Dictionary) -> String:
-	if String(preview.get("status", "")) == "recovering":
+	var status := String(preview.get("status", ""))
+	if status == "recovering":
 		return _format_duration(int(preview.get("remaining_seconds", 0))) + " remaining"
+	if status == "ready":
+		return "Complete"
 	var seconds := int(preview.get("recovery_seconds", 0))
 	return _format_duration(seconds) if seconds > 0 else "Not required"
 
@@ -646,8 +728,12 @@ func _failure_text(reason: String) -> String:
 	match reason:
 		"healthy": return "This Digimon is already healthy."
 		"already_recovering": return "This Digimon is already recovering."
+		"already_ready": return "This Digimon is already recovered and ready for discharge."
 		"insufficient_bits": return "You do not have enough Bits for immediate recovery."
-		_: return "The treatment could not be completed."
+		"not_in_party": return "Only Digimon currently in your Party can be admitted."
+		"not_in_party_or_hospital": return "This Digimon is not available for Hospital treatment."
+		"still_recovering": return "This Digimon is still recovering and cannot be discharged yet."
+		_: return "The Hospital operation could not be completed."
 
 
 func _focus_selected() -> void:
