@@ -6,8 +6,98 @@ extends "res://src/ui/HospitalScreen.gd"
 const CommandButtonStyle = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
 const PATIENT_CARD_HEIGHT := 116.0
 const PATIENT_STATUS_TOP_GAP := 4
+const ANALOG_NAV_PRESS_THRESHOLD := 0.62
+const ANALOG_NAV_RELEASE_THRESHOLD := 0.34
+const TRIGGER_PRESS_THRESHOLD := 0.55
+const TRIGGER_RELEASE_THRESHOLD := 0.25
 
 var _pointer_patient_selection := false
+var _analog_nav_state := 0
+var _left_trigger_down := false
+var _right_trigger_down := false
+
+
+func open_screen() -> void:
+	_analog_nav_state = 0
+	_left_trigger_down = false
+	_right_trigger_down = false
+	super.open_screen()
+
+
+func _input(event: InputEvent) -> void:
+	if not visible or _confirmation.visible:
+		super._input(event)
+		return
+
+	# Joypad motion needs explicit edge handling. Letting generic ui_up/ui_down
+	# consume every axis-motion event makes a held stick race through the roster.
+	# We intentionally require the stick to cross the press threshold and return
+	# through the release threshold before another move is accepted.
+	if event is InputEventJoypadMotion:
+		_handle_joypad_motion(event as InputEventJoypadMotion)
+		return
+
+	# Both the patient list and the action list are vertical. Horizontal arrows /
+	# D-pad directions are therefore inert instead of behaving like duplicate up
+	# and down inputs.
+	if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		get_viewport().set_input_as_handled()
+		return
+
+	super._input(event)
+
+
+func _handle_joypad_motion(event: InputEventJoypadMotion) -> void:
+	match event.axis:
+		JOY_AXIS_LEFT_Y:
+			_handle_analog_vertical(event.axis_value)
+		JOY_AXIS_TRIGGER_LEFT:
+			_handle_page_trigger(event.axis_value, -1, true)
+		JOY_AXIS_TRIGGER_RIGHT:
+			_handle_page_trigger(event.axis_value, 1, false)
+		_:
+			# Other axes do not navigate this screen. In particular, horizontal
+			# left-stick motion and the right stick must not move vertical lists.
+			pass
+
+
+func _handle_analog_vertical(value: float) -> void:
+	if absf(value) <= ANALOG_NAV_RELEASE_THRESHOLD:
+		_analog_nav_state = 0
+		return
+
+	var direction := 0
+	if value <= -ANALOG_NAV_PRESS_THRESHOLD:
+		direction = -1
+	elif value >= ANALOG_NAV_PRESS_THRESHOLD:
+		direction = 1
+	if direction == 0 or direction == _analog_nav_state:
+		return
+
+	_analog_nav_state = direction
+	if _interaction_mode == InteractionMode.ACTIONS:
+		_move_action_focus(direction)
+	else:
+		_move_preview(direction)
+	get_viewport().set_input_as_handled()
+
+
+func _handle_page_trigger(value: float, direction: int, left_trigger: bool) -> void:
+	var was_down := _left_trigger_down if left_trigger else _right_trigger_down
+	if not was_down and value >= TRIGGER_PRESS_THRESHOLD:
+		if left_trigger:
+			_left_trigger_down = true
+		else:
+			_right_trigger_down = true
+		_turn_page(direction)
+		get_viewport().set_input_as_handled()
+		return
+
+	if was_down and value <= TRIGGER_RELEASE_THRESHOLD:
+		if left_trigger:
+			_left_trigger_down = false
+		else:
+			_right_trigger_down = false
 
 
 func _build_header() -> void:
@@ -81,10 +171,33 @@ func _build_overview() -> void:
 	_overview_header.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 
+func _build_footer() -> void:
+	super._build_footer()
+	_footer.set_pagination_enabled(false)
+
+
 func _information_panel(parent: Node, node_name: String, accent: Color, minimum_height: float) -> PanelContainer:
 	var panel := super._information_panel(parent, node_name, accent, minimum_height)
 	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	return panel
+
+
+func _rebuild_cards() -> void:
+	super._rebuild_cards()
+
+	# Re-assert the authored slot sizing only after the buttons are parented into
+	# the VBox. This keeps one/two-card pages from receiving spare vertical space,
+	# prevents the third card from colliding with the pager/footer, and leaves the
+	# unused part of the roster deliberately empty.
+	_card_area.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_card_area.clip_contents = true
+	for card in _card_order:
+		card.custom_minimum_size.y = PATIENT_CARD_HEIGHT
+		card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		card.size_flags_stretch_ratio = 0.0
+
+	if _footer != null:
+		_footer.set_pagination_enabled(_current_roster().size() > _page_capacity())
 
 
 func _create_patient_card(instance: DigimonInstance) -> Button:
@@ -94,6 +207,7 @@ func _create_patient_card(instance: DigimonInstance) -> Button:
 	# empty instead of stretching the existing cards to fill it.
 	card.custom_minimum_size.y = PATIENT_CARD_HEIGHT
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	card.size_flags_stretch_ratio = 0.0
 	card.gui_input.connect(_on_patient_card_gui_input.bind(instance.id))
 
 	# The status chip needs an external breathing space after the HP bar. A margin
@@ -114,6 +228,44 @@ func _create_patient_card(instance: DigimonInstance) -> Button:
 		status_spacing.add_child(status)
 		status.custom_minimum_size.y = 20
 	return card
+
+
+func _refresh_detail() -> void:
+	super._refresh_detail()
+	# Instant Recovery is a Party decision. Once a Digimon is admitted, the paid
+	# instant-recovery option is no longer relevant to the Hospital-side summary.
+	if _cost_panel != null:
+		_cost_panel.visible = _tab == "party"
+
+
+func _move_preview(direction: int) -> void:
+	# Navigation is intentionally page-local. Moving beyond either edge wraps to
+	# the opposite edge of the same visible page; LT/RT are the only controller
+	# inputs that change pages.
+	if _card_order.is_empty():
+		return
+
+	var current := -1
+	for i in range(_card_order.size()):
+		if String(_card_order[i].get_meta("instance_id", "")) == _preview_id:
+			current = i
+			break
+	if current < 0:
+		current = 0
+
+	var next := current + direction
+	if next < 0:
+		next = _card_order.size() - 1
+	elif next >= _card_order.size():
+		next = 0
+	if next == current:
+		return
+
+	_preview_id = String(_card_order[next].get_meta("instance_id", ""))
+	_notice = ""
+	_refresh_card_highlights()
+	_refresh_detail()
+	call_deferred("_focus_preview_card")
 
 
 func _on_patient_card_gui_input(event: InputEvent, _id: String) -> void:
