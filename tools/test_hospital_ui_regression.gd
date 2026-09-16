@@ -1,6 +1,6 @@
 extends Node
 
-const HospitalScreenScript = preload("res://src/ui/HospitalScreen.gd")
+const HospitalScreenScript = preload("res://src/ui/DigiHospitalScreen.gd")
 
 
 func _ready() -> void:
@@ -38,7 +38,9 @@ func _ready() -> void:
 		assert(card.find_child("Level", true, false) is Label, "Patient card must expose a dedicated level label")
 		assert(card.find_child("Health", true, false) is Label, "Patient card must expose a dedicated HP label")
 		assert(card.find_child("HpBar", true, false) is ProgressBar, "Patient card must expose a dedicated HP bar")
-		assert(card.find_child("Status", true, false) is Label, "Patient card must expose a dedicated status chip")
+		var status_chip := card.find_child("Status", true, false) as Label
+		assert(status_chip != null and not status_chip.text.is_empty(), "Patient card must expose a readable status chip")
+		assert(status_chip.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING, "Patient status chip must size to its content instead of collapsing to an empty pill")
 
 	var tier_icon := hospital.get("_hero_tier_icon") as DigiTierIcon
 	var hp_arrow := hospital.get("_health_arrow") as TextureRect
@@ -50,7 +52,14 @@ func _ready() -> void:
 			break
 	assert(tier_icon != null and tier_icon.texture != null, "Patient details must reuse the shared Tier artwork")
 	assert(hp_arrow != null and hp_arrow.texture != null, "Health transition must use the packaged arrow asset")
-	assert(bits_icon != null and bits_icon.texture != null, "Hospital header must use the packaged Bits icon")
+	assert(bits_icon != null and bits_icon.texture != null and bits_icon.visible, "Hospital header must visibly use the packaged Bits icon")
+
+	var health_panel := hospital.get("_health_panel") as PanelContainer
+	var time_panel := hospital.get("_time_panel") as PanelContainer
+	var cost_panel := hospital.get("_cost_panel") as PanelContainer
+	assert(health_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Health overview must keep authored card height")
+	assert(time_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Recovery-time overview must keep authored card height")
+	assert(cost_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Recovery-cost overview must keep authored card height")
 
 	var party := OverworldState.get_active_instances()
 	assert(not party.is_empty(), "Hospital UI regression requires a starter Party")
@@ -95,6 +104,20 @@ func _ready() -> void:
 	assert(hospital.is_action_mode_active(), "Confirming a patient must enter action mode")
 	assert(not admit.disabled and admit.focus_mode == Control.FOCUS_ALL, "Valid Admit action must become interactive only after confirmation")
 	assert(get_viewport().gui_get_focus_owner() == admit, "Action mode must focus the first valid treatment action")
+
+	# Pointer selection must switch patients directly even while action mode is
+	# active; mouse/touch users must never need to click the overview just to get
+	# back to the roster.
+	if party.size() > 1:
+		var other := party[1]
+		if cards.has(other.id):
+			hospital.set("_pointer_patient_selection", true)
+			hospital.call("_confirm_instance", other.id)
+			await _frames(1)
+			assert(String(hospital.get("_preview_id")) == other.id, "Pointer selection must switch directly to another patient")
+			hospital.set("_pointer_patient_selection", true)
+			hospital.call("_confirm_instance", patient.id)
+			await _frames(1)
 
 	var focused_before_refresh := get_viewport().gui_get_focus_owner()
 	hospital.call("_refresh_live")
