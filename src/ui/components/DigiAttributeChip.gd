@@ -8,8 +8,15 @@ const VACCINE_ICON = preload("res://assets/ui/icons/vaccine.png")
 const VIRUS_ICON = preload("res://assets/ui/icons/virus.png")
 const DATA_ICON = preload("res://assets/ui/icons/data.png")
 
-const CHIP_HEIGHT := 30.0
+# V2.pill_style contributes 4 px of vertical inset on each side. Attribute
+# chips wrap a 30 px content row in that style, so their existing rendered
+# height is 38 px. Expose that outer height as the shared classification-chip
+# contract so text-only badges can match icon-backed badges without changing
+# the row height or the icon proportions.
+const CHIP_CONTENT_HEIGHT := 30.0
+const CHIP_HEIGHT := 38.0
 const ICON_SIZE := Vector2(30.0, 19.0)
+const CONTENT_LABEL_META := "digi_attribute_chip_content"
 
 
 static func build(attribute: String) -> PanelContainer:
@@ -41,7 +48,8 @@ static func build(attribute: String) -> PanelContainer:
 
 	var label := Label.new()
 	label.text = normalized.to_upper()
-	label.custom_minimum_size.y = CHIP_HEIGHT
+	label.custom_minimum_size.y = CHIP_CONTENT_HEIGHT
+	label.set_meta(CONTENT_LABEL_META, true)
 	label.add_theme_font_size_override("font_size", 9)
 	label.add_theme_color_override("font_color", accent)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -83,7 +91,10 @@ static func replace_text_pill(root: Node, attribute: String) -> bool:
 
 static func normalize_text_pill_height(root: Node, text: String) -> void:
 	var label := _find_label_exact(root, text)
-	if label != null:
+	# Icon-backed attribute chips contain their own label. Resizing that inner
+	# label would add the pill style's vertical inset a second time and make the
+	# attribute chip taller than the text-only classification badges.
+	if label != null and not label.has_meta(CONTENT_LABEL_META):
 		label.custom_minimum_size.y = CHIP_HEIGHT
 
 
