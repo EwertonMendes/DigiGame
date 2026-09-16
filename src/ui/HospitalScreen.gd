@@ -11,6 +11,7 @@ const ConfirmationModalScript = preload("res://src/ui/components/DigiConfirmatio
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
+const CHANGE_ICON := preload("res://assets/ui/icons/hp_change_arrow.svg")
 
 const FRAME_MAX_WIDTH := 1380.0
 const FRAME_MAX_HEIGHT := 850.0
@@ -395,8 +396,21 @@ func _refresh_detail() -> void:
 	var health_section := _section("HEALTH", V2.GREEN, "heart")
 	_detail.add_child(health_section)
 	var health_body := health_section.get_meta("body") as VBoxContainer
-	var hp_transition := _label("%d / %d  →  %d / %d" % [int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1)), int(preview.get("max_hp", 1)), int(preview.get("max_hp", 1))], 18, V2.TEXT, true)
+	var hp_transition := HBoxContainer.new()
+	hp_transition.add_theme_constant_override("separation", 8)
+	hp_transition.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	health_body.add_child(hp_transition)
+	hp_transition.add_child(_label("%d / %d" % [int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1))], 18, V2.TEXT, true))
+	var hp_arrow := TextureRect.new()
+	hp_arrow.texture = CHANGE_ICON
+	hp_arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	hp_arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	hp_arrow.custom_minimum_size = Vector2(18.0, 18.0)
+	hp_arrow.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hp_arrow.modulate = V2.CYAN
+	hp_arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hp_transition.add_child(hp_arrow)
+	hp_transition.add_child(_label("%d / %d" % [int(preview.get("max_hp", 1)), int(preview.get("max_hp", 1))], 18, V2.TEXT, true))
 	health_body.add_child(_progress(V2.GREEN, int(preview.get("max_hp", 1)), int(preview.get("current_hp", 0))))
 	health_body.add_child(_label("%d%% HP missing" % int(round(float(preview.get("missing_hp_ratio", 0.0)) * 100.0)), 10, V2.MUTED, false))
 
