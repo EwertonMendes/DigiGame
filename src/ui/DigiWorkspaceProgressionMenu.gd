@@ -1,7 +1,6 @@
 extends "res://src/ui/DigiIconProgressionMenu.gd"
 class_name DigiWorkspaceProgressionMenu
 
-const UI = preload("res://src/ui/components/DigiUiTheme.gd")
 const WorkspaceWalkPreview = preload("res://src/ui/DigimonWalkPreview.gd")
 const WorkspaceTierIcon = preload("res://src/ui/components/DigiTierIcon.gd")
 const WorkspacePager = preload("res://src/ui/components/DigiPager.gd")
@@ -37,8 +36,8 @@ func _build() -> void:
 	super._build()
 
 	_header.set_workspace_mode(true)
-	_collection_panel.add_theme_stylebox_override("panel", UI.hospital_panel_style(UI.CYAN))
-	_detail_panel.add_theme_stylebox_override("panel", UI.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
+	_collection_panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
+	_detail_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 
 	# The Hospital/DigiLab workspace keeps one shared outer inset around the
 	# complete roster column. Re-parenting the already-built stack keeps the base
@@ -55,7 +54,7 @@ func _build() -> void:
 
 	_collection_header.set_workspace_mode(true)
 	_collection_header.custom_minimum_size.y = 56.0
-	_collection_header.add_theme_stylebox_override("panel", UI.hospital_button_style(UI.CYAN, "focus"))
+	_collection_header.add_theme_stylebox_override("panel", V2.hospital_button_style(V2.CYAN, "focus"))
 
 	var roster_inset := _collection_scroll.get_parent() as MarginContainer
 	if roster_inset != null:
@@ -67,7 +66,7 @@ func _build() -> void:
 	if detail_margin != null:
 		_set_margin(detail_margin, 0, 0, 0, 0)
 
-	_compact_back_button = _workspace_button("‹  PARTY", UI.CYAN)
+	_compact_back_button = _workspace_button("‹  PARTY", V2.CYAN)
 	_compact_back_button.name = "CompactBackToParty"
 	_compact_back_button.custom_minimum_size = Vector2(148.0, 44.0)
 	_compact_back_button.visible = false
@@ -77,7 +76,7 @@ func _build() -> void:
 
 func _collection_button(instance: DigimonInstance, species: Dictionary, index: int) -> Button:
 	var rank := String(species.get("rank", "Unknown"))
-	var rank_color := UI.rank_color(rank)
+	var rank_color := V2.rank_color(rank)
 	var selected := index == _selected_index
 	var button := Button.new()
 	button.name = "PartyCard%02d" % index
@@ -121,17 +120,19 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	copy.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	copy.add_theme_constant_override("separation", 3)
+	copy.add_theme_constant_override("separation", 2)
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
 
 	var display_name := instance.get_display_name(String(species.get("name", "Unknown")))
-	var name := _label(display_name, 17 if _density_compact else 20, UI.WHITE, true)
+	var name := _label(display_name, 17 if _density_compact else 20, V2.WHITE, true)
 	name.name = "Name"
+	name.custom_minimum_size.y = 21.0 if _density_compact else 24.0
 	name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	copy.add_child(name)
 
 	var meta := HBoxContainer.new()
+	meta.custom_minimum_size.y = 18.0 if _density_compact else 24.0
 	meta.add_theme_constant_override("separation", 8)
 	meta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(meta)
@@ -146,11 +147,12 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 
 	var stats := _progression.get_final_stats(instance)
 	var max_hp := maxi(1, int(stats.get("hp", 1)))
-	var hp := _label("HP  %d / %d" % [clampi(instance.current_hp, 0, max_hp), max_hp], 12 if _density_compact else 14, UI.TEXT, false)
+	var hp := _label("HP  %d / %d" % [clampi(instance.current_hp, 0, max_hp), max_hp], 12 if _density_compact else 14, V2.TEXT, false)
 	hp.name = "Health"
+	hp.custom_minimum_size.y = 16.0 if _density_compact else 18.0
 	copy.add_child(hp)
 
-	var hp_bar := _mini_progress(UI.GREEN)
+	var hp_bar := _mini_progress(V2.GREEN)
 	hp_bar.name = "HpBar"
 	hp_bar.max_value = float(max_hp)
 	hp_bar.value = float(clampi(instance.current_hp, 0, max_hp))
@@ -162,12 +164,12 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 
 
 func _style_collection_button(button: Button, selected: bool, _rank_color: Color) -> void:
-	button.add_theme_stylebox_override("normal", UI.hospital_panel_style(UI.CYAN, selected))
-	button.add_theme_stylebox_override("hover", UI.hospital_button_style(UI.CYAN, "hover"))
-	button.add_theme_stylebox_override("focus", UI.hospital_button_style(UI.CYAN, "focus"))
-	button.add_theme_stylebox_override("pressed", UI.hospital_button_style(UI.CYAN, "pressed"))
-	button.add_theme_stylebox_override("hover_pressed", UI.hospital_button_style(UI.CYAN, "pressed"))
-	button.add_theme_stylebox_override("disabled", UI.hospital_button_style(UI.CYAN, "disabled"))
+	button.add_theme_stylebox_override("normal", V2.hospital_panel_style(V2.CYAN, selected))
+	button.add_theme_stylebox_override("hover", V2.hospital_button_style(V2.CYAN, "hover"))
+	button.add_theme_stylebox_override("focus", V2.hospital_button_style(V2.CYAN, "focus"))
+	button.add_theme_stylebox_override("pressed", V2.hospital_button_style(V2.CYAN, "pressed"))
+	button.add_theme_stylebox_override("hover_pressed", V2.hospital_button_style(V2.CYAN, "pressed"))
+	button.add_theme_stylebox_override("disabled", V2.hospital_button_style(V2.CYAN, "disabled"))
 
 
 func _refresh_details() -> void:
@@ -190,13 +192,13 @@ func _restyle_detail_surface() -> void:
 		_sidebar_column.add_theme_constant_override("separation", WORKSPACE_GAP)
 
 	if _action_panel != null:
-		_action_panel.add_theme_stylebox_override("panel", UI.hospital_panel_style(UI.CYAN))
+		_action_panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
 		_set_workspace_headers(_action_panel)
 
 	if _sidebar_column != null:
 		var overview := _sidebar_column.get_node_or_null("OverviewPanel") as PanelContainer
 		if overview != null:
-			overview.add_theme_stylebox_override("panel", UI.hospital_panel_style(UI.CYAN))
+			overview.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
 			_set_workspace_headers(overview)
 
 	for raw_button in _overview_tab_buttons.values():
@@ -207,10 +209,10 @@ func _restyle_detail_surface() -> void:
 		button.add_theme_font_size_override("font_size", 12 if not _density_compact else 11)
 
 	if _stats_panel != null:
-		_stats_panel.add_theme_stylebox_override("panel", UI.hospital_panel_style(UI.CYAN))
+		_stats_panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
 		_set_workspace_headers(_stats_panel)
 	if _development_panel != null:
-		_development_panel.add_theme_stylebox_override("panel", UI.hospital_panel_style(UI.PURPLE))
+		_development_panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.PURPLE))
 		_set_workspace_headers(_development_panel)
 
 
@@ -219,7 +221,7 @@ func _build_technique_view(instance: DigimonInstance) -> void:
 	panel.name = "TechniqueLibraryView"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", UI.hospital_panel_style(UI.CYAN))
+	panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
 	_detail_list.add_child(panel)
 	_technique_panel = panel
 
@@ -230,7 +232,7 @@ func _build_technique_view(instance: DigimonInstance) -> void:
 	panel.add_child(stack)
 
 	var header := WorkspaceSectionHeader.new() as DigiSectionHeader
-	header.configure("TECHNIQUE LIBRARY", "Favorite shortcuts and archived knowledge", UI.CYAN, "techniques")
+	header.configure("TECHNIQUE LIBRARY", "Favorite shortcuts and archived knowledge", V2.CYAN, "techniques")
 	header.set_workspace_mode(true)
 	stack.add_child(header)
 
@@ -246,18 +248,18 @@ func _build_technique_view(instance: DigimonInstance) -> void:
 	summary.add_theme_constant_override("separation", 12)
 	summary_margin.add_child(summary)
 
-	_technique_back_button = _workspace_button("‹  DETAILS", UI.CYAN)
+	_technique_back_button = _workspace_button("‹  DETAILS", V2.CYAN)
 	_technique_back_button.name = "TechniqueBack"
 	_technique_back_button.custom_minimum_size = Vector2(148.0, 44.0)
 	_technique_back_button.pressed.connect(_leave_techniques)
 	summary.add_child(_technique_back_button)
 	_technique_focus_rows.append([_technique_back_button])
 
-	var learned := _label("%d LEARNED" % instance.learned_skills.size(), 12 if _density_compact else 14, UI.TEXT, true)
+	var learned := _label("%d LEARNED" % instance.learned_skills.size(), 12 if _density_compact else 14, V2.TEXT, true)
 	learned.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	learned.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	summary.add_child(learned)
-	var favorites := _label("FAVORITES %d / %d" % [instance.favorite_skills.size(), DigimonInstance.MAX_FAVORITE_SKILLS], 11 if _density_compact else 13, UI.AMBER, true)
+	var favorites := _label("FAVORITES %d / %d" % [instance.favorite_skills.size(), DigimonInstance.MAX_FAVORITE_SKILLS], 11 if _density_compact else 13, V2.AMBER, true)
 	favorites.size_flags_horizontal = Control.SIZE_SHRINK_END
 	summary.add_child(favorites)
 
@@ -281,7 +283,7 @@ func _build_technique_view(instance: DigimonInstance) -> void:
 			var wrapper := PanelContainer.new()
 			wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			wrapper.custom_minimum_size.y = 66.0 if _density_compact else 76.0
-			wrapper.add_theme_stylebox_override("panel", UI.hospital_panel_style(UI.CYAN))
+			wrapper.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
 			list.add_child(wrapper)
 			var row_margin := _margin(12, 7, 12, 7)
 			wrapper.add_child(row_margin)
@@ -370,8 +372,8 @@ func _turn_technique_page(delta: int) -> void:
 func _layout() -> void:
 	if _panel == null or _menu_root == null:
 		return
-	var physical := UI.physical_window_size(get_viewport())
-	var scale_factor := UI.ui_scale(get_viewport())
+	var physical := V2.physical_window_size(get_viewport())
+	var scale_factor := V2.ui_scale(get_viewport())
 	var width := maxf(640.0, physical.x)
 	var height := maxf(420.0, physical.y)
 	var compact := width < WORKSPACE_COMPACT_WIDTH or height < WORKSPACE_COMPACT_HEIGHT
@@ -446,13 +448,13 @@ func _workspace_button(text: String, accent: Color) -> Button:
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_size_override("font_size", 15)
-	button.add_theme_color_override("font_color", UI.WHITE)
-	button.add_theme_color_override("font_hover_color", UI.WHITE)
-	button.add_theme_color_override("font_focus_color", UI.WHITE)
-	button.add_theme_color_override("font_disabled_color", UI.MUTED)
+	button.add_theme_color_override("font_color", V2.WHITE)
+	button.add_theme_color_override("font_hover_color", V2.WHITE)
+	button.add_theme_color_override("font_focus_color", V2.WHITE)
+	button.add_theme_color_override("font_disabled_color", V2.MUTED)
 	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, UI.hospital_button_style(accent, state))
-	UI.apply_heading(button)
+		button.add_theme_stylebox_override(state, V2.hospital_button_style(accent, state))
+	V2.apply_heading(button)
 	return button
 
 
