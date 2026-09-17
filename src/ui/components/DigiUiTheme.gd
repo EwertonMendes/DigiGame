@@ -33,6 +33,28 @@ const TOUCH_TARGET := 52.0
 const CARD_RADIUS := 8
 const SMALL_RADIUS := 6
 
+# Hospital surfaces use the same palette as UI V2 with stronger edge light and
+# enough opacity to keep text readable over the full-screen illustrated room.
+static func hospital_panel_style(accent: Color = CYAN, selected: bool = false) -> StyleBoxFlat:
+	var fill := Color(0.025, 0.055, 0.079, 0.91)
+	var edge := Color(accent.r, accent.g, accent.b, 0.93 if selected else 0.44)
+	var style := surface_style(fill, edge, 11)
+	style.set_border_width_all(2 if selected else 1)
+	style.shadow_color = Color(accent.r, accent.g, accent.b, 0.34 if selected else 0.09)
+	style.shadow_size = 14 if selected else 6
+	return style
+
+
+static func hospital_button_style(accent: Color, state: String) -> StyleBoxFlat:
+	var selected := state == "focus" or state == "hover" or state == "pressed"
+	var style := hospital_panel_style(accent, selected)
+	style.bg_color = Color(0.035, 0.095, 0.127, 0.95) if selected else Color(0.034, 0.068, 0.097, 0.93)
+	if state == "disabled":
+		style.bg_color = Color(0.025, 0.045, 0.062, 0.78)
+		style.border_color = Color(BORDER.r, BORDER.g, BORDER.b, 0.46)
+		style.shadow_size = 0
+	return style
+
 
 static func physical_window_size(viewport: Viewport) -> Vector2:
 	return BaseUI.physical_window_size(viewport)

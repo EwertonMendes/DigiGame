@@ -1,6 +1,8 @@
 extends PanelContainer
 class_name DigiInputHintBar
 
+signal input_mode_changed(mode: int)
+
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 enum InputMode {
@@ -16,6 +18,9 @@ var _description_text := "Manage your Digimon and view their information."
 var _mode := InputMode.TOUCH if DisplayServer.is_touchscreen_available() else InputMode.KEYBOARD_MOUSE
 var _last_touch_msec := -10000
 var _primary_tabs_enabled := false
+var _pagination_enabled := false
+var _scroll_hint_enabled := true
+var _hide_hints_on_touch := false
 
 
 func _ready() -> void:
@@ -29,14 +34,15 @@ func _ready() -> void:
 	add_theme_stylebox_override("panel", style)
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 30)
-	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_top", 8)
 	margin.add_theme_constant_override("margin_right", 30)
-	margin.add_theme_constant_override("margin_bottom", 10)
+	margin.add_theme_constant_override("margin_bottom", 8)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(margin)
 	_row = HBoxContainer.new()
 	_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_row.add_theme_constant_override("separation", 12)
 	_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_row.clip_contents = true
@@ -58,6 +64,38 @@ func set_primary_tabs_enabled(enabled: bool) -> void:
 		_refresh()
 
 
+func set_pagination_enabled(enabled: bool) -> void:
+	if _pagination_enabled == enabled:
+		return
+	_pagination_enabled = enabled
+	if _row != null:
+		_refresh()
+
+
+func set_scroll_hint_enabled(enabled: bool) -> void:
+	if _scroll_hint_enabled == enabled:
+		return
+	_scroll_hint_enabled = enabled
+	if _row != null:
+		_refresh()
+
+
+func set_hide_hints_on_touch(enabled: bool) -> void:
+	if _hide_hints_on_touch == enabled:
+		return
+	_hide_hints_on_touch = enabled
+	if _row != null:
+		_refresh()
+
+
+func get_input_mode() -> int:
+	return _mode
+
+
+func is_touch_mode() -> bool:
+	return _mode == InputMode.TOUCH
+
+
 func _input(event: InputEvent) -> void:
 	var next_mode := _mode
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
@@ -75,6 +113,7 @@ func _input(event: InputEvent) -> void:
 	if next_mode != _mode:
 		_mode = next_mode
 		_refresh()
+		input_mode_changed.emit(_mode)
 
 
 func _joypad_mode(device: int) -> int:
@@ -90,9 +129,12 @@ func _menu_hints() -> Array[Dictionary]:
 			var hints: Array[Dictionary] = []
 			if _primary_tabs_enabled:
 				hints.append({"key": "L1/R1", "label": "Tabs", "accent": V2.CYAN})
+			if _pagination_enabled:
+				hints.append({"key": "L2/R2", "label": "Pages", "accent": V2.CYAN})
+			hints.append({"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED})
+			if _scroll_hint_enabled:
+				hints.append({"key": "RS", "label": "Scroll", "accent": V2.MUTED})
 			hints.append_array([
-				{"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED},
-				{"key": "RS", "label": "Scroll", "accent": V2.MUTED},
 				{"key": "X", "label": "Select", "accent": V2.BLUE},
 				{"key": "O", "label": "Back", "accent": V2.RED},
 			])
@@ -101,24 +143,35 @@ func _menu_hints() -> Array[Dictionary]:
 			var hints: Array[Dictionary] = []
 			if _primary_tabs_enabled:
 				hints.append({"key": "LB/RB", "label": "Tabs", "accent": V2.CYAN})
+			if _pagination_enabled:
+				hints.append({"key": "LT/RT", "label": "Pages", "accent": V2.CYAN})
+			hints.append({"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED})
+			if _scroll_hint_enabled:
+				hints.append({"key": "RS", "label": "Scroll", "accent": V2.MUTED})
 			hints.append_array([
-				{"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED},
-				{"key": "RS", "label": "Scroll", "accent": V2.MUTED},
 				{"key": "A", "label": "Select", "accent": V2.GREEN},
 				{"key": "B", "label": "Back", "accent": V2.RED},
 			])
 			return hints
 		InputMode.TOUCH:
-			return [
+			if _hide_hints_on_touch:
+				return []
+			var hints: Array[Dictionary] = [
 				{"key": "TAP", "label": "Select", "accent": V2.CYAN},
-				{"key": "DRAG", "label": "Scroll", "accent": V2.MUTED},
 			]
+			if _scroll_hint_enabled:
+				hints.append({"key": "DRAG", "label": "Scroll", "accent": V2.MUTED})
+			return hints
 		_:
-			return [
+			var hints: Array[Dictionary] = []
+			if _primary_tabs_enabled:
+				hints.append({"key": "TAB", "label": "Tabs · Click", "accent": V2.CYAN})
+			hints.append_array([
 				{"key": "ARROWS", "label": "Navigate", "accent": V2.MUTED},
-				{"key": "ENTER", "label": "Select", "accent": V2.CYAN},
+				{"key": "ENTER", "label": "Select · Click", "accent": V2.CYAN},
 				{"key": "ESC", "label": "Back", "accent": V2.MUTED},
-			]
+			])
+			return hints
 
 
 func _refresh() -> void:
@@ -131,6 +184,7 @@ func _refresh() -> void:
 	_description = Label.new()
 	_description.text = _description_text
 	_description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_description.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_description.custom_minimum_size.x = 0.0
 	_description.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_description.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -144,6 +198,7 @@ func _refresh() -> void:
 	for hint in _menu_hints():
 		var group := HBoxContainer.new()
 		group.add_theme_constant_override("separation", 7)
+		group.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		group.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_row.add_child(group)
 
