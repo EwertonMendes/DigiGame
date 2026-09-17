@@ -4,6 +4,7 @@ extends "res://src/ui/HospitalScreen.gd"
 # HospitalScreen/OverworldState; this layer owns the final interaction polish.
 
 const CommandButtonStyle = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
+const BitsDisplayScript = preload("res://src/ui/components/DigiBitsDisplay.gd")
 const PATIENT_CARD_HEIGHT := 132.0
 const PATIENT_STATUS_TOP_GAP := 4
 const ANALOG_NAV_PRESS_THRESHOLD := 0.62
@@ -17,6 +18,7 @@ var _analog_nav_state := 0
 var _left_trigger_down := false
 var _right_trigger_down := false
 var _right_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
+var _premium_bits: DigiBitsDisplay
 
 
 func open_screen() -> void:
@@ -117,26 +119,52 @@ func _build_header() -> void:
 	if badge == null:
 		return
 	badge.clip_contents = false
-	var bits_icon: TextureRect = null
+	badge.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	for child in badge.get_children():
-		if child is TextureRect:
-			bits_icon = child as TextureRect
-			break
-	if bits_icon == null:
+		if child is CanvasItem:
+			(child as CanvasItem).visible = false
+
+	_premium_bits = BitsDisplayScript.new() as DigiBitsDisplay
+	_premium_bits.name = "PremiumBitsDisplay"
+	_premium_bits.set_variant(DigiBitsDisplay.VARIANT_STANDARD)
+	_premium_bits.prime_value(OverworldState.get_bits())
+	_premium_bits.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	badge.add_child(_premium_bits)
+
+
+func _layout() -> void:
+	super._layout()
+	if _header == null or _close_button == null:
 		return
-	bits_icon.name = "BitsIcon"
-	bits_icon.texture = BITS_ICON
-	bits_icon.position = Vector2(12, 8)
-	bits_icon.size = Vector2(28, 28)
-	bits_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bits_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	bits_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	bits_icon.modulate = Color.WHITE
-	bits_icon.z_index = 4
-	_bits_label.position = Vector2(46, 7)
-	_bits_label.size = Vector2(108, 32)
-	_bits_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_bits_label.z_index = 4
+	var badge := _header.get_node_or_null("BitsBadge") as Panel
+	if badge == null:
+		return
+	var compact := _is_compact()
+	var badge_size := Vector2(150.0, 42.0) if compact else Vector2(184.0, 52.0)
+	badge.size = badge_size
+	badge.position = Vector2(
+		maxf(0.0, _close_button.position.x - 12.0 - badge_size.x),
+		floor((_header.size.y - badge_size.y) * 0.5)
+	)
+	if _premium_bits != null:
+		_premium_bits.set_variant(DigiBitsDisplay.VARIANT_COMPACT if compact else DigiBitsDisplay.VARIANT_STANDARD)
+		_premium_bits.position = Vector2.ZERO
+		_premium_bits.size = badge_size
+
+
+func _refresh_structure(restore_focus: bool = true) -> void:
+	super._refresh_structure(restore_focus)
+	_sync_premium_bits()
+
+
+func _refresh_live() -> void:
+	super._refresh_live()
+	_sync_premium_bits()
+
+
+func _sync_premium_bits() -> void:
+	if _premium_bits != null:
+		_premium_bits.set_value(OverworldState.get_bits())
 
 
 func _build_hero() -> void:
