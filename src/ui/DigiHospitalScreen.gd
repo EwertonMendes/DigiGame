@@ -467,7 +467,7 @@ func _apply_action_state(key: String, button: Button, action_mode: bool, allowed
 
 func _apply_density(compact: bool) -> void:
 	super._apply_density(compact)
-	_health_panel.custom_minimum_size.y = 94 if compact else 106
+	_health_panel.custom_minimum_size.y = 110 if compact else 120
 	_time_panel.custom_minimum_size.y = 50 if compact else 58
 	_cost_panel.custom_minimum_size.y = 50 if compact else 58
 	_overview_header.custom_minimum_size.y = 29 if compact else 34
