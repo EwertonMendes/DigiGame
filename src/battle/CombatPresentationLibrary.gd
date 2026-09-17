@@ -1,6 +1,8 @@
 extends Node
 class_name CombatPresentationLibrary
 
+const AudioBusIdsScript = preload("res://src/audio/AudioBusIds.gd")
+
 const VFX_LIBRARY_PATH := "res://database/vfx-library.json"
 const PRESENTATIONS_PATH := "res://database/combat-presentations.json"
 const DEFAULT_Z_INDEX := 101
@@ -108,6 +110,7 @@ func play_audio_phase(presentation: Dictionary, phase: String, default_to_techni
 	var player := AudioStreamPlayer.new()
 	player.name = "CombatPresentationAudio"
 	player.stream = stream
+	player.bus = AudioBusIdsScript.BATTLE
 	player.volume_db = float(presentation.get("volumeDb", -1.5))
 	add_child(player)
 	player.finished.connect(player.queue_free, CONNECT_ONE_SHOT)
