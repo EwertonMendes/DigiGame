@@ -127,10 +127,27 @@ func _build() -> void:
 
 
 func _apply_variant() -> void:
-	# The header itself is the backdrop. The currency readout must not become
-	# another card inside the header, so both layout panels are fully transparent.
-	add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
-	_medallion.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
+	var outer: StyleBoxFlat = V2.surface_style(
+		Color(0.019, 0.038, 0.052, 0.985),
+		Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.62),
+		12
+	)
+	outer.set_border_width_all(1)
+	outer.border_blend = true
+	outer.shadow_color = Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.13)
+	outer.shadow_size = 10
+	outer.shadow_offset = Vector2(0.0, 2.0)
+	add_theme_stylebox_override("panel", outer)
+
+	var medallion_style: StyleBoxFlat = V2.surface_style(
+		Color(0.125, 0.090, 0.020, 0.90),
+		Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.84),
+		10
+	)
+	medallion_style.set_border_width_all(1)
+	medallion_style.shadow_color = Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.18)
+	medallion_style.shadow_size = 7
+	_medallion.add_theme_stylebox_override("panel", medallion_style)
 
 	_value_label.add_theme_color_override("font_color", V2.WHITE)
 	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.86))
@@ -156,13 +173,13 @@ func _layout() -> void:
 	var height: float = size.y
 	var compact: bool = _variant == VARIANT_COMPACT or height <= 44.0
 	var emphasis: bool = _variant == VARIANT_EMPHASIS and height >= 56.0
-	var medal_size: float = 38.0 if compact else (54.0 if emphasis else 48.0)
-	var outer_pad: float = 0.0
+	var medal_size: float = 34.0 if compact else (44.0 if emphasis else 40.0)
+	var outer_pad: float = 6.0
 	var medal_y: float = floorf((height - medal_size) * 0.5)
 	_medallion.position = Vector2(outer_pad, medal_y)
 	_medallion.size = Vector2(medal_size, medal_size)
 
-	var icon_pad: float = 0.0
+	var icon_pad: float = 5.0 if compact else 6.0
 	_icon.position = Vector2(icon_pad, icon_pad)
 	_icon.size = Vector2(medal_size - icon_pad * 2.0, medal_size - icon_pad * 2.0)
 
