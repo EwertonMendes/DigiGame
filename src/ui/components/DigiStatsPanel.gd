@@ -5,31 +5,40 @@ const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const StatRowScript = preload("res://src/ui/components/DigiStatRow.gd")
 const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 
+var _workspace_mode := false
+var _compact_workspace := false
+
+
+func set_workspace_mode(enabled: bool, compact: bool = false) -> void:
+	_workspace_mode = enabled
+	_compact_workspace = compact
+
 
 func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) -> DigiStatsPanel:
 	for child in get_children():
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
-	size_flags_stretch_ratio = 0.78
-	custom_minimum_size.y = 228.0
-	add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
+	size_flags_stretch_ratio = 1.0 if _workspace_mode else 0.78
+	custom_minimum_size.y = 0.0 if _workspace_mode else 228.0
+	add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0) if _workspace_mode else V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 0)
 	add_child(body)
-	var header := SectionHeaderScript.new() as DigiSectionHeader
-	header.configure("COMBAT STATS", "", V2.CYAN, "sword")
-	body.add_child(header)
+	if not _workspace_mode:
+		var header := SectionHeaderScript.new() as DigiSectionHeader
+		header.configure("COMBAT STATS", "", V2.CYAN, "sword")
+		body.add_child(header)
 
-	var content := _margin(10, 8, 10, 8)
+	var content := _margin(12 if _workspace_mode else 10, 10 if _workspace_mode else 8, 12 if _workspace_mode else 10, 12 if _workspace_mode else 8)
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(content)
 	var rows := VBoxContainer.new()
 	rows.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	rows.add_theme_constant_override("separation", 2)
+	rows.add_theme_constant_override("separation", 5 if _workspace_mode else 2)
 	content.add_child(rows)
 
 	var max_hp := maxi(1, int(stats.get("hp", 0)))
@@ -37,9 +46,11 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 	var hp_now := clampi(max_hp if current_hp < 0 else current_hp, 0, max_hp)
 	var sp_now := clampi(max_sp if current_sp < 0 else current_sp, 0, max_sp)
 	var hp_row := StatRowScript.new() as DigiStatRow
+	hp_row.set_roomy(_workspace_mode, _compact_workspace)
 	hp_row.configure("HP", hp_now, float(max_hp), "heart", V2.GREEN, true, "%d / %d" % [hp_now, max_hp])
 	rows.add_child(hp_row)
 	var sp_row := StatRowScript.new() as DigiStatRow
+	sp_row.set_roomy(_workspace_mode, _compact_workspace)
 	sp_row.configure("SP", sp_now, float(max_sp), "bolt", V2.BLUE, true, "%d / %d" % [sp_now, max_sp])
 	rows.add_child(sp_row)
 	rows.add_child(_separator())
@@ -54,6 +65,7 @@ func configure(stats: Dictionary, current_hp: int = -1, current_sp: int = -1) ->
 	for entry in entries:
 		var value := int(stats.get(String(entry[1]), 0))
 		var row := StatRowScript.new() as DigiStatRow
+		row.set_roomy(_workspace_mode, _compact_workspace)
 		row.configure(String(entry[0]), value, 1.0, String(entry[2]), entry[3] as Color, false, str(value))
 		rows.add_child(row)
 	return self

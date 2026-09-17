@@ -10,17 +10,20 @@ const ANALOG_NAV_PRESS_THRESHOLD := 0.62
 const ANALOG_NAV_RELEASE_THRESHOLD := 0.34
 const TRIGGER_PRESS_THRESHOLD := 0.55
 const TRIGGER_RELEASE_THRESHOLD := 0.25
+const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 
 var _pointer_patient_selection := false
 var _analog_nav_state := 0
 var _left_trigger_down := false
 var _right_trigger_down := false
+var _right_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
 
 
 func open_screen() -> void:
 	_analog_nav_state = 0
 	_left_trigger_down = false
 	_right_trigger_down = false
+	_right_analog_gate.reset()
 	super.open_screen()
 
 
@@ -51,6 +54,13 @@ func _handle_joypad_motion(event: InputEventJoypadMotion) -> void:
 	match event.axis:
 		JOY_AXIS_LEFT_Y:
 			_handle_analog_vertical(event.axis_value)
+		JOY_AXIS_RIGHT_Y:
+			var step := _right_analog_gate.vertical_step(event.axis_value)
+			if step != 0:
+				if _interaction_mode == InteractionMode.ACTIONS:
+					_move_action_focus(step)
+				else:
+					_move_preview(step)
 		JOY_AXIS_TRIGGER_LEFT:
 			_handle_page_trigger(event.axis_value, -1, true)
 		JOY_AXIS_TRIGGER_RIGHT:
@@ -59,6 +69,7 @@ func _handle_joypad_motion(event: InputEventJoypadMotion) -> void:
 			# Other axes do not navigate this screen. In particular, horizontal
 			# left-stick motion and the right stick must not move vertical lists.
 			pass
+	get_viewport().set_input_as_handled()
 
 
 func _handle_analog_vertical(value: float) -> void:

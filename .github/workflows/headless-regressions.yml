@@ -57,6 +57,9 @@ jobs:
           - name: global-ui-v2
             command: godot --headless --path . tools/test_ui_v2_components_regression.tscn --quit-after 30
             success: global ui v2 components regression passed
+          - name: digimon-main-menu-ui
+            command: godot --headless --path . tools/test_digimon_main_menu_ui_regression.tscn --quit-after 70
+            success: digimon main menu ui regression passed
           - name: evolution-chart-ui-v2
             command: godot --headless --path . tools/test_evolution_chart_ui_v2_regression.tscn --quit-after 20
             success: evolution chart ui v2 regression passed
