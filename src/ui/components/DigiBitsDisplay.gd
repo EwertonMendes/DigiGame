@@ -136,21 +136,27 @@ func _apply_variant() -> void:
 	_medallion.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
 	_value_label.add_theme_color_override("font_color", V2.WHITE)
-	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.98))
+	var currency_color := Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 1.0)
+	_currency_label.add_theme_color_override("font_color", currency_color)
+	# The UI typeface is intentionally slim, so a one-pixel same-hue outline gives
+	# the small currency label enough weight to stay readable without competing
+	# with the balance value above it.
+	_currency_label.add_theme_constant_override("outline_size", 1)
+	_currency_label.add_theme_color_override("font_outline_color", Color(currency_color.r, currency_color.g, currency_color.b, 0.72))
 
 	match _variant:
 		VARIANT_COMPACT:
 			custom_minimum_size = Vector2(170.0, 44.0)
 			_value_label.add_theme_font_size_override("font_size", 19)
-			_currency_label.add_theme_font_size_override("font_size", 8)
+			_currency_label.add_theme_font_size_override("font_size", 10)
 		VARIANT_EMPHASIS:
 			custom_minimum_size = Vector2(232.0, 64.0)
 			_value_label.add_theme_font_size_override("font_size", 27)
-			_currency_label.add_theme_font_size_override("font_size", 10)
+			_currency_label.add_theme_font_size_override("font_size", 12)
 		_:
 			custom_minimum_size = Vector2(208.0, 56.0)
 			_value_label.add_theme_font_size_override("font_size", 24)
-			_currency_label.add_theme_font_size_override("font_size", 9)
+			_currency_label.add_theme_font_size_override("font_size", 11)
 	queue_redraw()
 
 
@@ -256,15 +262,15 @@ func _layout() -> void:
 	# Keep the balance + currency label centered as one visual block instead of
 	# aligning the number to the top edge of the HUD plate.
 	if compact:
-		_value_label.position = Vector2(copy_x, 5.0)
+		_value_label.position = Vector2(copy_x, 4.0)
 		_value_label.size = Vector2(copy_w, 25.0)
-		_currency_label.position = Vector2(copy_x + 1.0, 27.0)
-		_currency_label.size = Vector2(copy_w, 13.0)
+		_currency_label.position = Vector2(copy_x + 1.0, 25.0)
+		_currency_label.size = Vector2(copy_w, 16.0)
 	else:
-		_value_label.position = Vector2(copy_x, 7.0 if emphasis else 6.0)
+		_value_label.position = Vector2(copy_x, 6.0 if emphasis else 5.0)
 		_value_label.size = Vector2(copy_w, 36.0 if emphasis else 31.0)
-		_currency_label.position = Vector2(copy_x + 1.0, 42.0 if emphasis else 35.0)
-		_currency_label.size = Vector2(copy_w, 15.0)
+		_currency_label.position = Vector2(copy_x + 1.0, 39.0 if emphasis else 32.0)
+		_currency_label.size = Vector2(copy_w, 18.0)
 
 	_delta_label.position = Vector2(copy_x, -7.0)
 	_delta_label.size = Vector2(copy_w, 18.0)
