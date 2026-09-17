@@ -2,11 +2,11 @@ extends "res://src/ui/DigimonProgressionMenu.gd"
 class_name DigiIconProgressionMenu
 
 const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
-const AssetIcons = preload("res://src/ui/components/DigiUiAssetIcons.gd")
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
 const ProfilePanelScript = preload("res://src/ui/components/DigiRosterProfilePanel.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
+const MENU_BACKGROUND = preload("res://assets/ui/backgrounds/digimon_menu.png")
 
 const ROSTER_PAGE_SIZE := 3
 const TECHNIQUE_PAGE_SIZE := 4
@@ -37,6 +37,9 @@ var _technique_focus_rows: Array[Array] = []
 var _technique_page_size := TECHNIQUE_PAGE_SIZE
 var _density_compact := false
 var _analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
+var _right_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
+var _main_tab := "party"
+var _soon_label: Label
 
 
 func open_menu() -> void:
@@ -44,7 +47,10 @@ func open_menu() -> void:
 		_constellation.visible = false
 	visible = true
 	_mode = MenuMode.ROSTER
+	_main_tab = "party"
+	_header.set_active_tab(_main_tab)
 	_analog_gate.reset()
+	_right_analog_gate.reset()
 	_refresh_collection()
 	call_deferred("_focus_selected_roster_card")
 	_panel.modulate.a = 0.0
@@ -62,8 +68,20 @@ func _build() -> void:
 	_panel = PanelContainer.new()
 	_panel.name = "DigimonMainMenuV2"
 	_panel.clip_contents = true
-	_panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.BACKDROP.r, V2.BACKDROP.g, V2.BACKDROP.b, 1.0), Color.TRANSPARENT, 0))
+	_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 	add_child(_panel)
+	var background := TextureRect.new()
+	background.name = "DigimonMenuBackground"
+	background.texture = MENU_BACKGROUND
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(background)
+	var shade := ColorRect.new()
+	shade.name = "BackgroundShade"
+	shade.color = Color(0.005, 0.019, 0.032, 0.36)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(shade)
 
 	_menu_root = Control.new()
 	_menu_root.name = "DigimonMainContent"
@@ -73,13 +91,21 @@ func _build() -> void:
 	_header = ModalHeaderScript.new() as DigiModalHeader
 	_header.name = "DigimonHeader"
 	_header.configure("DIGIMON", "Party & Progression", OverworldState.get_bits(), true)
-	_header.configure_tabs([], "")
+	_header.configure_tabs([
+		{"id": "party", "label": "Party", "icon": "party", "min_width": 112.0},
+		{"id": "digipedia", "label": "Digipedia", "icon": "book", "min_width": 146.0},
+		{"id": "system", "label": "System", "icon": "gear", "min_width": 120.0},
+	], _main_tab)
+	_header.tab_selected.connect(_set_main_tab)
 	_header.close_requested.connect(func(): close_requested.emit())
 	_menu_root.add_child(_header)
-	AssetIcons.apply_bits_icon(_header)
 	var close := _header.get_close_button()
 	if close != null:
 		close.focus_mode = Control.FOCUS_NONE
+	for tab_id in ["party", "digipedia", "system"]:
+		var main_tab_button := _header.get_tab_button(tab_id)
+		if main_tab_button != null:
+			main_tab_button.focus_mode = Control.FOCUS_NONE
 
 	_header_rule = ColorRect.new()
 	_header_rule.color = Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.62)
@@ -164,6 +190,12 @@ func _build() -> void:
 	_hint_bar.set_hide_hints_on_touch(true)
 	_hint_bar.set_primary_tabs_enabled(true)
 	_menu_root.add_child(_hint_bar)
+	_soon_label = _empty_message("Soon")
+	_soon_label.name = "ComingSoon"
+	_soon_label.add_theme_font_size_override("font_size", 34)
+	_soon_label.add_theme_color_override("font_color", V2.WHITE)
+	_soon_label.visible = false
+	_menu_root.add_child(_soon_label)
 
 	_constellation = EvolutionChartScript.new() as EvolutionChart
 	_constellation.name = "EvolutionChart"
@@ -176,6 +208,10 @@ func _build() -> void:
 func _input(event: InputEvent) -> void:
 	if not visible or (_constellation != null and _constellation.is_open()):
 		return
+	if _main_tab != "party":
+		if event is InputEventJoypadMotion:
+			get_viewport().set_input_as_handled()
+		return
 
 	if event is InputEventJoypadMotion:
 		var motion := event as InputEventJoypadMotion
@@ -183,19 +219,31 @@ func _input(event: InputEvent) -> void:
 			var step := _analog_gate.vertical_step(motion.axis_value)
 			if step != 0:
 				_move_vertical(step)
-				get_viewport().set_input_as_handled()
+			get_viewport().set_input_as_handled()
+			return
+		if motion.axis == JOY_AXIS_RIGHT_Y:
+			var step := _right_analog_gate.vertical_step(motion.axis_value)
+			if step != 0:
+				_move_vertical(step)
+			get_viewport().set_input_as_handled()
+			return
+		if motion.axis == JOY_AXIS_RIGHT_X:
+			var step := _right_analog_gate.horizontal_step(motion.axis_value)
+			if step != 0:
+				_move_horizontal(step)
+			get_viewport().set_input_as_handled()
 			return
 		if motion.axis == JOY_AXIS_LEFT_X:
 			var step := _analog_gate.horizontal_step(motion.axis_value)
 			if step != 0:
 				_move_horizontal(step)
-				get_viewport().set_input_as_handled()
+			get_viewport().set_input_as_handled()
 			return
 		if motion.axis == JOY_AXIS_TRIGGER_LEFT or motion.axis == JOY_AXIS_TRIGGER_RIGHT:
 			var page_step := _analog_gate.trigger_step(motion.axis, motion.axis_value)
 			if page_step != 0:
 				_turn_active_page(page_step)
-				get_viewport().set_input_as_handled()
+			get_viewport().set_input_as_handled()
 			return
 
 	if event.is_action_pressed("ui_up"):
@@ -227,13 +275,31 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton and (event as InputEventJoypadButton).pressed:
 		var joy := event as InputEventJoypadButton
 		if joy.button_index == JOY_BUTTON_LEFT_SHOULDER:
-			_switch_overview_tab(-1)
+			_header.select_adjacent_tab(-1)
 			get_viewport().set_input_as_handled()
 			return
 		if joy.button_index == JOY_BUTTON_RIGHT_SHOULDER:
+			_header.select_adjacent_tab(1)
+			get_viewport().set_input_as_handled()
+			return
+		if joy.button_index == JOY_BUTTON_X and _main_tab == "party":
 			_switch_overview_tab(1)
 			get_viewport().set_input_as_handled()
 			return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_TAB:
+			_header.select_adjacent_tab(-1 if event.shift_pressed else 1)
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_X and _main_tab == "party":
+			_switch_overview_tab(1)
+			get_viewport().set_input_as_handled()
+			return
+	if _main_tab != "party":
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu"):
+			_set_main_tab("party")
+			get_viewport().set_input_as_handled()
+		return
 
 	if event.is_action_pressed("game_menu"):
 		close_requested.emit()
@@ -658,6 +724,37 @@ func _switch_overview_tab(direction: int) -> void:
 		_set_overview_tab(next)
 
 
+func _set_main_tab(tab_id: String) -> void:
+	if tab_id == _main_tab or not ["party", "digipedia", "system"].has(tab_id):
+		return
+	_main_tab = tab_id
+	_header.set_active_tab(tab_id)
+	_layout()
+	_update_footer_hints()
+	if tab_id == "party":
+		if _mode == MenuMode.ACTIONS:
+			call_deferred("_focus_action", 0)
+		elif _mode == MenuMode.TECHNIQUES:
+			call_deferred("_focus_first_technique_control")
+		else:
+			call_deferred("_focus_selected_roster_card")
+	else:
+		get_viewport().gui_release_focus()
+
+
+func _sync_main_tab_visibility() -> void:
+	if _soon_label == null:
+		return
+	var party_visible := _main_tab == "party"
+	_soon_label.visible = not party_visible
+	if not party_visible:
+		_collection_panel.visible = false
+		_detail_panel.visible = false
+		var compact_back := _menu_root.get_node_or_null("CompactBackToParty") as Control
+		if compact_back != null:
+			compact_back.visible = false
+
+
 func _update_action_state() -> void:
 	var active := _mode == MenuMode.ACTIONS
 	for button in _command_buttons:
@@ -1025,7 +1122,12 @@ func _on_account_rewards_changed(_bits: int, _digi_data: Dictionary) -> void:
 func _update_footer_hints() -> void:
 	if _hint_bar == null:
 		return
-	_hint_bar.set_primary_tabs_enabled(_mode != MenuMode.TECHNIQUES)
+	_hint_bar.set_primary_tabs_enabled(true)
+	_hint_bar.set_secondary_tabs_enabled(_main_tab == "party" and _mode != MenuMode.TECHNIQUES)
+	if _main_tab != "party":
+		_hint_bar.set_pagination_enabled(false)
+		_hint_bar.set_description("%s · Soon" % _main_tab.capitalize())
+		return
 	var pages := 1
 	if _mode == MenuMode.TECHNIQUES:
 		var party := _party_instances()

@@ -18,6 +18,7 @@ var _description_text := "Manage your Digimon and view their information."
 var _mode := InputMode.TOUCH if DisplayServer.is_touchscreen_available() else InputMode.KEYBOARD_MOUSE
 var _last_touch_msec := -10000
 var _primary_tabs_enabled := false
+var _secondary_tabs_enabled := false
 var _pagination_enabled := false
 var _scroll_hint_enabled := true
 var _hide_hints_on_touch := false
@@ -60,6 +61,14 @@ func set_primary_tabs_enabled(enabled: bool) -> void:
 	if _primary_tabs_enabled == enabled:
 		return
 	_primary_tabs_enabled = enabled
+	if _row != null:
+		_refresh()
+
+
+func set_secondary_tabs_enabled(enabled: bool) -> void:
+	if _secondary_tabs_enabled == enabled:
+		return
+	_secondary_tabs_enabled = enabled
 	if _row != null:
 		_refresh()
 
@@ -129,6 +138,8 @@ func _menu_hints() -> Array[Dictionary]:
 			var hints: Array[Dictionary] = []
 			if _primary_tabs_enabled:
 				hints.append({"key": "L1/R1", "label": "Tabs", "accent": V2.CYAN})
+			if _secondary_tabs_enabled:
+				hints.append({"key": "□", "label": "Stats / Development", "accent": V2.CYAN})
 			if _pagination_enabled:
 				hints.append({"key": "L2/R2", "label": "Pages", "accent": V2.CYAN})
 			hints.append({"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED})
@@ -143,6 +154,8 @@ func _menu_hints() -> Array[Dictionary]:
 			var hints: Array[Dictionary] = []
 			if _primary_tabs_enabled:
 				hints.append({"key": "LB/RB", "label": "Tabs", "accent": V2.CYAN})
+			if _secondary_tabs_enabled:
+				hints.append({"key": "X", "label": "Stats / Development", "accent": V2.CYAN})
 			if _pagination_enabled:
 				hints.append({"key": "LT/RT", "label": "Pages", "accent": V2.CYAN})
 			hints.append({"key": "D-PAD", "label": "Navigate", "accent": V2.MUTED})
@@ -166,6 +179,8 @@ func _menu_hints() -> Array[Dictionary]:
 			var hints: Array[Dictionary] = []
 			if _primary_tabs_enabled:
 				hints.append({"key": "TAB", "label": "Tabs · Click", "accent": V2.CYAN})
+			if _secondary_tabs_enabled:
+				hints.append({"key": "X", "label": "Stats / Development", "accent": V2.CYAN})
 			hints.append_array([
 				{"key": "ARROWS", "label": "Navigate", "accent": V2.MUTED},
 				{"key": "ENTER", "label": "Select · Click", "accent": V2.CYAN},

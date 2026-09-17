@@ -401,6 +401,8 @@ func _layout() -> void:
 	var body_top := header_h + top_gap
 	var body_bottom := height - footer_h - WORKSPACE_BOTTOM_GAP
 	var body_h := maxf(220.0, body_bottom - body_top)
+	_soon_label.position = Vector2(edge, body_top)
+	_soon_label.size = Vector2(width - edge * 2.0, body_h)
 
 	if compact:
 		var detail_open := _mode != MenuMode.ROSTER
@@ -433,6 +435,7 @@ func _layout() -> void:
 	_detail_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_roster_pager.set_workspace_mode(true)
 	_roster_pager.set_compact(compact)
+	_sync_main_tab_visibility()
 
 	if density_changed:
 		call_deferred("_refresh_collection")

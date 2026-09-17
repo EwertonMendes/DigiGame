@@ -7,7 +7,7 @@ signal tab_selected(tab_id: String)
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
 const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
-const BITS_ICON = preload("res://assets/ui/icons/bits.svg")
+const BITS_ICON = preload("res://assets/ui/icons/bits.png")
 
 const HEADER_HEIGHT := 60.0
 const CLOSE_SIZE := 40.0
@@ -249,6 +249,8 @@ func _apply_visual_mode() -> void:
 		_bits_badge.custom_minimum_size = WORKSPACE_BITS_SIZE
 		_bits_badge.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.AMBER))
 		_bits_icon.custom_minimum_size = Vector2(27.0, 27.0)
+		_bits_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_bits_icon.self_modulate = Color.WHITE
 		_bits_value.add_theme_font_size_override("font_size", 18)
 		_bits_value.add_theme_color_override("font_color", V2.WHITE)
 		_close_button.custom_minimum_size = Vector2(WORKSPACE_CLOSE_SIZE, WORKSPACE_CLOSE_SIZE)
@@ -309,7 +311,7 @@ func _rebuild_tabs() -> void:
 		button.name = "Tab_%s" % tab_id
 		button.text = ""
 		button.custom_minimum_size = Vector2(min_width, 58.0)
-		button.focus_mode = Control.FOCUS_ALL
+		button.focus_mode = Control.FOCUS_NONE if _workspace_mode else Control.FOCUS_ALL
 		button.disabled = not enabled
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
 		button.tooltip_text = label_text if enabled else "%s — coming later" % label_text
@@ -370,7 +372,7 @@ func _tab_icon_for(tab_id: String) -> String:
 func _layout() -> void:
 	if _title == null:
 		return
-	if _workspace_mode and _tab_specs.is_empty():
+	if _workspace_mode:
 		_layout_workspace()
 		return
 
@@ -437,16 +439,32 @@ func _layout() -> void:
 
 
 func _layout_workspace() -> void:
-	_tabs_root.visible = false
+	_tabs_root.visible = not _tab_specs.is_empty()
 	var compact := size.x < 680.0
-	var show_bits_now := _show_bits and not compact
+	var show_bits_now := _show_bits and not compact and (not _tabs_root.visible or size.x >= 900.0)
 	_bits_badge.visible = show_bits_now
 	_brand_row.visible = true
 	_brand_row.position = Vector2(24.0, 12.0)
-	_brand_row.size = Vector2(maxf(180.0, size.x - 360.0), 60.0)
-	_subtitle.visible = size.x >= 520.0
+	_brand_row.size = Vector2((340.0 if size.x >= 900.0 else 220.0) if _tabs_root.visible else maxf(180.0, size.x - 360.0), 60.0)
+	_subtitle.visible = size.x >= (900.0 if _tabs_root.visible else 520.0)
 	_close_button.position = Vector2(maxf(0.0, size.x - 70.0), 16.0)
 	_close_button.size = Vector2(WORKSPACE_CLOSE_SIZE, WORKSPACE_CLOSE_SIZE)
 	if show_bits_now:
 		_bits_badge.position = Vector2(maxf(0.0, size.x - WORKSPACE_BITS_SIZE.x - 82.0), 17.0)
 		_bits_badge.size = WORKSPACE_BITS_SIZE
+	if _tabs_root.visible:
+		var tabs_left := 370.0 if size.x >= 900.0 else 258.0
+		var tabs_right := _bits_badge.position.x if show_bits_now else _close_button.position.x
+		_tabs_root.position = Vector2(tabs_left, 17.0)
+		_tabs_root.size = Vector2(maxf(0.0, tabs_right - tabs_left - 20.0), 50.0)
+		var tab_width := clampf((_tabs_root.size.x - 8.0) / float(_tab_specs.size()), 72.0, 150.0)
+		for value in _tab_buttons.values():
+			var button := value as Button
+			button.custom_minimum_size = Vector2(tab_width, 50.0)
+			var label := button.get_meta("tab_label") as Label
+			var icon := button.get_meta("tab_icon") as DigiProceduralIcon
+			if label != null:
+				label.visible = tab_width >= 94.0
+				label.add_theme_font_size_override("font_size", 14)
+			if icon != null:
+				icon.custom_minimum_size = Vector2(20.0, 20.0)

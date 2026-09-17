@@ -54,6 +54,8 @@ func _ready() -> void:
 	var expected_edge := 10.0 if compact else 24.0
 	var expected_top_gap := 12.0 if compact else 16.0
 	assert(header != null and header.is_workspace_mode(), "Main Digimon header must use the shared workspace header variant")
+	assert(header.get_tab_button("party") != null and header.get_tab_button("digipedia") != null and header.get_tab_button("system") != null, "Main header must expose Party, Digipedia and System tabs")
+	assert(menu.find_child("DigimonMenuBackground", true, false) != null, "Main menu must display its supplied background")
 	assert(is_equal_approx(header.size.y, expected_header), "Main Digimon header height must match the DigiLab/Hospital workspace chrome")
 	assert(is_equal_approx(footer.size.y, 54.0), "Main Digimon footer height must match the shared workspace footer")
 	assert(is_equal_approx(collection_panel.position.x, expected_edge), "Main Digimon content edge must match the shared workspace gutter")
@@ -119,13 +121,25 @@ func _ready() -> void:
 	rb.pressed = true
 	menu.call("_unhandled_input", rb)
 	await _frames(2)
-	assert(String(menu.get("_overview_tab")) != initial_overview, "RB must switch the detail overview between Stats and Development")
+	assert(String(menu.get("_main_tab")) == "digipedia", "RB must switch to Digipedia")
+	assert((menu.get("_soon_label") as Label).visible, "Digipedia must display its Soon placeholder")
+	menu.call("_unhandled_input", rb)
+	await _frames(2)
+	assert(String(menu.get("_main_tab")) == "system", "RB must switch to System")
 	var lb := InputEventJoypadButton.new()
 	lb.button_index = JOY_BUTTON_LEFT_SHOULDER
 	lb.pressed = true
 	menu.call("_unhandled_input", lb)
+	menu.call("_unhandled_input", lb)
 	await _frames(2)
-	assert(String(menu.get("_overview_tab")) == initial_overview, "LB must switch the detail overview back")
+	assert(String(menu.get("_main_tab")) == "party", "LB must return to Party")
+	assert(not (menu.get("_soon_label") as Label).visible, "Party must restore its roster and detail panels")
+	var x_button := InputEventJoypadButton.new()
+	x_button.button_index = JOY_BUTTON_X
+	x_button.pressed = true
+	menu.call("_unhandled_input", x_button)
+	await _frames(2)
+	assert(String(menu.get("_overview_tab")) != initial_overview, "X must switch Stats and Development")
 
 	menu.call("_open_techniques")
 	await _frames(3)
@@ -164,7 +178,7 @@ func _ready() -> void:
 	controller.pressed = true
 	footer.call("_input", controller)
 	var hint_keys := _hint_keys(footer.call("_menu_hints") as Array)
-	assert(hint_keys.has("LB/RB") and hint_keys.has("LT/RT") and hint_keys.has("D-PAD") and hint_keys.has("A") and hint_keys.has("B"), "Controller hints must expose overview tabs, pages, navigation, select and back")
+	assert(hint_keys.has("LB/RB") and hint_keys.has("X") and hint_keys.has("LT/RT") and hint_keys.has("D-PAD") and hint_keys.has("A") and hint_keys.has("B"), "Controller hints must expose main tabs, overview toggle, pages, navigation, select and back")
 	assert(not hint_keys.has("RS"), "Scroll hints must never appear on the redesigned main Digimon menu")
 
 	# Reusable analog hysteresis accepts one intentional movement per deflection.

@@ -2,6 +2,7 @@ extends "res://src/world/HubHospitalGameplay.gd"
 
 const BattleOperatorCatalogScript = preload("res://src/world/BattleOperatorEncounterCatalog.gd")
 const EncounterDefinitionScript = preload("res://src/world/BattleEncounterDefinition.gd")
+const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 
 const PROGRAM_ORDER: Array[String] = [
 	"basic",
@@ -19,6 +20,8 @@ var _battle_program_rng := RandomNumberGenerator.new()
 var _battle_program_buttons: Dictionary = {}
 var _battle_program_hint: Label = null
 var _battle_program_columns := 2
+var _left_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
+var _right_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
 
 
 func _ready() -> void:
@@ -92,6 +95,8 @@ func _battle_program_cancel_tooltip() -> void:
 
 
 func _open_dialog() -> void:
+	_left_analog_gate.reset()
+	_right_analog_gate.reset()
 	super._open_dialog()
 	if not _dialog_open:
 		return
@@ -231,6 +236,20 @@ func _rank_for_program(program_id: String) -> String:
 func _input(event: InputEvent) -> void:
 	if not _dialog_open or _transitioning:
 		super._input(event)
+		return
+	if event is InputEventJoypadMotion:
+		var motion := event as InputEventJoypadMotion
+		var gate := _right_analog_gate if motion.axis == JOY_AXIS_RIGHT_X or motion.axis == JOY_AXIS_RIGHT_Y else _left_analog_gate
+		var step := 0
+		if motion.axis == JOY_AXIS_LEFT_X or motion.axis == JOY_AXIS_RIGHT_X:
+			step = gate.horizontal_step(motion.axis_value)
+			if step != 0:
+				_focus_battle_program_delta(step, 0)
+		elif motion.axis == JOY_AXIS_LEFT_Y or motion.axis == JOY_AXIS_RIGHT_Y:
+			step = gate.vertical_step(motion.axis_value)
+			if step != 0:
+				_focus_battle_program_delta(0, step)
+		get_viewport().set_input_as_handled()
 		return
 
 	if event.is_action_pressed("ui_cancel"):
