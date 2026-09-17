@@ -75,6 +75,7 @@ var _card_area: VBoxContainer
 var _overview_stack: VBoxContainer
 var _health_panel: PanelContainer
 var _sp_panel: PanelContainer
+var _recovery_meta_row: HBoxContainer
 var _time_panel: PanelContainer
 var _cost_panel: PanelContainer
 var _overview_header: HBoxContainer
@@ -389,9 +390,19 @@ func _build_overview() -> void:
 	_sp_bar = sp_controls["bar"] as ProgressBar
 	_sp_progress = sp_controls["progress"] as Label
 
-	_time_panel = _information_panel(_overview_stack, "RecoveryTime", V2.CYAN, 58)
+	_recovery_meta_row = HBoxContainer.new()
+	_recovery_meta_row.name = "RecoveryMetaRow"
+	_recovery_meta_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_recovery_meta_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_recovery_meta_row.add_theme_constant_override("separation", 8)
+	_recovery_meta_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overview_stack.add_child(_recovery_meta_row)
+
+	_time_panel = _information_panel(_recovery_meta_row, "RecoveryTime", V2.CYAN, 58)
+	_time_panel.size_flags_stretch_ratio = 1.0
 	_time_value = _build_metric_content(_time_panel, "speed", null, "RECOVERY TIME", V2.CYAN)
-	_cost_panel = _information_panel(_overview_stack, "InstantRecovery", V2.AMBER, 58)
+	_cost_panel = _information_panel(_recovery_meta_row, "InstantRecovery", V2.AMBER, 58)
+	_cost_panel.size_flags_stretch_ratio = 1.0
 	_cost_value = _build_metric_content(_cost_panel, "", BITS_ICON, "INSTANT RECOVERY", V2.AMBER)
 
 	for spec in [
