@@ -61,6 +61,7 @@ var _health_after: Label
 var _health_arrow: TextureRect
 var _health_missing: Label
 var _health_bar: ProgressBar
+var _sp_bar: ProgressBar
 var _time_value: Label
 var _cost_value: Label
 var _confirmation: DigiConfirmationModal
@@ -376,7 +377,7 @@ func _build_overview() -> void:
 
 	for spec in [
 		["admit", "ADMIT · FREE", "Move to Hospital for timed recovery", V2.CYAN, "brand"],
-		["recover", "RECOVER NOW", "Restore HP immediately", V2.WHITE, "speed"],
+		["recover", "RECOVER NOW", "Restore HP and SP immediately", V2.WHITE, "speed"],
 		["discharge", "DISCHARGE", "Remove from Hospital", V2.GREEN, "move"],
 	]:
 		var button := _create_action_button(String(spec[0]), String(spec[1]), String(spec[2]), spec[3] as Color, String(spec[4]))
@@ -404,7 +405,7 @@ func _build_health_content(panel: PanelContainer) -> void:
 	icon.custom_minimum_size = Vector2(23, 23)
 	icon.configure("heart", V2.GREEN)
 	title_row.add_child(icon)
-	var title := _flow_label(title_row, "HEALTH RECOVERY", 16, V2.TEXT, true)
+	var title := _flow_label(title_row, "HP + SP RECOVERY", 16, V2.TEXT, true)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var values := HBoxContainer.new()
@@ -433,6 +434,9 @@ func _build_health_content(panel: PanelContainer) -> void:
 	_health_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_health_missing = _flow_label(stack, "", 13, V2.MUTED, false)
 	_health_missing.custom_minimum_size.y = 17
+	_sp_bar = _progress(stack, "SpBar")
+	_sp_bar.custom_minimum_size.y = 8
+	_sp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 
 func _build_metric_content(panel: PanelContainer, icon_kind: String, texture: Texture2D, title_text: String, accent: Color) -> Label:
@@ -546,7 +550,7 @@ func _layout() -> void:
 func _apply_density(compact: bool) -> void:
 	if _health_panel == null:
 		return
-	_health_panel.custom_minimum_size.y = 94 if compact else 112
+	_health_panel.custom_minimum_size.y = 110 if compact else 120
 	_time_panel.custom_minimum_size.y = 52 if compact else 62
 	_cost_panel.custom_minimum_size.y = 52 if compact else 62
 	_overview_header.custom_minimum_size.y = 29 if compact else 34
@@ -692,7 +696,7 @@ func _create_patient_card(instance: DigimonInstance) -> Button:
 	var level := _flow_label(info, "Lv. %d" % instance.level, 14, V2.TEXT, false)
 	level.name = "Level"
 	level.custom_minimum_size.y = 18
-	var health := _flow_label(info, "HP  %d / %d" % [int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1))], 14, V2.TEXT, false)
+	var health := _flow_label(info, "HP %d / %d  ·  SP %d / %d" % [int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1)), int(preview.get("current_sp", 0)), int(preview.get("max_sp", 0))], 12, V2.TEXT, false)
 	health.name = "Health"
 	health.custom_minimum_size.y = 18
 	var bar := _progress(info, "HpBar")
@@ -725,7 +729,7 @@ func _refresh_card_values() -> void:
 		var preview := OverworldState.get_hospital_preview(id)
 		var health := card.find_child("Health", true, false) as Label
 		if health != null:
-			health.text = "HP  %d / %d" % [int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1))]
+			health.text = "HP %d / %d  ·  SP %d / %d" % [int(preview.get("current_hp", 0)), int(preview.get("max_hp", 1)), int(preview.get("current_sp", 0)), int(preview.get("max_sp", 0))]
 		var bar := card.find_child("HpBar", true, false) as ProgressBar
 		if bar != null:
 			bar.max_value = maxf(1.0, float(preview.get("max_hp", 1)))
@@ -751,6 +755,9 @@ func _refresh_detail() -> void:
 		_health_after.text = "—"
 		_health_arrow.visible = false
 		_health_missing.text = ""
+		if _sp_bar != null:
+			_sp_bar.max_value = 1.0
+			_sp_bar.value = 0.0
 		_time_value.text = "—"
 		_cost_value.text = "—"
 		for button in _actions.values():
@@ -767,6 +774,9 @@ func _refresh_detail() -> void:
 	var location := String(preview.get("location", "")).to_upper()
 	var current_hp := int(preview.get("current_hp", 0))
 	var max_hp := int(preview.get("max_hp", 1))
+	var current_sp := int(preview.get("current_sp", 0))
+	var max_sp := int(preview.get("max_sp", 0))
+	var recovery_progress := clampf(float(preview.get("recovery_progress", 0.0)), 0.0, 1.0)
 
 	_hero_name.text = name
 	_hero_info.text = "%s   |   Level %d   |" % [String(species.get("rank", "")), instance.level]
@@ -785,7 +795,12 @@ func _refresh_detail() -> void:
 	_health_arrow.visible = true
 	_health_bar.max_value = maxf(1.0, float(max_hp))
 	_health_bar.value = current_hp
-	_health_missing.text = "%d%% HP missing" % int(round(float(preview.get("missing_hp_ratio", 0.0)) * 100.0))
+	_health_missing.text = "SP %d / %d" % [current_sp, max_sp]
+	if String(preview.get("location", "")) == PlayerCollection.LOCATION_HOSPITAL:
+		_health_missing.text += "   ·   RECOVERY %d%%" % int(round(recovery_progress * 100.0))
+	if _sp_bar != null:
+		_sp_bar.max_value = maxf(1.0, float(max_sp))
+		_sp_bar.value = current_sp
 	_time_value.text = _time_text(preview)
 	_cost_value.text = "%d Bits" % int(preview.get("instant_cost", 0))
 
@@ -923,7 +938,7 @@ func _request_action(action: String) -> void:
 	if action == "admit":
 		_confirmation.configure("ADMIT THIS DIGIMON?", "Timed recovery takes %s. This Digimon leaves the Party until discharged." % _format_duration(int(preview.get("recovery_seconds", 0))), "ADMIT", "CANCEL", V2.CYAN, "DIGI HOSPITAL")
 	elif action == "recover":
-		_confirmation.configure("RECOVER NOW?", "Spend %d Bits to fully restore HP? This Digimon remains in Hospital until discharged." % int(preview.get("instant_cost", 0)), "SPEND BITS", "CANCEL", V2.AMBER, "DIGI HOSPITAL")
+		_confirmation.configure("RECOVER NOW?", "Spend %d Bits to fully restore HP and SP? This Digimon remains in Hospital until discharged." % int(preview.get("instant_cost", 0)), "SPEND BITS", "CANCEL", V2.AMBER, "DIGI HOSPITAL")
 	else:
 		var destination := "Party" if OverworldState.get_active_instances().size() < OverworldState.get_max_active_party_size() else "Storage"
 		_confirmation.configure("DISCHARGE THIS DIGIMON?", "Recovery is complete. Send this Digimon to %s?" % destination, "DISCHARGE", "CANCEL", V2.GREEN, "DIGI HOSPITAL")
@@ -942,7 +957,7 @@ func _confirm_action() -> void:
 		"recover": result = OverworldState.recover_from_hospital_now(target_id)
 		"discharge": result = OverworldState.discharge_from_hospital(target_id)
 	if bool(result.get("success", false)):
-		_notice = "Treatment started." if action == "admit" else ("HP restored. Ready for discharge." if action == "recover" else "Discharged successfully.")
+		_notice = "Treatment started." if action == "admit" else ("HP and SP restored. Ready for discharge." if action == "recover" else "Discharged successfully.")
 		_notice_color = V2.GREEN
 		_interaction_mode = InteractionMode.EXPLORE
 		_confirmed_id = ""
