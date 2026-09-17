@@ -12,6 +12,7 @@ var _subtitle_text := ""
 var _status_text := ""
 var _content_built := false
 var _compact := false
+var _last_disabled := false
 
 
 func configure(title: String, subtitle: String, status: String, icon_kind: String, accent: Color) -> DigiCommandButton:
@@ -33,9 +34,21 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(180.0, 64.0 if _compact else 76.0)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	clip_contents = false
+	_last_disabled = disabled
+	set_process(true)
 	_apply_styles()
 	_rebuild_content()
 	_content_built = true
+
+
+func _process(_delta: float) -> void:
+	# `disabled` is a built-in Button property and can be changed by any screen.
+	# Mirror that state into the icon/copy only when it actually changes so the
+	# shared component always has a complete disabled treatment, not just a dim
+	# background supplied by the theme.
+	if _content_built and disabled != _last_disabled:
+		_last_disabled = disabled
+		_rebuild_content()
 
 
 func set_compact(compact: bool) -> void:
@@ -49,6 +62,7 @@ func set_interactive(interactive: bool) -> void:
 	disabled = not interactive
 	focus_mode = Control.FOCUS_ALL if interactive else Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if interactive else Control.CURSOR_ARROW
+	_last_disabled = disabled
 	if _content_built:
 		_rebuild_content()
 
