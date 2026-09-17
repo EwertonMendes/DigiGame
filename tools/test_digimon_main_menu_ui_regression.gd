@@ -15,6 +15,10 @@ func _ready() -> void:
 	var factory: DigimonFactory = FactoryScript.new(database)
 	var starter := OverworldState.get_active_instances()
 	assert(not starter.is_empty(), "Digimon menu regression requires the starter Party")
+	# The shared test reset now seeds the normal three-member gameplay Party.
+	# Collapse it through the public Party API before building the five-member UI
+	# fixture so this regression stays valid as the production starter roster evolves.
+	assert(OverworldState.set_active_party([starter[0].id]), "Regression fixture must start from one active Digimon")
 
 	# Build a five-member Party through public collection/party APIs so pagination
 	# is exercised without reaching into production state internals.
