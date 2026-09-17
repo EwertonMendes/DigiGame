@@ -184,8 +184,11 @@ func _test_discharge_destinations(database: DigimonDatabase, factory: DigimonFac
 	var patient := factory.create_player_by_name("agumon", 10, 100)
 	var teammate := factory.create_player_by_name("gabumon", 10, 100)
 	var reserve := factory.create_player_by_name("veemon", 10, 100)
-	var max_hp := stats.get_stat(patient, database.get_by_seed(patient.species_seed), "hp")
+	var patient_species := database.get_by_seed(patient.species_seed)
+	var max_hp := stats.get_stat(patient, patient_species, "hp")
+	var max_sp := stats.get_stat(patient, patient_species, "mp")
 	patient.current_hp = 0
+	patient.set_current_sp(0)
 	collection.add_instance(patient, "agumon", "Agumon")
 	collection.add_instance(teammate, "gabumon", "Gabumon")
 	collection.add_instance(reserve, "veemon", "Veemon")
