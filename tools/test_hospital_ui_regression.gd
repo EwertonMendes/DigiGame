@@ -1,6 +1,7 @@
 extends Node
 
 const HospitalScreenScript = preload("res://src/ui/DigiHospitalScreen.gd")
+const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 
 func _ready() -> void:
@@ -44,6 +45,7 @@ func _ready() -> void:
 
 	var tier_icon := hospital.get("_hero_tier_icon") as DigiTierIcon
 	var hp_arrow := hospital.get("_health_arrow") as TextureRect
+	var sp_arrow := hospital.get("_sp_arrow") as TextureRect
 	var bits_badge := hospital.get("_header").get_node("BitsBadge") as Panel
 	var bits_icon: TextureRect = null
 	for child in bits_badge.get_children():
@@ -51,15 +53,25 @@ func _ready() -> void:
 			bits_icon = child as TextureRect
 			break
 	assert(tier_icon != null and tier_icon.texture != null, "Patient details must reuse the shared Tier artwork")
-	assert(hp_arrow != null and hp_arrow.texture != null, "Health transition must use the packaged arrow asset")
+	assert(hp_arrow != null and hp_arrow.texture != null, "HP recovery transition must use the packaged arrow asset")
+	assert(sp_arrow != null and sp_arrow.texture != null, "SP recovery transition must use the packaged arrow asset")
 	assert(bits_icon != null and bits_icon.texture != null and bits_icon.visible, "Hospital header must visibly use the packaged Bits icon")
 
 	var health_panel := hospital.get("_health_panel") as PanelContainer
+	var sp_panel := hospital.get("_sp_panel") as PanelContainer
 	var time_panel := hospital.get("_time_panel") as PanelContainer
 	var cost_panel := hospital.get("_cost_panel") as PanelContainer
-	var sp_bar := health_panel.find_child("SpBar", true, false) as ProgressBar
-	assert(sp_bar != null, "Recovery overview must expose a dedicated SP progress bar")
-	assert(health_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Health overview must keep authored card height")
+	var hp_bar := health_panel.find_child("HpBar", true, false) as ProgressBar
+	var sp_bar := sp_panel.find_child("SpBar", true, false) as ProgressBar
+	assert(hp_bar != null, "HP recovery card must expose its own HP progress bar")
+	assert(sp_bar != null, "SP recovery card must expose its own SP progress bar")
+	var hp_fill := hp_bar.get_theme_stylebox("fill")
+	var sp_fill := sp_bar.get_theme_stylebox("fill")
+	assert(hp_fill is StyleBoxFlat and (hp_fill as StyleBoxFlat).bg_color == V2.GREEN, "HP recovery bar must use the semantic green accent")
+	assert(sp_fill is StyleBoxFlat and (sp_fill as StyleBoxFlat).bg_color == V2.BLUE, "SP recovery bar must use the semantic blue accent")
+	assert(health_panel.custom_minimum_size.y == sp_panel.custom_minimum_size.y, "HP and SP recovery cards must have equal authored height")
+	assert(health_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "HP recovery overview must keep authored card height")
+	assert(sp_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "SP recovery overview must keep authored card height")
 	assert(time_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Recovery-time overview must keep authored card height")
 	assert(cost_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Recovery-cost overview must keep authored card height")
 
