@@ -174,7 +174,7 @@ func _layout() -> void:
 	var compact := _variant == VARIANT_COMPACT or h <= 44.0
 	var emphasis := _variant == VARIANT_EMPHASIS and h >= 56.0
 	var medal_size := 34.0 if compact else (44.0 if emphasis else 40.0)
-	var outer_pad := 6.0 if compact else 6.0
+	var outer_pad := 6.0
 	var medal_y := floor((h - medal_size) * 0.5)
 	_medallion.position = Vector2(outer_pad, medal_y)
 	_medallion.size = Vector2(medal_size, medal_size)
@@ -219,7 +219,7 @@ func _play_delta(delta: int) -> void:
 		return
 	if _delta_tween != null and _delta_tween.is_valid():
 		_delta_tween.kill()
-	_delta_label.text = "%+d" % delta
+	_delta_label.text = "+%d" % delta if delta > 0 else str(delta)
 	_delta_label.add_theme_font_size_override("font_size", 11)
 	_delta_label.add_theme_color_override("font_color", V2.GREEN if delta > 0 else V2.AMBER)
 	_delta_label.modulate = Color.WHITE
