@@ -13,6 +13,11 @@ static func apply_bits_icon(root: Node) -> void:
 	if root == null:
 		return
 	_replace_bits_texture(root)
+	# DigiBitsDisplay owns its complete presentation. The legacy polish pass is
+	# intentionally skipped when the shared premium component is present so old
+	# screen compatibility helpers cannot resize or restyle it underneath us.
+	if root.find_child("BitsDisplay", true, false) is DigiBitsDisplay or root.find_child("BitsBadge", true, false) is DigiBitsDisplay:
+		return
 	if root is Control:
 		var control := root as Control
 		_polish_bits_badge(control)
