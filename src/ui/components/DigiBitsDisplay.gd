@@ -127,27 +127,10 @@ func _build() -> void:
 
 
 func _apply_variant() -> void:
-	var outer: StyleBoxFlat = V2.surface_style(
-		Color.TRANSPARENT,
-		Color.TRANSPARENT,
-		12
-	)
-	outer.set_border_width_all(0)
-	outer.border_blend = true
-	outer.shadow_color = Color.TRANSPARENT
-	outer.shadow_size = 0
-	outer.shadow_offset = Vector2(0.0, 2.0)
-	add_theme_stylebox_override("panel", outer)
-
-	var medallion_style: StyleBoxFlat = V2.surface_style(
-		Color.TRANSPARENT,
-		Color.TRANSPARENT,
-		10
-	)
-	medallion_style.set_border_width_all(0)
-	medallion_style.shadow_color = Color.TRANSPARENT
-	medallion_style.shadow_size = 0
-	_medallion.add_theme_stylebox_override("panel", medallion_style)
+	# The header itself is the backdrop. The currency readout must not become
+	# another card inside the header, so both layout panels are fully transparent.
+	add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
+	_medallion.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 
 	_value_label.add_theme_color_override("font_color", V2.WHITE)
 	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.86))
