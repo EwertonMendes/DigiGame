@@ -1,8 +1,9 @@
 extends Node
 
-const MenuScript = preload("res://src/ui/DigiIconProgressionMenu.gd")
+const MenuScript = preload("res://src/ui/DigiWorkspaceProgressionMenu.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
+const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 
 func _ready() -> void:
@@ -26,7 +27,7 @@ func _ready() -> void:
 	var party := OverworldState.get_active_instances()
 	assert(party.size() == 5, "Regression setup must expose five active Digimon")
 
-	var menu := MenuScript.new() as DigiIconProgressionMenu
+	var menu := MenuScript.new() as DigiWorkspaceProgressionMenu
 	add_child(menu)
 	menu.open_menu()
 	await _frames(4)
@@ -38,10 +39,32 @@ func _ready() -> void:
 	assert(detail_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Main Digimon detail workspace must be scroll-free")
 	assert(detail_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Main Digimon detail workspace must remain horizontally contained")
 
+	# The main menu must use the exact workspace chrome language established by
+	# DigiLab/Hospital instead of a visually similar but independently sized shell.
+	var header := menu.get("_header") as DigiModalHeader
+	var footer := menu.get("_hint_bar") as DigiInputHintBar
+	var collection_panel := menu.get("_collection_panel") as Control
+	var physical := V2.physical_window_size(get_viewport())
+	var compact := physical.x < 980.0 or physical.y < 600.0
+	var expected_header := 72.0 if compact else 86.0
+	var expected_edge := 10.0 if compact else 24.0
+	var expected_top_gap := 12.0 if compact else 16.0
+	assert(header != null and header.is_workspace_mode(), "Main Digimon header must use the shared workspace header variant")
+	assert(is_equal_approx(header.size.y, expected_header), "Main Digimon header height must match the DigiLab/Hospital workspace chrome")
+	assert(is_equal_approx(footer.size.y, 54.0), "Main Digimon footer height must match the shared workspace footer")
+	assert(is_equal_approx(collection_panel.position.x, expected_edge), "Main Digimon content edge must match the shared workspace gutter")
+	assert(is_equal_approx(collection_panel.position.y, expected_header + expected_top_gap), "Main Digimon body must align with the shared workspace header spacing")
+
 	var buttons := menu.get("_buttons") as Array
 	var pager := menu.get("_roster_pager") as DigiPager
 	assert(buttons.size() == 3, "Roster page must render exactly three cards when at least three Digimon are available")
 	assert(pager.get_page_count() == 2 and pager.get_page() == 0, "Five active Digimon must produce two roster pages")
+	var pager_previous := pager.get_node("PreviousPage") as Button
+	var pager_next := pager.get_node("NextPage") as Button
+	var pager_label := pager.get_node("PageIndicator") as Label
+	assert(pager_previous.visible and pager_next.visible and pager_label.visible, "Workspace pager must keep its arrows and page indicator visible")
+	assert(pager_previous.disabled and not pager_next.disabled, "Workspace pager must disable only the unavailable page direction")
+	assert(pager_previous.custom_minimum_size == Vector2(52.0, 43.0), "Workspace pager arrows must use the DigiLab/Hospital dimensions")
 	for raw_button in buttons:
 		var card := raw_button as Button
 		assert(card != null and card.custom_minimum_size.y >= 100.0, "Paged Digimon cards must retain a readable authored height")
@@ -62,6 +85,7 @@ func _ready() -> void:
 	menu.call("_turn_roster_page", 1)
 	await _frames(3)
 	assert(int(menu.get("_roster_page")) == 1 and int(menu.get("_selected_index")) == 3, "Explicit pagination must move to the next Party page and select its first Digimon")
+	assert(not pager_previous.disabled and pager_next.disabled, "Last workspace roster page must expose a disabled next arrow instead of wrapping")
 	buttons = menu.get("_buttons") as Array
 	assert(buttons.size() == 2, "Final Party page must show only its actual Digimon and leave unused space empty")
 
@@ -75,8 +99,9 @@ func _ready() -> void:
 	for raw_command in commands:
 		var command := raw_command as Button
 		assert(command != null and not command.disabled and command.focus_mode == Control.FOCUS_ALL, "Commands must become interactive only after Digimon confirmation")
-	var close_button := (menu.get("_header") as DigiModalHeader).get_close_button()
+	var close_button := header.get_close_button()
 	assert(close_button != null and close_button.focus_mode == Control.FOCUS_NONE, "Header close X must stay out of controller directional focus")
+	assert(close_button.custom_minimum_size == Vector2(48.0, 48.0), "Header close button must match the DigiLab/Hospital workspace target size")
 	var overview_tabs := menu.get("_overview_tab_buttons") as Dictionary
 	for raw_tab in overview_tabs.values():
 		assert((raw_tab as Button).focus_mode == Control.FOCUS_NONE, "Overview tabs must be changed by shoulder buttons, not D-pad focus")
@@ -104,7 +129,15 @@ func _ready() -> void:
 	assert(detail_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Technique Library must remain paged instead of scrollable")
 	var technique_panel := menu.get("_technique_panel") as Control
 	assert(technique_panel != null and technique_panel.visible, "Technique Library must own a dedicated contained workspace")
+	var technique_back := technique_panel.find_child("TechniqueBack", true, false) as Button
+	assert(technique_back != null and technique_back.visible and technique_back.focus_mode == Control.FOCUS_ALL, "Technique Library must expose a visible touch/controller Back button")
+	technique_back.pressed.emit()
+	await _frames(2)
+	assert(int(menu.get("_mode")) == 1 and menu.visible, "Visible Technique Back button must return to Digimon details/commands")
 
+	# ESC/B must retain the same nested back semantics as the visible affordance.
+	menu.call("_open_techniques")
+	await _frames(2)
 	var back := InputEventAction.new()
 	back.action = "ui_cancel"
 	back.pressed = true
@@ -117,7 +150,6 @@ func _ready() -> void:
 
 	# The shared hint bar tracks the last input family. Touch hides legends while
 	# controller mode advertises shoulder tabs and trigger pagination.
-	var footer := menu.get("_hint_bar") as DigiInputHintBar
 	var touch := InputEventScreenTouch.new()
 	touch.pressed = true
 	footer.call("_input", touch)
