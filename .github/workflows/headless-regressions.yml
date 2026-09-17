@@ -61,7 +61,7 @@ jobs:
             command: godot --headless --path . tools/test_digimon_main_menu_ui_regression.tscn --quit-after 70
             success: digimon main menu ui regression passed
           - name: system-audio-settings
-            command: godot --headless --path . -s tools/test_system_audio_settings.gd
+            command: godot --headless --path . tools/test_system_audio_settings.tscn --quit-after 30
             success: system audio settings regression passed
           - name: evolution-chart-ui-v2
             command: godot --headless --path . tools/test_evolution_chart_ui_v2_regression.tscn --quit-after 20
