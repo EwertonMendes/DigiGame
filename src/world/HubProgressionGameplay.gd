@@ -1,6 +1,6 @@
 extends "res://src/world/HubMobileGameplay.gd"
 
-const DigimonCollectionMenuScript = preload("res://src/ui/DigiWorkspaceProgressionMenu.gd")
+const DigimonCollectionMenuScript = preload("res://src/ui/DigiSystemProgressionMenu.gd")
 const DigiLabHubScreenScript = preload("res://src/ui/DigiLabHubScreen.gd")
 
 var _digimon_menu: DigimonCollectionMenu = null

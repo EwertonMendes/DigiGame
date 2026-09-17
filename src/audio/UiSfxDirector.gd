@@ -14,6 +14,8 @@ extends Node
 ## and SVG resources have finished importing; referencing a UI class here would
 ## force those scripts (and their texture preloads) to compile too early.
 
+const AudioBusIdsScript = preload("res://src/audio/AudioBusIds.gd")
+
 const ROLE_CONFIRM := "confirm"
 const ROLE_NAVIGATION := "navigation"
 const ROLE_BACK := "back"
@@ -200,6 +202,7 @@ func _build_players() -> void:
 		var player := AudioStreamPlayer.new()
 		player.name = "UiSfx_%s" % cue.capitalize()
 		player.stream = stream
+		player.bus = AudioBusIdsScript.UI
 		player.volume_db = float(definition.get("volume_db", 0.0))
 		player.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(player)

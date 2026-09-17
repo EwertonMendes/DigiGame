@@ -9,6 +9,8 @@ extends Node
 
 signal track_changed(track_id: String)
 
+const AudioBusIdsScript = preload("res://src/audio/AudioBusIds.gd")
+
 const TRACK_ZONE_1 := "zone_1"
 const TRACK_BATTLE_1 := "battle_1"
 const TRACK_VICTORY_THEME := "victory_theme"
@@ -53,6 +55,7 @@ func _ready() -> void:
 	for index in range(2):
 		var player := AudioStreamPlayer.new()
 		player.name = "MusicPlayer%d" % (index + 1)
+		player.bus = AudioBusIdsScript.MUSIC
 		player.volume_db = SILENT_VOLUME_DB
 		player.finished.connect(_on_player_finished.bind(index))
 		add_child(player)
