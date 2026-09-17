@@ -81,8 +81,9 @@ func get_value_label() -> Label:
 
 
 func _build() -> void:
-	# Kept as an invisible positioning/animation anchor. The currency artwork is
-	# deliberately not placed inside another visible tile.
+	# The mark is only a positioning/animation anchor. The HUD frame itself is
+	# drawn procedurally by this control, so the Bits artwork never sits inside
+	# a nested rounded card or requires another texture asset.
 	_medallion = Panel.new()
 	_medallion.name = "BitsMark"
 	_medallion.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -114,7 +115,7 @@ func _build() -> void:
 	_currency_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_currency_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_currency_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	V2.apply_body(_currency_label)
+	V2.apply_heading(_currency_label)
 	add_child(_currency_label)
 
 	_delta_label = Label.new()
@@ -129,58 +130,159 @@ func _build() -> void:
 
 
 func _apply_variant() -> void:
-	# The header is the backdrop. Both Panels are layout nodes only: no rounded
-	# rectangle, no nested icon square, no border and no glow container.
-	add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
-	_medallion.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
+	# The panel shape is intentionally custom-drawn with cut corners. Keeping the
+	# theme surface empty prevents Godot from reintroducing the old rounded card.
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	_medallion.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
 	_value_label.add_theme_color_override("font_color", V2.WHITE)
-	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.92))
+	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.98))
 
 	match _variant:
 		VARIANT_COMPACT:
-			custom_minimum_size = Vector2(150.0, 42.0)
-			_value_label.add_theme_font_size_override("font_size", 18)
+			custom_minimum_size = Vector2(170.0, 44.0)
+			_value_label.add_theme_font_size_override("font_size", 19)
 			_currency_label.add_theme_font_size_override("font_size", 8)
 		VARIANT_EMPHASIS:
-			custom_minimum_size = Vector2(204.0, 60.0)
-			_value_label.add_theme_font_size_override("font_size", 26)
+			custom_minimum_size = Vector2(232.0, 64.0)
+			_value_label.add_theme_font_size_override("font_size", 27)
 			_currency_label.add_theme_font_size_override("font_size", 10)
 		_:
-			custom_minimum_size = Vector2(184.0, 52.0)
-			_value_label.add_theme_font_size_override("font_size", 23)
+			custom_minimum_size = Vector2(208.0, 56.0)
+			_value_label.add_theme_font_size_override("font_size", 24)
 			_currency_label.add_theme_font_size_override("font_size", 9)
+	queue_redraw()
+
+
+func _draw() -> void:
+	if size.x < 24.0 or size.y < 20.0:
+		return
+
+	var compact: bool = _is_compact_layout()
+	var emphasis: bool = _is_emphasis_layout()
+	var w: float = size.x
+	var h: float = size.y
+	var inset: float = 1.5
+	var cut: float = 7.0 if compact else (11.0 if emphasis else 9.0)
+
+	var frame := PackedVector2Array([
+		Vector2(inset + cut, inset),
+		Vector2(w - inset - cut, inset),
+		Vector2(w - inset, inset + cut),
+		Vector2(w - inset, h - inset - cut),
+		Vector2(w - inset - cut, h - inset),
+		Vector2(inset + cut, h - inset),
+		Vector2(inset, h - inset - cut),
+		Vector2(inset, inset + cut),
+	])
+	var outline := frame.duplicate()
+	outline.append(frame[0])
+
+	# A deep blue-black HUD plate with a faint cyan inner wash. Both remain fully
+	# inside the component bounds so the badge never leaks out of the header.
+	draw_colored_polygon(frame, Color(0.012, 0.033, 0.046, 0.94))
+	var inner_inset: float = 3.0
+	var inner_cut: float = maxf(3.0, cut - 2.0)
+	var inner := PackedVector2Array([
+		Vector2(inner_inset + inner_cut, inner_inset),
+		Vector2(w - inner_inset - inner_cut, inner_inset),
+		Vector2(w - inner_inset, inner_inset + inner_cut),
+		Vector2(w - inner_inset, h - inner_inset - inner_cut),
+		Vector2(w - inner_inset - inner_cut, h - inner_inset),
+		Vector2(inner_inset + inner_cut, h - inner_inset),
+		Vector2(inner_inset, h - inner_inset - inner_cut),
+		Vector2(inner_inset, inner_inset + inner_cut),
+	])
+	draw_colored_polygon(inner, Color(0.020, 0.070, 0.090, 0.22))
+
+	# Layered cyan edge: a restrained glow plus a crisp game-HUD outline.
+	draw_polyline(outline, Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.10), 4.0, true)
+	draw_polyline(outline, Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.78), 1.35, true)
+
+	# Bright corner strokes reproduce the segmented sci-fi construction from the
+	# approved concept without needing exported frame assets.
+	var corner_color := Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.98)
+	var corner_len: float = 15.0 if compact else 20.0
+	draw_line(Vector2(inset + cut, inset), Vector2(minf(w * 0.32, inset + cut + corner_len), inset), corner_color, 2.0, true)
+	draw_line(Vector2(w - inset - cut, inset), Vector2(maxf(w * 0.72, w - inset - cut - corner_len), inset), corner_color, 2.0, true)
+	draw_line(Vector2(inset, inset + cut), Vector2(inset, minf(h * 0.52, inset + cut + 13.0)), corner_color, 2.0, true)
+	draw_line(Vector2(w - inset, h - inset - cut), Vector2(w - inset, maxf(h * 0.58, h - inset - cut - 13.0)), corner_color, 2.0, true)
+
+	# The vertical separator makes the coin read as an equipment/status module
+	# rather than a generic rounded badge.
+	var divider_x: float = _left_zone_width()
+	draw_line(
+		Vector2(divider_x, 10.0 if compact else 11.0),
+		Vector2(divider_x, h - (10.0 if compact else 11.0)),
+		Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.55),
+		1.0,
+		true
+	)
+
+	# Three amber diagnostic slashes give the economy module a distinct game-like
+	# signature while staying small enough not to compete with the balance.
+	var accent_y: float = h - (8.0 if compact else 9.0)
+	var accent_start: float = w - (28.0 if compact else 35.0)
+	var accent_step: float = 7.0 if compact else 8.0
+	var accent_len: float = 8.0 if compact else 10.0
+	for index in range(3):
+		var x: float = accent_start + float(index) * accent_step
+		draw_line(
+			Vector2(x, accent_y),
+			Vector2(x + accent_len * 0.55, accent_y - accent_len * 0.70),
+			Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.96),
+			2.5 if compact else 3.0,
+			true
+		)
 
 
 func _layout() -> void:
 	if _medallion == null:
 		return
 	var height: float = size.y
-	var compact: bool = _variant == VARIANT_COMPACT or height <= 44.0
-	var emphasis: bool = _variant == VARIANT_EMPHASIS and height >= 56.0
-	var mark_size: float = 38.0 if compact else (54.0 if emphasis else 48.0)
-	var mark_y: float = floorf((height - mark_size) * 0.5)
-	_medallion.position = Vector2(0.0, mark_y)
-	_medallion.size = Vector2(mark_size, mark_size)
-
+	var compact: bool = _is_compact_layout()
+	var emphasis: bool = _is_emphasis_layout()
+	var left_zone: float = _left_zone_width()
+	var icon_size: float = 36.0 if compact else (52.0 if emphasis else 48.0)
+	var icon_x: float = floorf((left_zone - icon_size) * 0.5)
+	var icon_y: float = floorf((height - icon_size) * 0.5)
+	_medallion.position = Vector2(icon_x, icon_y)
+	_medallion.size = Vector2(icon_size, icon_size)
 	_icon.position = Vector2.ZERO
-	_icon.size = Vector2(mark_size, mark_size)
+	_icon.size = Vector2(icon_size, icon_size)
 
-	var copy_x: float = mark_size + (10.0 if compact else 13.0)
-	var copy_w: float = maxf(0.0, size.x - copy_x)
+	var copy_x: float = left_zone + (11.0 if compact else 13.0)
+	var copy_w: float = maxf(0.0, size.x - copy_x - (36.0 if compact else 44.0))
 	if compact:
-		_value_label.position = Vector2(copy_x, 0.0)
-		_value_label.size = Vector2(copy_w, 26.0)
+		_value_label.position = Vector2(copy_x, 1.0)
+		_value_label.size = Vector2(copy_w, 25.0)
 		_currency_label.position = Vector2(copy_x + 1.0, 23.0)
-		_currency_label.size = Vector2(copy_w, 14.0)
+		_currency_label.size = Vector2(copy_w, 13.0)
 	else:
-		_value_label.position = Vector2(copy_x, 0.0 if not emphasis else 1.0)
-		_value_label.size = Vector2(copy_w, 33.0 if not emphasis else 37.0)
-		_currency_label.position = Vector2(copy_x + 1.0, 30.0 if not emphasis else 35.0)
-		_currency_label.size = Vector2(copy_w, 16.0)
+		_value_label.position = Vector2(copy_x, 1.0 if not emphasis else 2.0)
+		_value_label.size = Vector2(copy_w, 31.0 if not emphasis else 36.0)
+		_currency_label.position = Vector2(copy_x + 1.0, 30.0 if not emphasis else 36.0)
+		_currency_label.size = Vector2(copy_w, 15.0)
 
-	_delta_label.position = Vector2(copy_x, -10.0)
-	_delta_label.size = Vector2(copy_w, 20.0)
+	_delta_label.position = Vector2(copy_x, -7.0)
+	_delta_label.size = Vector2(copy_w, 18.0)
+	queue_redraw()
+
+
+func _left_zone_width() -> float:
+	if _is_compact_layout():
+		return 58.0
+	if _is_emphasis_layout():
+		return 76.0
+	return 68.0
+
+
+func _is_compact_layout() -> bool:
+	return _variant == VARIANT_COMPACT or size.y <= 46.0
+
+
+func _is_emphasis_layout() -> bool:
+	return _variant == VARIANT_EMPHASIS and size.y >= 60.0
 
 
 func _refresh_copy() -> void:
