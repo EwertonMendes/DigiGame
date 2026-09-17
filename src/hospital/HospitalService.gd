@@ -10,22 +10,36 @@ func _init(calculator: HospitalRecoveryCalculator = null) -> void:
 	_calculator = calculator if calculator != null else CalculatorScript.new() as HospitalRecoveryCalculator
 
 
-func preview(instance: DigimonInstance, max_hp: int, available_bits: int, now_unix: int = -1, location: String = "") -> Dictionary:
+func preview(instance: DigimonInstance, max_hp: int, max_sp: int, available_bits: int, now_unix: int = -1, location: String = "") -> Dictionary:
 	var now := _resolve_now(now_unix)
-	var normalized_max := maxi(1, max_hp)
-	var status := status_for(instance, normalized_max, now, location)
+	var normalized_max_hp := maxi(1, max_hp)
+	var normalized_max_sp := maxi(0, max_sp)
+	var status := status_for(instance, normalized_max_hp, now, location)
 	var hospitalized := location == PlayerCollection.LOCATION_HOSPITAL
 	var party_member := location == PlayerCollection.LOCATION_PARTY
-	var cost := _calculator.instant_cost(instance, normalized_max)
-	var duration := _calculator.recovery_seconds(instance, normalized_max)
+	var cost := _calculator.instant_cost(instance, normalized_max_hp)
+	var duration := _calculator.recovery_seconds(instance, normalized_max_hp)
 	var completes_at := instance.get_hospital_recovery_end_time() if instance != null else 0
+	var progress := _recovery_progress(instance, now) if hospitalized else 0.0
+	var current_hp := clampi(instance.current_hp, 0, normalized_max_hp) if instance != null else 0
+	var current_sp := clampi(instance.get_current_sp(), 0, normalized_max_sp) if instance != null else 0
+	if hospitalized and instance != null and instance.has_hospital_recovery():
+		current_hp = _interpolated_resource(current_hp, normalized_max_hp, progress)
+		current_sp = _interpolated_resource(current_sp, normalized_max_sp, progress)
+	var missing_hp := maxi(0, normalized_max_hp - current_hp)
+	var missing_sp := maxi(0, normalized_max_sp - current_sp)
 	return {
 		"status": status,
 		"location": location,
-		"current_hp": clampi(instance.current_hp, 0, normalized_max) if instance != null else 0,
-		"max_hp": normalized_max,
-		"missing_hp": _calculator.missing_hp(instance, normalized_max),
-		"missing_hp_ratio": _calculator.missing_hp_ratio(instance, normalized_max),
+		"current_hp": current_hp,
+		"max_hp": normalized_max_hp,
+		"current_sp": current_sp,
+		"max_sp": normalized_max_sp,
+		"missing_hp": missing_hp,
+		"missing_hp_ratio": clampf(float(missing_hp) / float(normalized_max_hp), 0.0, 1.0),
+		"missing_sp": missing_sp,
+		"missing_sp_ratio": clampf(float(missing_sp) / float(normalized_max_sp), 0.0, 1.0) if normalized_max_sp > 0 else 0.0,
+		"recovery_progress": progress,
 		"recovery_seconds": duration,
 		"instant_cost": cost,
 		"can_admit": party_member and status in ["injured", "critical"],
@@ -84,7 +98,7 @@ func admit(collection: PlayerCollection, instance: DigimonInstance, max_hp: int,
 	return result
 
 
-func recover_now(collection: PlayerCollection, instance: DigimonInstance, max_hp: int, now_unix: int = -1) -> Dictionary:
+func recover_now(collection: PlayerCollection, instance: DigimonInstance, max_hp: int, max_sp: int, now_unix: int = -1) -> Dictionary:
 	var result := {"success": false, "reason": "invalid", "bits_spent": 0}
 	if collection == null or instance == null:
 		return result
@@ -121,12 +135,17 @@ func recover_now(collection: PlayerCollection, instance: DigimonInstance, max_hp
 		if not instance.start_hospital_recovery(now, now):
 			return result
 
+	var previous_hp := instance.current_hp
+	var previous_sp := instance.get_current_sp()
 	collection.bits -= cost
 	instance.current_hp = maxi(1, max_hp)
+	instance.set_current_sp(maxi(0, max_sp))
 	if not instance.complete_hospital_recovery(now):
 		# This should be unreachable after the validated setup above. Roll back all
-		# mutable transaction state rather than leave Bits/location inconsistent.
+		# mutable transaction state rather than leave Bits/location/resources inconsistent.
 		collection.bits += cost
+		instance.current_hp = previous_hp
+		instance.set_current_sp(previous_sp)
 		if admitted_during_transaction:
 			collection.discharge_from_hospital(instance.id, 0)
 		instance.clear_hospital_recovery()
@@ -139,15 +158,17 @@ func recover_now(collection: PlayerCollection, instance: DigimonInstance, max_hp
 	return result
 
 
-func complete_if_ready(instance: DigimonInstance, max_hp: int, now_unix: int = -1, location: String = "") -> bool:
+func complete_if_ready(instance: DigimonInstance, max_hp: int, max_sp: int, now_unix: int = -1, location: String = "") -> bool:
 	if instance == null or location != PlayerCollection.LOCATION_HOSPITAL or not instance.has_hospital_recovery():
 		return false
 	if instance.get_hospital_recovery_end_time() > _resolve_now(now_unix):
 		return false
-	var normalized_max := maxi(1, max_hp)
-	if instance.current_hp >= normalized_max:
+	var normalized_max_hp := maxi(1, max_hp)
+	var normalized_max_sp := maxi(0, max_sp)
+	if instance.current_hp >= normalized_max_hp and instance.get_current_sp() >= normalized_max_sp:
 		return false
-	instance.current_hp = normalized_max
+	instance.current_hp = normalized_max_hp
+	instance.set_current_sp(normalized_max_sp)
 	return true
 
 
@@ -183,6 +204,24 @@ func battle_eligibility_error(instance: DigimonInstance, max_hp: int, display_na
 	if status == "critical":
 		return "%s is in critical condition and cannot battle." % display_name
 	return ""
+
+
+func _recovery_progress(instance: DigimonInstance, now_unix: int) -> float:
+	if instance == null or not instance.has_hospital_recovery():
+		return 0.0
+	var started_at := instance.get_hospital_recovery_start_time()
+	var completes_at := instance.get_hospital_recovery_end_time()
+	if completes_at <= started_at:
+		return 1.0 if now_unix >= completes_at else 0.0
+	return clampf(float(now_unix - started_at) / float(completes_at - started_at), 0.0, 1.0)
+
+
+func _interpolated_resource(current_value: int, max_value: int, progress: float) -> int:
+	var normalized_max := maxi(0, max_value)
+	if normalized_max <= 0:
+		return 0
+	var start_value := clampi(current_value, 0, normalized_max)
+	return clampi(int(round(lerpf(float(start_value), float(normalized_max), clampf(progress, 0.0, 1.0)))), 0, normalized_max)
 
 
 func _resolve_now(now_unix: int) -> int:
