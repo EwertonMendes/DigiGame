@@ -8,10 +8,10 @@ const VARIANT_COMPACT := "compact"
 const VARIANT_STANDARD := "standard"
 const VARIANT_EMPHASIS := "emphasis"
 
-var _value := 0
-var _variant := VARIANT_STANDARD
-var _has_presented_value := false
-var _animate_changes := true
+var _value: int = 0
+var _variant: String = VARIANT_STANDARD
+var _has_presented_value: bool = false
+var _animate_changes: bool = true
 
 var _medallion: Panel
 var _icon: TextureRect
@@ -32,9 +32,9 @@ func _ready() -> void:
 
 
 func set_value(value: int, animate: bool = true) -> void:
-	var next_value := maxi(0, value)
-	var delta := next_value - _value
-	var should_animate := animate and _animate_changes and _has_presented_value and delta != 0
+	var next_value: int = maxi(0, value)
+	var delta: int = next_value - _value
+	var should_animate: bool = animate and _animate_changes and _has_presented_value and delta != 0
 	_value = next_value
 	_has_presented_value = true
 	_refresh_copy()
@@ -47,7 +47,7 @@ func get_value() -> int:
 
 
 func set_variant(variant: String) -> void:
-	var normalized := variant.to_lower()
+	var normalized: String = variant.to_lower()
 	if normalized not in [VARIANT_COMPACT, VARIANT_STANDARD, VARIANT_EMPHASIS]:
 		normalized = VARIANT_STANDARD
 	if _variant == normalized:
@@ -127,7 +127,7 @@ func _build() -> void:
 
 
 func _apply_variant() -> void:
-	var outer := V2.surface_style(
+	var outer: StyleBoxFlat = V2.surface_style(
 		Color(0.019, 0.038, 0.052, 0.985),
 		Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.62),
 		12
@@ -139,7 +139,7 @@ func _apply_variant() -> void:
 	outer.shadow_offset = Vector2(0.0, 2.0)
 	add_theme_stylebox_override("panel", outer)
 
-	var medallion_style := V2.surface_style(
+	var medallion_style: StyleBoxFlat = V2.surface_style(
 		Color(0.125, 0.090, 0.020, 0.90),
 		Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.84),
 		10
@@ -170,21 +170,21 @@ func _apply_variant() -> void:
 func _layout() -> void:
 	if _medallion == null:
 		return
-	var h := size.y
-	var compact := _variant == VARIANT_COMPACT or h <= 44.0
-	var emphasis := _variant == VARIANT_EMPHASIS and h >= 56.0
-	var medal_size := 34.0 if compact else (44.0 if emphasis else 40.0)
-	var outer_pad := 6.0
-	var medal_y := floor((h - medal_size) * 0.5)
+	var height: float = size.y
+	var compact: bool = _variant == VARIANT_COMPACT or height <= 44.0
+	var emphasis: bool = _variant == VARIANT_EMPHASIS and height >= 56.0
+	var medal_size: float = 34.0 if compact else (44.0 if emphasis else 40.0)
+	var outer_pad: float = 6.0
+	var medal_y: float = floorf((height - medal_size) * 0.5)
 	_medallion.position = Vector2(outer_pad, medal_y)
 	_medallion.size = Vector2(medal_size, medal_size)
 
-	var icon_pad := 5.0 if compact else 6.0
+	var icon_pad: float = 5.0 if compact else 6.0
 	_icon.position = Vector2(icon_pad, icon_pad)
 	_icon.size = Vector2(medal_size - icon_pad * 2.0, medal_size - icon_pad * 2.0)
 
-	var copy_x := _medallion.position.x + medal_size + (10.0 if compact else 12.0)
-	var copy_w := maxf(0.0, size.x - copy_x - 10.0)
+	var copy_x: float = _medallion.position.x + medal_size + (10.0 if compact else 12.0)
+	var copy_w: float = maxf(0.0, size.x - copy_x - 10.0)
 	if compact:
 		_value_label.position = Vector2(copy_x, 3.0)
 		_value_label.size = Vector2(copy_w, 23.0)
@@ -206,8 +206,8 @@ func _refresh_copy() -> void:
 
 
 func _format_amount(value: int) -> String:
-	var raw := str(maxi(0, value))
-	var formatted := ""
+	var raw: String = str(maxi(0, value))
+	var formatted: String = ""
 	while raw.length() > 3:
 		formatted = "," + raw.right(3) + formatted
 		raw = raw.left(raw.length() - 3)
