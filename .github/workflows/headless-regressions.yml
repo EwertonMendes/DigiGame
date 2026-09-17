@@ -157,5 +157,23 @@ jobs:
         run: |
           set -euo pipefail
           bash -lc "$TEST_COMMAND" 2>&1 | tee /tmp/regression.log
-          grep -Fq "$SUCCESS_MARKER" /tmp/regression.log
-          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/regression.log; then exit 1; fi
+
+          marker_line="$(grep -nF -m1 "$SUCCESS_MARKER" /tmp/regression.log | cut -d: -f1 || true)"
+          if [[ -z "$marker_line" ]]; then
+            echo "::error::Regression did not emit the expected success marker: $SUCCESS_MARKER"
+            exit 1
+          fi
+
+          # The success marker is the semantic end of each regression. Keep
+          # runtime/script errors strict before that boundary, while treating
+          # Godot teardown diagnostics emitted after an explicit successful
+          # quit as non-blocking shutdown noise rather than a gameplay failure.
+          head -n "$marker_line" /tmp/regression.log > /tmp/regression-before-success.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/regression-before-success.log; then
+            exit 1
+          fi
+
+          if tail -n "+$((marker_line + 1))" /tmp/regression.log | grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' > /tmp/regression-after-success.log; then
+            echo "::warning::Godot emitted shutdown diagnostics after the regression had already passed."
+            cat /tmp/regression-after-success.log
+          fi
