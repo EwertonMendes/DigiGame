@@ -61,6 +61,10 @@ var _health_after: Label
 var _health_arrow: TextureRect
 var _health_missing: Label
 var _health_bar: ProgressBar
+var _sp_before: Label
+var _sp_after: Label
+var _sp_arrow: TextureRect
+var _sp_progress: Label
 var _sp_bar: ProgressBar
 var _time_value: Label
 var _cost_value: Label
@@ -70,6 +74,7 @@ var _detail_back: Button
 var _card_area: VBoxContainer
 var _overview_stack: VBoxContainer
 var _health_panel: PanelContainer
+var _sp_panel: PanelContainer
 var _time_panel: PanelContainer
 var _cost_panel: PanelContainer
 var _overview_header: HBoxContainer
@@ -369,7 +374,21 @@ func _build_overview() -> void:
 	overview_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	_health_panel = _information_panel(_overview_stack, "HealthRecovery", V2.GREEN, 104)
-	_build_health_content(_health_panel)
+	var hp_controls := _build_recovery_resource_content(_health_panel, "HP RECOVERY", "heart", V2.GREEN, "Hp")
+	_health_before = hp_controls["before"] as Label
+	_health_after = hp_controls["after"] as Label
+	_health_arrow = hp_controls["arrow"] as TextureRect
+	_health_bar = hp_controls["bar"] as ProgressBar
+	_health_missing = hp_controls["progress"] as Label
+
+	_sp_panel = _information_panel(_overview_stack, "SpRecovery", V2.BLUE, 104)
+	var sp_controls := _build_recovery_resource_content(_sp_panel, "SP RECOVERY", "bolt", V2.BLUE, "Sp")
+	_sp_before = sp_controls["before"] as Label
+	_sp_after = sp_controls["after"] as Label
+	_sp_arrow = sp_controls["arrow"] as TextureRect
+	_sp_bar = sp_controls["bar"] as ProgressBar
+	_sp_progress = sp_controls["progress"] as Label
+
 	_time_panel = _information_panel(_overview_stack, "RecoveryTime", V2.CYAN, 58)
 	_time_value = _build_metric_content(_time_panel, "speed", null, "RECOVERY TIME", V2.CYAN)
 	_cost_panel = _information_panel(_overview_stack, "InstantRecovery", V2.AMBER, 58)
@@ -389,9 +408,10 @@ func _build_overview() -> void:
 	_detail_back.pressed.connect(_exit_action_mode)
 
 
-func _build_health_content(panel: PanelContainer) -> void:
+func _build_recovery_resource_content(panel: PanelContainer, title_text: String, icon_kind: String, accent: Color, prefix: String) -> Dictionary:
 	var margin := _full_margin(panel, 14, 8, 14, 8)
 	var stack := VBoxContainer.new()
+	stack.name = "%sRecoveryContent" % prefix
 	stack.add_theme_constant_override("separation", 4)
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(stack)
@@ -403,9 +423,9 @@ func _build_health_content(panel: PanelContainer) -> void:
 	stack.add_child(title_row)
 	var icon := IconScript.new() as DigiProceduralIcon
 	icon.custom_minimum_size = Vector2(23, 23)
-	icon.configure("heart", V2.GREEN)
+	icon.configure(icon_kind, accent)
 	title_row.add_child(icon)
-	var title := _flow_label(title_row, "HP + SP RECOVERY", 16, V2.TEXT, true)
+	var title := _flow_label(title_row, title_text, 16, V2.TEXT, true)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var values := HBoxContainer.new()
@@ -414,29 +434,41 @@ func _build_health_content(panel: PanelContainer) -> void:
 	values.add_theme_constant_override("separation", 10)
 	values.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_child(values)
-	_health_before = _flow_label(values, "—", 23, V2.WHITE, true)
-	_health_before.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_health_before.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_health_arrow = TextureRect.new()
-	_health_arrow.name = "HpChangeArrow"
-	_health_arrow.texture = ARROW_ICON
-	_health_arrow.custom_minimum_size = Vector2(28, 24)
-	_health_arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_health_arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_health_arrow.modulate = V2.CYAN
-	_health_arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	values.add_child(_health_arrow)
-	_health_after = _flow_label(values, "—", 23, V2.WHITE, true)
-	_health_after.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	_health_bar = _progress(stack, "HealthBar")
-	_health_bar.custom_minimum_size.y = 9
-	_health_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_health_missing = _flow_label(stack, "", 13, V2.MUTED, false)
-	_health_missing.custom_minimum_size.y = 17
-	_sp_bar = _progress(stack, "SpBar")
-	_sp_bar.custom_minimum_size.y = 8
-	_sp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var before := _flow_label(values, "—", 23, V2.WHITE, true)
+	before.name = "%sBefore" % prefix
+	before.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	before.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+
+	var arrow := TextureRect.new()
+	arrow.name = "%sChangeArrow" % prefix
+	arrow.texture = ARROW_ICON
+	arrow.custom_minimum_size = Vector2(28, 24)
+	arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	arrow.modulate = accent
+	arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	values.add_child(arrow)
+
+	var after := _flow_label(values, "—", 23, V2.WHITE, true)
+	after.name = "%sAfter" % prefix
+	after.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var bar := _progress(stack, "%sBar" % prefix, accent)
+	bar.custom_minimum_size.y = 9
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var progress := _flow_label(stack, "", 13, V2.MUTED, false)
+	progress.name = "%sProgress" % prefix
+	progress.custom_minimum_size.y = 17
+
+	return {
+		"before": before,
+		"after": after,
+		"arrow": arrow,
+		"bar": bar,
+		"progress": progress,
+	}
 
 
 func _build_metric_content(panel: PanelContainer, icon_kind: String, texture: Texture2D, title_text: String, accent: Color) -> Label:
@@ -551,6 +583,7 @@ func _apply_density(compact: bool) -> void:
 	if _health_panel == null:
 		return
 	_health_panel.custom_minimum_size.y = 110 if compact else 120
+	_sp_panel.custom_minimum_size.y = _health_panel.custom_minimum_size.y
 	_time_panel.custom_minimum_size.y = 52 if compact else 62
 	_cost_panel.custom_minimum_size.y = 52 if compact else 62
 	_overview_header.custom_minimum_size.y = 29 if compact else 34
@@ -755,9 +788,14 @@ func _refresh_detail() -> void:
 		_health_after.text = "—"
 		_health_arrow.visible = false
 		_health_missing.text = ""
-		if _sp_bar != null:
-			_sp_bar.max_value = 1.0
-			_sp_bar.value = 0.0
+		_health_bar.max_value = 1.0
+		_health_bar.value = 0.0
+		_sp_before.text = "—"
+		_sp_after.text = "—"
+		_sp_arrow.visible = false
+		_sp_progress.text = ""
+		_sp_bar.max_value = 1.0
+		_sp_bar.value = 0.0
 		_time_value.text = "—"
 		_cost_value.text = "—"
 		for button in _actions.values():
@@ -795,12 +833,21 @@ func _refresh_detail() -> void:
 	_health_arrow.visible = true
 	_health_bar.max_value = maxf(1.0, float(max_hp))
 	_health_bar.value = current_hp
-	_health_missing.text = "SP %d / %d" % [current_sp, max_sp]
-	if String(preview.get("location", "")) == PlayerCollection.LOCATION_HOSPITAL:
-		_health_missing.text += "   ·   RECOVERY %d%%" % int(round(recovery_progress * 100.0))
-	if _sp_bar != null:
-		_sp_bar.max_value = maxf(1.0, float(max_sp))
-		_sp_bar.value = current_sp
+
+	_sp_before.text = "%d / %d" % [current_sp, max_sp]
+	_sp_after.text = "%d / %d" % [max_sp, max_sp]
+	_sp_arrow.visible = true
+	_sp_bar.max_value = maxf(1.0, float(max_sp))
+	_sp_bar.value = current_sp
+
+	var hospitalized := String(preview.get("location", "")) == PlayerCollection.LOCATION_HOSPITAL
+	if hospitalized:
+		var progress_percent := int(round(recovery_progress * 100.0))
+		_health_missing.text = "RECOVERY %d%%" % progress_percent
+		_sp_progress.text = "RECOVERY %d%%" % progress_percent
+	else:
+		_health_missing.text = "%d%% HP missing" % int(round(float(preview.get("missing_hp_ratio", 0.0)) * 100.0))
+		_sp_progress.text = "%d%% SP missing" % int(round(float(preview.get("missing_sp_ratio", 0.0)) * 100.0))
 	_time_value.text = _time_text(preview)
 	_cost_value.text = "%d Bits" % int(preview.get("instant_cost", 0))
 
@@ -1341,13 +1388,13 @@ func _texture(parent: Node, texture: Texture2D, tint: Color, pos: Vector2, dimen
 	return image
 
 
-func _progress(parent: Node, node_name: String) -> ProgressBar:
+func _progress(parent: Node, node_name: String, accent: Color = V2.GREEN) -> ProgressBar:
 	var bar := ProgressBar.new()
 	bar.name = node_name
 	bar.show_percentage = false
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_theme_stylebox_override("background", V2.progress_track_style())
-	bar.add_theme_stylebox_override("fill", V2.progress_fill_style(V2.GREEN, true))
+	bar.add_theme_stylebox_override("fill", V2.progress_fill_style(accent, true))
 	parent.add_child(bar)
 	return bar
 
