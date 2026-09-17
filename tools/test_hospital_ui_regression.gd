@@ -177,7 +177,9 @@ func _ready() -> void:
 	assert(int(recovering_preview.get("current_sp", 0)) > patient.get_current_sp() and int(recovering_preview.get("current_sp", 0)) < max_sp, "Hospital UI preview must show SP rising during recovery")
 	assert(sp_bar.value > 0.0 and sp_bar.value < sp_bar.max_value, "SP bar must visually reflect in-progress recovery")
 	var hospital_card := (hospital.get("_cards") as Dictionary).get(patient.id) as Button
-	var resource_label := hospital_card.find_child("Health", true, false) as Label if hospital_card != null else null
+	var resource_label: Label = null
+	if hospital_card != null:
+		resource_label = hospital_card.find_child("Health", true, false) as Label
 	assert(resource_label != null and resource_label.text.contains("SP"), "Hospital patient card must show both HP and SP")
 
 	# Mark the same admitted patient ready without changing the service rules.
