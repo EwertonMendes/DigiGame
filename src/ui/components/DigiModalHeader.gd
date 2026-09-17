@@ -15,8 +15,8 @@ const CLOSE_SIZE := 40.0
 const TITLE_BLOCK_WIDTH := 196.0
 const WORKSPACE_HEADER_HEIGHT := 86.0
 const WORKSPACE_CLOSE_SIZE := 48.0
-const COMPACT_BITS_SIZE := Vector2(150.0, 42.0)
-const WORKSPACE_BITS_SIZE := Vector2(184.0, 52.0)
+const COMPACT_BITS_SIZE := Vector2(170.0, 44.0)
+const WORKSPACE_BITS_SIZE := Vector2(208.0, 56.0)
 
 var _backplate: ColorRect
 var _brand_row: HBoxContainer
@@ -413,7 +413,7 @@ func _layout() -> void:
 	_close_button.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 16.0), 10.0)
 	_close_button.size = Vector2(CLOSE_SIZE, CLOSE_SIZE)
 	if show_bits_now:
-		_bits_badge.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 16.0 - 12.0 - COMPACT_BITS_SIZE.x), 9.0)
+		_bits_badge.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 16.0 - 12.0 - COMPACT_BITS_SIZE.x), 8.0)
 		_bits_badge.size = COMPACT_BITS_SIZE
 
 
@@ -429,7 +429,7 @@ func _layout_workspace() -> void:
 	_close_button.position = Vector2(maxf(0.0, size.x - 70.0), 16.0)
 	_close_button.size = Vector2(WORKSPACE_CLOSE_SIZE, WORKSPACE_CLOSE_SIZE)
 	if show_bits_now:
-		_bits_badge.position = Vector2(maxf(0.0, size.x - WORKSPACE_BITS_SIZE.x - 82.0), 17.0)
+		_bits_badge.position = Vector2(maxf(0.0, size.x - WORKSPACE_BITS_SIZE.x - 82.0), 15.0)
 		_bits_badge.size = WORKSPACE_BITS_SIZE
 	if _tabs_root.visible:
 		var tab_overlap := 18.0 if bool(_tab_specs[0].get("angled", false)) else 0.0
