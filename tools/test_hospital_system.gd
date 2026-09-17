@@ -101,8 +101,11 @@ func _test_party_storage_and_admission(database: DigimonDatabase, factory: Digim
 func _test_last_party_member_can_be_admitted(database: DigimonDatabase, factory: DigimonFactory, stats: DigimonStatCalculator, hospital: HospitalService) -> void:
 	var collection: PlayerCollection = CollectionScript.new()
 	var patient := factory.create_player_by_name("veemon", 6, 100)
-	var max_hp := stats.get_stat(patient, database.get_by_seed(patient.species_seed), "hp")
+	var patient_species := database.get_by_seed(patient.species_seed)
+	var max_hp := stats.get_stat(patient, patient_species, "hp")
+	var max_sp := stats.get_stat(patient, patient_species, "mp")
 	patient.current_hp = 0
+	patient.set_current_sp(0)
 	collection.add_instance(patient, "veemon", "Veemon")
 	assert(collection.set_active_party_ids([patient.id], 1, 6), "Last-member test must begin with one Party member")
 	assert(hospital.admit(collection, patient, max_hp, 6000).get("success", false), "Hospital admission must be allowed to remove the last Party member")
@@ -189,7 +192,7 @@ func _test_discharge_destinations(database: DigimonDatabase, factory: DigimonFac
 	collection.set_active_party_ids([patient.id, teammate.id], 1, 6)
 	var admission := hospital.admit(collection, patient, max_hp, 9000)
 	var completes_at := int(admission.get("completes_at", 0))
-	hospital.complete_if_ready(patient, max_hp, completes_at, PlayerCollection.LOCATION_HOSPITAL)
+	hospital.complete_if_ready(patient, max_hp, max_sp, completes_at, PlayerCollection.LOCATION_HOSPITAL)
 	var discharge := hospital.discharge(collection, patient, max_hp, 2, completes_at)
 	assert(discharge.get("success", false) and String(discharge.get("destination", "")) == PlayerCollection.LOCATION_PARTY, "Recovered patient must return to Party when a slot is free")
 	assert(collection.get_active_party_ids() == [patient.id, teammate.id] and not collection.get_hospital_ids().has(patient.id), "Discharge must restore the UUID to its original Party position exactly once")
@@ -198,7 +201,7 @@ func _test_discharge_destinations(database: DigimonDatabase, factory: DigimonFac
 	patient.current_hp = 0
 	var second_admission := hospital.admit(collection, patient, max_hp, 10000)
 	var second_complete := int(second_admission.get("completes_at", 0))
-	hospital.complete_if_ready(patient, max_hp, second_complete, PlayerCollection.LOCATION_HOSPITAL)
+	hospital.complete_if_ready(patient, max_hp, max_sp, second_complete, PlayerCollection.LOCATION_HOSPITAL)
 	assert(collection.get_active_party_ids() == [teammate.id], "Second admission must remove patient from Party again")
 	assert(collection.set_active_party_ids([teammate.id, reserve.id], 1, 2), "Test must fill Party before discharge")
 	var storage_discharge := hospital.discharge(collection, patient, max_hp, 2, second_complete)
