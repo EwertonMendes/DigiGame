@@ -15,8 +15,6 @@ var _animate_changes: bool = true
 
 var _medallion: Panel
 var _icon: TextureRect
-var _separator: ColorRect
-var _accent_line: ColorRect
 var _value_label: Label
 var _currency_label: Label
 var _delta_label: Label
@@ -83,8 +81,8 @@ func get_value_label() -> Label:
 
 
 func _build() -> void:
-	# The currency mark is intentionally frameless. It should read as a HUD
-	# instrument in the header, not as another rounded card competing with the UI.
+	# This node is a positioning/animation anchor only. It deliberately has no
+	# visible tile or card so the Bits artwork can stand on its own in the header.
 	_medallion = Panel.new()
 	_medallion.name = "BitsMark"
 	_medallion.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -101,11 +99,6 @@ func _build() -> void:
 	_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_icon.z_index = 2
 	_medallion.add_child(_icon)
-
-	_separator = ColorRect.new()
-	_separator.name = "BitsSeparator"
-	_separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_separator)
 
 	_value_label = Label.new()
 	_value_label.name = "BitsValue"
@@ -125,11 +118,6 @@ func _build() -> void:
 	V2.apply_body(_currency_label)
 	add_child(_currency_label)
 
-	_accent_line = ColorRect.new()
-	_accent_line.name = "BitsAccent"
-	_accent_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_accent_line)
-
 	_delta_label = Label.new()
 	_delta_label.name = "BitsDelta"
 	_delta_label.visible = false
@@ -142,27 +130,25 @@ func _build() -> void:
 
 
 func _apply_variant() -> void:
-	# No outer card and no icon tile. The dark header itself is the backdrop.
+	# The old rounded badge and nested medallion are both intentionally gone.
 	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_medallion.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
-	_separator.color = Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.42)
-	_accent_line.color = Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.78)
 	_value_label.add_theme_color_override("font_color", V2.WHITE)
-	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.92))
+	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.94))
 
 	match _variant:
 		VARIANT_COMPACT:
-			custom_minimum_size = Vector2(126.0, 42.0)
+			custom_minimum_size = Vector2(132.0, 42.0)
 			_value_label.add_theme_font_size_override("font_size", 17)
 			_currency_label.add_theme_font_size_override("font_size", 8)
 		VARIANT_EMPHASIS:
-			custom_minimum_size = Vector2(180.0, 60.0)
-			_value_label.add_theme_font_size_override("font_size", 25)
+			custom_minimum_size = Vector2(190.0, 60.0)
+			_value_label.add_theme_font_size_override("font_size", 26)
 			_currency_label.add_theme_font_size_override("font_size", 10)
 		_:
-			custom_minimum_size = Vector2(154.0, 52.0)
-			_value_label.add_theme_font_size_override("font_size", 22)
+			custom_minimum_size = Vector2(164.0, 52.0)
+			_value_label.add_theme_font_size_override("font_size", 23)
 			_currency_label.add_theme_font_size_override("font_size", 9)
 
 
@@ -173,36 +159,26 @@ func _layout() -> void:
 	var compact: bool = _variant == VARIANT_COMPACT or height <= 44.0
 	var emphasis: bool = _variant == VARIANT_EMPHASIS and height >= 56.0
 
-	# The Bits artwork is now the dominant visual anchor instead of being shrunk
-	# into a nested rounded square.
-	var icon_size: float = 36.0 if compact else (50.0 if emphasis else 44.0)
-	var icon_y: float = floorf((height - icon_size) * 0.5)
-	_medallion.position = Vector2(0.0, icon_y)
-	_medallion.size = Vector2(icon_size, icon_size)
+	# The icon itself is now the visual anchor: no padding inside another square.
+	var mark_size: float = 38.0 if compact else (54.0 if emphasis else 48.0)
+	var mark_y: float = floorf((height - mark_size) * 0.5)
+	_medallion.position = Vector2(0.0, mark_y)
+	_medallion.size = Vector2(mark_size, mark_size)
 	_icon.position = Vector2.ZERO
-	_icon.size = Vector2(icon_size, icon_size)
+	_icon.size = Vector2(mark_size, mark_size)
 
-	var separator_x: float = icon_size + (8.0 if compact else 10.0)
-	var separator_top: float = 8.0 if compact else 9.0
-	_separator.position = Vector2(separator_x, separator_top)
-	_separator.size = Vector2(1.0, maxf(12.0, height - separator_top * 2.0))
-
-	var copy_x: float = separator_x + (9.0 if compact else 11.0)
+	var copy_x: float = mark_size + (10.0 if compact else 13.0)
 	var copy_w: float = maxf(0.0, size.x - copy_x)
 	if compact:
-		_value_label.position = Vector2(copy_x, 0.0)
+		_value_label.position = Vector2(copy_x, 1.0)
 		_value_label.size = Vector2(copy_w, 25.0)
-		_currency_label.position = Vector2(copy_x, 22.0)
+		_currency_label.position = Vector2(copy_x + 1.0, 23.0)
 		_currency_label.size = Vector2(copy_w, 14.0)
 	else:
 		_value_label.position = Vector2(copy_x, 0.0 if not emphasis else 1.0)
-		_value_label.size = Vector2(copy_w, 31.0 if not emphasis else 35.0)
-		_currency_label.position = Vector2(copy_x, 29.0 if not emphasis else 34.0)
-		_currency_label.size = Vector2(copy_w, 15.0)
-
-	var line_width: float = minf(38.0 if compact else 46.0, copy_w)
-	_accent_line.position = Vector2(copy_x, height - 3.0)
-	_accent_line.size = Vector2(line_width, 2.0)
+		_value_label.size = Vector2(copy_w, 32.0 if not emphasis else 37.0)
+		_currency_label.position = Vector2(copy_x + 1.0, 29.0 if not emphasis else 35.0)
+		_currency_label.size = Vector2(copy_w, 16.0)
 
 	_delta_label.position = Vector2(copy_x, -10.0)
 	_delta_label.size = Vector2(copy_w, 20.0)
