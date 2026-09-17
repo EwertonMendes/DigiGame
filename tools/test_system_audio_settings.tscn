@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://tools/test_system_audio_settings.gd" type="Script" id="1_system_audio"]
+
+[node name="SystemAudioSettingsRegression" type="Node"]
+script = ExtResource("1_system_audio")
