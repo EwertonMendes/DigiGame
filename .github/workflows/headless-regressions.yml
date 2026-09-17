@@ -179,3 +179,4 @@ jobs:
           if tail -n "+$((marker_line + 1))" /tmp/regression.log | grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' > /tmp/regression-after-success.log; then
             echo "::warning::Godot emitted shutdown diagnostics after the regression had already passed."
             cat /tmp/regression-after-success.log
+          fi
