@@ -3,8 +3,8 @@ class_name DigiPremiumHospitalScreen
 
 const BitsDisplayScript = preload("res://src/ui/components/DigiBitsDisplay.gd")
 
-const PREMIUM_BITS_SIZE := Vector2(184.0, 52.0)
-const COMPACT_BITS_SIZE := Vector2(150.0, 42.0)
+const PREMIUM_BITS_SIZE := Vector2(208.0, 56.0)
+const COMPACT_BITS_SIZE := Vector2(170.0, 44.0)
 
 var _premium_bits_display: DigiBitsDisplay
 
