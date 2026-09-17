@@ -1,4 +1,4 @@
-extends SceneTree
+extends Node
 
 const MenuScript = preload("res://src/ui/DigiSystemProgressionMenu.gd")
 const SettingsStoreScript = preload("res://src/settings/SettingsStore.gd")
@@ -8,11 +8,7 @@ const Buses = preload("res://src/audio/AudioBusIds.gd")
 const TEST_SETTINGS_PATH := "user://digigame-settings-regression.json"
 
 
-func _initialize() -> void:
-	call_deferred("_run")
-
-
-func _run() -> void:
+func _ready() -> void:
 	GameInputBootstrap.configure_gamepad_actions()
 	GameSettings.set_persistence_enabled(false)
 	GameSettings.reset_audio_defaults(false)
@@ -24,7 +20,7 @@ func _run() -> void:
 
 	GameSettings.reset_audio_defaults(false)
 	print("system audio settings regression passed")
-	quit(0)
+	get_tree().quit(0)
 
 
 func _test_bus_layout() -> void:
@@ -61,14 +57,14 @@ func _test_persistence_store() -> void:
 
 func _test_system_workspace() -> void:
 	var menu := MenuScript.new() as DigiSystemProgressionMenu
-	root.add_child(menu)
+	add_child(menu)
 	menu.open_menu()
-	await process_frame
-	await process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 	menu.call("_set_main_tab", "system")
-	await process_frame
-	await process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 	var system_panel := menu.get("_system_panel") as DigiSystemSettingsPanel
 	assert(system_panel != null and system_panel.visible, "System tab must show the settings workspace")
@@ -81,10 +77,10 @@ func _test_system_workspace() -> void:
 	assert(master_row != null and master_row.has_focus(), "System audio must focus Master Volume first")
 	assert(is_equal_approx(master_row.get_value(), 1.0), "Master Volume must reflect persisted settings state")
 
-	var right := InputEventAction.new()
-	right.action = "ui_left"
-	right.pressed = true
-	assert(system_panel.handle_input(right), "System panel must own horizontal adjustment input")
+	var left := InputEventAction.new()
+	left.action = "ui_left"
+	left.pressed = true
+	assert(system_panel.handle_input(left), "System panel must own horizontal adjustment input")
 	assert(is_equal_approx(GameSettings.get_audio_volume("master"), 0.95), "Keyboard/controller adjustment must move volume in 5 percent steps")
 
 	var master_index := AudioServer.get_bus_index(Buses.MASTER)
@@ -98,7 +94,7 @@ func _test_system_workspace() -> void:
 	assert(mute != null, "Audio workspace must expose an easy Mute All control")
 	mute.set_pressed_no_signal(true)
 	mute.toggled.emit(true)
-	await process_frame
+	await get_tree().process_frame
 	assert(GameSettings.is_audio_muted(), "Mute All must update settings state")
 	assert(AudioServer.is_bus_mute(master_index), "Mute All must mute Master without overwriting slider values")
 	assert(is_equal_approx(GameSettings.get_audio_volume("music"), 0.42), "Mute All must preserve channel levels")
@@ -106,11 +102,11 @@ func _test_system_workspace() -> void:
 	assert(not AudioServer.is_bus_mute(master_index), "Unmute must restore audio without changing channel levels")
 
 	menu.call("_set_main_tab", "party")
-	await process_frame
+	await get_tree().process_frame
 	assert(not system_panel.visible, "Leaving System must hide settings without destroying their state")
 	assert((menu.get("_collection_panel") as Control).visible, "Returning to Party must restore Party content")
 	menu.queue_free()
-	await process_frame
+	await get_tree().process_frame
 
 
 func _test_audio_routing() -> void:
@@ -125,11 +121,11 @@ func _test_audio_routing() -> void:
 		assert((raw_player as AudioStreamPlayer).bus == Buses.UI, "UI effects must use UI bus")
 
 	var combat := CombatPresentationScript.new() as CombatPresentationLibrary
-	root.add_child(combat)
+	add_child(combat)
 	assert(combat.load_default(), "Combat presentation library must load for audio routing regression")
 	assert(combat.play_audio_phase({"audioProfile": "normal"}, "start"), "Combat presentation must play a routed test cue")
-	await process_frame
+	await get_tree().process_frame
 	var combat_player := combat.find_child("CombatPresentationAudio", true, false) as AudioStreamPlayer
 	assert(combat_player != null and combat_player.bus == Buses.BATTLE, "Combat effects must use Battle bus")
 	combat.queue_free()
-	await process_frame
+	await get_tree().process_frame
