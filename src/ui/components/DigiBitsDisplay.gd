@@ -127,45 +127,43 @@ func _build() -> void:
 
 
 func _apply_variant() -> void:
-	# The shared header itself is now the background. These transparent styles
-	# preserve the proven component structure while removing both rounded boxes.
 	var outer: StyleBoxFlat = V2.surface_style(
-		Color(0.0, 0.0, 0.0, 0.0),
-		Color(0.0, 0.0, 0.0, 0.0),
-		0
+		Color.TRANSPARENT,
+		Color.TRANSPARENT,
+		12
 	)
 	outer.set_border_width_all(0)
 	outer.border_blend = true
-	outer.shadow_color = Color(0.0, 0.0, 0.0, 0.0)
+	outer.shadow_color = Color.TRANSPARENT
 	outer.shadow_size = 0
-	outer.shadow_offset = Vector2.ZERO
+	outer.shadow_offset = Vector2(0.0, 2.0)
 	add_theme_stylebox_override("panel", outer)
 
 	var medallion_style: StyleBoxFlat = V2.surface_style(
-		Color(0.0, 0.0, 0.0, 0.0),
-		Color(0.0, 0.0, 0.0, 0.0),
-		0
+		Color.TRANSPARENT,
+		Color.TRANSPARENT,
+		10
 	)
 	medallion_style.set_border_width_all(0)
-	medallion_style.shadow_color = Color(0.0, 0.0, 0.0, 0.0)
+	medallion_style.shadow_color = Color.TRANSPARENT
 	medallion_style.shadow_size = 0
 	_medallion.add_theme_stylebox_override("panel", medallion_style)
 
 	_value_label.add_theme_color_override("font_color", V2.WHITE)
-	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.92))
+	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.86))
 
 	match _variant:
 		VARIANT_COMPACT:
 			custom_minimum_size = Vector2(150.0, 42.0)
-			_value_label.add_theme_font_size_override("font_size", 17)
+			_value_label.add_theme_font_size_override("font_size", 16)
 			_currency_label.add_theme_font_size_override("font_size", 8)
 		VARIANT_EMPHASIS:
 			custom_minimum_size = Vector2(204.0, 60.0)
-			_value_label.add_theme_font_size_override("font_size", 25)
+			_value_label.add_theme_font_size_override("font_size", 23)
 			_currency_label.add_theme_font_size_override("font_size", 10)
 		_:
 			custom_minimum_size = Vector2(184.0, 52.0)
-			_value_label.add_theme_font_size_override("font_size", 22)
+			_value_label.add_theme_font_size_override("font_size", 20)
 			_currency_label.add_theme_font_size_override("font_size", 9)
 
 
@@ -185,17 +183,17 @@ func _layout() -> void:
 	_icon.position = Vector2(icon_pad, icon_pad)
 	_icon.size = Vector2(medal_size - icon_pad * 2.0, medal_size - icon_pad * 2.0)
 
-	var copy_x: float = _medallion.position.x + medal_size + (10.0 if compact else 13.0)
-	var copy_w: float = maxf(0.0, size.x - copy_x - 2.0)
+	var copy_x: float = _medallion.position.x + medal_size + (10.0 if compact else 12.0)
+	var copy_w: float = maxf(0.0, size.x - copy_x - 10.0)
 	if compact:
-		_value_label.position = Vector2(copy_x, 1.0)
-		_value_label.size = Vector2(copy_w, 25.0)
+		_value_label.position = Vector2(copy_x, 3.0)
+		_value_label.size = Vector2(copy_w, 23.0)
 		_currency_label.position = Vector2(copy_x, 23.0)
 		_currency_label.size = Vector2(copy_w, 14.0)
 	else:
-		_value_label.position = Vector2(copy_x, 1.0 if not emphasis else 2.0)
-		_value_label.size = Vector2(copy_w, 32.0 if not emphasis else 36.0)
-		_currency_label.position = Vector2(copy_x, 30.0 if not emphasis else 35.0)
+		_value_label.position = Vector2(copy_x, 3.0 if not emphasis else 4.0)
+		_value_label.size = Vector2(copy_w, 30.0 if not emphasis else 34.0)
+		_currency_label.position = Vector2(copy_x, 30.0 if not emphasis else 34.0)
 		_currency_label.size = Vector2(copy_w, 16.0)
 
 	_delta_label.position = Vector2(copy_x, -10.0)
