@@ -92,9 +92,9 @@ func _build() -> void:
 	_header.name = "DigimonHeader"
 	_header.configure("DIGIMON", "Party & Progression", OverworldState.get_bits(), true)
 	_header.configure_tabs([
-		{"id": "party", "label": "Party", "icon": "party", "min_width": 112.0},
-		{"id": "digipedia", "label": "Digipedia", "icon": "book", "min_width": 146.0},
-		{"id": "system", "label": "System", "icon": "gear", "min_width": 120.0},
+		{"id": "party", "label": "Party", "icon": "party", "angled": true},
+		{"id": "digipedia", "label": "Digipedia", "icon": "book", "angled": true},
+		{"id": "system", "label": "System", "icon": "gear", "angled": true},
 	], _main_tab)
 	_header.tab_selected.connect(_set_main_tab)
 	_header.close_requested.connect(func(): close_requested.emit())
@@ -123,10 +123,6 @@ func _build() -> void:
 	roster_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	roster_stack.add_theme_constant_override("separation", 0)
 	_collection_panel.add_child(roster_stack)
-
-	_collection_header = SectionHeaderScript.new() as DigiSectionHeader
-	_collection_header.configure("ACTIVE PARTY", "", V2.CYAN, "party")
-	roster_stack.add_child(_collection_header)
 
 	var roster_inset := _margin(10, 8, 10, 4)
 	roster_inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -194,6 +190,7 @@ func _build() -> void:
 	_soon_label.name = "ComingSoon"
 	_soon_label.add_theme_font_size_override("font_size", 34)
 	_soon_label.add_theme_color_override("font_color", V2.WHITE)
+	V2.apply_heading(_soon_label)
 	_soon_label.visible = false
 	_menu_root.add_child(_soon_label)
 
@@ -328,7 +325,6 @@ func _refresh_collection() -> void:
 	if party.is_empty():
 		_selected_index = 0
 		_roster_page = 0
-		_collection_header.set_trailing("0 ACTIVE")
 		_collection_grid.add_child(_empty_message("No Digimon in your active party."))
 		_roster_pager.configure(0, 1)
 		_refresh_details()
@@ -351,7 +347,6 @@ func _refresh_collection() -> void:
 		_collection_grid.add_child(card)
 		_visible_party_indices.append(global_index)
 
-	_collection_header.set_trailing("%d ACTIVE" % party.size())
 	_roster_pager.configure(_roster_page, page_count)
 	_roster_pager.set_compact(_density_compact)
 	_update_account()
@@ -585,6 +580,7 @@ func _build_command_area(instance: DigimonInstance) -> void:
 	stack.add_theme_constant_override("separation", 0)
 	_action_panel.add_child(stack)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
+	header.name = "CommandsHeader"
 	header.configure("COMMANDS", "", V2.CYAN, "evolution")
 	stack.add_child(header)
 
@@ -678,12 +674,14 @@ func _build_overview_column(instance: DigimonInstance) -> void:
 
 	if _overview_tab == "development":
 		_development_panel = DevelopmentPanelScript.new()
+		_development_panel.set_workspace_mode(true, _density_compact)
 		_development_panel.configure(instance)
 		_development_panel.custom_minimum_size.y = 0.0
 		_development_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		_overview_content.add_child(_development_panel)
 	else:
 		_stats_panel = StatsPanelScript.new()
+		_stats_panel.set_workspace_mode(true, _density_compact)
 		_stats_panel.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 		_stats_panel.custom_minimum_size.y = 0.0
 		_stats_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -699,9 +697,9 @@ func _overview_button(text: String, active: bool) -> Button:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_size_override("font_size", 10)
 	button.add_theme_color_override("font_color", V2.WHITE if active else V2.MUTED)
-	button.add_theme_stylebox_override("normal", V2.tab_style(active, false, false))
-	button.add_theme_stylebox_override("hover", V2.tab_style(active, true, false))
-	button.add_theme_stylebox_override("pressed", V2.tab_style(active, true, false))
+	button.add_theme_stylebox_override("normal", V2.pill_style(V2.CYAN, active))
+	button.add_theme_stylebox_override("hover", V2.hospital_button_style(V2.CYAN, "hover"))
+	button.add_theme_stylebox_override("pressed", V2.hospital_button_style(V2.CYAN, "pressed"))
 	V2.apply_heading(button)
 	return button
 

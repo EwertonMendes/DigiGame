@@ -4,6 +4,7 @@ const MenuScript = preload("res://src/ui/DigiWorkspaceProgressionMenu.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
+const TacticalTheme = preload("res://src/ui/TacticalTheme.gd")
 
 
 func _ready() -> void:
@@ -55,6 +56,9 @@ func _ready() -> void:
 	var expected_top_gap := 12.0 if compact else 16.0
 	assert(header != null and header.is_workspace_mode(), "Main Digimon header must use the shared workspace header variant")
 	assert(header.get_tab_button("party") != null and header.get_tab_button("digipedia") != null and header.get_tab_button("system") != null, "Main header must expose Party, Digipedia and System tabs")
+	for tab_id in ["party", "digipedia", "system"]:
+		assert(header.get_tab_button(tab_id) is DigiAngledTab, "Main header tabs must use the angled game tab shape")
+	assert(menu.get("_collection_header") == null, "Party cards must not have an Active Party banner")
 	assert(menu.find_child("DigimonMenuBackground", true, false) != null, "Main menu must display its supplied background")
 	assert(is_equal_approx(header.size.y, expected_header), "Main Digimon header height must match the DigiLab/Hospital workspace chrome")
 	assert(is_equal_approx(footer.size.y, 54.0), "Main Digimon footer height must match the shared workspace footer")
@@ -110,7 +114,15 @@ func _ready() -> void:
 	assert(close_button.custom_minimum_size == Vector2(48.0, 48.0), "Header close button must match the DigiLab/Hospital workspace target size")
 	var overview_tabs := menu.get("_overview_tab_buttons") as Dictionary
 	for raw_tab in overview_tabs.values():
-		assert((raw_tab as Button).focus_mode == Control.FOCUS_NONE, "Overview tabs must be changed by shoulder buttons, not D-pad focus")
+		assert((raw_tab as Button).focus_mode == Control.FOCUS_NONE, "Overview tabs must be changed by X, not D-pad focus")
+	var stats_panel := menu.get("_stats_panel") as DigiStatsPanel
+	assert(stats_panel != null, "Overview must provide the stats panel")
+	var stat_row: DigiStatRow = null
+	for descendant in stats_panel.find_children("*", "PanelContainer", true, false):
+		assert(not (descendant is DigiSectionHeader), "Overview must not nest a second Combat Stats header")
+		if descendant is DigiStatRow:
+			stat_row = descendant as DigiStatRow
+	assert(stat_row != null and stat_row.custom_minimum_size.y >= 50.0, "Overview stats need readable row height")
 	for child in pager.get_children():
 		if child is Button:
 			assert((child as Button).focus_mode == Control.FOCUS_NONE, "Pager arrows must remain pointer/touch controls outside the D-pad focus path")
@@ -123,6 +135,7 @@ func _ready() -> void:
 	await _frames(2)
 	assert(String(menu.get("_main_tab")) == "digipedia", "RB must switch to Digipedia")
 	assert((menu.get("_soon_label") as Label).visible, "Digipedia must display its Soon placeholder")
+	assert((menu.get("_soon_label") as Label).get_theme_font("font") == TacticalTheme.heading_font(), "Soon placeholder must use the Digimon display font")
 	menu.call("_unhandled_input", rb)
 	await _frames(2)
 	assert(String(menu.get("_main_tab")) == "system", "RB must switch to System")

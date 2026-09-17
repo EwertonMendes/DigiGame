@@ -52,10 +52,6 @@ func _build() -> void:
 		roster_margin.add_child(roster_stack)
 		roster_stack.add_theme_constant_override("separation", 10)
 
-	_collection_header.set_workspace_mode(true)
-	_collection_header.custom_minimum_size.y = 56.0
-	_collection_header.add_theme_stylebox_override("panel", V2.hospital_button_style(V2.CYAN, "focus"))
-
 	var roster_inset := _collection_scroll.get_parent() as MarginContainer
 	if roster_inset != null:
 		_set_margin(roster_inset, 0, 0, 0, 0)
@@ -192,8 +188,11 @@ func _restyle_detail_surface() -> void:
 		_sidebar_column.add_theme_constant_override("separation", WORKSPACE_GAP)
 
 	if _action_panel != null:
-		_action_panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
+		_action_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 		_set_workspace_headers(_action_panel)
+		var commands_header := _action_panel.find_child("CommandsHeader", true, false) as DigiSectionHeader
+		if commands_header != null:
+			commands_header.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 
 	if _sidebar_column != null:
 		var overview := _sidebar_column.get_node_or_null("OverviewPanel") as PanelContainer
@@ -209,11 +208,9 @@ func _restyle_detail_surface() -> void:
 		button.add_theme_font_size_override("font_size", 12 if not _density_compact else 11)
 
 	if _stats_panel != null:
-		_stats_panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
-		_set_workspace_headers(_stats_panel)
+		_stats_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 	if _development_panel != null:
-		_development_panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.PURPLE))
-		_set_workspace_headers(_development_panel)
+		_development_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 
 
 func _build_technique_view(instance: DigimonInstance) -> void:

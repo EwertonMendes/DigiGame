@@ -4,32 +4,41 @@ class_name DigiDevelopmentPanel
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 
+var _workspace_mode := false
+var _compact_workspace := false
+
+
+func set_workspace_mode(enabled: bool, compact: bool = false) -> void:
+	_workspace_mode = enabled
+	_compact_workspace = compact
+
 
 func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 	for child in get_children():
 		child.queue_free()
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
-	size_flags_stretch_ratio = 1.22
-	custom_minimum_size.y = 264.0
-	add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
+	size_flags_stretch_ratio = 1.0 if _workspace_mode else 1.22
+	custom_minimum_size.y = 0.0 if _workspace_mode else 264.0
+	add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0) if _workspace_mode else V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 0)
 	add_child(body)
-	var header := SectionHeaderScript.new() as DigiSectionHeader
-	header.configure("DEVELOPMENT", "", V2.TEXT, "training")
-	body.add_child(header)
+	if not _workspace_mode:
+		var header := SectionHeaderScript.new() as DigiSectionHeader
+		header.configure("DEVELOPMENT", "", V2.TEXT, "training")
+		body.add_child(header)
 
-	var content := _margin(10, 5, 10, 5)
+	var content := _margin(12 if _workspace_mode else 10, 10 if _workspace_mode else 5, 12 if _workspace_mode else 10, 12 if _workspace_mode else 5)
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(content)
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_theme_constant_override("separation", 2)
+	stack.add_theme_constant_override("separation", 5 if _workspace_mode else 2)
 	content.add_child(stack)
 
 	stack.add_child(_header_row())
@@ -46,7 +55,8 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 
 func _header_row() -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 25.0
+	panel.custom_minimum_size.y = 32.0 if _compact_workspace else (40.0 if _workspace_mode else 25.0)
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL if _workspace_mode else Control.SIZE_FILL
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override(
 		"panel",
@@ -61,16 +71,18 @@ func _header_row() -> PanelContainer:
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(row)
-	row.add_child(_cell("STAT", 9, V2.MUTED, true, false))
-	row.add_child(_cell("APT", 9, V2.MUTED, true, true))
-	row.add_child(_cell("TRAIN", 9, V2.MUTED, true, true))
-	row.add_child(_cell("TOTAL", 9, V2.MUTED, true, true))
+	var font_size := 11 if _compact_workspace else (13 if _workspace_mode else 9)
+	row.add_child(_cell("STAT", font_size, V2.MUTED, true, false))
+	row.add_child(_cell("APT", font_size, V2.MUTED, true, true))
+	row.add_child(_cell("TRAIN", font_size, V2.MUTED, true, true))
+	row.add_child(_cell("TOTAL", font_size, V2.MUTED, true, true))
 	return panel
 
 
 func _development_row(stat_name: String, aptitude: int, training: int, index: int) -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 25.0
+	panel.custom_minimum_size.y = 38.0 if _compact_workspace else (50.0 if _workspace_mode else 25.0)
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL if _workspace_mode else Control.SIZE_FILL
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill := Color.TRANSPARENT
 	if index % 2 == 1:
@@ -85,12 +97,13 @@ func _development_row(stat_name: String, aptitude: int, training: int, index: in
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(row)
 
-	row.add_child(_cell(stat_name, 11, V2.MUTED, true, false))
-	row.add_child(_cell("%+d%%" % aptitude, 11, V2.CYAN if aptitude >= 0 else V2.RED, true, true))
-	row.add_child(_cell("%+d" % training, 11, V2.AMBER if training > 0 else V2.MUTED, true, true))
+	var font_size := 13 if _compact_workspace else (16 if _workspace_mode else 11)
+	row.add_child(_cell(stat_name, font_size, V2.MUTED, true, false))
+	row.add_child(_cell("%+d%%" % aptitude, font_size, V2.CYAN if aptitude >= 0 else V2.RED, true, true))
+	row.add_child(_cell("%+d" % training, font_size, V2.AMBER if training > 0 else V2.MUTED, true, true))
 	row.add_child(_cell(
 		_total_copy(aptitude, training),
-		11,
+		font_size,
 		V2.GREEN if aptitude >= 0 and training >= 0 else V2.RED,
 		true,
 		true

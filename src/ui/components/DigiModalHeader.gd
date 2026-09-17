@@ -6,6 +6,7 @@ signal tab_selected(tab_id: String)
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
+const AngledTabScript = preload("res://src/ui/components/DigiAngledTab.gd")
 const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
 const BITS_ICON = preload("res://assets/ui/icons/bits.png")
 
@@ -307,7 +308,13 @@ func _rebuild_tabs() -> void:
 		var icon_kind := String(spec.get("icon", _tab_icon_for(tab_id)))
 		var min_width := float(spec.get("min_width", 126.0))
 
-		var button := Button.new()
+		var angled := bool(spec.get("angled", false))
+		var button: Button
+		if angled:
+			button = AngledTabScript.new() as DigiAngledTab
+			(button as DigiAngledTab).set_active(active)
+		else:
+			button = Button.new()
 		button.name = "Tab_%s" % tab_id
 		button.text = ""
 		button.custom_minimum_size = Vector2(min_width, 58.0)
@@ -315,16 +322,17 @@ func _rebuild_tabs() -> void:
 		button.disabled = not enabled
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
 		button.tooltip_text = label_text if enabled else "%s — coming later" % label_text
-		button.add_theme_stylebox_override("normal", V2.tab_style(active, false, false))
-		button.add_theme_stylebox_override("hover", V2.tab_style(active, true, false))
-		button.add_theme_stylebox_override("focus", V2.tab_style(active, true, false))
-		button.add_theme_stylebox_override("pressed", V2.tab_style(active, true, false))
-		button.add_theme_stylebox_override("disabled", V2.tab_style(false, false, true))
+		if not angled:
+			button.add_theme_stylebox_override("normal", V2.tab_style(active, false, false))
+			button.add_theme_stylebox_override("hover", V2.tab_style(active, true, false))
+			button.add_theme_stylebox_override("focus", V2.tab_style(active, true, false))
+			button.add_theme_stylebox_override("pressed", V2.tab_style(active, true, false))
+			button.add_theme_stylebox_override("disabled", V2.tab_style(false, false, true))
 
 		var row := HBoxContainer.new()
 		row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.add_theme_constant_override("separation", 9)
+		row.add_theme_constant_override("separation", 7 if angled else 9)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.add_child(row)
 		var icon := IconScript.new() as DigiProceduralIcon
@@ -345,6 +353,7 @@ func _rebuild_tabs() -> void:
 		button.set_meta("full_label", label_text)
 		button.set_meta("compact_label", compact_label)
 		button.set_meta("preferred_min_width", min_width)
+		button.set_meta("angled", angled)
 		if enabled:
 			button.pressed.connect(func(): tab_selected.emit(tab_id))
 		_tabs_root.add_child(button)
@@ -453,18 +462,20 @@ func _layout_workspace() -> void:
 		_bits_badge.position = Vector2(maxf(0.0, size.x - WORKSPACE_BITS_SIZE.x - 82.0), 17.0)
 		_bits_badge.size = WORKSPACE_BITS_SIZE
 	if _tabs_root.visible:
+		var tab_overlap := 18.0 if bool(_tab_specs[0].get("angled", false)) else 0.0
+		_tabs_root.add_theme_constant_override("separation", -int(tab_overlap))
 		var tabs_left := 370.0 if size.x >= 900.0 else 258.0
 		var tabs_right := _bits_badge.position.x if show_bits_now else _close_button.position.x
 		_tabs_root.position = Vector2(tabs_left, 17.0)
 		_tabs_root.size = Vector2(maxf(0.0, tabs_right - tabs_left - 20.0), 50.0)
-		var tab_width := clampf((_tabs_root.size.x - 8.0) / float(_tab_specs.size()), 72.0, 150.0)
+		var tab_width := clampf((_tabs_root.size.x + tab_overlap * float(_tab_specs.size() - 1)) / float(_tab_specs.size()), 102.0, 172.0)
 		for value in _tab_buttons.values():
 			var button := value as Button
 			button.custom_minimum_size = Vector2(tab_width, 50.0)
 			var label := button.get_meta("tab_label") as Label
 			var icon := button.get_meta("tab_icon") as DigiProceduralIcon
 			if label != null:
-				label.visible = tab_width >= 94.0
-				label.add_theme_font_size_override("font_size", 14)
+				label.visible = tab_width >= 102.0
+				label.add_theme_font_size_override("font_size", 15)
 			if icon != null:
 				icon.custom_minimum_size = Vector2(20.0, 20.0)
