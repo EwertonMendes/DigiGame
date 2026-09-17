@@ -38,7 +38,7 @@ func _sync_main_tab_visibility() -> void:
 func _update_footer_hints() -> void:
 	super._update_footer_hints()
 	if _hint_bar != null and _main_tab == "system":
-		_hint_bar.set_description("Audio · ↑/↓ navigate · ←/→ adjust · Enter/A toggle · Esc/B back")
+		_hint_bar.set_description("")
 
 
 func _layout() -> void:
