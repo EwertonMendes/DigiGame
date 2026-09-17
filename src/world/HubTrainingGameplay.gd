@@ -93,6 +93,7 @@ func _open_training() -> void:
 	if _trainer != null:
 		_trainer.set_facing("southeast")
 	_training_screen.open_screen()
+	UiSfxDirector.play_open()
 	_layout_ui()
 	if OS.is_debug_build():
 		print("[Hub] TRAINING_CENTER open")
@@ -101,6 +102,7 @@ func _open_training() -> void:
 func _close_training() -> void:
 	if not _training_open:
 		return
+	UiSfxDirector.play_back()
 	_training_open = false
 	if _training_screen != null:
 		_training_screen.visible = false

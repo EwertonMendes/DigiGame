@@ -86,6 +86,7 @@ func _open_hospital() -> void:
 	if _hospital_npc != null:
 		_hospital_npc.set_facing("southwest")
 	_hospital_screen.open_screen()
+	UiSfxDirector.play_open()
 	_layout_ui()
 	if OS.is_debug_build():
 		print("[Hub] DIGI_HOSPITAL open")
@@ -94,6 +95,7 @@ func _open_hospital() -> void:
 func _close_hospital() -> void:
 	if not _hospital_open:
 		return
+	UiSfxDirector.play_back()
 	_hospital_open = false
 	if _hospital_screen != null:
 		_hospital_screen.visible = false

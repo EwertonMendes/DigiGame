@@ -120,6 +120,7 @@ func _open_digimon_menu() -> void:
 	if _player != null:
 		_player.set_physics_process(false)
 	_digimon_menu.open_menu()
+	UiSfxDirector.play_open()
 	_layout_ui()
 	if OS.is_debug_build():
 		print("[Hub] DIGIMON_MENU open")
@@ -127,6 +128,7 @@ func _open_digimon_menu() -> void:
 func _close_digimon_menu() -> void:
 	if not _menu_open:
 		return
+	UiSfxDirector.play_back()
 	_menu_open = false
 	if _digimon_menu != null:
 		_digimon_menu.visible = false
@@ -144,6 +146,7 @@ func _open_digilab() -> void:
 	if _player != null:
 		_player.set_physics_process(false)
 	_digilab.open_lab()
+	UiSfxDirector.play_open()
 	_layout_ui()
 	if OS.is_debug_build():
 		print("[Hub] DIGILAB open")
@@ -151,6 +154,7 @@ func _open_digilab() -> void:
 func _close_digilab() -> void:
 	if not _digilab_open:
 		return
+	UiSfxDirector.play_back()
 	_digilab_open = false
 	if _digilab != null:
 		_digilab.visible = false
