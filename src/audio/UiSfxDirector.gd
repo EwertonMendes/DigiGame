@@ -6,8 +6,13 @@ extends Node
 ## than loading audio themselves. Existing Button controls are observed globally
 ## so mouse/touch activation gets the same feedback as keyboard/gamepad input.
 ## Screens can opt into a specific role by setting `ui_sfx_role` metadata to one
-## of the ROLE_* constants; shared Digi UI component conventions are recognized
+## of the ROLE_* constants; shared Digi UI naming conventions are recognized
 ## centrally so individual screens do not duplicate audio plumbing.
+##
+## This autoload deliberately does not reference script class_names from the UI
+## layer. During a clean Godot import autoload scripts are compiled before image
+## and SVG resources have finished importing; referencing a UI class here would
+## force those scripts (and their texture preloads) to compile too early.
 
 const ROLE_CONFIRM := "confirm"
 const ROLE_NAVIGATION := "navigation"
@@ -276,20 +281,12 @@ func _resolve_button_role(button: Button) -> String:
 	if explicit in [ROLE_CONFIRM, ROLE_NAVIGATION, ROLE_BACK, ROLE_OPEN, ROLE_SILENT]:
 		return explicit
 
-	# Shared component contracts are stable semantic boundaries. Keeping these
-	# conventions here avoids scattering SFX calls throughout every screen.
-	var parent: Node = button.get_parent()
-	while parent != null:
-		if parent is DigiModalHeader:
-			var header := parent as DigiModalHeader
-			return ROLE_BACK if header.get_close_button() == button else ROLE_NAVIGATION
-		if parent is DigiPager:
-			return ROLE_NAVIGATION
-		parent = parent.get_parent()
-
+	# Classify shared controls by their stable public names/copy instead of
+	# depending on script class_names. This keeps the autoload isolated from UI
+	# texture preloads during a clean Godot import while preserving semantics.
 	var node_name := String(button.name)
 	if node_name.begins_with("Close") or node_name == "ModalClose" or node_name.ends_with("Back") or "BackTo" in node_name:
 		return ROLE_BACK
-	if node_name.begins_with("Tab_") or button.text in ["‹", "›"]:
+	if node_name.begins_with("Tab_") or node_name in ["PreviousPage", "NextPage", "PreviousPatients", "NextPatients"] or button.text in ["‹", "›"]:
 		return ROLE_NAVIGATION
 	return ROLE_CONFIRM
