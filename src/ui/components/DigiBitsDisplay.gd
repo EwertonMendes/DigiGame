@@ -127,19 +127,27 @@ func _build() -> void:
 
 
 func _apply_variant() -> void:
-	# Keep the same proven component architecture, but render it as a true HUD
-	# currency readout: no outer rounded card and no nested icon tile.
-	var outer: StyleBoxFlat = StyleBoxFlat.new()
-	outer.bg_color = Color(0.0, 0.0, 0.0, 0.0)
-	outer.border_color = Color(0.0, 0.0, 0.0, 0.0)
+	# The shared header itself is now the background. These transparent styles
+	# preserve the proven component structure while removing both rounded boxes.
+	var outer: StyleBoxFlat = V2.surface_style(
+		Color(0.0, 0.0, 0.0, 0.0),
+		Color(0.0, 0.0, 0.0, 0.0),
+		0
+	)
 	outer.set_border_width_all(0)
+	outer.border_blend = true
+	outer.shadow_color = Color(0.0, 0.0, 0.0, 0.0)
 	outer.shadow_size = 0
+	outer.shadow_offset = Vector2.ZERO
 	add_theme_stylebox_override("panel", outer)
 
-	var medallion_style: StyleBoxFlat = StyleBoxFlat.new()
-	medallion_style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
-	medallion_style.border_color = Color(0.0, 0.0, 0.0, 0.0)
+	var medallion_style: StyleBoxFlat = V2.surface_style(
+		Color(0.0, 0.0, 0.0, 0.0),
+		Color(0.0, 0.0, 0.0, 0.0),
+		0
+	)
 	medallion_style.set_border_width_all(0)
+	medallion_style.shadow_color = Color(0.0, 0.0, 0.0, 0.0)
 	medallion_style.shadow_size = 0
 	_medallion.add_theme_stylebox_override("panel", medallion_style)
 
