@@ -5,6 +5,11 @@ const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const Style = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
 const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
 
+const REGULAR_HEIGHT := 84.0
+const COMPACT_HEIGHT := 72.0
+const REGULAR_SUBTITLE_HEIGHT := 28.0
+const COMPACT_SUBTITLE_HEIGHT := 24.0
+
 var _accent := V2.CYAN
 var _icon_kind := "info"
 var _title_text := "ACTION"
@@ -31,7 +36,7 @@ func _ready() -> void:
 	text = ""
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	custom_minimum_size = Vector2(180.0, 64.0 if _compact else 76.0)
+	custom_minimum_size = Vector2(180.0, COMPACT_HEIGHT if _compact else REGULAR_HEIGHT)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	clip_contents = false
 	_last_disabled = disabled
@@ -53,7 +58,7 @@ func _process(_delta: float) -> void:
 
 func set_compact(compact: bool) -> void:
 	_compact = compact
-	custom_minimum_size.y = 64.0 if compact else 76.0
+	custom_minimum_size.y = COMPACT_HEIGHT if compact else REGULAR_HEIGHT
 	if _content_built:
 		_rebuild_content()
 
@@ -109,39 +114,43 @@ func _rebuild_content() -> void:
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(icon)
 
+	# Keep all copy in one flexible column. The status now shares the heading row
+	# with the short title instead of permanently stealing width from the much
+	# longer description. This lets ordinary command copy render in full while
+	# preserving ellipsis as a safety net for genuinely exceptional content.
 	var copy := VBoxContainer.new()
+	copy.name = "CommandCopy"
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	copy.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	copy.add_theme_constant_override("separation", 1 if _compact else 2)
+	copy.add_theme_constant_override("separation", 2 if _compact else 3)
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
+
+	var heading := HBoxContainer.new()
+	heading.name = "CommandHeading"
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_theme_constant_override("separation", 8)
+	heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	copy.add_child(heading)
 
 	var title := Label.new()
 	title.name = "CommandTitle"
 	title.text = _title_text
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title.add_theme_font_size_override("font_size", 13 if _compact else 14)
 	title.add_theme_color_override("font_color", V2.WHITE if not disabled else V2.SUBTLE)
 	V2.apply_heading(title)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	copy.add_child(title)
-
-	var subtitle := Label.new()
-	subtitle.name = "CommandSubtitle"
-	subtitle.text = _subtitle_text
-	subtitle.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	subtitle.add_theme_font_size_override("font_size", 9 if _compact else 10)
-	subtitle.add_theme_color_override("font_color", V2.MUTED if not disabled else V2.SUBTLE)
-	V2.apply_body(subtitle)
-	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	copy.add_child(subtitle)
+	heading.add_child(title)
 
 	if not _status_text.is_empty():
 		var status := Label.new()
 		status.name = "CommandStatus"
 		status.text = _status_text
-		status.custom_minimum_size.x = 70.0 if _compact else 82.0
+		status.size_flags_horizontal = Control.SIZE_SHRINK_END
 		status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -149,6 +158,23 @@ func _rebuild_content() -> void:
 		status.add_theme_color_override("font_color", _accent if not disabled else V2.SUBTLE)
 		V2.apply_heading(status)
 		status.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(status)
+		heading.add_child(status)
+
+	var subtitle := Label.new()
+	subtitle.name = "CommandSubtitle"
+	subtitle.text = _subtitle_text
+	subtitle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	subtitle.custom_minimum_size.y = COMPACT_SUBTITLE_HEIGHT if _compact else REGULAR_SUBTITLE_HEIGHT
+	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	subtitle.max_lines_visible = 2
+	subtitle.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	subtitle.add_theme_font_size_override("font_size", 9 if _compact else 10)
+	subtitle.add_theme_color_override("font_color", V2.MUTED if not disabled else V2.SUBTLE)
+	V2.apply_body(subtitle)
+	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	copy.add_child(subtitle)
 
 	tooltip_text = "%s — %s" % [_title_text, _subtitle_text]
+	if not _status_text.is_empty():
+		tooltip_text += "\n%s" % _status_text
