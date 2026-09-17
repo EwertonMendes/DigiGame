@@ -96,14 +96,14 @@ func _test_system_workspace() -> void:
 
 	var mute := system_panel.get_mute_button()
 	assert(mute != null, "Audio workspace must expose an easy Mute All control")
-	mute.button_pressed = true
+	mute.set_pressed_no_signal(true)
 	mute.toggled.emit(true)
 	await process_frame
 	assert(GameSettings.is_audio_muted(), "Mute All must update settings state")
-	assert(AudioServer.is_bus_mute_enabled(master_index), "Mute All must mute Master without overwriting slider values")
+	assert(AudioServer.is_bus_mute(master_index), "Mute All must mute Master without overwriting slider values")
 	assert(is_equal_approx(GameSettings.get_audio_volume("music"), 0.42), "Mute All must preserve channel levels")
 	GameSettings.set_audio_muted(false)
-	assert(not AudioServer.is_bus_mute_enabled(master_index), "Unmute must restore audio without changing channel levels")
+	assert(not AudioServer.is_bus_mute(master_index), "Unmute must restore audio without changing channel levels")
 
 	menu.call("_set_main_tab", "party")
 	await process_frame
