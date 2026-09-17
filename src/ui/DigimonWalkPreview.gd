@@ -3,6 +3,8 @@ class_name DigimonWalkPreview
 
 const WALK_FRAME_DURATION := 0.11
 const PREVIEW_FACING := "down_right"
+const PREVIEW_REFERENCE_CELL := 64.0
+const PREVIEW_FILL_RATIO := 0.82
 const SPACED_9_IDLE_FRAME := {
 	"down_left": 3,
 	"down_right": 5,
@@ -173,5 +175,23 @@ func _layout_sprite() -> void:
 		)
 	if frame_size.x <= 0.0 or frame_size.y <= 0.0:
 		return
-	var fit := minf(size.x / frame_size.x, size.y / frame_size.y) * 0.82
-	_sprite.scale = Vector2.ONE * clampf(fit, 0.6, 2.5)
+	# Menu cards must preserve the same authored/native proportions used by the
+	# overworld and battle renderers. The old implementation independently fit
+	# every species to the card, which made Fresh/Baby/Rookie sprites inflate to
+	# nearly the same visual size as Champion+ forms and made Greymon look small.
+	# A 64 px runtime cell at scale 1 is the preview reference; each resource's
+	# sprite_scale remains authoritative. Oversized forms are only reduced when
+	# they would clip the preview bounds.
+	var preview_unit_scale := minf(size.x, size.y) / PREVIEW_REFERENCE_CELL * PREVIEW_FILL_RATIO
+	var desired_scale := _digimon.sprite_scale * preview_unit_scale
+	var desired_size := Vector2(
+		frame_size.x * absf(desired_scale.x),
+		frame_size.y * absf(desired_scale.y)
+	)
+	var available_size := size * PREVIEW_FILL_RATIO
+	var overflow_fit := minf(
+		1.0,
+		available_size.x / maxf(desired_size.x, 0.001),
+		available_size.y / maxf(desired_size.y, 0.001)
+	)
+	_sprite.scale = desired_scale * overflow_fit
