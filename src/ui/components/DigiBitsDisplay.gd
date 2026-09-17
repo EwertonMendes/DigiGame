@@ -81,13 +81,10 @@ func get_value_label() -> Label:
 
 
 func _build() -> void:
-	# This node is a positioning/animation anchor only. It deliberately has no
-	# visible tile or card so the Bits artwork can stand on its own in the header.
 	_medallion = Panel.new()
-	_medallion.name = "BitsMark"
+	_medallion.name = "BitsMedallion"
 	_medallion.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_medallion.clip_contents = false
-	_medallion.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(_medallion)
 
 	_icon = TextureRect.new()
@@ -130,25 +127,37 @@ func _build() -> void:
 
 
 func _apply_variant() -> void:
-	# The old rounded badge and nested medallion are both intentionally gone.
-	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	_medallion.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	# Keep the same proven component architecture, but render it as a true HUD
+	# currency readout: no outer rounded card and no nested icon tile.
+	var outer: StyleBoxFlat = StyleBoxFlat.new()
+	outer.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	outer.border_color = Color(0.0, 0.0, 0.0, 0.0)
+	outer.set_border_width_all(0)
+	outer.shadow_size = 0
+	add_theme_stylebox_override("panel", outer)
+
+	var medallion_style: StyleBoxFlat = StyleBoxFlat.new()
+	medallion_style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	medallion_style.border_color = Color(0.0, 0.0, 0.0, 0.0)
+	medallion_style.set_border_width_all(0)
+	medallion_style.shadow_size = 0
+	_medallion.add_theme_stylebox_override("panel", medallion_style)
 
 	_value_label.add_theme_color_override("font_color", V2.WHITE)
-	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.94))
+	_currency_label.add_theme_color_override("font_color", Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.92))
 
 	match _variant:
 		VARIANT_COMPACT:
-			custom_minimum_size = Vector2(132.0, 42.0)
+			custom_minimum_size = Vector2(150.0, 42.0)
 			_value_label.add_theme_font_size_override("font_size", 17)
 			_currency_label.add_theme_font_size_override("font_size", 8)
 		VARIANT_EMPHASIS:
-			custom_minimum_size = Vector2(190.0, 60.0)
-			_value_label.add_theme_font_size_override("font_size", 26)
+			custom_minimum_size = Vector2(204.0, 60.0)
+			_value_label.add_theme_font_size_override("font_size", 25)
 			_currency_label.add_theme_font_size_override("font_size", 10)
 		_:
-			custom_minimum_size = Vector2(164.0, 52.0)
-			_value_label.add_theme_font_size_override("font_size", 23)
+			custom_minimum_size = Vector2(184.0, 52.0)
+			_value_label.add_theme_font_size_override("font_size", 22)
 			_currency_label.add_theme_font_size_override("font_size", 9)
 
 
@@ -158,26 +167,27 @@ func _layout() -> void:
 	var height: float = size.y
 	var compact: bool = _variant == VARIANT_COMPACT or height <= 44.0
 	var emphasis: bool = _variant == VARIANT_EMPHASIS and height >= 56.0
+	var medal_size: float = 38.0 if compact else (54.0 if emphasis else 48.0)
+	var outer_pad: float = 0.0
+	var medal_y: float = floorf((height - medal_size) * 0.5)
+	_medallion.position = Vector2(outer_pad, medal_y)
+	_medallion.size = Vector2(medal_size, medal_size)
 
-	# The icon itself is now the visual anchor: no padding inside another square.
-	var mark_size: float = 38.0 if compact else (54.0 if emphasis else 48.0)
-	var mark_y: float = floorf((height - mark_size) * 0.5)
-	_medallion.position = Vector2(0.0, mark_y)
-	_medallion.size = Vector2(mark_size, mark_size)
-	_icon.position = Vector2.ZERO
-	_icon.size = Vector2(mark_size, mark_size)
+	var icon_pad: float = 0.0
+	_icon.position = Vector2(icon_pad, icon_pad)
+	_icon.size = Vector2(medal_size - icon_pad * 2.0, medal_size - icon_pad * 2.0)
 
-	var copy_x: float = mark_size + (10.0 if compact else 13.0)
-	var copy_w: float = maxf(0.0, size.x - copy_x)
+	var copy_x: float = _medallion.position.x + medal_size + (10.0 if compact else 13.0)
+	var copy_w: float = maxf(0.0, size.x - copy_x - 2.0)
 	if compact:
 		_value_label.position = Vector2(copy_x, 1.0)
 		_value_label.size = Vector2(copy_w, 25.0)
-		_currency_label.position = Vector2(copy_x + 1.0, 23.0)
+		_currency_label.position = Vector2(copy_x, 23.0)
 		_currency_label.size = Vector2(copy_w, 14.0)
 	else:
-		_value_label.position = Vector2(copy_x, 0.0 if not emphasis else 1.0)
-		_value_label.size = Vector2(copy_w, 32.0 if not emphasis else 37.0)
-		_currency_label.position = Vector2(copy_x + 1.0, 29.0 if not emphasis else 35.0)
+		_value_label.position = Vector2(copy_x, 1.0 if not emphasis else 2.0)
+		_value_label.size = Vector2(copy_w, 32.0 if not emphasis else 36.0)
+		_currency_label.position = Vector2(copy_x, 30.0 if not emphasis else 35.0)
 		_currency_label.size = Vector2(copy_w, 16.0)
 
 	_delta_label.position = Vector2(copy_x, -10.0)
@@ -209,7 +219,7 @@ func _play_delta(delta: int) -> void:
 	_delta_label.modulate = Color.WHITE
 	_delta_label.visible = true
 	_delta_label.position.y = -4.0
-	_medallion.modulate = Color(1.20, 1.12, 0.84, 1.0)
+	_medallion.modulate = Color(1.18, 1.12, 0.82, 1.0)
 
 	_delta_tween = create_tween()
 	_delta_tween.set_parallel(true)
