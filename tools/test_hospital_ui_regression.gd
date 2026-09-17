@@ -59,6 +59,7 @@ func _ready() -> void:
 
 	var health_panel := hospital.get("_health_panel") as PanelContainer
 	var sp_panel := hospital.get("_sp_panel") as PanelContainer
+	var recovery_meta_row := hospital.get("_recovery_meta_row") as HBoxContainer
 	var time_panel := hospital.get("_time_panel") as PanelContainer
 	var cost_panel := hospital.get("_cost_panel") as PanelContainer
 	var hp_bar := health_panel.find_child("HpBar", true, false) as ProgressBar
@@ -70,6 +71,8 @@ func _ready() -> void:
 	assert(hp_fill is StyleBoxFlat and (hp_fill as StyleBoxFlat).bg_color == V2.GREEN, "HP recovery bar must use the semantic green accent")
 	assert(sp_fill is StyleBoxFlat and (sp_fill as StyleBoxFlat).bg_color == V2.BLUE, "SP recovery bar must use the semantic blue accent")
 	assert(health_panel.custom_minimum_size.y == sp_panel.custom_minimum_size.y, "HP and SP recovery cards must have equal authored height")
+	assert(recovery_meta_row != null and time_panel.get_parent() == recovery_meta_row and cost_panel.get_parent() == recovery_meta_row, "Party recovery time and instant cost must share one horizontal row")
+	assert(time_panel.size_flags_horizontal == Control.SIZE_EXPAND_FILL and cost_panel.size_flags_horizontal == Control.SIZE_EXPAND_FILL, "Party recovery summary cards must share the available row width")
 	assert(health_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "HP recovery overview must keep authored card height")
 	assert(sp_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "SP recovery overview must keep authored card height")
 	assert(time_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Recovery-time overview must keep authored card height")
@@ -99,6 +102,10 @@ func _ready() -> void:
 	var discharge := actions["discharge"] as Button
 	assert(admit.visible and recover.visible, "Injured Party Digimon must expose Admit and Recover Now")
 	assert(not discharge.visible, "Party Digimon must never expose Discharge")
+	assert(time_panel.visible and cost_panel.visible, "Party treatment overview must show both Recovery Time and Instant Recovery")
+	await _frames(1)
+	var overview := hospital.get("_overview") as Panel
+	assert(recover.get_global_rect().end.y <= overview.get_global_rect().end.y + 1.0, "Recover Now must remain inside the treatment overview without requiring scroll")
 	assert(admit.disabled and recover.disabled, "Treatment actions must not be interactive during exploration")
 	assert(admit.focus_mode == Control.FOCUS_NONE and recover.focus_mode == Control.FOCUS_NONE, "Exploration mode must keep treatment actions out of focus navigation")
 
@@ -177,6 +184,7 @@ func _ready() -> void:
 	discharge = actions["discharge"] as Button
 	assert(not admit.visible and not recover.visible, "Hospital patients must hide Party-only Admit and Recover Now actions")
 	assert(not discharge.visible, "Recovering patient must not expose Discharge before treatment completes")
+	assert(time_panel.visible and not cost_panel.visible, "Hospital tab must keep Recovery Time full-width while hiding Instant Recovery")
 
 	# Move the persisted interval around the current clock to verify that the
 	# production preview and live UI both expose gradual HP/SP recovery.
