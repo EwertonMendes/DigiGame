@@ -230,7 +230,7 @@ func get_hospital_preview(instance_id: String, now_unix: int = -1) -> Dictionary
 	var instance := _collection.get_instance(instance_id)
 	if instance == null:
 		return {"status": "unavailable", "can_admit": false, "can_recover_now": false, "can_discharge": false}
-	return _hospital_service.preview(instance, _max_hp_for(instance), _collection.bits, now_unix, _collection.get_location(instance_id))
+	return _hospital_service.preview(instance, _max_hp_for(instance), _max_sp_for(instance), _collection.bits, now_unix, _collection.get_location(instance_id))
 
 
 func admit_to_hospital(instance_id: String, now_unix: int = -1) -> Dictionary:
@@ -249,7 +249,7 @@ func admit_to_hospital(instance_id: String, now_unix: int = -1) -> Dictionary:
 func recover_from_hospital_now(instance_id: String, now_unix: int = -1) -> Dictionary:
 	_ensure_starter_collection()
 	var instance := _collection.get_instance(instance_id)
-	var result := _hospital_service.recover_now(_collection, instance, _max_hp_for(instance), now_unix)
+	var result := _hospital_service.recover_now(_collection, instance, _max_hp_for(instance), _max_sp_for(instance), now_unix)
 	if bool(result.get("success", false)):
 		active_party_changed.emit(get_active_party())
 		collection_changed.emit()
@@ -276,7 +276,7 @@ func process_hospital_recoveries(now_unix: int = -1, persist: bool = true) -> Ar
 	_ensure_starter_collection()
 	var completed: Array[String] = []
 	for instance: DigimonInstance in _collection.get_hospital_instances():
-		if _hospital_service.complete_if_ready(instance, _max_hp_for(instance), now_unix, PlayerCollection.LOCATION_HOSPITAL):
+		if _hospital_service.complete_if_ready(instance, _max_hp_for(instance), _max_sp_for(instance), now_unix, PlayerCollection.LOCATION_HOSPITAL):
 			completed.append(instance.id)
 	if completed.is_empty():
 		return completed
@@ -662,6 +662,15 @@ func _max_hp_for(instance: DigimonInstance) -> int:
 	_ensure_database()
 	var species := _database.get_by_seed(instance.species_seed)
 	return maxi(1, _stat_calculator.get_stat(instance, species, "hp"))
+
+
+func _max_sp_for(instance: DigimonInstance) -> int:
+	if instance == null:
+		return 0
+	_ensure_database()
+	var species := _database.get_by_seed(instance.species_seed)
+	return maxi(0, _stat_calculator.get_stat(instance, species, "mp"))
+
 
 func _save_after_mutation() -> void:
 	if not save_progress() and _persistence_enabled:

@@ -1,6 +1,7 @@
 extends Node
 
 const HospitalScreenScript = preload("res://src/ui/DigiHospitalScreen.gd")
+const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 
 func _ready() -> void:
@@ -44,6 +45,7 @@ func _ready() -> void:
 
 	var tier_icon := hospital.get("_hero_tier_icon") as DigiTierIcon
 	var hp_arrow := hospital.get("_health_arrow") as TextureRect
+	var sp_arrow := hospital.get("_sp_arrow") as TextureRect
 	var bits_badge := hospital.get("_header").get_node("BitsBadge") as Panel
 	var bits_icon: TextureRect = null
 	for child in bits_badge.get_children():
@@ -51,13 +53,28 @@ func _ready() -> void:
 			bits_icon = child as TextureRect
 			break
 	assert(tier_icon != null and tier_icon.texture != null, "Patient details must reuse the shared Tier artwork")
-	assert(hp_arrow != null and hp_arrow.texture != null, "Health transition must use the packaged arrow asset")
+	assert(hp_arrow != null and hp_arrow.texture != null, "HP recovery transition must use the packaged arrow asset")
+	assert(sp_arrow != null and sp_arrow.texture != null, "SP recovery transition must use the packaged arrow asset")
 	assert(bits_icon != null and bits_icon.texture != null and bits_icon.visible, "Hospital header must visibly use the packaged Bits icon")
 
 	var health_panel := hospital.get("_health_panel") as PanelContainer
+	var sp_panel := hospital.get("_sp_panel") as PanelContainer
+	var recovery_meta_row := hospital.get("_recovery_meta_row") as HBoxContainer
 	var time_panel := hospital.get("_time_panel") as PanelContainer
 	var cost_panel := hospital.get("_cost_panel") as PanelContainer
-	assert(health_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Health overview must keep authored card height")
+	var hp_bar := health_panel.find_child("HpBar", true, false) as ProgressBar
+	var sp_bar := sp_panel.find_child("SpBar", true, false) as ProgressBar
+	assert(hp_bar != null, "HP recovery card must expose its own HP progress bar")
+	assert(sp_bar != null, "SP recovery card must expose its own SP progress bar")
+	var hp_fill := hp_bar.get_theme_stylebox("fill")
+	var sp_fill := sp_bar.get_theme_stylebox("fill")
+	assert(hp_fill is StyleBoxFlat and (hp_fill as StyleBoxFlat).bg_color == V2.GREEN, "HP recovery bar must use the semantic green accent")
+	assert(sp_fill is StyleBoxFlat and (sp_fill as StyleBoxFlat).bg_color == V2.BLUE, "SP recovery bar must use the semantic blue accent")
+	assert(health_panel.custom_minimum_size.y == sp_panel.custom_minimum_size.y, "HP and SP recovery cards must have equal authored height")
+	assert(recovery_meta_row != null and time_panel.get_parent() == recovery_meta_row and cost_panel.get_parent() == recovery_meta_row, "Party recovery time and instant cost must share one horizontal row")
+	assert(time_panel.size_flags_horizontal == Control.SIZE_EXPAND_FILL and cost_panel.size_flags_horizontal == Control.SIZE_EXPAND_FILL, "Party recovery summary cards must share the available row width")
+	assert(health_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "HP recovery overview must keep authored card height")
+	assert(sp_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "SP recovery overview must keep authored card height")
 	assert(time_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Recovery-time overview must keep authored card height")
 	assert(cost_panel.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Recovery-cost overview must keep authored card height")
 
@@ -65,9 +82,12 @@ func _ready() -> void:
 	assert(not party.is_empty(), "Hospital UI regression requires a starter Party")
 	var patient := party[0]
 	var original_hp := patient.current_hp
+	var original_sp := patient.get_current_sp()
 	var preview := OverworldState.get_hospital_preview(patient.id)
 	var max_hp := int(preview.get("max_hp", 1))
+	var max_sp := int(preview.get("max_sp", 0))
 	patient.current_hp = maxi(0, max_hp - maxi(1, int(round(float(max_hp) * 0.25))))
+	patient.set_current_sp(0)
 	OverworldState.notify_collection_changed()
 	await _frames(2)
 
@@ -82,6 +102,10 @@ func _ready() -> void:
 	var discharge := actions["discharge"] as Button
 	assert(admit.visible and recover.visible, "Injured Party Digimon must expose Admit and Recover Now")
 	assert(not discharge.visible, "Party Digimon must never expose Discharge")
+	assert(time_panel.visible and cost_panel.visible, "Party treatment overview must show both Recovery Time and Instant Recovery")
+	await _frames(1)
+	var overview := hospital.get("_overview") as Panel
+	assert(recover.get_global_rect().end.y <= overview.get_global_rect().end.y + 1.0, "Recover Now must remain inside the treatment overview without requiring scroll")
 	assert(admit.disabled and recover.disabled, "Treatment actions must not be interactive during exploration")
 	assert(admit.focus_mode == Control.FOCUS_NONE and recover.focus_mode == Control.FOCUS_NONE, "Exploration mode must keep treatment actions out of focus navigation")
 
@@ -160,9 +184,27 @@ func _ready() -> void:
 	discharge = actions["discharge"] as Button
 	assert(not admit.visible and not recover.visible, "Hospital patients must hide Party-only Admit and Recover Now actions")
 	assert(not discharge.visible, "Recovering patient must not expose Discharge before treatment completes")
+	assert(time_panel.visible and not cost_panel.visible, "Hospital tab must keep Recovery Time full-width while hiding Instant Recovery")
+
+	# Move the persisted interval around the current clock to verify that the
+	# production preview and live UI both expose gradual HP/SP recovery.
+	var recovery_now := int(Time.get_unix_time_from_system())
+	assert(patient.start_hospital_recovery(recovery_now - 30, recovery_now + 30), "UI regression must be able to stage a halfway recovery interval")
+	hospital.call("_refresh_live")
+	await _frames(2)
+	var recovering_preview := OverworldState.get_hospital_preview(patient.id, recovery_now)
+	assert(int(recovering_preview.get("current_hp", 0)) > patient.current_hp and int(recovering_preview.get("current_hp", 0)) < max_hp, "Hospital UI preview must show HP rising during recovery")
+	assert(int(recovering_preview.get("current_sp", 0)) > patient.get_current_sp() and int(recovering_preview.get("current_sp", 0)) < max_sp, "Hospital UI preview must show SP rising during recovery")
+	assert(sp_bar.value > 0.0 and sp_bar.value < sp_bar.max_value, "SP bar must visually reflect in-progress recovery")
+	var hospital_card := (hospital.get("_cards") as Dictionary).get(patient.id) as Button
+	var resource_label: Label = null
+	if hospital_card != null:
+		resource_label = hospital_card.find_child("Health", true, false) as Label
+	assert(resource_label != null and resource_label.text.contains("SP"), "Hospital patient card must show both HP and SP")
 
 	# Mark the same admitted patient ready without changing the service rules.
 	patient.current_hp = max_hp
+	patient.set_current_sp(max_sp)
 	assert(patient.complete_hospital_recovery(int(Time.get_unix_time_from_system())), "Test patient must retain a valid hospital recovery interval")
 	OverworldState.notify_collection_changed()
 	await _frames(2)
@@ -194,6 +236,7 @@ func _ready() -> void:
 	var cleanup := OverworldState.discharge_from_hospital(patient.id)
 	assert(bool(cleanup.get("success", false)), "Ready test patient must discharge cleanly")
 	patient.current_hp = original_hp
+	patient.set_current_sp(original_sp)
 	OverworldState.notify_collection_changed()
 	await _frames(2)
 
