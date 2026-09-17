@@ -7,15 +7,16 @@ signal tab_selected(tab_id: String)
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
 const AngledTabScript = preload("res://src/ui/components/DigiAngledTab.gd")
+const BitsDisplayScript = preload("res://src/ui/components/DigiBitsDisplay.gd")
 const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
-const BITS_ICON = preload("res://assets/ui/icons/bits.png")
 
 const HEADER_HEIGHT := 60.0
 const CLOSE_SIZE := 40.0
 const TITLE_BLOCK_WIDTH := 196.0
 const WORKSPACE_HEADER_HEIGHT := 86.0
 const WORKSPACE_CLOSE_SIZE := 48.0
-const WORKSPACE_BITS_SIZE := Vector2(166.0, 46.0)
+const COMPACT_BITS_SIZE := Vector2(170.0, 44.0)
+const WORKSPACE_BITS_SIZE := Vector2(208.0, 56.0)
 
 var _backplate: ColorRect
 var _brand_row: HBoxContainer
@@ -26,9 +27,7 @@ var _tabs_root: HBoxContainer
 var _tab_buttons: Dictionary = {}
 var _tab_specs: Array[Dictionary] = []
 var _active_tab := ""
-var _bits_badge: PanelContainer
-var _bits_icon: TextureRect
-var _bits_value: Label
+var _bits_badge: DigiBitsDisplay
 var _close_button: Button
 var _title_text := "DIGI"
 var _subtitle_text := "Digital Monsters"
@@ -56,7 +55,7 @@ func configure(title: String, subtitle: String, bits: int = 0, show_bits: bool =
 	if _title != null:
 		_title.text = _title_text
 		_subtitle.text = _subtitle_text
-		_bits_value.text = "%d BITS" % _bits
+		_bits_badge.prime_value(_bits)
 		_layout()
 	return self
 
@@ -102,8 +101,8 @@ func set_tab_enabled(tab_id: String, enabled: bool) -> void:
 
 func set_bits(bits: int) -> void:
 	_bits = maxi(0, bits)
-	if _bits_value != null:
-		_bits_value.text = "%d BITS" % _bits
+	if _bits_badge != null:
+		_bits_badge.set_value(_bits)
 
 
 func get_close_button() -> Button:
@@ -112,6 +111,10 @@ func get_close_button() -> Button:
 
 func get_tab_button(tab_id: String) -> Button:
 	return _tab_buttons.get(tab_id) as Button
+
+
+func get_bits_display() -> DigiBitsDisplay:
+	return _bits_badge
 
 
 func select_adjacent_tab(direction: int) -> bool:
@@ -200,27 +203,10 @@ func _build() -> void:
 	_tabs_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_tabs_root)
 
-	_bits_badge = PanelContainer.new()
-	_bits_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bits_badge = BitsDisplayScript.new() as DigiBitsDisplay
+	_bits_badge.name = "BitsBadge"
+	_bits_badge.prime_value(_bits)
 	add_child(_bits_badge)
-	var bits_row := HBoxContainer.new()
-	bits_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	bits_row.add_theme_constant_override("separation", 8)
-	bits_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_bits_badge.add_child(bits_row)
-	_bits_icon = TextureRect.new()
-	_bits_icon.texture = BITS_ICON
-	_bits_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_bits_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_bits_icon.self_modulate = V2.AMBER
-	_bits_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bits_row.add_child(_bits_icon)
-	_bits_value = Label.new()
-	_bits_value.text = "%d BITS" % _bits
-	_bits_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	V2.apply_heading(_bits_value)
-	_bits_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bits_row.add_child(_bits_value)
 
 	_close_button = Button.new()
 	_close_button.name = "ModalClose"
@@ -247,13 +233,8 @@ func _apply_visual_mode() -> void:
 		_title.add_theme_color_override("font_color", V2.WHITE)
 		_subtitle.add_theme_font_size_override("font_size", 16)
 		_subtitle.add_theme_color_override("font_color", V2.MUTED)
+		_bits_badge.set_variant(DigiBitsDisplay.VARIANT_STANDARD)
 		_bits_badge.custom_minimum_size = WORKSPACE_BITS_SIZE
-		_bits_badge.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.AMBER))
-		_bits_icon.custom_minimum_size = Vector2(27.0, 27.0)
-		_bits_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		_bits_icon.self_modulate = Color.WHITE
-		_bits_value.add_theme_font_size_override("font_size", 18)
-		_bits_value.add_theme_color_override("font_color", V2.WHITE)
 		_close_button.custom_minimum_size = Vector2(WORKSPACE_CLOSE_SIZE, WORKSPACE_CLOSE_SIZE)
 		for state in ["normal", "hover", "focus", "pressed", "disabled"]:
 			_close_button.add_theme_stylebox_override(state, V2.hospital_button_style(V2.CYAN, state))
@@ -269,19 +250,8 @@ func _apply_visual_mode() -> void:
 		_title.add_theme_color_override("font_color", Color(0.70, 0.79, 0.90, 1.0))
 		_subtitle.add_theme_font_size_override("font_size", 9)
 		_subtitle.add_theme_color_override("font_color", V2.MUTED)
-		_bits_badge.custom_minimum_size = Vector2(128.0, 38.0)
-		_bits_badge.add_theme_stylebox_override(
-			"panel",
-			V2.surface_style(
-				Color(0.035, 0.055, 0.075, 0.98),
-				Color(V2.AMBER.r, V2.AMBER.g, V2.AMBER.b, 0.30),
-				7,
-				Vector4(10.0, 5.0, 10.0, 5.0)
-			)
-		)
-		_bits_icon.custom_minimum_size = Vector2(19.0, 19.0)
-		_bits_value.add_theme_font_size_override("font_size", 11)
-		_bits_value.add_theme_color_override("font_color", V2.TEXT)
+		_bits_badge.set_variant(DigiBitsDisplay.VARIANT_COMPACT)
+		_bits_badge.custom_minimum_size = COMPACT_BITS_SIZE
 		_close_button.custom_minimum_size = Vector2(CLOSE_SIZE, CLOSE_SIZE)
 		_close_button.add_theme_stylebox_override("normal", V2.surface_style(Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.68), V2.BORDER_SOFT, 7))
 		_close_button.add_theme_stylebox_override("hover", V2.button_style(V2.RED, "hover", 7))
@@ -395,7 +365,7 @@ func _layout() -> void:
 	_brand_row.size = Vector2(TITLE_BLOCK_WIDTH - 28.0, 42.0)
 	_subtitle.visible = not compact and not compact_tabs
 
-	var controls_right := 18.0 + CLOSE_SIZE + (140.0 if show_bits_now else 0.0)
+	var controls_right := 18.0 + CLOSE_SIZE + (COMPACT_BITS_SIZE.x + 12.0 if show_bits_now else 0.0)
 	_tabs_root.visible = has_tabs
 	if _tabs_root.visible:
 		if compact_tabs:
@@ -443,8 +413,8 @@ func _layout() -> void:
 	_close_button.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 16.0), 10.0)
 	_close_button.size = Vector2(CLOSE_SIZE, CLOSE_SIZE)
 	if show_bits_now:
-		_bits_badge.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 16.0 - 12.0 - 128.0), 11.0)
-		_bits_badge.size = Vector2(128.0, 38.0)
+		_bits_badge.position = Vector2(maxf(0.0, size.x - CLOSE_SIZE - 16.0 - 12.0 - COMPACT_BITS_SIZE.x), 8.0)
+		_bits_badge.size = COMPACT_BITS_SIZE
 
 
 func _layout_workspace() -> void:
@@ -459,7 +429,7 @@ func _layout_workspace() -> void:
 	_close_button.position = Vector2(maxf(0.0, size.x - 70.0), 16.0)
 	_close_button.size = Vector2(WORKSPACE_CLOSE_SIZE, WORKSPACE_CLOSE_SIZE)
 	if show_bits_now:
-		_bits_badge.position = Vector2(maxf(0.0, size.x - WORKSPACE_BITS_SIZE.x - 82.0), 17.0)
+		_bits_badge.position = Vector2(maxf(0.0, size.x - WORKSPACE_BITS_SIZE.x - 82.0), 15.0)
 		_bits_badge.size = WORKSPACE_BITS_SIZE
 	if _tabs_root.visible:
 		var tab_overlap := 18.0 if bool(_tab_specs[0].get("angled", false)) else 0.0

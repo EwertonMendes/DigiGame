@@ -1,6 +1,6 @@
 extends "res://src/world/HubTrainingGameplay.gd"
 
-const HospitalScreenScript = preload("res://src/ui/DigiHospitalScreen.gd")
+const HospitalScreenScript = preload("res://src/ui/DigiPremiumHospitalScreen.gd")
 const HospitalActorScript = preload("res://src/world/HubActor.gd")
 const HOSPITAL_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
 
