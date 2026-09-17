@@ -53,7 +53,10 @@ func _ready() -> void:
 func _build_content() -> void:
 	for child in get_children():
 		child.queue_free()
-	custom_minimum_size.y = (44.0 if _show_bar else 38.0) if _compact_roomy else ((56.0 if _show_bar else 50.0) if _roomy else (30.0 if _show_bar else 22.0))
+	# Compact workspace rows use a readable floor and let the surrounding
+	# VBox distribute remaining height. This prevents their minima from forcing
+	# the Overview presentation surface to grow on short viewports.
+	custom_minimum_size.y = 29.0 if _compact_roomy else ((56.0 if _show_bar else 50.0) if _roomy else (30.0 if _show_bar else 22.0))
 	size_flags_vertical = Control.SIZE_EXPAND_FILL if _roomy else Control.SIZE_FILL
 	add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 

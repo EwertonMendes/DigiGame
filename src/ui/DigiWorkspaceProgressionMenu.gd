@@ -25,6 +25,7 @@ const WORKSPACE_TECHNIQUE_PAGE_SIZE_COMPACT := 3
 
 var _compact_back_button: Button
 var _technique_back_button: Button
+var _overview_presentation_host: Control
 
 
 func open_menu() -> void:
@@ -211,6 +212,95 @@ func _restyle_detail_surface() -> void:
 		_stats_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 	if _development_panel != null:
 		_development_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
+
+
+func _build_overview_column(instance: DigimonInstance) -> void:
+	var panel := PanelContainer.new()
+	panel.name = "OverviewPanel"
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 8))
+	_sidebar_column.add_child(panel)
+
+	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 0)
+	panel.add_child(stack)
+	var header := SectionHeaderScript.new() as DigiSectionHeader
+	header.configure("OVERVIEW", "", V2.CYAN, "info")
+	stack.add_child(header)
+
+	var tabs_margin := _margin(8, 7, 8, 5)
+	stack.add_child(tabs_margin)
+	var tabs := HBoxContainer.new()
+	tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tabs.add_theme_constant_override("separation", 5)
+	tabs_margin.add_child(tabs)
+	_overview_tab_buttons.clear()
+	for spec in [["stats", "STATS"], ["development", "DEVELOPMENT"]]:
+		var tab_id := String(spec[0])
+		var button := _overview_button(String(spec[1]), tab_id == _overview_tab)
+		button.pressed.connect(_set_overview_tab.bind(tab_id))
+		tabs.add_child(button)
+		_overview_tab_buttons[tab_id] = button
+
+	var content_margin := _margin(8, 4, 8, 8)
+	content_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(content_margin)
+	_overview_content = VBoxContainer.new()
+	_overview_content.name = "OverviewContent"
+	_overview_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_overview_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_margin.add_child(_overview_content)
+
+	# A plain Control deliberately separates the presentation surface from the
+	# minimum-size propagation performed by VBox/Grid containers. Both tabs stay
+	# alive and fill this same rectangle, so switching content cannot resize the
+	# surrounding Overview, workspace columns, roster or footer.
+	_overview_presentation_host = Control.new()
+	_overview_presentation_host.name = "OverviewPresentationHost"
+	_overview_presentation_host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_overview_presentation_host.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_overview_presentation_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overview_content.add_child(_overview_presentation_host)
+
+	_stats_panel = StatsPanelScript.new()
+	_stats_panel.set_workspace_mode(true, _density_compact)
+	_stats_panel.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
+	_stats_panel.custom_minimum_size.y = 0.0
+	_overview_presentation_host.add_child(_stats_panel)
+	_stats_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	_development_panel = DevelopmentPanelScript.new()
+	_development_panel.set_workspace_mode(true, _density_compact)
+	_development_panel.configure(instance)
+	_development_panel.custom_minimum_size.y = 0.0
+	_overview_presentation_host.add_child(_development_panel)
+	_development_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	_apply_overview_tab_state()
+
+
+func _set_overview_tab(tab_id: String) -> void:
+	if tab_id == _overview_tab or not ["stats", "development"].has(tab_id):
+		return
+	_overview_tab = tab_id
+	_apply_overview_tab_state()
+
+
+func _apply_overview_tab_state() -> void:
+	if _stats_panel != null:
+		_stats_panel.visible = _overview_tab == "stats"
+	if _development_panel != null:
+		_development_panel.visible = _overview_tab == "development"
+	for tab_id in _overview_tab_buttons:
+		var button := _overview_tab_buttons[tab_id] as Button
+		if button == null:
+			continue
+		var active := String(tab_id) == _overview_tab
+		button.add_theme_color_override("font_color", V2.WHITE if active else V2.MUTED)
+		button.add_theme_stylebox_override("normal", V2.pill_style(V2.CYAN, active))
 
 
 func _build_technique_view(instance: DigimonInstance) -> void:

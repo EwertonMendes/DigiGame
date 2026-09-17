@@ -55,7 +55,7 @@ func configure(instance: DigimonInstance) -> DigiDevelopmentPanel:
 
 func _header_row() -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 32.0 if _compact_workspace else (40.0 if _workspace_mode else 25.0)
+	panel.custom_minimum_size.y = 29.0 if _compact_workspace else (40.0 if _workspace_mode else 25.0)
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL if _workspace_mode else Control.SIZE_FILL
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override(
@@ -81,7 +81,9 @@ func _header_row() -> PanelContainer:
 
 func _development_row(stat_name: String, aptitude: int, training: int, index: int) -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 38.0 if _compact_workspace else (50.0 if _workspace_mode else 25.0)
+	# These are readable floors, not fixed row heights. Workspace containers
+	# still expand the rows to fill the available Overview rectangle.
+	panel.custom_minimum_size.y = 29.0 if _compact_workspace else (48.0 if _workspace_mode else 25.0)
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL if _workspace_mode else Control.SIZE_FILL
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill := Color.TRANSPARENT

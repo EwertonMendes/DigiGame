@@ -116,7 +116,9 @@ func _ready() -> void:
 	for raw_tab in overview_tabs.values():
 		assert((raw_tab as Button).focus_mode == Control.FOCUS_NONE, "Overview tabs must be changed by X, not D-pad focus")
 	var stats_panel := menu.get("_stats_panel") as DigiStatsPanel
-	assert(stats_panel != null, "Overview must provide the stats panel")
+	var development_panel := menu.get("_development_panel") as DigiDevelopmentPanel
+	assert(stats_panel != null and development_panel != null, "Overview must keep both presentation panels available inside one stable host")
+	assert(stats_panel.visible and not development_panel.visible, "Stats must be the initial Overview presentation")
 	var stat_row: DigiStatRow = null
 	for descendant in stats_panel.find_children("*", "PanelContainer", true, false):
 		assert(not (descendant is DigiSectionHeader), "Overview must not nest a second Combat Stats header")
@@ -127,7 +129,6 @@ func _ready() -> void:
 		if child is Button:
 			assert((child as Button).focus_mode == Control.FOCUS_NONE, "Pager arrows must remain pointer/touch controls outside the D-pad focus path")
 
-	var initial_overview := String(menu.get("_overview_tab"))
 	var rb := InputEventJoypadButton.new()
 	rb.button_index = JOY_BUTTON_RIGHT_SHOULDER
 	rb.pressed = true
@@ -147,12 +148,48 @@ func _ready() -> void:
 	await _frames(2)
 	assert(String(menu.get("_main_tab")) == "party", "LB must return to Party")
 	assert(not (menu.get("_soon_label") as Label).visible, "Party must restore its roster and detail panels")
+
+	# X/Square must swap only the presentation state. The complete workspace
+	# geometry is captured after layout settles and compared across repeated
+	# real input events so a one-time or first-toggle-only fix cannot pass.
+	var detail_panel := menu.get("_detail_panel") as Control
+	var body_grid := menu.get("_body_grid") as Control
+	var primary_column := menu.get("_primary_column") as Control
+	var sidebar_column := menu.get("_sidebar_column") as Control
+	var overview_panel := sidebar_column.get_node_or_null("OverviewPanel") as Control
+	var overview_content := menu.get("_overview_content") as Control
+	var presentation_host := menu.get("_overview_presentation_host") as Control
+	assert(detail_panel != null and body_grid != null and primary_column != null and sidebar_column != null, "Stable Overview regression requires the complete workspace geometry")
+	assert(overview_panel != null and overview_content != null and presentation_host != null, "Overview must expose a stable presentation host")
+	var stable_controls := {
+		"header": header,
+		"roster": collection_panel,
+		"detail": detail_panel,
+		"workspace": body_grid,
+		"primary": primary_column,
+		"sidebar": sidebar_column,
+		"overview": overview_panel,
+		"overview_content": overview_content,
+		"footer": footer,
+	}
+	var stable_geometry := _capture_geometry(stable_controls)
 	var x_button := InputEventJoypadButton.new()
 	x_button.button_index = JOY_BUTTON_X
 	x_button.pressed = true
-	menu.call("_unhandled_input", x_button)
-	await _frames(2)
-	assert(String(menu.get("_overview_tab")) != initial_overview, "X must switch Stats and Development")
+	for expected_tab in ["development", "stats", "development", "stats"]:
+		menu.call("_unhandled_input", x_button)
+		await _frames(3)
+		assert(String(menu.get("_overview_tab")) == expected_tab, "X must alternate Stats and Development on every press")
+		_assert_geometry_unchanged(stable_geometry, stable_controls, "Overview tab %s" % expected_tab)
+		assert(menu.get("_body_grid") == body_grid, "Overview switching must not rebuild the workspace grid")
+		assert(menu.get("_primary_column") == primary_column and menu.get("_sidebar_column") == sidebar_column, "Overview switching must preserve both workspace columns")
+		assert(menu.get("_overview_content") == overview_content, "Overview switching must preserve the presentation area")
+		assert(stats_panel.size.is_equal_approx(presentation_host.size), "Stats must fill the stable Overview presentation rectangle")
+		assert(development_panel.size.is_equal_approx(presentation_host.size), "Development must fill the stable Overview presentation rectangle")
+		assert(stats_panel.visible == (expected_tab == "stats"), "Stats visibility must match the selected Overview tab")
+		assert(development_panel.visible == (expected_tab == "development"), "Development visibility must match the selected Overview tab")
+	assert(stats_panel.get_combined_minimum_size().y <= presentation_host.size.y + 0.01, "Stats minimum height must fit inside the stable Overview presentation area")
+	assert(development_panel.get_combined_minimum_size().y <= presentation_host.size.y + 0.01, "Development minimum height must fit inside the stable Overview presentation area")
 
 	menu.call("_open_techniques")
 	await _frames(3)
@@ -213,6 +250,24 @@ func _ready() -> void:
 	OverworldState.set_persistence_enabled(true)
 	print("digimon main menu ui regression passed")
 	get_tree().quit()
+
+
+func _capture_geometry(controls: Dictionary) -> Dictionary:
+	var result := {}
+	for key in controls:
+		var control := controls[key] as Control
+		assert(control != null, "Geometry capture requires a valid Control for %s" % String(key))
+		result[key] = Rect2(control.global_position, control.size)
+	return result
+
+
+func _assert_geometry_unchanged(expected: Dictionary, controls: Dictionary, context: String) -> void:
+	var actual := _capture_geometry(controls)
+	for key in expected:
+		var before: Rect2 = expected[key]
+		var after: Rect2 = actual[key]
+		assert(before.position.is_equal_approx(after.position), "%s must not move %s" % [context, String(key)])
+		assert(before.size.is_equal_approx(after.size), "%s must not resize %s" % [context, String(key)])
 
 
 func _hint_keys(hints: Array) -> Array[String]:
