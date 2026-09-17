@@ -1,0 +1,164 @@
+extends Node
+
+const MenuScript = preload("res://src/ui/DigiIconProgressionMenu.gd")
+const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
+const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
+
+
+func _ready() -> void:
+	GameInputBootstrap.configure_gamepad_actions()
+	OverworldState.set_persistence_enabled(false)
+	OverworldState.reset_progress_for_tests(false)
+
+	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
+	var factory: DigimonFactory = FactoryScript.new(database)
+	var starter := OverworldState.get_active_instances()
+	assert(not starter.is_empty(), "Digimon menu regression requires the starter Party")
+
+	# Build a five-member Party through public collection/party APIs so pagination
+	# is exercised without reaching into production state internals.
+	for species_name in ["gabumon", "veemon", "guilmon", "patamon"]:
+		var instance: DigimonInstance = factory.create_player_by_name(species_name, 3, 100)
+		assert(instance != null, "Regression species must resolve: %s" % species_name)
+		assert(not OverworldState.add_collection_instance(instance).is_empty(), "Regression Digimon must be added to the collection")
+		assert(OverworldState.add_to_active_party(instance.id), "Regression Digimon must be added to the active Party")
+
+	var party := OverworldState.get_active_instances()
+	assert(party.size() == 5, "Regression setup must expose five active Digimon")
+
+	var menu := MenuScript.new() as DigiIconProgressionMenu
+	add_child(menu)
+	menu.open_menu()
+	await _frames(4)
+
+	var collection_scroll := menu.get("_collection_scroll") as ScrollContainer
+	var detail_scroll := menu.get("_detail_scroll") as ScrollContainer
+	assert(collection_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Main Digimon roster must use pagination instead of vertical scrolling")
+	assert(collection_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Main Digimon roster must not depend on horizontal scrolling")
+	assert(detail_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Main Digimon detail workspace must be scroll-free")
+	assert(detail_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Main Digimon detail workspace must remain horizontally contained")
+
+	var buttons := menu.get("_buttons") as Array
+	var pager := menu.get("_roster_pager") as DigiPager
+	assert(buttons.size() == 3, "Roster page must render exactly three cards when at least three Digimon are available")
+	assert(pager.get_page_count() == 2 and pager.get_page() == 0, "Five active Digimon must produce two roster pages")
+	for raw_button in buttons:
+		var card := raw_button as Button
+		assert(card != null and card.custom_minimum_size.y >= 100.0, "Paged Digimon cards must retain a readable authored height")
+		assert(card.find_child("FieldSprite", true, false) != null, "Each roster card must reuse the packaged DS field sprite system")
+
+	# Vertical roster navigation is page-local. It wraps inside page 1 instead of
+	# silently changing pages, leaving LT/RT as the explicit pagination control.
+	menu.call("_move_roster_focus", 1)
+	menu.call("_move_roster_focus", 1)
+	menu.call("_move_roster_focus", 1)
+	await _frames(2)
+	assert(int(menu.get("_roster_page")) == 0, "D-pad roster navigation must never auto-page")
+	assert(int(menu.get("_selected_index")) < 3, "End-of-page roster navigation must wrap within the current page")
+	var before_horizontal := int(menu.get("_selected_index"))
+	menu.call("_move_horizontal", 1)
+	assert(int(menu.get("_selected_index")) == before_horizontal, "Horizontal direction must not alias vertical roster navigation")
+
+	menu.call("_turn_roster_page", 1)
+	await _frames(3)
+	assert(int(menu.get("_roster_page")) == 1 and int(menu.get("_selected_index")) == 3, "Explicit pagination must move to the next Party page and select its first Digimon")
+	buttons = menu.get("_buttons") as Array
+	assert(buttons.size() == 2, "Final Party page must show only its actual Digimon and leave unused space empty")
+
+	# Confirming a Digimon activates only the command surface. Header chrome,
+	# pager arrows and overview tabs remain pointer/touch targets, not D-pad stops.
+	menu.call("_confirm_index", 3)
+	await _frames(3)
+	assert(int(menu.get("_mode")) == 1, "Confirming a roster card must enter command mode")
+	var commands := menu.get("_command_buttons") as Array
+	assert(commands.size() == 2, "Main Digimon command area must expose Techniques and Evolution")
+	for raw_command in commands:
+		var command := raw_command as Button
+		assert(command != null and not command.disabled and command.focus_mode == Control.FOCUS_ALL, "Commands must become interactive only after Digimon confirmation")
+	var close_button := (menu.get("_header") as DigiModalHeader).get_close_button()
+	assert(close_button != null and close_button.focus_mode == Control.FOCUS_NONE, "Header close X must stay out of controller directional focus")
+	var overview_tabs := menu.get("_overview_tab_buttons") as Dictionary
+	for raw_tab in overview_tabs.values():
+		assert((raw_tab as Button).focus_mode == Control.FOCUS_NONE, "Overview tabs must be changed by shoulder buttons, not D-pad focus")
+	for child in pager.get_children():
+		if child is Button:
+			assert((child as Button).focus_mode == Control.FOCUS_NONE, "Pager arrows must remain pointer/touch controls outside the D-pad focus path")
+
+	var initial_overview := String(menu.get("_overview_tab"))
+	var rb := InputEventJoypadButton.new()
+	rb.button_index = JOY_BUTTON_RIGHT_SHOULDER
+	rb.pressed = true
+	menu.call("_unhandled_input", rb)
+	await _frames(2)
+	assert(String(menu.get("_overview_tab")) != initial_overview, "RB must switch the detail overview between Stats and Development")
+	var lb := InputEventJoypadButton.new()
+	lb.button_index = JOY_BUTTON_LEFT_SHOULDER
+	lb.pressed = true
+	menu.call("_unhandled_input", lb)
+	await _frames(2)
+	assert(String(menu.get("_overview_tab")) == initial_overview, "LB must switch the detail overview back")
+
+	menu.call("_open_techniques")
+	await _frames(3)
+	assert(int(menu.get("_mode")) == 2, "Techniques command must open the dedicated no-scroll library view")
+	assert(detail_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Technique Library must remain paged instead of scrollable")
+	var technique_panel := menu.get("_technique_panel") as Control
+	assert(technique_panel != null and technique_panel.visible, "Technique Library must own a dedicated contained workspace")
+
+	var back := InputEventAction.new()
+	back.action = "ui_cancel"
+	back.pressed = true
+	menu.call("_unhandled_input", back)
+	await _frames(2)
+	assert(int(menu.get("_mode")) == 1 and menu.visible, "Back from Technique Library must return to Digimon commands")
+	menu.call("_unhandled_input", back)
+	await _frames(2)
+	assert(int(menu.get("_mode")) == 0 and menu.visible, "Back from commands must return to the Party roster without closing")
+
+	# The shared hint bar tracks the last input family. Touch hides legends while
+	# controller mode advertises shoulder tabs and trigger pagination.
+	var footer := menu.get("_hint_bar") as DigiInputHintBar
+	var touch := InputEventScreenTouch.new()
+	touch.pressed = true
+	footer.call("_input", touch)
+	assert(footer.is_touch_mode(), "Touch must become the active menu input mode")
+	assert((footer.call("_menu_hints") as Array).is_empty(), "Touch mode must hide control legends")
+	var controller := InputEventJoypadButton.new()
+	controller.button_index = JOY_BUTTON_A
+	controller.pressed = true
+	footer.call("_input", controller)
+	var hint_keys := _hint_keys(footer.call("_menu_hints") as Array)
+	assert(hint_keys.has("LB/RB") and hint_keys.has("LT/RT") and hint_keys.has("D-PAD") and hint_keys.has("A") and hint_keys.has("B"), "Controller hints must expose overview tabs, pages, navigation, select and back")
+	assert(not hint_keys.has("RS"), "Scroll hints must never appear on the redesigned main Digimon menu")
+
+	# Reusable analog hysteresis accepts one intentional movement per deflection.
+	var gate := AnalogGateScript.new() as DigiAnalogNavigationGate
+	assert(gate.vertical_step(0.90) == 1, "Analog gate must register an intentional downward press")
+	assert(gate.vertical_step(0.95) == 0, "Held analog direction must not race through multiple Digimon")
+	assert(gate.vertical_step(0.0) == 0 and gate.vertical_step(0.90) == 1, "Analog gate must re-arm after returning to neutral")
+	assert(gate.trigger_step(JOY_AXIS_TRIGGER_RIGHT, 0.90) == 1, "Right trigger must request the next page once")
+	assert(gate.trigger_step(JOY_AXIS_TRIGGER_RIGHT, 0.95) == 0, "Held trigger must not skip multiple pages")
+
+	var closed := [false]
+	menu.close_requested.connect(func(): closed[0] = true)
+	menu.call("_unhandled_input", back)
+	await _frames(2)
+	assert(bool(closed[0]), "Back from roster exploration must close the main Digimon menu")
+
+	menu.queue_free()
+	await _frames(4)
+	OverworldState.set_persistence_enabled(true)
+	print("digimon main menu ui regression passed")
+	get_tree().quit()
+
+
+func _hint_keys(hints: Array) -> Array[String]:
+	var result: Array[String] = []
+	for hint in hints:
+		result.append(String((hint as Dictionary).get("key", "")))
+	return result
+
+
+func _frames(count: int) -> void:
+	for _index in range(count):
+		await get_tree().process_frame
