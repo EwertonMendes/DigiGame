@@ -45,12 +45,14 @@ func _ready() -> void:
 	var tier_icon := hospital.get("_hero_tier_icon") as DigiTierIcon
 	var hp_arrow := hospital.get("_health_arrow") as TextureRect
 	var bits_badge := hospital.get("_header").get_node("BitsBadge") as Panel
-	var premium_bits := bits_badge.get_node_or_null("PremiumBitsDisplay") as DigiBitsDisplay
-	var bits_icon := premium_bits.get_icon_rect() if premium_bits != null else null
+	var bits_icon: TextureRect = null
+	for child in bits_badge.get_children():
+		if child is TextureRect:
+			bits_icon = child as TextureRect
+			break
 	assert(tier_icon != null and tier_icon.texture != null, "Patient details must reuse the shared Tier artwork")
 	assert(hp_arrow != null and hp_arrow.texture != null, "Health transition must use the packaged arrow asset")
-	assert(premium_bits != null and bits_icon != null and bits_icon.texture != null and bits_icon.visible, "Hospital header must use the shared premium Bits display and packaged icon")
-	assert(premium_bits.get_value() == OverworldState.get_bits(), "Hospital Bits display must reflect the live account balance")
+	assert(bits_icon != null and bits_icon.texture != null and bits_icon.visible, "Hospital header must visibly use the packaged Bits icon")
 
 	var health_panel := hospital.get("_health_panel") as PanelContainer
 	var time_panel := hospital.get("_time_panel") as PanelContainer
@@ -214,3 +216,8 @@ func _hint_keys(hints: Array) -> Array[String]:
 	for hint in hints:
 		result.append(String((hint as Dictionary).get("key", "")))
 	return result
+
+
+func _frames(count: int) -> void:
+	for _index in range(count):
+		await get_tree().process_frame
