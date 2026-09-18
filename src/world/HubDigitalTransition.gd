@@ -358,9 +358,9 @@ func _open_dialog() -> void:
 	if not _dialog_open:
 		return
 	_refresh_operator_state()
-	if _mobile_dialog_cancel != null and not _mobile_dialog_cancel.disabled:
-		_mobile_dialog_cancel.grab_focus()
-
+	_sync_pages_to_selection()
+	_layout_ui()
+	call_deferred("_focus_selected_program")
 
 func _refresh_operator_state() -> void:
 	var party_error := OverworldState.battle_party_validation_error()
@@ -376,7 +376,7 @@ func _refresh_battle_program_availability() -> void:
 	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
 	_battle_catalog.prepare(database)
 	for program_id: String in PROGRAM_IDS:
-		var button := _battle_program_buttons.get(program_id) as DigiCommandButton
+		var button := _battle_program_buttons.get(program_id) as DigiSelectionCard
 		if button == null:
 			continue
 		if program_id == "basic":
@@ -386,14 +386,13 @@ func _refresh_battle_program_availability() -> void:
 		var available := _battle_catalog.ready_count(rank, database)
 		button.set_interactive(available >= BattleOperatorEncounterCatalog.ENEMY_COUNT)
 
-
 func _refresh_battlefield_availability() -> void:
 	var player_footprints := _player_footprints()
 	var enemy_footprints: Array = [FootprintScript.SINGLE, FootprintScript.SINGLE, FootprintScript.SINGLE]
 	var first_compatible := ""
 	for battlefield_id: String in _field_order:
 		var definition := _field_catalog.get_by_id(battlefield_id)
-		var button := _battlefield_buttons.get(battlefield_id) as DigiCommandButton
+		var button := _battlefield_buttons.get(battlefield_id) as DigiSelectionCard
 		if definition == null or button == null:
 			continue
 		var compatible := definition.supports_teams(player_footprints, enemy_footprints)
@@ -401,65 +400,61 @@ func _refresh_battlefield_availability() -> void:
 		if compatible and first_compatible.is_empty():
 			first_compatible = battlefield_id
 
-	var selected_button := _battlefield_buttons.get(_selected_battlefield_id) as DigiCommandButton
+	var selected_button := _battlefield_buttons.get(_selected_battlefield_id) as DigiSelectionCard
 	if selected_button != null and selected_button.disabled and not first_compatible.is_empty():
 		_selected_battlefield_id = first_compatible
 
-
 func _refresh_program_cards() -> void:
 	for program_id: String in PROGRAM_IDS:
-		var button := _battle_program_buttons.get(program_id) as DigiCommandButton
+		var button := _battle_program_buttons.get(program_id) as DigiSelectionCard
 		if button == null:
 			continue
-		var selected := program_id == _selected_program_id
 		var spec := _program_spec(program_id)
-		var status := "SELECTED" if selected else String(spec.get("status", ""))
-		if button.disabled:
-			status = "UNAVAILABLE"
 		button.configure(
 			String(spec.get("title", program_id.to_upper())),
 			String(spec.get("subtitle", "")),
-			status,
+			"UNAVAILABLE" if button.disabled else String(spec.get("status", "")),
 			String(spec.get("icon", "info")),
-			HUB_V2.AMBER if selected else (spec.get("accent", HUB_V2.CYAN) as Color)
+			spec.get("accent", HUB_V2.CYAN) as Color
 		)
-
+		button.set_selected(program_id == _selected_program_id)
 
 func _refresh_field_cards() -> void:
 	for battlefield_id: String in _field_order:
 		var definition := _field_catalog.get_by_id(battlefield_id)
-		var button := _battlefield_buttons.get(battlefield_id) as DigiCommandButton
+		var button := _battlefield_buttons.get(battlefield_id) as DigiSelectionCard
 		if definition == null or button == null:
 			continue
-		var selected := battlefield_id == _selected_battlefield_id
-		var status := "INCOMPATIBLE" if button.disabled else _field_card_status(definition, selected)
 		button.configure(
 			definition.display_name.to_upper(),
-			definition.description,
-			status,
+			_field_list_subtitle(definition),
+			"INCOMPATIBLE" if button.disabled else _field_card_status(definition),
 			"move",
-			HUB_V2.AMBER if selected else _field_accent(definition)
+			_field_accent(definition)
 		)
-
+		button.set_selected(battlefield_id == _selected_battlefield_id)
 
 func _refresh_selection_summary() -> void:
-	if _selection_summary == null:
+	if _summary_program == null:
 		return
-	var definition := _field_catalog.get_by_id(_selected_battlefield_id)
 	var program_spec := _program_spec(_selected_program_id)
-	var field_text := "No field selected"
-	if definition != null:
-		field_text = "%s · %dx%d · max %s" % [
-			definition.display_name,
-			definition.grid_size.x,
-			definition.grid_size.y,
-			FootprintScript.display_label(definition.max_supported_footprint_id()),
-		]
-	_selection_summary.text = "PROGRAM  %s     FIELD  %s" % [
-		String(program_spec.get("title", _selected_program_id)).to_upper(),
-		field_text.to_upper(),
-	]
+	var definition := _field_catalog.get_by_id(_selected_battlefield_id)
 
+	_summary_program.text = String(program_spec.get("title", _selected_program_id)).to_upper()
+	if definition == null:
+		_summary_field.text = "NO BATTLEFIELD SELECTED"
+		_summary_description.text = "Choose a battlefield before starting the simulation."
+		_summary_meta.text = ""
+		return
+
+	_summary_field.text = definition.display_name.to_upper()
+	_summary_description.text = definition.description
+	_summary_meta.text = "%s FIELD  ·  GRID %dx%d  ·  MAX FOOTPRINT %s" % [
+		definition.size_class.to_upper(),
+		definition.grid_size.x,
+		definition.grid_size.y,
+		FootprintScript.display_label(definition.max_supported_footprint_id()),
+	]
 
 func _refresh_launch_state(party_error: String) -> void:
 	if _start_battle_button == null:
@@ -477,39 +472,33 @@ func _refresh_launch_state(party_error: String) -> void:
 		message = "Select a battlefield before starting the simulation."
 
 	_start_battle_button.disabled = not message.is_empty()
-	if _mobile_dialog_body != null:
-		_mobile_dialog_body.text = "PARTY NOT READY" if not party_error.is_empty() else "CONFIGURE TEST BATTLE"
-	if _battle_program_hint != null:
-		if not message.is_empty():
-			_battle_program_hint.text = message
-		else:
-			var definition := _field_catalog.get_by_id(_selected_battlefield_id)
-			_battle_program_hint.text = (
-				definition.description
-				if definition != null
-				else "Choose an opponent program and an authored battlefield."
-			)
-
+	if _summary_state != null:
+		_summary_state.text = "READY TO SIMULATE" if message.is_empty() else "NOT READY"
+		_summary_state.add_theme_color_override("font_color", HUB_V2.GREEN if message.is_empty() else HUB_V2.RED)
+	if not message.is_empty() and _summary_description != null:
+		_summary_description.text = message
 
 func _select_battle_program(program_id: String) -> void:
-	var button := _battle_program_buttons.get(program_id) as Button
+	var button := _battle_program_buttons.get(program_id) as DigiSelectionCard
 	if button == null or button.disabled:
 		return
 	_selected_program_id = program_id
 	_refresh_program_cards()
 	_refresh_selection_summary()
 	_refresh_launch_state(OverworldState.battle_party_validation_error())
-
+	_sync_pages_to_selection()
+	_refresh_page_visibility()
 
 func _select_battlefield(battlefield_id: String) -> void:
-	var button := _battlefield_buttons.get(battlefield_id) as Button
+	var button := _battlefield_buttons.get(battlefield_id) as DigiSelectionCard
 	if button == null or button.disabled:
 		return
 	_selected_battlefield_id = battlefield_id
 	_refresh_field_cards()
 	_refresh_selection_summary()
 	_refresh_launch_state(OverworldState.battle_party_validation_error())
-
+	_sync_pages_to_selection()
+	_refresh_page_visibility()
 
 func _start_test_battle() -> void:
 	_launch_selected_battle()
@@ -601,26 +590,25 @@ func _begin_battle_transition(program_id: String, selected_names: Array[String])
 
 
 func _show_battle_program_error(message: String) -> void:
-	if _mobile_dialog_body != null:
-		_mobile_dialog_body.text = "SIMULATION UNAVAILABLE"
-	if _battle_program_hint != null:
-		_battle_program_hint.text = message
-	if _mobile_dialog_cancel != null:
-		_mobile_dialog_cancel.grab_focus()
-
+	if _summary_state != null:
+		_summary_state.text = "SIMULATION UNAVAILABLE"
+		_summary_state.add_theme_color_override("font_color", HUB_V2.RED)
+	if _summary_description != null:
+		_summary_description.text = message
+	if _start_battle_button != null:
+		_start_battle_button.grab_focus()
 
 func _set_operator_controls_disabled(disabled: bool) -> void:
 	for program_id: String in PROGRAM_IDS:
-		var button := _battle_program_buttons.get(program_id) as Button
+		var button := _battle_program_buttons.get(program_id) as DigiSelectionCard
 		if button != null:
-			button.disabled = disabled
+			button.set_interactive(not disabled)
 	for battlefield_id: String in _field_order:
-		var button := _battlefield_buttons.get(battlefield_id) as Button
+		var button := _battlefield_buttons.get(battlefield_id) as DigiSelectionCard
 		if button != null:
-			button.disabled = disabled
+			button.set_interactive(not disabled)
 	if _start_battle_button != null:
 		_start_battle_button.disabled = disabled
-
 
 func _active_party_level() -> int:
 	var party: Array[DigimonInstance] = OverworldState.get_battle_ready_active_instances()
@@ -682,16 +670,8 @@ func _program_button_name(program_id: String) -> String:
 	return "BattleProgram"
 
 
-func _field_card_status(definition: BattlefieldDefinition, selected: bool) -> String:
-	if selected:
-		return "SELECTED"
-	return "%s · %dx%d · MAX %s" % [
-		definition.size_class.to_upper(),
-		definition.grid_size.x,
-		definition.grid_size.y,
-		FootprintScript.display_label(definition.max_supported_footprint_id()),
-	]
-
+func _field_card_status(definition: BattlefieldDefinition) -> String:
+	return definition.size_class.to_upper()
 
 func _field_accent(definition: BattlefieldDefinition) -> Color:
 	match definition.size_class:
