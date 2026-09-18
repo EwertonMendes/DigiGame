@@ -416,8 +416,8 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 
 	var footprint := PanelContainer.new()
 	footprint.name = "ExpansionFootprint"
-	footprint.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	footprint.size_flags_stretch_ratio = 0.0
+	footprint.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	footprint.size_flags_stretch_ratio = 0.8
 	footprint.custom_minimum_size.y = 64.0 if dense else 82.0
 	footprint.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.06), Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.35), 8))
 	var fm := _margin(10, 6, 10, 6) if dense else _margin(14, 10, 14, 10)
@@ -454,8 +454,8 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 	action_grid.name = "ExpansionActions"
 	action_grid.columns = 2 if _detail_panel != null and _detail_panel.size.x >= 620.0 else 1
 	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	action_grid.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	action_grid.size_flags_stretch_ratio = 0.0
+	action_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	action_grid.size_flags_stretch_ratio = 0.9
 	action_grid.add_theme_constant_override("h_separation", 9)
 	action_grid.add_theme_constant_override("v_separation", 9)
 	body.add_child(action_grid)
@@ -467,8 +467,7 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 			"READY" if tier_ready and core_count >= 1 else "TIER %s + 1 CORE REQUIRED" % required_tier,
 			"move",
 			V2.ORANGE,
-			tier_ready and core_count >= 1,
-			false
+			tier_ready and core_count >= 1
 		)
 		unlock.pressed.connect(_unlock_expansion)
 		action_grid.add_child(unlock)
@@ -479,8 +478,7 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 			"UNLOCKED",
 			"move",
 			V2.ORANGE,
-			true,
-			false
+			true
 		)
 		toggle.pressed.connect(_toggle_expansion.bind(not instance.is_expanded()))
 		action_grid.add_child(toggle)
@@ -492,8 +490,7 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 		"READY" if can_craft else "%d / 5 FRAGMENTS · %d BITS" % [fragment_count, OverworldState.get_bits()],
 		"database",
 		V2.CYAN,
-		can_craft,
-		false
+		can_craft
 	)
 	craft.pressed.connect(_craft_core)
 	action_grid.add_child(craft)
@@ -532,27 +529,16 @@ func _available_workspace_body_height() -> float:
 
 
 func _workspace_is_dense() -> bool:
-	# Use the compact internal composition on 900p-class desktop windows too.
-	# The screen itself is not "mobile compact"; only the content density changes
-	# so profile + tabs + progression workspace always fit above the footer.
-	return WorkspaceChrome.is_compact(get_viewport()) or _available_workspace_body_height() < 760.0
+	return WorkspaceChrome.is_compact(get_viewport()) or _available_workspace_body_height() < 590.0
 
 
-func _command_button(
-	title: String,
-	subtitle: String,
-	status: String,
-	icon_kind: String,
-	accent: Color,
-	interactive: bool,
-	expand_vertical: bool = true
-) -> DigiCommandButton:
+func _command_button(title: String, subtitle: String, status: String, icon_kind: String, accent: Color, interactive: bool) -> DigiCommandButton:
 	var button := CommandButtonScript.new() as DigiCommandButton
 	button.configure(title, subtitle, status, icon_kind, accent)
 	button.set_compact(true)
 	button.custom_minimum_size.y = 54.0 if _workspace_is_dense() else 62.0
-	button.size_flags_vertical = Control.SIZE_EXPAND_FILL if expand_vertical else Control.SIZE_FILL
-	button.size_flags_stretch_ratio = 1.0 if expand_vertical else 0.0
+	button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	button.size_flags_stretch_ratio = 1.0
 	button.set_interactive(interactive)
 	return button
 
