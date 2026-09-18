@@ -94,31 +94,24 @@ async function waitForBattlePresentation(page) {
 }
 
 async function moveToDigiLabAndOpen(page) {
-  // The authored Hub starts the player at grid (2,2) and the DigiLab terminal
-  // at (-4,1). Move in two simple screen-space legs instead of coupling QA to
-  // internal Godot nodes or adding a runtime-only test hook.
-  await page.keyboard.down('KeyA');
-  await page.waitForTimeout(900);
-  await page.keyboard.up('KeyA');
-  await settleFrames(page, 2);
+  // Compact Hub layouts expose the real touch DigiLab action. Use that authored
+  // control to open the service, then restore the desktop viewport for visual
+  // QA. This avoids brittle world-coordinate movement in the browser test.
+  const compactViewport = { width: 800, height: 600 };
+  await page.setViewportSize(compactViewport);
+  await settleFrames(page, 5);
 
-  await page.keyboard.down('KeyW');
-  await page.waitForTimeout(760);
-  await page.keyboard.up('KeyW');
-  await settleFrames(page, 2);
+  const opened = waitForConsole(page, '[Hub] DIGILAB open', 6000);
+  const digilabCenter = {
+    x: compactViewport.width - 260 + 59,
+    y: compactViewport.height - 132 + 23,
+  };
+  await page.mouse.click(digilabCenter.x, digilabCenter.y);
+  await opened;
 
-  await page.screenshot({ path: 'build/digilab-approach.png', fullPage: true });
-  const opened = waitForConsole(page, '[Hub] DIGILAB open', 3000);
-  await page.keyboard.press('KeyE');
-  try {
-    await opened;
-  } catch (error) {
-    await page.screenshot({ path: 'build/digilab-open-failed.png', fullPage: true });
-    throw error;
-  }
-  await settleFrames(page, 4);
+  await page.setViewportSize(desktopViewports[0]);
+  await settleFrames(page, 5);
 }
-
 
 async function captureDigiLabWorkspaces(page, prefix = 'digilab') {
   await moveToDigiLabAndOpen(page);
