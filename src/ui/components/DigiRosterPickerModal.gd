@@ -171,6 +171,10 @@ func _entry_button(entry: Dictionary) -> Button:
 	var subtitle := String(entry.get("subtitle", ""))
 	var species := String(entry.get("species", ""))
 	var accent: Color = entry.get("accent", _accent)
+	var enabled := bool(entry.get("enabled", entry.get("can_deploy", true)))
+	var disabled_reason := String(entry.get("reason", "")).strip_edges()
+	if not enabled and not disabled_reason.is_empty():
+		subtitle = disabled_reason
 
 	var button := Button.new()
 	button.text = ""
@@ -179,6 +183,8 @@ func _entry_button(entry: Dictionary) -> Button:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.clip_contents = true
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.disabled = not enabled
+	button.tooltip_text = disabled_reason
 	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
 		button.add_theme_stylebox_override(state, V2.hospital_button_style(accent, state))
 	button.pressed.connect(func():
