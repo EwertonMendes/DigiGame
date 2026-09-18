@@ -645,7 +645,7 @@ func _layout_command(panel_size: Vector2, compact: bool, contextual: bool, user_
 		button.custom_minimum_size = Vector2(0.0, button_h)
 		button.add_theme_font_size_override("font_size", 13 if compact else 16)
 	_switch_button.custom_minimum_size = Vector2(0.0, button_h)
-	_switch_button.add_theme_font_size_override("font_size", 13 if compact else 15)
+	_switch_button.add_theme_font_size_override("font_size", 13 if compact else 16)
 	_undo_button.custom_minimum_size = Vector2(0.0, button_h)
 	_undo_button.add_theme_font_size_override("font_size", 13 if compact else 15)
 	_nav_hint.position = Vector2(pad + 3.0, panel_size.y - nav_h - 3.0)
