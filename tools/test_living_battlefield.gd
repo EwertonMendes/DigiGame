@@ -103,8 +103,12 @@ func _validate_environment(field: Node) -> void:
 	_expect(enemy_rock != null, "Enemy-side rock must be present beyond the spawn band")
 
 	_expect(
-		field.get_static_tile_block_reason(Vector2i(12, 10)).is_empty(),
-		"The split oak stump is decorative and must not silently become a blocker"
+		field.get_static_tile_block_reason(Vector2i(12, 10)) == "terrain_blocked",
+		"The split oak stump must block traversal on its owning tile"
+	)
+	_expect(
+		String(field.tile_map_data[Vector2i(12, 10)].get("blocker_kind", "")) == "stump",
+		"The stump tile must expose its blocker kind"
 	)
 
 	_assert_atlas_source(large_tree, "res://assets/terrain/Oak_Tree.png", "Large oak")
@@ -265,6 +269,10 @@ func _validate_pathfinding(field: Node) -> void:
 	_expect(
 		not reachable.has(Vector2i(10, 14)),
 		"Movement search must never expose a rock blocker as reachable"
+	)
+	_expect(
+		not reachable.has(Vector2i(12, 10)),
+		"Movement search must never expose the stump tile as reachable"
 	)
 
 	var path: Array[Vector2i] = movement.find_path(field, null, null, origin, destination, 20)
