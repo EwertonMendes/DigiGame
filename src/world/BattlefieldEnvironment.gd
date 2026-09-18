@@ -15,6 +15,13 @@ const ROCK_Z_INDEX := -24
 const ROCK_SCALE := 0.90
 const ROCK_TINT := Color(0.94, 0.97, 0.94, 1.0)
 
+# Upright blockers read better when their ground contact sits slightly toward
+# the near edge of the isometric diamond instead of its mathematical center.
+# Express the bias as a fraction of the tile's center-to-near-edge depth so it
+# automatically follows the field geometry rather than using sprite-specific
+# pixel offsets.
+const BLOCKER_VISUAL_DEPTH_RATIO := 0.35
+
 # Visible alpha bounds inside the user-supplied source PNGs. Oak_Tree_Small.png
 # is a compact atlas containing a stump and two separate trees, not one prop.
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
@@ -56,7 +63,8 @@ func _build_trees(cells: Array[Vector2i]) -> void:
 			descriptor["texture"] as Texture2D,
 			grid,
 			descriptor["foot"] as Vector2,
-			1.0
+			1.0,
+			true
 		)
 		tree.z_index = TREE_Z_INDEX
 		tree.set_meta("obstacle_kind", "tree")
@@ -71,7 +79,8 @@ func _build_stump(grid: Vector2i) -> void:
 		stump_texture,
 		grid,
 		SMALL_STUMP_FOOT,
-		1.0
+		1.0,
+		false
 	)
 	stump.z_index = TREE_Z_INDEX
 	stump.set_meta("obstacle_kind", "decoration")
@@ -88,7 +97,8 @@ func _build_rocks(cells: Array[Vector2i]) -> void:
 			rock_texture,
 			grid,
 			ROCK_FOOT,
-			ROCK_SCALE
+			ROCK_SCALE,
+			true
 		)
 		rock.z_index = ROCK_Z_INDEX
 		rock.flip_h = index % 2 == 1
@@ -132,14 +142,21 @@ func _create_anchored_prop(
 	texture: Texture2D,
 	grid: Vector2i,
 	foot_anchor: Vector2,
-	scale_factor: float
+	scale_factor: float,
+	use_blocker_visual_anchor: bool
 ) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.name = prop_name
 	sprite.texture = texture
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.scale = Vector2.ONE * scale_factor
-	sprite.position = _position_for_foot_anchor(grid, texture, foot_anchor, scale_factor)
+	sprite.position = _position_for_foot_anchor(
+		grid,
+		texture,
+		foot_anchor,
+		scale_factor,
+		use_blocker_visual_anchor
+	)
 	return sprite
 
 
@@ -147,11 +164,25 @@ func _position_for_foot_anchor(
 	grid: Vector2i,
 	texture: Texture2D,
 	foot_anchor: Vector2,
-	scale_factor: float
+	scale_factor: float,
+	use_blocker_visual_anchor: bool
 ) -> Vector2:
 	if _field == null:
 		return Vector2.ZERO
-	var tile_center := Vector2(_field.call("grid_to_world", grid))
+	var ground_anchor := _visual_ground_anchor(grid, use_blocker_visual_anchor)
 	var texture_center := texture.get_size() * 0.5
 	var center_to_foot := (foot_anchor - texture_center) * scale_factor
-	return tile_center - center_to_foot
+	return ground_anchor - center_to_foot
+
+
+func _visual_ground_anchor(grid: Vector2i, use_blocker_visual_anchor: bool) -> Vector2:
+	var tile_center := Vector2(_field.call("grid_to_world", grid))
+	if not use_blocker_visual_anchor:
+		return tile_center
+
+	# One cardinal grid step moves half a tile-height downward on this 2:1
+	# isometric projection. Using that measured depth keeps this policy valid if
+	# the grid dimensions change later.
+	var next_row_center := Vector2(_field.call("grid_to_world", grid + Vector2i(1, 0)))
+	var center_to_near_edge := absf(next_row_center.y - tile_center.y)
+	return tile_center + Vector2(0.0, center_to_near_edge * BLOCKER_VISUAL_DEPTH_RATIO)
