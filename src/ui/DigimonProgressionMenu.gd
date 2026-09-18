@@ -166,7 +166,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _party_instances() -> Array[DigimonInstance]:
-	return OverworldState.get_active_instances()
+	# The main Digimon workspace presents the complete six-member Squad in two
+	# fixed pages: Active first, then Reserve. ROSTER_PAGE_SIZE remains three.
+	return OverworldState.get_squad_instances()
 
 
 func _refresh_collection() -> void:
