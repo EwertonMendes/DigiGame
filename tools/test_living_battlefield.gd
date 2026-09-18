@@ -2,6 +2,7 @@ extends Node
 
 const FieldScript = preload("res://src/world/DevilsWorkshopField.gd")
 const EnvironmentScript = preload("res://src/world/BattlefieldEnvironment.gd")
+const CombatRuntimeScript = preload("res://src/battle/CombatDigimonRuntimeController.gd")
 const MovementSystemScript = preload("res://src/MovementSystem.gd")
 
 class FakeBattleActor:
@@ -59,6 +60,7 @@ func _ready() -> void:
 		)
 
 	_validate_environment(field)
+	_validate_enemy_spawn_reservation(field)
 	_validate_pathfinding(field)
 
 	if _failed:
@@ -76,21 +78,29 @@ func _validate_environment(field: Node) -> void:
 		return
 
 	_expect(
-		environment.get_child_count() == 8,
-		"Field must contain three tree blockers, one separate stump and four rock props"
+		environment.get_child_count() == 13,
+		"Field must contain six tree blockers, one separate stump and six rock props"
 	)
 
 	var large_tree := environment.get_node_or_null("OakTreeLarge_04_12") as Sprite2D
 	var small_tree_a := environment.get_node_or_null("OakTreeSmallA_10_10") as Sprite2D
 	var small_tree_b := environment.get_node_or_null("OakTreeSmallB_04_16") as Sprite2D
+	var enemy_small_tree := environment.get_node_or_null("OakTreeSmallA_02_06") as Sprite2D
+	var enemy_large_tree := environment.get_node_or_null("OakTreeLarge_11_07") as Sprite2D
+	var enemy_small_tree_b := environment.get_node_or_null("OakTreeSmallB_05_08") as Sprite2D
 	var stump := environment.get_node_or_null("OakStump_12_10") as Sprite2D
 	var rock := environment.get_node_or_null("Rock_10_14") as Sprite2D
+	var enemy_rock := environment.get_node_or_null("Rock_13_08") as Sprite2D
 
 	_expect(large_tree != null, "A full-size Oak_Tree prop must be present")
 	_expect(small_tree_a != null, "First Oak_Tree_Small tree must be cropped into its own prop")
 	_expect(small_tree_b != null, "Second Oak_Tree_Small tree must be cropped into its own prop")
+	_expect(enemy_small_tree != null, "Enemy-side small oak A must be present beyond the spawn band")
+	_expect(enemy_large_tree != null, "Enemy-side large oak must be present beyond the spawn band")
+	_expect(enemy_small_tree_b != null, "Enemy-side small oak B must be present beyond the spawn band")
 	_expect(stump != null, "Oak_Tree_Small stump must be cropped into its own tile prop")
 	_expect(rock != null, "The retained rock prop must be present")
+	_expect(enemy_rock != null, "Enemy-side rock must be present beyond the spawn band")
 
 	_expect(
 		field.get_static_tile_block_reason(Vector2i(12, 10)).is_empty(),
@@ -100,14 +110,22 @@ func _validate_environment(field: Node) -> void:
 	_assert_atlas_source(large_tree, "res://assets/terrain/Oak_Tree.png", "Large oak")
 	_assert_atlas_source(small_tree_a, "res://assets/terrain/Oak_Tree_Small.png", "Small oak A")
 	_assert_atlas_source(small_tree_b, "res://assets/terrain/Oak_Tree_Small.png", "Small oak B")
+	_assert_atlas_source(enemy_small_tree, "res://assets/terrain/Oak_Tree_Small.png", "Enemy-side small oak")
+	_assert_atlas_source(enemy_large_tree, "res://assets/terrain/Oak_Tree.png", "Enemy-side large oak")
+	_assert_atlas_source(enemy_small_tree_b, "res://assets/terrain/Oak_Tree_Small.png", "Enemy-side small oak B")
 	_assert_atlas_source(stump, "res://assets/terrain/Oak_Tree_Small.png", "Oak stump")
 	_assert_atlas_source(rock, "res://assets/world/hawkbirdtree/rock.png", "Rock")
+	_assert_atlas_source(enemy_rock, "res://assets/world/hawkbirdtree/rock.png", "Enemy-side rock")
 
 	_assert_prop_ground_anchor(field, large_tree, Vector2i(4, 12), Vector2(20.5, 62.0), "Large oak", true)
 	_assert_prop_ground_anchor(field, small_tree_a, Vector2i(10, 10), Vector2(10.5, 33.0), "Small oak A", true)
 	_assert_prop_ground_anchor(field, small_tree_b, Vector2i(4, 16), Vector2(10.5, 25.0), "Small oak B", true)
+	_assert_prop_ground_anchor(field, enemy_small_tree, Vector2i(2, 6), Vector2(10.5, 33.0), "Enemy-side small oak", true)
+	_assert_prop_ground_anchor(field, enemy_large_tree, Vector2i(11, 7), Vector2(20.5, 62.0), "Enemy-side large oak", true)
+	_assert_prop_ground_anchor(field, enemy_small_tree_b, Vector2i(5, 8), Vector2(10.5, 25.0), "Enemy-side small oak B", true)
 	_assert_prop_ground_anchor(field, stump, Vector2i(12, 10), Vector2(3.5, 7.0), "Oak stump", false)
 	_assert_prop_ground_anchor(field, rock, Vector2i(10, 14), Vector2(13.5, 21.0), "Rock", true)
+	_assert_prop_ground_anchor(field, enemy_rock, Vector2i(13, 8), Vector2(13.5, 21.0), "Enemy-side rock", true)
 
 	if large_tree != null:
 		_expect(
@@ -115,6 +133,12 @@ func _validate_environment(field: Node) -> void:
 			"Large oak depth must match the same isometric x+y ordering used by battle actors"
 		)
 		_validate_large_tree_occlusion(environment, large_tree)
+
+	if enemy_large_tree != null:
+		_expect(
+			enemy_large_tree.has_meta("large_canopy_occluder"),
+			"Every large oak variant must automatically participate in canopy occlusion"
+		)
 
 	if rock != null:
 		_expect(
@@ -210,6 +234,22 @@ func _validate_large_tree_occlusion(environment: Node, large_tree: Sprite2D) -> 
 	)
 
 	actor.queue_free()
+
+
+func _validate_enemy_spawn_reservation(field: Node) -> void:
+	var runtime := CombatRuntimeScript.new()
+	var raw_candidates = runtime.call("_spawn_zone_candidates", field, false)
+	_expect(raw_candidates is Array, "Enemy spawn-zone query must remain available for battlefield authoring checks")
+	if not raw_candidates is Array:
+		return
+	for raw_grid in raw_candidates:
+		if not raw_grid is Vector2i:
+			continue
+		var grid := Vector2i(raw_grid)
+		_expect(
+			field.get_static_tile_block_reason(grid).is_empty(),
+			"Enemy-side scenery must never consume a legal enemy spawn tile: %s" % grid
+		)
 
 
 func _validate_pathfinding(field: Node) -> void:
