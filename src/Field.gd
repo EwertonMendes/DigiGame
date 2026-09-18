@@ -33,7 +33,7 @@ const TERRAIN_BASE_COLORS := {
 }
 
 var tile_map_data: Dictionary = {}
-var _grid_size := Vector2i(_grid_size.x, _grid_size.y)
+var _grid_size := Vector2i(GRID_SIZE_X, GRID_SIZE_Y)
 var selectedTile := Vector2i.ZERO
 var _static_blocked_tiles: Dictionary = {}
 var _terrain_textures: Dictionary = {}
