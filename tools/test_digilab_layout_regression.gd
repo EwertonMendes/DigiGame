@@ -25,6 +25,8 @@ func _ready() -> void:
 		return
 	if not _check(_primary_tabs_are_valid(convert, "convert"), "Convert Digi Data must expose the three primary tabs"):
 		return
+	if not _check(_workspace_contract_is_valid(convert, "_list_scroll", "_detail_scroll", "_roster_pager"), "Convert Digi Data must use the paged no-scroll workspace contract"):
+		return
 	if not _check(_layout_text_is_usable(convert.get("_detail_body") as Control), "Convert Digi Data contains collapsed or vertical text"):
 		return
 	print("[digilab-layout] convert ok")
@@ -34,6 +36,8 @@ func _ready() -> void:
 	if not _check(party.visible and not convert.visible and not ascension.visible, "Party / Storage primary tab must open"):
 		return
 	if not _check(_primary_tabs_are_valid(party, "party"), "Party / Storage must expose the three primary tabs"):
+		return
+	if not _check(_workspace_contract_is_valid(party, "_list_scroll", "_detail_scroll", "_workspace_pager"), "Party / Storage must use the paged no-scroll workspace contract"):
 		return
 	var party_detail: Control = party.get("_detail") as Control
 	if not _check(party_detail != null and _layout_text_is_usable(party_detail), "Party / Storage contains collapsed or vertical text"):
@@ -59,12 +63,14 @@ func _ready() -> void:
 		return
 	if not _check(_primary_tabs_are_valid(ascension, "ascension"), "Ascension / Expansion must expose the three primary tabs"):
 		return
+	if not _check(_workspace_contract_is_valid(ascension, "_list_scroll", "_detail_scroll", "_workspace_pager"), "Ascension / Expansion must use the paged no-scroll workspace contract"):
+		return
 	var ascension_detail: Control = ascension.get("_detail") as Control
 	if not _check(ascension_detail != null and _layout_text_is_usable(ascension_detail), "Ascension / Expansion contains collapsed or vertical text"):
 		return
-	if not _check(_find_label_containing(ascension_detail, "TIER ASCENSION") != null, "Ascension / Expansion must expose Tier Ascension"):
+	if not _check(_find_button_by_text(ascension_detail, "TIER ASCENSION") != null, "Ascension / Expansion must expose the Tier Ascension secondary workspace"):
 		return
-	if not _check(_find_label_containing(ascension_detail, "EXPANSION") != null, "Ascension / Expansion must expose Expansion controls"):
+	if not _check(_find_button_by_text(ascension_detail, "EXPANSION") != null, "Ascension / Expansion must expose the Expansion secondary workspace"):
 		return
 	print("[digilab-layout] ascension deep-link ok")
 
@@ -100,13 +106,32 @@ func _ready() -> void:
 
 func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 	var header: DigiModalHeader = screen.get("_header") as DigiModalHeader
-	if header == null:
+	if header == null or not header.is_workspace_mode():
 		return false
 	for tab_id: String in ["convert", "party", "ascension"]:
 		var button: Button = header.get_tab_button(tab_id)
-		if button == null or button.disabled:
+		if button == null or button.disabled or button.focus_mode != Control.FOCUS_NONE:
 			return false
 	return header.get_tab_button(active_id) != null
+
+
+func _workspace_contract_is_valid(screen: Control, list_scroll_key: String, detail_scroll_key: String, pager_key: String) -> bool:
+	var list_scroll := screen.get(list_scroll_key) as ScrollContainer
+	var detail_scroll := screen.get(detail_scroll_key) as ScrollContainer
+	var pager := screen.get(pager_key) as DigiPager
+	if list_scroll == null or detail_scroll == null or pager == null:
+		return false
+	if list_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
+		return false
+	if detail_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
+		return false
+	var previous := pager.get_node_or_null("PreviousPage") as Button
+	var next := pager.get_node_or_null("NextPage") as Button
+	if previous == null or next == null:
+		return false
+	if previous.focus_mode != Control.FOCUS_NONE or next.focus_mode != Control.FOCUS_NONE:
+		return false
+	return true
 
 
 func _layout_text_is_usable(root: Control) -> bool:
