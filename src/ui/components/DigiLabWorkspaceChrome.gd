@@ -25,7 +25,7 @@ static func is_compact(viewport: Viewport) -> bool:
 	return physical.x < COMPACT_WIDTH or physical.y < COMPACT_HEIGHT
 
 
-static func page_capacity(viewport: Viewport, desktop: int = 4, compact: int = 3, low_height: int = 2) -> int:
+static func page_capacity(viewport: Viewport, desktop: int = 3, compact: int = 3, low_height: int = 2) -> int:
 	var physical := V2.physical_window_size(viewport)
 	if physical.y < LOW_HEIGHT:
 		return maxi(1, low_height)
