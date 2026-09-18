@@ -7,6 +7,10 @@ const LOCATION_PARTY := "party"
 const LOCATION_STORAGE := "storage"
 const LOCATION_HOSPITAL := "hospital"
 
+const SQUAD_ROLE_ACTIVE := "active"
+const SQUAD_ROLE_RESERVE := "reserve"
+const DEFAULT_RESERVE_LIMIT := 3
+
 var bits: int = 0
 var progression_flags: Dictionary = {}
 var quest_states: Dictionary = {}
@@ -18,8 +22,11 @@ var _instances_by_id: Dictionary = {}
 var _instance_id_by_key: Dictionary = {}
 var _collection_key_by_id: Dictionary = {}
 var _active_party_ids: Array[String] = []
+var _reserve_party_ids: Array[String] = []
 var _hospital_ids: Array[String] = []
-var _hospital_party_indices: Dictionary = {}
+# Hospitalized Digimon remember the exact Squad role and index they left from.
+# This is durable domain state, not UI state, so discharge can restore intent.
+var _hospital_return_slots: Dictionary = {}
 var _digi_data_by_seed: Dictionary = {}
 
 func is_empty() -> bool:
@@ -60,13 +67,16 @@ func replace_at_key(instance: DigimonInstance, collection_key: String, species_n
 	var active_index := _active_party_ids.find(old_id)
 	if active_index >= 0:
 		_active_party_ids[active_index] = instance.id
+	var reserve_index := _reserve_party_ids.find(old_id)
+	if reserve_index >= 0:
+		_reserve_party_ids[reserve_index] = instance.id
 	var hospital_index := _hospital_ids.find(old_id)
 	if hospital_index >= 0:
 		_hospital_ids[hospital_index] = instance.id
-	if _hospital_party_indices.has(old_id):
-		var original_party_index := int(_hospital_party_indices.get(old_id, 0))
-		_hospital_party_indices.erase(old_id)
-		_hospital_party_indices[instance.id] = original_party_index
+	if _hospital_return_slots.has(old_id):
+		var return_slot = _hospital_return_slots.get(old_id, {})
+		_hospital_return_slots.erase(old_id)
+		_hospital_return_slots[instance.id] = (return_slot as Dictionary).duplicate(true) if return_slot is Dictionary else {}
 	return true
 
 func get_instances() -> Array[DigimonInstance]:
@@ -101,15 +111,23 @@ func remove_instance(instance_id: String) -> bool:
 	if clean_id.is_empty() or not _instances_by_id.has(clean_id):
 		return false
 	_active_party_ids.erase(clean_id)
+	_reserve_party_ids.erase(clean_id)
 	_hospital_ids.erase(clean_id)
-	_hospital_party_indices.erase(clean_id)
+	_hospital_return_slots.erase(clean_id)
 	return _erase_instance_record(clean_id)
 
-func remove_reserve_instance(instance_id: String) -> bool:
+
+func remove_storage_instance(instance_id: String) -> bool:
 	var clean_id := instance_id.strip_edges()
-	if clean_id.is_empty() or not _instances_by_id.has(clean_id) or _active_party_ids.has(clean_id) or _hospital_ids.has(clean_id):
+	if clean_id.is_empty() or get_location(clean_id) != LOCATION_STORAGE:
 		return false
 	return _erase_instance_record(clean_id)
+
+
+# Compatibility for older call sites while the prototype vocabulary is cleaned up.
+# "Reserve" now means the three-member battle bench; this alias still removes only Storage.
+func remove_reserve_instance(instance_id: String) -> bool:
+	return remove_storage_instance(instance_id)
 
 func _erase_instance_record(instance_id: String) -> bool:
 	if not _instances_by_id.has(instance_id):
@@ -124,31 +142,61 @@ func _erase_instance_record(instance_id: String) -> bool:
 func get_active_party_ids() -> Array[String]:
 	return _active_party_ids.duplicate()
 
-func get_active_instances() -> Array[DigimonInstance]:
-	var result: Array[DigimonInstance] = []
-	for instance_id: String in _active_party_ids:
-		var instance := get_instance(instance_id)
-		if instance != null:
-			result.append(instance)
+
+func get_reserve_party_ids() -> Array[String]:
+	return _reserve_party_ids.duplicate()
+
+
+func get_squad_ids() -> Array[String]:
+	var result := _active_party_ids.duplicate()
+	result.append_array(_reserve_party_ids)
 	return result
+
+
+func get_active_instances() -> Array[DigimonInstance]:
+	return _instances_for_ids(_active_party_ids)
+
+
+func get_reserve_party_instances() -> Array[DigimonInstance]:
+	return _instances_for_ids(_reserve_party_ids)
+
+
+func get_squad_instances() -> Array[DigimonInstance]:
+	var result := get_active_instances()
+	result.append_array(get_reserve_party_instances())
+	return result
+
 
 func get_hospital_ids() -> Array[String]:
 	return _hospital_ids.duplicate()
 
+
 func get_hospital_instances() -> Array[DigimonInstance]:
+	return _instances_for_ids(_hospital_ids)
+
+
+func get_storage_instances() -> Array[DigimonInstance]:
 	var result: Array[DigimonInstance] = []
-	for instance_id: String in _hospital_ids:
+	for instance: DigimonInstance in get_instances():
+		if get_location(instance.id) == LOCATION_STORAGE:
+			result.append(instance)
+	return result
+
+
+# Deprecated prototype vocabulary: callers that still use get_reserve_instances()
+# continue to receive Storage until they are migrated to get_storage_instances().
+func get_reserve_instances() -> Array[DigimonInstance]:
+	return get_storage_instances()
+
+
+func _instances_for_ids(instance_ids: Array[String]) -> Array[DigimonInstance]:
+	var result: Array[DigimonInstance] = []
+	for instance_id: String in instance_ids:
 		var instance := get_instance(instance_id)
 		if instance != null:
 			result.append(instance)
 	return result
 
-func get_reserve_instances() -> Array[DigimonInstance]:
-	var result: Array[DigimonInstance] = []
-	for instance: DigimonInstance in get_instances():
-		if not _active_party_ids.has(instance.id) and not _hospital_ids.has(instance.id):
-			result.append(instance)
-	return result
 
 func get_location(instance_id: String) -> String:
 	var clean_id := instance_id.strip_edges()
@@ -156,69 +204,180 @@ func get_location(instance_id: String) -> String:
 		return ""
 	if _hospital_ids.has(clean_id):
 		return LOCATION_HOSPITAL
-	if _active_party_ids.has(clean_id):
+	if _active_party_ids.has(clean_id) or _reserve_party_ids.has(clean_id):
 		return LOCATION_PARTY
 	return LOCATION_STORAGE
+
+
+func get_squad_role(instance_id: String) -> String:
+	var clean_id := instance_id.strip_edges()
+	if _active_party_ids.has(clean_id):
+		return SQUAD_ROLE_ACTIVE
+	if _reserve_party_ids.has(clean_id):
+		return SQUAD_ROLE_RESERVE
+	return ""
+
 
 func is_hospitalized(instance_id: String) -> bool:
 	return get_location(instance_id) == LOCATION_HOSPITAL
 
-func set_active_party_ids(instance_ids: Array[String], minimum_size: int, maximum_size: int) -> bool:
-	if instance_ids.size() < minimum_size or instance_ids.size() > maximum_size:
+
+func set_squad_ids(
+	active_ids: Array[String],
+	reserve_ids: Array[String],
+	minimum_active_size: int,
+	maximum_active_size: int,
+	maximum_reserve_size: int
+) -> bool:
+	if active_ids.size() < maxi(0, minimum_active_size) or active_ids.size() > maxi(0, maximum_active_size):
 		return false
-	var normalized: Array[String] = []
-	for instance_id: String in instance_ids:
+	if reserve_ids.size() > maxi(0, maximum_reserve_size):
+		return false
+
+	var seen: Dictionary = {}
+	var normalized_active: Array[String] = []
+	var normalized_reserve: Array[String] = []
+	for instance_id: String in active_ids:
 		var clean_id := instance_id.strip_edges()
-		if clean_id.is_empty() or not _instances_by_id.has(clean_id) or _hospital_ids.has(clean_id) or normalized.has(clean_id):
+		if not _valid_squad_member(clean_id, seen):
 			return false
-		normalized.append(clean_id)
-	_active_party_ids = normalized
+		seen[clean_id] = true
+		normalized_active.append(clean_id)
+	for instance_id: String in reserve_ids:
+		var clean_id := instance_id.strip_edges()
+		if not _valid_squad_member(clean_id, seen):
+			return false
+		seen[clean_id] = true
+		normalized_reserve.append(clean_id)
+
+	_active_party_ids = normalized_active
+	_reserve_party_ids = normalized_reserve
 	return true
+
+
+func _valid_squad_member(instance_id: String, seen: Dictionary) -> bool:
+	return (
+		not instance_id.is_empty()
+		and _instances_by_id.has(instance_id)
+		and not _hospital_ids.has(instance_id)
+		and not seen.has(instance_id)
+	)
+
+
+func set_active_party_ids(instance_ids: Array[String], minimum_size: int, maximum_size: int) -> bool:
+	var reserve := _reserve_party_ids.duplicate()
+	for instance_id: String in instance_ids:
+		reserve.erase(instance_id)
+	return set_squad_ids(instance_ids, reserve, minimum_size, maximum_size, maxi(DEFAULT_RESERVE_LIMIT, reserve.size()))
+
+
+func set_reserve_party_ids(instance_ids: Array[String], maximum_size: int = DEFAULT_RESERVE_LIMIT) -> bool:
+	var active := _active_party_ids.duplicate()
+	for instance_id: String in instance_ids:
+		active.erase(instance_id)
+	return set_squad_ids(active, instance_ids, 0, maxi(active.size(), 3), maximum_size)
+
 
 func admit_to_hospital(instance_id: String) -> bool:
 	var clean_id := instance_id.strip_edges()
-	var party_index := _active_party_ids.find(clean_id)
-	if clean_id.is_empty() or party_index < 0 or _hospital_ids.has(clean_id) or not _instances_by_id.has(clean_id):
+	var role := get_squad_role(clean_id)
+	if clean_id.is_empty() or role.is_empty() or _hospital_ids.has(clean_id) or not _instances_by_id.has(clean_id):
 		return false
-	_hospital_party_indices[clean_id] = party_index
-	_active_party_ids.remove_at(party_index)
+
+	var index := _active_party_ids.find(clean_id) if role == SQUAD_ROLE_ACTIVE else _reserve_party_ids.find(clean_id)
+	if index < 0:
+		return false
+	_hospital_return_slots[clean_id] = {"role": role, "index": index}
+	if role == SQUAD_ROLE_ACTIVE:
+		_active_party_ids.remove_at(index)
+	else:
+		_reserve_party_ids.remove_at(index)
 	_hospital_ids.append(clean_id)
 	return true
 
-func discharge_from_hospital(instance_id: String, maximum_party_size: int) -> String:
+
+func cancel_hospital_admission(instance_id: String) -> bool:
+	var clean_id := instance_id.strip_edges()
+	var hospital_index := _hospital_ids.find(clean_id)
+	if hospital_index < 0:
+		return false
+	var return_slot = _hospital_return_slots.get(clean_id, {})
+	var role := String((return_slot as Dictionary).get("role", "")) if return_slot is Dictionary else ""
+	var index := int((return_slot as Dictionary).get("index", 0)) if return_slot is Dictionary else 0
+	_hospital_ids.remove_at(hospital_index)
+	_hospital_return_slots.erase(clean_id)
+	if role == SQUAD_ROLE_RESERVE:
+		_reserve_party_ids.insert(clampi(index, 0, _reserve_party_ids.size()), clean_id)
+	else:
+		_active_party_ids.insert(clampi(index, 0, _active_party_ids.size()), clean_id)
+	return true
+
+
+func discharge_from_hospital(instance_id: String, maximum_active_size: int, maximum_reserve_size: int) -> Dictionary:
+	var result := {"location": "", "role": ""}
 	var clean_id := instance_id.strip_edges()
 	var hospital_index := _hospital_ids.find(clean_id)
 	if clean_id.is_empty() or hospital_index < 0 or not _instances_by_id.has(clean_id):
-		return ""
-	var original_party_index := int(_hospital_party_indices.get(clean_id, _active_party_ids.size()))
+		return result
+
+	var return_slot = _hospital_return_slots.get(clean_id, {})
+	var preferred_role := String((return_slot as Dictionary).get("role", SQUAD_ROLE_ACTIVE)) if return_slot is Dictionary else SQUAD_ROLE_ACTIVE
+	var preferred_index := int((return_slot as Dictionary).get("index", 0)) if return_slot is Dictionary else 0
 	_hospital_ids.remove_at(hospital_index)
-	_hospital_party_indices.erase(clean_id)
-	if _active_party_ids.size() < maxi(0, maximum_party_size):
-		_active_party_ids.insert(clampi(original_party_index, 0, _active_party_ids.size()), clean_id)
-		return LOCATION_PARTY
-	return LOCATION_STORAGE
+	_hospital_return_slots.erase(clean_id)
+
+	if preferred_role == SQUAD_ROLE_ACTIVE and _active_party_ids.size() < maxi(0, maximum_active_size):
+		_active_party_ids.insert(clampi(preferred_index, 0, _active_party_ids.size()), clean_id)
+		return {"location": LOCATION_PARTY, "role": SQUAD_ROLE_ACTIVE}
+	if preferred_role == SQUAD_ROLE_RESERVE and _reserve_party_ids.size() < maxi(0, maximum_reserve_size):
+		_reserve_party_ids.insert(clampi(preferred_index, 0, _reserve_party_ids.size()), clean_id)
+		return {"location": LOCATION_PARTY, "role": SQUAD_ROLE_RESERVE}
+
+	if _active_party_ids.size() < maxi(0, maximum_active_size):
+		_active_party_ids.append(clean_id)
+		return {"location": LOCATION_PARTY, "role": SQUAD_ROLE_ACTIVE}
+	if _reserve_party_ids.size() < maxi(0, maximum_reserve_size):
+		_reserve_party_ids.append(clean_id)
+		return {"location": LOCATION_PARTY, "role": SQUAD_ROLE_RESERVE}
+
+	return {"location": LOCATION_STORAGE, "role": ""}
+
 
 func location_invariant_error() -> String:
 	var seen: Dictionary = {}
 	for instance_id: String in _active_party_ids:
-		if not _instances_by_id.has(instance_id):
-			return "Party contains an unknown Digimon UUID."
-		if seen.has(instance_id):
-			return "A Digimon UUID occupies more than one collection location."
-		seen[instance_id] = LOCATION_PARTY
+		var error := _record_location(seen, instance_id, SQUAD_ROLE_ACTIVE)
+		if not error.is_empty():
+			return error
+	for instance_id: String in _reserve_party_ids:
+		var error := _record_location(seen, instance_id, SQUAD_ROLE_RESERVE)
+		if not error.is_empty():
+			return error
 	for instance_id: String in _hospital_ids:
-		if not _instances_by_id.has(instance_id):
-			return "Hospital contains an unknown Digimon UUID."
-		if seen.has(instance_id):
-			return "A Digimon UUID occupies more than one collection location."
-		seen[instance_id] = LOCATION_HOSPITAL
-	for raw_id in _hospital_party_indices.keys():
+		var error := _record_location(seen, instance_id, LOCATION_HOSPITAL)
+		if not error.is_empty():
+			return error
+	for raw_id in _hospital_return_slots.keys():
 		var instance_id := String(raw_id)
 		if not _hospital_ids.has(instance_id):
-			return "Hospital Party position metadata references a Digimon outside the Hospital."
-		if int(_hospital_party_indices[raw_id]) < 0:
-			return "Hospital Party position metadata contains an invalid index."
+			return "Hospital return metadata references a Digimon outside the Hospital."
+		var raw_slot = _hospital_return_slots[raw_id]
+		if not raw_slot is Dictionary:
+			return "Hospital return metadata contains an invalid slot."
+		var role := String((raw_slot as Dictionary).get("role", ""))
+		if role not in [SQUAD_ROLE_ACTIVE, SQUAD_ROLE_RESERVE] or int((raw_slot as Dictionary).get("index", -1)) < 0:
+			return "Hospital return metadata contains an invalid Squad slot."
 	return ""
+
+
+func _record_location(seen: Dictionary, instance_id: String, location: String) -> String:
+	if not _instances_by_id.has(instance_id):
+		return "%s contains an unknown Digimon UUID." % location.capitalize()
+	if seen.has(instance_id):
+		return "A Digimon UUID occupies more than one collection location."
+	seen[instance_id] = location
+	return ""
+
 
 func add_digi_data(species_seed: String, amount: int) -> int:
 	if species_seed.strip_edges().is_empty() or amount <= 0:
@@ -310,9 +469,10 @@ func to_dict() -> Dictionary:
 		entries.append({"collectionKey": get_key_for_instance(instance.id), "instance": instance.to_dict()})
 	return {
 		"instances": entries,
-		"activePartyIds": get_active_party_ids(),
+		"activeSquadIds": get_active_party_ids(),
+		"reserveSquadIds": get_reserve_party_ids(),
 		"hospitalIds": get_hospital_ids(),
-		"hospitalPartyIndices": _hospital_party_indices.duplicate(true),
+		"hospitalReturnSlots": _hospital_return_slots.duplicate(true),
 		"bits": bits,
 		"digiData": get_all_digi_data(),
 		"progressionFlags": progression_flags.duplicate(true),
@@ -322,13 +482,15 @@ func to_dict() -> Dictionary:
 		"inventory": get_inventory(),
 	}
 
+
 func load_dict(data: Dictionary) -> void:
 	_instances_by_id.clear()
 	_instance_id_by_key.clear()
 	_collection_key_by_id.clear()
 	_active_party_ids.clear()
+	_reserve_party_ids.clear()
 	_hospital_ids.clear()
-	_hospital_party_indices.clear()
+	_hospital_return_slots.clear()
 	_digi_data_by_seed.clear()
 	unlocked_technique_records.clear()
 	technique_research.clear()
@@ -336,12 +498,14 @@ func load_dict(data: Dictionary) -> void:
 	bits = maxi(0, int(data.get("bits", 0)))
 	progression_flags = _safe_dictionary(data.get("progressionFlags", {}))
 	quest_states = _safe_dictionary(data.get("questStates", {}))
+
 	var raw_records = data.get("unlockedTechniqueRecords", [])
 	if raw_records is Array:
 		for raw_record in raw_records:
 			var record_id := String(raw_record).strip_edges()
 			if not record_id.is_empty() and not unlocked_technique_records.has(record_id):
 				unlocked_technique_records.append(record_id)
+
 	var raw_research = data.get("techniqueResearch", {})
 	if raw_research is Dictionary:
 		for raw_skill_id in raw_research.keys():
@@ -349,6 +513,7 @@ func load_dict(data: Dictionary) -> void:
 			var points := clampi(int(raw_research[raw_skill_id]), 0, 2)
 			if not skill_id.is_empty() and points > 0 and not unlocked_technique_records.has(skill_id):
 				technique_research[skill_id] = points
+
 	var raw_inventory = data.get("inventory", {})
 	if raw_inventory is Dictionary:
 		for raw_item_id in raw_inventory.keys():
@@ -375,30 +540,44 @@ func load_dict(data: Dictionary) -> void:
 				_migrate_instance_skill_ids(instance, action_database)
 			add_instance(instance, String(entry.get("collectionKey", "")), "digimon")
 
-	var has_explicit_hospital_ids := data.has("hospitalIds")
 	var raw_hospital = data.get("hospitalIds", [])
 	if raw_hospital is Array:
 		for raw_id in raw_hospital:
 			var instance_id := String(raw_id).strip_edges()
 			if _instances_by_id.has(instance_id) and not _hospital_ids.has(instance_id):
 				_hospital_ids.append(instance_id)
-	if not has_explicit_hospital_ids:
-		for instance: DigimonInstance in get_instances():
-			if instance.has_hospital_recovery() and not _hospital_ids.has(instance.id):
-				_hospital_ids.append(instance.id)
-	var raw_hospital_party_indices = data.get("hospitalPartyIndices", {})
-	if raw_hospital_party_indices is Dictionary:
-		for raw_id in (raw_hospital_party_indices as Dictionary).keys():
-			var instance_id := String(raw_id).strip_edges()
-			if _hospital_ids.has(instance_id):
-				_hospital_party_indices[instance_id] = maxi(0, int((raw_hospital_party_indices as Dictionary)[raw_id]))
 
-	var raw_party = data.get("activePartyIds", [])
-	if raw_party is Array:
-		for raw_id in raw_party:
+	var raw_return_slots = data.get("hospitalReturnSlots", {})
+	if raw_return_slots is Dictionary:
+		for raw_id in (raw_return_slots as Dictionary).keys():
+			var instance_id := String(raw_id).strip_edges()
+			var raw_slot = (raw_return_slots as Dictionary)[raw_id]
+			if not _hospital_ids.has(instance_id) or not raw_slot is Dictionary:
+				continue
+			var role := String((raw_slot as Dictionary).get("role", ""))
+			var index := int((raw_slot as Dictionary).get("index", -1))
+			if role in [SQUAD_ROLE_ACTIVE, SQUAD_ROLE_RESERVE] and index >= 0:
+				_hospital_return_slots[instance_id] = {"role": role, "index": index}
+
+	var raw_active = data.get("activeSquadIds", [])
+	if raw_active is Array:
+		for raw_id in raw_active:
 			var instance_id := String(raw_id).strip_edges()
 			if _instances_by_id.has(instance_id) and not _hospital_ids.has(instance_id) and not _active_party_ids.has(instance_id):
 				_active_party_ids.append(instance_id)
+
+	var raw_reserve = data.get("reserveSquadIds", [])
+	if raw_reserve is Array:
+		for raw_id in raw_reserve:
+			var instance_id := String(raw_id).strip_edges()
+			if (
+				_instances_by_id.has(instance_id)
+				and not _hospital_ids.has(instance_id)
+				and not _active_party_ids.has(instance_id)
+				and not _reserve_party_ids.has(instance_id)
+			):
+				_reserve_party_ids.append(instance_id)
+
 	var raw_data = data.get("digiData", {})
 	if raw_data is Dictionary:
 		for raw_seed in raw_data.keys():
@@ -406,6 +585,7 @@ func load_dict(data: Dictionary) -> void:
 			var amount := maxi(0, int(raw_data[raw_seed]))
 			if not seed.is_empty() and amount > 0:
 				_digi_data_by_seed[seed] = amount
+
 
 func _migrate_instance_skill_ids(instance: DigimonInstance, action_database) -> void:
 	if instance == null or action_database == null:
