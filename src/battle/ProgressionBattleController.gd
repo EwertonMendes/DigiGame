@@ -2,7 +2,6 @@ extends "res://src/battle/EscapeBattleController.gd"
 
 const BattleRewardServiceScript = preload("res://src/digimon/BattleRewardService.gd")
 const ExpansionQuestCatalogScript = preload("res://src/quests/ExpansionQuestCatalog.gd")
-const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 var _reward_service = null
 
