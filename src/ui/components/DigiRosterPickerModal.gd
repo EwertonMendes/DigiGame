@@ -170,7 +170,7 @@ func _entry_button(entry: Dictionary) -> Button:
 	var title := String(entry.get("title", id))
 	var subtitle := String(entry.get("subtitle", ""))
 	var species := String(entry.get("species", ""))
-	var accent: Color = entry.get("accent", _accent) as Color
+	var accent: Color = entry.get("accent", _accent)
 
 	var button := Button.new()
 	button.text = ""
