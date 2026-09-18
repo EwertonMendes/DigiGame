@@ -9,6 +9,9 @@ const ModalHeaderScript = preload("res://src/ui/components/DigiModalHeader.gd")
 const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
+const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
+const WorkspaceChrome = preload("res://src/ui/components/DigiLabWorkspaceChrome.gd")
+const OPERATOR_BACKGROUND = preload("res://assets/ui/backgrounds/digimon_menu.png")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 const PROGRAM_IDS: Array[String] = [
@@ -22,6 +25,7 @@ const PROGRAM_IDS: Array[String] = [
 ]
 const SECTION_PROGRAM := "program"
 const SECTION_FIELD := "field"
+const OPERATOR_UI_LAYER := 90
 
 var _battle_catalog := BattleOperatorCatalogScript.new() as BattleOperatorEncounterCatalog
 var _field_catalog := BattlefieldCatalogScript.new() as BattlefieldCatalog
@@ -32,7 +36,10 @@ var _field_order: Array[String] = []
 var _selected_program_id := "basic"
 var _selected_battlefield_id := ""
 var _operator_section := SECTION_PROGRAM
+var _operator_ui_layer: CanvasLayer = null
 var _operator_header: DigiModalHeader = null
+var _operator_header_rule: ColorRect = null
+var _operator_footer: DigiInputHintBar = null
 var _section_tabs: DigiSegmentedTabs = null
 var _program_panel: PanelContainer = null
 var _field_panel: PanelContainer = null
@@ -55,8 +62,7 @@ var _field_page := 0
 var _program_page_capacity := PROGRAM_IDS.size()
 var _field_page_capacity := 5
 var _compact_operator_layout := false
-var _left_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
-var _right_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
+var _analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
 
 func _ready() -> void:
 	_battle_program_rng.randomize()
@@ -66,9 +72,14 @@ func _ready() -> void:
 
 
 func _build_dialog() -> void:
-	# Battle Operator owns a real V2 workspace. Do not instantiate the inherited
-	# two-button conversation prompt and hide it afterward; only the Hub's shared
-	# open/close/transition lifecycle is reused.
+	# Battle Operator follows the same full-screen service-layer contract as the
+	# Digimon menu, DigiLab and Hospital. Keeping it on its own CanvasLayer also
+	# guarantees closed debug launchers (layers 60/80) never cover workspace UI.
+	_operator_ui_layer = CanvasLayer.new()
+	_operator_ui_layer.name = "BattleOperatorUI"
+	_operator_ui_layer.layer = OPERATOR_UI_LAYER
+	add_child(_operator_ui_layer)
+
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.name = "BattleDialog"
 	_dialog_panel.visible = false
@@ -76,18 +87,28 @@ func _build_dialog() -> void:
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_dialog_panel.add_theme_stylebox_override(
 		"panel",
-		HUB_V2.surface_style(
-			Color(0.016, 0.037, 0.055, 0.985),
-			Color(HUB_V2.CYAN.r, HUB_V2.CYAN.g, HUB_V2.CYAN.b, 0.34),
-			12
-		)
+		HUB_V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0)
 	)
-	_ui_root.add_child(_dialog_panel)
+	_operator_ui_layer.add_child(_dialog_panel)
+
+	var background := TextureRect.new()
+	background.name = "BattleOperatorBackground"
+	background.texture = OPERATOR_BACKGROUND
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dialog_panel.add_child(background)
+
+	var shade := ColorRect.new()
+	shade.name = "BattleOperatorBackgroundShade"
+	shade.color = Color(0.005, 0.019, 0.032, 0.40)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dialog_panel.add_child(shade)
 
 	_mobile_dialog_content = Control.new()
 	_mobile_dialog_content.name = "Content"
 	_mobile_dialog_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_mobile_dialog_content.custom_minimum_size = Vector2.ZERO
+	_mobile_dialog_content.clip_contents = true
 	_dialog_panel.add_child(_mobile_dialog_content)
 
 	_start_battle_button = _dialog_button("START BATTLE", HUB_V2.AMBER)
@@ -105,10 +126,21 @@ func _build_dialog() -> void:
 
 	_operator_header = ModalHeaderScript.new() as DigiModalHeader
 	_operator_header.name = "OperatorHeader"
-	_operator_header.configure("BATTLE OPERATOR", "Battle Simulation", 0, false)
 	_operator_header.set_workspace_mode(true)
+	_operator_header.configure("BATTLE OPERATOR", "Battle Simulation", 0, false)
 	_operator_header.close_requested.connect(_close_dialog)
 	_mobile_dialog_content.add_child(_operator_header)
+	var close_button := _operator_header.get_close_button()
+	if close_button != null:
+		# Same navigation contract as Digimon/Hospital: close chrome is pointer /
+		# Back driven and never steals D-pad or analog focus from workspace content.
+		close_button.focus_mode = Control.FOCUS_NONE
+
+	_operator_header_rule = ColorRect.new()
+	_operator_header_rule.name = "OperatorHeaderRule"
+	_operator_header_rule.color = Color(HUB_V2.BORDER.r, HUB_V2.BORDER.g, HUB_V2.BORDER.b, 0.62)
+	_operator_header_rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mobile_dialog_content.add_child(_operator_header_rule)
 
 	_section_tabs = SegmentScript.new() as DigiSegmentedTabs
 	_section_tabs.name = "OperatorSections"
@@ -123,6 +155,14 @@ func _build_dialog() -> void:
 	_build_battlefield_workspace()
 	_build_selection_summary()
 
+	_operator_footer = InputHintBarScript.new() as DigiInputHintBar
+	_operator_footer.name = "BattleOperatorHints"
+	WorkspaceChrome.configure_hints(
+		_operator_footer,
+		"Configure the test battle. Select a program and battlefield, then start the simulation."
+	)
+	_mobile_dialog_content.add_child(_operator_footer)
+
 	_refresh_operator_state()
 	call_deferred("_wire_operator_focus")
 
@@ -130,7 +170,7 @@ func _build_dialog() -> void:
 func _build_program_workspace() -> void:
 	_program_panel = PanelContainer.new()
 	_program_panel.name = "ProgramPanel"
-	_program_panel.add_theme_stylebox_override("panel", HUB_V2.hospital_panel_style(HUB_V2.CYAN))
+	WorkspaceChrome.style_workspace_panel(_program_panel, HUB_V2.CYAN)
 	_mobile_dialog_content.add_child(_program_panel)
 
 	var stack := VBoxContainer.new()
@@ -189,7 +229,7 @@ func _build_program_workspace() -> void:
 func _build_battlefield_workspace() -> void:
 	_field_panel = PanelContainer.new()
 	_field_panel.name = "BattlefieldPanel"
-	_field_panel.add_theme_stylebox_override("panel", HUB_V2.hospital_panel_style(HUB_V2.CYAN))
+	WorkspaceChrome.style_workspace_panel(_field_panel, HUB_V2.CYAN)
 	_mobile_dialog_content.add_child(_field_panel)
 
 	var stack := VBoxContainer.new()
@@ -255,7 +295,7 @@ func _build_battlefield_workspace() -> void:
 func _build_selection_summary() -> void:
 	_summary_panel = PanelContainer.new()
 	_summary_panel.name = "SimulationPanel"
-	_summary_panel.add_theme_stylebox_override("panel", HUB_V2.hospital_panel_style(HUB_V2.CYAN))
+	WorkspaceChrome.style_workspace_panel(_summary_panel, HUB_V2.CYAN)
 	_mobile_dialog_content.add_child(_summary_panel)
 
 	var stack := VBoxContainer.new()
@@ -267,7 +307,7 @@ func _build_selection_summary() -> void:
 
 	_summary_header = SectionHeaderScript.new() as DigiSectionHeader
 	_summary_header.name = "SimulationHeader"
-	_summary_header.configure("SIMULATION", "MECHANICS TEST", HUB_V2.AMBER, "sword")
+	_summary_header.configure("SIMULATION", "MECHANICS TEST", HUB_V2.CYAN, "sword")
 	_summary_header.set_workspace_mode(true)
 	stack.add_child(_summary_header)
 
@@ -347,8 +387,7 @@ func _field_list_subtitle(definition: BattlefieldDefinition) -> String:
 
 
 func _open_dialog() -> void:
-	_left_analog_gate.reset()
-	_right_analog_gate.reset()
+	_analog_gate.reset()
 	super._open_dialog()
 	if not _dialog_open:
 		return
