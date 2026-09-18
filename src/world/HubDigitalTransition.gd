@@ -534,19 +534,19 @@ func _rank_for_program(program_id: String) -> String:
 func _program_spec(program_id: String) -> Dictionary:
 	match program_id:
 		"basic":
-			return {"title": "Basic Battle", "subtitle": "Koromon, Tanemon and Veemon. Fixed low-level baseline encounter.", "status": "MIXED", "icon": "sword", "accent": HUB_V2.CYAN}
+			return {"title": "BASIC BATTLE", "subtitle": "Koromon, Tanemon and Veemon. Fixed low-level baseline encounter.", "status": "MIXED", "icon": "sword", "accent": HUB_V2.CYAN}
 		"random_fresh":
-			return {"title": "Random Fresh", "subtitle": "Three verified Fresh Digimon scaled to your squad.", "status": "FRESH", "icon": "spark", "accent": HUB_V2.CYAN}
+			return {"title": "RANDOM FRESH", "subtitle": "Three verified Fresh Digimon scaled to your squad.", "status": "FRESH", "icon": "spark", "accent": HUB_V2.CYAN}
 		"random_baby":
-			return {"title": "Random Baby", "subtitle": "Three verified In-Training Digimon scaled to your squad.", "status": "IN-TRAINING", "icon": "spark", "accent": HUB_V2.BLUE}
+			return {"title": "RANDOM BABY", "subtitle": "Three verified In-Training Digimon scaled to your squad.", "status": "IN-TRAINING", "icon": "spark", "accent": HUB_V2.BLUE}
 		"random_rookie":
-			return {"title": "Random Rookie", "subtitle": "Three verified Rookie Digimon scaled to your squad.", "status": "ROOKIE", "icon": "sword", "accent": HUB_V2.GREEN}
+			return {"title": "RANDOM ROOKIE", "subtitle": "Three verified Rookie Digimon scaled to your squad.", "status": "ROOKIE", "icon": "sword", "accent": HUB_V2.GREEN}
 		"random_champion":
-			return {"title": "Random Champion", "subtitle": "Three verified Champion Digimon scaled to your squad.", "status": "CHAMPION", "icon": "shield", "accent": HUB_V2.AMBER}
+			return {"title": "RANDOM CHAMPION", "subtitle": "Three verified Champion Digimon scaled to your squad.", "status": "CHAMPION", "icon": "shield", "accent": HUB_V2.AMBER}
 		"random_ultimate":
-			return {"title": "Random Ultimate", "subtitle": "Three verified Ultimate Digimon scaled to your squad.", "status": "ULTIMATE", "icon": "bolt", "accent": HUB_V2.RED}
+			return {"title": "RANDOM ULTIMATE", "subtitle": "Three verified Ultimate Digimon scaled to your squad.", "status": "ULTIMATE", "icon": "bolt", "accent": HUB_V2.RED}
 		"random_mega":
-			return {"title": "Random Mega", "subtitle": "Three verified Mega Digimon scaled to your squad.", "status": "MEGA", "icon": "evolution", "accent": HUB_V2.PURPLE}
+			return {"title": "RANDOM MEGA", "subtitle": "Three verified Mega Digimon scaled to your squad.", "status": "MEGA", "icon": "evolution", "accent": HUB_V2.PURPLE}
 	return {}
 
 
