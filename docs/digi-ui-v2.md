@@ -20,6 +20,8 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - `DigiActionCard.gd`: focusable/touch-safe action card with icon, title, description and status footer.
 - `DigiCommandButtonStyle.gd`: raised command-button language that remains visually distinct from informational panels in normal, hover, focus, pressed and disabled states.
 - `DigiCommandButton.gd`: reusable icon/title/subtitle/status command control built on the shared command style.
+- `DigiSelectionCard.gd`: persistent-selection list card for roster/configuration workspaces. Focus/hover are transient navigation states; committed selection keeps a stable cyan highlight without changing card geometry or shadow depth.
+- `DigiSegmentedTabs.gd`: shared bounded section switcher used by DigiLab-style compact workspaces.
 - `DigiPager.gd`: pointer/touch pager with an explicit page indicator; its arrows deliberately stay outside directional focus navigation.
 - `DigiAnalogNavigationGate.gd`: reusable analog-stick/trigger hysteresis so one intentional deflection produces one menu navigation step.
 - `DigiRosterProfilePanel.gd`: compact adaptive Digimon profile surface for paged, no-scroll roster workspaces.
@@ -38,6 +40,7 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - Primary touch targets are at least 52 logical pixels where the component represents a direct action.
 - Buttons expose distinct normal, hover, focus, pressed and disabled states.
 - Focus is never represented by color alone: focused controls also receive a stronger border.
+- Configuration/roster workspaces keep committed selection separate from transient focus, hover and press. Selection remains persistently highlighted while navigation moves elsewhere, and press feedback must not change card geometry.
 - Touch never depends on hover-only information.
 - Reversible or potentially destructive confirmation flows default keyboard/controller focus to the safe cancel/no action. `ui_accept` activates the currently focused button instead of being hard-coded to confirm.
 - Contextual world prompts separate the current input badge (`E`, Xbox `A`, PlayStation `X`, or touch) from the action text so copy remains concise and input-aware.
@@ -71,7 +74,7 @@ Global overlays follow the same physical-size helpers. Confirmation cards remain
 - DigiLab and Party / Storage: shared modal hierarchy and V2 surfaces/components.
 - Digi Hospital: full-screen V2 treatment workspace with paged patients, explicit exploration/action modes and controller-aware input hints.
 - Training Center: V2 modal header, responsive roster, training budget, semantic attribute steppers, mobility planning, plan summary, adaptive input hints and focus restoration after dynamic updates.
-- Hub chrome: V2 location surface, contextual glass interaction prompt, contextual mobile action labels and a responsive Battle Operator mechanics-test workspace with independent battle-program and authored-battlefield selection.
+- Hub chrome: V2 location surface, contextual interaction prompt and a responsive Battle Operator mechanics-test workspace that reuses the DigiLab/Digimon workspace hierarchy: persistent program list, persistent battlefield list, simulation summary/action panel, and compact paged section navigation.
 - Confirmation flows: shared V2 confirmation component is used by battle retreat, while specialized evolution confirmation is normalized by the V2 runtime and keeps its richer transition summary.
 - Transient overlays: area-title and battle-start presentation use V2 slate surfaces, typography and restrained semantic accents.
 - Remaining named legacy battle/dialog surfaces are normalized by `DigiUiRuntime` so player-facing chrome no longer falls back to the old Kenney-frame presentation while deeper screens are migrated structurally.
