@@ -347,6 +347,7 @@ func _rebuild_tabs() -> void:
 		label.clip_text = true
 		V2.apply_heading(label)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_set_tab_label_intrinsic_width(label)
 		row.add_child(label)
 
 		button.set_meta("tab_label", label)
@@ -361,6 +362,20 @@ func _rebuild_tabs() -> void:
 			button.pressed.connect(func(): tab_selected.emit(tab_id))
 		_tabs_root.add_child(button)
 		_tab_buttons[tab_id] = button
+
+
+func _measure_tab_label(label: Label, text: String, font_size: int) -> float:
+	if label == null or text.is_empty():
+		return 0.0
+	var font := label.get_theme_font("font")
+	return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+
+
+func _set_tab_label_intrinsic_width(label: Label) -> void:
+	if label == null:
+		return
+	var font_size := label.get_theme_font_size("font_size")
+	label.custom_minimum_size.x = ceilf(_measure_tab_label(label, label.text, font_size)) + 2.0
 
 
 func _tab_icon_for(tab_id: String) -> String:
@@ -419,6 +434,7 @@ func _layout() -> void:
 					label.visible = not icon_only
 					label.text = String(tab_button.get_meta("compact_label", tab_button.get_meta("full_label", "")))
 					label.add_theme_font_size_override("font_size", 11)
+					_set_tab_label_intrinsic_width(label)
 				if icon != null:
 					icon.custom_minimum_size = Vector2(19.0, 19.0)
 				if row != null:
@@ -438,6 +454,7 @@ func _layout() -> void:
 					label.visible = true
 					label.text = String(tab_button.get_meta("full_label", ""))
 					label.add_theme_font_size_override("font_size", 13)
+					_set_tab_label_intrinsic_width(label)
 				if icon != null:
 					icon.custom_minimum_size = Vector2(22.0, 22.0)
 				if row != null:
@@ -505,14 +522,23 @@ func _layout_workspace() -> void:
 			if label != null:
 				var full_label := String(button.get_meta("full_label", ""))
 				var compact_label := String(button.get_meta("compact_label", full_label))
-				var font := label.get_theme_font("font")
-				var full_text_width := font.get_string_size(full_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 				var content_padding := 20.0 + 8.0 + (54.0 if angled_tabs else 30.0)
+				var full_font_size := 15 if tab_width >= 150.0 else 13
+				var full_text_width := _measure_tab_label(label, full_label, full_font_size)
+				var chosen_label := full_label
+				var chosen_font_size := full_font_size
+				if full_text_width + content_padding > tab_width and compact_label != full_label:
+					chosen_label = compact_label
+					chosen_font_size = 13
+					var compact_text_width := _measure_tab_label(label, compact_label, chosen_font_size)
+					if compact_text_width + content_padding > tab_width:
+						chosen_font_size = 11
 				label.visible = true
-				label.text = compact_label if full_text_width + content_padding > tab_width and compact_label != full_label else full_label
-				label.add_theme_font_size_override("font_size", 15 if tab_width >= 150.0 else 13)
+				label.text = chosen_label
+				label.add_theme_font_size_override("font_size", chosen_font_size)
 				label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 				label.clip_text = true
+				_set_tab_label_intrinsic_width(label)
 			if icon != null:
 				icon.custom_minimum_size = Vector2(20.0, 20.0)
 			if row != null:
