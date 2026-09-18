@@ -618,7 +618,7 @@ func _refresh_structure(restore_focus: bool = true) -> void:
 
 
 func _current_roster() -> Array[DigimonInstance]:
-	return OverworldState.get_active_instances() if _tab == "party" else OverworldState.get_hospital_instances()
+	return OverworldState.get_squad_instances() if _tab == "party" else OverworldState.get_hospital_instances()
 
 
 func _roster_signature() -> String:
@@ -657,8 +657,9 @@ func _ensure_preview() -> void:
 func _refresh_tabs() -> void:
 	for key in ["party", "hospital"]:
 		var button := _tab_buttons[key] as Button
-		var count := OverworldState.get_active_instances().size() if key == "party" else OverworldState.get_hospital_instances().size()
-		button.text = "%s  %d" % [key.to_upper(), count]
+		var count := OverworldState.get_squad_instances().size() if key == "party" else OverworldState.get_hospital_instances().size()
+		var label := "SQUAD" if key == "party" else "HOSPITAL"
+		button.text = "%s  %d" % [label, count]
 		var active := String(key) == _tab
 		button.add_theme_stylebox_override("normal", V2.hospital_button_style(V2.CYAN, "focus" if active else "normal"))
 		button.add_theme_color_override("font_color", V2.WHITE if active else V2.MUTED)
@@ -681,7 +682,8 @@ func _rebuild_cards() -> void:
 	_card_roster_signature = _roster_signature()
 
 	if roster.is_empty():
-		var empty := _flow_label(_card_area, "No Digimon in %s." % _tab.capitalize(), 18, V2.MUTED, true)
+		var empty_label := "Squad" if _tab == "party" else "Hospital"
+		var empty := _flow_label(_card_area, "No Digimon in %s." % empty_label, 18, V2.MUTED, true)
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		empty.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -821,6 +823,9 @@ func _refresh_detail() -> void:
 	var preview := OverworldState.get_hospital_preview(instance.id)
 	var name := instance.get_display_name(String(species.get("name", instance.species_seed)))
 	var location := String(preview.get("location", "")).to_upper()
+	if location == PlayerCollection.LOCATION_PARTY.to_upper():
+		var role := OverworldState.get_squad_role(instance.id)
+		location = role.to_upper() if not role.is_empty() else "SQUAD"
 	var current_hp := int(preview.get("current_hp", 0))
 	var max_hp := int(preview.get("max_hp", 1))
 	var current_sp := int(preview.get("current_sp", 0))
