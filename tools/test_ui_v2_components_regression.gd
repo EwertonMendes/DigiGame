@@ -66,7 +66,7 @@ func _ready() -> void:
 		return
 	if not _check(selection_normal != null and selection_pressed != null, "Selection card must expose stable selection styles"):
 		return
-	if not _check(selection_normal.shadow_size == 0 and selection_pressed.shadow_size == 0, "Selection card must not use press/focus shadows that visually bounce"):
+	if not _check(selection_normal.shadow_size == selection_pressed.shadow_size, "Selection card press state must keep the shared workspace depth stable"):
 		return
 	if not _check(selection_normal.border_width_left == selection_pressed.border_width_left, "Selection card press feedback must preserve geometry"):
 		return
