@@ -145,6 +145,9 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 		if label == null or not label.visible or label.text.strip_edges().is_empty():
 			print("[digilab-layout] missing visible name for primary tab %s" % tab_id)
 			return false
+		if label.size.x < 24.0:
+			print("[digilab-layout] primary tab label has no usable rendered width: %s (%.1f px)" % [tab_id, label.size.x])
+			return false
 		if label.size.x > button.size.x:
 			print("[digilab-layout] primary tab label exceeds tab bounds: %s" % tab_id)
 			return false
