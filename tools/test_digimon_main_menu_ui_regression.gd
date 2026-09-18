@@ -62,6 +62,7 @@ func _ready() -> void:
 		assert(main_tab is DigiAngledTab, "Main header tabs must use the angled game tab shape")
 		var main_label := main_tab.get_meta("tab_label") as Label
 		assert(main_label != null and main_label.visible and not main_label.text.strip_edges().is_empty(), "Main Digimon tabs must keep their icon and text label visible")
+		assert(main_label.size.x >= 24.0, "Main Digimon tab labels must receive real rendered width, not just exist in metadata")
 		if main_tab_width < 0.0:
 			main_tab_width = main_tab.size.x
 		else:
