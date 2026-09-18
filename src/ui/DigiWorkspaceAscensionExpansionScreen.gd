@@ -390,7 +390,6 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 func _expansion_workspace(instance: DigimonInstance) -> Control:
 	var dense := _workspace_is_dense()
 	var panel := PanelContainer.new()
-	panel.name = "ExpansionWorkspacePanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.clip_contents = true
