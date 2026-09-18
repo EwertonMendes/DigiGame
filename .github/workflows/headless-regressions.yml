@@ -106,6 +106,9 @@ jobs:
           - name: expansion-footprint-integration
             command: godot --headless --path . tools/test_expansion_footprint_integration.tscn --quit-after 12
             success: "[ExpansionFootprintIntegrationTest] PASS"
+          - name: living-battlefield
+            command: godot --headless --path . tools/test_living_battlefield.tscn --quit-after 12
+            success: living battlefield regression passed
     steps:
       - name: Checkout
         uses: actions/checkout@v6
