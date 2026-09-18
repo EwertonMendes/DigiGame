@@ -57,18 +57,39 @@ func _ready() -> void:
 	selection_card.configure("BASIC BATTLE", "Persistent selection probe.", "MIXED", "sword", DigiUiTheme.CYAN)
 	add_child(selection_card)
 	await _frames(2)
+	var selection_badge := selection_card.find_child("SelectionStatus", true, false) as Label
+	selection_card.call("_on_mouse_entered")
+	var preview_style := selection_card.get_theme_stylebox("normal") as StyleBoxFlat
 	selection_card.set_selected(true)
-	var selection_normal := selection_card.get_theme_stylebox("normal") as StyleBoxFlat
+	var selected_style := selection_card.get_theme_stylebox("normal") as StyleBoxFlat
 	var selection_pressed := selection_card.get_theme_stylebox("pressed") as StyleBoxFlat
+	selection_card.call("_on_mouse_exited")
+	var persistent_style := selection_card.get_theme_stylebox("normal") as StyleBoxFlat
 	if not _check(selection_card.is_selected(), "Selection card must expose persistent committed selection independent from focus"):
+		return
+	if not _check(selection_badge != null and selection_badge.text == "MIXED", "Selection must never replace semantic card metadata with SELECTED text"):
 		return
 	if not _check(selection_card.get_combined_minimum_size().y >= DigiUiTheme.TOUCH_TARGET, "Selection card must remain touch-safe"):
 		return
-	if not _check(selection_normal != null and selection_pressed != null, "Selection card must expose stable selection styles"):
+	if not _check(preview_style != null and selected_style != null and persistent_style != null and selection_pressed != null, "Selection card must expose stable preview and committed styles"):
 		return
-	if not _check(selection_normal.shadow_size == selection_pressed.shadow_size, "Selection card press state must keep the shared workspace depth stable"):
+	if not _check(
+		preview_style.bg_color == selected_style.bg_color
+		and preview_style.border_color == selected_style.border_color
+		and preview_style.shadow_size == selected_style.shadow_size,
+		"Committing a hovered card must not repaint through a different coloured selection surface"
+	):
 		return
-	if not _check(selection_normal.border_width_left == selection_pressed.border_width_left, "Selection card press feedback must preserve geometry"):
+	if not _check(
+		selected_style.bg_color == persistent_style.bg_color
+		and selected_style.border_color == persistent_style.border_color
+		and selected_style.shadow_size == persistent_style.shadow_size,
+		"Committed selection must remain visually identical after pointer/focus leaves"
+	):
+		return
+	if not _check(selected_style.bg_color == selection_pressed.bg_color and selected_style.border_color == selection_pressed.border_color, "Pressing a selected card must not flash a different fill or border"):
+		return
+	if not _check(selected_style.border_width_left == selection_pressed.border_width_left, "Selection card press feedback must preserve geometry"):
 		return
 
 	var segmented := SegmentedTabsScript.new() as DigiSegmentedTabs
