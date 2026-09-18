@@ -5,7 +5,6 @@ const EncounterDefinitionScript = preload("res://src/world/BattleEncounterDefini
 const BattlefieldCatalogScript = preload("res://src/world/BattlefieldCatalog.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
-const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 const PROGRAM_IDS: Array[String] = [
@@ -48,7 +47,6 @@ var _program_tab: Button = null
 var _field_tab: Button = null
 var _selection_panel: PanelContainer = null
 var _selection_summary: Label = null
-var _input_hint_bar: DigiInputHintBar = null
 var _battle_program_columns := 2
 var _battlefield_columns := 2
 var _compact_operator_layout := false
@@ -224,23 +222,6 @@ func _build_selection_summary() -> void:
 	_selection_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_selection_summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_selection_panel.add_child(_selection_summary)
-
-
-func _ensure_input_hints(enabled: bool) -> void:
-	if enabled and _input_hint_bar == null:
-		_build_input_hints()
-	if _input_hint_bar != null:
-		_input_hint_bar.visible = enabled
-
-
-func _build_input_hints() -> void:
-	_input_hint_bar = InputHintBarScript.new() as DigiInputHintBar
-	_input_hint_bar.name = "OperatorInputHints"
-	_input_hint_bar.set_description("Choose a program and battlefield, then start the simulation.")
-	_input_hint_bar.set_scroll_hint_enabled(false)
-	_input_hint_bar.set_secondary_tabs_enabled(false)
-	_input_hint_bar.set_pagination_enabled(false)
-	_mobile_dialog_content.add_child(_input_hint_bar)
 
 
 func _open_dialog() -> void:
@@ -722,13 +703,12 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 
 	var compact_landscape := landscape and physical.y < 520.0
 	_compact_operator_layout = physical.x < 900.0 or physical.y < 620.0
-	_ensure_input_hints(not _compact_operator_layout)
 	var outer_edge := 12.0 if compact_landscape else edge
 	var dialog_width := minf(1120.0, physical.x - outer_edge * 2.0)
 	var dialog_height := minf(720.0, physical.y - outer_edge * 2.0)
 	var side_pad := 16.0 if compact_landscape else 24.0
 	var top_pad := 8.0 if compact_landscape else 18.0
-	var hint_bar_height := 0.0 if _compact_operator_layout else 48.0
+	var hint_bar_height := 0.0
 	var action_height := HUB_V2.TOUCH_TARGET
 	var summary_height := 44.0 if compact_landscape else 58.0
 	var bottom_pad := 10.0 if compact_landscape else 16.0
@@ -787,13 +767,6 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	_selection_panel.position = Vector2(side_pad, summary_y)
 	_selection_panel.size = Vector2(dialog_width - side_pad * 2.0, summary_height)
 	_selection_summary.add_theme_font_size_override("font_size", 9 if compact_landscape else 10)
-
-	if _input_hint_bar != null:
-		_input_hint_bar.visible = hint_bar_height > 0.0
-		if _input_hint_bar.visible:
-			_input_hint_bar.position = Vector2(0.0, dialog_height - hint_bar_height)
-			_input_hint_bar.size = Vector2(dialog_width, hint_bar_height)
-			_input_hint_bar.set_primary_tabs_enabled(false)
 
 	if _compact_operator_layout:
 		_program_tab.visible = true
