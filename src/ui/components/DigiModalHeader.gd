@@ -269,6 +269,7 @@ func _rebuild_tabs() -> void:
 	for child in _tabs_root.get_children():
 		child.queue_free()
 	_tab_buttons.clear()
+
 	for spec: Dictionary in _tab_specs:
 		var tab_id := String(spec.get("id", ""))
 		var label_text := String(spec.get("label", tab_id.capitalize()))
@@ -277,19 +278,24 @@ func _rebuild_tabs() -> void:
 		var active := tab_id == _active_tab
 		var icon_kind := String(spec.get("icon", _tab_icon_for(tab_id)))
 		var min_width := float(spec.get("min_width", 126.0))
-
 		var angled := bool(spec.get("angled", false))
+
 		var button: Button
 		if angled:
 			button = AngledTabScript.new() as DigiAngledTab
 			(button as DigiAngledTab).set_active(active)
 		else:
 			button = Button.new()
+
+		# Common configuration belongs to every tab shape. Keeping this outside
+		# the angled/non-angled branch prevents one variant from silently losing
+		# its authored size, label or input configuration.
 		button.name = "Tab_%s" % tab_id
 		button.text = ""
 		button.custom_minimum_size = Vector2(min_width, 58.0)
 		button.focus_mode = Control.FOCUS_NONE if _workspace_mode else Control.FOCUS_ALL
 		button.disabled = not enabled
+		button.clip_contents = true
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
 		button.tooltip_text = label_text if enabled else "%s — coming later" % label_text
 		if not angled:
@@ -300,26 +306,53 @@ func _rebuild_tabs() -> void:
 			button.add_theme_stylebox_override("disabled", V2.tab_style(false, false, true))
 
 		var row := HBoxContainer.new()
-		row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.add_theme_constant_override("separation", 7 if angled else 9)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		row.add_theme_constant_override("separation", 8 if angled else 9)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		button.add_child(row)
+
+		var content_host: Control = row
+		if angled:
+			# Keep icon + text out of the two slanted edges while centering the
+			# pair as one unit. This is shared by Digimon and DigiLab.
+			var safe := MarginContainer.new()
+			safe.name = "SlantSafeContent"
+			safe.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			safe.add_theme_constant_override("margin_left", 24)
+			safe.add_theme_constant_override("margin_right", 24)
+			safe.add_theme_constant_override("margin_top", 2)
+			safe.add_theme_constant_override("margin_bottom", 2)
+			safe.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			button.add_child(safe)
+			safe.add_child(row)
+			content_host = safe
+		else:
+			row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			button.add_child(row)
+
 		var icon := IconScript.new() as DigiProceduralIcon
-		icon.custom_minimum_size = Vector2(22.0, 22.0)
+		icon.custom_minimum_size = Vector2(20.0, 20.0)
 		icon.configure(icon_kind, V2.CYAN if active else (V2.MUTED if enabled else V2.SUBTLE), 1.8)
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(icon)
+
 		var label := Label.new()
 		label.text = label_text
-		label.add_theme_font_size_override("font_size", 13)
+		label.add_theme_font_size_override("font_size", 15 if _workspace_mode else 13)
 		label.add_theme_color_override("font_color", V2.WHITE if active else (V2.MUTED if enabled else V2.SUBTLE))
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		label.clip_text = true
 		V2.apply_heading(label)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(label)
+
 		button.set_meta("tab_label", label)
 		button.set_meta("tab_icon", icon)
 		button.set_meta("tab_row", row)
+		button.set_meta("tab_content_host", content_host)
 		button.set_meta("full_label", label_text)
 		button.set_meta("compact_label", compact_label)
 		button.set_meta("preferred_min_width", min_width)
