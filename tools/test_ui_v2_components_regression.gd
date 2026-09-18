@@ -5,6 +5,8 @@ const GlassPanelScript = preload("res://src/ui/components/DigiGlassPanel.gd")
 const InteractionPromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
 const ConfirmationModalScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
 const AttributeChipScript = preload("res://src/ui/components/DigiAttributeChip.gd")
+const SelectionCardScript = preload("res://src/ui/components/DigiSelectionCard.gd")
+const SegmentedTabsScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
 
 
 func _ready() -> void:
@@ -49,6 +51,63 @@ func _ready() -> void:
 	if not _check(is_equal_approx(text_attribute_chip.get_combined_minimum_size().y, icon_height_after), "Classification chips without an icon must keep the shared chip height"):
 		return
 	if not _check(is_equal_approx(icon_height_before, icon_height_after), "Normalizing a classification row must not enlarge the nested attribute label"):
+		return
+
+	var selection_card := SelectionCardScript.new() as DigiSelectionCard
+	selection_card.configure("BASIC BATTLE", "Persistent selection probe.", "MIXED", "sword", DigiUiTheme.CYAN)
+	add_child(selection_card)
+	await _frames(2)
+	var selection_badge := selection_card.find_child("SelectionStatus", true, false) as Label
+	var selection_surface := selection_card.find_child("SelectionCommittedSurface", true, false) as Panel
+	if not _check(selection_surface != null and not selection_surface.visible, "Unselected card must keep committed-selection surface hidden"):
+		return
+	selection_card.call("_on_mouse_entered")
+	var preview_style := selection_card.get_theme_stylebox("normal") as StyleBoxFlat
+	selection_card.set_selected(true)
+	var selected_surface_style := selection_surface.get_theme_stylebox("panel") as StyleBoxFlat
+	var selection_pressed := selection_card.get_theme_stylebox("pressed") as StyleBoxFlat
+	selection_card.call("_on_mouse_exited")
+	var persistent_surface_style := selection_surface.get_theme_stylebox("panel") as StyleBoxFlat
+	if not _check(selection_card.is_selected(), "Selection card must expose persistent committed selection independent from focus"):
+		return
+	if not _check(selection_badge != null and selection_badge.text == "MIXED", "Selection must never replace semantic card metadata with SELECTED text"):
+		return
+	if not _check(selection_surface.visible, "Committed selection must show a dedicated persistent visual surface"):
+		return
+	if not _check(selected_surface_style != null and persistent_surface_style != null, "Committed selection surface must expose a concrete workspace style"):
+		return
+	if not _check(
+		selected_surface_style.border_width_left >= 2
+		and selected_surface_style.border_color.a >= 0.9
+		and selected_surface_style.shadow_size >= 10,
+		"Committed selection must use the approved bright cyan border and glow"
+	):
+		return
+	if not _check(
+		selected_surface_style.border_color == persistent_surface_style.border_color
+		and selected_surface_style.bg_color == persistent_surface_style.bg_color
+		and selected_surface_style.shadow_size == persistent_surface_style.shadow_size,
+		"Committed selection surface must remain visually identical after pointer/focus leaves"
+	):
+		return
+	if not _check(preview_style != null and selection_pressed != null and preview_style.bg_color == selection_pressed.bg_color and preview_style.border_color == selection_pressed.border_color, "Pointer press must not flash through a third transient card surface"):
+		return
+
+	var segmented := SegmentedTabsScript.new() as DigiSegmentedTabs
+	segmented.configure([
+		{"id": "program", "label": "BATTLE PROGRAM", "compact_label": "PROGRAM"},
+		{"id": "field", "label": "BATTLEFIELD", "compact_label": "FIELD"},
+	], "program")
+	add_child(segmented)
+	await _frames(2)
+	segmented.set_compact(true)
+	var compact_program := segmented.get_button("program")
+	var compact_field := segmented.get_button("field")
+	if not _check(
+		compact_program != null and compact_program.text == "PROGRAM"
+		and compact_field != null and compact_field.text == "FIELD",
+		"Segmented tabs must use authored compact labels without truncating workspace navigation"
+	):
 		return
 
 	var prompt := InteractionPromptScript.new() as DigiInteractionPrompt
@@ -98,19 +157,25 @@ func _ready() -> void:
 	hub.call("open_test_battle_dialog")
 	await _frames(3)
 	var battle_dialog := hub.find_child("BattleDialog", true, false) as Control
-	var hub_cancel := hub.find_child("CancelBattleDialog", true, false) as Button
+	var operator_header := hub.find_child("OperatorHeader", true, false) as DigiModalHeader
 	var hub_start := hub.find_child("StartBattle", true, false) as Button
-	if not _check(battle_dialog != null and battle_dialog.visible, "Battle Operator dialog must open"):
+	var program_buttons := hub.get("_battle_program_buttons") as Dictionary
+	var basic_card := program_buttons.get("basic") as DigiSelectionCard
+	if not _check(battle_dialog != null and battle_dialog.visible, "Battle Operator workspace must open"):
 		return
-	if not _check(hub_cancel != null and hub_start != null, "Battle Operator dialog must expose cancel and start actions"):
+	if not _check(operator_header != null and operator_header.is_workspace_mode(), "Battle Operator must reuse the shared V2 workspace header"):
 		return
-	if not _check(get_viewport().gui_get_focus_owner() == hub_cancel, "Battle Operator dialog must default to NOT NOW"):
+	if not _check(hub_start != null and basic_card != null, "Battle Operator must expose selected-program and start controls"):
+		return
+	if not _check(get_viewport().gui_get_focus_owner() == basic_card, "Battle Operator must focus the selected program while keeping selection persistent"):
 		return
 
 	hub.queue_free()
 	modal.queue_free()
 	prompt.queue_free()
 	classification_row.queue_free()
+	selection_card.queue_free()
+	segmented.queue_free()
 	glass.queue_free()
 	await _frames(3)
 	print("global ui v2 components regression passed")

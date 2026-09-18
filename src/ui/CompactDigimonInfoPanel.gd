@@ -1,6 +1,7 @@
 extends "res://src/DigimonInfoPanel.gd"
 
 const CompactUI = preload("res://src/ui/TacticalTheme.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 const CARD_BREAKPOINT := 760.0
 
 var _pointer_tail: ColorRect = null
@@ -83,7 +84,7 @@ func _refresh_context() -> void:
 	var rank_accent := CompactUI.rank_color(rank)
 	var tier := String(hovered.call("get_tier")) if hovered.has_method("get_tier") else "E"
 	var footprint := String(hovered.call("get_battle_footprint_id")) if hovered.has_method("get_battle_footprint_id") else "single"
-	_rank_label.text = "%s · %s" % [tier, "2×2" if footprint == "large_2x2" else "1×1"]
+	_rank_label.text = "%s · %s" % [tier, FootprintScript.display_label(footprint)]
 	_rank_label.tooltip_text = "%s rank · Tier %s" % [rank, tier]
 	_rank_label.visible = true
 	_rank_label.add_theme_stylebox_override("normal", CompactUI.pill(rank_accent, 0.14))

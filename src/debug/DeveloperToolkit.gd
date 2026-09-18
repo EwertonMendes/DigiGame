@@ -8,12 +8,14 @@ const StateToolsScript = preload("res://src/debug/DebugStateTools.gd")
 const RosterToolsScript = preload("res://src/debug/DebugRosterTools.gd")
 const SpeciesPickerScript = preload("res://src/debug/DebugSpeciesPicker.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
+const BattlefieldCatalogScript = preload("res://src/world/BattlefieldCatalog.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 const BATTLE_SCENE := "res://scenes/main.tscn"
 const CLOSED_LAYER := 60
 const OPEN_LAYER := 180
 const MAX_FRAME_SIZE := Vector2(1180, 720)
-const BATTLE_FOOTPRINTS := ["single", "large_2x2"]
+const BATTLE_FOOTPRINTS := ["single", "large_2x2", "large_3x3"]
 
 var _available := false
 var _open := false
@@ -82,6 +84,9 @@ var _battle_roster: Array[Dictionary] = []
 var _battle_list: VBoxContainer
 var _battle_summary: Label
 var _enemy_seed: SpinBox
+var _battlefield_catalog: BattlefieldCatalog
+var _battlefield_select: OptionButton
+var _battlefield_summary: Label
 
 var _diagnostics: Label
 var _history: Label
@@ -98,6 +103,10 @@ func _ready() -> void:
 	_collection_tools = CollectionToolsScript.new() as DebugCollectionTools
 	_state = StateToolsScript.new() as DebugStateTools
 	_roster = RosterToolsScript.new() as DebugRosterTools
+	_battlefield_catalog = BattlefieldCatalogScript.new() as BattlefieldCatalog
+	if not _battlefield_catalog.load_default():
+		for error in _battlefield_catalog.validation_errors():
+			push_error("Developer Toolkit battlefield catalog: %s" % error)
 	_build_ui()
 	_initialize_defaults()
 	get_viewport().size_changed.connect(_layout)
@@ -158,6 +167,10 @@ func close() -> void:
 	_dev_button.visible = true
 	layer = CLOSED_LAYER
 	get_tree().paused = _paused_before_open
+
+func peek_pending_battle_config() -> Dictionary:
+	return _pending_battle_config.duplicate(true)
+
 
 func consume_pending_battle_config() -> Dictionary:
 	var result := _pending_battle_config.duplicate(true)
@@ -496,10 +509,26 @@ func _build_battle_tab(tabs: TabContainer) -> void:
 	_battle_list.add_theme_constant_override("separation", 7)
 	roster_scroll.add_child(_battle_list)
 
+	page.add_child(_section_label("BATTLEFIELD V2", UI.CYAN))
+	_battlefield_select = OptionButton.new()
+	_battlefield_select.custom_minimum_size = Vector2(320, 40)
+	_battlefield_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_battlefield_select.add_item("AUTO · CATALOG DEFAULT")
+	_battlefield_select.set_item_metadata(0, "")
+	for definition: BattlefieldDefinition in _battlefield_catalog.all_definitions():
+		_battlefield_select.add_item("%s · %dx%d" % [definition.display_name.to_upper(), definition.grid_size.x, definition.grid_size.y])
+		_battlefield_select.set_item_metadata(_battlefield_select.item_count - 1, definition.battlefield_id)
+	_style_field(_battlefield_select)
+	_battlefield_select.item_selected.connect(_on_battlefield_changed)
+	page.add_child(_field_row("BATTLEFIELD", _battlefield_select, []))
+	_battlefield_summary = _label("", 9, UI.SUBTLE)
+	_battlefield_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(_battlefield_summary)
+
 	_enemy_seed = _spin(1, 999999999, 1)
 	_enemy_seed.value = 1337
 	page.add_child(_field_row("DETERMINISTIC RNG SEED", _enemy_seed, []))
-	page.add_child(_button_row([_action("START DEBUG BATTLE", _start_debug_battle, UI.GOLD)]))
+	page.add_child(_button_row([_action("START SELECTED FIELD", _start_debug_battle, UI.GOLD)]))
 
 func _build_diagnostics_tab(tabs: TabContainer) -> void:
 	var page := _page(tabs, "DIAGNOSTICS")
@@ -526,6 +555,7 @@ func _initialize_defaults() -> void:
 			_battle_roster.append(descriptor)
 	_refresh_spawn_identity()
 	_refresh_battle_roster()
+	_refresh_battlefield_summary()
 
 func _refresh_all() -> void:
 	_refresh_collection()
@@ -533,6 +563,7 @@ func _refresh_all() -> void:
 	_refresh_account_inventory()
 	_refresh_snapshots()
 	_refresh_battle_roster()
+	_refresh_battlefield_summary()
 	_refresh_diagnostics()
 
 func _refresh_collection() -> void:
@@ -706,6 +737,7 @@ func _refresh_battle_roster() -> void:
 	for child in _battle_list.get_children():
 		child.queue_free()
 	_battle_summary.text = "%d / %d ENEMIES" % [_battle_roster.size(), DebugRosterTools.MAX_SANDBOX_ENEMIES]
+	_refresh_battlefield_summary()
 	if _battle_roster.is_empty():
 		_battle_list.add_child(_label("No enemies configured. Add at least one Digimon.", 10, UI.MUTED))
 		return
@@ -734,7 +766,7 @@ func _refresh_battle_roster() -> void:
 		identity.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_child(identity)
 		identity.add_child(_single_line_label("%02d · %s" % [index + 1, name.to_upper()], 10, UI.TEXT, true))
-		identity.add_child(_single_line_label("%s · TIER %s · %s" % [rank.to_upper(), String(descriptor.get("tier", "E")), "2×2" if String(descriptor.get("footprint", "single")) == "large_2x2" else "1×1"], 8, accent, true))
+		identity.add_child(_single_line_label("%s · TIER %s · %s" % [rank.to_upper(), String(descriptor.get("tier", "E")), _footprint_label(String(descriptor.get("footprint", "single")))], 8, accent, true))
 		row.add_child(_action("CHANGE", _change_battle_species.bind(index), accent, 34))
 		var level := _spin(1, 99, 1)
 		level.custom_minimum_size.x = 72
@@ -761,10 +793,11 @@ func _refresh_battle_roster() -> void:
 		tier.item_selected.connect(_on_battle_tier_changed.bind(index))
 		row.add_child(tier)
 		var footprint := OptionButton.new()
-		footprint.custom_minimum_size = Vector2(74, 34)
-		footprint.add_item("1×1")
-		footprint.add_item("2×2")
-		footprint.select(1 if String(descriptor.get("footprint", "single")) == "large_2x2" else 0)
+		footprint.custom_minimum_size = Vector2(78, 34)
+		for footprint_id: String in BATTLE_FOOTPRINTS:
+			footprint.add_item(_footprint_label(footprint_id))
+		var current_footprint := String(descriptor.get("footprint", FootprintScript.SINGLE))
+		footprint.select(maxi(0, BATTLE_FOOTPRINTS.find(current_footprint)))
 		_style_field(footprint)
 		footprint.item_selected.connect(_on_battle_footprint_changed.bind(index))
 		row.add_child(footprint)
@@ -1042,6 +1075,56 @@ func _on_battle_footprint_changed(selected: int, index: int) -> void:
 	if index < 0 or index >= _battle_roster.size():
 		return
 	_battle_roster[index]["footprint"] = String(BATTLE_FOOTPRINTS[clampi(selected, 0, BATTLE_FOOTPRINTS.size() - 1)])
+	_refresh_battle_roster()
+
+
+func _on_battlefield_changed(_selected: int) -> void:
+	_refresh_battlefield_summary()
+
+
+func _selected_battlefield_id() -> String:
+	if _battlefield_select == null or _battlefield_select.item_count == 0 or _battlefield_select.selected < 0:
+		return ""
+	return String(_battlefield_select.get_item_metadata(_battlefield_select.selected))
+
+
+func _refresh_battlefield_summary() -> void:
+	if _battlefield_summary == null or _battlefield_catalog == null:
+		return
+	var battlefield_id := _selected_battlefield_id()
+	var definition := (
+		_battlefield_catalog.default_definition()
+		if battlefield_id.is_empty()
+		else _battlefield_catalog.get_by_id(battlefield_id)
+	)
+	if definition == null:
+		_battlefield_summary.text = "No valid battlefield definition is available."
+		return
+
+	var player_footprints: Array = []
+	for instance: DigimonInstance in OverworldState.get_battle_ready_active_instances():
+		if instance != null:
+			player_footprints.append(instance.battle_footprint_id)
+	var enemy_footprints: Array = []
+	for descriptor: Dictionary in _battle_roster:
+		enemy_footprints.append(String(descriptor.get("footprint", FootprintScript.SINGLE)))
+	var compatible := definition.supports_teams(player_footprints, enemy_footprints)
+	var mode := "AUTO" if battlefield_id.is_empty() else "LOCKED"
+	var readiness := "READY FOR CURRENT ROSTERS" if compatible else "INCOMPATIBLE WITH CURRENT FOOTPRINTS"
+	_battlefield_summary.text = "%s · %s · %s\nMax footprint %s · %d player spawn cells · %d enemy spawn cells · %d difficult tiles" % [
+		mode,
+		definition.summary(),
+		readiness,
+		_footprint_label(definition.max_supported_footprint_id()),
+		definition.player_deployment_cells.size(),
+		definition.enemy_deployment_cells.size(),
+		definition.movement_cost_cells.size(),
+	]
+
+
+func _footprint_label(footprint_id: String) -> String:
+	return FootprintScript.display_label(footprint_id)
+
 
 func _start_debug_battle() -> void:
 	if _battle_roster.is_empty():
@@ -1051,11 +1134,35 @@ func _start_debug_battle() -> void:
 	for raw in _battle_roster:
 		if raw is Dictionary:
 			enemies.append((raw as Dictionary).duplicate(true))
-	_pending_battle_config = {"encounter_id": "debug_sandbox", "enemy_party": enemies, "reward_modifier": 1.0, "repeatable": true, "seed": int(_enemy_seed.value)}
+	var battlefield_id := _selected_battlefield_id()
+	var selected_definition := (
+		_battlefield_catalog.default_definition()
+		if battlefield_id.is_empty()
+		else _battlefield_catalog.get_by_id(battlefield_id)
+	)
+	var player_footprints: Array = []
+	for instance: DigimonInstance in OverworldState.get_battle_ready_active_instances():
+		if instance != null:
+			player_footprints.append(instance.battle_footprint_id)
+	var enemy_footprints: Array = []
+	for descriptor: Dictionary in enemies:
+		enemy_footprints.append(String(descriptor.get("footprint", FootprintScript.SINGLE)))
+	if selected_definition != null and not selected_definition.supports_teams(player_footprints, enemy_footprints):
+		_status.text = "%s cannot fit the current player/enemy footprints. Choose a compatible field." % selected_definition.display_name
+		_refresh_battlefield_summary()
+		return
+	_pending_battle_config = {
+		"encounter_id": "debug_sandbox",
+		"enemy_party": enemies,
+		"battle_map": battlefield_id,
+		"reward_modifier": 1.0,
+		"repeatable": true,
+		"seed": int(_enemy_seed.value),
+	}
 	var names: Array[String] = []
 	for descriptor: Dictionary in enemies:
 		var species := _roster.species(String(descriptor.get("species_seed", "")))
-		names.append("%s Lv.%d · T%s · %s" % [String(species.get("name", "?")), int(descriptor.get("level", 1)), String(descriptor.get("tier", "E")), "2×2" if String(descriptor.get("footprint", "single")) == "large_2x2" else "1×1"])
+		names.append("%s Lv.%d · T%s · %s" % [String(species.get("name", "?")), int(descriptor.get("level", 1)), String(descriptor.get("tier", "E")), _footprint_label(String(descriptor.get("footprint", "single")))])
 	_state.log_action("Battle sandbox", "%d enemies · %s" % [enemies.size(), ", ".join(names)])
 	close()
 	if not DigitalSceneTransition.enter_battle(BATTLE_SCENE):

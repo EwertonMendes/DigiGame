@@ -188,7 +188,12 @@ func _open_dialog() -> void:
 	# the default for keyboard/controller instead of making Enter/A start combat.
 	if _dialog_panel != null and _dialog_panel.visible:
 		var cancel := _dialog_panel.find_child("CancelBattleDialog", true, false) as Button
-		if cancel != null and not cancel.disabled:
+		if (
+			cancel != null
+			and not cancel.disabled
+			and cancel.is_visible_in_tree()
+			and cancel.focus_mode != Control.FOCUS_NONE
+		):
 			cancel.grab_focus()
 
 

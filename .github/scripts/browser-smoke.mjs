@@ -66,17 +66,13 @@ async function reloadHub(page) {
 }
 
 async function confirmBasicBattleProgram(page) {
-  // NOT NOW intentionally owns initial focus. The Battle Operator grid is
-  // responsive (2 or 4 columns), so avoid coupling browser QA to one layout.
-  // Hub navigation clamps at the top/left edges; saturating both directions
-  // deterministically lands on the top-left BASIC BATTLE action.
-  for (let index = 0; index < 8; index += 1) {
-    await page.keyboard.press('ArrowUp');
-  }
+  // The workspace opens on the committed Basic Battle selection. Navigation is
+  // distinct from selection: Right moves to the selected battlefield, Right
+  // again moves to the persistent START BATTLE action, then Enter launches.
+  // This path is shared by desktop and compact Program/Field layouts.
+  await page.keyboard.press('ArrowRight');
   await settleFrames(page, 1);
-  for (let index = 0; index < 8; index += 1) {
-    await page.keyboard.press('ArrowLeft');
-  }
+  await page.keyboard.press('ArrowRight');
   await settleFrames(page, 1);
   await page.keyboard.press('Enter');
 }

@@ -5,6 +5,11 @@ const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatab
 const READY_RANKS: Array[String] = ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]
 const ENEMY_COUNT := 3
 const MAX_LEVEL := 99
+const BASIC_ENEMIES: Array[Dictionary] = [
+	{"species": "koromon", "level_min": 1, "level_max": 2, "profile": "wild", "tier": "E", "footprint": "single"},
+	{"species": "tanemon", "level_min": 1, "level_max": 2, "profile": "wild", "tier": "E", "footprint": "single"},
+	{"species": "veemon", "level_min": 2, "level_max": 3, "profile": "wild", "tier": "E", "footprint": "single"},
+]
 
 var _action_database = ActionDatabaseScript.new()
 var _ready_by_rank: Dictionary = {}
@@ -69,7 +74,25 @@ func ready_species(rank: String, database = null) -> Array[Dictionary]:
 	return result
 
 
-func build_rank_encounter(rank: String, database, party_level: int, rng: RandomNumberGenerator) -> Dictionary:
+func build_basic_encounter(battle_map: String = "") -> Dictionary:
+	var enemies: Array[Dictionary] = []
+	for descriptor: Dictionary in BASIC_ENEMIES:
+		enemies.append(descriptor.duplicate(true))
+	return {
+		"ok": true,
+		"rank": "Mixed",
+		"names": ["Koromon", "Tanemon", "Veemon"],
+		"config": {
+			"encounter_id": "battle_operator_basic",
+			"enemy_party": enemies,
+			"battle_map": battle_map.strip_edges(),
+			"reward_modifier": 1.0,
+			"repeatable": true,
+		},
+	}
+
+
+func build_rank_encounter(rank: String, database, party_level: int, rng: RandomNumberGenerator, battle_map: String = "") -> Dictionary:
 	prepare(database)
 	var normalized_rank := _normalize_rank(rank)
 	if not READY_RANKS.has(normalized_rank):
@@ -109,6 +132,7 @@ func build_rank_encounter(rank: String, database, party_level: int, rng: RandomN
 		"config": {
 			"encounter_id": encounter_id,
 			"enemy_party": enemies,
+			"battle_map": battle_map.strip_edges(),
 			"reward_modifier": 1.0,
 			"repeatable": true,
 		},

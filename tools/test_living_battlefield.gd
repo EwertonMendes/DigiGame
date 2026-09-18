@@ -1,9 +1,8 @@
 extends Node
 
 const FieldScript = preload("res://src/world/DevilsWorkshopField.gd")
-const EnvironmentScript = preload("res://src/world/BattlefieldEnvironment.gd")
-const CombatRuntimeScript = preload("res://src/battle/CombatDigimonRuntimeController.gd")
 const MovementSystemScript = preload("res://src/MovementSystem.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 class FakeBattleActor:
 	extends Node2D
@@ -18,50 +17,25 @@ var _failed := false
 
 
 func _ready() -> void:
+	BattleEncounterSession.clear_pending_encounter()
 	var field := FieldScript.new()
 	add_child(field)
 	await get_tree().process_frame
 
+	_expect(field.get_battlefield_id() == "training_clearing", "Default battle runtime must use Training Clearing.")
+	_expect(field.get_grid_size() == Vector2i(11, 15), "Training Clearing must render the compact 11x15 grid.")
 	_expect(
-		field.tile_map_data.size() == field.GRID_SIZE_X * field.GRID_SIZE_Y,
-		"Battlefield must still author every tactical cell"
+		field.tile_map_data.size() == field.get_grid_width() * field.get_grid_height(),
+		"Battlefield must author every runtime tactical cell."
 	)
 
-	# The underlying battlefield must remain the current master composition.
-	_expect(_tile_type(field, Vector2i(7, 3)) == "data", "Master data-anchor tiles must remain unchanged")
-	_expect(_tile_type(field, Vector2i(5, 3)) == "route", "Master deployment terrace tiles must remain unchanged")
-	_expect(_tile_type(field, Vector2i(7, 12)) == "route", "Master center crossing must remain unchanged")
-	_expect(_tile_type(field, Vector2i(4, 12)) == "grass", "Obstacle props must not replace the master grass tile")
-	_expect(field.get_node_or_null("PerimeterWater") != null, "Master perimeter water must remain unchanged")
-	_expect(not _contains_removed_terrain_types(field), "Old PR water/rough terrain types must not return")
-
-	# Sparse props are gameplay blockers through the field's existing static
-	# obstacle contract, which MovementSystem already consumes.
-	_expect(
-		field.get_static_tile_block_reason(Vector2i(4, 12)) == "terrain_blocked",
-		"Oak trees must block traversal"
-	)
-	_expect(
-		field.get_static_tile_block_reason(Vector2i(10, 14)) == "terrain_blocked",
-		"Rock formations must block traversal"
-	)
-	_expect(
-		String(field.tile_map_data[Vector2i(4, 12)].get("blocker_kind", "")) == "tree",
-		"Tree cells must expose their blocker kind"
-	)
-	_expect(
-		String(field.tile_map_data[Vector2i(10, 14)].get("blocker_kind", "")) == "rock",
-		"Rock cells must expose their blocker kind"
-	)
-	for x in range(6, 9):
-		_expect(
-			field.get_static_tile_block_reason(Vector2i(x, 12)).is_empty(),
-			"The three-cell center route must remain open for large footprints"
-		)
-
-	_validate_environment(field)
-	_validate_enemy_spawn_reservation(field)
-	_validate_pathfinding(field)
+	var definition: BattlefieldDefinition = field.get_battlefield_definition()
+	_expect(definition != null, "Runtime field must expose its BattlefieldDefinition.")
+	if definition != null:
+		_validate_definition_projection(field, definition)
+		_validate_environment(field, definition)
+		_validate_spawn_zones(field, definition)
+		_validate_pathfinding(field, definition)
 
 	if _failed:
 		push_error("living battlefield regression failed")
@@ -71,253 +45,99 @@ func _ready() -> void:
 	get_tree().quit()
 
 
-func _validate_environment(field: Node) -> void:
+func _validate_definition_projection(field: Node, definition: BattlefieldDefinition) -> void:
+	for prop: Dictionary in definition.props:
+		var grid := Vector2i(prop.get("grid", Vector2i(-1, -1)))
+		var kind := String(prop.get("kind", ""))
+		_expect(
+			field.get_static_tile_block_reason(grid) == "terrain_blocked",
+			"Every authored physical prop must block its owning tactical cell."
+		)
+		var raw_tile = field.tile_map_data.get(grid, {})
+		_expect(
+			raw_tile is Dictionary and String((raw_tile as Dictionary).get("blocker_kind", "")) == kind,
+			"Runtime blocker metadata must match the authored prop kind at %s." % grid
+		)
+
+	for cost: Dictionary in definition.movement_cost_cells:
+		var grid := Vector2i(cost.get("grid", Vector2i(-1, -1)))
+		var expected := int(cost.get("cost", 1))
+		_expect(field.get_movement_cost(grid) == expected, "Runtime movement cost must match BattlefieldDefinition at %s." % grid)
+
+	_expect(field.get_node_or_null("PerimeterWater") != null, "Dynamic battlefield perimeter water must still render.")
+
+
+func _validate_environment(field: Node, definition: BattlefieldDefinition) -> void:
 	var environment := field.get_node_or_null("BattlefieldEnvironment")
-	_expect(environment != null, "Battlefield environment layer must exist")
+	_expect(environment != null, "Battlefield environment layer must exist.")
 	if environment == null:
 		return
+	_expect(environment.get_child_count() == definition.props.size(), "Environment must render exactly one visual prop per authored physical prop.")
 
-	_expect(
-		environment.get_child_count() == 13,
-		"Field must contain six tree blockers, one separate stump and six rock props"
-	)
-
-	var large_tree := environment.get_node_or_null("OakTreeLarge_04_12") as Sprite2D
-	var small_tree_a := environment.get_node_or_null("OakTreeSmallA_10_10") as Sprite2D
-	var small_tree_b := environment.get_node_or_null("OakTreeSmallB_04_16") as Sprite2D
-	var enemy_small_tree := environment.get_node_or_null("OakTreeSmallA_02_06") as Sprite2D
-	var enemy_large_tree := environment.get_node_or_null("OakTreeLarge_11_07") as Sprite2D
-	var enemy_small_tree_b := environment.get_node_or_null("OakTreeSmallB_05_08") as Sprite2D
-	var stump := environment.get_node_or_null("OakStump_12_10") as Sprite2D
-	var rock := environment.get_node_or_null("Rock_10_14") as Sprite2D
-	var enemy_rock := environment.get_node_or_null("Rock_13_08") as Sprite2D
-
-	_expect(large_tree != null, "A full-size Oak_Tree prop must be present")
-	_expect(small_tree_a != null, "First Oak_Tree_Small tree must be cropped into its own prop")
-	_expect(small_tree_b != null, "Second Oak_Tree_Small tree must be cropped into its own prop")
-	_expect(enemy_small_tree != null, "Enemy-side small oak A must be present beyond the spawn band")
-	_expect(enemy_large_tree != null, "Enemy-side large oak must be present beyond the spawn band")
-	_expect(enemy_small_tree_b != null, "Enemy-side small oak B must be present beyond the spawn band")
-	_expect(stump != null, "Oak_Tree_Small stump must be cropped into its own tile prop")
-	_expect(rock != null, "The retained rock prop must be present")
-	_expect(enemy_rock != null, "Enemy-side rock must be present beyond the spawn band")
-
-	_expect(
-		field.get_static_tile_block_reason(Vector2i(12, 10)) == "terrain_blocked",
-		"The split oak stump must block traversal on its owning tile"
-	)
-	_expect(
-		String(field.tile_map_data[Vector2i(12, 10)].get("blocker_kind", "")) == "stump",
-		"The stump tile must expose its blocker kind"
-	)
-
-	_assert_atlas_source(large_tree, "res://assets/terrain/Oak_Tree.png", "Large oak")
-	_assert_atlas_source(small_tree_a, "res://assets/terrain/Oak_Tree_Small.png", "Small oak A")
-	_assert_atlas_source(small_tree_b, "res://assets/terrain/Oak_Tree_Small.png", "Small oak B")
-	_assert_atlas_source(enemy_small_tree, "res://assets/terrain/Oak_Tree_Small.png", "Enemy-side small oak")
-	_assert_atlas_source(enemy_large_tree, "res://assets/terrain/Oak_Tree.png", "Enemy-side large oak")
-	_assert_atlas_source(enemy_small_tree_b, "res://assets/terrain/Oak_Tree_Small.png", "Enemy-side small oak B")
-	_assert_atlas_source(stump, "res://assets/terrain/Oak_Tree_Small.png", "Oak stump")
-	_assert_atlas_source(rock, "res://assets/world/hawkbirdtree/rock.png", "Rock")
-	_assert_atlas_source(enemy_rock, "res://assets/world/hawkbirdtree/rock.png", "Enemy-side rock")
-
-	_assert_prop_ground_anchor(field, large_tree, Vector2i(4, 12), Vector2(20.5, 62.0), "Large oak", true)
-	_assert_prop_ground_anchor(field, small_tree_a, Vector2i(10, 10), Vector2(10.5, 33.0), "Small oak A", true)
-	_assert_prop_ground_anchor(field, small_tree_b, Vector2i(4, 16), Vector2(10.5, 25.0), "Small oak B", true)
-	_assert_prop_ground_anchor(field, enemy_small_tree, Vector2i(2, 6), Vector2(10.5, 33.0), "Enemy-side small oak", true)
-	_assert_prop_ground_anchor(field, enemy_large_tree, Vector2i(11, 7), Vector2(20.5, 62.0), "Enemy-side large oak", true)
-	_assert_prop_ground_anchor(field, enemy_small_tree_b, Vector2i(5, 8), Vector2(10.5, 25.0), "Enemy-side small oak B", true)
-	_assert_prop_ground_anchor(field, stump, Vector2i(12, 10), Vector2(3.5, 7.0), "Oak stump", false)
-	_assert_prop_ground_anchor(field, rock, Vector2i(10, 14), Vector2(13.5, 21.0), "Rock", true)
-	_assert_prop_ground_anchor(field, enemy_rock, Vector2i(13, 8), Vector2(13.5, 21.0), "Enemy-side rock", true)
-
+	var large_tree: Sprite2D = null
+	var large_tree_grid := Vector2i.ZERO
+	for child in environment.get_children():
+		if child is Sprite2D and bool(child.get_meta("large_canopy_occluder", false)):
+			large_tree = child as Sprite2D
+			large_tree_grid = Vector2i(child.get_meta("grid", Vector2i.ZERO))
+			break
+	_expect(large_tree != null, "Default compact battlefield must include a large-canopy occluder.")
 	if large_tree != null:
-		_expect(
-			large_tree.z_index == 16,
-			"Large oak depth must match the same isometric x+y ordering used by battle actors"
-		)
-		_validate_large_tree_occlusion(environment, large_tree)
-
-	if enemy_large_tree != null:
-		_expect(
-			enemy_large_tree.has_meta("large_canopy_occluder"),
-			"Every large oak variant must automatically participate in canopy occlusion"
-		)
-
-	if rock != null:
-		_expect(
-			rock.scale.x <= 0.90 and rock.scale.y <= 0.90,
-			"Rock props must remain smaller than their previous oversized presentation"
-		)
+		_validate_large_tree_occlusion(environment, large_tree, large_tree_grid)
 
 
-func _assert_atlas_source(prop: Sprite2D, expected_path: String, label: String) -> void:
-	if prop == null or prop.texture == null:
-		return
-	var atlas_texture := prop.texture as AtlasTexture
-	_expect(atlas_texture != null, "%s must render a cropped atlas region" % label)
-	if atlas_texture == null or atlas_texture.atlas == null:
-		return
-	_expect(
-		atlas_texture.atlas.resource_path == expected_path,
-		"%s must use the expected source asset" % label
-	)
-
-
-func _assert_prop_ground_anchor(
-	field: Node,
-	prop: Sprite2D,
-	grid: Vector2i,
-	foot_anchor: Vector2,
-	label: String,
-	use_blocker_visual_anchor: bool
-) -> void:
-	if prop == null or prop.texture == null:
-		return
-
-	var tile_center := Vector2(field.call("grid_to_world", grid))
-	var expected := tile_center
-	if use_blocker_visual_anchor:
-		var next_row_center := Vector2(field.call("grid_to_world", grid + Vector2i(1, 0)))
-		var center_to_near_edge := absf(next_row_center.y - tile_center.y)
-		var tile_depth := maxf(1.0, center_to_near_edge * 2.0)
-		var rendered_height := prop.texture.get_height() * prop.scale.y
-		var extra_height_tiles := maxf(0.0, (rendered_height - tile_depth) / tile_depth)
-		var visual_depth_ratio := clampf(
-			EnvironmentScript.BLOCKER_VISUAL_DEPTH_RATIO
-				+ extra_height_tiles * EnvironmentScript.TALL_PROP_EXTRA_DEPTH_RATIO,
-			EnvironmentScript.BLOCKER_VISUAL_DEPTH_RATIO,
-			EnvironmentScript.MAX_BLOCKER_VISUAL_DEPTH_RATIO
-		)
-		expected += Vector2(0.0, center_to_near_edge * visual_depth_ratio)
-
-	var texture_center := prop.texture.get_size() * 0.5
-	var center_to_foot := (foot_anchor - texture_center) * prop.scale
-	var visual_foot := prop.position + center_to_foot
-	_expect(
-		visual_foot.distance_to(expected) <= 0.01,
-		"%s ground contact must use the shared isometric visual anchor policy" % label
-	)
-
-	if use_blocker_visual_anchor:
-		_expect(
-			visual_foot.y > tile_center.y,
-			"%s blocker must sit visually below the mathematical tile center" % label
-		)
-	else:
-		_expect(
-			visual_foot.distance_to(tile_center) <= 0.01,
-			"%s decoration must keep the unbiased tile-center anchor" % label
-		)
-
-
-func _validate_large_tree_occlusion(environment: Node, large_tree: Sprite2D) -> void:
+func _validate_large_tree_occlusion(environment: Node, large_tree: Sprite2D, tree_grid: Vector2i) -> void:
 	var actor := FakeBattleActor.new()
 	actor.name = "OcclusionProbe"
 	environment.get_parent().get_parent().add_child(actor)
 
-	var tree_grid := Vector2i(4, 12)
 	var directly_behind := tree_grid - Vector2i.ONE
-	_expect(
-		Vector2i(environment.call("_large_tree_occlusion_grid", tree_grid)) == directly_behind,
-		"Large-tree occlusion must target the single isometric tile directly behind the canopy"
-	)
-
 	actor.occupied_grids = [directly_behind]
-	_expect(
-		bool(environment.call("_should_fade_for_actor", large_tree, actor)),
-		"A Digimon on the tile directly behind the large oak must trigger canopy transparency"
-	)
+	_expect(bool(environment.call("_should_fade_for_actor", large_tree, actor)), "Large oak must fade for the exact tile directly behind its canopy.")
 
-	# These two cells share the rear-side edges of the tree tile and can be
-	# visually close to the canopy, but they are not the tile directly behind it.
 	actor.occupied_grids = [tree_grid + Vector2i(-1, 0)]
-	_expect(
-		not bool(environment.call("_should_fade_for_actor", large_tree, actor)),
-		"A Digimon on the nearby upper-left tile must not fade the oak"
-	)
+	_expect(not bool(environment.call("_should_fade_for_actor", large_tree, actor)), "Side-adjacent units must not fade a large oak.")
 
 	actor.occupied_grids = [tree_grid + Vector2i(0, -1)]
-	_expect(
-		not bool(environment.call("_should_fade_for_actor", large_tree, actor)),
-		"A Digimon on the nearby upper-right tile must not fade the oak"
-	)
+	_expect(not bool(environment.call("_should_fade_for_actor", large_tree, actor)), "The opposite side-adjacent tile must not fade a large oak.")
 
-	actor.occupied_grids = [tree_grid + Vector2i(1, 0)]
-	_expect(
-		not bool(environment.call("_should_fade_for_actor", large_tree, actor)),
-		"A Digimon in front of the large oak must keep the canopy opaque"
-	)
-
-	# Multi-tile Digimon still trigger the effect if any occupied cell is the
-	# exact occlusion tile.
-	actor.occupied_grids = [Vector2i(2, 10), directly_behind, Vector2i(2, 11), Vector2i(3, 10)]
-	_expect(
-		bool(environment.call("_should_fade_for_actor", large_tree, actor)),
-		"A large Digimon footprint covering the direct-behind tile must fade the canopy"
-	)
-
+	actor.occupied_grids = [
+		directly_behind,
+		directly_behind + Vector2i.RIGHT,
+		directly_behind + Vector2i.DOWN,
+		directly_behind + Vector2i.ONE,
+	]
+	_expect(bool(environment.call("_should_fade_for_actor", large_tree, actor)), "A multi-tile actor covering the exact rear tile must fade the canopy.")
 	actor.queue_free()
 
 
-func _validate_enemy_spawn_reservation(field: Node) -> void:
-	var runtime := CombatRuntimeScript.new()
-	var raw_candidates = runtime.call("_spawn_zone_candidates", field, false)
-	_expect(raw_candidates is Array, "Enemy spawn-zone query must remain available for battlefield authoring checks")
-	if not raw_candidates is Array:
-		return
-	for raw_grid in raw_candidates:
-		if not raw_grid is Vector2i:
+func _validate_spawn_zones(field: Node, definition: BattlefieldDefinition) -> void:
+	var runtime_script = preload("res://src/battle/CombatDigimonRuntimeController.gd")
+	var runtime := runtime_script.new()
+	for player_side in [true, false]:
+		var raw_candidates = runtime.call("_spawn_zone_candidates", field, player_side)
+		_expect(raw_candidates is Array, "Runtime spawn-zone query must return authored cells.")
+		if not raw_candidates is Array:
 			continue
-		var grid := Vector2i(raw_grid)
-		_expect(
-			field.get_static_tile_block_reason(grid).is_empty(),
-			"Enemy-side scenery must never consume a legal enemy spawn tile: %s" % grid
-		)
+		var expected := definition.player_deployment_cells if player_side else definition.enemy_deployment_cells
+		_expect(raw_candidates.size() == expected.size(), "Runtime spawn zones must preserve all authored deployment cells.")
+		for raw_grid in raw_candidates:
+			if raw_grid is Vector2i:
+				_expect(expected.has(Vector2i(raw_grid)), "Spawn runtime must not invent cells outside the authored deployment zone.")
 
 
-func _validate_pathfinding(field: Node) -> void:
+func _validate_pathfinding(field: Node, definition: BattlefieldDefinition) -> void:
 	var movement = MovementSystemScript.new()
-	var origin := Vector2i(4, 10)
-	var destination := Vector2i(4, 14)
-
-	var reachable: Dictionary = movement.get_reachable_tiles(field, null, null, origin, 20)
-	_expect(
-		not reachable.has(Vector2i(4, 12)),
-		"Movement search must never expose a tree blocker as reachable"
-	)
-	_expect(
-		not reachable.has(Vector2i(10, 14)),
-		"Movement search must never expose a rock blocker as reachable"
-	)
-	_expect(
-		not reachable.has(Vector2i(12, 10)),
-		"Movement search must never expose the stump tile as reachable"
-	)
-
-	var path: Array[Vector2i] = movement.find_path(field, null, null, origin, destination, 20)
-	_expect(not path.is_empty(), "Movement must still find a route around sparse props")
-	_expect(path.size() > 4, "The tree must force a real detour instead of straight traversal")
+	var origin := definition.player_deployment_cells[0]
+	var destination := definition.enemy_deployment_cells[0]
+	var path: Array[Vector2i] = movement.find_path(field, null, null, origin, destination, 80)
+	_expect(not path.is_empty(), "Compact battlefield must preserve at least one traversable route between deployment zones.")
 	for grid: Vector2i in path:
-		_expect(
-			field.get_static_tile_block_reason(grid).is_empty(),
-			"Computed movement paths must never enter an authored prop blocker"
-		)
-
-
-func _tile_type(field: Node, grid: Vector2i) -> String:
-	var raw = field.tile_map_data.get(grid, {})
-	return String((raw as Dictionary).get("type", "")) if raw is Dictionary else ""
-
-
-func _contains_removed_terrain_types(field: Node) -> bool:
-	for raw in field.tile_map_data.values():
-		if not raw is Dictionary:
-			continue
-		var terrain_type := String((raw as Dictionary).get("type", ""))
-		if terrain_type in ["shallow_water", "deep_water", "rough_grass"]:
-			return true
-	return false
+		_expect(field.get_static_tile_block_reason(grid).is_empty(), "Pathfinding must never enter an authored blocker.")
+	_expect(
+		FootprintScript.max_extent(definition.max_supported_footprint_id()) == 2,
+		"Training Clearing must retain its declared 2x2 maximum footprint."
+	)
 
 
 func _expect(condition: bool, message: String) -> void:

@@ -97,6 +97,9 @@ func _refresh_styles() -> void:
 			continue
 		var accent: Color = spec.get("accent", V2.CYAN)
 		var active := id == _active_id
+		var full_label := String(spec.get("label", id.to_upper()))
+		var compact_label := String(spec.get("compact_label", full_label))
+		button.text = compact_label if _compact else full_label
 		button.custom_minimum_size.y = 46.0 if _compact else 52.0
 		button.add_theme_color_override("font_color", V2.WHITE if active else V2.MUTED)
 		button.add_theme_color_override("font_hover_color", V2.WHITE)

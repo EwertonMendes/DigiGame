@@ -100,6 +100,29 @@ jobs:
           trap 'kill $SERVER_PID || true' EXIT
           node .github/scripts/browser-smoke.mjs
 
+      - name: Upload desktop visual snapshot
+        if: matrix.suite == 'desktop'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-smoke-${{ inputs.source_run_id }}
+          path: |
+            build/web-smoke.png
+            build/desktop-*.png
+            build/hub-battle-dialog.png
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload mobile visual snapshot
+        if: matrix.suite == 'mobile'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-smoke-${{ inputs.source_run_id }}
+          path: |
+            build/hub-mobile-dialog.png
+            build/mobile-*.png
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Upload ${{ matrix.suite }} failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

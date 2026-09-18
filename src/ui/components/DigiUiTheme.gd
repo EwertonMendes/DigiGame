@@ -328,6 +328,47 @@ static func pill_style(accent: Color, active: bool = true) -> StyleBoxFlat:
 	)
 
 
+# Selection cards deliberately keep their silhouette and depth fixed across
+# hover/focus/press. Navigation feedback is a restrained tint; committed
+# selection is a persistent cyan highlight owned by screen state.
+static func selection_card_style(
+	accent: Color = CYAN,
+	selected: bool = false,
+	emphasized: bool = false,
+	disabled: bool = false
+) -> StyleBoxFlat:
+	var fill := PANEL_FILL
+	var edge := Color(BORDER.r, BORDER.g, BORDER.b, 0.52)
+	if selected:
+		fill = Color(
+			lerpf(PANEL_FILL.r, accent.r, 0.13),
+			lerpf(PANEL_FILL.g, accent.g, 0.13),
+			lerpf(PANEL_FILL.b, accent.b, 0.13),
+			0.995
+		)
+		edge = Color(accent.r, accent.g, accent.b, 0.96)
+	elif emphasized:
+		fill = Color(
+			lerpf(PANEL_FILL.r, SURFACE_HOVER.r, 0.68),
+			lerpf(PANEL_FILL.g, SURFACE_HOVER.g, 0.68),
+			lerpf(PANEL_FILL.b, SURFACE_HOVER.b, 0.68),
+			0.995
+		)
+		edge = Color(BORDER.r, BORDER.g, BORDER.b, 0.82)
+	if disabled:
+		fill = Color(PANEL_DEEP.r, PANEL_DEEP.g, PANEL_DEEP.b, 0.76)
+		edge = Color(BORDER.r, BORDER.g, BORDER.b, 0.24)
+
+	var style := surface_style(fill, edge, 9)
+	style.border_width_left = 3
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.shadow_size = 0
+	style.shadow_offset = Vector2.ZERO
+	return style
+
+
 static func progress_track_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.020, 0.035, 0.049, 1.0)

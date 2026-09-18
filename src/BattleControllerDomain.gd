@@ -979,11 +979,12 @@ func _record_effective_skill_use(actor: Node, skill_id: String) -> void:
 func _apply_forced_movement(target: Node, mode: String, distance: int, force_class: String = "normal") -> bool:
 	if target == null or current_actor == null or _field == null or not target.has_method("debug_relocate_to_grid"):
 		return false
-	var footprint := String(target.call("get_battle_footprint_id")) if target.has_method("get_battle_footprint_id") else "single"
+	var footprint := String(target.call("get_battle_footprint_id")) if target.has_method("get_battle_footprint_id") else FootprintScript.SINGLE
 	var normalized_force := force_class.to_lower().strip_edges()
-	if footprint == "large_2x2" and not ["heavy", "colossal"].has(normalized_force):
+	var footprint_extent := FootprintScript.max_extent(footprint)
+	if footprint_extent == 2 and not ["heavy", "colossal"].has(normalized_force):
 		return false
-	if footprint != "single" and footprint != "large_2x2" and normalized_force != "colossal":
+	if footprint_extent >= 3 and normalized_force != "colossal":
 		return false
 	var source_grid := _grid_for_actor(current_actor)
 	var target_grid := _grid_for_actor(target)
