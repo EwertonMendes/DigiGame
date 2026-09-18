@@ -335,6 +335,13 @@ func _build_digimon_tab(tabs: TabContainer) -> void:
 	state_grid.add_child(_field_card("EXPANSION", expansion_flags, UI.PURPLE))
 	page.add_child(_button_row([_action("APPLY EXACT STATE", _apply_exact_state, UI.GOLD), _action("+100 XP", _add_xp.bind(100), UI.CYAN), _action("+1000 XP", _add_xp.bind(1000), UI.CYAN), _action("HEAL", _heal, UI.GREEN), _action("CRITICAL", _critical, UI.ORANGE), _action("KNOCK OUT", _knock_out, UI.RED), _action("DELETE DIGIMON", _delete_digimon, UI.RED)]))
 
+	page.add_child(_section_label("SQUAD LOCATION", UI.CYAN))
+	page.add_child(_button_row([
+		_action("ASSIGN ACTIVE", _assign_selected_active, UI.GOLD),
+		_action("ASSIGN RESERVE", _assign_selected_reserve, UI.PURPLE),
+		_action("MOVE TO STORAGE", _move_selected_to_storage, UI.CYAN),
+	]))
+
 	page.add_child(_section_label("TRAINING", UI.PURPLE))
 	var training_grid := GridContainer.new()
 	training_grid.columns = 4
@@ -579,16 +586,18 @@ func _refresh_collection() -> void:
 	_collection_ids.clear()
 	_collection_previews.clear()
 	var active_ids := OverworldState.get_active_party_ids()
+	var reserve_ids := OverworldState.get_reserve_party_ids()
 	var collection := OverworldState.get_collection_instances()
-	_collection_summary.text = "%d owned · %d active" % [collection.size(), active_ids.size()]
+	_collection_summary.text = "%d owned · %d active · %d reserve" % [collection.size(), active_ids.size(), reserve_ids.size()]
 	if collection.is_empty():
 		_collection_list.add_child(_label("No Digimon available.", 10, UI.MUTED))
 		return
 	for value: DigimonInstance in collection:
 		var species := _roster.database.get_by_seed(value.species_seed)
 		var active := active_ids.has(value.id)
+		var reserve := reserve_ids.has(value.id)
 		var selected := value.id == _selected_id
-		var accent := UI.GREEN if selected else (UI.GOLD if active else UI.CYAN)
+		var accent := UI.GREEN if selected else (UI.GOLD if active else (UI.PURPLE if reserve else UI.CYAN))
 		var button := Button.new()
 		button.text = ""
 		button.custom_minimum_size = Vector2(0, 70)
@@ -619,7 +628,9 @@ func _refresh_collection() -> void:
 		copy.add_theme_constant_override("separation", 1)
 		row.add_child(copy)
 		copy.add_child(_single_line_label(_progression.display_name(value).to_upper(), 11, UI.TEXT, true))
-		copy.add_child(_single_line_label("TIER %s · %s · %s" % [value.tier, "2×2" if value.is_expanded() else "1×1", "PARTY" if active else "STORAGE"], 9, UI.GOLD if active else UI.CYAN, true))
+		var location_label := "ACTIVE" if active else ("RESERVE" if reserve else ("HOSPITAL" if OverworldState.get_collection_location(value.id) == PlayerCollection.LOCATION_HOSPITAL else "STORAGE"))
+		var location_color := UI.GOLD if active else (UI.PURPLE if reserve else UI.CYAN)
+		copy.add_child(_single_line_label("TIER %s · %s · %s" % [value.tier, "2×2" if value.is_expanded() else "1×1", location_label], 9, location_color, true))
 		copy.add_child(_single_line_label("LV %d · POT %d · LINK %d" % [value.level, value.potential, value.link], 8, UI.SUBTLE))
 		_collection_list.add_child(button)
 		_collection_buttons.append(button)
@@ -808,7 +819,7 @@ func _refresh_diagnostics() -> void:
 	if _diagnostics == null:
 		return
 	var info := _state.diagnostics(_selected_id)
-	_diagnostics.text = "Scene: %s\nFPS: %d · Time scale %.2f · Memory %.1f MB\nCollection: %d · Party: %d · Bits: %d\nSelected: Lv.%d · HP %d · SP %d" % [String(info.get("scene", "")), int(info.get("fps", 0)), float(info.get("time_scale", 1.0)), float(info.get("static_memory", 0)) / 1048576.0, int(info.get("collection_size", 0)), int(info.get("party_size", 0)), int(info.get("bits", 0)), int(info.get("selected_level", 0)), int(info.get("selected_hp", 0)), int(info.get("selected_sp", 0))]
+	_diagnostics.text = "Scene: %s\nFPS: %d · Time scale %.2f · Memory %.1f MB\nCollection: %d · Squad: %d (Active %d + Reserve %d) · Bits: %d\nSelected: Lv.%d · HP %d · SP %d" % [String(info.get("scene", "")), int(info.get("fps", 0)), float(info.get("time_scale", 1.0)), float(info.get("static_memory", 0)) / 1048576.0, int(info.get("collection_size", 0)), int(info.get("squad_size", 0)), int(info.get("active_size", 0)), int(info.get("reserve_size", 0)), int(info.get("bits", 0)), int(info.get("selected_level", 0)), int(info.get("selected_hp", 0)), int(info.get("selected_sp", 0))]
 	var history_lines: Array[String] = []
 	var limit := mini(10, _state.history.size())
 	for index in range(limit):
@@ -863,6 +874,36 @@ func _knock_out() -> void:
 	if _progression.set_knocked_out(_selected_id):
 		_state.log_action("Knock out", _selected_name())
 	_refresh_all()
+
+func _assign_selected_active() -> void:
+	if _selected_id.is_empty():
+		return
+	var ok := OverworldState.add_to_active_party(_selected_id)
+	_status.text = "Assigned to Active Squad." if ok else "Could not assign Active: check the 3-slot limit or keep at least one Active."
+	if ok:
+		_state.log_action("Assign Active", _selected_name())
+	_refresh_all()
+
+
+func _assign_selected_reserve() -> void:
+	if _selected_id.is_empty():
+		return
+	var ok := OverworldState.add_to_reserve_party(_selected_id)
+	_status.text = "Assigned to Reserve Squad." if ok else "Could not assign Reserve: check the 3-slot limit or keep at least one Active."
+	if ok:
+		_state.log_action("Assign Reserve", _selected_name())
+	_refresh_all()
+
+
+func _move_selected_to_storage() -> void:
+	if _selected_id.is_empty():
+		return
+	var ok := OverworldState.move_squad_member_to_storage(_selected_id)
+	_status.text = "Moved to Storage." if ok else "Could not move to Storage: at least one Active Digimon must remain."
+	if ok:
+		_state.log_action("Move to Storage", _selected_name())
+	_refresh_all()
+
 
 func _delete_digimon() -> void:
 	var value := _selected_instance()
