@@ -56,6 +56,8 @@ func _ready() -> void:
 		return
 	if not _check(_content_fits_disabled_scroll(party, "_detail_scroll", "_detail"), "Party / Storage stats and actions must fit without scrolling"):
 		return
+	if not _check(_content_uses_available_height(party, "_detail_scroll", "_detail"), "Party / Storage detail must compose itself across the available height"):
+		return
 
 	var selected_id: String = String(party.call("get_selected_instance_id"))
 	if not _check(not selected_id.is_empty(), "Party / Storage must expose the selected individual"):
@@ -131,6 +133,9 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 	var header: DigiModalHeader = screen.get("_header") as DigiModalHeader
 	if header == null or not header.is_workspace_mode():
 		return false
+	var tabs_root := header.get_node_or_null("HeaderTabs") as Control
+	if tabs_root == null:
+		return false
 	for tab_id: String in ["convert", "party", "ascension"]:
 		var button: Button = header.get_tab_button(tab_id)
 		if button == null or button.disabled or button.focus_mode != Control.FOCUS_NONE:
@@ -141,6 +146,12 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 			return false
 		if label.size.x > button.size.x:
 			print("[digilab-layout] primary tab label exceeds tab bounds: %s" % tab_id)
+			return false
+		if button.size.x > 176.5:
+			print("[digilab-layout] primary tab grew beyond the authored cap: %s (%.1f px)" % [tab_id, button.size.x])
+			return false
+		if button.position.x + button.size.x > tabs_root.size.x + 1.0:
+			print("[digilab-layout] primary tab escaped behind header controls: %s" % tab_id)
 			return false
 	return header.get_tab_button(active_id) != null
 
@@ -173,6 +184,19 @@ func _content_fits_disabled_scroll(screen: Control, scroll_key: String, content_
 	var available := scroll.size.y
 	if required > available + 2.0:
 		print("[digilab-layout] content overflow: %s requires %.1f px but only %.1f px are available" % [content_key, required, available])
+		return false
+	return true
+
+
+func _content_uses_available_height(screen: Control, scroll_key: String, content_key: String) -> bool:
+	var scroll := screen.get(scroll_key) as ScrollContainer
+	var content := screen.get(content_key) as Control
+	if scroll == null or content == null:
+		return false
+	if not scroll.is_visible_in_tree() or scroll.size.y <= 1.0:
+		return true
+	if content.size.y + 2.0 < scroll.size.y:
+		print("[digilab-layout] unused vertical space: %s uses %.1f px of %.1f px" % [content_key, content.size.y, scroll.size.y])
 		return false
 	return true
 
