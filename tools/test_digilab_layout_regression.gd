@@ -420,9 +420,16 @@ func _expansion_content_is_bounded(screen: Control, root: Control) -> bool:
 	if screen == null or root == null:
 		return false
 	var scroll := screen.get("_detail_scroll") as ScrollContainer
-	var workspace := root.find_child("ExpansionWorkspacePanel", true, false) as Control
 	var footprint := root.find_child("ExpansionFootprint", true, false) as Control
 	var actions := root.find_child("ExpansionActions", true, false) as Control
+	var workspace: Control = null
+	if footprint != null:
+		var cursor := footprint.get_parent()
+		while cursor != null and cursor != root:
+			if cursor is PanelContainer:
+				workspace = cursor as Control
+				break
+			cursor = cursor.get_parent()
 	if scroll == null or workspace == null or footprint == null or actions == null:
 		print("[digilab-layout] missing Expansion bounded-workspace nodes")
 		return false
