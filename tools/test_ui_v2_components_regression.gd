@@ -6,6 +6,7 @@ const InteractionPromptScript = preload("res://src/ui/components/DigiInteraction
 const ConfirmationModalScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
 const AttributeChipScript = preload("res://src/ui/components/DigiAttributeChip.gd")
 const SelectionCardScript = preload("res://src/ui/components/DigiSelectionCard.gd")
+const SegmentedTabsScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
 
 
 func _ready() -> void:
@@ -68,6 +69,23 @@ func _ready() -> void:
 	if not _check(selection_normal.shadow_size == 0 and selection_pressed.shadow_size == 0, "Selection card must not use press/focus shadows that visually bounce"):
 		return
 	if not _check(selection_normal.border_width_left == selection_pressed.border_width_left, "Selection card press feedback must preserve geometry"):
+		return
+
+	var segmented := SegmentedTabsScript.new() as DigiSegmentedTabs
+	segmented.configure([
+		{"id": "program", "label": "BATTLE PROGRAM", "compact_label": "PROGRAM"},
+		{"id": "field", "label": "BATTLEFIELD", "compact_label": "FIELD"},
+	], "program")
+	add_child(segmented)
+	await _frames(2)
+	segmented.set_compact(true)
+	var compact_program := segmented.get_button("program")
+	var compact_field := segmented.get_button("field")
+	if not _check(
+		compact_program != null and compact_program.text == "PROGRAM"
+		and compact_field != null and compact_field.text == "FIELD",
+		"Segmented tabs must use authored compact labels without truncating workspace navigation"
+	):
 		return
 
 	var prompt := InteractionPromptScript.new() as DigiInteractionPrompt
@@ -135,6 +153,7 @@ func _ready() -> void:
 	prompt.queue_free()
 	classification_row.queue_free()
 	selection_card.queue_free()
+	segmented.queue_free()
 	glass.queue_free()
 	await _frames(3)
 	print("global ui v2 components regression passed")
