@@ -96,15 +96,24 @@ func _process(_delta: float) -> void:
 
 
 func _apply_styles() -> void:
-	var emphasized := _focused or _hovered
-	var stable := V2.selection_card_style(V2.CYAN, _selected, emphasized, disabled)
-	# Button's internal pressed/hover/focus state must never repaint the card with
-	# a different geometry or border colour. The screen owns committed selection
-	# and this component owns transient focus/hover explicitly, so pointer click,
-	# keyboard confirm and controller A all render the same stable surface.
+	var stable: StyleBoxFlat
+	if disabled:
+		stable = V2.hospital_button_style(V2.CYAN, "disabled")
+	elif _selected:
+		# Committed selection uses the exact workspace selection surface already
+		# used by Digimon/Digi Hospital roster cards.
+		stable = V2.workspace_panel_style(V2.CYAN, true)
+	elif _focused or _hovered:
+		# Focus/hover uses the shared service-button treatment, but the same
+		# StyleBox is installed for pressed as well so clicking cannot flash into
+		# a second visual state.
+		stable = V2.hospital_button_style(V2.CYAN, "focus")
+	else:
+		stable = V2.workspace_panel_style(V2.CYAN, false)
+
 	for state in ["normal", "hover", "focus", "pressed", "hover_pressed"]:
 		add_theme_stylebox_override(state, stable)
-	add_theme_stylebox_override("disabled", V2.selection_card_style(V2.CYAN, _selected, false, true))
+	add_theme_stylebox_override("disabled", V2.hospital_button_style(V2.CYAN, "disabled"))
 	add_theme_color_override("font_color", V2.TEXT)
 	add_theme_color_override("font_disabled_color", V2.SUBTLE)
 
