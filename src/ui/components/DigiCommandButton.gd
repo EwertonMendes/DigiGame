@@ -36,11 +36,7 @@ func _ready() -> void:
 	text = ""
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var authored_height := custom_minimum_size.y
-	custom_minimum_size = Vector2(
-		maxf(180.0, custom_minimum_size.x),
-		authored_height if authored_height > 0.0 else (COMPACT_HEIGHT if _compact else REGULAR_HEIGHT)
-	)
+	custom_minimum_size = Vector2(180.0, COMPACT_HEIGHT if _compact else REGULAR_HEIGHT)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	clip_contents = false
 	_last_disabled = disabled
