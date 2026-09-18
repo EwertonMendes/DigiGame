@@ -133,7 +133,9 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	meta.add_theme_constant_override("separation", 8)
 	meta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(meta)
-	var level_rank := _label("Lv. %d · %s" % [instance.level, rank], 12 if _density_compact else 14, rank_color, true)
+	var squad_role := OverworldState.get_squad_role(instance.id)
+	var role_label := "ACTIVE" if squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE else "RESERVE"
+	var level_rank := _label("%s · Lv. %d · %s" % [role_label, instance.level, rank], 12 if _density_compact else 14, rank_color, true)
 	level_rank.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	level_rank.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	meta.add_child(level_rank)
