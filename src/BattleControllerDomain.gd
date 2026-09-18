@@ -45,6 +45,9 @@ var _defeated_enemy_ids: Array[String] = []
 var _effective_skill_uses_by_instance: Dictionary = {}
 var _observed_enemy_skill_ids: Array[String] = []
 var _recent_skill_ids: Array[String] = []
+var _squad_session: BattleSquadSession = null
+var _pending_replacements: Array[Dictionary] = []
+var _replacement_prompt_ready := false
 
 
 func _ready() -> void:
@@ -114,6 +117,9 @@ func _movement_for(actor: Node) -> int:
 func _start_battle() -> void:
 	if _controller == null:
 		return
+	_squad_session = _controller.call("get_battle_squad_session") as BattleSquadSession if _controller.has_method("get_battle_squad_session") else null
+	_pending_replacements.clear()
+	_replacement_prompt_ready = false
 	_turn_order.clear()
 	for child in _controller.get_children():
 		if child is CharacterBody2D:
@@ -136,6 +142,8 @@ func _start_next_turn() -> void:
 	if _battle_over or _turn_order.is_empty():
 		return
 	if _check_battle_end():
+		return
+	if _activate_pending_replacement():
 		return
 
 	var next_actor: Node = _turn_scheduler.next_actor(_turn_order)
@@ -814,16 +822,207 @@ func _actor_knows_skill(actor: Node, skill_id: String) -> bool:
 	return false
 
 
-func _end_turn() -> void:
-	if _battle_over or current_actor == null:
+func get_switch_options(forced_replacement: bool = false) -> Array[Dictionary]:
+	if _controller == null or not _controller.has_method("get_bench_deployment_options"):
+		return []
+	var outgoing: Node = null
+	if forced_replacement and _replacement_prompt_ready and not _pending_replacements.is_empty():
+		outgoing = _pending_replacements[0].get("actor") as Node
+	elif not forced_replacement:
+		outgoing = current_actor
+	if outgoing == null or not is_instance_valid(outgoing):
+		return []
+	var raw_options = _controller.call("get_bench_deployment_options", outgoing, forced_replacement)
+	var result: Array[Dictionary] = []
+	if raw_options is Array:
+		for raw_option in raw_options:
+			if raw_option is Dictionary:
+				result.append((raw_option as Dictionary).duplicate(true))
+	return result
+
+
+func can_switch_current() -> bool:
+	if (
+		_battle_over
+		or _replacement_prompt_ready
+		or current_actor == null
+		or not _is_user_controlled(current_actor)
+		or _input_locked
+		or _has_moved
+		or _has_acted
+		or phase not in [Phase.COMMAND, Phase.ACTION_SELECT]
+	):
+		return false
+	for option: Dictionary in get_switch_options(false):
+		if bool(option.get("can_deploy", false)):
+			return true
+	return false
+
+
+func switch_current(incoming_id: String) -> bool:
+	if not can_switch_current() or _controller == null or not _controller.has_method("perform_player_switch"):
+		return false
+	var outgoing := current_actor
+	var outgoing_id := _instance_id(outgoing)
+	var outgoing_name := _display_name(outgoing)
+	var outgoing_index := _turn_order.find(outgoing)
+	if outgoing_index < 0:
+		return false
+	var anchor := _grid_for_actor(outgoing)
+	var selected_option: Dictionary = {}
+	for option: Dictionary in get_switch_options(false):
+		if String(option.get("id", "")) == incoming_id and bool(option.get("can_deploy", false)):
+			selected_option = option
+			break
+	if selected_option.is_empty():
+		return false
+
+	_input_locked = true
+	phase = Phase.ACTION_RESOLVE
+	_clear_action_selection(false)
+	_clear_manual_path_visuals()
+	_resolve_turn_end_statuses(outgoing)
+	var incoming := _controller.call("perform_player_switch", outgoing, incoming_id, anchor) as Node
+	if incoming == null:
+		_input_locked = false
+		phase = Phase.COMMAND
+		_refresh_hud()
+		return false
+
+	_turn_order[outgoing_index] = incoming
+	_turn_scheduler.set_actor_initiative(incoming, 0.0)
+	_event_bus.emit_event("unit_switched", {
+		"outgoing_id": outgoing_id,
+		"outgoing_name": outgoing_name,
+		"incoming_id": _instance_id(incoming),
+		"incoming_name": _display_name(incoming),
+		"forced": false,
+	})
+	current_actor = null
+	_turn_index = -1
+	_pending_recovery_cost = _base_turn_recovery()
+	_preview_recovery_cost = _pending_recovery_cost
+	_input_locked = false
+	phase = Phase.TURN_END
+	turn_order_changed.emit()
+	_refresh_hud()
+	call_deferred("_start_next_turn")
+	return true
+
+
+func deploy_reserve_replacement(incoming_id: String) -> bool:
+	if (
+		not _replacement_prompt_ready
+		or _pending_replacements.is_empty()
+		or _controller == null
+		or not _controller.has_method("perform_knockout_replacement")
+	):
+		return false
+	var request := _pending_replacements[0]
+	var outgoing := request.get("actor") as Node
+	if outgoing == null or not is_instance_valid(outgoing):
+		_pending_replacements.remove_at(0)
+		_replacement_prompt_ready = false
+		call_deferred("_start_next_turn")
+		return false
+	var outgoing_index := _turn_order.find(outgoing)
+	if outgoing_index < 0:
+		_pending_replacements.remove_at(0)
+		_replacement_prompt_ready = false
+		call_deferred("_start_next_turn")
+		return false
+
+	var selected_option: Dictionary = {}
+	for option: Dictionary in get_switch_options(true):
+		if String(option.get("id", "")) == incoming_id and bool(option.get("can_deploy", false)):
+			selected_option = option
+			break
+	if selected_option.is_empty():
+		return false
+
+	_input_locked = true
+	var requested_anchor := Vector2i(selected_option.get("anchor", request.get("anchor", Vector2i.ZERO)))
+	var outgoing_id := _instance_id(outgoing)
+	var incoming := _controller.call("perform_knockout_replacement", outgoing, incoming_id, requested_anchor) as Node
+	if incoming == null:
+		_input_locked = false
+		_refresh_hud()
+		return false
+
+	_turn_order[outgoing_index] = incoming
+	_turn_scheduler.set_actor_initiative(incoming, 0.0)
+	_pending_replacements.remove_at(0)
+	_replacement_prompt_ready = false
+	_event_bus.emit_event("unit_switched", {
+		"outgoing_id": outgoing_id,
+		"incoming_id": _instance_id(incoming),
+		"incoming_name": _display_name(incoming),
+		"forced": true,
+	})
+	current_actor = null
+	_turn_index = -1
+	_input_locked = false
+	phase = Phase.TURN_END
+	turn_order_changed.emit()
+	_refresh_hud()
+	call_deferred("_start_next_turn")
+	return true
+
+
+func _queue_player_replacement(actor: Node) -> void:
+	if actor == null or not bool(actor.get("is_player_controlled")) or _squad_session == null:
 		return
-	var expired_raw = _status_system.on_turn_end(current_actor)
+	var actor_id := _instance_id(actor)
+	for request: Dictionary in _pending_replacements:
+		var queued_actor := request.get("actor") as Node
+		if queued_actor != null and is_instance_valid(queued_actor) and _instance_id(queued_actor) == actor_id:
+			return
+	_pending_replacements.append({
+		"actor": actor,
+		"actor_id": actor_id,
+		"anchor": _grid_for_actor(actor),
+	})
+
+
+func _activate_pending_replacement() -> bool:
+	if _replacement_prompt_ready:
+		return true
+	while not _pending_replacements.is_empty():
+		if _squad_session == null or not _squad_session.has_available_bench():
+			_pending_replacements.clear()
+			return false
+		var request := _pending_replacements[0]
+		var actor := request.get("actor") as Node
+		if actor == null or not is_instance_valid(actor) or _actor_available(actor):
+			_pending_replacements.remove_at(0)
+			continue
+		_replacement_prompt_ready = true
+		current_actor = null
+		_turn_index = -1
+		phase = Phase.COMMAND
+		_input_locked = false
+		turn_order_changed.emit()
+		_refresh_hud()
+		return true
+	return false
+
+
+func _resolve_turn_end_statuses(actor: Node) -> void:
+	if actor == null or not is_instance_valid(actor):
+		return
+	var expired_raw = _status_system.on_turn_end(actor)
 	if expired_raw is Array:
 		for raw_status_id in expired_raw:
 			var status_id := String(raw_status_id)
-			_event_bus.emit_event("status_expired", {"target_id": _instance_id(current_actor), "status": status_id})
-	if current_actor.has_method("get_statuses"):
+			_event_bus.emit_event("status_expired", {"target_id": _instance_id(actor), "status": status_id})
+	if actor.has_method("get_statuses"):
 		notify_speed_changed()
+
+
+func _end_turn() -> void:
+	if _battle_over or current_actor == null:
+		return
+	_resolve_turn_end_statuses(current_actor)
 	var battle_state = current_actor.get("battle_state")
 	if battle_state != null and battle_state.has_method("commit_resources_to_instance"):
 		battle_state.call("commit_resources_to_instance")
@@ -847,7 +1046,9 @@ func _handle_knockout(actor: Node) -> void:
 		"target_name": _display_name(actor),
 		"is_player": bool(actor.get("is_player_controlled")),
 	})
-	if not bool(actor.get("is_player_controlled")) and not _defeated_enemy_ids.has(actor_id):
+	if bool(actor.get("is_player_controlled")):
+		_queue_player_replacement(actor)
+	elif not _defeated_enemy_ids.has(actor_id):
 		_defeated_enemy_ids.append(actor_id)
 	turn_order_changed.emit()
 
@@ -857,11 +1058,14 @@ func _check_battle_end() -> bool:
 		return true
 	var players: Array[Node] = _alive_actors(true)
 	var enemies: Array[Node] = _alive_actors(false)
-	if players.is_empty():
-		_finish_battle(false)
-		return true
 	if enemies.is_empty():
 		_finish_battle(true)
+		return true
+	if players.is_empty():
+		var can_replace := _squad_session != null and _squad_session.has_available_bench()
+		if can_replace or not _pending_replacements.is_empty() or _replacement_prompt_ready:
+			return false
+		_finish_battle(false)
 		return true
 	return false
 
@@ -883,6 +1087,9 @@ func _finish_battle(victory: bool) -> void:
 
 
 func _commit_player_resources() -> void:
+	if _controller != null and _controller.has_method("commit_squad_resources"):
+		_controller.call("commit_squad_resources")
+		return
 	for actor: Node in _turn_order:
 		if actor == null or not is_instance_valid(actor) or not bool(actor.get("is_player_controlled")):
 			continue
@@ -1051,6 +1258,11 @@ func get_hud_state() -> Dictionary:
 	state["is_targeting"] = phase == Phase.TARGET_SELECT
 	state["selected_action"] = _selected_action.duplicate(true)
 	state["can_confirm_action"] = phase == Phase.TARGET_SELECT and _selected_target != null and not _input_locked
+	state["replacement_required"] = _replacement_prompt_ready
+	state["reserve_count"] = _squad_session.get_available_bench_ids().size() if _squad_session != null else 0
+	state["switch_options"] = get_switch_options(_replacement_prompt_ready)
+	state["can_switch"] = can_switch_current()
+	state["switch_locked_reason"] = _switch_locked_reason()
 	if current_actor == null:
 		return state
 	if current_actor.has_method("get_display_name"):
@@ -1080,7 +1292,29 @@ func get_hud_state() -> Dictionary:
 	state["can_defend"] = bool(state["can_attack"])
 	state["can_wait"] = player_turn and not _input_locked and (phase == Phase.COMMAND or phase == Phase.ACTION_SELECT)
 	state["can_undo"] = player_turn and _has_moved and not _has_acted and not _input_locked and (phase == Phase.ACTION_SELECT or phase == Phase.COMMAND)
+	state["can_switch"] = can_switch_current()
+	state["switch_options"] = get_switch_options(false)
+	state["switch_locked_reason"] = _switch_locked_reason()
 	return state
+
+
+func _switch_locked_reason() -> String:
+	if _replacement_prompt_ready:
+		return "Choose a replacement Digimon."
+	if _squad_session == null or not _squad_session.has_available_bench():
+		return "No battle-ready Digimon in Reserve."
+	if current_actor == null or not _is_user_controlled(current_actor):
+		return "Wait for your Digimon's turn."
+	if _has_moved:
+		return "Switch is unavailable after moving."
+	if _has_acted:
+		return "Switch is unavailable after acting."
+	if _input_locked or phase not in [Phase.COMMAND, Phase.ACTION_SELECT]:
+		return "Finish the current action first."
+	for option: Dictionary in get_switch_options(false):
+		if bool(option.get("can_deploy", false)):
+			return ""
+	return "No Reserve Digimon fits this position."
 
 
 func get_turn_preview(total_slots: int = 7) -> Array[Dictionary]:
