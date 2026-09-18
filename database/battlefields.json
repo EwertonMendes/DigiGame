@@ -1,0 +1,794 @@
+{
+  "version": 1,
+  "default": "training_clearing",
+  "battlefields": [
+    {
+      "id": "training_clearing",
+      "name": "Training Clearing",
+      "size_class": "compact",
+      "grid": [
+        11,
+        15
+      ],
+      "recommended_team_size": 3,
+      "max_footprint_extent": 2,
+      "environment_theme": "digital_plains",
+      "enemy_deployment_rects": [
+        [
+          1,
+          1,
+          9,
+          3
+        ]
+      ],
+      "player_deployment_rects": [
+        [
+          1,
+          11,
+          9,
+          3
+        ]
+      ],
+      "route_rects": [
+        [
+          1,
+          1,
+          9,
+          3
+        ],
+        [
+          4,
+          5,
+          3,
+          5
+        ],
+        [
+          1,
+          11,
+          9,
+          3
+        ]
+      ],
+      "data_cells": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          12
+        ]
+      ],
+      "props": [
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            0,
+            7
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_a",
+          "grid": [
+            10,
+            7
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            2,
+            8
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            8,
+            6
+          ]
+        }
+      ],
+      "movement_costs": []
+    },
+    {
+      "id": "twin_grove",
+      "name": "Twin Grove",
+      "size_class": "standard",
+      "grid": [
+        13,
+        17
+      ],
+      "recommended_team_size": 3,
+      "max_footprint_extent": 2,
+      "environment_theme": "digital_plains",
+      "enemy_deployment_rects": [
+        [
+          1,
+          1,
+          11,
+          3
+        ]
+      ],
+      "player_deployment_rects": [
+        [
+          1,
+          13,
+          11,
+          3
+        ]
+      ],
+      "route_rects": [
+        [
+          1,
+          1,
+          11,
+          3
+        ],
+        [
+          1,
+          4,
+          4,
+          9
+        ],
+        [
+          8,
+          4,
+          4,
+          9
+        ],
+        [
+          5,
+          8,
+          3,
+          1
+        ],
+        [
+          1,
+          13,
+          11,
+          3
+        ]
+      ],
+      "data_cells": [
+        [
+          6,
+          2
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          9,
+          8
+        ],
+        [
+          6,
+          14
+        ]
+      ],
+      "props": [
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            6,
+            5
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            6,
+            6
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_a",
+          "grid": [
+            6,
+            7
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            6,
+            9
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            6,
+            10
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            6,
+            11
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            2,
+            8
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            10,
+            8
+          ]
+        }
+      ],
+      "movement_costs": [
+        {
+          "grid": [
+            4,
+            8
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            8,
+            8
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        }
+      ]
+    },
+    {
+      "id": "forest_crossing",
+      "name": "Forest Crossing",
+      "size_class": "standard",
+      "grid": [
+        11,
+        17
+      ],
+      "recommended_team_size": 3,
+      "max_footprint_extent": 2,
+      "environment_theme": "digital_plains",
+      "enemy_deployment_rects": [
+        [
+          1,
+          1,
+          9,
+          3
+        ]
+      ],
+      "player_deployment_rects": [
+        [
+          1,
+          13,
+          9,
+          3
+        ]
+      ],
+      "route_rects": [
+        [
+          1,
+          1,
+          9,
+          3
+        ],
+        [
+          4,
+          4,
+          3,
+          9
+        ],
+        [
+          1,
+          13,
+          9,
+          3
+        ]
+      ],
+      "data_cells": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          5,
+          14
+        ]
+      ],
+      "props": [
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            1,
+            6
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_a",
+          "grid": [
+            2,
+            6
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            1,
+            7
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_b",
+          "grid": [
+            8,
+            6
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            9,
+            6
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            9,
+            7
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_a",
+          "grid": [
+            1,
+            10
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            2,
+            10
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            1,
+            9
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_b",
+          "grid": [
+            8,
+            10
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            9,
+            10
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            9,
+            9
+          ]
+        }
+      ],
+      "movement_costs": [
+        {
+          "grid": [
+            3,
+            8
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            7,
+            8
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        }
+      ]
+    },
+    {
+      "id": "broken_clearing",
+      "name": "Broken Clearing",
+      "size_class": "standard",
+      "grid": [
+        13,
+        17
+      ],
+      "recommended_team_size": 3,
+      "max_footprint_extent": 2,
+      "environment_theme": "digital_plains",
+      "enemy_deployment_rects": [
+        [
+          1,
+          1,
+          11,
+          3
+        ]
+      ],
+      "player_deployment_rects": [
+        [
+          1,
+          13,
+          11,
+          3
+        ]
+      ],
+      "route_rects": [
+        [
+          1,
+          1,
+          11,
+          3
+        ],
+        [
+          2,
+          4,
+          9,
+          9
+        ],
+        [
+          1,
+          13,
+          11,
+          3
+        ]
+      ],
+      "data_cells": [
+        [
+          6,
+          2
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          9,
+          9
+        ],
+        [
+          6,
+          14
+        ]
+      ],
+      "props": [
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            2,
+            5
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            3,
+            5
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_b",
+          "grid": [
+            9,
+            5
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            10,
+            6
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            5,
+            7
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_a",
+          "grid": [
+            8,
+            8
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            3,
+            9
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            6,
+            10
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            10,
+            11
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            2,
+            12
+          ]
+        }
+      ],
+      "movement_costs": [
+        {
+          "grid": [
+            4,
+            6
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            4,
+            7
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            7,
+            9
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            8,
+            9
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            5,
+            11
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        }
+      ]
+    },
+    {
+      "id": "grand_digital_field",
+      "name": "Grand Digital Field",
+      "size_class": "colossal",
+      "grid": [
+        15,
+        19
+      ],
+      "recommended_team_size": 3,
+      "max_footprint_extent": 3,
+      "environment_theme": "digital_plains",
+      "enemy_deployment_rects": [
+        [
+          1,
+          1,
+          13,
+          4
+        ]
+      ],
+      "player_deployment_rects": [
+        [
+          1,
+          14,
+          13,
+          4
+        ]
+      ],
+      "route_rects": [
+        [
+          1,
+          1,
+          13,
+          4
+        ],
+        [
+          5,
+          5,
+          5,
+          9
+        ],
+        [
+          1,
+          14,
+          13,
+          4
+        ]
+      ],
+      "data_cells": [
+        [
+          7,
+          2
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          7,
+          16
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          11,
+          9
+        ]
+      ],
+      "props": [
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            3,
+            6
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            4,
+            6
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_a",
+          "grid": [
+            10,
+            6
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            11,
+            6
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            2,
+            9
+          ]
+        },
+        {
+          "kind": "stump",
+          "grid": [
+            12,
+            9
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "small_b",
+          "grid": [
+            3,
+            12
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            4,
+            12
+          ]
+        },
+        {
+          "kind": "tree",
+          "variant": "large",
+          "grid": [
+            10,
+            12
+          ]
+        },
+        {
+          "kind": "rock",
+          "grid": [
+            11,
+            12
+          ]
+        }
+      ],
+      "movement_costs": [
+        {
+          "grid": [
+            5,
+            8
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            6,
+            8
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            8,
+            10
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        },
+        {
+          "grid": [
+            9,
+            10
+          ],
+          "cost": 2,
+          "surface": "rough_grass"
+        }
+      ]
+    }
+  ]
+}
