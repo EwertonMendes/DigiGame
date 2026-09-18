@@ -126,6 +126,11 @@ func assign_to_slot(collection: PlayerCollection, instance_id: String, role: Str
 	if slot_index < 0 or slot_index >= target_capacity:
 		return false
 
+	# Squad order is intentionally compact: slots after the first empty slot do
+	# not exist yet. Reject artificial holes instead of silently collapsing a
+	# requested slot to the end of the list.
+	if slot_index > target.size():
+		return false
 	var target_id := String(target[slot_index]) if slot_index < target.size() else ""
 	if source_role == normalized_role:
 		if source_index < 0:
