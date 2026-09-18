@@ -3,9 +3,9 @@ class_name DigiLabHubScreen
 
 signal close_requested
 
-const CreateScreenScript = preload("res://src/ui/DigiLabConvertScreen.gd")
-const PartyStorageScript = preload("res://src/ui/DigiIconPartyStorageScreen.gd")
-const AscensionExpansionScript = preload("res://src/ui/DigiIconAscensionExpansionScreen.gd")
+const CreateScreenScript = preload("res://src/ui/DigiWorkspaceLabConvertScreen.gd")
+const PartyStorageScript = preload("res://src/ui/DigiWorkspacePartyStorageScreen.gd")
+const AscensionExpansionScript = preload("res://src/ui/DigiWorkspaceAscensionExpansionScreen.gd")
 
 var _create_screen: DigiLabConvertScreen
 var _party_screen: DigiLabPartyStorageScreen
