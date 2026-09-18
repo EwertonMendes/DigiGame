@@ -5,6 +5,7 @@ const GlassPanelScript = preload("res://src/ui/components/DigiGlassPanel.gd")
 const InteractionPromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
 const ConfirmationModalScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
 const AttributeChipScript = preload("res://src/ui/components/DigiAttributeChip.gd")
+const SelectionCardScript = preload("res://src/ui/components/DigiSelectionCard.gd")
 
 
 func _ready() -> void:
@@ -49,6 +50,24 @@ func _ready() -> void:
 	if not _check(is_equal_approx(text_attribute_chip.get_combined_minimum_size().y, icon_height_after), "Classification chips without an icon must keep the shared chip height"):
 		return
 	if not _check(is_equal_approx(icon_height_before, icon_height_after), "Normalizing a classification row must not enlarge the nested attribute label"):
+		return
+
+	var selection_card := SelectionCardScript.new() as DigiSelectionCard
+	selection_card.configure("BASIC BATTLE", "Persistent selection probe.", "MIXED", "sword", DigiUiTheme.CYAN)
+	add_child(selection_card)
+	await _frames(2)
+	selection_card.set_selected(true)
+	var selection_normal := selection_card.get_theme_stylebox("normal") as StyleBoxFlat
+	var selection_pressed := selection_card.get_theme_stylebox("pressed") as StyleBoxFlat
+	if not _check(selection_card.is_selected(), "Selection card must expose persistent committed selection independent from focus"):
+		return
+	if not _check(selection_card.get_combined_minimum_size().y >= DigiUiTheme.TOUCH_TARGET, "Selection card must remain touch-safe"):
+		return
+	if not _check(selection_normal != null and selection_pressed != null, "Selection card must expose stable selection styles"):
+		return
+	if not _check(selection_normal.shadow_size == 0 and selection_pressed.shadow_size == 0, "Selection card must not use press/focus shadows that visually bounce"):
+		return
+	if not _check(selection_normal.border_width_left == selection_pressed.border_width_left, "Selection card press feedback must preserve geometry"):
 		return
 
 	var prompt := InteractionPromptScript.new() as DigiInteractionPrompt
@@ -98,19 +117,24 @@ func _ready() -> void:
 	hub.call("open_test_battle_dialog")
 	await _frames(3)
 	var battle_dialog := hub.find_child("BattleDialog", true, false) as Control
-	var hub_cancel := hub.find_child("CancelBattleDialog", true, false) as Button
+	var operator_header := hub.find_child("OperatorHeader", true, false) as DigiModalHeader
 	var hub_start := hub.find_child("StartBattle", true, false) as Button
-	if not _check(battle_dialog != null and battle_dialog.visible, "Battle Operator dialog must open"):
+	var program_buttons := hub.get("_battle_program_buttons") as Dictionary
+	var basic_card := program_buttons.get("basic") as DigiSelectionCard
+	if not _check(battle_dialog != null and battle_dialog.visible, "Battle Operator workspace must open"):
 		return
-	if not _check(hub_cancel != null and hub_start != null, "Battle Operator dialog must expose cancel and start actions"):
+	if not _check(operator_header != null and operator_header.is_workspace_mode(), "Battle Operator must reuse the shared V2 workspace header"):
 		return
-	if not _check(get_viewport().gui_get_focus_owner() == hub_cancel, "Battle Operator dialog must default to NOT NOW"):
+	if not _check(hub_start != null and basic_card != null, "Battle Operator must expose selected-program and start controls"):
+		return
+	if not _check(get_viewport().gui_get_focus_owner() == basic_card, "Battle Operator must focus the selected program while keeping selection persistent"):
 		return
 
 	hub.queue_free()
 	modal.queue_free()
 	prompt.queue_free()
 	classification_row.queue_free()
+	selection_card.queue_free()
 	glass.queue_free()
 	await _frames(3)
 	print("global ui v2 components regression passed")
