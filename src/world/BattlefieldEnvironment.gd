@@ -11,7 +11,7 @@ const ROCK_TEXTURE = preload("res://assets/world/hawkbirdtree/rock.png")
 
 const TREE_Z_INDEX := -22
 const ROCK_Z_INDEX := -24
-const ROCK_SCALE := 1.30
+const ROCK_SCALE := 0.90
 const ROCK_TINT := Color(0.94, 0.97, 0.94, 1.0)
 
 var _field: Node2D = null
@@ -40,7 +40,7 @@ func _build_trees(cells: Array[Vector2i]) -> void:
 		]
 		tree.texture = texture
 		tree.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tree.position = _foot_aligned_position(grid, texture, 1.0)
+		tree.position = _tile_center_position(grid)
 		tree.z_index = TREE_Z_INDEX
 		tree.set_meta("obstacle_kind", "tree")
 		tree.set_meta("grid", grid)
@@ -55,7 +55,7 @@ func _build_rocks(cells: Array[Vector2i]) -> void:
 		rock.texture = ROCK_TEXTURE
 		rock.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		rock.scale = Vector2.ONE * ROCK_SCALE
-		rock.position = _foot_aligned_position(grid, ROCK_TEXTURE, ROCK_SCALE)
+		rock.position = _tile_center_position(grid)
 		rock.z_index = ROCK_Z_INDEX
 		rock.flip_h = index % 2 == 1
 		rock.modulate = ROCK_TINT
@@ -64,9 +64,11 @@ func _build_rocks(cells: Array[Vector2i]) -> void:
 		add_child(rock)
 
 
-func _foot_aligned_position(grid: Vector2i, texture: Texture2D, scale_factor: float) -> Vector2:
+func _tile_center_position(grid: Vector2i) -> Vector2:
+	# The logical blocker and its visual must share the exact same isometric
+	# tile center. Do not offset props by their texture dimensions: that moves
+	# the visual toward a neighboring diamond and makes the blocked cell
+	# ambiguous to the player.
 	if _field == null:
 		return Vector2.ZERO
-	var foot := Vector2(_field.call("grid_to_world", grid))
-	var half_height := float(texture.get_height()) * scale_factor * 0.5
-	return foot + Vector2(0.0, -half_height)
+	return Vector2(_field.call("grid_to_world", grid))
