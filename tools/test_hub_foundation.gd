@@ -328,8 +328,10 @@ func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> vo
 	await get_tree().process_frame
 	assert(OverworldState.get_active_instances().size() == 2 and OverworldState.get_reserve_party_instances().size() == 1, "Reserve assignment must preserve 3+3 Squad roles")
 	assert(int(party_followers.call("get_follower_count")) == 2, "Reserve Digimon must never render as overworld followers")
-	assert(OverworldState.add_to_active_party(reserve_fixture.id), "Reserve fixture must return to Active")
+	assert(OverworldState.set_active_party(default_party), "Reserve fixture must restore the authored Active order")
 	await get_tree().process_frame
+	assert(OverworldState.get_active_party() == default_party, "Restoring the fixture must recover the original logical Active order")
+	assert(OverworldState.get_reserve_party_instances().is_empty(), "Restoring the fixture must clear its temporary Reserve assignment")
 	assert(int(party_followers.call("get_follower_count")) == 3, "Returning Reserve to Active must restore its follower")
 
 	var middle_instance := OverworldState.get_instance_for_party_key("gabumon")
