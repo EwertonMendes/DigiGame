@@ -3,6 +3,9 @@ extends "res://src/battle/CombatDigimonRuntimeController.gd"
 const EncounterDefinitionScript = preload("res://src/world/BattleEncounterDefinition.gd")
 const BattleSquadSessionScript = preload("res://src/battle/BattleSquadSession.gd")
 const SquadFootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const SWITCH_RECALL_SECONDS := 0.28
+const SWITCH_DEPLOY_DELAY_SECONDS := 0.18
+const SWITCH_CLEANUP_SECONDS := 0.34
 
 var encounter_definition: BattleEncounterDefinition = null
 var _squad_session: BattleSquadSession = null
@@ -202,6 +205,8 @@ func perform_player_switch(outgoing_actor: Node, incoming_id: String, anchor: Ve
 	if instance == null or field == null:
 		return null
 
+	# Create and attach the incoming actor before mutating the outgoing Squad
+	# state. If anything fails, the original actor remains untouched.
 	_squad_session.prepare_deployment(incoming_id)
 	var incoming := _spawn_instance_at_anchor(instance, true, anchor, field)
 	if incoming == null:
@@ -214,10 +219,35 @@ func perform_player_switch(outgoing_actor: Node, incoming_id: String, anchor: Ve
 	var outgoing_id := String(outgoing_actor.call("get_digimon_instance_id")) if outgoing_actor.has_method("get_digimon_instance_id") else ""
 	_squad_session.bench(outgoing_id)
 	outgoing_actor.set("is_defending", false)
-	outgoing_actor.visible = false
-	if outgoing_actor.get_parent() == self:
-		remove_child(outgoing_actor)
-	outgoing_actor.queue_free()
+	outgoing_actor.set_meta("battle_switching_out", true)
+
+	# Reserve the destination immediately but stage the visuals: the outgoing
+	# Digimon is digitally recalled first, then the incoming Digimon materializes
+	# into the exact tactical anchor. No logical state is recreated by the VFX.
+	incoming.visible = false
+	incoming.set_meta("battle_switching_in", true)
+	if outgoing_actor.has_method("play_switch_out_animation"):
+		outgoing_actor.call("play_switch_out_animation")
+	else:
+		outgoing_actor.visible = false
+
+	var deploy_timer := get_tree().create_timer(SWITCH_DEPLOY_DELAY_SECONDS)
+	deploy_timer.timeout.connect(func():
+		if incoming != null and is_instance_valid(incoming):
+			incoming.erase_meta("battle_switching_in")
+			if incoming.has_method("play_switch_in_animation"):
+				incoming.call("play_switch_in_animation")
+			else:
+				incoming.visible = true
+	, CONNECT_ONE_SHOT)
+
+	var cleanup_timer := get_tree().create_timer(SWITCH_CLEANUP_SECONDS)
+	cleanup_timer.timeout.connect(func():
+		if outgoing_actor != null and is_instance_valid(outgoing_actor):
+			if outgoing_actor.get_parent() == self:
+				remove_child(outgoing_actor)
+			outgoing_actor.queue_free()
+	, CONNECT_ONE_SHOT)
 
 	refresh_occupancy_index()
 	face_actor_toward_nearest_opponent(incoming)
