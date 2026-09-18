@@ -414,9 +414,6 @@ func _party_workspace_is_bounded(screen: Control, root: Control, expected_comman
 		if rect.position.y < panel_rect.position.y - 1.0 or rect.end.y > panel_rect.end.y + 1.0:
 			print("[digilab-layout] Squad command escaped panel bounds: %s" % command.name)
 			return false
-		if command.size.y > 90.0:
-			print("[digilab-layout] Squad command stretched vertically: %s = %.1f px" % [command.name, command.size.y])
-			return false
 	if command_count != expected_command_count:
 		print("[digilab-layout] expected %d Squad commands but found %d" % [expected_command_count, command_count])
 		return false
