@@ -18,6 +18,7 @@ const MIN_RECOVERY_COST := 1.0
 const MAX_RECOVERY_COST := 300.0
 const DEMO_BATTLE_SEED := 20260910
 const INVALID_TARGET_GRID := Vector2i(-9998, -9998)
+const SWITCH_PRESENTATION_SECONDS := 0.72
 
 var _turn_scheduler = TurnSchedulerScript.new()
 var _battle_config = BattleConfigScript.new()
@@ -897,17 +898,29 @@ func switch_current(incoming_id: String) -> bool:
 		"incoming_id": _instance_id(incoming),
 		"incoming_name": _display_name(incoming),
 		"forced": false,
+		"turn_consumed": true,
 	})
 	current_actor = null
 	_turn_index = -1
 	_pending_recovery_cost = _base_turn_recovery()
 	_preview_recovery_cost = _pending_recovery_cost
-	_input_locked = false
+	# Keep the battle locked while the recall/materialization VFX reads clearly.
+	# The incoming actor already has neutral initiative, so the tactical turn is
+	# consumed immediately; this delay is presentation only.
+	_input_locked = true
 	phase = Phase.TURN_END
 	turn_order_changed.emit()
 	_refresh_hud()
-	call_deferred("_start_next_turn")
+	call_deferred("_continue_after_switch_presentation")
 	return true
+
+
+func _continue_after_switch_presentation() -> void:
+	await get_tree().create_timer(SWITCH_PRESENTATION_SECONDS).timeout
+	if _battle_over:
+		return
+	_input_locked = false
+	_start_next_turn()
 
 
 func can_skip_reserve_replacement() -> bool:
