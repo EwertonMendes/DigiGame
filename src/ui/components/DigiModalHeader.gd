@@ -477,7 +477,7 @@ func _layout_workspace() -> void:
 			var label := button.get_meta("tab_label") as Label
 			var icon := button.get_meta("tab_icon") as DigiProceduralIcon
 			var row := button.get_meta("tab_row") as HBoxContainer
-			var safe_content := button.get_meta("tab_safe_content") as MarginContainer
+			var safe_content := button.get_meta("tab_safe_content", null) as MarginContainer
 			var use_compact_label := estimated_width < 176.0
 			var very_tight := estimated_width < 126.0
 			if label != null:
