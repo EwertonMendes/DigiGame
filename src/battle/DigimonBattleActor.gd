@@ -33,6 +33,18 @@ func bind_digimon_instance(instance: DigimonInstance, species: Dictionary, playe
 	battle_state = BattleDigimonScript.new(instance, "player" if player_controlled else "enemy")
 
 
+func adopt_battle_state(state: BattleDigimon) -> bool:
+	if state == null or digimon_instance == null or state.instance != digimon_instance:
+		return false
+	battle_state = state
+	_knockout_started = state.is_knocked_out()
+	if not _knockout_started:
+		modulate = Color.WHITE
+		if sprite != null:
+			sprite.modulate = Color.WHITE
+	return true
+
+
 func get_digimon_instance_id() -> String:
 	return digimon_instance.id if digimon_instance != null else ""
 
