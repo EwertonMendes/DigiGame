@@ -100,15 +100,6 @@ jobs:
           trap 'kill $SERVER_PID || true' EXIT
           node .github/scripts/browser-smoke.mjs
 
-      - name: Upload DigiLab visual QA
-        if: matrix.suite == 'desktop' && success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: digilab-visual-${{ inputs.source_run_id }}
-          path: build/digilab-*.png
-          if-no-files-found: error
-          retention-days: 7
-
       - name: Upload ${{ matrix.suite }} failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
