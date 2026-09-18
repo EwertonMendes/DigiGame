@@ -33,7 +33,7 @@ func configure(
 	_icon_kind = icon_kind
 	_semantic_accent = semantic_accent
 	if _built:
-		_rebuild_content()
+		_refresh_content_state()
 		_apply_styles()
 	return self
 
@@ -44,7 +44,7 @@ func set_selected(selected: bool) -> void:
 	_selected = selected
 	if _built:
 		_apply_styles()
-		_rebuild_content()
+		_refresh_content_state()
 
 
 func is_selected() -> bool:
@@ -52,6 +52,8 @@ func is_selected() -> bool:
 
 
 func set_compact(compact: bool) -> void:
+	if _compact == compact:
+		return
 	_compact = compact
 	custom_minimum_size.y = COMPACT_HEIGHT if compact else REGULAR_HEIGHT
 	if _built:
@@ -65,7 +67,7 @@ func set_interactive(interactive: bool) -> void:
 	_last_disabled = disabled
 	if _built:
 		_apply_styles()
-		_rebuild_content()
+		_refresh_content_state()
 
 
 func _ready() -> void:
@@ -90,7 +92,7 @@ func _process(_delta: float) -> void:
 	if _built and disabled != _last_disabled:
 		_last_disabled = disabled
 		_apply_styles()
-		_rebuild_content()
+		_refresh_content_state()
 
 
 func _apply_styles() -> void:
@@ -129,6 +131,42 @@ func _on_mouse_exited() -> void:
 	_hovered = false
 	if _built:
 		_apply_styles()
+
+
+func _refresh_content_state() -> void:
+	var icon := find_child("SelectionIcon", true, false) as DigiProceduralIcon
+	if icon != null:
+		icon.custom_minimum_size = Vector2(27.0, 27.0) if _compact else Vector2(31.0, 31.0)
+		icon.configure(_icon_kind, _semantic_accent if not disabled else V2.SUBTLE, 1.8)
+
+	var title := find_child("SelectionTitle", true, false) as Label
+	if title != null:
+		title.text = _title_text
+		title.add_theme_font_size_override("font_size", 12 if _compact else 14)
+		title.add_theme_color_override("font_color", V2.WHITE if not disabled else V2.SUBTLE)
+
+	var subtitle := find_child("SelectionSubtitle", true, false) as Label
+	if subtitle != null:
+		subtitle.text = _subtitle_text
+		subtitle.add_theme_font_size_override("font_size", 9 if _compact else 10)
+		subtitle.add_theme_color_override("font_color", V2.MUTED if not disabled else V2.SUBTLE)
+
+	var badge := find_child("SelectionStatus", true, false) as Label
+	if badge != null:
+		badge.text = "SELECTED" if _selected else _status_text
+		badge.visible = not badge.text.is_empty()
+		badge.custom_minimum_size = Vector2(78.0 if _compact else 92.0, 28.0)
+		badge.add_theme_font_size_override("font_size", 8 if _compact else 9)
+		badge.add_theme_color_override(
+			"font_color",
+			V2.CYAN if _selected else (_semantic_accent if not disabled else V2.SUBTLE)
+		)
+		badge.add_theme_stylebox_override(
+			"normal",
+			V2.pill_style(V2.CYAN if _selected else _semantic_accent, not disabled)
+		)
+
+	tooltip_text = "%s — %s" % [_title_text, _subtitle_text]
 
 
 func _rebuild_content() -> void:
@@ -214,4 +252,4 @@ func _rebuild_content() -> void:
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(badge)
 
-	tooltip_text = "%s — %s" % [_title_text, _subtitle_text]
+	_refresh_content_state()
