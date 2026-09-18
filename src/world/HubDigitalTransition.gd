@@ -753,9 +753,9 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 
 	var actions_y := dialog_height - bottom_pad - hint_bar_height - action_height
 	var summary_y := actions_y - action_gap - summary_height
-	var content_top := tabs_y + (tabs_height + (8.0 if compact_landscape else 10.0) if _compact_operator_layout else 0.0)
-	if not _compact_operator_layout:
-		content_top = top_pad + 102.0
+	var content_top := top_pad + 102.0
+	if _compact_operator_layout:
+		content_top = tabs_y + tabs_height + (8.0 if compact_landscape else 10.0)
 	var content_bottom := summary_y - (4.0 if compact_landscape else 10.0)
 	var content_height := maxf(80.0, content_bottom - content_top)
 
