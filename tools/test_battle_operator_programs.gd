@@ -132,6 +132,10 @@ func _test_operator_menu() -> void:
 	var training_badge := training.find_child("SelectionStatus", true, false) as Label if training != null else null
 	_expect(basic_badge != null and basic_badge.text == "MIXED", "Selected Battle Program must keep its semantic badge instead of displaying SELECTED")
 	_expect(training_badge != null and training_badge.text == "COMPACT", "Selected Battlefield must keep its field-class badge instead of displaying SELECTED")
+	var basic_surface := basic.find_child("SelectionCommittedSurface", true, false) as Panel if basic != null else null
+	var training_surface := training.find_child("SelectionCommittedSurface", true, false) as Panel if training != null else null
+	_expect(basic_surface != null and basic_surface.visible, "Selected Battle Program must expose the persistent bright selection surface")
+	_expect(training_surface != null and training_surface.visible, "Selected Battlefield must expose the persistent bright selection surface")
 	_expect(get_viewport().gui_get_focus_owner() == basic, "Opening Battle Operator must focus the current selected program instead of a destructive/confirm action")
 
 	var expected_titles := {
@@ -247,6 +251,12 @@ func _test_operator_menu() -> void:
 	_expect(basic != null and not basic.is_selected(), "Previous program selection must lose its persistent highlight")
 	_expect(grand != null and grand.is_selected(), "New battlefield selection must keep a persistent highlight")
 	_expect(training != null and not training.is_selected(), "Previous battlefield selection must lose its persistent highlight")
+	var rookie_surface := rookie.find_child("SelectionCommittedSurface", true, false) as Panel if rookie != null else null
+	var grand_surface := grand.find_child("SelectionCommittedSurface", true, false) as Panel if grand != null else null
+	_expect(rookie_surface != null and rookie_surface.visible, "Newly selected program must keep its committed visual surface visible")
+	_expect(grand_surface != null and grand_surface.visible, "Newly selected battlefield must keep its committed visual surface visible")
+	_expect(basic_surface != null and not basic_surface.visible, "Previous program committed visual surface must turn off without changing card copy")
+	_expect(training_surface != null and not training_surface.visible, "Previous field committed visual surface must turn off without changing card copy")
 	_expect(selected_program_label != null and selected_program_label.text == "RANDOM ROOKIE", "Simulation panel must refresh the selected program")
 	_expect(selected_field_label != null and selected_field_label.text == "GRAND DIGITAL FIELD", "Simulation panel must refresh the selected battlefield")
 
