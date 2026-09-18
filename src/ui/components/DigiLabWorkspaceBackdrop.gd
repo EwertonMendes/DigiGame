@@ -15,14 +15,14 @@ func _ready() -> void:
 	image.texture = BACKGROUND
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	image.modulate = Color(0.82, 0.92, 1.0, 0.86)
+	image.modulate = Color(0.94, 0.98, 1.0, 0.94)
 	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(image)
 
 	var shade := ColorRect.new()
 	shade.name = "DigiLabBackgroundShade"
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.004, 0.018, 0.030, 0.56)
+	shade.color = Color(0.004, 0.018, 0.030, 0.42)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
 
