@@ -23,6 +23,9 @@ func _ready() -> void:
 		return
 	if not _check(convert.visible and not party.visible and not ascension.visible, "DigiLab must open on Convert Digi Data"):
 		return
+	var lab_background := convert.find_child("DigiLabBackgroundImage", true, false) as TextureRect
+	if not _check(lab_background != null and lab_background.texture != null and lab_background.texture.resource_path.ends_with("digi_lab.webp"), "DigiLab must use its dedicated laboratory background"):
+		return
 	if not _check(_primary_tabs_are_valid(convert, "convert"), "Convert Digi Data must expose the three primary tabs"):
 		return
 	if not _check(_workspace_contract_is_valid(convert, "_list_scroll", "_detail_scroll", "_roster_pager"), "Convert Digi Data must use the paged no-scroll workspace contract"):
@@ -96,6 +99,14 @@ func _ready() -> void:
 	if not _check(_content_fits_disabled_scroll(ascension, "_list_scroll", "_list"), "Ascension roster page must fit without scrolling"):
 		return
 	if not _check(_content_fits_disabled_scroll(ascension, "_detail_scroll", "_detail"), "Ascension / Expansion detail must fit without scrolling"):
+		return
+	if not _check(_content_uses_available_height(ascension, "_detail_scroll", "_detail"), "Ascension / Expansion detail must compose itself across the available height"):
+		return
+	var tier_compare := ascension_detail.find_child("TierComparison", true, false) as Control
+	var tier_actions := ascension_detail.find_child("TierActions", true, false) as Control
+	if not _check(tier_compare != null and tier_compare.size_flags_vertical == Control.SIZE_EXPAND_FILL, "Tier comparison must expand into available vertical room"):
+		return
+	if not _check(tier_actions != null and tier_actions.size_flags_vertical == Control.SIZE_EXPAND_FILL, "Tier actions must expand into available vertical room"):
 		return
 	print("[digilab-layout] ascension deep-link ok")
 
