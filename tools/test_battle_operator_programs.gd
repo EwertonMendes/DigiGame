@@ -157,7 +157,11 @@ func _test_operator_menu() -> void:
 			var pressed := button.get_theme_stylebox("pressed") as StyleBoxFlat
 			_expect(normal != null and focus_style != null and pressed != null, "%s must expose stable V2 selection styles" % program_id)
 			if normal != null and focus_style != null and pressed != null:
-				_expect(normal.shadow_size == 0 and focus_style.shadow_size == 0 and pressed.shadow_size == 0, "%s must not bounce through press/focus shadows" % program_id)
+				_expect(
+					normal.shadow_size == focus_style.shadow_size
+					and normal.shadow_size == pressed.shadow_size,
+					"%s press/focus states must keep the same shared workspace depth" % program_id
+				)
 				_expect(
 					normal.border_width_left == pressed.border_width_left
 					and normal.border_width_top == pressed.border_width_top
