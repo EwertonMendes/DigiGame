@@ -2,6 +2,7 @@ extends Resource
 class_name BattleEncounterDefinition
 
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const BattlefieldCatalogScript = preload("res://src/world/BattlefieldCatalog.gd")
 const VALID_TIERS: Array[String] = ["E", "D", "C", "B", "A", "S", "SS", "SSS"]
 
 @export var encounter_id: String = ""
@@ -21,6 +22,12 @@ func validate(database: DigimonDatabase = null) -> PackedStringArray:
 		errors.append("Encounter '%s' has no enemies." % encounter_id)
 	if reward_modifier < 0.0:
 		errors.append("Encounter '%s' has a negative reward modifier." % encounter_id)
+	if not battle_map.strip_edges().is_empty():
+		var battlefield_catalog := BattlefieldCatalogScript.new() as BattlefieldCatalog
+		if not battlefield_catalog.load_default():
+			errors.append("Encounter '%s' cannot validate battlefield catalog." % encounter_id)
+		elif battlefield_catalog.get_by_id(battle_map) == null:
+			errors.append("Encounter '%s' references unknown battlefield '%s'." % [encounter_id, battle_map])
 	for raw_item_id in guaranteed_items.keys():
 		var item_id := String(raw_item_id).strip_edges()
 		if item_id.is_empty() or int(guaranteed_items[raw_item_id]) <= 0:
