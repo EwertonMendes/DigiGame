@@ -66,10 +66,12 @@ async function reloadHub(page) {
 }
 
 async function confirmBasicBattleProgram(page) {
-  // CLOSE intentionally owns initial focus. The redesigned Battle Operator now
-  // keeps Basic Battle + Training Clearing selected by default, so one safe,
-  // explicit move to START BATTLE exercises the real two-stage configuration
-  // flow without coupling browser QA to the responsive program/field card grid.
+  // The workspace opens on the committed Basic Battle selection. Navigation is
+  // distinct from selection: Right moves to the selected battlefield, Right
+  // again moves to the persistent START BATTLE action, then Enter launches.
+  // This path is shared by desktop and compact Program/Field layouts.
+  await page.keyboard.press('ArrowRight');
+  await settleFrames(page, 1);
   await page.keyboard.press('ArrowRight');
   await settleFrames(page, 1);
   await page.keyboard.press('Enter');
