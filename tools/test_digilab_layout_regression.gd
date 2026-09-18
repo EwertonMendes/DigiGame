@@ -33,6 +33,10 @@ func _ready() -> void:
 		return
 	if not _check(_layout_text_is_usable(convert.get("_detail_body") as Control), "Convert Digi Data contains collapsed or vertical text"):
 		return
+	if not _check(_content_fits_disabled_scroll(convert, "_list_scroll", "_list_box"), "Convert Digi Data archive page must fit without scrolling"):
+		return
+	if not _check(_content_fits_disabled_scroll(convert, "_detail_scroll", "_detail_body"), "Convert Digi Data detail must fit without scrolling"):
+		return
 	print("[digilab-layout] convert ok")
 
 	digilab.call("_switch_tab", "party")
@@ -47,6 +51,10 @@ func _ready() -> void:
 		return
 	var party_detail: Control = party.get("_detail") as Control
 	if not _check(party_detail != null and _layout_text_is_usable(party_detail), "Party / Storage contains collapsed or vertical text"):
+		return
+	if not _check(_content_fits_disabled_scroll(party, "_list_scroll", "_list"), "Party / Storage roster page must fit without scrolling"):
+		return
+	if not _check(_content_fits_disabled_scroll(party, "_detail_scroll", "_detail"), "Party / Storage stats and actions must fit without scrolling"):
 		return
 
 	var selected_id: String = String(party.call("get_selected_instance_id"))
@@ -79,6 +87,13 @@ func _ready() -> void:
 	if not _check(_find_button_by_text(ascension_detail, "TIER ASCENSION") != null, "Ascension / Expansion must expose the Tier Ascension secondary workspace"):
 		return
 	if not _check(_find_button_by_text(ascension_detail, "EXPANSION") != null, "Ascension / Expansion must expose the Expansion secondary workspace"):
+		return
+	var tier_arrow := ascension_detail.find_child("TierTransitionArrow", true, false) as TextureRect
+	if not _check(tier_arrow != null and tier_arrow.texture != null, "Tier Ascension must use the packaged transition arrow icon instead of a font glyph"):
+		return
+	if not _check(_content_fits_disabled_scroll(ascension, "_list_scroll", "_list"), "Ascension roster page must fit without scrolling"):
+		return
+	if not _check(_content_fits_disabled_scroll(ascension, "_detail_scroll", "_detail"), "Ascension / Expansion detail must fit without scrolling"):
 		return
 	print("[digilab-layout] ascension deep-link ok")
 
@@ -120,6 +135,13 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 		var button: Button = header.get_tab_button(tab_id)
 		if button == null or button.disabled or button.focus_mode != Control.FOCUS_NONE:
 			return false
+		var label := button.get_meta("tab_label") as Label
+		if label == null or not label.visible or label.text.strip_edges().is_empty():
+			print("[digilab-layout] missing visible name for primary tab %s" % tab_id)
+			return false
+		if label.size.x > button.size.x:
+			print("[digilab-layout] primary tab label exceeds tab bounds: %s" % tab_id)
+			return false
 	return header.get_tab_button(active_id) != null
 
 
@@ -138,6 +160,19 @@ func _workspace_contract_is_valid(screen: Control, list_scroll_key: String, deta
 	if previous == null or next == null:
 		return false
 	if previous.focus_mode != Control.FOCUS_NONE or next.focus_mode != Control.FOCUS_NONE:
+		return false
+	return true
+
+
+func _content_fits_disabled_scroll(screen: Control, scroll_key: String, content_key: String) -> bool:
+	var scroll := screen.get(scroll_key) as ScrollContainer
+	var content := screen.get(content_key) as Control
+	if scroll == null or content == null:
+		return false
+	var required := content.get_combined_minimum_size().y
+	var available := scroll.size.y
+	if required > available + 2.0:
+		print("[digilab-layout] content overflow: %s requires %.1f px but only %.1f px are available" % [content_key, required, available])
 		return false
 	return true
 
