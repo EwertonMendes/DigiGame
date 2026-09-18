@@ -255,9 +255,9 @@ func _rebuild() -> void:
 					var reward: Dictionary = raw_reward
 					reward_by_id[String(reward.get("instance_id", ""))] = reward
 
-	var active_party: Array[DigimonInstance] = OverworldState.get_active_instances()
-	_party_heading_value.text = "%d ACTIVE" % active_party.size()
-	for instance: DigimonInstance in active_party:
+	var squad: Array[DigimonInstance] = OverworldState.get_squad_instances()
+	_party_heading_value.text = "%d SQUAD" % squad.size()
+	for instance: DigimonInstance in squad:
 		var reward: Dictionary = reward_by_id.get(instance.id, {}) as Dictionary
 		if reward.is_empty():
 			reward = _snapshot_reward(instance)
