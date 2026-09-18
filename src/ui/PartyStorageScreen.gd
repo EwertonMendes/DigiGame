@@ -423,8 +423,16 @@ func _identity_card(instance: DigimonInstance, species: Dictionary, display_name
 	status_row.add_child(_semantic_label(footprint_badge, 10, V2.ORANGE, true))
 	status_row.add_child(_semantic_label("POTENTIAL %d" % instance.potential, 10, V2.PURPLE, true))
 	status_row.add_child(_semantic_label("LINK %d / %d" % [instance.link, DigimonInstance.MAX_LINK], 10, V2.CYAN, true))
-	var location := "ACTIVE PARTY · SLOT %d" % (party_index + 1) if active else "STORAGE"
-	info.add_child(_pill(location, V2.AMBER if active else V2.CYAN))
+	var role := OverworldState.get_squad_role(instance.id)
+	var location := "STORAGE"
+	var location_color := V2.BLUE
+	if role == PlayerCollection.SQUAD_ROLE_ACTIVE:
+		location = "ACTIVE · SLOT %d" % (OverworldState.get_active_party_ids().find(instance.id) + 1)
+		location_color = V2.AMBER
+	elif role == PlayerCollection.SQUAD_ROLE_RESERVE:
+		location = "RESERVE · SLOT %d" % (OverworldState.get_reserve_party_ids().find(instance.id) + 1)
+		location_color = V2.PURPLE
+	info.add_child(_pill(location, location_color))
 	return panel
 
 
