@@ -95,7 +95,7 @@ func _refresh_styles() -> void:
 		var button := _buttons.get(id) as Button
 		if button == null:
 			continue
-		var accent: Color = spec.get("accent", V2.CYAN) as Color
+		var accent: Color = spec.get("accent", V2.CYAN)
 		var active := id == _active_id
 		button.custom_minimum_size.y = 46.0 if _compact else 52.0
 		button.add_theme_color_override("font_color", V2.WHITE if active else V2.MUTED)
