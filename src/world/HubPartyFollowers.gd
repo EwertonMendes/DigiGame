@@ -29,6 +29,8 @@ var _active_party_keys: Array[String] = []
 var _trail: Array[Vector2] = []
 var _bound := false
 var _bind_attempts := 0
+var _missing_followers := false
+var _spawn_retry_seconds := 0.0
 
 func _ready() -> void:
 	_followers_root = Node2D.new()
@@ -60,6 +62,11 @@ func _physics_process(delta: float) -> void:
 		return
 	_record_player_position(_player.global_position)
 	_update_followers(delta)
+	if _missing_followers:
+		_spawn_retry_seconds = maxf(0.0, _spawn_retry_seconds - delta)
+		if _spawn_retry_seconds <= 0.0:
+			_spawn_retry_seconds = 0.5
+			_sync_party()
 
 func get_follower_count() -> int:
 	return _followers.size()
@@ -117,6 +124,7 @@ func _sync_party() -> void:
 		follower.queue_free()
 	_followers.clear()
 	_active_party_keys.clear()
+	_missing_followers = false
 
 	var visible_party := OverworldState.get_battle_ready_active_instances()
 	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
@@ -146,10 +154,17 @@ func _sync_party() -> void:
 			push_warning("Active party resource is not a Digimon: %s" % resource_path)
 			continue
 
+		var placement := _find_safe_spawn_position(visual_slot, occupied)
+		if not bool(placement.get("found", false)):
+			# Never materialize a follower outside authored walkable space. A
+			# short retry will populate the missing visual once the player moves
+			# into an area with enough safe room.
+			_missing_followers = true
+			continue
+		var spawn_position := Vector2(placement.get("position", _player.global_position))
 		var follower := FOLLOWER_SCRIPT.new() as Node2D
 		follower.call("configure", digimon, visual_key, visual_slot, instance.is_expanded())
 		_followers_root.add_child(follower)
-		var spawn_position := _find_safe_spawn_position(visual_slot, occupied)
 		follower.call("teleport_to", spawn_position, _initial_digimon_facing())
 		_followers.append(follower)
 		_active_party_keys.append(key)
@@ -180,7 +195,9 @@ func _record_player_position(world_position: Vector2) -> void:
 	if distance > TELEPORT_RESET_DISTANCE:
 		_trail.clear()
 		_trail.append(world_position)
-		_reposition_followers_around_player()
+		# Rebuild from validated positions after teleports instead of forcing the
+		# old followers into an unchecked fallback coordinate.
+		_sync_party()
 		return
 	if distance < PATH_SAMPLE_DISTANCE:
 		return
@@ -232,27 +249,35 @@ func _reposition_followers_around_player() -> void:
 		var follower := _followers[index]
 		if not is_instance_valid(follower):
 			continue
-		var spawn_position := _find_safe_spawn_position(index, occupied)
+		var placement := _find_safe_spawn_position(index, occupied)
+		if not bool(placement.get("found", false)):
+			follower.visible = false
+			_missing_followers = true
+			continue
+		var spawn_position := Vector2(placement.get("position", _player.global_position))
+		follower.visible = true
 		follower.call("teleport_to", spawn_position, _initial_digimon_facing())
 		occupied.append(spawn_position)
 
-func _find_safe_spawn_position(party_slot: int, occupied: Array[Vector2]) -> Vector2:
+
+func _find_safe_spawn_position(party_slot: int, occupied: Array[Vector2]) -> Dictionary:
 	if _player == null:
-		return Vector2.ZERO
+		return {"found": false}
 
 	var player_facing := String(_player.get("facing_direction"))
 	var facing_vector := Vector2(HUB_FACING_VECTORS.get(player_facing, Vector2.UP)).normalized()
 	var behind := -facing_vector
 	var base_radius := FOLLOW_SPACING * float(party_slot + 1)
 
-	for ring_offset in range(3):
+	for ring_offset in range(4):
 		var radius := base_radius + FOLLOW_SPACING * float(ring_offset)
 		for angle_offset in SPAWN_ANGLE_OFFSETS:
 			var candidate := _player.global_position + behind.rotated(float(angle_offset)) * radius
 			if _is_walkable(candidate) and _has_clearance(candidate, occupied):
-				return candidate
+				return {"found": true, "position": candidate}
 
-	return _player.global_position + Vector2(0.0, FOLLOW_SPACING * float(party_slot + 1))
+	return {"found": false}
+
 
 func _is_walkable(candidate: Vector2) -> bool:
 	if _hub == null or _player == null or not _hub.has_method("can_actor_move_to"):
