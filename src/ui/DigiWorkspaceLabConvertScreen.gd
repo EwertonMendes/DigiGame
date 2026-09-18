@@ -43,8 +43,7 @@ func _build() -> void:
 	var backdrop := WorkspaceBackdrop.new() as DigiLabWorkspaceBackdrop
 	backdrop.name = "DigiLabWorkspaceBackdrop"
 	add_child(backdrop)
-	move_child(backdrop, 0)
-	_backdrop.color = Color(V2.BACKDROP.r, V2.BACKDROP.g, V2.BACKDROP.b, 0.72)
+	WorkspaceChrome.install_background(self, backdrop, _frame)
 
 	WorkspaceChrome.configure_header(_header)
 	WorkspaceChrome.configure_hints(
