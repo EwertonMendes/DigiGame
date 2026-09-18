@@ -361,9 +361,9 @@ func _party_actions_panel(
 	var panel := PanelContainer.new()
 	panel.name = "SquadActionsPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# The action panel is content-sized. Stats may fill the remaining row height,
-	# but Squad Actions must stop after its own commands instead of stretching
-	# under the footer on Reserve/Storage variants with different action counts.
+	# The panel fills the same bounded lower row as Stats. Only the command list
+	# remains content-sized, so the authored panel baseline reaches the bottom
+	# without stretching individual action cards.
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.AMBER))
