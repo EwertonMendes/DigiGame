@@ -299,6 +299,8 @@ func _open_switch_picker(forced: bool = false) -> void:
 	if forced and not bool(state.get("replacement_required", false)):
 		return
 	if not forced and not bool(state.get("can_switch", false)):
+		# The visible-but-disabled Switch command is intentional: it teaches the
+		# player that Reserve switching exists without opening an empty picker.
 		return
 
 	var raw_options = _controller.call("get_switch_options", forced)
