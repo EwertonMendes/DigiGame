@@ -1,12 +1,25 @@
 extends Node
 
 const ResultScreenScript = preload("res://src/ui/RetreatAwareBattleResultScreen.gd")
+const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 var _failures: Array[String] = []
 
 
 func _ready() -> void:
+	OverworldState.set_persistence_enabled(false)
+	OverworldState.reset_progress_for_tests()
+	var database: DigimonDatabase = OverworldState.get_database()
+	var factory: DigimonFactory = FactoryScript.new(database)
+	for species_name: String in ["agumon", "gabumon", "veemon"]:
+		var reserve := factory.create_player_by_name(species_name, 4, 100)
+		_check(reserve != null, "Full Squad result fixture must create %s" % species_name)
+		if reserve != null:
+			_check(not OverworldState.add_collection_instance(reserve).is_empty(), "Reserve fixture must enter the collection")
+			_check(OverworldState.add_to_reserve_party(reserve.id), "Reserve fixture must enter the three-slot bench")
+	_check(OverworldState.get_squad_instances().size() == 6, "Battle result regression must exercise a complete six-member Squad")
+
 	var viewport := SubViewport.new()
 	viewport.name = "BattleResultRegressionViewport"
 	viewport.size = Vector2i(1280, 720)
@@ -33,6 +46,10 @@ func _ready() -> void:
 	# Victory is intentionally verified first and also reproduces the first-open
 	# late-minimum-size case that caused the production overflow.
 	await _verify_outcome(screen, viewport, "victory", "VICTORY", true)
+	var squad_cards := screen.get("_cards") as Array
+	var squad_heading := screen.get("_party_heading_value") as Label
+	_check(squad_cards.size() == 6, "Victory report must render Active and Reserve members")
+	_check(squad_heading != null and squad_heading.text == "6 SQUAD", "Victory report must identify the complete Squad")
 	await _verify_outcome(screen, viewport, "escaped", "RETREATED")
 	await _verify_outcome(screen, viewport, "defeat", "DEFEAT")
 
@@ -42,7 +59,7 @@ func _ready() -> void:
 	await _frames(2)
 	_check_frame_inside_viewport(screen, viewport, "compact")
 	_check_frame_centered(screen, viewport, "compact")
-	_check(party_grid != null and party_grid.columns == 1, "Compact result layout must collapse squad cards to one column")
+	_check(party_grid != null and party_grid.columns == 2, "Compact full-Squad result must use two columns to avoid excessive vertical scaling")
 
 	screen.queue_free()
 	viewport.queue_free()
