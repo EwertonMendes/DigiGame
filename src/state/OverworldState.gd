@@ -111,11 +111,6 @@ func get_storage_instances() -> Array[DigimonInstance]:
 	return _collection.get_storage_instances()
 
 
-# Compatibility for prototype callers that used "reserve" to mean Storage.
-# New gameplay code must use get_reserve_party_instances() for the battle bench.
-func get_reserve_instances() -> Array[DigimonInstance]:
-	return get_storage_instances()
-
 func get_collection_instances() -> Array[DigimonInstance]:
 	_ensure_starter_collection()
 	return _collection.get_instances()
