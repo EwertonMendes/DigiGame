@@ -2,6 +2,7 @@ extends "res://src/Field.gd"
 class_name DevilsWorkshopField
 
 const ART = preload("res://src/world/DevilsWorkshopArt.gd")
+const ENVIRONMENT = preload("res://src/world/BattlefieldEnvironment.gd")
 
 const LOWER_LEVEL_OFFSET := 24.0
 const BOARD_SKIRT_DEPTH := 24.0
@@ -21,6 +22,39 @@ const WATER_DETAIL := Color(0.72, 0.94, 1.0, 1.0)
 const SKIRT_LEFT := Color(0.14, 0.27, 0.18, 1.0)
 const SKIRT_RIGHT := Color(0.10, 0.22, 0.16, 1.0)
 
+# Props are intentionally sparse so the original master battlefield remains
+# visually dominant. They stay outside both deployment terraces and the
+# three-cell-wide center lane used by large tactical footprints.
+const TREE_BLOCKER_CELLS: Array[Vector2i] = [
+	# Mid / player-side composition already approved visually.
+	Vector2i(4, 12),
+	Vector2i(10, 10),
+	Vector2i(4, 16),
+
+	# Enemy-side scenery. These rows start beyond the enemy deployment band,
+	# so the extra life on the upper half never consumes a legal spawn tile.
+	Vector2i(2, 6),
+	Vector2i(11, 7),
+	Vector2i(5, 8),
+]
+
+# Oak_Tree_Small.png also contains a stump. It is rendered as its own prop on
+# its own tile and follows the same rule as every other physical battlefield
+# prop: the owning tile is not traversable.
+const OAK_STUMP_CELL := Vector2i(12, 10)
+
+const ROCK_BLOCKER_CELLS: Array[Vector2i] = [
+	Vector2i(2, 9),
+	Vector2i(10, 14),
+	Vector2i(12, 17),
+	Vector2i(3, 18),
+
+	# Only a couple of additional rocks on the enemy side so trees remain the
+	# dominant environmental read.
+	Vector2i(13, 8),
+	Vector2i(3, 7),
+]
+
 
 func _ready() -> void:
 	_map_center = _grid_to_raw(Vector2((GRID_SIZE_X - 1) * 0.5, (GRID_SIZE_Y - 1) * 0.5))
@@ -31,6 +65,7 @@ func _ready() -> void:
 
 func _generate_terrain() -> void:
 	tile_map_data.clear()
+	_static_blocked_tiles.clear()
 
 	for y in range(GRID_SIZE_Y):
 		for x in range(GRID_SIZE_X):
@@ -41,6 +76,12 @@ func _generate_terrain() -> void:
 				"type": String(presentation["name"]),
 				"world_position": world_position,
 			}
+
+			var blocker_kind := _blocker_kind_for(grid)
+			if not blocker_kind.is_empty():
+				set_static_tile_blocked(grid, "terrain_blocked")
+				tile_map_data[grid]["blocked"] = true
+				tile_map_data[grid]["blocker_kind"] = blocker_kind
 
 			var tile := ART.create_surface_tile(
 				presentation["texture"],
@@ -54,7 +95,25 @@ func _generate_terrain() -> void:
 			add_child(tile)
 
 	_build_perimeter_water()
+	_build_battlefield_environment()
 	selectedTile = Vector2i(grid_to_world(Vector2i(GRID_SIZE_X / 2, GRID_SIZE_Y / 2)))
+
+
+func _blocker_kind_for(grid: Vector2i) -> String:
+	if grid in TREE_BLOCKER_CELLS:
+		return "tree"
+	if grid in ROCK_BLOCKER_CELLS:
+		return "rock"
+	if grid == OAK_STUMP_CELL:
+		return "stump"
+	return ""
+
+
+func _build_battlefield_environment() -> void:
+	var environment := ENVIRONMENT.new() as BattlefieldEnvironment
+	environment.name = "BattlefieldEnvironment"
+	add_child(environment)
+	environment.configure(self, TREE_BLOCKER_CELLS, ROCK_BLOCKER_CELLS, OAK_STUMP_CELL)
 
 
 func _battle_surface(grid: Vector2i) -> Dictionary:
