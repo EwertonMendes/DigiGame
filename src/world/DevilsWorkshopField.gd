@@ -26,9 +26,16 @@ const SKIRT_RIGHT := Color(0.10, 0.22, 0.16, 1.0)
 # visually dominant. They stay outside both deployment terraces and the
 # three-cell-wide center lane used by large tactical footprints.
 const TREE_BLOCKER_CELLS: Array[Vector2i] = [
+	# Mid / player-side composition already approved visually.
 	Vector2i(4, 12),
 	Vector2i(10, 10),
 	Vector2i(4, 16),
+
+	# Enemy-side scenery. These rows start beyond the enemy deployment band,
+	# so the extra life on the upper half never consumes a legal spawn tile.
+	Vector2i(2, 6),
+	Vector2i(11, 7),
+	Vector2i(5, 8),
 ]
 
 # Oak_Tree_Small.png also contains a stump. It is rendered as its own prop on
@@ -40,6 +47,11 @@ const ROCK_BLOCKER_CELLS: Array[Vector2i] = [
 	Vector2i(10, 14),
 	Vector2i(12, 17),
 	Vector2i(3, 18),
+
+	# Only a couple of additional rocks on the enemy side so trees remain the
+	# dominant environmental read.
+	Vector2i(13, 8),
+	Vector2i(3, 7),
 ]
 
 
