@@ -3,6 +3,7 @@ class_name BattleFootprint
 
 const SINGLE := "single"
 const LARGE_2X2 := "large_2x2"
+const LARGE_3X3 := "large_3x3"
 
 const _OFFSETS := {
 	SINGLE: [Vector2i.ZERO],
@@ -11,6 +12,11 @@ const _OFFSETS := {
 		Vector2i(1, 0),
 		Vector2i(0, 1),
 		Vector2i(1, 1),
+	],
+	LARGE_3X3: [
+		Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0),
+		Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1),
+		Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2),
 	],
 }
 
@@ -47,6 +53,43 @@ static func newly_entered_grids(previous_anchor: Vector2i, next_anchor: Vector2i
 		if not previous.has(grid):
 			result.append(grid)
 	return result
+
+
+static func extent(footprint_id: String) -> Vector2i:
+	var offsets := offsets_for(footprint_id)
+	if offsets.is_empty():
+		return Vector2i.ONE
+	var max_x := 0
+	var max_y := 0
+	for offset: Vector2i in offsets:
+		max_x = maxi(max_x, offset.x)
+		max_y = maxi(max_y, offset.y)
+	return Vector2i(max_x + 1, max_y + 1)
+
+
+static func max_extent(footprint_id: String) -> int:
+	var footprint_extent := extent(footprint_id)
+	return maxi(footprint_extent.x, footprint_extent.y)
+
+
+static func id_for_extent(value: int) -> String:
+	match value:
+		1:
+			return SINGLE
+		2:
+			return LARGE_2X2
+		3:
+			return LARGE_3X3
+	return ""
+
+
+static func display_label(footprint_id: String) -> String:
+	match normalize_id(footprint_id):
+		LARGE_2X2:
+			return "2×2"
+		LARGE_3X3:
+			return "3×3"
+	return "1×1"
 
 
 static func minimum_distance(first: Array[Vector2i], second: Array[Vector2i], metric: String = "manhattan") -> int:
