@@ -33,7 +33,7 @@ func _ready() -> void:
 func _install_flee_command() -> void:
 	if _action_grid == null or _flee_button != null:
 		return
-	_flee_button = _make_action_button("Flee", "flee.svg", "6", "Try to flee from battle")
+	_flee_button = _make_action_button("Flee", "flee.svg", "7", "Try to flee from battle")
 	_flee_button.pressed.connect(_on_flee_pressed)
 	_primary_buttons.append(_flee_button)
 	_action_grid.add_child(_flee_button)
@@ -52,7 +52,7 @@ func refresh_from_controller() -> void:
 	var command_available := bool(state.get("can_wait", false))
 	_flee_button.disabled = not bool(state.get("can_flee", false)) if policy_allowed else not command_available
 	_flee_button.text = "Flee"
-	_flee_button.tooltip_text = "Try to flee from battle  [6]" if policy_allowed else "You can't flee from this battle.  [6]"
+	_flee_button.tooltip_text = "Try to flee from battle  [7]" if policy_allowed else "You can't flee from this battle.  [6]"
 	if bool(state.get("battle_over", false)):
 		_flee_button.disabled = true
 		_close_escape_modal()
@@ -83,7 +83,7 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var key := event as InputEventKey
-		if key.pressed and not key.echo and key.keycode == KEY_6:
+		if key.pressed and not key.echo and key.keycode == KEY_7:
 			if not _is_timeline_navigation_active() and (_combat_overlay == null or not _combat_overlay.is_skill_menu_visible()):
 				_on_flee_pressed()
 				get_viewport().set_input_as_handled()
