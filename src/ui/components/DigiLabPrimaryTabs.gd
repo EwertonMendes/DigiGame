@@ -10,6 +10,7 @@ static func specs() -> Array[Dictionary]:
 			"compact_label": "Convert",
 			"icon": "database",
 			"enabled": true,
+			"angled": true,
 			"min_width": 176.0,
 		},
 		{
@@ -18,6 +19,7 @@ static func specs() -> Array[Dictionary]:
 			"compact_label": "Party",
 			"icon": "party",
 			"enabled": true,
+			"angled": true,
 			"min_width": 166.0,
 		},
 		{
@@ -26,6 +28,7 @@ static func specs() -> Array[Dictionary]:
 			"compact_label": "Ascension",
 			"icon": "evolution",
 			"enabled": true,
+			"angled": true,
 			"min_width": 214.0,
 		},
 	]
