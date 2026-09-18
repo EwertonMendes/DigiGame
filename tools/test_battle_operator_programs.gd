@@ -89,26 +89,40 @@ func _test_operator_menu() -> void:
 	if player == null or operator == null:
 		hub.queue_free()
 		return
+
 	player.position = operator.position + Vector2(12.0, 12.0)
 	hub.call("_refresh_interaction")
 	hub.call("open_test_battle_dialog")
-	for _index in range(4):
+	for _index in range(5):
 		await get_tree().process_frame
 
 	var dialog := hub.find_child("BattleDialog", true, false) as Control
+	var header := hub.find_child("OperatorHeader", true, false) as DigiModalHeader
+	var program_panel := hub.find_child("ProgramPanel", true, false) as PanelContainer
+	var field_panel := hub.find_child("BattlefieldPanel", true, false) as PanelContainer
+	var simulation_panel := hub.find_child("SimulationPanel", true, false) as PanelContainer
 	var buttons := hub.get("_battle_program_buttons") as Dictionary
 	var fields := hub.get("_battlefield_buttons") as Dictionary
 	var launch := hub.find_child("StartBattle", true, false) as Button
-	var cancel := hub.find_child("CancelBattleDialog", true, false) as Button
-	var summary := hub.find_child("SelectionSummaryText", true, false) as Label
+	var selected_program_label := hub.find_child("SelectedProgram", true, false) as Label
+	var selected_field_label := hub.find_child("SelectedField", true, false) as Label
+
 	_expect(dialog != null and dialog.visible, "Battle Operator workspace must open")
-	_expect(buttons.size() == 8, "Battle Operator must expose Basic, six random-rank programs, and Close")
+	_expect(header != null and header.is_workspace_mode(), "Battle Operator must use the shared V2 workspace header")
+	_expect(program_panel != null and field_panel != null and simulation_panel != null, "Battle Operator must expose Program, Battlefield and Simulation workspace panels")
+	_expect(buttons.size() == 7, "Battle Operator must expose Basic plus six random-rank programs")
 	_expect(fields.size() == 5, "Battle Operator must expose all five authored Battlefield V2 layouts")
 	_expect(launch != null and launch.text == "START BATTLE", "Battle Operator must expose a persistent launch action")
-	_expect(cancel != null and cancel.text == "CLOSE", "Battle Operator must expose a persistent close action")
 	_expect(String(hub.get("_selected_program_id")) == "basic", "Battle Operator must default to Basic Battle")
 	_expect(String(hub.get("_selected_battlefield_id")) == "training_clearing", "Battle Operator must default to Training Clearing")
-	_expect(summary != null and "TRAINING CLEARING" in summary.text, "Battle Operator summary must expose the selected battlefield")
+	_expect(selected_program_label != null and selected_program_label.text == "BASIC BATTLE", "Simulation panel must expose the selected program")
+	_expect(selected_field_label != null and selected_field_label.text == "TRAINING CLEARING", "Simulation panel must expose the selected battlefield")
+
+	var basic := buttons.get("basic") as DigiSelectionCard
+	var training := fields.get("training_clearing") as DigiSelectionCard
+	_expect(basic != null and basic.is_selected(), "Basic Battle must have persistent selected highlight by default")
+	_expect(training != null and training.is_selected(), "Training Clearing must have persistent selected highlight by default")
+	_expect(get_viewport().gui_get_focus_owner() == basic, "Opening Battle Operator must focus the current selected program instead of a destructive/confirm action")
 
 	var expected_titles := {
 		"basic": "BASIC BATTLE",
@@ -122,32 +136,53 @@ func _test_operator_menu() -> void:
 	if dialog != null:
 		var dialog_rect := dialog.get_global_rect()
 		for program_id: String in expected_titles.keys():
-			var button := buttons.get(program_id) as Button
-			_expect(button != null, "Battle Operator must expose %s" % program_id)
+			var button := buttons.get(program_id) as DigiSelectionCard
+			_expect(button != null, "Battle Operator must expose %s as a selection card" % program_id)
 			if button == null:
 				continue
-			var title := button.find_child("CommandTitle", true, false) as Label
+			var title := button.find_child("SelectionTitle", true, false) as Label
 			_expect(title != null and title.text == String(expected_titles[program_id]), "%s must use the intended player-facing title" % program_id)
 			_expect(button.get_combined_minimum_size().y >= 52.0, "%s must remain touch-safe" % program_id)
 			_expect(dialog_rect.encloses(button.get_global_rect()), "%s must stay visually contained inside the Battle Operator workspace" % program_id)
 			_expect(not button.disabled, "%s must be available when the party is battle-ready" % program_id)
 
+			var normal := button.get_theme_stylebox("normal") as StyleBoxFlat
+			var pressed := button.get_theme_stylebox("pressed") as StyleBoxFlat
+			_expect(normal != null and pressed != null, "%s must expose stable V2 selection styles" % program_id)
+			if normal != null and pressed != null:
+				_expect(normal.shadow_size == 0 and pressed.shadow_size == 0, "%s must not bounce through press/focus shadows" % program_id)
+				_expect(
+					normal.border_width_left == pressed.border_width_left
+					and normal.border_width_top == pressed.border_width_top
+					and normal.border_width_right == pressed.border_width_right
+					and normal.border_width_bottom == pressed.border_width_bottom,
+					"%s press feedback must not change card geometry" % program_id
+				)
+
 		for battlefield_id: String in fields.keys():
-			var field_button := fields.get(battlefield_id) as Button
-			_expect(field_button != null, "Battle Operator must expose battlefield %s" % battlefield_id)
+			var field_button := fields.get(battlefield_id) as DigiSelectionCard
+			_expect(field_button != null, "Battle Operator must expose battlefield %s as a selection card" % battlefield_id)
 			if field_button == null:
 				continue
 			_expect(field_button.get_combined_minimum_size().y >= 52.0, "%s battlefield card must remain touch-safe" % battlefield_id)
 			_expect(dialog_rect.encloses(field_button.get_global_rect()), "%s battlefield card must stay inside the workspace" % battlefield_id)
 
-		_expect(get_viewport().gui_get_focus_owner() == cancel, "Battle Operator must keep Close as the safe default focus")
-
 	hub.call("_select_battle_program", "random_rookie")
 	hub.call("_select_battlefield", "grand_digital_field")
 	for _index in range(2):
 		await get_tree().process_frame
+
+	var rookie := buttons.get("random_rookie") as DigiSelectionCard
+	var grand := fields.get("grand_digital_field") as DigiSelectionCard
 	_expect(String(hub.get("_selected_program_id")) == "random_rookie", "Program selection must update without immediately starting combat")
 	_expect(String(hub.get("_selected_battlefield_id")) == "grand_digital_field", "Battlefield selection must update without debug tooling")
+	_expect(rookie != null and rookie.is_selected(), "New program selection must keep a persistent highlight")
+	_expect(basic != null and not basic.is_selected(), "Previous program selection must lose its persistent highlight")
+	_expect(grand != null and grand.is_selected(), "New battlefield selection must keep a persistent highlight")
+	_expect(training != null and not training.is_selected(), "Previous battlefield selection must lose its persistent highlight")
+	_expect(selected_program_label != null and selected_program_label.text == "RANDOM ROOKIE", "Simulation panel must refresh the selected program")
+	_expect(selected_field_label != null and selected_field_label.text == "GRAND DIGITAL FIELD", "Simulation panel must refresh the selected battlefield")
+
 	var selected_result := hub.call("_build_selected_battle_encounter", "random_rookie") as Dictionary
 	_expect(bool(selected_result.get("ok", false)), "Selected operator configuration must build a valid encounter")
 	if bool(selected_result.get("ok", false)):
