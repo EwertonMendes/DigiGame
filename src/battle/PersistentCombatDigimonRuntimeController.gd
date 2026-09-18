@@ -234,7 +234,7 @@ func perform_player_switch(outgoing_actor: Node, incoming_id: String, anchor: Ve
 	var deploy_timer := get_tree().create_timer(SWITCH_DEPLOY_DELAY_SECONDS)
 	deploy_timer.timeout.connect(func():
 		if incoming != null and is_instance_valid(incoming):
-			incoming.erase_meta("battle_switching_in")
+			incoming.remove_meta("battle_switching_in")
 			if incoming.has_method("play_switch_in_animation"):
 				incoming.call("play_switch_in_animation")
 			else:
