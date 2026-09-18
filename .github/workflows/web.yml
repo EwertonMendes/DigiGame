@@ -133,10 +133,15 @@ jobs:
         run: |
           set -euo pipefail
 
+          POST_WEB_REF="master"
+          if [[ "$SOURCE_EVENT" == "pull_request" && "$SOURCE_HEAD_REPO" == "$GITHUB_REPOSITORY" ]]; then
+            POST_WEB_REF="$SOURCE_HEAD_BRANCH"
+          fi
+
           for attempt in 1 2 3; do
             if gh workflow run post-web.yml \
               --repo "$GITHUB_REPOSITORY" \
-              --ref master \
+              --ref "$POST_WEB_REF" \
               -f source_run_id="$GITHUB_RUN_ID" \
               -f source_event="$SOURCE_EVENT" \
               -f source_head_branch="$SOURCE_HEAD_BRANCH" \
