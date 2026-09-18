@@ -65,35 +65,40 @@ func _validate_environment(field: Node) -> void:
 	if environment == null:
 		return
 
-	_expect(environment.get_child_count() == 7, "Field must contain exactly three trees and four rock props")
+	_expect(
+		environment.get_child_count() == 8,
+		"Field must contain three tree blockers, one separate stump and four rock props"
+	)
 
-	var large_tree := environment.get_node_or_null("OakTree_04_12") as Sprite2D
-	var small_tree := environment.get_node_or_null("OakTreeSmall_10_10") as Sprite2D
+	var large_tree := environment.get_node_or_null("OakTreeLarge_04_12") as Sprite2D
+	var small_tree_a := environment.get_node_or_null("OakTreeSmallA_10_10") as Sprite2D
+	var small_tree_b := environment.get_node_or_null("OakTreeSmallB_04_16") as Sprite2D
+	var stump := environment.get_node_or_null("OakStump_12_10") as Sprite2D
 	var rock := environment.get_node_or_null("Rock_10_14") as Sprite2D
 
 	_expect(large_tree != null, "A full-size Oak_Tree prop must be present")
-	_expect(small_tree != null, "An Oak_Tree_Small prop must be present")
+	_expect(small_tree_a != null, "First Oak_Tree_Small tree must be cropped into its own prop")
+	_expect(small_tree_b != null, "Second Oak_Tree_Small tree must be cropped into its own prop")
+	_expect(stump != null, "Oak_Tree_Small stump must be cropped into its own tile prop")
 	_expect(rock != null, "The retained rock prop must be present")
 
-	if large_tree != null and large_tree.texture != null:
-		_expect(
-			large_tree.texture.resource_path == "res://assets/terrain/Oak_Tree.png",
-			"Large battlefield trees must use Oak_Tree.png"
-		)
-	if small_tree != null and small_tree.texture != null:
-		_expect(
-			small_tree.texture.resource_path == "res://assets/terrain/Oak_Tree_Small.png",
-			"Small battlefield trees must use Oak_Tree_Small.png"
-		)
-	if rock != null and rock.texture != null:
-		_expect(
-			rock.texture.resource_path == "res://assets/world/hawkbirdtree/rock.png",
-			"Battlefield rocks must keep the approved rock asset"
-		)
+	_expect(
+		field.get_static_tile_block_reason(Vector2i(12, 10)).is_empty(),
+		"The split oak stump is decorative and must not silently become a blocker"
+	)
 
-	_assert_prop_center(field, large_tree, Vector2i(4, 12), "Large oak")
-	_assert_prop_center(field, small_tree, Vector2i(10, 10), "Small oak")
-	_assert_prop_center(field, rock, Vector2i(10, 14), "Rock")
+	_assert_atlas_source(large_tree, "res://assets/terrain/Oak_Tree.png", "Large oak")
+	_assert_atlas_source(small_tree_a, "res://assets/terrain/Oak_Tree_Small.png", "Small oak A")
+	_assert_atlas_source(small_tree_b, "res://assets/terrain/Oak_Tree_Small.png", "Small oak B")
+	_assert_atlas_source(stump, "res://assets/terrain/Oak_Tree_Small.png", "Oak stump")
+	_assert_atlas_source(rock, "res://assets/world/hawkbirdtree/rock.png", "Rock")
+
+	_assert_prop_foot_on_tile(field, large_tree, Vector2i(4, 12), Vector2(20.5, 62.0), "Large oak")
+	_assert_prop_foot_on_tile(field, small_tree_a, Vector2i(10, 10), Vector2(10.5, 33.0), "Small oak A")
+	_assert_prop_foot_on_tile(field, small_tree_b, Vector2i(4, 16), Vector2(10.5, 25.0), "Small oak B")
+	_assert_prop_foot_on_tile(field, stump, Vector2i(12, 10), Vector2(3.5, 7.0), "Oak stump")
+	_assert_prop_foot_on_tile(field, rock, Vector2i(10, 14), Vector2(13.5, 21.0), "Rock")
+
 	if rock != null:
 		_expect(
 			rock.scale.x <= 0.90 and rock.scale.y <= 0.90,
@@ -101,13 +106,35 @@ func _validate_environment(field: Node) -> void:
 		)
 
 
-func _assert_prop_center(field: Node, prop: Sprite2D, grid: Vector2i, label: String) -> void:
-	if prop == null:
+func _assert_atlas_source(prop: Sprite2D, expected_path: String, label: String) -> void:
+	if prop == null or prop.texture == null:
+		return
+	var atlas_texture := prop.texture as AtlasTexture
+	_expect(atlas_texture != null, "%s must render a cropped atlas region" % label)
+	if atlas_texture == null or atlas_texture.atlas == null:
+		return
+	_expect(
+		atlas_texture.atlas.resource_path == expected_path,
+		"%s must use the expected source asset" % label
+	)
+
+
+func _assert_prop_foot_on_tile(
+	field: Node,
+	prop: Sprite2D,
+	grid: Vector2i,
+	foot_anchor: Vector2,
+	label: String
+) -> void:
+	if prop == null or prop.texture == null:
 		return
 	var expected := Vector2(field.call("grid_to_world", grid))
+	var texture_center := prop.texture.get_size() * 0.5
+	var center_to_foot := (foot_anchor - texture_center) * prop.scale
+	var visual_foot := prop.position + center_to_foot
 	_expect(
-		prop.position.distance_to(expected) <= 0.01,
-		"%s visual must be centered on the exact blocked tile" % label
+		visual_foot.distance_to(expected) <= 0.01,
+		"%s foot/pivot must land on the exact center of its owning tile" % label
 	)
 
 
