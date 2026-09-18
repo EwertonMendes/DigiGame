@@ -164,6 +164,7 @@ func _build_dialog() -> void:
 	_mobile_dialog_content.add_child(_operator_footer)
 
 	_refresh_operator_state()
+	call_deferred("_enforce_operator_header_focus_contract")
 	call_deferred("_wire_operator_focus")
 
 
@@ -384,6 +385,15 @@ func _field_list_subtitle(definition: BattlefieldDefinition) -> String:
 		definition.grid_size.y,
 		definition.description,
 	]
+
+
+func _enforce_operator_header_focus_contract() -> void:
+	if _operator_header == null:
+		return
+	var close_button := _operator_header.get_close_button()
+	if close_button != null:
+		close_button.focus_mode = Control.FOCUS_NONE
+
 
 
 func _open_dialog() -> void:
@@ -882,6 +892,7 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 
 	_operator_header.position = Vector2.ZERO
 	_operator_header.size = Vector2(physical.x, header_h)
+	_enforce_operator_header_focus_contract()
 	if physical.x < 520.0:
 		_operator_header.configure("BATTLE", "Battle Operator", 0, false)
 	else:
