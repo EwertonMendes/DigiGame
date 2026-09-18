@@ -370,7 +370,7 @@ func _refresh_operator_state() -> void:
 	_refresh_field_cards()
 	_refresh_selection_summary()
 	_refresh_launch_state(party_error)
-
+	_refresh_page_visibility()
 
 func _refresh_battle_program_availability() -> void:
 	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
@@ -688,11 +688,15 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventJoypadButton:
 		var joy := event as InputEventJoypadButton
-		if joy.pressed and (joy.button_index == JOY_BUTTON_LEFT_SHOULDER or joy.button_index == JOY_BUTTON_RIGHT_SHOULDER):
-			if _compact_operator_layout:
-				_switch_operator_section(-1 if joy.button_index == JOY_BUTTON_LEFT_SHOULDER else 1, true)
-			get_viewport().set_input_as_handled()
-			return
+		if joy.pressed and _compact_operator_layout:
+			if joy.button_index == JOY_BUTTON_LEFT_SHOULDER:
+				_switch_operator_section(-1, true)
+				get_viewport().set_input_as_handled()
+				return
+			if joy.button_index == JOY_BUTTON_RIGHT_SHOULDER:
+				_switch_operator_section(1, true)
+				get_viewport().set_input_as_handled()
+				return
 
 	if event is InputEventJoypadMotion:
 		var motion := event as InputEventJoypadMotion
@@ -706,15 +710,12 @@ func _input(event: InputEvent) -> void:
 			step = gate.vertical_step(motion.axis_value)
 			if step != 0:
 				_focus_operator_neighbor("down" if step > 0 else "up")
-		get_viewport().set_input_as_handled()
+		if step != 0:
+			get_viewport().set_input_as_handled()
 		return
 
 	if event.is_action_pressed("ui_cancel"):
 		_close_dialog()
-		get_viewport().set_input_as_handled()
-		return
-	if _compact_operator_layout and event.is_action_pressed("ui_focus_next"):
-		_switch_operator_section(1, true)
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("ui_left"):
@@ -753,13 +754,9 @@ func _activate_focused_operator_control() -> void:
 			_select_battle_program(control_id)
 		"field":
 			_select_battlefield(control_id)
-		"tab":
-			_set_operator_section(control_id, false)
 		"action":
 			if control_id == "launch":
 				_launch_selected_battle()
-			elif control_id == "cancel":
-				_close_dialog()
 
 
 func _handle_operator_touch(touch: InputEventScreenTouch) -> void:
@@ -768,7 +765,7 @@ func _handle_operator_touch(touch: InputEventScreenTouch) -> void:
 			return
 		for program_id: String in PROGRAM_IDS:
 			var program_button := _battle_program_buttons.get(program_id) as Button
-			if program_button != null and not program_button.disabled and program_button.visible:
+			if program_button != null and program_button.visible and not program_button.disabled:
 				if _control_contains_viewport_point(program_button, touch.position, 6.0):
 					_fallback_action_touch = touch.index
 					_select_battle_program(program_id)
@@ -776,50 +773,51 @@ func _handle_operator_touch(touch: InputEventScreenTouch) -> void:
 					return
 		for battlefield_id: String in _field_order:
 			var field_button := _battlefield_buttons.get(battlefield_id) as Button
-			if field_button != null and not field_button.disabled and field_button.visible:
+			if field_button != null and field_button.visible and not field_button.disabled:
 				if _control_contains_viewport_point(field_button, touch.position, 6.0):
 					_fallback_action_touch = touch.index
 					_select_battlefield(battlefield_id)
 					get_viewport().set_input_as_handled()
 					return
-		for tab in [_program_tab, _field_tab]:
-			if tab != null and tab.visible and _control_contains_viewport_point(tab, touch.position, 6.0):
+		if _compact_operator_layout and _section_tabs != null:
+			for section_id: String in [SECTION_PROGRAM, SECTION_FIELD]:
+				var tab := _section_tabs.get_button(section_id)
+				if tab != null and tab.visible and _control_contains_viewport_point(tab, touch.position, 6.0):
+					_fallback_action_touch = touch.index
+					_set_operator_section(section_id, false)
+					get_viewport().set_input_as_handled()
+					return
+		if _start_battle_button != null and not _start_battle_button.disabled:
+			if _control_contains_viewport_point(_start_battle_button, touch.position, 8.0):
 				_fallback_action_touch = touch.index
-				_set_operator_section(String(tab.get_meta("operator_id", SECTION_PROGRAM)), false)
+				_launch_selected_battle()
 				get_viewport().set_input_as_handled()
 				return
-		if _start_battle_button != null and not _start_battle_button.disabled and _control_contains_viewport_point(_start_battle_button, touch.position, 8.0):
-			_fallback_action_touch = touch.index
-			_launch_selected_battle()
-			get_viewport().set_input_as_handled()
-			return
-		if _mobile_dialog_cancel != null and _control_contains_viewport_point(_mobile_dialog_cancel, touch.position, 8.0):
-			_fallback_action_touch = touch.index
-			_close_dialog()
-			get_viewport().set_input_as_handled()
-			return
+		if _operator_header != null:
+			var close := _operator_header.get_close_button()
+			if close != null and _control_contains_viewport_point(close, touch.position, 8.0):
+				_fallback_action_touch = touch.index
+				_close_dialog()
+				get_viewport().set_input_as_handled()
+				return
 	elif touch.index == _fallback_action_touch:
 		_fallback_action_touch = -1
 		get_viewport().set_input_as_handled()
 
 
 func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, edge: float) -> void:
-	if _dialog_panel == null or _mobile_dialog_content == null or _program_container == null or _field_container == null:
+	if _dialog_panel == null or _mobile_dialog_content == null or _operator_header == null:
 		super._layout_mobile_dialog(physical, ui_scale, landscape, edge)
 		return
 
-	var compact_landscape := landscape and physical.y < 520.0
-	_compact_operator_layout = physical.x < 900.0 or physical.y < 620.0
-	var outer_edge := 12.0 if compact_landscape else edge
-	var dialog_width := minf(1120.0, physical.x - outer_edge * 2.0)
-	var dialog_height := minf(720.0, physical.y - outer_edge * 2.0)
-	var side_pad := 16.0 if compact_landscape else 24.0
-	var top_pad := 8.0 if compact_landscape else 18.0
-	var hint_bar_height := 0.0
-	var action_height := HUB_V2.TOUCH_TARGET
-	var summary_height := 44.0 if compact_landscape else 58.0
-	var bottom_pad := 10.0 if compact_landscape else 16.0
-	var action_gap := 10.0
+	var short_landscape := landscape and physical.y < 520.0
+	_compact_operator_layout = physical.x < 980.0 or physical.y < 620.0
+	var outer_edge := 10.0 if short_landscape else (14.0 if _compact_operator_layout else 22.0)
+	var dialog_width := minf(1320.0, physical.x - outer_edge * 2.0)
+	var dialog_height := minf(820.0, physical.y - outer_edge * 2.0)
+	var inner_edge := 10.0 if short_landscape else (14.0 if _compact_operator_layout else 20.0)
+	var gap := 8.0 if _compact_operator_layout else 12.0
+	var header_h := 64.0 if short_landscape else (72.0 if _compact_operator_layout else 86.0)
 
 	_dialog_panel.scale = Vector2.ONE * ui_scale
 	_dialog_panel.position = Vector2(
@@ -830,145 +828,116 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	_mobile_dialog_content.position = Vector2.ZERO
 	_mobile_dialog_content.size = Vector2(dialog_width, dialog_height)
 
-	_mobile_dialog_title.position = Vector2(side_pad, top_pad)
-	_mobile_dialog_title.size = Vector2(dialog_width - side_pad * 2.0, 18.0)
-	_mobile_dialog_title.add_theme_font_size_override("font_size", 10 if compact_landscape else 12)
-	_mobile_dialog_body.position = Vector2(side_pad, top_pad + (18.0 if compact_landscape else 22.0))
-	_mobile_dialog_body.size = Vector2(dialog_width - side_pad * 2.0, 22.0 if compact_landscape else 26.0)
-	_mobile_dialog_body.add_theme_font_size_override("font_size", 14 if compact_landscape else 19)
-	_battle_program_hint.visible = not compact_landscape
-	_battle_program_hint.position = Vector2(side_pad, top_pad + 52.0)
-	_battle_program_hint.size = Vector2(dialog_width - side_pad * 2.0, 40.0)
-	_battle_program_hint.add_theme_font_size_override("font_size", 10)
-
-	var tabs_y := top_pad + (44.0 if compact_landscape else 96.0)
-	var tabs_height := 36.0 if compact_landscape else 38.0
-	var tabs_gap := 8.0
-	var tabs_width := minf(360.0, dialog_width - side_pad * 2.0)
-	var tab_width := (tabs_width - tabs_gap) * 0.5
-	_program_tab.custom_minimum_size = Vector2(0.0, tabs_height)
-	_field_tab.custom_minimum_size = Vector2(0.0, tabs_height)
-	_program_tab.position = Vector2(side_pad, tabs_y)
-	_program_tab.size = Vector2(tab_width, tabs_height)
-	_field_tab.position = Vector2(side_pad + tab_width + tabs_gap, tabs_y)
-	_field_tab.size = Vector2(tab_width, tabs_height)
-
-	var actions_y := dialog_height - bottom_pad - hint_bar_height - action_height
-	var summary_y := actions_y - action_gap - summary_height
-	var content_top := top_pad + 102.0
-	if _compact_operator_layout:
-		content_top = tabs_y + tabs_height + (8.0 if compact_landscape else 10.0)
-	var content_bottom := summary_y - (4.0 if compact_landscape else 10.0)
-	var content_height := maxf(80.0, content_bottom - content_top)
-
-	var action_group_width := minf(520.0, dialog_width - side_pad * 2.0)
-	var action_width := (action_group_width - action_gap) * 0.5
-	var actions_x := dialog_width - side_pad - action_group_width
-	_mobile_dialog_cancel.position = Vector2(actions_x, actions_y)
-	_mobile_dialog_cancel.size = Vector2(action_width, action_height)
-	_start_battle_button.position = Vector2(actions_x + action_width + action_gap, actions_y)
-	_start_battle_button.size = Vector2(action_width, action_height)
-	_mobile_dialog_cancel.custom_minimum_size = Vector2(0.0, HUB_V2.TOUCH_TARGET)
-	_start_battle_button.custom_minimum_size = Vector2(0.0, HUB_V2.TOUCH_TARGET)
-
-	_selection_panel.position = Vector2(side_pad, summary_y)
-	_selection_panel.size = Vector2(dialog_width - side_pad * 2.0, summary_height)
-	_selection_summary.add_theme_font_size_override("font_size", 9 if compact_landscape else 10)
+	_operator_header.position = Vector2.ZERO
+	_operator_header.size = Vector2(dialog_width, header_h)
 
 	if _compact_operator_layout:
-		_program_tab.visible = true
-		_field_tab.visible = true
-		_layout_compact_operator_workspace(
-			Rect2(side_pad, content_top, dialog_width - side_pad * 2.0, content_height),
-			compact_landscape
-		)
+		var tabs_h := 42.0 if short_landscape else 48.0
+		_section_tabs.visible = true
+		_section_tabs.set_compact(short_landscape)
+		_section_tabs.position = Vector2(inner_edge, header_h + gap)
+		_section_tabs.size = Vector2(dialog_width - inner_edge * 2.0, tabs_h)
+
+		var summary_h := 96.0 if short_landscape else minf(152.0, dialog_height * 0.24)
+		var body_top := header_h + gap + tabs_h + gap
+		var body_bottom := dialog_height - inner_edge - summary_h - gap
+		var body_h := maxf(72.0, body_bottom - body_top)
+		var body_rect := Rect2(inner_edge, body_top, dialog_width - inner_edge * 2.0, body_h)
+
+		_program_panel.position = body_rect.position
+		_program_panel.size = body_rect.size
+		_field_panel.position = body_rect.position
+		_field_panel.size = body_rect.size
+		_summary_panel.position = Vector2(inner_edge, body_bottom + gap)
+		_summary_panel.size = Vector2(dialog_width - inner_edge * 2.0, summary_h)
+
+		_summary_header.visible = not short_landscape
+		_summary_description.visible = not short_landscape
+		_summary_meta.visible = not short_landscape
+		_start_battle_button.custom_minimum_size = Vector2(190.0 if not short_landscape else 156.0, HUB_V2.TOUCH_TARGET)
+
+		_program_page_capacity = _page_capacity_for_height(body_h, PROGRAM_IDS.size(), short_landscape)
+		_field_page_capacity = _page_capacity_for_height(body_h, _field_order.size(), short_landscape)
 	else:
-		_program_tab.visible = false
-		_field_tab.visible = false
-		_layout_desktop_operator_workspace(
-			Rect2(side_pad, content_top, dialog_width - side_pad * 2.0, content_height)
-		)
+		_section_tabs.visible = false
+		_summary_header.visible = true
+		_summary_description.visible = true
+		_summary_meta.visible = true
+		_start_battle_button.custom_minimum_size = Vector2(220.0, HUB_V2.TOUCH_TARGET)
 
+		var body_top := header_h + gap
+		var body_h := maxf(320.0, dialog_height - body_top - inner_edge)
+		var usable_w := dialog_width - inner_edge * 2.0 - gap * 2.0
+		var program_w := clampf(usable_w * 0.30, 300.0, 410.0)
+		var field_w := clampf(usable_w * 0.29, 290.0, 390.0)
+		var summary_w := maxf(300.0, usable_w - program_w - field_w)
+
+		_program_panel.position = Vector2(inner_edge, body_top)
+		_program_panel.size = Vector2(program_w, body_h)
+		_field_panel.position = Vector2(inner_edge + program_w + gap, body_top)
+		_field_panel.size = Vector2(field_w, body_h)
+		_summary_panel.position = Vector2(inner_edge + program_w + gap + field_w + gap, body_top)
+		_summary_panel.size = Vector2(summary_w, body_h)
+
+		_program_page_capacity = PROGRAM_IDS.size()
+		_field_page_capacity = _field_order.size()
+		_program_page = 0
+		_field_page = 0
+
+	_apply_operator_density(short_landscape)
 	_refresh_section_visibility()
+	_refresh_page_visibility()
 	_wire_operator_focus()
 
 
-func _layout_desktop_operator_workspace(rect: Rect2) -> void:
-	var pane_gap := 16.0
-	var pane_width := (rect.size.x - pane_gap) * 0.5
-	var heading_height := 20.0
-	var cards_top := 28.0
-
-	_program_heading.visible = true
-	_field_heading.visible = true
-	_program_heading.position = rect.position
-	_program_heading.size = Vector2(pane_width, heading_height)
-	_field_heading.position = Vector2(rect.position.x + pane_width + pane_gap, rect.position.y)
-	_field_heading.size = Vector2(pane_width, heading_height)
-
-	_program_container.position = Vector2(rect.position.x, rect.position.y + cards_top)
-	_program_container.size = Vector2(pane_width, rect.size.y - cards_top)
-	_field_container.position = Vector2(rect.position.x + pane_width + pane_gap, rect.position.y + cards_top)
-	_field_container.size = Vector2(pane_width, rect.size.y - cards_top)
-
-	_battle_program_columns = 2
-	_battlefield_columns = 2
-	_layout_card_grid(PROGRAM_IDS, _battle_program_buttons, _program_container.size, _battle_program_columns, false)
-	_layout_card_grid(_field_order, _battlefield_buttons, _field_container.size, _battlefield_columns, false)
+func _page_capacity_for_height(panel_height: float, total: int, short_landscape: bool) -> int:
+	if total <= 1:
+		return maxi(1, total)
+	var card_h := DigiSelectionCard.COMPACT_HEIGHT
+	var separation := 7.0
+	var header_h := 44.0
+	var margins := 16.0
+	var pager_h := 43.0
+	var list_h := maxf(card_h, panel_height - header_h - margins)
+	var without_pager := clampi(int(floor((list_h + separation) / (card_h + separation))), 1, total)
+	if without_pager >= total:
+		return total
+	list_h = maxf(card_h, list_h - pager_h)
+	var capacity := clampi(int(floor((list_h + separation) / (card_h + separation))), 1, total)
+	if short_landscape:
+		capacity = mini(capacity, 2)
+	return capacity
 
 
-func _layout_compact_operator_workspace(rect: Rect2, compact_landscape: bool) -> void:
-	_program_heading.visible = false
-	_field_heading.visible = false
-	_program_container.position = rect.position
-	_program_container.size = rect.size
-	_field_container.position = rect.position
-	_field_container.size = rect.size
-
-	_battle_program_columns = 4 if compact_landscape else 2
-	_battlefield_columns = 3 if compact_landscape else 2
-	_layout_card_grid(PROGRAM_IDS, _battle_program_buttons, rect.size, _battle_program_columns, compact_landscape)
-	_layout_card_grid(_field_order, _battlefield_buttons, rect.size, _battlefield_columns, compact_landscape)
-
-
-func _layout_card_grid(
-	ids: Array[String],
-	buttons: Dictionary,
-	available_size: Vector2,
-	columns: int,
-	dense: bool
-) -> void:
-	if ids.is_empty():
-		return
-	var safe_columns := maxi(1, columns)
-	var rows := int(ceil(float(ids.size()) / float(safe_columns)))
-	var gap := 6.0 if dense else 9.0
-	var button_width := (available_size.x - gap * float(safe_columns - 1)) / float(safe_columns)
-	var button_height := minf(
-		82.0,
-		(available_size.y - gap * float(maxi(0, rows - 1))) / float(maxi(1, rows))
-	)
-	button_height = maxf(56.0 if dense else 64.0, button_height)
-	for index in range(ids.size()):
-		var button := buttons.get(ids[index]) as DigiCommandButton
-		if button == null:
-			continue
-		var row := int(index / safe_columns)
-		var column := index % safe_columns
-		button.set_compact(button_height < 78.0)
-		button.custom_minimum_size = Vector2.ZERO
-		button.position = Vector2(
-			float(column) * (button_width + gap),
-			float(row) * (button_height + gap)
-		)
-		button.size = Vector2(button_width, button_height)
+func _apply_operator_density(short_landscape: bool) -> void:
+	var compact_cards := _compact_operator_layout
+	for program_id: String in PROGRAM_IDS:
+		var button := _battle_program_buttons.get(program_id) as DigiSelectionCard
+		if button != null:
+			button.set_compact(compact_cards)
+	for battlefield_id: String in _field_order:
+		var button := _battlefield_buttons.get(battlefield_id) as DigiSelectionCard
+		if button != null:
+			button.set_compact(compact_cards)
+	if _program_pager != null:
+		_program_pager.set_compact(short_landscape or _compact_operator_layout)
+	if _field_pager != null:
+		_field_pager.set_compact(short_landscape or _compact_operator_layout)
+	if _summary_program != null:
+		_summary_program.add_theme_font_size_override("font_size", 12 if short_landscape else (14 if _compact_operator_layout else 16))
+	if _summary_field != null:
+		_summary_field.add_theme_font_size_override("font_size", 11 if short_landscape else (12 if _compact_operator_layout else 14))
 
 
 func _set_operator_section(section: String, focus_selected: bool = true) -> void:
 	if section != SECTION_PROGRAM and section != SECTION_FIELD:
 		return
 	_operator_section = section
+	if _section_tabs != null:
+		_section_tabs.set_active(section)
+	_sync_page_for_selected(section)
 	_refresh_section_visibility()
+	_refresh_page_visibility()
 	_wire_operator_focus()
 	if focus_selected:
 		_focus_selected_in_active_section()
@@ -982,174 +951,295 @@ func _switch_operator_section(direction: int, focus_selected: bool = true) -> vo
 
 
 func _refresh_section_visibility() -> void:
-	if _program_container == null or _field_container == null:
+	if _program_panel == null or _field_panel == null:
 		return
 	if _compact_operator_layout:
-		_program_container.visible = _operator_section == SECTION_PROGRAM
-		_field_container.visible = _operator_section == SECTION_FIELD
-		_program_tab.focus_mode = Control.FOCUS_ALL
-		_field_tab.focus_mode = Control.FOCUS_ALL
+		_program_panel.visible = _operator_section == SECTION_PROGRAM
+		_field_panel.visible = _operator_section == SECTION_FIELD
 	else:
-		_program_container.visible = true
-		_field_container.visible = true
-		_program_tab.focus_mode = Control.FOCUS_NONE
-		_field_tab.focus_mode = Control.FOCUS_NONE
+		_program_panel.visible = true
+		_field_panel.visible = true
 
-	_apply_v2_dialog_button(_program_tab, HUB_V2.AMBER if _operator_section == SECTION_PROGRAM else HUB_V2.CYAN)
-	_apply_v2_dialog_button(_field_tab, HUB_V2.AMBER if _operator_section == SECTION_FIELD else HUB_V2.CYAN)
+
+func _sync_pages_to_selection() -> void:
+	_sync_page_for_selected(SECTION_PROGRAM)
+	_sync_page_for_selected(SECTION_FIELD)
+
+
+func _sync_page_for_selected(section: String) -> void:
+	if section == SECTION_PROGRAM:
+		var index := PROGRAM_IDS.find(_selected_program_id)
+		if index >= 0:
+			_program_page = int(index / maxi(1, _program_page_capacity))
+	elif section == SECTION_FIELD:
+		var index := _field_order.find(_selected_battlefield_id)
+		if index >= 0:
+			_field_page = int(index / maxi(1, _field_page_capacity))
+
+
+func _refresh_page_visibility() -> void:
+	if _program_pager == null or _field_pager == null:
+		return
+	var program_pages := _page_count(PROGRAM_IDS.size(), _program_page_capacity)
+	var field_pages := _page_count(_field_order.size(), _field_page_capacity)
+	_program_page = clampi(_program_page, 0, program_pages - 1)
+	_field_page = clampi(_field_page, 0, field_pages - 1)
+	_program_pager.configure(_program_page, program_pages)
+	_field_pager.configure(_field_page, field_pages)
+	_program_pager.visible = _compact_operator_layout and program_pages > 1
+	_field_pager.visible = _compact_operator_layout and field_pages > 1
+
+	_apply_page_visibility(PROGRAM_IDS, _battle_program_buttons, _program_page, _program_page_capacity)
+	_apply_page_visibility(_field_order, _battlefield_buttons, _field_page, _field_page_capacity)
+
+	if _program_header != null:
+		_program_header.set_trailing(
+			_page_trailing(PROGRAM_IDS.size(), _program_page, _program_page_capacity, "PROGRAMS")
+		)
+	if _field_header != null:
+		_field_header.set_trailing(
+			_page_trailing(_field_order.size(), _field_page, _field_page_capacity, "FIELDS")
+		)
+
+
+func _apply_page_visibility(ids: Array[String], controls: Dictionary, page: int, capacity: int) -> void:
+	var start := page * maxi(1, capacity)
+	var finish := mini(ids.size(), start + maxi(1, capacity))
+	for index in range(ids.size()):
+		var control := controls.get(ids[index]) as Control
+		if control != null:
+			control.visible = not _compact_operator_layout or (index >= start and index < finish)
+
+
+func _page_trailing(total: int, page: int, capacity: int, noun: String) -> String:
+	if not _compact_operator_layout or capacity >= total:
+		return "%d %s" % [total, noun]
+	var start := page * capacity + 1
+	var finish := mini(total, start + capacity - 1)
+	return "%d–%d / %d" % [start, finish, total]
+
+
+func _page_count(total: int, capacity: int) -> int:
+	return maxi(1, int(ceil(float(maxi(1, total)) / float(maxi(1, capacity)))))
+
+
+func _turn_program_page(delta: int, focus_card: bool = false) -> void:
+	var count := _page_count(PROGRAM_IDS.size(), _program_page_capacity)
+	var next_page := clampi(_program_page + delta, 0, count - 1)
+	if next_page == _program_page:
+		return
+	_program_page = next_page
+	_refresh_page_visibility()
+	_wire_operator_focus()
+	if focus_card:
+		_focus_page_edge(SECTION_PROGRAM, delta)
+
+
+func _turn_field_page(delta: int, focus_card: bool = false) -> void:
+	var count := _page_count(_field_order.size(), _field_page_capacity)
+	var next_page := clampi(_field_page + delta, 0, count - 1)
+	if next_page == _field_page:
+		return
+	_field_page = next_page
+	_refresh_page_visibility()
+	_wire_operator_focus()
+	if focus_card:
+		_focus_page_edge(SECTION_FIELD, delta)
+
+
+func _focus_page_edge(section: String, direction: int) -> void:
+	var ids := PROGRAM_IDS if section == SECTION_PROGRAM else _field_order
+	var controls := _battle_program_buttons if section == SECTION_PROGRAM else _battlefield_buttons
+	var page := _program_page if section == SECTION_PROGRAM else _field_page
+	var capacity := _program_page_capacity if section == SECTION_PROGRAM else _field_page_capacity
+	var visible := _visible_ids(ids, page, capacity)
+	if visible.is_empty():
+		return
+	var id := visible[0] if direction > 0 else visible[visible.size() - 1]
+	var button := controls.get(id) as Button
+	if button != null and not button.disabled:
+		button.grab_focus()
+
+
+func _visible_ids(ids: Array[String], page: int, capacity: int) -> Array[String]:
+	if not _compact_operator_layout:
+		return ids.duplicate()
+	var result: Array[String] = []
+	var start := page * maxi(1, capacity)
+	var finish := mini(ids.size(), start + maxi(1, capacity))
+	for index in range(start, finish):
+		result.append(ids[index])
+	return result
 
 
 func _wire_operator_focus() -> void:
-	if _mobile_dialog_cancel == null or _start_battle_button == null:
+	if _start_battle_button == null:
 		return
-	_wire_grid_neighbors(PROGRAM_IDS, _battle_program_buttons, _battle_program_columns)
-	_wire_grid_neighbors(_field_order, _battlefield_buttons, _battlefield_columns)
-
-	_mobile_dialog_cancel.focus_neighbor_left = _mobile_dialog_cancel.get_path()
-	_mobile_dialog_cancel.focus_neighbor_right = _start_battle_button.get_path()
-	_start_battle_button.focus_neighbor_left = _mobile_dialog_cancel.get_path()
+	_wire_selection_list(
+		PROGRAM_IDS,
+		_battle_program_buttons,
+		_program_page,
+		_program_page_capacity,
+		SECTION_PROGRAM
+	)
+	_wire_selection_list(
+		_field_order,
+		_battlefield_buttons,
+		_field_page,
+		_field_page_capacity,
+		SECTION_FIELD
+	)
+	var selected_field := _selected_field_button()
+	if selected_field != null:
+		_start_battle_button.focus_neighbor_left = selected_field.get_path()
+		_start_battle_button.focus_neighbor_top = selected_field.get_path()
 	_start_battle_button.focus_neighbor_right = _start_battle_button.get_path()
-
-	if _compact_operator_layout:
-		_program_tab.focus_neighbor_left = _program_tab.get_path()
-		_program_tab.focus_neighbor_right = _field_tab.get_path()
-		_field_tab.focus_neighbor_left = _program_tab.get_path()
-		_field_tab.focus_neighbor_right = _field_tab.get_path()
-		var active_ids := PROGRAM_IDS if _operator_section == SECTION_PROGRAM else _field_order
-		var active_buttons := _battle_program_buttons if _operator_section == SECTION_PROGRAM else _battlefield_buttons
-		var columns := _battle_program_columns if _operator_section == SECTION_PROGRAM else _battlefield_columns
-		var active_tab := _program_tab if _operator_section == SECTION_PROGRAM else _field_tab
-		_wire_compact_edges(active_ids, active_buttons, columns, active_tab)
-	else:
-		_wire_desktop_cross_edges()
-
-	var cancel_up := _selected_program_button()
-	var launch_up := _selected_field_button()
-	if _compact_operator_layout:
-		cancel_up = _selected_active_button()
-		launch_up = _selected_active_button()
-	if cancel_up != null:
-		_mobile_dialog_cancel.focus_neighbor_top = cancel_up.get_path()
-	if launch_up != null:
-		_start_battle_button.focus_neighbor_top = launch_up.get_path()
+	_start_battle_button.focus_neighbor_bottom = _start_battle_button.get_path()
 
 
-func _wire_grid_neighbors(ids: Array[String], buttons: Dictionary, columns: int) -> void:
-	if ids.is_empty():
+func _wire_selection_list(
+	ids: Array[String],
+	controls: Dictionary,
+	page: int,
+	capacity: int,
+	section: String
+) -> void:
+	var visible := _visible_ids(ids, page, capacity)
+	if visible.is_empty():
 		return
-	var safe_columns := maxi(1, columns)
-	for index in range(ids.size()):
-		var button := buttons.get(ids[index]) as Button
+	for index in range(visible.size()):
+		var button := controls.get(visible[index]) as Button
 		if button == null:
 			continue
-		var row := int(index / safe_columns)
-		var column := index % safe_columns
-		var left_index := row * safe_columns + maxi(0, column - 1)
-		var right_index := mini(row * safe_columns + mini(safe_columns - 1, column + 1), ids.size() - 1)
-		var up_index := maxi(0, index - safe_columns)
-		var down_index := mini(ids.size() - 1, index + safe_columns)
-		var left := buttons.get(ids[left_index]) as Button
-		var right := buttons.get(ids[right_index]) as Button
-		var up := buttons.get(ids[up_index]) as Button
-		var down := buttons.get(ids[down_index]) as Button
-		if left != null:
-			button.focus_neighbor_left = left.get_path()
-		if right != null:
-			button.focus_neighbor_right = right.get_path()
-		if up != null:
-			button.focus_neighbor_top = up.get_path()
-		if down != null:
-			button.focus_neighbor_bottom = down.get_path()
+		var previous := controls.get(visible[maxi(0, index - 1)]) as Button
+		var next := controls.get(visible[mini(visible.size() - 1, index + 1)]) as Button
+		if previous != null:
+			button.focus_neighbor_top = previous.get_path()
+		if next != null:
+			button.focus_neighbor_bottom = next.get_path()
 
-
-func _wire_compact_edges(ids: Array[String], buttons: Dictionary, columns: int, active_tab: Button) -> void:
-	if ids.is_empty():
-		return
-	var safe_columns := maxi(1, columns)
-	var rows := int(ceil(float(ids.size()) / float(safe_columns)))
-	for index in range(ids.size()):
-		var button := buttons.get(ids[index]) as Button
-		if button == null:
-			continue
-		var row := int(index / safe_columns)
-		if row == 0 and active_tab != null:
-			button.focus_neighbor_top = active_tab.get_path()
-		if row == rows - 1 or index + safe_columns >= ids.size():
-			button.focus_neighbor_bottom = (
-				_mobile_dialog_cancel.get_path()
-				if index % safe_columns < int(ceil(float(safe_columns) * 0.5))
-				else _start_battle_button.get_path()
-			)
-	if active_tab != null:
-		var selected := _selected_active_button()
-		if selected != null:
-			active_tab.focus_neighbor_bottom = selected.get_path()
-
-
-func _wire_desktop_cross_edges() -> void:
-	if PROGRAM_IDS.is_empty() or _field_order.is_empty():
-		return
-	for index in range(PROGRAM_IDS.size()):
-		var program_button := _battle_program_buttons.get(PROGRAM_IDS[index]) as Button
-		if program_button == null:
-			continue
-		var column := index % _battle_program_columns
-		if column == _battle_program_columns - 1 or index == PROGRAM_IDS.size() - 1:
-			var target_index := mini(
-				int(index / _battle_program_columns) * _battlefield_columns,
-				_field_order.size() - 1
-			)
-			var target := _battlefield_buttons.get(_field_order[target_index]) as Button
-			if target != null:
-				program_button.focus_neighbor_right = target.get_path()
-		if index + _battle_program_columns >= PROGRAM_IDS.size():
-			program_button.focus_neighbor_bottom = _mobile_dialog_cancel.get_path()
-
-	for index in range(_field_order.size()):
-		var field_button := _battlefield_buttons.get(_field_order[index]) as Button
-		if field_button == null:
-			continue
-		var column := index % _battlefield_columns
-		if column == 0:
-			var target_index := mini(
-				int(index / _battlefield_columns) * _battle_program_columns + (_battle_program_columns - 1),
-				PROGRAM_IDS.size() - 1
-			)
-			var target := _battle_program_buttons.get(PROGRAM_IDS[target_index]) as Button
-			if target != null:
-				field_button.focus_neighbor_left = target.get_path()
-		if index + _battlefield_columns >= _field_order.size():
-			field_button.focus_neighbor_bottom = _start_battle_button.get_path()
+		if not _compact_operator_layout:
+			if section == SECTION_PROGRAM:
+				var field := _selected_field_button()
+				if field != null:
+					button.focus_neighbor_right = field.get_path()
+				button.focus_neighbor_left = button.get_path()
+			else:
+				var program := _selected_program_button()
+				if program != null:
+					button.focus_neighbor_left = program.get_path()
+				button.focus_neighbor_right = _start_battle_button.get_path()
+		else:
+			button.focus_neighbor_left = button.get_path()
+			button.focus_neighbor_right = button.get_path()
 
 
 func _focus_operator_neighbor(direction: String) -> void:
 	var focus := get_viewport().gui_get_focus_owner() as Control
 	if focus == null:
-		_mobile_dialog_cancel.grab_focus()
+		_focus_selected_program()
 		return
-	var current := focus
-	for _attempt in range(16):
-		var path := NodePath()
-		match direction:
-			"left": path = current.focus_neighbor_left
-			"right": path = current.focus_neighbor_right
-			"up": path = current.focus_neighbor_top
-			"down": path = current.focus_neighbor_bottom
-		if path.is_empty():
+
+	var kind := String(focus.get_meta("operator_kind", ""))
+	if _compact_operator_layout:
+		if kind == "program" and direction == "right":
+			_set_operator_section(SECTION_FIELD, true)
 			return
-		var target := current.get_node_or_null(path) as Control
-		if target == null or target == current:
+		if kind == "field" and direction == "left":
+			_set_operator_section(SECTION_PROGRAM, true)
 			return
-		if target.visible and target.focus_mode != Control.FOCUS_NONE and (not (target is Button) or not (target as Button).disabled):
+		if kind == "field" and direction == "right":
+			_start_battle_button.grab_focus()
+			return
+		if kind == "action" and direction == "left":
+			_set_operator_section(SECTION_FIELD, true)
+			return
+		if direction == "down" and _maybe_turn_page_at_edge(kind, 1):
+			return
+		if direction == "up" and _maybe_turn_page_at_edge(kind, -1):
+			return
+
+	var path := NodePath()
+	match direction:
+		"left": path = focus.focus_neighbor_left
+		"right": path = focus.focus_neighbor_right
+		"up": path = focus.focus_neighbor_top
+		"down": path = focus.focus_neighbor_bottom
+	if path.is_empty():
+		return
+	var target := focus.get_node_or_null(path) as Control
+	if target != null and target.visible and target.focus_mode != Control.FOCUS_NONE:
+		if not (target is Button) or not (target as Button).disabled:
 			target.grab_focus()
-			return
-		current = target
+
+
+func _maybe_turn_page_at_edge(kind: String, delta: int) -> bool:
+	var section := ""
+	var ids: Array[String] = []
+	var controls: Dictionary = {}
+	var page := 0
+	var capacity := 1
+	if kind == "program":
+		section = SECTION_PROGRAM
+		ids = PROGRAM_IDS
+		controls = _battle_program_buttons
+		page = _program_page
+		capacity = _program_page_capacity
+	elif kind == "field":
+		section = SECTION_FIELD
+		ids = _field_order
+		controls = _battlefield_buttons
+		page = _field_page
+		capacity = _field_page_capacity
+	else:
+		return false
+
+	var focus := get_viewport().gui_get_focus_owner() as Button
+	var visible := _visible_ids(ids, page, capacity)
+	if focus == null or visible.is_empty():
+		return false
+	var focused_id := String(focus.get_meta("operator_id", ""))
+	var edge_id := visible[visible.size() - 1] if delta > 0 else visible[0]
+	if focused_id != edge_id:
+		return false
+
+	var page_count := _page_count(ids.size(), capacity)
+	var next_page := clampi(page + delta, 0, page_count - 1)
+	if next_page == page:
+		return false
+	if section == SECTION_PROGRAM:
+		_turn_program_page(delta, true)
+	else:
+		_turn_field_page(delta, true)
+	return true
+
+
+func _focus_selected_program() -> void:
+	var button := _selected_program_button()
+	if button != null and button.visible and not button.disabled:
+		button.grab_focus()
+		return
+	_focus_first_visible(SECTION_PROGRAM)
 
 
 func _focus_selected_in_active_section() -> void:
 	var button := _selected_active_button()
-	if button != null and not button.disabled:
+	if button != null and button.visible and not button.disabled:
 		button.grab_focus()
+		return
+	_focus_first_visible(_operator_section)
+
+
+func _focus_first_visible(section: String) -> void:
+	var ids := PROGRAM_IDS if section == SECTION_PROGRAM else _field_order
+	var controls := _battle_program_buttons if section == SECTION_PROGRAM else _battlefield_buttons
+	var page := _program_page if section == SECTION_PROGRAM else _field_page
+	var capacity := _program_page_capacity if section == SECTION_PROGRAM else _field_page_capacity
+	for id: String in _visible_ids(ids, page, capacity):
+		var button := controls.get(id) as Button
+		if button != null and not button.disabled:
+			button.grab_focus()
+			return
 
 
 func _selected_active_button() -> Button:
@@ -1162,3 +1252,4 @@ func _selected_program_button() -> Button:
 
 func _selected_field_button() -> Button:
 	return _battlefield_buttons.get(_selected_battlefield_id) as Button
+
