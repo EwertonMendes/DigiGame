@@ -9,7 +9,6 @@ const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
 const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
 const ProfilePanelScript = preload("res://src/ui/components/DigiCompactProfilePanel.gd")
 const PickerScript = preload("res://src/ui/components/DigiRosterPickerModal.gd")
-const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
 
 const TRIGGER_PRESS_THRESHOLD := 0.55
