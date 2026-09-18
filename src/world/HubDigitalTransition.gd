@@ -120,7 +120,6 @@ func _build_dialog() -> void:
 	_start_battle_button.set_meta("operator_id", "launch")
 	_apply_v2_dialog_button(_start_battle_button, HUB_V2.AMBER)
 	_start_battle_button.icon = OperatorIcons.action_icon("start_simulation")
-	_start_battle_button.icon_max_width = 22
 	_start_battle_button.expand_icon = false
 	_start_battle_button.add_theme_color_override("icon_normal_color", HUB_V2.AMBER)
 	_start_battle_button.add_theme_color_override("icon_hover_color", HUB_V2.WHITE)
