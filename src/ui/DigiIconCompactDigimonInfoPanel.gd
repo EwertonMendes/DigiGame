@@ -1,7 +1,6 @@
 extends "res://src/ui/CompactDigimonInfoPanel.gd"
 
 const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
-const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 var _tier_icon: DigiTierIcon = null
 
