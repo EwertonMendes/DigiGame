@@ -302,14 +302,17 @@ func _rebuild_tabs() -> void:
 
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		row.add_theme_constant_override("separation", 7 if angled else 9)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var safe_content: MarginContainer = null
 		if angled:
-			var safe_content := MarginContainer.new()
+			safe_content = MarginContainer.new()
 			safe_content.name = "SlantSafeContent"
 			safe_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-			safe_content.add_theme_constant_override("margin_left", 26)
-			safe_content.add_theme_constant_override("margin_right", 26)
+			safe_content.add_theme_constant_override("margin_left", 22)
+			safe_content.add_theme_constant_override("margin_right", 22)
 			safe_content.add_theme_constant_override("margin_top", 2)
 			safe_content.add_theme_constant_override("margin_bottom", 2)
 			safe_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -327,6 +330,7 @@ func _rebuild_tabs() -> void:
 		label.add_theme_font_size_override("font_size", 13)
 		label.add_theme_color_override("font_color", V2.WHITE if active else (V2.MUTED if enabled else V2.SUBTLE))
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		label.clip_text = true
 		V2.apply_heading(label)
@@ -335,6 +339,7 @@ func _rebuild_tabs() -> void:
 		button.set_meta("tab_label", label)
 		button.set_meta("tab_icon", icon)
 		button.set_meta("tab_row", row)
+		button.set_meta("tab_safe_content", safe_content)
 		button.set_meta("full_label", label_text)
 		button.set_meta("compact_label", compact_label)
 		button.set_meta("preferred_min_width", min_width)
@@ -458,17 +463,32 @@ func _layout_workspace() -> void:
 			var preferred_button := value as Button
 			if preferred_button != null:
 				preferred_total += float(preferred_button.get_meta("preferred_min_width", 150.0))
-		preferred_total -= tab_overlap * float(maxi(0, _tab_specs.size() - 1))
-		var scale_tabs := minf(1.0, _tabs_root.size.x / maxf(1.0, preferred_total))
+		preferred_total = maxf(1.0, preferred_total)
+		var distributable := _tabs_root.size.x + tab_overlap * float(maxi(0, _tab_specs.size() - 1))
 		for value in _tab_buttons.values():
 			var button := value as Button
+			if button == null:
+				continue
 			var preferred := float(button.get_meta("preferred_min_width", 150.0))
-			var tab_width := maxf(112.0, preferred * scale_tabs)
-			button.custom_minimum_size = Vector2(tab_width, 50.0)
+			var estimated_width := maxf(88.0, distributable * preferred / preferred_total)
+			button.custom_minimum_size = Vector2(88.0, 50.0)
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			button.size_flags_stretch_ratio = preferred / preferred_total
 			var label := button.get_meta("tab_label") as Label
 			var icon := button.get_meta("tab_icon") as DigiProceduralIcon
+			var row := button.get_meta("tab_row") as HBoxContainer
+			var safe_content := button.get_meta("tab_safe_content") as MarginContainer
+			var use_compact_label := estimated_width < 176.0
+			var very_tight := estimated_width < 126.0
 			if label != null:
-				label.visible = tab_width >= 118.0
-				label.add_theme_font_size_override("font_size", 14 if scale_tabs < 0.90 else 15)
+				label.visible = true
+				label.text = String(button.get_meta("compact_label" if use_compact_label else "full_label", ""))
+				label.add_theme_font_size_override("font_size", 10 if very_tight else (12 if use_compact_label else 14))
 			if icon != null:
-				icon.custom_minimum_size = Vector2(20.0, 20.0)
+				icon.custom_minimum_size = Vector2(16.0, 16.0) if very_tight else Vector2(19.0, 19.0)
+			if row != null:
+				row.add_theme_constant_override("separation", 4 if very_tight else 7)
+			if safe_content != null:
+				var safe_margin := 12 if very_tight else (16 if use_compact_label else 22)
+				safe_content.add_theme_constant_override("margin_left", safe_margin)
+				safe_content.add_theme_constant_override("margin_right", safe_margin)
