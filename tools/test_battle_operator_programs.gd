@@ -154,8 +154,15 @@ func _test_operator_menu() -> void:
 	_expect(program_panel != null and field_panel != null and simulation_panel != null, "Battle Operator must expose Program, Battlefield and Simulation workspace panels")
 	_expect(buttons.size() == 7, "Battle Operator must expose Basic plus six random-rank programs")
 	_expect(fields.size() == 5, "Battle Operator must expose all five authored Battlefield V2 layouts")
-	_expect(launch != null and launch.text == "START BATTLE", "Battle Operator must expose a persistent launch action")
-	_expect(launch.icon != null and launch.icon.resource_path == OperatorIcons.action_icon("start_simulation").resource_path, "Start Battle must use the dedicated simulation SVG")
+	_expect(launch != null and launch.text.is_empty(), "Battle Operator launch action must use composed centered content instead of native Button icon/text layout")
+	var launch_content := launch.find_child("StartBattleContent", true, false) as CenterContainer if launch != null else null
+	var launch_icon := launch.find_child("StartBattleIcon", true, false) as DigiIconView if launch != null else null
+	var launch_label := launch.find_child("StartBattleLabel", true, false) as Label if launch != null else null
+	_expect(launch_content != null, "Start Battle must center its icon and label as one content group")
+	_expect(launch_icon != null and launch_icon.uses_texture(), "Start Battle must render the dedicated simulation SVG through DigiIconView")
+	_expect(launch_icon != null and launch_icon.custom_minimum_size == Vector2(22.0, 22.0), "Start Battle icon must keep the authored 22px visual size")
+	_expect(launch_icon != null and launch_icon.get_texture() != null and launch_icon.get_texture().resource_path == OperatorIcons.action_icon("start_simulation").resource_path, "Start Battle must use the dedicated simulation SVG")
+	_expect(launch_label != null and launch_label.text == "START BATTLE", "Start Battle composed label must preserve the player-facing action copy")
 	for header_spec: Array in [
 		[program_header, "program"],
 		[field_header, "battlefield"],
