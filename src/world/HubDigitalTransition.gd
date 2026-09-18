@@ -103,7 +103,6 @@ func _build_dialog() -> void:
 	_build_program_workspace()
 	_build_battlefield_workspace()
 	_build_selection_summary()
-	_build_input_hints()
 	_refresh_operator_state()
 	_wire_operator_focus()
 
@@ -225,6 +224,13 @@ func _build_selection_summary() -> void:
 	_selection_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_selection_summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_selection_panel.add_child(_selection_summary)
+
+
+func _ensure_input_hints(enabled: bool) -> void:
+	if enabled and _input_hint_bar == null:
+		_build_input_hints()
+	if _input_hint_bar != null:
+		_input_hint_bar.visible = enabled
 
 
 func _build_input_hints() -> void:
@@ -716,6 +722,7 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 
 	var compact_landscape := landscape and physical.y < 520.0
 	_compact_operator_layout = physical.x < 900.0 or physical.y < 620.0
+	_ensure_input_hints(not _compact_operator_layout)
 	var outer_edge := 12.0 if compact_landscape else edge
 	var dialog_width := minf(1120.0, physical.x - outer_edge * 2.0)
 	var dialog_height := minf(720.0, physical.y - outer_edge * 2.0)
@@ -752,6 +759,8 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	var tabs_gap := 8.0
 	var tabs_width := minf(360.0, dialog_width - side_pad * 2.0)
 	var tab_width := (tabs_width - tabs_gap) * 0.5
+	_program_tab.custom_minimum_size = Vector2(0.0, tabs_height)
+	_field_tab.custom_minimum_size = Vector2(0.0, tabs_height)
 	_program_tab.position = Vector2(side_pad, tabs_y)
 	_program_tab.size = Vector2(tab_width, tabs_height)
 	_field_tab.position = Vector2(side_pad + tab_width + tabs_gap, tabs_y)
@@ -772,18 +781,19 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	_mobile_dialog_cancel.size = Vector2(action_width, action_height)
 	_start_battle_button.position = Vector2(actions_x + action_width + action_gap, actions_y)
 	_start_battle_button.size = Vector2(action_width, action_height)
-	_mobile_dialog_cancel.custom_minimum_size.y = HUB_V2.TOUCH_TARGET
-	_start_battle_button.custom_minimum_size.y = HUB_V2.TOUCH_TARGET
+	_mobile_dialog_cancel.custom_minimum_size = Vector2(0.0, HUB_V2.TOUCH_TARGET)
+	_start_battle_button.custom_minimum_size = Vector2(0.0, HUB_V2.TOUCH_TARGET)
 
 	_selection_panel.position = Vector2(side_pad, summary_y)
 	_selection_panel.size = Vector2(dialog_width - side_pad * 2.0, summary_height)
 	_selection_summary.add_theme_font_size_override("font_size", 9 if compact_landscape else 10)
 
-	_input_hint_bar.visible = hint_bar_height > 0.0
-	if _input_hint_bar.visible:
-		_input_hint_bar.position = Vector2(0.0, dialog_height - hint_bar_height)
-		_input_hint_bar.size = Vector2(dialog_width, hint_bar_height)
-		_input_hint_bar.set_primary_tabs_enabled(false)
+	if _input_hint_bar != null:
+		_input_hint_bar.visible = hint_bar_height > 0.0
+		if _input_hint_bar.visible:
+			_input_hint_bar.position = Vector2(0.0, dialog_height - hint_bar_height)
+			_input_hint_bar.size = Vector2(dialog_width, hint_bar_height)
+			_input_hint_bar.set_primary_tabs_enabled(false)
 
 	if _compact_operator_layout:
 		_program_tab.visible = true
