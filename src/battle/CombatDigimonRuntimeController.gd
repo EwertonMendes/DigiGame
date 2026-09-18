@@ -82,12 +82,25 @@ func _validate_current_story_layout(field: Node2D, player_candidates: Array[Vect
 		if field.has_method("get_static_tile_block_reason") and not String(field.call("get_static_tile_block_reason", grid)).is_empty():
 			continue
 		walkable.append(grid)
-	var validation := FootprintMapValidatorScript.validate_story_layout(walkable, player_candidates, objective_cells, 3)
+
+	var footprint_id := FootprintScript.LARGE_2X2
+	if field.has_method("get_max_supported_footprint_id"):
+		footprint_id = FootprintScript.normalize_id(String(field.call("get_max_supported_footprint_id")))
+	var validation := FootprintMapValidatorScript.validate_layout(
+		walkable,
+		player_candidates,
+		objective_cells,
+		footprint_id,
+		3
+	)
 	if bool(validation.get("ok", false)):
 		return true
 	var errors = validation.get("errors", [])
 	var detail := "; ".join(PackedStringArray(errors)) if errors is Array else "unknown footprint authoring error"
-	push_error("Battle cannot start: map fails 2x2 story-layout validation. %s" % detail)
+	push_error(
+		"Battle cannot start: map fails %s layout validation. %s"
+		% [FootprintScript.display_label(footprint_id), detail]
+	)
 	return false
 
 
@@ -150,6 +163,23 @@ func _report_deployment_failure(team_name: String, plan: Dictionary) -> void:
 
 func _spawn_zone_candidates(field: Node2D, player_side: bool) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
+
+	# Authored BattlefieldDefinition zones are the primary source of truth.
+	# The legacy band fallback remains only for isolated/custom fields that have
+	# not migrated to the catalog yet.
+	if field.has_method("get_deployment_cells"):
+		var authored = field.call("get_deployment_cells", player_side)
+		if authored is Array:
+			for raw_grid in authored:
+				if not raw_grid is Vector2i:
+					continue
+				var grid := Vector2i(raw_grid)
+				if field.has_method("get_static_tile_block_reason") and not String(field.call("get_static_tile_block_reason", grid)).is_empty():
+					continue
+				result.append(grid)
+			if not result.is_empty():
+				return result
+
 	var map_data_variant = field.get("tile_map_data")
 	if not map_data_variant is Dictionary:
 		return result
