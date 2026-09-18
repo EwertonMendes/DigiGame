@@ -16,19 +16,33 @@ func _init(database: DigimonDatabase) -> void:
 
 
 func apply_victory_rewards(player_actors: Array[Node], defeated_enemy_actors: Array[Node], difficulty_modifier: float = 1.0) -> Dictionary:
-	var players: Array[Dictionary] = []
-	var player_instances: Dictionary = {}
+	var snapshots: Array[Dictionary] = []
+	var instances: Array[DigimonInstance] = []
 	for actor: Node in player_actors:
 		var instance := _instance_from_actor(actor)
 		if instance == null:
 			continue
-		player_instances[instance.id] = instance
+		instances.append(instance)
 		var battle_state = actor.get("battle_state") if actor != null else null
-		players.append({
+		snapshots.append({
 			"instance_id": instance.id,
 			"level": instance.level,
+			"participated": true,
 			"knocked_out": bool(battle_state != null and battle_state.has_method("is_knocked_out") and battle_state.call("is_knocked_out")),
 		})
+	return apply_victory_rewards_from_snapshots(snapshots, instances, defeated_enemy_actors, difficulty_modifier)
+
+
+func apply_victory_rewards_from_snapshots(
+	player_snapshots: Array[Dictionary],
+	player_instances: Array[DigimonInstance],
+	defeated_enemy_actors: Array[Node],
+	difficulty_modifier: float = 1.0
+) -> Dictionary:
+	var player_instances_by_id: Dictionary = {}
+	for instance: DigimonInstance in player_instances:
+		if instance != null:
+			player_instances_by_id[instance.id] = instance
 
 	var enemies: Array[Dictionary] = []
 	for actor: Node in defeated_enemy_actors:
@@ -42,12 +56,12 @@ func apply_victory_rewards(player_actors: Array[Node], defeated_enemy_actors: Ar
 			"reward_modifier": float(actor.get_meta("reward_modifier", 1.0)) if actor != null else 1.0,
 		})
 
-	var rewards: BattleRewards = _calculator.calculate(players, enemies, difficulty_modifier)
+	var rewards: BattleRewards = _calculator.calculate(player_snapshots, enemies, difficulty_modifier)
 	var progression_results: Array[Dictionary] = []
 	var total_xp := 0
 	for raw_instance_id in rewards.xp_by_instance.keys():
 		var instance_id := String(raw_instance_id)
-		var instance = player_instances.get(instance_id)
+		var instance = player_instances_by_id.get(instance_id)
 		if not instance is DigimonInstance:
 			continue
 		var amount := maxi(0, int(rewards.xp_by_instance[raw_instance_id]))
