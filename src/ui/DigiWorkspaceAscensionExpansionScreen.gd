@@ -66,6 +66,11 @@ func _build() -> void:
 	WorkspaceChrome.disable_scroll(_list_scroll)
 	WorkspaceChrome.disable_scroll(_detail_scroll)
 
+	_detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var detail_content_host := _detail.get_parent() as Control
+	if detail_content_host != null:
+		detail_content_host.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
 	var collection_stack := _collection_panel.get_child(0) as VBoxContainer
 	var pager_margin := _margin(10, 2, 10, 8)
 	_workspace_pager = PagerScript.new() as DigiPager
@@ -249,8 +254,7 @@ func _refresh_detail() -> void:
 		_detail.add_child(_empty_state("Species data unavailable."))
 		return
 
-	var physical := V2.physical_window_size(get_viewport())
-	var dense := WorkspaceChrome.is_compact(get_viewport()) or physical.y < 760.0
+	var dense := _workspace_is_dense()
 	var profile := ProfilePanelScript.new() as DigiCompactProfilePanel
 	profile.configure(instance, species, _workspace_progression, true, dense)
 	_detail.add_child(profile)
@@ -275,7 +279,7 @@ func _refresh_detail() -> void:
 
 
 func _tier_workspace(instance: DigimonInstance) -> Control:
-	var dense := V2.physical_window_size(get_viewport()).y < 760.0 or WorkspaceChrome.is_compact(get_viewport())
+	var dense := _workspace_is_dense()
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -308,7 +312,10 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 		return panel
 
 	var compare := HBoxContainer.new()
+	compare.name = "TierComparison"
 	compare.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	compare.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	compare.size_flags_stretch_ratio = 1.15
 	compare.custom_minimum_size.y = 66.0 if dense else 82.0
 	compare.add_theme_constant_override("separation", 12)
 	body.add_child(compare)
@@ -326,6 +333,8 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 	compare.add_child(_tier_compare_card("NEXT", next_tier, _tier_bonus_copy(next_tier), V2.PURPLE, dense))
 
 	var requirements := HFlowContainer.new()
+	requirements.name = "TierRequirements"
+	requirements.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	requirements.add_theme_constant_override("h_separation", 8)
 	requirements.add_theme_constant_override("v_separation", 6)
 	body.add_child(requirements)
@@ -336,8 +345,11 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 		requirements.add_child(_pill("SAME-SPECIES DONOR", V2.PURPLE))
 
 	var action_grid := GridContainer.new()
-	action_grid.columns = 2 if _detail_panel != null and _detail_panel.size.x >= 620.0 else 1
+	action_grid.name = "TierActions"
+	action_grid.columns = 2 if needs_donor and _detail_panel != null and _detail_panel.size.x >= 620.0 else 1
 	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	action_grid.size_flags_stretch_ratio = 0.85
 	action_grid.add_theme_constant_override("h_separation", 9)
 	action_grid.add_theme_constant_override("v_separation", 9)
 	body.add_child(action_grid)
@@ -377,7 +389,7 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 
 
 func _expansion_workspace(instance: DigimonInstance) -> Control:
-	var dense := V2.physical_window_size(get_viewport()).y < 760.0 or WorkspaceChrome.is_compact(get_viewport())
+	var dense := _workspace_is_dense()
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -404,6 +416,9 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 	inset.add_child(body)
 
 	var footprint := PanelContainer.new()
+	footprint.name = "ExpansionFootprint"
+	footprint.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	footprint.size_flags_stretch_ratio = 0.8
 	footprint.custom_minimum_size.y = 64.0 if dense else 82.0
 	footprint.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.06), Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.35), 8))
 	var fm := _margin(10, 6, 10, 6) if dense else _margin(14, 10, 14, 10)
@@ -437,8 +452,11 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 	reqs.add_child(_pill("FRAGMENTS · %d" % fragment_count, V2.CYAN))
 
 	var action_grid := GridContainer.new()
+	action_grid.name = "ExpansionActions"
 	action_grid.columns = 2 if _detail_panel != null and _detail_panel.size.x >= 620.0 else 1
 	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	action_grid.size_flags_stretch_ratio = 0.9
 	action_grid.add_theme_constant_override("h_separation", 9)
 	action_grid.add_theme_constant_override("v_separation", 9)
 	body.add_child(action_grid)
@@ -483,10 +501,13 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 func _tier_compare_card(caption: String, tier_name: String, bonus: String, accent: Color, dense: bool = false) -> Control:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", V2.surface_style(Color(accent.r, accent.g, accent.b, 0.06), Color(accent.r, accent.g, accent.b, 0.32), 8))
 	var margin := _margin(9, 5, 9, 5) if dense else _margin(12, 8, 12, 8)
 	panel.add_child(margin)
 	var row := HBoxContainer.new()
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 10)
 	margin.add_child(row)
 	var tier_icon := TierIconScript.new() as DigiTierIcon
@@ -502,11 +523,23 @@ func _tier_compare_card(caption: String, tier_name: String, bonus: String, accen
 	return panel
 
 
+func _available_workspace_body_height() -> float:
+	var physical := V2.physical_window_size(get_viewport())
+	var compact := WorkspaceChrome.is_compact(get_viewport())
+	return physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
+
+
+func _workspace_is_dense() -> bool:
+	return WorkspaceChrome.is_compact(get_viewport()) or _available_workspace_body_height() < 590.0
+
+
 func _command_button(title: String, subtitle: String, status: String, icon_kind: String, accent: Color, interactive: bool) -> DigiCommandButton:
 	var button := CommandButtonScript.new() as DigiCommandButton
 	button.configure(title, subtitle, status, icon_kind, accent)
 	button.set_compact(true)
-	button.custom_minimum_size.y = 54.0 if V2.physical_window_size(get_viewport()).y < 760.0 or WorkspaceChrome.is_compact(get_viewport()) else 62.0
+	button.custom_minimum_size.y = 54.0 if _workspace_is_dense() else 62.0
+	button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	button.size_flags_stretch_ratio = 1.0
 	button.set_interactive(interactive)
 	return button
 
