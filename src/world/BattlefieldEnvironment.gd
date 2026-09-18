@@ -268,39 +268,23 @@ func _should_fade_for_actor(tree: Sprite2D, actor: Node) -> bool:
 	var raw_grids = actor.call("get_occupied_grids")
 	if not raw_grids is Array:
 		return false
-	var actor_grids: Array[Vector2i] = []
-	for raw_grid in raw_grids:
-		if raw_grid is Vector2i:
-			actor_grids.append(Vector2i(raw_grid))
-	if actor_grids.is_empty():
-		return false
 
 	var tree_grid_variant = tree.get_meta("grid", null)
 	if not tree_grid_variant is Vector2i:
 		return false
 	var tree_grid := Vector2i(tree_grid_variant)
-	var actor_depth := FootprintScript.isometric_front_depth(actor_grids)
-	var tree_grids: Array[Vector2i] = [tree_grid]
-	var tree_depth := FootprintScript.isometric_front_depth(tree_grids)
-	if actor_depth >= tree_depth:
-		return false
+	var occlusion_grid := _large_tree_occlusion_grid(tree_grid)
 
-	var actor_sprite := actor.get_node_or_null("Sprite2D") as Sprite2D
-	if actor_sprite == null or actor_sprite.texture == null:
-		return false
-	return _sprite_global_rect(tree).intersects(_sprite_global_rect(actor_sprite), true)
+	# A large oak only fades for the single tile directly behind its canopy.
+	# In this 2:1 isometric projection, (-1, -1) keeps the same screen X and
+	# moves one full tile upward, i.e. precisely behind the tree. Side-adjacent
+	# tiles may overlap the canopy's broad sprite rectangle, but they are not
+	# visually behind the tree and must never trigger transparency.
+	for raw_grid in raw_grids:
+		if raw_grid is Vector2i and Vector2i(raw_grid) == occlusion_grid:
+			return true
+	return false
 
 
-func _sprite_global_rect(sprite: Sprite2D) -> Rect2:
-	var local_rect := sprite.get_rect()
-	var transform := sprite.get_global_transform()
-	var corners := [
-		transform * local_rect.position,
-		transform * Vector2(local_rect.end.x, local_rect.position.y),
-		transform * local_rect.end,
-		transform * Vector2(local_rect.position.x, local_rect.end.y),
-	]
-	var result := Rect2(corners[0], Vector2.ZERO)
-	for corner in corners:
-		result = result.expand(corner)
-	return result
+func _large_tree_occlusion_grid(tree_grid: Vector2i) -> Vector2i:
+	return tree_grid - Vector2i.ONE
