@@ -294,10 +294,7 @@ func _refresh_detail() -> void:
 	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
-	# 900p-class desktop viewports need the dense workspace composition too.
-	# This threshold is based on the actual body budget after header/footer chrome,
-	# not on device class, so the no-scroll contract stays valid on short desktops.
-	var dense := compact or estimated_body_h < 760.0
+	var dense := compact or estimated_body_h < 590.0
 
 	var profile := ProfilePanelScript.new() as DigiCompactProfilePanel
 	profile.configure(instance, species, _progression, true, dense)
@@ -315,47 +312,37 @@ func _refresh_detail() -> void:
 			var stats := StatsPanelScript.new()
 			stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			stats.size_flags_vertical = Control.SIZE_EXPAND_FILL
-			stats.set_workspace_mode(true, true, true)
+			stats.set_workspace_mode(true, true)
 			stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 			_detail.add_child(stats)
 		else:
 			_detail.add_child(_party_actions_panel(instance, active_ids, active_ids.find(instance.id), squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE))
 	else:
-		# Do not use GridContainer here. A grid couples both cells to the same row
-		# height, which previously let an expanding Stats panel stretch Squad
-		# Actions (or vice versa) beyond the visible no-scroll workspace.
-		var lower_row := HBoxContainer.new()
-		lower_row.name = "PartyDetailColumns"
-		lower_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lower_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		lower_row.clip_contents = true
-		lower_row.add_theme_constant_override("separation", WorkspaceChrome.GAP)
-		_detail.add_child(lower_row)
-
-		var stats_column := VBoxContainer.new()
-		stats_column.name = "StatsColumn"
-		stats_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		stats_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		stats_column.size_flags_stretch_ratio = 1.0
-		stats_column.clip_contents = true
-		lower_row.add_child(stats_column)
+		# Keep both lower workspaces on one shared row so Stats and Squad Actions
+		# finish on the same authored baseline. Internal cards stay content-sized;
+		# only the panels consume the available no-scroll height.
+		var lower_grid := GridContainer.new()
+		lower_grid.name = "PartyDetailGrid"
+		lower_grid.columns = 2
+		lower_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lower_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		lower_grid.clip_contents = true
+		lower_grid.add_theme_constant_override("h_separation", WorkspaceChrome.GAP)
+		lower_grid.add_theme_constant_override("v_separation", WorkspaceChrome.GAP)
+		_detail.add_child(lower_grid)
 
 		var stats := StatsPanelScript.new()
 		stats.name = "PartyWorkspaceStats"
 		stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		stats.set_workspace_mode(true, true, true)
+		stats.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		stats.set_workspace_mode(true, true)
 		stats.custom_minimum_size.y = 0.0
 		stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
-		stats_column.add_child(stats)
+		lower_grid.add_child(stats)
 
-		var actions_column := VBoxContainer.new()
-		actions_column.name = "ActionsColumn"
-		actions_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		actions_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		actions_column.size_flags_stretch_ratio = 1.0
-		actions_column.clip_contents = true
-		lower_row.add_child(actions_column)
-		actions_column.add_child(_party_actions_panel(instance, active_ids, active_ids.find(instance.id), squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE))
+		var actions_panel := _party_actions_panel(instance, active_ids, active_ids.find(instance.id), squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE)
+		actions_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		lower_grid.add_child(actions_panel)
 
 
 func _party_actions_panel(
@@ -377,12 +364,12 @@ func _party_actions_panel(
 	# The action panel is content-sized. Stats may fill the remaining row height,
 	# but Squad Actions must stop after its own commands instead of stretching
 	# under the footer on Reserve/Storage variants with different action counts.
-	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.AMBER))
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation", 0)
 	panel.add_child(stack)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
@@ -391,7 +378,7 @@ func _party_actions_panel(
 	stack.add_child(header)
 	var inset := _margin(8, 6, 8, 8) if dense else _margin(10, 8, 10, 10)
 	inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inset.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(inset)
 	var actions := VBoxContainer.new()
 	actions.name = "SquadActionsCommands"
@@ -500,7 +487,7 @@ func _command_button(title: String, subtitle: String, status: String, icon_kind:
 	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
-	button.custom_minimum_size.y = 54.0 if compact or estimated_body_h < 760.0 else 62.0
+	button.custom_minimum_size.y = 54.0 if compact or estimated_body_h < 590.0 else 62.0
 	# Never vertically expand command cards. Their component minimum height is
 	# the authored touch target; extra panel height belongs to whitespace, not to
 	# one giant action card that can force siblings below the viewport.
