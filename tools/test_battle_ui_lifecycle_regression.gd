@@ -109,7 +109,7 @@ func _ready() -> void:
 	picker.call("close_picker", false)
 
 	var switch_events: Array[Dictionary] = []
-	controller.combat_event.connect(func(event: Dictionary):
+	controller.connect("combat_event", func(event: Dictionary):
 		if String(event.get("type", "")) == "unit_switched":
 			switch_events.append(event.duplicate(true))
 	)
@@ -123,7 +123,7 @@ func _ready() -> void:
 	if not _check(bool(switch_event.get("turn_consumed", false)) and not bool(switch_event.get("forced", true)), "Voluntary Switch must explicitly report that it consumed the turn"):
 		return
 	var overlay := hud.get("_combat_overlay") as Control
-	var toast := overlay.get("_toast") as Label if overlay != null else null
+	var toast: Label = (overlay.get("_toast") as Label) if overlay != null else null
 	if not _check(toast != null and toast.text.contains("SWITCH") and toast.text.contains("TURN CONSUMED"), "Battle overlay must explain both the replacement and consumed turn"):
 		return
 
