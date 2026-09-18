@@ -123,6 +123,9 @@ async function moveToDigiLabAndOpen(page) {
     throw error;
   }
 
+  await settleFrames(page, 4);
+  await page.screenshot({ path: 'build/digilab-compact-entry.png', fullPage: true });
+
   await page.setViewportSize(desktopViewports[0]);
   await settleFrames(page, 5);
 }
@@ -201,10 +204,6 @@ async function runDesktopSuite() {
   watchRuntimeErrors(page, 'desktop');
   await openHub(page);
 
-  // Exercise the actual DigiLab surface and keep visual artifacts for review.
-  await captureDigiLabWorkspaces(page, 'digilab-1365x685');
-  await reloadHub(page);
-
   // Smoke the V2 menu surface without asserting exact pixels/layout values.
   await page.keyboard.press('KeyM');
   await settleFrames(page, 3);
@@ -280,6 +279,13 @@ async function runMobileSuite() {
   watchRuntimeErrors(page, 'mobile');
   await openHub(page);
   await page.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
+
+  // Touch-capable contexts expose the authored compact DigiLab action. Open it
+  // through that real control, capture compact + desktop workspace states, then
+  // restore the mobile viewport for the ordinary mobile regression.
+  await captureDigiLabWorkspaces(page, 'digilab-touch');
+  await page.setViewportSize(mobileViewports[0]);
+  await reloadHub(page);
 
   // V2 menu should open/close on the mobile-sized viewport, but exact pixels are
   // deliberately not part of this regression contract.
