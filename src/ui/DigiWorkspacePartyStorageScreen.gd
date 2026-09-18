@@ -349,6 +349,7 @@ func _party_actions_panel(
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
 	var dense := compact or estimated_body_h < 590.0
 	var panel := PanelContainer.new()
+	panel.name = "SquadActionsPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.clip_contents = true
@@ -367,8 +368,12 @@ func _party_actions_panel(
 	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(inset)
 	var actions := VBoxContainer.new()
+	actions.name = "SquadActionsCommands"
 	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	actions.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Commands are intentionally content-sized. The actions panel shares the
+	# remaining detail height with Stats, but its buttons must never absorb that
+	# free vertical space or push later actions outside the no-scroll viewport.
+	actions.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	actions.add_theme_constant_override("separation", 5 if dense else 7)
 	inset.add_child(actions)
 
@@ -470,8 +475,11 @@ func _command_button(title: String, subtitle: String, status: String, icon_kind:
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
 	button.custom_minimum_size.y = 54.0 if compact or estimated_body_h < 590.0 else 62.0
-	button.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	button.size_flags_stretch_ratio = 1.0
+	# Never vertically expand command cards. Their component minimum height is
+	# the authored touch target; extra panel height belongs to whitespace, not to
+	# one giant action card that can force siblings below the viewport.
+	button.size_flags_vertical = Control.SIZE_FILL
+	button.size_flags_stretch_ratio = 0.0
 	button.set_interactive(interactive)
 	return button
 
