@@ -94,8 +94,11 @@ func _ready() -> void:
 	if not _check(switch_button.tooltip_text.contains("[6]") and flee_button.tooltip_text.contains("[7]"), "Switch and Flee must have distinct keyboard shortcuts"):
 		return
 	var switch_rect := switch_button.get_global_rect()
+	var flee_rect := flee_button.get_global_rect()
 	var dock_rect := command_dock.get_global_rect()
 	if not _check(switch_rect.end.y <= dock_rect.end.y + 1.0, "Visible Switch command must remain inside the Battle Operator rail"):
+		return
+	if not _check(flee_rect.end.y <= dock_rect.end.y + 1.0, "Flee must remain inside the Battle Operator rail after adding Switch"):
 		return
 
 	var switch_options: Array[Dictionary] = controller.call("get_switch_options", false)
