@@ -14,11 +14,13 @@ var _value_text := ""
 var _built := false
 var _roomy := false
 var _compact_roomy := false
+var _expand_roomy_height := true
 
 
-func set_roomy(enabled: bool, compact: bool = false) -> void:
+func set_roomy(enabled: bool, compact: bool = false, expand_height: bool = true) -> void:
 	_roomy = enabled
 	_compact_roomy = compact
+	_expand_roomy_height = expand_height
 	if _built:
 		_build_content()
 
@@ -57,7 +59,7 @@ func _build_content() -> void:
 	# VBox distribute remaining height. This prevents their minima from forcing
 	# the Overview presentation surface to grow on short viewports.
 	custom_minimum_size.y = 29.0 if _compact_roomy else ((56.0 if _show_bar else 50.0) if _roomy else (30.0 if _show_bar else 22.0))
-	size_flags_vertical = Control.SIZE_EXPAND_FILL if _roomy else Control.SIZE_FILL
+	size_flags_vertical = Control.SIZE_EXPAND_FILL if _roomy and _expand_roomy_height else Control.SIZE_FILL
 	add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
 
 	var margin := MarginContainer.new()
