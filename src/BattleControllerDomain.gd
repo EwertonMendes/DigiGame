@@ -992,11 +992,11 @@ func deploy_reserve_replacement(incoming_id: String) -> bool:
 	})
 	current_actor = null
 	_turn_index = -1
-	_input_locked = false
+	_input_locked = true
 	phase = Phase.TURN_END
 	turn_order_changed.emit()
 	_refresh_hud()
-	call_deferred("_start_next_turn")
+	call_deferred("_continue_after_switch_presentation")
 	return true
 
 
