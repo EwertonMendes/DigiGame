@@ -413,7 +413,9 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	meta.add_theme_constant_override("separation", 7)
 	meta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(meta)
-	var level_rank := _label("Lv. %d · %s" % [instance.level, rank], 10, rank_color, true)
+	var squad_role := OverworldState.get_squad_role(instance.id)
+	var role_label := "ACTIVE" if squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE else "RESERVE"
+	var level_rank := _label("%s · Lv. %d · %s" % [role_label, instance.level, rank], 10, rank_color, true)
 	level_rank.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	level_rank.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	meta.add_child(level_rank)
@@ -1142,7 +1144,8 @@ func _update_footer_hints() -> void:
 	elif _mode == MenuMode.ACTIONS:
 		_hint_bar.set_description("Choose a command for the selected Digimon.")
 	else:
-		_hint_bar.set_description("Browse the active Party. Confirm a Digimon to access commands.")
+		var roster_label := "Active" if _roster_page == 0 else "Reserve"
+		_hint_bar.set_description("Browse %s Squad members. Confirm a Digimon to access commands." % roster_label)
 
 
 func _layout() -> void:
