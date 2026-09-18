@@ -5,6 +5,13 @@ const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 
 
 func _ready() -> void:
+	# Regress the 1900×935-class desktop viewport where the roomy DigiLab
+	# composition previously let lower workspace panels extend past their host.
+	var window := get_window()
+	if window != null:
+		window.size = Vector2i(1913, 935)
+		await _frames(2)
+
 	OverworldState.set_persistence_enabled(false)
 	OverworldState.reset_progress_for_tests()
 	var factory: DigimonFactory = FactoryScript.new(OverworldState.get_database())
