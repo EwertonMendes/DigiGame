@@ -31,7 +31,7 @@ func _test_collection_removal_cleans_every_location() -> void:
 	assert(collection.remove_instance(reserve.id), "Storage Digimon must be removable")
 	assert(collection.get_instance(reserve.id) == null, "Removed Storage UUID must leave the instance index")
 	assert(collection.get_instance_by_key(reserve_key) == null, "Removed Storage UUID must leave the collection-key index")
-	assert(not collection.get_reserve_instances().has(reserve), "Removed Storage Digimon must not remain in reserve results")
+	assert(not collection.get_storage_instances().has(reserve), "Removed Storage Digimon must not remain in Storage results")
 
 	assert(collection.remove_instance(patient.id), "Hospital Digimon must be removable")
 	assert(collection.get_instance(patient.id) == null, "Removed Hospital UUID must leave the instance index")
