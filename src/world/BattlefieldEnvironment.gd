@@ -171,7 +171,8 @@ func _create_anchored_prop(
 		scale_factor,
 		use_blocker_visual_anchor
 	)
-	sprite.z_index = FootprintScript.isometric_front_depth([grid])
+	var depth_grids: Array[Vector2i] = [grid]
+	sprite.z_index = FootprintScript.isometric_front_depth(depth_grids)
 	return sprite
 
 
@@ -272,7 +273,8 @@ func _should_fade_for_actor(tree: Sprite2D, actor: Node) -> bool:
 		return false
 	var tree_grid := Vector2i(tree_grid_variant)
 	var actor_depth := FootprintScript.isometric_front_depth(actor_grids)
-	var tree_depth := FootprintScript.isometric_front_depth([tree_grid])
+	var tree_grids: Array[Vector2i] = [tree_grid]
+	var tree_depth := FootprintScript.isometric_front_depth(tree_grids)
 	if actor_depth >= tree_depth:
 		return false
 
