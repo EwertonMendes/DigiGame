@@ -118,7 +118,8 @@ func _test_legacy_save_migration() -> bool:
 				}
 			}
 		],
-		"activePartyIds": ["legacy-zeke-regression"]
+		"activeSquadIds": ["legacy-zeke-regression"],
+		"reserveSquadIds": []
 	})
 	var instance = collection.get_instance("legacy-zeke-regression")
 	if not _check(instance != null, "Legacy Zeke save must load"):
