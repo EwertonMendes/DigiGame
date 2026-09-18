@@ -500,7 +500,7 @@ func _command_button(title: String, subtitle: String, status: String, icon_kind:
 	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
-	button.custom_minimum_size.y = 54.0 if compact or estimated_body_h < 590.0 else 62.0
+	button.custom_minimum_size.y = 54.0 if compact or estimated_body_h < 760.0 else 62.0
 	# Never vertically expand command cards. Their component minimum height is
 	# the authored touch target; extra panel height belongs to whitespace, not to
 	# one giant action card that can force siblings below the viewport.
