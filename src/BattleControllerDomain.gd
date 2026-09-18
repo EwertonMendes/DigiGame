@@ -1014,6 +1014,25 @@ func _activate_pending_replacement() -> bool:
 		if actor == null or not is_instance_valid(actor) or _actor_available(actor):
 			_pending_replacements.remove_at(0)
 			continue
+
+		# Availability in the bench is not enough: a replacement also needs a
+		# legal footprint placement. Never open a mandatory picker with every
+		# choice disabled, which would deadlock battle input.
+		var has_deployable_option := false
+		if _controller != null and _controller.has_method("get_bench_deployment_options"):
+			var raw_options = _controller.call("get_bench_deployment_options", actor, true)
+			if raw_options is Array:
+				for raw_option in raw_options:
+					if raw_option is Dictionary and bool((raw_option as Dictionary).get("can_deploy", false)):
+						has_deployable_option = true
+						break
+		if not has_deployable_option:
+			_pending_replacements.remove_at(0)
+			if _alive_actors(true).is_empty():
+				_finish_battle(false)
+				return true
+			continue
+
 		_replacement_prompt_ready = true
 		current_actor = null
 		_turn_index = -1
