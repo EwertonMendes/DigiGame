@@ -95,7 +95,8 @@
           ]
         }
       ],
-      "movement_costs": []
+      "movement_costs": [],
+      "description": "Compact open ground built for fast, readable test battles."
     },
     {
       "id": "twin_grove",
@@ -252,7 +253,8 @@
           "cost": 2,
           "surface": "rough_grass"
         }
-      ]
+      ],
+      "description": "Two main lanes create flanking choices and reward mobile teams."
     },
     {
       "id": "forest_crossing",
@@ -424,7 +426,8 @@
           "cost": 2,
           "surface": "rough_grass"
         }
-      ]
+      ],
+      "description": "A narrow central crossing creates chokepoints and route commitment."
     },
     {
       "id": "broken_clearing",
@@ -608,7 +611,8 @@
           "cost": 2,
           "surface": "rough_grass"
         }
-      ]
+      ],
+      "description": "Asymmetric obstacles create irregular paths and positioning puzzles."
     },
     {
       "id": "grand_digital_field",
@@ -788,7 +792,8 @@
           "cost": 2,
           "surface": "rough_grass"
         }
-      ]
+      ],
+      "description": "A wide arena designed to support large footprints and future 3×3 units."
     }
   ]
 }
