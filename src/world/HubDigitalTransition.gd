@@ -714,7 +714,7 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	var dialog_width := minf(1120.0, physical.x - outer_edge * 2.0)
 	var dialog_height := minf(720.0, physical.y - outer_edge * 2.0)
 	var side_pad := 16.0 if compact_landscape else 24.0
-	var top_pad := 10.0 if compact_landscape else 18.0
+	var top_pad := 8.0 if compact_landscape else 18.0
 	var hint_bar_height := 0.0 if compact_landscape else 48.0
 	var action_height := HUB_V2.TOUCH_TARGET
 	var summary_height := 44.0 if compact_landscape else 58.0
@@ -733,15 +733,16 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	_mobile_dialog_title.position = Vector2(side_pad, top_pad)
 	_mobile_dialog_title.size = Vector2(dialog_width - side_pad * 2.0, 18.0)
 	_mobile_dialog_title.add_theme_font_size_override("font_size", 10 if compact_landscape else 12)
-	_mobile_dialog_body.position = Vector2(side_pad, top_pad + 22.0)
-	_mobile_dialog_body.size = Vector2(dialog_width - side_pad * 2.0, 26.0)
-	_mobile_dialog_body.add_theme_font_size_override("font_size", 15 if compact_landscape else 19)
-	_battle_program_hint.position = Vector2(side_pad, top_pad + (47.0 if compact_landscape else 52.0))
-	_battle_program_hint.size = Vector2(dialog_width - side_pad * 2.0, 30.0 if compact_landscape else 40.0)
-	_battle_program_hint.add_theme_font_size_override("font_size", 9 if compact_landscape else 10)
+	_mobile_dialog_body.position = Vector2(side_pad, top_pad + (18.0 if compact_landscape else 22.0))
+	_mobile_dialog_body.size = Vector2(dialog_width - side_pad * 2.0, 22.0 if compact_landscape else 26.0)
+	_mobile_dialog_body.add_theme_font_size_override("font_size", 14 if compact_landscape else 19)
+	_battle_program_hint.visible = not compact_landscape
+	_battle_program_hint.position = Vector2(side_pad, top_pad + 52.0)
+	_battle_program_hint.size = Vector2(dialog_width - side_pad * 2.0, 40.0)
+	_battle_program_hint.add_theme_font_size_override("font_size", 10)
 
-	var tabs_y := top_pad + (76.0 if compact_landscape else 96.0)
-	var tabs_height := 38.0
+	var tabs_y := top_pad + (44.0 if compact_landscape else 96.0)
+	var tabs_height := 36.0 if compact_landscape else 38.0
 	var tabs_gap := 8.0
 	var tabs_width := minf(360.0, dialog_width - side_pad * 2.0)
 	var tab_width := (tabs_width - tabs_gap) * 0.5
@@ -752,10 +753,10 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 
 	var actions_y := dialog_height - bottom_pad - hint_bar_height - action_height
 	var summary_y := actions_y - action_gap - summary_height
-	var content_top := tabs_y + (tabs_height + 10.0 if _compact_operator_layout else 0.0)
+	var content_top := tabs_y + (tabs_height + (8.0 if compact_landscape else 10.0) if _compact_operator_layout else 0.0)
 	if not _compact_operator_layout:
 		content_top = top_pad + 102.0
-	var content_bottom := summary_y - 10.0
+	var content_bottom := summary_y - (4.0 if compact_landscape else 10.0)
 	var content_height := maxf(80.0, content_bottom - content_top)
 
 	var action_group_width := minf(520.0, dialog_width - side_pad * 2.0)
@@ -845,7 +846,7 @@ func _layout_card_grid(
 		return
 	var safe_columns := maxi(1, columns)
 	var rows := int(ceil(float(ids.size()) / float(safe_columns)))
-	var gap := 7.0 if dense else 9.0
+	var gap := 6.0 if dense else 9.0
 	var button_width := (available_size.x - gap * float(safe_columns - 1)) / float(safe_columns)
 	var button_height := minf(
 		82.0,
