@@ -39,7 +39,8 @@ const TREE_BLOCKER_CELLS: Array[Vector2i] = [
 ]
 
 # Oak_Tree_Small.png also contains a stump. It is rendered as its own prop on
-# its own tile, but intentionally remains decorative rather than blocking.
+# its own tile and follows the same rule as every other physical battlefield
+# prop: the owning tile is not traversable.
 const OAK_STUMP_CELL := Vector2i(12, 10)
 
 const ROCK_BLOCKER_CELLS: Array[Vector2i] = [
@@ -103,6 +104,8 @@ func _blocker_kind_for(grid: Vector2i) -> String:
 		return "tree"
 	if grid in ROCK_BLOCKER_CELLS:
 		return "rock"
+	if grid == OAK_STUMP_CELL:
+		return "stump"
 	return ""
 
 
