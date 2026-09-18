@@ -999,7 +999,7 @@ func _request_action(action: String) -> void:
 		return
 	_pending_action = action
 	if action == "admit":
-		_confirmation.configure("ADMIT THIS DIGIMON?", "Timed recovery takes %s. This Digimon leaves the Party until discharged." % _format_duration(int(preview.get("recovery_seconds", 0))), "ADMIT", "CANCEL", V2.CYAN, "DIGI HOSPITAL")
+		_confirmation.configure("ADMIT THIS DIGIMON?", "Timed recovery takes %s. This Digimon leaves the Squad until discharged." % _format_duration(int(preview.get("recovery_seconds", 0))), "ADMIT", "CANCEL", V2.CYAN, "DIGI HOSPITAL")
 	elif action == "recover":
 		_confirmation.configure("RECOVER NOW?", "Spend %d Bits to fully restore HP and SP? This Digimon remains in Hospital until discharged." % int(preview.get("instant_cost", 0)), "SPEND BITS", "CANCEL", V2.AMBER, "DIGI HOSPITAL")
 	else:
