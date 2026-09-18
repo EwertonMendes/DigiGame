@@ -20,16 +20,6 @@ const PROGRAM_IDS: Array[String] = [
 	"random_ultimate",
 	"random_mega",
 ]
-const PROGRAM_ORDER: Array[String] = [
-	"basic",
-	"random_fresh",
-	"random_baby",
-	"random_rookie",
-	"random_champion",
-	"random_ultimate",
-	"random_mega",
-	"cancel",
-]
 const SECTION_PROGRAM := "program"
 const SECTION_FIELD := "field"
 
@@ -42,8 +32,6 @@ var _field_order: Array[String] = []
 var _selected_program_id := "basic"
 var _selected_battlefield_id := ""
 var _operator_section := SECTION_PROGRAM
-var _battle_program_hint: Label = null
-
 var _operator_header: DigiModalHeader = null
 var _section_tabs: DigiSegmentedTabs = null
 var _program_panel: PanelContainer = null
@@ -78,31 +66,42 @@ func _ready() -> void:
 
 
 func _build_dialog() -> void:
-	super._build_dialog()
-	if _mobile_dialog_content == null or _start_battle_button == null or _mobile_dialog_cancel == null:
-		return
+	# Battle Operator owns a real V2 workspace. Do not instantiate the inherited
+	# two-button conversation prompt and hide it afterward; only the Hub's shared
+	# open/close/transition lifecycle is reused.
+	_dialog_panel = PanelContainer.new()
+	_dialog_panel.name = "BattleDialog"
+	_dialog_panel.visible = false
+	_dialog_panel.clip_contents = true
+	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_dialog_panel.add_theme_stylebox_override(
+		"panel",
+		HUB_V2.surface_style(
+			Color(0.016, 0.037, 0.055, 0.985),
+			Color(HUB_V2.CYAN.r, HUB_V2.CYAN.g, HUB_V2.CYAN.b, 0.34),
+			12
+		)
+	)
+	_ui_root.add_child(_dialog_panel)
+
+	_mobile_dialog_content = Control.new()
+	_mobile_dialog_content.name = "Content"
+	_mobile_dialog_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mobile_dialog_content.custom_minimum_size = Vector2.ZERO
+	_dialog_panel.add_child(_mobile_dialog_content)
+
+	_start_battle_button = _dialog_button("START BATTLE", HUB_V2.AMBER)
+	_start_battle_button.name = "StartBattle"
+	_start_battle_button.custom_minimum_size.y = HUB_V2.TOUCH_TARGET
+	_start_battle_button.pressed.connect(_start_test_battle)
+	_start_battle_button.set_meta("operator_kind", "action")
+	_start_battle_button.set_meta("operator_id", "launch")
+	_apply_v2_dialog_button(_start_battle_button, HUB_V2.AMBER)
+	_mobile_dialog_content.add_child(_start_battle_button)
 
 	if not _field_catalog.load_default():
 		for error in _field_catalog.validation_errors():
 			push_error("Battle Operator battlefield catalog: %s" % error)
-
-	# Battle Operator is a task workspace, not a command-button dialog. Use the
-	# same opaque slate shell, header hierarchy and bounded panels as DigiLab and
-	# the Digimon menu.
-	_dialog_panel.add_theme_stylebox_override(
-		"panel",
-		HUB_V2.surface_style(
-			Color(0.016, 0.037, 0.055, 0.975),
-			Color(HUB_V2.CYAN.r, HUB_V2.CYAN.g, HUB_V2.CYAN.b, 0.36),
-			12
-		)
-	)
-
-	_mobile_dialog_title.visible = false
-	_mobile_dialog_body.visible = false
-	_mobile_dialog_cancel.visible = false
-	_mobile_dialog_cancel.focus_mode = Control.FOCUS_NONE
-	_mobile_dialog_cancel.disabled = false
 
 	_operator_header = ModalHeaderScript.new() as DigiModalHeader
 	_operator_header.name = "OperatorHeader"
@@ -321,12 +320,8 @@ func _build_selection_summary() -> void:
 
 	if _start_battle_button.get_parent() != null:
 		_start_battle_button.reparent(actions)
-	_start_battle_button.text = "START BATTLE"
 	_start_battle_button.custom_minimum_size = Vector2(220.0, HUB_V2.TOUCH_TARGET)
 	_start_battle_button.size_flags_horizontal = Control.SIZE_SHRINK_END
-	_start_battle_button.set_meta("operator_kind", "action")
-	_start_battle_button.set_meta("operator_id", "launch")
-	_apply_v2_dialog_button(_start_battle_button, HUB_V2.AMBER)
 
 
 func _workspace_label(text_value: String, font_size: int, color: Color, heading: bool) -> Label:
