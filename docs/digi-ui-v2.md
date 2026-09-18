@@ -71,7 +71,7 @@ Global overlays follow the same physical-size helpers. Confirmation cards remain
 - DigiLab and Party / Storage: shared modal hierarchy and V2 surfaces/components.
 - Digi Hospital: full-screen V2 treatment workspace with paged patients, explicit exploration/action modes and controller-aware input hints.
 - Training Center: V2 modal header, responsive roster, training budget, semantic attribute steppers, mobility planning, plan summary, adaptive input hints and focus restoration after dynamic updates.
-- Hub chrome: V2 location surface, contextual glass interaction prompt, contextual mobile action labels and safe-default glass Battle Operator decision flow.
+- Hub chrome: V2 location surface, contextual glass interaction prompt, contextual mobile action labels and a responsive Battle Operator mechanics-test workspace with independent battle-program and authored-battlefield selection.
 - Confirmation flows: shared V2 confirmation component is used by battle retreat, while specialized evolution confirmation is normalized by the V2 runtime and keeps its richer transition summary.
 - Transient overlays: area-title and battle-start presentation use V2 slate surfaces, typography and restrained semantic accents.
 - Remaining named legacy battle/dialog surfaces are normalized by `DigiUiRuntime` so player-facing chrome no longer falls back to the old Kenney-frame presentation while deeper screens are migrated structurally.
