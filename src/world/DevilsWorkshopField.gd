@@ -31,6 +31,10 @@ const TREE_BLOCKER_CELLS: Array[Vector2i] = [
 	Vector2i(4, 16),
 ]
 
+# Oak_Tree_Small.png also contains a stump. It is rendered as its own prop on
+# its own tile, but intentionally remains decorative rather than blocking.
+const OAK_STUMP_CELL := Vector2i(12, 10)
+
 const ROCK_BLOCKER_CELLS: Array[Vector2i] = [
 	Vector2i(2, 9),
 	Vector2i(10, 14),
@@ -94,7 +98,7 @@ func _build_battlefield_environment() -> void:
 	var environment := ENVIRONMENT.new() as BattlefieldEnvironment
 	environment.name = "BattlefieldEnvironment"
 	add_child(environment)
-	environment.configure(self, TREE_BLOCKER_CELLS, ROCK_BLOCKER_CELLS)
+	environment.configure(self, TREE_BLOCKER_CELLS, ROCK_BLOCKER_CELLS, OAK_STUMP_CELL)
 
 
 func _battle_surface(grid: Vector2i) -> Dictionary:
