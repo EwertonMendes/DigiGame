@@ -882,7 +882,10 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 
 	_operator_header.position = Vector2.ZERO
 	_operator_header.size = Vector2(physical.x, header_h)
-	_operator_header.configure("BATTLE OPERATOR", "Battle Simulation", 0, false)
+	if physical.x < 520.0:
+		_operator_header.configure("BATTLE", "Battle Operator", 0, false)
+	else:
+		_operator_header.configure("BATTLE OPERATOR", "Battle Simulation", 0, false)
 	_operator_header_rule.position = Vector2(0.0, header_h - 1.0)
 	_operator_header_rule.size = Vector2(physical.x, 1.0)
 	_operator_footer.position = Vector2(0.0, physical.y - footer_h)
