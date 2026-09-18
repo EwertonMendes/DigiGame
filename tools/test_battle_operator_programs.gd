@@ -106,8 +106,14 @@ func _test_operator_menu() -> void:
 	var launch := hub.find_child("StartBattle", true, false) as Button
 	var selected_program_label := hub.find_child("SelectedProgram", true, false) as Label
 	var selected_field_label := hub.find_child("SelectedField", true, false) as Label
+	var operator_layer := hub.get("_operator_ui_layer") as CanvasLayer
+	var footer := hub.get("_operator_footer") as DigiInputHintBar
+	var close_button := header.get_close_button() if header != null else null
 
 	_expect(dialog != null and dialog.visible, "Battle Operator workspace must open")
+	_expect(operator_layer != null and operator_layer.layer > 80, "Battle Operator must render above closed Sprite Test and Dev debug launchers")
+	_expect(footer != null, "Battle Operator must reuse the shared workspace input-hint footer")
+	_expect(close_button != null and close_button.focus_mode == Control.FOCUS_NONE, "Battle Operator close chrome must stay outside directional focus navigation")
 	_expect(header != null and header.is_workspace_mode(), "Battle Operator must use the shared V2 workspace header")
 	_expect(program_panel != null and field_panel != null and simulation_panel != null, "Battle Operator must expose Program, Battlefield and Simulation workspace panels")
 	_expect(buttons.size() == 7, "Battle Operator must expose Basic plus six random-rank programs")
@@ -147,10 +153,11 @@ func _test_operator_menu() -> void:
 			_expect(not button.disabled, "%s must be available when the party is battle-ready" % program_id)
 
 			var normal := button.get_theme_stylebox("normal") as StyleBoxFlat
+			var focus_style := button.get_theme_stylebox("focus") as StyleBoxFlat
 			var pressed := button.get_theme_stylebox("pressed") as StyleBoxFlat
-			_expect(normal != null and pressed != null, "%s must expose stable V2 selection styles" % program_id)
-			if normal != null and pressed != null:
-				_expect(normal.shadow_size == 0 and pressed.shadow_size == 0, "%s must not bounce through press/focus shadows" % program_id)
+			_expect(normal != null and focus_style != null and pressed != null, "%s must expose stable V2 selection styles" % program_id)
+			if normal != null and focus_style != null and pressed != null:
+				_expect(normal.shadow_size == 0 and focus_style.shadow_size == 0 and pressed.shadow_size == 0, "%s must not bounce through press/focus shadows" % program_id)
 				_expect(
 					normal.border_width_left == pressed.border_width_left
 					and normal.border_width_top == pressed.border_width_top
@@ -158,6 +165,7 @@ func _test_operator_menu() -> void:
 					and normal.border_width_bottom == pressed.border_width_bottom,
 					"%s press feedback must not change card geometry" % program_id
 				)
+				_expect(normal.border_color == pressed.border_color and normal.bg_color == pressed.bg_color, "%s click must not flash a different border or fill" % program_id)
 
 		for battlefield_id: String in fields.keys():
 			var field_button := fields.get(battlefield_id) as DigiSelectionCard
@@ -166,6 +174,58 @@ func _test_operator_menu() -> void:
 				continue
 			_expect(field_button.get_combined_minimum_size().y >= 52.0, "%s battlefield card must remain touch-safe" % battlefield_id)
 			_expect(dialog_rect.encloses(field_button.get_global_rect()), "%s battlefield card must stay inside the workspace" % battlefield_id)
+
+	# Controller navigation mirrors the approved service menus: only the left
+	# stick navigates, one threshold crossing equals one focus step, and focus is
+	# independent from the committed program selection.
+	basic.grab_focus()
+	await get_tree().process_frame
+	var right_motion := InputEventJoypadMotion.new()
+	right_motion.axis = JOY_AXIS_RIGHT_Y
+	right_motion.axis_value = 0.95
+	hub.call("_input", right_motion)
+	await get_tree().process_frame
+	_expect(get_viewport().gui_get_focus_owner() == basic, "Right analog stick must never navigate Battle Operator")
+
+	var left_down := InputEventJoypadMotion.new()
+	left_down.axis = JOY_AXIS_LEFT_Y
+	left_down.axis_value = 0.95
+	hub.call("_input", left_down)
+	await get_tree().process_frame
+	var fresh := buttons.get("random_fresh") as DigiSelectionCard
+	_expect(get_viewport().gui_get_focus_owner() == fresh, "One left-stick deflection must move focus exactly one program")
+	_expect(String(hub.get("_selected_program_id")) == "basic", "Moving focus must not commit a different battle program")
+
+	hub.call("_input", left_down)
+	await get_tree().process_frame
+	_expect(get_viewport().gui_get_focus_owner() == fresh, "Held left stick must not race through Battle Operator choices")
+
+	var left_release := InputEventJoypadMotion.new()
+	left_release.axis = JOY_AXIS_LEFT_Y
+	left_release.axis_value = 0.0
+	hub.call("_input", left_release)
+	var second_down := InputEventJoypadMotion.new()
+	second_down.axis = JOY_AXIS_LEFT_Y
+	second_down.axis_value = 0.95
+	hub.call("_input", second_down)
+	await get_tree().process_frame
+	var baby := buttons.get("random_baby") as DigiSelectionCard
+	_expect(get_viewport().gui_get_focus_owner() == baby, "Releasing and deflecting again must allow the next single focus step")
+
+	# Horizontal navigation moves real focus between workspace regions. It must
+	# not alias vertical selection or commit anything implicitly.
+	var left_release_horizontal := InputEventJoypadMotion.new()
+	left_release_horizontal.axis = JOY_AXIS_LEFT_X
+	left_release_horizontal.axis_value = 0.0
+	hub.call("_input", left_release_horizontal)
+	basic.grab_focus()
+	var left_right := InputEventJoypadMotion.new()
+	left_right.axis = JOY_AXIS_LEFT_X
+	left_right.axis_value = 0.95
+	hub.call("_input", left_right)
+	await get_tree().process_frame
+	_expect(get_viewport().gui_get_focus_owner() == training, "Left-stick horizontal navigation must move actual focus from Program to Battlefield")
+	_expect(String(hub.get("_selected_program_id")) == "basic" and String(hub.get("_selected_battlefield_id")) == "training_clearing", "Horizontal focus movement must not mutate committed selections")
 
 	hub.call("_select_battle_program", "random_rookie")
 	hub.call("_select_battlefield", "grand_digital_field")
