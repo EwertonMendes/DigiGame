@@ -106,6 +106,8 @@ func _layout_command(panel_size: Vector2, compact: bool, contextual: bool, user_
 	for button: Button in _primary_buttons:
 		if button.visible:
 			visible_count += 1
+	if _switch_button.visible:
+		visible_count += 1
 	if _undo_button.visible:
 		visible_count += 1
 	var columns := maxi(1, _action_grid.columns)
@@ -114,6 +116,8 @@ func _layout_command(panel_size: Vector2, compact: bool, contextual: bool, user_
 	for button: Button in _primary_buttons:
 		button.custom_minimum_size = Vector2(0.0, button_h)
 		button.add_theme_font_size_override("font_size", 13)
+	_switch_button.custom_minimum_size = Vector2(0.0, button_h)
+	_switch_button.add_theme_font_size_override("font_size", 13)
 	_undo_button.custom_minimum_size = Vector2(0.0, button_h)
 	_undo_button.add_theme_font_size_override("font_size", 13)
 
@@ -123,6 +127,9 @@ func _set_touch_shortcut_visibility(visible: bool) -> void:
 		for child: Node in button.get_children():
 			if child is Label:
 				(child as Label).visible = visible
+	for child: Node in _switch_button.get_children():
+		if child is Label:
+			(child as Label).visible = visible
 	for child: Node in _undo_button.get_children():
 		if child is Label:
 			(child as Label).visible = visible
