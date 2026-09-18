@@ -12,6 +12,7 @@ const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
 const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
 const WorkspaceChrome = preload("res://src/ui/components/DigiLabWorkspaceChrome.gd")
 const OperatorIcons = preload("res://src/ui/battle_operator/BattleOperatorIconCatalog.gd")
+const IconViewScript = preload("res://src/ui/components/DigiIconView.gd")
 const OPERATOR_BACKGROUND = preload("res://assets/ui/backgrounds/digimon_menu.png")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
@@ -112,20 +113,14 @@ func _build_dialog() -> void:
 	_mobile_dialog_content.clip_contents = true
 	_dialog_panel.add_child(_mobile_dialog_content)
 
-	_start_battle_button = _dialog_button("START BATTLE", HUB_V2.AMBER)
+	_start_battle_button = _dialog_button("", HUB_V2.AMBER)
 	_start_battle_button.name = "StartBattle"
 	_start_battle_button.custom_minimum_size.y = HUB_V2.TOUCH_TARGET
 	_start_battle_button.pressed.connect(_start_test_battle)
 	_start_battle_button.set_meta("operator_kind", "action")
 	_start_battle_button.set_meta("operator_id", "launch")
 	_apply_v2_dialog_button(_start_battle_button, HUB_V2.AMBER)
-	_start_battle_button.icon = OperatorIcons.action_icon("start_simulation")
-	_start_battle_button.expand_icon = false
-	_start_battle_button.add_theme_color_override("icon_normal_color", HUB_V2.AMBER)
-	_start_battle_button.add_theme_color_override("icon_hover_color", HUB_V2.WHITE)
-	_start_battle_button.add_theme_color_override("icon_focus_color", HUB_V2.WHITE)
-	_start_battle_button.add_theme_color_override("icon_pressed_color", HUB_V2.WHITE)
-	_start_battle_button.add_theme_color_override("icon_disabled_color", HUB_V2.SUBTLE)
+	_build_start_battle_content()
 	_mobile_dialog_content.add_child(_start_battle_button)
 
 	if not _field_catalog.load_default():
@@ -174,6 +169,60 @@ func _build_dialog() -> void:
 	_refresh_operator_state()
 	call_deferred("_enforce_operator_header_focus_contract")
 	call_deferred("_wire_operator_focus")
+
+
+func _build_start_battle_content() -> void:
+	if _start_battle_button == null:
+		return
+
+	# Do not use Button.icon here. Godot aligns native button icons separately
+	# from centered text, which makes a small SVG sit against the left edge.
+	# A single centered content row keeps the action icon and label together
+	# across desktop, compact and touch layouts without hard-coded offsets.
+	var center := CenterContainer.new()
+	center.name = "StartBattleContent"
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_start_battle_button.add_child(center)
+
+	var row := HBoxContainer.new()
+	row.name = "StartBattleRow"
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(row)
+
+	var icon := IconViewScript.new() as DigiIconView
+	icon.name = "StartBattleIcon"
+	icon.custom_minimum_size = Vector2(22.0, 22.0)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.configure_texture(OperatorIcons.action_icon("start_simulation"), HUB_V2.AMBER)
+	row.add_child(icon)
+
+	var label := Label.new()
+	label.name = "StartBattleLabel"
+	label.text = "START BATTLE"
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", HUB_V2.TEXT)
+	HUB_V2.apply_heading(label)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
+
+
+func _refresh_start_battle_content() -> void:
+	if _start_battle_button == null:
+		return
+	var icon := _start_battle_button.find_child("StartBattleIcon", true, false) as DigiIconView
+	var label := _start_battle_button.find_child("StartBattleLabel", true, false) as Label
+	var content_color := HUB_V2.SUBTLE if _start_battle_button.disabled else HUB_V2.AMBER
+	if icon != null:
+		icon.configure_texture(OperatorIcons.action_icon("start_simulation"), content_color)
+	if label != null:
+		label.add_theme_color_override(
+			"font_color",
+			HUB_V2.SUBTLE if _start_battle_button.disabled else HUB_V2.TEXT
+		)
 
 
 func _build_program_workspace() -> void:
@@ -535,6 +584,7 @@ func _refresh_launch_state(party_error: String) -> void:
 		message = "Select a battlefield before starting the simulation."
 
 	_start_battle_button.disabled = not message.is_empty()
+	_refresh_start_battle_content()
 	if _summary_state != null:
 		_summary_state.text = "READY TO SIMULATE" if message.is_empty() else "NOT READY"
 		_summary_state.add_theme_color_override("font_color", HUB_V2.GREEN if message.is_empty() else HUB_V2.RED)
