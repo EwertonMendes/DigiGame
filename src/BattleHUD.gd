@@ -527,11 +527,38 @@ func _layout_dock() -> void:
 		_layout_status(Vector2(status_w, status_h), false)
 
 		var dock_w := 242.0
-		var dock_h := 320.0 if user_turn and not contextual else (132.0 if contextual else 76.0)
+		var dock_h := _desktop_command_dock_height(user_turn, contextual)
 		_dock.position = Vector2(margin * ui_scale, 192.0 * ui_scale)
 		_dock.size = Vector2(dock_w, dock_h)
 		_action_grid.columns = 1
 		_layout_command(Vector2(dock_w, dock_h), false, contextual, user_turn)
+
+
+func _desktop_command_dock_height(user_turn: bool, contextual: bool) -> float:
+	if contextual:
+		return 132.0
+	if not user_turn:
+		return 76.0
+
+	# Desktop uses a single-column operator rail. Five primary commands plus the
+	# shared Switch/Undo utility slot require six rows. Derive the rail height
+	# from the authored button size so future command additions cannot silently
+	# overflow the panel.
+	var visible_commands := 0
+	for button: Button in _primary_buttons:
+		if button.visible:
+			visible_commands += 1
+	if _switch_button != null and _switch_button.visible:
+		visible_commands += 1
+	if _undo_button != null and _undo_button.visible:
+		visible_commands += 1
+	visible_commands = maxi(1, visible_commands)
+
+	var button_h := 47.0
+	var gaps := 3.0 * float(maxi(0, visible_commands - 1))
+	var grid_h := button_h * float(visible_commands) + gaps
+	var chrome_h := 58.0 + 22.0 + 7.0
+	return maxf(320.0, grid_h + chrome_h)
 
 
 func _layout_status(panel_size: Vector2, compact: bool) -> void:
