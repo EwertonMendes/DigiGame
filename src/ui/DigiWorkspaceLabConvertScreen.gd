@@ -5,7 +5,6 @@ const WorkspaceChrome = preload("res://src/ui/components/DigiLabWorkspaceChrome.
 const WorkspaceBackdrop = preload("res://src/ui/components/DigiLabWorkspaceBackdrop.gd")
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
-const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
 
 const TRIGGER_PRESS_THRESHOLD := 0.55
 const TRIGGER_RELEASE_THRESHOLD := 0.25
