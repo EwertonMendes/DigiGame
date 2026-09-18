@@ -29,6 +29,7 @@ var _skill_button: Button = null
 var _defend_button: Button = null
 var _wait_button: Button = null
 var _confirm_move_button: Button = null
+var _switch_button: Button = null
 var _undo_button: Button = null
 var _cancel_button: Button = null
 var _primary_buttons: Array[Button] = []
@@ -175,6 +176,10 @@ func _build_command_panel() -> void:
 	_primary_buttons = [_move_button, _attack_button, _skill_button, _defend_button, _wait_button]
 	for button: Button in _primary_buttons:
 		_action_grid.add_child(button)
+
+	_switch_button = _make_action_button("Switch", "switch.svg", "6", "Switch with a battle-ready Reserve Digimon")
+	_switch_button.visible = false
+	_action_grid.add_child(_switch_button)
 
 	_undo_button = _make_action_button("Undo", "undo.svg", "Z", "Undo the committed move")
 	_action_grid.add_child(_undo_button)
@@ -355,6 +360,10 @@ func refresh_from_controller() -> void:
 	_wait_button.disabled = not bool(state.get("can_wait", false))
 	_confirm_move_button.disabled = not bool(state.get("can_confirm_move", false))
 	_undo_button.visible = bool(state.get("can_undo", false))
+	var reserve_count := int(state.get("reserve_count", 0))
+	_switch_button.visible = reserve_count > 0 and not _undo_button.visible and bool(state.get("is_user_turn", false))
+	_switch_button.disabled = not bool(state.get("can_switch", false))
+	_switch_button.tooltip_text = String(state.get("switch_locked_reason", "Switch with a Reserve Digimon"))
 	_cancel_button.disabled = false
 
 	_set_action_selected(_move_button, planning)
@@ -597,6 +606,8 @@ func _layout_command(panel_size: Vector2, compact: bool, contextual: bool, user_
 	for button: Button in _primary_buttons:
 		button.custom_minimum_size = Vector2(0.0, button_h)
 		button.add_theme_font_size_override("font_size", 13 if compact else 16)
+	_switch_button.custom_minimum_size = Vector2(0.0, button_h)
+	_switch_button.add_theme_font_size_override("font_size", 13 if compact else 15)
 	_undo_button.custom_minimum_size = Vector2(0.0, button_h)
 	_undo_button.add_theme_font_size_override("font_size", 13 if compact else 15)
 	_nav_hint.position = Vector2(pad + 3.0, panel_size.y - nav_h - 3.0)
@@ -610,7 +621,7 @@ func _is_our_focus(owner: Control) -> bool:
 		return false
 	if _primary_buttons.has(owner as Button):
 		return true
-	return owner == _undo_button or owner == _cancel_button or owner == _confirm_move_button
+	return owner == _switch_button or owner == _undo_button or owner == _cancel_button or owner == _confirm_move_button
 
 
 func _focus_first_available() -> void:
@@ -624,6 +635,9 @@ func _focus_first_available() -> void:
 		if button.visible and not button.disabled:
 			button.grab_focus()
 			return
+	if _switch_button.visible and not _switch_button.disabled:
+		_switch_button.grab_focus()
+		return
 	if _undo_button.visible and not _undo_button.disabled:
 		_undo_button.grab_focus()
 
