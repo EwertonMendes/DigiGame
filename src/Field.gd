@@ -33,6 +33,7 @@ const TERRAIN_BASE_COLORS := {
 }
 
 var tile_map_data: Dictionary = {}
+var _grid_size := Vector2i(_grid_size.x, _grid_size.y)
 var selectedTile := Vector2i.ZERO
 var _static_blocked_tiles: Dictionary = {}
 var _terrain_textures: Dictionary = {}
@@ -53,7 +54,7 @@ var _path_indicators: Array[Node] = []
 
 
 func _ready() -> void:
-	_map_center = _grid_to_raw(Vector2((GRID_SIZE_X - 1) * 0.5, (GRID_SIZE_Y - 1) * 0.5))
+	_map_center = _grid_to_raw(Vector2((_grid_size.x - 1) * 0.5, (_grid_size.y - 1) * 0.5))
 	if not _load_terrain_textures():
 		return
 	_create_board_foundation()
@@ -86,8 +87,8 @@ func _generate_terrain() -> void:
 	detail_noise.frequency = 0.18
 	detail_noise.fractal_octaves = 2
 
-	for y in range(GRID_SIZE_Y):
-		for x in range(GRID_SIZE_X):
+	for y in range(_grid_size.y):
+		for x in range(_grid_size.x):
 			var grid := Vector2i(x, y)
 			var biome_value := biome_noise.get_noise_2d(float(x), float(y))
 			var detail_value := detail_noise.get_noise_2d(float(x), float(y))
@@ -105,7 +106,7 @@ func _generate_terrain() -> void:
 			tile.z_index = -100 + x + y
 			add_child(tile)
 
-	selectedTile = Vector2i(grid_to_world(Vector2i(GRID_SIZE_X / 2, GRID_SIZE_Y / 2)))
+	selectedTile = Vector2i(grid_to_world(Vector2i(_grid_size.x / 2, _grid_size.y / 2)))
 
 
 func _create_terrain_tile(terrain_name: String, detail_value: float) -> Node2D:
@@ -182,10 +183,26 @@ func _create_board_foundation() -> void:
 func _board_outline() -> PackedVector2Array:
 	return PackedVector2Array([
 		grid_to_world(Vector2i(0, 0)) + Vector2(0.0, -TILE_HEIGHT * 0.5),
-		grid_to_world(Vector2i(GRID_SIZE_X - 1, 0)) + Vector2(TILE_WIDTH * 0.5, 0.0),
-		grid_to_world(Vector2i(GRID_SIZE_X - 1, GRID_SIZE_Y - 1)) + Vector2(0.0, TILE_HEIGHT * 0.5),
-		grid_to_world(Vector2i(0, GRID_SIZE_Y - 1)) + Vector2(-TILE_WIDTH * 0.5, 0.0),
+		grid_to_world(Vector2i(_grid_size.x - 1, 0)) + Vector2(TILE_WIDTH * 0.5, 0.0),
+		grid_to_world(Vector2i(_grid_size.x - 1, _grid_size.y - 1)) + Vector2(0.0, TILE_HEIGHT * 0.5),
+		grid_to_world(Vector2i(0, _grid_size.y - 1)) + Vector2(-TILE_WIDTH * 0.5, 0.0),
 	])
+
+
+func configure_grid_size(value: Vector2i) -> void:
+	_grid_size = Vector2i(maxi(1, value.x), maxi(1, value.y))
+
+
+func get_grid_size() -> Vector2i:
+	return _grid_size
+
+
+func get_grid_width() -> int:
+	return _grid_size.x
+
+
+func get_grid_height() -> int:
+	return _grid_size.y
 
 
 func get_camera_pan_bounds() -> Rect2:
@@ -268,6 +285,9 @@ func can_actor_occupy_anchor(anchor: Vector2i, moving_digimon: Node = null) -> b
 func get_movement_cost(grid: Vector2i, _moving_digimon: Node = null) -> int:
 	if not _is_valid_grid(grid):
 		return 999999
+	var raw = tile_map_data.get(grid, {})
+	if raw is Dictionary:
+		return maxi(1, int((raw as Dictionary).get("movement_cost", 1)))
 	return 1
 
 
@@ -475,7 +495,7 @@ func _apply_selected_grid(grid: Vector2i, block_reason := "") -> void:
 
 
 func _is_valid_grid(grid: Vector2i) -> bool:
-	return grid.x >= 0 and grid.x < GRID_SIZE_X and grid.y >= 0 and grid.y < GRID_SIZE_Y
+	return grid.x >= 0 and grid.x < _grid_size.x and grid.y >= 0 and grid.y < _grid_size.y
 
 
 func _grid_to_raw(grid: Vector2) -> Vector2:
