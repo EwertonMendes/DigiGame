@@ -326,7 +326,6 @@ func _refresh_detail() -> void:
 		lower_grid.columns = 2
 		lower_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lower_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		lower_grid.clip_contents = true
 		lower_grid.add_theme_constant_override("h_separation", WorkspaceChrome.GAP)
 		lower_grid.add_theme_constant_override("v_separation", WorkspaceChrome.GAP)
 		_detail.add_child(lower_grid)
@@ -383,10 +382,7 @@ func _party_actions_panel(
 	var actions := VBoxContainer.new()
 	actions.name = "SquadActionsCommands"
 	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Commands are intentionally content-sized. The actions panel shares the
-	# remaining detail height with Stats, but its buttons must never absorb that
-	# free vertical space or push later actions outside the no-scroll viewport.
-	actions.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	actions.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	actions.add_theme_constant_override("separation", 5 if dense else 7)
 	inset.add_child(actions)
 
@@ -430,22 +426,6 @@ func _party_actions_panel(
 		remove.pressed.connect(_move_to_storage.bind(instance.id))
 		actions.add_child(remove)
 
-	var summary := _label(
-		"SQUAD %d / %d  ·  ACTIVE %d / %d  ·  RESERVE %d / %d"
-		% [
-			active_ids.size() + reserve_ids.size(),
-			OverworldState.get_max_squad_size(),
-			active_ids.size(),
-			OverworldState.get_max_active_party_size(),
-			reserve_ids.size(),
-			OverworldState.get_max_reserve_party_size(),
-		],
-		9,
-		V2.MUTED,
-		true
-	)
-	summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	actions.add_child(summary)
 	return panel
 
 
@@ -488,11 +468,8 @@ func _command_button(title: String, subtitle: String, status: String, icon_kind:
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
 	button.custom_minimum_size.y = 54.0 if compact or estimated_body_h < 590.0 else 62.0
-	# Never vertically expand command cards. Their component minimum height is
-	# the authored touch target; extra panel height belongs to whitespace, not to
-	# one giant action card that can force siblings below the viewport.
-	button.size_flags_vertical = Control.SIZE_FILL
-	button.size_flags_stretch_ratio = 0.0
+	button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	button.size_flags_stretch_ratio = 1.0
 	button.set_interactive(interactive)
 	return button
 
