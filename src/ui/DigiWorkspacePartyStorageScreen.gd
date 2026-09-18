@@ -316,7 +316,7 @@ func _refresh_detail() -> void:
 			stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 			_detail.add_child(stats)
 		else:
-			_detail.add_child(_party_actions_panel(instance, active_ids, reserve_ids, squad_role, squad_index))
+			_detail.add_child(_party_actions_panel(instance, active_ids, active_ids.find(instance.id), squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE))
 	else:
 		var lower_grid := GridContainer.new()
 		lower_grid.columns = 2
@@ -332,16 +332,18 @@ func _refresh_detail() -> void:
 		stats.custom_minimum_size.y = 0.0
 		stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 		lower_grid.add_child(stats)
-		lower_grid.add_child(_party_actions_panel(instance, active_ids, reserve_ids, squad_role, squad_index))
+		lower_grid.add_child(_party_actions_panel(instance, active_ids, active_ids.find(instance.id), squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE))
 
 
 func _party_actions_panel(
 	instance: DigimonInstance,
 	active_ids: Array[String],
-	reserve_ids: Array[String],
-	squad_role: String,
-	squad_index: int
+	_party_index: int,
+	_is_active: bool
 ) -> Control:
+	var reserve_ids := OverworldState.get_reserve_party_ids()
+	var squad_role := OverworldState.get_squad_role(instance.id)
+	var squad_index := active_ids.find(instance.id) if squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE else reserve_ids.find(instance.id)
 	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
