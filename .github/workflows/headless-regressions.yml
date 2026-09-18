@@ -82,6 +82,9 @@ jobs:
           - name: zeke-greymon
             command: godot --headless --path . tools/test_zeke_greymon_regression.tscn --quit-after 30
             success: zeke greymon regression passed
+          - name: digimon-sprite-scale
+            command: godot --headless --path . tools/test_digimon_sprite_scale_regression.tscn --quit-after 20
+            success: digimon sprite scale regression passed
           - name: digimon-progression
             command: godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8
             success: digimon progression regression passed
