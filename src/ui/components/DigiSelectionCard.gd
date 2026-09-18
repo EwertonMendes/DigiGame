@@ -18,6 +18,7 @@ var _hovered := false
 var _compact := false
 var _built := false
 var _last_disabled := false
+var _selection_surface: Panel = null
 
 
 func configure(
@@ -42,7 +43,7 @@ func set_selected(selected: bool) -> void:
 		return
 	_selected = selected
 	if _built:
-		_apply_styles()
+		_sync_selection_surface()
 
 
 func is_selected() -> bool:
@@ -66,6 +67,8 @@ func set_interactive(interactive: bool) -> void:
 	if _built:
 		_apply_styles()
 		_refresh_content_state()
+		_sync_selection_surface()
+		_sync_selection_surface()
 
 
 func _ready() -> void:
@@ -74,7 +77,7 @@ func _ready() -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	custom_minimum_size = Vector2(180.0, COMPACT_HEIGHT if _compact else REGULAR_HEIGHT)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	clip_contents = true
+	clip_contents = false
 	_last_disabled = disabled
 	focus_entered.connect(_on_focus_entered)
 	focus_exited.connect(_on_focus_exited)
@@ -84,6 +87,7 @@ func _ready() -> void:
 	_apply_styles()
 	_rebuild_content()
 	_built = true
+	_sync_selection_surface()
 
 
 func _process(_delta: float) -> void:
@@ -97,22 +101,30 @@ func _apply_styles() -> void:
 	var stable: StyleBoxFlat
 	if disabled:
 		stable = V2.hospital_button_style(V2.CYAN, "disabled")
+	elif _focused or _hovered:
+		# Navigation preview uses the approved service-button surface. Because
+		# hover, pressed and hover_pressed all point at this same object, a click
+		# cannot introduce a transient colour/border frame.
+		stable = V2.hospital_button_style(V2.CYAN, "focus")
 	else:
-		# Match the approved Digimon roster interaction language: focus/hover is
-		# a preview of the exact same selected surface, while _selected decides
-		# whether that surface remains after focus/pointer leaves. There is no
-		# intermediate focus colour to flash through when a click commits state.
-		var visually_selected := _selected or _focused or _hovered
-		stable = V2.workspace_panel_style(V2.CYAN, visually_selected)
+		stable = V2.workspace_panel_style(V2.CYAN, false)
 
 	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		add_theme_stylebox_override(state, stable)
-	# Control draws focus as a second overlay. The complete focus preview is
-	# already represented by the stable card surface above.
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	add_theme_stylebox_override("disabled", V2.hospital_button_style(V2.CYAN, "disabled"))
 	add_theme_color_override("font_color", V2.TEXT)
 	add_theme_color_override("font_disabled_color", V2.SUBTLE)
+
+
+func _sync_selection_surface() -> void:
+	if _selection_surface == null:
+		return
+	# Committed selection is a dedicated visual layer, not a Button interaction
+	# state. It therefore remains pixel-stable while the parent moves through
+	# hover/focus/pressed and gives the same persistent bright cyan treatment as
+	# the selected Digimon roster surface.
+	_selection_surface.visible = _selected
 
 
 func _on_focus_entered() -> void:
@@ -179,6 +191,17 @@ func _rebuild_content() -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
+
+	_selection_surface = Panel.new()
+	_selection_surface.name = "SelectionCommittedSurface"
+	_selection_surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_selection_surface.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_selection_surface.add_theme_stylebox_override(
+		"panel",
+		V2.hospital_panel_style(V2.CYAN, true)
+	)
+	add_child(_selection_surface)
+	_sync_selection_surface()
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
