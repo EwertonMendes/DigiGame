@@ -264,10 +264,12 @@ func _refresh_detail() -> void:
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
 	var party_index := active_ids.find(instance.id)
 	var is_active := party_index >= 0
+	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
+	var dense := compact or physical.y < 760.0
 
 	var profile := ProfilePanelScript.new() as DigiCompactProfilePanel
-	profile.configure(instance, species, _progression, true)
+	profile.configure(instance, species, _progression, true, dense)
 	_detail.add_child(profile)
 
 	if compact:
@@ -298,16 +300,19 @@ func _refresh_detail() -> void:
 		var stats := StatsPanelScript.new()
 		stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		stats.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		stats.set_workspace_mode(true, false)
+		stats.set_workspace_mode(true, true)
+		stats.custom_minimum_size.y = 0.0
 		stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 		lower_grid.add_child(stats)
 		lower_grid.add_child(_party_actions_panel(instance, active_ids, party_index, is_active))
 
 
 func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], party_index: int, active: bool) -> Control:
+	var dense := V2.physical_window_size(get_viewport()).y < 760.0
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.AMBER))
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -318,13 +323,13 @@ func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], 
 	header.configure("PARTY ACTIONS", _status_text, V2.AMBER, "party")
 	header.set_workspace_mode(true)
 	stack.add_child(header)
-	var inset := _margin(10, 8, 10, 10)
+	var inset := _margin(8, 6, 8, 8) if dense else _margin(10, 8, 10, 10)
 	inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(inset)
 	var actions := VBoxContainer.new()
 	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	actions.add_theme_constant_override("separation", 7)
+	actions.add_theme_constant_override("separation", 5 if dense else 7)
 	inset.add_child(actions)
 
 	var ascension := _command_button(
@@ -408,7 +413,7 @@ func _command_button(title: String, subtitle: String, status: String, icon_kind:
 	var button := CommandButtonScript.new() as DigiCommandButton
 	button.configure(title, subtitle, status, icon_kind, accent)
 	button.set_compact(true)
-	button.custom_minimum_size.y = 62.0
+	button.custom_minimum_size.y = 54.0 if V2.physical_window_size(get_viewport()).y < 760.0 else 62.0
 	button.set_interactive(interactive)
 	return button
 
