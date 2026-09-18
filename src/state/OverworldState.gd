@@ -255,7 +255,7 @@ func reset_active_party() -> void:
 	if ids.is_empty() or ids == _collection.get_active_party_ids():
 		return
 	if _party_service.set_party(_collection, ids):
-		active_party_changed.emit(get_active_party())
+		_emit_squad_changed()
 		_save_after_mutation()
 
 func replace_or_add_instance(instance: DigimonInstance, collection_key: String = "") -> bool:
