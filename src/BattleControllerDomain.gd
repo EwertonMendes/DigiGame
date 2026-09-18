@@ -13,7 +13,6 @@ const DamageCalculatorScript = preload("res://src/battle/combat/DamageCalculator
 const StatusSystemScript = preload("res://src/battle/status/StatusSystem.gd")
 const BattleAIScript = preload("res://src/battle/ai/BattleAI.gd")
 const BattleEventBusScript = preload("res://src/battle/events/BattleEventBus.gd")
-const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 const MIN_RECOVERY_COST := 1.0
 const MAX_RECOVERY_COST := 300.0
