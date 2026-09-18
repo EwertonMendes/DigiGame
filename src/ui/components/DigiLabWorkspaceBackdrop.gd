@@ -2,7 +2,7 @@ extends Control
 class_name DigiLabWorkspaceBackdrop
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
-const BACKGROUND = preload("res://assets/ui/backgrounds/digimon_menu.png")
+const BACKGROUND = preload("res://assets/ui/backgrounds/digi_lab.webp")
 
 
 func _ready() -> void:
@@ -15,20 +15,20 @@ func _ready() -> void:
 	image.texture = BACKGROUND
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	image.modulate = Color(0.72, 0.88, 0.96, 0.78)
+	image.modulate = Color(0.82, 0.92, 1.0, 0.86)
 	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(image)
 
 	var shade := ColorRect.new()
 	shade.name = "DigiLabBackgroundShade"
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.004, 0.018, 0.030, 0.48)
+	shade.color = Color(0.004, 0.018, 0.030, 0.56)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
 
 	var cyan_wash := ColorRect.new()
 	cyan_wash.name = "DigiLabCyanWash"
 	cyan_wash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	cyan_wash.color = Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.025)
+	cyan_wash.color = Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.018)
 	cyan_wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(cyan_wash)
