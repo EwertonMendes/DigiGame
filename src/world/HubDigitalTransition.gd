@@ -1044,7 +1044,7 @@ func _focus_operator_neighbor(direction: String) -> void:
 		var target := current.get_node_or_null(path) as Control
 		if target == null or target == current:
 			return
-		if target.visible and target.focus_mode != Control.FOCUS_NONE and (not target is Button or not (target as Button).disabled):
+		if target.visible and target.focus_mode != Control.FOCUS_NONE and (not (target is Button) or not (target as Button).disabled):
 			target.grab_focus()
 			return
 		current = target
