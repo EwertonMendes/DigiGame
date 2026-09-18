@@ -4,6 +4,15 @@ const FieldScript = preload("res://src/world/DevilsWorkshopField.gd")
 const EnvironmentScript = preload("res://src/world/BattlefieldEnvironment.gd")
 const MovementSystemScript = preload("res://src/MovementSystem.gd")
 
+class FakeBattleActor:
+	extends Node2D
+
+	var occupied_grids: Array[Vector2i] = []
+
+	func get_occupied_grids() -> Array[Vector2i]:
+		return occupied_grids
+
+
 var _failed := false
 
 
@@ -100,6 +109,13 @@ func _validate_environment(field: Node) -> void:
 	_assert_prop_ground_anchor(field, stump, Vector2i(12, 10), Vector2(3.5, 7.0), "Oak stump", false)
 	_assert_prop_ground_anchor(field, rock, Vector2i(10, 14), Vector2(13.5, 21.0), "Rock", true)
 
+	if large_tree != null:
+		_expect(
+			large_tree.z_index == 16,
+			"Large oak depth must match the same isometric x+y ordering used by battle actors"
+		)
+		_validate_large_tree_occlusion(environment, large_tree)
+
 	if rock != null:
 		_expect(
 			rock.scale.x <= 0.90 and rock.scale.y <= 0.90,
@@ -136,10 +152,16 @@ func _assert_prop_ground_anchor(
 	if use_blocker_visual_anchor:
 		var next_row_center := Vector2(field.call("grid_to_world", grid + Vector2i(1, 0)))
 		var center_to_near_edge := absf(next_row_center.y - tile_center.y)
-		expected += Vector2(
-			0.0,
-			center_to_near_edge * EnvironmentScript.BLOCKER_VISUAL_DEPTH_RATIO
+		var tile_depth := maxf(1.0, center_to_near_edge * 2.0)
+		var rendered_height := prop.texture.get_height() * prop.scale.y
+		var extra_height_tiles := maxf(0.0, (rendered_height - tile_depth) / tile_depth)
+		var visual_depth_ratio := clampf(
+			EnvironmentScript.BLOCKER_VISUAL_DEPTH_RATIO
+				+ extra_height_tiles * EnvironmentScript.TALL_PROP_EXTRA_DEPTH_RATIO,
+			EnvironmentScript.BLOCKER_VISUAL_DEPTH_RATIO,
+			EnvironmentScript.MAX_BLOCKER_VISUAL_DEPTH_RATIO
 		)
+		expected += Vector2(0.0, center_to_near_edge * visual_depth_ratio)
 
 	var texture_center := prop.texture.get_size() * 0.5
 	var center_to_foot := (foot_anchor - texture_center) * prop.scale
@@ -159,6 +181,35 @@ func _assert_prop_ground_anchor(
 			visual_foot.distance_to(tile_center) <= 0.01,
 			"%s decoration must keep the unbiased tile-center anchor" % label
 		)
+
+
+func _validate_large_tree_occlusion(environment: Node, large_tree: Sprite2D) -> void:
+	var actor := FakeBattleActor.new()
+	actor.name = "OcclusionProbe"
+	actor.occupied_grids = [Vector2i(3, 12)]
+
+	var actor_sprite := Sprite2D.new()
+	actor_sprite.name = "Sprite2D"
+	actor_sprite.texture = large_tree.texture
+	actor.add_child(actor_sprite)
+	environment.get_parent().get_parent().add_child(actor)
+
+	# Keep the probe visibly overlapping the canopy while changing only its
+	# tactical depth. This verifies occlusion is based on projected depth, not
+	# on species names or hard-coded tile coordinates.
+	actor.global_position = large_tree.global_position + Vector2(0.0, -12.0)
+	_expect(
+		bool(environment.call("_should_fade_for_actor", large_tree, actor)),
+		"A Digimon visually behind the large oak must trigger canopy transparency"
+	)
+
+	actor.occupied_grids = [Vector2i(5, 12)]
+	_expect(
+		not bool(environment.call("_should_fade_for_actor", large_tree, actor)),
+		"A Digimon in front of the large oak must remain rendered above an opaque canopy"
+	)
+
+	actor.queue_free()
 
 
 func _validate_pathfinding(field: Node) -> void:
