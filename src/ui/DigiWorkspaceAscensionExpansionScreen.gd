@@ -323,6 +323,13 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 	if needs_donor:
 		requirements.add_child(_pill("SAME-SPECIES DONOR", V2.PURPLE))
 
+	var action_grid := GridContainer.new()
+	action_grid.columns = 2 if _detail_panel != null and _detail_panel.size.x >= 620.0 else 1
+	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_grid.add_theme_constant_override("h_separation", 9)
+	action_grid.add_theme_constant_override("v_separation", 9)
+	body.add_child(action_grid)
+
 	if needs_donor:
 		var donor_name := "NONE SELECTED"
 		if not _pending_donor_id.is_empty():
@@ -339,7 +346,7 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 			true
 		)
 		donor_button.pressed.connect(_open_donor_picker.bind(instance.id))
-		body.add_child(donor_button)
+		action_grid.add_child(donor_button)
 
 	var preview := OverworldState.get_tier_promotion_preview(instance.id, _pending_donor_id)
 	var ready := bool(preview.get("success", false))
@@ -353,7 +360,7 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 		ready
 	)
 	promote.pressed.connect(_request_promotion)
-	body.add_child(promote)
+	action_grid.add_child(promote)
 	return panel
 
 
@@ -415,6 +422,13 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 	reqs.add_child(_pill("CORES · %d" % core_count, V2.ORANGE))
 	reqs.add_child(_pill("FRAGMENTS · %d" % fragment_count, V2.CYAN))
 
+	var action_grid := GridContainer.new()
+	action_grid.columns = 2 if _detail_panel != null and _detail_panel.size.x >= 620.0 else 1
+	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_grid.add_theme_constant_override("h_separation", 9)
+	action_grid.add_theme_constant_override("v_separation", 9)
+	body.add_child(action_grid)
+
 	if not instance.expansion_unlocked:
 		var unlock := _command_button(
 			"UNLOCK EXPANSION",
@@ -425,7 +439,7 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 			tier_ready and core_count >= 1
 		)
 		unlock.pressed.connect(_unlock_expansion)
-		body.add_child(unlock)
+		action_grid.add_child(unlock)
 	else:
 		var toggle := _command_button(
 			"SWITCH TO %s" % ("1×1" if instance.is_expanded() else "2×2"),
@@ -436,7 +450,7 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 			true
 		)
 		toggle.pressed.connect(_toggle_expansion.bind(not instance.is_expanded()))
-		body.add_child(toggle)
+		action_grid.add_child(toggle)
 
 	var can_craft := fragment_count >= 5 and OverworldState.get_bits() >= 50000
 	var craft := _command_button(
@@ -448,7 +462,7 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 		can_craft
 	)
 	craft.pressed.connect(_craft_core)
-	body.add_child(craft)
+	action_grid.add_child(craft)
 	return panel
 
 
