@@ -1,6 +1,7 @@
 extends Node
 
 const FieldScript = preload("res://src/world/DevilsWorkshopField.gd")
+const EnvironmentScript = preload("res://src/world/BattlefieldEnvironment.gd")
 const MovementSystemScript = preload("res://src/MovementSystem.gd")
 
 var _failed := false
@@ -93,11 +94,11 @@ func _validate_environment(field: Node) -> void:
 	_assert_atlas_source(stump, "res://assets/terrain/Oak_Tree_Small.png", "Oak stump")
 	_assert_atlas_source(rock, "res://assets/world/hawkbirdtree/rock.png", "Rock")
 
-	_assert_prop_foot_on_tile(field, large_tree, Vector2i(4, 12), Vector2(20.5, 62.0), "Large oak")
-	_assert_prop_foot_on_tile(field, small_tree_a, Vector2i(10, 10), Vector2(10.5, 33.0), "Small oak A")
-	_assert_prop_foot_on_tile(field, small_tree_b, Vector2i(4, 16), Vector2(10.5, 25.0), "Small oak B")
-	_assert_prop_foot_on_tile(field, stump, Vector2i(12, 10), Vector2(3.5, 7.0), "Oak stump")
-	_assert_prop_foot_on_tile(field, rock, Vector2i(10, 14), Vector2(13.5, 21.0), "Rock")
+	_assert_prop_ground_anchor(field, large_tree, Vector2i(4, 12), Vector2(20.5, 62.0), "Large oak", true)
+	_assert_prop_ground_anchor(field, small_tree_a, Vector2i(10, 10), Vector2(10.5, 33.0), "Small oak A", true)
+	_assert_prop_ground_anchor(field, small_tree_b, Vector2i(4, 16), Vector2(10.5, 25.0), "Small oak B", true)
+	_assert_prop_ground_anchor(field, stump, Vector2i(12, 10), Vector2(3.5, 7.0), "Oak stump", false)
+	_assert_prop_ground_anchor(field, rock, Vector2i(10, 14), Vector2(13.5, 21.0), "Rock", true)
 
 	if rock != null:
 		_expect(
@@ -119,23 +120,45 @@ func _assert_atlas_source(prop: Sprite2D, expected_path: String, label: String) 
 	)
 
 
-func _assert_prop_foot_on_tile(
+func _assert_prop_ground_anchor(
 	field: Node,
 	prop: Sprite2D,
 	grid: Vector2i,
 	foot_anchor: Vector2,
-	label: String
+	label: String,
+	use_blocker_visual_anchor: bool
 ) -> void:
 	if prop == null or prop.texture == null:
 		return
-	var expected := Vector2(field.call("grid_to_world", grid))
+
+	var tile_center := Vector2(field.call("grid_to_world", grid))
+	var expected := tile_center
+	if use_blocker_visual_anchor:
+		var next_row_center := Vector2(field.call("grid_to_world", grid + Vector2i(1, 0)))
+		var center_to_near_edge := absf(next_row_center.y - tile_center.y)
+		expected += Vector2(
+			0.0,
+			center_to_near_edge * EnvironmentScript.BLOCKER_VISUAL_DEPTH_RATIO
+		)
+
 	var texture_center := prop.texture.get_size() * 0.5
 	var center_to_foot := (foot_anchor - texture_center) * prop.scale
 	var visual_foot := prop.position + center_to_foot
 	_expect(
 		visual_foot.distance_to(expected) <= 0.01,
-		"%s foot/pivot must land on the exact center of its owning tile" % label
+		"%s ground contact must use the shared isometric visual anchor policy" % label
 	)
+
+	if use_blocker_visual_anchor:
+		_expect(
+			visual_foot.y > tile_center.y,
+			"%s blocker must sit visually below the mathematical tile center" % label
+		)
+	else:
+		_expect(
+			visual_foot.distance_to(tile_center) <= 0.01,
+			"%s decoration must keep the unbiased tile-center anchor" % label
+		)
 
 
 func _validate_pathfinding(field: Node) -> void:
