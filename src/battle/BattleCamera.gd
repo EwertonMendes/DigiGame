@@ -12,6 +12,9 @@ const FOCUS_MOVE_TIME := 0.30
 const FIRST_FOCUS_MOVE_TIME := 0.40
 const GAMEPLAY_FOCUS_TIME := 0.46
 const PAN_EDGE_MARGIN_SCREEN := Vector2(168.0, 112.0)
+const MAP_FIT_MIN_ZOOM := 0.65
+const MAP_FIT_HORIZONTAL_RESERVE_RATIO := 0.24
+const MAP_FIT_VERTICAL_RESERVE_RATIO := 0.16
 
 var _battle_default_zoom := DESKTOP_BATTLE_ZOOM
 
@@ -48,8 +51,9 @@ func zoom_out() -> void:
 func animate_opening_overview(duration: float = OPENING_ZOOM_TIME) -> void:
 	_refresh_pan_bounds()
 	_battle_default_zoom = _preferred_battle_zoom()
-	var target_position := _overview_center_for_zoom(OPENING_BOOT_ZOOM)
-	await _animate_camera_to(target_position, OPENING_BOOT_ZOOM, duration)
+	var overview_zoom := minf(OPENING_BOOT_ZOOM, _preferred_overview_zoom())
+	var target_position := _overview_center_for_zoom(overview_zoom)
+	await _animate_camera_to(target_position, overview_zoom, duration)
 
 func animate_intro_focus(world_position: Vector2, first_focus: bool = false) -> void:
 	_refresh_pan_bounds()
@@ -92,19 +96,48 @@ func _post_battle_locked() -> bool:
 
 func _preferred_battle_zoom() -> float:
 	var viewport_size := get_viewport_rect().size
+	var profile_zoom := DESKTOP_BATTLE_ZOOM
 	if viewport_size.y < 560.0 or viewport_size.x < 1000.0:
-		return COMPACT_BATTLE_ZOOM
-	if viewport_size.y < 780.0:
-		return LAPTOP_BATTLE_ZOOM
-	return DESKTOP_BATTLE_ZOOM
+		profile_zoom = COMPACT_BATTLE_ZOOM
+	elif viewport_size.y < 780.0:
+		profile_zoom = LAPTOP_BATTLE_ZOOM
+	return minf(profile_zoom, _map_fit_zoom(1.08, profile_zoom))
 
 func _preferred_intro_zoom() -> float:
 	var viewport_size := get_viewport_rect().size
+	var profile_zoom := DESKTOP_INTRO_ZOOM
 	if viewport_size.y < 560.0 or viewport_size.x < 1000.0:
-		return COMPACT_INTRO_ZOOM
-	if viewport_size.y < 780.0:
-		return LAPTOP_INTRO_ZOOM
-	return DESKTOP_INTRO_ZOOM
+		profile_zoom = COMPACT_INTRO_ZOOM
+	elif viewport_size.y < 780.0:
+		profile_zoom = LAPTOP_INTRO_ZOOM
+	return minf(profile_zoom, _map_fit_zoom(1.0, profile_zoom))
+
+
+func _preferred_overview_zoom() -> float:
+	return _map_fit_zoom(0.96, OPENING_BOOT_ZOOM)
+
+
+func _map_fit_zoom(fill_ratio: float, upper_bound: float) -> float:
+	var main := get_tree().root.get_node_or_null("Main")
+	if main == null:
+		return upper_bound
+	var field := main.get_node_or_null("Blocks")
+	if field == null or not field.has_method("get_camera_pan_bounds"):
+		return upper_bound
+	var bounds: Rect2 = field.call("get_camera_pan_bounds")
+	if bounds.size.x <= 0.0 or bounds.size.y <= 0.0:
+		return upper_bound
+
+	var viewport_size := get_viewport_rect().size
+	var available := Vector2(
+		viewport_size.x * (1.0 - MAP_FIT_HORIZONTAL_RESERVE_RATIO),
+		viewport_size.y * (1.0 - MAP_FIT_VERTICAL_RESERVE_RATIO)
+	)
+	var fit_zoom := minf(
+		available.x / bounds.size.x,
+		available.y / bounds.size.y
+	) * fill_ratio
+	return clampf(fit_zoom, MAP_FIT_MIN_ZOOM, upper_bound)
 
 func _animate_camera_to(target_position: Vector2, target_zoom: float, duration: float) -> void:
 	var tween := create_tween().set_parallel(true)
