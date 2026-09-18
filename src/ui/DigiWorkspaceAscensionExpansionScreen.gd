@@ -10,6 +10,7 @@ const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.g
 const ProfilePanelScript = preload("res://src/ui/components/DigiCompactProfilePanel.gd")
 const PickerScript = preload("res://src/ui/components/DigiRosterPickerModal.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
+const CHANGE_ARROW_ICON = preload("res://assets/ui/icons/hp_change_arrow.svg")
 
 const TRIGGER_PRESS_THRESHOLD := 0.55
 const TRIGGER_RELEASE_THRESHOLD := 0.25
@@ -248,8 +249,10 @@ func _refresh_detail() -> void:
 		_detail.add_child(_empty_state("Species data unavailable."))
 		return
 
+	var physical := V2.physical_window_size(get_viewport())
+	var dense := WorkspaceChrome.is_compact(get_viewport()) or physical.y < 760.0
 	var profile := ProfilePanelScript.new() as DigiCompactProfilePanel
-	profile.configure(instance, species, _workspace_progression, true)
+	profile.configure(instance, species, _workspace_progression, true, dense)
 	_detail.add_child(profile)
 
 	if not _status_text.is_empty():
@@ -262,6 +265,7 @@ func _refresh_detail() -> void:
 		{"id": "expansion", "label": "EXPANSION", "accent": V2.ORANGE},
 	], _section_mode)
 	_section_segments.tab_selected.connect(_set_section_mode)
+	_section_segments.set_compact(dense)
 	_detail.add_child(_section_segments)
 
 	var section := _tier_workspace(instance) if _section_mode == "tier" else _expansion_workspace(instance)
@@ -271,9 +275,11 @@ func _refresh_detail() -> void:
 
 
 func _tier_workspace(instance: DigimonInstance) -> Control:
+	var dense := V2.physical_window_size(get_viewport()).y < 760.0 or WorkspaceChrome.is_compact(get_viewport())
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.PURPLE))
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -286,13 +292,13 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 	header.set_workspace_mode(true)
 	stack.add_child(header)
 
-	var inset := _margin(12, 10, 12, 12)
+	var inset := _margin(10, 6, 10, 8) if dense else _margin(12, 10, 12, 12)
 	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(inset)
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 9)
+	body.add_theme_constant_override("separation", 6 if dense else 9)
 	inset.add_child(body)
 
 	var initial := OverworldState.get_tier_promotion_preview(instance.id)
@@ -303,15 +309,21 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 
 	var compare := HBoxContainer.new()
 	compare.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	compare.custom_minimum_size.y = 82.0
+	compare.custom_minimum_size.y = 66.0 if dense else 82.0
 	compare.add_theme_constant_override("separation", 12)
 	body.add_child(compare)
-	compare.add_child(_tier_compare_card("CURRENT", instance.tier, _tier_bonus_copy(instance.tier), V2.CYAN))
-	var arrow := _single_line_label("→", 26, V2.PURPLE, true)
-	arrow.custom_minimum_size.x = 34
-	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	compare.add_child(_tier_compare_card("CURRENT", instance.tier, _tier_bonus_copy(instance.tier), V2.CYAN, dense))
+	var arrow := TextureRect.new()
+	arrow.name = "TierTransitionArrow"
+	arrow.texture = CHANGE_ARROW_ICON
+	arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	arrow.custom_minimum_size = Vector2(26.0, 26.0) if dense else Vector2(34.0, 34.0)
+	arrow.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	arrow.modulate = V2.PURPLE
+	arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	compare.add_child(arrow)
-	compare.add_child(_tier_compare_card("NEXT", next_tier, _tier_bonus_copy(next_tier), V2.PURPLE))
+	compare.add_child(_tier_compare_card("NEXT", next_tier, _tier_bonus_copy(next_tier), V2.PURPLE, dense))
 
 	var requirements := HFlowContainer.new()
 	requirements.add_theme_constant_override("h_separation", 8)
@@ -365,9 +377,11 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 
 
 func _expansion_workspace(instance: DigimonInstance) -> Control:
+	var dense := V2.physical_window_size(get_viewport()).y < 760.0 or WorkspaceChrome.is_compact(get_viewport())
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.ORANGE))
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -380,31 +394,31 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 	header.set_workspace_mode(true)
 	stack.add_child(header)
 
-	var inset := _margin(12, 10, 12, 12)
+	var inset := _margin(10, 6, 10, 8) if dense else _margin(12, 10, 12, 12)
 	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(inset)
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 9)
+	body.add_theme_constant_override("separation", 6 if dense else 9)
 	inset.add_child(body)
 
 	var footprint := PanelContainer.new()
-	footprint.custom_minimum_size.y = 82.0
+	footprint.custom_minimum_size.y = 64.0 if dense else 82.0
 	footprint.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.06), Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.35), 8))
-	var fm := _margin(14, 10, 14, 10)
+	var fm := _margin(10, 6, 10, 6) if dense else _margin(14, 10, 14, 10)
 	footprint.add_child(fm)
 	var fr := HBoxContainer.new()
 	fr.add_theme_constant_override("separation", 14)
 	fm.add_child(fr)
-	var footprint_value := _single_line_label("2×2" if instance.is_expanded() else "1×1", 28, V2.ORANGE, true)
+	var footprint_value := _single_line_label("2×2" if instance.is_expanded() else "1×1", 23 if dense else 28, V2.ORANGE, true)
 	footprint_value.custom_minimum_size.x = 90
 	fr.add_child(footprint_value)
 	var footprint_copy := VBoxContainer.new()
 	footprint_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	fr.add_child(footprint_copy)
-	footprint_copy.add_child(_single_line_label("CURRENT FOOTPRINT", 11, V2.TEXT, true))
-	footprint_copy.add_child(_label("+20% max HP and normal forced-movement immunity while 2×2 is active.", 10, V2.MUTED))
+	footprint_copy.add_child(_single_line_label("CURRENT FOOTPRINT", 10 if dense else 11, V2.TEXT, true))
+	footprint_copy.add_child(_label("+20% max HP and normal forced-movement immunity while 2×2 is active.", 9 if dense else 10, V2.MUTED))
 	body.add_child(footprint)
 
 	var required_tier := _balance.expansion_string("requiredTier", "S")
@@ -466,25 +480,25 @@ func _expansion_workspace(instance: DigimonInstance) -> Control:
 	return panel
 
 
-func _tier_compare_card(caption: String, tier_name: String, bonus: String, accent: Color) -> Control:
+func _tier_compare_card(caption: String, tier_name: String, bonus: String, accent: Color, dense: bool = false) -> Control:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", V2.surface_style(Color(accent.r, accent.g, accent.b, 0.06), Color(accent.r, accent.g, accent.b, 0.32), 8))
-	var margin := _margin(12, 8, 12, 8)
+	var margin := _margin(9, 5, 9, 5) if dense else _margin(12, 8, 12, 8)
 	panel.add_child(margin)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	margin.add_child(row)
 	var tier_icon := TierIconScript.new() as DigiTierIcon
-	tier_icon.configure(tier_name, Vector2(38, 28))
+	tier_icon.configure(tier_name, Vector2(32, 24) if dense else Vector2(38, 28))
 	row.add_child(tier_icon)
 	var copy := VBoxContainer.new()
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
 	copy.add_theme_constant_override("separation", 2)
 	row.add_child(copy)
-	copy.add_child(_single_line_label("%s · TIER %s" % [caption, tier_name], 12, accent, true))
-	copy.add_child(_single_line_label(bonus, 9, V2.MUTED))
+	copy.add_child(_single_line_label("%s · TIER %s" % [caption, tier_name], 11 if dense else 12, accent, true))
+	copy.add_child(_single_line_label(bonus, 8 if dense else 9, V2.MUTED))
 	return panel
 
 
@@ -492,7 +506,7 @@ func _command_button(title: String, subtitle: String, status: String, icon_kind:
 	var button := CommandButtonScript.new() as DigiCommandButton
 	button.configure(title, subtitle, status, icon_kind, accent)
 	button.set_compact(true)
-	button.custom_minimum_size.y = 62.0
+	button.custom_minimum_size.y = 54.0 if V2.physical_window_size(get_viewport()).y < 760.0 or WorkspaceChrome.is_compact(get_viewport()) else 62.0
 	button.set_interactive(interactive)
 	return button
 
