@@ -13,6 +13,8 @@ var _status_text := ""
 var _icon_kind := "info"
 var _semantic_accent := V2.CYAN
 var _selected := false
+var _focused := false
+var _hovered := false
 var _compact := false
 var _built := false
 var _last_disabled := false
@@ -74,6 +76,10 @@ func _ready() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	clip_contents = true
 	_last_disabled = disabled
+	focus_entered.connect(_on_focus_entered)
+	focus_exited.connect(_on_focus_exited)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
 	set_process(true)
 	_apply_styles()
 	_rebuild_content()
@@ -88,16 +94,41 @@ func _process(_delta: float) -> void:
 
 
 func _apply_styles() -> void:
-	add_theme_stylebox_override("normal", V2.selection_card_style(V2.CYAN, _selected, false, disabled))
-	add_theme_stylebox_override("hover", V2.selection_card_style(V2.CYAN, _selected, true, disabled))
-	add_theme_stylebox_override("focus", V2.selection_card_style(V2.CYAN, _selected, true, disabled))
-	# Selection cards never use a depressed/raised visual. Press is an input event,
-	# while selection is persistent state owned by the screen.
-	add_theme_stylebox_override("pressed", V2.selection_card_style(V2.CYAN, _selected, true, disabled))
-	add_theme_stylebox_override("hover_pressed", V2.selection_card_style(V2.CYAN, _selected, true, disabled))
+	var emphasized := _focused or _hovered
+	var stable := V2.selection_card_style(V2.CYAN, _selected, emphasized, disabled)
+	# Button's internal pressed/hover/focus state must never repaint the card with
+	# a different geometry or border colour. The screen owns committed selection
+	# and this component owns transient focus/hover explicitly, so pointer click,
+	# keyboard confirm and controller A all render the same stable surface.
+	for state in ["normal", "hover", "focus", "pressed", "hover_pressed"]:
+		add_theme_stylebox_override(state, stable)
 	add_theme_stylebox_override("disabled", V2.selection_card_style(V2.CYAN, _selected, false, true))
 	add_theme_color_override("font_color", V2.TEXT)
 	add_theme_color_override("font_disabled_color", V2.SUBTLE)
+
+
+func _on_focus_entered() -> void:
+	_focused = true
+	if _built:
+		_apply_styles()
+
+
+func _on_focus_exited() -> void:
+	_focused = false
+	if _built:
+		_apply_styles()
+
+
+func _on_mouse_entered() -> void:
+	_hovered = true
+	if _built:
+		_apply_styles()
+
+
+func _on_mouse_exited() -> void:
+	_hovered = false
+	if _built:
+		_apply_styles()
 
 
 func _rebuild_content() -> void:
