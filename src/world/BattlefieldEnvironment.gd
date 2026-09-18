@@ -83,7 +83,7 @@ func _build_trees(cells: Array[Vector2i]) -> void:
 		tree.set_meta("obstacle_kind", "tree")
 		tree.set_meta("grid", grid)
 		add_child(tree)
-		if index == 0:
+		if bool(descriptor.get("large_canopy_occluder", false)):
 			tree.set_meta("large_canopy_occluder", true)
 			_large_tree_occluders.append(tree)
 
@@ -123,24 +123,31 @@ func _build_rocks(cells: Array[Vector2i]) -> void:
 
 
 func _tree_descriptor(index: int) -> Dictionary:
-	match index:
-		0:
+	# Keep a restrained, repeatable visual rhythm: two large canopy trees for
+	# every six authored tree cells, with the two small-oak cuts filling the
+	# remaining positions. Large-canopy behavior comes from the descriptor,
+	# not from a hard-coded battlefield coordinate.
+	match index % 6:
+		0, 4:
 			return {
 				"name": "OakTreeLarge",
 				"texture": _atlas_texture(OAK_TREE_SOURCE, LARGE_OAK_REGION),
 				"foot": LARGE_OAK_FOOT,
+				"large_canopy_occluder": true,
 			}
-		1:
+		1, 3:
 			return {
 				"name": "OakTreeSmallA",
 				"texture": _atlas_texture(OAK_SMALL_SOURCE, SMALL_OAK_A_REGION),
 				"foot": SMALL_OAK_A_FOOT,
+				"large_canopy_occluder": false,
 			}
 		_:
 			return {
 				"name": "OakTreeSmallB",
 				"texture": _atlas_texture(OAK_SMALL_SOURCE, SMALL_OAK_B_REGION),
 				"foot": SMALL_OAK_B_FOOT,
+				"large_canopy_occluder": false,
 			}
 
 
