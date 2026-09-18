@@ -360,6 +360,10 @@ func _open_dialog() -> void:
 	_refresh_operator_state()
 	_sync_pages_to_selection()
 	_layout_ui()
+	# The inherited dialog briefly focuses its legacy safe action. Replace that
+	# immediately with the current committed program, then repeat deferred after
+	# the layout pass for Web/mobile focus stability.
+	_focus_selected_program()
 	call_deferred("_focus_selected_program")
 
 func _refresh_operator_state() -> void:
@@ -833,12 +837,17 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 
 	if _compact_operator_layout:
 		var tabs_h := 42.0 if short_landscape else 48.0
+		var condensed_summary := short_landscape or physical.x < 620.0
 		_section_tabs.visible = true
 		_section_tabs.set_compact(short_landscape)
 		_section_tabs.position = Vector2(inner_edge, header_h + gap)
 		_section_tabs.size = Vector2(dialog_width - inner_edge * 2.0, tabs_h)
 
-		var summary_h := 96.0 if short_landscape else minf(152.0, dialog_height * 0.24)
+		var summary_h := (
+			112.0
+			if condensed_summary
+			else minf(190.0, dialog_height * 0.28)
+		)
 		var body_top := header_h + gap + tabs_h + gap
 		var body_bottom := dialog_height - inner_edge - summary_h - gap
 		var body_h := maxf(72.0, body_bottom - body_top)
@@ -851,13 +860,16 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 		_summary_panel.position = Vector2(inner_edge, body_bottom + gap)
 		_summary_panel.size = Vector2(dialog_width - inner_edge * 2.0, summary_h)
 
-		_summary_header.visible = not short_landscape
-		_summary_description.visible = not short_landscape
-		_summary_meta.visible = not short_landscape
-		_start_battle_button.custom_minimum_size = Vector2(190.0 if not short_landscape else 156.0, HUB_V2.TOUCH_TARGET)
+		_summary_header.visible = not condensed_summary
+		_summary_description.visible = not condensed_summary
+		_summary_meta.visible = not condensed_summary
+		_start_battle_button.custom_minimum_size = Vector2(190.0 if not condensed_summary else 150.0, HUB_V2.TOUCH_TARGET)
 
 		_program_page_capacity = _page_capacity_for_height(body_h, PROGRAM_IDS.size(), short_landscape)
 		_field_page_capacity = _page_capacity_for_height(body_h, _field_order.size(), short_landscape)
+		if not landscape and physical.x < 520.0:
+			_program_page_capacity = mini(_program_page_capacity, 4)
+			_field_page_capacity = mini(_field_page_capacity, 4)
 	else:
 		_section_tabs.visible = false
 		_summary_header.visible = true
