@@ -1,10 +1,24 @@
 extends Node
 
 const HUB_SCENE = preload("res://scenes/world/hub.tscn")
+const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 
 
 func _ready() -> void:
-	OverworldState.reset_active_party()
+	OverworldState.set_persistence_enabled(false)
+	OverworldState.reset_progress_for_tests()
+	var factory: DigimonFactory = FactoryScript.new(OverworldState.get_database())
+	var reserve_fixture := factory.create_player_by_name("agumon", 1, 100)
+	var storage_fixture := factory.create_player_by_name("gabumon", 1, 100)
+	if not _check(reserve_fixture != null and storage_fixture != null, "Party / Storage regression fixtures must be creatable"):
+		return
+	if not _check(not OverworldState.add_collection_instance(reserve_fixture).is_empty(), "Reserve fixture must enter the collection"):
+		return
+	if not _check(not OverworldState.add_collection_instance(storage_fixture).is_empty(), "Storage fixture must enter the collection"):
+		return
+	if not _check(OverworldState.add_to_reserve_party(reserve_fixture.id), "Reserve fixture must occupy Reserve slot 1"):
+		return
+
 	var hub: Node = HUB_SCENE.instantiate()
 	add_child(hub)
 	await _frames(3)
@@ -65,9 +79,24 @@ func _ready() -> void:
 		return
 	if not _check(_content_uses_available_height(party, "_detail_scroll", "_detail"), "Party / Storage detail must compose itself across the available height"):
 		return
-	if not _check(_squad_actions_are_bounded(party_detail), "Squad Actions command cards must remain compact and fully inside their panel"):
+	if not _check(_squad_actions_are_bounded(party, party_detail, 3), "Active Squad Actions must remain compact and fully above the footer"):
 		return
 
+	party.call("_set_roster_mode", "reserve")
+	await _frames(3)
+	var reserve_detail := party.get("_detail") as Control
+	if not _check(reserve_detail != null and _squad_actions_are_bounded(party, reserve_detail, 3), "Reserve Squad Actions must remain compact and fully above the footer"):
+		return
+
+	party.call("_set_roster_mode", "storage")
+	await _frames(3)
+	var storage_detail := party.get("_detail") as Control
+	if not _check(storage_detail != null and _squad_actions_are_bounded(party, storage_detail, 2), "Storage Squad Actions must remain compact and fully above the footer"):
+		return
+
+	party.call("_set_roster_mode", "active")
+	await _frames(3)
+	party_detail = party.get("_detail") as Control
 	var selected_id: String = String(party.call("get_selected_instance_id"))
 	if not _check(not selected_id.is_empty(), "Party / Storage must expose the selected individual"):
 		return
@@ -250,23 +279,23 @@ func _content_uses_available_height(screen: Control, scroll_key: String, content
 	return true
 
 
-func _squad_actions_are_bounded(root: Control) -> bool:
-	if root == null:
+func _squad_actions_are_bounded(screen: Control, root: Control, expected_command_count: int) -> bool:
+	if screen == null or root == null:
 		return false
 	var panel := root.find_child("SquadActionsPanel", true, false) as Control
 	var commands := root.find_child("SquadActionsCommands", true, false) as VBoxContainer
-	if panel == null or commands == null:
+	var footer := screen.get("_hint_bar") as Control
+	var detail_panel := screen.get("_detail_panel") as Control
+	if panel == null or commands == null or footer == null or detail_panel == null:
 		print("[digilab-layout] missing Squad Actions layout nodes")
 		return false
+
 	var command_count := 0
 	for child: Node in commands.get_children():
 		if not child is DigiCommandButton:
 			continue
 		var command := child as DigiCommandButton
 		command_count += 1
-		# Compact command cards are authored at 72px. Allow a tiny layout margin,
-		# but explicitly reject the regression where a card expands to hundreds
-		# of pixels and pushes its siblings below the no-scroll viewport.
 		if command.size.y > 90.0:
 			print("[digilab-layout] Squad command expanded vertically: %s = %.1f px" % [command.name, command.size.y])
 			return false
@@ -275,8 +304,24 @@ func _squad_actions_are_bounded(root: Control) -> bool:
 		if command_rect.position.y < panel_rect.position.y - 1.0 or command_rect.end.y > panel_rect.end.y + 1.0:
 			print("[digilab-layout] Squad command escaped panel bounds: %s" % command.name)
 			return false
-	if command_count < 3:
-		print("[digilab-layout] Active Squad detail must expose all three command cards")
+
+	if command_count != expected_command_count:
+		print("[digilab-layout] expected %d Squad commands but found %d" % [expected_command_count, command_count])
+		return false
+
+	var panel_rect := panel.get_global_rect()
+	var footer_rect := footer.get_global_rect()
+	var detail_rect := detail_panel.get_global_rect()
+	if panel_rect.end.y > footer_rect.position.y - 2.0:
+		print("[digilab-layout] Squad Actions overlaps footer: panel bottom %.1f footer top %.1f" % [panel_rect.end.y, footer_rect.position.y])
+		return false
+	if panel_rect.end.y > detail_rect.end.y + 1.0:
+		print("[digilab-layout] Squad Actions escaped detail panel")
+		return false
+
+	var minimum_h := panel.get_combined_minimum_size().y
+	if panel.size.y > minimum_h + 6.0:
+		print("[digilab-layout] Squad Actions stretched beyond content: %.1f px vs minimum %.1f px" % [panel.size.y, minimum_h])
 		return false
 	return true
 
