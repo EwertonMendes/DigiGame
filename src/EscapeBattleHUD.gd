@@ -52,7 +52,7 @@ func refresh_from_controller() -> void:
 	var command_available := bool(state.get("can_wait", false))
 	_flee_button.disabled = not bool(state.get("can_flee", false)) if policy_allowed else not command_available
 	_flee_button.text = "Flee"
-	_flee_button.tooltip_text = "Try to flee from battle  [7]" if policy_allowed else "You can't flee from this battle.  [6]"
+	_flee_button.tooltip_text = "Try to flee from battle  [7]" if policy_allowed else "You can't flee from this battle.  [7]"
 	if bool(state.get("battle_over", false)):
 		_flee_button.disabled = true
 		_close_escape_modal()
@@ -310,42 +310,60 @@ func _layout_dock() -> void:
 	if _dock == null or _flee_button == null:
 		_layout_escape_ui()
 		return
+
 	var viewport_obj := get_viewport()
 	var physical := UI.physical_window_size(viewport_obj)
 	var ui_scale := UI.ui_scale(viewport_obj)
 	var compact := UI.is_compact(viewport_obj, 820.0)
 	var user_turn := bool(_cached_state.get("is_user_turn", false))
 	var contextual := _context_row.visible
+
 	if user_turn and not contextual:
 		if not compact:
-			var dock_h := minf(410.0, maxf(330.0, physical.y - 208.0))
-			_dock.size = Vector2(_dock.size.x, dock_h)
-			_layout_command(Vector2(_dock.size.x, dock_h), false, false, true)
-			var visible_count := 0
-			for button: Button in _primary_buttons:
-				if button.visible:
-					visible_count += 1
-			if _undo_button.visible:
-				visible_count += 1
-			var grid_h := maxf(50.0, dock_h - 87.0)
-			var button_h := clampf((grid_h - float(maxi(0, visible_count - 1)) * 3.0) / float(maxi(1, visible_count)), 34.0, 42.0)
-			for button: Button in _primary_buttons:
-				button.custom_minimum_size.y = button_h
-			_undo_button.custom_minimum_size.y = button_h
+			# The base HUD owns desktop rail sizing. It already derives height
+			# from every visible primary command (including Flee) plus the shared
+			# Switch/Undo utility slot, so do not compress or override it here.
+			var required_h := _desktop_command_dock_height(true, false)
+			_dock.size.y = required_h
+			_layout_command(Vector2(_dock.size.x, required_h), false, false, true)
 		elif physical.x > physical.y:
 			var dock_w := _dock.size.x
 			_action_grid.columns = 4 if dock_w >= 420.0 else 3
-			var target_h := 178.0 if _undo_button.visible else 160.0
-			target_h = minf(target_h, maxf(148.0, physical.y - 196.0))
+			var required_h := _compact_command_dock_height(_action_grid.columns)
+			var max_h := maxf(150.0, physical.y - 148.0)
+			var target_h := minf(required_h, max_h)
 			_dock.position.y = maxf(136.0, physical.y - target_h - MOBILE_BOTTOM) * ui_scale
 			_dock.size.y = target_h
 			_layout_command(Vector2(dock_w, target_h), true, false, true)
 		else:
-			var target_h := 198.0 if _undo_button.visible else 176.0
+			_action_grid.columns = 3 if physical.x >= 330.0 else 2
+			var required_h := _compact_command_dock_height(_action_grid.columns)
+			var max_h := maxf(170.0, physical.y - 154.0)
+			var target_h := minf(required_h, max_h)
 			_dock.position.y = (physical.y - target_h - MOBILE_BOTTOM) * ui_scale
 			_dock.size.y = target_h
 			_layout_command(Vector2(_dock.size.x, target_h), true, false, true)
+
 	_layout_escape_ui()
+
+
+func _compact_command_dock_height(columns: int) -> float:
+	var visible_count := 0
+	for button: Button in _primary_buttons:
+		if button.visible:
+			visible_count += 1
+	if _switch_button != null and _switch_button.visible:
+		visible_count += 1
+	if _undo_button != null and _undo_button.visible:
+		visible_count += 1
+	visible_count = maxi(1, visible_count)
+
+	var safe_columns := maxi(1, columns)
+	var rows := ceili(float(visible_count) / float(safe_columns))
+	var button_h := 47.0
+	var gaps := 3.0 * float(maxi(0, rows - 1))
+	# 58px command header + grid rows + 22px footer hint + 7px breathing room.
+	return 58.0 + float(rows) * button_h + gaps + 29.0
 
 
 func _layout_escape_ui() -> void:
