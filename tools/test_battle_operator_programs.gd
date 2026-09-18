@@ -6,6 +6,15 @@ const EncounterScript = preload("res://src/world/BattleEncounterDefinition.gd")
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
 const OperatorIcons = preload("res://src/ui/battle_operator/BattleOperatorIconCatalog.gd")
 const RANKS: Array[String] = ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]
+const OPERATOR_PROGRAM_IDS: Array[String] = [
+	"basic",
+	"random_fresh",
+	"random_baby",
+	"random_rookie",
+	"random_champion",
+	"random_ultimate",
+	"random_mega",
+]
 
 var _failures: Array[String] = []
 
@@ -94,7 +103,7 @@ func _test_operator_icon_catalog() -> void:
 
 	for section_id: String in ["program", "battlefield", "simulation"]:
 		_expect(OperatorIcons.section_icon(section_id) != null, "Section %s must have a dedicated SVG icon" % section_id)
-	for program_id: String in PROGRAM_IDS:
+	for program_id: String in OPERATOR_PROGRAM_IDS:
 		_expect(OperatorIcons.program_icon(program_id) != null, "Program %s must have a dedicated SVG icon" % program_id)
 	for battlefield_id: String in ["training_clearing", "twin_grove", "forest_crossing", "broken_clearing", "grand_digital_field"]:
 		_expect(OperatorIcons.battlefield_icon(battlefield_id) != null, "Battlefield %s must have a dedicated SVG icon" % battlefield_id)
