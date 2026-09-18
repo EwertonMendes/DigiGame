@@ -111,8 +111,12 @@ func _apply_styles() -> void:
 	else:
 		stable = V2.workspace_panel_style(V2.CYAN, false)
 
-	for state in ["normal", "hover", "focus", "pressed", "hover_pressed"]:
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		add_theme_stylebox_override(state, stable)
+	# Button draws the focus StyleBox as an additional overlay. Focus is already
+	# represented by `stable` through _focused, so a second painted focus box
+	# would double the border/glow and create the click/focus flash.
+	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	add_theme_stylebox_override("disabled", V2.hospital_button_style(V2.CYAN, "disabled"))
 	add_theme_color_override("font_color", V2.TEXT)
 	add_theme_color_override("font_disabled_color", V2.SUBTLE)
