@@ -153,14 +153,13 @@ func _test_operator_menu() -> void:
 			_expect(not button.disabled, "%s must be available when the party is battle-ready" % program_id)
 
 			var normal := button.get_theme_stylebox("normal") as StyleBoxFlat
-			var focus_style := button.get_theme_stylebox("focus") as StyleBoxFlat
+			var focus_overlay := button.get_theme_stylebox("focus")
 			var pressed := button.get_theme_stylebox("pressed") as StyleBoxFlat
-			_expect(normal != null and focus_style != null and pressed != null, "%s must expose stable V2 selection styles" % program_id)
-			if normal != null and focus_style != null and pressed != null:
+			_expect(normal != null and focus_overlay is StyleBoxEmpty and pressed != null, "%s must use stable workspace state plus an empty native focus overlay" % program_id)
+			if normal != null and pressed != null:
 				_expect(
-					normal.shadow_size == focus_style.shadow_size
-					and normal.shadow_size == pressed.shadow_size,
-					"%s press/focus states must keep the same shared workspace depth" % program_id
+					normal.shadow_size == pressed.shadow_size,
+					"%s press state must keep the same shared workspace depth" % program_id
 				)
 				_expect(
 					normal.border_width_left == pressed.border_width_left
