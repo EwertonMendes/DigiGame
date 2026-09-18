@@ -107,9 +107,15 @@ async function moveToDigiLabAndOpen(page) {
   await page.keyboard.up('KeyW');
   await settleFrames(page, 2);
 
-  const opened = waitForConsole(page, '[Hub] DIGILAB open', 6000);
+  await page.screenshot({ path: 'build/digilab-approach.png', fullPage: true });
+  const opened = waitForConsole(page, '[Hub] DIGILAB open', 3000);
   await page.keyboard.press('KeyE');
-  await opened;
+  try {
+    await opened;
+  } catch (error) {
+    await page.screenshot({ path: 'build/digilab-open-failed.png', fullPage: true });
+    throw error;
+  }
   await settleFrames(page, 4);
 }
 
