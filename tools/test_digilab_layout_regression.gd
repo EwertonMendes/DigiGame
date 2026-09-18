@@ -27,6 +27,10 @@ func _ready() -> void:
 		return
 	if not _check(_workspace_contract_is_valid(convert, "_list_scroll", "_detail_scroll", "_roster_pager"), "Convert Digi Data must use the paged no-scroll workspace contract"):
 		return
+	if not _check(convert.get("_mode_segments") is DigiSegmentedTabs, "Convert Digi Data must use the shared segmented control"):
+		return
+	if not _check(_find_label_containing(convert.get("_detail_body") as Control, "NEW INDIVIDUAL") == null, "Convert Digi Data must not keep the legacy New Individual strip"):
+		return
 	if not _check(_layout_text_is_usable(convert.get("_detail_body") as Control), "Convert Digi Data contains collapsed or vertical text"):
 		return
 	print("[digilab-layout] convert ok")
@@ -38,6 +42,8 @@ func _ready() -> void:
 	if not _check(_primary_tabs_are_valid(party, "party"), "Party / Storage must expose the three primary tabs"):
 		return
 	if not _check(_workspace_contract_is_valid(party, "_list_scroll", "_detail_scroll", "_workspace_pager"), "Party / Storage must use the paged no-scroll workspace contract"):
+		return
+	if not _check(party.get("_roster_segments") is DigiSegmentedTabs, "Party / Storage must expose separate Party and Storage segments"):
 		return
 	var party_detail: Control = party.get("_detail") as Control
 	if not _check(party_detail != null and _layout_text_is_usable(party_detail), "Party / Storage contains collapsed or vertical text"):
@@ -64,6 +70,8 @@ func _ready() -> void:
 	if not _check(_primary_tabs_are_valid(ascension, "ascension"), "Ascension / Expansion must expose the three primary tabs"):
 		return
 	if not _check(_workspace_contract_is_valid(ascension, "_list_scroll", "_detail_scroll", "_workspace_pager"), "Ascension / Expansion must use the paged no-scroll workspace contract"):
+		return
+	if not _check(ascension.get("_section_segments") is DigiSegmentedTabs, "Ascension / Expansion must use the shared segmented control"):
 		return
 	var ascension_detail: Control = ascension.get("_detail") as Control
 	if not _check(ascension_detail != null and _layout_text_is_usable(ascension_detail), "Ascension / Expansion contains collapsed or vertical text"):
@@ -159,8 +167,13 @@ func _layout_text_is_usable(root: Control) -> bool:
 
 
 func _find_button_by_text(root: Node, target: String) -> Button:
-	if root is Button and (root as Button).text == target:
-		return root as Button
+	if root is Button:
+		var button := root as Button
+		if button.text == target:
+			return button
+		var command_title := button.find_child("CommandTitle", true, false) as Label
+		if command_title != null and command_title.text == target:
+			return button
 	for child: Node in root.get_children():
 		var found: Button = _find_button_by_text(child, target)
 		if found != null:
