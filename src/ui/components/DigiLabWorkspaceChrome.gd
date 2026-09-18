@@ -59,6 +59,24 @@ static func configure_hints(
 	hints.set_hide_hints_on_touch(true)
 
 
+static func install_background(host: Control, background: Control, frame: PanelContainer) -> void:
+	if host == null or background == null or frame == null:
+		return
+	if background.get_parent() != host:
+		return
+
+	# Base DigiLab screens paint an opaque full-screen frame. Workspace screens
+	# render their dedicated backdrop between the legacy input-blocking backdrop
+	# and the frame, then make only the frame surface transparent. Child panels
+	# keep their own opacity, so readability is preserved without hiding the art.
+	var frame_index := frame.get_index()
+	host.move_child(background, frame_index)
+	frame.add_theme_stylebox_override(
+		"panel",
+		V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0)
+	)
+
+
 static func style_workspace_panel(panel: PanelContainer, accent: Color = V2.CYAN) -> void:
 	if panel == null:
 		return
