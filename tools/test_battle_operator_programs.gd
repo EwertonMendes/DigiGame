@@ -128,6 +128,10 @@ func _test_operator_menu() -> void:
 	var training := fields.get("training_clearing") as DigiSelectionCard
 	_expect(basic != null and basic.is_selected(), "Basic Battle must have persistent selected highlight by default")
 	_expect(training != null and training.is_selected(), "Training Clearing must have persistent selected highlight by default")
+	var basic_badge := basic.find_child("SelectionStatus", true, false) as Label if basic != null else null
+	var training_badge := training.find_child("SelectionStatus", true, false) as Label if training != null else null
+	_expect(basic_badge != null and basic_badge.text == "MIXED", "Selected Battle Program must keep its semantic badge instead of displaying SELECTED")
+	_expect(training_badge != null and training_badge.text == "COMPACT", "Selected Battlefield must keep its field-class badge instead of displaying SELECTED")
 	_expect(get_viewport().gui_get_focus_owner() == basic, "Opening Battle Operator must focus the current selected program instead of a destructive/confirm action")
 
 	var expected_titles := {
