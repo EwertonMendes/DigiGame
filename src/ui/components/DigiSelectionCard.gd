@@ -2,7 +2,7 @@ extends Button
 class_name DigiSelectionCard
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
-const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
+const IconScript = preload("res://src/ui/components/DigiIconView.gd")
 
 const REGULAR_HEIGHT := 66.0
 const COMPACT_HEIGHT := 56.0
@@ -11,6 +11,7 @@ var _title_text := ""
 var _subtitle_text := ""
 var _status_text := ""
 var _icon_kind := "info"
+var _icon_texture: Texture2D = null
 var _semantic_accent := V2.CYAN
 var _selected := false
 var _focused := false
@@ -36,6 +37,19 @@ func configure(
 	if _built:
 		_refresh_content_state()
 	return self
+
+
+func set_icon_texture(texture: Texture2D) -> DigiSelectionCard:
+	_icon_texture = texture
+	if _built:
+		_refresh_content_state()
+	return self
+
+
+func clear_icon_texture() -> void:
+	_icon_texture = null
+	if _built:
+		_refresh_content_state()
 
 
 func set_selected(selected: bool) -> void:
@@ -152,10 +166,14 @@ func _on_mouse_exited() -> void:
 
 
 func _refresh_content_state() -> void:
-	var icon := find_child("SelectionIcon", true, false) as DigiProceduralIcon
+	var icon := find_child("SelectionIcon", true, false) as DigiIconView
 	if icon != null:
 		icon.custom_minimum_size = Vector2(27.0, 27.0) if _compact else Vector2(31.0, 31.0)
-		icon.configure(_icon_kind, _semantic_accent if not disabled else V2.SUBTLE, 1.8)
+		var icon_accent := _semantic_accent if not disabled else V2.SUBTLE
+		if _icon_texture != null:
+			icon.configure_texture(_icon_texture, icon_accent)
+		else:
+			icon.configure_procedural(_icon_kind, icon_accent, 1.8)
 
 	var title := find_child("SelectionTitle", true, false) as Label
 	if title != null:
@@ -220,11 +238,15 @@ func _rebuild_content() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
-	var icon := IconScript.new() as DigiProceduralIcon
+	var icon := IconScript.new() as DigiIconView
 	icon.name = "SelectionIcon"
 	icon.custom_minimum_size = Vector2(27.0, 27.0) if _compact else Vector2(31.0, 31.0)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.configure(_icon_kind, _semantic_accent if not disabled else V2.SUBTLE, 1.8)
+	var icon_accent := _semantic_accent if not disabled else V2.SUBTLE
+	if _icon_texture != null:
+		icon.configure_texture(_icon_texture, icon_accent)
+	else:
+		icon.configure_procedural(_icon_kind, icon_accent, 1.8)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(icon)
 

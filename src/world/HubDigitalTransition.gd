@@ -11,6 +11,8 @@ const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
 const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
 const WorkspaceChrome = preload("res://src/ui/components/DigiLabWorkspaceChrome.gd")
+const OperatorIcons = preload("res://src/ui/battle_operator/BattleOperatorIconCatalog.gd")
+const IconViewScript = preload("res://src/ui/components/DigiIconView.gd")
 const OPERATOR_BACKGROUND = preload("res://assets/ui/backgrounds/digimon_menu.png")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
@@ -111,13 +113,14 @@ func _build_dialog() -> void:
 	_mobile_dialog_content.clip_contents = true
 	_dialog_panel.add_child(_mobile_dialog_content)
 
-	_start_battle_button = _dialog_button("START BATTLE", HUB_V2.AMBER)
+	_start_battle_button = _dialog_button("", HUB_V2.AMBER)
 	_start_battle_button.name = "StartBattle"
 	_start_battle_button.custom_minimum_size.y = HUB_V2.TOUCH_TARGET
 	_start_battle_button.pressed.connect(_start_test_battle)
 	_start_battle_button.set_meta("operator_kind", "action")
 	_start_battle_button.set_meta("operator_id", "launch")
 	_apply_v2_dialog_button(_start_battle_button, HUB_V2.AMBER)
+	_build_start_battle_content()
 	_mobile_dialog_content.add_child(_start_battle_button)
 
 	if not _field_catalog.load_default():
@@ -168,6 +171,60 @@ func _build_dialog() -> void:
 	call_deferred("_wire_operator_focus")
 
 
+func _build_start_battle_content() -> void:
+	if _start_battle_button == null:
+		return
+
+	# Do not use Button.icon here. Godot aligns native button icons separately
+	# from centered text, which makes a small SVG sit against the left edge.
+	# A single centered content row keeps the action icon and label together
+	# across desktop, compact and touch layouts without hard-coded offsets.
+	var center := CenterContainer.new()
+	center.name = "StartBattleContent"
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_start_battle_button.add_child(center)
+
+	var row := HBoxContainer.new()
+	row.name = "StartBattleRow"
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(row)
+
+	var icon := IconViewScript.new() as DigiIconView
+	icon.name = "StartBattleIcon"
+	icon.custom_minimum_size = Vector2(22.0, 22.0)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.configure_texture(OperatorIcons.action_icon("start_simulation"), HUB_V2.AMBER)
+	row.add_child(icon)
+
+	var label := Label.new()
+	label.name = "StartBattleLabel"
+	label.text = "START BATTLE"
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", HUB_V2.TEXT)
+	HUB_V2.apply_heading(label)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
+
+
+func _refresh_start_battle_content() -> void:
+	if _start_battle_button == null:
+		return
+	var icon := _start_battle_button.find_child("StartBattleIcon", true, false) as DigiIconView
+	var label := _start_battle_button.find_child("StartBattleLabel", true, false) as Label
+	var content_color := HUB_V2.SUBTLE if _start_battle_button.disabled else HUB_V2.AMBER
+	if icon != null:
+		icon.configure_texture(OperatorIcons.action_icon("start_simulation"), content_color)
+	if label != null:
+		label.add_theme_color_override(
+			"font_color",
+			HUB_V2.SUBTLE if _start_battle_button.disabled else HUB_V2.TEXT
+		)
+
+
 func _build_program_workspace() -> void:
 	_program_panel = PanelContainer.new()
 	_program_panel.name = "ProgramPanel"
@@ -183,7 +240,8 @@ func _build_program_workspace() -> void:
 
 	_program_header = SectionHeaderScript.new() as DigiSectionHeader
 	_program_header.name = "ProgramHeader"
-	_program_header.configure("BATTLE PROGRAM", "7 PROGRAMS", HUB_V2.CYAN, "database")
+	_program_header.configure("BATTLE PROGRAM", "7 PROGRAMS", HUB_V2.CYAN)
+	_program_header.set_icon_texture(OperatorIcons.section_icon("program"))
 	_program_header.set_workspace_mode(true)
 	stack.add_child(_program_header)
 
@@ -211,9 +269,10 @@ func _build_program_workspace() -> void:
 			String(spec.get("title", program_id.to_upper())),
 			String(spec.get("subtitle", "")),
 			String(spec.get("status", "")),
-			String(spec.get("icon", "info")),
+			"",
 			spec.get("accent", HUB_V2.CYAN) as Color
 		)
+		button.set_icon_texture(OperatorIcons.program_icon(program_id))
 		button.set_meta("operator_kind", "program")
 		button.set_meta("operator_id", program_id)
 		button.pressed.connect(_select_battle_program.bind(program_id))
@@ -242,7 +301,8 @@ func _build_battlefield_workspace() -> void:
 
 	_field_header = SectionHeaderScript.new() as DigiSectionHeader
 	_field_header.name = "BattlefieldHeader"
-	_field_header.configure("BATTLEFIELD", "5 FIELDS", HUB_V2.CYAN, "move")
+	_field_header.configure("BATTLEFIELD", "5 FIELDS", HUB_V2.CYAN)
+	_field_header.set_icon_texture(OperatorIcons.section_icon("battlefield"))
 	_field_header.set_workspace_mode(true)
 	stack.add_child(_field_header)
 
@@ -271,9 +331,10 @@ func _build_battlefield_workspace() -> void:
 			definition.display_name.to_upper(),
 			_field_list_subtitle(definition),
 			_field_card_status(definition),
-			"move",
+			"",
 			_field_accent(definition)
 		)
+		button.set_icon_texture(OperatorIcons.battlefield_icon(definition.battlefield_id))
 		button.set_meta("operator_kind", "field")
 		button.set_meta("operator_id", definition.battlefield_id)
 		button.pressed.connect(_select_battlefield.bind(definition.battlefield_id))
@@ -308,7 +369,8 @@ func _build_selection_summary() -> void:
 
 	_summary_header = SectionHeaderScript.new() as DigiSectionHeader
 	_summary_header.name = "SimulationHeader"
-	_summary_header.configure("SIMULATION", "MECHANICS TEST", HUB_V2.CYAN, "sword")
+	_summary_header.configure("SIMULATION", "MECHANICS TEST", HUB_V2.CYAN)
+	_summary_header.set_icon_texture(OperatorIcons.section_icon("simulation"))
 	_summary_header.set_workspace_mode(true)
 	stack.add_child(_summary_header)
 
@@ -462,9 +524,10 @@ func _refresh_program_cards() -> void:
 			String(spec.get("title", program_id.to_upper())),
 			String(spec.get("subtitle", "")),
 			"UNAVAILABLE" if button.disabled else String(spec.get("status", "")),
-			String(spec.get("icon", "info")),
+			"",
 			spec.get("accent", HUB_V2.CYAN) as Color
 		)
+		button.set_icon_texture(OperatorIcons.program_icon(program_id))
 		button.set_selected(program_id == _selected_program_id)
 
 func _refresh_field_cards() -> void:
@@ -477,9 +540,10 @@ func _refresh_field_cards() -> void:
 			definition.display_name.to_upper(),
 			_field_list_subtitle(definition),
 			"INCOMPATIBLE" if button.disabled else _field_card_status(definition),
-			"move",
+			"",
 			_field_accent(definition)
 		)
+		button.set_icon_texture(OperatorIcons.battlefield_icon(battlefield_id))
 		button.set_selected(battlefield_id == _selected_battlefield_id)
 
 func _refresh_selection_summary() -> void:
@@ -520,6 +584,7 @@ func _refresh_launch_state(party_error: String) -> void:
 		message = "Select a battlefield before starting the simulation."
 
 	_start_battle_button.disabled = not message.is_empty()
+	_refresh_start_battle_content()
 	if _summary_state != null:
 		_summary_state.text = "READY TO SIMULATE" if message.is_empty() else "NOT READY"
 		_summary_state.add_theme_color_override("font_color", HUB_V2.GREEN if message.is_empty() else HUB_V2.RED)
@@ -690,19 +755,19 @@ func _rank_for_program(program_id: String) -> String:
 func _program_spec(program_id: String) -> Dictionary:
 	match program_id:
 		"basic":
-			return {"title": "BASIC BATTLE", "subtitle": "Koromon, Tanemon and Veemon. Fixed low-level baseline encounter.", "status": "MIXED", "icon": "sword", "accent": HUB_V2.CYAN}
+			return {"title": "BASIC BATTLE", "subtitle": "Koromon, Tanemon and Veemon. Fixed low-level baseline encounter.", "status": "MIXED", "accent": HUB_V2.CYAN}
 		"random_fresh":
-			return {"title": "RANDOM FRESH", "subtitle": "Three verified Fresh Digimon scaled to your squad.", "status": "FRESH", "icon": "spark", "accent": HUB_V2.CYAN}
+			return {"title": "RANDOM FRESH", "subtitle": "Three verified Fresh Digimon scaled to your squad.", "status": "FRESH", "accent": HUB_V2.CYAN}
 		"random_baby":
-			return {"title": "RANDOM BABY", "subtitle": "Three verified In-Training Digimon scaled to your squad.", "status": "IN-TRAINING", "icon": "spark", "accent": HUB_V2.BLUE}
+			return {"title": "RANDOM BABY", "subtitle": "Three verified In-Training Digimon scaled to your squad.", "status": "IN-TRAINING", "accent": HUB_V2.BLUE}
 		"random_rookie":
-			return {"title": "RANDOM ROOKIE", "subtitle": "Three verified Rookie Digimon scaled to your squad.", "status": "ROOKIE", "icon": "sword", "accent": HUB_V2.GREEN}
+			return {"title": "RANDOM ROOKIE", "subtitle": "Three verified Rookie Digimon scaled to your squad.", "status": "ROOKIE", "accent": HUB_V2.GREEN}
 		"random_champion":
-			return {"title": "RANDOM CHAMPION", "subtitle": "Three verified Champion Digimon scaled to your squad.", "status": "CHAMPION", "icon": "shield", "accent": HUB_V2.AMBER}
+			return {"title": "RANDOM CHAMPION", "subtitle": "Three verified Champion Digimon scaled to your squad.", "status": "CHAMPION", "accent": HUB_V2.AMBER}
 		"random_ultimate":
-			return {"title": "RANDOM ULTIMATE", "subtitle": "Three verified Ultimate Digimon scaled to your squad.", "status": "ULTIMATE", "icon": "bolt", "accent": HUB_V2.RED}
+			return {"title": "RANDOM ULTIMATE", "subtitle": "Three verified Ultimate Digimon scaled to your squad.", "status": "ULTIMATE", "accent": HUB_V2.RED}
 		"random_mega":
-			return {"title": "RANDOM MEGA", "subtitle": "Three verified Mega Digimon scaled to your squad.", "status": "MEGA", "icon": "evolution", "accent": HUB_V2.PURPLE}
+			return {"title": "RANDOM MEGA", "subtitle": "Three verified Mega Digimon scaled to your squad.", "status": "MEGA", "accent": HUB_V2.PURPLE}
 	return {}
 
 

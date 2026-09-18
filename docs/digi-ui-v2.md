@@ -17,6 +17,7 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - `DigiUiTheme.gd`: palette, responsive helpers, surface/button/pill/progress styles, shared glass styles and sizing tokens.
 - `DigiGlassPanel.gd`: reusable glassmorphism foundation for floating panels and modal cards. It centralizes translucency, semantic border tint, shadow, radius and procedural inner highlight. Use `configure_glass(accent, variant, padding, radius)` instead of recreating per-screen styleboxes.
 - `DigiProceduralIcon.gd`: anti-aliased vector icons drawn by Godot for stats and major actions.
+- `DigiIconView.gd`: shared icon presenter that preserves existing procedural icons while allowing authored `Texture2D`/SVG assets to use the same sizing, tinting and component hierarchy.
 - `DigiActionCard.gd`: focusable/touch-safe action card with icon, title, description and status footer.
 - `DigiCommandButtonStyle.gd`: raised command-button language that remains visually distinct from informational panels in normal, hover, focus, pressed and disabled states.
 - `DigiCommandButton.gd`: reusable icon/title/subtitle/status command control built on the shared command style.
@@ -74,7 +75,7 @@ Global overlays follow the same physical-size helpers. Confirmation cards remain
 - DigiLab and Party / Storage: shared modal hierarchy and V2 surfaces/components.
 - Digi Hospital: full-screen V2 treatment workspace with paged patients, explicit exploration/action modes and controller-aware input hints.
 - Training Center: V2 modal header, responsive roster, training budget, semantic attribute steppers, mobility planning, plan summary, adaptive input hints and focus restoration after dynamic updates.
-- Hub chrome: V2 location surface, contextual interaction prompt and a responsive Battle Operator mechanics-test workspace that reuses the DigiLab/Digimon workspace hierarchy: persistent program list, persistent battlefield list, simulation summary/action panel, and compact paged section navigation.
+- Hub chrome: V2 location surface, contextual interaction prompt and a responsive Battle Operator mechanics-test workspace that reuses the DigiLab/Digimon workspace hierarchy: persistent program list, persistent battlefield list, simulation summary/action panel, and compact paged section navigation. Battle Operator presentation uses its own original SVG family under `assets/ui/icons/battle_operator/`; program-rank icons form one progressive data-core language, battlefield icons describe authored arena geometry, and section/action icons remain separate from combat/stat semantics.
 - Confirmation flows: shared V2 confirmation component is used by battle retreat, while specialized evolution confirmation is normalized by the V2 runtime and keeps its richer transition summary.
 - Transient overlays: area-title and battle-start presentation use V2 slate surfaces, typography and restrained semantic accents.
 - Remaining named legacy battle/dialog surfaces are normalized by `DigiUiRuntime` so player-facing chrome no longer falls back to the old Kenney-frame presentation while deeper screens are migrated structurally.
