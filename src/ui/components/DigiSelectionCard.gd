@@ -34,7 +34,6 @@ func configure(
 	_semantic_accent = semantic_accent
 	if _built:
 		_refresh_content_state()
-		_apply_styles()
 	return self
 
 
@@ -44,7 +43,6 @@ func set_selected(selected: bool) -> void:
 	_selected = selected
 	if _built:
 		_apply_styles()
-		_refresh_content_state()
 
 
 func is_selected() -> bool:
@@ -99,23 +97,18 @@ func _apply_styles() -> void:
 	var stable: StyleBoxFlat
 	if disabled:
 		stable = V2.hospital_button_style(V2.CYAN, "disabled")
-	elif _selected:
-		# Committed selection uses the exact workspace selection surface already
-		# used by Digimon/Digi Hospital roster cards.
-		stable = V2.workspace_panel_style(V2.CYAN, true)
-	elif _focused or _hovered:
-		# Focus/hover uses the shared service-button treatment, but the same
-		# StyleBox is installed for pressed as well so clicking cannot flash into
-		# a second visual state.
-		stable = V2.hospital_button_style(V2.CYAN, "focus")
 	else:
-		stable = V2.workspace_panel_style(V2.CYAN, false)
+		# Match the approved Digimon roster interaction language: focus/hover is
+		# a preview of the exact same selected surface, while _selected decides
+		# whether that surface remains after focus/pointer leaves. There is no
+		# intermediate focus colour to flash through when a click commits state.
+		var visually_selected := _selected or _focused or _hovered
+		stable = V2.workspace_panel_style(V2.CYAN, visually_selected)
 
 	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		add_theme_stylebox_override(state, stable)
-	# Button draws the focus StyleBox as an additional overlay. Focus is already
-	# represented by `stable` through _focused, so a second painted focus box
-	# would double the border/glow and create the click/focus flash.
+	# Control draws focus as a second overlay. The complete focus preview is
+	# already represented by the stable card surface above.
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	add_theme_stylebox_override("disabled", V2.hospital_button_style(V2.CYAN, "disabled"))
 	add_theme_color_override("font_color", V2.TEXT)
@@ -166,17 +159,17 @@ func _refresh_content_state() -> void:
 
 	var badge := find_child("SelectionStatus", true, false) as Label
 	if badge != null:
-		badge.text = "SELECTED" if _selected else _status_text
+		badge.text = _status_text
 		badge.visible = not badge.text.is_empty()
 		badge.custom_minimum_size = Vector2(78.0 if _compact else 92.0, 28.0)
 		badge.add_theme_font_size_override("font_size", 8 if _compact else 9)
 		badge.add_theme_color_override(
 			"font_color",
-			V2.CYAN if _selected else (_semantic_accent if not disabled else V2.SUBTLE)
+			_semantic_accent if not disabled else V2.SUBTLE
 		)
 		badge.add_theme_stylebox_override(
 			"normal",
-			V2.pill_style(V2.CYAN if _selected else _semantic_accent, not disabled)
+			V2.pill_style(_semantic_accent, not disabled)
 		)
 
 	tooltip_text = "%s — %s" % [_title_text, _subtitle_text]
@@ -247,7 +240,7 @@ func _rebuild_content() -> void:
 
 	var badge := Label.new()
 	badge.name = "SelectionStatus"
-	badge.text = "SELECTED" if _selected else _status_text
+	badge.text = _status_text
 	badge.visible = not badge.text.is_empty()
 	badge.custom_minimum_size = Vector2(78.0 if _compact else 92.0, 28.0)
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -255,11 +248,11 @@ func _rebuild_content() -> void:
 	badge.add_theme_font_size_override("font_size", 8 if _compact else 9)
 	badge.add_theme_color_override(
 		"font_color",
-		V2.CYAN if _selected else (_semantic_accent if not disabled else V2.SUBTLE)
+		_semantic_accent if not disabled else V2.SUBTLE
 	)
 	badge.add_theme_stylebox_override(
 		"normal",
-		V2.pill_style(V2.CYAN if _selected else _semantic_accent, not disabled)
+		V2.pill_style(_semantic_accent, not disabled)
 	)
 	V2.apply_heading(badge)
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
