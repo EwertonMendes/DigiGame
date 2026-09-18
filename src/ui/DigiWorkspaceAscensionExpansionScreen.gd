@@ -21,6 +21,7 @@ var _compact_detail_open := false
 var _section_mode := "tier"
 var _left_trigger_down := false
 var _right_trigger_down := false
+var _section_layout_revision := 0
 
 var _workspace_pager: DigiPager
 var _workspace_back_button: Button
@@ -37,6 +38,7 @@ func open_screen(preferred_instance_id: String = "") -> void:
 	_compact_detail_open = false
 	_left_trigger_down = false
 	_right_trigger_down = false
+	_section_layout_revision += 1
 	super.open_screen(preferred_instance_id)
 	WorkspaceChrome.configure_header(_header)
 	_header.set_active_tab("ascension")
@@ -572,9 +574,42 @@ func _set_section_mode(mode: String) -> void:
 	_section_mode = mode
 	if _section_segments != null:
 		_section_segments.set_active(mode)
+
+	# Rebuilding the detail tree changes several nested Container minimum sizes.
+	# The first Expansion switch used to run _layout() before Godot had completed
+	# that propagation, so the new workspace inherited the previous frame's
+	# geometry and extended behind the footer. Re-entering the screen fixed it
+	# only because open_screen() already performs a deferred second layout pass.
 	_refresh_detail()
 	_layout()
+	_queue_section_layout_settle()
 	call_deferred("_focus_first_detail_control")
+
+
+func _queue_section_layout_settle() -> void:
+	_section_layout_revision += 1
+	call_deferred("_settle_section_layout", _section_layout_revision)
+
+
+func _settle_section_layout(revision: int) -> void:
+	# Wait for one complete frame so VBox/Panel/ScrollContainer minimum sizes
+	# produced by the newly built Tier/Expansion subtree are authoritative.
+	await get_tree().process_frame
+	if revision != _section_layout_revision or not visible or _detail == null:
+		return
+
+	_layout()
+	if _detail_scroll != null:
+		_detail_scroll.scroll_vertical = 0
+
+	# _layout() changes the outer panel geometry. Give the child Containers one
+	# final frame to distribute that geometry, then verify/apply the same layout
+	# contract once more. This is presentation settling only; no content rebuild
+	# or gameplay state is touched.
+	await get_tree().process_frame
+	if revision != _section_layout_revision or not visible:
+		return
+	_layout()
 
 
 func _toggle_section_mode() -> void:
