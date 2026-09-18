@@ -9,6 +9,10 @@ const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const NEBULA_TEXTURE = preload("res://assets/backgrounds/Nebula Blue.png")
 
 const NODE_SIZE := Vector2(204.0, 92.0)
+const NODE_VISUAL_FRAME_SIZE := 80.0
+const NODE_PREVIEW_MIN_FILL := 0.66
+const NODE_PREVIEW_RANK_STEP := 0.085
+const NODE_PREVIEW_MAX_FILL := 1.0
 const COLUMN_GAP := 252.0
 const ROW_GAP := 116.0
 const MIN_ZOOM := 0.58
@@ -358,20 +362,20 @@ func _create_node_button(node: Dictionary) -> Button:
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", 6)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(margin)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 9)
+	row.add_theme_constant_override("separation", 5)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
 	var visual_frame := PanelContainer.new()
-	visual_frame.custom_minimum_size = Vector2(68.0, 68.0)
+	visual_frame.custom_minimum_size = Vector2(NODE_VISUAL_FRAME_SIZE, NODE_VISUAL_FRAME_SIZE)
 	visual_frame.add_theme_stylebox_override("panel", SKIN.frame_style(Color(0.09, 0.14, 0.25, 0.90), Vector4(4, 4, 4, 4), 8.0))
 	visual_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(visual_frame)
@@ -379,7 +383,12 @@ func _create_node_button(node: Dictionary) -> Button:
 	var visual_key := _resolve_field_visual_key(species_name)
 	if not visual_key.is_empty():
 		var preview := WalkPreviewScript.new() as DigimonWalkPreview
-		preview.custom_minimum_size = Vector2(60.0, 60.0)
+		preview.custom_minimum_size = Vector2(NODE_VISUAL_FRAME_SIZE - 8.0, NODE_VISUAL_FRAME_SIZE - 8.0)
+		preview.configure_presentation(
+			WalkPreviewScript.FIT_VISUAL_ENVELOPE,
+			_node_preview_fill_ratio(node),
+			Vector2.ZERO
+		)
 		preview.set_species(visual_key)
 		preview.set_active(true)
 		visual_frame.add_child(preview)
@@ -427,6 +436,19 @@ func _create_node_button(node: Dictionary) -> Button:
 	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(status)
 	return button
+
+
+func _node_preview_fill_ratio(node: Dictionary) -> float:
+	# Evolution cards favor legibility, but keep a monotonic stage hierarchy:
+	# every rank gains a little more of the available visual envelope, so
+	# Fresh/In-Training/Rookie forms can be large without overtaking Champion+
+	# simply because their source cells happen to be compact.
+	var rank_index := maxi(0, int(node.get("rank_index", 3)))
+	return clampf(
+		NODE_PREVIEW_MIN_FILL + float(rank_index) * NODE_PREVIEW_RANK_STEP,
+		NODE_PREVIEW_MIN_FILL,
+		NODE_PREVIEW_MAX_FILL
+	)
 
 
 func _refresh_node_styles() -> void:
