@@ -81,17 +81,23 @@ func _ready() -> void:
 		return
 	if not _check(_squad_actions_are_bounded(party, party_detail, 3), "Active Squad Actions must remain compact and fully above the footer"):
 		return
+	if not _check(_stats_are_bounded(party, party_detail), "Active Stats must keep all seven rows inside the visible detail area"):
+		return
 
 	party.call("_set_roster_mode", "reserve")
 	await _frames(3)
 	var reserve_detail := party.get("_detail") as Control
 	if not _check(reserve_detail != null and _squad_actions_are_bounded(party, reserve_detail, 3), "Reserve Squad Actions must remain compact and fully above the footer"):
 		return
+	if not _check(_stats_are_bounded(party, reserve_detail), "Reserve Stats must keep all seven rows inside the visible detail area"):
+		return
 
 	party.call("_set_roster_mode", "storage")
 	await _frames(3)
 	var storage_detail := party.get("_detail") as Control
 	if not _check(storage_detail != null and _squad_actions_are_bounded(party, storage_detail, 2), "Storage Squad Actions must remain compact and fully above the footer"):
+		return
+	if not _check(_stats_are_bounded(party, storage_detail), "Storage Stats must keep all seven rows inside the visible detail area"):
 		return
 
 	party.call("_set_roster_mode", "active")
@@ -146,6 +152,15 @@ func _ready() -> void:
 	if not _check(tier_actions != null and tier_actions.size_flags_vertical == Control.SIZE_EXPAND_FILL, "Tier actions must expand into available vertical room"):
 		return
 	print("[digilab-layout] ascension deep-link ok")
+
+	ascension.call("_set_section_mode", "expansion")
+	await _frames(4)
+	ascension_detail = ascension.get("_detail") as Control
+	if not _check(_content_fits_disabled_scroll(ascension, "_detail_scroll", "_detail"), "Expansion detail must fit without scrolling"):
+		return
+	if not _check(_expansion_content_is_bounded(ascension, ascension_detail), "Expansion footprint and actions must remain fully above the footer"):
+		return
+	print("[digilab-layout] expansion bounds ok")
 
 	# DigiModalHeader uses the same adjacent-tab method for LB/RB and L1/R1.
 	# Moving left from Ascension must therefore return to Party / Storage.
@@ -322,6 +337,78 @@ func _squad_actions_are_bounded(screen: Control, root: Control, expected_command
 	var minimum_h := panel.get_combined_minimum_size().y
 	if panel.size.y > minimum_h + 6.0:
 		print("[digilab-layout] Squad Actions stretched beyond content: %.1f px vs minimum %.1f px" % [panel.size.y, minimum_h])
+		return false
+	return true
+
+
+func _stats_are_bounded(screen: Control, root: Control) -> bool:
+	if screen == null or root == null:
+		return false
+	var stats := root.find_child("PartyWorkspaceStats", true, false) as Control
+	var detail_panel := screen.get("_detail_panel") as Control
+	var footer := screen.get("_hint_bar") as Control
+	if stats == null or detail_panel == null or footer == null:
+		print("[digilab-layout] missing bounded Stats layout nodes")
+		return false
+
+	var rows: Array[Control] = []
+	for child: Node in stats.find_children("*", "DigiStatRow", true, false):
+		if child is Control:
+			rows.append(child as Control)
+	if rows.size() != 7:
+		print("[digilab-layout] expected 7 Stats rows but found %d" % rows.size())
+		return false
+
+	var detail_rect := detail_panel.get_global_rect()
+	var footer_rect := footer.get_global_rect()
+	for row: Control in rows:
+		var rect := row.get_global_rect()
+		if rect.position.y < detail_rect.position.y - 1.0 or rect.end.y > detail_rect.end.y + 1.0:
+			print("[digilab-layout] Stats row escaped detail panel: %s" % row.name)
+			return false
+		if rect.end.y > footer_rect.position.y - 2.0:
+			print("[digilab-layout] Stats row overlaps footer: %s" % row.name)
+			return false
+		if row.size.y > 44.0:
+			print("[digilab-layout] bounded Stats row stretched vertically: %s = %.1f px" % [row.name, row.size.y])
+			return false
+	return true
+
+
+func _expansion_content_is_bounded(screen: Control, root: Control) -> bool:
+	if screen == null or root == null:
+		return false
+	var footprint := root.find_child("ExpansionFootprint", true, false) as Control
+	var actions := root.find_child("ExpansionActions", true, false) as Control
+	var detail_panel := screen.get("_detail_panel") as Control
+	var footer := screen.get("_hint_bar") as Control
+	if footprint == null or actions == null or detail_panel == null or footer == null:
+		print("[digilab-layout] missing Expansion layout nodes")
+		return false
+
+	var detail_rect := detail_panel.get_global_rect()
+	var footer_rect := footer.get_global_rect()
+	for control: Control in [footprint, actions]:
+		var rect := control.get_global_rect()
+		if rect.end.y > detail_rect.end.y + 1.0 or rect.end.y > footer_rect.position.y - 2.0:
+			print("[digilab-layout] Expansion control escaped visible workspace: %s" % control.name)
+			return false
+
+	var command_count := 0
+	for child: Node in actions.get_children():
+		if not child is DigiCommandButton:
+			continue
+		command_count += 1
+		var button := child as DigiCommandButton
+		if button.size.y > 90.0:
+			print("[digilab-layout] Expansion command stretched vertically: %s = %.1f px" % [button.name, button.size.y])
+			return false
+		var rect := button.get_global_rect()
+		if rect.end.y > detail_rect.end.y + 1.0 or rect.end.y > footer_rect.position.y - 2.0:
+			print("[digilab-layout] Expansion command escaped visible workspace: %s" % button.name)
+			return false
+	if command_count != 2:
+		print("[digilab-layout] Expansion must expose exactly two command cards; found %d" % command_count)
 		return false
 	return true
 
