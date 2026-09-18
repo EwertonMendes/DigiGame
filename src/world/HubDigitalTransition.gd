@@ -726,7 +726,7 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventJoypadButton:
 		var joy := event as InputEventJoypadButton
-		if joy.pressed and _compact_operator_layout:
+		if joy.pressed:
 			if joy.button_index == JOY_BUTTON_LEFT_SHOULDER:
 				_switch_operator_section(-1, true)
 				get_viewport().set_input_as_handled()
@@ -738,21 +738,31 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventJoypadMotion:
 		var motion := event as InputEventJoypadMotion
-		var gate := _right_analog_gate if motion.axis == JOY_AXIS_RIGHT_X or motion.axis == JOY_AXIS_RIGHT_Y else _left_analog_gate
-		var step := 0
-		if motion.axis == JOY_AXIS_LEFT_X or motion.axis == JOY_AXIS_RIGHT_X:
-			step = gate.horizontal_step(motion.axis_value)
-			if step != 0:
-				_focus_operator_neighbor("right" if step > 0 else "left")
-		elif motion.axis == JOY_AXIS_LEFT_Y or motion.axis == JOY_AXIS_RIGHT_Y:
-			step = gate.vertical_step(motion.axis_value)
-			if step != 0:
-				_focus_operator_neighbor("down" if step > 0 else "up")
-		if step != 0:
-			get_viewport().set_input_as_handled()
+		# Match the approved service screens: menu navigation belongs exclusively
+		# to the left stick and passes through one hysteresis gate. Right-stick
+		# motion and trigger axes are consumed but never mapped to menu focus.
+		match motion.axis:
+			JOY_AXIS_LEFT_Y:
+				var step := _analog_gate.vertical_step(motion.axis_value)
+				if step != 0:
+					_focus_operator_neighbor("down" if step > 0 else "up")
+			JOY_AXIS_LEFT_X:
+				var step := _analog_gate.horizontal_step(motion.axis_value)
+				if step != 0:
+					_focus_operator_neighbor("right" if step > 0 else "left")
+			_:
+				pass
+		get_viewport().set_input_as_handled()
 		return
 
-	if event.is_action_pressed("ui_cancel"):
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.pressed and not key.echo and key.keycode == KEY_TAB:
+			_switch_operator_section(-1 if key.shift_pressed else 1, true)
+			get_viewport().set_input_as_handled()
+			return
+
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu"):
 		_close_dialog()
 		get_viewport().set_input_as_handled()
 		return
@@ -779,7 +789,6 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventScreenTouch:
 		_handle_operator_touch(event as InputEventScreenTouch)
-
 
 func _activate_focused_operator_control() -> void:
 	var focus_owner := get_viewport().gui_get_focus_owner() as Button
@@ -843,68 +852,78 @@ func _handle_operator_touch(touch: InputEventScreenTouch) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, edge: float) -> void:
-	if _dialog_panel == null or _mobile_dialog_content == null or _operator_header == null:
-		super._layout_mobile_dialog(physical, ui_scale, landscape, edge)
+func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, _edge: float) -> void:
+	if (
+		_dialog_panel == null
+		or _mobile_dialog_content == null
+		or _operator_header == null
+		or _operator_footer == null
+	):
 		return
 
-	var short_landscape := landscape and physical.y < 520.0
-	_compact_operator_layout = physical.x < 980.0 or physical.y < 620.0
-	var outer_edge := 10.0 if short_landscape else (14.0 if _compact_operator_layout else 22.0)
-	var dialog_width := minf(1320.0, physical.x - outer_edge * 2.0)
-	var dialog_height := minf(820.0, physical.y - outer_edge * 2.0)
-	var inner_edge := 10.0 if short_landscape else (14.0 if _compact_operator_layout else 20.0)
-	var gap := 8.0 if _compact_operator_layout else 12.0
-	var header_h := 64.0 if short_landscape else (72.0 if _compact_operator_layout else 86.0)
+	# Use the exact workspace metrics shared by DigiLab and the modern Digimon
+	# menu instead of sizing Battle Operator as a centered conversation dialog.
+	_compact_operator_layout = WorkspaceChrome.is_compact(get_viewport())
+	var short_landscape := landscape and physical.y < WorkspaceChrome.LOW_HEIGHT
+	var workspace_edge := WorkspaceChrome.edge_for(_compact_operator_layout)
+	var gap := WorkspaceChrome.GAP
+	var header_h := WorkspaceChrome.header_height(_compact_operator_layout)
+	var footer_h := WorkspaceChrome.FOOTER_HEIGHT
+	var top_gap := WorkspaceChrome.top_gap(_compact_operator_layout)
+	var body_top := header_h + top_gap
+	var body_bottom := physical.y - footer_h - WorkspaceChrome.BOTTOM_GAP
+	var body_h := maxf(120.0, body_bottom - body_top)
 
 	_dialog_panel.scale = Vector2.ONE * ui_scale
-	_dialog_panel.position = Vector2(
-		(physical.x - dialog_width) * 0.5 * ui_scale,
-		(physical.y - dialog_height) * 0.5 * ui_scale
-	)
-	_dialog_panel.size = Vector2(dialog_width, dialog_height)
+	_dialog_panel.position = Vector2.ZERO
+	_dialog_panel.size = physical
 	_mobile_dialog_content.position = Vector2.ZERO
-	_mobile_dialog_content.size = Vector2(dialog_width, dialog_height)
+	_mobile_dialog_content.size = physical
 
 	_operator_header.position = Vector2.ZERO
-	_operator_header.size = Vector2(dialog_width, header_h)
-	if physical.x < 520.0:
-		_operator_header.configure("BATTLE", "Battle Operator", 0, false)
-	else:
-		_operator_header.configure("BATTLE OPERATOR", "Battle Simulation", 0, false)
+	_operator_header.size = Vector2(physical.x, header_h)
+	_operator_header.configure("BATTLE OPERATOR", "Battle Simulation", 0, false)
+	_operator_header_rule.position = Vector2(0.0, header_h - 1.0)
+	_operator_header_rule.size = Vector2(physical.x, 1.0)
+	_operator_footer.position = Vector2(0.0, physical.y - footer_h)
+	_operator_footer.size = Vector2(physical.x, footer_h)
 
 	if _compact_operator_layout:
-		var tabs_h := 42.0 if short_landscape else 48.0
+		var tabs_h := 46.0 if not short_landscape else 42.0
 		var condensed_summary := short_landscape or physical.x < 620.0
 		_section_tabs.visible = true
-		_section_tabs.set_compact(short_landscape)
-		_section_tabs.position = Vector2(inner_edge, header_h + gap)
-		_section_tabs.size = Vector2(dialog_width - inner_edge * 2.0, tabs_h)
+		_section_tabs.set_compact(true)
+		_section_tabs.position = Vector2(workspace_edge, body_top)
+		_section_tabs.size = Vector2(physical.x - workspace_edge * 2.0, tabs_h)
 
-		var summary_h := (
-			112.0
-			if condensed_summary
-			else minf(190.0, dialog_height * 0.28)
+		var summary_h := 108.0 if condensed_summary else minf(176.0, body_h * 0.30)
+		var list_top := body_top + tabs_h + gap
+		var summary_top := body_bottom - summary_h
+		var list_h := maxf(72.0, summary_top - gap - list_top)
+		var body_rect := Rect2(
+			workspace_edge,
+			list_top,
+			physical.x - workspace_edge * 2.0,
+			list_h
 		)
-		var body_top := header_h + gap + tabs_h + gap
-		var body_bottom := dialog_height - inner_edge - summary_h - gap
-		var body_h := maxf(72.0, body_bottom - body_top)
-		var body_rect := Rect2(inner_edge, body_top, dialog_width - inner_edge * 2.0, body_h)
 
 		_program_panel.position = body_rect.position
 		_program_panel.size = body_rect.size
 		_field_panel.position = body_rect.position
 		_field_panel.size = body_rect.size
-		_summary_panel.position = Vector2(inner_edge, body_bottom + gap)
-		_summary_panel.size = Vector2(dialog_width - inner_edge * 2.0, summary_h)
+		_summary_panel.position = Vector2(workspace_edge, summary_top)
+		_summary_panel.size = Vector2(physical.x - workspace_edge * 2.0, summary_h)
 
 		_summary_header.visible = not condensed_summary
 		_summary_description.visible = not condensed_summary
 		_summary_meta.visible = not condensed_summary
-		_start_battle_button.custom_minimum_size = Vector2(190.0 if not condensed_summary else 150.0, HUB_V2.TOUCH_TARGET)
+		_start_battle_button.custom_minimum_size = Vector2(
+			150.0 if condensed_summary else 190.0,
+			HUB_V2.TOUCH_TARGET
+		)
 
-		_program_page_capacity = _page_capacity_for_height(body_h, PROGRAM_IDS.size(), short_landscape)
-		_field_page_capacity = _page_capacity_for_height(body_h, _field_order.size(), short_landscape)
+		_program_page_capacity = _page_capacity_for_height(list_h, PROGRAM_IDS.size(), short_landscape)
+		_field_page_capacity = _page_capacity_for_height(list_h, _field_order.size(), short_landscape)
 		if not landscape and physical.x < 520.0:
 			_program_page_capacity = mini(_program_page_capacity, 4)
 			_field_page_capacity = mini(_field_page_capacity, 4)
@@ -915,18 +934,16 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 		_summary_meta.visible = true
 		_start_battle_button.custom_minimum_size = Vector2(220.0, HUB_V2.TOUCH_TARGET)
 
-		var body_top := header_h + gap
-		var body_h := maxf(320.0, dialog_height - body_top - inner_edge)
-		var usable_w := dialog_width - inner_edge * 2.0 - gap * 2.0
-		var program_w := clampf(usable_w * 0.30, 300.0, 410.0)
-		var field_w := clampf(usable_w * 0.29, 290.0, 390.0)
-		var summary_w := maxf(300.0, usable_w - program_w - field_w)
+		var usable_w := physical.x - workspace_edge * 2.0 - gap * 2.0
+		var program_w := clampf(usable_w * 0.30, 330.0, 470.0)
+		var field_w := clampf(usable_w * 0.29, 320.0, 450.0)
+		var summary_w := maxf(340.0, usable_w - program_w - field_w)
 
-		_program_panel.position = Vector2(inner_edge, body_top)
+		_program_panel.position = Vector2(workspace_edge, body_top)
 		_program_panel.size = Vector2(program_w, body_h)
-		_field_panel.position = Vector2(inner_edge + program_w + gap, body_top)
+		_field_panel.position = Vector2(workspace_edge + program_w + gap, body_top)
 		_field_panel.size = Vector2(field_w, body_h)
-		_summary_panel.position = Vector2(inner_edge + program_w + gap + field_w + gap, body_top)
+		_summary_panel.position = Vector2(workspace_edge + program_w + gap + field_w + gap, body_top)
 		_summary_panel.size = Vector2(summary_w, body_h)
 
 		_program_page_capacity = PROGRAM_IDS.size()
@@ -938,7 +955,6 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	_refresh_section_visibility()
 	_refresh_page_visibility()
 	_wire_operator_focus()
-
 
 func _page_capacity_for_height(panel_height: float, total: int, short_landscape: bool) -> int:
 	if total <= 1:
@@ -1141,11 +1157,10 @@ func _wire_operator_focus() -> void:
 	)
 	var selected_field := _selected_field_button()
 	if selected_field != null:
-		_start_battle_button.focus_neighbor_left = selected_field.get_path()
-		_start_battle_button.focus_neighbor_top = selected_field.get_path()
+		_start_battle_button.focus_neighbor_left = _start_battle_button.get_path_to(selected_field)
+		_start_battle_button.focus_neighbor_top = _start_battle_button.get_path_to(selected_field)
 	_start_battle_button.focus_neighbor_right = _start_battle_button.get_path()
 	_start_battle_button.focus_neighbor_bottom = _start_battle_button.get_path()
-
 
 func _wire_selection_list(
 	ids: Array[String],
@@ -1161,28 +1176,33 @@ func _wire_selection_list(
 		var button := controls.get(visible[index]) as Button
 		if button == null:
 			continue
-		var previous := controls.get(visible[maxi(0, index - 1)]) as Button
-		var next := controls.get(visible[mini(visible.size() - 1, index + 1)]) as Button
+
+		# Lists use the same page-local wrap contract as the approved roster
+		# screens. Focus moves exactly one visible item per navigation step.
+		var previous := controls.get(visible[posmod(index - 1, visible.size())]) as Button
+		var next := controls.get(visible[posmod(index + 1, visible.size())]) as Button
 		if previous != null:
-			button.focus_neighbor_top = previous.get_path()
+			button.focus_neighbor_top = button.get_path_to(previous)
 		if next != null:
-			button.focus_neighbor_bottom = next.get_path()
+			button.focus_neighbor_bottom = button.get_path_to(next)
 
 		if not _compact_operator_layout:
 			if section == SECTION_PROGRAM:
 				var field := _selected_field_button()
 				if field != null:
-					button.focus_neighbor_right = field.get_path()
+					button.focus_neighbor_right = button.get_path_to(field)
 				button.focus_neighbor_left = button.get_path()
 			else:
 				var program := _selected_program_button()
 				if program != null:
-					button.focus_neighbor_left = program.get_path()
-				button.focus_neighbor_right = _start_battle_button.get_path()
+					button.focus_neighbor_left = button.get_path_to(program)
+				button.focus_neighbor_right = button.get_path_to(_start_battle_button)
 		else:
+			# Compact keeps one list visible at a time. Horizontal focus changes
+			# section (or reaches Start) in _focus_operator_neighbor rather than
+			# inventing hidden focus neighbors.
 			button.focus_neighbor_left = button.get_path()
 			button.focus_neighbor_right = button.get_path()
-
 
 func _focus_operator_neighbor(direction: String) -> void:
 	var focus := get_viewport().gui_get_focus_owner() as Control
