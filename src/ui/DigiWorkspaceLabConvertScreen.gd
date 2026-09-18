@@ -4,6 +4,8 @@ class_name DigiWorkspaceLabConvertScreen
 const WorkspaceChrome = preload("res://src/ui/components/DigiLabWorkspaceChrome.gd")
 const WorkspaceBackdrop = preload("res://src/ui/components/DigiLabWorkspaceBackdrop.gd")
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
+const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
+const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
 
 const TRIGGER_PRESS_THRESHOLD := 0.55
 const TRIGGER_RELEASE_THRESHOLD := 0.25
@@ -23,6 +25,8 @@ var _record_pager: DigiPager
 var _compact_mode_bar: HBoxContainer
 var _compact_reconstruct_button: Button
 var _compact_records_button: Button
+var _mode_segments: DigiSegmentedTabs
+var _compact_segments: DigiSegmentedTabs
 
 
 func open_lab() -> void:
@@ -58,11 +62,28 @@ func _build() -> void:
 	WorkspaceChrome.disable_scroll(_detail_scroll)
 
 	var list_stack := _list_panel.get_child(0) as VBoxContainer
+	var pager_margin := _margin(10, 2, 10, 8)
 	_roster_pager = PagerScript.new() as DigiPager
 	_roster_pager.name = "DigiDataPager"
 	_roster_pager.set_workspace_mode(true)
 	_roster_pager.page_delta_requested.connect(_turn_roster_page)
-	list_stack.add_child(_roster_pager)
+	pager_margin.add_child(_roster_pager)
+	list_stack.add_child(pager_margin)
+
+	var legacy_mode_margin := _mode_bar.get_parent() as CanvasItem
+	if legacy_mode_margin != null:
+		legacy_mode_margin.visible = false
+	var detail_stack := _detail_panel.get_child(0) as VBoxContainer
+	var segment_margin := _margin(12, 10, 12, 6)
+	_mode_segments = SegmentScript.new() as DigiSegmentedTabs
+	_mode_segments.configure([
+		{"id": "reconstruction", "label": "RECONSTRUCTION", "accent": V2.CYAN},
+		{"id": "records", "label": "TECHNIQUE RECORDS", "accent": V2.AMBER},
+	], _lab_mode)
+	_mode_segments.tab_selected.connect(_set_lab_mode)
+	segment_margin.add_child(_mode_segments)
+	detail_stack.add_child(segment_margin)
+	detail_stack.move_child(segment_margin, 1)
 
 	_workspace_back_button = _workspace_button("‹  ARCHIVE", V2.CYAN)
 	_workspace_back_button.name = "BackToDigiData"
@@ -74,14 +95,14 @@ func _build() -> void:
 	_compact_mode_bar = HBoxContainer.new()
 	_compact_mode_bar.name = "CompactLabModes"
 	_compact_mode_bar.visible = false
-	_compact_mode_bar.add_theme_constant_override("separation", 8)
 	_root.add_child(_compact_mode_bar)
-	_compact_reconstruct_button = _workspace_segment_button("RECONSTRUCTION")
-	_compact_reconstruct_button.pressed.connect(_set_lab_mode.bind("reconstruction"))
-	_compact_mode_bar.add_child(_compact_reconstruct_button)
-	_compact_records_button = _workspace_segment_button("TECHNIQUE RECORDS")
-	_compact_records_button.pressed.connect(_set_lab_mode.bind("records"))
-	_compact_mode_bar.add_child(_compact_records_button)
+	_compact_segments = SegmentScript.new() as DigiSegmentedTabs
+	_compact_segments.configure([
+		{"id": "reconstruction", "label": "RECONSTRUCTION", "accent": V2.CYAN},
+		{"id": "records", "label": "TECHNIQUE RECORDS", "accent": V2.AMBER},
+	], _lab_mode)
+	_compact_segments.tab_selected.connect(_set_lab_mode)
+	_compact_mode_bar.add_child(_compact_segments)
 
 	for button in [_reconstruct_mode_button, _records_mode_button]:
 		button.custom_minimum_size = Vector2(150.0, 52.0)
@@ -144,10 +165,10 @@ func _set_lab_mode(mode: String) -> void:
 
 func _style_mode_tabs() -> void:
 	super._style_mode_tabs()
-	if _compact_reconstruct_button == null:
-		return
-	_style_workspace_segment(_compact_reconstruct_button, _lab_mode == "reconstruction", V2.CYAN)
-	_style_workspace_segment(_compact_records_button, _lab_mode == "records", V2.AMBER)
+	if _mode_segments != null:
+		_mode_segments.set_active(_lab_mode)
+	if _compact_segments != null:
+		_compact_segments.set_active(_lab_mode)
 
 
 func _refresh_list() -> void:
@@ -180,7 +201,7 @@ func _refresh_list() -> void:
 		selected_index = 0
 		_selected_name = String(entries[0].get("name", ""))
 
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
 	_roster_page_count = maxi(1, ceili(float(entries.size()) / float(capacity)))
 	_roster_page = clampi(selected_index / capacity, 0, _roster_page_count - 1)
 	var start := _roster_page * capacity
@@ -217,7 +238,7 @@ func _refresh_record_roster() -> void:
 		selected_index = 0
 		_selected_name = instances[0].id
 
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
 	_roster_page_count = maxi(1, ceili(float(instances.size()) / float(capacity)))
 	_roster_page = clampi(selected_index / capacity, 0, _roster_page_count - 1)
 	var start := _roster_page * capacity
@@ -302,7 +323,7 @@ func _turn_roster_page(delta: int) -> void:
 	if next_page == _roster_page:
 		return
 	_roster_page = next_page
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
 	if _lab_mode == "records":
 		var instances: Array[DigimonInstance] = OverworldState.get_collection_instances()
 		var index := mini(_roster_page * capacity, instances.size() - 1)
@@ -365,7 +386,7 @@ func _refresh_record_detail() -> void:
 		if unlocked or research > 0:
 			actions.append(action)
 
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
 	_record_page_count = maxi(1, ceili(float(actions.size()) / float(capacity)))
 	_record_page = clampi(_record_page, 0, _record_page_count - 1)
 	if actions.is_empty():
@@ -391,10 +412,13 @@ func _record_row(instance: DigimonInstance, action: Dictionary) -> Control:
 	var research := int(action.get("research", 0))
 	var record = action.get("record", {})
 	var cost := int(record.get("bitsCost", 0)) if record is Dictionary else 0
+	var compatible := bool(action.get("compatible", false))
+	var learned := bool(action.get("learned", false))
+	var affordable := OverworldState.get_bits() >= cost
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 72.0
+	panel.custom_minimum_size.y = 78.0
 	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.AMBER if unlocked else V2.CYAN))
-	var margin := _margin(12, 8, 12, 8)
+	var margin := _margin(12, 7, 12, 7)
 	panel.add_child(margin)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
@@ -414,10 +438,12 @@ func _record_row(instance: DigimonInstance, action: Dictionary) -> Control:
 		10,
 		V2.MUTED
 	))
-	var teach := _workspace_button("LEARN\n%d BITS" % cost, V2.AMBER)
-	teach.custom_minimum_size = Vector2(126, 54)
-	teach.disabled = not unlocked or not bool(action.get("compatible", false)) or bool(action.get("learned", false)) or OverworldState.get_bits() < cost
-	teach.tooltip_text = "Already learned" if bool(action.get("learned", false)) else ("Incompatible with the current form" if not bool(action.get("compatible", false)) else "Teach permanently")
+	var status := "LEARNED" if learned else ("LOCKED" if not unlocked else ("INCOMPATIBLE" if not compatible else ("NEED %d BITS" % maxi(0, cost - OverworldState.get_bits()) if not affordable else "READY")))
+	var teach := CommandButtonScript.new() as DigiCommandButton
+	teach.custom_minimum_size.x = 210.0
+	teach.configure("LEARN · %d BITS" % cost, "Teach permanently to this individual", status, "book", V2.AMBER)
+	teach.set_compact(true)
+	teach.set_interactive(unlocked and compatible and not learned and affordable)
 	teach.pressed.connect(_teach_record.bind(instance.id, String(action.get("id", ""))))
 	row.add_child(teach)
 	return panel
@@ -565,7 +591,8 @@ func _layout() -> void:
 	_compact_mode_bar.visible = compact and not _compact_detail_open
 	if _compact_mode_bar.visible:
 		_compact_mode_bar.position = Vector2(edge, body_top)
-		_compact_mode_bar.size = Vector2(width - edge * 2.0, 48.0)
+		_compact_mode_bar.size = Vector2(width - edge * 2.0, 52.0)
+		_compact_segments.size = _compact_mode_bar.size
 		body_top += 56.0
 		body_h = maxf(160.0, body_bottom - body_top)
 
@@ -597,6 +624,10 @@ func _layout() -> void:
 	WorkspaceChrome.disable_scroll(_detail_scroll)
 	_roster_pager.set_workspace_mode(true)
 	_roster_pager.set_compact(compact)
+	if _mode_segments != null:
+		_mode_segments.set_compact(compact)
+	if _compact_segments != null:
+		_compact_segments.set_compact(true)
 	if _record_pager != null:
 		_record_pager.set_workspace_mode(true)
 		_record_pager.set_compact(compact)
