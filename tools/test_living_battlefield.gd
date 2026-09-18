@@ -91,6 +91,25 @@ func _validate_environment(field: Node) -> void:
 			"Battlefield rocks must keep the approved rock asset"
 		)
 
+	_assert_prop_center(field, large_tree, Vector2i(4, 12), "Large oak")
+	_assert_prop_center(field, small_tree, Vector2i(10, 10), "Small oak")
+	_assert_prop_center(field, rock, Vector2i(10, 14), "Rock")
+	if rock != null:
+		_expect(
+			rock.scale.x <= 0.90 and rock.scale.y <= 0.90,
+			"Rock props must remain smaller than their previous oversized presentation"
+		)
+
+
+func _assert_prop_center(field: Node, prop: Sprite2D, grid: Vector2i, label: String) -> void:
+	if prop == null:
+		return
+	var expected := Vector2(field.call("grid_to_world", grid))
+	_expect(
+		prop.position.distance_to(expected) <= 0.01,
+		"%s visual must be centered on the exact blocked tile" % label
+	)
+
 
 func _validate_pathfinding(field: Node) -> void:
 	var movement = MovementSystemScript.new()
