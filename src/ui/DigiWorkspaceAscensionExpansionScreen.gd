@@ -7,7 +7,7 @@ const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const ConfirmationScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
 const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
 const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
-const ProfilePanelScript = preload("res://src/ui/components/DigiRosterProfilePanel.gd")
+const ProfilePanelScript = preload("res://src/ui/components/DigiCompactProfilePanel.gd")
 const PickerScript = preload("res://src/ui/components/DigiRosterPickerModal.gd")
 const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
@@ -249,9 +249,8 @@ func _refresh_detail() -> void:
 		_detail.add_child(_empty_state("Species data unavailable."))
 		return
 
-	var profile := ProfilePanelScript.new() as DigiRosterProfilePanel
+	var profile := ProfilePanelScript.new() as DigiCompactProfilePanel
 	profile.configure(instance, species, _workspace_progression, true)
-	profile.custom_minimum_size.y = 250.0
 	_detail.add_child(profile)
 
 	if not _status_text.is_empty():
