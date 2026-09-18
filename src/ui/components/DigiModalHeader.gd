@@ -277,6 +277,7 @@ func _rebuild_tabs() -> void:
 		var active := tab_id == _active_tab
 		var icon_kind := String(spec.get("icon", _tab_icon_for(tab_id)))
 		var min_width := float(spec.get("min_width", 126.0))
+		var force_label := bool(spec.get("force_label", false))
 
 		var angled := bool(spec.get("angled", false))
 		var button: Button
@@ -302,8 +303,6 @@ func _rebuild_tabs() -> void:
 
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		row.add_theme_constant_override("separation", 7 if angled else 9)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var safe_content: MarginContainer = null
@@ -311,12 +310,16 @@ func _rebuild_tabs() -> void:
 			safe_content = MarginContainer.new()
 			safe_content.name = "SlantSafeContent"
 			safe_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-			safe_content.add_theme_constant_override("margin_left", 22)
-			safe_content.add_theme_constant_override("margin_right", 22)
+			var slant_margin := 10 if force_label else 26
+			safe_content.add_theme_constant_override("margin_left", slant_margin)
+			safe_content.add_theme_constant_override("margin_right", slant_margin)
 			safe_content.add_theme_constant_override("margin_top", 2)
 			safe_content.add_theme_constant_override("margin_bottom", 2)
 			safe_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			button.add_child(safe_content)
+			if force_label:
+				row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			safe_content.add_child(row)
 		else:
 			row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -330,7 +333,9 @@ func _rebuild_tabs() -> void:
 		label.add_theme_font_size_override("font_size", 13)
 		label.add_theme_color_override("font_color", V2.WHITE if active else (V2.MUTED if enabled else V2.SUBTLE))
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if force_label:
+			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		label.clip_text = true
 		V2.apply_heading(label)
@@ -340,6 +345,7 @@ func _rebuild_tabs() -> void:
 		button.set_meta("tab_icon", icon)
 		button.set_meta("tab_row", row)
 		button.set_meta("tab_safe_content", safe_content)
+		button.set_meta("force_label", force_label)
 		button.set_meta("full_label", label_text)
 		button.set_meta("compact_label", compact_label)
 		button.set_meta("preferred_min_width", min_width)
@@ -458,39 +464,61 @@ func _layout_workspace() -> void:
 		var tabs_right := _bits_badge.position.x if show_bits_now else _close_button.position.x
 		_tabs_root.position = Vector2(tabs_left, 17.0)
 		_tabs_root.size = Vector2(maxf(0.0, tabs_right - tabs_left - 20.0), 50.0)
-		var preferred_total := 0.0
-		for value in _tab_buttons.values():
-			var preferred_button := value as Button
-			if preferred_button != null:
-				preferred_total += float(preferred_button.get_meta("preferred_min_width", 150.0))
-		preferred_total = maxf(1.0, preferred_total)
-		var distributable := _tabs_root.size.x + tab_overlap * float(maxi(0, _tab_specs.size() - 1))
-		for value in _tab_buttons.values():
-			var button := value as Button
-			if button == null:
-				continue
-			var preferred := float(button.get_meta("preferred_min_width", 150.0))
-			var estimated_width := maxf(88.0, distributable * preferred / preferred_total)
-			button.custom_minimum_size = Vector2(88.0, 50.0)
-			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			button.size_flags_stretch_ratio = preferred / preferred_total
-			var label := button.get_meta("tab_label") as Label
-			var icon := button.get_meta("tab_icon") as DigiProceduralIcon
-			var row := button.get_meta("tab_row") as HBoxContainer
-			var safe_content: MarginContainer = null
-			if button.has_meta("tab_safe_content"):
-				safe_content = button.get_meta("tab_safe_content") as MarginContainer
-			var use_compact_label := estimated_width < 176.0
-			var very_tight := estimated_width < 126.0
-			if label != null:
-				label.visible = true
-				label.text = String(button.get_meta("compact_label" if use_compact_label else "full_label", ""))
-				label.add_theme_font_size_override("font_size", 10 if very_tight else (12 if use_compact_label else 14))
-			if icon != null:
-				icon.custom_minimum_size = Vector2(16.0, 16.0) if very_tight else Vector2(19.0, 19.0)
-			if row != null:
-				row.add_theme_constant_override("separation", 4 if very_tight else 7)
-			if safe_content != null:
-				var safe_margin := 12 if very_tight else (16 if use_compact_label else 22)
-				safe_content.add_theme_constant_override("margin_left", safe_margin)
-				safe_content.add_theme_constant_override("margin_right", safe_margin)
+		var force_workspace_labels := false
+		for spec: Dictionary in _tab_specs:
+			if bool(spec.get("force_label", false)):
+				force_workspace_labels = true
+				break
+		_tabs_root.clip_contents = force_workspace_labels
+
+		if force_workspace_labels:
+			var count := maxi(1, _tab_specs.size())
+			var fitted_width := (_tabs_root.size.x + tab_overlap * float(maxi(0, count - 1))) / float(count)
+			var tab_width := clampf(fitted_width, 96.0, 176.0)
+			for value in _tab_buttons.values():
+				var button := value as Button
+				if button == null:
+					continue
+				button.size_flags_horizontal = Control.SIZE_FILL
+				button.size_flags_stretch_ratio = 1.0
+				button.custom_minimum_size = Vector2(tab_width, 50.0)
+				var label := button.get_meta("tab_label") as Label
+				var icon := button.get_meta("tab_icon") as DigiProceduralIcon
+				var row := button.get_meta("tab_row") as HBoxContainer
+				var safe_content: MarginContainer = null
+				if button.has_meta("tab_safe_content"):
+					safe_content = button.get_meta("tab_safe_content") as MarginContainer
+				var use_compact := tab_width < 146.0
+				var very_tight := tab_width < 112.0
+				if label != null:
+					label.visible = true
+					label.text = String(button.get_meta("compact_label" if use_compact else "full_label", ""))
+					label.add_theme_font_size_override("font_size", 9 if very_tight else (10 if use_compact else 12))
+				if icon != null:
+					icon.custom_minimum_size = Vector2(14.0, 14.0) if very_tight else Vector2(17.0, 17.0)
+				if row != null:
+					row.add_theme_constant_override("separation", 3 if very_tight else 5)
+				if safe_content != null:
+					var safe_margin := 6 if very_tight else 9
+					safe_content.add_theme_constant_override("margin_left", safe_margin)
+					safe_content.add_theme_constant_override("margin_right", safe_margin)
+		else:
+			var preferred_total := 0.0
+			for value in _tab_buttons.values():
+				var preferred_button := value as Button
+				if preferred_button != null:
+					preferred_total += float(preferred_button.get_meta("preferred_min_width", 150.0))
+			preferred_total -= tab_overlap * float(maxi(0, _tab_specs.size() - 1))
+			var scale_tabs := minf(1.0, _tabs_root.size.x / maxf(1.0, preferred_total))
+			for value in _tab_buttons.values():
+				var button := value as Button
+				var preferred := float(button.get_meta("preferred_min_width", 150.0))
+				var tab_width := maxf(112.0, preferred * scale_tabs)
+				button.custom_minimum_size = Vector2(tab_width, 50.0)
+				var label := button.get_meta("tab_label") as Label
+				var icon := button.get_meta("tab_icon") as DigiProceduralIcon
+				if label != null:
+					label.visible = tab_width >= 118.0
+					label.add_theme_font_size_override("font_size", 14 if scale_tabs < 0.90 else 15)
+				if icon != null:
+					icon.custom_minimum_size = Vector2(20.0, 20.0)
