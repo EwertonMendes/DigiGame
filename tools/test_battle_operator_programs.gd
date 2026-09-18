@@ -4,6 +4,7 @@ const HUB_SCENE = preload("res://scenes/world/hub.tscn")
 const CatalogScript = preload("res://src/world/BattleOperatorEncounterCatalog.gd")
 const EncounterScript = preload("res://src/world/BattleEncounterDefinition.gd")
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
+const OperatorIcons = preload("res://src/ui/battle_operator/BattleOperatorIconCatalog.gd")
 const RANKS: Array[String] = ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]
 
 var _failures: Array[String] = []
@@ -14,6 +15,7 @@ func _ready() -> void:
 	BattleEncounterSession.clear_pending_encounter()
 	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
 	_expect(database != null and database.is_loaded(), "Persistent Digimon database must be loaded")
+	_test_operator_icon_catalog()
 	if not _failures.is_empty():
 		_finish()
 		return
@@ -77,6 +79,28 @@ func _ready() -> void:
 	_finish()
 
 
+func _test_operator_icon_catalog() -> void:
+	var textures := OperatorIcons.all_operator_textures()
+	_expect(textures.size() == 16, "Battle Operator must ship the complete 16-icon authored SVG family")
+	var unique_paths: Dictionary = {}
+	for texture: Texture2D in textures:
+		_expect(texture != null, "Every Battle Operator icon must import as Texture2D")
+		if texture == null:
+			continue
+		var path := texture.resource_path
+		_expect(path.begins_with(OperatorIcons.ICON_ROOT), "Battle Operator icons must come from the dedicated asset namespace")
+		_expect(not unique_paths.has(path), "Every Battle Operator semantic slot must have its own SVG asset")
+		unique_paths[path] = true
+
+	for section_id: String in ["program", "battlefield", "simulation"]:
+		_expect(OperatorIcons.section_icon(section_id) != null, "Section %s must have a dedicated SVG icon" % section_id)
+	for program_id: String in PROGRAM_IDS:
+		_expect(OperatorIcons.program_icon(program_id) != null, "Program %s must have a dedicated SVG icon" % program_id)
+	for battlefield_id: String in ["training_clearing", "twin_grove", "forest_crossing", "broken_clearing", "grand_digital_field"]:
+		_expect(OperatorIcons.battlefield_icon(battlefield_id) != null, "Battlefield %s must have a dedicated SVG icon" % battlefield_id)
+	_expect(OperatorIcons.action_icon("start_simulation") != null, "Start Simulation must have a dedicated SVG icon")
+
+
 func _test_operator_menu() -> void:
 	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
 	var hub := HUB_SCENE.instantiate()
@@ -101,6 +125,9 @@ func _test_operator_menu() -> void:
 	var program_panel := hub.find_child("ProgramPanel", true, false) as PanelContainer
 	var field_panel := hub.find_child("BattlefieldPanel", true, false) as PanelContainer
 	var simulation_panel := hub.find_child("SimulationPanel", true, false) as PanelContainer
+	var program_header := hub.find_child("ProgramHeader", true, false) as DigiSectionHeader
+	var field_header := hub.find_child("BattlefieldHeader", true, false) as DigiSectionHeader
+	var simulation_header := hub.find_child("SimulationHeader", true, false) as DigiSectionHeader
 	var buttons := hub.get("_battle_program_buttons") as Dictionary
 	var fields := hub.get("_battlefield_buttons") as Dictionary
 	var launch := hub.find_child("StartBattle", true, false) as Button
@@ -119,6 +146,18 @@ func _test_operator_menu() -> void:
 	_expect(buttons.size() == 7, "Battle Operator must expose Basic plus six random-rank programs")
 	_expect(fields.size() == 5, "Battle Operator must expose all five authored Battlefield V2 layouts")
 	_expect(launch != null and launch.text == "START BATTLE", "Battle Operator must expose a persistent launch action")
+	_expect(launch.icon != null and launch.icon.resource_path == OperatorIcons.action_icon("start_simulation").resource_path, "Start Battle must use the dedicated simulation SVG")
+	for header_spec: Array in [
+		[program_header, "program"],
+		[field_header, "battlefield"],
+		[simulation_header, "simulation"],
+	]:
+		var section_header := header_spec[0] as DigiSectionHeader
+		var section_id := String(header_spec[1])
+		var icon_view := section_header.get_icon_view() if section_header != null else null
+		_expect(icon_view != null and icon_view.uses_texture(), "%s header must render an authored SVG instead of a procedural fallback" % section_id)
+		if icon_view != null and icon_view.get_texture() != null:
+			_expect(icon_view.get_texture().resource_path == OperatorIcons.section_icon(section_id).resource_path, "%s header must use its dedicated Battle Operator SVG" % section_id)
 	_expect(String(hub.get("_selected_program_id")) == "basic", "Battle Operator must default to Basic Battle")
 	_expect(String(hub.get("_selected_battlefield_id")) == "training_clearing", "Battle Operator must default to Training Clearing")
 	_expect(selected_program_label != null and selected_program_label.text == "BASIC BATTLE", "Simulation panel must expose the selected program")
@@ -155,7 +194,11 @@ func _test_operator_menu() -> void:
 			if button == null:
 				continue
 			var title := button.find_child("SelectionTitle", true, false) as Label
+			var icon_view := button.find_child("SelectionIcon", true, false) as DigiIconView
 			_expect(title != null and title.text == String(expected_titles[program_id]), "%s must use the intended player-facing title" % program_id)
+			_expect(icon_view != null and icon_view.uses_texture(), "%s must use an authored Battle Operator SVG" % program_id)
+			if icon_view != null and icon_view.get_texture() != null:
+				_expect(icon_view.get_texture().resource_path == OperatorIcons.program_icon(program_id).resource_path, "%s must use its dedicated program SVG" % program_id)
 			_expect(button.get_combined_minimum_size().y >= 52.0, "%s must remain touch-safe" % program_id)
 			_expect(dialog_rect.encloses(button.get_global_rect()), "%s must stay visually contained inside the Battle Operator workspace" % program_id)
 			_expect(not button.disabled, "%s must be available when the party is battle-ready" % program_id)
@@ -183,6 +226,10 @@ func _test_operator_menu() -> void:
 			_expect(field_button != null, "Battle Operator must expose battlefield %s as a selection card" % battlefield_id)
 			if field_button == null:
 				continue
+			var field_icon := field_button.find_child("SelectionIcon", true, false) as DigiIconView
+			_expect(field_icon != null and field_icon.uses_texture(), "%s battlefield card must use an authored SVG" % battlefield_id)
+			if field_icon != null and field_icon.get_texture() != null:
+				_expect(field_icon.get_texture().resource_path == OperatorIcons.battlefield_icon(battlefield_id).resource_path, "%s must use its dedicated battlefield SVG" % battlefield_id)
 			_expect(field_button.get_combined_minimum_size().y >= 52.0, "%s battlefield card must remain touch-safe" % battlefield_id)
 			_expect(dialog_rect.encloses(field_button.get_global_rect()), "%s battlefield card must stay inside the workspace" % battlefield_id)
 
