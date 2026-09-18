@@ -2,15 +2,16 @@ extends PanelContainer
 class_name DigiSectionHeader
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
-const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
+const IconScript = preload("res://src/ui/components/DigiIconView.gd")
 
 var _title_text := "SECTION"
 var _trailing_text := ""
 var _accent := V2.CYAN
 var _icon_kind := ""
+var _icon_texture: Texture2D = null
 var _title_label: Label
 var _trailing_label: Label
-var _icon: DigiProceduralIcon
+var _icon: DigiIconView
 var _margin: MarginContainer
 var _built := false
 var _workspace_mode := false
@@ -24,6 +25,23 @@ func configure(title: String, trailing: String = "", accent: Color = V2.CYAN, ic
 	if _built:
 		_apply_content()
 	return self
+
+
+func set_icon_texture(texture: Texture2D) -> DigiSectionHeader:
+	_icon_texture = texture
+	if _built:
+		_apply_content()
+	return self
+
+
+func clear_icon_texture() -> void:
+	_icon_texture = null
+	if _built:
+		_apply_content()
+
+
+func get_icon_view() -> DigiIconView:
+	return _icon
 
 
 func set_workspace_mode(enabled: bool) -> void:
@@ -54,7 +72,8 @@ func _ready() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_margin.add_child(row)
 
-	_icon = IconScript.new() as DigiProceduralIcon
+	_icon = IconScript.new() as DigiIconView
+	_icon.name = "SectionIcon"
 	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_icon)
 
@@ -113,6 +132,10 @@ func _apply_content() -> void:
 	_title_label.text = _title_text.to_upper()
 	_trailing_label.text = _trailing_text
 	_trailing_label.visible = not _trailing_text.is_empty()
-	_icon.visible = not _icon_kind.is_empty()
+	_icon.visible = _icon_texture != null or not _icon_kind.is_empty()
 	if _icon.visible:
-		_icon.configure(_icon_kind, Color(_accent.r, _accent.g, _accent.b, 0.82), 1.65 if _workspace_mode else 1.45)
+		var icon_accent := Color(_accent.r, _accent.g, _accent.b, 0.82)
+		if _icon_texture != null:
+			_icon.configure_texture(_icon_texture, icon_accent)
+		else:
+			_icon.configure_procedural(_icon_kind, icon_accent, 1.65 if _workspace_mode else 1.45)
