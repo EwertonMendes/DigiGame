@@ -85,6 +85,12 @@ jobs:
           - name: digimon-progression
             command: godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8
             success: digimon progression regression passed
+          - name: squad-system
+            command: godot --headless --path . tools/test_squad_system.tscn --quit-after 10
+            success: squad system regression passed
+          - name: battle-squad-switching
+            command: godot --headless --path . tools/test_battle_squad_switching.tscn --quit-after 10
+            success: battle squad switching regression passed
           - name: hospital-system
             command: godot --headless --path . tools/test_hospital_system.tscn --quit-after 8
             success: hospital system regression passed
