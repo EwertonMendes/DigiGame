@@ -65,6 +65,24 @@ func _ready() -> void:
 		_check(false, "Battle must reach a player turn where flee can be attempted")
 		return
 
+	# Switch is a first-class command and must remain discoverable even when this
+	# default fixture has no Reserve members. It occupies the same utility slot as
+	# Undo, so showing it must not overflow the command rail.
+	var switch_button := hud.get("_switch_button") as Button
+	var command_dock := hud.get("_dock") as Control
+	if not _check(switch_button != null and command_dock != null, "Battle HUD must expose the Switch utility command"):
+		return
+	if not _check(switch_button.visible, "Switch must remain visible on a normal player turn even with Reserve 0/3"):
+		return
+	if not _check(switch_button.disabled, "Switch must be disabled rather than hidden when no battle-ready Reserve exists"):
+		return
+	if not _check(switch_button.tooltip_text.contains("Digi Lab") and switch_button.tooltip_text.contains("Reserve"), "Disabled Switch must explain how to assign Reserve members"):
+		return
+	var switch_rect := switch_button.get_global_rect()
+	var dock_rect := command_dock.get_global_rect()
+	if not _check(switch_rect.end.y <= dock_rect.end.y + 1.0, "Visible Switch command must remain inside the Battle Operator rail"):
+		return
+
 	# Use a normal probabilistic policy rather than guaranteed escape. The preview
 	# is intentionally below 100%, and the RNG seeds below prove that the exact
 	# first-attempt probability admits both success and failure outcomes.
