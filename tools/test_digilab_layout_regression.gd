@@ -26,6 +26,8 @@ func _ready() -> void:
 	var lab_background := convert.find_child("DigiLabBackgroundImage", true, false) as TextureRect
 	if not _check(lab_background != null and lab_background.texture != null and lab_background.texture.resource_path.ends_with("digi_lab.webp"), "DigiLab must use its dedicated laboratory background"):
 		return
+	if not _check(_workspace_background_is_visible(convert), "Convert Digi Data must render the laboratory background above the legacy backdrop and below transparent workspace chrome"):
+		return
 	if not _check(_primary_tabs_are_valid(convert, "convert"), "Convert Digi Data must expose the three primary tabs"):
 		return
 	if not _check(_workspace_contract_is_valid(convert, "_list_scroll", "_detail_scroll", "_roster_pager"), "Convert Digi Data must use the paged no-scroll workspace contract"):
@@ -45,6 +47,8 @@ func _ready() -> void:
 	digilab.call("_switch_tab", "party")
 	await _frames(4)
 	if not _check(party.visible and not convert.visible and not ascension.visible, "Party / Storage primary tab must open"):
+		return
+	if not _check(_workspace_background_is_visible(party), "Party / Storage must keep the laboratory background visible"):
 		return
 	if not _check(_primary_tabs_are_valid(party, "party"), "Party / Storage must expose the three primary tabs"):
 		return
@@ -75,6 +79,8 @@ func _ready() -> void:
 	ascension_action.pressed.emit()
 	await _frames(4)
 	if not _check(ascension.visible and not party.visible, "Party Actions must open the Ascension / Expansion primary tab"):
+		return
+	if not _check(_workspace_background_is_visible(ascension), "Ascension / Expansion must keep the laboratory background visible"):
 		return
 	if not _check(String(digilab.get("_active_tab")) == "ascension", "Opening Ascension from Party Actions must update the active primary tab"):
 		return
@@ -138,6 +144,30 @@ func _ready() -> void:
 	await get_tree().process_frame
 	print("digilab layout regression passed")
 	get_tree().quit()
+
+
+
+func _workspace_background_is_visible(screen: Control) -> bool:
+	var legacy_backdrop := screen.get("_backdrop") as ColorRect
+	var frame := screen.get("_frame") as PanelContainer
+	var layer := screen.find_child("DigiLabWorkspaceBackdrop", true, false) as Control
+	var image := screen.find_child("DigiLabBackgroundImage", true, false) as TextureRect
+	if legacy_backdrop == null or frame == null or layer == null or image == null:
+		return false
+	if layer.get_parent() != screen:
+		return false
+	if not image.visible or image.texture == null or image.modulate.a < 0.8:
+		return false
+	# The image must sit above the opaque legacy backdrop but below the full-screen
+	# workspace frame. The frame itself must not paint an opaque surface.
+	if not (legacy_backdrop.get_index() < layer.get_index() and layer.get_index() < frame.get_index()):
+		print("[digilab-layout] background layer order is invalid: legacy=%d image=%d frame=%d" % [legacy_backdrop.get_index(), layer.get_index(), frame.get_index()])
+		return false
+	var frame_style := frame.get_theme_stylebox("panel") as StyleBoxFlat
+	if frame_style == null or frame_style.bg_color.a > 0.05:
+		print("[digilab-layout] workspace frame still hides the background")
+		return false
+	return true
 
 
 func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
