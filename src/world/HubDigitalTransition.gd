@@ -113,8 +113,8 @@ func _build_dialog() -> void:
 	_section_tabs = SegmentScript.new() as DigiSegmentedTabs
 	_section_tabs.name = "OperatorSections"
 	_section_tabs.configure([
-		{"id": SECTION_PROGRAM, "label": "BATTLE PROGRAM", "accent": HUB_V2.CYAN},
-		{"id": SECTION_FIELD, "label": "BATTLEFIELD", "accent": HUB_V2.CYAN},
+		{"id": SECTION_PROGRAM, "label": "BATTLE PROGRAM", "compact_label": "PROGRAM", "accent": HUB_V2.CYAN},
+		{"id": SECTION_FIELD, "label": "BATTLEFIELD", "compact_label": "FIELD", "accent": HUB_V2.CYAN},
 	], _operator_section)
 	_section_tabs.tab_selected.connect(_set_operator_section)
 	_mobile_dialog_content.add_child(_section_tabs)
@@ -829,6 +829,10 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 
 	_operator_header.position = Vector2.ZERO
 	_operator_header.size = Vector2(dialog_width, header_h)
+	if physical.x < 520.0:
+		_operator_header.configure("BATTLE", "Battle Operator", 0, false)
+	else:
+		_operator_header.configure("BATTLE OPERATOR", "Battle Simulation", 0, false)
 
 	if _compact_operator_layout:
 		var tabs_h := 42.0 if short_landscape else 48.0
