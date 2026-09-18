@@ -5,6 +5,12 @@ const WorkspaceChrome = preload("res://src/ui/components/DigiLabWorkspaceChrome.
 const WorkspaceBackdrop = preload("res://src/ui/components/DigiLabWorkspaceBackdrop.gd")
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const ConfirmationScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
+const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
+const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
+const ProfilePanelScript = preload("res://src/ui/components/DigiRosterProfilePanel.gd")
+const PickerScript = preload("res://src/ui/components/DigiRosterPickerModal.gd")
+const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
+const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
 
 const TRIGGER_PRESS_THRESHOLD := 0.55
 const TRIGGER_RELEASE_THRESHOLD := 0.25
@@ -22,6 +28,9 @@ var _section_tabs: HBoxContainer
 var _tier_tab_button: Button
 var _expansion_tab_button: Button
 var _workspace_confirmation: DigiConfirmationModal
+var _section_segments: DigiSegmentedTabs
+var _donor_picker: DigiRosterPickerModal
+var _workspace_progression: DigimonProgressionService
 
 
 func open_screen(preferred_instance_id: String = "") -> void:
@@ -36,6 +45,7 @@ func open_screen(preferred_instance_id: String = "") -> void:
 
 func _build() -> void:
 	super._build()
+	_workspace_progression = ProgressionServiceScript.new(_database) as DigimonProgressionService
 	var backdrop := WorkspaceBackdrop.new() as DigiLabWorkspaceBackdrop
 	backdrop.name = "DigiLabWorkspaceBackdrop"
 	add_child(backdrop)
@@ -57,11 +67,18 @@ func _build() -> void:
 	WorkspaceChrome.disable_scroll(_detail_scroll)
 
 	var collection_stack := _collection_panel.get_child(0) as VBoxContainer
+	var pager_margin := _margin(10, 2, 10, 8)
 	_workspace_pager = PagerScript.new() as DigiPager
 	_workspace_pager.name = "AscensionCollectionPager"
 	_workspace_pager.set_workspace_mode(true)
 	_workspace_pager.page_delta_requested.connect(_turn_workspace_page)
-	collection_stack.add_child(_workspace_pager)
+	pager_margin.add_child(_workspace_pager)
+	collection_stack.add_child(pager_margin)
+
+	_donor_picker = PickerScript.new() as DigiRosterPickerModal
+	_donor_picker.name = "AscensionDonorPicker"
+	_donor_picker.entry_selected.connect(_on_donor_picked)
+	add_child(_donor_picker)
 
 	_workspace_back_button = _workspace_button("‹  INDIVIDUALS", V2.CYAN)
 	_workspace_back_button.name = "BackToIndividuals"
@@ -137,7 +154,7 @@ func _refresh_list() -> void:
 		selected_index = 0
 		_selected_id = collection[0].id
 
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
 	_workspace_page_count = maxi(1, ceili(float(collection.size()) / float(capacity)))
 	_workspace_page = clampi(selected_index / capacity, 0, _workspace_page_count - 1)
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
@@ -194,7 +211,7 @@ func _turn_workspace_page(delta: int) -> void:
 		return
 	_workspace_page = next_page
 	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
 	var index := mini(_workspace_page * capacity, collection.size() - 1)
 	if index >= 0:
 		_selected_id = collection[index].id
@@ -232,37 +249,271 @@ func _refresh_detail() -> void:
 		_detail.add_child(_empty_state("Species data unavailable."))
 		return
 
-	var display_name := instance.get_display_name(String(species.get("name", "Unknown")))
-	var rank := String(species.get("rank", "Unknown"))
-	var accent := V2.rank_color(rank)
-	var identity := _identity_card(instance, species, display_name, rank, accent)
-	identity.add_theme_stylebox_override("panel", V2.workspace_panel_style(accent))
-	_detail.add_child(identity)
+	var profile := ProfilePanelScript.new() as DigiRosterProfilePanel
+	profile.configure(instance, species, _workspace_progression, true)
+	profile.custom_minimum_size.y = 250.0
+	_detail.add_child(profile)
+
 	if not _status_text.is_empty():
 		_detail.add_child(_status_banner(_status_text))
 
-	_section_tabs = HBoxContainer.new()
-	_section_tabs.name = "AscensionSectionTabs"
-	_section_tabs.add_theme_constant_override("separation", 8)
-	_detail.add_child(_section_tabs)
-	_tier_tab_button = _section_tab_button("TIER ASCENSION", _section_mode == "tier", V2.PURPLE)
-	_tier_tab_button.pressed.connect(_set_section_mode.bind("tier"))
-	_section_tabs.add_child(_tier_tab_button)
-	_expansion_tab_button = _section_tab_button("EXPANSION", _section_mode == "expansion", V2.ORANGE)
-	_expansion_tab_button.pressed.connect(_set_section_mode.bind("expansion"))
-	_section_tabs.add_child(_expansion_tab_button)
+	_section_segments = SegmentScript.new() as DigiSegmentedTabs
+	_section_segments.name = "AscensionSectionTabs"
+	_section_segments.configure([
+		{"id": "tier", "label": "TIER ASCENSION", "accent": V2.PURPLE},
+		{"id": "expansion", "label": "EXPANSION", "accent": V2.ORANGE},
+	], _section_mode)
+	_section_segments.tab_selected.connect(_set_section_mode)
+	_detail.add_child(_section_segments)
 
-	var section := _tier_panel(instance) if _section_mode == "tier" else _expansion_panel(instance)
+	var section := _tier_workspace(instance) if _section_mode == "tier" else _expansion_workspace(instance)
 	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	section.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail.add_child(section)
-	_set_workspace_headers(section)
+
+
+func _tier_workspace(instance: DigimonInstance) -> Control:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.PURPLE))
+	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 0)
+	panel.add_child(stack)
+
+	var header := SectionHeaderScript.new() as DigiSectionHeader
+	header.configure("TIER ASCENSION", "Permanent individual progression", V2.PURPLE, "evolution")
+	header.set_workspace_mode(true)
+	stack.add_child(header)
+
+	var inset := _margin(12, 10, 12, 12)
+	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(inset)
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 9)
+	inset.add_child(body)
+
+	var initial := OverworldState.get_tier_promotion_preview(instance.id)
+	var next_tier := String(initial.get("target_tier", ""))
+	if next_tier.is_empty():
+		body.add_child(_info_card("MAXIMUM TIER", "This individual has reached Tier SSS.", V2.GREEN))
+		return panel
+
+	var compare := HBoxContainer.new()
+	compare.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	compare.custom_minimum_size.y = 82.0
+	compare.add_theme_constant_override("separation", 12)
+	body.add_child(compare)
+	compare.add_child(_tier_compare_card("CURRENT", instance.tier, _tier_bonus_copy(instance.tier), V2.CYAN))
+	var arrow := _single_line_label("→", 26, V2.PURPLE, true)
+	arrow.custom_minimum_size.x = 34
+	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	compare.add_child(arrow)
+	compare.add_child(_tier_compare_card("NEXT", next_tier, _tier_bonus_copy(next_tier), V2.PURPLE))
+
+	var requirements := HFlowContainer.new()
+	requirements.add_theme_constant_override("h_separation", 8)
+	requirements.add_theme_constant_override("v_separation", 6)
+	body.add_child(requirements)
+	requirements.add_child(_pill("%d BITS" % int(initial.get("bits_cost", 0)), V2.AMBER))
+	requirements.add_child(_pill("%s+ FORM" % String(initial.get("minimum_rank", "Fresh")).to_upper(), V2.CYAN))
+	var needs_donor := bool(initial.get("fusion_required", false))
+	if needs_donor:
+		requirements.add_child(_pill("SAME-SPECIES DONOR", V2.PURPLE))
+
+	if needs_donor:
+		var donor_name := "NONE SELECTED"
+		if not _pending_donor_id.is_empty():
+			var donor := OverworldState.get_instance_by_id(_pending_donor_id)
+			if donor != null:
+				var donor_species := _database.get_by_seed(donor.species_seed)
+				donor_name = donor.get_display_name(String(donor_species.get("name", "Digimon")))
+		var donor_button := _command_button(
+			"SELECT DONOR",
+			"Choose the exact Storage individual that will be consumed",
+			donor_name.to_upper(),
+			"party",
+			V2.PURPLE,
+			true
+		)
+		donor_button.pressed.connect(_open_donor_picker.bind(instance.id))
+		body.add_child(donor_button)
+
+	var preview := OverworldState.get_tier_promotion_preview(instance.id, _pending_donor_id)
+	var ready := bool(preview.get("success", false))
+	var reason := "READY" if ready else _reason_text(String(preview.get("reason", "invalid"))).to_upper()
+	var promote := _command_button(
+		"ASCEND TO TIER %s" % next_tier,
+		"Permanently raise this individual's Tier",
+		reason,
+		"evolution",
+		V2.PURPLE,
+		ready
+	)
+	promote.pressed.connect(_request_promotion)
+	body.add_child(promote)
+	return panel
+
+
+func _expansion_workspace(instance: DigimonInstance) -> Control:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.ORANGE))
+	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 0)
+	panel.add_child(stack)
+
+	var header := SectionHeaderScript.new() as DigiSectionHeader
+	header.configure("EXPANSION", "Permanent tactical footprint configuration", V2.ORANGE, "move")
+	header.set_workspace_mode(true)
+	stack.add_child(header)
+
+	var inset := _margin(12, 10, 12, 12)
+	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(inset)
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 9)
+	inset.add_child(body)
+
+	var footprint := PanelContainer.new()
+	footprint.custom_minimum_size.y = 82.0
+	footprint.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.06), Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.35), 8))
+	var fm := _margin(14, 10, 14, 10)
+	footprint.add_child(fm)
+	var fr := HBoxContainer.new()
+	fr.add_theme_constant_override("separation", 14)
+	fm.add_child(fr)
+	var footprint_value := _single_line_label("2×2" if instance.is_expanded() else "1×1", 28, V2.ORANGE, true)
+	footprint_value.custom_minimum_size.x = 90
+	fr.add_child(footprint_value)
+	var footprint_copy := VBoxContainer.new()
+	footprint_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	fr.add_child(footprint_copy)
+	footprint_copy.add_child(_single_line_label("CURRENT FOOTPRINT", 11, V2.TEXT, true))
+	footprint_copy.add_child(_label("+20% max HP and normal forced-movement immunity while 2×2 is active.", 10, V2.MUTED))
+	body.add_child(footprint)
+
+	var required_tier := _balance.expansion_string("requiredTier", "S")
+	var core_id := _balance.expansion_string("coreItemId", "expansion_core")
+	var fragment_id := _balance.expansion_string("fragmentItemId", "expansion_fragment")
+	var core_count := OverworldState.get_item_count(core_id)
+	var fragment_count := OverworldState.get_item_count(fragment_id)
+	var tier_ready := _balance.tier_index(instance.tier) >= _balance.tier_index(required_tier)
+
+	var reqs := HFlowContainer.new()
+	reqs.add_theme_constant_override("h_separation", 8)
+	reqs.add_theme_constant_override("v_separation", 6)
+	body.add_child(reqs)
+	reqs.add_child(_pill("TIER %s · %s" % [required_tier, "READY" if tier_ready else "REQUIRED"], V2.GREEN if tier_ready else V2.MUTED))
+	reqs.add_child(_pill("CORES · %d" % core_count, V2.ORANGE))
+	reqs.add_child(_pill("FRAGMENTS · %d" % fragment_count, V2.CYAN))
+
+	if not instance.expansion_unlocked:
+		var unlock := _command_button(
+			"UNLOCK EXPANSION",
+			"Consume one Expansion Core for this individual",
+			"READY" if tier_ready and core_count >= 1 else "TIER %s + 1 CORE REQUIRED" % required_tier,
+			"move",
+			V2.ORANGE,
+			tier_ready and core_count >= 1
+		)
+		unlock.pressed.connect(_unlock_expansion)
+		body.add_child(unlock)
+	else:
+		var toggle := _command_button(
+			"SWITCH TO %s" % ("1×1" if instance.is_expanded() else "2×2"),
+			"Switch freely outside combat after permanent unlock",
+			"UNLOCKED",
+			"move",
+			V2.ORANGE,
+			true
+		)
+		toggle.pressed.connect(_toggle_expansion.bind(not instance.is_expanded()))
+		body.add_child(toggle)
+
+	var can_craft := fragment_count >= 5 and OverworldState.get_bits() >= 50000
+	var craft := _command_button(
+		"CRAFT EXPANSION CORE",
+		"5 Fragments + 50,000 Bits",
+		"READY" if can_craft else "%d / 5 FRAGMENTS · %d BITS" % [fragment_count, OverworldState.get_bits()],
+		"database",
+		V2.CYAN,
+		can_craft
+	)
+	craft.pressed.connect(_craft_core)
+	body.add_child(craft)
+	return panel
+
+
+func _tier_compare_card(caption: String, tier_name: String, bonus: String, accent: Color) -> Control:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", V2.surface_style(Color(accent.r, accent.g, accent.b, 0.06), Color(accent.r, accent.g, accent.b, 0.32), 8))
+	var margin := _margin(12, 8, 12, 8)
+	panel.add_child(margin)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	margin.add_child(row)
+	var tier_icon := TierIconScript.new() as DigiTierIcon
+	tier_icon.configure(tier_name, Vector2(38, 28))
+	row.add_child(tier_icon)
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.add_theme_constant_override("separation", 2)
+	row.add_child(copy)
+	copy.add_child(_single_line_label("%s · TIER %s" % [caption, tier_name], 12, accent, true))
+	copy.add_child(_single_line_label(bonus, 9, V2.MUTED))
+	return panel
+
+
+func _command_button(title: String, subtitle: String, status: String, icon_kind: String, accent: Color, interactive: bool) -> DigiCommandButton:
+	var button := CommandButtonScript.new() as DigiCommandButton
+	button.configure(title, subtitle, status, icon_kind, accent)
+	button.set_compact(true)
+	button.custom_minimum_size.y = 62.0
+	button.set_interactive(interactive)
+	return button
+
+
+func _open_donor_picker(target_id: String) -> void:
+	var entries: Array[Dictionary] = []
+	for donor: DigimonInstance in OverworldState.get_tier_donors(target_id):
+		var species := _database.get_by_seed(donor.species_seed)
+		entries.append({
+			"id": donor.id,
+			"title": donor.get_display_name(String(species.get("name", "Digimon"))),
+			"subtitle": "Lv %d · Storage donor · permanently consumed" % donor.level,
+			"species": String(species.get("name", "")),
+			"accent": V2.PURPLE,
+		})
+	_donor_picker.configure("SELECT FUSION DONOR", "Only valid exact-species Storage donors are shown.", entries, V2.PURPLE)
+	_donor_picker.open_picker(get_viewport().gui_get_focus_owner())
+
+
+func _on_donor_picked(donor_id: String) -> void:
+	_pending_donor_id = donor_id
+	_status_text = "Fusion donor selected."
+	_refresh_detail()
+	_layout()
+	call_deferred("_focus_first_detail_control")
 
 
 func _set_section_mode(mode: String) -> void:
 	if mode == _section_mode or not ["tier", "expansion"].has(mode):
 		return
 	_section_mode = mode
+	if _section_segments != null:
+		_section_segments.set_active(mode)
 	_refresh_detail()
 	_layout()
 	call_deferred("_focus_first_detail_control")
@@ -415,6 +666,8 @@ func _layout() -> void:
 	WorkspaceChrome.disable_scroll(_detail_scroll)
 	_workspace_pager.set_workspace_mode(true)
 	_workspace_pager.set_compact(compact)
+	if _section_segments != null:
+		_section_segments.set_compact(compact)
 	_hint_bar.set_secondary_tabs_enabled(not compact or _compact_detail_open)
 	_hint_bar.set_secondary_tabs_label("Tier Ascension / Expansion")
 	_hint_bar.set_scroll_hint_enabled(false)
