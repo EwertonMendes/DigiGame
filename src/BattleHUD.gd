@@ -361,9 +361,20 @@ func refresh_from_controller() -> void:
 	_confirm_move_button.disabled = not bool(state.get("can_confirm_move", false))
 	_undo_button.visible = bool(state.get("can_undo", false))
 	var reserve_count := int(state.get("reserve_count", 0))
-	_switch_button.visible = reserve_count > 0 and not _undo_button.visible and bool(state.get("is_user_turn", false))
+	var user_turn := bool(state.get("is_user_turn", false))
+	# Switch is a first-class battle command, so keep it discoverable even when
+	# the player currently has no battle-ready Reserve member. It shares the
+	# utility slot with Undo: before movement the player sees Switch; after
+	# movement Undo takes that same slot without growing the command rail.
+	_switch_button.visible = user_turn and not _undo_button.visible
 	_switch_button.disabled = not bool(state.get("can_switch", false))
-	_switch_button.tooltip_text = String(state.get("switch_locked_reason", "Switch with a Reserve Digimon"))
+	var switch_reason := String(state.get("switch_locked_reason", "")).strip_edges()
+	if switch_reason.is_empty():
+		_switch_button.tooltip_text = "Switch with a Reserve Digimon and end this Digimon's turn  [6]"
+	elif reserve_count <= 0:
+		_switch_button.tooltip_text = "%s Assign Reserve members in Digi Lab > Party / Storage.  [6]" % switch_reason
+	else:
+		_switch_button.tooltip_text = "%s  [6]" % switch_reason
 	_cancel_button.disabled = false
 
 	_set_action_selected(_move_button, planning)
