@@ -496,12 +496,15 @@ func _open_squad_slot_picker(instance_id: String) -> void:
 			var occupied: DigimonInstance = members[index] as DigimonInstance if index < members.size() else null
 			var species: Dictionary = _database.get_by_seed(occupied.species_seed) if occupied != null else {}
 			var occupied_name := occupied.get_display_name(String(species.get("name", "Digimon"))) if occupied != null else "EMPTY"
+			var contiguous := occupied != null or index == members.size()
 			entries.append({
 				"id": "%s:%d" % [role, index],
 				"title": "%s SLOT %d · %s" % [role_label, index + 1, occupied_name],
 				"subtitle": "Keep here" if occupied != null and occupied.id == instance_id else ("Swap with this member" if occupied != null else "Assign to this empty slot"),
 				"species": String(species.get("name", "")),
 				"accent": accent,
+				"enabled": contiguous,
+				"reason": "" if contiguous else "Fill the previous %s slot first." % role_label.capitalize(),
 			})
 
 	_picker.configure("ASSIGN SQUAD SLOT", "Active deploys to battle; Reserve can Switch in during combat.", entries, V2.CYAN)
