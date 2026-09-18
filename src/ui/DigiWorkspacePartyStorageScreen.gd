@@ -66,6 +66,14 @@ func _build() -> void:
 	WorkspaceChrome.disable_scroll(_list_scroll)
 	WorkspaceChrome.disable_scroll(_detail_scroll)
 
+	# The no-scroll detail surface must fill the viewport, not stop at the
+	# combined minimum height of its children. This lets stats and actions share
+	# any extra vertical room while still shrinking to their bounded minima.
+	_detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var detail_content_host := _detail.get_parent() as Control
+	if detail_content_host != null:
+		detail_content_host.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
 	var collection_stack := _collection_panel.get_child(0) as VBoxContainer
 	var roster_segment_margin := _margin(10, 10, 10, 4)
 	_roster_segments = SegmentScript.new() as DigiSegmentedTabs
@@ -266,7 +274,8 @@ func _refresh_detail() -> void:
 	var is_active := party_index >= 0
 	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
-	var dense := compact or physical.y < 760.0
+	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
+	var dense := compact or estimated_body_h < 590.0
 
 	var profile := ProfilePanelScript.new() as DigiCompactProfilePanel
 	profile.configure(instance, species, _progression, true, dense)
@@ -308,7 +317,10 @@ func _refresh_detail() -> void:
 
 
 func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], party_index: int, active: bool) -> Control:
-	var dense := V2.physical_window_size(get_viewport()).y < 760.0
+	var physical := V2.physical_window_size(get_viewport())
+	var compact := WorkspaceChrome.is_compact(get_viewport())
+	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
+	var dense := compact or estimated_body_h < 590.0
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -329,6 +341,7 @@ func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], 
 	stack.add_child(inset)
 	var actions := VBoxContainer.new()
 	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	actions.add_theme_constant_override("separation", 5 if dense else 7)
 	inset.add_child(actions)
 
@@ -413,7 +426,12 @@ func _command_button(title: String, subtitle: String, status: String, icon_kind:
 	var button := CommandButtonScript.new() as DigiCommandButton
 	button.configure(title, subtitle, status, icon_kind, accent)
 	button.set_compact(true)
-	button.custom_minimum_size.y = 54.0 if V2.physical_window_size(get_viewport()).y < 760.0 else 62.0
+	var physical := V2.physical_window_size(get_viewport())
+	var compact := WorkspaceChrome.is_compact(get_viewport())
+	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
+	button.custom_minimum_size.y = 54.0 if compact or estimated_body_h < 590.0 else 62.0
+	button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	button.size_flags_stretch_ratio = 1.0
 	button.set_interactive(interactive)
 	return button
 
