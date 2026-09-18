@@ -10,6 +10,7 @@ const VALID_PROP_KINDS: Array[String] = ["tree", "rock", "stump"]
 
 var battlefield_id: String = ""
 var display_name: String = ""
+var description: String = ""
 var size_class: String = "standard"
 var grid_size := Vector2i(13, 17)
 var recommended_team_size := 3
@@ -33,6 +34,7 @@ static func from_dict(data: Dictionary) -> BattlefieldDefinition:
 	var definition := BattlefieldDefinition.new()
 	definition.battlefield_id = String(data.get("id", "")).strip_edges()
 	definition.display_name = String(data.get("name", definition.battlefield_id)).strip_edges()
+	definition.description = String(data.get("description", "")).strip_edges()
 	definition.size_class = String(data.get("size_class", "standard")).strip_edges().to_lower()
 	definition.grid_size = _vector2i(data.get("grid", [13, 17]), Vector2i(13, 17))
 	definition.recommended_team_size = clampi(int(data.get("recommended_team_size", 3)), 1, 6)
