@@ -68,7 +68,6 @@ func set_interactive(interactive: bool) -> void:
 		_apply_styles()
 		_refresh_content_state()
 		_sync_selection_surface()
-		_sync_selection_surface()
 
 
 func _ready() -> void:
@@ -95,6 +94,7 @@ func _process(_delta: float) -> void:
 		_last_disabled = disabled
 		_apply_styles()
 		_refresh_content_state()
+		_sync_selection_surface()
 
 
 func _apply_styles() -> void:
