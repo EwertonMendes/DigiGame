@@ -24,7 +24,7 @@ var _workspace_back_button: Button
 var _compact_detail_tabs: HBoxContainer
 var _stats_tab_button: Button
 var _actions_tab_button: Button
-var _roster_mode := "party"
+var _roster_mode := "active"
 var _roster_segments: DigiSegmentedTabs
 var _compact_detail_segments: DigiSegmentedTabs
 var _picker: DigiRosterPickerModal
@@ -35,7 +35,7 @@ var _picker_subject_id := ""
 func open_screen() -> void:
 	_compact_detail_open = false
 	_compact_detail_tab = "stats"
-	_roster_mode = "party"
+	_roster_mode = "active"
 	_left_trigger_down = false
 	_right_trigger_down = false
 	super.open_screen()
@@ -54,7 +54,7 @@ func _build() -> void:
 	WorkspaceChrome.configure_header(_header)
 	WorkspaceChrome.configure_hints(
 		_hint_bar,
-		"Organize the active Party, Storage and individual progression.",
+		"Organize the 3 Active + 3 Reserve Squad, Storage and individual progression.",
 		"",
 		false
 	)
@@ -146,17 +146,20 @@ func _refresh_list() -> void:
 	_list_previews.clear()
 
 	var active: Array[DigimonInstance] = OverworldState.get_active_instances()
-	var storage: Array[DigimonInstance] = OverworldState.get_reserve_instances()
-	var roster: Array[DigimonInstance] = active if _roster_mode == "party" else storage
-	_collection_header.configure("PARTY" if _roster_mode == "party" else "STORAGE", "%d DIGIMON" % roster.size(), V2.CYAN, "party")
+	var reserve: Array[DigimonInstance] = OverworldState.get_reserve_party_instances()
+	var storage: Array[DigimonInstance] = OverworldState.get_storage_instances()
+	var roster := _roster_for_mode(active, reserve, storage)
+	var mode_title := _roster_mode.to_upper()
+	_collection_header.configure(mode_title, "%d DIGIMON" % roster.size(), V2.CYAN, "party")
 	if _roster_segments != null:
 		_roster_segments.configure([
-			{"id": "party", "label": "PARTY · %d / %d" % [active.size(), OverworldState.get_max_active_party_size()], "accent": V2.CYAN},
+			{"id": "active", "label": "ACTIVE · %d / %d" % [active.size(), OverworldState.get_max_active_party_size()], "accent": V2.CYAN},
+			{"id": "reserve", "label": "RESERVE · %d / %d" % [reserve.size(), OverworldState.get_max_reserve_party_size()], "accent": V2.PURPLE},
 			{"id": "storage", "label": "STORAGE · %d" % storage.size(), "accent": V2.BLUE},
 		], _roster_mode)
 
 	if roster.is_empty():
-		_list.add_child(_empty_state("No Digimon in %s." % ("Party" if _roster_mode == "party" else "Storage")))
+		_list.add_child(_empty_state("No Digimon in %s." % mode_title.capitalize()))
 		_selected_id = ""
 		_workspace_page = 0
 		_workspace_page_count = 1
@@ -174,6 +177,8 @@ func _refresh_list() -> void:
 		_selected_id = roster[0].id
 
 	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
+	# Active and Reserve are hard-capped to three, so only Storage can paginate
+	# on normal layouts. Compact layouts may still choose a two-card page.
 	_workspace_page_count = maxi(1, ceili(float(roster.size()) / float(capacity)))
 	_workspace_page = clampi(selected_index / capacity, 0, _workspace_page_count - 1)
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
@@ -182,7 +187,7 @@ func _refresh_list() -> void:
 	for index in range(start, finish):
 		var instance := roster[index]
 		var species: Dictionary = _database.get_by_seed(instance.species_seed)
-		var is_active := active_ids.has(instance.id)
+		var is_active := OverworldState.get_squad_role(instance.id) == PlayerCollection.SQUAD_ROLE_ACTIVE
 		var button := _collection_button(instance, species, is_active, active_ids)
 		_list.add_child(button)
 		_list_buttons.append(button)
@@ -190,6 +195,20 @@ func _refresh_list() -> void:
 	_style_list_selection()
 	_workspace_pager.configure(_workspace_page, _workspace_page_count)
 	_hint_bar.set_pagination_enabled(_workspace_page_count > 1)
+
+
+func _roster_for_mode(
+	active: Array[DigimonInstance] = OverworldState.get_active_instances(),
+	reserve: Array[DigimonInstance] = OverworldState.get_reserve_party_instances(),
+	storage: Array[DigimonInstance] = OverworldState.get_storage_instances()
+) -> Array[DigimonInstance]:
+	match _roster_mode:
+		"active":
+			return active
+		"reserve":
+			return reserve
+		_:
+			return storage
 
 
 func _collection_button(instance: DigimonInstance, species: Dictionary, active: bool, active_ids: Array[String]) -> Button:
@@ -230,7 +249,7 @@ func _turn_workspace_page(delta: int) -> void:
 	if next_page == _workspace_page:
 		return
 	_workspace_page = next_page
-	var roster: Array[DigimonInstance] = OverworldState.get_active_instances() if _roster_mode == "party" else OverworldState.get_reserve_instances()
+	var roster: Array[DigimonInstance] = _roster_for_mode()
 	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
 	var index := mini(_workspace_page * capacity, roster.size() - 1)
 	if index >= 0:
@@ -269,8 +288,9 @@ func _refresh_detail() -> void:
 		return
 
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
-	var party_index := active_ids.find(instance.id)
-	var is_active := party_index >= 0
+	var reserve_ids: Array[String] = OverworldState.get_reserve_party_ids()
+	var squad_role := OverworldState.get_squad_role(instance.id)
+	var squad_index := active_ids.find(instance.id) if squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE else reserve_ids.find(instance.id)
 	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
@@ -296,7 +316,7 @@ func _refresh_detail() -> void:
 			stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 			_detail.add_child(stats)
 		else:
-			_detail.add_child(_party_actions_panel(instance, active_ids, party_index, is_active))
+			_detail.add_child(_party_actions_panel(instance, active_ids, reserve_ids, squad_role, squad_index))
 	else:
 		var lower_grid := GridContainer.new()
 		lower_grid.columns = 2
@@ -312,10 +332,16 @@ func _refresh_detail() -> void:
 		stats.custom_minimum_size.y = 0.0
 		stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 		lower_grid.add_child(stats)
-		lower_grid.add_child(_party_actions_panel(instance, active_ids, party_index, is_active))
+		lower_grid.add_child(_party_actions_panel(instance, active_ids, reserve_ids, squad_role, squad_index))
 
 
-func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], party_index: int, active: bool) -> Control:
+func _party_actions_panel(
+	instance: DigimonInstance,
+	active_ids: Array[String],
+	reserve_ids: Array[String],
+	squad_role: String,
+	squad_index: int
+) -> Control:
 	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
@@ -331,7 +357,7 @@ func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], 
 	stack.add_theme_constant_override("separation", 0)
 	panel.add_child(stack)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
-	header.configure("PARTY ACTIONS", _status_text, V2.AMBER, "party")
+	header.configure("SQUAD ACTIONS", _status_text, V2.AMBER, "party")
 	header.set_workspace_mode(true)
 	stack.add_child(header)
 	var inset := _margin(8, 6, 8, 8) if dense else _margin(10, 8, 10, 10)
@@ -355,40 +381,51 @@ func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], 
 	ascension.pressed.connect(func(): ascension_requested.emit())
 	actions.add_child(ascension)
 
-	if active:
+	var slot_status := "STORAGE"
+	if squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE:
+		slot_status = "ACTIVE %d / %d" % [squad_index + 1, OverworldState.get_max_active_party_size()]
+	elif squad_role == PlayerCollection.SQUAD_ROLE_RESERVE:
+		slot_status = "RESERVE %d / %d" % [squad_index + 1, OverworldState.get_max_reserve_party_size()]
+	var assign := _command_button(
+		"ASSIGN SQUAD SLOT",
+		"Choose one of the 3 Active or 3 Reserve slots",
+		slot_status,
+		"party",
+		V2.CYAN,
+		true
+	)
+	assign.pressed.connect(_open_squad_slot_picker.bind(instance.id))
+	actions.add_child(assign)
+
+	if not squad_role.is_empty():
+		var can_store := squad_role != PlayerCollection.SQUAD_ROLE_ACTIVE or active_ids.size() > 1
 		var remove := _command_button(
 			"MOVE TO STORAGE",
-			"Remove from the active Party",
-			"UNAVAILABLE" if active_ids.size() <= 1 else "READY",
-			"party",
+			"Remove this Digimon from the six-member Squad",
+			"READY" if can_store else "KEEP 1 ACTIVE",
+			"move",
 			V2.ORANGE,
-			active_ids.size() > 1
+			can_store
 		)
-		remove.pressed.connect(_remove_from_party.bind(instance.id))
+		remove.pressed.connect(_move_to_storage.bind(instance.id))
 		actions.add_child(remove)
 
-		var reorder := _command_button(
-			"REORDER PARTY",
-			"Choose the destination Party slot",
-			"SLOT %d" % (party_index + 1),
-			"move",
-			V2.CYAN,
-			active_ids.size() > 1
-		)
-		reorder.pressed.connect(_open_reorder_picker.bind(instance.id))
-		actions.add_child(reorder)
-	else:
-		var party_full := active_ids.size() >= OverworldState.get_max_active_party_size()
-		var add := _command_button(
-			"ADD TO PARTY",
-			"Choose a Party slot to replace" if party_full else "Add to the next open Party slot",
-			"CHOOSE SLOT" if party_full else "READY",
-			"party",
-			V2.GREEN,
-			true
-		)
-		add.pressed.connect(_open_replacement_picker.bind(instance.id) if party_full else _add_to_party.bind(instance.id))
-		actions.add_child(add)
+	var summary := _label(
+		"SQUAD %d / %d  ·  ACTIVE %d / %d  ·  RESERVE %d / %d"
+		% [
+			active_ids.size() + reserve_ids.size(),
+			OverworldState.get_max_squad_size(),
+			active_ids.size(),
+			OverworldState.get_max_active_party_size(),
+			reserve_ids.size(),
+			OverworldState.get_max_reserve_party_size(),
+		],
+		9,
+		V2.MUTED,
+		true
+	)
+	summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	actions.add_child(summary)
 	return panel
 
 
@@ -406,7 +443,7 @@ func _toggle_compact_detail_tab() -> void:
 
 
 func _set_roster_mode(mode: String) -> void:
-	if not ["party", "storage"].has(mode) or mode == _roster_mode:
+	if not ["active", "reserve", "storage"].has(mode) or mode == _roster_mode:
 		return
 	_roster_mode = mode
 	_workspace_page = 0
@@ -418,7 +455,9 @@ func _set_roster_mode(mode: String) -> void:
 
 
 func _toggle_roster_mode() -> void:
-	_set_roster_mode("storage" if _roster_mode == "party" else "party")
+	var modes := ["active", "reserve", "storage"]
+	var index := modes.find(_roster_mode)
+	_set_roster_mode(String(modes[posmod(index + 1, modes.size())]))
 
 
 func _command_button(title: String, subtitle: String, status: String, icon_kind: String, accent: Color, interactive: bool) -> DigiCommandButton:
@@ -435,53 +474,62 @@ func _command_button(title: String, subtitle: String, status: String, icon_kind:
 	return button
 
 
-func _open_replacement_picker(reserve_id: String) -> void:
-	_picker_mode = "replace"
-	_picker_subject_id = reserve_id
-	var entries: Array[Dictionary] = []
-	var active := OverworldState.get_active_instances()
-	for index in range(active.size()):
-		var instance := active[index]
-		var species := _database.get_by_seed(instance.species_seed)
-		entries.append({
-			"id": instance.id,
-			"title": "SLOT %d · %s" % [index + 1, instance.get_display_name(String(species.get("name", "Digimon")))],
-			"subtitle": "Replace this Party member",
-			"species": String(species.get("name", "")),
-			"accent": V2.PURPLE,
-		})
-	_picker.configure("REPLACE PARTY SLOT", "Choose the member that returns to Storage.", entries, V2.PURPLE)
-	_picker.open_picker(get_viewport().gui_get_focus_owner())
-
-
-func _open_reorder_picker(instance_id: String) -> void:
-	_picker_mode = "reorder"
+func _open_squad_slot_picker(instance_id: String) -> void:
+	_picker_mode = "assign_squad"
 	_picker_subject_id = instance_id
 	var entries: Array[Dictionary] = []
 	var active := OverworldState.get_active_instances()
-	for index in range(active.size()):
-		var target := active[index]
-		var species := _database.get_by_seed(target.species_seed)
-		entries.append({
-			"id": str(index),
-			"title": "PARTY SLOT %d" % (index + 1),
-			"subtitle": "Place before %s" % target.get_display_name(String(species.get("name", "Digimon"))),
-			"species": String(species.get("name", "")),
-			"accent": V2.CYAN,
-		})
-	_picker.configure("REORDER PARTY", "Choose the destination slot.", entries, V2.CYAN)
+	var reserve := OverworldState.get_reserve_party_instances()
+
+	for role_spec in [
+		[PlayerCollection.SQUAD_ROLE_ACTIVE, "ACTIVE", V2.CYAN, active, OverworldState.get_max_active_party_size()],
+		[PlayerCollection.SQUAD_ROLE_RESERVE, "RESERVE", V2.PURPLE, reserve, OverworldState.get_max_reserve_party_size()],
+	]:
+		var role := String(role_spec[0])
+		var role_label := String(role_spec[1])
+		var accent: Color = role_spec[2]
+		var members: Array = role_spec[3]
+		var capacity := int(role_spec[4])
+		for index in range(capacity):
+			var occupied: DigimonInstance = members[index] as DigimonInstance if index < members.size() else null
+			var species: Dictionary = _database.get_by_seed(occupied.species_seed) if occupied != null else {}
+			var occupied_name := occupied.get_display_name(String(species.get("name", "Digimon"))) if occupied != null else "EMPTY"
+			entries.append({
+				"id": "%s:%d" % [role, index],
+				"title": "%s SLOT %d · %s" % [role_label, index + 1, occupied_name],
+				"subtitle": "Keep here" if occupied != null and occupied.id == instance_id else ("Swap with this member" if occupied != null else "Assign to this empty slot"),
+				"species": String(species.get("name", "")),
+				"accent": accent,
+			})
+
+	_picker.configure("ASSIGN SQUAD SLOT", "Active deploys to battle; Reserve can Switch in during combat.", entries, V2.CYAN)
 	_picker.open_picker(get_viewport().gui_get_focus_owner())
 
 
 func _on_picker_selected(entry_id: String) -> void:
-	match _picker_mode:
-		"replace":
-			_swap(entry_id, _picker_subject_id)
-			_roster_mode = "party"
-		"reorder":
-			_move(_picker_subject_id, int(entry_id))
+	if _picker_mode == "assign_squad":
+		var parts := entry_id.split(":")
+		if parts.size() == 2:
+			var role := String(parts[0])
+			var slot := int(parts[1])
+			var ok := OverworldState.assign_squad_slot(_picker_subject_id, role, slot)
+			_status_text = "Squad assignment updated" if ok else "Could not assign this Squad slot"
+			if ok:
+				_roster_mode = role
+
 	_picker_mode = ""
 	_picker_subject_id = ""
+	_compact_detail_open = false
+	_refresh()
+	_layout()
+	call_deferred("_focus_selected")
+
+
+func _move_to_storage(instance_id: String) -> void:
+	var ok := OverworldState.move_squad_member_to_storage(instance_id)
+	_status_text = "Moved to Storage" if ok else "At least one Digimon must remain Active"
+	if ok:
+		_roster_mode = "storage"
 	_compact_detail_open = false
 	_refresh()
 	_layout()
