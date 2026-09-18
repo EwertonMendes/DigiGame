@@ -217,80 +217,67 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	first.link = 42
 	first.potential = 40
 	assert(training.apply_plan(first, {"atk": 3}, 0), "Training state must be persistable")
-	collection.add_instance(first, "agumon", "Agumon")
-	collection.add_instance(second, "agumon", "Agumon")
-	collection.add_instance(third, "gabumon", "Gabumon")
-	collection.add_instance(fourth, "veemon", "Veemon")
-	collection.add_instance(fifth, "agumon", "Agumon")
-	collection.add_instance(sixth, "gabumon", "Gabumon")
-	collection.add_instance(seventh, "veemon", "Veemon")
-	var party_ids: Array[String] = [first.id, second.id, third.id]
-	assert(party_service.set_party(collection, party_ids), "Valid party must be accepted")
-	var duplicates: Array[String] = [first.id, first.id]
-	assert(not party_service.set_party(collection, duplicates), "Duplicate individual must be rejected")
-	assert(party_service.add_to_party(collection, fourth.id), "Fourth Party member must be accepted")
-	assert(party_service.add_to_party(collection, fifth.id), "Fifth Party member must be accepted")
-	assert(party_service.add_to_party(collection, sixth.id), "Sixth Party member must be accepted")
-	assert(not party_service.add_to_party(collection, seventh.id), "A seventh Party member must be rejected")
-	assert(party_service.remove_from_party(collection, third.id) and party_service.add_to_party(collection, seventh.id), "Six-slot Party swap flow must work")
-	assert(collection.get_active_party_ids().size() == 6 and collection.get_reserve_instances().size() == 1, "Exactly six Digimon may be active and the remainder must stay in Storage")
+	for entry in [
+		[first, "agumon", "Agumon"],
+		[second, "agumon", "Agumon"],
+		[third, "gabumon", "Gabumon"],
+		[fourth, "veemon", "Veemon"],
+		[fifth, "agumon", "Agumon"],
+		[sixth, "gabumon", "Gabumon"],
+		[seventh, "veemon", "Veemon"],
+	]:
+		collection.add_instance(entry[0] as DigimonInstance, String(entry[1]), String(entry[2]))
+
+	var active_ids: Array[String] = [first.id, second.id, third.id]
+	var reserve_ids: Array[String] = [fourth.id, fifth.id, sixth.id]
+	assert(party_service.set_squad(collection, active_ids, reserve_ids), "Valid 3 Active + 3 Reserve Squad must be accepted")
+	assert(collection.get_active_party_ids() == active_ids, "Active order must be explicit and stable")
+	assert(collection.get_reserve_party_ids() == reserve_ids, "Reserve order must be explicit and stable")
+	assert(collection.get_storage_instances() == [seventh], "The seventh Digimon must remain in Storage")
+	assert(not party_service.add_to_active(collection, seventh.id), "A fourth Active Digimon must be rejected")
+	assert(not party_service.add_to_reserve(collection, seventh.id), "A fourth Reserve Digimon must be rejected")
+
+	assert(party_service.swap_with_reserve(collection, first.id, fourth.id), "Active and Reserve members must swap atomically")
+	assert(collection.get_active_party_ids()[0] == fourth.id and collection.get_reserve_party_ids()[0] == first.id, "Swap must preserve slot positions")
+	assert(party_service.swap_with_reserve(collection, fourth.id, first.id), "Squad swap must be reversible")
+	assert(collection.location_invariant_error().is_empty(), "Squad role changes must preserve collection location invariants")
+
 	collection.bits = 321
 	collection.add_digi_data(first.species_seed, 87)
+	collection.add_item("expansion_fragment", 4)
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
-	collection.add_item("expansion_fragment", 4)
-	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Collection save v6 must write")
+	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Squad v1 collection save must write")
 	var loaded: PlayerCollection = save_service.load_collection(TEST_SAVE_PATH)
 	assert(loaded != null and loaded.get_instances().size() == collection.get_instances().size(), "Save/load must preserve collection")
 	var restored := loaded.get_instance(first.id)
 	assert(restored != null and restored.level == first.level and restored.exp == first.exp and restored.link == first.link, "Save/load must preserve individual progression")
 	assert(int(restored.training.get("atk", 0)) == 3, "Save/load must preserve permanent Training")
 	assert(loaded.get_digi_data(first.species_seed) == 87 and loaded.bits == 321, "Save/load must preserve account rewards")
-	assert(loaded.get_active_party_ids() == collection.get_active_party_ids(), "Save/load must preserve party order")
+	assert(loaded.get_active_party_ids() == active_ids, "Save/load must preserve Active order")
+	assert(loaded.get_reserve_party_ids() == reserve_ids, "Save/load must preserve Reserve order")
+	assert(loaded.get_storage_instances().size() == 1 and loaded.get_storage_instances()[0].id == seventh.id, "Save/load must preserve Storage separation")
 	assert(loaded.get_item_count("expansion_fragment") == 4, "Save/load must preserve generic inventory")
 	var save_data := save_service.load_data(TEST_SAVE_PATH)
-	assert(save_data != null and save_data.save_version == 6 and not save_data.collection.is_empty(), "New saves must use v6 collection schema")
+	assert(save_data != null and save_data.save_version == 1 and save_data.save_format == "squad-v1", "New saves must use the Squad v1 contract")
+
+	# Prototype saves are intentionally invalidated. The game has not shipped,
+	# so Squad v1 is a clean persistence contract rather than a migration layer.
+	var migration: SaveMigration = MigrationScript.new()
+	assert(migration.migrate({"save_version": 6, "collection": collection.to_dict()}).is_empty(), "Prototype v6 saves must be rejected")
+	assert(migration.migrate({"save_version": 1, "collection": collection.to_dict()}).is_empty(), "Version alone must not accidentally accept a pre-Squad save")
+	var current_payload := {
+		"save_version": 1,
+		"save_format": "squad-v1",
+		"collection": collection.to_dict(),
+	}
+	var normalized := migration.migrate(current_payload)
+	assert(not normalized.is_empty(), "Current Squad v1 saves must normalize")
+	var normalized_collection := normalized.get("collection", {}) as Dictionary
+	assert((normalized_collection.get("activeSquadIds", []) as Array).size() == 3, "Squad v1 save must persist three Active slots")
+	assert((normalized_collection.get("reserveSquadIds", []) as Array).size() == 3, "Squad v1 save must persist three Reserve slots")
 	assert(save_service.delete_save(TEST_SAVE_PATH), "Regression save must be removable")
 
-	# Legacy vocabulary exists only in this fixture because it verifies that real
-	# v1 saves are migrated without data loss. New v6 data must never write it.
-	var migration: SaveMigration = MigrationScript.new()
-	var legacy_v1_instance := first.to_dict()
-	legacy_v1_instance.erase("tier")
-	legacy_v1_instance.erase("expansionUnlocked")
-	legacy_v1_instance.erase("battleFootprintId")
-	legacy_v1_instance.erase("hospitalRecovery")
-	var legacy_entry := {"rosterKey": "legacy_agumon", "instance": legacy_v1_instance}
-	var migrated := migration.migrate({"save_version": 1, "roster": {"instances": [legacy_entry], "activePartyIds": [first.id], "bits": 19, "digiData": {first.species_seed: 4}}})
-	assert(int(migrated.get("save_version", 0)) == 6, "v1 save must migrate through v6")
-	var migrated_collection := migrated.get("collection", {}) as Dictionary
-	assert(int(migrated_collection.get("bits", 0)) == 19, "Migration must retain legacy values")
-	var migrated_entries := migrated_collection.get("instances", []) as Array
-	assert(migrated_entries.size() == 1 and String((migrated_entries[0] as Dictionary).get("collectionKey", "")) == "legacy_agumon", "Migration must rename legacy entry key")
-	assert(not (migrated_entries[0] as Dictionary).has("rosterKey"), "v6 save must not write legacy key names")
-	var migrated_individual := (migrated_entries[0] as Dictionary).get("instance", {}) as Dictionary
-	assert(String(migrated_individual.get("tier", "")) == "E" and not bool(migrated_individual.get("expansionUnlocked", true)) and String(migrated_individual.get("battleFootprintId", "")) == "single", "Old saves must initialize Tier E and a locked 1x1 footprint")
-	assert((migrated_individual.get("hospitalRecovery", {}) as Dictionary).is_empty(), "Old saves must initialize without active Hospital recovery")
-	assert((migrated_collection.get("hospitalIds", []) as Array).is_empty(), "Legacy saves without recovery must initialize with no Hospital occupants")
-	var legacy_v2_instance := first.to_dict()
-	legacy_v2_instance.erase("tier")
-	legacy_v2_instance.erase("expansionUnlocked")
-	legacy_v2_instance.erase("battleFootprintId")
-	legacy_v2_instance.erase("hospitalRecovery")
-	legacy_v2_instance["equippedSkills"] = ["pepper_breath", "guard_charge"]
-	legacy_v2_instance.erase("favoriteSkills")
-	legacy_v2_instance.erase("archivedSkills")
-	legacy_v2_instance.erase("skillMastery")
-	var migrated_v2 := migration.migrate({"save_version": 2, "collection": {"instances": [{"collectionKey": "legacy", "instance": legacy_v2_instance}]}})
-	var migrated_v2_collection := migrated_v2.get("collection", {}) as Dictionary
-	var migrated_v2_entries := migrated_v2_collection.get("instances", []) as Array
-	var migrated_v2_entry := migrated_v2_entries[0] as Dictionary
-	var migrated_instance := migrated_v2_entry.get("instance", {}) as Dictionary
-	assert((migrated_instance.get("favoriteSkills", []) as Array) == ["pepper_breath", "guard_charge"], "v2 equipped order must become v3 Favorites")
-	assert(not migrated_instance.has("equippedSkills") and (migrated_instance.get("archivedSkills", []) as Array).is_empty(), "v3 migration must remove slots and initialize Archive")
-	assert(String(migrated_instance.get("tier", "")) == "E" and not bool(migrated_instance.get("expansionUnlocked", true)) and String(migrated_instance.get("battleFootprintId", "")) == "single", "v2 migration must initialize v4 individual defaults")
-	assert((migrated_instance.get("hospitalRecovery", {}) as Dictionary).is_empty(), "v2 migration must initialize Hospital recovery defaults")
-	assert((migrated_v2_collection.get("hospitalIds", []) as Array).is_empty(), "v2 migration must initialize v6 Hospital location defaults")
 
 func _test_overworld_digi_data() -> void:
 	assert(OverworldState.get_active_instances().size() == 3, "Production flow must start with three active instances")
