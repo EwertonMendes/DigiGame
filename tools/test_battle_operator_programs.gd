@@ -78,6 +78,7 @@ func _ready() -> void:
 
 
 func _test_operator_menu() -> void:
+	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
 	var hub := HUB_SCENE.instantiate()
 	add_child(hub)
 	for _index in range(6):
