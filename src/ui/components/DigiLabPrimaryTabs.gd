@@ -11,7 +11,7 @@ static func specs() -> Array[Dictionary]:
 			"icon": "database",
 			"enabled": true,
 			"angled": true,
-			"min_width": 176.0,
+			"min_width": 202.0,
 		},
 		{
 			"id": "party",
@@ -20,7 +20,7 @@ static func specs() -> Array[Dictionary]:
 			"icon": "party",
 			"enabled": true,
 			"angled": true,
-			"min_width": 166.0,
+			"min_width": 194.0,
 		},
 		{
 			"id": "ascension",
@@ -29,6 +29,6 @@ static func specs() -> Array[Dictionary]:
 			"icon": "evolution",
 			"enabled": true,
 			"angled": true,
-			"min_width": 214.0,
+			"min_width": 236.0,
 		},
 	]
