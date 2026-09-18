@@ -147,7 +147,7 @@ func recover_now(collection: PlayerCollection, instance: DigimonInstance, max_hp
 		instance.current_hp = previous_hp
 		instance.set_current_sp(previous_sp)
 		if admitted_during_transaction:
-			collection.discharge_from_hospital(instance.id, 0)
+			collection.cancel_hospital_admission(instance.id)
 		instance.clear_hospital_recovery()
 		result["reason"] = "invalid_recovery_state"
 		return result
@@ -172,8 +172,15 @@ func complete_if_ready(instance: DigimonInstance, max_hp: int, max_sp: int, now_
 	return true
 
 
-func discharge(collection: PlayerCollection, instance: DigimonInstance, max_hp: int, maximum_party_size: int, now_unix: int = -1) -> Dictionary:
-	var result := {"success": false, "reason": "invalid", "destination": ""}
+func discharge(
+	collection: PlayerCollection,
+	instance: DigimonInstance,
+	max_hp: int,
+	maximum_active_size: int,
+	maximum_reserve_size: int,
+	now_unix: int = -1
+) -> Dictionary:
+	var result := {"success": false, "reason": "invalid", "destination": "", "squad_role": ""}
 	if collection == null or instance == null:
 		return result
 	if collection.get_location(instance.id) != PlayerCollection.LOCATION_HOSPITAL:
@@ -182,14 +189,16 @@ func discharge(collection: PlayerCollection, instance: DigimonInstance, max_hp: 
 	if status_for(instance, max_hp, now_unix, PlayerCollection.LOCATION_HOSPITAL) != "ready":
 		result["reason"] = "still_recovering"
 		return result
-	var destination := collection.discharge_from_hospital(instance.id, maximum_party_size)
-	if destination.is_empty():
+	var destination := collection.discharge_from_hospital(instance.id, maximum_active_size, maximum_reserve_size)
+	var location := String(destination.get("location", ""))
+	if location.is_empty():
 		result["reason"] = "location_conflict"
 		return result
 	instance.clear_hospital_recovery()
 	result["success"] = true
 	result["reason"] = ""
-	result["destination"] = destination
+	result["destination"] = location
+	result["squad_role"] = String(destination.get("role", ""))
 	return result
 
 
