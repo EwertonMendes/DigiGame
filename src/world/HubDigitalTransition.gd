@@ -210,12 +210,18 @@ func _build_selection_summary() -> void:
 	_selection_panel = GlassPanelScript.new() as PanelContainer
 	_selection_panel.name = "SelectionSummary"
 	_selection_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_selection_panel.clip_contents = true
+	_selection_panel.custom_minimum_size = Vector2.ZERO
 	_selection_panel.call("configure_glass", HUB_V2.CYAN, "subtle", Vector4(16, 8, 16, 8), 10)
 	_mobile_dialog_content.add_child(_selection_panel)
 
 	_selection_summary = _label("", 11, HUB_V2.TEXT)
 	_selection_summary.name = "SelectionSummaryText"
-	_selection_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_selection_summary.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_selection_summary.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_selection_summary.max_lines_visible = 1
+	_selection_summary.custom_minimum_size = Vector2.ZERO
+	_selection_summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_selection_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_selection_summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_selection_panel.add_child(_selection_summary)
@@ -715,7 +721,7 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	var dialog_height := minf(720.0, physical.y - outer_edge * 2.0)
 	var side_pad := 16.0 if compact_landscape else 24.0
 	var top_pad := 8.0 if compact_landscape else 18.0
-	var hint_bar_height := 0.0 if compact_landscape else 48.0
+	var hint_bar_height := 0.0 if _compact_operator_layout else 48.0
 	var action_height := HUB_V2.TOUCH_TARGET
 	var summary_height := 44.0 if compact_landscape else 58.0
 	var bottom_pad := 10.0 if compact_landscape else 16.0
@@ -777,7 +783,7 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	if _input_hint_bar.visible:
 		_input_hint_bar.position = Vector2(0.0, dialog_height - hint_bar_height)
 		_input_hint_bar.size = Vector2(dialog_width, hint_bar_height)
-		_input_hint_bar.set_primary_tabs_enabled(_compact_operator_layout)
+		_input_hint_bar.set_primary_tabs_enabled(false)
 
 	if _compact_operator_layout:
 		_program_tab.visible = true
