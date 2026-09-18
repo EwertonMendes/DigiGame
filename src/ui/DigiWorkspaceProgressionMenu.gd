@@ -426,14 +426,16 @@ func _leave_techniques() -> void:
 
 func _turn_roster_page(delta: int) -> void:
 	var party := _party_instances()
-	var count := _page_count(party.size(), ROSTER_PAGE_SIZE)
-	if count <= 1:
+	var count := _squad_roster_page_count()
+	if party.is_empty() or count <= 1:
 		return
 	var next_page := clampi(_roster_page + delta, 0, count - 1)
 	if next_page == _roster_page:
 		return
 	_roster_page = next_page
-	_selected_index = mini(_roster_page * ROSTER_PAGE_SIZE, party.size() - 1)
+	var first_index := _first_index_for_roster_page(_roster_page)
+	if first_index >= 0:
+		_selected_index = first_index
 	_mode = MenuMode.ROSTER
 	_refresh_collection()
 	_layout()
