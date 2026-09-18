@@ -36,9 +36,12 @@ func maximum_squad_size() -> int:
 func set_party(collection: PlayerCollection, instance_ids: Array[String]) -> bool:
 	if collection == null:
 		return false
+	var reserve := collection.get_reserve_party_ids()
+	for instance_id: String in instance_ids:
+		reserve.erase(instance_id)
 	return collection.set_squad_ids(
 		instance_ids,
-		collection.get_reserve_party_ids(),
+		reserve,
 		minimum_active_size(),
 		maximum_active_size(),
 		maximum_reserve_size()
