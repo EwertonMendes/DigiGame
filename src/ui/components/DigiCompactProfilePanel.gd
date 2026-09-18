@@ -14,7 +14,7 @@ func configure(instance: DigimonInstance, species: Dictionary, progression: Digi
 	var rank := String(species.get("rank", "Unknown"))
 	var accent := V2.rank_color(rank)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	custom_minimum_size.y = 138.0 if dense else 176.0
+	custom_minimum_size.y = 122.0 if dense else 176.0
 	clip_contents = true
 	add_theme_stylebox_override("panel", V2.workspace_panel_style(accent))
 
@@ -32,7 +32,7 @@ func configure(instance: DigimonInstance, species: Dictionary, progression: Digi
 	margin.add_child(row)
 
 	var portrait_frame := PanelContainer.new()
-	portrait_frame.custom_minimum_size = Vector2(108, 108) if dense else Vector2(136, 136)
+	portrait_frame.custom_minimum_size = Vector2(96, 96) if dense else Vector2(136, 136)
 	portrait_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	portrait_frame.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.PANEL_DEEP.r, V2.PANEL_DEEP.g, V2.PANEL_DEEP.b, 0.86), Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.42), 9))
 	row.add_child(portrait_frame)
@@ -43,7 +43,7 @@ func configure(instance: DigimonInstance, species: Dictionary, progression: Digi
 	pm.add_theme_constant_override("margin_bottom", 7)
 	portrait_frame.add_child(pm)
 	var portrait := PortraitPreviewScript.new() as DigimonPortraitPreview
-	portrait.custom_minimum_size = Vector2(94, 94) if dense else Vector2(122, 122)
+	portrait.custom_minimum_size = Vector2(82, 82) if dense else Vector2(122, 122)
 	portrait.set_species(String(species.get("name", "")))
 	pm.add_child(portrait)
 
@@ -55,7 +55,7 @@ func configure(instance: DigimonInstance, species: Dictionary, progression: Digi
 	row.add_child(info)
 
 	var display_name := instance.get_display_name(String(species.get("name", "Unknown")))
-	var name := _label(display_name, 22 if dense else 26, V2.WHITE, true)
+	var name := _label(display_name, 20 if dense else 26, V2.WHITE, true)
 	name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	info.add_child(name)
 
