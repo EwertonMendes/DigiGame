@@ -294,7 +294,10 @@ func _refresh_detail() -> void:
 	var physical := V2.physical_window_size(get_viewport())
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 	var estimated_body_h := physical.y - WorkspaceChrome.header_height(compact) - WorkspaceChrome.top_gap(compact) - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP
-	var dense := compact or estimated_body_h < 590.0
+	# 900p-class desktop viewports need the dense workspace composition too.
+	# This threshold is based on the actual body budget after header/footer chrome,
+	# not on device class, so the no-scroll contract stays valid on short desktops.
+	var dense := compact or estimated_body_h < 760.0
 
 	var profile := ProfilePanelScript.new() as DigiCompactProfilePanel
 	profile.configure(instance, species, _progression, true, dense)
@@ -312,27 +315,47 @@ func _refresh_detail() -> void:
 			var stats := StatsPanelScript.new()
 			stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			stats.size_flags_vertical = Control.SIZE_EXPAND_FILL
-			stats.set_workspace_mode(true, true)
+			stats.set_workspace_mode(true, true, true)
 			stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 			_detail.add_child(stats)
 		else:
 			_detail.add_child(_party_actions_panel(instance, active_ids, active_ids.find(instance.id), squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE))
 	else:
-		var lower_grid := GridContainer.new()
-		lower_grid.columns = 2
-		lower_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lower_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		lower_grid.add_theme_constant_override("h_separation", WorkspaceChrome.GAP)
-		lower_grid.add_theme_constant_override("v_separation", WorkspaceChrome.GAP)
-		_detail.add_child(lower_grid)
+		# Do not use GridContainer here. A grid couples both cells to the same row
+		# height, which previously let an expanding Stats panel stretch Squad
+		# Actions (or vice versa) beyond the visible no-scroll workspace.
+		var lower_row := HBoxContainer.new()
+		lower_row.name = "PartyDetailColumns"
+		lower_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lower_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		lower_row.clip_contents = true
+		lower_row.add_theme_constant_override("separation", WorkspaceChrome.GAP)
+		_detail.add_child(lower_row)
+
+		var stats_column := VBoxContainer.new()
+		stats_column.name = "StatsColumn"
+		stats_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		stats_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		stats_column.size_flags_stretch_ratio = 1.0
+		stats_column.clip_contents = true
+		lower_row.add_child(stats_column)
+
 		var stats := StatsPanelScript.new()
+		stats.name = "PartyWorkspaceStats"
 		stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		stats.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		stats.set_workspace_mode(true, true)
+		stats.set_workspace_mode(true, true, true)
 		stats.custom_minimum_size.y = 0.0
 		stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
-		lower_grid.add_child(stats)
-		lower_grid.add_child(_party_actions_panel(instance, active_ids, active_ids.find(instance.id), squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE))
+		stats_column.add_child(stats)
+
+		var actions_column := VBoxContainer.new()
+		actions_column.name = "ActionsColumn"
+		actions_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		actions_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		actions_column.size_flags_stretch_ratio = 1.0
+		actions_column.clip_contents = true
+		lower_row.add_child(actions_column)
+		actions_column.add_child(_party_actions_panel(instance, active_ids, active_ids.find(instance.id), squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE))
 
 
 func _party_actions_panel(
