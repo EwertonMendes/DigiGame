@@ -910,6 +910,24 @@ func switch_current(incoming_id: String) -> bool:
 	return true
 
 
+func can_skip_reserve_replacement() -> bool:
+	return _replacement_prompt_ready and not _alive_actors(true).is_empty()
+
+
+func skip_reserve_replacement() -> bool:
+	if not can_skip_reserve_replacement() or _pending_replacements.is_empty():
+		return false
+	_pending_replacements.remove_at(0)
+	_replacement_prompt_ready = false
+	current_actor = null
+	_turn_index = -1
+	phase = Phase.TURN_END
+	turn_order_changed.emit()
+	_refresh_hud()
+	call_deferred("_start_next_turn")
+	return true
+
+
 func deploy_reserve_replacement(incoming_id: String) -> bool:
 	if (
 		not _replacement_prompt_ready
@@ -1259,6 +1277,7 @@ func get_hud_state() -> Dictionary:
 	state["selected_action"] = _selected_action.duplicate(true)
 	state["can_confirm_action"] = phase == Phase.TARGET_SELECT and _selected_target != null and not _input_locked
 	state["replacement_required"] = _replacement_prompt_ready
+	state["replacement_can_skip"] = can_skip_reserve_replacement()
 	state["reserve_count"] = _squad_session.get_available_bench_ids().size() if _squad_session != null else 0
 	state["switch_options"] = get_switch_options(_replacement_prompt_ready)
 	state["can_switch"] = can_switch_current()
