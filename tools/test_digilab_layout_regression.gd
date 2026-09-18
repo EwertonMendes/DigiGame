@@ -136,6 +136,7 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 	var tabs_root := header.get_node_or_null("HeaderTabs") as Control
 	if tabs_root == null:
 		return false
+	var uniform_width := -1.0
 	for tab_id: String in ["convert", "party", "ascension"]:
 		var button: Button = header.get_tab_button(tab_id)
 		if button == null or button.disabled or button.focus_mode != Control.FOCUS_NONE:
@@ -147,13 +148,15 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 		if label.size.x > button.size.x:
 			print("[digilab-layout] primary tab label exceeds tab bounds: %s" % tab_id)
 			return false
-		if button.size.x > 176.5:
-			print("[digilab-layout] primary tab grew beyond the authored cap: %s (%.1f px)" % [tab_id, button.size.x])
+		if uniform_width < 0.0:
+			uniform_width = button.size.x
+		elif not is_equal_approx(button.size.x, uniform_width):
+			print("[digilab-layout] primary tabs must share one content-driven width")
 			return false
 		if button.position.x + button.size.x > tabs_root.size.x + 1.0:
 			print("[digilab-layout] primary tab escaped behind header controls: %s" % tab_id)
 			return false
-	return header.get_tab_button(active_id) != null
+	return uniform_width >= 170.0 and header.get_tab_button(active_id) != null
 
 
 func _workspace_contract_is_valid(screen: Control, list_scroll_key: String, detail_scroll_key: String, pager_key: String) -> bool:
