@@ -2,6 +2,7 @@ extends "res://src/ui/DigiLabScreen.gd"
 class_name ProgressionDigiLabCreateScreen
 
 const SemanticPalette = preload("res://src/ui/components/DigiSemanticPalette.gd")
+const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
 
 
 func open_lab() -> void:
@@ -269,48 +270,23 @@ func _refresh_detail() -> void:
 	for amount: int in spend_options:
 		option_grid.add_child(_reconstruction_option(canonical_name, amount, available, required))
 
-	_detail_body.add_child(_subsection("NEW INDIVIDUAL", "Persistent collection member", V2.PURPLE))
-	var note := _label("The reconstructed Digimon joins Storage at Level 1 with its own persistent identity. Multiple individuals of the same species are allowed.", 10, V2.MUTED)
-	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	note.custom_minimum_size.y = 34
-	_detail_body.add_child(note)
-
-
 func _reconstruction_option(species_name: String, amount: int, available: int, required: int) -> Button:
 	var potential := _factory.potential_from_scan_percent(clampi(amount, 100, 200))
 	var accent := V2.AMBER if amount == required else V2.CYAN
-	var button := Button.new()
-	button.text = ""
-	button.focus_mode = Control.FOCUS_ALL
-	button.custom_minimum_size = Vector2(150, 86)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.disabled = available < amount
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if not button.disabled else Control.CURSOR_ARROW
-	button.add_theme_stylebox_override("normal", V2.action_card_style(accent, "normal"))
-	button.add_theme_stylebox_override("hover", V2.action_card_style(accent, "hover"))
-	button.add_theme_stylebox_override("focus", V2.action_card_style(accent, "focus"))
-	button.add_theme_stylebox_override("pressed", V2.action_card_style(accent, "pressed"))
-	button.add_theme_stylebox_override("disabled", V2.action_card_style(accent, "disabled"))
+	var subtitle := "Standard reconstruction" if potential <= 0 else "+%d starting Potential" % potential
+	var status := "READY" if available >= amount else "NEED %d MORE DATA" % (amount - available)
+	var button := CommandButtonScript.new() as DigiCommandButton
+	button.configure(
+		"RECONSTRUCT · %d DATA" % amount,
+		subtitle,
+		status,
+		"database",
+		accent
+	)
+	button.set_compact(true)
+	button.set_interactive(available >= amount)
 	button.tooltip_text = "Need %d more Digi Data." % (amount - available) if available < amount else "Reconstruct a new %s using %d Digi Data." % [species_name, amount]
 	button.pressed.connect(_reconstruct.bind(species_name, amount))
-	var margin := _margin(12, 10, 12, 10)
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(margin)
-	var stack := VBoxContainer.new()
-	stack.alignment = BoxContainer.ALIGNMENT_CENTER
-	stack.add_theme_constant_override("separation", 4)
-	margin.add_child(stack)
-	var amount_label := _single_line_label("%d DATA" % amount, 15, V2.TEXT, true)
-	amount_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stack.add_child(amount_label)
-	var bonus_copy := "STANDARD RECONSTRUCTION" if potential <= 0 else "+%d STARTING POTENTIAL" % potential
-	var bonus := _single_line_label(bonus_copy, 9, accent, true)
-	bonus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stack.add_child(bonus)
-	var status := _single_line_label("READY" if available >= amount else "%d MORE NEEDED" % (amount - available), 9, V2.GREEN if available >= amount else V2.SUBTLE, true)
-	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stack.add_child(status)
 	return button
 
 

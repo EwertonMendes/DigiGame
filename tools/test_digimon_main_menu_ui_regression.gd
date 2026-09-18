@@ -56,8 +56,18 @@ func _ready() -> void:
 	var expected_top_gap := 12.0 if compact else 16.0
 	assert(header != null and header.is_workspace_mode(), "Main Digimon header must use the shared workspace header variant")
 	assert(header.get_tab_button("party") != null and header.get_tab_button("digipedia") != null and header.get_tab_button("system") != null, "Main header must expose Party, Digipedia and System tabs")
+	var main_tab_width := -1.0
 	for tab_id in ["party", "digipedia", "system"]:
-		assert(header.get_tab_button(tab_id) is DigiAngledTab, "Main header tabs must use the angled game tab shape")
+		var main_tab := header.get_tab_button(tab_id)
+		assert(main_tab is DigiAngledTab, "Main header tabs must use the angled game tab shape")
+		var main_label := main_tab.get_meta("tab_label") as Label
+		assert(main_label != null and main_label.visible and not main_label.text.strip_edges().is_empty(), "Main Digimon tabs must keep their icon and text label visible")
+		assert(main_label.size.x >= 24.0, "Main Digimon tab labels must receive real rendered width, not just exist in metadata")
+		if main_tab_width < 0.0:
+			main_tab_width = main_tab.size.x
+		else:
+			assert(is_equal_approx(main_tab.size.x, main_tab_width), "Main Digimon tabs must use one uniform width based on their largest label")
+	assert(main_tab_width >= 150.0, "Main Digimon tabs must retain comfortable label padding instead of collapsing to icon-only buttons")
 	assert(menu.get("_collection_header") == null, "Party cards must not have an Active Party banner")
 	assert(menu.find_child("DigimonMenuBackground", true, false) != null, "Main menu must display its supplied background")
 	assert(is_equal_approx(header.size.y, expected_header), "Main Digimon header height must match the DigiLab/Hospital workspace chrome")
