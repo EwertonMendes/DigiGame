@@ -101,13 +101,27 @@ async function moveToDigiLabAndOpen(page) {
   await page.setViewportSize(compactViewport);
   await settleFrames(page, 5);
 
-  const opened = waitForConsole(page, '[Hub] DIGILAB open', 6000);
+  const canvas = page.locator('canvas');
+  const canvasBox = await canvas.boundingBox();
+  if (!canvasBox) throw new Error('DigiLab QA requires a visible canvas bounding box.');
+
+  // HubProgressionGameplay positions the real compact DigiLab action 260 px
+  // from the physical canvas right edge and 132 px from the bottom. Godot Web
+  // may letterbox the canvas inside the browser viewport, so derive the click
+  // from the rendered canvas rect rather than the page viewport.
   const digilabCenter = {
-    x: compactViewport.width - 260 + 59,
-    y: compactViewport.height - 132 + 23,
+    x: canvasBox.x + canvasBox.width - 260 + 59,
+    y: canvasBox.y + canvasBox.height - 132 + 23,
   };
+  await page.screenshot({ path: 'build/digilab-touch-entry.png', fullPage: true });
+  const opened = waitForConsole(page, '[Hub] DIGILAB open', 6000);
   await page.mouse.click(digilabCenter.x, digilabCenter.y);
-  await opened;
+  try {
+    await opened;
+  } catch (error) {
+    await page.screenshot({ path: 'build/digilab-touch-entry-failed.png', fullPage: true });
+    throw error;
+  }
 
   await page.setViewportSize(desktopViewports[0]);
   await settleFrames(page, 5);
