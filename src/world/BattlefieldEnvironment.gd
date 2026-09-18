@@ -3,11 +3,6 @@ class_name BattlefieldEnvironment
 
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
-# Presentation-only layer for authored battlefield props.
-# Gameplay collision remains in the field through static blocked cells. Every
-# prop has an explicit visual foot/pivot that is aligned to one logical tile
-# center, so the player can always tell which cell owns the obstacle.
-
 const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
 const OAK_SMALL_SOURCE = preload("res://assets/terrain/Oak_Tree_Small.png")
 const ROCK_SOURCE = preload("res://assets/world/hawkbirdtree/rock.png")
@@ -18,21 +13,10 @@ const ROCK_TINT := Color(0.94, 0.97, 0.94, 1.0)
 const LARGE_TREE_OCCLUDED_ALPHA := 0.42
 const OCCLUSION_FADE_SPEED := 7.5
 
-# Upright blockers read better when their ground contact sits slightly toward
-# the near edge of the isometric diamond instead of its mathematical center.
-# Express the bias as a fraction of the tile's center-to-near-edge depth so it
-# automatically follows the field geometry rather than using sprite-specific
-# pixel offsets.
 const BLOCKER_VISUAL_DEPTH_RATIO := 0.35
-# Tall upright props need a stronger visual-depth correction because their
-# canopy shifts the perceived center upward. Scale the extra bias from rendered
-# height versus the actual isometric tile depth, so short trees and rocks stay
-# where they already read correctly while tall props naturally sit deeper.
 const TALL_PROP_EXTRA_DEPTH_RATIO := 0.50
 const MAX_BLOCKER_VISUAL_DEPTH_RATIO := 0.90
 
-# Visible alpha bounds inside the user-supplied source PNGs. Oak_Tree_Small.png
-# is a compact atlas containing a stump and two separate trees, not one prop.
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 
@@ -56,36 +40,43 @@ func _process(delta: float) -> void:
 	_update_large_tree_occlusion(delta)
 
 
-func configure(
-	field: Node2D,
-	tree_cells: Array[Vector2i],
-	rock_cells: Array[Vector2i],
-	stump_cell: Vector2i
-) -> void:
+func configure(field: Node2D, props: Array[Dictionary]) -> void:
 	_field = field
-	_build_trees(tree_cells)
-	_build_stump(stump_cell)
-	_build_rocks(rock_cells)
+	_large_tree_occluders.clear()
+	var tree_index := 0
+	var rock_index := 0
+	for prop: Dictionary in props:
+		var grid := Vector2i(prop.get("grid", Vector2i(-1, -1)))
+		var kind := String(prop.get("kind", "")).strip_edges().to_lower()
+		match kind:
+			"tree":
+				_build_tree(grid, String(prop.get("variant", "")), tree_index)
+				tree_index += 1
+			"rock":
+				_build_rock(grid, rock_index)
+				rock_index += 1
+			"stump":
+				_build_stump(grid)
+			_:
+				push_warning("BattlefieldEnvironment ignored unsupported prop kind '%s'." % kind)
 
 
-func _build_trees(cells: Array[Vector2i]) -> void:
-	for index in range(cells.size()):
-		var grid: Vector2i = cells[index]
-		var descriptor := _tree_descriptor(index)
-		var tree := _create_anchored_prop(
-			String(descriptor["name"]) + "_%02d_%02d" % [grid.x, grid.y],
-			descriptor["texture"] as Texture2D,
-			grid,
-			descriptor["foot"] as Vector2,
-			1.0,
-			true
-		)
-		tree.set_meta("obstacle_kind", "tree")
-		tree.set_meta("grid", grid)
-		add_child(tree)
-		if bool(descriptor.get("large_canopy_occluder", false)):
-			tree.set_meta("large_canopy_occluder", true)
-			_large_tree_occluders.append(tree)
+func _build_tree(grid: Vector2i, variant: String, index: int) -> void:
+	var descriptor := _tree_descriptor(variant, index)
+	var tree := _create_anchored_prop(
+		String(descriptor["name"]) + "_%02d_%02d" % [grid.x, grid.y],
+		descriptor["texture"] as Texture2D,
+		grid,
+		descriptor["foot"] as Vector2,
+		1.0,
+		true
+	)
+	tree.set_meta("obstacle_kind", "tree")
+	tree.set_meta("grid", grid)
+	add_child(tree)
+	if bool(descriptor.get("large_canopy_occluder", false)):
+		tree.set_meta("large_canopy_occluder", true)
+		_large_tree_occluders.append(tree)
 
 
 func _build_stump(grid: Vector2i) -> void:
@@ -98,57 +89,71 @@ func _build_stump(grid: Vector2i) -> void:
 		1.0,
 		false
 	)
-	stump.set_meta("obstacle_kind", "decoration")
+	stump.set_meta("obstacle_kind", "stump")
 	stump.set_meta("grid", grid)
 	add_child(stump)
 
 
-func _build_rocks(cells: Array[Vector2i]) -> void:
+func _build_rock(grid: Vector2i, index: int) -> void:
 	var rock_texture := _atlas_texture(ROCK_SOURCE, ROCK_REGION)
-	for index in range(cells.size()):
-		var grid: Vector2i = cells[index]
-		var rock := _create_anchored_prop(
-			"Rock_%02d_%02d" % [grid.x, grid.y],
-			rock_texture,
-			grid,
-			ROCK_FOOT,
-			ROCK_SCALE,
-			true
-		)
-		rock.flip_h = index % 2 == 1
-		rock.modulate = ROCK_TINT
-		rock.set_meta("obstacle_kind", "rock")
-		rock.set_meta("grid", grid)
-		add_child(rock)
+	var rock := _create_anchored_prop(
+		"Rock_%02d_%02d" % [grid.x, grid.y],
+		rock_texture,
+		grid,
+		ROCK_FOOT,
+		ROCK_SCALE,
+		true
+	)
+	rock.flip_h = index % 2 == 1
+	rock.modulate = ROCK_TINT
+	rock.set_meta("obstacle_kind", "rock")
+	rock.set_meta("grid", grid)
+	add_child(rock)
 
 
-func _tree_descriptor(index: int) -> Dictionary:
-	# Keep a restrained, repeatable visual rhythm: two large canopy trees for
-	# every six authored tree cells, with the two small-oak cuts filling the
-	# remaining positions. Large-canopy behavior comes from the descriptor,
-	# not from a hard-coded battlefield coordinate.
+func _tree_descriptor(variant: String, index: int) -> Dictionary:
+	match variant.strip_edges().to_lower():
+		"large":
+			return _large_tree_descriptor()
+		"small_a":
+			return _small_tree_a_descriptor()
+		"small_b":
+			return _small_tree_b_descriptor()
+
 	match index % 6:
 		0, 4:
-			return {
-				"name": "OakTreeLarge",
-				"texture": _atlas_texture(OAK_TREE_SOURCE, LARGE_OAK_REGION),
-				"foot": LARGE_OAK_FOOT,
-				"large_canopy_occluder": true,
-			}
+			return _large_tree_descriptor()
 		1, 3:
-			return {
-				"name": "OakTreeSmallA",
-				"texture": _atlas_texture(OAK_SMALL_SOURCE, SMALL_OAK_A_REGION),
-				"foot": SMALL_OAK_A_FOOT,
-				"large_canopy_occluder": false,
-			}
+			return _small_tree_a_descriptor()
 		_:
-			return {
-				"name": "OakTreeSmallB",
-				"texture": _atlas_texture(OAK_SMALL_SOURCE, SMALL_OAK_B_REGION),
-				"foot": SMALL_OAK_B_FOOT,
-				"large_canopy_occluder": false,
-			}
+			return _small_tree_b_descriptor()
+
+
+func _large_tree_descriptor() -> Dictionary:
+	return {
+		"name": "OakTreeLarge",
+		"texture": _atlas_texture(OAK_TREE_SOURCE, LARGE_OAK_REGION),
+		"foot": LARGE_OAK_FOOT,
+		"large_canopy_occluder": true,
+	}
+
+
+func _small_tree_a_descriptor() -> Dictionary:
+	return {
+		"name": "OakTreeSmallA",
+		"texture": _atlas_texture(OAK_SMALL_SOURCE, SMALL_OAK_A_REGION),
+		"foot": SMALL_OAK_A_FOOT,
+		"large_canopy_occluder": false,
+	}
+
+
+func _small_tree_b_descriptor() -> Dictionary:
+	return {
+		"name": "OakTreeSmallB",
+		"texture": _atlas_texture(OAK_SMALL_SOURCE, SMALL_OAK_B_REGION),
+		"foot": SMALL_OAK_B_FOOT,
+		"large_canopy_occluder": false,
+	}
 
 
 func _atlas_texture(source: Texture2D, region: Rect2) -> AtlasTexture:
@@ -213,9 +218,6 @@ func _visual_ground_anchor(
 	if not use_blocker_visual_anchor:
 		return tile_center
 
-	# One cardinal grid step moves half a tile-height downward on this 2:1
-	# isometric projection. Using that measured depth keeps this policy valid if
-	# the grid dimensions change later.
 	var next_row_center := Vector2(_field.call("grid_to_world", grid + Vector2i(1, 0)))
 	var center_to_near_edge := absf(next_row_center.y - tile_center.y)
 	var tile_depth := maxf(1.0, center_to_near_edge * 2.0)
@@ -275,11 +277,6 @@ func _should_fade_for_actor(tree: Sprite2D, actor: Node) -> bool:
 	var tree_grid := Vector2i(tree_grid_variant)
 	var occlusion_grid := _large_tree_occlusion_grid(tree_grid)
 
-	# A large oak only fades for the single tile directly behind its canopy.
-	# In this 2:1 isometric projection, (-1, -1) keeps the same screen X and
-	# moves one full tile upward, i.e. precisely behind the tree. Side-adjacent
-	# tiles may overlap the canopy's broad sprite rectangle, but they are not
-	# visually behind the tree and must never trigger transparency.
 	for raw_grid in raw_grids:
 		if raw_grid is Vector2i and Vector2i(raw_grid) == occlusion_grid:
 			return true
