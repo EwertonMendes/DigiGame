@@ -1,6 +1,7 @@
 extends "res://src/ui/CompactDigimonInfoPanel.gd"
 
 const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 var _tier_icon: DigiTierIcon = null
 
@@ -27,7 +28,7 @@ func _refresh_context() -> void:
 
 	var tier := String(hovered.call("get_tier")) if hovered.has_method("get_tier") else "E"
 	var footprint := String(hovered.call("get_battle_footprint_id")) if hovered.has_method("get_battle_footprint_id") else "single"
-	var size_badge := "2×2" if footprint == "large_2x2" else "1×1"
+	var size_badge := FootprintScript.display_label(footprint)
 	_tier_icon.set_tier(tier)
 	_tier_icon.visible = true
 	_rank_label.text = size_badge
