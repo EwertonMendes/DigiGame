@@ -214,27 +214,47 @@ func _assert_prop_ground_anchor(
 func _validate_large_tree_occlusion(environment: Node, large_tree: Sprite2D) -> void:
 	var actor := FakeBattleActor.new()
 	actor.name = "OcclusionProbe"
-	actor.occupied_grids = [Vector2i(3, 12)]
-
-	var actor_sprite := Sprite2D.new()
-	actor_sprite.name = "Sprite2D"
-	actor_sprite.texture = large_tree.texture
-	actor.add_child(actor_sprite)
 	environment.get_parent().get_parent().add_child(actor)
 
-	# Keep the probe visibly overlapping the canopy while changing only its
-	# tactical depth. This verifies occlusion is based on projected depth, not
-	# on species names or hard-coded tile coordinates.
-	actor.global_position = large_tree.global_position + Vector2(0.0, -12.0)
+	var tree_grid := Vector2i(4, 12)
+	var directly_behind := tree_grid - Vector2i.ONE
 	_expect(
-		bool(environment.call("_should_fade_for_actor", large_tree, actor)),
-		"A Digimon visually behind the large oak must trigger canopy transparency"
+		Vector2i(environment.call("_large_tree_occlusion_grid", tree_grid)) == directly_behind,
+		"Large-tree occlusion must target the single isometric tile directly behind the canopy"
 	)
 
-	actor.occupied_grids = [Vector2i(5, 12)]
+	actor.occupied_grids = [directly_behind]
+	_expect(
+		bool(environment.call("_should_fade_for_actor", large_tree, actor)),
+		"A Digimon on the tile directly behind the large oak must trigger canopy transparency"
+	)
+
+	# These two cells share the rear-side edges of the tree tile and can be
+	# visually close to the canopy, but they are not the tile directly behind it.
+	actor.occupied_grids = [tree_grid + Vector2i(-1, 0)]
 	_expect(
 		not bool(environment.call("_should_fade_for_actor", large_tree, actor)),
-		"A Digimon in front of the large oak must remain rendered above an opaque canopy"
+		"A Digimon on the nearby upper-left tile must not fade the oak"
+	)
+
+	actor.occupied_grids = [tree_grid + Vector2i(0, -1)]
+	_expect(
+		not bool(environment.call("_should_fade_for_actor", large_tree, actor)),
+		"A Digimon on the nearby upper-right tile must not fade the oak"
+	)
+
+	actor.occupied_grids = [tree_grid + Vector2i(1, 0)]
+	_expect(
+		not bool(environment.call("_should_fade_for_actor", large_tree, actor)),
+		"A Digimon in front of the large oak must keep the canopy opaque"
+	)
+
+	# Multi-tile Digimon still trigger the effect if any occupied cell is the
+	# exact occlusion tile.
+	actor.occupied_grids = [Vector2i(2, 10), directly_behind, Vector2i(2, 11), Vector2i(3, 10)]
+	_expect(
+		bool(environment.call("_should_fade_for_actor", large_tree, actor)),
+		"A large Digimon footprint covering the direct-behind tile must fade the canopy"
 	)
 
 	actor.queue_free()
