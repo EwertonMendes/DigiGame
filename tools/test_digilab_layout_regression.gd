@@ -154,8 +154,15 @@ func _ready() -> void:
 		return
 	print("[digilab-layout] ascension deep-link ok")
 
+	# Regression for the first-open lifecycle bug: on a freshly opened
+	# Ascension / Expansion screen, switching from Tier to Expansion must settle
+	# against the real detail viewport without requiring navigation away/back.
+	if not _check(String(ascension.get("_section_mode")) == "tier", "Fresh Ascension screen must start in Tier before first Expansion switch"):
+		return
 	ascension.call("_set_section_mode", "expansion")
 	await _frames(4)
+	if not _check(String(ascension.get("_section_mode")) == "expansion", "First Expansion switch must complete without reopening the screen"):
+		return
 	ascension_detail = ascension.get("_detail") as Control
 	if not _check(_content_fits_disabled_scroll(ascension, "_detail_scroll", "_detail"), "Expansion detail must fit without scrolling"):
 		return
