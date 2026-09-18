@@ -5,6 +5,13 @@ const WALK_FRAME_DURATION := 0.11
 const PREVIEW_FACING := "down_right"
 const PREVIEW_REFERENCE_CELL := 64.0
 const PREVIEW_FILL_RATIO := 0.82
+const DEFAULT_POSITION_BIAS := Vector2(0.0, 3.0)
+
+# Default previews preserve the authored runtime relationship between species.
+# Contexts that need maximum legibility (such as the Evolution Chart) may opt
+# into an envelope fit while still preserving each resource's authored aspect.
+const FIT_AUTHORED_PROPORTION := 0
+const FIT_VISUAL_ENVELOPE := 1
 const SPACED_9_IDLE_FRAME := {
 	"down_left": 3,
 	"down_right": 5,
@@ -32,6 +39,9 @@ var _active := false
 var _elapsed := 0.0
 var _sequence_index := 0
 var _pending_species := ""
+var _fit_mode := FIT_AUTHORED_PROPORTION
+var _fill_ratio := PREVIEW_FILL_RATIO
+var _position_bias := DEFAULT_POSITION_BIAS
 
 
 func _ready() -> void:
@@ -53,6 +63,13 @@ func set_species(species_name: String) -> void:
 	_pending_species = species_name
 	if _sprite != null:
 		_load_species(species_name)
+
+
+func configure_presentation(fit_mode: int, fill_ratio: float = PREVIEW_FILL_RATIO, position_bias: Vector2 = DEFAULT_POSITION_BIAS) -> void:
+	_fit_mode = FIT_VISUAL_ENVELOPE if fit_mode == FIT_VISUAL_ENVELOPE else FIT_AUTHORED_PROPORTION
+	_fill_ratio = clampf(fill_ratio, 0.10, 1.0)
+	_position_bias = position_bias
+	_layout_sprite()
 
 
 func set_active(value: bool) -> void:
@@ -162,7 +179,7 @@ func _show_spaced_9_frame(frame_index: int) -> void:
 func _layout_sprite() -> void:
 	if _sprite == null:
 		return
-	_sprite.position = size * 0.5 + Vector2(0.0, 3.0)
+	_sprite.position = size * 0.5 + _position_bias
 	if _digimon == null or _digimon.texture == null:
 		return
 	var frame_size := Vector2.ZERO
@@ -175,20 +192,32 @@ func _layout_sprite() -> void:
 		)
 	if frame_size.x <= 0.0 or frame_size.y <= 0.0:
 		return
-	# Menu cards must preserve the same authored/native proportions used by the
-	# overworld and battle renderers. The old implementation independently fit
-	# every species to the card, which made Fresh/Baby/Rookie sprites inflate to
-	# nearly the same visual size as Champion+ forms and made Greymon look small.
-	# A 64 px runtime cell at scale 1 is the preview reference; each resource's
-	# sprite_scale remains authoritative. Oversized forms are only reduced when
-	# they would clip the preview bounds.
-	var preview_unit_scale := minf(size.x, size.y) / PREVIEW_REFERENCE_CELL * PREVIEW_FILL_RATIO
+	var authored_size := Vector2(
+		frame_size.x * absf(_digimon.sprite_scale.x),
+		frame_size.y * absf(_digimon.sprite_scale.y)
+	)
+	if _fit_mode == FIT_VISUAL_ENVELOPE:
+		# Fill a caller-defined visual envelope. This is intentionally generic:
+		# the caller decides the hierarchy, while this component only preserves
+		# the resource's aspect and fits it as large as the envelope permits.
+		var envelope := size * _fill_ratio
+		var envelope_fit := minf(
+			envelope.x / maxf(authored_size.x, 0.001),
+			envelope.y / maxf(authored_size.y, 0.001)
+		)
+		_sprite.scale = _digimon.sprite_scale * envelope_fit
+		return
+
+	# Normal menu cards preserve the same authored/native proportions used by
+	# overworld and battle. A 64 px runtime cell at scale 1 is the shared
+	# reference; oversized forms are only reduced when they would clip.
+	var preview_unit_scale := minf(size.x, size.y) / PREVIEW_REFERENCE_CELL * _fill_ratio
 	var desired_scale := _digimon.sprite_scale * preview_unit_scale
 	var desired_size := Vector2(
 		frame_size.x * absf(desired_scale.x),
 		frame_size.y * absf(desired_scale.y)
 	)
-	var available_size := size * PREVIEW_FILL_RATIO
+	var available_size := size * _fill_ratio
 	var overflow_fit := minf(
 		1.0,
 		minf(
