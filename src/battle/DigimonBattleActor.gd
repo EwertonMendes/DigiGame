@@ -14,6 +14,8 @@ const HIT_RECOIL_TIME := 0.06
 const HIT_HOLD_TIME := 0.035
 const HIT_RETURN_TIME := 0.15
 const FLOATING_TEXT_TIME := 0.72
+const SWITCH_OUT_TIME := 0.28
+const SWITCH_IN_TIME := 0.34
 
 var digimon_instance: DigimonInstance = null
 var battle_state: BattleDigimon = null
@@ -204,6 +206,55 @@ func get_damage_number_anchor_world() -> Vector2:
 		return global_position + Vector2(0.0, -54.0)
 	var visual_height: float = _sprite_visual_height()
 	return sprite.global_position + Vector2(0.0, -maxf(44.0, visual_height * 0.62))
+
+
+func play_switch_out_animation() -> void:
+	if not visible:
+		return
+	set_tactical_selected(false)
+	set_debug_selected(false)
+	if _attack_tween != null and _attack_tween.is_valid():
+		_attack_tween.kill()
+	if _hit_tween != null and _hit_tween.is_valid():
+		_hit_tween.kill()
+
+	var base_scale := scale
+	var base_modulate := modulate
+	_spawn_burst(Color(0.30, 0.92, 1.0, 1.0), 24, 112.0, 0.44, 1.55)
+	_spawn_burst(Color(0.84, 0.98, 1.0, 1.0), 12, 72.0, 0.52, 1.10)
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "scale", base_scale * 0.54, SWITCH_OUT_TIME)
+	tween.tween_property(self, "modulate:a", 0.0, SWITCH_OUT_TIME)
+	tween.tween_property(self, "position:y", position.y - 10.0, SWITCH_OUT_TIME)
+	tween.chain().tween_callback(func():
+		if is_instance_valid(self):
+			visible = false
+			scale = base_scale
+			modulate = base_modulate
+	)
+
+
+func play_switch_in_animation() -> void:
+	var base_scale := scale
+	var base_position := position
+	visible = true
+	scale = base_scale * 0.56
+	modulate = Color(0.62, 0.96, 1.0, 0.0)
+	position = base_position + Vector2(0.0, -10.0)
+	_spawn_burst(Color(0.30, 0.92, 1.0, 1.0), 28, 126.0, 0.52, 1.75)
+	_spawn_burst(Color(0.90, 1.0, 1.0, 1.0), 16, 82.0, 0.60, 1.15)
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "scale", base_scale, SWITCH_IN_TIME)
+	tween.tween_property(self, "modulate", Color.WHITE, SWITCH_IN_TIME * 0.82)
+	tween.tween_property(self, "position", base_position, SWITCH_IN_TIME)
+	tween.chain().tween_callback(func():
+		if is_instance_valid(self):
+			scale = base_scale
+			position = base_position
+			modulate = Color.WHITE
+	)
 
 
 func play_attack_animation(target: Node, intensity: float = 4.0, ranged: bool = false) -> void:
