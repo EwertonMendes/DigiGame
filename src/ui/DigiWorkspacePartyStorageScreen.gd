@@ -6,7 +6,7 @@ const WorkspaceBackdrop = preload("res://src/ui/components/DigiLabWorkspaceBackd
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
 const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
-const ProfilePanelScript = preload("res://src/ui/components/DigiRosterProfilePanel.gd")
+const ProfilePanelScript = preload("res://src/ui/components/DigiCompactProfilePanel.gd")
 const PickerScript = preload("res://src/ui/components/DigiRosterPickerModal.gd")
 
 const TRIGGER_PRESS_THRESHOLD := 0.55
@@ -266,9 +266,8 @@ func _refresh_detail() -> void:
 	var is_active := party_index >= 0
 	var compact := WorkspaceChrome.is_compact(get_viewport())
 
-	var profile := ProfilePanelScript.new() as DigiRosterProfilePanel
+	var profile := ProfilePanelScript.new() as DigiCompactProfilePanel
 	profile.configure(instance, species, _progression, true)
-	profile.custom_minimum_size.y = 250.0
 	_detail.add_child(profile)
 
 	if compact:
