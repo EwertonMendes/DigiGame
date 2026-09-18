@@ -183,12 +183,6 @@ func get_storage_instances() -> Array[DigimonInstance]:
 	return result
 
 
-# Deprecated prototype vocabulary: callers that still use get_reserve_instances()
-# continue to receive Storage until they are migrated to get_storage_instances().
-func get_reserve_instances() -> Array[DigimonInstance]:
-	return get_storage_instances()
-
-
 func _instances_for_ids(instance_ids: Array[String]) -> Array[DigimonInstance]:
 	var result: Array[DigimonInstance] = []
 	for instance_id: String in instance_ids:
