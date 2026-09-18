@@ -4,7 +4,11 @@ const BattleOperatorCatalogScript = preload("res://src/world/BattleOperatorEncou
 const EncounterDefinitionScript = preload("res://src/world/BattleEncounterDefinition.gd")
 const BattlefieldCatalogScript = preload("res://src/world/BattlefieldCatalog.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
-const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
+const SelectionCardScript = preload("res://src/ui/components/DigiSelectionCard.gd")
+const ModalHeaderScript = preload("res://src/ui/components/DigiModalHeader.gd")
+const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
+const PagerScript = preload("res://src/ui/components/DigiPager.gd")
+const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 const PROGRAM_IDS: Array[String] = [
@@ -39,20 +43,32 @@ var _selected_program_id := "basic"
 var _selected_battlefield_id := ""
 var _operator_section := SECTION_PROGRAM
 var _battle_program_hint: Label = null
-var _program_heading: Label = null
-var _field_heading: Label = null
-var _program_container: Control = null
-var _field_container: Control = null
-var _program_tab: Button = null
-var _field_tab: Button = null
-var _selection_panel: PanelContainer = null
-var _selection_summary: Label = null
-var _battle_program_columns := 2
-var _battlefield_columns := 2
+
+var _operator_header: DigiModalHeader = null
+var _section_tabs: DigiSegmentedTabs = null
+var _program_panel: PanelContainer = null
+var _field_panel: PanelContainer = null
+var _summary_panel: PanelContainer = null
+var _program_list: VBoxContainer = null
+var _field_list: VBoxContainer = null
+var _program_header: DigiSectionHeader = null
+var _field_header: DigiSectionHeader = null
+var _summary_header: DigiSectionHeader = null
+var _program_pager: DigiPager = null
+var _field_pager: DigiPager = null
+var _summary_program: Label = null
+var _summary_field: Label = null
+var _summary_description: Label = null
+var _summary_meta: Label = null
+var _summary_state: Label = null
+
+var _program_page := 0
+var _field_page := 0
+var _program_page_capacity := PROGRAM_IDS.size()
+var _field_page_capacity := 5
 var _compact_operator_layout := false
 var _left_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
 var _right_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
-
 
 func _ready() -> void:
 	_battle_program_rng.randomize()
@@ -70,130 +86,158 @@ func _build_dialog() -> void:
 		for error in _field_catalog.validation_errors():
 			push_error("Battle Operator battlefield catalog: %s" % error)
 
-	_dialog_panel.call("configure_glass", HUB_V2.CYAN, "modal", Vector4.ZERO, 14)
-	_mobile_dialog_title.text = "BATTLE OPERATOR"
-	_mobile_dialog_body.text = "CONFIGURE TEST BATTLE"
-	_start_battle_button.text = "START BATTLE"
-	_start_battle_button.tooltip_text = "Launch the selected battle program on the selected battlefield."
-	_start_battle_button.set_meta("operator_kind", "action")
-	_start_battle_button.set_meta("operator_id", "launch")
-	_apply_v2_dialog_button(_start_battle_button, HUB_V2.AMBER)
-
-	_mobile_dialog_cancel.text = "CLOSE"
-	_mobile_dialog_cancel.tooltip_text = "Close the Battle Operator without starting combat."
-	_mobile_dialog_cancel.set_meta("battle_program_id", "cancel")
-	_mobile_dialog_cancel.set_meta("operator_kind", "action")
-	_mobile_dialog_cancel.set_meta("operator_id", "cancel")
-	_apply_v2_dialog_button(_mobile_dialog_cancel, HUB_V2.MUTED)
-	_battle_program_buttons["cancel"] = _mobile_dialog_cancel
-
-	_battle_program_hint = _label(
-		"Choose an opponent program and an authored battlefield. This build is intended for mechanics testing.",
-		11,
-		HUB_V2.MUTED
+	# Battle Operator is a task workspace, not a command-button dialog. Use the
+	# same opaque slate shell, header hierarchy and bounded panels as DigiLab and
+	# the Digimon menu.
+	_dialog_panel.add_theme_stylebox_override(
+		"panel",
+		HUB_V2.surface_style(
+			Color(0.016, 0.037, 0.055, 0.975),
+			Color(HUB_V2.CYAN.r, HUB_V2.CYAN.g, HUB_V2.CYAN.b, 0.36),
+			12
+		)
 	)
-	_battle_program_hint.name = "OperatorHint"
-	_battle_program_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_battle_program_hint.max_lines_visible = 2
-	_mobile_dialog_content.add_child(_battle_program_hint)
 
-	_build_section_tabs()
+	_mobile_dialog_title.visible = false
+	_mobile_dialog_body.visible = false
+	_mobile_dialog_cancel.visible = false
+	_mobile_dialog_cancel.focus_mode = Control.FOCUS_NONE
+	_mobile_dialog_cancel.disabled = false
+
+	_operator_header = ModalHeaderScript.new() as DigiModalHeader
+	_operator_header.name = "OperatorHeader"
+	_operator_header.configure("BATTLE OPERATOR", "Battle Simulation", 0, false)
+	_operator_header.set_workspace_mode(true)
+	_operator_header.close_requested.connect(_close_dialog)
+	_mobile_dialog_content.add_child(_operator_header)
+
+	_section_tabs = SegmentScript.new() as DigiSegmentedTabs
+	_section_tabs.name = "OperatorSections"
+	_section_tabs.configure([
+		{"id": SECTION_PROGRAM, "label": "BATTLE PROGRAM", "accent": HUB_V2.CYAN},
+		{"id": SECTION_FIELD, "label": "BATTLEFIELD", "accent": HUB_V2.CYAN},
+	], _operator_section)
+	_section_tabs.tab_selected.connect(_set_operator_section)
+	_mobile_dialog_content.add_child(_section_tabs)
+
 	_build_program_workspace()
 	_build_battlefield_workspace()
 	_build_selection_summary()
+
 	_refresh_operator_state()
-	_wire_operator_focus()
-
-
-func _build_section_tabs() -> void:
-	_program_tab = _dialog_button("PROGRAM", HUB_V2.AMBER)
-	_program_tab.name = "ProgramTab"
-	_program_tab.set_meta("operator_kind", "tab")
-	_program_tab.set_meta("operator_id", SECTION_PROGRAM)
-	_program_tab.pressed.connect(_set_operator_section.bind(SECTION_PROGRAM, false))
-	_mobile_dialog_content.add_child(_program_tab)
-
-	_field_tab = _dialog_button("FIELD", HUB_V2.CYAN)
-	_field_tab.name = "FieldTab"
-	_field_tab.set_meta("operator_kind", "tab")
-	_field_tab.set_meta("operator_id", SECTION_FIELD)
-	_field_tab.pressed.connect(_set_operator_section.bind(SECTION_FIELD, false))
-	_mobile_dialog_content.add_child(_field_tab)
+	call_deferred("_wire_operator_focus")
 
 
 func _build_program_workspace() -> void:
-	_program_heading = _label("BATTLE PROGRAM", 11, HUB_V2.CYAN)
-	_program_heading.name = "ProgramHeading"
-	HUB_V2.apply_heading(_program_heading)
-	_mobile_dialog_content.add_child(_program_heading)
+	_program_panel = PanelContainer.new()
+	_program_panel.name = "ProgramPanel"
+	_program_panel.add_theme_stylebox_override("panel", HUB_V2.hospital_panel_style(HUB_V2.CYAN))
+	_mobile_dialog_content.add_child(_program_panel)
 
-	_program_container = Control.new()
-	_program_container.name = "ProgramWorkspace"
-	_program_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_mobile_dialog_content.add_child(_program_container)
+	var stack := VBoxContainer.new()
+	stack.name = "ProgramStack"
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 0)
+	_program_panel.add_child(stack)
 
-	_add_program_card(
-		"basic",
-		"BASIC BATTLE",
-		"Koromon, Tanemon and Veemon. Fixed low-level baseline encounter.",
-		"MIXED",
-		"sword",
-		HUB_V2.CYAN
-	)
-	_add_program_card("random_fresh", "RANDOM FRESH", "Three verified Fresh Digimon scaled to your squad.", "FRESH", "spark", HUB_V2.CYAN)
-	_add_program_card("random_baby", "RANDOM BABY", "Three verified In-Training Digimon scaled to your squad.", "IN-TRAINING", "spark", HUB_V2.BLUE)
-	_add_program_card("random_rookie", "RANDOM ROOKIE", "Three verified Rookie Digimon scaled to your squad.", "ROOKIE", "sword", HUB_V2.GREEN)
-	_add_program_card("random_champion", "RANDOM CHAMPION", "Three verified Champion Digimon scaled to your squad.", "CHAMPION", "shield", HUB_V2.AMBER)
-	_add_program_card("random_ultimate", "RANDOM ULTIMATE", "Three verified Ultimate Digimon scaled to your squad.", "ULTIMATE", "bolt", HUB_V2.RED)
-	_add_program_card("random_mega", "RANDOM MEGA", "Three verified Mega Digimon scaled to your squad.", "MEGA", "evolution", HUB_V2.PURPLE)
+	_program_header = SectionHeaderScript.new() as DigiSectionHeader
+	_program_header.name = "ProgramHeader"
+	_program_header.configure("BATTLE PROGRAM", "7 PROGRAMS", HUB_V2.CYAN, "database")
+	_program_header.set_workspace_mode(true)
+	stack.add_child(_program_header)
 
+	var margin := MarginContainer.new()
+	margin.name = "ProgramListMargin"
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_top", 9)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 7)
+	stack.add_child(margin)
 
-func _add_program_card(
-	program_id: String,
-	title: String,
-	subtitle: String,
-	status: String,
-	icon_kind: String,
-	accent: Color
-) -> void:
-	var button := CommandButtonScript.new() as DigiCommandButton
-	button.name = _program_button_name(program_id)
-	button.configure(title, subtitle, status, icon_kind, accent)
-	button.set_meta("battle_program_id", program_id)
-	button.set_meta("operator_kind", "program")
-	button.set_meta("operator_id", program_id)
-	button.pressed.connect(_select_battle_program.bind(program_id))
-	_program_container.add_child(button)
-	_battle_program_buttons[program_id] = button
+	_program_list = VBoxContainer.new()
+	_program_list.name = "ProgramList"
+	_program_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_program_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_program_list.add_theme_constant_override("separation", 7)
+	margin.add_child(_program_list)
+
+	for program_id: String in PROGRAM_IDS:
+		var spec := _program_spec(program_id)
+		var button := SelectionCardScript.new() as DigiSelectionCard
+		button.name = _program_button_name(program_id)
+		button.configure(
+			String(spec.get("title", program_id.to_upper())),
+			String(spec.get("subtitle", "")),
+			String(spec.get("status", "")),
+			String(spec.get("icon", "info")),
+			spec.get("accent", HUB_V2.CYAN) as Color
+		)
+		button.set_meta("operator_kind", "program")
+		button.set_meta("operator_id", program_id)
+		button.pressed.connect(_select_battle_program.bind(program_id))
+		_program_list.add_child(button)
+		_battle_program_buttons[program_id] = button
+
+	_program_pager = PagerScript.new() as DigiPager
+	_program_pager.name = "ProgramPager"
+	_program_pager.set_workspace_mode(true)
+	_program_pager.page_delta_requested.connect(_turn_program_page)
+	stack.add_child(_program_pager)
 
 
 func _build_battlefield_workspace() -> void:
-	_field_heading = _label("BATTLEFIELD", 11, HUB_V2.CYAN)
-	_field_heading.name = "FieldHeading"
-	HUB_V2.apply_heading(_field_heading)
-	_mobile_dialog_content.add_child(_field_heading)
+	_field_panel = PanelContainer.new()
+	_field_panel.name = "BattlefieldPanel"
+	_field_panel.add_theme_stylebox_override("panel", HUB_V2.hospital_panel_style(HUB_V2.CYAN))
+	_mobile_dialog_content.add_child(_field_panel)
 
-	_field_container = Control.new()
-	_field_container.name = "FieldWorkspace"
-	_field_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_mobile_dialog_content.add_child(_field_container)
+	var stack := VBoxContainer.new()
+	stack.name = "BattlefieldStack"
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 0)
+	_field_panel.add_child(stack)
+
+	_field_header = SectionHeaderScript.new() as DigiSectionHeader
+	_field_header.name = "BattlefieldHeader"
+	_field_header.configure("BATTLEFIELD", "5 FIELDS", HUB_V2.CYAN, "move")
+	_field_header.set_workspace_mode(true)
+	stack.add_child(_field_header)
+
+	var margin := MarginContainer.new()
+	margin.name = "FieldListMargin"
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_top", 9)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 7)
+	stack.add_child(margin)
+
+	_field_list = VBoxContainer.new()
+	_field_list.name = "FieldList"
+	_field_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_field_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_field_list.add_theme_constant_override("separation", 7)
+	margin.add_child(_field_list)
 
 	_field_order.clear()
 	for definition: BattlefieldDefinition in _field_catalog.all_definitions():
 		_field_order.append(definition.battlefield_id)
-		var button := CommandButtonScript.new() as DigiCommandButton
+		var button := SelectionCardScript.new() as DigiSelectionCard
 		button.name = "Field_%s" % definition.battlefield_id
 		button.configure(
 			definition.display_name.to_upper(),
-			definition.description,
-			_field_card_status(definition, false),
+			_field_list_subtitle(definition),
+			_field_card_status(definition),
 			"move",
 			_field_accent(definition)
 		)
 		button.set_meta("operator_kind", "field")
 		button.set_meta("operator_id", definition.battlefield_id)
 		button.pressed.connect(_select_battlefield.bind(definition.battlefield_id))
-		_field_container.add_child(button)
+		_field_list.add_child(button)
 		_battlefield_buttons[definition.battlefield_id] = button
 
 	var default_field := _field_catalog.default_definition()
@@ -202,26 +246,109 @@ func _build_battlefield_workspace() -> void:
 	elif not _field_order.is_empty():
 		_selected_battlefield_id = _field_order[0]
 
+	_field_pager = PagerScript.new() as DigiPager
+	_field_pager.name = "FieldPager"
+	_field_pager.set_workspace_mode(true)
+	_field_pager.page_delta_requested.connect(_turn_field_page)
+	stack.add_child(_field_pager)
+
 
 func _build_selection_summary() -> void:
-	_selection_panel = GlassPanelScript.new() as PanelContainer
-	_selection_panel.name = "SelectionSummary"
-	_selection_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_selection_panel.clip_contents = true
-	_selection_panel.custom_minimum_size = Vector2.ZERO
-	_selection_panel.call("configure_glass", HUB_V2.CYAN, "subtle", Vector4(16, 8, 16, 8), 10)
-	_mobile_dialog_content.add_child(_selection_panel)
+	_summary_panel = PanelContainer.new()
+	_summary_panel.name = "SimulationPanel"
+	_summary_panel.add_theme_stylebox_override("panel", HUB_V2.hospital_panel_style(HUB_V2.CYAN))
+	_mobile_dialog_content.add_child(_summary_panel)
 
-	_selection_summary = _label("", 11, HUB_V2.TEXT)
-	_selection_summary.name = "SelectionSummaryText"
-	_selection_summary.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_selection_summary.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_selection_summary.max_lines_visible = 1
-	_selection_summary.custom_minimum_size = Vector2.ZERO
-	_selection_summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_selection_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_selection_summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_selection_panel.add_child(_selection_summary)
+	var stack := VBoxContainer.new()
+	stack.name = "SimulationStack"
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 0)
+	_summary_panel.add_child(stack)
+
+	_summary_header = SectionHeaderScript.new() as DigiSectionHeader
+	_summary_header.name = "SimulationHeader"
+	_summary_header.configure("SIMULATION", "MECHANICS TEST", HUB_V2.AMBER, "sword")
+	_summary_header.set_workspace_mode(true)
+	stack.add_child(_summary_header)
+
+	var margin := MarginContainer.new()
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	stack.add_child(margin)
+
+	var content := VBoxContainer.new()
+	content.name = "SimulationContent"
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 6)
+	margin.add_child(content)
+
+	_summary_program = _workspace_label("", 16, HUB_V2.WHITE, true)
+	_summary_program.name = "SelectedProgram"
+	content.add_child(_summary_program)
+
+	_summary_field = _workspace_label("", 14, HUB_V2.CYAN, true)
+	_summary_field.name = "SelectedField"
+	content.add_child(_summary_field)
+
+	_summary_description = _workspace_label("", 11, HUB_V2.MUTED, false)
+	_summary_description.name = "SelectionDescription"
+	_summary_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_summary_description.max_lines_visible = 3
+	_summary_description.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_child(_summary_description)
+
+	_summary_meta = _workspace_label("", 10, HUB_V2.MUTED, false)
+	_summary_meta.name = "SelectionMeta"
+	_summary_meta.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	content.add_child(_summary_meta)
+
+	var actions := HBoxContainer.new()
+	actions.name = "SimulationActions"
+	actions.add_theme_constant_override("separation", 10)
+	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_child(actions)
+
+	_summary_state = _workspace_label("READY", 11, HUB_V2.GREEN, true)
+	_summary_state.name = "SimulationState"
+	_summary_state.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_summary_state.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	actions.add_child(_summary_state)
+
+	if _start_battle_button.get_parent() != null:
+		_start_battle_button.reparent(actions)
+	_start_battle_button.text = "START BATTLE"
+	_start_battle_button.custom_minimum_size = Vector2(220.0, HUB_V2.TOUCH_TARGET)
+	_start_battle_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	_start_battle_button.set_meta("operator_kind", "action")
+	_start_battle_button.set_meta("operator_id", "launch")
+	_apply_v2_dialog_button(_start_battle_button, HUB_V2.AMBER)
+
+
+func _workspace_label(text_value: String, font_size: int, color: Color, heading: bool) -> Label:
+	var label := Label.new()
+	label.text = text_value
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	if heading:
+		HUB_V2.apply_heading(label)
+	else:
+		HUB_V2.apply_body(label)
+	return label
+
+
+func _field_list_subtitle(definition: BattlefieldDefinition) -> String:
+	return "%dx%d · %s" % [
+		definition.grid_size.x,
+		definition.grid_size.y,
+		definition.description,
+	]
 
 
 func _open_dialog() -> void:
