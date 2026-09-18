@@ -351,12 +351,15 @@ func _party_actions_panel(
 	var panel := PanelContainer.new()
 	panel.name = "SquadActionsPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The action panel is content-sized. Stats may fill the remaining row height,
+	# but Squad Actions must stop after its own commands instead of stretching
+	# under the footer on Reserve/Storage variants with different action counts.
+	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.AMBER))
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	stack.add_theme_constant_override("separation", 0)
 	panel.add_child(stack)
 	var header := SectionHeaderScript.new() as DigiSectionHeader
@@ -365,7 +368,7 @@ func _party_actions_panel(
 	stack.add_child(header)
 	var inset := _margin(8, 6, 8, 8) if dense else _margin(10, 8, 10, 10)
 	inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inset.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	stack.add_child(inset)
 	var actions := VBoxContainer.new()
 	actions.name = "SquadActionsCommands"
