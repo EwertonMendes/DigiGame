@@ -191,7 +191,9 @@ func _layout_sprite() -> void:
 	var available_size := size * PREVIEW_FILL_RATIO
 	var overflow_fit := minf(
 		1.0,
-		available_size.x / maxf(desired_size.x, 0.001),
-		available_size.y / maxf(desired_size.y, 0.001)
+		minf(
+			available_size.x / maxf(desired_size.x, 0.001),
+			available_size.y / maxf(desired_size.y, 0.001)
+		)
 	)
 	_sprite.scale = desired_scale * overflow_fit
