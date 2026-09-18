@@ -108,6 +108,18 @@ jobs:
           path: |
             build/web-smoke.png
             build/desktop-*.png
+            build/hub-battle-dialog.png
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload mobile visual snapshot
+        if: matrix.suite == 'mobile'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-smoke-${{ inputs.source_run_id }}
+          path: |
+            build/hub-mobile-dialog.png
+            build/mobile-*.png
           if-no-files-found: error
           retention-days: 7
 
