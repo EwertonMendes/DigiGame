@@ -66,17 +66,11 @@ async function reloadHub(page) {
 }
 
 async function confirmBasicBattleProgram(page) {
-  // NOT NOW intentionally owns initial focus. The Battle Operator grid is
-  // responsive (2 or 4 columns), so avoid coupling browser QA to one layout.
-  // Hub navigation clamps at the top/left edges; saturating both directions
-  // deterministically lands on the top-left BASIC BATTLE action.
-  for (let index = 0; index < 8; index += 1) {
-    await page.keyboard.press('ArrowUp');
-  }
-  await settleFrames(page, 1);
-  for (let index = 0; index < 8; index += 1) {
-    await page.keyboard.press('ArrowLeft');
-  }
+  // CLOSE intentionally owns initial focus. The redesigned Battle Operator now
+  // keeps Basic Battle + Training Clearing selected by default, so one safe,
+  // explicit move to START BATTLE exercises the real two-stage configuration
+  // flow without coupling browser QA to the responsive program/field card grid.
+  await page.keyboard.press('ArrowRight');
   await settleFrames(page, 1);
   await page.keyboard.press('Enter');
 }
