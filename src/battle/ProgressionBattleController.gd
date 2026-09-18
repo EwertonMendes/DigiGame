@@ -2,6 +2,7 @@ extends "res://src/battle/EscapeBattleController.gd"
 
 const BattleRewardServiceScript = preload("res://src/digimon/BattleRewardService.gd")
 const ExpansionQuestCatalogScript = preload("res://src/quests/ExpansionQuestCatalog.gd")
+const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 var _reward_service = null
 
@@ -104,7 +105,7 @@ func get_hud_state() -> Dictionary:
 		return state
 	var tier := String(current_actor.call("get_tier")) if current_actor.has_method("get_tier") else "E"
 	var footprint := String(current_actor.call("get_battle_footprint_id")) if current_actor.has_method("get_battle_footprint_id") else "single"
-	var size_badge := "2×2" if footprint == "large_2x2" else "1×1"
+	var size_badge := FootprintScript.display_label(footprint)
 	state["tier"] = tier
 	state["footprint"] = footprint
 	state["size_badge"] = size_badge
