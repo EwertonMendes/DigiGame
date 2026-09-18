@@ -93,6 +93,51 @@ async function waitForBattlePresentation(page) {
   await settleFrames(page, 3);
 }
 
+async function moveToDigiLabAndOpen(page) {
+  // The authored Hub starts the player at grid (2,2) and the DigiLab terminal
+  // at (-4,1). Move in two simple screen-space legs instead of coupling QA to
+  // internal Godot nodes or adding a runtime-only test hook.
+  await page.keyboard.down('KeyA');
+  await page.waitForTimeout(900);
+  await page.keyboard.up('KeyA');
+  await settleFrames(page, 2);
+
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(760);
+  await page.keyboard.up('KeyW');
+  await settleFrames(page, 2);
+
+  const opened = waitForConsole(page, '[Hub] DIGILAB open', 6000);
+  await page.keyboard.press('KeyE');
+  await opened;
+  await settleFrames(page, 4);
+}
+
+
+async function captureDigiLabWorkspaces(page, prefix = 'digilab') {
+  await moveToDigiLabAndOpen(page);
+  await page.screenshot({ path: `build/${prefix}-convert.png`, fullPage: true });
+
+  // TAB is the keyboard equivalent of the shoulder-tab navigation exposed by
+  // DigiModalHeader. Capture each primary workspace after its layout settles.
+  await page.keyboard.press('Tab');
+  await settleFrames(page, 4);
+  await page.screenshot({ path: `build/${prefix}-party-storage.png`, fullPage: true });
+
+  await page.keyboard.press('Tab');
+  await settleFrames(page, 4);
+  await page.screenshot({ path: `build/${prefix}-ascension.png`, fullPage: true });
+
+  // X / Square toggles the screen-local secondary workspace.
+  await page.keyboard.press('KeyX');
+  await settleFrames(page, 4);
+  await page.screenshot({ path: `build/${prefix}-ascension-expansion.png`, fullPage: true });
+
+  await page.keyboard.press('Escape');
+  await settleFrames(page, 3);
+}
+
+
 async function enterTestBattle(page, captureDialogue = false) {
   const dialogueOpened = waitForConsole(page, '[Hub] DIALOGUE_OPEN');
   await page.keyboard.press('KeyE');
@@ -142,6 +187,10 @@ async function runDesktopSuite() {
   const page = await browser.newPage({ viewport: desktopViewports[0] });
   watchRuntimeErrors(page, 'desktop');
   await openHub(page);
+
+  // Exercise the actual DigiLab surface and keep visual artifacts for review.
+  await captureDigiLabWorkspaces(page, 'digilab-1365x685');
+  await reloadHub(page);
 
   // Smoke the V2 menu surface without asserting exact pixels/layout values.
   await page.keyboard.press('KeyM');
