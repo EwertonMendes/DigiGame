@@ -99,15 +99,15 @@ func apply_scenario(scenario_id: String, selected_instance_id: String, progressi
 			log_action("Scenario", "Fresh start")
 			return {"success": true, "message": "Starter state restored."}
 		"party_level_20":
-			for value: DigimonInstance in OverworldState.get_active_instances():
+			for value: DigimonInstance in OverworldState.get_squad_instances():
 				progression_tools.set_level(value.id, 20)
-			log_action("Scenario", "Party Level 20")
-			return {"success": true, "message": "Active party prepared at Level 20."}
+			log_action("Scenario", "Squad Level 20")
+			return {"success": true, "message": "Active and Reserve Squad prepared at Level 20."}
 		"critical_party":
-			for value: DigimonInstance in OverworldState.get_active_instances():
+			for value: DigimonInstance in OverworldState.get_squad_instances():
 				progression_tools.set_critical(value.id)
-			log_action("Scenario", "Critical party")
-			return {"success": true, "message": "Active party set to 1 HP / 0 SP."}
+			log_action("Scenario", "Critical Squad")
+			return {"success": true, "message": "Active and Reserve Squad set to 1 HP / 0 SP."}
 		"rich_account":
 			set_bits(50000)
 			var selected := progression_tools.instance(selected_instance_id)
