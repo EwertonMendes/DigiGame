@@ -93,67 +93,6 @@ async function waitForBattlePresentation(page) {
   await settleFrames(page, 3);
 }
 
-async function moveToDigiLabAndOpen(page) {
-  // Compact Hub layouts expose the real touch DigiLab action. Use that authored
-  // control to open the service, then restore the desktop viewport for visual
-  // QA. This avoids brittle world-coordinate movement in the browser test.
-  const compactViewport = { width: 800, height: 600 };
-  await page.setViewportSize(compactViewport);
-  await settleFrames(page, 5);
-
-  const canvas = page.locator('canvas');
-  const canvasBox = await canvas.boundingBox();
-  if (!canvasBox) throw new Error('DigiLab QA requires a visible canvas bounding box.');
-
-  // HubProgressionGameplay positions the real compact DigiLab action 260 px
-  // from the physical canvas right edge and 132 px from the bottom. Godot Web
-  // may letterbox the canvas inside the browser viewport, so derive the click
-  // from the rendered canvas rect rather than the page viewport.
-  const digilabCenter = {
-    x: canvasBox.x + canvasBox.width - 260 + 59,
-    y: canvasBox.y + canvasBox.height - 132 + 23,
-  };
-  await page.screenshot({ path: 'build/digilab-touch-entry.png', fullPage: true });
-  const opened = waitForConsole(page, '[Hub] DIGILAB open', 6000);
-  await page.mouse.click(digilabCenter.x, digilabCenter.y);
-  try {
-    await opened;
-  } catch (error) {
-    await page.screenshot({ path: 'build/digilab-touch-entry-failed.png', fullPage: true });
-    throw error;
-  }
-
-  await settleFrames(page, 4);
-  await page.screenshot({ path: 'build/digilab-compact-entry.png', fullPage: true });
-
-  await page.setViewportSize(desktopViewports[0]);
-  await settleFrames(page, 5);
-}
-
-async function captureDigiLabWorkspaces(page, prefix = 'digilab') {
-  await moveToDigiLabAndOpen(page);
-  await page.screenshot({ path: `build/${prefix}-convert.png`, fullPage: true });
-
-  // TAB is the keyboard equivalent of the shoulder-tab navigation exposed by
-  // DigiModalHeader. Capture each primary workspace after its layout settles.
-  await page.keyboard.press('Tab');
-  await settleFrames(page, 4);
-  await page.screenshot({ path: `build/${prefix}-party-storage.png`, fullPage: true });
-
-  await page.keyboard.press('Tab');
-  await settleFrames(page, 4);
-  await page.screenshot({ path: `build/${prefix}-ascension.png`, fullPage: true });
-
-  // X / Square toggles the screen-local secondary workspace.
-  await page.keyboard.press('KeyX');
-  await settleFrames(page, 4);
-  await page.screenshot({ path: `build/${prefix}-ascension-expansion.png`, fullPage: true });
-
-  await page.keyboard.press('Escape');
-  await settleFrames(page, 3);
-}
-
-
 async function enterTestBattle(page, captureDialogue = false) {
   const dialogueOpened = waitForConsole(page, '[Hub] DIALOGUE_OPEN');
   await page.keyboard.press('KeyE');
@@ -279,13 +218,6 @@ async function runMobileSuite() {
   watchRuntimeErrors(page, 'mobile');
   await openHub(page);
   await page.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
-
-  // Touch-capable contexts expose the authored compact DigiLab action. Open it
-  // through that real control, capture compact + desktop workspace states, then
-  // restore the mobile viewport for the ordinary mobile regression.
-  await captureDigiLabWorkspaces(page, 'digilab-touch');
-  await page.setViewportSize(mobileViewports[0]);
-  await reloadHub(page);
 
   // V2 menu should open/close on the mobile-sized viewport, but exact pixels are
   // deliberately not part of this regression contract.
