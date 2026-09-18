@@ -4,6 +4,10 @@ class_name DigiWorkspacePartyStorageScreen
 const WorkspaceChrome = preload("res://src/ui/components/DigiLabWorkspaceChrome.gd")
 const WorkspaceBackdrop = preload("res://src/ui/components/DigiLabWorkspaceBackdrop.gd")
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
+const SegmentScript = preload("res://src/ui/components/DigiSegmentedTabs.gd")
+const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
+const ProfilePanelScript = preload("res://src/ui/components/DigiRosterProfilePanel.gd")
+const PickerScript = preload("res://src/ui/components/DigiRosterPickerModal.gd")
 
 const TRIGGER_PRESS_THRESHOLD := 0.55
 const TRIGGER_RELEASE_THRESHOLD := 0.25
@@ -20,11 +24,18 @@ var _workspace_back_button: Button
 var _compact_detail_tabs: HBoxContainer
 var _stats_tab_button: Button
 var _actions_tab_button: Button
+var _roster_mode := "party"
+var _roster_segments: DigiSegmentedTabs
+var _compact_detail_segments: DigiSegmentedTabs
+var _picker: DigiRosterPickerModal
+var _picker_mode := ""
+var _picker_subject_id := ""
 
 
 func open_screen() -> void:
 	_compact_detail_open = false
 	_compact_detail_tab = "stats"
+	_roster_mode = "party"
 	_left_trigger_down = false
 	_right_trigger_down = false
 	super.open_screen()
@@ -56,11 +67,25 @@ func _build() -> void:
 	WorkspaceChrome.disable_scroll(_detail_scroll)
 
 	var collection_stack := _collection_panel.get_child(0) as VBoxContainer
+	var roster_segment_margin := _margin(10, 10, 10, 4)
+	_roster_segments = SegmentScript.new() as DigiSegmentedTabs
+	_roster_segments.tab_selected.connect(_set_roster_mode)
+	roster_segment_margin.add_child(_roster_segments)
+	collection_stack.add_child(roster_segment_margin)
+	collection_stack.move_child(roster_segment_margin, 1)
+
+	var pager_margin := _margin(10, 2, 10, 8)
 	_workspace_pager = PagerScript.new() as DigiPager
 	_workspace_pager.name = "CollectionPager"
 	_workspace_pager.set_workspace_mode(true)
 	_workspace_pager.page_delta_requested.connect(_turn_workspace_page)
-	collection_stack.add_child(_workspace_pager)
+	pager_margin.add_child(_workspace_pager)
+	collection_stack.add_child(pager_margin)
+
+	_picker = PickerScript.new() as DigiRosterPickerModal
+	_picker.name = "PartyRosterPicker"
+	_picker.entry_selected.connect(_on_picker_selected)
+	add_child(_picker)
 
 	_workspace_back_button = _workspace_button("‹  COLLECTION", V2.CYAN)
 	_workspace_back_button.name = "BackToCollection"
@@ -71,7 +96,7 @@ func _build() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or (_picker != null and _picker.visible):
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		var key := event as InputEventKey
@@ -79,14 +104,14 @@ func _input(event: InputEvent) -> void:
 			if _header.select_adjacent_tab(1):
 				get_viewport().set_input_as_handled()
 			return
-		if key.keycode == KEY_X and _compact_detail_open:
-			_toggle_compact_detail_tab()
+		if key.keycode == KEY_X:
+			_toggle_roster_mode()
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventJoypadButton and event.pressed:
 		var joy := event as InputEventJoypadButton
-		if joy.button_index == JOY_BUTTON_X and _compact_detail_open:
-			_toggle_compact_detail_tab()
+		if joy.button_index == JOY_BUTTON_X:
+			_toggle_roster_mode()
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventJoypadMotion:
@@ -112,10 +137,19 @@ func _refresh_list() -> void:
 	_list_buttons.clear()
 	_list_ids.clear()
 	_list_previews.clear()
-	var active_ids: Array[String] = OverworldState.get_active_party_ids()
-	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
-	if collection.is_empty():
-		_list.add_child(_empty_state("No Digimon available."))
+
+	var active: Array[DigimonInstance] = OverworldState.get_active_instances()
+	var storage: Array[DigimonInstance] = OverworldState.get_reserve_instances()
+	var roster: Array[DigimonInstance] = active if _roster_mode == "party" else storage
+	_collection_header.configure("PARTY" if _roster_mode == "party" else "STORAGE", "%d DIGIMON" % roster.size(), V2.CYAN, "party")
+	if _roster_segments != null:
+		_roster_segments.configure([
+			{"id": "party", "label": "PARTY · %d / %d" % [active.size(), OverworldState.get_max_active_party_size()], "accent": V2.CYAN},
+			{"id": "storage", "label": "STORAGE · %d" % storage.size(), "accent": V2.BLUE},
+		], _roster_mode)
+
+	if roster.is_empty():
+		_list.add_child(_empty_state("No Digimon in %s." % ("Party" if _roster_mode == "party" else "Storage")))
 		_selected_id = ""
 		_workspace_page = 0
 		_workspace_page_count = 1
@@ -124,24 +158,25 @@ func _refresh_list() -> void:
 		return
 
 	var selected_index := -1
-	for index in range(collection.size()):
-		if collection[index].id == _selected_id:
+	for index in range(roster.size()):
+		if roster[index].id == _selected_id:
 			selected_index = index
 			break
 	if selected_index < 0:
 		selected_index = 0
-		_selected_id = collection[0].id
+		_selected_id = roster[0].id
 
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
-	_workspace_page_count = maxi(1, ceili(float(collection.size()) / float(capacity)))
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
+	_workspace_page_count = maxi(1, ceili(float(roster.size()) / float(capacity)))
 	_workspace_page = clampi(selected_index / capacity, 0, _workspace_page_count - 1)
+	var active_ids: Array[String] = OverworldState.get_active_party_ids()
 	var start := _workspace_page * capacity
-	var finish := mini(collection.size(), start + capacity)
+	var finish := mini(roster.size(), start + capacity)
 	for index in range(start, finish):
-		var instance := collection[index]
+		var instance := roster[index]
 		var species: Dictionary = _database.get_by_seed(instance.species_seed)
-		var active := active_ids.has(instance.id)
-		var button := _collection_button(instance, species, active, active_ids)
+		var is_active := active_ids.has(instance.id)
+		var button := _collection_button(instance, species, is_active, active_ids)
 		_list.add_child(button)
 		_list_buttons.append(button)
 		_list_ids.append(instance.id)
@@ -188,11 +223,11 @@ func _turn_workspace_page(delta: int) -> void:
 	if next_page == _workspace_page:
 		return
 	_workspace_page = next_page
-	var collection: Array[DigimonInstance] = OverworldState.get_collection_instances()
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
-	var index := mini(_workspace_page * capacity, collection.size() - 1)
+	var roster: Array[DigimonInstance] = OverworldState.get_active_instances() if _roster_mode == "party" else OverworldState.get_reserve_instances()
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 3, 3, 2)
+	var index := mini(_workspace_page * capacity, roster.size() - 1)
 	if index >= 0:
-		_selected_id = collection[index].id
+		_selected_id = roster[index].id
 	_status_text = ""
 	_refresh()
 	call_deferred("_focus_selected")
@@ -219,37 +254,31 @@ func _refresh_detail() -> void:
 	_clear_children_now(_detail)
 	var instance: DigimonInstance = OverworldState.get_instance_by_id(_selected_id)
 	if instance == null:
-		_detail.add_child(_empty_state("Select a Digimon from your collection."))
+		_detail.add_child(_empty_state("Select a Digimon from the current roster."))
 		return
 	var species: Dictionary = _database.get_by_seed(instance.species_seed)
 	if species.is_empty():
 		_detail.add_child(_empty_state("Species data unavailable."))
 		return
 
-	var species_name := String(species.get("name", "Unknown"))
-	var display_name := instance.get_display_name(species_name)
-	var rank := String(species.get("rank", "Unknown"))
-	var accent := V2.rank_color(rank)
 	var active_ids: Array[String] = OverworldState.get_active_party_ids()
 	var party_index := active_ids.find(instance.id)
-	var active := party_index >= 0
-
-	var identity := _identity_card(instance, species, display_name, rank, accent, active, party_index)
-	identity.add_theme_stylebox_override("panel", V2.workspace_panel_style(accent))
-	_detail.add_child(identity)
-
+	var is_active := party_index >= 0
 	var compact := WorkspaceChrome.is_compact(get_viewport())
+
+	var profile := ProfilePanelScript.new() as DigiRosterProfilePanel
+	profile.configure(instance, species, _progression, true)
+	profile.custom_minimum_size.y = 250.0
+	_detail.add_child(profile)
+
 	if compact:
-		_compact_detail_tabs = HBoxContainer.new()
-		_compact_detail_tabs.name = "PartyDetailTabs"
-		_compact_detail_tabs.add_theme_constant_override("separation", 8)
-		_detail.add_child(_compact_detail_tabs)
-		_stats_tab_button = _detail_tab_button("STATS", _compact_detail_tab == "stats")
-		_stats_tab_button.pressed.connect(_set_compact_detail_tab.bind("stats"))
-		_compact_detail_tabs.add_child(_stats_tab_button)
-		_actions_tab_button = _detail_tab_button("PARTY ACTIONS", _compact_detail_tab == "actions")
-		_actions_tab_button.pressed.connect(_set_compact_detail_tab.bind("actions"))
-		_compact_detail_tabs.add_child(_actions_tab_button)
+		_compact_detail_segments = SegmentScript.new() as DigiSegmentedTabs
+		_compact_detail_segments.configure([
+			{"id": "stats", "label": "STATS", "accent": V2.CYAN},
+			{"id": "actions", "label": "PARTY ACTIONS", "accent": V2.AMBER},
+		], _compact_detail_tab)
+		_compact_detail_segments.tab_selected.connect(_set_compact_detail_tab)
+		_detail.add_child(_compact_detail_segments)
 		if _compact_detail_tab == "stats":
 			var stats := StatsPanelScript.new()
 			stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -258,7 +287,7 @@ func _refresh_detail() -> void:
 			stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 			_detail.add_child(stats)
 		else:
-			_detail.add_child(_party_actions_panel(instance, active_ids, party_index, active))
+			_detail.add_child(_party_actions_panel(instance, active_ids, party_index, is_active))
 	else:
 		var lower_grid := GridContainer.new()
 		lower_grid.columns = 2
@@ -273,7 +302,7 @@ func _refresh_detail() -> void:
 		stats.set_workspace_mode(true, false)
 		stats.configure(_progression.get_final_stats(instance), instance.current_hp, instance.current_mp)
 		lower_grid.add_child(stats)
-		lower_grid.add_child(_party_actions_panel(instance, active_ids, party_index, active))
+		lower_grid.add_child(_party_actions_panel(instance, active_ids, party_index, is_active))
 
 
 func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], party_index: int, active: bool) -> Control:
@@ -290,72 +319,60 @@ func _party_actions_panel(instance: DigimonInstance, active_ids: Array[String], 
 	header.configure("PARTY ACTIONS", _status_text, V2.AMBER, "party")
 	header.set_workspace_mode(true)
 	stack.add_child(header)
-	var inset := _margin(12, 10, 12, 12)
+	var inset := _margin(10, 8, 10, 10)
 	inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(inset)
 	var actions := VBoxContainer.new()
 	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	actions.add_theme_constant_override("separation", 8)
+	actions.add_theme_constant_override("separation", 7)
 	inset.add_child(actions)
 
-	var ascension := _workspace_button("ASCENSION / EXPANSION", V2.PURPLE)
-	ascension.custom_minimum_size.y = 52
-	ascension.tooltip_text = "Raise Tier, assimilate duplicate techniques and configure tactical size."
+	var ascension := _command_button(
+		"ASCENSION / EXPANSION",
+		"Raise Tier or configure tactical footprint",
+		"OPEN DIGI LAB",
+		"evolution",
+		V2.PURPLE,
+		true
+	)
 	ascension.pressed.connect(func(): ascension_requested.emit())
 	actions.add_child(ascension)
 
 	if active:
-		var remove := _workspace_button("MOVE TO STORAGE", V2.ORANGE)
-		remove.custom_minimum_size.y = 52
-		remove.disabled = active_ids.size() <= 1
-		remove.tooltip_text = "At least one Digimon must remain active." if remove.disabled else "Move this Digimon to Storage."
+		var remove := _command_button(
+			"MOVE TO STORAGE",
+			"Remove from the active Party",
+			"UNAVAILABLE" if active_ids.size() <= 1 else "READY",
+			"party",
+			V2.ORANGE,
+			active_ids.size() > 1
+		)
 		remove.pressed.connect(_remove_from_party.bind(instance.id))
 		actions.add_child(remove)
-		var order := HBoxContainer.new()
-		order.add_theme_constant_override("separation", 8)
-		actions.add_child(order)
-		var up := _workspace_button("MOVE UP", V2.CYAN)
-		up.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		up.custom_minimum_size.y = 52
-		up.disabled = party_index <= 0
-		up.pressed.connect(_move.bind(instance.id, party_index - 1))
-		order.add_child(up)
-		var down := _workspace_button("MOVE DOWN", V2.CYAN)
-		down.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		down.custom_minimum_size.y = 52
-		down.disabled = party_index >= active_ids.size() - 1
-		down.pressed.connect(_move.bind(instance.id, party_index + 1))
-		order.add_child(down)
+
+		var reorder := _command_button(
+			"REORDER PARTY",
+			"Choose the destination Party slot",
+			"SLOT %d" % (party_index + 1),
+			"move",
+			V2.CYAN,
+			active_ids.size() > 1
+		)
+		reorder.pressed.connect(_open_reorder_picker.bind(instance.id))
+		actions.add_child(reorder)
 	else:
-		var add := _workspace_button("ADD TO PARTY", V2.GREEN)
-		add.custom_minimum_size.y = 52
-		add.disabled = active_ids.size() >= OverworldState.get_max_active_party_size()
-		add.tooltip_text = "Party is full. Choose a slot to replace." if add.disabled else "Add this Digimon to the active party."
-		add.pressed.connect(_add_to_party.bind(instance.id))
+		var party_full := active_ids.size() >= OverworldState.get_max_active_party_size()
+		var add := _command_button(
+			"ADD TO PARTY",
+			"Choose a Party slot to replace" if party_full else "Add to the next open Party slot",
+			"CHOOSE SLOT" if party_full else "READY",
+			"party",
+			V2.GREEN,
+			true
+		)
+		add.pressed.connect(_open_replacement_picker.bind(instance.id) if party_full else _add_to_party.bind(instance.id))
 		actions.add_child(add)
-		if add.disabled:
-			var warning := _single_line_label("PARTY FULL · CHOOSE A SLOT TO REPLACE", 10, V2.AMBER, true)
-			warning.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			actions.add_child(warning)
-			var replacements := GridContainer.new()
-			replacements.columns = 2
-			replacements.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			replacements.add_theme_constant_override("h_separation", 8)
-			replacements.add_theme_constant_override("v_separation", 8)
-			actions.add_child(replacements)
-			for active_id: String in active_ids:
-				var active_instance: DigimonInstance = OverworldState.get_instance_by_id(active_id)
-				if active_instance == null:
-					continue
-				var active_species := _database.get_by_seed(active_instance.species_seed)
-				var active_name := active_instance.get_display_name(String(active_species.get("name", "Digimon")))
-				var slot := active_ids.find(active_id) + 1
-				var swap := _workspace_button("SLOT %d · %s" % [slot, active_name.to_upper()], V2.PURPLE)
-				swap.custom_minimum_size.y = 52
-				swap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-				swap.pressed.connect(_swap.bind(active_id, instance.id))
-				replacements.add_child(swap)
 	return panel
 
 
@@ -370,6 +387,84 @@ func _set_compact_detail_tab(tab_id: String) -> void:
 
 func _toggle_compact_detail_tab() -> void:
 	_set_compact_detail_tab("actions" if _compact_detail_tab == "stats" else "stats")
+
+
+func _set_roster_mode(mode: String) -> void:
+	if not ["party", "storage"].has(mode) or mode == _roster_mode:
+		return
+	_roster_mode = mode
+	_workspace_page = 0
+	_compact_detail_open = false
+	_status_text = ""
+	_refresh()
+	_layout()
+	call_deferred("_focus_selected")
+
+
+func _toggle_roster_mode() -> void:
+	_set_roster_mode("storage" if _roster_mode == "party" else "party")
+
+
+func _command_button(title: String, subtitle: String, status: String, icon_kind: String, accent: Color, interactive: bool) -> DigiCommandButton:
+	var button := CommandButtonScript.new() as DigiCommandButton
+	button.configure(title, subtitle, status, icon_kind, accent)
+	button.set_compact(true)
+	button.custom_minimum_size.y = 62.0
+	button.set_interactive(interactive)
+	return button
+
+
+func _open_replacement_picker(reserve_id: String) -> void:
+	_picker_mode = "replace"
+	_picker_subject_id = reserve_id
+	var entries: Array[Dictionary] = []
+	var active := OverworldState.get_active_instances()
+	for index in range(active.size()):
+		var instance := active[index]
+		var species := _database.get_by_seed(instance.species_seed)
+		entries.append({
+			"id": instance.id,
+			"title": "SLOT %d · %s" % [index + 1, instance.get_display_name(String(species.get("name", "Digimon")))],
+			"subtitle": "Replace this Party member",
+			"species": String(species.get("name", "")),
+			"accent": V2.PURPLE,
+		})
+	_picker.configure("REPLACE PARTY SLOT", "Choose the member that returns to Storage.", entries, V2.PURPLE)
+	_picker.open_picker(get_viewport().gui_get_focus_owner())
+
+
+func _open_reorder_picker(instance_id: String) -> void:
+	_picker_mode = "reorder"
+	_picker_subject_id = instance_id
+	var entries: Array[Dictionary] = []
+	var active := OverworldState.get_active_instances()
+	for index in range(active.size()):
+		var target := active[index]
+		var species := _database.get_by_seed(target.species_seed)
+		entries.append({
+			"id": str(index),
+			"title": "PARTY SLOT %d" % (index + 1),
+			"subtitle": "Place before %s" % target.get_display_name(String(species.get("name", "Digimon"))),
+			"species": String(species.get("name", "")),
+			"accent": V2.CYAN,
+		})
+	_picker.configure("REORDER PARTY", "Choose the destination slot.", entries, V2.CYAN)
+	_picker.open_picker(get_viewport().gui_get_focus_owner())
+
+
+func _on_picker_selected(entry_id: String) -> void:
+	match _picker_mode:
+		"replace":
+			_swap(entry_id, _picker_subject_id)
+			_roster_mode = "party"
+		"reorder":
+			_move(_picker_subject_id, int(entry_id))
+	_picker_mode = ""
+	_picker_subject_id = ""
+	_compact_detail_open = false
+	_refresh()
+	_layout()
+	call_deferred("_focus_selected")
 
 
 func _detail_tab_button(text: String, active: bool) -> Button:
@@ -471,8 +566,12 @@ func _layout() -> void:
 	WorkspaceChrome.disable_scroll(_detail_scroll)
 	_workspace_pager.set_workspace_mode(true)
 	_workspace_pager.set_compact(compact)
-	_hint_bar.set_secondary_tabs_enabled(compact and _compact_detail_open)
-	_hint_bar.set_secondary_tabs_label("Stats / Party Actions")
+	if _roster_segments != null:
+		_roster_segments.set_compact(compact)
+	if _compact_detail_segments != null:
+		_compact_detail_segments.set_compact(true)
+	_hint_bar.set_secondary_tabs_enabled(true)
+	_hint_bar.set_secondary_tabs_label("Party / Storage")
 	_hint_bar.set_scroll_hint_enabled(false)
 	_hint_bar.set_hide_hints_on_touch(true)
 
