@@ -269,6 +269,7 @@ func _rebuild_tabs() -> void:
 	for child in _tabs_root.get_children():
 		child.queue_free()
 	_tab_buttons.clear()
+
 	for spec: Dictionary in _tab_specs:
 		var tab_id := String(spec.get("id", ""))
 		var label_text := String(spec.get("label", tab_id.capitalize()))
@@ -277,19 +278,24 @@ func _rebuild_tabs() -> void:
 		var active := tab_id == _active_tab
 		var icon_kind := String(spec.get("icon", _tab_icon_for(tab_id)))
 		var min_width := float(spec.get("min_width", 126.0))
-
 		var angled := bool(spec.get("angled", false))
+
 		var button: Button
 		if angled:
 			button = AngledTabScript.new() as DigiAngledTab
 			(button as DigiAngledTab).set_active(active)
 		else:
 			button = Button.new()
+
+		# Common configuration belongs to every tab shape. Keeping this outside
+		# the angled/non-angled branch prevents one variant from silently losing
+		# its authored size, label or input configuration.
 		button.name = "Tab_%s" % tab_id
 		button.text = ""
 		button.custom_minimum_size = Vector2(min_width, 58.0)
 		button.focus_mode = Control.FOCUS_NONE if _workspace_mode else Control.FOCUS_ALL
 		button.disabled = not enabled
+		button.clip_contents = true
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
 		button.tooltip_text = label_text if enabled else "%s — coming later" % label_text
 		if not angled:
@@ -300,26 +306,54 @@ func _rebuild_tabs() -> void:
 			button.add_theme_stylebox_override("disabled", V2.tab_style(false, false, true))
 
 		var row := HBoxContainer.new()
-		row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.add_theme_constant_override("separation", 7 if angled else 9)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		row.add_theme_constant_override("separation", 8 if angled else 9)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		button.add_child(row)
+
+		var content_host: Control = row
+		if angled:
+			# Keep icon + text out of the two slanted edges while centering the
+			# pair as one unit. This is shared by Digimon and DigiLab.
+			var safe := MarginContainer.new()
+			safe.name = "SlantSafeContent"
+			safe.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			safe.add_theme_constant_override("margin_left", 24)
+			safe.add_theme_constant_override("margin_right", 24)
+			safe.add_theme_constant_override("margin_top", 2)
+			safe.add_theme_constant_override("margin_bottom", 2)
+			safe.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			button.add_child(safe)
+			safe.add_child(row)
+			content_host = safe
+		else:
+			row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			button.add_child(row)
+
 		var icon := IconScript.new() as DigiProceduralIcon
-		icon.custom_minimum_size = Vector2(22.0, 22.0)
+		icon.custom_minimum_size = Vector2(20.0, 20.0)
 		icon.configure(icon_kind, V2.CYAN if active else (V2.MUTED if enabled else V2.SUBTLE), 1.8)
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(icon)
+
 		var label := Label.new()
 		label.text = label_text
-		label.add_theme_font_size_override("font_size", 13)
+		label.add_theme_font_size_override("font_size", 15 if _workspace_mode else 13)
 		label.add_theme_color_override("font_color", V2.WHITE if active else (V2.MUTED if enabled else V2.SUBTLE))
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		label.clip_text = true
 		V2.apply_heading(label)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_set_tab_label_intrinsic_width(label)
 		row.add_child(label)
+
 		button.set_meta("tab_label", label)
 		button.set_meta("tab_icon", icon)
 		button.set_meta("tab_row", row)
+		button.set_meta("tab_content_host", content_host)
 		button.set_meta("full_label", label_text)
 		button.set_meta("compact_label", compact_label)
 		button.set_meta("preferred_min_width", min_width)
@@ -328,6 +362,20 @@ func _rebuild_tabs() -> void:
 			button.pressed.connect(func(): tab_selected.emit(tab_id))
 		_tabs_root.add_child(button)
 		_tab_buttons[tab_id] = button
+
+
+func _measure_tab_label(label: Label, text: String, font_size: int) -> float:
+	if label == null or text.is_empty():
+		return 0.0
+	var font := label.get_theme_font("font")
+	return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+
+
+func _set_tab_label_intrinsic_width(label: Label) -> void:
+	if label == null:
+		return
+	var font_size := label.get_theme_font_size("font_size")
+	label.custom_minimum_size.x = ceilf(_measure_tab_label(label, label.text, font_size)) + 2.0
 
 
 func _tab_icon_for(tab_id: String) -> String:
@@ -386,6 +434,7 @@ func _layout() -> void:
 					label.visible = not icon_only
 					label.text = String(tab_button.get_meta("compact_label", tab_button.get_meta("full_label", "")))
 					label.add_theme_font_size_override("font_size", 11)
+					_set_tab_label_intrinsic_width(label)
 				if icon != null:
 					icon.custom_minimum_size = Vector2(19.0, 19.0)
 				if row != null:
@@ -405,6 +454,7 @@ func _layout() -> void:
 					label.visible = true
 					label.text = String(tab_button.get_meta("full_label", ""))
 					label.add_theme_font_size_override("font_size", 13)
+					_set_tab_label_intrinsic_width(label)
 				if icon != null:
 					icon.custom_minimum_size = Vector2(22.0, 22.0)
 				if row != null:
@@ -432,20 +482,64 @@ func _layout_workspace() -> void:
 		_bits_badge.position = Vector2(maxf(0.0, size.x - WORKSPACE_BITS_SIZE.x - 82.0), 15.0)
 		_bits_badge.size = WORKSPACE_BITS_SIZE
 	if _tabs_root.visible:
-		var tab_overlap := 18.0 if bool(_tab_specs[0].get("angled", false)) else 0.0
+		var angled_tabs := bool(_tab_specs[0].get("angled", false))
+		var tab_overlap := 18.0 if angled_tabs else 0.0
 		_tabs_root.add_theme_constant_override("separation", -int(tab_overlap))
 		var tabs_left := 370.0 if size.x >= 900.0 else 258.0
 		var tabs_right := _bits_badge.position.x if show_bits_now else _close_button.position.x
 		_tabs_root.position = Vector2(tabs_left, 17.0)
 		_tabs_root.size = Vector2(maxf(0.0, tabs_right - tabs_left - 20.0), 50.0)
-		var tab_width := clampf((_tabs_root.size.x + tab_overlap * float(_tab_specs.size() - 1)) / float(_tab_specs.size()), 102.0, 172.0)
+		_tabs_root.clip_contents = true
+
+		var tab_count := maxi(1, _tab_specs.size())
+		var maximum_uniform_width := (_tabs_root.size.x + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count)
+		var desired_uniform_width := 172.0 if angled_tabs else 126.0
 		for value in _tab_buttons.values():
 			var button := value as Button
+			if button == null:
+				continue
+			var preferred := float(button.get_meta("preferred_min_width", 126.0))
+			var label := button.get_meta("tab_label") as Label
+			var full_label := String(button.get_meta("full_label", ""))
+			var measured_text_width := 0.0
+			if label != null:
+				var font := label.get_theme_font("font")
+				measured_text_width = font.get_string_size(full_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+			var content_width := measured_text_width + 20.0 + 8.0 + (54.0 if angled_tabs else 30.0)
+			desired_uniform_width = maxf(desired_uniform_width, maxf(preferred, content_width))
+
+		var tab_width := minf(desired_uniform_width, maximum_uniform_width)
+		for value in _tab_buttons.values():
+			var button := value as Button
+			if button == null:
+				continue
+			button.size_flags_horizontal = Control.SIZE_FILL
+			button.size_flags_stretch_ratio = 1.0
 			button.custom_minimum_size = Vector2(tab_width, 50.0)
 			var label := button.get_meta("tab_label") as Label
 			var icon := button.get_meta("tab_icon") as DigiProceduralIcon
+			var row := button.get_meta("tab_row") as HBoxContainer
 			if label != null:
-				label.visible = tab_width >= 102.0
-				label.add_theme_font_size_override("font_size", 15)
+				var full_label := String(button.get_meta("full_label", ""))
+				var compact_label := String(button.get_meta("compact_label", full_label))
+				var content_padding := 20.0 + 8.0 + (54.0 if angled_tabs else 30.0)
+				var full_font_size := 15 if tab_width >= 150.0 else 13
+				var full_text_width := _measure_tab_label(label, full_label, full_font_size)
+				var chosen_label := full_label
+				var chosen_font_size := full_font_size
+				if full_text_width + content_padding > tab_width and compact_label != full_label:
+					chosen_label = compact_label
+					chosen_font_size = 13
+					var compact_text_width := _measure_tab_label(label, compact_label, chosen_font_size)
+					if compact_text_width + content_padding > tab_width:
+						chosen_font_size = 11
+				label.visible = true
+				label.text = chosen_label
+				label.add_theme_font_size_override("font_size", chosen_font_size)
+				label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+				label.clip_text = true
+				_set_tab_label_intrinsic_width(label)
 			if icon != null:
 				icon.custom_minimum_size = Vector2(20.0, 20.0)
+			if row != null:
+				row.add_theme_constant_override("separation", 8)

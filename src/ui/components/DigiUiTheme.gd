@@ -56,6 +56,17 @@ static func hospital_button_style(accent: Color, state: String) -> StyleBoxFlat:
 	return style
 
 
+# Workspace aliases make the approved full-screen menu language explicit.
+# Existing Hospital callers keep their stable API while Digimon/DigiLab and
+# future services no longer depend on a screen-specific style name.
+static func workspace_panel_style(accent: Color = CYAN, selected: bool = false) -> StyleBoxFlat:
+	return hospital_panel_style(accent, selected)
+
+
+static func workspace_button_style(accent: Color, state: String) -> StyleBoxFlat:
+	return hospital_button_style(accent, state)
+
+
 static func physical_window_size(viewport: Viewport) -> Vector2:
 	return BaseUI.physical_window_size(viewport)
 
@@ -349,8 +360,6 @@ static func selection_card_style(
 		edge = Color(BORDER.r, BORDER.g, BORDER.b, 0.24)
 
 	var style := surface_style(fill, edge, 9)
-	# The three-pixel rail is always present, so focus/press cannot make the card
-	# jump by changing geometry. Only its colour/fill communicates state.
 	style.border_width_left = 3
 	style.border_width_top = 1
 	style.border_width_right = 1

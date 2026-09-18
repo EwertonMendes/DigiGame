@@ -134,13 +134,15 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	var create_header := create_screen.get("_header") as Control
 	var convert_tab := create_header.call("get_tab_button", "convert") as Button
 	var party_tab := create_header.call("get_tab_button", "party") as Button
+	var ascension_tab := create_header.call("get_tab_button", "ascension") as Button
 	assert(create_frame != null and create_frame.visible, "Convert Digi Data must expose the V2 full-screen workspace")
-	assert(convert_tab != null and party_tab != null, "DigiLab must expose Convert Digi Data and Party / Storage as its two primary tabs")
-	assert(convert_tab.focus_mode == Control.FOCUS_ALL and party_tab.focus_mode == Control.FOCUS_ALL, "DigiLab tabs must be keyboard/gamepad focusable")
+	assert(convert_tab != null and party_tab != null and ascension_tab != null, "DigiLab must expose all three primary workspaces")
+	assert(convert_tab.focus_mode == Control.FOCUS_NONE and party_tab.focus_mode == Control.FOCUS_NONE and ascension_tab.focus_mode == Control.FOCUS_NONE, "DigiLab workspace tabs must stay out of D-pad focus navigation")
 	var create_list_scroll := create_screen.get("_list_scroll") as ScrollContainer
 	var create_detail_scroll := create_screen.get("_detail_scroll") as ScrollContainer
-	assert(create_list_scroll != null and create_list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Digi Data Archive must use shared smooth/right-stick scrolling")
-	assert(create_detail_scroll != null and create_detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Digi Data details must use shared smooth/right-stick scrolling")
+	assert(create_list_scroll != null and create_list_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Digi Data Archive must use explicit pages instead of scrolling")
+	assert(create_detail_scroll != null and create_detail_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Digi Data details must remain bounded without scrolling")
+	assert(create_screen.get("_roster_pager") is DigiPager, "Digi Data Archive must expose the shared pager")
 	_assert_fullscreen_service_frame(create_frame, "Convert Digi Data")
 
 	digilab.call("_switch_tab", "party")
@@ -149,11 +151,12 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	assert(not create_screen.visible and party_screen.visible, "Selecting Party / Storage must switch workspaces without returning to a service-card menu")
 	var party_frame := party_screen.get("_frame") as Control
 	var party_header := party_screen.get("_header") as Control
-	assert(party_header.call("get_tab_button", "convert") != null and party_header.call("get_tab_button", "party") != null, "Party / Storage must retain the same two primary DigiLab tabs")
+	assert(party_header.call("get_tab_button", "convert") != null and party_header.call("get_tab_button", "party") != null and party_header.call("get_tab_button", "ascension") != null, "Party / Storage must retain all three primary DigiLab tabs")
 	var party_list_scroll := party_screen.get("_list_scroll") as ScrollContainer
 	var party_detail_scroll := party_screen.get("_detail_scroll") as ScrollContainer
-	assert(party_list_scroll != null and party_list_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Party collection must use shared smooth/right-stick scrolling")
-	assert(party_detail_scroll != null and party_detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Party details must use shared smooth/right-stick scrolling")
+	assert(party_list_scroll != null and party_list_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Party collection must use explicit pages instead of scrolling")
+	assert(party_detail_scroll != null and party_detail_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Party details must remain bounded without scrolling")
+	assert(party_screen.get("_workspace_pager") is DigiPager, "Party / Storage must expose the shared pager")
 	_assert_fullscreen_service_frame(party_frame, "Party / Storage")
 
 	hub.call("_close_digilab")
