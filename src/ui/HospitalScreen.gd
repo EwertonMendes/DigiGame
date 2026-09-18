@@ -1003,8 +1003,14 @@ func _request_action(action: String) -> void:
 	elif action == "recover":
 		_confirmation.configure("RECOVER NOW?", "Spend %d Bits to fully restore HP and SP? This Digimon remains in Hospital until discharged." % int(preview.get("instant_cost", 0)), "SPEND BITS", "CANCEL", V2.AMBER, "DIGI HOSPITAL")
 	else:
-		var destination := "Party" if OverworldState.get_active_instances().size() < OverworldState.get_max_active_party_size() else "Storage"
-		_confirmation.configure("DISCHARGE THIS DIGIMON?", "Recovery is complete. Send this Digimon to %s?" % destination, "DISCHARGE", "CANCEL", V2.GREEN, "DIGI HOSPITAL")
+		_confirmation.configure(
+			"DISCHARGE THIS DIGIMON?",
+			"Recovery is complete. Return this Digimon to its Squad role when possible? If the Squad is full, it will move to Storage.",
+			"DISCHARGE",
+			"CANCEL",
+			V2.GREEN,
+			"DIGI HOSPITAL"
+		)
 	_confirmation.open_dialog(button)
 
 
