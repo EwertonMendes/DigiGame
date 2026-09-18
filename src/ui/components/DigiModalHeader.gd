@@ -285,6 +285,7 @@ func _rebuild_tabs() -> void:
 			(button as DigiAngledTab).set_active(active)
 		else:
 			button = Button.new()
+
 		button.name = "Tab_%s" % tab_id
 		button.text = ""
 		button.custom_minimum_size = Vector2(min_width, 58.0)
@@ -300,11 +301,23 @@ func _rebuild_tabs() -> void:
 			button.add_theme_stylebox_override("disabled", V2.tab_style(false, false, true))
 
 		var row := HBoxContainer.new()
-		row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_theme_constant_override("separation", 7 if angled else 9)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		button.add_child(row)
+		if angled:
+			var safe_content := MarginContainer.new()
+			safe_content.name = "SlantSafeContent"
+			safe_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			safe_content.add_theme_constant_override("margin_left", 26)
+			safe_content.add_theme_constant_override("margin_right", 26)
+			safe_content.add_theme_constant_override("margin_top", 2)
+			safe_content.add_theme_constant_override("margin_bottom", 2)
+			safe_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			button.add_child(safe_content)
+			safe_content.add_child(row)
+		else:
+			row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			button.add_child(row)
 		var icon := IconScript.new() as DigiProceduralIcon
 		icon.custom_minimum_size = Vector2(22.0, 22.0)
 		icon.configure(icon_kind, V2.CYAN if active else (V2.MUTED if enabled else V2.SUBTLE), 1.8)
@@ -314,6 +327,8 @@ func _rebuild_tabs() -> void:
 		label.add_theme_font_size_override("font_size", 13)
 		label.add_theme_color_override("font_color", V2.WHITE if active else (V2.MUTED if enabled else V2.SUBTLE))
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		label.clip_text = true
 		V2.apply_heading(label)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(label)
@@ -438,14 +453,22 @@ func _layout_workspace() -> void:
 		var tabs_right := _bits_badge.position.x if show_bits_now else _close_button.position.x
 		_tabs_root.position = Vector2(tabs_left, 17.0)
 		_tabs_root.size = Vector2(maxf(0.0, tabs_right - tabs_left - 20.0), 50.0)
-		var tab_width := clampf((_tabs_root.size.x + tab_overlap * float(_tab_specs.size() - 1)) / float(_tab_specs.size()), 102.0, 172.0)
+		var preferred_total := 0.0
+		for value in _tab_buttons.values():
+			var preferred_button := value as Button
+			if preferred_button != null:
+				preferred_total += float(preferred_button.get_meta("preferred_min_width", 150.0))
+		preferred_total -= tab_overlap * float(maxi(0, _tab_specs.size() - 1))
+		var scale_tabs := minf(1.0, _tabs_root.size.x / maxf(1.0, preferred_total))
 		for value in _tab_buttons.values():
 			var button := value as Button
+			var preferred := float(button.get_meta("preferred_min_width", 150.0))
+			var tab_width := maxf(112.0, preferred * scale_tabs)
 			button.custom_minimum_size = Vector2(tab_width, 50.0)
 			var label := button.get_meta("tab_label") as Label
 			var icon := button.get_meta("tab_icon") as DigiProceduralIcon
 			if label != null:
-				label.visible = tab_width >= 102.0
-				label.add_theme_font_size_override("font_size", 15)
+				label.visible = tab_width >= 118.0
+				label.add_theme_font_size_override("font_size", 14 if scale_tabs < 0.90 else 15)
 			if icon != null:
 				icon.custom_minimum_size = Vector2(20.0, 20.0)
