@@ -5,7 +5,6 @@ const EncounterDefinitionScript = preload("res://src/world/BattleEncounterDefini
 const BattlefieldCatalogScript = preload("res://src/world/BattlefieldCatalog.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
-const GlassPanelScript = preload("res://src/ui/components/DigiGlassPanel.gd")
 const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
