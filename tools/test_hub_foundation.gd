@@ -297,8 +297,8 @@ func _assert_legacy_hub_facings(player: Node) -> void:
 	assert(player.get("facing_direction") == "north", "Legacy up_right must preserve the hub's north-facing pose")
 
 func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> void:
-	var default_party := ["agumon", "gabumon", "greymon"]
-	assert(OverworldState.get_active_party() == default_party, "Default overworld party must be Agumon, Gabumon and Greymon")
+	var default_party := ["botamon", "agumon", "gabumon"]
+	assert(OverworldState.get_active_party() == default_party, "Default overworld party must be Botamon, Agumon and Gabumon")
 	assert(OverworldState.get_max_active_party_size() == 3, "Active overworld formation must be capped at three Digimon")
 	assert(OverworldState.get_max_reserve_party_size() == 3, "Reserve must provide three bench slots")
 	assert(OverworldState.get_max_squad_size() == 6, "The complete Squad must support six Digimon")
