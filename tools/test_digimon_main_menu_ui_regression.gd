@@ -115,11 +115,16 @@ func _ready() -> void:
 	await _frames(3)
 	assert(int(menu.get("_mode")) == 1, "Confirming a roster card must enter command mode")
 	var commands := menu.get("_command_buttons") as Array
-	assert(commands.size() == 2, "Main Digimon command area must expose Techniques and Evolution")
-	for raw_command in commands:
-		var command := raw_command as Button
+	assert(commands.size() == 3, "Main Digimon command area must expose Techniques, Evolution and Squad role management")
+	for command_index in range(commands.size()):
+		var command := commands[command_index] as Button
 		assert(command != null and not command.disabled and command.focus_mode == Control.FOCUS_ALL, "Commands must become interactive only after Digimon confirmation")
-		_assert_command_copy_fits(command)
+		if command_index < 2:
+			_assert_command_copy_fits(command)
+	var squad_role_command := commands[2] as Button
+	assert(squad_role_command.name == "SquadRoleCommand", "Third command must own Active/Reserve role management")
+	assert(squad_role_command.text == "SWAP WITH ACTIVE", "Reserve member must offer an Active swap when all Active slots are full")
+	assert(squad_role_command.custom_minimum_size.y >= V2.TOUCH_TARGET, "Squad role action must remain touch-safe")
 	var close_button := header.get_close_button()
 	assert(close_button != null and close_button.focus_mode == Control.FOCUS_NONE, "Header close X must stay out of controller directional focus")
 	assert(close_button.custom_minimum_size == Vector2(48.0, 48.0), "Header close button must match the DigiLab/Hospital workspace target size")
@@ -249,6 +254,53 @@ func _ready() -> void:
 	assert(gate.vertical_step(0.0) == 0 and gate.vertical_step(0.90) == 1, "Analog gate must re-arm after returning to neutral")
 	assert(gate.trigger_step(JOY_AXIS_TRIGGER_RIGHT, 0.90) == 1, "Right trigger must request the next page once")
 	assert(gate.trigger_step(JOY_AXIS_TRIGGER_RIGHT, 0.95) == 0, "Held trigger must not skip multiple pages")
+
+	# Active/Reserve management belongs in the main Digimon menu. With three
+	# Active slots occupied, a Reserve member enters a lightweight swap-pick mode:
+	# controller/touch select a target card, while a visible touch-safe Cancel
+	# affordance and B/ESC both leave roles untouched.
+	var reserve_source_id := created[0].id
+	var active_target_id := OverworldState.get_active_instances()[0].id
+	var source_index := -1
+	for index in range(OverworldState.get_squad_instances().size()):
+		if OverworldState.get_squad_instances()[index].id == reserve_source_id:
+			source_index = index
+			break
+	assert(source_index >= 0, "Reserve swap source must remain in the Squad")
+	menu.call("_turn_roster_page", 1 if int(menu.get("_roster_page")) == 0 else 0)
+	await _frames(2)
+	menu.call("_confirm_index", source_index)
+	await _frames(2)
+	commands = menu.get("_command_buttons") as Array
+	squad_role_command = commands[2] as Button
+	assert(squad_role_command.text == "SWAP WITH ACTIVE", "Full Active team must route Reserve promotion through an explicit swap")
+	squad_role_command.pressed.emit()
+	await _frames(3)
+	assert(String(menu.get("_squad_swap_source_id")) == reserve_source_id and int(menu.get("_roster_page")) == 0, "Squad swap must move directly to the opposite role page")
+	var cancel_swap := menu.find_child("CancelSquadSwap", true, false) as Button
+	assert(cancel_swap != null and cancel_swap.custom_minimum_size.y >= V2.TOUCH_TARGET, "Swap picker must expose a visible touch-safe cancel action")
+	cancel_swap.pressed.emit()
+	await _frames(2)
+	assert(String(menu.get("_squad_swap_source_id")).is_empty(), "Touch cancel must leave Squad swap mode")
+	assert(OverworldState.get_squad_role(reserve_source_id) == PlayerCollection.SQUAD_ROLE_RESERVE, "Cancelling must keep Reserve role unchanged")
+	assert(OverworldState.get_squad_role(active_target_id) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Cancelling must keep Active target unchanged")
+
+	# Repeat and complete the same flow through roster confirmation, matching the
+	# controller A/Enter path. Slot counts must stay valid and the roles exchange.
+	menu.call("_confirm_index", source_index)
+	await _frames(2)
+	commands = menu.get("_command_buttons") as Array
+	(commands[2] as Button).pressed.emit()
+	await _frames(2)
+	menu.call("_confirm_index", 0)
+	await _frames(3)
+	assert(OverworldState.get_squad_role(reserve_source_id) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Confirmed Reserve source must become Active")
+	assert(OverworldState.get_squad_role(active_target_id) == PlayerCollection.SQUAD_ROLE_RESERVE, "Confirmed Active target must become Reserve")
+	assert(OverworldState.get_active_instances().size() == 3 and OverworldState.get_reserve_party_instances().size() == 2, "Role swap must preserve three Active and two Reserve slots")
+	# Restore the fixture so close/back assertions remain independent of the role mutation.
+	assert(OverworldState.swap_party_with_reserve(reserve_source_id, active_target_id), "Regression fixture must restore original Squad roles")
+	menu.call("_refresh_collection")
+	await _frames(2)
 
 	var closed := [false]
 	menu.close_requested.connect(func(): closed[0] = true)
