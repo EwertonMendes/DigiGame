@@ -7,6 +7,8 @@ const IconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
 
 const REGULAR_HEIGHT := 84.0
 const COMPACT_HEIGHT := 72.0
+const MINIMAL_HEIGHT := 54.0
+const MINIMAL_COMPACT_HEIGHT := 50.0
 const REGULAR_SUBTITLE_HEIGHT := 28.0
 const COMPACT_SUBTITLE_HEIGHT := 24.0
 
@@ -17,6 +19,7 @@ var _subtitle_text := ""
 var _status_text := ""
 var _content_built := false
 var _compact := false
+var _minimal := false
 var _last_disabled := false
 
 
@@ -36,7 +39,7 @@ func _ready() -> void:
 	text = ""
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	custom_minimum_size = Vector2(180.0, COMPACT_HEIGHT if _compact else REGULAR_HEIGHT)
+	custom_minimum_size = Vector2(0.0 if _minimal else 180.0, _button_height())
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	clip_contents = false
 	_last_disabled = disabled
@@ -58,9 +61,22 @@ func _process(_delta: float) -> void:
 
 func set_compact(compact: bool) -> void:
 	_compact = compact
-	custom_minimum_size.y = COMPACT_HEIGHT if compact else REGULAR_HEIGHT
+	custom_minimum_size = Vector2(0.0 if _minimal else 180.0, _button_height())
 	if _content_built:
 		_rebuild_content()
+
+
+func set_minimal(minimal: bool) -> void:
+	_minimal = minimal
+	custom_minimum_size = Vector2(0.0 if minimal else 180.0, _button_height())
+	if _content_built:
+		_rebuild_content()
+
+
+func _button_height() -> float:
+	if _minimal:
+		return MINIMAL_COMPACT_HEIGHT if _compact else MINIMAL_HEIGHT
+	return COMPACT_HEIGHT if _compact else REGULAR_HEIGHT
 
 
 func set_interactive(interactive: bool) -> void:
@@ -90,10 +106,10 @@ func _rebuild_content() -> void:
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_top", 6 if _compact else 7)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_bottom", 6 if _compact else 7)
+	margin.add_theme_constant_override("margin_left", 10 if _minimal else 14)
+	margin.add_theme_constant_override("margin_top", 5 if _minimal else (6 if _compact else 7))
+	margin.add_theme_constant_override("margin_right", 10 if _minimal else 14)
+	margin.add_theme_constant_override("margin_bottom", 5 if _minimal else (6 if _compact else 7))
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(margin)
 
@@ -101,18 +117,39 @@ func _rebuild_content() -> void:
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 10 if _compact else 11)
+	row.add_theme_constant_override("separation", 7 if _minimal else (10 if _compact else 11))
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
 	var icon := IconScript.new() as DigiProceduralIcon
 	icon.name = "CommandIcon"
-	icon.custom_minimum_size = Vector2(30.0, 30.0) if _compact else Vector2(34.0, 34.0)
+	icon.custom_minimum_size = (
+		Vector2(24.0, 24.0)
+		if _minimal
+		else (Vector2(30.0, 30.0) if _compact else Vector2(34.0, 34.0))
+	)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.configure(_icon_kind, _accent if not disabled else V2.SUBTLE, 1.9)
 	icon.modulate = Color.WHITE if not disabled else Color(0.70, 0.74, 0.78, 0.60)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(icon)
+
+	if _minimal:
+		var minimal_title := Label.new()
+		minimal_title.name = "CommandTitle"
+		minimal_title.text = _title_text
+		minimal_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		minimal_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		minimal_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		minimal_title.add_theme_font_size_override("font_size", 11 if _compact else 12)
+		minimal_title.add_theme_color_override("font_color", V2.WHITE if not disabled else V2.SUBTLE)
+		V2.apply_heading(minimal_title)
+		minimal_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(minimal_title)
+		tooltip_text = "%s — %s" % [_title_text, _subtitle_text] if not _subtitle_text.is_empty() else _title_text
+		if not _status_text.is_empty():
+			tooltip_text += "\n%s" % _status_text
+		return
 
 	# Treat command copy as one flexible column. Title, description and metadata
 	# each receive the full remaining width instead of competing horizontally.
