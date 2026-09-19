@@ -1,13 +1,19 @@
 extends Node
 
 const HUB_SCENE = preload("res://scenes/world/hub.tscn")
+const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
+const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 
 
 func _ready() -> void:
-	OverworldState.reset_active_party()
+	GameInputBootstrap.configure_gamepad_actions()
+	OverworldState.set_persistence_enabled(false)
+	OverworldState.reset_progress_for_tests(false)
+	_ensure_paged_fixture()
+
 	var hub: Node = HUB_SCENE.instantiate()
 	add_child(hub)
-	await _frames(3)
+	await _frames(4)
 
 	var training: TrainingCenterScreen = hub.get_node_or_null("TrainingCenterUI/TrainingCenter") as TrainingCenterScreen
 	if not _check(training != null, "Hub must expose the Training Center"):
@@ -17,142 +23,328 @@ func _ready() -> void:
 
 	if not _check(training.visible, "Training Center must become visible"):
 		return
-	if not _check(training.get("_header") is DigiModalHeader, "Training Center must use the shared Digi UI V2 modal header"):
+	var header := training.get("_header") as DigiModalHeader
+	var hints := training.get("_hint_bar") as DigiInputHintBar
+	if not _check(header != null and header.is_workspace_mode(), "Training must use the shared workspace header"):
 		return
-	if not _check(training.get("_hint_bar") is DigiInputHintBar, "Training Center must expose adaptive V2 input hints"):
+	if not _check(hints != null, "Training must expose adaptive V2 input hints"):
 		return
-	if not _check(training.get("_collection_header") is DigiSectionHeader, "Training roster must use the shared V2 section header"):
-		return
-	if not _check((training.get("_collection_ids") as Array).size() > 0, "Training Center must expose at least one owned Digimon"):
-		return
-
-	var detail: Control = training.get("_detail") as Control
-	if not _check(detail != null and _layout_text_is_usable(detail), "Training detail contains collapsed or vertical text"):
-		return
-	if not _check(_find_label_containing(detail, "ATTRIBUTE TRAINING") != null, "Training Center must expose attribute training"):
-		return
-	if not _check(_find_label_containing(detail, "TACTICAL MOBILITY") != null, "Training Center must expose tactical mobility"):
-		return
-	if not _check(_find_label_containing(detail, "TRAINING PLAN") != null, "Training Center must expose the plan summary"):
+	if not _check(header.get_close_button() != null and header.get_close_button().focus_mode == Control.FOCUS_NONE, "Training close X must stay outside controller directional focus"):
 		return
 
-	var detail_scroll := training.get("_detail_scroll") as ScrollContainer
-	if not _check(detail_scroll != null, "Training detail must expose its scroll viewport"):
+	var scrolls := _controls_of_type(training, "ScrollContainer")
+	if not _check(scrolls.is_empty(), "Modern Training must not depend on ScrollContainer"):
 		return
+
+	var collection_header := training.get("_collection_header") as DigiSectionHeader
+	var pager := training.get("_roster_pager") as DigiPager
+	var buttons := training.get("_collection_buttons") as Array
+	var ids := training.get("_collection_ids") as Array
+	if not _check(collection_header != null and pager != null, "Training roster must use shared V2 section and pager components"):
+		return
+	if not _check(pager.get_page_count() >= 2, "Regression fixture must exercise paged Training roster"):
+		return
+	if not _check(buttons.size() == 3 and ids.size() == 3, "Training roster must render exactly three Digimon per full page"):
+		return
+	for raw_button in buttons:
+		var card := raw_button as Button
+		if not _check(card != null and card.custom_minimum_size.y >= V2.TOUCH_TARGET, "Training roster cards must remain touch-safe"):
+			return
+
+	var pager_previous := pager.get_node("PreviousPage") as Button
+	var pager_next := pager.get_node("NextPage") as Button
+	if not _check(pager_previous.focus_mode == Control.FOCUS_NONE and pager_next.focus_mode == Control.FOCUS_NONE, "Pager arrows must be pointer/touch controls outside the D-pad path"):
+		return
+	if not _check(pager_previous.custom_minimum_size == Vector2(52.0, 43.0) and pager_next.custom_minimum_size == Vector2(52.0, 43.0), "Training pager must reuse workspace pager dimensions"):
+		return
+
+	# D-pad/left-stick navigation stays page-local; only explicit pagination changes pages.
+	training.call("_focus_first_collection")
+	await _frames(1)
+	var first_focus := get_viewport().gui_get_focus_owner()
+	training.call("_move_roster_focus", 1)
+	training.call("_move_roster_focus", 1)
+	training.call("_move_roster_focus", 1)
+	if not _check(int(training.get("_roster_page")) == 0, "Roster directional navigation must never auto-page"):
+		return
+	if not _check(get_viewport().gui_get_focus_owner() == first_focus, "Three downward moves must wrap inside the current three-card page"):
+		return
+
+	var analog := InputEventJoypadMotion.new()
+	analog.axis = JOY_AXIS_LEFT_Y
+	analog.axis_value = 0.9
+	training.call("_input", analog)
+	var analog_once := get_viewport().gui_get_focus_owner()
+	training.call("_input", analog)
+	if not _check(get_viewport().gui_get_focus_owner() == analog_once, "Held analog input must not race through the Training roster"):
+		return
+	analog.axis_value = 0.0
+	training.call("_input", analog)
+	analog.axis_value = 0.9
+	training.call("_input", analog)
+	if not _check(get_viewport().gui_get_focus_owner() != analog_once, "Analog navigation must re-arm after returning through its release threshold"):
+		return
+
+	training.call("_turn_roster_page", 1)
+	await _frames(2)
+	if not _check(int(training.get("_roster_page")) == 1, "Explicit Training pagination must move to the next roster page"):
+		return
+	training.call("_turn_roster_page", -1)
+	await _frames(2)
+
+	ids = training.get("_collection_ids") as Array
+	if not _check(ids.size() >= 2, "First Training page must expose at least two selectable Digimon"):
+		return
+	var selected_id := String(ids[0])
+	var alternate_id := String(ids[1])
+	training.call("_activate_instance", selected_id)
+	await _frames(3)
+	if not _check(int(training.get("_interaction_mode")) == 1, "Confirming a Digimon must enter Training edit mode"):
+		return
+
+	var detail := training.get("_detail_panel") as Control
+	var host := training.get("_presentation_host") as Control
+	var attributes := training.get("_attributes_view") as Control
+	var mobility := training.get("_mobility_view") as Control
+	if not _check(detail != null and host != null and attributes != null and mobility != null, "Training must expose one stable detail workspace"):
+		return
+	if not _check(attributes.visible and not mobility.visible, "Attributes must be the initial Training presentation"):
+		return
+	var host_identity := host.get_instance_id()
+	var host_size := host.size
+	var background := training.find_child("TrainingBackgroundImage", true, false) as TextureRect
+	if not _check(background != null and background.texture != null and background.texture.resource_path.ends_with("training.webp"), "Training must render the dedicated training.webp background"):
+		return
+	if not _check(background.get_parent() == training, "Training background must live at the screen root, outside the scaled workspace frame"):
+		return
+	var background_rect := background.get_global_rect()
+	var screen_rect := training.get_global_rect()
+	if not _check(background_rect.position.is_equal_approx(screen_rect.position) and background_rect.size.is_equal_approx(screen_rect.size), "Training background must cover the complete screen bounds"):
+		return
+
+	var attribute_toolbar := training.get("_attribute_plan_bar") as PanelContainer
+	var attribute_icon := attribute_toolbar.find_child("AttributeTrainingIcon", true, false) as Control
+	var attribute_title := attribute_toolbar.find_child("AttributeTrainingTitle", true, false) as Label
+	if not _check(attribute_icon != null and attribute_title != null, "Attribute toolbar must expose its authored icon and title"):
+		return
+	if not _check(absf(attribute_icon.get_global_rect().get_center().y - attribute_title.get_global_rect().get_center().y) <= 2.0, "Attribute Training icon must be vertically centered with its title"):
+		return
+
 	var rows: Dictionary = training.get("_stat_rows") as Dictionary
-	if not _check(rows.size() == 6, "Training Center must build all six trainable stat rows"):
+	if not _check(rows.size() == 6, "Training must keep all six attribute rows alive"):
 		return
-	var selected_id := String(training.get("_selected_id"))
-	var selected: DigimonInstance = OverworldState.get_instance_by_id(selected_id)
-	if not _check(selected != null, "Training Center must keep a valid selected Digimon"):
-		return
-
 	var target_key := ""
+	var target_row: TrainingStatRow = null
 	var target_plus: Button = null
+	var host_rect := host.get_global_rect()
 	for stat_key: String in ["hp", "mp", "atk", "def", "int", "speed"]:
 		var row := rows.get(stat_key) as TrainingStatRow
 		if row == null:
 			continue
-		var buttons := row.get_focus_buttons()
-		if buttons.size() >= 2 and not buttons[1].disabled:
+		if not _check(row.custom_minimum_size.y <= 54.0, "Training attribute cards must use the compact 54px row height without shrinking text"):
+			return
+		if not _check(row.get_global_rect().end.y <= host_rect.end.y + 1.0, "Every Training attribute row, including INT/SPD, must stay fully inside the presentation workspace"):
+			return
+		var row_buttons := row.get_focus_buttons()
+		if not _check(row_buttons.size() == 2, "Each Training stat row must expose minus and plus controls"):
+			return
+		for control in row_buttons:
+			if not _check((control as Button).custom_minimum_size.y >= V2.TOUCH_TARGET, "Training stat steppers must remain touch-safe"):
+				return
+		if not row_buttons[1].disabled:
 			target_key = stat_key
-			target_plus = buttons[1]
+			target_row = row
+			target_plus = row_buttons[1]
 			break
-	if not _check(not target_key.is_empty() and target_plus != null, "At least one attribute must be trainable for the default individual"):
+	if not _check(target_row != null and target_plus != null, "At least one stat must be trainable for the regression Digimon"):
 		return
 
-	# Focus the same control a mouse/gamepad interaction would leave active and
-	# capture the viewport after Godot has made that row visible. Rebuilding the
-	# detail must not append a second pending tree and drag focus/scroll downward.
 	target_plus.grab_focus()
-	await _frames(2)
-	var scroll_before := detail_scroll.scroll_vertical
+	var stable_row_id := target_row.get_instance_id()
 	target_plus.pressed.emit()
 	await _frames(3)
 
-	var pending: Dictionary = training.get("_pending_stats") as Dictionary
-	if not _check(int(pending.get(target_key, 0)) == 1, "Attribute stepper must add a point to the pending plan"):
-		return
-	if not _check(abs(detail_scroll.scroll_vertical - scroll_before) <= 2, "Attribute refresh must preserve the user's training scroll position"):
-		return
+	var pending := training.get("_pending_stats") as Dictionary
 	rows = training.get("_stat_rows") as Dictionary
-	var refreshed_row := rows.get(target_key) as TrainingStatRow
-	if not _check(refreshed_row != null, "Dynamic refresh must recreate the edited stat row"):
+	var same_row := rows.get(target_key) as TrainingStatRow
+	if not _check(int(pending.get(target_key, 0)) == 1, "Stat plus must add one pending training point"):
 		return
-	var refreshed_buttons := refreshed_row.get_focus_buttons()
-	if not _check(refreshed_buttons.size() >= 2, "Refreshed stat row must preserve both step controls"):
+	if not _check(same_row != null and same_row.get_instance_id() == stable_row_id, "Stat updates must refresh the existing row instead of rebuilding it"):
 		return
-	var expected_focus: Control = refreshed_buttons[1] if not refreshed_buttons[1].disabled else refreshed_buttons[0]
-	var focus_owner := get_viewport().gui_get_focus_owner()
-	if not _check(focus_owner == expected_focus, "Dynamic stat refresh must restore focus to the equivalent available control"):
+	if not _check((training.get("_presentation_host") as Control).get_instance_id() == host_identity, "Training changes must preserve the presentation host"):
 		return
-	var points_label := refreshed_row.get_training_points_label()
-	if not _check(points_label != null and points_label.text.contains("+1"), "Edited stat row must expose its pending training amount"):
+	if not _check((training.get("_presentation_host") as Control).size.is_equal_approx(host_size), "Training changes must not resize the stable presentation host"):
 		return
-	if not _check(points_label.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING, "Training point totals must never render with ellipsis"):
-		return
-	if not _check(points_label.size.x >= 103.0, "Training point totals must reserve enough width for the complete value"):
-		return
-	if not _check(_find_label_containing(detail, "%s +1" % _stat_label(target_key)) != null, "Training plan must summarize the pending attribute change"):
+	var point_label := same_row.get_training_points_label()
+	if not _check(point_label.text.contains("+1") and point_label.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING, "Pending point totals must stay complete and visible"):
 		return
 
-	training.call("_discard_plan")
+	var attribute_plan_bar := training.get("_attribute_plan_bar") as PanelContainer
+	var discard := training.get("_discard_button") as Button
+	var apply := training.get("_apply_button") as Button
+	if not _check(attribute_plan_bar != null and attributes.is_ancestor_of(attribute_plan_bar), "Attribute Apply/Discard must live inside the Attributes presentation"):
+		return
+	if not _check(attribute_plan_bar.get_global_rect().position.y >= host_rect.position.y - 1.0 and attribute_plan_bar.get_global_rect().end.y <= host_rect.end.y + 1.0, "Attribute toolbar must stay fully inside the presentation workspace"):
+		return
+	if not _check(attribute_plan_bar.get_index() == 0, "Attribute actions must share the top toolbar instead of adding height below the stat grid"):
+		return
+	for action in [discard, apply]:
+		if not _check(action != null and action.custom_minimum_size.y >= 50.0, "Attribute plan actions must remain touch-safe"):
+			return
+		if not _check(action is DigiCommandButton, "Attribute plan actions must reuse DigiCommandButton instead of screen-specific button markup"):
+			return
+		var command_style := action.get_theme_stylebox("normal") as StyleBoxFlat
+		if not _check(command_style != null and command_style.border_width_left >= 4, "Compact attribute commands must keep the shared command rail"):
+			return
+		var compact_icon := action.find_child("CommandIcon", true, false) as Control
+		if not _check(compact_icon != null and compact_icon.custom_minimum_size == Vector2(24.0, 24.0), "Minimal attribute commands must keep the shared 24px command icon"):
+			return
+
+	# Apply remains guarded because attribute training is permanent.
+	if not _check(not apply.disabled, "A valid attribute plan must enable Apply Training"):
+		return
+	apply.pressed.emit()
+	await _frames(2)
+	var confirmation := training.get("_confirmation") as DigiConfirmationModal
+	if not _check(confirmation != null and confirmation.visible, "Attribute Apply must open the shared permanent-action confirmation"):
+		return
+	confirmation.get_cancel_button().pressed.emit()
+	await _frames(2)
+	if not _check(int((training.get("_pending_stats") as Dictionary).get(target_key, 0)) == 1, "Cancelling Apply must preserve the pending attribute plan"):
+		return
+
+	# Moving to another Digimon can never silently erase an unapplied attribute plan.
+	var before_switch := String(training.get("_selected_id"))
+	training.call("_activate_instance", alternate_id)
+	await _frames(2)
+	if not _check(confirmation.visible, "Switching Digimon with a pending attribute plan must ask before discarding it"):
+		return
+	if not _check(String(training.get("_selected_id")) == before_switch, "Pending attribute guard must keep the current Training target until confirmed"):
+		return
+	confirmation.get_cancel_button().pressed.emit()
+	await _frames(2)
+
+	# X/Square switches presentation only; geometry and component identity remain stable.
+	var x_button := InputEventJoypadButton.new()
+	x_button.button_index = JOY_BUTTON_X
+	x_button.pressed = true
+	training.call("_unhandled_input", x_button)
+	await _frames(2)
+	if not _check(int(training.get("_detail_view")) == 1 and mobility.visible and not attributes.visible, "X/Square must switch from Attributes to Mobility"):
+		return
+	if not _check((training.get("_presentation_host") as Control).get_instance_id() == host_identity, "Switching Training views must preserve the same presentation host"):
+		return
+	if not _check((training.get("_presentation_host") as Control).size.is_equal_approx(host_size), "Switching Training views must keep workspace geometry stable"):
+		return
+
+	var mobility_card := training.get("_mobility_card") as PanelContainer
+	var mobility_icon := mobility_card.find_child("MobilityTitleIcon", true, false) as Control
+	var mobility_title := mobility_card.find_child("MobilityTitleLabel", true, false) as Label
+	if not _check(mobility_card != null and mobility_icon != null and mobility_title != null, "Mobility must render as one self-contained card"):
+		return
+	var mobility_rect := mobility_card.get_global_rect()
+	var mobility_host_rect := host.get_global_rect()
+	if not _check(mobility_rect.position.y >= mobility_host_rect.position.y - 1.0 and mobility_rect.end.y <= mobility_host_rect.end.y + 1.0, "Mobility card must stay fully inside the presentation workspace"):
+		return
+	if not _check(mobility_rect.size.x >= mobility_host_rect.size.x * 0.90, "Mobility must use the available horizontal workspace instead of collapsing into a narrow centered column"):
+		return
+	if not _check(absf(mobility_rect.get_center().y - mobility_host_rect.get_center().y) <= 3.0, "Mobility card must be vertically centered in its presentation"):
+		return
+	if not _check(absf(mobility_icon.get_global_rect().get_center().y - mobility_title.get_global_rect().get_center().y) <= 2.0, "Tactical Mobility icon must be vertically centered with its title"):
+		return
+
+	var mobility_plus := training.get("_mobility_plus") as Button
+	if not _check(mobility_plus != null and mobility_plus.custom_minimum_size.y >= V2.TOUCH_TARGET, "Mobility command must remain touch-safe"):
+		return
+	if not _check(mobility_plus is DigiCommandButton, "Mobility must reuse the shared DigiCommandButton component"):
+		return
+	var mobility_style := mobility_plus.get_theme_stylebox("normal") as StyleBoxFlat
+	if not _check(mobility_style != null and mobility_style.border_width_left >= 4, "Mobility command must keep the shared command rail"):
+		return
+	var mobility_action_icon := mobility_plus.find_child("CommandIcon", true, false) as Control
+	if not _check(mobility_action_icon != null and mobility_action_icon.custom_minimum_size == Vector2(30.0, 30.0), "Compact Mobility command must use the shared 30px command icon"):
+		return
+	if not _check(mobility_plus.disabled, "Pending attribute changes must block independent MOV training until resolved"):
+		return
+
+	# Return to Attributes, discard the pending attribute plan, then prove MOV is self-sufficient.
+	training.call("_toggle_detail_view")
+	await _frames(2)
+	discard.pressed.emit()
 	await _frames(2)
 	pending = training.get("_pending_stats") as Dictionary
-	if not _check(pending.is_empty() and int(training.get("_pending_mobility")) == 0, "Discard must clear the complete pending plan"):
+	if not _check(pending.is_empty(), "Discard must clear only the pending attribute plan"):
+		return
+	if not _check((training.get("_stat_rows") as Dictionary).get(target_key) == same_row, "Discarding must update the same persistent stat components"):
+		return
+
+	var mobility_target_id := ""
+	for candidate: DigimonInstance in OverworldState.get_collection_instances():
+		if candidate.potential >= 20 and int(candidate.training.get("mov", 0)) < 2:
+			mobility_target_id = candidate.id
+			break
+	if not _check(not mobility_target_id.is_empty(), "Mobility regression fixture must provide an eligible Digimon"):
+		return
+
+	training.call("_activate_instance", mobility_target_id)
+	await _frames(3)
+	training.call("_set_detail_view", 1, false)
+	await _frames(2)
+	var mobility_instance := OverworldState.get_instance_by_id(mobility_target_id)
+	if not _check(mobility_instance != null and mobility_instance.potential >= 20, "Mobility regression target must satisfy the first MOV potential requirement"):
+		return
+	var mobility_before := int(mobility_instance.training.get("mov", 0))
+	mobility_plus = training.get("_mobility_plus") as Button
+	if not _check(not mobility_plus.disabled, "Eligible Digimon with no attribute plan must be able to train MOV independently"):
+		return
+	mobility_plus.pressed.emit()
+	await _frames(2)
+	if not _check(confirmation.visible, "Train MOV +1 must use its own permanent-action confirmation"):
+		return
+	if not _check((training.get("_pending_stats") as Dictionary).is_empty(), "MOV confirmation must not create or reuse an attribute plan"):
+		return
+	confirmation.get_confirm_button().pressed.emit()
+	await _frames(4)
+	mobility_instance = OverworldState.get_instance_by_id(mobility_target_id)
+	if not _check(int(mobility_instance.training.get("mov", 0)) == mobility_before + 1, "Confirmed MOV training must apply exactly one mobility level immediately"):
+		return
+	if not _check((training.get("_pending_stats") as Dictionary).is_empty(), "Committed MOV training must leave the attribute plan empty"):
+		return
+
+	training.call("_return_to_roster")
+	await _frames(2)
+	if not _check(int(training.get("_interaction_mode")) == 0, "Back from Training editing must return to the roster before closing the service"):
 		return
 
 	training.close_view()
 	hub.queue_free()
-	await _frames(2)
+	await _frames(3)
+	OverworldState.set_persistence_enabled(true)
 	print("training ui v2 regression passed")
 	get_tree().quit()
 
 
-func _stat_label(stat_key: String) -> String:
-	match stat_key:
-		"mp":
-			return "SP"
-		"speed":
-			return "SPD"
-		_:
-			return stat_key.to_upper()
+func _ensure_paged_fixture() -> void:
+	var database: DigimonDatabase = OverworldState.get_database() as DigimonDatabase
+	var factory = FactoryScript.new(database)
+	var candidates := ["guilmon", "patamon", "veemon", "gabumon"]
+	var cursor := 0
+	while OverworldState.get_collection_instances().size() < 5 and cursor < candidates.size():
+		var instance: DigimonInstance = factory.create_player_by_name(candidates[cursor], 3, 100)
+		cursor += 1
+		if instance != null:
+			# The factory argument is scan percent, not Potential. Give regression
+			# fixtures enough Potential to exercise independent MOV training.
+			instance.potential = 100
+			OverworldState.add_collection_instance(instance)
 
 
-func _layout_text_is_usable(root: Control) -> bool:
-	for label: Label in _labels_under(root):
-		if not label.is_visible_in_tree():
-			continue
-		var text := label.text.strip_edges()
-		if text.length() < 3:
-			continue
-		if label.autowrap_mode == TextServer.AUTOWRAP_OFF:
-			var width_floor := 8.0 if text.length() <= 4 else 18.0
-			if label.size.x < width_floor:
-				print("[training-ui-v2] collapsed single-line label: %s (%.1f px)" % [text, label.size.x])
-				return false
-		elif label.size.x < 42.0:
-			print("[training-ui-v2] collapsed wrapped label: %s (%.1f px)" % [text, label.size.x])
-			return false
-	return true
-
-
-func _find_label_containing(root: Node, target: String) -> Label:
-	if root is Label and (root as Label).text.contains(target):
-		return root as Label
+func _controls_of_type(root: Node, type_name: String) -> Array[Node]:
+	var result: Array[Node] = []
+	if root.get_class() == type_name:
+		result.append(root)
 	for child: Node in root.get_children():
-		var found := _find_label_containing(child, target)
-		if found != null:
-			return found
-	return null
-
-
-func _labels_under(root: Node) -> Array[Label]:
-	var result: Array[Label] = []
-	if root is Label:
-		result.append(root as Label)
-	for child: Node in root.get_children():
-		result.append_array(_labels_under(child))
+		result.append_array(_controls_of_type(child, type_name))
 	return result
 
 

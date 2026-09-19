@@ -12,6 +12,7 @@ var _icon_texture: Texture2D = null
 var _title_label: Label
 var _trailing_label: Label
 var _icon: DigiIconView
+var _icon_slot: CenterContainer
 var _margin: MarginContainer
 var _built := false
 var _workspace_mode := false
@@ -62,29 +63,41 @@ func _ready() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	_margin = MarginContainer.new()
+	_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_margin)
 
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	row.add_theme_constant_override("separation", 7)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_margin.add_child(row)
 
+	_icon_slot = CenterContainer.new()
+	_icon_slot.name = "SectionIconSlot"
+	_icon_slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_icon_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(_icon_slot)
+
 	_icon = IconScript.new() as DigiIconView
 	_icon.name = "SectionIcon"
+	_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(_icon)
+	_icon_slot.add_child(_icon)
 
 	_title_label = Label.new()
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	V2.apply_heading(_title_label)
 	_title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_title_label)
 
 	_trailing_label = Label.new()
+	_trailing_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_trailing_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_trailing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	V2.apply_body(_trailing_label)
@@ -106,6 +119,7 @@ func _apply_visual_mode() -> void:
 		_margin.add_theme_constant_override("margin_top", 7)
 		_margin.add_theme_constant_override("margin_right", 14)
 		_margin.add_theme_constant_override("margin_bottom", 7)
+		_icon_slot.custom_minimum_size = Vector2(24.0, 0.0)
 		_icon.custom_minimum_size = Vector2(22.0, 22.0)
 		_title_label.add_theme_font_size_override("font_size", 16)
 		_title_label.add_theme_color_override("font_color", V2.TEXT)
@@ -118,6 +132,7 @@ func _apply_visual_mode() -> void:
 		_margin.add_theme_constant_override("margin_top", 5)
 		_margin.add_theme_constant_override("margin_right", 12)
 		_margin.add_theme_constant_override("margin_bottom", 5)
+		_icon_slot.custom_minimum_size = Vector2(18.0, 0.0)
 		_icon.custom_minimum_size = Vector2(16.0, 16.0)
 		_title_label.add_theme_font_size_override("font_size", 12)
 		_title_label.add_theme_color_override("font_color", V2.TEXT)
