@@ -44,7 +44,7 @@ enum InteractionMode {
 
 enum DetailView {
 	ATTRIBUTES,
-	PLAN,
+	MOBILITY,
 }
 
 var STAT_META := {
@@ -61,7 +61,6 @@ var _training: DigimonTrainingService
 var _calculator: DigimonStatCalculator
 var _selected_id := ""
 var _pending_stats: Dictionary = {}
-var _pending_mobility := 0
 var _roster_page := 0
 var _compact_layout := false
 var _interaction_mode := InteractionMode.ROSTER
@@ -106,20 +105,18 @@ var _attributes_view: VBoxContainer
 var _attributes_header: DigiSectionHeader
 var _stat_grid: GridContainer
 var _stat_rows: Dictionary = {}
-var _plan_view: GridContainer
+var _attribute_plan_bar: PanelContainer
+var _attribute_plan_summary: Label
+var _attribute_plan_validation: Label
+var _discard_button: Button
+var _apply_button: Button
+var _mobility_view: VBoxContainer
 var _mobility_header: DigiSectionHeader
 var _mobility_card: PanelContainer
 var _mobility_value: Label
 var _mobility_level: Label
 var _mobility_requirement: Label
-var _mobility_minus: Button
 var _mobility_plus: Button
-var _plan_header: DigiSectionHeader
-var _plan_card: PanelContainer
-var _plan_summary_label: Label
-var _plan_validation_label: Label
-var _discard_button: Button
-var _apply_button: Button
 var _confirmation: DigiConfirmationModal
 var _editor_focus_rows: Array = []
 
@@ -300,7 +297,7 @@ func _build_ui() -> void:
 	_hint_bar.set_description("Choose a Digimon and build a permanent training plan.")
 	_hint_bar.set_scroll_hint_enabled(false)
 	_hint_bar.set_hide_hints_on_touch(true)
-	_hint_bar.set_secondary_tabs_label("Attributes / Plan")
+	_hint_bar.set_secondary_tabs_label("Attributes / Mobility")
 	_menu_root.add_child(_hint_bar)
 
 	_confirmation = ConfirmationScript.new() as DigiConfirmationModal
@@ -501,10 +498,10 @@ func _build_detail_tabs() -> void:
 	_detail_tabs.add_theme_constant_override("separation", 6)
 	_detail_root.add_child(_detail_tabs)
 
-	for spec in [[DetailView.ATTRIBUTES, "ATTRIBUTES"], [DetailView.PLAN, "PLAN / MOBILITY"]]:
+	for spec in [[DetailView.ATTRIBUTES, "ATTRIBUTES"], [DetailView.MOBILITY, "MOBILITY"]]:
 		var view_id := int(spec[0])
 		var button := Button.new()
-		button.name = "AttributesTab" if view_id == DetailView.ATTRIBUTES else "PlanTab"
+		button.name = "AttributesTab" if view_id == DetailView.ATTRIBUTES else "MobilityTab"
 		button.text = String(spec[1])
 		button.focus_mode = Control.FOCUS_NONE
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -542,7 +539,7 @@ func _build_presentation() -> void:
 	_stat_grid.name = "TrainingStatGrid"
 	_stat_grid.columns = 2
 	_stat_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_stat_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_stat_grid.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_stat_grid.add_theme_constant_override("h_separation", 8)
 	_stat_grid.add_theme_constant_override("v_separation", 5)
 	_attributes_view.add_child(_stat_grid)
@@ -551,120 +548,126 @@ func _build_presentation() -> void:
 		var row := TrainingStatRowScript.new() as TrainingStatRow
 		row.name = "Training_%s" % stat_key
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		row.add_requested.connect(_add_stat)
 		row.remove_requested.connect(_remove_stat)
 		_stat_grid.add_child(row)
 		_stat_rows[stat_key] = row
 
-	_plan_view = GridContainer.new()
-	_plan_view.name = "PlanView"
-	_plan_view.columns = 2
-	_plan_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_plan_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_plan_view.add_theme_constant_override("h_separation", 8)
-	_plan_view.add_theme_constant_override("v_separation", 7)
-	_presentation_host.add_child(_plan_view)
-	_plan_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_build_attribute_plan_bar()
+
+	_mobility_view = VBoxContainer.new()
+	_mobility_view.name = "MobilityView"
+	_mobility_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_mobility_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_mobility_view.add_theme_constant_override("separation", 7)
+	_presentation_host.add_child(_mobility_view)
+	_mobility_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	_build_mobility_panel()
-	_build_plan_panel()
-	# Keep section headers on one row and their task cards directly below them.
-	# Hidden compact headers are ignored by GridContainer, leaving the two cards
-	# side-by-side without introducing a second layout implementation.
-	_plan_view.move_child(_plan_header, 1)
+
+
+func _build_attribute_plan_bar() -> void:
+	_attribute_plan_bar = PanelContainer.new()
+	_attribute_plan_bar.name = "AttributePlanBar"
+	_attribute_plan_bar.custom_minimum_size.y = 58.0
+	_attribute_plan_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_attribute_plan_bar.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_attribute_plan_bar.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.GREEN))
+	_attributes_view.add_child(_attribute_plan_bar)
+
+	var margin := _margin(10, 3, 10, 3)
+	_attribute_plan_bar.add_child(margin)
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 8)
+	margin.add_child(row)
+
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.add_theme_constant_override("separation", 0)
+	row.add_child(copy)
+	var title := _single_line_label("ATTRIBUTE PLAN", 10, V2.GREEN, true)
+	copy.add_child(title)
+	_attribute_plan_summary = _single_line_label("NO PENDING CHANGES", 9, V2.MUTED, true)
+	copy.add_child(_attribute_plan_summary)
+	_attribute_plan_validation = _single_line_label("Adjust attributes to build a plan.", 8, V2.MUTED)
+	copy.add_child(_attribute_plan_validation)
+
+	_discard_button = _compact_command_button(UNDO_ICON, "DISCARD", V2.MUTED)
+	_discard_button.custom_minimum_size.x = 132.0
+	_discard_button.pressed.connect(_discard_plan)
+	row.add_child(_discard_button)
+
+	_apply_button = _compact_command_button(CONFIRM_ICON, "APPLY TRAINING", V2.GREEN)
+	_apply_button.custom_minimum_size.x = 176.0
+	_apply_button.pressed.connect(_request_apply_plan)
+	row.add_child(_apply_button)
 
 
 func _build_mobility_panel() -> void:
 	_mobility_header = SectionHeaderScript.new() as DigiSectionHeader
 	_mobility_header.configure("TACTICAL MOBILITY", "PERMANENT", V2.AMBER, "move")
 	_mobility_header.set_workspace_mode(true)
-	_plan_view.add_child(_mobility_header)
+	_mobility_view.add_child(_mobility_header)
 
 	_mobility_card = PanelContainer.new()
 	_mobility_card.name = "MobilityTraining"
 	_mobility_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_mobility_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_mobility_card.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.AMBER))
-	_plan_view.add_child(_mobility_card)
-	var margin := _margin(12, 8, 12, 8)
+	_mobility_view.add_child(_mobility_card)
+
+	var margin := _margin(18, 14, 18, 14)
 	_mobility_card.add_child(margin)
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 7)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 12)
 	margin.add_child(stack)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+	row.custom_minimum_size.y = 42.0
+	row.add_theme_constant_override("separation", 12)
 	stack.add_child(row)
 	var icon := ProceduralIconScript.new() as DigiProceduralIcon
-	icon.custom_minimum_size = Vector2(26.0, 26.0)
-	icon.configure("move", V2.AMBER, 1.8)
+	icon.custom_minimum_size = Vector2(32.0, 32.0)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.configure("move", V2.AMBER, 2.0)
 	row.add_child(icon)
-	_mobility_value = _single_line_label("MOV 0", 15, V2.TEXT, true)
+	_mobility_value = _single_line_label("MOV 0", 20, V2.TEXT, true)
 	_mobility_value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(_mobility_value)
-	_mobility_level = _single_line_label("MOBILITY 0 / 2", 10, V2.AMBER, true)
+	_mobility_level = _single_line_label("MOBILITY 0 / 2", 11, V2.AMBER, true)
 	_mobility_level.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_mobility_level.custom_minimum_size.x = 112.0
+	_mobility_level.custom_minimum_size.x = 126.0
 	row.add_child(_mobility_level)
 
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 8)
-	stack.add_child(actions)
-	_mobility_minus = _command_button(UNDO_ICON, "UNDO MOV", "Remove one planned mobility step", V2.MUTED)
-	_mobility_minus.pressed.connect(_remove_mobility)
-	actions.add_child(_mobility_minus)
-	_mobility_plus = _command_button(MOVE_ICON, "TRAIN MOV +1", "Add permanent tactical mobility", V2.AMBER)
-	_mobility_plus.pressed.connect(_add_mobility)
-	actions.add_child(_mobility_plus)
+	var explanation := _label(
+		"MOV training is independent from attribute training. Each upgrade is applied immediately after confirmation.",
+		10,
+		V2.MUTED
+	)
+	explanation.custom_minimum_size.y = 34.0
+	explanation.max_lines_visible = 2
+	stack.add_child(explanation)
 
-	_mobility_requirement = _single_line_label("", 9, V2.MUTED)
+	_mobility_requirement = _label("", 11, V2.MUTED, true)
+	_mobility_requirement.custom_minimum_size.y = 42.0
+	_mobility_requirement.max_lines_visible = 2
 	stack.add_child(_mobility_requirement)
-
-
-func _build_plan_panel() -> void:
-	_plan_header = SectionHeaderScript.new() as DigiSectionHeader
-	_plan_header.configure("TRAINING PLAN", "NO CHANGES", V2.GREEN, "training")
-	_plan_header.set_workspace_mode(true)
-	_plan_view.add_child(_plan_header)
-
-	_plan_card = PanelContainer.new()
-	_plan_card.name = "TrainingPlan"
-	_plan_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_plan_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_plan_card.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.GREEN))
-	_plan_view.add_child(_plan_card)
-	var margin := _margin(12, 8, 12, 8)
-	_plan_card.add_child(margin)
-	var stack := VBoxContainer.new()
-	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_theme_constant_override("separation", 7)
-	margin.add_child(stack)
-
-	_plan_summary_label = _label("NO PENDING CHANGES", 11, V2.MUTED, true)
-	_plan_summary_label.custom_minimum_size.y = 30.0
-	_plan_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_plan_summary_label.max_lines_visible = 2
-	stack.add_child(_plan_summary_label)
-
-	_plan_validation_label = _label("Add attribute or mobility training to create a plan.", 9, V2.MUTED)
-	_plan_validation_label.custom_minimum_size.y = 28.0
-	_plan_validation_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_plan_validation_label.max_lines_visible = 2
-	stack.add_child(_plan_validation_label)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(spacer)
 
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 10)
-	stack.add_child(actions)
-	_discard_button = _command_button(UNDO_ICON, "DISCARD PLAN", "Clear all pending changes", V2.MUTED)
-	_discard_button.pressed.connect(_discard_plan)
-	actions.add_child(_discard_button)
-	_apply_button = _command_button(CONFIRM_ICON, "APPLY TRAINING", "Save permanent growth", V2.GREEN)
-	_apply_button.pressed.connect(_request_apply_plan)
-	actions.add_child(_apply_button)
+	_mobility_plus = _command_button(MOVE_ICON, "TRAIN MOV +1", "Apply the next permanent mobility level", V2.AMBER)
+	_mobility_plus.custom_minimum_size.y = 72.0
+	_mobility_plus.pressed.connect(_request_mobility_training)
+	stack.add_child(_mobility_plus)
 
 
 func _refresh_collection() -> void:
@@ -832,7 +835,7 @@ func _refresh_detail_values() -> void:
 
 	var preview := DigimonInstance.from_dict(instance.to_dict())
 	if _has_plan():
-		_training.apply_plan(preview, _pending_stats, _pending_mobility)
+		_training.apply_plan(preview, _pending_stats, 0)
 	var current_stats := _calculator.get_all_stats(instance, species)
 	var preview_stats := _calculator.get_all_stats(preview, species)
 
@@ -846,7 +849,7 @@ func _refresh_detail_values() -> void:
 
 	var total := _training.capacity_for(instance)
 	var used := _training.used_capacity(instance)
-	var planned := _training.plan_cost(instance, _pending_stats, _pending_mobility)
+	var planned := _training.plan_cost(instance, _pending_stats, 0)
 	var remaining := maxi(0, total - used - planned)
 	_potential_value.text = "%d / 100" % instance.potential
 	_capacity_value.text = "%d / %d" % [used + planned, total]
@@ -873,51 +876,56 @@ func _refresh_detail_values() -> void:
 			int(instance.training.get(stat_key, 0)),
 			int(_pending_stats.get(stat_key, 0)),
 			_training.max_points_per_stat(),
-			_training.can_apply_plan(instance, test_plan, _pending_mobility),
+			_training.can_apply_plan(instance, test_plan, 0),
 			meta[1] as Color
 		)
 
 	var current_mov := int(current_stats.get("mov", 0))
-	var preview_mov := int(preview_stats.get("mov", current_mov))
+	var mobility_level := _training.mobility_level(instance)
 	_mobility_value.text = "MOV %d" % current_mov
-	if preview_mov != current_mov:
-		_mobility_value.text += "  →  %d" % preview_mov
-		_mobility_value.add_theme_color_override("font_color", V2.GREEN)
-	else:
-		_mobility_value.add_theme_color_override("font_color", V2.TEXT)
-	var mobility_level := _training.mobility_level(instance) + _pending_mobility
+	_mobility_value.add_theme_color_override("font_color", V2.TEXT)
 	_mobility_level.text = "MOBILITY %d / 2" % mobility_level
-	_mobility_minus.disabled = _pending_mobility <= 0
-	_mobility_plus.disabled = not _training.can_apply_plan(instance, _pending_stats, _pending_mobility + 1)
+
 	if mobility_level < 2:
 		var next_level := mobility_level + 1
-		_mobility_requirement.text = "Next upgrade: Potential %d · %d Capacity" % [
-			_training.mobility_potential_for_level(next_level),
-			_training.mobility_cost_for_level(next_level),
-		]
-		_mobility_requirement.add_theme_color_override("font_color", V2.MUTED)
+		var required_potential := _training.mobility_potential_for_level(next_level)
+		var capacity_cost := _training.mobility_cost_for_level(next_level)
+		if _has_plan():
+			_mobility_requirement.text = "Apply or discard the pending ATTRIBUTE PLAN before training MOV."
+			_mobility_requirement.add_theme_color_override("font_color", V2.AMBER)
+			_mobility_plus.disabled = true
+		else:
+			_mobility_requirement.text = "NEXT: MOV +%d  ·  Potential %d required  ·  %d Capacity" % [
+				next_level,
+				required_potential,
+				capacity_cost,
+			]
+			_mobility_requirement.add_theme_color_override(
+				"font_color",
+				V2.GREEN if _training.can_train_mobility(instance) else V2.MUTED
+			)
+			_mobility_plus.disabled = not _training.can_train_mobility(instance)
 	else:
 		_mobility_requirement.text = "Maximum permanent mobility training reached."
 		_mobility_requirement.add_theme_color_override("font_color", V2.GREEN)
+		_mobility_plus.disabled = true
 
-	var validation := _training.validate_plan(instance, _pending_stats, _pending_mobility)
 	var has_plan := _has_plan()
-	_plan_header.configure("TRAINING PLAN", "%d CAPACITY" % planned if has_plan else "NO CHANGES", V2.GREEN, "training")
-	_plan_header.set_workspace_mode(true)
-	_plan_summary_label.text = _plan_summary()
-	_plan_summary_label.add_theme_color_override("font_color", V2.GREEN if has_plan and validation.is_empty() else V2.MUTED)
+	var validation := _training.validate_plan(instance, _pending_stats, 0) if has_plan else ""
+	_attribute_plan_summary.text = _plan_summary()
+	_attribute_plan_summary.add_theme_color_override("font_color", V2.GREEN if has_plan and validation.is_empty() else V2.MUTED)
 	if has_plan and not validation.is_empty():
-		_plan_validation_label.text = validation
-		_plan_validation_label.add_theme_color_override("font_color", V2.RED)
+		_attribute_plan_validation.text = validation
+		_attribute_plan_validation.add_theme_color_override("font_color", V2.RED)
 	elif has_plan:
-		_plan_validation_label.text = "Previewed values are the permanent values that will be saved."
-		_plan_validation_label.add_theme_color_override("font_color", V2.MUTED)
+		_attribute_plan_validation.text = "%d Capacity · permanent after Apply" % planned
+		_attribute_plan_validation.add_theme_color_override("font_color", V2.MUTED)
 	else:
-		_plan_validation_label.text = "Add attribute or mobility training to create a plan."
-		_plan_validation_label.add_theme_color_override("font_color", V2.MUTED)
+		_attribute_plan_validation.text = "Adjust attributes to build a plan."
+		_attribute_plan_validation.add_theme_color_override("font_color", V2.MUTED)
+
 	_discard_button.disabled = not has_plan
 	_apply_button.disabled = not has_plan or not validation.is_empty()
-	_sync_command_button_state(_mobility_minus)
 	_sync_command_button_state(_mobility_plus)
 	_sync_command_button_state(_discard_button)
 	_sync_command_button_state(_apply_button)
@@ -932,7 +940,7 @@ func _set_controls_enabled(enabled: bool) -> void:
 			continue
 		for button in row.get_focus_buttons():
 			button.disabled = not enabled
-	for button in [_mobility_minus, _mobility_plus, _discard_button, _apply_button]:
+	for button in [_mobility_plus, _discard_button, _apply_button]:
 		if button != null:
 			button.disabled = not enabled
 			_sync_command_button_state(button)
@@ -944,7 +952,7 @@ func _add_stat(stat_key: String) -> void:
 		return
 	var test_plan := _pending_stats.duplicate(true)
 	test_plan[stat_key] = int(test_plan.get(stat_key, 0)) + 1
-	var error := _training.validate_plan(instance, test_plan, _pending_mobility)
+	var error := _training.validate_plan(instance, test_plan, 0)
 	if not error.is_empty():
 		_set_status(error, V2.RED)
 		return
@@ -968,31 +976,59 @@ func _remove_stat(stat_key: String) -> void:
 	_refresh_detail_values()
 
 
-func _add_mobility() -> void:
+func _request_mobility_training() -> void:
 	var instance := OverworldState.get_instance_by_id(_selected_id)
 	if instance == null:
 		return
-	var test_steps := _pending_mobility + 1
-	var error := _training.validate_plan(instance, _pending_stats, test_steps)
+	if _has_plan():
+		_set_status("Apply or discard the pending attribute plan before training MOV.", V2.AMBER)
+		return
+	var error := _training.validate_plan(instance, {}, 1)
 	if not error.is_empty():
 		_set_status(error, V2.RED)
 		return
-	_pending_mobility = test_steps
-	_set_status("Mobility added to the training plan.", V2.GREEN)
-	_refresh_detail_values()
+	var current_level := _training.mobility_level(instance)
+	var next_level := current_level + 1
+	var cost := _training.mobility_cost_for_level(next_level)
+	_pending_confirmation_action = "mobility"
+	_pending_confirmation_target = ""
+	_confirmation.configure(
+		"TRAIN MOV +1?",
+		"MOV %d → MOV %d is permanent and costs %d Training Capacity." % [current_level, next_level, cost],
+		"TRAIN MOV",
+		"BACK",
+		V2.AMBER,
+		"TACTICAL MOBILITY"
+	)
+	_confirmation.open_dialog(_mobility_plus)
 
 
-func _remove_mobility() -> void:
-	if _pending_mobility <= 0:
+func _commit_mobility_training() -> void:
+	var instance := OverworldState.get_instance_by_id(_selected_id)
+	if instance == null:
 		return
-	_pending_mobility = maxi(0, _pending_mobility - 1)
-	_set_status("Mobility plan updated.", V2.CYAN)
+	var error := _training.validate_plan(instance, {}, 1)
+	if not error.is_empty():
+		_set_status(error, V2.RED)
+		return
+	_state_mutation_in_progress = true
+	var applied := OverworldState.apply_training_plan(_selected_id, {}, 1)
+	_state_mutation_in_progress = false
+	if not applied:
+		_set_status("Mobility training could not be applied.", V2.RED)
+		return
+	_set_status("MOV training applied and saved.", V2.GREEN)
+	_refresh_collection()
 	_refresh_detail_values()
+	var tween := create_tween()
+	tween.tween_property(_mobility_card, "modulate", Color(1.05, 1.05, 1.05, 1.0), 0.08)
+	tween.tween_property(_mobility_card, "modulate", Color.WHITE, 0.20)
+	call_deferred("_focus_first_editor_control")
 
 
 func _discard_plan() -> void:
 	_clear_plan()
-	_set_status("Pending training discarded.", V2.CYAN)
+	_set_status("Pending attribute training discarded.", V2.CYAN)
 	_refresh_detail_values()
 	call_deferred("_focus_first_editor_control")
 
@@ -1001,7 +1037,7 @@ func _request_apply_plan() -> void:
 	var instance := OverworldState.get_instance_by_id(_selected_id)
 	if instance == null or not _has_plan():
 		return
-	var error := _training.validate_plan(instance, _pending_stats, _pending_mobility)
+	var error := _training.validate_plan(instance, _pending_stats, 0)
 	if not error.is_empty():
 		_set_status(error, V2.RED)
 		return
@@ -1009,7 +1045,7 @@ func _request_apply_plan() -> void:
 	_pending_confirmation_target = ""
 	_confirmation.configure(
 		"APPLY PERMANENT TRAINING?",
-		"%s\nCapacity used by this plan: %d." % [_plan_summary(), _training.plan_cost(instance, _pending_stats, _pending_mobility)],
+		"%s\nCapacity used by this attribute plan: %d." % [_plan_summary(), _training.plan_cost(instance, _pending_stats, 0)],
 		"APPLY TRAINING",
 		"REVIEW",
 		V2.GREEN,
@@ -1022,12 +1058,12 @@ func _commit_plan() -> void:
 	var instance := OverworldState.get_instance_by_id(_selected_id)
 	if instance == null:
 		return
-	var error := _training.validate_plan(instance, _pending_stats, _pending_mobility)
+	var error := _training.validate_plan(instance, _pending_stats, 0)
 	if not error.is_empty():
 		_set_status(error, V2.RED)
 		return
 	_state_mutation_in_progress = true
-	var applied := OverworldState.apply_training_plan(_selected_id, _pending_stats, _pending_mobility)
+	var applied := OverworldState.apply_training_plan(_selected_id, _pending_stats, 0)
 	_state_mutation_in_progress = false
 	if not applied:
 		_set_status("Training could not be applied.", V2.RED)
@@ -1067,6 +1103,8 @@ func _on_confirmation_confirmed() -> void:
 	match action:
 		"apply":
 			_commit_plan()
+		"mobility":
+			_commit_mobility_training()
 		"switch":
 			_clear_plan()
 			_selected_id = target
@@ -1099,19 +1137,14 @@ func _plan_summary() -> String:
 			continue
 		var meta: Array = STAT_META[stat_key]
 		parts.append("%s +%d" % [String(meta[0]), points])
-	if _pending_mobility > 0:
-		parts.append("MOV +%d" % _pending_mobility)
 	return " · ".join(parts)
 
 
 func _clear_plan() -> void:
 	_pending_stats.clear()
-	_pending_mobility = 0
 
 
 func _has_plan() -> bool:
-	if _pending_mobility > 0:
-		return true
 	for value in _pending_stats.values():
 		if int(value) > 0:
 			return true
@@ -1119,7 +1152,7 @@ func _has_plan() -> bool:
 
 
 func _set_detail_view(view_id: int, focus_editor: bool = true) -> void:
-	if view_id != DetailView.ATTRIBUTES and view_id != DetailView.PLAN:
+	if view_id != DetailView.ATTRIBUTES and view_id != DetailView.MOBILITY:
 		return
 	_detail_view = view_id
 	_apply_detail_view()
@@ -1129,14 +1162,14 @@ func _set_detail_view(view_id: int, focus_editor: bool = true) -> void:
 
 
 func _toggle_detail_view() -> void:
-	_set_detail_view(DetailView.PLAN if _detail_view == DetailView.ATTRIBUTES else DetailView.ATTRIBUTES)
+	_set_detail_view(DetailView.MOBILITY if _detail_view == DetailView.ATTRIBUTES else DetailView.ATTRIBUTES)
 
 
 func _apply_detail_view() -> void:
-	if _attributes_view == null or _plan_view == null:
+	if _attributes_view == null or _mobility_view == null:
 		return
 	_attributes_view.visible = _detail_view == DetailView.ATTRIBUTES
-	_plan_view.visible = _detail_view == DetailView.PLAN
+	_mobility_view.visible = _detail_view == DetailView.MOBILITY
 	for raw_id in _detail_tab_buttons:
 		var button := _detail_tab_buttons[raw_id] as Button
 		if button == null:
@@ -1206,9 +1239,9 @@ func _refresh_editor_focus_rows() -> void:
 				if stat_row != null:
 					focus_row.append_array(stat_row.get_focus_buttons())
 			_editor_focus_rows.append(focus_row)
-	else:
-		_editor_focus_rows.append([_mobility_minus, _mobility_plus])
 		_editor_focus_rows.append([_discard_button, _apply_button])
+	else:
+		_editor_focus_rows.append([_mobility_plus])
 
 
 func _focus_first_editor_control() -> void:
@@ -1386,7 +1419,6 @@ func _layout() -> void:
 	_identity_copy.visible = not compact
 	_attributes_header.visible = not compact
 	_mobility_header.visible = not compact
-	_plan_header.visible = not compact
 	_stat_grid.add_theme_constant_override("v_separation", 5)
 	_detail_tabs.custom_minimum_size.y = V2.TOUCH_TARGET
 	for raw_button in _detail_tab_buttons.values():
@@ -1494,6 +1526,36 @@ func _command_button(texture: Texture2D, title_text: String, subtitle_text: Stri
 	var subtitle := _single_line_label(subtitle_text, 11, V2.MUTED)
 	subtitle.name = "Subtitle"
 	copy.add_child(subtitle)
+	return button
+
+
+func _compact_command_button(texture: Texture2D, text: String, accent: Color) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.icon = texture
+	button.expand_icon = false
+	button.icon_max_width = 24
+	button.custom_minimum_size.y = V2.TOUCH_TARGET
+	button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.set_meta("digi_command_button", true)
+	button.set_meta("compact_command_button", true)
+	button.add_theme_font_size_override("font_size", 11)
+	button.add_theme_color_override("font_color", V2.WHITE)
+	button.add_theme_color_override("font_hover_color", V2.WHITE)
+	button.add_theme_color_override("font_focus_color", V2.WHITE)
+	button.add_theme_color_override("font_pressed_color", V2.WHITE)
+	button.add_theme_color_override("font_disabled_color", V2.SUBTLE)
+	button.add_theme_color_override("icon_normal_color", accent)
+	button.add_theme_color_override("icon_hover_color", V2.WHITE)
+	button.add_theme_color_override("icon_focus_color", V2.WHITE)
+	button.add_theme_color_override("icon_pressed_color", V2.WHITE)
+	button.add_theme_color_override("icon_disabled_color", V2.SUBTLE)
+	V2.apply_heading(button)
+	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, CommandButtonStyle.style(accent, state))
 	return button
 
 
