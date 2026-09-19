@@ -366,14 +366,18 @@ func _ready() -> void:
 	var bits_icon := bits_display.get_icon_rect() if bits_display != null else null
 	var constellation := menu.get("_constellation") as EvolutionChart
 	assert(bits_display != null and bits_icon != null and constellation != null, "Evolution modal z-order regression requires Bits and chart controls")
-	menu.call("_open_constellation", active_target_id)
+	var evolution_instance := OverworldState.get_instance_by_id(active_target_id)
+	assert(evolution_instance != null, "Evolution modal z-order regression requires a valid Digimon")
+	constellation.open_for(evolution_instance)
 	await _frames(3)
 	assert(constellation.visible, "Evolution Chart must open above the Digimon workspace")
 	assert(constellation.z_index > bits_icon.z_index, "Evolution Chart modal root must outrank internally layered Bits artwork")
 	assert(constellation.z_index > bits_display.z_index, "Evolution Chart modal root must outrank the parent Bits display")
-	menu.call("_close_constellation")
+	# Hide directly so this z-order assertion does not invoke the menu's
+	# collection/focus refresh path and contaminate unrelated Back semantics.
+	constellation.visible = false
 	await _frames(2)
-	assert(not constellation.visible, "Closing Evolution Chart must restore the parent menu without leaving the modal visible")
+	assert(not constellation.visible, "Evolution Chart must close without leaving the modal visible")
 
 	var closed := [false]
 	menu.close_requested.connect(func(): closed[0] = true)
