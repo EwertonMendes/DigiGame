@@ -29,6 +29,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Validate app branding configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/validate_app_icon.py
+
       - name: Validate vendored runtime assets
         shell: bash
         run: |

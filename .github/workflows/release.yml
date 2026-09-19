@@ -24,6 +24,11 @@ on:
     paths:
       - .github/workflows/release.yml
       - export_presets.cfg
+      - project.godot
+      - assets/ui/icons/favicon.png
+      - assets/ui/branding/boot_splash.png
+      - assets/ui/icons/android_adaptive_background.svg
+      - tools/validate_app_icon.py
       - tools/prepare_release_metadata.py
       - docs/releases.md
 
@@ -113,6 +118,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Validate app branding configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/validate_app_icon.py
 
       - name: Validate vendored runtime assets
         shell: bash
