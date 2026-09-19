@@ -18,7 +18,10 @@ func _ready() -> void:
 		if reserve != null:
 			_check(not OverworldState.add_collection_instance(reserve).is_empty(), "Reserve fixture must enter the collection")
 			_check(OverworldState.add_to_reserve_party(reserve.id), "Reserve fixture must enter the three-slot bench")
+			if species_name == "veemon":
+				reserve.current_hp = 0
 	_check(OverworldState.get_squad_instances().size() == 6, "Battle result regression must exercise a complete six-member Squad")
+	_check(OverworldState.get_squad_instances().filter(func(instance: DigimonInstance) -> bool: return instance.is_fainted()).size() == 1, "Result fixture must include exactly one previously KO Squad member")
 
 	var viewport := SubViewport.new()
 	viewport.name = "BattleResultRegressionViewport"
@@ -129,11 +132,36 @@ func _verify_outcome(
 	_check(title != null and title.text == expected_title, "%s result must communicate its outcome clearly" % expected_title)
 	_check_frame_inside_viewport(screen, viewport, outcome)
 	_check_frame_centered(screen, viewport, outcome)
+	if outcome == "victory":
+		screen.call("_apply_final_state")
+		_verify_ko_presentation(screen)
 
 	if simulate_first_open_growth and reward_panel != null:
 		reward_panel.custom_minimum_size = original_minimum
 	screen.hide_result()
 	await _frames(1)
+
+
+func _verify_ko_presentation(screen: BattleResultScreen) -> void:
+	var cards := screen.get("_cards") as Array
+	var ko_cards := 0
+	var healthy_alpha := 0.0
+	var ko_alpha := 1.0
+	for raw_card in cards:
+		var card := raw_card as Dictionary
+		var reward := card.get("reward", {}) as Dictionary
+		var panel := card.get("panel") as PanelContainer
+		var gain := card.get("gain") as Label
+		if bool(reward.get("knocked_out", false)):
+			ko_cards += 1
+			ko_alpha = panel.modulate.a if panel != null else 1.0
+			_check(gain != null and gain.text == "KO · NO XP", "KO result card must explicitly communicate zero XP")
+			_check(float(card.get("target_alpha", 1.0)) <= 0.55, "KO result card must own a deliberately dimmed final alpha")
+		else:
+			if panel != null:
+				healthy_alpha = maxf(healthy_alpha, panel.modulate.a)
+	_check(ko_cards == 1, "Victory result must retain the KO state for exactly one fixture Digimon")
+	_check(ko_alpha < healthy_alpha, "KO result card must be visually dimmer than healthy Squad members")
 
 
 func _check_frame_inside_viewport(screen: BattleResultScreen, viewport: SubViewport, context: String) -> void:
