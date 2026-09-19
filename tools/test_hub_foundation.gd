@@ -103,7 +103,7 @@ func _assert_training_center_entry(hub: Node, player: Node2D, trainer: Node2D, t
 	var training_pager := training_screen.get("_roster_pager") as DigiPager
 	assert(training_pager != null, "Training roster must expose the shared workspace pager")
 	assert(training_screen.find_children("*", "ScrollContainer", true, false).is_empty(), "Training workspace must be bounded and scroll-free")
-	_assert_safe_service_frame(training_screen.get("_frame") as Control, "Training Center")
+	_assert_fullscreen_service_frame(training_screen.get("_frame") as Control, "Training Center")
 	hub.call("_close_training")
 	await get_tree().process_frame
 	assert(not training_screen.visible, "Closing Training Center must return to the Hub")
