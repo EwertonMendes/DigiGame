@@ -2,36 +2,31 @@ extends RefCounted
 class_name DigiLabWorkspaceChrome
 
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
+const Shared = preload("res://src/ui/components/DigiWorkspaceChrome.gd")
 
-const HEADER_HEIGHT := 86.0
-const COMPACT_HEADER_HEIGHT := 72.0
-const FOOTER_HEIGHT := 54.0
-const EDGE := 24.0
-const COMPACT_EDGE := 10.0
-const GAP := 12.0
-const TOP_GAP := 16.0
-const COMPACT_TOP_GAP := 12.0
-const BOTTOM_GAP := 12.0
-const COMPACT_WIDTH := 980.0
-const COMPACT_HEIGHT := 600.0
-const LOW_HEIGHT := 560.0
-const ROSTER_RATIO := 0.255
-const ROSTER_MIN := 290.0
-const ROSTER_MAX := 430.0
+const HEADER_HEIGHT := Shared.HEADER_HEIGHT
+const COMPACT_HEADER_HEIGHT := Shared.COMPACT_HEADER_HEIGHT
+const FOOTER_HEIGHT := Shared.FOOTER_HEIGHT
+const EDGE := Shared.EDGE
+const COMPACT_EDGE := Shared.COMPACT_EDGE
+const GAP := Shared.GAP
+const TOP_GAP := Shared.TOP_GAP
+const COMPACT_TOP_GAP := Shared.COMPACT_TOP_GAP
+const BOTTOM_GAP := Shared.BOTTOM_GAP
+const COMPACT_WIDTH := Shared.COMPACT_WIDTH
+const COMPACT_HEIGHT := Shared.COMPACT_HEIGHT
+const LOW_HEIGHT := Shared.LOW_HEIGHT
+const ROSTER_RATIO := Shared.ROSTER_RATIO
+const ROSTER_MIN := Shared.ROSTER_MIN
+const ROSTER_MAX := Shared.ROSTER_MAX
 
 
 static func is_compact(viewport: Viewport) -> bool:
-	var physical := V2.physical_window_size(viewport)
-	return physical.x < COMPACT_WIDTH or physical.y < COMPACT_HEIGHT
+	return Shared.is_compact(viewport)
 
 
 static func page_capacity(viewport: Viewport, desktop: int = 3, compact: int = 3, low_height: int = 2) -> int:
-	var physical := V2.physical_window_size(viewport)
-	if physical.y < LOW_HEIGHT:
-		return maxi(1, low_height)
-	if is_compact(viewport):
-		return maxi(1, compact)
-	return maxi(1, desktop)
+	return Shared.page_capacity(viewport, desktop, compact, low_height)
 
 
 static func configure_header(header: DigiModalHeader) -> void:
@@ -60,44 +55,24 @@ static func configure_hints(
 
 
 static func install_background(host: Control, background: Control, frame: PanelContainer) -> void:
-	if host == null or background == null or frame == null:
-		return
-	if background.get_parent() != host:
-		return
-
-	# Base DigiLab screens paint an opaque full-screen frame. Workspace screens
-	# render their dedicated backdrop between the legacy input-blocking backdrop
-	# and the frame, then make only the frame surface transparent. Child panels
-	# keep their own opacity, so readability is preserved without hiding the art.
-	var frame_index := frame.get_index()
-	host.move_child(background, frame_index)
-	frame.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0)
-	)
+	Shared.install_background(host, background, frame)
 
 
 static func style_workspace_panel(panel: PanelContainer, accent: Color = V2.CYAN) -> void:
-	if panel == null:
-		return
-	panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(accent))
+	Shared.style_workspace_panel(panel, accent)
 
 
 static func disable_scroll(scroll: ScrollContainer) -> void:
-	if scroll == null:
-		return
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.follow_focus = false
+	Shared.disable_scroll(scroll)
 
 
 static func edge_for(compact: bool) -> float:
-	return COMPACT_EDGE if compact else EDGE
+	return Shared.edge_for(compact)
 
 
 static func header_height(compact: bool) -> float:
-	return COMPACT_HEADER_HEIGHT if compact else HEADER_HEIGHT
+	return Shared.header_height(compact)
 
 
 static func top_gap(compact: bool) -> float:
-	return COMPACT_TOP_GAP if compact else TOP_GAP
+	return Shared.top_gap(compact)

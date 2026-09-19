@@ -13,30 +13,14 @@ const ModalHeaderScript = preload("res://src/ui/components/DigiModalHeader.gd")
 const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
 const ProceduralIconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
-const CommandButtonStyle = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
+const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.gd")
+const WorkspaceChrome = preload("res://src/ui/components/DigiWorkspaceChrome.gd")
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 const ConfirmationScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
-const CONFIRM_ICON := preload("res://assets/ui/icons/confirm.svg")
-const UNDO_ICON := preload("res://assets/ui/icons/undo.svg")
-const MOVE_ICON := preload("res://assets/ui/icons/move.svg")
 const TRAINING_BACKGROUND := preload("res://assets/ui/backgrounds/training.webp")
 
 const ROSTER_PAGE_SIZE := 3
-const WORKSPACE_HEADER_HEIGHT := 86.0
-const COMPACT_HEADER_HEIGHT := 72.0
-const WORKSPACE_FOOTER_HEIGHT := 54.0
-const WORKSPACE_EDGE := 24.0
-const COMPACT_EDGE := 10.0
-const WORKSPACE_GAP := 12.0
-const WORKSPACE_TOP_GAP := 16.0
-const COMPACT_TOP_GAP := 12.0
-const WORKSPACE_BOTTOM_GAP := 12.0
-const WORKSPACE_ROSTER_RATIO := 0.255
-const WORKSPACE_ROSTER_MIN := 290.0
-const WORKSPACE_ROSTER_MAX := 430.0
-const WORKSPACE_COMPACT_WIDTH := 980.0
-const WORKSPACE_COMPACT_HEIGHT := 600.0
 
 enum InteractionMode {
 	ROSTER,
@@ -105,6 +89,7 @@ var _presentation_host: Control
 var _attributes_view: VBoxContainer
 var _attribute_toolbar_icon: DigiProceduralIcon
 var _attribute_toolbar_title: Label
+var _attribute_rate: Label
 var _stat_grid: GridContainer
 var _stat_rows: Dictionary = {}
 var _attribute_plan_bar: PanelContainer
@@ -112,7 +97,7 @@ var _attribute_plan_summary: Label
 var _attribute_plan_validation: Label
 var _discard_button: Button
 var _apply_button: Button
-var _mobility_view: CenterContainer
+var _mobility_view: VBoxContainer
 var _mobility_card: PanelContainer
 var _mobility_title_icon: DigiProceduralIcon
 var _mobility_title_label: Label
@@ -255,37 +240,35 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build_ui() -> void:
-	var backdrop := ColorRect.new()
-	backdrop.color = Color(V2.BACKDROP.r, V2.BACKDROP.g, V2.BACKDROP.b, 1.0)
-	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(backdrop)
-
-	_frame = PanelContainer.new()
-	_frame.name = "TrainingWorkspaceV2"
-	_frame.clip_contents = true
-	_frame.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0)
-	)
-	add_child(_frame)
-
 	var background := TextureRect.new()
 	background.name = "TrainingBackgroundImage"
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	background.texture = TRAINING_BACKGROUND
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	background.modulate = Color(0.94, 0.98, 1.0, 0.96)
+	background.modulate = Color(0.94, 0.98, 1.0, 0.94)
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_frame.add_child(background)
+	add_child(background)
 
 	var shade := ColorRect.new()
 	shade.name = "TrainingBackgroundShade"
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.004, 0.016, 0.028, 0.48)
+	shade.color = Color(0.004, 0.018, 0.030, 0.42)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_frame.add_child(shade)
+	add_child(shade)
+
+	var cyan_wash := ColorRect.new()
+	cyan_wash.name = "TrainingCyanWash"
+	cyan_wash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cyan_wash.color = Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.018)
+	cyan_wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(cyan_wash)
+
+	_frame = PanelContainer.new()
+	_frame.name = "TrainingWorkspaceV2"
+	_frame.clip_contents = false
+	_frame.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
+	add_child(_frame)
 
 	_menu_root = Control.new()
 	_menu_root.name = "TrainingWorkspaceContent"
@@ -375,7 +358,7 @@ func _build_detail_panel(parent: Control) -> void:
 	_detail_panel = PanelContainer.new()
 	_detail_panel.name = "TrainingDetails"
 	_detail_panel.clip_contents = true
-	_detail_panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.54), Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.72), 9))
+	_detail_panel.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.CYAN))
 	parent.add_child(_detail_panel)
 
 	var margin := _margin(10, 10, 10, 10)
@@ -390,6 +373,7 @@ func _build_detail_panel(parent: Control) -> void:
 	margin.add_child(_detail_root)
 
 	_build_status()
+	_status_panel.visible = false
 	_build_identity()
 	_build_budget()
 	_build_detail_tabs()
@@ -420,7 +404,7 @@ func _build_status() -> void:
 func _build_identity() -> void:
 	_identity_card = PanelContainer.new()
 	_identity_card.name = "TrainingIdentity"
-	_identity_card.custom_minimum_size.y = 88.0
+	_identity_card.custom_minimum_size.y = 82.0
 	_identity_card.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
 	_detail_root.add_child(_identity_card)
 
@@ -456,7 +440,7 @@ func _build_identity() -> void:
 func _build_budget() -> void:
 	_budget_card = PanelContainer.new()
 	_budget_card.name = "TrainingBudget"
-	_budget_card.custom_minimum_size.y = 78.0
+	_budget_card.custom_minimum_size.y = 68.0
 	_budget_card.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.PURPLE))
 	_detail_root.add_child(_budget_card)
 
@@ -572,47 +556,61 @@ func _build_presentation() -> void:
 		_stat_grid.add_child(row)
 		_stat_rows[stat_key] = row
 
-	_mobility_view = CenterContainer.new()
+	_mobility_view = VBoxContainer.new()
 	_mobility_view.name = "MobilityView"
 	_mobility_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_mobility_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_mobility_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mobility_view.add_theme_constant_override("separation", 0)
 	_presentation_host.add_child(_mobility_view)
 	_mobility_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	var top_spacer := Control.new()
+	top_spacer.name = "MobilityTopSpacer"
+	top_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	top_spacer.size_flags_stretch_ratio = 1.0
+	_mobility_view.add_child(top_spacer)
+
 	_build_mobility_panel()
+
+	var bottom_spacer := Control.new()
+	bottom_spacer.name = "MobilityBottomSpacer"
+	bottom_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	bottom_spacer.size_flags_stretch_ratio = 1.0
+	_mobility_view.add_child(bottom_spacer)
 
 
 func _build_attribute_toolbar() -> void:
 	_attribute_plan_bar = PanelContainer.new()
 	_attribute_plan_bar.name = "AttributeTrainingToolbar"
-	_attribute_plan_bar.custom_minimum_size.y = 56.0
+	_attribute_plan_bar.custom_minimum_size.y = 58.0
 	_attribute_plan_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_attribute_plan_bar.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_attribute_plan_bar.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.CYAN))
+	_attribute_plan_bar.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.CYAN))
 	_attributes_view.add_child(_attribute_plan_bar)
 
-	var margin := _margin(10, 2, 10, 2)
+	var margin := _margin(10, 3, 10, 3)
 	_attribute_plan_bar.add_child(margin)
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 9)
+	row.add_theme_constant_override("separation", 10)
 	margin.add_child(row)
 
-	var title_slot := HBoxContainer.new()
-	title_slot.custom_minimum_size.x = 220.0
-	title_slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	title_slot.alignment = BoxContainer.ALIGNMENT_BEGIN
-	title_slot.add_theme_constant_override("separation", 8)
-	title_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(title_slot)
+	var title_group := HBoxContainer.new()
+	title_group.name = "AttributeTitleGroup"
+	title_group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_group.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	title_group.alignment = BoxContainer.ALIGNMENT_BEGIN
+	title_group.add_theme_constant_override("separation", 8)
+	title_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(title_group)
 
 	var icon_center := CenterContainer.new()
+	icon_center.name = "AttributeTrainingIconSlot"
 	icon_center.custom_minimum_size = Vector2(26.0, 0.0)
 	icon_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	icon_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title_slot.add_child(icon_center)
+	title_group.add_child(icon_center)
 	_attribute_toolbar_icon = ProceduralIconScript.new() as DigiProceduralIcon
 	_attribute_toolbar_icon.name = "AttributeTrainingIcon"
 	_attribute_toolbar_icon.custom_minimum_size = Vector2(22.0, 22.0)
@@ -622,12 +620,14 @@ func _build_attribute_toolbar() -> void:
 	_attribute_toolbar_title = _single_line_label("ATTRIBUTE TRAINING", 13, V2.TEXT, true)
 	_attribute_toolbar_title.name = "AttributeTrainingTitle"
 	_attribute_toolbar_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	title_slot.add_child(_attribute_toolbar_title)
-	var rate := _single_line_label("1 point = +%.1f%%" % _training.stat_bonus_percent(1), 8, V2.MUTED)
-	rate.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	title_slot.add_child(rate)
+	title_group.add_child(_attribute_toolbar_title)
+	_attribute_rate = _single_line_label("1 point = +%.1f%%" % _training.stat_bonus_percent(1), 8, V2.MUTED)
+	_attribute_rate.name = "AttributeTrainingRate"
+	_attribute_rate.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title_group.add_child(_attribute_rate)
 
 	var summary := VBoxContainer.new()
+	summary.name = "AttributePlanSummary"
 	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	summary.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -641,13 +641,15 @@ func _build_attribute_toolbar() -> void:
 	_attribute_plan_validation.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	summary.add_child(_attribute_plan_validation)
 
-	_discard_button = _compact_command_button(UNDO_ICON, "DISCARD", V2.MUTED)
-	_discard_button.custom_minimum_size.x = 126.0
+	_discard_button = _training_command_button("DISCARD", "Clear pending attribute changes", "", "move", V2.MUTED, true)
+	_discard_button.name = "DiscardAttributePlan"
+	_discard_button.custom_minimum_size.x = 112.0
 	_discard_button.pressed.connect(_discard_plan)
 	row.add_child(_discard_button)
 
-	_apply_button = _compact_command_button(CONFIRM_ICON, "APPLY", V2.GREEN)
-	_apply_button.custom_minimum_size.x = 126.0
+	_apply_button = _training_command_button("APPLY", "Save permanent attribute growth", "", "training", V2.GREEN, true)
+	_apply_button.name = "ApplyAttributePlan"
+	_apply_button.custom_minimum_size.x = 112.0
 	_apply_button.pressed.connect(_request_apply_plan)
 	row.add_child(_apply_button)
 
@@ -655,13 +657,13 @@ func _build_attribute_toolbar() -> void:
 func _build_mobility_panel() -> void:
 	_mobility_card = PanelContainer.new()
 	_mobility_card.name = "MobilityTraining"
-	_mobility_card.custom_minimum_size.y = 244.0
+	_mobility_card.custom_minimum_size.y = 156.0
 	_mobility_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_mobility_card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_mobility_card.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.AMBER))
+	_mobility_card.add_theme_stylebox_override("panel", V2.workspace_panel_style(V2.AMBER))
 	_mobility_view.add_child(_mobility_card)
 
-	var margin := _margin(20, 12, 20, 12)
+	var margin := _margin(18, 10, 18, 10)
 	_mobility_card.add_child(margin)
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -670,7 +672,7 @@ func _build_mobility_panel() -> void:
 	margin.add_child(stack)
 
 	var title_row := HBoxContainer.new()
-	title_row.custom_minimum_size.y = 34.0
+	title_row.custom_minimum_size.y = 32.0
 	title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_theme_constant_override("separation", 9)
 	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -696,37 +698,55 @@ func _build_mobility_panel() -> void:
 	permanent.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	title_row.add_child(permanent)
 
-	var metric_row := HBoxContainer.new()
-	metric_row.custom_minimum_size.y = 40.0
-	metric_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	metric_row.add_theme_constant_override("separation", 12)
-	stack.add_child(metric_row)
-	_mobility_value = _single_line_label("MOV 0", 21, V2.WHITE, true)
-	_mobility_value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	metric_row.add_child(_mobility_value)
-	_mobility_level = _single_line_label("MOBILITY 0 / 2", 11, V2.AMBER, true)
-	_mobility_level.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_mobility_level.custom_minimum_size.x = 132.0
-	metric_row.add_child(_mobility_level)
+	var body := HBoxContainer.new()
+	body.name = "MobilityBody"
+	body.custom_minimum_size.y = 82.0
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	body.add_theme_constant_override("separation", 18)
+	stack.add_child(body)
 
+	var metrics := VBoxContainer.new()
+	metrics.custom_minimum_size.x = 170.0
+	metrics.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	metrics.alignment = BoxContainer.ALIGNMENT_CENTER
+	metrics.add_theme_constant_override("separation", 2)
+	body.add_child(metrics)
+	_mobility_value = _single_line_label("MOV 0", 22, V2.WHITE, true)
+	metrics.add_child(_mobility_value)
+	_mobility_level = _single_line_label("MOBILITY 0 / 2", 10, V2.AMBER, true)
+	metrics.add_child(_mobility_level)
+
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.add_theme_constant_override("separation", 4)
+	body.add_child(copy)
 	_mobility_explanation = _single_line_label(
 		"MOV is independent from attribute training and applies immediately after confirmation.",
 		9,
 		V2.MUTED
 	)
-	_mobility_explanation.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_mobility_explanation.custom_minimum_size.y = 24.0
-	stack.add_child(_mobility_explanation)
-
+	_mobility_explanation.name = "MobilityExplanation"
+	copy.add_child(_mobility_explanation)
 	_mobility_requirement = _single_line_label("", 10, V2.MUTED, true)
-	_mobility_requirement.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_mobility_requirement.custom_minimum_size.y = 30.0
-	stack.add_child(_mobility_requirement)
+	_mobility_requirement.name = "MobilityRequirement"
+	copy.add_child(_mobility_requirement)
 
-	_mobility_plus = _command_button(MOVE_ICON, "TRAIN MOV +1", "Apply the next permanent mobility level", V2.AMBER)
-	_mobility_plus.custom_minimum_size.y = 64.0
+	_mobility_plus = _training_command_button(
+		"TRAIN MOV +1",
+		"Apply the next permanent mobility level",
+		"",
+		"move",
+		V2.AMBER,
+		false
+	)
+	_mobility_plus.name = "TrainMobility"
+	_mobility_plus.custom_minimum_size.x = 250.0
+	_mobility_plus.custom_minimum_size.y = 72.0
 	_mobility_plus.pressed.connect(_request_mobility_training)
-	stack.add_child(_mobility_plus)
+	body.add_child(_mobility_plus)
 
 
 func _refresh_collection() -> void:
@@ -985,10 +1005,6 @@ func _refresh_detail_values() -> void:
 
 	_discard_button.disabled = not has_plan
 	_apply_button.disabled = not has_plan or not validation.is_empty()
-	_sync_command_button_state(_mobility_plus)
-	_sync_command_button_state(_discard_button)
-	_sync_command_button_state(_apply_button)
-
 	_refresh_editor_focus_rows()
 
 
@@ -1002,7 +1018,6 @@ func _set_controls_enabled(enabled: bool) -> void:
 	for button in [_mobility_plus, _discard_button, _apply_button]:
 		if button != null:
 			button.disabled = not enabled
-			_sync_command_button_state(button)
 
 
 func _add_stat(stat_key: String) -> void:
@@ -1391,15 +1406,16 @@ func _on_collection_changed() -> void:
 
 
 func _set_status(text: String, accent: Color) -> void:
-	if _status == null or _status_panel == null:
-		return
-	_status.text = text
-	_status.add_theme_color_override("font_color", accent)
-	_status_icon.configure("info", accent, 1.45)
-	_status_panel.add_theme_stylebox_override(
-		"panel",
-		V2.surface_style(Color(accent.r, accent.g, accent.b, 0.07), Color(accent.r, accent.g, accent.b, 0.34), 7)
-	)
+	if _status != null and _status_panel != null:
+		_status.text = text
+		_status.add_theme_color_override("font_color", accent)
+		_status_icon.configure("info", accent, 1.45)
+		_status_panel.add_theme_stylebox_override(
+			"panel",
+			V2.surface_style(Color(accent.r, accent.g, accent.b, 0.07), Color(accent.r, accent.g, accent.b, 0.34), 7)
+		)
+	if _hint_bar != null and visible:
+		_hint_bar.set_description(text)
 
 
 func _update_footer_hints() -> void:
@@ -1420,11 +1436,12 @@ func _update_footer_hints() -> void:
 func _layout() -> void:
 	if not visible or _frame == null or _menu_root == null:
 		return
-	var physical := V2.physical_window_size(get_viewport())
-	var scale_factor := V2.ui_scale(get_viewport())
+	var metrics := WorkspaceChrome.metrics(get_viewport())
+	var physical: Vector2 = metrics["physical"]
+	var scale_factor := float(metrics["scale"])
+	var compact := bool(metrics["compact"])
 	var width := maxf(640.0, physical.x)
 	var height := maxf(420.0, physical.y)
-	var compact := width < WORKSPACE_COMPACT_WIDTH or height < WORKSPACE_COMPACT_HEIGHT
 	var density_changed := compact != _compact_layout
 	_compact_layout = compact
 
@@ -1434,17 +1451,15 @@ func _layout() -> void:
 	_menu_root.position = Vector2.ZERO
 	_menu_root.size = Vector2(width, height)
 
-	var header_h := COMPACT_HEADER_HEIGHT if compact else WORKSPACE_HEADER_HEIGHT
-	var edge := COMPACT_EDGE if compact else WORKSPACE_EDGE
-	var top_gap := COMPACT_TOP_GAP if compact else WORKSPACE_TOP_GAP
+	var header_h := float(metrics["header_h"])
+	var edge := float(metrics["edge"])
+	var body_top := float(metrics["body_top"])
+	var body_bottom := minf(height - WorkspaceChrome.FOOTER_HEIGHT - WorkspaceChrome.BOTTOM_GAP, float(metrics["body_bottom"]))
+	var body_h := maxf(220.0, body_bottom - body_top)
 	_header.position = Vector2.ZERO
 	_header.size = Vector2(width, header_h)
-	_hint_bar.position = Vector2(0.0, height - WORKSPACE_FOOTER_HEIGHT)
-	_hint_bar.size = Vector2(width, WORKSPACE_FOOTER_HEIGHT)
-
-	var body_top := header_h + top_gap
-	var body_bottom := height - WORKSPACE_FOOTER_HEIGHT - WORKSPACE_BOTTOM_GAP
-	var body_h := maxf(220.0, body_bottom - body_top)
+	_hint_bar.position = Vector2(0.0, height - WorkspaceChrome.FOOTER_HEIGHT)
+	_hint_bar.size = Vector2(width, WorkspaceChrome.FOOTER_HEIGHT)
 
 	if compact:
 		var editing := _interaction_mode == InteractionMode.EDITING
@@ -1464,21 +1479,23 @@ func _layout() -> void:
 		_collection_panel.visible = true
 		_detail_panel.visible = true
 		_compact_back_button.visible = false
-		var usable := width - edge * 2.0 - WORKSPACE_GAP
-		var roster_w := clampf(usable * WORKSPACE_ROSTER_RATIO, WORKSPACE_ROSTER_MIN, WORKSPACE_ROSTER_MAX)
+		var usable := width - edge * 2.0 - WorkspaceChrome.GAP
+		var roster_w := clampf(usable * WorkspaceChrome.ROSTER_RATIO, WorkspaceChrome.ROSTER_MIN, WorkspaceChrome.ROSTER_MAX)
 		_collection_panel.position = Vector2(edge, body_top)
 		_collection_panel.size = Vector2(roster_w, body_h)
-		_detail_panel.position = Vector2(edge + roster_w + WORKSPACE_GAP, body_top)
-		_detail_panel.size = Vector2(maxf(360.0, width - edge * 2.0 - roster_w - WORKSPACE_GAP), body_h)
+		_detail_panel.position = Vector2(edge + roster_w + WorkspaceChrome.GAP, body_top)
+		_detail_panel.size = Vector2(maxf(360.0, width - edge * 2.0 - roster_w - WorkspaceChrome.GAP), body_h)
 
-	_status_panel.visible = not compact
-	_identity_card.custom_minimum_size.y = 72.0 if compact else 88.0
+	_status_panel.visible = false
+	_identity_card.custom_minimum_size.y = 72.0 if compact else 82.0
 	_budget_card.visible = not compact
-	_budget_card.custom_minimum_size.y = 64.0 if compact else 78.0
+	_budget_card.custom_minimum_size.y = 60.0 if compact else 68.0
 	_identity_copy.visible = not compact
+	_attribute_rate.visible = not compact
 	_attribute_plan_validation.visible = not compact
 	_mobility_explanation.visible = not compact
-	_mobility_card.custom_minimum_size.y = 216.0 if compact else 244.0
+	_mobility_card.custom_minimum_size.y = 138.0 if compact else 156.0
+	_mobility_plus.custom_minimum_size.x = 190.0 if compact else 250.0
 	_stat_grid.add_theme_constant_override("v_separation", 5)
 	_detail_tabs.custom_minimum_size.y = V2.TOUCH_TARGET
 	for raw_button in _detail_tab_buttons.values():
@@ -1537,106 +1554,19 @@ func _action_button(text: String, accent: Color, height: float = V2.TOUCH_TARGET
 	return button
 
 
-func _command_button(texture: Texture2D, title_text: String, subtitle_text: String, accent: Color) -> Button:
-	var button := Button.new()
-	button.text = ""
-	button.custom_minimum_size.y = 68.0
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	button.focus_mode = Control.FOCUS_ALL
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.clip_contents = false
-	button.set_meta("digi_command_button", true)
-	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, CommandButtonStyle.style(accent, state))
-
-	var margin := _margin(14, 6, 14, 6)
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	button.add_child(margin)
-
-	var row := HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(row)
-
-	var icon := TextureRect.new()
-	icon.name = "ActionIcon"
-	icon.texture = texture
-	icon.custom_minimum_size = Vector2(36.0, 36.0)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.self_modulate = accent
-	row.add_child(icon)
-
-	var copy := VBoxContainer.new()
-	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	copy.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	copy.add_theme_constant_override("separation", 1)
-	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(copy)
-
-	var title := _single_line_label(title_text, 16, V2.WHITE, true)
-	title.name = "Title"
-	copy.add_child(title)
-	var subtitle := _single_line_label(subtitle_text, 11, V2.MUTED)
-	subtitle.name = "Subtitle"
-	copy.add_child(subtitle)
+func _training_command_button(
+	title: String,
+	subtitle: String,
+	status: String,
+	icon_kind: String,
+	accent: Color,
+	minimal: bool
+) -> DigiCommandButton:
+	var button := CommandButtonScript.new() as DigiCommandButton
+	button.configure(title, subtitle, status, icon_kind, accent)
+	button.set_compact(true)
+	button.set_minimal(minimal)
 	return button
-
-
-func _compact_command_button(texture: Texture2D, text: String, accent: Color) -> Button:
-	var button := Button.new()
-	button.text = ""
-	button.custom_minimum_size.y = V2.TOUCH_TARGET
-	button.size_flags_horizontal = Control.SIZE_SHRINK_END
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.focus_mode = Control.FOCUS_ALL
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.clip_contents = false
-	button.set_meta("digi_command_button", true)
-	button.set_meta("compact_command_button", true)
-	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, CommandButtonStyle.style(accent, state))
-
-	var margin := _margin(10, 4, 12, 4)
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	button.add_child(margin)
-
-	var row := HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 7)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(row)
-
-	var icon := TextureRect.new()
-	icon.name = "ActionIcon"
-	icon.texture = texture
-	icon.custom_minimum_size = Vector2(24.0, 24.0)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.self_modulate = accent
-	row.add_child(icon)
-
-	var label := _single_line_label(text, 11, V2.WHITE, true)
-	label.name = "Title"
-	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	row.add_child(label)
-	return button
-
-
-func _sync_command_button_state(button: Button) -> void:
-	if button == null:
-		return
-	button.modulate = Color(1.0, 1.0, 1.0, 0.54) if button.disabled else Color.WHITE
 
 
 func _empty_state(text: String, accent: Color = V2.MUTED) -> PanelContainer:

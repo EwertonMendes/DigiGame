@@ -115,6 +115,12 @@ func _ready() -> void:
 	var background := training.find_child("TrainingBackgroundImage", true, false) as TextureRect
 	if not _check(background != null and background.texture != null and background.texture.resource_path.ends_with("training.webp"), "Training must render the dedicated training.webp background"):
 		return
+	if not _check(background.get_parent() == training, "Training background must live at the screen root, outside the scaled workspace frame"):
+		return
+	var background_rect := background.get_global_rect()
+	var screen_rect := training.get_global_rect()
+	if not _check(background_rect.position.is_equal_approx(screen_rect.position) and background_rect.size.is_equal_approx(screen_rect.size), "Training background must cover the complete screen bounds"):
+		return
 
 	var attribute_toolbar := training.get("_attribute_plan_bar") as PanelContainer
 	var attribute_icon := attribute_toolbar.find_child("AttributeTrainingIcon", true, false) as Control
@@ -183,15 +189,15 @@ func _ready() -> void:
 	if not _check(attribute_plan_bar.get_index() == 0, "Attribute actions must share the top toolbar instead of adding height below the stat grid"):
 		return
 	for action in [discard, apply]:
-		if not _check(action != null and action.custom_minimum_size.y >= V2.TOUCH_TARGET, "Attribute plan actions must remain touch-safe"):
+		if not _check(action != null and action.custom_minimum_size.y >= 50.0, "Attribute plan actions must remain touch-safe"):
 			return
-		if not _check(bool(action.get_meta("digi_command_button", false)) and bool(action.get_meta("compact_command_button", false)), "Attribute plan actions must use the compact Digi Hospital command language"):
+		if not _check(action is DigiCommandButton, "Attribute plan actions must reuse DigiCommandButton instead of screen-specific button markup"):
 			return
 		var command_style := action.get_theme_stylebox("normal") as StyleBoxFlat
-		if not _check(command_style != null and command_style.border_width_left >= 4, "Compact attribute commands must keep the Digi Hospital leading rail"):
+		if not _check(command_style != null and command_style.border_width_left >= 4, "Compact attribute commands must keep the shared command rail"):
 			return
-		var compact_icon := action.find_child("ActionIcon", true, false) as TextureRect
-		if not _check(compact_icon != null and compact_icon.custom_minimum_size == Vector2(24.0, 24.0), "Compact attribute commands must keep a readable 24px action icon"):
+		var compact_icon := action.find_child("CommandIcon", true, false) as Control
+		if not _check(compact_icon != null and compact_icon.custom_minimum_size == Vector2(24.0, 24.0), "Minimal attribute commands must keep the shared 24px command icon"):
 			return
 
 	# Apply remains guarded because attribute training is permanent.
@@ -240,6 +246,8 @@ func _ready() -> void:
 	var mobility_host_rect := host.get_global_rect()
 	if not _check(mobility_rect.position.y >= mobility_host_rect.position.y - 1.0 and mobility_rect.end.y <= mobility_host_rect.end.y + 1.0, "Mobility card must stay fully inside the presentation workspace"):
 		return
+	if not _check(mobility_rect.size.x >= mobility_host_rect.size.x * 0.90, "Mobility must use the available horizontal workspace instead of collapsing into a narrow centered column"):
+		return
 	if not _check(absf(mobility_rect.get_center().y - mobility_host_rect.get_center().y) <= 3.0, "Mobility card must be vertically centered in its presentation"):
 		return
 	if not _check(absf(mobility_icon.get_global_rect().get_center().y - mobility_title.get_global_rect().get_center().y) <= 2.0, "Tactical Mobility icon must be vertically centered with its title"):
@@ -248,13 +256,13 @@ func _ready() -> void:
 	var mobility_plus := training.get("_mobility_plus") as Button
 	if not _check(mobility_plus != null and mobility_plus.custom_minimum_size.y >= V2.TOUCH_TARGET, "Mobility command must remain touch-safe"):
 		return
-	if not _check(bool(mobility_plus.get_meta("digi_command_button", false)), "Mobility must use the shared Digi Hospital command-button language"):
+	if not _check(mobility_plus is DigiCommandButton, "Mobility must reuse the shared DigiCommandButton component"):
 		return
 	var mobility_style := mobility_plus.get_theme_stylebox("normal") as StyleBoxFlat
-	if not _check(mobility_style != null and mobility_style.border_width_left >= 4, "Mobility command must keep the Digi Hospital leading rail"):
+	if not _check(mobility_style != null and mobility_style.border_width_left >= 4, "Mobility command must keep the shared command rail"):
 		return
-	var mobility_action_icon := mobility_plus.find_child("ActionIcon", true, false) as TextureRect
-	if not _check(mobility_action_icon != null and mobility_action_icon.custom_minimum_size == Vector2(36.0, 36.0), "Mobility command icon must use the authored 36px Hospital scale"):
+	var mobility_action_icon := mobility_plus.find_child("CommandIcon", true, false) as Control
+	if not _check(mobility_action_icon != null and mobility_action_icon.custom_minimum_size == Vector2(30.0, 30.0), "Compact Mobility command must use the shared 30px command icon"):
 		return
 	if not _check(mobility_plus.disabled, "Pending attribute changes must block independent MOV training until resolved"):
 		return
