@@ -62,6 +62,9 @@ jobs:
           - name: global-ui-v2
             command: godot --headless --path . tools/test_ui_v2_components_regression.tscn --quit-after 30
             success: global ui v2 components regression passed
+          - name: ui-digital-transition
+            command: godot --headless --path . tools/test_ui_digital_transition.tscn --quit-after 90
+            success: ui digital transition regression passed
           - name: digimon-main-menu-ui
             # This regression now exercises controller navigation, swap/cancel,
             # and both direct Active <-> Reserve moves. Keep enough frame budget
