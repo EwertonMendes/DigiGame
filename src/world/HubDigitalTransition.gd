@@ -15,6 +15,7 @@ const OperatorIcons = preload("res://src/ui/battle_operator/BattleOperatorIconCa
 const IconViewScript = preload("res://src/ui/components/DigiIconView.gd")
 const OPERATOR_BACKGROUND = preload("res://assets/ui/backgrounds/digimon_menu.png")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const UiTransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 
 const PROGRAM_IDS: Array[String] = [
 	"basic",
@@ -39,6 +40,7 @@ var _selected_program_id := "basic"
 var _selected_battlefield_id := ""
 var _operator_section := SECTION_PROGRAM
 var _operator_ui_layer: CanvasLayer = null
+var _operator_transition_surface: CanvasGroup = null
 var _operator_header: DigiModalHeader = null
 var _operator_header_rule: ColorRect = null
 var _operator_footer: DigiInputHintBar = null
@@ -82,6 +84,10 @@ func _build_dialog() -> void:
 	_operator_ui_layer.layer = OPERATOR_UI_LAYER
 	add_child(_operator_ui_layer)
 
+	_operator_transition_surface = UiTransitionSurfaceScript.new() as CanvasGroup
+	_operator_transition_surface.name = "BattleOperatorTransition"
+	_operator_ui_layer.add_child(_operator_transition_surface)
+
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.name = "BattleDialog"
 	_dialog_panel.visible = false
@@ -91,7 +97,7 @@ func _build_dialog() -> void:
 		"panel",
 		HUB_V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0)
 	)
-	_operator_ui_layer.add_child(_dialog_panel)
+	_operator_transition_surface.add_child(_dialog_panel)
 
 	var background := TextureRect.new()
 	background.name = "BattleOperatorBackground"
@@ -459,18 +465,34 @@ func _enforce_operator_header_focus_contract() -> void:
 
 
 func _open_dialog() -> void:
+	if _operator_transition_surface == null:
+		return
+	if not DigiUiTransitionDirector.begin_open(_operator_transition_surface, "battle_operator"):
+		return
 	_analog_gate.reset()
 	super._open_dialog()
 	if not _dialog_open:
+		DigiUiTransitionDirector.cancel_transition()
 		return
 	_refresh_operator_state()
 	_sync_pages_to_selection()
 	_layout_ui()
-	# The inherited dialog briefly focuses its legacy safe action. Replace that
-	# immediately with the current committed program, then repeat deferred after
-	# the layout pass for Web/mobile focus stability.
+	await DigiUiTransitionDirector.reveal_open()
+	# Focus becomes interactive only after construction is complete. The inherited
+	# temporary focus is harmless while the director owns input.
 	_focus_selected_program()
 	call_deferred("_focus_selected_program")
+
+
+func _close_dialog() -> void:
+	if not _dialog_open or _transitioning or _operator_transition_surface == null:
+		return
+	if not DigiUiTransitionDirector.begin_close(_operator_transition_surface, "battle_operator"):
+		return
+	UiSfxDirector.play_back()
+	await DigiUiTransitionDirector.conceal_close()
+	super._close_dialog()
+	DigiUiTransitionDirector.complete_close()
 
 func _refresh_operator_state() -> void:
 	var party_error := OverworldState.battle_party_validation_error()
