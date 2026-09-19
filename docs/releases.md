@@ -129,7 +129,9 @@ For prerelease versions such as `0.1.0-rc.1`, package names and Android's visibl
 
 These changes happen only inside the CI runner. Running a release build does not create a version-bump commit.
 
-## Application icon
+## Application branding
+
+### Application icon
 
 The canonical application icon is `assets/ui/icons/favicon.png`. Keep this as the single source of truth for Digi Game branding across exports.
 
@@ -139,7 +141,19 @@ The canonical application icon is `assets/ui/icons/favicon.png`. Keep this as th
 - macOS exports use the same PNG as the application icon.
 - Android uses the PNG for the classic launcher icon and adaptive foreground. A dedicated dark adaptive background lives at `assets/ui/icons/android_adaptive_background.svg` so modern Android launchers can mask the icon cleanly.
 
-`tools/validate_app_icon.py` checks that the source PNG is square, at least 512x512, and still wired to all supported export presets. Both Web CI and release CI run this validation.
+### Startup splash
+
+The canonical startup splash is `assets/ui/branding/boot_splash.png`. It replaces Godot's default startup image and is authored at the game's native 16:9 presentation ratio.
+
+Godot is configured to:
+
+- show the Digi Game splash while the engine performs its real startup work;
+- use the same dark background tone as the artwork, avoiding an obvious black/default-engine flash around the image;
+- stretch the splash to the startup window while preserving the intended full-screen presentation;
+- keep texture filtering enabled for clean scaling;
+- use a zero minimum display time, so startup is never artificially delayed just to keep the splash visible.
+
+`tools/validate_app_icon.py` validates the complete application branding contract: icon dimensions, splash dimensions/aspect ratio, Godot startup settings, and all platform icon export wiring. Both Web CI and release CI run this validation. Replacing either the icon or the splash is covered by release-pipeline path validation.
 
 ## Platform notes
 
