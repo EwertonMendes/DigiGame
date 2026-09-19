@@ -4,6 +4,11 @@ class_name EvolutionConstellation
 signal close_requested
 signal evolution_applied(instance: DigimonInstance)
 
+# Nested evolution views are true modal surfaces. They must outrank every
+# descendant of the parent menu (for example DigiBitsDisplay's internally
+# layered coin/delta elements) instead of relying on sibling insertion order.
+const MODAL_Z_INDEX := 80
+
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const SKIN = preload("res://src/ui/KenneyFantasySkin.gd")
 const GraphServiceScript = preload("res://src/digimon/EvolutionGraphService.gd")
@@ -41,6 +46,8 @@ var _announcement: Label
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	z_index = MODAL_Z_INDEX
+	z_as_relative = true
 	_database = OverworldState.get_database() as DigimonDatabase
 	_graph_service = GraphServiceScript.new() as EvolutionGraphService
 	_evolution_service = EvolutionServiceScript.new() as DigimonEvolutionService
