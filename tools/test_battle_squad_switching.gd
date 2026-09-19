@@ -4,6 +4,7 @@ const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const SessionScript = preload("res://src/battle/BattleSquadSession.gd")
 const RewardCalculatorScript = preload("res://src/digimon/BattleRewardCalculator.gd")
+const BattleActorScene = preload("res://scenes/player.tscn")
 
 
 class ActorStub:
@@ -55,6 +56,27 @@ func _ready() -> void:
 	assert(session.attach_actor(active_actor), "Initial Active actor must attach to persistent battle state")
 	var active_state := active_actor.battle_state
 	assert(active_state != null, "Attached actor must receive BattleDigimon state")
+
+	# Initial battle actors are prepared for the roster-intro animation before the
+	# Squad session attaches its persistent BattleDigimon state. State adoption
+	# must not repaint that presentation state or desktop can render a tiny actor
+	# before its materialization animation begins.
+	var intro_actor := BattleActorScene.instantiate() as CharacterBody2D
+	assert(intro_actor != null, "Battle intro actor fixture must instantiate")
+	var intro_species: Dictionary = database.get_by_seed(active[1].species_seed)
+	intro_actor.call("bind_digimon_instance", active[1], intro_species, true)
+	add_child(intro_actor)
+	var intro_sprite := intro_actor.get_node("Sprite2D") as Sprite2D
+	assert(intro_sprite != null, "Battle intro actor must expose its sprite")
+	var intro_base_scale := intro_sprite.scale
+	intro_actor.call("prepare_battle_spawn")
+	var prepared_scale := intro_sprite.scale
+	assert(is_zero_approx(intro_actor.modulate.a), "Prepared intro actor must remain fully transparent")
+	assert(prepared_scale.length() < intro_base_scale.length(), "Prepared intro actor must begin at reduced scale")
+	assert(session.attach_actor(intro_actor), "Prepared intro actor must attach to persistent Squad state")
+	assert(is_zero_approx(intro_actor.modulate.a), "Squad state adoption must not reveal a staged intro actor")
+	assert(intro_sprite.scale.is_equal_approx(prepared_scale), "Squad state adoption must preserve staged intro scale")
+
 	var initial_hp := active_state.current_hp
 	var initial_sp := active_state.current_mp
 	active_state.take_damage(7)
@@ -114,5 +136,6 @@ func _ready() -> void:
 	active_actor.queue_free()
 	reserve_actor.queue_free()
 	returning_actor.queue_free()
+	intro_actor.queue_free()
 	print("battle squad switching regression passed")
 	get_tree().quit()
