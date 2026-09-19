@@ -22,7 +22,7 @@ const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd
 const HospitalCalculatorScript = preload("res://src/hospital/HospitalRecoveryCalculator.gd")
 const HospitalServiceScript = preload("res://src/hospital/HospitalService.gd")
 
-const DEFAULT_ACTIVE_PARTY := ["agumon", "gabumon", "greymon"]
+const DEFAULT_ACTIVE_PARTY := ["botamon", "agumon", "gabumon"]
 
 var _database = DatabaseScript.new()
 var _factory = null
