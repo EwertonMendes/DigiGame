@@ -85,13 +85,18 @@ async function verifyWebAudioActivationRecovery(page) {
     () => window.__digigameWebAudioBootstrap.resumeAttempts
   );
 
-  // Real pointer input is one of the HTML activation-triggering event classes.
-  // The regression asserts the production bootstrap reacts to trusted browser
-  // activation instead of merely observing a synthetic/polled gamepad state.
-  await page.mouse.click(12, 12);
+  // Match the real player path: bring the tab forward and click directly inside
+  // the Godot canvas so both browser activation and Godot's own focus handling
+  // run exactly as they do in an interactive browser.
+  await page.bringToFront();
+  const canvas = page.locator('canvas');
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error('Godot canvas has no layout box for audio activation test');
+  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.5);
   await page.waitForFunction(previous => {
     const state = window.__digigameWebAudioBootstrap;
     return state.resumeAttempts > previous &&
+      state.lastTrustedEvent.length > 0 &&
       [...state.contexts].every(context => context.state === 'running');
   }, attemptsBefore, { timeout: 5000 });
 }
