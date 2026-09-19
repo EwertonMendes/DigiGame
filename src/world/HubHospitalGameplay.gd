@@ -3,7 +3,7 @@ extends "res://src/world/HubTrainingGameplay.gd"
 const HospitalScreenScript = preload("res://src/ui/DigiPremiumHospitalScreen.gd")
 const HospitalActorScript = preload("res://src/world/HubActor.gd")
 const HOSPITAL_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
-const UiTransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
+const HospitalTransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 
 var _hospital_npc: HubActor = null
 var _hospital_screen: HospitalScreen = null
@@ -69,7 +69,7 @@ func _build_hospital_ui() -> void:
 	layer.name = "HospitalUI"
 	layer.layer = 96
 	add_child(layer)
-	_hospital_transition_surface = UiTransitionSurfaceScript.new() as CanvasGroup
+	_hospital_transition_surface = HospitalTransitionSurfaceScript.new() as CanvasGroup
 	_hospital_transition_surface.name = "HospitalTransition"
 	layer.add_child(_hospital_transition_surface)
 	_hospital_screen = HospitalScreenScript.new() as HospitalScreen
