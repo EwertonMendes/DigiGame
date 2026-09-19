@@ -1531,31 +1531,45 @@ func _command_button(texture: Texture2D, title_text: String, subtitle_text: Stri
 
 func _compact_command_button(texture: Texture2D, text: String, accent: Color) -> Button:
 	var button := Button.new()
-	button.text = text
-	button.icon = texture
-	button.expand_icon = false
-	button.icon_max_width = 24
+	button.text = ""
 	button.custom_minimum_size.y = V2.TOUCH_TARGET
 	button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.clip_contents = false
 	button.set_meta("digi_command_button", true)
 	button.set_meta("compact_command_button", true)
-	button.add_theme_font_size_override("font_size", 11)
-	button.add_theme_color_override("font_color", V2.WHITE)
-	button.add_theme_color_override("font_hover_color", V2.WHITE)
-	button.add_theme_color_override("font_focus_color", V2.WHITE)
-	button.add_theme_color_override("font_pressed_color", V2.WHITE)
-	button.add_theme_color_override("font_disabled_color", V2.SUBTLE)
-	button.add_theme_color_override("icon_normal_color", accent)
-	button.add_theme_color_override("icon_hover_color", V2.WHITE)
-	button.add_theme_color_override("icon_focus_color", V2.WHITE)
-	button.add_theme_color_override("icon_pressed_color", V2.WHITE)
-	button.add_theme_color_override("icon_disabled_color", V2.SUBTLE)
-	V2.apply_heading(button)
 	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
 		button.add_theme_stylebox_override(state, CommandButtonStyle.style(accent, state))
+
+	var margin := _margin(10, 4, 12, 4)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	button.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 7)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	var icon := TextureRect.new()
+	icon.name = "ActionIcon"
+	icon.texture = texture
+	icon.custom_minimum_size = Vector2(24.0, 24.0)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.self_modulate = accent
+	row.add_child(icon)
+
+	var label := _single_line_label(text, 11, V2.WHITE, true)
+	label.name = "Title"
+	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	row.add_child(label)
 	return button
 
 
