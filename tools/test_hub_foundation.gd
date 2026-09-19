@@ -68,7 +68,7 @@ func _ready() -> void:
 	await _assert_hospital_entry(hub, player, hospital_npc, hospital_screen)
 
 	hub.call("open_test_battle_dialog")
-	await get_tree().process_frame
+	await _await_ui_transition()
 	assert(dialog.visible, "Talking to the operator must open the battle prompt")
 	assert(not bool(player.get("movement_enabled")), "Dialogue must pause player movement")
 	assert(player.get("facing_direction") == "north", "Player must face north toward the operator in dialogue")
@@ -90,8 +90,7 @@ func _assert_training_center_entry(hub: Node, player: Node2D, trainer: Node2D, t
 	await get_tree().process_frame
 	assert(bool(hub.call("_trainer_has_interaction_priority")), "Training Specialist must win interaction priority when the player is closest to that NPC")
 	hub.call("_open_training")
-	await get_tree().process_frame
-	await get_tree().process_frame
+	await _await_ui_transition()
 	assert(training_screen.visible, "Talking to the Training Specialist must open the Training Center")
 	assert(not bool(player.get("movement_enabled")), "Training Center must pause overworld movement")
 	var collection_list := training_screen.get("_collection_list") as Container
@@ -105,7 +104,7 @@ func _assert_training_center_entry(hub: Node, player: Node2D, trainer: Node2D, t
 	assert(training_screen.find_children("*", "ScrollContainer", true, false).is_empty(), "Training workspace must be bounded and scroll-free")
 	_assert_fullscreen_service_frame(training_screen.get("_frame") as Control, "Training Center")
 	hub.call("_close_training")
-	await get_tree().process_frame
+	await _await_ui_transition()
 	assert(not training_screen.visible, "Closing Training Center must return to the Hub")
 	assert(bool(player.get("movement_enabled")), "Closing Training Center must restore overworld movement")
 	player.position = original_position
@@ -122,8 +121,7 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	interact.physical_keycode = KEY_E
 	interact.pressed = true
 	hub.call("_unhandled_input", interact)
-	await get_tree().process_frame
-	await get_tree().process_frame
+	await _await_ui_transition()
 
 	assert(digilab.visible, "Pressing E at the DigiLab terminal must open the DigiLab")
 	var create_screen := digilab.get("_create_screen") as Control
@@ -161,7 +159,7 @@ func _assert_digilab_root_entry(hub: Node, player: Node2D, digilab: Control) -> 
 	_assert_fullscreen_service_frame(party_frame, "Party / Storage")
 
 	hub.call("_close_digilab")
-	await get_tree().process_frame
+	await _await_ui_transition()
 	assert(not digilab.visible, "Closing DigiLab must return to the Hub")
 	assert(bool(player.get("movement_enabled")), "Closing DigiLab must restore overworld movement")
 	player.position = original_position
@@ -178,8 +176,7 @@ func _assert_hospital_entry(hub: Node, player: Node2D, hospital_npc: Node2D, hos
 	interact.physical_keycode = KEY_E
 	interact.pressed = true
 	hub.call("_unhandled_input", interact)
-	await get_tree().process_frame
-	await get_tree().process_frame
+	await _await_ui_transition()
 
 	assert(hospital_screen.visible, "Pressing E at the Hospital specialist must open the Hospital")
 	assert(not bool(player.get("movement_enabled")), "Hospital must pause overworld movement")
@@ -197,11 +194,19 @@ func _assert_hospital_entry(hub: Node, player: Node2D, hospital_npc: Node2D, hos
 	_assert_fullscreen_service_frame(hospital_screen.get("_canvas") as Control, "Digi Hospital")
 
 	hub.call("_close_hospital")
-	await get_tree().process_frame
+	await _await_ui_transition()
 	assert(not hospital_screen.visible, "Closing Hospital must return to the Hub")
 	assert(bool(player.get("movement_enabled")), "Closing Hospital must restore overworld movement")
 	player.position = original_position
 	await get_tree().process_frame
+
+func _await_ui_transition(max_frames: int = 90) -> void:
+	for _frame in range(max_frames):
+		if not DigiUiTransitionDirector.is_transitioning():
+			return
+		await get_tree().process_frame
+	assert(not DigiUiTransitionDirector.is_transitioning(), "UI transition must settle within the regression frame budget")
+
 
 func _assert_fullscreen_service_frame(frame: Control, label: String) -> void:
 	assert(frame != null, "%s must expose its V2 workspace frame" % label)
