@@ -72,7 +72,13 @@ func open_screen() -> void:
 	_frame.modulate.a = 1.0
 
 
+func _request_close() -> void:
+	close_requested.emit()
+
+
 func close_view() -> void:
+	# Immediate/programmatic close remains available for tests and tools. Normal
+	# player input requests a close so the parent service can animate first.
 	visible = false
 	close_requested.emit()
 
@@ -83,7 +89,7 @@ func is_open() -> bool:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu")):
-		close_view()
+		_request_close()
 		get_viewport().set_input_as_handled()
 
 
@@ -111,7 +117,7 @@ func _build() -> void:
 		{"id": "convert", "label": "Convert Digi Data", "icon": "database", "enabled": true, "min_width": 176.0},
 		{"id": "party", "label": "Party / Storage", "icon": "party", "enabled": true, "min_width": 166.0},
 	], "party")
-	_header.close_requested.connect(close_view)
+	_header.close_requested.connect(_request_close)
 	_header.tab_selected.connect(_on_top_tab_selected)
 	_root.add_child(_header)
 
