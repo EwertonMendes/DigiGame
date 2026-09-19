@@ -84,10 +84,6 @@ func _build_dialog() -> void:
 	_operator_ui_layer.layer = OPERATOR_UI_LAYER
 	add_child(_operator_ui_layer)
 
-	_operator_transition_surface = OperatorTransitionSurfaceScript.new() as CanvasGroup
-	_operator_transition_surface.name = "BattleOperatorTransition"
-	_operator_ui_layer.add_child(_operator_transition_surface)
-
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.name = "BattleDialog"
 	_dialog_panel.visible = false
@@ -97,27 +93,33 @@ func _build_dialog() -> void:
 		"panel",
 		HUB_V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0)
 	)
-	_operator_transition_surface.add_child(_dialog_panel)
+	_operator_ui_layer.add_child(_dialog_panel)
+
+	_operator_transition_surface = OperatorTransitionSurfaceScript.new() as CanvasGroup
+	_operator_transition_surface.name = "BattleOperatorTransition"
+	_dialog_panel.add_child(_operator_transition_surface)
 
 	var background := TextureRect.new()
 	background.name = "BattleOperatorBackground"
+	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	background.texture = OPERATOR_BACKGROUND
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_dialog_panel.add_child(background)
+	_operator_transition_surface.add_transition_child(background)
 
 	var shade := ColorRect.new()
 	shade.name = "BattleOperatorBackgroundShade"
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shade.color = Color(0.005, 0.019, 0.032, 0.40)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_dialog_panel.add_child(shade)
+	_operator_transition_surface.add_transition_child(shade)
 
 	_mobile_dialog_content = Control.new()
 	_mobile_dialog_content.name = "Content"
 	_mobile_dialog_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_mobile_dialog_content.clip_contents = true
-	_dialog_panel.add_child(_mobile_dialog_content)
+	_operator_transition_surface.add_transition_child(_mobile_dialog_content)
 
 	_start_battle_button = _dialog_button("", HUB_V2.AMBER)
 	_start_battle_button.name = "StartBattle"
@@ -477,11 +479,12 @@ func _open_dialog() -> void:
 	_refresh_operator_state()
 	_sync_pages_to_selection()
 	_layout_ui()
-	await DigiUiTransitionDirector.reveal_open()
-	# Focus becomes interactive only after construction is complete. The inherited
-	# temporary focus is harmless while the director owns input.
+	# Preserve the existing focus contract immediately. The transition director
+	# consumes input while construction is active, so focus can be prepared safely
+	# without letting the player interact with unrevealed controls.
 	_focus_selected_program()
 	call_deferred("_focus_selected_program")
+	await DigiUiTransitionDirector.reveal_open()
 
 
 func _close_dialog() -> void:
