@@ -103,6 +103,11 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
         if len(movement_rows) < 4:
             raise RuntimeError(f"Expected four movement rows, got {[len(row) for row in rows]}")
         groups = movement_rows[:4]
+    elif kind == "four_rows_leftmost_triples":
+        movement_rows = [sorted(row, key=lambda item: item["cx"])[:3] for row in rows if len(row) >= 3]
+        if len(movement_rows) < 4:
+            raise RuntimeError(f"Expected four movement rows, got {[len(row) for row in rows]}")
+        groups = movement_rows[:4]
     else:
         raise RuntimeError(f"Unknown reusable extraction profile: {kind}")
 
