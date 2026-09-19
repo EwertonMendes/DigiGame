@@ -109,7 +109,7 @@ var _mobility_requirement: Label
 var _mobility_plus: Button
 var _confirmation: DigiConfirmationModal
 var _editor_focus_rows: Array = []
-var _transition_surface: CanvasGroup = null
+var _transition_surface: DigiUiTransitionSurface = null
 var _close_lifecycle_managed := false
 
 
@@ -126,7 +126,7 @@ func _ready() -> void:
 	visible = false
 
 
-func get_transition_surface() -> CanvasGroup:
+func get_transition_surface() -> DigiUiTransitionSurface:
 	return _transition_surface
 
 
@@ -256,7 +256,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build_ui() -> void:
-	_transition_surface = TransitionSurfaceScript.new() as CanvasGroup
+	_transition_surface = TransitionSurfaceScript.new() as DigiUiTransitionSurface
 	_transition_surface.name = "TrainingTransition"
 	add_child(_transition_surface)
 
