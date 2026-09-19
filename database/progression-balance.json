@@ -52,8 +52,7 @@
     "minActive": 1,
     "maxActive": 3,
     "maxReserve": 3,
-    "participantXpMultiplier": 1.0,
-    "reserveXpMultiplier": 1.0
+    "squadXpMultiplier": 1.0
   },
   "rewards": {
     "bitsLevelMultiplier": 1.0,

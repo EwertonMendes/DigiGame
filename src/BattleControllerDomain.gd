@@ -60,6 +60,10 @@ func _ready() -> void:
 	_battle_ai = BattleAIScript.new(_targeting_system, _damage_calculator)
 	_event_bus.event_emitted.connect(_on_battle_event)
 	super._ready()
+	# BattleController._ready() resolves the runtime controller. Capture the
+	# persistent Squad session here rather than relying on _start_battle(), which
+	# presentation subclasses legitimately override for the intro sequence.
+	_sync_squad_session_from_runtime()
 	if _controller != null and _controller.has_signal("hovered_digimon_changed"):
 		_controller.connect("hovered_digimon_changed", _on_hovered_digimon_changed)
 
@@ -118,7 +122,7 @@ func _movement_for(actor: Node) -> int:
 func _start_battle() -> void:
 	if _controller == null:
 		return
-	_squad_session = _controller.call("get_battle_squad_session") as BattleSquadSession if _controller.has_method("get_battle_squad_session") else null
+	_sync_squad_session_from_runtime()
 	_pending_replacements.clear()
 	_replacement_prompt_ready = false
 	_turn_order.clear()
@@ -137,6 +141,14 @@ func _start_battle() -> void:
 	_observed_enemy_skill_ids.clear()
 	_recent_skill_ids.clear()
 	_start_next_turn()
+
+
+func _sync_squad_session_from_runtime() -> BattleSquadSession:
+	if _controller == null or not _controller.has_method("get_battle_squad_session"):
+		_squad_session = null
+		return null
+	_squad_session = _controller.call("get_battle_squad_session") as BattleSquadSession
+	return _squad_session
 
 
 func _start_next_turn() -> void:

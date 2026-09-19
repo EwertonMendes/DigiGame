@@ -4,6 +4,7 @@ const DatabaseScript = preload("res://src/digimon/DigimonDatabase.gd")
 const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const SessionScript = preload("res://src/battle/BattleSquadSession.gd")
 const RewardCalculatorScript = preload("res://src/digimon/BattleRewardCalculator.gd")
+const RewardServiceScript = preload("res://src/digimon/BattleRewardService.gd")
 const BattleActorScene = preload("res://scenes/player.tscn")
 
 
@@ -147,10 +148,50 @@ func _ready() -> void:
 	var calculated := rewards.calculate(player_snapshots, enemy_snapshots)
 	assert(int(calculated.xp_by_instance.get(active[0].id, 0)) > 0, "Healthy participant must receive battle XP")
 	assert(int(calculated.xp_by_instance.get(reserve[1].id, 0)) > 0, "Healthy unused Reserve must receive battle XP")
+	assert(int(calculated.xp_by_instance.get(active[0].id, 0)) == int(calculated.xp_by_instance.get(reserve[1].id, 0)), "Equal-level Active and Reserve members must receive equal battle XP")
 	assert(int(calculated.xp_by_instance.get(active[2].id, 0)) == 0, "Digimon knocked out during battle must receive no XP")
 	assert(int(calculated.xp_by_instance.get(reserve[2].id, 0)) == 0, "Reserve already knocked out before battle must receive no XP")
 
+	# Exercise the same service boundary used by ProgressionBattleController.
+	# Calculator-only coverage previously missed the player-instance application
+	# and final xp_rewards payload that the real Battle Result screen consumes.
+	var enemy_instance := factory.create_enemy_by_name("agumon", 8, "wild")
+	assert(enemy_instance != null, "Reward integration enemy fixture must resolve")
+	var enemy_actor := ActorStub.new(enemy_instance)
+	enemy_actor.set_meta("encounter_profile", "wild")
+	enemy_actor.set_meta("reward_modifier", 1.0)
+	add_child(enemy_actor)
+	var squad_instances: Array[DigimonInstance] = []
+	for instance: DigimonInstance in active:
+		squad_instances.append(instance)
+	for instance: DigimonInstance in reserve:
+		squad_instances.append(instance)
+	var reserve_before_level := reserve[1].level
+	var reserve_before_exp := reserve[1].exp
+	var reward_service: BattleRewardService = RewardServiceScript.new(database)
+	var defeated_enemy_actors: Array[Node] = [enemy_actor]
+	var applied_rewards := reward_service.apply_victory_rewards_from_snapshots(
+		session.reward_snapshots(),
+		squad_instances,
+		defeated_enemy_actors
+	)
+	var rows = (applied_rewards.get("xp_rewards", {}) as Dictionary).get("digimon", [])
+	assert(rows is Array and (rows as Array).size() == 6, "Real reward service must report every Squad member")
+	var applied_by_id: Dictionary = {}
+	for raw_row in rows:
+		if raw_row is Dictionary:
+			var row := raw_row as Dictionary
+			applied_by_id[String(row.get("instance_id", ""))] = row
+	var reserve_row := applied_by_id.get(reserve[1].id, {}) as Dictionary
+	var active_row := applied_by_id.get(active[1].id, {}) as Dictionary
+	var ko_row := applied_by_id.get(reserve[2].id, {}) as Dictionary
+	assert(int(reserve_row.get("xp_gained", 0)) > 0, "Real victory reward payload must grant XP to healthy Reserve")
+	assert(int(active_row.get("xp_gained", 0)) == int(reserve_row.get("xp_gained", 0)), "Real reward payload must give equal-level Active and Reserve equal XP")
+	assert(int(ko_row.get("xp_gained", 0)) == 0 and bool(ko_row.get("knocked_out", false)), "Real reward payload must keep KO Reserve at zero XP")
+	assert(reserve[1].level > reserve_before_level or reserve[1].exp > reserve_before_exp, "Reserve XP must be applied to the persistent Digimon instance")
+
 	assert(initial_hp >= persisted_hp and initial_sp >= persisted_sp, "Fixture resource mutations must be monotonic")
+	enemy_actor.queue_free()
 	active_actor.queue_free()
 	reserve_actor.queue_free()
 	returning_actor.queue_free()

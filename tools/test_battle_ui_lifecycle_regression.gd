@@ -29,6 +29,13 @@ func _ready() -> void:
 	var controller := battle.get_node_or_null("BattleController")
 	if not _check(controller != null, "Battle controller must exist after battle startup"):
 		return
+	var runtime_controller := battle.get_node_or_null("DigimonController")
+	if not _check(runtime_controller != null and runtime_controller.has_method("get_battle_squad_session"), "Persistent battle runtime must expose its Squad session"):
+		return
+	var runtime_squad = runtime_controller.call("get_battle_squad_session")
+	var domain_squad = controller.get("_squad_session")
+	if not _check(runtime_squad != null and domain_squad == runtime_squad, "Battle controller must retain the same persistent Squad session through the opening override"):
+		return
 
 	# Regression contract for PR #118: EscapeBattleHUD owns these legacy controls
 	# and its inherited layout still references them. A subclass may hide them, but

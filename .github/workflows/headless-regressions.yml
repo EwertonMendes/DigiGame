@@ -100,6 +100,9 @@ jobs:
           - name: battle-squad-switching
             command: godot --headless --path . tools/test_battle_squad_switching.tscn --quit-after 10
             success: battle squad switching regression passed
+          - name: battle-squad-rewards-integration
+            command: godot --headless --path . tools/test_battle_squad_rewards_integration.tscn --quit-after 30
+            success: battle squad rewards integration regression passed
           - name: hospital-system
             command: godot --headless --path . tools/test_hospital_system.tscn --quit-after 8
             success: hospital system regression passed

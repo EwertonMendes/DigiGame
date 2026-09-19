@@ -11,6 +11,9 @@ func _start_battle() -> void:
 	if _controller == null:
 		return
 
+	# This override owns the presentation sequence, so explicitly synchronize the
+	# domain state that the base _start_battle() would otherwise initialize.
+	_sync_squad_session_from_runtime()
 	_turn_order.clear()
 	for child in _controller.get_children():
 		if child is CharacterBody2D:
