@@ -12,6 +12,12 @@ config_version=5
 
 config/name="Digi Game"
 config/icon="res://assets/ui/icons/favicon.png"
+boot_splash/bg_color=Color(0.00392157, 0.00784314, 0.0235294, 1)
+boot_splash/image="res://assets/ui/branding/boot_splash.png"
+boot_splash/minimum_display_time=0
+boot_splash/show_image=true
+boot_splash/stretch_mode=1
+boot_splash/use_filter=true
 run/main_scene="res://scenes/world/hub.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
