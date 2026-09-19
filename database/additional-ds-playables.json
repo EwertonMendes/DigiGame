@@ -926,7 +926,7 @@
       "portrait_metadata": "res://assets/characters/ogremon/portrait_frames.json",
       "source_id": 96,
       "profile": "four_rows_leftmost_triples",
-      "pattern": "compact_interleaved_rear_reversed",
+      "pattern": "compact_interleaved",
       "field_cell": [
         34,
         37
