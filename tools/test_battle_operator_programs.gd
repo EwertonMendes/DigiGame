@@ -126,7 +126,8 @@ func _test_operator_menu() -> void:
 	player.position = operator.position + Vector2(12.0, 12.0)
 	hub.call("_refresh_interaction")
 	hub.call("open_test_battle_dialog")
-	for _index in range(5):
+	await _await_ui_transition()
+	for _index in range(2):
 		await get_tree().process_frame
 
 	var dialog := hub.find_child("BattleDialog", true, false) as Control
@@ -342,6 +343,14 @@ func _test_operator_menu() -> void:
 	hub.queue_free()
 	for _index in range(3):
 		await get_tree().process_frame
+
+
+func _await_ui_transition(max_frames: int = 120) -> void:
+	for _index in range(max_frames):
+		if not DigiUiTransitionDirector.is_transitioning():
+			return
+		await get_tree().process_frame
+	_expect(not DigiUiTransitionDirector.is_transitioning(), "Battle Operator transition must finish within the regression frame budget")
 
 
 func _expect(condition: bool, message: String) -> void:
