@@ -64,9 +64,9 @@ func open_lab() -> void:
 	_refresh()
 	call_deferred("_layout")
 	call_deferred("_focus_selected_data")
-	_frame.modulate.a = 0.0
-	var tween := create_tween()
-	tween.tween_property(_frame, "modulate:a", 1.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# The parent DigiLab service owns the full-screen digital transition.
+	# Sub-workspaces stay opaque so changing tabs never replays a competing fade.
+	_frame.modulate.a = 1.0
 
 
 func close_view() -> void:
