@@ -43,9 +43,9 @@ jobs:
             command: godot --headless --path . tools/test_attack_patterns.tscn --quit-after 5
             success: advanced attack pattern regression passed
           - name: hub-foundation
-            # The regression owns several frame-bound UI/service transitions;
-            # leave enough frame budget for the added Active/Reserve follower checks.
-            command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 60
+            # This integration flow now waits for real open/close construction
+            # tweens across Training, DigiLab, Hospital and Battle Operator.
+            command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 360
             success: hub foundation regression passed
           - name: battle-operator-programs
             command: godot --headless --path . tools/test_battle_operator_programs.tscn --quit-after 30
