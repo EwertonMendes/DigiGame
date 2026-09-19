@@ -124,7 +124,9 @@ func _ready() -> void:
 		var command := commands[command_index] as DigiCommandButton
 		assert(command != null and not command.disabled and command.focus_mode == Control.FOCUS_ALL, "Commands must become interactive only after Digimon confirmation")
 		assert(command.find_child("CommandIcon", true, false) != null, "Compact Digimon commands must retain their icon")
-		assert(command.find_child("CommandTitle", true, false) != null, "Compact Digimon commands must retain their name")
+		var compact_title := command.find_child("CommandTitle", true, false) as Label
+		assert(compact_title != null and not compact_title.text.is_empty(), "Compact Digimon commands must retain their name")
+		assert(compact_title.size.x > 1.0 and compact_title.get_combined_minimum_size().x > 1.0, "Compact command names must receive real rendered width beside their icons")
 		assert(command.find_child("CommandSubtitle", true, false) == null, "Compact Digimon commands must not render descriptions")
 		assert(command.find_child("CommandStatus", true, false) == null, "Compact Digimon commands must not render learned/ready/status labels")
 		assert(command.custom_minimum_size.y >= V2.TOUCH_TARGET and command.custom_minimum_size.y <= 60.0, "Compact Digimon commands must stay touch-safe without consuming a second row")
