@@ -45,7 +45,7 @@ func _start_parallel_card_animations(sequence_id: int) -> int:
 		var reward: Dictionary = card["reward"] as Dictionary
 		var xp_gained := int(reward.get("xp_gained", 0))
 		if xp_gained <= 0:
-			(card["gain"] as Label).text = "+0 XP"
+			(card["gain"] as Label).text = _victory_gain_text(reward)
 			_set_card_final(card)
 			_set_unlock_text(card)
 			continue
