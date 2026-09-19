@@ -297,6 +297,9 @@ func _ensure_paged_fixture() -> void:
 		var instance: DigimonInstance = factory.create_player_by_name(candidates[cursor], 3, 100)
 		cursor += 1
 		if instance != null:
+			# The factory argument is scan percent, not Potential. Give regression
+			# fixtures enough Potential to exercise independent MOV training.
+			instance.potential = 100
 			OverworldState.add_collection_instance(instance)
 
 
