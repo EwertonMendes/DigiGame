@@ -1,8 +1,6 @@
 shader_type canvas_item;
 render_mode unshaded;
 
-uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_nearest;
-
 uniform float progress : hint_range(0.0, 1.0) = 1.0;
 uniform float phase_seed = 0.0;
 uniform float cell_pixels : hint_range(18.0, 48.0) = 30.0;
@@ -16,13 +14,11 @@ float hash21(vec2 p) {
 }
 
 void fragment() {
-	// CanvasGroup renders its children into the 2D backbuffer. Assigning a custom
-	// material replaces Godot's built-in CanvasGroup shader, so preserve its
-	// native screen-texture sampling and premultiplied-alpha correction first.
-	vec4 source = textureLod(screen_texture, SCREEN_UV, 0.0);
-	if (source.a > 0.0001) {
-		source.rgb /= source.a;
-	}
+	// This shader deliberately does not sample the screen/backbuffer. It is
+	// applied directly to each UI CanvasItem for the short transition window,
+	// so unrevealed pixels are truly transparent and the overworld remains the
+	// renderer-native background behind the interface.
+	vec4 source = texture(TEXTURE, UV) * COLOR;
 
 	vec2 pixel = SCREEN_UV / max(SCREEN_PIXEL_SIZE, vec2(0.000001));
 	vec2 grid_uv = pixel / max(cell_pixels, 1.0);
@@ -33,25 +29,29 @@ void fragment() {
 	float random_b = hash21(cell.yx + vec2(phase_seed * 5.7, phase_seed * 23.9));
 
 	// Lower-left is order 0 and upper-right is order 1. A restrained amount of
-	// per-cell jitter keeps the interface feeling digitally assembled rather
-	// than looking like a plain diagonal wipe.
+	// per-cell jitter keeps the result digital without becoming a plain wipe.
 	float diagonal = clamp((SCREEN_UV.x + (1.0 - SCREEN_UV.y)) * 0.5, 0.0, 1.0);
 	float order = clamp(diagonal * 0.82 + random_value * 0.18, 0.0, 1.0);
-	float reveal = smoothstep(order - 0.055, order + 0.035, progress);
 
-	// The construction frontier gets a short data glow. It is disabled at both
-	// resting endpoints so a fully open menu is rendered exactly as authored.
+	// Exact endpoint guards are important. At progress 0 absolutely no menu
+	// pixel may leak into the world; at progress 1 the authored UI must be exact.
+	float reveal = 0.0;
+	if (progress >= 0.9999) {
+		reveal = 1.0;
+	} else if (progress > 0.0001) {
+		reveal = smoothstep(order - 0.055, order + 0.035, progress);
+	}
+
 	float active = step(0.001, progress) * (1.0 - step(0.999, progress));
 	float frontier = (1.0 - smoothstep(0.015, 0.085, abs(progress - order))) * active;
 	float edge_distance = min(min(local.x, 1.0 - local.x), min(local.y, 1.0 - local.y));
 	float cell_edge = 1.0 - smoothstep(0.025, 0.105, edge_distance);
 	float pulse = 0.72 + 0.28 * sin(TIME * (5.0 + random_b * 2.0) + random_value * 6.28318);
-	float glow = frontier * (0.22 + cell_edge * 0.48) * pulse;
+	float glow = frontier * (0.18 + cell_edge * 0.42) * pulse;
 
 	vec3 data_color = mix(primary_color.rgb, accent_color.rgb, random_b * 0.62);
-	vec3 rgb = mix(source.rgb, data_color, clamp(glow * 0.68, 0.0, 0.72));
-	rgb += data_color * frontier * cell_edge * 0.12;
+	vec3 rgb = mix(source.rgb, data_color, clamp(glow * 0.56, 0.0, 0.58));
+	rgb += data_color * frontier * cell_edge * 0.08;
 
-	vec4 transitioned = vec4(rgb, source.a * reveal);
-	COLOR *= transitioned;
+	COLOR = vec4(rgb, source.a * reveal);
 }
