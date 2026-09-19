@@ -1,0 +1,456 @@
+name: DigiGame Release Builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to build (for example 0.1.0 or 0.1.0-rc.1). A leading v is accepted.
+        required: true
+        default: 0.1.0
+        type: string
+      publish_release:
+        description: Publish these artifacts as a GitHub Release. Leave off for repeatable test builds.
+        required: true
+        default: false
+        type: boolean
+      prerelease:
+        description: Mark the GitHub Release as a prerelease when publishing.
+        required: true
+        default: true
+        type: boolean
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/release.yml
+      - export_presets.cfg
+      - tools/prepare_release_metadata.py
+      - docs/releases.md
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digigame-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: 4.7.2
+
+jobs:
+  prepare:
+    name: Prepare build identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_code: ${{ steps.version.outputs.version_code }}
+      artifact_prefix: ${{ steps.version.outputs.artifact_prefix }}
+      publish_release: ${{ steps.version.outputs.publish_release }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - name: Normalize and validate version
+        id: version
+        shell: bash
+        env:
+          MANUAL_VERSION: ${{ inputs.version }}
+          MANUAL_PUBLISH: ${{ inputs.publish_release }}
+          MANUAL_PRERELEASE: ${{ inputs.prerelease }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            raw_version="$MANUAL_VERSION"
+            publish_release="${MANUAL_PUBLISH:-false}"
+            prerelease="${MANUAL_PRERELEASE:-true}"
+          else
+            raw_version="0.0.0-pr.${PR_NUMBER}"
+            publish_release="false"
+            prerelease="true"
+          fi
+
+          version="${raw_version#v}"
+          if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "Invalid version: $raw_version" >&2
+            echo "Use major.minor.patch or major.minor.patch-prerelease, for example 0.1.0 or 0.1.0-rc.1." >&2
+            exit 1
+          fi
+
+          if [[ "$publish_release" == "true" && "$GITHUB_REF" != "refs/heads/master" ]]; then
+            echo "Published releases must be created from master. Run the workflow from the master branch." >&2
+            exit 1
+          fi
+
+          version_code="$GITHUB_RUN_NUMBER"
+          if (( version_code <= 0 || version_code > 2100000000 )); then
+            echo "GitHub run number cannot be used as an Android versionCode: $version_code" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "artifact_prefix=DigiGame-v$version" >> "$GITHUB_OUTPUT"
+          echo "publish_release=$publish_release" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+          echo "Building DigiGame v$version (Android versionCode $version_code)."
+          echo "Publish release: $publish_release"
+
+  build:
+    name: Build Windows, Linux, macOS and Android
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      ANDROID_VERSION_CODE: ${{ needs.prepare.outputs.version_code }}
+      ARTIFACT_PREFIX: ${{ needs.prepare.outputs.artifact_prefix }}
+      PUBLISH_RELEASE: ${{ needs.prepare.outputs.publish_release }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate vendored runtime assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/validate_runtime_assets.py
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Resolve Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_home="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          if [[ -z "$android_home" || ! -d "$android_home" ]]; then
+            echo "GitHub runner Android SDK was not found." >&2
+            exit 1
+          fi
+
+          echo "ANDROID_HOME=$android_home" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$android_home" >> "$GITHUB_ENV"
+          java -version
+          "$android_home/cmdline-tools/latest/bin/sdkmanager" --version || sdkmanager --version
+
+      - name: Restore Godot release toolchain cache
+        id: godot-toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/digigame-godot
+            ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-release-toolchain-v1-${{ runner.os }}-${{ env.GODOT_VERSION }}
+
+      - name: Download Godot and all export templates on cache miss
+        if: steps.godot-toolchain.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_TAG="${GODOT_VERSION}-stable"
+
+          mkdir -p "$HOME/.cache/digigame-godot"
+          curl -fL "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_linux.x86_64.zip" -o /tmp/godot.zip
+          rm -rf /tmp/godot && mkdir -p /tmp/godot
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          mv "/tmp/godot/Godot_v${GODOT_TAG}_linux.x86_64" "$HOME/.cache/digigame-godot/godot"
+          chmod +x "$HOME/.cache/digigame-godot/godot"
+
+          curl -fL "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_export_templates.tpz" -o /tmp/templates.tpz
+          rm -rf /tmp/godot-templates && mkdir -p /tmp/godot-templates
+          unzip -q /tmp/templates.tpz -d /tmp/godot-templates
+
+          template_dir="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$template_dir"
+          cp -a /tmp/godot-templates/templates/. "$template_dir/"
+
+      - name: Activate Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x "$HOME/.cache/digigame-godot/godot"
+          sudo ln -sf "$HOME/.cache/digigame-godot/godot" /usr/local/bin/godot
+          godot --version
+
+      - name: Configure Android paths for Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+
+      - name: Restore Godot imported-resource cache
+        uses: actions/cache@v4
+        with:
+          path: .godot/imported
+          key: godot-release-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', '**/*.gd', '**/*.tscn', '**/*.tres', 'assets/**/*') }}
+          restore-keys: |
+            godot-release-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-
+
+      - name: Import and validate project
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --import 2>&1 | tee /tmp/godot-import.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing .*assets/characters' /tmp/godot-import.log; then
+            exit 1
+          fi
+
+      - name: Validate game data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/enrich_digimon_database.py --check
+          python3 tools/validate_combat_data.py
+          python3 tools/validate_digimon_progression.py
+          python3 tools/validate_early_rank_playables.py
+
+      - name: Inject release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/prepare_release_metadata.py             --version "$RELEASE_VERSION"             --version-code "$ANDROID_VERSION_CODE"
+
+      - name: Configure Android signing
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          supplied=0
+          [[ -n "$ANDROID_KEYSTORE_BASE64" ]] && supplied=$((supplied + 1))
+          [[ -n "$ANDROID_KEYSTORE_ALIAS" ]] && supplied=$((supplied + 1))
+          [[ -n "$ANDROID_KEYSTORE_PASSWORD" ]] && supplied=$((supplied + 1))
+
+          if (( supplied > 0 && supplied < 3 )); then
+            echo "Android signing secrets are partially configured. Configure all three documented secrets." >&2
+            exit 1
+          fi
+
+          if (( supplied == 3 )); then
+            keystore="$RUNNER_TEMP/digigame-release.keystore"
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+            chmod 600 "$keystore"
+            alias="$ANDROID_KEYSTORE_ALIAS"
+            password="$ANDROID_KEYSTORE_PASSWORD"
+            echo "Using persistent Android release signing."
+          else
+            if [[ "$PUBLISH_RELEASE" == "true" ]]; then
+              echo "A public GitHub Release requires persistent Android signing secrets." >&2
+              echo "See docs/releases.md for ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_ALIAS and ANDROID_KEYSTORE_PASSWORD." >&2
+              exit 1
+            fi
+
+            keystore="$RUNNER_TEMP/digigame-ci.keystore"
+            alias="digigameci"
+            password="digigameci"
+            keytool -genkeypair -noprompt               -keystore "$keystore"               -storepass "$password"               -keypass "$password"               -alias "$alias"               -keyalg RSA               -keysize 2048               -validity 3650               -dname "CN=DigiGame CI,O=DigiGame,C=US"
+            echo "Using an ephemeral CI signing key. This APK is for testing only."
+          fi
+
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$keystore" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=$alias" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$password" >> "$GITHUB_ENV"
+
+      - name: Export release builds
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export_target() {
+            local preset="$1"
+            local output="$2"
+            local log="$3"
+
+            mkdir -p "$(dirname "$output")"
+            echo "Exporting $preset -> $output"
+            godot --headless --path . --export-release "$preset" "$output" 2>&1 | tee "$log"
+
+            if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing |Project export for platform: .* - Failed' "$log"; then
+              echo "$preset export reported an error." >&2
+              exit 1
+            fi
+
+            test -s "$output"
+          }
+
+          export_target "Windows Desktop" "build/release/windows/DigiGame.exe" "/tmp/export-windows.log"
+          export_target "Linux" "build/release/linux/DigiGame.x86_64" "/tmp/export-linux.log"
+          export_target "macOS" "build/release/macos/DigiGame-macOS.zip" "/tmp/export-macos.log"
+          export_target "Android" "build/release/android/DigiGame.apk" "/tmp/export-android.log"
+
+      - name: Package and checksum artifacts
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/packages
+
+          (
+            cd build/release/windows
+            zip -9 "../../packages/${ARTIFACT_PREFIX}-Windows-x86_64.zip" DigiGame.exe
+          )
+
+          chmod +x build/release/linux/DigiGame.x86_64
+          tar -C build/release/linux -czf "build/packages/${ARTIFACT_PREFIX}-Linux-x86_64.tar.gz" DigiGame.x86_64
+
+          cp build/release/macos/DigiGame-macOS.zip "build/packages/${ARTIFACT_PREFIX}-macOS-universal.zip"
+          cp build/release/android/DigiGame.apk "build/packages/${ARTIFACT_PREFIX}-Android-arm64.apk"
+
+          (
+            cd build/packages
+            sha256sum "${ARTIFACT_PREFIX}-Windows-x86_64.zip"                       "${ARTIFACT_PREFIX}-Linux-x86_64.tar.gz"                       "${ARTIFACT_PREFIX}-macOS-universal.zip"                       "${ARTIFACT_PREFIX}-Android-arm64.apk" > SHA256SUMS.txt
+          )
+
+          cat > build/packages/release-manifest.json <<EOF
+          {
+            "version": "$RELEASE_VERSION",
+            "android_version_code": $ANDROID_VERSION_CODE,
+            "godot_version": "$GODOT_VERSION",
+            "source_sha": "$SOURCE_SHA",
+            "source_ref": "$SOURCE_REF",
+            "github_run_id": "$GITHUB_RUN_ID",
+            "github_run_number": "$GITHUB_RUN_NUMBER",
+            "github_run_attempt": "$GITHUB_RUN_ATTEMPT"
+          }
+          EOF
+
+          ls -lh build/packages
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.artifact_prefix }}-Windows-x86_64-run-${{ github.run_number }}
+          path: build/packages/${{ needs.prepare.outputs.artifact_prefix }}-Windows-x86_64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.artifact_prefix }}-Linux-x86_64-run-${{ github.run_number }}
+          path: build/packages/${{ needs.prepare.outputs.artifact_prefix }}-Linux-x86_64.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.artifact_prefix }}-macOS-universal-run-${{ github.run_number }}
+          path: build/packages/${{ needs.prepare.outputs.artifact_prefix }}-macOS-universal.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.artifact_prefix }}-Android-arm64-run-${{ github.run_number }}
+          path: build/packages/${{ needs.prepare.outputs.artifact_prefix }}-Android-arm64.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload release metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.artifact_prefix }}-metadata-run-${{ github.run_number }}
+          path: |
+            build/packages/SHA256SUMS.txt
+            build/packages/release-manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Publish GitHub Release
+    needs:
+      - prepare
+      - build
+    if: needs.prepare.outputs.publish_release == 'true' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      ARTIFACT_PREFIX: ${{ needs.prepare.outputs.artifact_prefix }}
+      PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+    steps:
+      - name: Download exact build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: ${{ needs.prepare.outputs.artifact_prefix }}-*-run-${{ github.run_number }}
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create or resume draft release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v$RELEASE_VERSION"
+
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            is_draft="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)"
+            target="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json targetCommitish --jq .targetCommitish)"
+
+            if [[ "$is_draft" != "true" ]]; then
+              echo "Release $tag is already published. Published versions are immutable; choose a new version." >&2
+              exit 1
+            fi
+
+            if [[ "$target" != "$GITHUB_SHA" ]]; then
+              echo "Existing draft $tag targets $target, but this run targets $GITHUB_SHA." >&2
+              echo "Delete the stale draft or run the workflow from the matching revision." >&2
+              exit 1
+            fi
+
+            echo "Resuming existing draft release $tag."
+          else
+            args=(
+              release create "$tag"
+              --repo "$GITHUB_REPOSITORY"
+              --target "$GITHUB_SHA"
+              --title "Digi Game $tag"
+              --draft
+              --generate-notes
+            )
+
+            if [[ "$PRERELEASE" == "true" ]]; then
+              args+=(--prerelease)
+            fi
+
+            gh "${args[@]}"
+          fi
+
+      - name: Upload and publish release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v$RELEASE_VERSION"
+
+          test -s "release-assets/${ARTIFACT_PREFIX}-Windows-x86_64.zip"
+          test -s "release-assets/${ARTIFACT_PREFIX}-Linux-x86_64.tar.gz"
+          test -s "release-assets/${ARTIFACT_PREFIX}-macOS-universal.zip"
+          test -s "release-assets/${ARTIFACT_PREFIX}-Android-arm64.apk"
+          test -s "release-assets/SHA256SUMS.txt"
+          test -s "release-assets/release-manifest.json"
+
+          gh release upload "$tag" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false
+
+          echo "Published Digi Game $tag from $GITHUB_SHA."

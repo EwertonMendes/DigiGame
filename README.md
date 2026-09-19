@@ -1,5 +1,9 @@
 # DigiGame
 
+## Builds and releases
+
+Windows, Linux, macOS, and Android packages are built remotely with GitHub Actions. See [docs/releases.md](docs/releases.md) for versioning, repeatable builds, Android signing, and the official release process.
+
 ## Screenshot 20-09-2023
   ### Features:
   <ul>
