@@ -116,22 +116,36 @@ func _ready() -> void:
 	assert(int(menu.get("_mode")) == 1, "Confirming a roster card must enter command mode")
 	var commands := menu.get("_command_buttons") as Array
 	assert(commands.size() == 3, "Main Digimon command area must expose Techniques, Evolution and Squad role management")
+	var command_row := menu.find_child("CommandRow", true, false) as HBoxContainer
+	assert(command_row != null and command_row.get_child_count() == 3, "All three Digimon commands must share one horizontal row")
+	var first_command_y := -1.0
+	var first_command_height := -1.0
 	for command_index in range(commands.size()):
-		var command := commands[command_index] as Button
+		var command := commands[command_index] as DigiCommandButton
 		assert(command != null and not command.disabled and command.focus_mode == Control.FOCUS_ALL, "Commands must become interactive only after Digimon confirmation")
-		if command_index < 2:
-			_assert_command_copy_fits(command)
-	var squad_role_command := commands[2] as Button
+		assert(command.find_child("CommandIcon", true, false) != null, "Compact Digimon commands must retain their icon")
+		assert(command.find_child("CommandTitle", true, false) != null, "Compact Digimon commands must retain their name")
+		assert(command.find_child("CommandSubtitle", true, false) == null, "Compact Digimon commands must not render descriptions")
+		assert(command.find_child("CommandStatus", true, false) == null, "Compact Digimon commands must not render learned/ready/status labels")
+		assert(command.custom_minimum_size.y >= V2.TOUCH_TARGET and command.custom_minimum_size.y <= 60.0, "Compact Digimon commands must stay touch-safe without consuming a second row")
+		if command_index == 0:
+			first_command_y = command.position.y
+			first_command_height = command.size.y
+		else:
+			assert(is_equal_approx(command.position.y, first_command_y), "All Digimon commands must stay on the same visual row")
+			assert(is_equal_approx(command.size.y, first_command_height), "All Digimon commands must use the same compact height")
+	var squad_role_command := commands[2] as DigiCommandButton
 	assert(squad_role_command.name == "SquadRoleCommand", "Third command must own Active/Reserve role management")
-	assert(squad_role_command.text == "SWAP WITH ACTIVE", "Reserve member must offer an Active swap when all Active slots are full")
-	assert(squad_role_command.custom_minimum_size.y >= V2.TOUCH_TARGET, "Squad role action must remain touch-safe")
+	assert(_command_title(squad_role_command) == "SWAP WITH ACTIVE", "Reserve member must offer an Active swap when all Active slots are full")
 	menu.call("_focus_action", 0)
-	menu.call("_move_vertical", 1)
-	assert(get_viewport().gui_get_focus_owner() == squad_role_command, "Controller Down must follow the visual layout into Squad role management")
-	menu.call("_move_vertical", -1)
-	assert(get_viewport().gui_get_focus_owner() == commands[0], "Controller Up from Squad role management must return to the top command row")
 	menu.call("_move_horizontal", 1)
-	assert(get_viewport().gui_get_focus_owner() == commands[1], "Controller Left/Right must stay within the Techniques/Evolution top row")
+	assert(get_viewport().gui_get_focus_owner() == commands[1], "Controller Right must move to Evolution in the single command row")
+	menu.call("_move_horizontal", 1)
+	assert(get_viewport().gui_get_focus_owner() == squad_role_command, "Controller Right must reach Squad role management in the same row")
+	menu.call("_move_horizontal", 1)
+	assert(get_viewport().gui_get_focus_owner() == commands[0], "Single-row command navigation must wrap without escaping into chrome")
+	menu.call("_move_vertical", 1)
+	assert(get_viewport().gui_get_focus_owner() == commands[1], "Controller vertical input must remain forgiving within the single command row")
 	menu.call("_focus_action", 0)
 	var close_button := header.get_close_button()
 	assert(close_button != null and close_button.focus_mode == Control.FOCUS_NONE, "Header close X must stay out of controller directional focus")
@@ -322,7 +336,7 @@ func _ready() -> void:
 	menu.call("_confirm_index", active_target_index)
 	await _frames(2)
 	commands = menu.get("_command_buttons") as Array
-	assert((commands[2] as Button).text == "MOVE TO RESERVE", "Active member must offer a direct Reserve move when a slot is open")
+	assert(_command_title(commands[2] as Button) == "MOVE TO RESERVE", "Active member must offer a direct Reserve move when a slot is open")
 	(commands[2] as Button).pressed.emit()
 	await _frames(3)
 	assert(OverworldState.get_active_instances().size() == 2 and OverworldState.get_reserve_party_instances().size() == 3, "Direct Reserve move must update Squad counts without a picker")
@@ -337,7 +351,7 @@ func _ready() -> void:
 	menu.call("_confirm_index", moved_target_index)
 	await _frames(2)
 	commands = menu.get("_command_buttons") as Array
-	assert((commands[2] as Button).text == "MOVE TO ACTIVE", "Reserve member must offer a direct Active move when a slot is open")
+	assert(_command_title(commands[2] as Button) == "MOVE TO ACTIVE", "Reserve member must offer a direct Active move when a slot is open")
 	(commands[2] as Button).pressed.emit()
 	await _frames(3)
 	assert(OverworldState.get_active_instances().size() == 3 and OverworldState.get_reserve_party_instances().size() == 2, "Direct Active move must restore the original Squad counts")
@@ -355,42 +369,11 @@ func _ready() -> void:
 	get_tree().quit()
 
 
-func _assert_command_copy_fits(command: Button) -> void:
+func _command_title(command: Button) -> String:
+	if command == null:
+		return ""
 	var title := command.find_child("CommandTitle", true, false) as Label
-	var subtitle := command.find_child("CommandSubtitle", true, false) as Label
-	var status := command.find_child("CommandStatus", true, false) as Label
-	assert(title != null and subtitle != null and status != null, "Every populated Digimon command must expose title, subtitle and status labels")
-	assert(_single_line_text_width(title) <= title.size.x + 1.0, "%s title should fit without default ellipsis" % title.text)
-	assert(_single_line_text_width(status) <= status.size.x + 1.0, "%s status should fit without default ellipsis" % title.text)
-	assert(subtitle.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART and subtitle.max_lines_visible == 2, "%s subtitle must use bounded two-line wrapping before ellipsis" % title.text)
-	assert(_wrapped_line_count(subtitle) <= subtitle.max_lines_visible, "%s standard subtitle should fit without ellipsis" % title.text)
-
-
-func _single_line_text_width(label: Label) -> float:
-	var font := label.get_theme_font("font")
-	var font_size := label.get_theme_font_size("font_size")
-	return font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-
-
-func _wrapped_line_count(label: Label) -> int:
-	var words := label.text.split(" ", false)
-	if words.is_empty():
-		return 0
-	var font := label.get_theme_font("font")
-	var font_size := label.get_theme_font_size("font_size")
-	var available := maxf(1.0, label.size.x)
-	var space_width := font.get_string_size(" ", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	var lines := 1
-	var line_width := 0.0
-	for word in words:
-		var word_width := font.get_string_size(String(word), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		if line_width > 0.0 and line_width + space_width + word_width > available:
-			lines += 1
-			line_width = word_width
-		else:
-			line_width += word_width if line_width <= 0.0 else space_width + word_width
-	return lines
-
+	return title.text if title != null else command.text
 
 func _capture_geometry(controls: Dictionary) -> Dictionary:
 	var result := {}
