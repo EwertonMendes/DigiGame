@@ -44,6 +44,8 @@ func reveal_open() -> void:
 	if surface == null:
 		_abort()
 		return
+	if surface.has_method("refresh_transition_targets"):
+		surface.call("refresh_transition_targets")
 	await _animate(surface, 0.0, 1.0, OPEN_DURATION, Tween.EASE_OUT)
 	_finish(true)
 
@@ -83,6 +85,8 @@ func cancel_transition() -> void:
 	var surface := _active_surface()
 	if surface != null:
 		surface.call("set_transition_progress", 1.0)
+		if surface.has_method("end_transition"):
+			surface.call("end_transition")
 	_abort()
 
 
@@ -98,6 +102,8 @@ func _begin(surface: Node, surface_id: String, opening: bool) -> bool:
 	_surface_id = surface_id
 	_surface_ref = weakref(surface)
 	_configure_surface(surface, surface_id)
+	if surface.has_method("begin_transition"):
+		surface.call("begin_transition")
 	transition_started.emit(surface_id, opening)
 	return true
 
@@ -163,6 +169,9 @@ func _active_surface() -> Node:
 
 func _finish(opening: bool) -> void:
 	var finished_id := _surface_id
+	var surface := _active_surface()
+	if surface != null and surface.has_method("end_transition"):
+		surface.call("end_transition")
 	_busy = false
 	_opening = false
 	_surface_id = ""
