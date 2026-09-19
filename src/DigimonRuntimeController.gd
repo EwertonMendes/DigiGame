@@ -10,9 +10,9 @@ const BATTLE_SPRITE_SCALE := Vector2(1.0, 1.0)
 # Temporary encounter/bootstrap data. These descriptors already use the same
 # factory path that the future DigiLab, roster save, and encounter generator use.
 const PLAYER_ROSTER := [
+	{"species": "botamon", "level": 1, "scan": 100},
 	{"species": "agumon", "level": 1, "scan": 100},
 	{"species": "gabumon", "level": 1, "scan": 100},
-	{"species": "greymon", "level": 1, "scan": 100},
 ]
 const ENEMY_ENCOUNTER := [
 	{"species": "koromon", "level_min": 1, "level_max": 2, "profile": "wild", "tier": "E", "footprint": "single"},
@@ -20,7 +20,7 @@ const ENEMY_ENCOUNTER := [
 	{"species": "veemon", "level_min": 2, "level_max": 3, "profile": "wild", "tier": "E", "footprint": "single"},
 ]
 
-var player_digimons := ["agumon", "gabumon", "greymon"]
+var player_digimons := ["botamon", "agumon", "gabumon"]
 var enemy_digimons := ["koromon", "tanemon", "veemon"]
 var _hovered_digimon_key := ""
 var _hovered_actor: Node = null
