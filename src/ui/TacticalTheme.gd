@@ -26,26 +26,20 @@ const DISABLED: Color = Color(0.46, 0.48, 0.52, 1.0)
 const FRAME_DARK: Color = Color(0.16, 0.20, 0.25, 1.0)
 
 # Typography system.
-# Oxanium carries display/game identity. Exo 2 handles normal-size interface
-# copy. Noto Sans is deliberately used for microcopy because its open forms and
-# larger apparent x-height stay readable at 10-12 px and survive translation
-# better than a display face. Rajdhani remains a committed bootstrap fallback.
+# Runtime typography must be deterministic across desktop and Web. The old Web
+# pipeline downloaded extra font families only during CI, while a normal local
+# checkout used the committed Rajdhani fallback. The same revision could
+# therefore render with genuinely different typefaces depending on the target.
 #
-# Battle UI is intentionally different from dense menus: every tactical datum
-# (commands, HP/SP values, turn labels, hover cards and previews) stays in the
-# same Oxanium family for fast visual consistency, but uses the family's maximum
-# practical weight so the small/medium glyphs do not look wire-thin in motion.
-const FONT_DISPLAY_PATH := "res://assets/ui/fonts/Oxanium[wght].ttf"
-const FONT_UI_PATH := "res://assets/ui/fonts/Exo2[wght].ttf"
-const FONT_READING_PATH := "res://assets/ui/fonts/NotoSans[wdth,wght].ttf"
+# Rajdhani is the canonical packaged family on every runtime target. SemiBold
+# carries display, UI, microcopy and combat roles; Regular handles reading copy.
+# Any future family must be committed and validated before it can become runtime
+# typography so export environment can never change the visual identity.
+const FONT_DISPLAY_PATH := "res://assets/ui/fonts/Rajdhani-SemiBold.ttf"
+const FONT_UI_PATH := "res://assets/ui/fonts/Rajdhani-SemiBold.ttf"
+const FONT_READING_PATH := "res://assets/ui/fonts/Rajdhani-Regular.ttf"
 const FONT_BOOTSTRAP_REGULAR_PATH := "res://assets/ui/fonts/Rajdhani-Regular.ttf"
 const FONT_BOOTSTRAP_SEMIBOLD_PATH := "res://assets/ui/fonts/Rajdhani-SemiBold.ttf"
-
-const DISPLAY_WEIGHT := 700.0
-const COMBAT_WEIGHT := 800.0
-const UI_WEIGHT := 600.0
-const READING_WEIGHT := 500.0
-const MICRO_WEIGHT := 650.0
 const SMALL_TEXT_BREAKPOINT := 12
 const MIN_SMALL_TEXT_SIZE := 10
 const TYPOGRAPHY_ROOT_META := &"digi_typography_root_installed"
@@ -68,8 +62,7 @@ static func _load_font(path: String) -> Font:
 static func _font_with_fallbacks(
 	primary_path: String,
 	bootstrap_path: String,
-	fallback_paths: Array[String],
-	weight: float
+	fallback_paths: Array[String]
 ) -> Font:
 	var primary := _load_font(primary_path)
 	if primary == null:
@@ -83,11 +76,12 @@ static func _font_with_fallbacks(
 		if fallback != null and fallback != primary:
 			fallbacks.append(fallback)
 
-	# FontVariation is also how Godot exposes OpenType variable-font axes.
+	# Use only packaged static faces. Avoid OpenType weight-axis synthesis here:
+	# the committed Regular/SemiBold files should rasterize from the same source
+	# data on desktop and Web.
 	var composed := FontVariation.new()
 	composed.base_font = primary
 	composed.fallbacks = fallbacks
-	composed.variation_opentype = {"wght": weight}
 	return composed
 
 
@@ -96,8 +90,7 @@ static func display_font() -> Font:
 		_display_font_cache = _font_with_fallbacks(
 			FONT_DISPLAY_PATH,
 			FONT_BOOTSTRAP_SEMIBOLD_PATH,
-			[FONT_UI_PATH, FONT_READING_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
-			DISPLAY_WEIGHT
+			[FONT_UI_PATH, FONT_READING_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
 		)
 	return _display_font_cache
 
@@ -107,8 +100,7 @@ static func combat_font() -> Font:
 		_combat_font_cache = _font_with_fallbacks(
 			FONT_DISPLAY_PATH,
 			FONT_BOOTSTRAP_SEMIBOLD_PATH,
-			[FONT_UI_PATH, FONT_READING_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
-			COMBAT_WEIGHT
+			[FONT_UI_PATH, FONT_READING_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
 		)
 	return _combat_font_cache
 
@@ -122,8 +114,7 @@ static func body_font() -> Font:
 		_body_font_cache = _font_with_fallbacks(
 			FONT_UI_PATH,
 			FONT_BOOTSTRAP_SEMIBOLD_PATH,
-			[FONT_READING_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
-			UI_WEIGHT
+			[FONT_READING_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
 		)
 	return _body_font_cache
 
@@ -133,8 +124,7 @@ static func reading_font() -> Font:
 		_reading_font_cache = _font_with_fallbacks(
 			FONT_READING_PATH,
 			FONT_BOOTSTRAP_REGULAR_PATH,
-			[FONT_UI_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
-			READING_WEIGHT
+			[FONT_UI_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
 		)
 	return _reading_font_cache
 
@@ -142,10 +132,9 @@ static func reading_font() -> Font:
 static func micro_font() -> Font:
 	if _micro_font_cache == null:
 		_micro_font_cache = _font_with_fallbacks(
-			FONT_READING_PATH,
+			FONT_UI_PATH,
 			FONT_BOOTSTRAP_SEMIBOLD_PATH,
-			[FONT_UI_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH],
-			MICRO_WEIGHT
+			[FONT_READING_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
 		)
 	return _micro_font_cache
 
