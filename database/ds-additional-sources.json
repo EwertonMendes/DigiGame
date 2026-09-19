@@ -72,6 +72,9 @@
     "two_rows_lower_region_of_six": {
       "kind": "two_rows_of_six",
       "min_cy_ratio": 0.65
+    },
+    "four_rows_leftmost_triples": {
+      "kind": "four_rows_leftmost_triples"
     }
   },
   "species": {
@@ -434,6 +437,86 @@
       "profile": "two_rows_right_region_of_six",
       "pattern": "canonical_rows",
       "source_member": "sprite thread/AncientGreymon.png"
+    },
+    "Ogremon": {
+      "source_id": 96,
+      "source_member": "sprite thread/096_Ogremon.png",
+      "source_sha256": "caff59ef6aae6aab333603780acc80d925f676ae7e050ea0e97d4fcbcdf8a4dc",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/096_Ogremon.png",
+      "profile": "four_rows_leftmost_triples",
+      "pattern": "compact_interleaved"
+    },
+    "Minotarumon": {
+      "source_id": 135,
+      "source_member": "sprite thread/135_Minotarumon.png",
+      "source_sha256": "e33f955c626cb0045ed07d367158cdc47957dfca75abca3e65277da06288a1ed",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/135_Minotarumon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Gulfmon": {
+      "source_id": 353,
+      "source_member": "sprite thread/353_Galfmon.png",
+      "source_sha256": "de9471b7fbc4b316bbe670adb6789d04cf9485a4910fa30d8a38ba24273e6c39",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/353_Galfmon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Nanimon": {
+      "source_id": 179,
+      "source_member": "sprite thread/179_Nanimon.png",
+      "source_sha256": "70c3b22e4e8dca582e1332ed0eb4902f39c82ecf25b807815012bda396a63dc1",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/179_Nanimon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Black Were Garurumon": {
+      "source_id": 213,
+      "source_member": "sprite thread/213_WereGarurumonBlack.png",
+      "source_sha256": "650be564204a532f7b91a0360fbc070155def342a214b519c4b27e85c7ceb22b",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/213_WereGarurumonBlack.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Vikemon": {
+      "source_id": 362,
+      "source_member": "sprite thread/362_VikemonGarmmon.png",
+      "source_sha256": "1bbb48c8d48a60f8d963bc4af2bd33cdb20c7117a6247ff10a9b4abae13ebcd8",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/VikemonGarmmon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Zudomon": {
+      "source_id": 249,
+      "source_member": "sprite thread/249_Zudomon.png",
+      "source_sha256": "0d78392a1fed402eb97a65c27cad18fb946fd6ca78ffc3c055bde51405c43a21",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/249_Zudomon.png",
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved"
+    },
+    "Ikkakumon": {
+      "source_id": 134,
+      "source_member": "sprite thread/134_Ikkakumon.png",
+      "source_sha256": "2f231a2ae3012c24474df159e267f73e9c63f7e0f05388dec6611317869cdae0",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/134_Ikkakumon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "Etemon": {
+      "source_id": 200,
+      "source_member": "sprite thread/200_Etemon.png",
+      "source_sha256": "222f703e1f210b537c033d679ffbde719affb9d026750fc9e0880ecb792fbe69",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/200_Etemon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
+    },
+    "MetalEtemon": {
+      "source_id": 301,
+      "source_member": "sprite thread/301_MetalEtemon.png",
+      "source_sha256": "9fa990ba9a49ffc574549302ed286dd0c859c782f0d51439a1755ac9e8cf414b",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/301_MetalEtemon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
     }
   }
 }

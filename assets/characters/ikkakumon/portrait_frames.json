@@ -1,0 +1,14 @@
+{
+  "source": "Ikkakumon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ikkakumon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "0fc9d97ebccdd51ba959eda718bd63a5aefcd16adf540ffcc2e30040a3907674"
+}

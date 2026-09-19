@@ -1,0 +1,12 @@
+{
+  "source": "Zudomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Zudomon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 2,
+  "durations_ms": [
+    300,
+    300
+  ],
+  "source_sha256": "f2ba1846f5adfc451016490048f9f61b5a58f23e2244e2acd2f00eda36eec95a"
+}

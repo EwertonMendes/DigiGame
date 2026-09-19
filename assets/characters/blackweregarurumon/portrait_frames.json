@@ -1,0 +1,14 @@
+{
+  "source": "Black Were Garurumon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Black%20Were%20Garurumon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "1a7d1618aeaada06854ebac26ed03fdb331c29e8299955abc2f2081b119c19d3"
+}

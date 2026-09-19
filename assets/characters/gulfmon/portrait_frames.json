@@ -1,0 +1,14 @@
+{
+  "source": "Gulfmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Gulfmon.webp",
+  "frame_width": 117,
+  "frame_height": 156,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "6b93fbff71d032a7eb51d8c9aa34572fb3690254cfa6005f859b1d4b09fcf982"
+}

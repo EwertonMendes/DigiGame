@@ -10,6 +10,7 @@ on:
       - 'assets/characters/**'
       - 'assets/resources/**'
       - 'database/additional-ds-playables.json'
+      - 'database/ds-additional-sources.json'
       - 'database/ds-direction-registry.json'
       - 'database/ds-directional-resource-audit.json'
       - 'tools/build_additional_ds_fields.py'

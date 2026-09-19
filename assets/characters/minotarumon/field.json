@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 135,
+  "source_archive_file": "sprite thread/135_Minotarumon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/135_Minotarumon.png",
+  "source_sha256": "e33f955c626cb0045ed07d367158cdc47957dfca75abca3e65277da06288a1ed",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 99042,
+      "confidence_margin": 209840
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 323340
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 64,
+        "y": 347,
+        "w": 30,
+        "h": 39
+      },
+      {
+        "x": 104,
+        "y": 346,
+        "w": 29,
+        "h": 38
+      },
+      {
+        "x": 143,
+        "y": 347,
+        "w": 26,
+        "h": 38
+      }
+    ],
+    "down_right": [
+      {
+        "x": 254,
+        "y": 347,
+        "w": 30,
+        "h": 39
+      },
+      {
+        "x": 215,
+        "y": 346,
+        "w": 29,
+        "h": 38
+      },
+      {
+        "x": 179,
+        "y": 347,
+        "w": 26,
+        "h": 38
+      }
+    ],
+    "up_left": [
+      {
+        "x": 63,
+        "y": 301,
+        "w": 26,
+        "h": 37
+      },
+      {
+        "x": 99,
+        "y": 300,
+        "w": 28,
+        "h": 37
+      },
+      {
+        "x": 137,
+        "y": 301,
+        "w": 32,
+        "h": 39
+      }
+    ],
+    "up_right": [
+      {
+        "x": 259,
+        "y": 301,
+        "w": 26,
+        "h": 37
+      },
+      {
+        "x": 221,
+        "y": 300,
+        "w": 28,
+        "h": 37
+      },
+      {
+        "x": 179,
+        "y": 301,
+        "w": 32,
+        "h": 39
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/minotarumon/field.png"
+}
