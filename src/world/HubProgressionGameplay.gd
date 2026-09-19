@@ -4,7 +4,7 @@ const DigimonCollectionMenuScript = preload("res://src/ui/DigiSystemProgressionM
 const DigiLabHubScreenScript = preload("res://src/ui/DigiLabHubScreen.gd")
 
 var _digimon_menu: DigimonCollectionMenu = null
-var _digimon_transition_surface: CanvasGroup = null
+var _digimon_transition_surface: DigiUiTransitionSurface = null
 var _menu_open := false
 var _touch_menu_button: Button = null
 var _digilab: DigiLabHubScreen = null
@@ -52,7 +52,7 @@ func _build_digimon_menu() -> void:
 	_digimon_menu.visible = false
 	_digimon_menu.close_requested.connect(_close_digimon_menu)
 	layer.add_child(_digimon_menu)
-	_digimon_transition_surface = _digimon_menu.call("get_transition_surface") as CanvasGroup
+	_digimon_transition_surface = _digimon_menu.call("get_transition_surface") as DigiUiTransitionSurface
 
 	_touch_menu_button = _dialog_button("DIGIMON", UI.GOLD)
 	_touch_menu_button.name = "OpenDigimonMenu"
