@@ -323,15 +323,21 @@ func _snapshot_reward(instance: DigimonInstance) -> Dictionary:
 		"level_steps": [],
 		"learned_skills": [],
 		"unlocked_evolutions": [],
+		"participated": false,
+		"knocked_out": instance.is_fainted(),
+		"initial_role": OverworldState.get_squad_role(instance.id),
+		"xp_eligible": not instance.is_fainted(),
 	}
 
 
 func _create_party_card(reward: Dictionary, accent: Color, rewards_enabled: bool) -> Dictionary:
+	var knocked_out := bool(reward.get("knocked_out", false))
+	var card_accent := V2.SUBTLE if knocked_out else accent
 	var card := PanelContainer.new()
 	card.name = "BattleResultDigimonCardV2"
 	card.custom_minimum_size = Vector2(0.0, 126.0)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_theme_stylebox_override("panel", _card_style(accent, false))
+	card.add_theme_stylebox_override("panel", _card_style(card_accent, false))
 	_party_grid.add_child(card)
 
 	var margin := MarginContainer.new()
@@ -345,7 +351,7 @@ func _create_party_card(reward: Dictionary, accent: Color, rewards_enabled: bool
 	margin.add_child(row)
 
 	var accent_bar := ColorRect.new()
-	accent_bar.color = Color(accent.r, accent.g, accent.b, 0.86)
+	accent_bar.color = Color(card_accent.r, card_accent.g, card_accent.b, 0.86)
 	accent_bar.custom_minimum_size = Vector2(3.0, 0.0)
 	accent_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(accent_bar)
@@ -354,12 +360,14 @@ func _create_party_card(reward: Dictionary, accent: Color, rewards_enabled: bool
 	portrait_frame.custom_minimum_size = Vector2(78.0, 94.0)
 	portrait_frame.add_theme_stylebox_override(
 		"panel",
-		V2.surface_style(V2.PANEL_DEEP, Color(accent.r, accent.g, accent.b, 0.34), 7, Vector4(4.0, 4.0, 4.0, 4.0))
+		V2.surface_style(V2.PANEL_DEEP, Color(card_accent.r, card_accent.g, card_accent.b, 0.34), 7, Vector4(4.0, 4.0, 4.0, 4.0))
 	)
 	row.add_child(portrait_frame)
 	var portrait := PortraitPreviewScript.new()
 	portrait.custom_minimum_size = Vector2(70.0, 86.0)
 	portrait.set_species(String(reward.get("species_name", "")))
+	if knocked_out:
+		portrait.modulate = Color(0.62, 0.66, 0.72, 0.72)
 	portrait_frame.add_child(portrait)
 
 	var info := VBoxContainer.new()
@@ -369,20 +377,24 @@ func _create_party_card(reward: Dictionary, accent: Color, rewards_enabled: bool
 	var name_label := _label(
 		String(reward.get("display_name", reward.get("species_name", "Digimon"))),
 		15,
-		V2.TEXT,
+		V2.SUBTLE if knocked_out else V2.TEXT,
 		true
 	)
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	info.add_child(name_label)
 	var rank := String(reward.get("rank", ""))
-	var level_label := _label("Lv. %d  •  %s" % [int(reward.get("old_level", 1)), rank], 10, V2.rank_color(rank))
+	var level_label := _label(
+		"Lv. %d  •  %s" % [int(reward.get("old_level", 1)), rank],
+		10,
+		V2.SUBTLE if knocked_out else V2.rank_color(rank)
+	)
 	info.add_child(level_label)
 
 	var xp_bar := ProgressBar.new()
 	xp_bar.show_percentage = false
 	xp_bar.custom_minimum_size = Vector2(0.0, 10.0)
 	xp_bar.add_theme_stylebox_override("background", V2.progress_track_style())
-	xp_bar.add_theme_stylebox_override("fill", V2.progress_fill_style(accent))
+	xp_bar.add_theme_stylebox_override("fill", V2.progress_fill_style(card_accent))
 	info.add_child(xp_bar)
 	var required := int(reward.get("old_xp_required", 0))
 	xp_bar.max_value = maxf(1.0, float(required))
@@ -390,9 +402,9 @@ func _create_party_card(reward: Dictionary, accent: Color, rewards_enabled: bool
 	var xp_text := _label(_xp_text(int(reward.get("old_exp", 0)), required), 9, V2.MUTED)
 	info.add_child(xp_text)
 	var gained := _label(
-		"+0 XP" if rewards_enabled else _non_victory_status(_result_outcome()),
+		("KO · NO XP" if knocked_out else "+0 XP") if rewards_enabled else ("KO · NO XP" if knocked_out else _non_victory_status(_result_outcome())),
 		10,
-		V2.CYAN if rewards_enabled else _outcome_accent(_result_outcome()),
+		V2.RED if knocked_out else (V2.CYAN if rewards_enabled else _outcome_accent(_result_outcome())),
 		true
 	)
 	info.add_child(gained)
@@ -430,7 +442,8 @@ func _create_party_card(reward: Dictionary, accent: Color, rewards_enabled: bool
 		"unlocks": unlocks,
 		"level_up": level_up,
 		"reward": reward,
-		"accent": accent,
+		"accent": card_accent,
+		"target_alpha": 0.50 if knocked_out else 1.0,
 	}
 
 
@@ -471,7 +484,7 @@ func _animate_entrance(sequence_id: int) -> bool:
 		for index in range(_cards.size()):
 			var panel: Control = _cards[index]["panel"] as Control
 			panel.position.y += 8.0
-			_active_tween.tween_property(panel, "modulate:a", 1.0, 0.18).set_delay(float(index) * 0.055)
+			_active_tween.tween_property(panel, "modulate:a", float(_cards[index].get("target_alpha", 1.0)), 0.18).set_delay(float(index) * 0.055)
 			_active_tween.tween_property(panel, "position:y", panel.position.y - 8.0, 0.18).set_delay(float(index) * 0.055)
 		await _active_tween.finished
 	return sequence_id == _sequence_id
@@ -482,7 +495,7 @@ func _animate_card(card: Dictionary, sequence_id: int) -> void:
 	var gain_label: Label = card["gain"] as Label
 	var xp_gained := int(reward.get("xp_gained", 0))
 	if xp_gained <= 0:
-		gain_label.text = "+0 XP"
+		gain_label.text = _victory_gain_text(reward)
 		_set_card_final(card)
 		_set_unlock_text(card)
 		return
@@ -569,6 +582,12 @@ func _set_gain_counter(value: float, label: Label) -> void:
 		label.text = "+%d XP" % int(round(value))
 
 
+func _victory_gain_text(reward: Dictionary) -> String:
+	if bool(reward.get("knocked_out", false)):
+		return "KO · NO XP"
+	return "+%d XP" % int(reward.get("xp_gained", 0))
+
+
 func _set_bits_counter(value: float) -> void:
 	_bits_value.text = "+%d Bits" % int(round(value))
 
@@ -631,14 +650,14 @@ func _apply_final_state() -> void:
 	var outcome := _result_outcome()
 	for card: Dictionary in _cards:
 		var panel: PanelContainer = card["panel"] as PanelContainer
-		panel.modulate.a = 1.0
+		panel.modulate.a = float(card.get("target_alpha", 1.0))
 		_set_card_final(card)
 		_set_unlock_text(card)
 		var reward: Dictionary = card["reward"] as Dictionary
 		(card["gain"] as Label).text = (
-			"+%d XP" % int(reward.get("xp_gained", 0))
+			_victory_gain_text(reward)
 			if outcome == "victory"
-			else _non_victory_status(outcome)
+			else ("KO · NO XP" if bool(reward.get("knocked_out", false)) else _non_victory_status(outcome))
 		)
 		var level_up := card["level_up"] as Label
 		level_up.modulate.a = 0.0
