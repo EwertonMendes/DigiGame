@@ -104,7 +104,7 @@ var _attributes_view: VBoxContainer
 var _attributes_header: DigiSectionHeader
 var _stat_grid: GridContainer
 var _stat_rows: Dictionary = {}
-var _plan_view: VBoxContainer
+var _plan_view: GridContainer
 var _mobility_header: DigiSectionHeader
 var _mobility_card: PanelContainer
 var _mobility_value: Label
@@ -287,7 +287,7 @@ func _build_ui() -> void:
 
 	_compact_back_button = _workspace_button("‹  DIGIMON", V2.CYAN)
 	_compact_back_button.name = "CompactBackToRoster"
-	_compact_back_button.custom_minimum_size = Vector2(148.0, 44.0)
+	_compact_back_button.custom_minimum_size = Vector2(148.0, V2.TOUCH_TARGET)
 	_compact_back_button.visible = false
 	_compact_back_button.pressed.connect(_return_to_roster)
 	_menu_root.add_child(_compact_back_button)
@@ -494,7 +494,7 @@ func _budget_metric(parent: HBoxContainer, title: String, accent: Color) -> Labe
 func _build_detail_tabs() -> void:
 	_detail_tabs = HBoxContainer.new()
 	_detail_tabs.name = "TrainingViewTabs"
-	_detail_tabs.custom_minimum_size.y = 42.0
+	_detail_tabs.custom_minimum_size.y = V2.TOUCH_TARGET
 	_detail_tabs.add_theme_constant_override("separation", 6)
 	_detail_root.add_child(_detail_tabs)
 
@@ -505,7 +505,7 @@ func _build_detail_tabs() -> void:
 		button.text = String(spec[1])
 		button.focus_mode = Control.FOCUS_NONE
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.custom_minimum_size.y = 42.0
+		button.custom_minimum_size.y = V2.TOUCH_TARGET
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		button.pressed.connect(_set_detail_view.bind(view_id, false))
 		V2.apply_heading(button)
@@ -553,16 +553,22 @@ func _build_presentation() -> void:
 		_stat_grid.add_child(row)
 		_stat_rows[stat_key] = row
 
-	_plan_view = VBoxContainer.new()
+	_plan_view = GridContainer.new()
 	_plan_view.name = "PlanView"
+	_plan_view.columns = 2
 	_plan_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_plan_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_plan_view.add_theme_constant_override("separation", 7)
+	_plan_view.add_theme_constant_override("h_separation", 8)
+	_plan_view.add_theme_constant_override("v_separation", 7)
 	_presentation_host.add_child(_plan_view)
 	_plan_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	_build_mobility_panel()
 	_build_plan_panel()
+	# Keep section headers on one row and their task cards directly below them.
+	# Hidden compact headers are ignored by GridContainer, leaving the two cards
+	# side-by-side without introducing a second layout implementation.
+	_plan_view.move_child(_plan_header, 1)
 
 
 func _build_mobility_panel() -> void:
@@ -573,6 +579,8 @@ func _build_mobility_panel() -> void:
 
 	_mobility_card = PanelContainer.new()
 	_mobility_card.name = "MobilityTraining"
+	_mobility_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_mobility_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_mobility_card.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.AMBER))
 	_plan_view.add_child(_mobility_card)
 	var margin := _margin(12, 8, 12, 8)
@@ -620,6 +628,7 @@ func _build_plan_panel() -> void:
 
 	_plan_card = PanelContainer.new()
 	_plan_card.name = "TrainingPlan"
+	_plan_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_plan_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_plan_card.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.GREEN))
 	_plan_view.add_child(_plan_card)
@@ -844,6 +853,8 @@ func _refresh_detail_values() -> void:
 	_capacity_value.text = "%d / %d" % [used + planned, total]
 	_available_value.text = str(remaining)
 	_available_value.add_theme_color_override("font_color", V2.GREEN if remaining > 0 else V2.RED)
+	if _compact_layout:
+		_identity_meta.text = "%s · LV %d · TIER %s · %d CAP" % [rank.to_upper(), instance.level, instance.tier, remaining]
 	_capacity_bar.max_value = maxf(1.0, float(total))
 	_capacity_bar.value = float(used + planned)
 
@@ -1267,7 +1278,7 @@ func _page_for_instance(instance_id: String) -> int:
 	var owned := OverworldState.get_collection_instances()
 	for index in range(owned.size()):
 		if owned[index].id == instance_id:
-			return index / ROSTER_PAGE_SIZE
+			return floori(float(index) / float(ROSTER_PAGE_SIZE))
 	return 0
 
 
@@ -1349,8 +1360,8 @@ func _layout() -> void:
 			_collection_panel.size = Vector2(width - edge * 2.0, body_h)
 		else:
 			_compact_back_button.position = Vector2(edge, body_top)
-			_compact_back_button.size = Vector2(148.0, 44.0)
-			var detail_top := body_top + 52.0
+			_compact_back_button.size = Vector2(148.0, V2.TOUCH_TARGET)
+			var detail_top := body_top + V2.TOUCH_TARGET + 8.0
 			_detail_panel.position = Vector2(edge, detail_top)
 			_detail_panel.size = Vector2(width - edge * 2.0, maxf(160.0, body_bottom - detail_top))
 	else:
@@ -1366,15 +1377,16 @@ func _layout() -> void:
 
 	_status_panel.visible = not compact
 	_identity_card.custom_minimum_size.y = 72.0 if compact else 88.0
+	_budget_card.visible = not compact
 	_budget_card.custom_minimum_size.y = 64.0 if compact else 78.0
 	_identity_copy.visible = not compact
 	_attributes_header.visible = not compact
 	_mobility_header.visible = not compact
 	_plan_header.visible = not compact
 	_stat_grid.add_theme_constant_override("v_separation", 5 if compact else 8)
-	_detail_tabs.custom_minimum_size.y = 40.0 if compact else 42.0
+	_detail_tabs.custom_minimum_size.y = V2.TOUCH_TARGET
 	for raw_button in _detail_tab_buttons.values():
-		(raw_button as Button).custom_minimum_size.y = 40.0 if compact else 42.0
+		(raw_button as Button).custom_minimum_size.y = V2.TOUCH_TARGET
 	for row_value in _stat_rows.values():
 		(row_value as TrainingStatRow).set_compact(compact)
 	_roster_pager.set_compact(compact)
