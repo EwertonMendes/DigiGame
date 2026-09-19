@@ -65,6 +65,63 @@ async function reloadHub(page) {
   await settleFrames(page, 3);
 }
 
+async function verifyControllerAudioBootstrap(page) {
+  await page.waitForFunction(() => {
+    const state = window.__digigameWebAudioBootstrap;
+    return state && state.contexts instanceof Set && state.contexts.size > 0;
+  }, null, { timeout: 10000 });
+
+  const baselineAttempts = await page.evaluate(async () => {
+    const state = window.__digigameWebAudioBootstrap;
+    window.__digigameTestGamepadPressed = false;
+
+    // Gamepad buttons are polled by browsers/Godot rather than delivered through
+    // the pointer/key callbacks that normally resume WebAudio. Shadow the polling
+    // API with one standard pad so this regression can prove that a controller
+    // edge reaches the bootstrap without requiring physical CI hardware.
+    Object.defineProperty(navigator, 'getGamepads', {
+      configurable: true,
+      value: () => {
+        const pressed = window.__digigameTestGamepadPressed === true;
+        return [{
+          index: 0,
+          connected: true,
+          mapping: 'standard',
+          buttons: Array.from({ length: 16 }, (_, index) => ({
+            pressed: index === 0 && pressed,
+            value: index === 0 && pressed ? 1 : 0,
+          })),
+          axes: [0, 0, 0, 0],
+        }];
+      },
+    });
+
+    state.lastPads.clear();
+    for (const context of state.contexts) {
+      if (context.state === 'running') {
+        await context.suspend();
+      }
+    }
+
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return state.resumeAttempts;
+  });
+
+  await page.evaluate(() => {
+    window.__digigameTestGamepadPressed = true;
+  });
+
+  await page.waitForFunction(baseline => {
+    const state = window.__digigameWebAudioBootstrap;
+    return state && state.resumeAttempts > baseline;
+  }, baselineAttempts, { timeout: 5000 });
+
+  await page.evaluate(() => {
+    window.__digigameTestGamepadPressed = false;
+    delete navigator.getGamepads;
+  });
+}
+
 async function confirmBasicBattleProgram(page) {
   // The workspace opens on the committed Basic Battle selection. Navigation is
   // distinct from selection: Right moves to the selected battlefield, Right
@@ -138,6 +195,7 @@ async function runDesktopSuite() {
   const page = await browser.newPage({ viewport: desktopViewports[0] });
   watchRuntimeErrors(page, 'desktop');
   await openHub(page);
+  await verifyControllerAudioBootstrap(page);
 
   // Smoke the V2 menu surface without asserting exact pixels/layout values.
   await page.keyboard.press('KeyM');
