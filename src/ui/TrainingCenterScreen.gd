@@ -643,15 +643,15 @@ func _build_attribute_toolbar() -> void:
 
 	_discard_button = _training_command_button("DISCARD", "Clear pending attribute changes", "", "move", V2.MUTED, true)
 	_discard_button.name = "DiscardAttributePlan"
-	_discard_button.custom_minimum_size.x = 112.0
 	_discard_button.pressed.connect(_discard_plan)
 	row.add_child(_discard_button)
+	_discard_button.custom_minimum_size = Vector2(112.0, V2.TOUCH_TARGET)
 
 	_apply_button = _training_command_button("APPLY", "Save permanent attribute growth", "", "training", V2.GREEN, true)
 	_apply_button.name = "ApplyAttributePlan"
-	_apply_button.custom_minimum_size.x = 112.0
 	_apply_button.pressed.connect(_request_apply_plan)
 	row.add_child(_apply_button)
+	_apply_button.custom_minimum_size = Vector2(112.0, V2.TOUCH_TARGET)
 
 
 func _build_mobility_panel() -> void:
@@ -743,10 +743,9 @@ func _build_mobility_panel() -> void:
 		false
 	)
 	_mobility_plus.name = "TrainMobility"
-	_mobility_plus.custom_minimum_size.x = 250.0
-	_mobility_plus.custom_minimum_size.y = 72.0
 	_mobility_plus.pressed.connect(_request_mobility_training)
 	body.add_child(_mobility_plus)
+	_mobility_plus.custom_minimum_size = Vector2(250.0, 72.0)
 
 
 func _refresh_collection() -> void:
