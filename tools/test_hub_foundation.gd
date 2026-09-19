@@ -334,7 +334,7 @@ func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> vo
 	assert(OverworldState.get_reserve_party_instances().is_empty(), "Restoring the fixture must clear its temporary Reserve assignment")
 	assert(int(party_followers.call("get_follower_count")) == 3, "Returning Reserve to Active must restore its follower")
 
-	var middle_instance := OverworldState.get_instance_for_party_key("gabumon")
+	var middle_instance := OverworldState.get_instance_for_party_key("agumon")
 	assert(middle_instance != null, "Follower compaction regression requires the middle Party member")
 	var middle_hp := middle_instance.current_hp
 	middle_instance.current_hp = 0
@@ -342,7 +342,7 @@ func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> vo
 	await get_tree().process_frame
 	assert(OverworldState.get_active_party() == default_party, "Fainting must not reorder or remove the logical Party member")
 	assert(int(party_followers.call("get_follower_count")) == 2, "Fainted Digimon must disappear from the overworld formation")
-	assert(Array(party_followers.call("get_active_party_keys")) == ["agumon", "greymon"], "Visible followers must preserve relative Party order without a gap")
+	assert(Array(party_followers.call("get_active_party_keys")) == ["botamon", "gabumon"], "Visible followers must preserve relative Party order without a gap")
 	var compact_followers := followers_root.get_children()
 	assert(compact_followers.size() == 2, "Only battle-ready followers may have overworld nodes")
 	assert(int(compact_followers[0].get("slot_index")) == 0 and int(compact_followers[1].get("slot_index")) == 1, "Visible followers must receive contiguous visual slots")
