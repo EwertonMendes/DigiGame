@@ -26,6 +26,7 @@ func _build() -> void:
 	_create_screen = CreateScreenScript.new() as DigiLabConvertScreen
 	_create_screen.name = "ConvertDigiData"
 	_create_screen.visible = false
+	_create_screen.set_close_lifecycle_managed(true)
 	_create_screen.close_requested.connect(_request_close)
 	_create_screen.tab_requested.connect(_switch_tab)
 	add_child(_create_screen)
@@ -33,6 +34,7 @@ func _build() -> void:
 	_party_screen = PartyStorageScript.new() as DigiLabPartyStorageScreen
 	_party_screen.name = "PartyStorage"
 	_party_screen.visible = false
+	_party_screen.set_close_lifecycle_managed(true)
 	_party_screen.close_requested.connect(_request_close)
 	_party_screen.tab_requested.connect(_switch_tab)
 	_party_screen.ascension_requested.connect(_open_ascension)
@@ -41,9 +43,20 @@ func _build() -> void:
 	_ascension_screen = AscensionExpansionScript.new() as AscensionExpansionScreen
 	_ascension_screen.name = "AscensionExpansion"
 	_ascension_screen.visible = false
+	_ascension_screen.set_close_lifecycle_managed(true)
 	_ascension_screen.close_requested.connect(_request_close)
 	_ascension_screen.tab_requested.connect(_switch_tab)
 	add_child(_ascension_screen)
+
+
+func get_transition_surface() -> CanvasGroup:
+	match _active_tab:
+		"party":
+			return _party_screen.get_transition_surface() if _party_screen != null else null
+		"ascension":
+			return _ascension_screen.get_transition_surface() if _ascension_screen != null else null
+		_:
+			return _create_screen.get_transition_surface() if _create_screen != null else null
 
 
 func open_lab() -> void:
