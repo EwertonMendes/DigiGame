@@ -622,48 +622,42 @@ func _build_command_area(instance: DigimonInstance) -> void:
 	header.configure("COMMANDS", "", V2.CYAN, "evolution")
 	stack.add_child(header)
 
-	var inset := _margin(10, 8, 10, 10)
+	# Commands must stay fully inside the no-scroll workspace. Keep all three
+	# actions on one compact row and reserve descriptions/status for tooltips.
+	var inset := _margin(10, 7, 10, 9)
 	stack.add_child(inset)
 	var row := HBoxContainer.new()
+	row.name = "CommandRow"
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 8)
 	inset.add_child(row)
 
-	var learned := instance.learned_skills.size()
-	var favorites := instance.favorite_skills.size()
 	var techniques := CommandButtonScript.new() as DigiCommandButton
 	techniques.name = "TechniquesCommand"
 	techniques.configure(
 		"TECHNIQUES",
 		"Manage learned techniques and favorite shortcuts.",
-		"%d learned · %d favorite%s" % [learned, favorites, "" if favorites == 1 else "s"],
+		"",
 		"techniques",
 		V2.CYAN
 	)
+	techniques.set_minimal(true)
 	techniques.set_compact(_density_compact)
 	techniques.pressed.connect(_open_techniques)
 	row.add_child(techniques)
 	_command_buttons.append(techniques)
 	_action_cards.append(techniques)
 
-	var evolutions := _progression.get_evolution_routes(instance)
-	var degenerations := _progression.get_degeneration_routes(instance)
-	var ready := 0
-	for route: Dictionary in evolutions:
-		if bool(route.get("unlocked", false)):
-			ready += 1
-	for route: Dictionary in degenerations:
-		if bool(route.get("unlocked", false)):
-			ready += 1
 	var evolution := CommandButtonScript.new() as DigiCommandButton
 	evolution.name = "EvolutionCommand"
 	evolution.configure(
 		"EVOLUTION",
 		"Review Digivolution and Degeneration routes.",
-		"%d route%s ready" % [ready, "" if ready == 1 else "s"],
+		"",
 		"evolution",
 		V2.GREEN
 	)
+	evolution.set_minimal(true)
 	evolution.set_compact(_density_compact)
 	evolution.pressed.connect(_open_constellation.bind(instance.id))
 	row.add_child(evolution)
@@ -671,33 +665,24 @@ func _build_command_area(instance: DigimonInstance) -> void:
 	_action_cards.append(evolution)
 
 	var squad_state := _squad_role_action_state(instance)
-	var squad_margin := _margin(10, 0, 10, 10)
-	stack.add_child(squad_margin)
-	var squad_action := Button.new()
+	var squad_action := CommandButtonScript.new() as DigiCommandButton
 	squad_action.name = "SquadRoleCommand"
-	squad_action.text = String(squad_state.get("label", "SQUAD ROLE"))
-	squad_action.tooltip_text = String(squad_state.get("description", "Change this Digimon's Squad role."))
-	squad_action.custom_minimum_size = Vector2(0.0, V2.TOUCH_TARGET)
-	squad_action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	squad_action.focus_mode = Control.FOCUS_ALL
-	squad_action.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	squad_action.add_theme_font_size_override("font_size", 12 if _density_compact else 13)
-	squad_action.add_theme_color_override("font_color", V2.WHITE)
-	squad_action.add_theme_color_override("font_hover_color", V2.WHITE)
-	squad_action.add_theme_color_override("font_focus_color", V2.WHITE)
-	squad_action.add_theme_color_override("font_disabled_color", V2.SUBTLE)
-	for state_name in ["normal", "hover", "focus", "pressed", "disabled"]:
-		squad_action.add_theme_stylebox_override(state_name, V2.hospital_button_style(V2.PURPLE, state_name))
-	V2.apply_heading(squad_action)
+	squad_action.configure(
+		String(squad_state.get("label", "SQUAD ROLE")),
+		String(squad_state.get("description", "Change this Digimon's Squad role.")),
+		"",
+		"party",
+		V2.PURPLE
+	)
+	squad_action.set_minimal(true)
+	squad_action.set_compact(_density_compact)
 	var allowed := bool(squad_state.get("allowed", false))
 	squad_action.set_meta("action_allowed", allowed)
-	squad_action.disabled = not allowed
-	squad_action.focus_mode = Control.FOCUS_ALL if allowed else Control.FOCUS_NONE
+	squad_action.set_interactive(allowed)
 	squad_action.pressed.connect(_request_squad_role_change.bind(instance.id))
-	squad_margin.add_child(squad_action)
+	row.add_child(squad_action)
 	_command_buttons.append(squad_action)
 	_action_cards.append(squad_action)
-
 
 func _squad_role_action_state(instance: DigimonInstance) -> Dictionary:
 	if instance == null:
@@ -1306,36 +1291,19 @@ func _move_action_focus(direction: int) -> void:
 		return
 	var owner := get_viewport().gui_get_focus_owner()
 	var index := _command_buttons.find(owner)
-
-	# Techniques/Evolution form the horizontal top row. Squad role management is
-	# a full-width second row and is reached with Down, matching its visual
-	# position instead of making controller focus jump diagonally.
-	var top_count := mini(2, _command_buttons.size())
-	if index >= top_count:
-		var preferred := top_count - 1 if direction > 0 else 0
-		_focus_action(preferred)
-		return
 	if index < 0:
 		index = 0
-	if top_count <= 1:
-		_focus_action(0)
-		return
-	var candidate := posmod(index + direction, top_count)
-	if not _command_buttons[candidate].disabled:
-		_command_buttons[candidate].grab_focus()
+	for offset in range(1, _command_buttons.size() + 1):
+		var candidate := posmod(index + direction * offset, _command_buttons.size())
+		if not _command_buttons[candidate].disabled:
+			_command_buttons[candidate].grab_focus()
+			return
 
 
 func _move_action_vertical(direction: int) -> void:
-	if _command_buttons.size() <= 2:
-		return
-	var owner := get_viewport().gui_get_focus_owner()
-	var index := _command_buttons.find(owner)
-	var squad_index := 2
-	if direction > 0 and index >= 0 and index < 2 and not _command_buttons[squad_index].disabled:
-		_command_buttons[squad_index].grab_focus()
-	elif direction < 0 and index == squad_index:
-		_focus_action(0)
-
+	# The redesigned command surface is a single row. Supporting both axes keeps
+	# controller navigation forgiving without introducing a hidden second row.
+	_move_action_focus(direction)
 
 func _focus_action(index: int) -> void:
 	if _command_buttons.is_empty():
