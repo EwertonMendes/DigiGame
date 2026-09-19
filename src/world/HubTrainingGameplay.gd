@@ -5,7 +5,6 @@ const TrainerActorScript = preload("res://src/world/HubActor.gd")
 const TRAINER_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const InteractionPromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
-const TrainingTransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 
 var _trainer: HubActor = null
 var _training_screen: TrainingCenterScreen = null
@@ -76,14 +75,13 @@ func _build_training_ui() -> void:
 	layer.name = "TrainingCenterUI"
 	layer.layer = 94
 	add_child(layer)
-	_training_transition_surface = TrainingTransitionSurfaceScript.new() as CanvasGroup
-	_training_transition_surface.name = "TrainingCenterTransition"
-	layer.add_child(_training_transition_surface)
 	_training_screen = TrainingCenterScreenScript.new() as TrainingCenterScreen
 	_training_screen.name = "TrainingCenter"
 	_training_screen.visible = false
+	_training_screen.set_close_lifecycle_managed(true)
 	_training_screen.close_requested.connect(_close_training)
-	_training_transition_surface.add_child(_training_screen)
+	layer.add_child(_training_screen)
+	_training_transition_surface = _training_screen.get_transition_surface()
 
 
 func _open_training() -> void:
