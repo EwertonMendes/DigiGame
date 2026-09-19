@@ -1247,9 +1247,7 @@ func _move_vertical(direction: int) -> void:
 		MenuMode.TECHNIQUES:
 			_move_technique_vertical(direction)
 		MenuMode.ACTIONS:
-			# Commands are laid out horizontally, so vertical input intentionally
-			# stays inert instead of jumping to unrelated chrome.
-			pass
+			_move_action_vertical(direction)
 
 
 func _move_horizontal(direction: int) -> void:
@@ -1284,13 +1282,35 @@ func _move_action_focus(direction: int) -> void:
 		return
 	var owner := get_viewport().gui_get_focus_owner()
 	var index := _command_buttons.find(owner)
+
+	# Techniques/Evolution form the horizontal top row. Squad role management is
+	# a full-width second row and is reached with Down, matching its visual
+	# position instead of making controller focus jump diagonally.
+	var top_count := mini(2, _command_buttons.size())
+	if index >= top_count:
+		var preferred := top_count - 1 if direction > 0 else 0
+		_focus_action(preferred)
+		return
 	if index < 0:
 		index = 0
-	for offset in range(1, _command_buttons.size() + 1):
-		var candidate := posmod(index + direction * offset, _command_buttons.size())
-		if not _command_buttons[candidate].disabled:
-			_command_buttons[candidate].grab_focus()
-			return
+	if top_count <= 1:
+		_focus_action(0)
+		return
+	var candidate := posmod(index + direction, top_count)
+	if not _command_buttons[candidate].disabled:
+		_command_buttons[candidate].grab_focus()
+
+
+func _move_action_vertical(direction: int) -> void:
+	if _command_buttons.size() <= 2:
+		return
+	var owner := get_viewport().gui_get_focus_owner()
+	var index := _command_buttons.find(owner)
+	var squad_index := 2
+	if direction > 0 and index >= 0 and index < 2 and not _command_buttons[squad_index].disabled:
+		_command_buttons[squad_index].grab_focus()
+	elif direction < 0 and index == squad_index:
+		_focus_action(0)
 
 
 func _focus_action(index: int) -> void:
