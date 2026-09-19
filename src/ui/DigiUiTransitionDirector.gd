@@ -30,6 +30,14 @@ func active_surface_id() -> String:
 	return _surface_id
 
 
+func open_duration() -> float:
+	return OPEN_DURATION
+
+
+func close_duration() -> float:
+	return CLOSE_DURATION
+
+
 func begin_open(surface: Node, surface_id: String) -> bool:
 	if not _begin(surface, surface_id, true):
 		return false
