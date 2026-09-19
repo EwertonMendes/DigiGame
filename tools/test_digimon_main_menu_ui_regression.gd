@@ -298,8 +298,9 @@ func _ready() -> void:
 	assert(OverworldState.get_squad_role(active_target_id) == PlayerCollection.SQUAD_ROLE_RESERVE, "Confirmed Active target must become Reserve")
 	assert(OverworldState.get_active_instances().size() == 3 and OverworldState.get_reserve_party_instances().size() == 2, "Role swap must preserve three Active and two Reserve slots")
 	# Restore the fixture so close/back assertions remain independent of the role mutation.
+	# The state signal owns the menu refresh; do not issue a second same-frame
+	# rebuild because production callers likewise use the shared signal contract.
 	assert(OverworldState.swap_party_with_reserve(reserve_source_id, active_target_id), "Regression fixture must restore original Squad roles")
-	menu.call("_refresh_collection")
 	await _frames(2)
 
 	var closed := [false]
