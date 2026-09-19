@@ -619,17 +619,13 @@ func _build_attribute_toolbar() -> void:
 	_attribute_toolbar_icon.configure("training", V2.CYAN, 1.65)
 	icon_center.add_child(_attribute_toolbar_icon)
 
-	var title_copy := VBoxContainer.new()
-	title_copy.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	title_copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	title_copy.add_theme_constant_override("separation", 0)
-	title_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title_slot.add_child(title_copy)
 	_attribute_toolbar_title = _single_line_label("ATTRIBUTE TRAINING", 13, V2.TEXT, true)
 	_attribute_toolbar_title.name = "AttributeTrainingTitle"
-	title_copy.add_child(_attribute_toolbar_title)
+	_attribute_toolbar_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title_slot.add_child(_attribute_toolbar_title)
 	var rate := _single_line_label("1 point = +%.1f%%" % _training.stat_bonus_percent(1), 8, V2.MUTED)
-	title_copy.add_child(rate)
+	rate.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title_slot.add_child(rate)
 
 	var summary := VBoxContainer.new()
 	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
