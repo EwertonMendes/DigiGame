@@ -105,10 +105,10 @@ func _ready() -> void:
 	var detail := training.get("_detail_panel") as Control
 	var host := training.get("_presentation_host") as Control
 	var attributes := training.get("_attributes_view") as Control
-	var plan := training.get("_plan_view") as Control
-	if not _check(detail != null and host != null and attributes != null and plan != null, "Training must expose one stable detail workspace"):
+	var mobility := training.get("_mobility_view") as Control
+	if not _check(detail != null and host != null and attributes != null and mobility != null, "Training must expose one stable detail workspace"):
 		return
-	if not _check(attributes.visible and not plan.visible, "Attributes must be the initial Training presentation"):
+	if not _check(attributes.visible and not mobility.visible, "Attributes must be the initial Training presentation"):
 		return
 	var host_identity := host.get_instance_id()
 	var host_size := host.size
@@ -165,13 +165,55 @@ func _ready() -> void:
 	if not _check(point_label.text.contains("+1") and point_label.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING, "Pending point totals must stay complete and visible"):
 		return
 
+	var attribute_plan_bar := training.get("_attribute_plan_bar") as PanelContainer
+	var discard := training.get("_discard_button") as Button
+	var apply := training.get("_apply_button") as Button
+	if not _check(attribute_plan_bar != null and attributes.is_ancestor_of(attribute_plan_bar), "Attribute Apply/Discard must live inside the Attributes presentation"):
+		return
+	if not _check(attribute_plan_bar.get_global_rect().end.y <= host_rect.end.y + 1.0, "Compact attribute actions must stay fully inside the presentation workspace"):
+		return
+	for action in [discard, apply]:
+		if not _check(action != null and action.custom_minimum_size.y >= V2.TOUCH_TARGET, "Attribute plan actions must remain touch-safe"):
+			return
+		if not _check(bool(action.get_meta("digi_command_button", false)) and bool(action.get_meta("compact_command_button", false)), "Attribute plan actions must use the compact Digi Hospital command language"):
+			return
+		var command_style := action.get_theme_stylebox("normal") as StyleBoxFlat
+		if not _check(command_style != null and command_style.border_width_left >= 4, "Compact attribute commands must keep the Digi Hospital leading rail"):
+			return
+		if not _check(action.icon != null, "Compact attribute commands must keep a readable action icon"):
+			return
+
+	# Apply remains guarded because attribute training is permanent.
+	if not _check(not apply.disabled, "A valid attribute plan must enable Apply Training"):
+		return
+	apply.pressed.emit()
+	await _frames(2)
+	var confirmation := training.get("_confirmation") as DigiConfirmationModal
+	if not _check(confirmation != null and confirmation.visible, "Attribute Apply must open the shared permanent-action confirmation"):
+		return
+	confirmation.get_cancel_button().pressed.emit()
+	await _frames(2)
+	if not _check(int((training.get("_pending_stats") as Dictionary).get(target_key, 0)) == 1, "Cancelling Apply must preserve the pending attribute plan"):
+		return
+
+	# Moving to another Digimon can never silently erase an unapplied attribute plan.
+	var before_switch := String(training.get("_selected_id"))
+	training.call("_activate_instance", alternate_id)
+	await _frames(2)
+	if not _check(confirmation.visible, "Switching Digimon with a pending attribute plan must ask before discarding it"):
+		return
+	if not _check(String(training.get("_selected_id")) == before_switch, "Pending attribute guard must keep the current Training target until confirmed"):
+		return
+	confirmation.get_cancel_button().pressed.emit()
+	await _frames(2)
+
 	# X/Square switches presentation only; geometry and component identity remain stable.
 	var x_button := InputEventJoypadButton.new()
 	x_button.button_index = JOY_BUTTON_X
 	x_button.pressed = true
 	training.call("_unhandled_input", x_button)
 	await _frames(2)
-	if not _check(int(training.get("_detail_view")) == 1 and plan.visible and not attributes.visible, "X/Square must switch from Attributes to Plan/Mobility"):
+	if not _check(int(training.get("_detail_view")) == 1 and mobility.visible and not attributes.visible, "X/Square must switch from Attributes to Mobility"):
 		return
 	if not _check((training.get("_presentation_host") as Control).get_instance_id() == host_identity, "Switching Training views must preserve the same presentation host"):
 		return
@@ -179,62 +221,57 @@ func _ready() -> void:
 		return
 
 	var mobility_header := training.get("_mobility_header") as DigiSectionHeader
-	var plan_header := training.get("_plan_header") as DigiSectionHeader
 	if not _check(_header_icon_is_centered(mobility_header), "Tactical Mobility icon must be vertically centered beside its title"):
 		return
-	if not _check(_header_icon_is_centered(plan_header), "Training Plan icon must be vertically centered beside its title"):
-		return
 
-	var mobility_minus := training.get("_mobility_minus") as Button
 	var mobility_plus := training.get("_mobility_plus") as Button
-	var discard := training.get("_discard_button") as Button
-	var apply := training.get("_apply_button") as Button
-	for action in [mobility_minus, mobility_plus, discard, apply]:
-		if not _check(action != null and action.custom_minimum_size.y >= V2.TOUCH_TARGET, "Plan/Mobility actions must remain touch-safe"):
-			return
-		if not _check(bool(action.get_meta("digi_command_button", false)), "Plan/Mobility actions must use the shared Digi Hospital command-button language"):
-			return
-		var command_style := action.get_theme_stylebox("normal") as StyleBoxFlat
-		if not _check(command_style != null and command_style.border_width_left >= 4, "Training command buttons must keep the Digi Hospital leading command rail"):
-			return
-		var action_icon := action.find_child("ActionIcon", true, false) as TextureRect
-		if not _check(action_icon != null and action_icon.custom_minimum_size == Vector2(36.0, 36.0), "Training command icons must use the same authored 36px scale as Digi Hospital"):
-			return
-		if not _check(action.find_child("Title", true, false) != null and action.find_child("Subtitle", true, false) != null, "Training command buttons must expose Hospital-style title and subtitle hierarchy"):
-			return
-
-	# Apply is intentionally guarded because training is permanent.
-	if not _check(not apply.disabled, "A valid pending plan must enable Apply Training"):
+	if not _check(mobility_plus != null and mobility_plus.custom_minimum_size.y >= V2.TOUCH_TARGET, "Mobility command must remain touch-safe"):
 		return
-	apply.pressed.emit()
-	await _frames(2)
-	var confirmation := training.get("_confirmation") as DigiConfirmationModal
-	if not _check(confirmation != null and confirmation.visible, "Apply Training must open the shared permanent-action confirmation"):
+	if not _check(bool(mobility_plus.get_meta("digi_command_button", false)), "Mobility must use the shared Digi Hospital command-button language"):
 		return
-	confirmation.get_cancel_button().pressed.emit()
-	await _frames(2)
-	if not _check(int((training.get("_pending_stats") as Dictionary).get(target_key, 0)) == 1, "Cancelling Apply must preserve the pending Training plan"):
+	var mobility_style := mobility_plus.get_theme_stylebox("normal") as StyleBoxFlat
+	if not _check(mobility_style != null and mobility_style.border_width_left >= 4, "Mobility command must keep the Digi Hospital leading rail"):
+		return
+	var mobility_icon := mobility_plus.find_child("ActionIcon", true, false) as TextureRect
+	if not _check(mobility_icon != null and mobility_icon.custom_minimum_size == Vector2(36.0, 36.0), "Mobility command icon must use the authored 36px Hospital scale"):
+		return
+	if not _check(mobility_plus.disabled, "Pending attribute changes must block independent MOV training until resolved"):
 		return
 
-	# Moving to another Digimon can never silently erase an unapplied plan.
-	var before_switch := String(training.get("_selected_id"))
-	training.call("_activate_instance", alternate_id)
+	# Return to Attributes, discard the pending attribute plan, then prove MOV is self-sufficient.
+	training.call("_toggle_detail_view")
 	await _frames(2)
-	if not _check(confirmation.visible, "Switching Digimon with a pending plan must ask before discarding it"):
-		return
-	if not _check(String(training.get("_selected_id")) == before_switch, "Pending plan guard must keep the current Training target until confirmed"):
-		return
-	confirmation.get_cancel_button().pressed.emit()
-	await _frames(2)
-	if not _check(int((training.get("_pending_stats") as Dictionary).get(target_key, 0)) == 1, "Cancelling a target switch must keep the pending plan"):
-		return
-
 	discard.pressed.emit()
 	await _frames(2)
 	pending = training.get("_pending_stats") as Dictionary
-	if not _check(pending.is_empty() and int(training.get("_pending_mobility")) == 0, "Discard Plan must clear all pending Training changes"):
+	if not _check(pending.is_empty(), "Discard must clear only the pending attribute plan"):
 		return
 	if not _check((training.get("_stat_rows") as Dictionary).get(target_key) == same_row, "Discarding must update the same persistent stat components"):
+		return
+
+	training.call("_activate_instance", alternate_id)
+	await _frames(3)
+	training.call("_set_detail_view", 1, false)
+	await _frames(2)
+	var mobility_instance := OverworldState.get_instance_by_id(alternate_id)
+	if not _check(mobility_instance != null and mobility_instance.potential >= 20, "Mobility regression target must satisfy the first MOV potential requirement"):
+		return
+	var mobility_before := int(mobility_instance.training.get("mov", 0))
+	mobility_plus = training.get("_mobility_plus") as Button
+	if not _check(not mobility_plus.disabled, "Eligible Digimon with no attribute plan must be able to train MOV independently"):
+		return
+	mobility_plus.pressed.emit()
+	await _frames(2)
+	if not _check(confirmation.visible, "Train MOV +1 must use its own permanent-action confirmation"):
+		return
+	if not _check((training.get("_pending_stats") as Dictionary).is_empty(), "MOV confirmation must not create or reuse an attribute plan"):
+		return
+	confirmation.get_confirm_button().pressed.emit()
+	await _frames(4)
+	mobility_instance = OverworldState.get_instance_by_id(alternate_id)
+	if not _check(int(mobility_instance.training.get("mov", 0)) == mobility_before + 1, "Confirmed MOV training must apply exactly one mobility level immediately"):
+		return
+	if not _check((training.get("_pending_stats") as Dictionary).is_empty(), "Committed MOV training must leave the attribute plan empty"):
 		return
 
 	training.call("_return_to_roster")
@@ -266,9 +303,14 @@ func _header_icon_is_centered(header: DigiSectionHeader) -> bool:
 	if header == null:
 		return false
 	var icon := header.get_icon_view()
-	if icon == null or not icon.visible:
+	var slot := header.get_node_or_null("MarginContainer/HBoxContainer/SectionIconSlot") as CenterContainer
+	if slot == null:
+		slot = header.find_child("SectionIconSlot", true, false) as CenterContainer
+	if icon == null or slot == null or not icon.visible:
 		return false
-	return absf(icon.get_global_rect().get_center().y - header.get_global_rect().get_center().y) <= 2.0
+	var icon_center := icon.get_global_rect().get_center()
+	var slot_center := slot.get_global_rect().get_center()
+	return absf(icon_center.y - slot_center.y) <= 0.5
 
 
 func _controls_of_type(root: Node, type_name: String) -> Array[Node]:
