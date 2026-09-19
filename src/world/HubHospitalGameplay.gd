@@ -3,9 +3,11 @@ extends "res://src/world/HubTrainingGameplay.gd"
 const HospitalScreenScript = preload("res://src/ui/DigiPremiumHospitalScreen.gd")
 const HospitalActorScript = preload("res://src/world/HubActor.gd")
 const HOSPITAL_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
+const UiTransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 
 var _hospital_npc: HubActor = null
 var _hospital_screen: HospitalScreen = null
+var _hospital_transition_surface: CanvasGroup = null
 var _hospital_open := false
 
 
@@ -67,15 +69,20 @@ func _build_hospital_ui() -> void:
 	layer.name = "HospitalUI"
 	layer.layer = 96
 	add_child(layer)
+	_hospital_transition_surface = UiTransitionSurfaceScript.new() as CanvasGroup
+	_hospital_transition_surface.name = "HospitalTransition"
+	layer.add_child(_hospital_transition_surface)
 	_hospital_screen = HospitalScreenScript.new() as HospitalScreen
 	_hospital_screen.name = "Hospital"
 	_hospital_screen.visible = false
 	_hospital_screen.close_requested.connect(_close_hospital)
-	layer.add_child(_hospital_screen)
+	_hospital_transition_surface.add_child(_hospital_screen)
 
 
 func _open_hospital() -> void:
-	if _hospital_open or _training_open or _digilab_open or _menu_open or _dialog_open or _transitioning or _hospital_screen == null:
+	if _hospital_open or _training_open or _digilab_open or _menu_open or _dialog_open or _transitioning or _hospital_screen == null or _hospital_transition_surface == null:
+		return
+	if not DigiUiTransitionDirector.begin_open(_hospital_transition_surface, "hospital"):
 		return
 	_hospital_open = true
 	_release_touch_movement()
@@ -88,21 +95,26 @@ func _open_hospital() -> void:
 	_hospital_screen.open_screen()
 	UiSfxDirector.play_open()
 	_layout_ui()
+	await DigiUiTransitionDirector.reveal_open()
 	if OS.is_debug_build():
 		print("[Hub] DIGI_HOSPITAL open")
 
 
 func _close_hospital() -> void:
-	if not _hospital_open:
+	if not _hospital_open or _hospital_transition_surface == null:
+		return
+	if not DigiUiTransitionDirector.begin_close(_hospital_transition_surface, "hospital"):
 		return
 	UiSfxDirector.play_back()
+	await DigiUiTransitionDirector.conceal_close()
 	_hospital_open = false
 	if _hospital_screen != null:
-		_hospital_screen.visible = false
+		_hospital_screen.finish_close()
 	if _player != null:
 		_player.movement_enabled = true
 	_layout_ui()
 	_refresh_interaction()
+	DigiUiTransitionDirector.complete_close()
 	if OS.is_debug_build():
 		print("[Hub] DIGI_HOSPITAL close")
 
