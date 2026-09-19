@@ -42,6 +42,7 @@ var _main_tab := "party"
 var _soon_label: Label
 var _squad_swap_source_id := ""
 var _squad_swap_source_name := ""
+var _squad_role_mutation_in_progress := false
 
 
 func open_menu() -> void:
@@ -319,6 +320,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+func _on_active_party_changed(active_party: Array) -> void:
+	# Squad-role actions below mutate through OverworldState, which emits the
+	# shared party signal synchronously. The menu owns the resulting refresh and
+	# must not rebuild itself re-entrantly in the middle of that transaction.
+	if _squad_role_mutation_in_progress:
+		return
+	super._on_active_party_changed(active_party)
+
+
 func _refresh_collection() -> void:
 	if _collection_grid == null:
 		return
@@ -525,6 +535,11 @@ func _refresh_details() -> void:
 	_command_buttons.clear()
 	_action_cards.clear()
 	_technique_focus_rows.clear()
+	# These controls belong to the detail subtree that was just queued for
+	# deletion. Clear every reference before any alternate detail mode (such as
+	# the Squad swap picker) can return early without rebuilding Overview.
+	_overview_tab_buttons.clear()
+	_overview_content = null
 	_profile_panel = null
 	_stats_panel = null
 	_development_panel = null
@@ -713,7 +728,10 @@ func _request_squad_role_change(instance_id: String) -> void:
 	var reserve := OverworldState.get_reserve_party_instances()
 	if role == PlayerCollection.SQUAD_ROLE_ACTIVE:
 		if reserve.size() < OverworldState.get_max_reserve_party_size() and active.size() > 1:
-			if OverworldState.add_to_reserve_party(instance_id):
+			_squad_role_mutation_in_progress = true
+			var moved := OverworldState.add_to_reserve_party(instance_id)
+			_squad_role_mutation_in_progress = false
+			if moved:
 				_finish_squad_role_change(instance_id)
 			return
 		if not reserve.is_empty():
@@ -721,7 +739,10 @@ func _request_squad_role_change(instance_id: String) -> void:
 		return
 	if role == PlayerCollection.SQUAD_ROLE_RESERVE:
 		if active.size() < OverworldState.get_max_active_party_size():
-			if OverworldState.add_to_active_party(instance_id):
+			_squad_role_mutation_in_progress = true
+			var moved := OverworldState.add_to_active_party(instance_id)
+			_squad_role_mutation_in_progress = false
+			if moved:
 				_finish_squad_role_change(instance_id)
 			return
 		if not active.is_empty():
@@ -759,7 +780,10 @@ func _complete_squad_swap(target_index: int) -> void:
 		return
 	var active_id := source_id if source_role == PlayerCollection.SQUAD_ROLE_ACTIVE else target.id
 	var reserve_id := source_id if source_role == PlayerCollection.SQUAD_ROLE_RESERVE else target.id
-	if not OverworldState.swap_party_with_reserve(active_id, reserve_id):
+	_squad_role_mutation_in_progress = true
+	var swapped := OverworldState.swap_party_with_reserve(active_id, reserve_id)
+	_squad_role_mutation_in_progress = false
+	if not swapped:
 		return
 	_finish_squad_role_change(source_id)
 
