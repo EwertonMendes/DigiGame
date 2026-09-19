@@ -51,6 +51,19 @@ func _ready() -> void:
 	assert(session.get_fielded_ids().size() == 3, "Battle session must start with only the three Active members fielded")
 	assert(session.get_available_bench_ids().size() == 3, "All healthy Reserve members must be available on the bench")
 
+	# A Reserve member can enter a later battle already knocked out. Reward
+	# snapshots must still detect the persistent zero-HP state even though that
+	# Digimon never had a BattleDigimon state or actor in this encounter.
+	reserve[2].current_hp = 0
+	assert(session.is_knocked_out(reserve[2].id), "Previously fainted Reserve must be recognized as KO without deployment")
+	var initial_reward_snapshots := session.reward_snapshots()
+	var prior_ko_snapshot: Dictionary = {}
+	for snapshot: Dictionary in initial_reward_snapshots:
+		if String(snapshot.get("instance_id", "")) == reserve[2].id:
+			prior_ko_snapshot = snapshot
+			break
+	assert(not prior_ko_snapshot.is_empty() and bool(prior_ko_snapshot.get("knocked_out", false)), "Reward snapshot must carry prior KO state for Reserve")
+
 	var active_actor := ActorStub.new(active[0])
 	add_child(active_actor)
 	assert(session.attach_actor(active_actor), "Initial Active actor must attach to persistent battle state")
@@ -115,12 +128,15 @@ func _ready() -> void:
 	session.commit_all_resources()
 	assert(active[0].current_hp == persisted_hp and active[0].current_mp == persisted_sp, "Battle session commit must persist switched Digimon resources")
 
-	# A Squad member that never entered combat receives the configured Reserve
-	# XP multiplier (currently zero), while participants receive normal XP.
+	# Healthy Reserve shares the battle XP pool even without deployment, while
+	# every KO member is excluded regardless of whether it fought this battle or
+	# entered the encounter already fainted.
 	var rewards: BattleRewardCalculator = RewardCalculatorScript.new(database)
 	var player_snapshots: Array[Dictionary] = [
 		{"instance_id": active[0].id, "level": active[0].level, "participated": true, "knocked_out": false},
 		{"instance_id": reserve[1].id, "level": reserve[1].level, "participated": false, "knocked_out": false},
+		{"instance_id": active[2].id, "level": active[2].level, "participated": true, "knocked_out": true},
+		{"instance_id": reserve[2].id, "level": reserve[2].level, "participated": false, "knocked_out": true},
 	]
 	var enemy_snapshots: Array[Dictionary] = [{
 		"species_seed": active[1].species_seed,
@@ -129,8 +145,10 @@ func _ready() -> void:
 		"reward_modifier": 1.0,
 	}]
 	var calculated := rewards.calculate(player_snapshots, enemy_snapshots)
-	assert(int(calculated.xp_by_instance.get(active[0].id, 0)) > 0, "Participant must receive battle XP")
-	assert(int(calculated.xp_by_instance.get(reserve[1].id, -1)) == 0, "Unused Reserve must use the zero Reserve XP multiplier")
+	assert(int(calculated.xp_by_instance.get(active[0].id, 0)) > 0, "Healthy participant must receive battle XP")
+	assert(int(calculated.xp_by_instance.get(reserve[1].id, 0)) > 0, "Healthy unused Reserve must receive battle XP")
+	assert(int(calculated.xp_by_instance.get(active[2].id, 0)) == 0, "Digimon knocked out during battle must receive no XP")
+	assert(int(calculated.xp_by_instance.get(reserve[2].id, 0)) == 0, "Reserve already knocked out before battle must receive no XP")
 
 	assert(initial_hp >= persisted_hp and initial_sp >= persisted_sp, "Fixture resource mutations must be monotonic")
 	active_actor.queue_free()
