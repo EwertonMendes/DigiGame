@@ -48,7 +48,9 @@ jobs:
             command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 360
             success: hub foundation regression passed
           - name: battle-operator-programs
-            command: godot --headless --path . tools/test_battle_operator_programs.tscn --quit-after 30
+            # This regression now waits for the real Battle Operator construction
+            # tween before asserting final focus/material/backdrop state.
+            command: godot --headless --path . tools/test_battle_operator_programs.tscn --quit-after 360
             success: battle operator programs regression passed
           - name: digilab-layout
             # This regression now exercises Active, Reserve and Storage layouts
