@@ -53,8 +53,7 @@
     "maxActive": 3,
     "maxReserve": 3,
     "participantXpMultiplier": 1.0,
-    "reserveXpMultiplier": 0.0,
-    "knockedOutReceivesXp": true
+    "reserveXpMultiplier": 1.0
   },
   "rewards": {
     "bitsLevelMultiplier": 1.0,
