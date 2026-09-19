@@ -40,6 +40,8 @@ var _analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalo
 var _right_analog_gate: DigiAnalogNavigationGate = AnalogGateScript.new() as DigiAnalogNavigationGate
 var _main_tab := "party"
 var _soon_label: Label
+var _squad_swap_source_id := ""
+var _squad_swap_source_name := ""
 
 
 func open_menu() -> void:
@@ -48,6 +50,8 @@ func open_menu() -> void:
 	visible = true
 	_mode = MenuMode.ROSTER
 	_main_tab = "party"
+	_squad_swap_source_id = ""
+	_squad_swap_source_name = ""
 	_header.set_active_tab(_main_tab)
 	_analog_gate.reset()
 	_right_analog_gate.reset()
@@ -304,7 +308,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("ui_cancel"):
-		if _mode == MenuMode.TECHNIQUES:
+		if not _squad_swap_source_id.is_empty():
+			_cancel_squad_swap()
+		elif _mode == MenuMode.TECHNIQUES:
 			_leave_techniques()
 		elif _mode == MenuMode.ACTIONS:
 			_return_to_roster()
@@ -483,6 +489,9 @@ func _confirm_index(index: int) -> void:
 	var pointer := _pointer_card_press
 	_pointer_card_press = false
 	_select_index(index)
+	if not _squad_swap_source_id.is_empty():
+		_complete_squad_swap(index)
+		return
 	if _mode == MenuMode.TECHNIQUES:
 		_technique_page = 0
 		_refresh_details()
@@ -521,6 +530,9 @@ func _refresh_details() -> void:
 	_development_panel = null
 	_action_panel = null
 	_technique_panel = null
+	_body_grid = null
+	_primary_column = null
+	_sidebar_column = null
 
 	var party := _party_instances()
 	if party.is_empty():
@@ -529,6 +541,11 @@ func _refresh_details() -> void:
 	_selected_index = clampi(_selected_index, 0, party.size() - 1)
 	var instance: DigimonInstance = party[_selected_index]
 	var species := _database.get_by_seed(instance.species_seed)
+
+	if not _squad_swap_source_id.is_empty():
+		_build_squad_swap_prompt(instance)
+		_update_footer_hints()
+		return
 
 	if _mode == MenuMode.TECHNIQUES:
 		_build_technique_view(instance)
@@ -637,6 +654,204 @@ func _build_command_area(instance: DigimonInstance) -> void:
 	row.add_child(evolution)
 	_command_buttons.append(evolution)
 	_action_cards.append(evolution)
+
+	var squad_state := _squad_role_action_state(instance)
+	var squad_margin := _margin(10, 0, 10, 10)
+	stack.add_child(squad_margin)
+	var squad_action := Button.new()
+	squad_action.name = "SquadRoleCommand"
+	squad_action.text = String(squad_state.get("label", "SQUAD ROLE"))
+	squad_action.tooltip_text = String(squad_state.get("description", "Change this Digimon's Squad role."))
+	squad_action.custom_minimum_size = Vector2(0.0, V2.TOUCH_TARGET)
+	squad_action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	squad_action.focus_mode = Control.FOCUS_ALL
+	squad_action.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	squad_action.add_theme_font_size_override("font_size", 12 if _density_compact else 13)
+	squad_action.add_theme_color_override("font_color", V2.WHITE)
+	squad_action.add_theme_color_override("font_hover_color", V2.WHITE)
+	squad_action.add_theme_color_override("font_focus_color", V2.WHITE)
+	squad_action.add_theme_color_override("font_disabled_color", V2.SUBTLE)
+	for state_name in ["normal", "hover", "focus", "pressed", "disabled"]:
+		squad_action.add_theme_stylebox_override(state_name, V2.hospital_button_style(V2.PURPLE, state_name))
+	V2.apply_heading(squad_action)
+	var allowed := bool(squad_state.get("allowed", false))
+	squad_action.set_meta("action_allowed", allowed)
+	squad_action.disabled = not allowed
+	squad_action.focus_mode = Control.FOCUS_ALL if allowed else Control.FOCUS_NONE
+	squad_action.pressed.connect(_request_squad_role_change.bind(instance.id))
+	squad_margin.add_child(squad_action)
+	_command_buttons.append(squad_action)
+	_action_cards.append(squad_action)
+
+
+func _squad_role_action_state(instance: DigimonInstance) -> Dictionary:
+	if instance == null:
+		return {"allowed": false, "label": "SQUAD ROLE UNAVAILABLE", "description": "No Digimon selected."}
+	var role := OverworldState.get_squad_role(instance.id)
+	var active := OverworldState.get_active_instances()
+	var reserve := OverworldState.get_reserve_party_instances()
+	if role == PlayerCollection.SQUAD_ROLE_ACTIVE:
+		if reserve.size() < OverworldState.get_max_reserve_party_size() and active.size() > 1:
+			return {"allowed": true, "label": "MOVE TO RESERVE", "description": "Move this Digimon to an open Reserve slot."}
+		if not reserve.is_empty():
+			return {"allowed": true, "label": "SWAP WITH RESERVE", "description": "Choose a Reserve Digimon to exchange Squad roles."}
+		return {"allowed": false, "label": "RESERVE UNAVAILABLE", "description": "Keep at least one Active Digimon and add a Reserve member before swapping."}
+	if role == PlayerCollection.SQUAD_ROLE_RESERVE:
+		if active.size() < OverworldState.get_max_active_party_size():
+			return {"allowed": true, "label": "MOVE TO ACTIVE", "description": "Promote this Digimon into an open Active slot."}
+		if not active.is_empty():
+			return {"allowed": true, "label": "SWAP WITH ACTIVE", "description": "Choose an Active Digimon to exchange Squad roles."}
+	return {"allowed": false, "label": "SQUAD ROLE UNAVAILABLE", "description": "This Digimon is not assigned to the Squad."}
+
+
+func _request_squad_role_change(instance_id: String) -> void:
+	var instance := OverworldState.get_instance_by_id(instance_id)
+	if instance == null:
+		return
+	var role := OverworldState.get_squad_role(instance_id)
+	var active := OverworldState.get_active_instances()
+	var reserve := OverworldState.get_reserve_party_instances()
+	if role == PlayerCollection.SQUAD_ROLE_ACTIVE:
+		if reserve.size() < OverworldState.get_max_reserve_party_size() and active.size() > 1:
+			if OverworldState.add_to_reserve_party(instance_id):
+				_finish_squad_role_change(instance_id)
+			return
+		if not reserve.is_empty():
+			_begin_squad_swap(instance_id)
+		return
+	if role == PlayerCollection.SQUAD_ROLE_RESERVE:
+		if active.size() < OverworldState.get_max_active_party_size():
+			if OverworldState.add_to_active_party(instance_id):
+				_finish_squad_role_change(instance_id)
+			return
+		if not active.is_empty():
+			_begin_squad_swap(instance_id)
+
+
+func _begin_squad_swap(instance_id: String) -> void:
+	var source := OverworldState.get_instance_by_id(instance_id)
+	if source == null:
+		return
+	var source_role := OverworldState.get_squad_role(instance_id)
+	if source_role not in [PlayerCollection.SQUAD_ROLE_ACTIVE, PlayerCollection.SQUAD_ROLE_RESERVE]:
+		return
+	var species := _database.get_by_seed(source.species_seed)
+	_squad_swap_source_id = instance_id
+	_squad_swap_source_name = source.get_display_name(String(species.get("name", "Digimon")))
+	_mode = MenuMode.ROSTER
+	_roster_page = 1 if source_role == PlayerCollection.SQUAD_ROLE_ACTIVE else 0
+	var first_index := _first_index_for_roster_page(_roster_page)
+	if first_index >= 0:
+		_selected_index = first_index
+	_refresh_collection()
+	call_deferred("_focus_selected_roster_card")
+
+
+func _complete_squad_swap(target_index: int) -> void:
+	var party := _party_instances()
+	if target_index < 0 or target_index >= party.size():
+		return
+	var source_id := _squad_swap_source_id
+	var source_role := OverworldState.get_squad_role(source_id)
+	var target: DigimonInstance = party[target_index]
+	var target_role := OverworldState.get_squad_role(target.id)
+	if source_role == target_role:
+		return
+	var active_id := source_id if source_role == PlayerCollection.SQUAD_ROLE_ACTIVE else target.id
+	var reserve_id := source_id if source_role == PlayerCollection.SQUAD_ROLE_RESERVE else target.id
+	if not OverworldState.swap_party_with_reserve(active_id, reserve_id):
+		return
+	_finish_squad_role_change(source_id)
+
+
+func _finish_squad_role_change(instance_id: String) -> void:
+	_squad_swap_source_id = ""
+	_squad_swap_source_name = ""
+	_mode = MenuMode.ROSTER
+	var party := _party_instances()
+	for index in range(party.size()):
+		if party[index].id == instance_id:
+			_selected_index = index
+			_roster_page = _squad_page_for_index(index)
+			break
+	_refresh_collection()
+	call_deferred("_focus_selected_roster_card")
+
+
+func _cancel_squad_swap() -> void:
+	var source_id := _squad_swap_source_id
+	_squad_swap_source_id = ""
+	_squad_swap_source_name = ""
+	_mode = MenuMode.ROSTER
+	var party := _party_instances()
+	for index in range(party.size()):
+		if party[index].id == source_id:
+			_selected_index = index
+			_roster_page = _squad_page_for_index(index)
+			break
+	_refresh_collection()
+	call_deferred("_focus_selected_roster_card")
+
+
+func _build_squad_swap_prompt(target: DigimonInstance) -> void:
+	var source := OverworldState.get_instance_by_id(_squad_swap_source_id)
+	if source == null or target == null:
+		_cancel_squad_swap()
+		return
+	var source_species := _database.get_by_seed(source.species_seed)
+	var target_species := _database.get_by_seed(target.species_seed)
+	var source_name := source.get_display_name(String(source_species.get("name", "Digimon")))
+	var target_name := target.get_display_name(String(target_species.get("name", "Digimon")))
+	var target_role := OverworldState.get_squad_role(target.id)
+	var target_role_label := "ACTIVE" if target_role == PlayerCollection.SQUAD_ROLE_ACTIVE else "RESERVE"
+
+	var panel := PanelContainer.new()
+	panel.name = "SquadSwapPrompt"
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", V2.hospital_panel_style(V2.PURPLE))
+	_detail_list.add_child(panel)
+	var margin := _margin(24, 24, 24, 24)
+	panel.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override("separation", 14)
+	margin.add_child(stack)
+	var title := _label("SWAP SQUAD ROLE", 22 if not _density_compact else 18, V2.WHITE, true)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stack.add_child(title)
+	var instruction := _label(
+		"%s  ↔  %s" % [source_name, target_name],
+		16 if not _density_compact else 14,
+		V2.CYAN,
+		true
+	)
+	instruction.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stack.add_child(instruction)
+	var description := _label(
+		"Select a %s Digimon from the roster to confirm the swap." % target_role_label.capitalize(),
+		12,
+		V2.MUTED
+	)
+	description.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stack.add_child(description)
+	var cancel := Button.new()
+	cancel.name = "CancelSquadSwap"
+	cancel.text = "CANCEL SWAP"
+	cancel.custom_minimum_size = Vector2(220.0, V2.TOUCH_TARGET)
+	cancel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cancel.focus_mode = Control.FOCUS_NONE
+	cancel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	cancel.add_theme_font_size_override("font_size", 13)
+	cancel.add_theme_color_override("font_color", V2.WHITE)
+	for state_name in ["normal", "hover", "pressed"]:
+		cancel.add_theme_stylebox_override(state_name, V2.hospital_button_style(V2.PURPLE, state_name))
+	V2.apply_heading(cancel)
+	cancel.pressed.connect(_cancel_squad_swap)
+	stack.add_child(cancel)
 
 
 func _build_overview_column(instance: DigimonInstance) -> void:
@@ -762,8 +977,9 @@ func _sync_main_tab_visibility() -> void:
 func _update_action_state() -> void:
 	var active := _mode == MenuMode.ACTIONS
 	for button in _command_buttons:
-		button.disabled = not active
-		button.focus_mode = Control.FOCUS_ALL if active else Control.FOCUS_NONE
+		var allowed := bool(button.get_meta("action_allowed", true))
+		button.disabled = not active or not allowed
+		button.focus_mode = Control.FOCUS_ALL if active and allowed else Control.FOCUS_NONE
 
 
 func _return_to_roster() -> void:
@@ -1000,6 +1216,8 @@ func _turn_technique_page(delta: int) -> void:
 
 
 func _turn_roster_page(delta: int) -> void:
+	if not _squad_swap_source_id.is_empty():
+		return
 	var party := _party_instances()
 	var count := _squad_roster_page_count()
 	if party.is_empty() or count <= 1:
@@ -1068,15 +1286,22 @@ func _move_action_focus(direction: int) -> void:
 	var index := _command_buttons.find(owner)
 	if index < 0:
 		index = 0
-	else:
-		index = posmod(index + direction, _command_buttons.size())
-	_command_buttons[index].grab_focus()
+	for offset in range(1, _command_buttons.size() + 1):
+		var candidate := posmod(index + direction * offset, _command_buttons.size())
+		if not _command_buttons[candidate].disabled:
+			_command_buttons[candidate].grab_focus()
+			return
 
 
 func _focus_action(index: int) -> void:
 	if _command_buttons.is_empty():
 		return
-	_command_buttons[clampi(index, 0, _command_buttons.size() - 1)].grab_focus()
+	var start := clampi(index, 0, _command_buttons.size() - 1)
+	for offset in range(_command_buttons.size()):
+		var candidate := posmod(start + offset, _command_buttons.size())
+		if not _command_buttons[candidate].disabled:
+			_command_buttons[candidate].grab_focus()
+			return
 
 
 func _current_action_index() -> int:
@@ -1129,13 +1354,15 @@ func _update_footer_hints() -> void:
 	if _hint_bar == null:
 		return
 	_hint_bar.set_primary_tabs_enabled(true)
-	_hint_bar.set_secondary_tabs_enabled(_main_tab == "party" and _mode != MenuMode.TECHNIQUES)
+	_hint_bar.set_secondary_tabs_enabled(_main_tab == "party" and _mode != MenuMode.TECHNIQUES and _squad_swap_source_id.is_empty())
 	if _main_tab != "party":
 		_hint_bar.set_pagination_enabled(false)
 		_hint_bar.set_description("%s · Soon" % _main_tab.capitalize())
 		return
 	var pages := 1
-	if _mode == MenuMode.TECHNIQUES:
+	if not _squad_swap_source_id.is_empty():
+		pages = 1
+	elif _mode == MenuMode.TECHNIQUES:
 		var party := _party_instances()
 		if not party.is_empty():
 			var instance := party[clampi(_selected_index, 0, party.size() - 1)]
@@ -1145,7 +1372,10 @@ func _update_footer_hints() -> void:
 	_hint_bar.set_pagination_enabled(pages > 1)
 	_hint_bar.set_scroll_hint_enabled(false)
 	_hint_bar.set_hide_hints_on_touch(true)
-	if _mode == MenuMode.TECHNIQUES:
+	if not _squad_swap_source_id.is_empty():
+		var target_label := "Reserve" if _roster_page == 1 else "Active"
+		_hint_bar.set_description("Swap %s · choose a %s Digimon. Back cancels." % [_squad_swap_source_name, target_label])
+	elif _mode == MenuMode.TECHNIQUES:
 		_hint_bar.set_description("Technique Library · favorite, reorder or archive learned techniques.")
 	elif _mode == MenuMode.ACTIONS:
 		_hint_bar.set_description("Choose a command for the selected Digimon.")
