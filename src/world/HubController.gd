@@ -505,6 +505,7 @@ func _open_dialog() -> void:
 	_interaction_prompt.visible = false
 	_mobile_controls.visible = false
 	_dialog_panel.visible = true
+	UiSfxDirector.play_open()
 	_start_battle_button.grab_focus()
 	print("[Hub] DIALOGUE_OPEN")
 

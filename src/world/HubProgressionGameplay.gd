@@ -4,6 +4,7 @@ const DigimonCollectionMenuScript = preload("res://src/ui/DigiSystemProgressionM
 const DigiLabHubScreenScript = preload("res://src/ui/DigiLabHubScreen.gd")
 
 var _digimon_menu: DigimonCollectionMenu = null
+var _digimon_transition_surface: DigiUiTransitionSurface = null
 var _menu_open := false
 var _touch_menu_button: Button = null
 var _digilab: DigiLabHubScreen = null
@@ -51,6 +52,7 @@ func _build_digimon_menu() -> void:
 	_digimon_menu.visible = false
 	_digimon_menu.close_requested.connect(_close_digimon_menu)
 	layer.add_child(_digimon_menu)
+	_digimon_transition_surface = _digimon_menu.call("get_transition_surface") as DigiUiTransitionSurface
 
 	_touch_menu_button = _dialog_button("DIGIMON", UI.GOLD)
 	_touch_menu_button.name = "OpenDigimonMenu"
@@ -113,7 +115,9 @@ func _build_digilab_ui() -> void:
 	_ui_root.add_child(_touch_digilab_button)
 
 func _open_digimon_menu() -> void:
-	if _menu_open or _digilab_open or _dialog_open or _transitioning or _digimon_menu == null:
+	if _menu_open or _digilab_open or _dialog_open or _transitioning or _digimon_menu == null or _digimon_transition_surface == null:
+		return
+	if not DigiUiTransitionDirector.begin_open(_digimon_transition_surface, "digimon"):
 		return
 	_menu_open = true
 	_release_touch_movement()
@@ -122,24 +126,32 @@ func _open_digimon_menu() -> void:
 	_digimon_menu.open_menu()
 	UiSfxDirector.play_open()
 	_layout_ui()
+	await DigiUiTransitionDirector.reveal_open()
 	if OS.is_debug_build():
 		print("[Hub] DIGIMON_MENU open")
 
 func _close_digimon_menu() -> void:
-	if not _menu_open:
+	if not _menu_open or _digimon_transition_surface == null:
+		return
+	if not DigiUiTransitionDirector.begin_close(_digimon_transition_surface, "digimon"):
 		return
 	UiSfxDirector.play_back()
+	await DigiUiTransitionDirector.conceal_close()
 	_menu_open = false
 	if _digimon_menu != null:
 		_digimon_menu.visible = false
 	if _player != null:
 		_player.set_physics_process(true)
 	_layout_ui()
+	DigiUiTransitionDirector.complete_close()
 	if OS.is_debug_build():
 		print("[Hub] DIGIMON_MENU close")
 
 func _open_digilab() -> void:
 	if _digilab_open or _menu_open or _dialog_open or _transitioning or _digilab == null:
+		return
+	var transition_surface := _digilab.get_transition_surface()
+	if transition_surface == null or not DigiUiTransitionDirector.begin_open(transition_surface, "digilab"):
 		return
 	_digilab_open = true
 	_release_touch_movement()
@@ -148,19 +160,25 @@ func _open_digilab() -> void:
 	_digilab.open_lab()
 	UiSfxDirector.play_open()
 	_layout_ui()
+	await DigiUiTransitionDirector.reveal_open()
 	if OS.is_debug_build():
 		print("[Hub] DIGILAB open")
 
 func _close_digilab() -> void:
-	if not _digilab_open:
+	if not _digilab_open or _digilab == null:
+		return
+	var transition_surface := _digilab.get_transition_surface()
+	if transition_surface == null or not DigiUiTransitionDirector.begin_close(transition_surface, "digilab"):
 		return
 	UiSfxDirector.play_back()
+	await DigiUiTransitionDirector.conceal_close()
 	_digilab_open = false
 	if _digilab != null:
-		_digilab.visible = false
+		_digilab.finish_close()
 	if _player != null:
 		_player.set_physics_process(true)
 	_layout_ui()
+	DigiUiTransitionDirector.complete_close()
 	if OS.is_debug_build():
 		print("[Hub] DIGILAB close")
 

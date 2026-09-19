@@ -18,6 +18,7 @@ const WorkspaceChrome = preload("res://src/ui/components/DigiWorkspaceChrome.gd"
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 const ConfirmationScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
+const TransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 const TRAINING_BACKGROUND := preload("res://assets/ui/backgrounds/training.webp")
 
 const ROSTER_PAGE_SIZE := 3
@@ -108,6 +109,8 @@ var _mobility_requirement: Label
 var _mobility_plus: Button
 var _confirmation: DigiConfirmationModal
 var _editor_focus_rows: Array = []
+var _transition_surface: DigiUiTransitionSurface = null
+var _close_lifecycle_managed := false
 
 
 func _ready() -> void:
@@ -121,6 +124,14 @@ func _ready() -> void:
 	OverworldState.collection_changed.connect(_on_collection_changed)
 	get_viewport().size_changed.connect(_layout)
 	visible = false
+
+
+func get_transition_surface() -> DigiUiTransitionSurface:
+	return _transition_surface
+
+
+func set_close_lifecycle_managed(value: bool) -> void:
+	_close_lifecycle_managed = value
 
 
 func open_screen() -> void:
@@ -141,18 +152,23 @@ func open_screen() -> void:
 	_update_footer_hints()
 	call_deferred("_layout")
 	call_deferred("_focus_selected_collection")
-	_frame.modulate.a = 0.0
-	var tween := create_tween()
-	tween.tween_property(_frame, "modulate:a", 1.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Full-screen construction is provided by the shared transition surface.
+	_frame.modulate.a = 1.0
 
 
-func close_view() -> void:
+func finish_close() -> void:
 	if _confirmation != null and _confirmation.visible:
 		_confirmation.close_dialog(false)
 	_pending_confirmation_action = ""
 	_pending_confirmation_target = ""
 	_clear_plan()
 	visible = false
+
+
+func close_view() -> void:
+	# Preserve the immediate programmatic close contract for tests/tools. Player
+	# input uses _request_close(), allowing the Hub to animate before finalizing.
+	finish_close()
 	close_requested.emit()
 
 
@@ -240,6 +256,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build_ui() -> void:
+	_transition_surface = TransitionSurfaceScript.new() as DigiUiTransitionSurface
+	_transition_surface.name = "TrainingTransition"
+	add_child(_transition_surface)
+
 	var background := TextureRect.new()
 	background.name = "TrainingBackgroundImage"
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -248,27 +268,27 @@ func _build_ui() -> void:
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	background.modulate = Color(0.94, 0.98, 1.0, 0.94)
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(background)
+	_transition_surface.add_transition_child(background)
 
 	var shade := ColorRect.new()
 	shade.name = "TrainingBackgroundShade"
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shade.color = Color(0.004, 0.018, 0.030, 0.42)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(shade)
+	_transition_surface.add_transition_child(shade)
 
 	var cyan_wash := ColorRect.new()
 	cyan_wash.name = "TrainingCyanWash"
 	cyan_wash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	cyan_wash.color = Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.018)
 	cyan_wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(cyan_wash)
+	_transition_surface.add_transition_child(cyan_wash)
 
 	_frame = PanelContainer.new()
 	_frame.name = "TrainingWorkspaceV2"
 	_frame.clip_contents = false
 	_frame.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
-	add_child(_frame)
+	_transition_surface.add_transition_child(_frame)
 
 	_menu_root = Control.new()
 	_menu_root.name = "TrainingWorkspaceContent"
@@ -1153,7 +1173,10 @@ func _commit_plan() -> void:
 
 func _request_close() -> void:
 	if not _has_plan():
-		close_view()
+		if _close_lifecycle_managed:
+			close_requested.emit()
+		else:
+			close_view()
 		return
 	_pending_confirmation_action = "close"
 	_pending_confirmation_target = ""
@@ -1192,7 +1215,10 @@ func _on_confirmation_confirmed() -> void:
 			call_deferred("_focus_first_editor_control")
 		"close":
 			_clear_plan()
-			close_view()
+			if _close_lifecycle_managed:
+				close_requested.emit()
+			else:
+				close_view()
 
 
 func _on_confirmation_cancelled() -> void:

@@ -43,12 +43,14 @@ jobs:
             command: godot --headless --path . tools/test_attack_patterns.tscn --quit-after 5
             success: advanced attack pattern regression passed
           - name: hub-foundation
-            # The regression owns several frame-bound UI/service transitions;
-            # leave enough frame budget for the added Active/Reserve follower checks.
-            command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 60
+            # This integration flow now waits for real open/close construction
+            # tweens across Training, DigiLab, Hospital and Battle Operator.
+            command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 360
             success: hub foundation regression passed
           - name: battle-operator-programs
-            command: godot --headless --path . tools/test_battle_operator_programs.tscn --quit-after 30
+            # This regression now waits for the real Battle Operator construction
+            # tween before asserting final focus/material/backdrop state.
+            command: godot --headless --path . tools/test_battle_operator_programs.tscn --quit-after 360
             success: battle operator programs regression passed
           - name: digilab-layout
             # This regression now exercises Active, Reserve and Storage layouts
@@ -62,6 +64,9 @@ jobs:
           - name: global-ui-v2
             command: godot --headless --path . tools/test_ui_v2_components_regression.tscn --quit-after 30
             success: global ui v2 components regression passed
+          - name: ui-digital-transition
+            command: godot --headless --path . tools/test_ui_digital_transition.tscn --quit-after 90
+            success: ui digital transition regression passed
           - name: digimon-main-menu-ui
             # This regression now exercises controller navigation, swap/cancel,
             # and both direct Active <-> Reserve moves. Keep enough frame budget

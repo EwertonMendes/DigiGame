@@ -13,6 +13,7 @@ const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd"
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
+const TransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 const BalanceScript = preload("res://src/digimon/ProgressionBalance.gd")
 
 const DESKTOP_BREAKPOINT := 980.0
@@ -26,6 +27,8 @@ var _status_text := ""
 var _backdrop: ColorRect
 var _frame: PanelContainer
 var _root: Control
+var _transition_surface: DigiUiTransitionSurface = null
+var _close_lifecycle_managed := false
 var _header: DigiModalHeader
 var _header_rule: ColorRect
 var _hint_bar: DigiInputHintBar
@@ -57,6 +60,14 @@ func _ready() -> void:
 	visible = false
 
 
+func get_transition_surface() -> DigiUiTransitionSurface:
+	return _transition_surface
+
+
+func set_close_lifecycle_managed(value: bool) -> void:
+	_close_lifecycle_managed = value
+
+
 func open_screen(preferred_instance_id: String = "") -> void:
 	visible = true
 	_header.configure_tabs(PrimaryTabs.specs(), "ascension")
@@ -76,12 +87,21 @@ func open_screen(preferred_instance_id: String = "") -> void:
 		_detail_scroll.scroll_vertical = 0
 	call_deferred("_layout")
 	call_deferred("_focus_selected")
-	_frame.modulate.a = 0.0
-	var tween := create_tween()
-	tween.tween_property(_frame, "modulate:a", 1.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# The parent DigiLab service owns the full-screen digital transition.
+	# Sub-workspaces stay opaque so changing tabs never replays a competing fade.
+	_frame.modulate.a = 1.0
+
+
+func _request_close() -> void:
+	if _close_lifecycle_managed:
+		close_requested.emit()
+	else:
+		close_view()
 
 
 func close_view() -> void:
+	# Immediate/programmatic close remains available for tests and tools. Normal
+	# player input requests a close so the parent service can animate first.
 	visible = false
 	close_requested.emit()
 
@@ -96,22 +116,26 @@ func get_selected_instance_id() -> String:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu")):
-		close_view()
+		_request_close()
 		get_viewport().set_input_as_handled()
 
 
 func _build() -> void:
+	_transition_surface = TransitionSurfaceScript.new() as DigiUiTransitionSurface
+	_transition_surface.name = "WorkspaceTransition"
+	add_child(_transition_surface)
+
 	_backdrop = ColorRect.new()
 	_backdrop.color = V2.BACKDROP
 	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_backdrop)
+	_transition_surface.add_transition_child(_backdrop)
 
 	_frame = PanelContainer.new()
 	_frame.name = "AscensionExpansionV2"
 	_frame.clip_contents = true
 	_frame.add_theme_stylebox_override("panel", V2.surface_style(V2.BACKDROP, Color.TRANSPARENT, 0))
-	add_child(_frame)
+	_transition_surface.add_transition_child(_frame)
 
 	_root = Control.new()
 	_root.clip_contents = true
@@ -121,7 +145,7 @@ func _build() -> void:
 	_header.name = "DigiLabHeader"
 	_header.configure("DIGI", "Digital Monsters", OverworldState.get_bits(), true)
 	_header.configure_tabs(PrimaryTabs.specs(), "ascension")
-	_header.close_requested.connect(close_view)
+	_header.close_requested.connect(_request_close)
 	_header.tab_selected.connect(_on_top_tab_selected)
 	_root.add_child(_header)
 

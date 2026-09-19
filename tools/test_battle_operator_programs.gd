@@ -126,7 +126,8 @@ func _test_operator_menu() -> void:
 	player.position = operator.position + Vector2(12.0, 12.0)
 	hub.call("_refresh_interaction")
 	hub.call("open_test_battle_dialog")
-	for _index in range(5):
+	await _await_ui_transition()
+	for _index in range(2):
 		await get_tree().process_frame
 
 	var dialog := hub.find_child("BattleDialog", true, false) as Control
@@ -145,8 +146,16 @@ func _test_operator_menu() -> void:
 	var operator_layer := hub.get("_operator_ui_layer") as CanvasLayer
 	var footer := hub.get("_operator_footer") as DigiInputHintBar
 	var close_button := header.get_close_button() if header != null else null
+	var backdrop_root := hub.find_child("BattleOperatorBackdrop", true, false) as Control
+	var transition_surface := hub.find_child("BattleOperatorTransition", true, false) as Control
+	var background := hub.find_child("BattleOperatorBackground", true, false) as TextureRect
 
 	_expect(dialog != null and dialog.visible, "Battle Operator workspace must open")
+	_expect(backdrop_root != null, "Battle Operator must own a dedicated backdrop layer")
+	_expect(transition_surface != null, "Battle Operator must own the shared digital transition surface")
+	_expect(background != null and backdrop_root != null and background.get_parent() == backdrop_root, "Battle Operator background must live in the dedicated backdrop layer")
+	_expect(transition_surface == null or background == null or not transition_surface.is_ancestor_of(background), "Battle Operator full-screen background must never be masked by the digital transition shader")
+	_expect(backdrop_root == null or is_equal_approx(backdrop_root.modulate.a, 1.0), "Battle Operator backdrop must finish opening at authored opacity")
 	_expect(operator_layer != null and operator_layer.layer > 80, "Battle Operator must render above closed Sprite Test and Dev debug launchers")
 	_expect(footer != null, "Battle Operator must reuse the shared workspace input-hint footer")
 	_expect(close_button != null and close_button.focus_mode == Control.FOCUS_NONE, "Battle Operator close chrome must stay outside directional focus navigation")
@@ -334,6 +343,14 @@ func _test_operator_menu() -> void:
 	hub.queue_free()
 	for _index in range(3):
 		await get_tree().process_frame
+
+
+func _await_ui_transition(max_frames: int = 120) -> void:
+	for _index in range(max_frames):
+		if not DigiUiTransitionDirector.is_transitioning():
+			return
+		await get_tree().process_frame
+	_expect(not DigiUiTransitionDirector.is_transitioning(), "Battle Operator transition must finish within the regression frame budget")
 
 
 func _expect(condition: bool, message: String) -> void:

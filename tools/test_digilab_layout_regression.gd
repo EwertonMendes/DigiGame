@@ -208,12 +208,18 @@ func _workspace_background_is_visible(screen: Control) -> bool:
 	var image := screen.find_child("DigiLabBackgroundImage", true, false) as TextureRect
 	if legacy_backdrop == null or frame == null or layer == null or image == null:
 		return false
-	if layer.get_parent() != screen:
+	var transition_surface := screen.call("get_transition_surface") as DigiUiTransitionSurface
+	var transition_root := transition_surface.get_content_root() if transition_surface != null else null
+	if transition_root == null:
+		return false
+	if legacy_backdrop.get_parent() != transition_root or layer.get_parent() != transition_root or frame.get_parent() != transition_root:
+		print("[digilab-layout] workspace visual layers must share TransitionContent")
 		return false
 	if not image.visible or image.texture == null or image.modulate.a < 0.8:
 		return false
 	# The image must sit above the opaque legacy backdrop but below the full-screen
-	# workspace frame. The frame itself must not paint an opaque surface.
+	# workspace frame inside the shared transition surface. The frame itself must
+	# not paint an opaque surface.
 	if not (legacy_backdrop.get_index() < layer.get_index() and layer.get_index() < frame.get_index()):
 		print("[digilab-layout] background layer order is invalid: legacy=%d image=%d frame=%d" % [legacy_backdrop.get_index(), layer.get_index(), frame.get_index()])
 		return false

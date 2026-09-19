@@ -91,9 +91,21 @@ async function waitForBattlePresentation(page) {
 
 async function enterTestBattle(page, captureDialogue = false) {
   const dialogueOpened = waitForConsole(page, '[Hub] DIALOGUE_OPEN');
-  await page.keyboard.press('KeyE');
+  await page.keyboard.down('KeyE');
+  // Capture while the key-down frame is still inside the authored 0.34 s
+  // construction window. Waiting for DIALOGUE_OPEN first made the old snapshots
+  // too late to catch one-frame/early-frame rendering defects.
+  if (captureDialogue) {
+    await page.waitForTimeout(28);
+    await page.screenshot({ path: 'build/hub-battle-dialog-opening-early.png', fullPage: true });
+    await page.waitForTimeout(70);
+    await page.screenshot({ path: 'build/hub-battle-dialog-opening-mid.png', fullPage: true });
+  }
+  await page.keyboard.up('KeyE');
   await dialogueOpened;
-  await settleFrames(page, 2);
+  // Inputs are intentionally blocked while the digital construction owns the UI.
+  // Wait beyond the authored 0.34 s open duration before navigating the workspace.
+  await page.waitForTimeout(380);
   if (captureDialogue) {
     await page.screenshot({ path: 'build/hub-battle-dialog.png', fullPage: true });
   }
@@ -134,6 +146,22 @@ async function advanceUntilMarker(page, marker, attempts = 48, intervalMs = 320)
   return message;
 }
 
+async function exerciseBattleOperatorCloseTransition(page) {
+  const dialogueOpened = waitForConsole(page, '[Hub] DIALOGUE_OPEN');
+  await page.keyboard.press('KeyE');
+  await dialogueOpened;
+  await page.waitForTimeout(380);
+  await page.keyboard.down('Escape');
+  await page.waitForTimeout(24);
+  await page.screenshot({ path: 'build/hub-battle-dialog-closing-early.png', fullPage: true });
+  await page.waitForTimeout(60);
+  await page.screenshot({ path: 'build/hub-battle-dialog-closing-mid.png', fullPage: true });
+  await page.keyboard.up('Escape');
+  await page.waitForTimeout(320);
+  await page.screenshot({ path: 'build/hub-battle-dialog-closed.png', fullPage: true });
+}
+
+
 async function runDesktopSuite() {
   const page = await browser.newPage({ viewport: desktopViewports[0] });
   watchRuntimeErrors(page, 'desktop');
@@ -154,6 +182,7 @@ async function runDesktopSuite() {
 
   await reloadHub(page);
   await page.screenshot({ path: 'build/hub-smoke.png', fullPage: true });
+  await exerciseBattleOperatorCloseTransition(page);
   await enterTestBattle(page, true);
   await page.screenshot({ path: 'build/web-smoke.png', fullPage: true });
 

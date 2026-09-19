@@ -115,7 +115,8 @@ func _ready() -> void:
 	var background := training.find_child("TrainingBackgroundImage", true, false) as TextureRect
 	if not _check(background != null and background.texture != null and background.texture.resource_path.ends_with("training.webp"), "Training must render the dedicated training.webp background"):
 		return
-	if not _check(background.get_parent() == training, "Training background must live at the screen root, outside the scaled workspace frame"):
+	var transition_surface := training.get_transition_surface()
+	if not _check(transition_surface != null and background.get_parent() == transition_surface.get_content_root(), "Training background must live in the shared transition surface, outside the scaled workspace frame"):
 		return
 	var background_rect := background.get_global_rect()
 	var screen_rect := training.get_global_rect()

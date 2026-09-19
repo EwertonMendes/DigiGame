@@ -7,6 +7,7 @@ const CommandButtonScript = preload("res://src/ui/components/DigiCommandButton.g
 const ProfilePanelScript = preload("res://src/ui/components/DigiRosterProfilePanel.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 const MENU_BACKGROUND = preload("res://assets/ui/backgrounds/digimon_menu.png")
+const TransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 
 const ROSTER_PAGE_SIZE := 3
 const TECHNIQUE_PAGE_SIZE := 4
@@ -43,6 +44,11 @@ var _soon_label: Label
 var _squad_swap_source_id := ""
 var _squad_swap_source_name := ""
 var _squad_role_mutation_in_progress := false
+var _transition_surface: DigiUiTransitionSurface = null
+
+
+func get_transition_surface() -> DigiUiTransitionSurface:
+	return _transition_surface
 
 
 func open_menu() -> void:
@@ -58,23 +64,27 @@ func open_menu() -> void:
 	_right_analog_gate.reset()
 	_refresh_collection()
 	call_deferred("_focus_selected_roster_card")
-	_panel.modulate.a = 0.0
-	var tween := create_tween()
-	tween.tween_property(_panel, "modulate:a", 1.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Full-screen construction is owned by DigiUiTransitionSurface. Keep this
+	# authored panel fully opaque so nested fades do not fight the shared mask.
+	_panel.modulate.a = 1.0
 
 
 func _build() -> void:
+	_transition_surface = TransitionSurfaceScript.new() as DigiUiTransitionSurface
+	_transition_surface.name = "DigimonMenuTransition"
+	add_child(_transition_surface)
+
 	_backdrop = ColorRect.new()
 	_backdrop.color = V2.BACKDROP
 	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_backdrop)
+	_transition_surface.add_transition_child(_backdrop)
 
 	_panel = PanelContainer.new()
 	_panel.name = "DigimonMainMenuV2"
 	_panel.clip_contents = true
 	_panel.add_theme_stylebox_override("panel", V2.surface_style(Color.TRANSPARENT, Color.TRANSPARENT, 0))
-	add_child(_panel)
+	_transition_surface.add_transition_child(_panel)
 	var background := TextureRect.new()
 	background.name = "DigimonMenuBackground"
 	background.texture = MENU_BACKGROUND

@@ -108,7 +108,7 @@ jobs:
           path: |
             build/web-smoke.png
             build/desktop-*.png
-            build/hub-battle-dialog.png
+            build/hub-battle-dialog*.png
           if-no-files-found: error
           retention-days: 7
 
