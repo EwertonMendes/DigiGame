@@ -40,10 +40,12 @@ func adopt_battle_state(state: BattleDigimon) -> bool:
 		return false
 	battle_state = state
 	_knockout_started = state.is_knocked_out()
-	if not _knockout_started:
-		modulate = Color.WHITE
-		if sprite != null:
-			sprite.modulate = Color.WHITE
+
+	# Battle-state adoption synchronizes domain state only. Initial actors may
+	# already be staged by IntroDigimonBattleActor with zero alpha and reduced
+	# scale before BattleSquadSession attaches its persistent state. Resetting
+	# presentation here exposed those staged sprites on faster desktop frames.
+	# Spawn, switch and revive flows own their visual state explicitly.
 	return true
 
 
