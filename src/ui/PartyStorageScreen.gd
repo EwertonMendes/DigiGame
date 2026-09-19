@@ -26,7 +26,7 @@ var _selected_id := ""
 var _backdrop: ColorRect
 var _frame: PanelContainer
 var _root: Control
-var _transition_surface: CanvasGroup = null
+var _transition_surface: DigiUiTransitionSurface = null
 var _close_lifecycle_managed := false
 var _header: DigiModalHeader
 var _header_rule: ColorRect
@@ -58,7 +58,7 @@ func _ready() -> void:
 	visible = false
 
 
-func get_transition_surface() -> CanvasGroup:
+func get_transition_surface() -> DigiUiTransitionSurface:
 	return _transition_surface
 
 
@@ -108,7 +108,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build() -> void:
-	_transition_surface = TransitionSurfaceScript.new() as CanvasGroup
+	_transition_surface = TransitionSurfaceScript.new() as DigiUiTransitionSurface
 	_transition_surface.name = "WorkspaceTransition"
 	add_child(_transition_surface)
 
