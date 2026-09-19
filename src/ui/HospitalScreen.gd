@@ -36,7 +36,7 @@ var _clock := 0.0
 var _card_roster_signature := ""
 
 var _canvas: Control
-var _transition_surface: CanvasGroup = null
+var _transition_surface: DigiUiTransitionSurface = null
 var _close_lifecycle_managed := false
 var _shade: ColorRect
 var _header: Panel
@@ -98,7 +98,7 @@ func _ready() -> void:
 	set_process(false)
 
 
-func get_transition_surface() -> CanvasGroup:
+func get_transition_surface() -> DigiUiTransitionSurface:
 	return _transition_surface
 
 
@@ -214,7 +214,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _build_ui() -> void:
-	_transition_surface = TransitionSurfaceScript.new() as CanvasGroup
+	_transition_surface = TransitionSurfaceScript.new() as DigiUiTransitionSurface
 	_transition_surface.name = "HospitalTransition"
 	add_child(_transition_surface)
 
