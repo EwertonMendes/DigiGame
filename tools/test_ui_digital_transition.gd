@@ -1,0 +1,47 @@
+extends Node
+
+const TransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
+
+var _failures: Array[String] = []
+
+
+func _ready() -> void:
+	var surface := TransitionSurfaceScript.new()
+	surface.name = "TransitionSurface"
+	add_child(surface)
+
+	var content := ColorRect.new()
+	content.color = Color.WHITE
+	content.size = Vector2(640.0, 360.0)
+	surface.add_child(content)
+	await get_tree().process_frame
+
+	_assert(not DigiUiTransitionDirector.is_transitioning(), "director must start idle")
+	_assert(DigiUiTransitionDirector.begin_open(surface, "digimon"), "open transition must start")
+	_assert(DigiUiTransitionDirector.is_transitioning(), "open transition must own input while active")
+	_assert(is_equal_approx(surface.get_transition_progress(), 0.0), "open must begin fully concealed")
+	await DigiUiTransitionDirector.reveal_open()
+	_assert(not DigiUiTransitionDirector.is_transitioning(), "open transition must release the director")
+	_assert(is_equal_approx(surface.get_transition_progress(), 1.0), "open must finish fully revealed")
+
+	_assert(DigiUiTransitionDirector.begin_close(surface, "digimon"), "close transition must start")
+	await DigiUiTransitionDirector.conceal_close()
+	_assert(DigiUiTransitionDirector.is_transitioning(), "close must remain owned until the screen finalizes")
+	_assert(is_equal_approx(surface.get_transition_progress(), 0.0), "close must finish fully concealed")
+	content.visible = false
+	DigiUiTransitionDirector.complete_close()
+	_assert(not DigiUiTransitionDirector.is_transitioning(), "close completion must release the director")
+	_assert(is_equal_approx(surface.get_transition_progress(), 1.0), "hidden surface must reset for future opens")
+
+	if _failures.is_empty():
+		print("ui digital transition regression passed")
+		get_tree().quit(0)
+		return
+	for failure in _failures:
+		push_error("[ui-digital-transition] %s" % failure)
+	get_tree().quit(1)
+
+
+func _assert(condition: bool, message: String) -> void:
+	if not condition:
+		_failures.append(message)
