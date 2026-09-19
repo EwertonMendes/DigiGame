@@ -148,7 +148,7 @@ func _ready() -> void:
 	var calculated := rewards.calculate(player_snapshots, enemy_snapshots)
 	assert(int(calculated.xp_by_instance.get(active[0].id, 0)) > 0, "Healthy participant must receive battle XP")
 	assert(int(calculated.xp_by_instance.get(reserve[1].id, 0)) > 0, "Healthy unused Reserve must receive battle XP")
-	assert(int(calculated.xp_by_instance.get(active[1].id, 0)) == int(calculated.xp_by_instance.get(reserve[1].id, 0)), "Equal-level Active and Reserve members must receive equal battle XP")
+	assert(int(calculated.xp_by_instance.get(active[0].id, 0)) == int(calculated.xp_by_instance.get(reserve[1].id, 0)), "Equal-level Active and Reserve members must receive equal battle XP")
 	assert(int(calculated.xp_by_instance.get(active[2].id, 0)) == 0, "Digimon knocked out during battle must receive no XP")
 	assert(int(calculated.xp_by_instance.get(reserve[2].id, 0)) == 0, "Reserve already knocked out before battle must receive no XP")
 
