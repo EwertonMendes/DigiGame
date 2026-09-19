@@ -18,7 +18,9 @@ var _points: Label
 var _minus: Button
 var _plus: Button
 var _icon: DigiProceduralIcon
+var _content_margin: MarginContainer
 var _accent := Color.WHITE
+var _compact := false
 
 
 func _ready() -> void:
@@ -26,6 +28,19 @@ func _ready() -> void:
 	clip_contents = true
 	custom_minimum_size.y = 66.0
 	_build()
+
+
+func set_compact(compact: bool) -> void:
+	_compact = compact
+	custom_minimum_size.y = 58.0 if compact else 66.0
+	if _content_margin != null:
+		_content_margin.add_theme_constant_override("margin_left", 8 if compact else 10)
+		_content_margin.add_theme_constant_override("margin_top", 3 if compact else 7)
+		_content_margin.add_theme_constant_override("margin_right", 8)
+		_content_margin.add_theme_constant_override("margin_bottom", 3 if compact else 7)
+	for button in [_minus, _plus]:
+		if button != null:
+			button.custom_minimum_size = Vector2(V2.TOUCH_TARGET, V2.TOUCH_TARGET)
 
 
 func configure(
@@ -92,12 +107,12 @@ func focus_plus() -> void:
 
 func _build() -> void:
 	add_theme_stylebox_override("panel", V2.panel_style(V2.BORDER_SOFT, 7))
-	var margin := _margin(10, 7, 8, 7)
-	add_child(margin)
+	_content_margin = _margin(10, 7, 8, 7)
+	add_child(_content_margin)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(row)
+	_content_margin.add_child(row)
 
 	_icon = IconScript.new() as DigiProceduralIcon
 	_icon.custom_minimum_size = Vector2(24.0, 24.0)
@@ -145,12 +160,13 @@ func _build() -> void:
 	_plus = _step_button("+", V2.GREEN, "Add one training point")
 	_plus.pressed.connect(func(): add_requested.emit(stat_key))
 	row.add_child(_plus)
+	set_compact(_compact)
 
 
 func _step_button(text: String, accent: Color, tooltip: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(52.0, 52.0)
+	button.custom_minimum_size = Vector2(V2.TOUCH_TARGET, V2.TOUCH_TARGET)
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.tooltip_text = tooltip
