@@ -141,18 +141,23 @@ func open_screen() -> void:
 	_update_footer_hints()
 	call_deferred("_layout")
 	call_deferred("_focus_selected_collection")
-	_frame.modulate.a = 0.0
-	var tween := create_tween()
-	tween.tween_property(_frame, "modulate:a", 1.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Full-screen construction is provided by the shared transition surface.
+	_frame.modulate.a = 1.0
 
 
-func close_view() -> void:
+func finish_close() -> void:
 	if _confirmation != null and _confirmation.visible:
 		_confirmation.close_dialog(false)
 	_pending_confirmation_action = ""
 	_pending_confirmation_target = ""
 	_clear_plan()
 	visible = false
+
+
+func close_view() -> void:
+	# Preserve the immediate programmatic close contract for tests/tools. Player
+	# input uses _request_close(), allowing the Hub to animate before finalizing.
+	finish_close()
 	close_requested.emit()
 
 
@@ -1153,7 +1158,7 @@ func _commit_plan() -> void:
 
 func _request_close() -> void:
 	if not _has_plan():
-		close_view()
+		close_requested.emit()
 		return
 	_pending_confirmation_action = "close"
 	_pending_confirmation_target = ""
@@ -1192,7 +1197,7 @@ func _on_confirmation_confirmed() -> void:
 			call_deferred("_focus_first_editor_control")
 		"close":
 			_clear_plan()
-			close_view()
+			close_requested.emit()
 
 
 func _on_confirmation_cancelled() -> void:
