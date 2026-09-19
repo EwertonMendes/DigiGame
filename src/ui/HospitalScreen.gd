@@ -10,6 +10,7 @@ const WalkScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const TierIconScript = preload("res://src/ui/components/DigiTierIcon.gd")
 const HintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
 const ConfirmationScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
+const TransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 const BACKGROUND = preload("res://assets/ui/backgrounds/digi_hospital.png")
 const BITS_ICON = preload("res://assets/ui/icons/bits.png")
 const CLOSE_ICON = preload("res://assets/ui/icons/cancel.svg")
@@ -35,6 +36,8 @@ var _clock := 0.0
 var _card_roster_signature := ""
 
 var _canvas: Control
+var _transition_surface: CanvasGroup = null
+var _close_lifecycle_managed := false
 var _shade: ColorRect
 var _header: Panel
 var _footer: DigiInputHintBar
@@ -95,6 +98,14 @@ func _ready() -> void:
 	set_process(false)
 
 
+func get_transition_surface() -> CanvasGroup:
+	return _transition_surface
+
+
+func set_close_lifecycle_managed(value: bool) -> void:
+	_close_lifecycle_managed = value
+
+
 func open_screen() -> void:
 	OverworldState.process_hospital_recoveries()
 	visible = true
@@ -110,7 +121,10 @@ func open_screen() -> void:
 
 
 func _request_close() -> void:
-	close_requested.emit()
+	if _close_lifecycle_managed:
+		close_requested.emit()
+	else:
+		close_view()
 
 
 func finish_close() -> void:
@@ -200,24 +214,28 @@ func _input(event: InputEvent) -> void:
 
 
 func _build_ui() -> void:
+	_transition_surface = TransitionSurfaceScript.new() as CanvasGroup
+	_transition_surface.name = "HospitalTransition"
+	add_child(_transition_surface)
+
 	var background := TextureRect.new()
 	background.texture = BACKGROUND
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(background)
+	_transition_surface.add_transition_child(background)
 
 	_shade = ColorRect.new()
 	_shade.color = Color(0.005, 0.019, 0.032, 0.36)
 	_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_shade)
+	_transition_surface.add_transition_child(_shade)
 
 	_canvas = Control.new()
 	_canvas.name = "HospitalCanvas"
 	_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_canvas)
+	_transition_surface.add_transition_child(_canvas)
 
 	_build_header()
 	_build_roster()
