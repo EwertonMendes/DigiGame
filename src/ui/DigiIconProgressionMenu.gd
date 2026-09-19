@@ -44,10 +44,10 @@ var _soon_label: Label
 var _squad_swap_source_id := ""
 var _squad_swap_source_name := ""
 var _squad_role_mutation_in_progress := false
-var _transition_surface: CanvasGroup = null
+var _transition_surface: DigiUiTransitionSurface = null
 
 
-func get_transition_surface() -> CanvasGroup:
+func get_transition_surface() -> DigiUiTransitionSurface:
 	return _transition_surface
 
 
@@ -70,7 +70,7 @@ func open_menu() -> void:
 
 
 func _build() -> void:
-	_transition_surface = TransitionSurfaceScript.new() as CanvasGroup
+	_transition_surface = TransitionSurfaceScript.new() as DigiUiTransitionSurface
 	_transition_surface.name = "DigimonMenuTransition"
 	add_child(_transition_surface)
 
