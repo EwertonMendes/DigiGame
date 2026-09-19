@@ -13,9 +13,11 @@ func _ready() -> void:
 	var content := ColorRect.new()
 	content.color = Color.WHITE
 	content.size = Vector2(640.0, 360.0)
-	surface.add_child(content)
+	surface.add_transition_child(content)
 	await get_tree().process_frame
 
+	_assert(surface.get_content_root() != null, "transition surface must own a stable content root")
+	_assert(content.get_parent() == surface.get_content_root(), "transition content must be hosted by the shared content root")
 	_assert(not DigiUiTransitionDirector.is_transitioning(), "director must start idle")
 	_assert(DigiUiTransitionDirector.begin_open(surface, "digimon"), "open transition must start")
 	_assert(DigiUiTransitionDirector.is_transitioning(), "open transition must own input while active")
