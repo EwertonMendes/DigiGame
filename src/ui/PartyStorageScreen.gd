@@ -14,6 +14,7 @@ const StatsPanelScript = preload("res://src/ui/components/DigiStatsPanel.gd")
 const PortraitPreviewScript = preload("res://src/ui/DigimonPortraitPreview.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const SmoothScrollScript = preload("res://src/ui/SmoothScrollBehavior.gd")
+const TransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 const ProgressionServiceScript = preload("res://src/digimon/DigimonProgressionService.gd")
 
 const DESKTOP_BREAKPOINT := 980.0
@@ -25,6 +26,8 @@ var _selected_id := ""
 var _backdrop: ColorRect
 var _frame: PanelContainer
 var _root: Control
+var _transition_surface: CanvasGroup = null
+var _close_lifecycle_managed := false
 var _header: DigiModalHeader
 var _header_rule: ColorRect
 var _hint_bar: DigiInputHintBar
@@ -55,6 +58,14 @@ func _ready() -> void:
 	visible = false
 
 
+func get_transition_surface() -> CanvasGroup:
+	return _transition_surface
+
+
+func set_close_lifecycle_managed(value: bool) -> void:
+	_close_lifecycle_managed = value
+
+
 func open_screen() -> void:
 	visible = true
 	_header.set_active_tab("party")
@@ -73,7 +84,10 @@ func open_screen() -> void:
 
 
 func _request_close() -> void:
-	close_requested.emit()
+	if _close_lifecycle_managed:
+		close_requested.emit()
+	else:
+		close_view()
 
 
 func close_view() -> void:
@@ -94,17 +108,21 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build() -> void:
+	_transition_surface = TransitionSurfaceScript.new() as CanvasGroup
+	_transition_surface.name = "WorkspaceTransition"
+	add_child(_transition_surface)
+
 	_backdrop = ColorRect.new()
 	_backdrop.color = V2.BACKDROP
 	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_backdrop)
+	_transition_surface.add_transition_child(_backdrop)
 
 	_frame = PanelContainer.new()
 	_frame.name = "PartyStorageV2"
 	_frame.clip_contents = true
 	_frame.add_theme_stylebox_override("panel", V2.surface_style(V2.BACKDROP, Color.TRANSPARENT, 0))
-	add_child(_frame)
+	_transition_surface.add_transition_child(_frame)
 
 	_root = Control.new()
 	_root.clip_contents = true
