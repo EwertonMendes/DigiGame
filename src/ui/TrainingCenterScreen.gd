@@ -199,6 +199,7 @@ func _input(event: InputEvent) -> void:
 				call_deferred("_focus_first_collection")
 			get_viewport().set_input_as_handled()
 			return
+		return
 
 
 func _unhandled_input(event: InputEvent) -> void:
