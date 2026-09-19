@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the canonical Digi Game application icon and export wiring."""
+"""Validate Digi Game application branding and export wiring."""
 
 from __future__ import annotations
 
@@ -9,22 +9,24 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 ICON = ROOT / "assets/ui/icons/favicon.png"
+SPLASH = ROOT / "assets/ui/branding/boot_splash.png"
 ANDROID_BACKGROUND = ROOT / "assets/ui/icons/android_adaptive_background.svg"
 PROJECT = ROOT / "project.godot"
 PRESETS = ROOT / "export_presets.cfg"
 
 RESOURCE_ICON = "res://assets/ui/icons/favicon.png"
+RESOURCE_SPLASH = "res://assets/ui/branding/boot_splash.png"
 RESOURCE_ANDROID_BACKGROUND = "res://assets/ui/icons/android_adaptive_background.svg"
 
 
 def fail(message: str) -> None:
-    print(f"App icon validation failed: {message}", file=sys.stderr)
+    print(f"App branding validation failed: {message}", file=sys.stderr)
     raise SystemExit(1)
 
 
 def read_png_size(path: Path) -> tuple[int, int]:
     data = path.read_bytes()[:24]
-    if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n":
+    if len(data) < 24 or data[:8] != b"\\x89PNG\\r\\n\\x1a\\n":
         fail(f"{path.relative_to(ROOT)} is not a valid PNG file.")
     if data[12:16] != b"IHDR":
         fail(f"{path.relative_to(ROOT)} is missing a PNG IHDR header.")
@@ -39,13 +41,27 @@ def require(text: str, value: str, source: str) -> None:
 def main() -> None:
     if not ICON.is_file():
         fail("assets/ui/icons/favicon.png does not exist.")
-    width, height = read_png_size(ICON)
-    if width != height:
-        fail(f"favicon.png must be square, got {width}x{height}.")
-    if width < 512:
+    icon_width, icon_height = read_png_size(ICON)
+    if icon_width != icon_height:
+        fail(f"favicon.png must be square, got {icon_width}x{icon_height}.")
+    if icon_width < 512:
         fail(
             f"favicon.png must be at least 512x512 so Android adaptive and Web/PWA "
-            f"icons can be generated cleanly, got {width}x{height}."
+            f"icons can be generated cleanly, got {icon_width}x{icon_height}."
+        )
+
+    if not SPLASH.is_file():
+        fail("assets/ui/branding/boot_splash.png does not exist.")
+    splash_width, splash_height = read_png_size(SPLASH)
+    if splash_width * 9 != splash_height * 16:
+        fail(
+            f"boot_splash.png must be 16:9 to match the game's viewport cleanly, "
+            f"got {splash_width}x{splash_height}."
+        )
+    if splash_width < 640 or splash_height < 360:
+        fail(
+            f"boot_splash.png must be at least 640x360, got "
+            f"{splash_width}x{splash_height}."
         )
 
     if not ANDROID_BACKGROUND.is_file():
@@ -55,6 +71,16 @@ def main() -> None:
     presets = PRESETS.read_text(encoding="utf-8")
 
     require(project, f'config/icon="{RESOURCE_ICON}"', "project.godot")
+    require(project, f'boot_splash/image="{RESOURCE_SPLASH}"', "project.godot")
+    require(project, "boot_splash/show_image=true", "project.godot")
+    require(project, "boot_splash/minimum_display_time=0", "project.godot")
+    require(project, "boot_splash/stretch_mode=1", "project.godot")
+    require(project, "boot_splash/use_filter=true", "project.godot")
+    require(
+        project,
+        "boot_splash/bg_color=Color(0.00392157, 0.00784314, 0.0235294, 1)",
+        "project.godot",
+    )
 
     required_preset_entries = (
         f'progressive_web_app/icon_144x144="{RESOURCE_ICON}"',
@@ -72,8 +98,9 @@ def main() -> None:
         fail("Windows and macOS export presets must both use favicon.png.")
 
     print(
-        f"App icon configuration OK: favicon.png is {width}x{height} and is wired "
-        "to project, Web/PWA, Windows, macOS, Android and Linux runtime fallback."
+        f"App branding configuration OK: favicon.png is {icon_width}x{icon_height}; "
+        f"boot_splash.png is {splash_width}x{splash_height}; icon and startup "
+        "branding are wired to Godot and all supported exports."
     )
 
 
