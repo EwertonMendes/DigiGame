@@ -40,7 +40,7 @@ var _selected_program_id := "basic"
 var _selected_battlefield_id := ""
 var _operator_section := SECTION_PROGRAM
 var _operator_ui_layer: CanvasLayer = null
-var _operator_transition_surface: CanvasGroup = null
+var _operator_transition_surface: DigiUiTransitionSurface = null
 var _operator_header: DigiModalHeader = null
 var _operator_header_rule: ColorRect = null
 var _operator_footer: DigiInputHintBar = null
@@ -95,7 +95,7 @@ func _build_dialog() -> void:
 	)
 	_operator_ui_layer.add_child(_dialog_panel)
 
-	_operator_transition_surface = OperatorTransitionSurfaceScript.new() as CanvasGroup
+	_operator_transition_surface = OperatorTransitionSurfaceScript.new() as DigiUiTransitionSurface
 	_operator_transition_surface.name = "BattleOperatorTransition"
 	_dialog_panel.add_child(_operator_transition_surface)
 
