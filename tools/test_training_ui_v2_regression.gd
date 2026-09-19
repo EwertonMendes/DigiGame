@@ -180,7 +180,8 @@ func _ready() -> void:
 		var command_style := action.get_theme_stylebox("normal") as StyleBoxFlat
 		if not _check(command_style != null and command_style.border_width_left >= 4, "Compact attribute commands must keep the Digi Hospital leading rail"):
 			return
-		if not _check(action.icon != null, "Compact attribute commands must keep a readable action icon"):
+		var compact_icon := action.find_child("ActionIcon", true, false) as TextureRect
+		if not _check(compact_icon != null and compact_icon.custom_minimum_size == Vector2(24.0, 24.0), "Compact attribute commands must keep a readable 24px action icon"):
 			return
 
 	# Apply remains guarded because attribute training is permanent.
