@@ -294,8 +294,8 @@ func _ready() -> void:
 	menu.call("_confirm_index", source_index)
 	await _frames(2)
 	commands = menu.get("_command_buttons") as Array
-	squad_role_command = commands[2] as Button
-	assert(squad_role_command.text == "SWAP WITH ACTIVE", "Full Active team must route Reserve promotion through an explicit swap")
+	squad_role_command = commands[2] as DigiCommandButton
+	assert(_command_title(squad_role_command) == "SWAP WITH ACTIVE", "Full Active team must route Reserve promotion through an explicit swap")
 	squad_role_command.pressed.emit()
 	await _frames(3)
 	assert(String(menu.get("_squad_swap_source_id")) == reserve_source_id and int(menu.get("_roster_page")) == 0, "Squad swap must move directly to the opposite role page")
