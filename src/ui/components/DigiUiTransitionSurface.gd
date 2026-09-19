@@ -12,6 +12,12 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_ensure_content_root()
 	_ensure_material()
+	_sync_content_rect()
+	var owner := get_parent() as Control
+	if owner != null and not owner.resized.is_connected(_sync_content_rect):
+		owner.resized.connect(_sync_content_rect)
+	if get_viewport() != null and not get_viewport().size_changed.is_connected(_sync_content_rect):
+		get_viewport().size_changed.connect(_sync_content_rect)
 
 
 func get_content_root() -> Control:
@@ -60,6 +66,17 @@ func _ensure_content_root() -> void:
 		return
 	_content_root = Control.new()
 	_content_root.name = "TransitionContent"
-	_content_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_content_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_content_root)
+	_sync_content_rect()
+
+
+func _sync_content_rect() -> void:
+	if _content_root == null:
+		return
+	_content_root.position = Vector2.ZERO
+	var owner := get_parent() as Control
+	if owner != null:
+		_content_root.size = owner.size
+	elif get_viewport() != null:
+		_content_root.size = get_viewport().get_visible_rect().size
