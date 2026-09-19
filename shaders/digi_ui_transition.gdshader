@@ -14,11 +14,13 @@ float hash21(vec2 p) {
 }
 
 void fragment() {
-	// This shader deliberately does not sample the screen/backbuffer. It is
-	// applied directly to each UI CanvasItem for the short transition window,
-	// so unrevealed pixels are truly transparent and the overworld remains the
-	// renderer-native background behind the interface.
-	vec4 source = texture(TEXTURE, UV) * COLOR;
+	// In a CanvasItem fragment shader, Godot already supplies COLOR multiplied
+	// by the CanvasItem's default texture (when one exists). Sampling TEXTURE
+	// again would square/darken textured UI — especially the Battle Operator's
+	// dark full-screen backdrop — and can look like a black flash while the
+	// transition material is active. Use the renderer-provided authored pixel
+	// directly and only change its reveal/glow.
+	vec4 source = COLOR;
 
 	vec2 pixel = SCREEN_UV / max(SCREEN_PIXEL_SIZE, vec2(0.000001));
 	vec2 grid_uv = pixel / max(cell_pixels, 1.0);
