@@ -112,8 +112,16 @@ func _ready() -> void:
 		return
 	var host_identity := host.get_instance_id()
 	var host_size := host.size
-	var attributes_header := training.get("_attributes_header") as DigiSectionHeader
-	if not _check(_header_icon_is_centered(attributes_header), "Attribute Training icon must be vertically centered beside its title"):
+	var background := training.find_child("TrainingBackgroundImage", true, false) as TextureRect
+	if not _check(background != null and background.texture != null and background.texture.resource_path.ends_with("training.webp"), "Training must render the dedicated training.webp background"):
+		return
+
+	var attribute_toolbar := training.get("_attribute_plan_bar") as PanelContainer
+	var attribute_icon := attribute_toolbar.find_child("AttributeTrainingIcon", true, false) as Control
+	var attribute_title := attribute_toolbar.find_child("AttributeTrainingTitle", true, false) as Label
+	if not _check(attribute_icon != null and attribute_title != null, "Attribute toolbar must expose its authored icon and title"):
+		return
+	if not _check(absf(attribute_icon.get_global_rect().get_center().y - attribute_title.get_global_rect().get_center().y) <= 2.0, "Attribute Training icon must be vertically centered with its title"):
 		return
 
 	var rows: Dictionary = training.get("_stat_rows") as Dictionary
@@ -170,7 +178,9 @@ func _ready() -> void:
 	var apply := training.get("_apply_button") as Button
 	if not _check(attribute_plan_bar != null and attributes.is_ancestor_of(attribute_plan_bar), "Attribute Apply/Discard must live inside the Attributes presentation"):
 		return
-	if not _check(attribute_plan_bar.get_global_rect().end.y <= host_rect.end.y + 1.0, "Compact attribute actions must stay fully inside the presentation workspace"):
+	if not _check(attribute_plan_bar.get_global_rect().position.y >= host_rect.position.y - 1.0 and attribute_plan_bar.get_global_rect().end.y <= host_rect.end.y + 1.0, "Attribute toolbar must stay fully inside the presentation workspace"):
+		return
+	if not _check(attribute_plan_bar.get_index() == 0, "Attribute actions must share the top toolbar instead of adding height below the stat grid"):
 		return
 	for action in [discard, apply]:
 		if not _check(action != null and action.custom_minimum_size.y >= V2.TOUCH_TARGET, "Attribute plan actions must remain touch-safe"):
@@ -221,8 +231,18 @@ func _ready() -> void:
 	if not _check((training.get("_presentation_host") as Control).size.is_equal_approx(host_size), "Switching Training views must keep workspace geometry stable"):
 		return
 
-	var mobility_header := training.get("_mobility_header") as DigiSectionHeader
-	if not _check(_header_icon_is_centered(mobility_header), "Tactical Mobility icon must be vertically centered beside its title"):
+	var mobility_card := training.get("_mobility_card") as PanelContainer
+	var mobility_icon := mobility_card.find_child("MobilityTitleIcon", true, false) as Control
+	var mobility_title := mobility_card.find_child("MobilityTitleLabel", true, false) as Label
+	if not _check(mobility_card != null and mobility_icon != null and mobility_title != null, "Mobility must render as one self-contained card"):
+		return
+	var mobility_rect := mobility_card.get_global_rect()
+	var mobility_host_rect := host.get_global_rect()
+	if not _check(mobility_rect.position.y >= mobility_host_rect.position.y - 1.0 and mobility_rect.end.y <= mobility_host_rect.end.y + 1.0, "Mobility card must stay fully inside the presentation workspace"):
+		return
+	if not _check(absf(mobility_rect.get_center().y - mobility_host_rect.get_center().y) <= 3.0, "Mobility card must be vertically centered in its presentation"):
+		return
+	if not _check(absf(mobility_icon.get_global_rect().get_center().y - mobility_title.get_global_rect().get_center().y) <= 2.0, "Tactical Mobility icon must be vertically centered with its title"):
 		return
 
 	var mobility_plus := training.get("_mobility_plus") as Button
@@ -309,20 +329,6 @@ func _ensure_paged_fixture() -> void:
 			# fixtures enough Potential to exercise independent MOV training.
 			instance.potential = 100
 			OverworldState.add_collection_instance(instance)
-
-
-func _header_icon_is_centered(header: DigiSectionHeader) -> bool:
-	if header == null:
-		return false
-	var icon := header.get_icon_view()
-	var slot := header.get_node_or_null("MarginContainer/HBoxContainer/SectionIconSlot") as CenterContainer
-	if slot == null:
-		slot = header.find_child("SectionIconSlot", true, false) as CenterContainer
-	if icon == null or slot == null or not icon.visible:
-		return false
-	var icon_center := icon.get_global_rect().get_center()
-	var slot_center := slot.get_global_rect().get_center()
-	return absf(icon_center.y - slot_center.y) <= 0.5
 
 
 func _controls_of_type(root: Node, type_name: String) -> Array[Node]:
