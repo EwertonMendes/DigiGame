@@ -253,8 +253,8 @@ func _ready() -> void:
 	var mobility_style := mobility_plus.get_theme_stylebox("normal") as StyleBoxFlat
 	if not _check(mobility_style != null and mobility_style.border_width_left >= 4, "Mobility command must keep the Digi Hospital leading rail"):
 		return
-	var mobility_icon := mobility_plus.find_child("ActionIcon", true, false) as TextureRect
-	if not _check(mobility_icon != null and mobility_icon.custom_minimum_size == Vector2(36.0, 36.0), "Mobility command icon must use the authored 36px Hospital scale"):
+	var mobility_action_icon := mobility_plus.find_child("ActionIcon", true, false) as TextureRect
+	if not _check(mobility_action_icon != null and mobility_action_icon.custom_minimum_size == Vector2(36.0, 36.0), "Mobility command icon must use the authored 36px Hospital scale"):
 		return
 	if not _check(mobility_plus.disabled, "Pending attribute changes must block independent MOV training until resolved"):
 		return
