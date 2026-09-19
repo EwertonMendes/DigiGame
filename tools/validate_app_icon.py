@@ -26,7 +26,7 @@ def fail(message: str) -> None:
 
 def read_png_size(path: Path) -> tuple[int, int]:
     data = path.read_bytes()[:24]
-    if len(data) < 24 or data[:8] != b"\\x89PNG\\r\\n\\x1a\\n":
+    if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n":
         fail(f"{path.relative_to(ROOT)} is not a valid PNG file.")
     if data[12:16] != b"IHDR":
         fail(f"{path.relative_to(ROOT)} is missing a PNG IHDR header.")
