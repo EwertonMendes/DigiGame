@@ -6,7 +6,7 @@ const HOSPITAL_TEXTURE = preload("res://assets/characters/world/battle_operator_
 
 var _hospital_npc: HubActor = null
 var _hospital_screen: HospitalScreen = null
-var _hospital_transition_surface: CanvasGroup = null
+var _hospital_transition_surface: DigiUiTransitionSurface = null
 var _hospital_open := false
 
 
