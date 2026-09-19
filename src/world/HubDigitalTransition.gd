@@ -15,7 +15,7 @@ const OperatorIcons = preload("res://src/ui/battle_operator/BattleOperatorIconCa
 const IconViewScript = preload("res://src/ui/components/DigiIconView.gd")
 const OPERATOR_BACKGROUND = preload("res://assets/ui/backgrounds/digimon_menu.png")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
-const UiTransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
+const OperatorTransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 
 const PROGRAM_IDS: Array[String] = [
 	"basic",
@@ -84,7 +84,7 @@ func _build_dialog() -> void:
 	_operator_ui_layer.layer = OPERATOR_UI_LAYER
 	add_child(_operator_ui_layer)
 
-	_operator_transition_surface = UiTransitionSurfaceScript.new() as CanvasGroup
+	_operator_transition_surface = OperatorTransitionSurfaceScript.new() as CanvasGroup
 	_operator_transition_surface.name = "BattleOperatorTransition"
 	_operator_ui_layer.add_child(_operator_transition_surface)
 
