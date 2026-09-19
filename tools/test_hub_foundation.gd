@@ -100,9 +100,10 @@ func _assert_training_center_entry(hub: Node, player: Node2D, trainer: Node2D, t
 		var card := child as Button
 		assert(card != null and card.focus_mode == Control.FOCUS_ALL, "Training Digimon cards must be keyboard/gamepad focusable")
 		assert(card.find_child("DigimonWalkPreview", true, false) != null or card.find_child("WalkPreview", true, false) != null, "Training selection cards must show a DS field preview")
-	var detail_scroll := training_screen.get("_detail_scroll") as ScrollContainer
-	assert(detail_scroll != null and detail_scroll.get_node_or_null("SmoothScrollBehavior") != null, "Training details must use smooth scrolling")
-	_assert_safe_service_frame(training_screen.get("_frame") as Control, "Training Center")
+	var training_pager := training_screen.get("_roster_pager") as DigiPager
+	assert(training_pager != null, "Training roster must expose the shared workspace pager")
+	assert(training_screen.find_children("*", "ScrollContainer", true, false).is_empty(), "Training workspace must be bounded and scroll-free")
+	_assert_fullscreen_service_frame(training_screen.get("_frame") as Control, "Training Center")
 	hub.call("_close_training")
 	await get_tree().process_frame
 	assert(not training_screen.visible, "Closing Training Center must return to the Hub")
