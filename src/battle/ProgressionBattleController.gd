@@ -49,6 +49,10 @@ func _build_battle_result(victory: bool) -> Dictionary:
 
 	if _reward_service != null:
 		var rewards: Dictionary = {}
+		# Defense in depth for any future presentation/startup override: a persistent
+		# battle should never silently fall back to field-actor-only rewards.
+		if _squad_session == null:
+			_sync_squad_session_from_runtime()
 		if _squad_session != null:
 			var squad_instances: Array[DigimonInstance] = []
 			for instance_id: String in _squad_session.get_squad_ids():
