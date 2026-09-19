@@ -62,29 +62,35 @@ func _ready() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	_margin = MarginContainer.new()
+	_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_margin)
 
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	row.add_theme_constant_override("separation", 7)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_margin.add_child(row)
 
 	_icon = IconScript.new() as DigiIconView
 	_icon.name = "SectionIcon"
+	_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_icon)
 
 	_title_label = Label.new()
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	V2.apply_heading(_title_label)
 	_title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_title_label)
 
 	_trailing_label = Label.new()
+	_trailing_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_trailing_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_trailing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	V2.apply_body(_trailing_label)

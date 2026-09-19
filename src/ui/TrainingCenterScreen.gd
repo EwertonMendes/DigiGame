@@ -13,11 +13,13 @@ const ModalHeaderScript = preload("res://src/ui/components/DigiModalHeader.gd")
 const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
 const ProceduralIconScript = preload("res://src/ui/components/DigiProceduralIcon.gd")
+const CommandButtonStyle = preload("res://src/ui/components/DigiCommandButtonStyle.gd")
 const PagerScript = preload("res://src/ui/components/DigiPager.gd")
 const AnalogGateScript = preload("res://src/ui/components/DigiAnalogNavigationGate.gd")
 const ConfirmationScript = preload("res://src/ui/components/DigiConfirmationModal.gd")
 const CONFIRM_ICON := preload("res://assets/ui/icons/confirm.svg")
 const UNDO_ICON := preload("res://assets/ui/icons/undo.svg")
+const MOVE_ICON := preload("res://assets/ui/icons/move.svg")
 
 const ROSTER_PAGE_SIZE := 3
 const WORKSPACE_HEADER_HEIGHT := 86.0
@@ -527,7 +529,7 @@ func _build_presentation() -> void:
 	_attributes_view.name = "AttributesView"
 	_attributes_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_attributes_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_attributes_view.add_theme_constant_override("separation", 7)
+	_attributes_view.add_theme_constant_override("separation", 5)
 	_presentation_host.add_child(_attributes_view)
 	_attributes_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -542,7 +544,7 @@ func _build_presentation() -> void:
 	_stat_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_stat_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_stat_grid.add_theme_constant_override("h_separation", 8)
-	_stat_grid.add_theme_constant_override("v_separation", 8)
+	_stat_grid.add_theme_constant_override("v_separation", 5)
 	_attributes_view.add_child(_stat_grid)
 
 	for stat_key: String in ["hp", "mp", "atk", "def", "int", "speed"]:
@@ -608,12 +610,10 @@ func _build_mobility_panel() -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	stack.add_child(actions)
-	_mobility_minus = _action_button("UNDO MOV", V2.MUTED)
-	_mobility_minus.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_mobility_minus = _command_button(UNDO_ICON, "UNDO MOV", "Remove one planned mobility step", V2.MUTED)
 	_mobility_minus.pressed.connect(_remove_mobility)
 	actions.add_child(_mobility_minus)
-	_mobility_plus = _action_button("TRAIN MOV +1", V2.AMBER)
-	_mobility_plus.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_mobility_plus = _command_button(MOVE_ICON, "TRAIN MOV +1", "Add permanent tactical mobility", V2.AMBER)
 	_mobility_plus.pressed.connect(_add_mobility)
 	actions.add_child(_mobility_plus)
 
@@ -659,12 +659,10 @@ func _build_plan_panel() -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 10)
 	stack.add_child(actions)
-	_discard_button = _icon_text_button(UNDO_ICON, "DISCARD PLAN", V2.MUTED)
-	_discard_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_discard_button = _command_button(UNDO_ICON, "DISCARD PLAN", "Clear all pending changes", V2.MUTED)
 	_discard_button.pressed.connect(_discard_plan)
 	actions.add_child(_discard_button)
-	_apply_button = _icon_text_button(CONFIRM_ICON, "APPLY TRAINING", V2.GREEN)
-	_apply_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_button = _command_button(CONFIRM_ICON, "APPLY TRAINING", "Save permanent growth", V2.GREEN)
 	_apply_button.pressed.connect(_request_apply_plan)
 	actions.add_child(_apply_button)
 
@@ -919,6 +917,10 @@ func _refresh_detail_values() -> void:
 		_plan_validation_label.add_theme_color_override("font_color", V2.MUTED)
 	_discard_button.disabled = not has_plan
 	_apply_button.disabled = not has_plan or not validation.is_empty()
+	_sync_command_button_state(_mobility_minus)
+	_sync_command_button_state(_mobility_plus)
+	_sync_command_button_state(_discard_button)
+	_sync_command_button_state(_apply_button)
 
 	_refresh_editor_focus_rows()
 
@@ -933,6 +935,7 @@ func _set_controls_enabled(enabled: bool) -> void:
 	for button in [_mobility_minus, _mobility_plus, _discard_button, _apply_button]:
 		if button != null:
 			button.disabled = not enabled
+			_sync_command_button_state(button)
 
 
 func _add_stat(stat_key: String) -> void:
@@ -1384,7 +1387,7 @@ func _layout() -> void:
 	_attributes_header.visible = not compact
 	_mobility_header.visible = not compact
 	_plan_header.visible = not compact
-	_stat_grid.add_theme_constant_override("v_separation", 5 if compact else 8)
+	_stat_grid.add_theme_constant_override("v_separation", 5)
 	_detail_tabs.custom_minimum_size.y = V2.TOUCH_TARGET
 	for raw_button in _detail_tab_buttons.values():
 		(raw_button as Button).custom_minimum_size.y = V2.TOUCH_TARGET
@@ -1442,16 +1445,62 @@ func _action_button(text: String, accent: Color, height: float = V2.TOUCH_TARGET
 	return button
 
 
-func _icon_text_button(texture: Texture2D, text: String, accent: Color) -> Button:
-	var button := _action_button(text, accent)
-	button.icon = texture
-	button.expand_icon = false
-	button.add_theme_color_override("icon_normal_color", accent)
-	button.add_theme_color_override("icon_hover_color", V2.WHITE)
-	button.add_theme_color_override("icon_focus_color", V2.WHITE)
-	button.add_theme_color_override("icon_pressed_color", V2.WHITE)
-	button.add_theme_color_override("icon_disabled_color", V2.SUBTLE)
+func _command_button(texture: Texture2D, title_text: String, subtitle_text: String, accent: Color) -> Button:
+	var button := Button.new()
+	button.text = ""
+	button.custom_minimum_size.y = 68.0
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.clip_contents = false
+	button.set_meta("digi_command_button", true)
+	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, CommandButtonStyle.style(accent, state))
+
+	var margin := _margin(14, 6, 14, 6)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	button.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 12)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	var icon := TextureRect.new()
+	icon.name = "ActionIcon"
+	icon.texture = texture
+	icon.custom_minimum_size = Vector2(36.0, 36.0)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.self_modulate = accent
+	row.add_child(icon)
+
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.add_theme_constant_override("separation", 1)
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(copy)
+
+	var title := _single_line_label(title_text, 16, V2.WHITE, true)
+	title.name = "Title"
+	copy.add_child(title)
+	var subtitle := _single_line_label(subtitle_text, 11, V2.MUTED)
+	subtitle.name = "Subtitle"
+	copy.add_child(subtitle)
 	return button
+
+
+func _sync_command_button_state(button: Button) -> void:
+	if button == null:
+		return
+	button.modulate = Color(1.0, 1.0, 1.0, 0.54) if button.disabled else Color.WHITE
 
 
 func _empty_state(text: String, accent: Color = V2.MUTED) -> PanelContainer:

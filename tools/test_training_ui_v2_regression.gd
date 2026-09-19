@@ -112,6 +112,9 @@ func _ready() -> void:
 		return
 	var host_identity := host.get_instance_id()
 	var host_size := host.size
+	var attributes_header := training.get("_attributes_header") as DigiSectionHeader
+	if not _check(_header_icon_is_centered(attributes_header), "Attribute Training icon must be vertically centered beside its title"):
+		return
 
 	var rows: Dictionary = training.get("_stat_rows") as Dictionary
 	if not _check(rows.size() == 6, "Training must keep all six attribute rows alive"):
@@ -119,10 +122,15 @@ func _ready() -> void:
 	var target_key := ""
 	var target_row: TrainingStatRow = null
 	var target_plus: Button = null
+	var host_rect := host.get_global_rect()
 	for stat_key: String in ["hp", "mp", "atk", "def", "int", "speed"]:
 		var row := rows.get(stat_key) as TrainingStatRow
 		if row == null:
 			continue
+		if not _check(row.custom_minimum_size.y <= 54.0, "Training attribute cards must use the compact 54px row height without shrinking text"):
+			return
+		if not _check(row.get_global_rect().end.y <= host_rect.end.y + 1.0, "Every Training attribute row, including INT/SPD, must stay fully inside the presentation workspace"):
+			return
 		var row_buttons := row.get_focus_buttons()
 		if not _check(row_buttons.size() == 2, "Each Training stat row must expose minus and plus controls"):
 			return
@@ -170,12 +178,29 @@ func _ready() -> void:
 	if not _check((training.get("_presentation_host") as Control).size.is_equal_approx(host_size), "Switching Training views must keep workspace geometry stable"):
 		return
 
+	var mobility_header := training.get("_mobility_header") as DigiSectionHeader
+	var plan_header := training.get("_plan_header") as DigiSectionHeader
+	if not _check(_header_icon_is_centered(mobility_header), "Tactical Mobility icon must be vertically centered beside its title"):
+		return
+	if not _check(_header_icon_is_centered(plan_header), "Training Plan icon must be vertically centered beside its title"):
+		return
+
 	var mobility_minus := training.get("_mobility_minus") as Button
 	var mobility_plus := training.get("_mobility_plus") as Button
 	var discard := training.get("_discard_button") as Button
 	var apply := training.get("_apply_button") as Button
 	for action in [mobility_minus, mobility_plus, discard, apply]:
 		if not _check(action != null and action.custom_minimum_size.y >= V2.TOUCH_TARGET, "Plan/Mobility actions must remain touch-safe"):
+			return
+		if not _check(bool(action.get_meta("digi_command_button", false)), "Plan/Mobility actions must use the shared Digi Hospital command-button language"):
+			return
+		var command_style := action.get_theme_stylebox("normal") as StyleBoxFlat
+		if not _check(command_style != null and command_style.border_width_left >= 4, "Training command buttons must keep the Digi Hospital leading command rail"):
+			return
+		var action_icon := action.find_child("ActionIcon", true, false) as TextureRect
+		if not _check(action_icon != null and action_icon.custom_minimum_size == Vector2(36.0, 36.0), "Training command icons must use the same authored 36px scale as Digi Hospital"):
+			return
+		if not _check(action.find_child("Title", true, false) != null and action.find_child("Subtitle", true, false) != null, "Training command buttons must expose Hospital-style title and subtitle hierarchy"):
 			return
 
 	# Apply is intentionally guarded because training is permanent.
@@ -235,6 +260,15 @@ func _ensure_paged_fixture() -> void:
 		cursor += 1
 		if instance != null:
 			OverworldState.add_collection_instance(instance)
+
+
+func _header_icon_is_centered(header: DigiSectionHeader) -> bool:
+	if header == null:
+		return false
+	var icon := header.get_icon_view()
+	if icon == null or not icon.visible:
+		return false
+	return absf(icon.get_global_rect().get_center().y - header.get_global_rect().get_center().y) <= 2.0
 
 
 func _controls_of_type(root: Node, type_name: String) -> Array[Node]:

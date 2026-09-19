@@ -26,18 +26,18 @@ var _compact := false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	clip_contents = true
-	custom_minimum_size.y = 66.0
+	custom_minimum_size.y = 54.0
 	_build()
 
 
 func set_compact(compact: bool) -> void:
 	_compact = compact
-	custom_minimum_size.y = 58.0 if compact else 66.0
+	custom_minimum_size.y = 54.0
 	if _content_margin != null:
 		_content_margin.add_theme_constant_override("margin_left", 8 if compact else 10)
-		_content_margin.add_theme_constant_override("margin_top", 3 if compact else 7)
+		_content_margin.add_theme_constant_override("margin_top", 1)
 		_content_margin.add_theme_constant_override("margin_right", 8)
-		_content_margin.add_theme_constant_override("margin_bottom", 3 if compact else 7)
+		_content_margin.add_theme_constant_override("margin_bottom", 1)
 	for button in [_minus, _plus]:
 		if button != null:
 			button.custom_minimum_size = Vector2(V2.TOUCH_TARGET, V2.TOUCH_TARGET)
@@ -107,9 +107,10 @@ func focus_plus() -> void:
 
 func _build() -> void:
 	add_theme_stylebox_override("panel", V2.panel_style(V2.BORDER_SOFT, 7))
-	_content_margin = _margin(10, 7, 8, 7)
+	_content_margin = _margin(10, 1, 8, 1)
 	add_child(_content_margin)
 	var row := HBoxContainer.new()
+	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_content_margin.add_child(row)
