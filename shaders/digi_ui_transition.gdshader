@@ -1,6 +1,8 @@
 shader_type canvas_item;
 render_mode unshaded;
 
+uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_nearest;
+
 uniform float progress : hint_range(0.0, 1.0) = 1.0;
 uniform float phase_seed = 0.0;
 uniform float cell_pixels : hint_range(18.0, 48.0) = 30.0;
@@ -14,8 +16,15 @@ float hash21(vec2 p) {
 }
 
 void fragment() {
-	vec4 source = texture(TEXTURE, UV);
-	vec2 pixel = UV / max(TEXTURE_PIXEL_SIZE, vec2(0.000001));
+	// CanvasGroup renders its children into the 2D backbuffer. Assigning a custom
+	// material replaces Godot's built-in CanvasGroup shader, so preserve its
+	// native screen-texture sampling and premultiplied-alpha correction first.
+	vec4 source = textureLod(screen_texture, SCREEN_UV, 0.0);
+	if (source.a > 0.0001) {
+		source.rgb /= source.a;
+	}
+
+	vec2 pixel = SCREEN_UV / max(SCREEN_PIXEL_SIZE, vec2(0.000001));
 	vec2 grid_uv = pixel / max(cell_pixels, 1.0);
 	vec2 cell = floor(grid_uv);
 	vec2 local = fract(grid_uv);
@@ -26,7 +35,7 @@ void fragment() {
 	// Lower-left is order 0 and upper-right is order 1. A restrained amount of
 	// per-cell jitter keeps the interface feeling digitally assembled rather
 	// than looking like a plain diagonal wipe.
-	float diagonal = clamp((UV.x + (1.0 - UV.y)) * 0.5, 0.0, 1.0);
+	float diagonal = clamp((SCREEN_UV.x + (1.0 - SCREEN_UV.y)) * 0.5, 0.0, 1.0);
 	float order = clamp(diagonal * 0.82 + random_value * 0.18, 0.0, 1.0);
 	float reveal = smoothstep(order - 0.055, order + 0.035, progress);
 
@@ -43,5 +52,6 @@ void fragment() {
 	vec3 rgb = mix(source.rgb, data_color, clamp(glow * 0.68, 0.0, 0.72));
 	rgb += data_color * frontier * cell_edge * 0.12;
 
-	COLOR = vec4(rgb, source.a * reveal);
+	vec4 transitioned = vec4(rgb, source.a * reveal);
+	COLOR *= transitioned;
 }
