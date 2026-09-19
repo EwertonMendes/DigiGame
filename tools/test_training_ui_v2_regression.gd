@@ -250,11 +250,19 @@ func _ready() -> void:
 	if not _check((training.get("_stat_rows") as Dictionary).get(target_key) == same_row, "Discarding must update the same persistent stat components"):
 		return
 
-	training.call("_activate_instance", alternate_id)
+	var mobility_target_id := ""
+	for candidate: DigimonInstance in OverworldState.get_collection_instances():
+		if candidate.potential >= 20 and int(candidate.training.get("mov", 0)) < 2:
+			mobility_target_id = candidate.id
+			break
+	if not _check(not mobility_target_id.is_empty(), "Mobility regression fixture must provide an eligible Digimon"):
+		return
+
+	training.call("_activate_instance", mobility_target_id)
 	await _frames(3)
 	training.call("_set_detail_view", 1, false)
 	await _frames(2)
-	var mobility_instance := OverworldState.get_instance_by_id(alternate_id)
+	var mobility_instance := OverworldState.get_instance_by_id(mobility_target_id)
 	if not _check(mobility_instance != null and mobility_instance.potential >= 20, "Mobility regression target must satisfy the first MOV potential requirement"):
 		return
 	var mobility_before := int(mobility_instance.training.get("mov", 0))
@@ -269,7 +277,7 @@ func _ready() -> void:
 		return
 	confirmation.get_confirm_button().pressed.emit()
 	await _frames(4)
-	mobility_instance = OverworldState.get_instance_by_id(alternate_id)
+	mobility_instance = OverworldState.get_instance_by_id(mobility_target_id)
 	if not _check(int(mobility_instance.training.get("mov", 0)) == mobility_before + 1, "Confirmed MOV training must apply exactly one mobility level immediately"):
 		return
 	if not _check((training.get("_pending_stats") as Dictionary).is_empty(), "Committed MOV training must leave the attribute plan empty"):
