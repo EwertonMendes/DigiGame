@@ -21,6 +21,13 @@ func _ready() -> void:
 
 	_assert(surface is Control and surface.get_class() != "CanvasGroup", "transition surface must not depend on CanvasGroup/backbuffer composition")
 	_assert(surface.get_content_root() != null, "transition surface must own a stable content root")
+	var transition_shader := load("res://shaders/digi_ui_transition.gdshader") as Shader
+	_assert(transition_shader != null, "transition shader must load")
+	if transition_shader != null:
+		_assert(
+			transition_shader.code.find("texture(TEXTURE") == -1,
+			"transition shader must use Godot's authored COLOR instead of sampling the CanvasItem texture twice"
+		)
 	_assert(content.get_parent() == surface.get_content_root(), "transition content must be hosted by the shared content root")
 	_assert(not DigiUiTransitionDirector.is_transitioning(), "director must start idle")
 	_assert(DigiUiTransitionDirector.begin_open(surface, "digimon"), "open transition must start")
