@@ -23,6 +23,7 @@ var _title := "SELECT DIGIMON"
 var _subtitle := ""
 var _accent := V2.CYAN
 var _previous_focus: Control
+var _cancel_enabled := true
 
 
 func _ready() -> void:
@@ -45,6 +46,14 @@ func configure(title: String, subtitle: String, entries: Array[Dictionary], acce
 		_refresh()
 
 
+func set_cancel_enabled(enabled: bool) -> void:
+	_cancel_enabled = enabled
+	if _cancel != null:
+		_cancel.visible = enabled
+		_cancel.disabled = not enabled
+		_cancel.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
+
+
 func open_picker(previous_focus: Control = null) -> void:
 	_previous_focus = previous_focus if previous_focus != null else get_viewport().gui_get_focus_owner()
 	visible = true
@@ -65,7 +74,7 @@ func close_picker(restore_focus: bool = true) -> void:
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu"):
+	if _cancel_enabled and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("game_menu")):
 		close_picker()
 		cancelled.emit()
 		get_viewport().set_input_as_handled()
@@ -135,6 +144,7 @@ func _build() -> void:
 		cancelled.emit()
 	)
 	cancel_margin.add_child(_cancel)
+	set_cancel_enabled(_cancel_enabled)
 
 
 func _refresh() -> void:
@@ -171,6 +181,10 @@ func _entry_button(entry: Dictionary) -> Button:
 	var subtitle := String(entry.get("subtitle", ""))
 	var species := String(entry.get("species", ""))
 	var accent: Color = entry.get("accent", _accent)
+	var enabled := bool(entry.get("enabled", entry.get("can_deploy", true)))
+	var disabled_reason := String(entry.get("reason", "")).strip_edges()
+	if not enabled and not disabled_reason.is_empty():
+		subtitle = disabled_reason
 
 	var button := Button.new()
 	button.text = ""
@@ -179,6 +193,8 @@ func _entry_button(entry: Dictionary) -> Button:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.clip_contents = true
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.disabled = not enabled
+	button.tooltip_text = disabled_reason
 	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
 		button.add_theme_stylebox_override(state, V2.hospital_button_style(accent, state))
 	button.pressed.connect(func():

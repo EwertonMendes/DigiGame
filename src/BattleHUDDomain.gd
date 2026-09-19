@@ -3,6 +3,7 @@ extends "res://src/BattleHUD.gd"
 const TurnOrderHUDScript = preload("res://src/ui/NavigableTurnOrderHUD.gd")
 const BattleTopBarScript = preload("res://src/ui/BattleTopBar.gd")
 const CombatOverlayScript = preload("res://src/ui/CombatOverlayHUD.gd")
+const RosterPickerScript = preload("res://src/ui/components/DigiRosterPickerModal.gd")
 const JOYPAD_NAV_REPEAT_MS := 135
 
 var _turn_order_hud: Control = null
@@ -10,6 +11,9 @@ var _top_bar: Control = null
 var _combat_overlay: Control = null
 var _menu_focus_before_timeline: Control = null
 var _last_joypad_nav_ms := 0
+var _switch_picker: DigiRosterPickerModal = null
+var _switch_picker_forced := false
+var _replacement_open_scheduled := false
 
 
 func _ready() -> void:
@@ -18,6 +22,7 @@ func _ready() -> void:
 	_configure_end_turn_command()
 	_remove_command_footer_hint()
 	_connect_navigation_cleanup()
+	_install_switch_picker()
 
 	_top_bar = BattleTopBarScript.new()
 	_top_bar.name = "BattleTopBar"
@@ -44,6 +49,8 @@ func _ready() -> void:
 # directions without disturbing the existing mouse/touch behavior.
 func _input(event: InputEvent) -> void:
 	if _controller == null or _cached_state.is_empty():
+		return
+	if _switch_picker != null and _switch_picker.visible:
 		return
 
 	var user_turn := bool(_cached_state.get("is_user_turn", false))
@@ -76,6 +83,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _switch_picker != null and _switch_picker.visible:
+		return
 	# Numeric shortcuts are intentionally disabled while browsing the timeline;
 	# Enter/A activates the highlighted timeline Digimon instead.
 	if _is_timeline_navigation_active():
@@ -83,6 +92,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var key := event as InputEventKey
 		if key.pressed and not key.echo and _controller != null and bool(_cached_state.get("is_user_turn", false)):
+			if key.physical_keycode == KEY_6 and _switch_button.visible and not _switch_button.disabled:
+				_open_switch_picker(false)
+				get_viewport().set_input_as_handled()
+				return
 			if key.physical_keycode == KEY_2 and not _attack_button.disabled:
 				_attack_button.emit_signal("pressed")
 				get_viewport().set_input_as_handled()
@@ -202,7 +215,7 @@ func _is_command_focus(owner: Control) -> bool:
 		return false
 	if _primary_buttons.has(owner as Button):
 		return true
-	return owner == _undo_button
+	return owner == _switch_button or owner == _undo_button
 
 
 func _restore_command_focus(preferred: Control = null) -> void:
@@ -236,6 +249,8 @@ func _connect_navigation_cleanup() -> void:
 	for button: Button in _primary_buttons:
 		if not button.pressed.is_connected(cleanup):
 			button.pressed.connect(cleanup)
+	if not _switch_button.pressed.is_connected(cleanup):
+		_switch_button.pressed.connect(cleanup)
 	if not _undo_button.pressed.is_connected(cleanup):
 		_undo_button.pressed.connect(cleanup)
 
@@ -262,8 +277,109 @@ func _rewire_combat_controls() -> void:
 
 	_attack_button.pressed.connect(_on_attack_pressed)
 	_skill_button.pressed.connect(_on_skill_pressed)
+	_switch_button.pressed.connect(_open_switch_picker.bind(false))
 	_attack_button.mouse_entered.connect(_on_attack_hover)
 	_attack_button.mouse_exited.connect(_on_action_hover_exit)
+
+
+func _install_switch_picker() -> void:
+	if _switch_picker != null:
+		return
+	_switch_picker = RosterPickerScript.new() as DigiRosterPickerModal
+	_switch_picker.name = "BattleReservePicker"
+	_switch_picker.entry_selected.connect(_on_switch_entry_selected)
+	_switch_picker.cancelled.connect(_on_switch_picker_cancelled)
+	add_child(_switch_picker)
+
+
+func _open_switch_picker(forced: bool = false) -> void:
+	if _controller == null or not _controller.has_method("get_switch_options") or _switch_picker == null:
+		return
+	var state: Dictionary = _controller.call("get_hud_state") if _controller.has_method("get_hud_state") else {}
+	if forced and not bool(state.get("replacement_required", false)):
+		return
+	if not forced and not bool(state.get("can_switch", false)):
+		# The visible-but-disabled Switch command is intentional: it teaches the
+		# player that Reserve switching exists without opening an empty picker.
+		return
+
+	var raw_options = _controller.call("get_switch_options", forced)
+	var entries: Array[Dictionary] = []
+	if raw_options is Array:
+		for raw_option in raw_options:
+			if not raw_option is Dictionary:
+				continue
+			var option := raw_option as Dictionary
+			entries.append({
+				"id": String(option.get("id", "")),
+				"title": String(option.get("title", "Digimon")),
+				"subtitle": String(option.get("subtitle", "")),
+				"species": String(option.get("species", "")),
+				"accent": UI.GOLD,
+				"can_deploy": bool(option.get("can_deploy", false)),
+				"reason": String(option.get("reason", "")),
+			})
+	if entries.is_empty():
+		return
+
+	_switch_picker_forced = forced
+	_switch_picker.set_cancel_enabled(not forced or bool(state.get("replacement_can_skip", false)))
+	_switch_picker.configure(
+		"SELECT REPLACEMENT" if forced else "SWITCH DIGIMON",
+		"Choose a battle-ready Reserve Digimon." if not forced else "Choose who enters the battlefield.",
+		entries,
+		UI.GOLD
+	)
+	_switch_picker.open_picker(get_viewport().gui_get_focus_owner())
+
+
+func _on_switch_entry_selected(instance_id: String) -> void:
+	if _controller == null:
+		return
+	var forced := _switch_picker_forced
+	_switch_picker_forced = false
+	var success := false
+	if forced and _controller.has_method("deploy_reserve_replacement"):
+		success = bool(_controller.call("deploy_reserve_replacement", instance_id))
+	elif not forced and _controller.has_method("switch_current"):
+		success = bool(_controller.call("switch_current", instance_id))
+	if not success and forced:
+		call_deferred("_ensure_forced_replacement_picker")
+
+
+func _on_switch_picker_cancelled() -> void:
+	var forced := _switch_picker_forced
+	_switch_picker_forced = false
+	if not forced or _controller == null:
+		return
+	if _controller.has_method("skip_reserve_replacement") and bool(_controller.call("skip_reserve_replacement")):
+		return
+	call_deferred("_ensure_forced_replacement_picker")
+
+
+func _ensure_forced_replacement_picker() -> void:
+	_replacement_open_scheduled = false
+	if _controller == null or _switch_picker == null or _switch_picker.visible:
+		return
+	var state: Dictionary = _controller.call("get_hud_state") if _controller.has_method("get_hud_state") else {}
+	if bool(state.get("replacement_required", false)) and not bool(state.get("battle_over", false)):
+		_open_switch_picker(true)
+
+
+func _sync_replacement_picker(state: Dictionary) -> void:
+	if bool(state.get("battle_over", false)):
+		_replacement_open_scheduled = false
+		_switch_picker_forced = false
+		if _switch_picker != null and _switch_picker.visible:
+			_switch_picker.close_picker(false)
+		return
+	if not bool(state.get("replacement_required", false)):
+		return
+	if _switch_picker != null and _switch_picker.visible:
+		return
+	if not _replacement_open_scheduled:
+		_replacement_open_scheduled = true
+		call_deferred("_ensure_forced_replacement_picker")
 
 
 func _configure_end_turn_command() -> void:
@@ -351,7 +467,9 @@ func refresh_from_controller() -> void:
 				button.disabled = true
 			_confirm_move_button.visible = false
 			_cancel_button.visible = false
+			_switch_button.visible = false
 			_undo_button.visible = false
+		_sync_replacement_picker(state)
 	if _top_bar != null and _top_bar.has_method("refresh"):
 		_top_bar.call("refresh")
 	if _turn_order_hud != null and _turn_order_hud.has_method("refresh"):

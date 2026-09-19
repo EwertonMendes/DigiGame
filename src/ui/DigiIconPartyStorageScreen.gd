@@ -49,8 +49,16 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, active: 
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(copy)
 	var name := instance.get_display_name(String(species.get("name", "Unknown")))
-	var location := "PARTY SLOT %d" % (active_ids.find(instance.id) + 1) if active else "STORAGE"
-	var location_color := V2.AMBER if active else V2.CYAN
+	var role := OverworldState.get_squad_role(instance.id)
+	var reserve_ids := OverworldState.get_reserve_party_ids()
+	var location := "STORAGE"
+	var location_color := V2.BLUE
+	if role == PlayerCollection.SQUAD_ROLE_ACTIVE:
+		location = "ACTIVE · SLOT %d" % (active_ids.find(instance.id) + 1)
+		location_color = V2.AMBER
+	elif role == PlayerCollection.SQUAD_ROLE_RESERVE:
+		location = "RESERVE · SLOT %d" % (reserve_ids.find(instance.id) + 1)
+		location_color = V2.PURPLE
 	var footprint_badge := "2×2" if instance.is_expanded() else "1×1"
 	copy.add_child(_single_line_label(name, 15, V2.TEXT, true))
 	copy.add_child(_single_line_label("Lv %d  ·  %s" % [instance.level, rank], 10, rank_color, true))

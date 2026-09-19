@@ -30,8 +30,7 @@ func _ready() -> void:
 	_test_discharge_destinations(database, factory, stats, hospital)
 	_test_save_load_preserves_locations(database, factory, stats, hospital)
 	_test_overworld_battle_gate_and_runtime_roster()
-	_test_v5_migration_from_current_pr(factory)
-	_test_v4_migration(factory)
+	_test_pre_squad_saves_are_rejected(factory)
 
 	print("hospital system regression passed")
 	get_tree().quit()
@@ -75,28 +74,50 @@ func _test_battle_damage_commits_fainted_state(database: DigimonDatabase, factor
 
 func _test_party_storage_and_admission(database: DigimonDatabase, factory: DigimonFactory, stats: DigimonStatCalculator, hospital: HospitalService) -> void:
 	var collection: PlayerCollection = CollectionScript.new()
-	var party_patient := factory.create_player_by_name("agumon", 8, 100)
+	var active_patient := factory.create_player_by_name("agumon", 8, 100)
+	var reserve_patient := factory.create_player_by_name("veemon", 8, 100)
 	var storage_digimon := factory.create_player_by_name("gabumon", 8, 100)
-	var max_hp := stats.get_stat(party_patient, database.get_by_seed(party_patient.species_seed), "hp")
-	party_patient.current_hp = 0
+	active_patient.current_hp = 0
+	reserve_patient.current_hp = 0
 	storage_digimon.current_hp = 0
-	collection.add_instance(party_patient, "agumon", "Agumon")
+	collection.add_instance(active_patient, "agumon", "Agumon")
+	collection.add_instance(reserve_patient, "veemon", "Veemon")
 	collection.add_instance(storage_digimon, "gabumon", "Gabumon")
-	assert(collection.set_active_party_ids([party_patient.id], 1, 6), "Test Party must be configurable")
-	assert(collection.get_active_instances() == [party_patient], "Only Party members are treatment candidates from the Party section")
-	assert(collection.get_reserve_instances() == [storage_digimon], "Storage must stay separate from Party")
-	assert(collection.get_location(storage_digimon.id) == PlayerCollection.LOCATION_STORAGE, "Reserve Digimon must derive Storage location")
+	assert(
+		collection.set_squad_ids([active_patient.id], [reserve_patient.id], 1, 3, 3),
+		"Hospital fixture must configure Active and Reserve explicitly"
+	)
+	assert(collection.get_active_instances() == [active_patient], "Active treatment candidate must remain Active")
+	assert(collection.get_reserve_party_instances() == [reserve_patient], "Reserve must be a real Squad role")
+	assert(collection.get_storage_instances() == [storage_digimon], "Storage must remain outside the Squad")
 
-	var admission := hospital.admit(collection, party_patient, max_hp, 5000)
-	assert(bool(admission.get("success", false)), "Critical Party Digimon must be admissible")
-	assert(not collection.get_active_party_ids().has(party_patient.id), "Admission must remove the UUID from Party")
-	assert(collection.get_hospital_ids().has(party_patient.id), "Admission must add the UUID to Hospital")
-	assert(collection.get_location(party_patient.id) == PlayerCollection.LOCATION_HOSPITAL, "Admitted Digimon must have one Hospital location")
-	assert(collection.get_reserve_instances() == [storage_digimon], "Hospitalized Digimon must never leak into Storage")
-	assert(collection.location_invariant_error().is_empty(), "A UUID must never occupy Party and Hospital simultaneously")
-	assert(not hospital.preview(storage_digimon, max_hp, stats.get_stat(storage_digimon, database.get_by_seed(storage_digimon.species_seed), "mp"), 9999, 5000, collection.get_location(storage_digimon.id)).get("can_admit", true), "Storage Digimon must not be admissible from Hospital UI")
-	assert(not hospital.admit(collection, storage_digimon, max_hp, 5000).get("success", true), "Storage Digimon cannot be admitted directly")
+	var active_max_hp := stats.get_stat(active_patient, database.get_by_seed(active_patient.species_seed), "hp")
+	var active_admission := hospital.admit(collection, active_patient, active_max_hp, 5000)
+	assert(bool(active_admission.get("success", false)), "Critical Active Digimon must be admissible")
+	assert(collection.get_squad_role(active_patient.id).is_empty(), "Hospital admission must remove Active role")
+	assert(collection.get_hospital_ids().has(active_patient.id), "Admission must add the UUID to Hospital")
+	assert(collection.get_reserve_party_ids() == [reserve_patient.id], "Admitting Active must not mutate Reserve order")
 
+	var reserve_max_hp := stats.get_stat(reserve_patient, database.get_by_seed(reserve_patient.species_seed), "hp")
+	var reserve_admission := hospital.admit(collection, reserve_patient, reserve_max_hp, 5100)
+	assert(bool(reserve_admission.get("success", false)), "Critical Reserve Digimon must also be admissible")
+	assert(not collection.get_reserve_party_ids().has(reserve_patient.id), "Hospital admission must remove Reserve role")
+	var return_slots := collection.to_dict().get("hospitalReturnSlots", {}) as Dictionary
+	assert(String((return_slots.get(active_patient.id, {}) as Dictionary).get("role", "")) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Hospital must remember Active origin")
+	assert(String((return_slots.get(reserve_patient.id, {}) as Dictionary).get("role", "")) == PlayerCollection.SQUAD_ROLE_RESERVE, "Hospital must remember Reserve origin")
+	assert(collection.get_storage_instances() == [storage_digimon], "Hospitalized Squad members must never leak into Storage")
+	assert(collection.location_invariant_error().is_empty(), "Active, Reserve, Hospital and Storage UUIDs must remain exclusive")
+
+	var storage_preview := hospital.preview(
+		storage_digimon,
+		stats.get_stat(storage_digimon, database.get_by_seed(storage_digimon.species_seed), "hp"),
+		stats.get_stat(storage_digimon, database.get_by_seed(storage_digimon.species_seed), "mp"),
+		9999,
+		5000,
+		collection.get_location(storage_digimon.id)
+	)
+	assert(not storage_preview.get("can_admit", true), "Storage Digimon must not be admissible from Hospital UI")
+	assert(not hospital.admit(collection, storage_digimon, 100, 5000).get("success", true), "Storage Digimon cannot be admitted directly")
 
 func _test_last_party_member_can_be_admitted(database: DigimonDatabase, factory: DigimonFactory, stats: DigimonStatCalculator, hospital: HospitalService) -> void:
 	var collection: PlayerCollection = CollectionScript.new()
@@ -181,65 +202,81 @@ func _test_instant_recovery_is_atomic_and_idempotent(database: DigimonDatabase, 
 
 func _test_discharge_destinations(database: DigimonDatabase, factory: DigimonFactory, stats: DigimonStatCalculator, hospital: HospitalService) -> void:
 	var collection: PlayerCollection = CollectionScript.new()
-	var patient := factory.create_player_by_name("agumon", 10, 100)
+	var active_patient := factory.create_player_by_name("agumon", 10, 100)
 	var teammate := factory.create_player_by_name("gabumon", 10, 100)
-	var reserve := factory.create_player_by_name("veemon", 10, 100)
-	var patient_species := database.get_by_seed(patient.species_seed)
-	var max_hp := stats.get_stat(patient, patient_species, "hp")
-	var max_sp := stats.get_stat(patient, patient_species, "mp")
-	patient.current_hp = 0
-	patient.set_current_sp(0)
-	collection.add_instance(patient, "agumon", "Agumon")
-	collection.add_instance(teammate, "gabumon", "Gabumon")
-	collection.add_instance(reserve, "veemon", "Veemon")
-	collection.set_active_party_ids([patient.id, teammate.id], 1, 6)
-	var admission := hospital.admit(collection, patient, max_hp, 9000)
+	var reserve_patient := factory.create_player_by_name("veemon", 10, 100)
+	for instance: DigimonInstance in [active_patient, teammate, reserve_patient]:
+		collection.add_instance(instance, instance.species_seed, "Digimon")
+	assert(collection.set_squad_ids([active_patient.id, teammate.id], [reserve_patient.id], 1, 3, 3), "Discharge fixture must configure Squad roles")
+
+	var active_species := database.get_by_seed(active_patient.species_seed)
+	var active_max_hp := stats.get_stat(active_patient, active_species, "hp")
+	var active_max_sp := stats.get_stat(active_patient, active_species, "mp")
+	active_patient.current_hp = 0
+	active_patient.set_current_sp(0)
+	var admission := hospital.admit(collection, active_patient, active_max_hp, 9000)
 	var completes_at := int(admission.get("completes_at", 0))
-	hospital.complete_if_ready(patient, max_hp, max_sp, completes_at, PlayerCollection.LOCATION_HOSPITAL)
-	var discharge := hospital.discharge(collection, patient, max_hp, 2, completes_at)
-	assert(discharge.get("success", false) and String(discharge.get("destination", "")) == PlayerCollection.LOCATION_PARTY, "Recovered patient must return to Party when a slot is free")
-	assert(collection.get_active_party_ids() == [patient.id, teammate.id] and not collection.get_hospital_ids().has(patient.id), "Discharge must restore the UUID to its original Party position exactly once")
-	assert(not patient.has_hospital_recovery(), "Discharge must clear recovery timing")
+	hospital.complete_if_ready(active_patient, active_max_hp, active_max_sp, completes_at, PlayerCollection.LOCATION_HOSPITAL)
+	var discharge := hospital.discharge(collection, active_patient, active_max_hp, 3, 3, completes_at)
+	assert(discharge.get("success", false), "Recovered Active patient must discharge")
+	assert(String(discharge.get("squad_role", "")) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Recovered Active patient must prefer its original role")
+	assert(collection.get_active_party_ids() == [active_patient.id, teammate.id], "Active discharge must restore original slot order")
 
-	patient.current_hp = 0
-	var second_admission := hospital.admit(collection, patient, max_hp, 10000)
+	var reserve_species := database.get_by_seed(reserve_patient.species_seed)
+	var reserve_max_hp := stats.get_stat(reserve_patient, reserve_species, "hp")
+	var reserve_max_sp := stats.get_stat(reserve_patient, reserve_species, "mp")
+	reserve_patient.current_hp = 0
+	reserve_patient.set_current_sp(0)
+	var reserve_admission := hospital.admit(collection, reserve_patient, reserve_max_hp, 10000)
+	var reserve_complete := int(reserve_admission.get("completes_at", 0))
+	hospital.complete_if_ready(reserve_patient, reserve_max_hp, reserve_max_sp, reserve_complete, PlayerCollection.LOCATION_HOSPITAL)
+	var reserve_discharge := hospital.discharge(collection, reserve_patient, reserve_max_hp, 3, 3, reserve_complete)
+	assert(reserve_discharge.get("success", false), "Recovered Reserve patient must discharge")
+	assert(String(reserve_discharge.get("squad_role", "")) == PlayerCollection.SQUAD_ROLE_RESERVE, "Recovered Reserve patient must return to Reserve")
+	assert(collection.get_reserve_party_ids() == [reserve_patient.id], "Reserve discharge must restore original slot")
+
+	# Capacity fallback is deterministic: when neither Squad role has a free
+	# slot under the supplied limits, the recovered individual goes to Storage.
+	active_patient.current_hp = 0
+	var second_admission := hospital.admit(collection, active_patient, active_max_hp, 11000)
 	var second_complete := int(second_admission.get("completes_at", 0))
-	hospital.complete_if_ready(patient, max_hp, max_sp, second_complete, PlayerCollection.LOCATION_HOSPITAL)
-	assert(collection.get_active_party_ids() == [teammate.id], "Second admission must remove patient from Party again")
-	assert(collection.set_active_party_ids([teammate.id, reserve.id], 1, 2), "Test must fill Party before discharge")
-	var storage_discharge := hospital.discharge(collection, patient, max_hp, 2, second_complete)
-	assert(storage_discharge.get("success", false) and String(storage_discharge.get("destination", "")) == PlayerCollection.LOCATION_STORAGE, "Full Party must send discharged patient to Storage")
-	assert(collection.get_location(patient.id) == PlayerCollection.LOCATION_STORAGE, "Storage discharge must leave exactly one derived Storage location")
+	hospital.complete_if_ready(active_patient, active_max_hp, active_max_sp, second_complete, PlayerCollection.LOCATION_HOSPITAL)
+	var storage_discharge := hospital.discharge(collection, active_patient, active_max_hp, 1, 1, second_complete)
+	assert(storage_discharge.get("success", false) and String(storage_discharge.get("destination", "")) == PlayerCollection.LOCATION_STORAGE, "Full Active and Reserve capacities must fall back to Storage")
+	assert(collection.get_location(active_patient.id) == PlayerCollection.LOCATION_STORAGE, "Storage fallback must leave one derived location")
 	assert(collection.location_invariant_error().is_empty(), "Discharge must preserve location invariants")
-
 
 func _test_save_load_preserves_locations(database: DigimonDatabase, factory: DigimonFactory, stats: DigimonStatCalculator, hospital: HospitalService) -> void:
 	var collection: PlayerCollection = CollectionScript.new()
 	var patient := factory.create_player_by_name("agumon", 7, 100)
 	var party_member := factory.create_player_by_name("gabumon", 7, 100)
-	var storage_member := factory.create_player_by_name("veemon", 7, 100)
+	var reserve_member := factory.create_player_by_name("veemon", 7, 100)
+	var storage_member := factory.create_player_by_name("agumon", 7, 100)
 	var max_hp := stats.get_stat(patient, database.get_by_seed(patient.species_seed), "hp")
 	patient.current_hp = 0
-	collection.add_instance(patient, "agumon", "Agumon")
-	collection.add_instance(party_member, "gabumon", "Gabumon")
-	collection.add_instance(storage_member, "veemon", "Veemon")
-	collection.set_active_party_ids([patient.id, party_member.id], 1, 6)
+	for instance: DigimonInstance in [patient, party_member, reserve_member, storage_member]:
+		collection.add_instance(instance, instance.species_seed, "Digimon")
+	assert(collection.set_squad_ids([patient.id, party_member.id], [reserve_member.id], 1, 3, 3), "Save fixture must configure Squad")
 	var admission := hospital.admit(collection, patient, max_hp, 11000)
 	assert(admission.get("success", false), "Save test patient must be admitted")
-	assert(int((collection.to_dict().get("hospitalPartyIndices", {}) as Dictionary).get(patient.id, -1)) == 0, "Hospital save data must remember the original Party position")
+	var return_slots := collection.to_dict().get("hospitalReturnSlots", {}) as Dictionary
+	var return_slot := return_slots.get(patient.id, {}) as Dictionary
+	assert(String(return_slot.get("role", "")) == PlayerCollection.SQUAD_ROLE_ACTIVE and int(return_slot.get("index", -1)) == 0, "Hospital save data must remember exact Squad role and slot")
 
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
-	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Hospital locations must be saveable atomically")
+	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Hospital Squad locations must be saveable atomically")
 	var loaded := save_service.load_collection(TEST_SAVE_PATH)
 	assert(loaded != null, "Hospital save must load")
 	assert(loaded.get_location(patient.id) == PlayerCollection.LOCATION_HOSPITAL, "Save/load must preserve Hospital location")
-	assert(loaded.get_location(party_member.id) == PlayerCollection.LOCATION_PARTY, "Save/load must preserve Party location")
-	assert(loaded.get_location(storage_member.id) == PlayerCollection.LOCATION_STORAGE, "Save/load must preserve Storage location")
+	assert(loaded.get_squad_role(party_member.id) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Save/load must preserve Active role")
+	assert(loaded.get_squad_role(reserve_member.id) == PlayerCollection.SQUAD_ROLE_RESERVE, "Save/load must preserve Reserve role")
+	assert(loaded.get_location(storage_member.id) == PlayerCollection.LOCATION_STORAGE, "Save/load must preserve Storage")
+	var loaded_slots := loaded.to_dict().get("hospitalReturnSlots", {}) as Dictionary
+	assert(String((loaded_slots.get(patient.id, {}) as Dictionary).get("role", "")) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Save/load must preserve Hospital return role")
 	assert(loaded.get_instance(patient.id).has_hospital_recovery(), "Save/load must preserve Hospital timestamps")
 	assert(loaded.location_invariant_error().is_empty(), "Loaded save must preserve exclusive UUID locations")
 	assert(save_service.delete_save(TEST_SAVE_PATH), "Hospital regression save must be removable")
-
 
 func _test_overworld_battle_gate_and_runtime_roster() -> void:
 	OverworldState.set_persistence_enabled(false)
@@ -280,39 +317,23 @@ func _test_overworld_battle_gate_and_runtime_roster() -> void:
 	OverworldState.reset_progress_for_tests()
 
 
-func _test_v5_migration_from_current_pr(factory: DigimonFactory) -> void:
-	var recovering := factory.create_player_by_name("agumon", 5, 100)
-	recovering.current_hp = 0
-	assert(recovering.start_hospital_recovery(13000, 14000), "Migration fixture requires active recovery")
-	var raw := {
-		"save_version": 5,
+func _test_pre_squad_saves_are_rejected(factory: DigimonFactory) -> void:
+	var legacy := factory.create_player_by_name("agumon", 5, 100)
+	var migration := MigrationScript.new()
+	var old_v6 := {
+		"save_version": 6,
 		"collection": {
-			"instances": [{"collectionKey": "agumon", "instance": recovering.to_dict()}],
-			"activePartyIds": [recovering.id],
-		}
+			"instances": [{"collectionKey": "agumon", "instance": legacy.to_dict()}],
+			"activePartyIds": [legacy.id],
+		},
 	}
-	var migrated := MigrationScript.new().migrate(raw)
-	assert(int(migrated.get("save_version", 0)) == 6, "Current PR v5 saves must migrate to v6")
-	var migrated_collection := migrated.get("collection", {}) as Dictionary
-	assert((migrated_collection.get("activePartyIds", []) as Array).is_empty(), "v5 recovering UUID must be removed from Party during migration")
-	assert((migrated_collection.get("hospitalIds", []) as Array) == [recovering.id], "v5 recovering UUID must migrate into Hospital")
-
-
-func _test_v4_migration(factory: DigimonFactory) -> void:
-	var legacy := factory.create_player_by_name("agumon", 5, 100).to_dict()
-	legacy.erase("hospitalRecovery")
-	var raw := {
-		"save_version": 4,
+	assert(migration.migrate(old_v6).is_empty(), "Pre-Squad v6 saves must be intentionally rejected")
+	var fake_v1_without_format := {
+		"save_version": 1,
 		"collection": {
-			"instances": [{"collectionKey": "agumon", "instance": legacy}],
-			"activePartyIds": [String(legacy.get("id", ""))],
-		}
+			"instances": [{"collectionKey": "agumon", "instance": legacy.to_dict()}],
+			"activePartyIds": [legacy.id],
+		},
 	}
-	var migrated := MigrationScript.new().migrate(raw)
-	assert(int(migrated.get("save_version", 0)) == 6, "v4 saves must migrate through Hospital-aware v6 schema")
-	var migrated_collection := migrated.get("collection", {}) as Dictionary
-	assert((migrated_collection.get("hospitalIds", []) as Array).is_empty(), "Legacy healthy individuals must not be placed in Hospital")
-	assert((migrated_collection.get("activePartyIds", []) as Array) == [String(legacy.get("id", ""))], "Legacy Party placement must remain unchanged")
-	var entries := migrated_collection.get("instances", []) as Array
-	var migrated_instance := (entries[0] as Dictionary).get("instance", {}) as Dictionary
-	assert(migrated_instance.get("hospitalRecovery", {}) is Dictionary and (migrated_instance.get("hospitalRecovery", {}) as Dictionary).is_empty(), "Legacy individuals must migrate with no active recovery")
+	assert(migration.migrate(fake_v1_without_format).is_empty(), "Old data cannot masquerade as Squad v1 without the format marker")
+

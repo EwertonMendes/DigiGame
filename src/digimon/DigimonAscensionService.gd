@@ -69,8 +69,8 @@ func promotion_preview(collection: PlayerCollection, database: DigimonDatabase, 
 		if donor == null or donor == target:
 			result["reason"] = "donor_required"
 			return result
-		if collection.get_active_party_ids().has(donor.id):
-			result["reason"] = "donor_in_active_party"
+		if collection.get_location(donor.id) != PlayerCollection.LOCATION_STORAGE:
+			result["reason"] = "donor_not_in_storage"
 			return result
 		if donor.species_seed != target.species_seed:
 			result["reason"] = "donor_species_mismatch"
@@ -93,7 +93,7 @@ func promote(collection: PlayerCollection, database: DigimonDatabase, target_id:
 	var old_hp_max := _calculator.get_stat(target, species, "hp")
 	var old_sp_max := _calculator.get_stat(target, species, "mp")
 	if donor != null:
-		if not collection.remove_reserve_instance(donor.id):
+		if not collection.remove_storage_instance(donor.id):
 			preview["success"] = false
 			preview["reason"] = "donor_removal_failed"
 			return preview
@@ -116,11 +116,10 @@ func eligible_donors(collection: PlayerCollection, target_id: String) -> Array[D
 	var target := collection.get_instance(target_id)
 	if target == null:
 		return result
-	var active_ids := collection.get_active_party_ids()
-	for candidate: DigimonInstance in collection.get_instances():
+	for candidate: DigimonInstance in collection.get_storage_instances():
 		if candidate.id == target.id or candidate.species_seed != target.species_seed:
 			continue
-		if active_ids.has(candidate.id) or not candidate.equipment.is_empty():
+		if not candidate.equipment.is_empty():
 			continue
 		result.append(candidate)
 	return result

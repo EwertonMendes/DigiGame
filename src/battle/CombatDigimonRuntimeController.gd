@@ -284,6 +284,8 @@ func refresh_occupancy_index() -> void:
 	_occupancy_by_grid.clear()
 	var field := get_node_or_null("../Blocks") as Node2D
 	for actor: Node in get_battle_digimons():
+		if bool(actor.get_meta("battle_switching_out", false)):
+			continue
 		if actor.has_method("is_available_for_turn") and not bool(actor.call("is_available_for_turn")):
 			continue
 		var cells := _actor_cells(actor)

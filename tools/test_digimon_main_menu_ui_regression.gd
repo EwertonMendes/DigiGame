@@ -16,21 +16,21 @@ func _ready() -> void:
 	var factory: DigimonFactory = FactoryScript.new(database)
 	var starter := OverworldState.get_active_instances()
 	assert(not starter.is_empty(), "Digimon menu regression requires the starter Party")
-	# The shared test reset now seeds the normal three-member gameplay Party.
-	# Collapse it through the public Party API before building the five-member UI
-	# fixture so this regression stays valid as the production starter roster evolves.
-	assert(OverworldState.set_active_party([starter[0].id]), "Regression fixture must start from one active Digimon")
-
-	# Build a five-member Party through public collection/party APIs so pagination
-	# is exercised without reaching into production state internals.
-	for species_name in ["gabumon", "veemon", "guilmon", "patamon"]:
+	# Build a five-member Squad as 3 Active + 2 Reserve. The menu must keep its
+	# existing three-card geometry while page 1 and page 2 have explicit roles.
+	var created: Array[DigimonInstance] = []
+	for species_name in ["guilmon", "patamon"]:
 		var instance: DigimonInstance = factory.create_player_by_name(species_name, 3, 100)
 		assert(instance != null, "Regression species must resolve: %s" % species_name)
 		assert(not OverworldState.add_collection_instance(instance).is_empty(), "Regression Digimon must be added to the collection")
-		assert(OverworldState.add_to_active_party(instance.id), "Regression Digimon must be added to the active Party")
+		created.append(instance)
+	assert(OverworldState.add_to_reserve_party(created[0].id), "First regression Digimon must join Reserve")
+	assert(OverworldState.add_to_reserve_party(created[1].id), "Second regression Digimon must join Reserve")
 
-	var party := OverworldState.get_active_instances()
-	assert(party.size() == 5, "Regression setup must expose five active Digimon")
+	var squad := OverworldState.get_squad_instances()
+	assert(OverworldState.get_active_instances().size() == 3, "Regression setup must keep exactly three Active Digimon")
+	assert(OverworldState.get_reserve_party_instances().size() == 2, "Regression setup must expose two Reserve Digimon")
+	assert(squad.size() == 5, "Regression setup must expose five Squad Digimon")
 
 	var menu := MenuScript.new() as DigiWorkspaceProgressionMenu
 	add_child(menu)
@@ -78,7 +78,7 @@ func _ready() -> void:
 	var buttons := menu.get("_buttons") as Array
 	var pager := menu.get("_roster_pager") as DigiPager
 	assert(buttons.size() == 3, "Roster page must render exactly three cards when at least three Digimon are available")
-	assert(pager.get_page_count() == 2 and pager.get_page() == 0, "Five active Digimon must produce two roster pages")
+	assert(pager.get_page_count() == 2 and pager.get_page() == 0, "Five Squad Digimon must produce Active and Reserve roster pages")
 	var pager_previous := pager.get_node("PreviousPage") as Button
 	var pager_next := pager.get_node("NextPage") as Button
 	var pager_label := pager.get_node("PageIndicator") as Label
@@ -104,10 +104,10 @@ func _ready() -> void:
 
 	menu.call("_turn_roster_page", 1)
 	await _frames(3)
-	assert(int(menu.get("_roster_page")) == 1 and int(menu.get("_selected_index")) == 3, "Explicit pagination must move to the next Party page and select its first Digimon")
+	assert(int(menu.get("_roster_page")) == 1 and int(menu.get("_selected_index")) == 3, "Explicit pagination must move to the Reserve page and select its first Digimon")
 	assert(not pager_previous.disabled and pager_next.disabled, "Last workspace roster page must expose a disabled next arrow instead of wrapping")
 	buttons = menu.get("_buttons") as Array
-	assert(buttons.size() == 2, "Final Party page must show only its actual Digimon and leave unused space empty")
+	assert(buttons.size() == 2, "Reserve page must show only its actual Digimon and leave unused space empty")
 
 	# Confirming a Digimon activates only the command surface. Header chrome,
 	# pager arrows and overview tabs remain pointer/touch targets, not D-pad stops.

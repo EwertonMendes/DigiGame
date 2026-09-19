@@ -325,27 +325,31 @@ func _refresh_collection() -> void:
 	if party.is_empty():
 		_selected_index = 0
 		_roster_page = 0
-		_collection_grid.add_child(_empty_message("No Digimon in your active party."))
+		_collection_grid.add_child(_empty_message("No Digimon in your Squad."))
 		_roster_pager.configure(0, 1)
 		_refresh_details()
 		_update_footer_hints()
 		return
 
 	_selected_index = clampi(_selected_index, 0, party.size() - 1)
-	var page_count := _page_count(party.size(), ROSTER_PAGE_SIZE)
+	var page_count := _squad_roster_page_count()
 	_roster_page = clampi(_roster_page, 0, page_count - 1)
-	var selected_page := _selected_index / ROSTER_PAGE_SIZE
+	var selected_page := _squad_page_for_index(_selected_index)
 	if selected_page != _roster_page and not _is_index_on_roster_page(_selected_index):
 		_roster_page = selected_page
 
-	var start := _roster_page * ROSTER_PAGE_SIZE
-	var finish := mini(party.size(), start + ROSTER_PAGE_SIZE)
-	for global_index in range(start, finish):
-		var instance: DigimonInstance = party[global_index]
-		var species := _database.get_by_seed(instance.species_seed)
-		var card := _collection_button(instance, species, global_index)
-		_collection_grid.add_child(card)
-		_visible_party_indices.append(global_index)
+	var page_indices := _squad_indices_for_page(_roster_page)
+	if page_indices.is_empty():
+		_collection_grid.add_child(_empty_message(
+			"No Active Digimon assigned." if _roster_page == 0 else "No Reserve Digimon assigned."
+		))
+	else:
+		for global_index: int in page_indices:
+			var instance: DigimonInstance = party[global_index]
+			var species := _database.get_by_seed(instance.species_seed)
+			var card := _collection_button(instance, species, global_index)
+			_collection_grid.add_child(card)
+			_visible_party_indices.append(global_index)
 
 	_roster_pager.configure(_roster_page, page_count)
 	_roster_pager.set_compact(_density_compact)
@@ -413,7 +417,9 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	meta.add_theme_constant_override("separation", 7)
 	meta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(meta)
-	var level_rank := _label("Lv. %d · %s" % [instance.level, rank], 10, rank_color, true)
+	var squad_role := OverworldState.get_squad_role(instance.id)
+	var role_label := "ACTIVE" if squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE else "RESERVE"
+	var level_rank := _label("%s · Lv. %d · %s" % [role_label, instance.level, rank], 10, rank_color, true)
 	level_rank.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	level_rank.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	meta.add_child(level_rank)
@@ -995,11 +1001,13 @@ func _turn_technique_page(delta: int) -> void:
 
 func _turn_roster_page(delta: int) -> void:
 	var party := _party_instances()
-	var count := _page_count(party.size(), ROSTER_PAGE_SIZE)
-	if count <= 1:
+	var count := _squad_roster_page_count()
+	if party.is_empty() or count <= 1:
 		return
 	_roster_page = posmod(_roster_page + delta, count)
-	_selected_index = mini(_roster_page * ROSTER_PAGE_SIZE, party.size() - 1)
+	var first_index := _first_index_for_roster_page(_roster_page)
+	if first_index >= 0:
+		_selected_index = first_index
 	_mode = MenuMode.ROSTER
 	_refresh_collection()
 	call_deferred("_focus_selected_roster_card")
@@ -1133,7 +1141,7 @@ func _update_footer_hints() -> void:
 			var instance := party[clampi(_selected_index, 0, party.size() - 1)]
 			pages = _page_count(_ordered_techniques(instance).size(), maxi(1, _technique_page_size))
 	else:
-		pages = _page_count(_party_instances().size(), ROSTER_PAGE_SIZE)
+		pages = _squad_roster_page_count()
 	_hint_bar.set_pagination_enabled(pages > 1)
 	_hint_bar.set_scroll_hint_enabled(false)
 	_hint_bar.set_hide_hints_on_touch(true)
@@ -1142,7 +1150,8 @@ func _update_footer_hints() -> void:
 	elif _mode == MenuMode.ACTIONS:
 		_hint_bar.set_description("Choose a command for the selected Digimon.")
 	else:
-		_hint_bar.set_description("Browse the active Party. Confirm a Digimon to access commands.")
+		var roster_label := "Active" if _roster_page == 0 else "Reserve"
+		_hint_bar.set_description("Browse %s Squad members. Confirm a Digimon to access commands." % roster_label)
 
 
 func _layout() -> void:
@@ -1202,8 +1211,38 @@ func _roster_card_height() -> float:
 
 
 func _is_index_on_roster_page(index: int) -> bool:
-	var start := _roster_page * ROSTER_PAGE_SIZE
-	return index >= start and index < start + ROSTER_PAGE_SIZE
+	return _squad_indices_for_page(_roster_page).has(index)
+
+
+func _squad_roster_page_count() -> int:
+	var reserve_count := OverworldState.get_reserve_party_instances().size()
+	# Active is always page zero. Reserve gets a dedicated second page whenever
+	# it contains at least one member, regardless of how many Active slots are
+	# filled. This prevents role mixing when Active has fewer than three.
+	return 2 if reserve_count > 0 else 1
+
+
+func _squad_page_for_index(index: int) -> int:
+	var active_count := OverworldState.get_active_instances().size()
+	return 0 if index < active_count else 1
+
+
+func _squad_indices_for_page(page: int) -> Array[int]:
+	var result: Array[int] = []
+	var active_count := OverworldState.get_active_instances().size()
+	var reserve_count := OverworldState.get_reserve_party_instances().size()
+	if page <= 0:
+		for index in range(active_count):
+			result.append(index)
+	else:
+		for reserve_index in range(reserve_count):
+			result.append(active_count + reserve_index)
+	return result
+
+
+func _first_index_for_roster_page(page: int) -> int:
+	var indices := _squad_indices_for_page(page)
+	return indices[0] if not indices.is_empty() else -1
 
 
 func _page_count(item_count: int, page_size: int) -> int:

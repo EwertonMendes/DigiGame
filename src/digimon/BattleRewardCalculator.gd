@@ -68,7 +68,11 @@ func _apply_player_xp(rewards: BattleRewards, player: Dictionary, enemies: Array
 	if knocked_out and not bool(_balance.section("party").get("knockedOutReceivesXp", true)):
 		return
 	var recipient_level := maxi(1, int(player.get("level", 1)))
-	var participant_multiplier := _balance.party_number("participantXpMultiplier", 1.0)
+	var participated := bool(player.get("participated", true))
+	var xp_multiplier := _balance.party_number(
+		"participantXpMultiplier" if participated else "reserveXpMultiplier",
+		1.0 if participated else 0.0
+	)
 	var total := 0.0
 	for enemy: Dictionary in enemies:
 		var species := _database.get_by_seed(String(enemy.get("species_seed", "")))
@@ -78,4 +82,4 @@ func _apply_player_xp(rewards: BattleRewards, player: Dictionary, enemies: Array
 		var profile := String(enemy.get("profile", "wild"))
 		var enemy_modifier := maxf(0.0, float(enemy.get("reward_modifier", 1.0)))
 		total += float(_experience.reward_for_enemy(recipient_level, enemy_level, species, profile)) * enemy_modifier
-	rewards.xp_by_instance[instance_id] = maxi(0, int(round(total * participant_multiplier * difficulty)))
+	rewards.xp_by_instance[instance_id] = maxi(0, int(round(total * xp_multiplier * difficulty)))

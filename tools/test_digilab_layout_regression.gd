@@ -1,10 +1,31 @@
 extends Node
 
 const HUB_SCENE = preload("res://scenes/world/hub.tscn")
+const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 
 
 func _ready() -> void:
-	OverworldState.reset_active_party()
+	# Regress the 1900×935-class desktop viewport where the roomy DigiLab
+	# composition previously let lower workspace panels extend past their host.
+	var window := get_window()
+	if window != null:
+		window.size = Vector2i(1913, 935)
+		await _frames(2)
+
+	OverworldState.set_persistence_enabled(false)
+	OverworldState.reset_progress_for_tests()
+	var factory: DigimonFactory = FactoryScript.new(OverworldState.get_database())
+	var reserve_fixture := factory.create_player_by_name("agumon", 1, 100)
+	var storage_fixture := factory.create_player_by_name("gabumon", 1, 100)
+	if not _check(reserve_fixture != null and storage_fixture != null, "Party / Storage regression fixtures must be creatable"):
+		return
+	if not _check(not OverworldState.add_collection_instance(reserve_fixture).is_empty(), "Reserve fixture must enter the collection"):
+		return
+	if not _check(not OverworldState.add_collection_instance(storage_fixture).is_empty(), "Storage fixture must enter the collection"):
+		return
+	if not _check(OverworldState.add_to_reserve_party(reserve_fixture.id), "Reserve fixture must occupy Reserve slot 1"):
+		return
+
 	var hub: Node = HUB_SCENE.instantiate()
 	add_child(hub)
 	await _frames(3)
@@ -65,7 +86,24 @@ func _ready() -> void:
 		return
 	if not _check(_content_uses_available_height(party, "_detail_scroll", "_detail"), "Party / Storage detail must compose itself across the available height"):
 		return
+	if not _check(_party_workspace_is_bounded(party, party_detail, 3), "Active detail workspace must fill exactly the visible no-scroll area"):
+		return
 
+	party.call("_set_roster_mode", "reserve")
+	await _frames(3)
+	var reserve_detail := party.get("_detail") as Control
+	if not _check(reserve_detail != null and _party_workspace_is_bounded(party, reserve_detail, 3), "Reserve detail workspace must fill exactly the visible no-scroll area"):
+		return
+
+	party.call("_set_roster_mode", "storage")
+	await _frames(3)
+	var storage_detail := party.get("_detail") as Control
+	if not _check(storage_detail != null and _party_workspace_is_bounded(party, storage_detail, 2), "Storage detail workspace must fill exactly the visible no-scroll area"):
+		return
+
+	party.call("_set_roster_mode", "active")
+	await _frames(3)
+	party_detail = party.get("_detail") as Control
 	var selected_id: String = String(party.call("get_selected_instance_id"))
 	if not _check(not selected_id.is_empty(), "Party / Storage must expose the selected individual"):
 		return
@@ -115,6 +153,22 @@ func _ready() -> void:
 	if not _check(tier_actions != null and tier_actions.size_flags_vertical == Control.SIZE_EXPAND_FILL, "Tier actions must expand into available vertical room"):
 		return
 	print("[digilab-layout] ascension deep-link ok")
+
+	# Regression for the first-open lifecycle bug: on a freshly opened
+	# Ascension / Expansion screen, switching from Tier to Expansion must settle
+	# against the real detail viewport without requiring navigation away/back.
+	if not _check(String(ascension.get("_section_mode")) == "tier", "Fresh Ascension screen must start in Tier before first Expansion switch"):
+		return
+	ascension.call("_set_section_mode", "expansion")
+	await _frames(4)
+	if not _check(String(ascension.get("_section_mode")) == "expansion", "First Expansion switch must complete without reopening the screen"):
+		return
+	ascension_detail = ascension.get("_detail") as Control
+	if not _check(_content_fits_disabled_scroll(ascension, "_detail_scroll", "_detail"), "Expansion detail must fit without scrolling"):
+		return
+	if not _check(_expansion_content_is_bounded(ascension, ascension_detail), "Expansion footprint and actions must remain fully above the footer"):
+		return
+	print("[digilab-layout] expansion bounds ok")
 
 	# DigiModalHeader uses the same adjacent-tab method for LB/RB and L1/R1.
 	# Moving left from Ascension must therefore return to Party / Storage.
@@ -232,6 +286,12 @@ func _content_fits_disabled_scroll(screen: Control, scroll_key: String, content_
 	if required > available + 2.0:
 		print("[digilab-layout] content overflow: %s requires %.1f px but only %.1f px are available" % [content_key, required, available])
 		return false
+	if scroll.is_visible_in_tree():
+		var scroll_rect := scroll.get_global_rect()
+		var content_rect := content.get_global_rect()
+		if content_rect.end.y > scroll_rect.end.y + 1.0:
+			print("[digilab-layout] rendered content escaped disabled scroll: %s ends %.1f, scroll ends %.1f" % [content_key, content_rect.end.y, scroll_rect.end.y])
+			return false
 	return true
 
 
@@ -244,6 +304,169 @@ func _content_uses_available_height(screen: Control, scroll_key: String, content
 		return true
 	if content.size.y + 2.0 < scroll.size.y:
 		print("[digilab-layout] unused vertical space: %s uses %.1f px of %.1f px" % [content_key, content.size.y, scroll.size.y])
+		return false
+	return true
+
+
+func _squad_actions_are_bounded(screen: Control, root: Control, expected_command_count: int) -> bool:
+	if screen == null or root == null:
+		return false
+	var panel := root.find_child("SquadActionsPanel", true, false) as Control
+	var commands := root.find_child("SquadActionsCommands", true, false) as VBoxContainer
+	var footer := screen.get("_hint_bar") as Control
+	var detail_panel := screen.get("_detail_panel") as Control
+	if panel == null or commands == null or footer == null or detail_panel == null:
+		print("[digilab-layout] missing Squad Actions layout nodes")
+		return false
+
+	var command_count := 0
+	for child: Node in commands.get_children():
+		if not child is DigiCommandButton:
+			continue
+		var command := child as DigiCommandButton
+		command_count += 1
+		if command.size.y > 90.0:
+			print("[digilab-layout] Squad command expanded vertically: %s = %.1f px" % [command.name, command.size.y])
+			return false
+		var command_rect := command.get_global_rect()
+		var panel_rect := panel.get_global_rect()
+		if command_rect.position.y < panel_rect.position.y - 1.0 or command_rect.end.y > panel_rect.end.y + 1.0:
+			print("[digilab-layout] Squad command escaped panel bounds: %s" % command.name)
+			return false
+
+	if command_count != expected_command_count:
+		print("[digilab-layout] expected %d Squad commands but found %d" % [expected_command_count, command_count])
+		return false
+
+	var panel_rect := panel.get_global_rect()
+	var footer_rect := footer.get_global_rect()
+	var detail_rect := detail_panel.get_global_rect()
+	if panel_rect.end.y > footer_rect.position.y - 2.0:
+		print("[digilab-layout] Squad Actions overlaps footer: panel bottom %.1f footer top %.1f" % [panel_rect.end.y, footer_rect.position.y])
+		return false
+	if panel_rect.end.y > detail_rect.end.y + 1.0:
+		print("[digilab-layout] Squad Actions escaped detail panel")
+		return false
+
+	var minimum_h := panel.get_combined_minimum_size().y
+	if panel.size.y > minimum_h + 6.0:
+		print("[digilab-layout] Squad Actions stretched beyond content: %.1f px vs minimum %.1f px" % [panel.size.y, minimum_h])
+		return false
+	return true
+
+
+func _party_workspace_is_bounded(screen: Control, root: Control, expected_command_count: int) -> bool:
+	if screen == null or root == null:
+		return false
+	var scroll := screen.get("_detail_scroll") as ScrollContainer
+	var grid := root.find_child("PartyDetailGrid", true, false) as Control
+	var stats := root.find_child("PartyWorkspaceStats", true, false) as Control
+	var panel := root.find_child("SquadActionsPanel", true, false) as Control
+	var commands := root.find_child("SquadActionsCommands", true, false) as VBoxContainer
+	if scroll == null or grid == null or stats == null or panel == null or commands == null:
+		print("[digilab-layout] missing Party bounded-workspace nodes")
+		return false
+
+	var scroll_rect := scroll.get_global_rect()
+	var grid_rect := grid.get_global_rect()
+	var stats_rect := stats.get_global_rect()
+	var panel_rect := panel.get_global_rect()
+
+	# The shared lower workspace must finish inside the actual no-scroll viewport.
+	# A small bottom inset is valid, but rendered controls may never continue
+	# behind the footer or beyond the ScrollContainer.
+	if grid_rect.end.y > scroll_rect.end.y + 1.0:
+		print("[digilab-layout] Party detail grid escaped scroll: %.1f > %.1f" % [grid_rect.end.y, scroll_rect.end.y])
+		return false
+	if absf(stats_rect.end.y - grid_rect.end.y) > 2.0:
+		print("[digilab-layout] Stats did not fill the shared lower baseline")
+		return false
+	if absf(panel_rect.end.y - grid_rect.end.y) > 2.0:
+		print("[digilab-layout] Squad Actions did not fill the shared lower baseline")
+		return false
+
+	var stat_rows: Array[Control] = []
+	for child: Node in stats.find_children("*", "DigiStatRow", true, false):
+		if child is Control:
+			stat_rows.append(child as Control)
+	if stat_rows.size() != 7:
+		print("[digilab-layout] expected 7 Stats rows but found %d" % stat_rows.size())
+		return false
+	for row: Control in stat_rows:
+		var rect := row.get_global_rect()
+		if rect.position.y < stats_rect.position.y - 1.0 or rect.end.y > stats_rect.end.y + 1.0:
+			print("[digilab-layout] Stats row escaped Stats surface: %s" % row.name)
+			return false
+	# Roomy workspace rows should consume the available Stats height rather than
+	# bunching at the top and leaving a large dead zone.
+	var last_row_rect := stat_rows[stat_rows.size() - 1].get_global_rect()
+	if stats_rect.end.y - last_row_rect.end.y > 30.0:
+		print("[digilab-layout] Stats no longer consume the available workspace height")
+		return false
+
+	var command_count := 0
+	for child: Node in commands.get_children():
+		if not child is DigiCommandButton:
+			continue
+		command_count += 1
+		var command := child as DigiCommandButton
+		var rect := command.get_global_rect()
+		if rect.position.y < panel_rect.position.y - 1.0 or rect.end.y > panel_rect.end.y + 1.0:
+			print("[digilab-layout] Squad command escaped panel bounds: %s" % command.name)
+			return false
+	if command_count != expected_command_count:
+		print("[digilab-layout] expected %d Squad commands but found %d" % [expected_command_count, command_count])
+		return false
+	return true
+
+
+func _expansion_content_is_bounded(screen: Control, root: Control) -> bool:
+	if screen == null or root == null:
+		return false
+	var scroll := screen.get("_detail_scroll") as ScrollContainer
+	var footprint := root.find_child("ExpansionFootprint", true, false) as Control
+	var actions := root.find_child("ExpansionActions", true, false) as Control
+	var workspace: Control = null
+	if footprint != null:
+		var cursor := footprint.get_parent()
+		while cursor != null and cursor != root:
+			if cursor is PanelContainer:
+				workspace = cursor as Control
+				break
+			cursor = cursor.get_parent()
+	if scroll == null or workspace == null or footprint == null or actions == null:
+		print("[digilab-layout] missing Expansion bounded-workspace nodes")
+		return false
+
+	var scroll_rect := scroll.get_global_rect()
+	var workspace_rect := workspace.get_global_rect()
+	if workspace_rect.end.y > scroll_rect.end.y + 1.0:
+		print("[digilab-layout] Expansion workspace escaped scroll: %.1f > %.1f" % [workspace_rect.end.y, scroll_rect.end.y])
+		return false
+	# The progression workspace is the flexible final child of the detail VBox,
+	# so it should reach the scroll baseline instead of ending early or extending
+	# behind the footer.
+	if scroll_rect.end.y - workspace_rect.end.y > 3.0:
+		print("[digilab-layout] Expansion workspace did not consume the available height")
+		return false
+
+	for control: Control in [footprint, actions]:
+		var rect := control.get_global_rect()
+		if rect.position.y < workspace_rect.position.y - 1.0 or rect.end.y > workspace_rect.end.y + 1.0:
+			print("[digilab-layout] Expansion control escaped workspace: %s" % control.name)
+			return false
+
+	var command_count := 0
+	for child: Node in actions.get_children():
+		if not child is DigiCommandButton:
+			continue
+		command_count += 1
+		var rect := (child as Control).get_global_rect()
+		if rect.end.y > workspace_rect.end.y + 1.0:
+			print("[digilab-layout] Expansion command escaped workspace")
+			return false
+	if command_count != 2:
+		print("[digilab-layout] Expansion must expose exactly two command cards; found %d" % command_count)
 		return false
 	return true
 

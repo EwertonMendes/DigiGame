@@ -255,9 +255,9 @@ func _rebuild() -> void:
 					var reward: Dictionary = raw_reward
 					reward_by_id[String(reward.get("instance_id", ""))] = reward
 
-	var active_party: Array[DigimonInstance] = OverworldState.get_active_instances()
-	_party_heading_value.text = "%d ACTIVE" % active_party.size()
-	for instance: DigimonInstance in active_party:
+	var squad: Array[DigimonInstance] = OverworldState.get_squad_instances()
+	_party_heading_value.text = "%d SQUAD" % squad.size()
+	for instance: DigimonInstance in squad:
 		var reward: Dictionary = reward_by_id.get(instance.id, {}) as Dictionary
 		if reward.is_empty():
 			reward = _snapshot_reward(instance)
@@ -676,7 +676,14 @@ func _layout() -> void:
 
 	var compact := V2.is_compact(viewport, 900.0)
 	var narrow := physical.x < 720.0
-	var columns := 1 if narrow else (TABLET_COLUMNS if physical.x < 1180.0 else DESKTOP_COLUMNS)
+	# A full six-member Squad would become excessively tall in one column.
+	# Keep the original single-column compact treatment for <= 3 cards, but use
+	# two columns for larger Squads so the result remains readable and touch-safe.
+	var columns := (
+		(1 if _cards.size() <= 3 else TABLET_COLUMNS)
+		if narrow
+		else (TABLET_COLUMNS if physical.x < 1180.0 else DESKTOP_COLUMNS)
+	)
 	_party_grid.columns = columns
 
 	var card_height := 116.0 if compact else 126.0

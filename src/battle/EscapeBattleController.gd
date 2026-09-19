@@ -198,12 +198,10 @@ func _play_retreat_success_animation() -> void:
 
 
 func _commit_player_resources() -> void:
-	for actor: Node in _turn_order:
-		if actor == null or not is_instance_valid(actor) or not bool(actor.get("is_player_controlled")):
-			continue
-		var battle_state = actor.get("battle_state")
-		if battle_state != null and battle_state.has_method("commit_resources_to_instance"):
-			battle_state.call("commit_resources_to_instance")
+	if _controller != null and _controller.has_method("commit_squad_resources"):
+		_controller.call("commit_squad_resources")
+		return
+	super._commit_player_resources()
 
 
 func _finish_escape(escape_preview: Dictionary) -> void:

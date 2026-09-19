@@ -133,7 +133,9 @@ func _collection_button(instance: DigimonInstance, species: Dictionary, index: i
 	meta.add_theme_constant_override("separation", 8)
 	meta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(meta)
-	var level_rank := _label("Lv. %d · %s" % [instance.level, rank], 12 if _density_compact else 14, rank_color, true)
+	var squad_role := OverworldState.get_squad_role(instance.id)
+	var role_label := "ACTIVE" if squad_role == PlayerCollection.SQUAD_ROLE_ACTIVE else "RESERVE"
+	var level_rank := _label("%s · Lv. %d · %s" % [role_label, instance.level, rank], 12 if _density_compact else 14, rank_color, true)
 	level_rank.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	level_rank.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	meta.add_child(level_rank)
@@ -424,14 +426,16 @@ func _leave_techniques() -> void:
 
 func _turn_roster_page(delta: int) -> void:
 	var party := _party_instances()
-	var count := _page_count(party.size(), ROSTER_PAGE_SIZE)
-	if count <= 1:
+	var count := _squad_roster_page_count()
+	if party.is_empty() or count <= 1:
 		return
 	var next_page := clampi(_roster_page + delta, 0, count - 1)
 	if next_page == _roster_page:
 		return
 	_roster_page = next_page
-	_selected_index = mini(_roster_page * ROSTER_PAGE_SIZE, party.size() - 1)
+	var first_index := _first_index_for_roster_page(_roster_page)
+	if first_index >= 0:
+		_selected_index = first_index
 	_mode = MenuMode.ROSTER
 	_refresh_collection()
 	_layout()

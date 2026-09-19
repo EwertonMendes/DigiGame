@@ -187,9 +187,9 @@ func _assert_hospital_entry(hub: Node, player: Node2D, hospital_npc: Node2D, hos
 	var tabs := hospital_screen.get("_tab_buttons") as Dictionary
 	assert(tabs.has("party") and tabs.has("hospital"), "Hospital must expose Party and Hospital tabs")
 	var patient_buttons := hospital_screen.get("_cards") as Dictionary
-	assert(patient_buttons.size() == mini(3, OverworldState.get_active_instances().size()), "Party tab must show at most three patients without scrolling")
-	for reserve: DigimonInstance in OverworldState.get_reserve_instances():
-		assert(not patient_buttons.has(reserve.id), "Storage Digimon must not appear as Hospital treatment candidates")
+	assert(patient_buttons.size() == mini(3, OverworldState.get_squad_instances().size()), "Squad tab must show one three-card page without scrolling")
+	for storage: DigimonInstance in OverworldState.get_storage_instances():
+		assert(not patient_buttons.has(storage.id), "Storage Digimon must not appear as Hospital treatment candidates")
 	hospital_screen.call("_switch_tab", "hospital")
 	patient_buttons = hospital_screen.get("_cards") as Dictionary
 	assert(patient_buttons.size() == mini(3, OverworldState.get_hospital_instances().size()), "Hospital tab must page admitted patients without scrolling")
@@ -299,7 +299,9 @@ func _assert_legacy_hub_facings(player: Node) -> void:
 func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> void:
 	var default_party := ["agumon", "gabumon", "greymon"]
 	assert(OverworldState.get_active_party() == default_party, "Default overworld party must be Agumon, Gabumon and Greymon")
-	assert(OverworldState.get_max_active_party_size() == 6, "Active overworld party must support up to six Digimon")
+	assert(OverworldState.get_max_active_party_size() == 3, "Active overworld formation must be capped at three Digimon")
+	assert(OverworldState.get_max_reserve_party_size() == 3, "Reserve must provide three bench slots")
+	assert(OverworldState.get_max_squad_size() == 6, "The complete Squad must support six Digimon")
 	assert(int(party_followers.call("get_follower_count")) == 3, "Default active party must render three followers")
 	assert(Array(party_followers.call("get_active_party_keys")) == default_party, "Follower order must match active-party order")
 
@@ -312,12 +314,25 @@ func _assert_overworld_active_party(player: Node2D, party_followers: Node) -> vo
 	for follower in follower_nodes:
 		var follower_node := follower as Node2D
 		assert(follower_node != null, "Every active-party follower must be a Node2D")
+		var hub := party_followers.get_parent()
+		assert(hub != null and bool(hub.call("can_actor_move_to", follower_node.global_position, player)), "Followers must never spawn outside walkable hub space")
 		for point in occupied:
 			assert(
 				follower_node.global_position.distance_to(point) >= minimum_separation,
 				"Party followers must spawn without overlapping the player or each other"
 			)
 		occupied.append(follower_node.global_position)
+
+	var reserve_fixture := OverworldState.get_instance_for_party_key("gabumon")
+	assert(reserve_fixture != null and OverworldState.add_to_reserve_party(reserve_fixture.id), "An Active Digimon must be assignable to Reserve")
+	await get_tree().process_frame
+	assert(OverworldState.get_active_instances().size() == 2 and OverworldState.get_reserve_party_instances().size() == 1, "Reserve assignment must preserve 3+3 Squad roles")
+	assert(int(party_followers.call("get_follower_count")) == 2, "Reserve Digimon must never render as overworld followers")
+	assert(OverworldState.set_active_party(default_party), "Reserve fixture must restore the authored Active order")
+	await get_tree().process_frame
+	assert(OverworldState.get_active_party() == default_party, "Restoring the fixture must recover the original logical Active order")
+	assert(OverworldState.get_reserve_party_instances().is_empty(), "Restoring the fixture must clear its temporary Reserve assignment")
+	assert(int(party_followers.call("get_follower_count")) == 3, "Returning Reserve to Active must restore its follower")
 
 	var middle_instance := OverworldState.get_instance_for_party_key("gabumon")
 	assert(middle_instance != null, "Follower compaction regression requires the middle Party member")

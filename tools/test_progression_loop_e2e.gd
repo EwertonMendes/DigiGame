@@ -89,10 +89,16 @@ func _run_full_progression_loop() -> void:
 	assert(not OverworldState.get_active_party_ids().has(created_id), "Created Digimon must enter Storage, not silently replace party")
 	assert(OverworldState.get_digi_data_for("Koromon") < OverworldState.get_reconstruction_requirement("Koromon"), "Creation must consume required Digi Data")
 
-	# Move the new individual into the real party and persist/reload the party order.
+	# Move the new Storage individual directly into an explicit Active slot.
+	# Storage is not Reserve anymore, so this uses the same six-slot assignment
+	# contract as the production Party / Storage workspace.
 	var replaced_active_id := OverworldState.get_active_party_ids()[0]
-	assert(OverworldState.swap_party_with_reserve(replaced_active_id, created_id), "Storage Digimon must be swappable into the party")
-	assert(OverworldState.get_active_party_ids().has(created_id), "Created Digimon must now be active")
+	assert(
+		OverworldState.assign_squad_slot(created_id, PlayerCollection.SQUAD_ROLE_ACTIVE, 0),
+		"Storage Digimon must be assignable into an Active Squad slot"
+	)
+	assert(OverworldState.get_active_party_ids()[0] == created_id, "Created Digimon must occupy the selected Active slot")
+	assert(OverworldState.get_collection_location(replaced_active_id) == PlayerCollection.LOCATION_STORAGE, "Displaced Active Digimon must move to Storage")
 	assert(OverworldState.save_progress() and OverworldState.load_progress(), "Party mutation must survive reload")
 	assert(OverworldState.get_active_party_ids().has(created_id), "Reload must retain created Digimon in party")
 

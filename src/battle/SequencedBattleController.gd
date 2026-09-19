@@ -428,7 +428,9 @@ func _handle_knockout(actor: Node) -> void:
 		"target_name": _display_name(actor),
 		"is_player": bool(actor.get("is_player_controlled")),
 	})
-	if not bool(actor.get("is_player_controlled")) and not _defeated_enemy_ids.has(actor_id):
+	if bool(actor.get("is_player_controlled")):
+		_queue_player_replacement(actor)
+	elif not _defeated_enemy_ids.has(actor_id):
 		_defeated_enemy_ids.append(actor_id)
 	if _controller != null and _controller.has_method("refresh_occupancy_index"):
 		_controller.call("refresh_occupancy_index")

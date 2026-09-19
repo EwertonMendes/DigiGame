@@ -1,6 +1,7 @@
 extends Node
 
 signal active_party_changed(active_party: Array)
+signal squad_changed(active_ids: Array, reserve_ids: Array)
 signal collection_changed
 signal account_rewards_changed(bits: int, digi_data: Dictionary)
 signal technique_progress_changed
@@ -62,9 +63,37 @@ func get_active_instances() -> Array[DigimonInstance]:
 	return _collection.get_active_instances()
 
 
+func get_reserve_party_ids() -> Array[String]:
+	_ensure_starter_collection()
+	return _collection.get_reserve_party_ids()
+
+
+func get_reserve_party_instances() -> Array[DigimonInstance]:
+	_ensure_starter_collection()
+	return _collection.get_reserve_party_instances()
+
+
+func get_squad_ids() -> Array[String]:
+	_ensure_starter_collection()
+	return _collection.get_squad_ids()
+
+
+func get_squad_instances() -> Array[DigimonInstance]:
+	_ensure_starter_collection()
+	return _collection.get_squad_instances()
+
+
 func get_battle_ready_active_instances() -> Array[DigimonInstance]:
 	var result: Array[DigimonInstance] = []
 	for instance: DigimonInstance in get_active_instances():
+		if not instance.is_fainted():
+			result.append(instance)
+	return result
+
+
+func get_battle_ready_reserve_instances() -> Array[DigimonInstance]:
+	var result: Array[DigimonInstance] = []
+	for instance: DigimonInstance in get_reserve_party_instances():
 		if not instance.is_fainted():
 			result.append(instance)
 	return result
@@ -77,9 +106,10 @@ func get_hospital_ids() -> Array[String]:
 	_ensure_starter_collection()
 	return _collection.get_hospital_ids()
 
-func get_reserve_instances() -> Array[DigimonInstance]:
+func get_storage_instances() -> Array[DigimonInstance]:
 	_ensure_starter_collection()
-	return _collection.get_reserve_instances()
+	return _collection.get_storage_instances()
+
 
 func get_collection_instances() -> Array[DigimonInstance]:
 	_ensure_starter_collection()
@@ -101,6 +131,11 @@ func get_collection_location(instance_id: String) -> String:
 	_ensure_starter_collection()
 	return _collection.get_location(instance_id)
 
+
+func get_squad_role(instance_id: String) -> String:
+	_ensure_starter_collection()
+	return _collection.get_squad_role(instance_id)
+
 func set_active_party(party: Array) -> bool:
 	_ensure_starter_collection()
 	var ids: Array[String] = []
@@ -114,43 +149,92 @@ func set_active_party(party: Array) -> bool:
 		if instance == null or ids.has(instance.id):
 			return false
 		ids.append(instance.id)
-	if not _party_service.set_party(_collection, ids):
+
+	var reserve := _collection.get_reserve_party_ids()
+	for instance_id: String in ids:
+		reserve.erase(instance_id)
+	if not _party_service.set_squad(_collection, ids, reserve):
 		return false
-	active_party_changed.emit(get_active_party())
+	_emit_squad_changed()
 	_save_after_mutation()
 	return true
+
 
 func add_to_active_party(instance_id: String) -> bool:
 	_ensure_starter_collection()
-	if not _party_service.add_to_party(_collection, instance_id):
+	if not _party_service.add_to_active(_collection, instance_id):
 		return false
-	active_party_changed.emit(get_active_party())
+	_emit_squad_changed()
 	_save_after_mutation()
 	return true
 
-func remove_from_active_party(instance_id: String) -> bool:
+
+func add_to_reserve_party(instance_id: String) -> bool:
 	_ensure_starter_collection()
-	if not _party_service.remove_from_party(_collection, instance_id):
+	if not _party_service.add_to_reserve(_collection, instance_id):
 		return false
-	active_party_changed.emit(get_active_party())
+	_emit_squad_changed()
 	_save_after_mutation()
 	return true
+
+
+func remove_from_active_party(instance_id: String) -> bool:
+	_ensure_starter_collection()
+	if not _party_service.move_to_storage(_collection, instance_id):
+		return false
+	_emit_squad_changed()
+	_save_after_mutation()
+	return true
+
+
+func move_squad_member_to_storage(instance_id: String) -> bool:
+	_ensure_starter_collection()
+	if not _party_service.move_to_storage(_collection, instance_id):
+		return false
+	_emit_squad_changed()
+	_save_after_mutation()
+	return true
+
+
+func assign_squad_slot(instance_id: String, role: String, slot_index: int) -> bool:
+	_ensure_starter_collection()
+	if not _party_service.assign_to_slot(_collection, instance_id, role, slot_index):
+		return false
+	_emit_squad_changed()
+	_save_after_mutation()
+	return true
+
 
 func swap_party_with_reserve(active_instance_id: String, reserve_instance_id: String) -> bool:
 	_ensure_starter_collection()
 	if not _party_service.swap_with_reserve(_collection, active_instance_id, reserve_instance_id):
 		return false
-	active_party_changed.emit(get_active_party())
+	_emit_squad_changed()
 	_save_after_mutation()
 	return true
 
+
 func move_active_party_member(instance_id: String, new_index: int) -> bool:
 	_ensure_starter_collection()
+	if _collection.get_squad_role(instance_id) != PlayerCollection.SQUAD_ROLE_ACTIVE:
+		return false
 	if not _party_service.move(_collection, instance_id, new_index):
 		return false
-	active_party_changed.emit(get_active_party())
+	_emit_squad_changed()
 	_save_after_mutation()
 	return true
+
+
+func move_reserve_party_member(instance_id: String, new_index: int) -> bool:
+	_ensure_starter_collection()
+	if _collection.get_squad_role(instance_id) != PlayerCollection.SQUAD_ROLE_RESERVE:
+		return false
+	if not _party_service.move(_collection, instance_id, new_index):
+		return false
+	_emit_squad_changed()
+	_save_after_mutation()
+	return true
+
 
 func party_validation_error(instance_ids: Array[String]) -> String:
 	_ensure_starter_collection()
@@ -166,7 +250,7 @@ func reset_active_party() -> void:
 	if ids.is_empty() or ids == _collection.get_active_party_ids():
 		return
 	if _party_service.set_party(_collection, ids):
-		active_party_changed.emit(get_active_party())
+		_emit_squad_changed()
 		_save_after_mutation()
 
 func replace_or_add_instance(instance: DigimonInstance, collection_key: String = "") -> bool:
@@ -184,7 +268,7 @@ func replace_or_add_instance(instance: DigimonInstance, collection_key: String =
 		success = _collection.replace_at_key(instance, key, String(species.get("name", "digimon")))
 	if success:
 		collection_changed.emit()
-		active_party_changed.emit(get_active_party())
+		_emit_squad_changed()
 		_save_after_mutation()
 	return success
 
@@ -215,7 +299,15 @@ func apply_training_plan(instance_id: String, stat_additions: Dictionary, mobili
 	return true
 
 func get_max_active_party_size() -> int:
-	return _party_service.maximum_size()
+	return _party_service.maximum_active_size()
+
+
+func get_max_reserve_party_size() -> int:
+	return _party_service.maximum_reserve_size()
+
+
+func get_max_squad_size() -> int:
+	return _party_service.maximum_squad_size()
 
 func get_database():
 	_ensure_database()
@@ -239,7 +331,7 @@ func admit_to_hospital(instance_id: String, now_unix: int = -1) -> Dictionary:
 	var instance := _collection.get_instance(instance_id)
 	var result := _hospital_service.admit(_collection, instance, _max_hp_for(instance), now_unix)
 	if bool(result.get("success", false)):
-		active_party_changed.emit(get_active_party())
+		_emit_squad_changed()
 		collection_changed.emit()
 		hospital_state_changed.emit(instance_id, "recovering")
 		_save_after_mutation()
@@ -251,7 +343,7 @@ func recover_from_hospital_now(instance_id: String, now_unix: int = -1) -> Dicti
 	var instance := _collection.get_instance(instance_id)
 	var result := _hospital_service.recover_now(_collection, instance, _max_hp_for(instance), _max_sp_for(instance), now_unix)
 	if bool(result.get("success", false)):
-		active_party_changed.emit(get_active_party())
+		_emit_squad_changed()
 		collection_changed.emit()
 		account_rewards_changed.emit(_collection.bits, get_digi_data())
 		hospital_state_changed.emit(instance_id, "ready")
@@ -263,9 +355,16 @@ func discharge_from_hospital(instance_id: String, now_unix: int = -1) -> Diction
 	_ensure_starter_collection()
 	process_hospital_recoveries(now_unix)
 	var instance := _collection.get_instance(instance_id)
-	var result := _hospital_service.discharge(_collection, instance, _max_hp_for(instance), _party_service.maximum_size(), now_unix)
+	var result := _hospital_service.discharge(
+		_collection,
+		instance,
+		_max_hp_for(instance),
+		_party_service.maximum_active_size(),
+		_party_service.maximum_reserve_size(),
+		now_unix
+	)
 	if bool(result.get("success", false)):
-		active_party_changed.emit(get_active_party())
+		_emit_squad_changed()
 		collection_changed.emit()
 		hospital_state_changed.emit(instance_id, String(result.get("destination", "storage")))
 		_save_after_mutation()
@@ -357,7 +456,7 @@ func set_digimon_expanded(target_id: String, expanded: bool) -> Dictionary:
 	var result: Dictionary = _ascension.set_expanded(_database, target, expanded)
 	if bool(result.get("success", false)):
 		collection_changed.emit()
-		active_party_changed.emit(get_active_party())
+		_emit_squad_changed()
 		_save_after_mutation()
 	return result
 
@@ -587,7 +686,7 @@ func reset_progress_for_tests(delete_disk_save: bool = false) -> void:
 	if delete_disk_save:
 		_save_service.delete_save()
 	_ensure_starter_collection()
-	active_party_changed.emit(get_active_party())
+	_emit_squad_changed()
 	collection_changed.emit()
 	account_rewards_changed.emit(_collection.bits, get_digi_data())
 	inventory_changed.emit(get_inventory())
@@ -615,27 +714,65 @@ func _repair_loaded_collection() -> void:
 		_ensure_starter_collection()
 		save_progress()
 		return
+
 	var changed := false
-	var valid_ids: Array[String] = []
+	var seen: Dictionary = {}
+	var valid_active: Array[String] = []
+	var valid_reserve: Array[String] = []
+
 	for instance_id: String in _collection.get_active_party_ids():
 		var instance := _collection.get_instance(instance_id)
-		if instance == null or _collection.is_hospitalized(instance_id) or _database.get_by_seed(instance.species_seed).is_empty():
+		if (
+			instance == null
+			or _collection.is_hospitalized(instance_id)
+			or _database.get_by_seed(instance.species_seed).is_empty()
+			or seen.has(instance_id)
+		):
 			changed = true
 			continue
-		if not valid_ids.has(instance_id):
-			valid_ids.append(instance_id)
+		if valid_active.size() < _party_service.maximum_active_size():
+			valid_active.append(instance_id)
+			seen[instance_id] = true
 		else:
 			changed = true
-	if valid_ids.size() > _party_service.maximum_size():
-		valid_ids.resize(_party_service.maximum_size())
+
+	for instance_id: String in _collection.get_reserve_party_ids():
+		var instance := _collection.get_instance(instance_id)
+		if (
+			instance == null
+			or _collection.is_hospitalized(instance_id)
+			or _database.get_by_seed(instance.species_seed).is_empty()
+			or seen.has(instance_id)
+		):
+			changed = true
+			continue
+		if valid_reserve.size() < _party_service.maximum_reserve_size():
+			valid_reserve.append(instance_id)
+			seen[instance_id] = true
+		else:
+			changed = true
+
+	if valid_active != _collection.get_active_party_ids() or valid_reserve != _collection.get_reserve_party_ids():
+		_collection.set_squad_ids(
+			valid_active,
+			valid_reserve,
+			0,
+			_party_service.maximum_active_size(),
+			_party_service.maximum_reserve_size()
+		)
 		changed = true
-	if valid_ids != _collection.get_active_party_ids():
-		_collection.set_active_party_ids(valid_ids, 0, _party_service.maximum_size())
-		changed = true
-	if not _collection.location_invariant_error().is_empty():
-		push_error("Loaded collection has invalid Digimon locations: %s" % _collection.location_invariant_error())
+
+	var invariant_error := _collection.location_invariant_error()
+	if not invariant_error.is_empty():
+		push_error("Loaded collection has invalid Digimon locations: %s" % invariant_error)
 	if changed:
 		save_progress()
+
+
+func _emit_squad_changed() -> void:
+	active_party_changed.emit(get_active_party())
+	squad_changed.emit(_collection.get_active_party_ids(), _collection.get_reserve_party_ids())
+
 
 func _ensure_database() -> void:
 	if not _database.is_loaded():

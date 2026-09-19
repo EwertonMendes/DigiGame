@@ -43,13 +43,18 @@ jobs:
             command: godot --headless --path . tools/test_attack_patterns.tscn --quit-after 5
             success: advanced attack pattern regression passed
           - name: hub-foundation
-            command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 30
+            # The regression owns several frame-bound UI/service transitions;
+            # leave enough frame budget for the added Active/Reserve follower checks.
+            command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 60
             success: hub foundation regression passed
           - name: battle-operator-programs
             command: godot --headless --path . tools/test_battle_operator_programs.tscn --quit-after 30
             success: battle operator programs regression passed
           - name: digilab-layout
-            command: godot --headless --path . tools/test_digilab_layout_regression.tscn --quit-after 30
+            # This regression now exercises Active, Reserve and Storage layouts
+            # before continuing through the Ascension deep-link/navigation flow.
+            # Keep a generous frame budget; layout assertions remain strict.
+            command: godot --headless --path . tools/test_digilab_layout_regression.tscn --quit-after 70
             success: digilab layout regression passed
           - name: training-ui-v2
             command: godot --headless --path . tools/test_training_ui_v2_regression.tscn --quit-after 30
@@ -85,6 +90,12 @@ jobs:
           - name: digimon-progression
             command: godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8
             success: digimon progression regression passed
+          - name: squad-system
+            command: godot --headless --path . tools/test_squad_system.tscn --quit-after 10
+            success: squad system regression passed
+          - name: battle-squad-switching
+            command: godot --headless --path . tools/test_battle_squad_switching.tscn --quit-after 10
+            success: battle squad switching regression passed
           - name: hospital-system
             command: godot --headless --path . tools/test_hospital_system.tscn --quit-after 8
             success: hospital system regression passed

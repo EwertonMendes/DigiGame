@@ -99,15 +99,15 @@ func apply_scenario(scenario_id: String, selected_instance_id: String, progressi
 			log_action("Scenario", "Fresh start")
 			return {"success": true, "message": "Starter state restored."}
 		"party_level_20":
-			for value: DigimonInstance in OverworldState.get_active_instances():
+			for value: DigimonInstance in OverworldState.get_squad_instances():
 				progression_tools.set_level(value.id, 20)
-			log_action("Scenario", "Party Level 20")
-			return {"success": true, "message": "Active party prepared at Level 20."}
+			log_action("Scenario", "Squad Level 20")
+			return {"success": true, "message": "Active and Reserve Squad prepared at Level 20."}
 		"critical_party":
-			for value: DigimonInstance in OverworldState.get_active_instances():
+			for value: DigimonInstance in OverworldState.get_squad_instances():
 				progression_tools.set_critical(value.id)
-			log_action("Scenario", "Critical party")
-			return {"success": true, "message": "Active party set to 1 HP / 0 SP."}
+			log_action("Scenario", "Critical Squad")
+			return {"success": true, "message": "Active and Reserve Squad set to 1 HP / 0 SP."}
 		"rich_account":
 			set_bits(50000)
 			var selected := progression_tools.instance(selected_instance_id)
@@ -141,7 +141,10 @@ func diagnostics(selected_instance_id: String = "") -> Dictionary:
 		"scene_name": scene.name if scene != null else "",
 		"time_scale": Engine.time_scale,
 		"collection_size": OverworldState.get_collection_instances().size(),
-		"party_size": OverworldState.get_active_instances().size(),
+		"active_size": OverworldState.get_active_instances().size(),
+		"reserve_size": OverworldState.get_reserve_party_instances().size(),
+		"squad_size": OverworldState.get_squad_instances().size(),
+		"party_size": OverworldState.get_squad_instances().size(),
 		"bits": OverworldState.get_bits(),
 		"selected_level": selected.level if selected != null else 0,
 		"selected_hp": selected.current_hp if selected != null else 0,
@@ -172,5 +175,6 @@ func _import_state(state: Dictionary) -> bool:
 func _emit_full_state_changed() -> void:
 	OverworldState.collection_changed.emit()
 	OverworldState.active_party_changed.emit(OverworldState.get_active_party())
+	OverworldState.squad_changed.emit(OverworldState.get_active_party_ids(), OverworldState.get_reserve_party_ids())
 	OverworldState.account_rewards_changed.emit(OverworldState.get_bits(), OverworldState.get_digi_data())
 	OverworldState.save_progress()

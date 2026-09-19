@@ -1,8 +1,14 @@
 extends "res://src/battle/CombatDigimonRuntimeController.gd"
 
 const EncounterDefinitionScript = preload("res://src/world/BattleEncounterDefinition.gd")
+const BattleSquadSessionScript = preload("res://src/battle/BattleSquadSession.gd")
+const SquadFootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const SWITCH_RECALL_SECONDS := 0.28
+const SWITCH_DEPLOY_DELAY_SECONDS := 0.18
+const SWITCH_CLEANUP_SECONDS := 0.34
 
 var encounter_definition: BattleEncounterDefinition = null
+var _squad_session: BattleSquadSession = null
 var _invalid_battle_abort_pending := false
 
 
@@ -24,12 +30,18 @@ func _spawn_demo_rosters() -> void:
 		return
 
 	var player_entries: Array[Dictionary] = []
+	var active_squad: Array[DigimonInstance] = OverworldState.get_active_instances()
 	var persistent_party: Array[DigimonInstance] = OverworldState.get_battle_ready_active_instances()
 	if persistent_party.is_empty():
-		_abort_invalid_battle("You need at least one available Digimon in your party to start a battle.")
+		_abort_invalid_battle("You need at least one available Active Digimon to start a battle.")
 		return
+
+	var deployed_ids: Array[String] = []
 	for instance: DigimonInstance in persistent_party:
 		player_entries.append({"instance": instance, "profile": ""})
+		deployed_ids.append(instance.id)
+	_squad_session = BattleSquadSessionScript.new() as BattleSquadSession
+	_squad_session.configure(active_squad, OverworldState.get_reserve_party_instances(), deployed_ids)
 
 	var enemy_entries: Array[Dictionary] = []
 	for descriptor: Dictionary in _enemy_descriptors():
@@ -72,9 +84,196 @@ func _spawn_demo_rosters() -> void:
 
 	_spawn_team_from_plan(player_entries, true, player_anchors, field)
 	_spawn_team_from_plan(enemy_entries, false, enemy_plan.get("anchors", []), field)
+	_attach_spawned_player_actors_to_squad()
 	refresh_occupancy_index()
 
 	orient_battle_actors_toward_opponents()
+
+
+func get_battle_squad_session() -> BattleSquadSession:
+	return _squad_session
+
+
+func _attach_spawned_player_actors_to_squad() -> void:
+	if _squad_session == null:
+		return
+	for actor: Node in get_battle_digimons():
+		if actor == null or not bool(actor.get("is_player_controlled")):
+			continue
+		_squad_session.attach_actor(actor)
+
+
+func get_bench_deployment_options(outgoing_actor: Node, allow_fallback: bool = false) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if _squad_session == null:
+		return result
+	var preferred_anchor := _actor_anchor(outgoing_actor)
+	for instance: DigimonInstance in _squad_session.get_available_bench_instances():
+		var placement := find_player_deployment_anchor(
+			instance.id,
+			preferred_anchor,
+			outgoing_actor,
+			allow_fallback
+		)
+		var species := _database.get_by_seed(instance.species_seed)
+		var state := _squad_session.get_state(instance.id)
+		result.append({
+			"id": instance.id,
+			"title": instance.get_display_name(String(species.get("name", "Digimon"))),
+			"subtitle": "HP %d · SP %d · Tier %s · %s"
+				% [
+					state.current_hp if state != null else instance.current_hp,
+					state.current_mp if state != null else instance.current_mp,
+					instance.tier,
+					SquadFootprintScript.display_label(instance.battle_footprint_id),
+				],
+			"species": String(species.get("name", "")),
+			"can_deploy": bool(placement.get("ok", false)),
+			"reason": String(placement.get("reason", "")),
+			"anchor": placement.get("anchor", preferred_anchor),
+		})
+	return result
+
+
+func find_player_deployment_anchor(
+	instance_id: String,
+	preferred_anchor: Vector2i,
+	outgoing_actor: Node = null,
+	allow_fallback: bool = false
+) -> Dictionary:
+	if _squad_session == null:
+		return {"ok": false, "reason": "Battle Squad is unavailable."}
+	var instance := _squad_session.get_instance(instance_id)
+	if instance == null or not _squad_session.is_available_on_bench(instance_id):
+		return {"ok": false, "reason": "This Digimon is not available in Reserve."}
+	var field := get_node_or_null("../Blocks") as Node2D
+	if field == null:
+		return {"ok": false, "reason": "Battlefield is unavailable."}
+
+	var candidates: Array[Vector2i] = [preferred_anchor]
+	if allow_fallback:
+		for candidate: Vector2i in _spawn_zone_candidates(field, true):
+			if not candidates.has(candidate):
+				candidates.append(candidate)
+
+	for anchor: Vector2i in candidates:
+		if _can_place_instance_at_anchor(instance, anchor, outgoing_actor, field):
+			return {"ok": true, "anchor": anchor, "reason": ""}
+	return {
+		"ok": false,
+		"anchor": preferred_anchor,
+		"reason": "No valid %s deployment space is available." % SquadFootprintScript.display_label(instance.battle_footprint_id),
+	}
+
+
+func _can_place_instance_at_anchor(
+	instance: DigimonInstance,
+	anchor: Vector2i,
+	outgoing_actor: Node,
+	field: Node2D
+) -> bool:
+	if instance == null:
+		return false
+	var raw_map = field.get("tile_map_data")
+	if not raw_map is Dictionary:
+		return false
+	var map_data := raw_map as Dictionary
+	for grid: Vector2i in SquadFootprintScript.occupied_grids(anchor, instance.battle_footprint_id):
+		if not map_data.has(grid):
+			return false
+		if field.has_method("get_static_tile_block_reason") and not String(field.call("get_static_tile_block_reason", grid)).is_empty():
+			return false
+		var occupant := get_digimon_at_grid(grid, outgoing_actor)
+		if occupant != null:
+			return false
+	return true
+
+
+func perform_player_switch(outgoing_actor: Node, incoming_id: String, anchor: Vector2i) -> Node:
+	if (
+		_squad_session == null
+		or outgoing_actor == null
+		or not is_instance_valid(outgoing_actor)
+		or not bool(outgoing_actor.get("is_player_controlled"))
+	):
+		return null
+	var placement := find_player_deployment_anchor(incoming_id, anchor, outgoing_actor, false)
+	if not bool(placement.get("ok", false)):
+		return null
+	var instance := _squad_session.get_instance(incoming_id)
+	var field := get_node_or_null("../Blocks") as Node2D
+	if instance == null or field == null:
+		return null
+
+	# Create and attach the incoming actor before mutating the outgoing Squad
+	# state. If anything fails, the original actor remains untouched.
+	_squad_session.prepare_deployment(incoming_id)
+	var incoming := _spawn_instance_at_anchor(instance, true, anchor, field)
+	if incoming == null:
+		return null
+	if not _squad_session.attach_actor(incoming):
+		remove_child(incoming)
+		incoming.queue_free()
+		return null
+
+	var outgoing_id := String(outgoing_actor.call("get_digimon_instance_id")) if outgoing_actor.has_method("get_digimon_instance_id") else ""
+	_squad_session.bench(outgoing_id)
+	outgoing_actor.set("is_defending", false)
+	outgoing_actor.set_meta("battle_switching_out", true)
+
+	# Reserve the destination immediately but stage the visuals: the outgoing
+	# Digimon is digitally recalled first, then the incoming Digimon materializes
+	# into the exact tactical anchor. No logical state is recreated by the VFX.
+	incoming.visible = false
+	incoming.set_meta("battle_switching_in", true)
+	if outgoing_actor.has_method("play_switch_out_animation"):
+		outgoing_actor.call("play_switch_out_animation")
+	else:
+		outgoing_actor.visible = false
+
+	var deploy_timer := get_tree().create_timer(SWITCH_DEPLOY_DELAY_SECONDS)
+	deploy_timer.timeout.connect(func():
+		if incoming != null and is_instance_valid(incoming):
+			incoming.remove_meta("battle_switching_in")
+			if incoming.has_method("play_switch_in_animation"):
+				incoming.call("play_switch_in_animation")
+			else:
+				incoming.visible = true
+	, CONNECT_ONE_SHOT)
+
+	var cleanup_timer := get_tree().create_timer(SWITCH_CLEANUP_SECONDS)
+	cleanup_timer.timeout.connect(func():
+		if outgoing_actor != null and is_instance_valid(outgoing_actor):
+			if outgoing_actor.get_parent() == self:
+				remove_child(outgoing_actor)
+			outgoing_actor.queue_free()
+	, CONNECT_ONE_SHOT)
+
+	refresh_occupancy_index()
+	face_actor_toward_nearest_opponent(incoming)
+	return incoming
+
+
+func perform_knockout_replacement(outgoing_actor: Node, incoming_id: String, anchor: Vector2i) -> Node:
+	if _squad_session == null or outgoing_actor == null:
+		return null
+	var placement := find_player_deployment_anchor(incoming_id, anchor, outgoing_actor, true)
+	if not bool(placement.get("ok", false)):
+		return null
+	return perform_player_switch(outgoing_actor, incoming_id, Vector2i(placement.get("anchor", anchor)))
+
+
+func commit_squad_resources() -> void:
+	if _squad_session != null:
+		_squad_session.commit_all_resources()
+
+
+func _actor_anchor(actor: Node) -> Vector2i:
+	var field := get_node_or_null("../Blocks") as Node2D
+	if actor == null or field == null or not actor.has_method("get_tile_world_position"):
+		return Vector2i.ZERO
+	var world := Vector2(actor.call("get_tile_world_position"))
+	return Vector2i(field.call("world_to_grid", field.to_local(world)))
 
 
 func _abort_invalid_battle(reason: String) -> void:

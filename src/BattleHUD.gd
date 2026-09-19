@@ -29,6 +29,7 @@ var _skill_button: Button = null
 var _defend_button: Button = null
 var _wait_button: Button = null
 var _confirm_move_button: Button = null
+var _switch_button: Button = null
 var _undo_button: Button = null
 var _cancel_button: Button = null
 var _primary_buttons: Array[Button] = []
@@ -175,6 +176,10 @@ func _build_command_panel() -> void:
 	_primary_buttons = [_move_button, _attack_button, _skill_button, _defend_button, _wait_button]
 	for button: Button in _primary_buttons:
 		_action_grid.add_child(button)
+
+	_switch_button = _make_action_button("Switch", "switch.svg", "6", "Switch with a battle-ready Reserve Digimon")
+	_switch_button.visible = false
+	_action_grid.add_child(_switch_button)
 
 	_undo_button = _make_action_button("Undo", "undo.svg", "Z", "Undo the committed move")
 	_action_grid.add_child(_undo_button)
@@ -355,6 +360,21 @@ func refresh_from_controller() -> void:
 	_wait_button.disabled = not bool(state.get("can_wait", false))
 	_confirm_move_button.disabled = not bool(state.get("can_confirm_move", false))
 	_undo_button.visible = bool(state.get("can_undo", false))
+	var reserve_count := int(state.get("reserve_count", 0))
+	var user_turn := bool(state.get("is_user_turn", false))
+	# Switch is a first-class battle command, so keep it discoverable even when
+	# the player currently has no battle-ready Reserve member. It shares the
+	# utility slot with Undo: before movement the player sees Switch; after
+	# movement Undo takes that same slot without growing the command rail.
+	_switch_button.visible = user_turn and not _undo_button.visible
+	_switch_button.disabled = not bool(state.get("can_switch", false))
+	var switch_reason := String(state.get("switch_locked_reason", "")).strip_edges()
+	if switch_reason.is_empty():
+		_switch_button.tooltip_text = "Switch with a Reserve Digimon and end this Digimon's turn  [6]"
+	elif reserve_count <= 0:
+		_switch_button.tooltip_text = "%s Assign Reserve members in Digi Lab > Party / Storage.  [6]" % switch_reason
+	else:
+		_switch_button.tooltip_text = "%s  [6]" % switch_reason
 	_cancel_button.disabled = false
 
 	_set_action_selected(_move_button, planning)
@@ -507,11 +527,38 @@ func _layout_dock() -> void:
 		_layout_status(Vector2(status_w, status_h), false)
 
 		var dock_w := 242.0
-		var dock_h := 320.0 if user_turn and not contextual else (132.0 if contextual else 76.0)
+		var dock_h := _desktop_command_dock_height(user_turn, contextual)
 		_dock.position = Vector2(margin * ui_scale, 192.0 * ui_scale)
 		_dock.size = Vector2(dock_w, dock_h)
 		_action_grid.columns = 1
 		_layout_command(Vector2(dock_w, dock_h), false, contextual, user_turn)
+
+
+func _desktop_command_dock_height(user_turn: bool, contextual: bool) -> float:
+	if contextual:
+		return 132.0
+	if not user_turn:
+		return 76.0
+
+	# Desktop uses a single-column operator rail. Five primary commands plus the
+	# shared Switch/Undo utility slot require six rows. Derive the rail height
+	# from the authored button size so future command additions cannot silently
+	# overflow the panel.
+	var visible_commands := 0
+	for button: Button in _primary_buttons:
+		if button.visible:
+			visible_commands += 1
+	if _switch_button != null and _switch_button.visible:
+		visible_commands += 1
+	if _undo_button != null and _undo_button.visible:
+		visible_commands += 1
+	visible_commands = maxi(1, visible_commands)
+
+	var button_h := 47.0
+	var gaps := 3.0 * float(maxi(0, visible_commands - 1))
+	var grid_h := button_h * float(visible_commands) + gaps
+	var chrome_h := 58.0 + 22.0 + 7.0
+	return maxf(320.0, grid_h + chrome_h)
 
 
 func _layout_status(panel_size: Vector2, compact: bool) -> void:
@@ -597,6 +644,8 @@ func _layout_command(panel_size: Vector2, compact: bool, contextual: bool, user_
 	for button: Button in _primary_buttons:
 		button.custom_minimum_size = Vector2(0.0, button_h)
 		button.add_theme_font_size_override("font_size", 13 if compact else 16)
+	_switch_button.custom_minimum_size = Vector2(0.0, button_h)
+	_switch_button.add_theme_font_size_override("font_size", 13 if compact else 16)
 	_undo_button.custom_minimum_size = Vector2(0.0, button_h)
 	_undo_button.add_theme_font_size_override("font_size", 13 if compact else 15)
 	_nav_hint.position = Vector2(pad + 3.0, panel_size.y - nav_h - 3.0)
@@ -610,7 +659,7 @@ func _is_our_focus(owner: Control) -> bool:
 		return false
 	if _primary_buttons.has(owner as Button):
 		return true
-	return owner == _undo_button or owner == _cancel_button or owner == _confirm_move_button
+	return owner == _switch_button or owner == _undo_button or owner == _cancel_button or owner == _confirm_move_button
 
 
 func _focus_first_available() -> void:
@@ -624,6 +673,9 @@ func _focus_first_available() -> void:
 		if button.visible and not button.disabled:
 			button.grab_focus()
 			return
+	if _switch_button.visible and not _switch_button.disabled:
+		_switch_button.grab_focus()
+		return
 	if _undo_button.visible and not _undo_button.disabled:
 		_undo_button.grab_focus()
 

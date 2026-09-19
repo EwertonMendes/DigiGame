@@ -300,6 +300,8 @@ func _build_ui() -> void:
 
 	_toast = _label("", 18, Color.WHITE)
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_toast.clip_text = false
 	_toast.add_theme_color_override("font_outline_color", Color(0.03, 0.05, 0.05, 0.94))
 	_toast.add_theme_constant_override("outline_size", 4)
 	_toast.visible = false
@@ -740,20 +742,29 @@ func _on_combat_event(event: Dictionary) -> void:
 		"status_applied": text = String(event.get("status", "Status")).replace("_", " ").capitalize()
 		"unit_knocked_out": text = "%s  KO" % String(event.get("target_name", "Digimon"))
 		"status_damage": text = "%s  −%d" % [String(event.get("status", "Status")).replace("_", " ").capitalize(), int(event.get("damage", 0))]
+		"unit_switched":
+			var incoming_name := String(event.get("incoming_name", "Digimon"))
+			if bool(event.get("forced", false)):
+				_show_toast("RESERVE DEPLOYED  ·  %s" % incoming_name, UI.CYAN, 0.70)
+			else:
+				var outgoing_name := String(event.get("outgoing_name", "Digimon"))
+				_show_toast("SWITCH  ·  %s  →  %s\nTURN CONSUMED" % [outgoing_name, incoming_name], UI.GOLD, 0.90)
+			return
 	if text.is_empty():
 		return
 	_show_toast(text)
 
 
-func _show_toast(text: String) -> void:
+func _show_toast(text: String, color: Color = Color.WHITE, hold_seconds: float = 0.42) -> void:
 	_toast.text = text
 	_toast.visible = true
+	_toast.add_theme_color_override("font_color", color)
 	_toast.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	_toast.position.y -= 5.0
 	if _toast_tween != null and _toast_tween.is_valid():
 		_toast_tween.kill()
 	_toast_tween = create_tween().set_parallel(true)
-	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.70).set_delay(0.42)
+	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.70).set_delay(maxf(0.10, hold_seconds))
 	_toast_tween.tween_property(_toast, "position:y", _toast.position.y - 12.0, 1.1)
 	_toast_tween.chain().tween_callback(func(): _toast.visible = false)
 
@@ -863,6 +874,7 @@ func _layout() -> void:
 	_result_return.position = Vector2(74.0, 184.0)
 	_result_return.size = Vector2(result_width - 148.0, 48.0)
 
+	var toast_width := minf(520.0, physical.x - 40.0)
 	_toast.scale = Vector2.ONE * ui_scale
-	_toast.position = Vector2((physical.x - 320.0) * 0.5 * ui_scale, 96.0 * ui_scale)
-	_toast.size = Vector2(320.0, 42.0)
+	_toast.position = Vector2((physical.x - toast_width) * 0.5 * ui_scale, 88.0 * ui_scale)
+	_toast.size = Vector2(toast_width, 58.0)

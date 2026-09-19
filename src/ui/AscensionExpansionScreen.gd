@@ -692,6 +692,7 @@ func _reason_text(reason: String) -> String:
 		"insufficient_bits": "Not enough Bits.",
 		"donor_required": "Select the exact individual that will be consumed.",
 		"donor_in_active_party": "The donor must be in Storage.",
+		"donor_not_in_storage": "Reserve belongs to the Squad. Move the donor to Storage first.",
 		"donor_species_mismatch": "The donor must be the same current species.",
 		"donor_has_equipment": "Remove all donor equipment first.",
 		"tier_too_low": "Tier S is required to unlock Expansion.",

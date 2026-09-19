@@ -48,7 +48,20 @@ func _build_battle_result(victory: bool) -> Dictionary:
 			defeated_enemies.append(actor)
 
 	if _reward_service != null:
-		var rewards: Dictionary = _reward_service.apply_victory_rewards(players, defeated_enemies)
+		var rewards: Dictionary = {}
+		if _squad_session != null:
+			var squad_instances: Array[DigimonInstance] = []
+			for instance_id: String in _squad_session.get_squad_ids():
+				var instance := _squad_session.get_instance(instance_id)
+				if instance != null:
+					squad_instances.append(instance)
+			rewards = _reward_service.apply_victory_rewards_from_snapshots(
+				_squad_session.reward_snapshots(),
+				squad_instances,
+				defeated_enemies
+			)
+		else:
+			rewards = _reward_service.apply_victory_rewards(players, defeated_enemies)
 		result["bits"] = int(rewards.get("bits", 0))
 		result["digi_data"] = (rewards.get("digi_data", {}) as Dictionary).duplicate(true) if rewards.get("digi_data", {}) is Dictionary else {}
 		result["xp_rewards"] = (rewards.get("xp_rewards", {}) as Dictionary).duplicate(true) if rewards.get("xp_rewards", {}) is Dictionary else {"total_enemy_xp_value": 0, "digimon": []}

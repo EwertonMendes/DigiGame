@@ -26,6 +26,7 @@ func delete_instance(instance_id: String) -> Dictionary:
 
 	OverworldState.collection_changed.emit()
 	OverworldState.active_party_changed.emit(OverworldState.get_active_party())
+	OverworldState.squad_changed.emit(OverworldState.get_active_party_ids(), OverworldState.get_reserve_party_ids())
 	OverworldState.save_progress()
 	return {"success": true, "instance_id": clean_id, "previous_location": location}
 
