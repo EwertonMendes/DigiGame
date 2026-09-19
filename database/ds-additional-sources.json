@@ -53,12 +53,6 @@
       2,
       1,
       0
-    ],
-    "compact_interleaved_rear_reversed": [
-      0,
-      2,
-      3,
-      1
     ]
   },
   "profiles": {
@@ -450,7 +444,7 @@
       "source_sha256": "caff59ef6aae6aab333603780acc80d925f676ae7e050ea0e97d4fcbcdf8a4dc",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/096_Ogremon.png",
       "profile": "four_rows_leftmost_triples",
-      "pattern": "compact_interleaved_rear_reversed"
+      "pattern": "compact_interleaved"
     },
     "Minotarumon": {
       "source_id": 135,
