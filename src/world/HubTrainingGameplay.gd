@@ -5,9 +5,11 @@ const TrainerActorScript = preload("res://src/world/HubActor.gd")
 const TRAINER_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const InteractionPromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
+const UiTransitionSurfaceScript = preload("res://src/ui/components/DigiUiTransitionSurface.gd")
 
 var _trainer: HubActor = null
 var _training_screen: TrainingCenterScreen = null
+var _training_transition_surface: CanvasGroup = null
 var _training_open := false
 var _v2_interaction_prompt: DigiInteractionPrompt = null
 
@@ -74,15 +76,20 @@ func _build_training_ui() -> void:
 	layer.name = "TrainingCenterUI"
 	layer.layer = 94
 	add_child(layer)
+	_training_transition_surface = UiTransitionSurfaceScript.new() as CanvasGroup
+	_training_transition_surface.name = "TrainingCenterTransition"
+	layer.add_child(_training_transition_surface)
 	_training_screen = TrainingCenterScreenScript.new() as TrainingCenterScreen
 	_training_screen.name = "TrainingCenter"
 	_training_screen.visible = false
 	_training_screen.close_requested.connect(_close_training)
-	layer.add_child(_training_screen)
+	_training_transition_surface.add_child(_training_screen)
 
 
 func _open_training() -> void:
-	if _training_open or _digilab_open or _menu_open or _dialog_open or _transitioning or _training_screen == null:
+	if _training_open or _digilab_open or _menu_open or _dialog_open or _transitioning or _training_screen == null or _training_transition_surface == null:
+		return
+	if not DigiUiTransitionDirector.begin_open(_training_transition_surface, "training"):
 		return
 	_training_open = true
 	_release_touch_movement()
@@ -95,21 +102,26 @@ func _open_training() -> void:
 	_training_screen.open_screen()
 	UiSfxDirector.play_open()
 	_layout_ui()
+	await DigiUiTransitionDirector.reveal_open()
 	if OS.is_debug_build():
 		print("[Hub] TRAINING_CENTER open")
 
 
 func _close_training() -> void:
-	if not _training_open:
+	if not _training_open or _training_transition_surface == null:
+		return
+	if not DigiUiTransitionDirector.begin_close(_training_transition_surface, "training"):
 		return
 	UiSfxDirector.play_back()
+	await DigiUiTransitionDirector.conceal_close()
 	_training_open = false
 	if _training_screen != null:
-		_training_screen.visible = false
+		_training_screen.finish_close()
 	if _player != null:
 		_player.movement_enabled = true
 	_layout_ui()
 	_refresh_interaction()
+	DigiUiTransitionDirector.complete_close()
 	if OS.is_debug_build():
 		print("[Hub] TRAINING_CENTER close")
 
