@@ -8,7 +8,7 @@ const InteractionPromptScript = preload("res://src/ui/components/DigiInteraction
 
 var _trainer: HubActor = null
 var _training_screen: TrainingCenterScreen = null
-var _training_transition_surface: CanvasGroup = null
+var _training_transition_surface: DigiUiTransitionSurface = null
 var _training_open := false
 var _v2_interaction_prompt: DigiInteractionPrompt = null
 
