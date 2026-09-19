@@ -35,7 +35,7 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - `DigiDevelopmentPanel.gd`: reusable aptitude/training summary with readable semantic colors.
 - `DigiModalHeader.gd` and `DigiSectionHeader.gd`: shared screen/section hierarchy used by the Digimon, DigiLab, Party / Storage and Training flows.
 - `DigiUiRuntime.gd`: compatibility bridge that normalizes the remaining named player-facing legacy HUD surfaces/buttons to the V2 visual language without duplicating gameplay/domain logic.
-- `DigiUiTransitionSurface.gd` + `DigiUiTransitionDirector.gd`: GPU-backed menu lifecycle transition. Full-screen service UIs are rendered through a `CanvasGroup` and revealed cell-by-cell from lower-left to upper-right; closing runs the exact inverse while the world remains visible behind unrevealed cells. The director owns transition concurrency/input blocking while screens keep their own domain logic.
+- `DigiUiTransitionSurface.gd` + `DigiUiTransitionDirector.gd`: GPU-backed menu lifecycle transition. During the short animation window, one shared mask material is applied directly to the screen's CanvasItems using `SCREEN_UV`; it never reads the backbuffer. This keeps `clip_contents`, glass materials and the overworld renderer independent, so unrevealed cells are genuinely transparent. Authored materials are restored immediately when the animation ends.
 
 ## Interaction rules
 
