@@ -50,8 +50,8 @@ func _build() -> void:
 	_workspace_progression = ProgressionServiceScript.new(_database) as DigimonProgressionService
 	var backdrop := WorkspaceBackdrop.new() as DigiLabWorkspaceBackdrop
 	backdrop.name = "DigiLabWorkspaceBackdrop"
-	add_child(backdrop)
-	WorkspaceChrome.install_background(self, backdrop, _frame)
+	_transition_surface.add_transition_child(backdrop)
+	WorkspaceChrome.install_background(_transition_surface.get_content_root(), backdrop, _frame)
 
 	WorkspaceChrome.configure_header(_header)
 	WorkspaceChrome.configure_hints(
