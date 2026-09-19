@@ -40,6 +40,7 @@ var _selected_program_id := "basic"
 var _selected_battlefield_id := ""
 var _operator_section := SECTION_PROGRAM
 var _operator_ui_layer: CanvasLayer = null
+var _operator_backdrop_root: Control = null
 var _operator_transition_surface: DigiUiTransitionSurface = null
 var _operator_header: DigiModalHeader = null
 var _operator_header_rule: ColorRect = null
@@ -87,7 +88,10 @@ func _build_dialog() -> void:
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.name = "BattleDialog"
 	_dialog_panel.visible = false
-	_dialog_panel.clip_contents = true
+	# This is a full-screen service surface, so parent clipping adds no value and
+	# introduces an extra renderer state change exactly when the transition is
+	# starting. Child workspaces still own their local clipping where needed.
+	_dialog_panel.clip_contents = false
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_dialog_panel.add_theme_stylebox_override(
 		"panel",
@@ -95,9 +99,14 @@ func _build_dialog() -> void:
 	)
 	_operator_ui_layer.add_child(_dialog_panel)
 
-	_operator_transition_surface = OperatorTransitionSurfaceScript.new() as DigiUiTransitionSurface
-	_operator_transition_surface.name = "BattleOperatorTransition"
-	_dialog_panel.add_child(_operator_transition_surface)
+	# Keep the full-screen authored backdrop outside the digital mask. The
+	# interface itself still constructs cell-by-cell, while the backdrop only
+	# crossfades over the live Hub. This removes any possibility of a masked
+	# full-screen texture looking like a black framebuffer flash.
+	_operator_backdrop_root = Control.new()
+	_operator_backdrop_root.name = "BattleOperatorBackdrop"
+	_operator_backdrop_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dialog_panel.add_child(_operator_backdrop_root)
 
 	var background := TextureRect.new()
 	background.name = "BattleOperatorBackground"
@@ -106,14 +115,18 @@ func _build_dialog() -> void:
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_operator_transition_surface.add_transition_child(background)
+	_operator_backdrop_root.add_child(background)
 
 	var shade := ColorRect.new()
 	shade.name = "BattleOperatorBackgroundShade"
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shade.color = Color(0.005, 0.019, 0.032, 0.40)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_operator_transition_surface.add_transition_child(shade)
+	_operator_backdrop_root.add_child(shade)
+
+	_operator_transition_surface = OperatorTransitionSurfaceScript.new() as DigiUiTransitionSurface
+	_operator_transition_surface.name = "BattleOperatorTransition"
+	_dialog_panel.add_child(_operator_transition_surface)
 
 	_mobile_dialog_content = Control.new()
 	_mobile_dialog_content.name = "Content"
@@ -469,22 +482,27 @@ func _enforce_operator_header_focus_contract() -> void:
 func _open_dialog() -> void:
 	if _operator_transition_surface == null:
 		return
+	_set_operator_backdrop_alpha(0.0)
 	if not DigiUiTransitionDirector.begin_open(_operator_transition_surface, "battle_operator"):
+		_set_operator_backdrop_alpha(1.0)
 		return
 	_analog_gate.reset()
 	super._open_dialog()
 	if not _dialog_open:
 		DigiUiTransitionDirector.cancel_transition()
+		_set_operator_backdrop_alpha(1.0)
 		return
 	_refresh_operator_state()
 	_sync_pages_to_selection()
 	_layout_ui()
+	_fade_operator_backdrop(1.0, DigiUiTransitionDirector.open_duration())
 	# Preserve the existing focus contract immediately. The transition director
 	# consumes input while construction is active, so focus can be prepared safely
 	# without letting the player interact with unrevealed controls.
 	_focus_selected_program()
 	call_deferred("_focus_selected_program")
 	await DigiUiTransitionDirector.reveal_open()
+	_set_operator_backdrop_alpha(1.0)
 
 
 func _close_dialog() -> void:
@@ -493,9 +511,32 @@ func _close_dialog() -> void:
 	if not DigiUiTransitionDirector.begin_close(_operator_transition_surface, "battle_operator"):
 		return
 	UiSfxDirector.play_back()
+	_fade_operator_backdrop(0.0, DigiUiTransitionDirector.close_duration())
 	await DigiUiTransitionDirector.conceal_close()
 	super._close_dialog()
+	# Reset while hidden so the next open always starts from an explicit,
+	# deterministic alpha 0 -> 1 fade over the live world.
+	_set_operator_backdrop_alpha(1.0)
 	DigiUiTransitionDirector.complete_close()
+
+
+func _set_operator_backdrop_alpha(value: float) -> void:
+	if _operator_backdrop_root != null:
+		_operator_backdrop_root.modulate.a = clampf(value, 0.0, 1.0)
+
+
+func _fade_operator_backdrop(target_alpha: float, duration: float) -> void:
+	if _operator_backdrop_root == null:
+		return
+	var tween := create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(
+		_operator_backdrop_root,
+		"modulate:a",
+		clampf(target_alpha, 0.0, 1.0),
+		maxf(duration, 0.01)
+	)
 
 func _refresh_operator_state() -> void:
 	var party_error := OverworldState.battle_party_validation_error()
@@ -977,6 +1018,9 @@ func _layout_mobile_dialog(physical: Vector2, ui_scale: float, landscape: bool, 
 	_dialog_panel.scale = Vector2.ONE * ui_scale
 	_dialog_panel.position = Vector2.ZERO
 	_dialog_panel.size = physical
+	if _operator_backdrop_root != null:
+		_operator_backdrop_root.position = Vector2.ZERO
+		_operator_backdrop_root.size = physical
 	_mobile_dialog_content.position = Vector2.ZERO
 	_mobile_dialog_content.size = physical
 
