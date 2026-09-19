@@ -49,7 +49,7 @@ func _build() -> void:
 	add_child(_ascension_screen)
 
 
-func get_transition_surface() -> CanvasGroup:
+func get_transition_surface() -> DigiUiTransitionSurface:
 	match _active_tab:
 		"party":
 			return _party_screen.get_transition_surface() if _party_screen != null else null
