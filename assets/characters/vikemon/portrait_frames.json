@@ -1,0 +1,14 @@
+{
+  "source": "Vikemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Vikemon.webp",
+  "frame_width": 200,
+  "frame_height": 200,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "3609ec9eaa5e1027bb36d7d8ad4520e4378ccf4205f040cbdf4fd658a3dd1096"
+}

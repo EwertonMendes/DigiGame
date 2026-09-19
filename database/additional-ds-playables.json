@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 45,
+  "count": 55,
   "species": [
     {
       "name": "Geo Greymon",
@@ -910,6 +910,206 @@
       "field_cell": [
         36,
         44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Ogremon",
+      "seed": "87a9e123-4f23-42b3-9d83-3c7e4382c3d5",
+      "rank": "Champion",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/ogremon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/ogremon/field.png",
+      "field_metadata": "res://assets/characters/ogremon/field.json",
+      "portrait_strip": "res://assets/characters/ogremon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/ogremon/portrait_frames.json",
+      "source_id": 96,
+      "profile": "four_rows_leftmost_triples",
+      "pattern": "compact_interleaved_rear_reversed",
+      "field_cell": [
+        34,
+        37
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Minotarumon",
+      "seed": "e3f9c4b1-8a2d-4d91-97c1-5378c5f78e0b",
+      "rank": "Champion",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/minotarumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/minotarumon/field.png",
+      "field_metadata": "res://assets/characters/minotarumon/field.json",
+      "portrait_strip": "res://assets/characters/minotarumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/minotarumon/portrait_frames.json",
+      "source_id": 135,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Gulfmon",
+      "seed": "186679a0-9fd2-4f85-af92-78085cf216bf",
+      "rank": "Mega",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/gulfmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/gulfmon/field.png",
+      "field_metadata": "res://assets/characters/gulfmon/field.json",
+      "portrait_strip": "res://assets/characters/gulfmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/gulfmon/portrait_frames.json",
+      "source_id": 353,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Nanimon",
+      "seed": "46c1f3e9-5a4d-4b7c-8e1f-cb7a0f9d2e3c",
+      "rank": "Champion",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/nanimon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/nanimon/field.png",
+      "field_metadata": "res://assets/characters/nanimon/field.json",
+      "portrait_strip": "res://assets/characters/nanimon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/nanimon/portrait_frames.json",
+      "source_id": 179,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        32
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Black Were Garurumon",
+      "seed": "4aa02e4b-b20a-4faf-9269-0ba18a1e7d08",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/black were garurumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/blackweregarurumon/field.png",
+      "field_metadata": "res://assets/characters/blackweregarurumon/field.json",
+      "portrait_strip": "res://assets/characters/blackweregarurumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/blackweregarurumon/portrait_frames.json",
+      "source_id": 213,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        36
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Vikemon",
+      "seed": "8e58f41d-2d7f-4f3a-b94d-21a37f4ec691",
+      "rank": "Mega",
+      "attribute": "Data",
+      "resource": "res://assets/resources/vikemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/vikemon/field.png",
+      "field_metadata": "res://assets/characters/vikemon/field.json",
+      "portrait_strip": "res://assets/characters/vikemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/vikemon/portrait_frames.json",
+      "source_id": 362,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Zudomon",
+      "seed": "fd9a8a5e-7e23-4c1b-b6b8-f2ec5f0c82e1",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/zudomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/zudomon/field.png",
+      "field_metadata": "res://assets/characters/zudomon/field.json",
+      "portrait_strip": "res://assets/characters/zudomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/zudomon/portrait_frames.json",
+      "source_id": 249,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        36,
+        44
+      ],
+      "portrait_frames": 2
+    },
+    {
+      "name": "Ikkakumon",
+      "seed": "b7f8c97d-1e9f-42a7-bbf1-d3e67a54f799",
+      "rank": "Champion",
+      "attribute": "Data",
+      "resource": "res://assets/resources/ikkakumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/ikkakumon/field.png",
+      "field_metadata": "res://assets/characters/ikkakumon/field.json",
+      "portrait_strip": "res://assets/characters/ikkakumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/ikkakumon/portrait_frames.json",
+      "source_id": 134,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        40
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Etemon",
+      "seed": "8f14e45f-ceea-41d4-9a3d-3e8d2e9f6b2c",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/etemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/etemon/field.png",
+      "field_metadata": "res://assets/characters/etemon/field.json",
+      "portrait_strip": "res://assets/characters/etemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/etemon/portrait_frames.json",
+      "source_id": 200,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "MetalEtemon",
+      "seed": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "rank": "Mega",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/metaletemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/metaletemon/field.png",
+      "field_metadata": "res://assets/characters/metaletemon/field.json",
+      "portrait_strip": "res://assets/characters/metaletemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/metaletemon/portrait_frames.json",
+      "source_id": 301,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        42
       ],
       "portrait_frames": 4
     }

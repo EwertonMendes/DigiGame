@@ -1,13 +1,13 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 136,
+  "directional_resource_count": 146,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 45,
+  "additional_source_rebuilt_resource_count": 55,
   "project_original_resource_count": 1,
   "project_supplied_resource_count": 1,
-  "audited_resource_count": 136,
+  "audited_resource_count": 146,
   "directional_resources": [
     {
       "name": "AeroVeedramon",
@@ -66,6 +66,12 @@
     {
       "name": "Black War Greymon",
       "resource": "assets/resources/black war greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Black Were Garurumon",
+      "resource": "assets/resources/black were garurumon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -214,6 +220,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Etemon",
+      "resource": "assets/resources/etemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "ExVeemon",
       "resource": "assets/resources/exveemon.tres",
       "layout_source": "explicit",
@@ -334,6 +346,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Gulfmon",
+      "resource": "assets/resources/gulfmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Gummymon",
       "resource": "assets/resources/gummymon.tres",
       "layout_source": "explicit",
@@ -350,6 +368,12 @@
       "resource": "assets/resources/hawkmon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Ikkakumon",
+      "resource": "assets/resources/ikkakumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Imperialdramon (Dragon Mode)",
@@ -502,6 +526,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "MetalEtemon",
+      "resource": "assets/resources/metaletemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "MetalTyrannomon",
       "resource": "assets/resources/metaltyrannomon.tres",
       "layout_source": "explicit",
@@ -518,6 +548,12 @@
       "resource": "assets/resources/minomon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Minotarumon",
+      "resource": "assets/resources/minotarumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Mochimon",
@@ -554,6 +590,18 @@
       "resource": "assets/resources/mushroomon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Nanimon",
+      "resource": "assets/resources/nanimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Ogremon",
+      "resource": "assets/resources/ogremon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Omnimon",
@@ -790,6 +838,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Vikemon",
+      "resource": "assets/resources/vikemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Wanyamon",
       "resource": "assets/resources/wanyamon.tres",
       "layout_source": "explicit",
@@ -824,6 +878,12 @@
       "resource": "assets/resources/zeke greymon.tres",
       "layout_source": "explicit",
       "coverage": "project_supplied"
+    },
+    {
+      "name": "Zudomon",
+      "resource": "assets/resources/zudomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     }
   ],
   "unknown_directional_resources": [],
