@@ -58,9 +58,9 @@ func open_menu() -> void:
 	_right_analog_gate.reset()
 	_refresh_collection()
 	call_deferred("_focus_selected_roster_card")
-	_panel.modulate.a = 0.0
-	var tween := create_tween()
-	tween.tween_property(_panel, "modulate:a", 1.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Full-screen construction is owned by DigiUiTransitionSurface. Keep this
+	# authored panel fully opaque so nested fades do not fight the shared mask.
+	_panel.modulate.a = 1.0
 
 
 func _build() -> void:
