@@ -70,10 +70,12 @@ func _apply_player_xp(rewards: BattleRewards, player: Dictionary, enemies: Array
 	if bool(player.get("knocked_out", false)):
 		return
 	var recipient_level := maxi(1, int(player.get("level", 1)))
-	var participated := bool(player.get("participated", true))
+	# XP belongs to the healthy Battle Squad, not only to actors that were
+	# deployed. Active/Reserve is a tactical field role and must never change
+	# whether a healthy Squad member learns from the victory.
 	var xp_multiplier := _balance.party_number(
-		"participantXpMultiplier" if participated else "reserveXpMultiplier",
-		1.0
+		"squadXpMultiplier",
+		_balance.party_number("participantXpMultiplier", 1.0)
 	)
 	var total := 0.0
 	for enemy: Dictionary in enemies:
