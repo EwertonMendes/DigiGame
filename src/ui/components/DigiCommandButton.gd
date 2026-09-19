@@ -139,9 +139,14 @@ func _rebuild_content() -> void:
 		minimal_title.name = "CommandTitle"
 		minimal_title.text = _title_text
 		minimal_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		minimal_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		minimal_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		minimal_title.add_theme_font_size_override("font_size", 11 if _compact else 12)
+		minimal_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		minimal_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		# Do not enable ellipsis on the minimal title without an explicit width:
+		# Label then reports a zero horizontal minimum and HBoxContainer is free to
+		# collapse it completely, which is why only the icons were visible.
+		# The compact command names are intentionally short enough to use their
+		# natural measured width beside the icon.
+		minimal_title.add_theme_font_size_override("font_size", 10 if _compact else 11)
 		minimal_title.add_theme_color_override("font_color", V2.WHITE if not disabled else V2.SUBTLE)
 		V2.apply_heading(minimal_title)
 		minimal_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
