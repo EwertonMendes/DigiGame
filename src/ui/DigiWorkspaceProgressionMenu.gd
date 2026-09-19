@@ -172,6 +172,11 @@ func _style_collection_button(button: Button, selected: bool, _rank_color: Color
 
 
 func _refresh_details() -> void:
+	# Both references point into the previous detail subtree. Alternate detail
+	# modes can intentionally skip rebuilding Overview/Techniques, so invalidate
+	# them before delegating instead of retaining queued-for-free Controls.
+	_overview_presentation_host = null
+	_technique_back_button = null
 	super._refresh_details()
 	_restyle_detail_surface()
 
