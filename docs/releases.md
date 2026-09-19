@@ -129,6 +129,18 @@ For prerelease versions such as `0.1.0-rc.1`, package names and Android's visibl
 
 These changes happen only inside the CI runner. Running a release build does not create a version-bump commit.
 
+## Application icon
+
+The canonical application icon is `assets/ui/icons/favicon.png`. Keep this as the single source of truth for Digi Game branding across exports.
+
+- Godot's project icon uses this PNG, which also covers the Linux runtime/window icon.
+- Web exports use the project icon as the browser favicon; the PWA icon slots also point to the same source and Godot resizes them when needed.
+- Windows exports point directly to the PNG. Godot 4.7 converts it to the Windows icon resource during export.
+- macOS exports use the same PNG as the application icon.
+- Android uses the PNG for the classic launcher icon and adaptive foreground. A dedicated dark adaptive background lives at `assets/ui/icons/android_adaptive_background.svg` so modern Android launchers can mask the icon cleanly.
+
+`tools/validate_app_icon.py` checks that the source PNG is square, at least 512x512, and still wired to all supported export presets. Both Web CI and release CI run this validation.
+
 ## Platform notes
 
 ### Windows
