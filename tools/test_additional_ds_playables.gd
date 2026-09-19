@@ -5,6 +5,7 @@ const FollowerScript = preload("res://src/world/OverworldDigimonFollower.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const DirectionalContractScript = preload("res://src/sprites/DirectionalSpriteContract.gd")
 const PortraitResolverScript = preload("res://src/ui/DigimonPortraitResolver.gd")
+const EvolutionCanvasScript = preload("res://src/ui/EvolutionConstellationCanvas.gd")
 const MANIFEST_PATH := "res://database/additional-ds-playables.json"
 const FACINGS := ["down_left", "down_right", "up_left", "up_right"]
 
@@ -89,11 +90,18 @@ func _ready() -> void:
 		assert(FileAccess.file_exists(PortraitResolverScript.metadata_path(portrait_key)), "%s portrait metadata must be packaged for detail menus" % species_name)
 		assert(ResourceLoader.exists(PortraitResolverScript.strip_path(portrait_key)), "%s portrait strip must be packaged for detail menus" % species_name)
 
+		print("  evolution chart")
+		var evolution_canvas := EvolutionCanvasScript.new()
+		var evolution_visual_key := String(evolution_canvas.call("_resolve_field_visual_key", species_name))
+		assert(not evolution_visual_key.is_empty(), "%s Evolution Chart must resolve a packaged field visual" % species_name)
+		assert(ResourceLoader.exists("res://assets/resources/%s.tres" % evolution_visual_key), "%s Evolution Chart visual resource must be packaged" % species_name)
+		evolution_canvas.free()
+
 		runtime.remove_child(actor)
 		actor.free()
 		await get_tree().process_frame
 
-	print("additional DS playable regression passed: battle, overworld, walk preview and portrait assets for %d species" % expected_count)
+	print("additional DS playable regression passed: battle, overworld, walk preview, portrait and Evolution Chart assets for %d species" % expected_count)
 	get_tree().quit()
 
 
