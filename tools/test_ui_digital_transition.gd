@@ -19,7 +19,7 @@ func _ready() -> void:
 	surface.add_transition_child(content)
 	await get_tree().process_frame
 
-	_assert(surface is Control and not surface is CanvasGroup, "transition surface must not depend on CanvasGroup/backbuffer composition")
+	_assert(surface is Control and surface.get_class() != "CanvasGroup", "transition surface must not depend on CanvasGroup/backbuffer composition")
 	_assert(surface.get_content_root() != null, "transition surface must own a stable content root")
 	_assert(content.get_parent() == surface.get_content_root(), "transition content must be hosted by the shared content root")
 	_assert(not DigiUiTransitionDirector.is_transitioning(), "director must start idle")
