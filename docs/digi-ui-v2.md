@@ -35,6 +35,7 @@ Digi UI V2 is the reusable presentation foundation introduced with the Digimon s
 - `DigiDevelopmentPanel.gd`: reusable aptitude/training summary with readable semantic colors.
 - `DigiModalHeader.gd` and `DigiSectionHeader.gd`: shared screen/section hierarchy used by the Digimon, DigiLab, Party / Storage and Training flows.
 - `DigiUiRuntime.gd`: compatibility bridge that normalizes the remaining named player-facing legacy HUD surfaces/buttons to the V2 visual language without duplicating gameplay/domain logic.
+- `DigiUiTransitionSurface.gd` + `DigiUiTransitionDirector.gd`: GPU-backed menu lifecycle transition. Full-screen service UIs are rendered through a `CanvasGroup` and revealed cell-by-cell from lower-left to upper-right; closing runs the exact inverse while the world remains visible behind unrevealed cells. The director owns transition concurrency/input blocking while screens keep their own domain logic.
 
 ## Interaction rules
 
@@ -76,6 +77,7 @@ Global overlays follow the same physical-size helpers. Confirmation cards remain
 - Digi Hospital: full-screen V2 treatment workspace with paged patients, explicit exploration/action modes and controller-aware input hints.
 - Training Center: V2 modal header, responsive roster, training budget, semantic attribute steppers, mobility planning, plan summary, adaptive input hints and focus restoration after dynamic updates.
 - Hub chrome: V2 location surface, contextual interaction prompt and a responsive Battle Operator mechanics-test workspace that reuses the DigiLab/Digimon workspace hierarchy: persistent program list, persistent battlefield list, simulation summary/action panel, and compact paged section navigation. Battle Operator presentation uses its own original SVG family under `assets/ui/icons/battle_operator/`; program-rank icons form one progressive data-core language, battlefield icons describe authored arena geometry, and section/action icons remain separate from combat/stat semantics.
+- Full-screen Hub services (Digimon, DigiLab, Battle Operator, Digi Hospital and Training) share the same reversible digital construction transition. Internal tab/page changes intentionally do not replay the full-screen effect.
 - Confirmation flows: shared V2 confirmation component is used by battle retreat, while specialized evolution confirmation is normalized by the V2 runtime and keeps its richer transition summary.
 - Transient overlays: area-title and battle-start presentation use V2 slate surfaces, typography and restrained semantic accents.
 - Remaining named legacy battle/dialog surfaces are normalized by `DigiUiRuntime` so player-facing chrome no longer falls back to the old Kenney-frame presentation while deeper screens are migrated structurally.
