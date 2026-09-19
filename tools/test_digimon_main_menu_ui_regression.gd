@@ -125,6 +125,14 @@ func _ready() -> void:
 	assert(squad_role_command.name == "SquadRoleCommand", "Third command must own Active/Reserve role management")
 	assert(squad_role_command.text == "SWAP WITH ACTIVE", "Reserve member must offer an Active swap when all Active slots are full")
 	assert(squad_role_command.custom_minimum_size.y >= V2.TOUCH_TARGET, "Squad role action must remain touch-safe")
+	menu.call("_focus_action", 0)
+	menu.call("_move_vertical", 1)
+	assert(get_viewport().gui_get_focus_owner() == squad_role_command, "Controller Down must follow the visual layout into Squad role management")
+	menu.call("_move_vertical", -1)
+	assert(get_viewport().gui_get_focus_owner() == commands[0], "Controller Up from Squad role management must return to the top command row")
+	menu.call("_move_horizontal", 1)
+	assert(get_viewport().gui_get_focus_owner() == commands[1], "Controller Left/Right must stay within the Techniques/Evolution top row")
+	menu.call("_focus_action", 0)
 	var close_button := header.get_close_button()
 	assert(close_button != null and close_button.focus_mode == Control.FOCUS_NONE, "Header close X must stay out of controller directional focus")
 	assert(close_button.custom_minimum_size == Vector2(48.0, 48.0), "Header close button must match the DigiLab/Hospital workspace target size")
@@ -297,11 +305,42 @@ func _ready() -> void:
 	assert(OverworldState.get_squad_role(reserve_source_id) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Confirmed Reserve source must become Active")
 	assert(OverworldState.get_squad_role(active_target_id) == PlayerCollection.SQUAD_ROLE_RESERVE, "Confirmed Active target must become Reserve")
 	assert(OverworldState.get_active_instances().size() == 3 and OverworldState.get_reserve_party_instances().size() == 2, "Role swap must preserve three Active and two Reserve slots")
-	# Restore the fixture so close/back assertions remain independent of the role mutation.
-	# The state signal owns the menu refresh; do not issue a second same-frame
-	# rebuild because production callers likewise use the shared signal contract.
+	# Restore the fixture so the direct-move path starts from the original 3+2
+	# shape. The state signal owns the menu refresh; no second same-frame rebuild.
 	assert(OverworldState.swap_party_with_reserve(reserve_source_id, active_target_id), "Regression fixture must restore original Squad roles")
 	await _frames(2)
+
+	# An open destination slot should require no picker or confirmation modal.
+	# Move one Active directly to Reserve, then promote the same Digimon back.
+	var active_target_index := -1
+	var restored_squad := OverworldState.get_squad_instances()
+	for index in range(restored_squad.size()):
+		if restored_squad[index].id == active_target_id:
+			active_target_index = index
+			break
+	assert(active_target_index >= 0, "Direct-move fixture must locate its Active member")
+	menu.call("_confirm_index", active_target_index)
+	await _frames(2)
+	commands = menu.get("_command_buttons") as Array
+	assert((commands[2] as Button).text == "MOVE TO RESERVE", "Active member must offer a direct Reserve move when a slot is open")
+	(commands[2] as Button).pressed.emit()
+	await _frames(3)
+	assert(OverworldState.get_active_instances().size() == 2 and OverworldState.get_reserve_party_instances().size() == 3, "Direct Reserve move must update Squad counts without a picker")
+	assert(String(menu.get("_squad_swap_source_id")).is_empty(), "Direct role move must never enter swap-pick mode")
+
+	var moved_squad := OverworldState.get_squad_instances()
+	var moved_target_index := -1
+	for index in range(moved_squad.size()):
+		if moved_squad[index].id == active_target_id:
+			moved_target_index = index
+			break
+	menu.call("_confirm_index", moved_target_index)
+	await _frames(2)
+	commands = menu.get("_command_buttons") as Array
+	assert((commands[2] as Button).text == "MOVE TO ACTIVE", "Reserve member must offer a direct Active move when a slot is open")
+	(commands[2] as Button).pressed.emit()
+	await _frames(3)
+	assert(OverworldState.get_active_instances().size() == 3 and OverworldState.get_reserve_party_instances().size() == 2, "Direct Active move must restore the original Squad counts")
 
 	var closed := [false]
 	menu.close_requested.connect(func(): closed[0] = true)
