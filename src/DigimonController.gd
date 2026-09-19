@@ -4,7 +4,7 @@ signal hovered_digimon_changed(digimon_key: String)
 
 const BATTLE_SPRITE_SCALE := Vector2(1.0, 1.0)
 
-var player_digimons := ["agumon", "gabumon", "greymon"]
+var player_digimons := ["botamon", "agumon", "gabumon"]
 var enemy_digimons := ["koromon", "tanemon", "veemon"]
 var _hovered_digimon_key := ""
 
