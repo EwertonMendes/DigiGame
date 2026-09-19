@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://77lm6hwt7vhj"
+
+[deps]
+
+files=["res://database/technique-matrix.name.translation", "res://database/technique-matrix.name_BR.translation", "res://database/technique-matrix.name.translation", "res://database/technique-matrix.aliases.translation", "res://database/technique-matrix.source.translation", "res://database/technique-matrix.role.translation", "res://database/technique-matrix.element.translation", "res://database/technique-matrix.range.translation", "res://database/technique-matrix.area.translation", "res://database/technique-matrix.power.translation", "res://database/technique-matrix.accuracy.translation", "res://database/technique-matrix.sp.translation", "res://database/technique-matrix.recovery.translation", "res://database/technique-matrix.effects.translation", "res://database/technique-matrix.mastery.translation", "res://database/technique-matrix.tags.translation", "res://database/technique-matrix.teachable.translation", "res://database/technique-matrix.availability.translation"]
+
+source_file="res://database/technique-matrix.csv"
+dest_files=["res://database/technique-matrix.name.translation", "res://database/technique-matrix.name_BR.translation", "res://database/technique-matrix.name.translation", "res://database/technique-matrix.aliases.translation", "res://database/technique-matrix.source.translation", "res://database/technique-matrix.role.translation", "res://database/technique-matrix.element.translation", "res://database/technique-matrix.range.translation", "res://database/technique-matrix.area.translation", "res://database/technique-matrix.power.translation", "res://database/technique-matrix.accuracy.translation", "res://database/technique-matrix.sp.translation", "res://database/technique-matrix.recovery.translation", "res://database/technique-matrix.effects.translation", "res://database/technique-matrix.mastery.translation", "res://database/technique-matrix.tags.translation", "res://database/technique-matrix.teachable.translation", "res://database/technique-matrix.availability.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
