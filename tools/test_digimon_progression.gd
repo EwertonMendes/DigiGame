@@ -79,10 +79,16 @@ func _test_rewards(database: DigimonDatabase, factory: DigimonFactory, xp: Exper
 	var enemy: DigimonInstance = factory.create_enemy_by_name("veemon", 5, "wild")
 	var species := database.get_by_seed(enemy.species_seed)
 	assert(xp.reward_for_enemy(5, 5, species, "wild") > xp.reward_for_enemy(30, 5, species, "wild"), "Overleveled farming must be devalued")
-	var players: Array[Dictionary] = [{"instance_id": "a", "level": 5, "knocked_out": false}, {"instance_id": "b", "level": 5, "knocked_out": true}]
+	var players: Array[Dictionary] = [
+		{"instance_id": "a", "level": 5, "participated": true, "knocked_out": false},
+		{"instance_id": "reserve", "level": 5, "participated": false, "knocked_out": false},
+		{"instance_id": "ko", "level": 5, "participated": true, "knocked_out": true},
+	]
 	var enemies: Array[Dictionary] = [{"species_seed": enemy.species_seed, "level": 5, "profile": "wild", "reward_modifier": 1.0}]
 	var rewards := reward_service.calculate_for_snapshots(players, enemies)
-	assert(int(rewards.xp_by_instance.get("a", 0)) > 0 and int(rewards.xp_by_instance.get("b", 0)) > 0, "Configured participants must receive XP")
+	assert(int(rewards.xp_by_instance.get("a", 0)) > 0, "Healthy participant must receive XP")
+	assert(int(rewards.xp_by_instance.get("reserve", 0)) > 0, "Healthy Reserve must receive XP without participating")
+	assert(int(rewards.xp_by_instance.get("ko", 0)) == 0, "KO Digimon must never receive battle XP")
 	assert(rewards.bits > 0 and int(rewards.digi_data.get(String(species.get("name", "")), 0)) > 0, "Victory must emit Bits and Digi Data")
 	var boosted: Array[Dictionary] = [{"species_seed": enemy.species_seed, "level": 5, "profile": "wild", "reward_modifier": 2.0}]
 	var boosted_rewards := reward_service.calculate_for_snapshots(players, boosted)

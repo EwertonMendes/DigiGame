@@ -29,6 +29,7 @@ func apply_victory_rewards(player_actors: Array[Node], defeated_enemy_actors: Ar
 			"level": instance.level,
 			"participated": true,
 			"knocked_out": bool(battle_state != null and battle_state.has_method("is_knocked_out") and battle_state.call("is_knocked_out")),
+			"initial_role": PlayerCollection.SQUAD_ROLE_ACTIVE,
 		})
 	return apply_victory_rewards_from_snapshots(snapshots, instances, defeated_enemy_actors, difficulty_modifier)
 
@@ -59,14 +60,21 @@ func apply_victory_rewards_from_snapshots(
 	var rewards: BattleRewards = _calculator.calculate(player_snapshots, enemies, difficulty_modifier)
 	var progression_results: Array[Dictionary] = []
 	var total_xp := 0
-	for raw_instance_id in rewards.xp_by_instance.keys():
-		var instance_id := String(raw_instance_id)
+	# Build one result row per Squad snapshot, including KO members that receive
+	# zero XP. The result UI must not infer eligibility from a missing reward row.
+	for snapshot: Dictionary in player_snapshots:
+		var instance_id := String(snapshot.get("instance_id", ""))
 		var instance = player_instances_by_id.get(instance_id)
 		if not instance is DigimonInstance:
 			continue
-		var amount := maxi(0, int(rewards.xp_by_instance[raw_instance_id]))
+		var amount := maxi(0, int(rewards.xp_by_instance.get(instance_id, 0)))
 		total_xp += amount
-		progression_results.append(_progression.apply_experience(instance as DigimonInstance, amount))
+		var progression_result := _progression.apply_experience(instance as DigimonInstance, amount)
+		progression_result["participated"] = bool(snapshot.get("participated", false))
+		progression_result["knocked_out"] = bool(snapshot.get("knocked_out", false))
+		progression_result["initial_role"] = String(snapshot.get("initial_role", ""))
+		progression_result["xp_eligible"] = not bool(snapshot.get("knocked_out", false))
+		progression_results.append(progression_result)
 
 	var result := rewards.to_dict()
 	result["xp_rewards"] = {

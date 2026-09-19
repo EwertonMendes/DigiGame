@@ -64,14 +64,16 @@ func _apply_player_xp(rewards: BattleRewards, player: Dictionary, enemies: Array
 	var instance_id := String(player.get("instance_id", ""))
 	if instance_id.is_empty():
 		return
-	var knocked_out := bool(player.get("knocked_out", false))
-	if knocked_out and not bool(_balance.section("party").get("knockedOutReceivesXp", true)):
+	# Incapacitated Squad members never receive battle XP. This applies equally
+	# to a Digimon knocked out in the current encounter and one that entered the
+	# encounter already fainted on the Reserve bench.
+	if bool(player.get("knocked_out", false)):
 		return
 	var recipient_level := maxi(1, int(player.get("level", 1)))
 	var participated := bool(player.get("participated", true))
 	var xp_multiplier := _balance.party_number(
 		"participantXpMultiplier" if participated else "reserveXpMultiplier",
-		1.0 if participated else 0.0
+		1.0
 	)
 	var total := 0.0
 	for enemy: Dictionary in enemies:

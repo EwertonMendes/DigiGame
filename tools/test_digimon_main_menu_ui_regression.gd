@@ -115,11 +115,40 @@ func _ready() -> void:
 	await _frames(3)
 	assert(int(menu.get("_mode")) == 1, "Confirming a roster card must enter command mode")
 	var commands := menu.get("_command_buttons") as Array
-	assert(commands.size() == 2, "Main Digimon command area must expose Techniques and Evolution")
-	for raw_command in commands:
-		var command := raw_command as Button
+	assert(commands.size() == 3, "Main Digimon command area must expose Techniques, Evolution and Squad role management")
+	var command_row := menu.find_child("CommandRow", true, false) as HBoxContainer
+	assert(command_row != null and command_row.get_child_count() == 3, "All three Digimon commands must share one horizontal row")
+	var first_command_y := -1.0
+	var first_command_height := -1.0
+	for command_index in range(commands.size()):
+		var command := commands[command_index] as DigiCommandButton
 		assert(command != null and not command.disabled and command.focus_mode == Control.FOCUS_ALL, "Commands must become interactive only after Digimon confirmation")
-		_assert_command_copy_fits(command)
+		assert(command.find_child("CommandIcon", true, false) != null, "Compact Digimon commands must retain their icon")
+		var compact_title := command.find_child("CommandTitle", true, false) as Label
+		assert(compact_title != null and not compact_title.text.is_empty(), "Compact Digimon commands must retain their name")
+		assert(compact_title.size.x > 1.0 and compact_title.get_combined_minimum_size().x > 1.0, "Compact command names must receive real rendered width beside their icons")
+		assert(command.find_child("CommandSubtitle", true, false) == null, "Compact Digimon commands must not render descriptions")
+		assert(command.find_child("CommandStatus", true, false) == null, "Compact Digimon commands must not render learned/ready/status labels")
+		assert(command.custom_minimum_size.y >= V2.TOUCH_TARGET and command.custom_minimum_size.y <= 60.0, "Compact Digimon commands must stay touch-safe without consuming a second row")
+		if command_index == 0:
+			first_command_y = command.position.y
+			first_command_height = command.size.y
+		else:
+			assert(is_equal_approx(command.position.y, first_command_y), "All Digimon commands must stay on the same visual row")
+			assert(is_equal_approx(command.size.y, first_command_height), "All Digimon commands must use the same compact height")
+	var squad_role_command := commands[2] as DigiCommandButton
+	assert(squad_role_command.name == "SquadRoleCommand", "Third command must own Active/Reserve role management")
+	assert(_command_title(squad_role_command) == "SWAP WITH ACTIVE", "Reserve member must offer an Active swap when all Active slots are full")
+	menu.call("_focus_action", 0)
+	menu.call("_move_horizontal", 1)
+	assert(get_viewport().gui_get_focus_owner() == commands[1], "Controller Right must move to Evolution in the single command row")
+	menu.call("_move_horizontal", 1)
+	assert(get_viewport().gui_get_focus_owner() == squad_role_command, "Controller Right must reach Squad role management in the same row")
+	menu.call("_move_horizontal", 1)
+	assert(get_viewport().gui_get_focus_owner() == commands[0], "Single-row command navigation must wrap without escaping into chrome")
+	menu.call("_move_vertical", 1)
+	assert(get_viewport().gui_get_focus_owner() == commands[1], "Controller vertical input must remain forgiving within the single command row")
+	menu.call("_focus_action", 0)
 	var close_button := header.get_close_button()
 	assert(close_button != null and close_button.focus_mode == Control.FOCUS_NONE, "Header close X must stay out of controller directional focus")
 	assert(close_button.custom_minimum_size == Vector2(48.0, 48.0), "Header close button must match the DigiLab/Hospital workspace target size")
@@ -250,6 +279,85 @@ func _ready() -> void:
 	assert(gate.trigger_step(JOY_AXIS_TRIGGER_RIGHT, 0.90) == 1, "Right trigger must request the next page once")
 	assert(gate.trigger_step(JOY_AXIS_TRIGGER_RIGHT, 0.95) == 0, "Held trigger must not skip multiple pages")
 
+	# Active/Reserve management belongs in the main Digimon menu. With three
+	# Active slots occupied, a Reserve member enters a lightweight swap-pick mode:
+	# controller/touch select a target card, while a visible touch-safe Cancel
+	# affordance and B/ESC both leave roles untouched.
+	var reserve_source_id := created[0].id
+	var active_target_id := OverworldState.get_active_instances()[0].id
+	var source_index := -1
+	for index in range(OverworldState.get_squad_instances().size()):
+		if OverworldState.get_squad_instances()[index].id == reserve_source_id:
+			source_index = index
+			break
+	assert(source_index >= 0, "Reserve swap source must remain in the Squad")
+	menu.call("_turn_roster_page", 1 if int(menu.get("_roster_page")) == 0 else 0)
+	await _frames(2)
+	menu.call("_confirm_index", source_index)
+	await _frames(2)
+	commands = menu.get("_command_buttons") as Array
+	squad_role_command = commands[2] as DigiCommandButton
+	assert(_command_title(squad_role_command) == "SWAP WITH ACTIVE", "Full Active team must route Reserve promotion through an explicit swap")
+	squad_role_command.pressed.emit()
+	await _frames(3)
+	assert(String(menu.get("_squad_swap_source_id")) == reserve_source_id and int(menu.get("_roster_page")) == 0, "Squad swap must move directly to the opposite role page")
+	var cancel_swap := menu.find_child("CancelSquadSwap", true, false) as Button
+	assert(cancel_swap != null and cancel_swap.custom_minimum_size.y >= V2.TOUCH_TARGET, "Swap picker must expose a visible touch-safe cancel action")
+	cancel_swap.pressed.emit()
+	await _frames(2)
+	assert(String(menu.get("_squad_swap_source_id")).is_empty(), "Touch cancel must leave Squad swap mode")
+	assert(OverworldState.get_squad_role(reserve_source_id) == PlayerCollection.SQUAD_ROLE_RESERVE, "Cancelling must keep Reserve role unchanged")
+	assert(OverworldState.get_squad_role(active_target_id) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Cancelling must keep Active target unchanged")
+
+	# Repeat and complete the same flow through roster confirmation, matching the
+	# controller A/Enter path. Slot counts must stay valid and the roles exchange.
+	menu.call("_confirm_index", source_index)
+	await _frames(2)
+	commands = menu.get("_command_buttons") as Array
+	(commands[2] as Button).pressed.emit()
+	await _frames(2)
+	menu.call("_confirm_index", 0)
+	await _frames(3)
+	assert(OverworldState.get_squad_role(reserve_source_id) == PlayerCollection.SQUAD_ROLE_ACTIVE, "Confirmed Reserve source must become Active")
+	assert(OverworldState.get_squad_role(active_target_id) == PlayerCollection.SQUAD_ROLE_RESERVE, "Confirmed Active target must become Reserve")
+	assert(OverworldState.get_active_instances().size() == 3 and OverworldState.get_reserve_party_instances().size() == 2, "Role swap must preserve three Active and two Reserve slots")
+	# Restore the fixture so the direct-move path starts from the original 3+2
+	# shape. The state signal owns the menu refresh; no second same-frame rebuild.
+	assert(OverworldState.swap_party_with_reserve(reserve_source_id, active_target_id), "Regression fixture must restore original Squad roles")
+	await _frames(2)
+
+	# An open destination slot should require no picker or confirmation modal.
+	# Move one Active directly to Reserve, then promote the same Digimon back.
+	var active_target_index := -1
+	var restored_squad := OverworldState.get_squad_instances()
+	for index in range(restored_squad.size()):
+		if restored_squad[index].id == active_target_id:
+			active_target_index = index
+			break
+	assert(active_target_index >= 0, "Direct-move fixture must locate its Active member")
+	menu.call("_confirm_index", active_target_index)
+	await _frames(2)
+	commands = menu.get("_command_buttons") as Array
+	assert(_command_title(commands[2] as Button) == "MOVE TO RESERVE", "Active member must offer a direct Reserve move when a slot is open")
+	(commands[2] as Button).pressed.emit()
+	await _frames(3)
+	assert(OverworldState.get_active_instances().size() == 2 and OverworldState.get_reserve_party_instances().size() == 3, "Direct Reserve move must update Squad counts without a picker")
+	assert(String(menu.get("_squad_swap_source_id")).is_empty(), "Direct role move must never enter swap-pick mode")
+
+	var moved_squad := OverworldState.get_squad_instances()
+	var moved_target_index := -1
+	for index in range(moved_squad.size()):
+		if moved_squad[index].id == active_target_id:
+			moved_target_index = index
+			break
+	menu.call("_confirm_index", moved_target_index)
+	await _frames(2)
+	commands = menu.get("_command_buttons") as Array
+	assert(_command_title(commands[2] as Button) == "MOVE TO ACTIVE", "Reserve member must offer a direct Active move when a slot is open")
+	(commands[2] as Button).pressed.emit()
+	await _frames(3)
+	assert(OverworldState.get_active_instances().size() == 3 and OverworldState.get_reserve_party_instances().size() == 2, "Direct Active move must restore the original Squad counts")
+
 	var closed := [false]
 	menu.close_requested.connect(func(): closed[0] = true)
 	menu.call("_unhandled_input", back)
@@ -263,42 +371,11 @@ func _ready() -> void:
 	get_tree().quit()
 
 
-func _assert_command_copy_fits(command: Button) -> void:
+func _command_title(command: Button) -> String:
+	if command == null:
+		return ""
 	var title := command.find_child("CommandTitle", true, false) as Label
-	var subtitle := command.find_child("CommandSubtitle", true, false) as Label
-	var status := command.find_child("CommandStatus", true, false) as Label
-	assert(title != null and subtitle != null and status != null, "Every populated Digimon command must expose title, subtitle and status labels")
-	assert(_single_line_text_width(title) <= title.size.x + 1.0, "%s title should fit without default ellipsis" % title.text)
-	assert(_single_line_text_width(status) <= status.size.x + 1.0, "%s status should fit without default ellipsis" % title.text)
-	assert(subtitle.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART and subtitle.max_lines_visible == 2, "%s subtitle must use bounded two-line wrapping before ellipsis" % title.text)
-	assert(_wrapped_line_count(subtitle) <= subtitle.max_lines_visible, "%s standard subtitle should fit without ellipsis" % title.text)
-
-
-func _single_line_text_width(label: Label) -> float:
-	var font := label.get_theme_font("font")
-	var font_size := label.get_theme_font_size("font_size")
-	return font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-
-
-func _wrapped_line_count(label: Label) -> int:
-	var words := label.text.split(" ", false)
-	if words.is_empty():
-		return 0
-	var font := label.get_theme_font("font")
-	var font_size := label.get_theme_font_size("font_size")
-	var available := maxf(1.0, label.size.x)
-	var space_width := font.get_string_size(" ", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	var lines := 1
-	var line_width := 0.0
-	for word in words:
-		var word_width := font.get_string_size(String(word), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		if line_width > 0.0 and line_width + space_width + word_width > available:
-			lines += 1
-			line_width = word_width
-		else:
-			line_width += word_width if line_width <= 0.0 else space_width + word_width
-	return lines
-
+	return title.text if title != null else command.text
 
 func _capture_geometry(controls: Dictionary) -> Dictionary:
 	var result := {}
