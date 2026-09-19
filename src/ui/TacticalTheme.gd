@@ -132,9 +132,9 @@ static func reading_font() -> Font:
 static func micro_font() -> Font:
 	if _micro_font_cache == null:
 		_micro_font_cache = _font_with_fallbacks(
-			FONT_READING_PATH,
+			FONT_UI_PATH,
 			FONT_BOOTSTRAP_SEMIBOLD_PATH,
-			[FONT_UI_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
+			[FONT_READING_PATH, FONT_DISPLAY_PATH, FONT_BOOTSTRAP_REGULAR_PATH]
 		)
 	return _micro_font_cache
 
