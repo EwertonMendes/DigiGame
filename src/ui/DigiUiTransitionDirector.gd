@@ -102,7 +102,7 @@ func _begin(surface: Node, surface_id: String, opening: bool) -> bool:
 	return true
 
 
-func _animate(surface: Node, from_value: float, to_value: float, duration: float, ease: Tween.EaseType) -> void:
+func _animate(surface: Node, from_value: float, to_value: float, duration: float, ease: int) -> void:
 	var tween := create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(ease)
@@ -157,7 +157,7 @@ func _palette_for(surface_id: String) -> Dictionary:
 func _active_surface() -> Node:
 	if _surface_ref == null:
 		return null
-	var candidate := _surface_ref.get_ref()
+	var candidate: Variant = _surface_ref.get_ref()
 	return candidate as Node if candidate is Node and is_instance_valid(candidate) else null
 
 
