@@ -109,7 +109,11 @@ func open_screen() -> void:
 	call_deferred("_focus_preview_card")
 
 
-func close_view() -> void:
+func _request_close() -> void:
+	close_requested.emit()
+
+
+func finish_close() -> void:
 	if _confirmation.visible:
 		_confirmation.close_dialog(false)
 	_pending_action = ""
@@ -118,6 +122,12 @@ func close_view() -> void:
 	_compact_detail = false
 	visible = false
 	set_process(false)
+
+
+func close_view() -> void:
+	# Preserve immediate programmatic close behavior; player input emits a request
+	# so the Hub can run the reversible digital transition first.
+	finish_close()
 	close_requested.emit()
 
 
@@ -161,7 +171,7 @@ func _input(event: InputEvent) -> void:
 		if _interaction_mode == InteractionMode.ACTIONS:
 			_exit_action_mode()
 		else:
-			close_view()
+			_request_close()
 		get_viewport().set_input_as_handled()
 		return
 
@@ -240,7 +250,7 @@ func _build_header() -> void:
 	_close_button.icon = CLOSE_ICON
 	_close_button.expand_icon = true
 	_close_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_close_button.pressed.connect(close_view)
+	_close_button.pressed.connect(_request_close)
 
 
 func _build_roster() -> void:
