@@ -15,7 +15,7 @@ enum InputMode {
 var _row: HBoxContainer
 var _description: Label
 var _description_text := "Manage your Digimon and view their information."
-var _mode := InputMode.TOUCH if DisplayServer.is_touchscreen_available() else InputMode.KEYBOARD_MOUSE
+var _mode := InputMode.TOUCH if (OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()) else InputMode.KEYBOARD_MOUSE
 var _last_touch_msec := -10000
 var _primary_tabs_enabled := false
 var _secondary_tabs_enabled := false

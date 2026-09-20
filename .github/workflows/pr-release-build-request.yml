@@ -1,0 +1,67 @@
+name: PR Release Build Request
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    name: Dispatch requested exact-version build
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.body || '', 'Build-Version:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Parse requested build version
+        id: version
+        shell: bash
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t version_lines < <(
+            printf '%s\n' "$PR_BODY" |
+              sed -nE 's/^[[:space:]]*Build-Version:[[:space:]]*([^[:space:]]+)[[:space:]]*$/\1/p'
+          )
+
+          if (( ${#version_lines[@]} != 1 )); then
+            echo "Expected exactly one 'Build-Version: <version>' line in the PR body." >&2
+            exit 1
+          fi
+
+          version="${version_lines[0]#v}"
+          if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "Invalid Build-Version: $version" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Requested exact-version QA build: v$version"
+
+      - name: Dispatch existing release workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          gh workflow run release.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref "$HEAD_REF" \
+            -f version="$VERSION" \
+            -f publish_release=false \
+            -f prerelease=true
+
+          echo "Dispatched DigiGame Release Builds v$VERSION from $HEAD_REF."

@@ -248,8 +248,25 @@ static func apply_reading_font(control: Control) -> void:
 	_apply_font(control, micro_font() if size <= SMALL_TEXT_BREAKPOINT else reading_font())
 
 
+static func is_native_mobile_runtime() -> bool:
+	# Native Android/iOS exports already lay out Controls in the stretched
+	# viewport coordinate space. DisplayServer.window_get_size() reports device
+	# pixels there, so treating those pixels like Web CSS pixels pushes bottom
+	# anchored controls outside the logical viewport.
+	return OS.has_feature("mobile") and not OS.has_feature("web")
+
+
+static func is_touch_runtime() -> bool:
+	# The immutable mobile feature tag is the authoritative signal for native
+	# mobile exports. Touchscreen probing remains necessary for mobile Web and
+	# hybrid desktop devices.
+	return OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
+
+
 static func uses_physical_touch_scale() -> bool:
-	return DisplayServer.is_touchscreen_available()
+	# Web touch layouts need CSS-to-canvas conversion. Native mobile does not:
+	# its viewport coordinates are already the coordinates Controls must use.
+	return DisplayServer.is_touchscreen_available() and not is_native_mobile_runtime()
 
 
 static func _parse_web_size(raw_value: Variant) -> Vector2:
