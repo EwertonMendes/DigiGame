@@ -13,7 +13,7 @@ enum InputMode {
 var _key_badge: PanelContainer
 var _key_label: Label
 var _action_label: Label
-var _mode := InputMode.TOUCH if DisplayServer.is_touchscreen_available() else InputMode.KEYBOARD_MOUSE
+var _mode := InputMode.TOUCH if (OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()) else InputMode.KEYBOARD_MOUSE
 var _last_touch_msec := -10000
 
 
