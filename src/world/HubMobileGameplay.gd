@@ -213,7 +213,7 @@ func _layout_ui() -> void:
 	var ui_scale := UI.ui_scale(viewport_obj)
 	var compact := UI.is_compact(viewport_obj, 820.0)
 	var landscape := physical.x > physical.y
-	var touch_layout := DisplayServer.is_touchscreen_available() or compact
+	var touch_layout := UI.is_touch_runtime() or compact
 	var edge := LANDSCAPE_EDGE if landscape else PORTRAIT_EDGE
 	var bottom := LANDSCAPE_BOTTOM if landscape else PORTRAIT_BOTTOM
 
@@ -338,7 +338,7 @@ func _release_touch_movement() -> void:
 func _interaction_distance_for_current_device() -> float:
 	var viewport_obj := get_viewport()
 	var compact := UI.is_compact(viewport_obj, 820.0)
-	var touch_layout := DisplayServer.is_touchscreen_available() or compact
+	var touch_layout := UI.is_touch_runtime() or compact
 	return MOBILE_INTERACTION_DISTANCE if touch_layout else DESKTOP_INTERACTION_DISTANCE
 
 
