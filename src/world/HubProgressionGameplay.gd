@@ -210,7 +210,7 @@ func _layout_ui() -> void:
 	var physical := UI.physical_window_size(viewport_obj)
 	var scale_factor := UI.ui_scale(viewport_obj)
 	var compact := UI.is_compact(viewport_obj, 820.0)
-	var touch_layout := DisplayServer.is_touchscreen_available() or compact
+	var touch_layout := UI.is_touch_runtime() or compact
 	var actions_visible := touch_layout and not _menu_open and not _digilab_open and not _dialog_open and not _transitioning
 	_touch_menu_button.visible = actions_visible
 	_touch_digilab_button.visible = actions_visible
