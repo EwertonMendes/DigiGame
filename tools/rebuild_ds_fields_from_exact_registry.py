@@ -21,6 +21,7 @@ from PIL import Image
 from build_early_rank_ds_fields import (
     COMMUNITY_SOURCES,
     EARLY_RANKS,
+    PROJECT_OWNER_FIELDS,
     WTW_IDS,
     build_community_exception,
     load_wtw_archive,
@@ -365,7 +366,7 @@ def rebuild_metalgreymon() -> dict[str, Any]:
 def hard_delete(entries: list[dict[str, Any]]) -> list[str]:
     deleted: list[str] = []
     for entry in entries:
-        if str(entry["name"]) == GOLDEN_NAME:
+        if str(entry["name"]) == GOLDEN_NAME or str(entry["name"]) in PROJECT_OWNER_FIELDS:
             continue
         key = portrait_key(entry)
         for path in (Path("assets/characters") / key / "field.png", Path("assets/characters") / key / "field.json"):
@@ -408,6 +409,12 @@ def main() -> None:
             "sha256": sha256(Path("assets/characters/metalgreymon/field.png").read_bytes()),
             "reason": "source host rejects automated downloads; existing reviewed strip is hash-verified",
         },
+        {
+            "name": "Mochimon",
+            "field": "assets/characters/mochimon/field.png",
+            "sha256": sha256(Path("assets/characters/mochimon/field.png").read_bytes()),
+            "reason": "project-owner supplied directional sheet normalized to the canonical runtime contract; preserved by hash",
+        },
     ]
 
     deleted = hard_delete(entries)
@@ -416,7 +423,7 @@ def main() -> None:
     failures: list[str] = []
     for entry in entries:
         name = str(entry["name"])
-        if name == GOLDEN_NAME:
+        if name == GOLDEN_NAME or name in PROJECT_OWNER_FIELDS:
             continue
         try:
             if name in WTW_IDS:
@@ -432,15 +439,15 @@ def main() -> None:
 
     if sha256(GOLDEN_FIELD.read_bytes()) != golden_png_sha or sha256(GOLDEN_META.read_bytes()) != golden_meta_sha:
         raise RuntimeError("Agumon golden reference was modified")
-    if len(rebuilt) != 86:
-        failures.append(f"expected 86 rebuilt sprites, got {len(rebuilt)}")
+    if len(rebuilt) != 85:
+        failures.append(f"expected 85 rebuilt sprites, got {len(rebuilt)}")
 
     manifest = {
         "canonical_reference": GOLDEN_NAME,
         "canonical_runtime_order": list(DIRECTIONS),
         "direction_registry": str(REGISTRY_PATH),
         "direction_registry_schema_version": registry["schema_version"],
-        "source_policy": "fresh download + SHA-256 pin + exact reviewed directions/phases + deterministic mirror-pose verification + uniform bottom-center anchor; three already-reviewed strips are preserved by hash",
+        "source_policy": "fresh download + SHA-256 pin + exact reviewed directions/phases + deterministic mirror-pose verification + uniform bottom-center anchor; four reviewed/project-owner strips are preserved by hash",
         "existing_non_agumon_runtime_strips_allowed_as_input": False,
         "preserved_count": len(preserved),
         "preserved": preserved,
@@ -455,7 +462,7 @@ def main() -> None:
         raise RuntimeError("Exact DS rebuild failed:\n- " + "\n- ".join(failures))
 
     update_pinned_hashes()
-    print("Exact DS rebuild complete: 3 reviewed strips preserved; 86 sprites recreated from fresh sources")
+    print("Exact DS rebuild complete: 4 reviewed/project-owner strips preserved; 85 sprites recreated from fresh sources")
 
 
 if __name__ == "__main__":
