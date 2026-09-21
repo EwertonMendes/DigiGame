@@ -32,8 +32,8 @@
     {
       "name": "Mochimon",
       "field": "assets/characters/mochimon/field.png",
-      "sha256": "ffbf57b5e3da627ebd33d6b9df9128238abdc8d97a47e129b24a7b2b15e300b0",
-      "reason": "project-owner directional sheet normalized to 32x32 In-Training cells with reviewed left/right facings; preserved by hash"
+      "sha256": "c0aa3eb7a645e893ea7838d507d055ffd735a510dd768a3f84284d7036a993ee",
+      "reason": "project-owner directional sheet normalized to a Poyomon-class In-Training footprint with reviewed facings; preserved by hash"
     }
   ],
   "deleted_before_rebuild_count": 170,
