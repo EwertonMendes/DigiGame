@@ -391,8 +391,9 @@ def main() -> None:
         metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         resource_path = write_resource(entry, key, float(metadata["runtime_scale"]))
 
+        row = dict(old_rows.get(name, {}))
         portrait_source = f"res://assets/characters/{key}/source/portrait.webp"
-        portrait_frame_count = int(row.get("frame_count", 0)) if row else 0
+        portrait_frame_count = int(row.get("frame_count", 0))
         if name in PROJECT_OWNER_FIELDS:
             portrait_meta_path = directory / "portrait_frames.json"
             portrait_strip_path = directory / "portrait_frames.png"
@@ -410,7 +411,6 @@ def main() -> None:
             portrait_source = str(portrait_meta.get("source_path", ""))
             portrait_frame_count = int(portrait_meta.get("frame_count", 0))
 
-        row = dict(old_rows.get(name, {}))
         row.update({
             "name": name,
             "seed": str(entry.get("seed", "")),
