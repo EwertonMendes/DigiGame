@@ -9,8 +9,9 @@ the archived sheets and writes one transparent 12-frame runtime strip:
 
 Four canonical database species absent from that DS archive use explicitly
 identified community DS-style art. Mochimon uses the project owner's reviewed,
-normalized directional strip and is preserved by a pinned content hash. WebP portraits are never used as field or
-battle sprites; they remain exclusively for UI/details/Evolution Chart previews.
+normalized directional strip and its owner-supplied large animation is preserved
+by pinned content hashes. Portrait art remains UI/detail data and is never used
+as the field or battle actor sprite.
 """
 from __future__ import annotations
 
@@ -390,6 +391,25 @@ def main() -> None:
         metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         resource_path = write_resource(entry, key, float(metadata["runtime_scale"]))
 
+        portrait_source = f"res://assets/characters/{key}/source/portrait.webp"
+        portrait_frame_count = int(row.get("frame_count", 0)) if row else 0
+        if name in PROJECT_OWNER_FIELDS:
+            portrait_meta_path = directory / "portrait_frames.json"
+            portrait_strip_path = directory / "portrait_frames.png"
+            if not portrait_meta_path.is_file() or not portrait_strip_path.is_file():
+                raise RuntimeError(f"{name}: missing preserved project-owner portrait asset")
+            portrait_meta = json.loads(portrait_meta_path.read_text(encoding="utf-8"))
+            if portrait_meta.get("source_kind") != "project_owner_supplied":
+                raise RuntimeError(f"{name}: preserved portrait metadata has unexpected source kind")
+            if portrait_meta.get("source_sha256") != metadata.get("original_source_sha256"):
+                raise RuntimeError(f"{name}: field and portrait must come from the same owner source sheet")
+            expected_portrait_sha = str(portrait_meta.get("normalized_portrait_sha256", ""))
+            actual_portrait_sha = hashlib.sha256(portrait_strip_path.read_bytes()).hexdigest()
+            if expected_portrait_sha != actual_portrait_sha:
+                raise RuntimeError(f"{name}: preserved project-owner portrait SHA-256 mismatch")
+            portrait_source = str(portrait_meta.get("source_path", ""))
+            portrait_frame_count = int(portrait_meta.get("frame_count", 0))
+
         row = dict(old_rows.get(name, {}))
         row.update({
             "name": name,
@@ -398,8 +418,9 @@ def main() -> None:
             "attribute": str(entry.get("attribute", "")),
             "database_image": str(entry.get("img", "")),
             "portrait_key": key,
-            "portrait_source": f"res://assets/characters/{key}/source/portrait.webp",
+            "portrait_source": portrait_source,
             "portrait_strip": f"res://assets/characters/{key}/portrait_frames.png",
+            "frame_count": portrait_frame_count,
             "field_sprite": f"res://assets/characters/{key}/field.png",
             "field_metadata": f"res://assets/characters/{key}/field.json",
             "field_source_kind": str(metadata["source_kind"]),
