@@ -130,7 +130,7 @@ def main() -> int:
         if fmeta.get("directions") != ["down_left", "down_right", "up_left", "up_right"]:
             fail(f"{name}: invalid field direction order")
         source_kind = str(fmeta.get("source_kind", ""))
-        if source_kind not in {"official_ds", "community_ds_style_exception", "project_original"}:
+        if source_kind not in {"official_ds", "community_ds_style_exception", "project_owner_supplied", "project_original"}:
             fail(f"{name}: unsupported field source kind {source_kind!r}")
         if str(row.get("field_source_kind", "")) != source_kind:
             fail(f"{name}: manifest/field source kind mismatch")
@@ -141,6 +141,14 @@ def main() -> int:
             fail(f"{name}: field.png must be one horizontal 12-frame strip, got {(width, height)}")
         if color_type not in {3, 4, 6}:
             fail(f"{name}: field.png must preserve transparency-capable pixel art (PNG color type {color_type})")
+        if source_kind == "project_owner_supplied":
+            actual_sha = hashlib.sha256(field_path.read_bytes()).hexdigest()
+            if fmeta.get("normalized_field_sha256") != actual_sha:
+                fail(f"{name}: project-owner normalized field SHA-256 mismatch")
+            if (int(fmeta.get("cell_width", 0)), int(fmeta.get("cell_height", 0))) != (width // 12, height):
+                fail(f"{name}: project-owner field metadata cell geometry mismatch")
+            if float(fmeta.get("runtime_scale", 0.0)) != 1.0:
+                fail(f"{name}: normalized project-owner field must render at native scale")
 
         resource_path = ROOT / resource_relpath(name)
         if not resource_path.is_file():
@@ -160,6 +168,8 @@ def main() -> int:
 
     if source_counts.get("official_ds", 0) < 80:
         fail(f"Expected the WtW/DS roster to provide the overwhelming majority of fields, got {source_counts}")
+    if source_counts.get("project_owner_supplied", 0) != 1:
+        fail(f"Expected exactly one project-owner supplied early-rank field, got {source_counts}")
     if source_counts.get("project_original", 0) != 1:
         fail(f"Expected exactly one project-original early-rank playable, got {source_counts}")
 
