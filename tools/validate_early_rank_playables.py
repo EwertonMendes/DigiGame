@@ -62,6 +62,16 @@ def _validate_portrait_source(name: str, entry: dict, row: dict, char_dir: Path,
             fail(f"{name}: project-original portrait source SHA-256 mismatch")
         return
 
+    if field_source_kind == "project_owner_supplied":
+        if pmeta.get("source_kind") != "project_owner_supplied":
+            fail(f"{name}: portrait metadata must identify project_owner_supplied source")
+        if str(row.get("portrait_source", "")) != str(pmeta.get("source_path", "")):
+            fail(f"{name}: manifest/project-owner portrait source mismatch")
+        source_sha = str(pmeta.get("source_sha256", ""))
+        if not re.fullmatch(r"[0-9a-f]{64}", source_sha):
+            fail(f"{name}: project-owner portrait must pin the original source SHA-256")
+        return
+
     source_path = char_dir / "source/portrait.webp"
     if not source_path.is_file() or source_path.stat().st_size <= 0:
         fail(f"{name}: missing canonical portrait source {source_path.relative_to(ROOT)}")
@@ -124,6 +134,14 @@ def main() -> int:
         if frame_count < 1 or int(row.get("frame_count", -1)) != frame_count:
             fail(f"{name}: portrait frame count mismatch")
 
+        portrait_width, portrait_height, portrait_color_type = read_png_ihdr(portrait_strip)
+        frame_width = int(pmeta.get("frame_width", 0))
+        frame_height = int(pmeta.get("frame_height", 0))
+        if (portrait_width, portrait_height) != (frame_width * frame_count, frame_height):
+            fail(f"{name}: portrait strip geometry does not match metadata")
+        if portrait_color_type not in {3, 4, 6}:
+            fail(f"{name}: portrait strip must preserve transparency-capable pixel art")
+
         fmeta = json.loads(field_meta_path.read_text(encoding="utf-8"))
         if int(fmeta.get("frame_count", 0)) != 12 or int(fmeta.get("frames_per_direction", 0)) != 3:
             fail(f"{name}: field metadata must describe 4 directions x 3 frames")
@@ -145,6 +163,11 @@ def main() -> int:
             actual_sha = hashlib.sha256(field_path.read_bytes()).hexdigest()
             if fmeta.get("normalized_field_sha256") != actual_sha:
                 fail(f"{name}: project-owner normalized field SHA-256 mismatch")
+            if pmeta.get("source_sha256") != fmeta.get("original_source_sha256"):
+                fail(f"{name}: project-owner field and portrait must come from the same source sheet")
+            portrait_sha = hashlib.sha256(portrait_strip.read_bytes()).hexdigest()
+            if pmeta.get("normalized_portrait_sha256") != portrait_sha:
+                fail(f"{name}: project-owner normalized portrait SHA-256 mismatch")
             if (int(fmeta.get("cell_width", 0)), int(fmeta.get("cell_height", 0))) != (width // 12, height):
                 fail(f"{name}: project-owner field metadata cell geometry mismatch")
             if float(fmeta.get("runtime_scale", 0.0)) != 1.0:
@@ -155,8 +178,8 @@ def main() -> int:
                 normalization = fmeta.get("normalization", {})
                 if normalization.get("target_cell") != [32, 32]:
                     fail(f"Mochimon: normalization target must stay 32x32")
-                if normalization.get("max_sprite_bounds") != [24, 22]:
-                    fail(f"Mochimon: visible bounds must stay capped at 24x22")
+                if normalization.get("max_sprite_bounds") != [18, 16]:
+                    fail(f"Mochimon: visible bounds must stay capped at 18x16")
                 expected_mirror_policy = {
                     "down_right": "build_time_horizontal_mirror_of_down_left",
                     "up_right": "build_time_horizontal_mirror_of_up_left",
@@ -166,6 +189,16 @@ def main() -> int:
                 source_boxes = fmeta.get("source_frame_boxes", {})
                 if set(source_boxes) != {"down_left", "up_left"}:
                     fail(f"Mochimon: only the reviewed authored left-facing groups may be direct source inputs")
+                if (frame_width, frame_height, frame_count) != (192, 192, 3):
+                    fail(f"Mochimon: owner portrait must remain a 3-frame 192x192 animation")
+                if (portrait_width, portrait_height) != (576, 192):
+                    fail(f"Mochimon: owner portrait strip must remain 576x192")
+                if pmeta.get("source_frame_boxes") != [
+                    [24, 51, 312, 257],
+                    [373, 55, 307, 253],
+                    [720, 55, 310, 253],
+                ]:
+                    fail(f"Mochimon: owner portrait must use the reviewed large animation frames")
 
         resource_path = ROOT / resource_relpath(name)
         if not resource_path.is_file():
