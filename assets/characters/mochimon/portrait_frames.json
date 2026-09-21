@@ -1,12 +1,45 @@
 {
-  "source": "Mochimon.webp",
-  "source_path": "source/portrait.webp",
-  "frame_width": 198,
-  "frame_height": 198,
-  "frame_count": 2,
+  "source_kind": "project_owner_supplied",
+  "source": "Project owner supplied sprite sheet on 2026-09-20",
+  "source_path": "project-owner-upload:2026-09-20",
+  "source_sha256": "176ade56581f29595e7a2d90878b2055ad8da3be0a9868814110e7083334501c",
+  "normalized_portrait_sha256": "8571b8adfdca5f5083a33251eb0e4dee778b4aa3403abe461776c9e4de0b2b85",
+  "frame_width": 192,
+  "frame_height": 192,
+  "frame_count": 3,
   "durations_ms": [
-    500,
-    500
+    300,
+    300,
+    300
   ],
-  "source_sha256": "303fb91957fee3bc608150c2273705756dc366746b1f16cc665cadb8b2e07944"
+  "source_frame_boxes": [
+    [
+      24,
+      51,
+      312,
+      257
+    ],
+    [
+      373,
+      55,
+      307,
+      253
+    ],
+    [
+      720,
+      55,
+      310,
+      253
+    ]
+  ],
+  "normalization": {
+    "max_sprite_bounds": [
+      168,
+      148
+    ],
+    "resampling": "nearest",
+    "anchor": "bottom_center",
+    "bottom_margin_px": 16,
+    "background_policy": "blue/cyan source canvas and blended fringe removed before normalization"
+  }
 }
