@@ -7,24 +7,25 @@
     838
   ],
   "original_source_sha256": "176ade56581f29595e7a2d90878b2055ad8da3be0a9868814110e7083334501c",
-  "normalized_field_sha256": "c0561a4b6c819b657695f7c04329c4a5f221620a50d290e966d727090ba76458",
+  "normalized_field_sha256": "ffbf57b5e3da627ebd33d6b9df9128238abdc8d97a47e129b24a7b2b15e300b0",
   "normalization": {
     "target_cell": [
-      52,
-      49
+      32,
+      32
     ],
     "max_sprite_bounds": [
-      48,
-      46
+      24,
+      22
     ],
     "resampling": "nearest",
     "anchor": "bottom_center",
-    "scale": 0.36923076923076925,
+    "scale_policy": "uniform_fit_to_in_training_reference_bounds",
+    "effective_scale_from_owner_sheet": 0.1885,
     "background_policy": "blue/cyan source canvas removed before normalization",
     "runtime_rescale": false
   },
   "source_frame_boxes": {
-    "down_right": [
+    "down_left": [
       [
         1184,
         464,
@@ -46,26 +47,6 @@
     ],
     "up_left": [
       [
-        1167,
-        298,
-        131,
-        109
-      ],
-      [
-        1379,
-        299,
-        132,
-        113
-      ],
-      [
-        1587,
-        300,
-        132,
-        110
-      ]
-    ],
-    "up_right": [
-      [
         1171,
         656,
         127,
@@ -86,10 +67,11 @@
     ]
   },
   "mirror_policy": {
-    "down_left": "build_time_horizontal_mirror_of_down_right"
+    "down_right": "build_time_horizontal_mirror_of_down_left",
+    "up_right": "build_time_horizontal_mirror_of_up_left"
   },
-  "cell_width": 52,
-  "cell_height": 49,
+  "cell_width": 32,
+  "cell_height": 32,
   "frame_count": 12,
   "frames_per_direction": 3,
   "directions": [
@@ -108,5 +90,26 @@
   "rebuilt_from_source": false,
   "preserved_project_asset": true,
   "existing_runtime_strip_used_as_input": false,
-  "field_path": "res://assets/characters/mochimon/field.png"
+  "field_path": "res://assets/characters/mochimon/field.png",
+  "direction_review": {
+    "corrected_on": "2026-09-20",
+    "reason": "owner gameplay screenshots showed previous left/right groups were reversed",
+    "authored_groups": [
+      "down_left",
+      "up_left"
+    ],
+    "derived_groups": [
+      "down_right",
+      "up_right"
+    ]
+  },
+  "stage_size_reference": {
+    "stage": "In-Training",
+    "reference_cells": [
+      "Koromon 32x32",
+      "Tsunomon 32x32",
+      "Tanemon 32x32"
+    ],
+    "policy": "keep visible sprite close to one isometric tile instead of scaling the generated authoring sheet directly"
+  }
 }
