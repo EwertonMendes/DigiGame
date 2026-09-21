@@ -7,13 +7,15 @@ the archived sheets and writes one transparent 12-frame runtime strip:
 
   down_left[0..2], down_right[0..2], up_left[0..2], up_right[0..2]
 
-The five canonical database species absent from that DS archive use explicitly
-identified community DS-style art. WebP portraits are never used as field or
+Four canonical database species absent from that DS archive use explicitly
+identified community DS-style art. Mochimon uses the project owner's reviewed,
+normalized directional strip and is preserved by a pinned content hash. WebP portraits are never used as field or
 battle sprites; they remain exclusively for UI/details/Evolution Chart previews.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import io
 import json
@@ -71,10 +73,11 @@ WTW_IDS: dict[str, int] = {
 COMMUNITY_SOURCES: dict[str, tuple[str, str]] = {
     "Dodomon": ("https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/1Dodomon.png", "PixelDots community DS-style sprite"),
     "Pitchmon": ("https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/Pichimon.png", "PixelDots community DS-style sprite"),
-    "Mochimon": ("https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/motimon_sprite_by_wooded_wolf-d4ai2kv.gif", "Wooded-Wolf community DS-style sprite"),
     "Pukamon": ("https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/bukamon_sprite_by_wooded_wolf-d4ai84c.gif", "Wooded-Wolf community DS-style sprite"),
     "Flamon": ("https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/Flamemon_zpsb381aecd.gif", "Wooded-Wolf community DS-style sprite"),
 }
+
+PROJECT_OWNER_FIELDS = {"Mochimon"}
 
 
 def normalize(value: str) -> str:
@@ -351,15 +354,29 @@ def main() -> None:
     built: list[dict[str, Any]] = []
     official_count = 0
     exception_count = 0
+    project_owner_count = 0
 
     for index, entry in enumerate(entries, start=1):
         name = str(entry["name"])
         key = portrait_key(entry)
         directory = Path("assets/characters") / key
         directory.mkdir(parents=True, exist_ok=True)
+        field_path = directory / "field.png"
+        metadata_path = directory / "field.json"
+        strip: Image.Image | None = None
         if name in WTW_IDS:
             strip, metadata = build_official_wtw(archive, WTW_IDS[name])
             official_count += 1
+        elif name in PROJECT_OWNER_FIELDS:
+            if not field_path.is_file() or not metadata_path.is_file():
+                raise RuntimeError(f"{name}: missing preserved project-owner field asset")
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            if metadata.get("source_kind") != "project_owner_supplied":
+                raise RuntimeError(f"{name}: preserved field metadata has unexpected source kind")
+            actual_sha = hashlib.sha256(field_path.read_bytes()).hexdigest()
+            if metadata.get("normalized_field_sha256") != actual_sha:
+                raise RuntimeError(f"{name}: preserved project-owner field SHA-256 mismatch")
+            project_owner_count += 1
         elif name in COMMUNITY_SOURCES:
             url, credit = COMMUNITY_SOURCES[name]
             strip, metadata = build_community_exception(name, url, credit)
@@ -367,10 +384,10 @@ def main() -> None:
         else:
             raise RuntimeError(f"No DS field source mapped for canonical species {name}")
 
-        field_path = directory / "field.png"
-        strip.save(field_path, "PNG", optimize=True)
+        if strip is not None:
+            strip.save(field_path, "PNG", optimize=True)
         metadata["field_path"] = f"res://assets/characters/{key}/field.png"
-        (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+        metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         resource_path = write_resource(entry, key, float(metadata["runtime_scale"]))
 
         row = dict(old_rows.get(name, {}))
@@ -403,13 +420,13 @@ def main() -> None:
         "ranks": list(EARLY_RANKS),
         "count": len(built),
         "counts_by_rank": {rank: sum(1 for row in built if str(row.get("rank")) == rank) for rank in EARLY_RANKS},
-        "field_sources": {"official_ds": official_count, "community_ds_style_exception": exception_count, "project_original": sum(1 for row in built if str(row.get("field_source_kind", "")) == "project_original")},
+        "field_sources": {"official_ds": official_count, "community_ds_style_exception": exception_count, "project_owner_supplied": project_owner_count, "project_original": sum(1 for row in built if str(row.get("field_source_kind", "")) == "project_original")},
         "species": built,
     }
     args.manifest.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    if official_count != 82 or exception_count != 5:
-        raise RuntimeError(f"Unexpected source split: official={official_count}, exceptions={exception_count}")
-    print("built complete early-rank field roster: 82 WithTheWill DS sheets + 5 explicit exceptions")
+    if official_count != 82 or exception_count != 4 or project_owner_count != 1:
+        raise RuntimeError(f"Unexpected source split: official={official_count}, exceptions={exception_count}, project_owner={project_owner_count}")
+    print("built complete early-rank field roster: 82 WithTheWill DS sheets + 4 community exceptions + 1 project-owner strip")
 
 
 if __name__ == "__main__":
