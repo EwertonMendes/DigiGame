@@ -8,9 +8,11 @@ deterministic PNG frame strip/metadata for runtime playback, and creates a
 battle-compatible Digimon resource when a bespoke field resource does not
 already exist.
 
-Existing authored field resources are never overwritten. Missing early-rank
-field sheets intentionally fall back to their canonical WebP animation until a
-proper directional field sprite is added later.
+Existing authored field resources are never overwritten. Project-owner portrait
+strips are preserved by their pinned hashes instead of being replaced by the
+canonical WebP sync. Missing early-rank field sheets intentionally fall back to
+their canonical WebP animation until a proper directional field sprite is added
+later.
 """
 from __future__ import annotations
 
@@ -174,6 +176,36 @@ def build_portrait_assets(entry: dict[str, Any]) -> dict[str, Any]:
     return metadata
 
 
+def preserved_project_owner_portrait(entry: dict[str, Any]) -> dict[str, Any] | None:
+    key = portrait_key(entry)
+    directory = Path("assets/characters") / key
+    field_meta_path = directory / "field.json"
+    portrait_meta_path = directory / "portrait_frames.json"
+    portrait_strip_path = directory / "portrait_frames.png"
+    if not field_meta_path.is_file() or not portrait_meta_path.is_file() or not portrait_strip_path.is_file():
+        return None
+
+    field_meta = json.loads(field_meta_path.read_text(encoding="utf-8"))
+    portrait_meta = json.loads(portrait_meta_path.read_text(encoding="utf-8"))
+    if field_meta.get("source_kind") != "project_owner_supplied":
+        return None
+    if portrait_meta.get("source_kind") != "project_owner_supplied":
+        raise RuntimeError(f"{entry.get('name')}: project-owner field must keep its project-owner portrait")
+
+    expected_portrait_sha = str(portrait_meta.get("normalized_portrait_sha256", ""))
+    actual_portrait_sha = hashlib.sha256(portrait_strip_path.read_bytes()).hexdigest()
+    if expected_portrait_sha != actual_portrait_sha:
+        raise RuntimeError(f"{entry.get('name')}: preserved project-owner portrait SHA-256 mismatch")
+    if portrait_meta.get("source_sha256") != field_meta.get("original_source_sha256"):
+        raise RuntimeError(f"{entry.get('name')}: field and portrait must come from the same owner source sheet")
+
+    print(
+        f"{entry.get('name')}: preserving {portrait_meta.get('frame_count', 0)} "
+        "project-owner portrait frame(s)"
+    )
+    return portrait_meta
+
+
 def existing_resource_visual_mode(resource_path: Path) -> str:
     text = resource_path.read_text(encoding="utf-8")
     match = re.search(r'^sprite_layout\s*=\s*"([^"]+)"', text, re.MULTILINE)
@@ -226,7 +258,9 @@ def main() -> None:
     manifest_rows: list[dict[str, Any]] = []
 
     for entry in entries:
-        metadata = build_portrait_assets(entry)
+        metadata = preserved_project_owner_portrait(entry)
+        if metadata is None:
+            metadata = build_portrait_assets(entry)
         resource_path, visual_mode = create_visual_resource(entry, metadata)
         manifest_rows.append(
             {
@@ -236,7 +270,12 @@ def main() -> None:
                 "attribute": str(entry.get("attribute", "")),
                 "database_image": str(entry.get("img", "")),
                 "portrait_key": portrait_key(entry),
-                "portrait_source": f"res://assets/characters/{portrait_key(entry)}/source/portrait.webp",
+                "portrait_source": str(
+                    metadata.get(
+                        "source_path",
+                        f"res://assets/characters/{portrait_key(entry)}/source/portrait.webp",
+                    )
+                ),
                 "portrait_strip": f"res://assets/characters/{portrait_key(entry)}/portrait_frames.png",
                 "resource": f"res://{resource_path.as_posix()}",
                 "visual_mode": visual_mode,
