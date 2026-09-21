@@ -32,7 +32,7 @@
     {
       "name": "Mochimon",
       "field": "assets/characters/mochimon/field.png",
-      "sha256": "8352ec9fd352461864d082a8ff341e5ebf0c53d6284313b873e406c7c957a930",
+      "sha256": "c0561a4b6c819b657695f7c04329c4a5f221620a50d290e966d727090ba76458",
       "reason": "project-owner supplied directional sheet normalized to the canonical runtime contract; preserved by hash"
     }
   ],
