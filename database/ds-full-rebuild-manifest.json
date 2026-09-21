@@ -8,9 +8,9 @@
   ],
   "direction_registry": "database/ds-direction-registry.json",
   "direction_registry_schema_version": 4,
-  "source_policy": "fresh download + SHA-256 pin + exact reviewed directions/phases + deterministic mirror-pose verification + uniform bottom-center anchor; three already-reviewed strips are preserved by hash",
+  "source_policy": "fresh download + SHA-256 pin + exact reviewed directions/phases + deterministic mirror-pose verification + uniform bottom-center anchor; four reviewed/project-owner strips are preserved by hash",
   "existing_non_agumon_runtime_strips_allowed_as_input": false,
-  "preserved_count": 3,
+  "preserved_count": 4,
   "preserved": [
     {
       "name": "Agumon",
@@ -28,9 +28,15 @@
       "field": "assets/characters/metalgreymon/field.png",
       "sha256": "0b02aea74a66b49d9d533bc37f744af2a3a7d91780164222ff6406e54372d230",
       "reason": "source host rejects automated downloads; existing reviewed strip is hash-verified"
+    },
+    {
+      "name": "Mochimon",
+      "field": "assets/characters/mochimon/field.png",
+      "sha256": "cb0d346a7c5138a19ccdc9660599898417e8e53b5dd1b8c9d3ebf5053fc08d44",
+      "reason": "project-owner supplied directional sheet normalized to the canonical runtime contract; preserved by hash"
     }
   ],
-  "deleted_before_rebuild_count": 172,
+  "deleted_before_rebuild_count": 170,
   "deleted_before_rebuild": [
     "assets/characters/botamon/field.png",
     "assets/characters/botamon/field.json",
@@ -62,8 +68,6 @@
     "assets/characters/kuramon/field.json",
     "assets/characters/minomon/field.png",
     "assets/characters/minomon/field.json",
-    "assets/characters/mochimon/field.png",
-    "assets/characters/mochimon/field.json",
     "assets/characters/moonmon/field.png",
     "assets/characters/moonmon/field.json",
     "assets/characters/pagumon/field.png",
@@ -205,7 +209,7 @@
     "assets/characters/wormmon/field.png",
     "assets/characters/wormmon/field.json"
   ],
-  "rebuilt_count": 86,
+  "rebuilt_count": 85,
   "rebuilt": [
     {
       "name": "Botamon",
@@ -461,17 +465,6 @@
       "cell": [
         32,
         33
-      ]
-    },
-    {
-      "name": "Mochimon",
-      "kind": "community_source_rebuilt",
-      "source": "https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/motimon_sprite_by_wooded_wolf-d4ai2kv.gif",
-      "output": "assets/characters/mochimon/field.png",
-      "output_sha256": "b4a28547cf5c7d23d34d58f8fc1f5275d83132bff78f1a67430cf74605eb0e48",
-      "cell": [
-        52,
-        49
       ]
     },
     {
