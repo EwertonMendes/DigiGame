@@ -32,7 +32,7 @@
     {
       "name": "Mochimon",
       "field": "assets/characters/mochimon/field.png",
-      "sha256": "c0aa3eb7a645e893ea7838d507d055ffd735a510dd768a3f84284d7036a993ee",
+      "sha256": "c8110494622a56123538652eb410ab5966615b9196026e29117fa8bc86a2cfc9",
       "reason": "project-owner directional sheet normalized to a Poyomon-class In-Training footprint with reviewed facings; preserved by hash"
     }
   ],
