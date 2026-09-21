@@ -79,13 +79,13 @@ def main() -> None:
 
     preserved = _names(audit.get("preserved"))
     rebuilt = _names(audit.get("rebuilt"))
-    expected_preserved = {"Agumon", "Greymon", "Metal Greymon"}
+    expected_preserved = {"Agumon", "Greymon", "Metal Greymon", "Mochimon"}
     if preserved != expected_preserved:
         raise RuntimeError(f"Expected preserved reviewed strips {sorted(expected_preserved)}, got: {sorted(preserved)}")
     if "Agumon" in rebuilt:
         raise RuntimeError("Agumon must not appear in rebuilt entries")
-    if len(rebuilt) != 86:
-        raise RuntimeError(f"Expected 86 source-rebuilt early directional sprites, got {len(rebuilt)}")
+    if len(rebuilt) != 85:
+        raise RuntimeError(f"Expected 85 source-rebuilt early directional sprites, got {len(rebuilt)}")
 
     additional = _additional_names()
     project_original = _project_original_names()
