@@ -149,6 +149,23 @@ def main() -> int:
                 fail(f"{name}: project-owner field metadata cell geometry mismatch")
             if float(fmeta.get("runtime_scale", 0.0)) != 1.0:
                 fail(f"{name}: normalized project-owner field must render at native scale")
+            if name == "Mochimon":
+                if (width, height) != (384, 32):
+                    fail(f"Mochimon: expected canonical 12x32x32 strip, got {(width, height)}")
+                normalization = fmeta.get("normalization", {})
+                if normalization.get("target_cell") != [32, 32]:
+                    fail(f"Mochimon: normalization target must stay 32x32")
+                if normalization.get("max_sprite_bounds") != [24, 22]:
+                    fail(f"Mochimon: visible bounds must stay capped at 24x22")
+                expected_mirror_policy = {
+                    "down_right": "build_time_horizontal_mirror_of_down_left",
+                    "up_right": "build_time_horizontal_mirror_of_up_left",
+                }
+                if fmeta.get("mirror_policy") != expected_mirror_policy:
+                    fail(f"Mochimon: reviewed left/right facing policy changed")
+                source_boxes = fmeta.get("source_frame_boxes", {})
+                if set(source_boxes) != {"down_left", "up_left"}:
+                    fail(f"Mochimon: only the reviewed authored left-facing groups may be direct source inputs")
 
         resource_path = ROOT / resource_relpath(name)
         if not resource_path.is_file():
