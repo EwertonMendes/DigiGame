@@ -270,11 +270,10 @@ def main() -> None:
                 "attribute": str(entry.get("attribute", "")),
                 "database_image": str(entry.get("img", "")),
                 "portrait_key": portrait_key(entry),
-                "portrait_source": str(
-                    metadata.get(
-                        "source_path",
-                        f"res://assets/characters/{portrait_key(entry)}/source/portrait.webp",
-                    )
+                "portrait_source": (
+                    str(metadata.get("source_path", ""))
+                    if metadata.get("source_kind") == "project_owner_supplied"
+                    else f"res://assets/characters/{portrait_key(entry)}/source/portrait.webp"
                 ),
                 "portrait_strip": f"res://assets/characters/{portrait_key(entry)}/portrait_frames.png",
                 "resource": f"res://{resource_path.as_posix()}",
