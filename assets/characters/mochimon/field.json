@@ -1,7 +1,93 @@
 {
-  "source_kind": "community_ds_style_exception",
-  "source_url": "https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/motimon_sprite_by_wooded_wolf-d4ai2kv.gif",
-  "credit": "Wooded-Wolf community DS-style sprite",
+  "source_kind": "project_owner_supplied",
+  "source_variant": "owner_sheet_normalized_directional_12",
+  "source_provenance": "Project owner supplied sprite sheet on 2026-09-20",
+  "original_source_dimensions": [
+    1877,
+    838
+  ],
+  "original_source_sha256": "176ade56581f29595e7a2d90878b2055ad8da3be0a9868814110e7083334501c",
+  "normalized_field_sha256": "cb0d346a7c5138a19ccdc9660599898417e8e53b5dd1b8c9d3ebf5053fc08d44",
+  "normalization": {
+    "target_cell": [
+      52,
+      49
+    ],
+    "max_sprite_bounds": [
+      48,
+      46
+    ],
+    "resampling": "nearest",
+    "anchor": "bottom_center",
+    "scale": 0.36923076923076925,
+    "background_policy": "blue/cyan source canvas removed before normalization",
+    "runtime_rescale": false
+  },
+  "source_frame_boxes": {
+    "down_right": [
+      [
+        1184,
+        464,
+        114,
+        120
+      ],
+      [
+        1388,
+        467,
+        117,
+        119
+      ],
+      [
+        1597,
+        466,
+        118,
+        117
+      ]
+    ],
+    "up_left": [
+      [
+        1167,
+        298,
+        131,
+        109
+      ],
+      [
+        1379,
+        299,
+        132,
+        113
+      ],
+      [
+        1587,
+        300,
+        132,
+        110
+      ]
+    ],
+    "up_right": [
+      [
+        1171,
+        656,
+        127,
+        107
+      ],
+      [
+        1381,
+        658,
+        128,
+        108
+      ],
+      [
+        1593,
+        657,
+        127,
+        112
+      ]
+    ]
+  },
+  "mirror_policy": {
+    "down_left": "build_time_horizontal_mirror_of_down_right"
+  },
   "cell_width": 52,
   "cell_height": 49,
   "frame_count": 12,
@@ -12,10 +98,15 @@
     "up_left",
     "up_right"
   ],
-  "runtime_scale": 0.9545,
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "runtime_scale": 1,
   "canonical_reference": "Agumon",
-  "rebuilt_from_source": true,
+  "rebuilt_from_source": false,
+  "preserved_project_asset": true,
   "existing_runtime_strip_used_as_input": false,
-  "rebuild_version": 3,
   "field_path": "res://assets/characters/mochimon/field.png"
 }
