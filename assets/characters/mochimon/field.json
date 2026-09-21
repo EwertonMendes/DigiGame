@@ -7,42 +7,42 @@
     838
   ],
   "original_source_sha256": "176ade56581f29595e7a2d90878b2055ad8da3be0a9868814110e7083334501c",
-  "normalized_field_sha256": "ffbf57b5e3da627ebd33d6b9df9128238abdc8d97a47e129b24a7b2b15e300b0",
+  "normalized_field_sha256": "c0aa3eb7a645e893ea7838d507d055ffd735a510dd768a3f84284d7036a993ee",
   "normalization": {
     "target_cell": [
       32,
       32
     ],
     "max_sprite_bounds": [
-      24,
-      22
+      18,
+      16
     ],
     "resampling": "nearest",
     "anchor": "bottom_center",
-    "scale_policy": "uniform_fit_to_in_training_reference_bounds",
-    "effective_scale_from_owner_sheet": 0.1885,
-    "background_policy": "blue/cyan source canvas removed before normalization",
+    "ground_margin_px": 2,
+    "scale_policy": "uniform_fit_to_poyomon_class_in_training_footprint",
+    "background_policy": "blue/cyan source canvas and blended fringe removed before normalization",
     "runtime_rescale": false
   },
   "source_frame_boxes": {
     "down_left": [
       [
         1184,
-        464,
+        465,
         114,
-        120
-      ],
-      [
-        1388,
-        467,
-        117,
         119
       ],
       [
-        1597,
-        466,
-        118,
-        117
+        1388,
+        468,
+        116,
+        118
+      ],
+      [
+        1598,
+        467,
+        116,
+        116
       ]
     ],
     "up_left": [
@@ -61,7 +61,7 @@
       [
         1593,
         657,
-        127,
+        126,
         112
       ]
     ]
@@ -105,11 +105,15 @@
   },
   "stage_size_reference": {
     "stage": "In-Training",
-    "reference_cells": [
-      "Koromon 32x32",
-      "Tsunomon 32x32",
-      "Tanemon 32x32"
+    "reference_species": "Poyomon",
+    "reference_visible_source_bounds": [
+      13,
+      14
     ],
-    "policy": "keep visible sprite close to one isometric tile instead of scaling the generated authoring sheet directly"
+    "normalized_max_sprite_bounds": [
+      18,
+      16
+    ],
+    "policy": "keep Mochimon in the same small visual class as Poyomon while preserving its wider silhouette"
   }
 }
