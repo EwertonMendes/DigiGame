@@ -439,6 +439,10 @@ def main() -> None:
 
     if sha256(GOLDEN_FIELD.read_bytes()) != golden_png_sha or sha256(GOLDEN_META.read_bytes()) != golden_meta_sha:
         raise RuntimeError("Agumon golden reference was modified")
+    for item in preserved:
+        preserved_path = Path(str(item["field"]))
+        if not preserved_path.is_file() or sha256(preserved_path.read_bytes()) != str(item["sha256"]):
+            raise RuntimeError(f"Preserved reviewed field changed during rebuild: {item['name']}")
     if len(rebuilt) != 85:
         failures.append(f"expected 85 rebuilt sprites, got {len(rebuilt)}")
 
