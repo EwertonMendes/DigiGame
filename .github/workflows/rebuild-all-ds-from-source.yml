@@ -82,15 +82,15 @@ jobs:
           from pathlib import Path
           data = json.loads(Path('database/ds-full-rebuild-manifest.json').read_text())
           assert data['canonical_reference'] == 'Agumon'
-          assert data['preserved_count'] == 3
-          assert {item['name'] for item in data['preserved']} == {'Agumon', 'Greymon', 'Metal Greymon'}
-          assert data['rebuilt_count'] == 86
+          assert data['preserved_count'] == 4
+          assert {item['name'] for item in data['preserved']} == {'Agumon', 'Greymon', 'Metal Greymon', 'Mochimon'}
+          assert data['rebuilt_count'] == 85
           assert data['unresolved'] == []
           assert data['existing_non_agumon_runtime_strips_allowed_as_input'] is False
           assert data['canonical_runtime_order'] == ['down_left', 'down_right', 'up_left', 'up_right']
           assert data['direction_registry'] == 'database/ds-direction-registry.json'
           assert all(item['name'] != 'Agumon' for item in data['rebuilt'])
-          print('manifest verified: 3 reviewed strips preserved; 86 sprites recreated from fresh sources')
+          print('manifest verified: 4 reviewed/project-owner strips preserved; 85 sprites recreated from fresh sources')
           PY
           python3 tools/validate_early_rank_playables.py
           python3 tools/validate_all_ds_directional_facings.py
