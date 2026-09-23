@@ -24,6 +24,27 @@ const FLOOR_GREEN := Vector2i(10, 16)
 const FLOOR_PURPLE := Vector2i(15, 16)
 const FLOOR_BLUE := Vector2i(16, 16)
 
+# Normalized cells from the project-owner supplied Central City ground sheet.
+# These are intentionally separate from the MCBlocks floor constants above:
+# MCBlocks continues to own buildings, roofs, interior thresholds and props.
+const GROUND_ROAD_PLAIN := Vector2i(0, 0)
+const GROUND_ROAD_LANE := Vector2i(1, 0)
+const GROUND_ROAD_EDGE := Vector2i(2, 0)
+const GROUND_ROAD_ALT := Vector2i(3, 0)
+const GROUND_CROSSWALK_A := Vector2i(4, 0)
+const GROUND_CROSSWALK_B := Vector2i(0, 1)
+const GROUND_ROAD_ARROW := Vector2i(1, 1)
+const GROUND_ROAD_TECH := Vector2i(2, 1)
+const GROUND_PAVEMENT := Vector2i(3, 1)
+const GROUND_PAVEMENT_TAN := Vector2i(4, 1)
+const GROUND_PAVEMENT_STONE := Vector2i(0, 2)
+const GROUND_TECH_PAVER := Vector2i(1, 2)
+const GROUND_GRASS := Vector2i(2, 2)
+const GROUND_GRASS_ALT := Vector2i(3, 2)
+const GROUND_SAND := Vector2i(4, 2)
+const GROUND_DIRT := Vector2i(0, 3)
+const GROUND_WATER := Vector2i(1, 3)
+
 const BLOCK_WALL := Vector2i(3, 13)
 const BLOCK_WALL_DARK := Vector2i(2, 13)
 const BLOCK_WHITE := Vector2i(11, 13)
@@ -109,11 +130,12 @@ func _prepare_ground_data() -> void:
 			var cell := Vector2i(x, y)
 			var presentation := _ground_presentation(cell, theme, center)
 			_ground_tiles.append({
-				"cell": presentation.get("cell", FLOOR_PAVEMENT),
+				"cell": presentation.get("cell", GROUND_PAVEMENT),
 				"position": position + grid_to_world(Vector2(cell)),
 				"base_color": presentation.get("base_color", PAVEMENT_BASE),
 				"detail_tint": Color.WHITE,
-				"detail_alpha": float(presentation.get("detail_alpha", 0.96)),
+				"detail_alpha": 1.0,
+				"ground_tint": presentation.get("ground_tint", Color.WHITE),
 			})
 			if not bool(presentation.get("walkable", true)):
 				_mark_blocked(cell)
@@ -124,61 +146,147 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
-	# Roads are authored as continuous city avenues, not repeated crosses inside
-	# every 14x14 authoring section. This removes the checkerboard/chunk look.
-	var road := (
-		(section_coord.y == 0 and cell.y >= center - 1 and cell.y <= center + 1)
-		or (section_coord.x == 0 and cell.x >= center - 1 and cell.x <= center + 1)
+	var global_x := section_coord.x * SECTION_SIZE + cell.x
+	var global_y := section_coord.y * SECTION_SIZE + cell.y
+	var horizontal_road := (
+		section_coord.y == 0
+		and cell.y >= center - 1
+		and cell.y <= center + 1
 	)
+	var vertical_road := (
+		section_coord.x == 0
+		and cell.x >= center - 1
+		and cell.x <= center + 1
+	)
+
+	# The canal remains a physical water strip from the authored city layout.
+	# The central bridge stays open so the north-south avenue is never broken.
 	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
 		return {
-			"cell": FLOOR_BLUE,
+			"cell": GROUND_WATER,
 			"base_color": WATER_BASE,
-			"detail_alpha": 0.62,
 			"walkable": false,
 		}
-	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
-		var plaza_accent := (cell.x + cell.y) % 5 == 0
-		return {
-			"cell": FLOOR_CYAN if plaza_accent else FLOOR_PLAZA,
-			"base_color": PLAZA_BASE,
-			"detail_alpha": 0.58,
-			"walkable": true,
-		}
-	if road:
-		return {
-			"cell": FLOOR_ROAD,
-			"base_color": ROAD_BASE,
-			"detail_alpha": 0.46,
-			"walkable": true,
-		}
 
-	# Garden chunks are urban parks: neutral walkable stone remains dominant and
-	# green tiles form deliberate planted plots instead of a giant grass carpet.
-	if theme == "garden":
-		var corner_plot := (
-			(cell.x <= 4 or cell.x >= 10)
-			and (cell.y <= 4 or cell.y >= 10)
-		)
-		if corner_plot:
+	# Central Plaza deliberately interrupts the avenue asphalt and reads as one
+	# civic surface. Crosswalks frame the four road approaches.
+	if theme == "plaza":
+		var dx := absi(cell.x - center)
+		var dy := absi(cell.y - center)
+		if dx <= 3 and dy <= 3:
+			var plaza_cell := GROUND_TECH_PAVER if posmod(global_x + global_y, 4) == 0 else GROUND_PAVEMENT_STONE
 			return {
-				"cell": FLOOR_GREEN,
-				"base_color": PARK_BASE,
-				"detail_alpha": 0.52,
+				"cell": plaza_cell,
+				"base_color": PLAZA_BASE,
+				"walkable": true,
+			}
+		if horizontal_road and cell.x in [2, 3, 11, 12]:
+			return {
+				"cell": GROUND_CROSSWALK_A if cell.x < center else GROUND_CROSSWALK_B,
+				"base_color": ROAD_BASE,
+				"walkable": true,
+			}
+		if vertical_road and cell.y in [2, 3, 11, 12]:
+			return {
+				"cell": GROUND_CROSSWALK_B if cell.y < center else GROUND_CROSSWALK_A,
+				"base_color": ROAD_BASE,
 				"walkable": true,
 			}
 
-	var alternate := posmod(
-		(cell.x + section_coord.x * SECTION_SIZE) * 7
-		+ (cell.y + section_coord.y * SECTION_SIZE) * 11,
-		7
-	) == 0
-	return {
-		"cell": FLOOR_PAVEMENT,
-		"base_color": PAVEMENT_BASE.darkened(0.04) if alternate else PAVEMENT_BASE,
-		"detail_alpha": 0.38,
-		"walkable": true,
-	}
+	if horizontal_road and vertical_road:
+		return {
+			"cell": GROUND_ROAD_TECH,
+			"base_color": ROAD_BASE,
+			"walkable": true,
+		}
+	if horizontal_road:
+		var horizontal_cell := GROUND_ROAD_LANE if cell.y == center else GROUND_ROAD_PLAIN
+		if posmod(global_x, 11) == 0 and cell.y == center:
+			horizontal_cell = GROUND_ROAD_ARROW
+		return {
+			"cell": horizontal_cell,
+			"base_color": ROAD_BASE,
+			"walkable": true,
+		}
+	if vertical_road:
+		var vertical_cell := GROUND_ROAD_ALT if cell.x == center else GROUND_ROAD_EDGE
+		if posmod(global_y, 13) == 0 and cell.x == center:
+			vertical_cell = GROUND_ROAD_TECH
+		return {
+			"cell": vertical_cell,
+			"base_color": ROAD_BASE,
+			"walkable": true,
+		}
+
+	# District surfaces are still deterministic authored choices rather than
+	# random terrain. This keeps section borders invisible while giving the
+	# supplied sheet enough variety to judge how it works as a city kit.
+	var pattern := posmod(global_x * 7 + global_y * 11, 17)
+	match theme:
+		"garden":
+			var planted_plot := (
+				(cell.x <= 4 or cell.x >= 10)
+				and (cell.y <= 4 or cell.y >= 10)
+			)
+			if planted_plot:
+				return {
+					"cell": GROUND_GRASS_ALT if pattern in [0, 5, 10] else GROUND_GRASS,
+					"base_color": PARK_BASE,
+					"walkable": true,
+				}
+			return {
+				"cell": GROUND_PAVEMENT_STONE if pattern % 4 == 0 else GROUND_PAVEMENT,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
+		"digilab":
+			return {
+				"cell": GROUND_TECH_PAVER if pattern in [0, 1, 8] else GROUND_PAVEMENT,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
+		"hospital":
+			return {
+				"cell": GROUND_PAVEMENT_STONE if pattern % 5 == 0 else GROUND_PAVEMENT,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
+		"training":
+			return {
+				"cell": GROUND_TECH_PAVER if pattern % 4 == 0 else GROUND_PAVEMENT_STONE,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
+		"market":
+			return {
+				"cell": GROUND_PAVEMENT_TAN if pattern < 7 else GROUND_PAVEMENT_STONE,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
+		"archive":
+			return {
+				"cell": GROUND_PAVEMENT_STONE if pattern < 10 else GROUND_TECH_PAVER,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
+		"gate":
+			return {
+				"cell": GROUND_SAND if pattern in [0, 8, 16] else GROUND_PAVEMENT_STONE,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
+		"canal":
+			return {
+				"cell": GROUND_PAVEMENT_STONE if pattern % 3 == 0 else GROUND_PAVEMENT,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
+		_:
+			return {
+				"cell": GROUND_PAVEMENT_STONE if pattern in [0, 9] else GROUND_PAVEMENT,
+				"base_color": PAVEMENT_BASE,
+				"walkable": true,
+			}
 
 
 func _build_street_detail() -> void:
