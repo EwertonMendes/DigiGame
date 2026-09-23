@@ -7,7 +7,6 @@ signal load_finished
 
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
 const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
-const ExternalCityArtScript = preload("res://src/world/runtime/ExternalCityArt.gd")
 const CentralCityCustomArtScript = preload("res://src/world/runtime/CentralCityCustomArt.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
@@ -45,14 +44,8 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	var ground_tiles: Array[Dictionary] = []
 	load_started.emit(total)
 
-	# Yield before doing any expensive area construction. On Web/mobile this lets
-	# the engine present its first frame and replace the browser's 100% download
-	# bar with the in-game area loader instead of appearing frozen.
 	await get_tree().process_frame
 
-	# Build one authoring section per frame behind the loading screen. The whole
-	# area remains hidden and non-interactive until every section is ready, so
-	# there is still zero terrain pop-in while the player explores.
 	for raw in raw_sections:
 		if not raw is Dictionary:
 			continue
@@ -85,7 +78,6 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	process_mode = Node.PROCESS_MODE_INHERIT
 	_update_ambient_vfx(true)
 	load_finished.emit()
-	print("[ExternalCity] READY available=%s" % str(ExternalCityArtScript.is_available()))
 	print("[CentralCityCustom] READY available=%s" % str(CentralCityCustomArtScript.is_available()))
 	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d" % [
 		_sections.size(),
@@ -180,4 +172,3 @@ func _count_nodes(node: Node) -> int:
 	for child in node.get_children():
 		total += _count_nodes(child)
 	return total
-
