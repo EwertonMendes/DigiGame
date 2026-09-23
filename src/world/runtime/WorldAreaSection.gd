@@ -21,9 +21,12 @@ const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 # base edges to the city's +/-26.565° grid instead of visually "eyeballing" it.
 const DIGILAB_SCALE := Vector2(0.40, 0.32838876)
 const DIGILAB_ROTATION_DEGREES := -2.00295
+const DIGILAB_BASE_Z := 880
+const DIGILAB_UPPER_OCCLUDER_Z := 1800
+const DIGILAB_UPPER_OCCLUDER_CUTOFF_Y := 700.0
 const DIGILAB_DOOR_PIXEL := Vector2(754.0, 1054.0)
 const DIGILAB_DOOR_CELL := Vector2i(8, 10)
-const DIGILAB_RETURN_CELL := Vector2i(9, 11)
+const DIGILAB_RETURN_CELL := Vector2i(10, 12)
 # Ground-contact footprint measured from the supplied source. The concave notch
 # follows the staircase/door opening, so the player can reach the threshold
 # while every visible ground-level wall remains solid.
@@ -175,7 +178,7 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 				return {"surface": CITY.SURFACE_GRASS_CHECKER, "walkable": true}
 			return {"surface": CITY.SURFACE_GRASS, "walkable": true}
 		"digilab":
-			return {"surface": CITY.SURFACE_TECH_TEAL, "walkable": true}
+			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 		"hospital":
 			return {"surface": CITY.SURFACE_TECH_BLUE, "walkable": true}
 		"training":
@@ -296,21 +299,30 @@ func _build_digilab_exterior() -> void:
 	add_child(exterior)
 
 	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
-	var sprite := Sprite2D.new()
-	sprite.name = "Building"
-	sprite.texture = DIGILAB_TEXTURE
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	sprite.scale = DIGILAB_SCALE
-	sprite.rotation_degrees = DIGILAB_ROTATION_DEGREES
-	var texture_center := DIGILAB_TEXTURE.get_size() * 0.5
-	var authored_door_offset := (
-		(DIGILAB_DOOR_PIXEL - texture_center) * DIGILAB_SCALE
-	).rotated(sprite.rotation)
-	sprite.position = door_world - authored_door_offset
-	# Match the actor depth convention to preserve natural occlusion. At the
-	# doorway itself the player stays one layer in front of the facade.
-	sprite.z_index = 999 + int(round(global_position.y + door_world.y))
+	var sprite := _create_digilab_sprite(
+		"Building",
+		door_world,
+		Rect2(),
+		DIGILAB_BASE_Z
+	)
 	exterior.add_child(sprite)
+
+	# One full-image sprite cannot represent a large isometric building correctly
+	# with a single Y-sort threshold: players at the lower-left exterior could be
+	# placed behind the whole PNG even though they were standing in front of the
+	# facade. Keep the full building below actors, then render only the genuinely
+	# upper/back portion as a dedicated occlusion layer.
+	var upper_region := Rect2(
+		Vector2.ZERO,
+		Vector2(float(DIGILAB_TEXTURE.get_width()), DIGILAB_UPPER_OCCLUDER_CUTOFF_Y)
+	)
+	var upper_occluder := _create_digilab_sprite(
+		"UpperOccluder",
+		door_world,
+		upper_region,
+		DIGILAB_UPPER_OCCLUDER_Z
+	)
+	exterior.add_child(upper_occluder)
 
 	var door_marker := Marker2D.new()
 	door_marker.name = "DoorAnchor"
@@ -333,6 +345,39 @@ func _build_digilab_exterior() -> void:
 		14.0
 	)
 	exterior.add_child(entrance)
+
+
+func _create_digilab_sprite(
+	node_name: String,
+	door_world: Vector2,
+	source_region: Rect2,
+	depth: int
+) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.name = node_name
+	sprite.texture = DIGILAB_TEXTURE
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.scale = DIGILAB_SCALE
+	sprite.rotation_degrees = DIGILAB_ROTATION_DEGREES
+	sprite.z_index = depth
+
+	var texture_center := DIGILAB_TEXTURE.get_size() * 0.5
+	var authored_door_offset := (
+		(DIGILAB_DOOR_PIXEL - texture_center) * DIGILAB_SCALE
+	).rotated(sprite.rotation)
+	var full_position := door_world - authored_door_offset
+
+	if source_region.size != Vector2.ZERO:
+		sprite.region_enabled = true
+		sprite.region_rect = source_region
+		var region_center := source_region.position + source_region.size * 0.5
+		var region_center_offset := (
+			(region_center - texture_center) * DIGILAB_SCALE
+		).rotated(sprite.rotation)
+		sprite.position = full_position + region_center_offset
+	else:
+		sprite.position = full_position
+	return sprite
 
 
 func _digilab_footprint(door_world: Vector2) -> PackedVector2Array:
