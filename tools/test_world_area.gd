@@ -24,7 +24,7 @@ func _ready() -> void:
 	assert(area.get_ground_tile_count() == 4341, "Central City octagonal island must omit only the authored corner void")
 	assert(
 		area.get_node_or_null("CityGround/Surface_main") != null,
-		"Central City must render 0087 as its primary high-resolution city surface"
+		"Central City must render 0072 as its primary high-resolution city surface"
 	)
 	assert(
 		area.get_node_or_null("CityGround/Surface_tech_teal") != null,
@@ -46,6 +46,43 @@ func _ready() -> void:
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the 64x32 safe plaza lane")
+
+	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
+	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
+	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
+	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
+	assert(
+		digilab_building.texture != null
+		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab.png",
+		"DigiLab exterior must use the project-supplied Tblack building asset"
+	)
+	var digilab_entrance := digilab_section.get_node_or_null("DigiLabExterior/DigiLabEntrance") as Area2D
+	assert(digilab_entrance != null, "DigiLab exterior must expose a doorway threshold")
+	var expected_door := digilab_section.grid_to_world(Vector2(8, 10))
+	assert(
+		digilab_entrance.position.is_equal_approx(expected_door),
+		"DigiLab teleport threshold must be anchored to the authored door position"
+	)
+	assert(
+		digilab_section.is_walkable_world_position(digilab_section.global_position + expected_door),
+		"DigiLab doorway must remain walkable"
+	)
+	assert(
+		not digilab_section.is_walkable_world_position(
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 5))
+		),
+		"DigiLab building footprint must block movement through the structure"
+	)
+	var digilab_payload = digilab_entrance.get_meta("interior_payload", {})
+	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
+	var digilab_return = (digilab_payload as Dictionary).get("return_position", [])
+	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(Vector2(9, 11))
+	assert(
+		digilab_return is Array
+		and digilab_return.size() >= 2
+		and Vector2(float(digilab_return[0]), float(digilab_return[1])).is_equal_approx(expected_return),
+		"DigiLab interior exit must return directly in front of the authored door"
+	)
 
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(-28, -28))),
