@@ -23,11 +23,11 @@ Small and medium interiors remain seamless. Service entrances keep the persisten
 
 `assets/resources/world/central_city.json` defines the 5×5 authoring grid used to compose the complete Central City scene: Central Plaza, DigiLab, Hospital, Training, Data Market, Archive, canals, gardens, residences and city gates.
 
-All 25 sections are present before `[World] READY`. Static ground is rendered as two batched `MeshInstance2D` surfaces per authoring section (base + atlas detail) instead of thousands of per-tile `Node2D/Polygon2D` objects. Area construction yields after small batches of sections behind the opaque loading screen, keeping the first frame responsive without artificially stretching loading across 25 frames. The exterior remains hidden and non-interactive until all sections are ready.
+All 25 sections are present before `[World] READY`. The complete 4,900-cell ground is rendered through one global batched sheet mesh instead of thousands of per-tile `Node2D/Polygon2D` objects. Area construction yields after small batches of sections behind the opaque loading screen, keeping the first frame responsive without artificially stretching loading across 25 frames. The exterior remains hidden and non-interactive until all sections are ready.
 
 Walking across section boundaries only changes district/title metadata; it never mutates the scene tree. This prevents mobile traversal from paying terrain construction/destruction costs and removes visible terrain pop-in.
 
-Central City uses the authored `MCBlocksColorOutline.png` atlas for urban surfaces, architecture and interior props. Roads, sidewalks and plazas are neutral/dark city materials; green is reserved for deliberate park plots. Establishment facades use neutral masonry with service-specific trim, windows and one exterior sign.
+For this visual test, Central City ground uses `assets/terrain/central_city_user_sheet/central_city_ground_atlas.png`, normalized from the project-owner supplied isometric sheet. Roads, crosswalks, sidewalks, plaza paving, grass, sand and canal water all come from that atlas. Architecture, roofs, service thresholds, interiors and props remain on `MCBlocksColorOutline.png`, so the ground experiment is isolated and can be discarded without touching gameplay systems.
 
 ## Adding a major area
 
@@ -40,7 +40,7 @@ The old prototype Hub is not the normal application entry point. Development bui
 
 ## Performance contract
 
-Central City treats authoring sections as data boundaries, never rendering boundaries. The 4,900 ground cells are batched into at most 75 ground-render nodes across the complete city, and the area regression enforces a 3,000-node runtime budget.
+Central City treats authoring sections as data boundaries, never rendering boundaries. The 4,900 ground cells stay inside one global ground batch with no more than three ground-render nodes, and the area regression keeps the world runtime below its existing node budget.
 
 Static world collision is represented by the authored walkability grid instead of duplicating every blocked cell into PhysicsServer shapes. Player clearance samples preserve collision margins; dynamic bodies and doorway Area2D triggers remain engine-native physics objects.
 
