@@ -23,7 +23,7 @@ Small and medium interiors remain seamless. Service entrances keep the persisten
 
 `assets/resources/world/central_city.json` defines the 5×5 authoring grid used to compose the complete Central City scene: Central Plaza, DigiLab, Hospital, Training, Data Market, Archive, canals, gardens, residences and city gates.
 
-All 25 sections are present before `[World] READY`. Area construction is staged one authored section per frame behind an opaque in-game loading screen, so slow mobile devices can present their first Godot frame immediately instead of leaving the browser download bar stuck at 100%. The exterior remains hidden and non-interactive until all sections are ready.
+All 25 sections are present before `[World] READY`. Static ground is rendered as two batched `MeshInstance2D` surfaces per authoring section (base + atlas detail) instead of thousands of per-tile `Node2D/Polygon2D` objects. Area construction yields after small batches of sections behind the opaque loading screen, keeping the first frame responsive without artificially stretching loading across 25 frames. The exterior remains hidden and non-interactive until all sections are ready.
 
 Walking across section boundaries only changes district/title metadata; it never mutates the scene tree. This prevents mobile traversal from paying terrain construction/destruction costs and removes visible terrain pop-in.
 
@@ -36,3 +36,16 @@ Add a dedicated area scene and its data file, register the data in `WorldAreaCat
 ## Developer Hub
 
 The old prototype Hub is not the normal application entry point. Development builds expose a **TEST HUB** action in the Developer Toolkit. Automated Web QA can use `?debug=1&test_hub=1`; the route is rejected when developer tools are unavailable.
+
+
+## Performance contract
+
+Central City treats authoring sections as data boundaries, never rendering boundaries. The 4,900 ground cells are batched into at most 75 ground-render nodes across the complete city, and the area regression enforces a 3,000-node runtime budget.
+
+Static world collision is represented by the authored walkability grid instead of duplicating every blocked cell into PhysicsServer shapes. Player clearance samples preserve collision margins; dynamic bodies and doorway Area2D triggers remain engine-native physics objects.
+
+Tree canopy sway is shader-driven. Leaf particles are only emitted in the player's nearby section neighborhood, managed by one area-level cadence rather than per-tree GDScript processing.
+
+World interaction candidates use a registry updated by SceneTree add/remove events and player movement instead of scanning the `world_interactable` group every frame.
+
+Area-title banners are reserved for major authored locations and explicit story events. Crossing an internal authoring section never displays a banner or forces an immediate save.

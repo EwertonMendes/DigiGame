@@ -54,10 +54,8 @@ var section_coord := Vector2i.ZERO
 
 var _player: Node2D = null
 var _world_controller: Node = null
-var _physics_root: StaticBody2D = null
 var _blocked_cells: Dictionary = {}
-var _trees: Array[Sprite2D] = []
-var _elapsed := 0.0
+var _leaf_particles: Array[CPUParticles2D] = []
 
 
 func configure(section_definition: Dictionary, player: Node2D, world_controller: Node) -> void:
@@ -69,12 +67,6 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
 	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
 	_build_section()
-
-
-func _process(delta: float) -> void:
-	_elapsed += delta
-	for tree: Sprite2D in _trees:
-		TreeAmbientFXScript.animate(tree, _elapsed)
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
@@ -100,42 +92,41 @@ func world_to_grid(world: Vector2) -> Vector2:
 
 
 func _build_section() -> void:
-	_physics_root = StaticBody2D.new()
-	_physics_root.name = "StaticCollision"
-	add_child(_physics_root)
 	_build_ground()
 	_build_street_detail()
 	_build_theme_content()
-	set_process(not _trees.is_empty())
 
 
 func _build_ground() -> void:
-	var ground := Node2D.new()
-	ground.name = "CityGround"
-	add_child(ground)
 	var theme := String(definition.get("theme", "residential"))
 	var center := int(SECTION_SIZE / 2)
+	var floor_tiles: Array[Dictionary] = []
 	for x in range(SECTION_SIZE):
 		for y in range(SECTION_SIZE):
 			var cell := Vector2i(x, y)
 			var presentation := _ground_presentation(cell, theme, center)
-			var foot := grid_to_world(Vector2(cell))
-			var tile := CITY.create_floor_tile(
-				presentation.get("cell", FLOOR_PAVEMENT) as Vector2i,
-				foot,
-				-1200 + int(round(global_position.y + foot.y)),
-				presentation.get("base_color", PAVEMENT_BASE) as Color,
-				Color.WHITE,
-				float(presentation.get("detail_alpha", 0.96))
-			)
-			ground.add_child(tile)
+			floor_tiles.append({
+				"cell": presentation.get("cell", FLOOR_PAVEMENT),
+				"position": grid_to_world(Vector2(cell)),
+				"base_color": presentation.get("base_color", PAVEMENT_BASE),
+				"detail_tint": Color.WHITE,
+				"detail_alpha": float(presentation.get("detail_alpha", 0.96)),
+			})
 			if not bool(presentation.get("walkable", true)):
 				_mark_blocked(cell)
-				_add_diamond_collision(cell)
+
+	var ground := CITY.create_floor_batch(floor_tiles, -1200, "CityGround")
+	ground.add_to_group("world_batched_ground")
+	add_child(ground)
 
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
-	var road := absi(cell.x - center) <= 1 or absi(cell.y - center) <= 1
+	# Roads are authored as continuous city avenues, not repeated crosses inside
+	# every 14x14 authoring section. This removes the checkerboard/chunk look.
+	var road := (
+		(section_coord.y == 0 and cell.y >= center - 1 and cell.y <= center + 1)
+		or (section_coord.x == 0 and cell.x >= center - 1 and cell.x <= center + 1)
+	)
 	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
 		return {
 			"cell": FLOOR_BLUE,
@@ -226,15 +217,15 @@ func _build_theme_content() -> void:
 		"plaza":
 			_build_plaza()
 		"digilab":
-			_build_service_exterior(Vector2i(1, 1), Vector2i(6, 6), Color(0.28, 0.88, 1.0), "DIGILAB", "digilab")
+			_build_service_exterior(Color(0.28, 0.88, 1.0), "DIGILAB", "digilab")
 		"hospital":
-			_build_service_exterior(Vector2i(1, 1), Vector2i(6, 6), Color(0.66, 0.96, 1.0), "DIGI HOSPITAL", "hospital")
+			_build_service_exterior(Color(0.66, 0.96, 1.0), "DIGI HOSPITAL", "hospital")
 		"training":
-			_build_service_exterior(Vector2i(1, 1), Vector2i(6, 6), Color(0.56, 0.95, 0.43), "TRAINING CENTER", "training")
+			_build_service_exterior(Color(0.56, 0.95, 0.43), "TRAINING CENTER", "training")
 		"market":
-			_build_service_exterior(Vector2i(1, 1), Vector2i(6, 6), Color(1.0, 0.78, 0.28), "DATA MARKET", "shop")
+			_build_service_exterior(Color(1.0, 0.78, 0.28), "DATA MARKET", "shop")
 		"archive":
-			_build_service_exterior(Vector2i(1, 1), Vector2i(6, 6), Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive")
+			_build_service_exterior(Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive")
 		"gate":
 			_build_gate()
 		"residential":
@@ -255,7 +246,6 @@ func _build_plaza() -> void:
 	)
 	props.add_child(core)
 	_mark_blocked(center)
-	_add_block_collision(center, 22.0)
 	_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
 
 
@@ -273,15 +263,27 @@ func _build_gate() -> void:
 			)
 			props.add_child(block)
 		_mark_blocked(cell)
-		_add_block_collision(cell, 23.0)
 
 
 func _build_residential_block() -> void:
-	_build_exterior_shell(Vector2i(1, 1), Vector2i(5, 5), Color(0.42, 0.72, 0.74), "ResidenceA", "", false, "residential")
-	_build_exterior_shell(Vector2i(9, 8), Vector2i(4, 4), Color(0.58, 0.60, 0.78), "ResidenceB", "", false, "residential")
+	# Continuous frontage along the north side leaves a coherent public space in
+	# front instead of scattering isolated cubes around the section.
+	_build_exterior_shell(Vector2i(1, 1), Vector2i(6, 5), Color(0.42, 0.72, 0.74), "ResidenceA", "", false, "residential", "south")
+	_build_exterior_shell(Vector2i(7, 1), Vector2i(5, 5), Color(0.58, 0.60, 0.78), "ResidenceB", "", false, "residential", "south")
 
 
-func _build_service_exterior(origin: Vector2i, size: Vector2i, accent: Color, title: String, service_id: String) -> void:
+func _build_service_exterior(accent: Color, title: String, service_id: String) -> void:
+	var origin := Vector2i(2, 1)
+	var size := Vector2i(8, 5)
+	var door_side := "south"
+	if service_id in ["training", "shop"]:
+		origin = Vector2i(1, 2)
+		size = Vector2i(5, 8)
+		door_side = "east"
+	elif service_id == "archive":
+		origin = Vector2i(2, 2)
+		size = Vector2i(8, 5)
+
 	var interior_id := "%s_%d_%d" % [service_id, section_coord.x, section_coord.y]
 	var exterior := _build_exterior_shell(
 		origin,
@@ -290,10 +292,11 @@ func _build_service_exterior(origin: Vector2i, size: Vector2i, accent: Color, ti
 		title.capitalize().replace(" ", ""),
 		title,
 		true,
-		service_id
+		service_id,
+		door_side
 	)
-	var door_cell: Vector2i = exterior.get("door_cell", origin + Vector2i(size.x - 1, int(size.y / 2)))
-	var approach_cell := door_cell + Vector2i(1, 0)
+	var door_cell: Vector2i = exterior.get("door_cell", origin)
+	var approach_cell := door_cell + (Vector2i(0, 1) if door_side == "south" else Vector2i(1, 0))
 
 	var entrance := Area2D.new()
 	entrance.name = "InteriorThreshold"
@@ -350,15 +353,20 @@ func _build_exterior_shell(
 	node_name: String,
 	title: String,
 	with_door: bool,
-	service_id: String
+	service_id: String,
+	door_side: String = "east"
 ) -> Dictionary:
 	var building := Node2D.new()
 	building.name = node_name
 	add_child(building)
 
-	var door_cell := origin + Vector2i(size.x - 1, int(size.y / 2))
+	var door_cell := (
+		origin + Vector2i(int(size.x / 2), size.y - 1)
+		if door_side == "south"
+		else origin + Vector2i(size.x - 1, int(size.y / 2))
+	)
 	var accent_block := _service_block_cell(service_id)
-	var wall_levels := 3 if with_door else 2
+	var wall_levels := 2
 	for x in range(size.x):
 		for y in range(size.y):
 			var boundary := x == 0 or y == 0 or x == size.x - 1 or y == size.y - 1
@@ -389,10 +397,9 @@ func _build_exterior_shell(
 				)
 				building.add_child(block)
 			_mark_blocked(cell)
-			_add_block_collision(cell, 21.5)
 
 	if with_door:
-		_add_service_windows(building, origin, size, service_id)
+		_add_service_windows(building, origin, size, service_id, door_side)
 		var door := CITY.create_prop(
 			DOOR_DARK,
 			grid_to_world(Vector2(door_cell)),
@@ -402,21 +409,25 @@ func _build_exterior_shell(
 		door.modulate = accent.lightened(0.12)
 		building.add_child(door)
 
-	# Dark neutral roof makes the building read as architecture. Accent is only
-	# used for one trim row, avoiding the previous giant colored roof.
+	# Roofs are static and never need one CanvasItem per tile. Batch the whole
+	# footprint into two meshes while retaining the authored atlas detail.
+	var roof_tiles: Array[Dictionary] = []
 	for x in range(size.x):
 		for y in range(size.y):
 			var roof_cell := origin + Vector2i(x, y)
-			var trim := y == size.y - 1 and x >= size.x - 3
-			var roof := CITY.create_floor_tile(
-				_service_floor_cell(service_id) if trim else FLOOR_ROAD,
-				grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * float(wall_levels)),
-				1580 + int(round(global_position.y + grid_to_world(Vector2(roof_cell)).y)),
-				Color(0.27, 0.29, 0.31, 1.0),
-				Color.WHITE,
-				0.64
+			var trim := (
+				(y == size.y - 1 and door_side == "south" and absi(x - int(size.x / 2)) <= 1)
+				or (x == size.x - 1 and door_side == "east" and absi(y - int(size.y / 2)) <= 1)
 			)
-			building.add_child(roof)
+			roof_tiles.append({
+				"cell": _service_floor_cell(service_id) if trim else FLOOR_ROAD,
+				"position": grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * float(wall_levels)),
+				"base_color": Color(0.27, 0.29, 0.31, 1.0),
+				"detail_tint": Color.WHITE,
+				"detail_alpha": 0.64,
+			})
+	var roof_depth := 1700 + int(round(global_position.y + grid_to_world(Vector2(door_cell)).y))
+	building.add_child(CITY.create_floor_batch(roof_tiles, roof_depth, "Roof"))
 
 	if not title.is_empty():
 		var sign := Label.new()
@@ -438,29 +449,43 @@ func _add_service_windows(
 	parent: Node2D,
 	origin: Vector2i,
 	size: Vector2i,
-	service_id: String
+	service_id: String,
+	door_side: String
 ) -> void:
 	var pane_cell := _service_window_cell(service_id)
-	var door_y := int(size.y / 2)
-	for local_y in range(1, size.y - 1):
-		if local_y == door_y:
-			continue
-		var cell := origin + Vector2i(size.x - 1, local_y)
+	var facade_cells: Array[Vector2i] = []
+	var door_cell := Vector2i.ZERO
+	if door_side == "south":
+		var door_x := int(size.x / 2)
+		door_cell = origin + Vector2i(door_x, size.y - 1)
+		for local_x in range(1, size.x - 1):
+			if local_x != door_x:
+				facade_cells.append(origin + Vector2i(local_x, size.y - 1))
+	else:
+		var door_y := int(size.y / 2)
+		door_cell = origin + Vector2i(size.x - 1, door_y)
+		for local_y in range(1, size.y - 1):
+			if local_y != door_y:
+				facade_cells.append(origin + Vector2i(size.x - 1, local_y))
+
+	for cell: Vector2i in facade_cells:
 		var foot := grid_to_world(Vector2(cell))
-		for story in range(2):
-			var pane := CITY.create_prop(
-				pane_cell,
-				foot,
-				1480 + int(round(global_position.y + foot.y)) + story,
-				Vector2(1.45, 1.45),
-				Color.WHITE,
-				Vector2(0.0, -34.0 - 31.0 * float(story))
-			)
-			parent.add_child(pane)
+		var pane := CITY.create_prop(
+			pane_cell,
+			foot,
+			1480 + int(round(global_position.y + foot.y)),
+			Vector2(1.48, 1.48),
+			Color.WHITE,
+			Vector2(0.0, -38.0)
+		)
+		parent.add_child(pane)
 
 	# A short accent canopy marks the doorway as an actual public entrance.
-	var door_cell := origin + Vector2i(size.x - 1, door_y)
-	var canopy_offsets: Array[Vector2i] = [Vector2i.ZERO, Vector2i(1, 0)]
+	var canopy_offsets: Array[Vector2i] = (
+		[Vector2i.ZERO, Vector2i(1, 0)]
+		if door_side == "south"
+		else [Vector2i.ZERO, Vector2i(0, 1)]
+	)
 	for canopy_offset: Vector2i in canopy_offsets:
 		var canopy_cell: Vector2i = door_cell + canopy_offset
 		var canopy := CITY.create_floor_tile(
@@ -567,12 +592,13 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 		tree,
 		float(index) * 1.37 + float(section_coord.x * 3 + section_coord.y),
 		2.8,
-		7,
+		4,
 		Color(0.62, 0.91, 0.39, 0.72)
 	)
-	_trees.append(tree)
+	var leaves := tree.get_node_or_null("AmbientLeaves") as CPUParticles2D
+	if leaves != null:
+		_leaf_particles.append(leaves)
 	_mark_blocked(cell)
-	_add_circle_collision(foot, 23.0)
 
 
 func _add_atlas_prop(
@@ -592,32 +618,21 @@ func _add_atlas_prop(
 	parent.add_child(prop)
 	if blocking:
 		_mark_blocked(cell)
-		_add_circle_collision(foot, 13.0)
 
 
-func _add_diamond_collision(cell: Vector2i) -> void:
-	var polygon := CollisionPolygon2D.new()
-	polygon.position = grid_to_world(Vector2(cell))
-	polygon.polygon = PackedVector2Array([
-		Vector2(-28.0, 0.0),
-		Vector2(0.0, -13.0),
-		Vector2(28.0, 0.0),
-		Vector2(0.0, 13.0),
-	])
-	_physics_root.add_child(polygon)
+func set_ambient_vfx_active(active: bool) -> void:
+	for leaves: CPUParticles2D in _leaf_particles:
+		if leaves == null or not is_instance_valid(leaves):
+			continue
+		leaves.visible = active
+		leaves.emitting = active
 
 
-func _add_block_collision(cell: Vector2i, radius: float) -> void:
-	_add_circle_collision(grid_to_world(Vector2(cell)), radius)
-
-
-func _add_circle_collision(local_position: Vector2, radius: float) -> void:
-	var shape_node := CollisionShape2D.new()
-	var shape := CircleShape2D.new()
-	shape.radius = radius
-	shape_node.shape = shape
-	shape_node.position = local_position + Vector2(0.0, -10.0)
-	_physics_root.add_child(shape_node)
+func get_ground_render_node_count() -> int:
+	var ground := get_node_or_null("CityGround")
+	if ground == null:
+		return 0
+	return 1 + ground.get_child_count()
 
 
 func _mark_blocked(cell: Vector2i) -> void:

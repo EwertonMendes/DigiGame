@@ -10,6 +10,7 @@ const CENTRAL_CITY_AREA_SCENE = preload("res://scenes/world/central_city_area.ts
 const InteractionScript = preload("res://src/world/runtime/InteractionSystem.gd")
 const ServiceHostScript = preload("res://src/world/runtime/WorldServiceHost.gd")
 const InteriorManagerScript = preload("res://src/world/runtime/WorldInteriorManager.gd")
+const PerformanceMonitorScript = preload("res://src/world/runtime/WorldPerformanceMonitor.gd")
 const PromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
 const AreaTitleScript = preload("res://src/ui/AreaTitleOverlay.gd")
 const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
@@ -23,6 +24,14 @@ const AREA_ID := "central_city"
 const TEST_HUB_SCENE := "res://scenes/world/hub.tscn"
 const AUTO_SAVE_SECONDS := 5.0
 const SAFE_CITY_SPAWN := Vector2(-96.0, 272.0)
+const ACTOR_CLEARANCE := 7.0
+const CLEARANCE_SAMPLES: Array[Vector2] = [
+	Vector2.ZERO,
+	Vector2(ACTOR_CLEARANCE, 0.0),
+	Vector2(-ACTOR_CLEARANCE, 0.0),
+	Vector2(0.0, ACTOR_CLEARANCE),
+	Vector2(0.0, -ACTOR_CLEARANCE),
+]
 
 var _area_definition: Dictionary = {}
 var _player: OverworldActor = null
@@ -33,6 +42,7 @@ var _services: WorldServiceHost = null
 var _interior_manager: WorldInteriorManager = null
 var _world_camera: Camera2D = null
 var _followers: WorldPartyFollowers = null
+var _performance_monitor: WorldPerformanceMonitor = null
 var _prompt: DigiInteractionPrompt = null
 var _area_title: AreaTitleOverlay = null
 var _mobile_root: Control = null
@@ -107,10 +117,10 @@ func _ready() -> void:
 
 	_interaction = InteractionScript.new() as InteractionSystem
 	_interaction.name = "InteractionSystem"
-	_interaction.configure(_player)
+	add_child(_interaction)
 	_interaction.candidate_changed.connect(_on_interaction_candidate_changed)
 	_interaction.interaction_requested.connect(_on_interaction_requested)
-	add_child(_interaction)
+	_interaction.configure(_player)
 
 	_services = ServiceHostScript.new() as WorldServiceHost
 	_services.name = "WorldServiceHost"
@@ -125,6 +135,10 @@ func _ready() -> void:
 	_interior_manager.interior_state_changed.connect(_on_interior_state_changed)
 
 	_build_world_ui()
+	_performance_monitor = PerformanceMonitorScript.new() as WorldPerformanceMonitor
+	_performance_monitor.name = "WorldPerformanceMonitor"
+	add_child(_performance_monitor)
+	_performance_monitor.configure(_area_scene)
 	MusicDirector.play_zone_1()
 	_player.visible = true
 	_player.movement_enabled = true
@@ -203,7 +217,12 @@ func can_actor_move_to(candidate: Vector2, _actor: Node) -> bool:
 		return false
 	if _interior_manager != null and _interior_manager.is_active():
 		return _interior_manager.can_move_to(candidate)
-	return _area_scene == null or _area_scene.is_walkable_world_position(candidate)
+	if _area_scene == null:
+		return true
+	for sample: Vector2 in CLEARANCE_SAMPLES:
+		if not _area_scene.is_walkable_world_position(candidate + sample):
+			return false
+	return true
 
 
 func is_world_ready() -> bool:
@@ -514,24 +533,7 @@ func _on_player_moved(world_position: Vector2) -> void:
 		)
 		if next_section != _current_section:
 			_current_section = next_section
-			_on_section_changed(_current_section)
-
-
-func _on_section_changed(section: Vector2i) -> void:
-	if _player == null or _area_scene == null:
-		return
-	WorldState.capture_location(REGION_ID, AREA_ID, section, _player.global_position, _player.facing_direction)
-	_movement_dirty = false
-	_save_elapsed = 0.0
-	OverworldState.save_progress()
-	var section_definition := _area_scene.get_section_definition(section)
-	if not section_definition.is_empty() and _area_title != null:
-		_area_title.present(
-			String(section_definition.get("title", "Central City")),
-			String(section_definition.get("subtitle", "")),
-			1.15
-		)
-	print("[World] SECTION %s" % str(section))
+			print("[World] SECTION %s" % str(_current_section))
 
 
 func _on_interaction_candidate_changed(action_text: String) -> void:
@@ -589,7 +591,13 @@ func _on_interior_state_changed(active: bool, title: String) -> void:
 	else:
 		if _area_scene != null and _player != null:
 			_current_section = _area_scene.world_to_section(_player.global_position)
-			_on_section_changed(_current_section)
+			WorldState.capture_location(
+				REGION_ID,
+				AREA_ID,
+				_current_section,
+				_player.global_position,
+				_player.facing_direction
+			)
 		OverworldState.save_progress()
 	_layout_ui()
 
@@ -689,13 +697,19 @@ func _is_interact_event(event: InputEvent) -> bool:
 	return false
 
 
-func _announce_area() -> void:
+func present_area_banner(title: String, subtitle: String = "", duration: float = 1.7) -> void:
 	if _area_title != null:
-		_area_title.present(
-			String(_area_definition.get("display_name", "Central City")),
-			String(_area_definition.get("subtitle", "Recovery District")),
-			1.7
-		)
+		_area_title.present(title, subtitle, duration)
+
+
+func _announce_area() -> void:
+	# Area banners are explicit major-location events. Authoring sections are
+	# invisible implementation metadata and never trigger this overlay.
+	present_area_banner(
+		String(_area_definition.get("display_name", "Central City")),
+		String(_area_definition.get("subtitle", "Recovery District")),
+		1.7
+	)
 
 
 func _persist_world_location() -> void:

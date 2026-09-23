@@ -17,6 +17,14 @@ func _ready() -> void:
 	assert(saw_partial_area, "Area construction must yield across frames instead of blocking the first frame")
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
+	assert(
+		area.get_ground_render_node_count() <= 75,
+		"Central City ground must stay batched instead of recreating per-tile CanvasItems"
+	)
+	assert(
+		area.get_runtime_node_count() < 3000,
+		"Central City runtime node budget must remain below 3000 nodes"
+	)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the safe plaza lane")

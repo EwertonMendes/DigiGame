@@ -7,12 +7,17 @@ signal load_finished
 
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
 const SECTION_SIZE := 14
+const BUILD_SECTIONS_PER_FRAME := 5
+const AMBIENT_VFX_UPDATE_SECONDS := 0.35
+const AMBIENT_VFX_SECTION_RADIUS := 1
 
 var _player: Node2D = null
 var _world_controller: Node = null
 var _definitions: Dictionary = {}
 var _sections: Dictionary = {}
 var _exterior_active := true
+var _ambient_elapsed := 0.0
+var _last_ambient_section := Vector2i(999999, 999999)
 
 
 func configure(area_definition: Dictionary, player: Node2D, world_controller: Node) -> bool:
@@ -59,15 +64,30 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		_sections[key] = instance
 		completed += 1
 		load_progress.emit(completed, total)
-		if completed < total:
+		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
 			await get_tree().process_frame
 
 	_exterior_active = true
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
+	_update_ambient_vfx(true)
 	load_finished.emit()
-	print("[WorldArea] READY sections=%d" % _sections.size())
+	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d" % [
+		_sections.size(),
+		get_runtime_node_count(),
+		get_ground_render_node_count(),
+	])
 	return completed == total
+
+
+func _process(delta: float) -> void:
+	if not _exterior_active or _player == null:
+		return
+	_ambient_elapsed += delta
+	if _ambient_elapsed < AMBIENT_VFX_UPDATE_SECONDS:
+		return
+	_ambient_elapsed = 0.0
+	_update_ambient_vfx(false)
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
@@ -97,6 +117,18 @@ func get_section_count() -> int:
 	return _sections.size()
 
 
+func get_runtime_node_count() -> int:
+	return _count_nodes(self) - 1
+
+
+func get_ground_render_node_count() -> int:
+	var total := 0
+	for raw_section in _sections.values():
+		if raw_section is WorldAreaSection:
+			total += (raw_section as WorldAreaSection).get_ground_render_node_count()
+	return total
+
+
 func get_section_definition(coord: Vector2i) -> Dictionary:
 	var raw = _definitions.get(_coord_key(coord), {})
 	return (raw as Dictionary).duplicate(true) if raw is Dictionary else {}
@@ -110,6 +142,32 @@ func set_exterior_active(active: bool) -> void:
 
 func is_exterior_active() -> bool:
 	return _exterior_active
+
+
+func _update_ambient_vfx(force: bool) -> void:
+	if _player == null:
+		return
+	var player_section := world_to_section(_player.global_position)
+	if not force and player_section == _last_ambient_section:
+		return
+	_last_ambient_section = player_section
+	for key in _sections:
+		var raw_section = _sections[key]
+		if not raw_section is WorldAreaSection:
+			continue
+		var section := raw_section as WorldAreaSection
+		var distance := maxi(
+			absi(section.section_coord.x - player_section.x),
+			absi(section.section_coord.y - player_section.y)
+		)
+		section.set_ambient_vfx_active(distance <= AMBIENT_VFX_SECTION_RADIUS)
+
+
+func _count_nodes(node: Node) -> int:
+	var total := 1
+	for child in node.get_children():
+		total += _count_nodes(child)
+	return total
 
 
 func _coord_key(coord: Vector2i) -> String:

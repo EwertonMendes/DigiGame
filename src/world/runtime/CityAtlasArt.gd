@@ -84,6 +84,90 @@ static func create_floor_tile(
 	return root
 
 
+static func create_floor_batch(
+	tiles: Array[Dictionary],
+	depth_order: int,
+	node_name: String = "FloorBatch"
+) -> Node2D:
+	var root := Node2D.new()
+	root.name = node_name
+	root.z_index = clampi(depth_order, -4000, 4000)
+	if tiles.is_empty():
+		return root
+
+	var base := MeshInstance2D.new()
+	base.name = "BaseMesh"
+	base.mesh = _build_floor_mesh(tiles, false)
+	base.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	root.add_child(base)
+
+	var detail := MeshInstance2D.new()
+	detail.name = "DetailMesh"
+	detail.mesh = _build_floor_mesh(tiles, true)
+	detail.texture = ATLAS
+	detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	detail.z_index = 1
+	root.add_child(detail)
+	return root
+
+
+static func _build_floor_mesh(tiles: Array[Dictionary], textured: bool) -> ArrayMesh:
+	var vertices := PackedVector2Array()
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+	var texture_size := Vector2(maxf(1.0, float(ATLAS.get_width())), maxf(1.0, float(ATLAS.get_height())))
+	var diamond := tile_diamond(Vector2.ZERO if textured else FLOOR_OVERSCAN)
+
+	for spec: Dictionary in tiles:
+		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var vertex_start := vertices.size()
+		for point: Vector2 in diamond:
+			vertices.append(center + point)
+
+		if textured:
+			var atlas_cell: Vector2i = spec.get("cell", Vector2i.ZERO)
+			var cell_origin := Vector2(float(atlas_cell.x) * CELL_SIZE, float(atlas_cell.y) * CELL_SIZE)
+			var pixel_uvs := PackedVector2Array([
+				cell_origin + FLOOR_LEFT,
+				cell_origin + FLOOR_TOP,
+				cell_origin + FLOOR_RIGHT,
+				cell_origin + FLOOR_BOTTOM,
+			])
+			for pixel_uv: Vector2 in pixel_uvs:
+				uvs.append(Vector2(pixel_uv.x / texture_size.x, pixel_uv.y / texture_size.y))
+			var detail_tint: Color = spec.get("detail_tint", Color.WHITE)
+			var detail_alpha := clampf(float(spec.get("detail_alpha", 1.0)), 0.0, 1.0)
+			var detail_color := Color(detail_tint.r, detail_tint.g, detail_tint.b, detail_alpha)
+			for _index in range(4):
+				colors.append(detail_color)
+		else:
+			var base_color: Color = spec.get("base_color", Color.WHITE)
+			for _index in range(4):
+				colors.append(base_color)
+
+		indices.append_array(PackedInt32Array([
+			vertex_start,
+			vertex_start + 1,
+			vertex_start + 2,
+			vertex_start,
+			vertex_start + 2,
+			vertex_start + 3,
+		]))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	if textured:
+		arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
 static func create_block(
 	cell: Vector2i,
 	top_center: Vector2,
