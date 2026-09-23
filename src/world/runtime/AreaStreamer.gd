@@ -115,7 +115,14 @@ func world_to_chunk(world_position: Vector2) -> Vector2i:
 		world_position.x / 64.0 + world_position.y / 32.0,
 		-world_position.x / 64.0 + world_position.y / 32.0
 	)
-	return Vector2i(floori(grid.x / float(CHUNK_SIZE)), floori(grid.y / float(CHUNK_SIZE)))
+	# Chunk tiles are authored around integer grid centers (0..13). Their
+	# physical ownership therefore spans -0.5..13.5, not 0..14. Keep chunk
+	# ownership aligned with WorldChunk's nearest-cell lookup so movement can
+	# cross a seam without hitting an artificial half-tile wall.
+	return Vector2i(
+		floori((grid.x + 0.5) / float(CHUNK_SIZE)),
+		floori((grid.y + 0.5) / float(CHUNK_SIZE))
+	)
 
 
 func _prime_active_ring(center: Vector2i) -> void:
