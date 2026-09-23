@@ -7,6 +7,7 @@ const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
+const DIGILAB_TEXTURE = preload("res://assets/world/tblack/digilab.png")
 
 const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
@@ -15,6 +16,12 @@ const CITY_CENTER_GLOBAL := Vector2i(7, 7)
 const CITY_SHAPE_MANHATTAN_RADIUS := 54
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
+const DIGILAB_SCALE := Vector2(0.40, 0.40)
+const DIGILAB_DOOR_PIXEL := Vector2(754.0, 1054.0)
+const DIGILAB_DOOR_CELL := Vector2i(8, 10)
+const DIGILAB_RETURN_CELL := Vector2i(9, 11)
+const DIGILAB_FOOTPRINT_MIN := Vector2i(1, 1)
+const DIGILAB_FOOTPRINT_MAX := Vector2i(11, 9)
 
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
@@ -123,10 +130,14 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 	if _is_block_sidewalk(cell):
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
-	# Service districts have a deliberate paved cross through the middle. This
-	# produces four readable future establishment lots and gives the temporary
-	# service pad an obvious pedestrian route from every surrounding sidewalk.
-	if _is_service_district(theme) and _is_service_walkway(cell):
+	# DigiLab now has a real exterior. Keep its structure on the teal lot and
+	# reserve a paved 0054 forecourt directly in front of the authored door.
+	if theme == "digilab" and _is_digilab_pavement(cell):
+		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+
+	# The remaining service districts still use the temporary paved cross until
+	# their dedicated exterior art is authored.
+	if theme != "digilab" and _is_service_district(theme) and _is_service_walkway(cell):
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
 	match theme:
@@ -175,6 +186,12 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 
 func _is_block_sidewalk(cell: Vector2i) -> bool:
 	return cell.x in [0, SECTION_SIZE - 1] or cell.y in [0, SECTION_SIZE - 1]
+
+
+func _is_digilab_pavement(cell: Vector2i) -> bool:
+	if cell.y in [10, 11] and cell.x >= 5 and cell.x <= 11:
+		return true
+	return cell in [Vector2i(9, 11), Vector2i(10, 12), Vector2i(11, 13)]
 
 
 func _is_service_district(theme: String) -> bool:
@@ -236,7 +253,7 @@ func _build_theme_content() -> void:
 		"plaza":
 			_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
 		"digilab":
-			_build_service_pad(Color(0.28, 0.88, 1.0), "DIGILAB", "digilab", CITY.SURFACE_TECH_TEAL)
+			_build_digilab_exterior()
 		"hospital":
 			_build_service_pad(Color(0.66, 0.96, 1.0), "DIGI HOSPITAL", "hospital", CITY.SURFACE_TECH_BLUE)
 		"training":
@@ -247,21 +264,67 @@ func _build_theme_content() -> void:
 			_build_service_pad(Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive", CITY.SURFACE_TECH_PURPLE)
 
 
+func _build_digilab_exterior() -> void:
+	if not _is_city_land(DIGILAB_DOOR_CELL):
+		return
+
+	var exterior := Node2D.new()
+	exterior.name = "DigiLabExterior"
+	add_child(exterior)
+
+	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
+	var sprite := Sprite2D.new()
+	sprite.name = "Building"
+	sprite.texture = DIGILAB_TEXTURE
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.scale = DIGILAB_SCALE
+	var texture_center := DIGILAB_TEXTURE.get_size() * 0.5
+	var authored_door_offset := (DIGILAB_DOOR_PIXEL - texture_center) * DIGILAB_SCALE
+	sprite.position = door_world - authored_door_offset
+	# Match the actor depth convention to preserve natural occlusion. At the
+	# doorway itself the player stays one layer in front of the facade.
+	sprite.z_index = 999 + int(round(global_position.y + door_world.y))
+	exterior.add_child(sprite)
+
+	var door_marker := Marker2D.new()
+	door_marker.name = "DoorAnchor"
+	door_marker.position = door_world
+	exterior.add_child(door_marker)
+
+	# The visible structure occupies the lot above the 0054 forecourt. Logical
+	# cell blocking keeps actors from walking through the building while the
+	# door and its approach remain open.
+	for x in range(DIGILAB_FOOTPRINT_MIN.x, DIGILAB_FOOTPRINT_MAX.x + 1):
+		for y in range(DIGILAB_FOOTPRINT_MIN.y, DIGILAB_FOOTPRINT_MAX.y + 1):
+			_mark_blocked(Vector2i(x, y))
+
+	var entrance := _create_service_threshold(
+		"DigiLabEntrance",
+		"digilab",
+		"DIGILAB",
+		Color(0.28, 0.88, 1.0),
+		DIGILAB_DOOR_CELL,
+		DIGILAB_RETURN_CELL,
+		14.0
+	)
+	exterior.add_child(entrance)
+
+
 func _build_service_pad(accent: Color, title: String, service_id: String, surface: String) -> void:
 	var pad_cell := Vector2i(7, 7)
 	if not _is_city_land(pad_cell):
 		return
 	var approach_cell := pad_cell + Vector2i(1, 0)
-	var interior_id := "%s_%d_%d" % [service_id, section_coord.x, section_coord.y]
 
-	var entrance := Area2D.new()
-	entrance.name = "%sPad" % title.capitalize().replace(" ", "")
-	entrance.add_to_group("world_interior_threshold")
-	entrance.position = grid_to_world(Vector2(pad_cell))
-	entrance.collision_layer = 0
-	entrance.collision_mask = 1
-	entrance.monitoring = true
-	entrance.monitorable = false
+	var entrance := _create_service_threshold(
+		"%sPad" % title.capitalize().replace(" ", ""),
+		service_id,
+		title,
+		accent,
+		pad_cell,
+		approach_cell,
+		17.0
+	)
 	add_child(entrance)
 
 	var pad := CITY.create_surface_tile(surface, Vector2.ZERO, 0, 1.0)
@@ -280,14 +343,34 @@ func _build_service_pad(accent: Color, title: String, service_id: String, surfac
 	label.z_index = 4
 	entrance.add_child(label)
 
+
+func _create_service_threshold(
+	node_name: String,
+	service_id: String,
+	title: String,
+	accent: Color,
+	cell: Vector2i,
+	return_cell: Vector2i,
+	radius: float
+) -> Area2D:
+	var entrance := Area2D.new()
+	entrance.name = node_name
+	entrance.add_to_group("world_interior_threshold")
+	entrance.position = grid_to_world(Vector2(cell))
+	entrance.collision_layer = 0
+	entrance.collision_mask = 1
+	entrance.monitoring = true
+	entrance.monitorable = false
+
 	var threshold_shape := CollisionShape2D.new()
 	var threshold_circle := CircleShape2D.new()
-	threshold_circle.radius = 17.0
+	threshold_circle.radius = radius
 	threshold_shape.shape = threshold_circle
-	threshold_shape.position = Vector2(0.0, -8.0)
+	threshold_shape.position = Vector2(0.0, -6.0)
 	entrance.add_child(threshold_shape)
 
-	var return_world := global_position + grid_to_world(Vector2(approach_cell))
+	var return_world := global_position + grid_to_world(Vector2(return_cell))
+	var interior_id := "%s_%d_%d" % [service_id, section_coord.x, section_coord.y]
 	entrance.set_meta("interior_payload", {
 		"interior_id": interior_id,
 		"service": service_id,
@@ -296,6 +379,7 @@ func _build_service_pad(accent: Color, title: String, service_id: String, surfac
 		"return_position": [return_world.x, return_world.y],
 	})
 	entrance.body_entered.connect(_on_interior_threshold_entered.bind(entrance))
+	return entrance
 
 
 func _on_interior_threshold_entered(body: Node2D, entrance: Area2D) -> void:
