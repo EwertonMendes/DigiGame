@@ -108,6 +108,7 @@ jobs:
           path: |
             build/world-smoke.png
             build/world-movement.png
+            build/world-interior-*.png
             build/web-smoke.png
             build/desktop-*.png
             build/hub-battle-dialog*.png
