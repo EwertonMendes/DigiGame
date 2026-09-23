@@ -99,21 +99,24 @@ static func kind(asset_name: String) -> String:
 
 
 static func footprint(asset_name: String) -> Vector2i:
-	return spec(asset_name).get("footprint", Vector2i.ONE) as Vector2i
+	var value = spec(asset_name).get("footprint", Vector2i.ONE)
+	return Vector2i(value)
 
 
 static func anchor(asset_name: String) -> Vector2:
-	return spec(asset_name).get("anchor", Vector2(0.5, 0.5)) as Vector2
+	var value = spec(asset_name).get("anchor", Vector2(0.5, 0.5))
+	return Vector2(value)
 
 
 static func collision_footprint(asset_name: String) -> Vector2i:
-	return spec(asset_name).get("collision", Vector2i.ZERO) as Vector2i
+	var value = spec(asset_name).get("collision", Vector2i.ZERO)
+	return Vector2i(value)
 
 
 static func logical_visual_width(asset_name: String) -> float:
 	var asset_spec := spec(asset_name)
 	if String(asset_spec.get("kind", "")) == "ground":
-		var ground_footprint: Vector2i = asset_spec.get("footprint", Vector2i.ONE)
+		var ground_footprint := Vector2i(asset_spec.get("footprint", Vector2i.ONE))
 		return maxf(1.0, float(ground_footprint.x) * TILE_WIDTH)
 	return maxf(1.0, float(asset_spec.get("visual_width_cells", 1.0)) * TILE_WIDTH)
 
