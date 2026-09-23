@@ -13,12 +13,30 @@ const BLOCK_SCALE := Vector2(2.0, 2.0)
 const BLOCK_TOP_CENTER_OFFSET := Vector2(0.0, 12.0)
 const BLOCK_LEVEL_HEIGHT := 32.0
 
+# Central City walls use a slightly oversized presentation of the same MC
+# Blocks cells. The source sprites include transparent breathing room around
+# each cube; at the original scale this reads as detached blocks. A small,
+# uniform overscale closes that authored padding without changing the grid,
+# collision footprint or atlas source.
+const JOINED_BLOCK_SCALE := Vector2(2.18, 2.18)
+const JOINED_BLOCK_TOP_CENTER_OFFSET := Vector2(0.0, 13.1)
+const JOINED_BLOCK_LEVEL_HEIGHT := 30.0
+
 # Every flat-floor icon in row 16 shares this authored diamond footprint
 # inside its 32x32 atlas cell.
 const FLOOR_LEFT := Vector2(4.0, 21.0)
 const FLOOR_TOP := Vector2(16.0, 14.0)
 const FLOOR_RIGHT := Vector2(28.0, 21.0)
 const FLOOR_BOTTOM := Vector2(16.0, 28.0)
+
+# The floor art itself has a dark one-to-two-pixel outline. Sampling slightly
+# inside that authored diamond removes the outline while preserving the actual
+# MC Blocks material/detail. The inner sample is stretched back over the exact
+# 64x32 world diamond, so neighboring tiles meet with no visible gap.
+const FLOOR_SAMPLE_LEFT := Vector2(6.0, 21.0)
+const FLOOR_SAMPLE_TOP := Vector2(16.0, 16.0)
+const FLOOR_SAMPLE_RIGHT := Vector2(26.0, 21.0)
+const FLOOR_SAMPLE_BOTTOM := Vector2(16.0, 26.0)
 
 
 static func tile_diamond(overscan := Vector2.ZERO) -> PackedVector2Array:
@@ -69,12 +87,12 @@ static func create_floor_tile(
 		detail.polygon = tile_diamond()
 		detail.texture = ATLAS
 		detail.uv = PackedVector2Array([
-			cell_origin + FLOOR_LEFT,
-			cell_origin + FLOOR_TOP,
-			cell_origin + FLOOR_RIGHT,
-			cell_origin + FLOOR_BOTTOM,
+			cell_origin + FLOOR_SAMPLE_LEFT,
+			cell_origin + FLOOR_SAMPLE_TOP,
+			cell_origin + FLOOR_SAMPLE_RIGHT,
+			cell_origin + FLOOR_SAMPLE_BOTTOM,
 		])
-		detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		detail.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		detail.color = Color(
 			detail_tint.r,
 			detail_tint.g,
@@ -113,7 +131,7 @@ static func create_floor_batch(
 		detail.name = "DetailMesh"
 		detail.mesh = _build_floor_mesh(tiles, true)
 		detail.texture = ATLAS
-		detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		detail.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		detail.z_index = 1
 		root.add_child(detail)
 	return root
@@ -137,10 +155,10 @@ static func _build_floor_mesh(tiles: Array[Dictionary], textured: bool) -> Array
 			var atlas_cell: Vector2i = spec.get("cell", Vector2i.ZERO)
 			var cell_origin := Vector2(float(atlas_cell.x) * CELL_SIZE, float(atlas_cell.y) * CELL_SIZE)
 			var pixel_uvs := PackedVector2Array([
-				cell_origin + FLOOR_LEFT,
-				cell_origin + FLOOR_TOP,
-				cell_origin + FLOOR_RIGHT,
-				cell_origin + FLOOR_BOTTOM,
+				cell_origin + FLOOR_SAMPLE_LEFT,
+				cell_origin + FLOOR_SAMPLE_TOP,
+				cell_origin + FLOOR_SAMPLE_RIGHT,
+				cell_origin + FLOOR_SAMPLE_BOTTOM,
 			])
 			for pixel_uv: Vector2 in pixel_uvs:
 				uvs.append(Vector2(pixel_uv.x / texture_size.x, pixel_uv.y / texture_size.y))
@@ -188,6 +206,30 @@ static func create_block(
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.scale = BLOCK_SCALE
 	sprite.position = top_center + BLOCK_TOP_CENTER_OFFSET - Vector2(0.0, float(level) * BLOCK_LEVEL_HEIGHT)
+	sprite.z_index = clampi(depth_order + level, -4000, 4000)
+	sprite.modulate = tint
+	return sprite
+
+
+static func create_joined_block(
+	cell: Vector2i,
+	top_center: Vector2,
+	depth_order: int,
+	level: int = 0,
+	tint: Color = Color.WHITE
+) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.texture = atlas_texture(cell)
+	# Linear filtering is intentional only for the larger Central City wall
+	# modules. It softens the doubled pixel stair-stepping without replacing the
+	# MC Blocks artwork or changing its authored silhouette.
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.scale = JOINED_BLOCK_SCALE
+	sprite.position = (
+		top_center
+		+ JOINED_BLOCK_TOP_CENTER_OFFSET
+		- Vector2(0.0, float(level) * JOINED_BLOCK_LEVEL_HEIGHT)
+	)
 	sprite.z_index = clampi(depth_order + level, -4000, 4000)
 	sprite.modulate = tint
 	return sprite
