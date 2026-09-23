@@ -27,6 +27,14 @@ func _ready() -> void:
 		"Central City runtime node budget must remain below 3000 nodes"
 	)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
+	assert(
+		get_tree().get_nodes_in_group("central_city_custom_asset").size() >= 24,
+		"Central City must render its authored Tblack city asset kit"
+	)
+	assert(
+		get_tree().get_nodes_in_group("central_city_tree_occluder").size() >= 2,
+		"Central City must expose custom tree occluders for player visibility"
+	)
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the safe plaza lane")
 

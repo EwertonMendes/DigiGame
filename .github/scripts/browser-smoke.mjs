@@ -66,6 +66,7 @@ async function waitForCanvas(page) {
 async function openWorld(page) {
   const loadingVisible = waitForConsole(page, '[World] AREA_LOAD_VISIBLE', 15000);
   const externalCity = waitForConsole(page, '[ExternalCity] READY available=true', 60000);
+  const customCity = waitForConsole(page, '[CentralCityCustom] READY available=true', 60000);
   const ready = waitForConsole(page, '[World] READY', 60000);
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForCanvas(page);
@@ -73,6 +74,7 @@ async function openWorld(page) {
   // complete Central City has been constructed, replacing the Web 100% loader.
   await loadingVisible;
   await externalCity;
+  await customCity;
   await ready;
   await settleFrames(page, 4);
 }

@@ -139,6 +139,7 @@ jobs:
           python3 -m pip install --disable-pip-version-check --quiet "Pillow==11.3.0"
           bash tools/setup_external_city_assets.sh
           python3 tools/validate_external_city_assets.py
+          python3 tools/prepare_tblack_central_city_assets.py
 
       - name: Validate app branding configuration
         shell: bash

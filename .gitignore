@@ -504,3 +504,11 @@ core.*
 # Downloaded at setup/build time. Never commit raw third-party pack files.
 /assets/external/central_city/
 /.cache/external-city-assets/
+
+
+########################################
+### Tblack Central City generated    ###
+########################################
+
+# Runtime-sized copies are generated from the committed source art.
+/assets/terrain/tblack-central-city/runtime/

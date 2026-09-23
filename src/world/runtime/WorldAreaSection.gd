@@ -3,17 +3,15 @@ class_name WorldAreaSection
 
 const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
 const ExternalCityArtScript = preload("res://src/world/runtime/ExternalCityArt.gd")
+const CentralCityCustomArtScript = preload("res://src/world/runtime/CentralCityCustomArt.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
-const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
 
 const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
-const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
-const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 
 # Authored MCBlocks atlas cells. Row 16 provides flat isometric surfaces.
 const FLOOR_ROAD := Vector2i(12, 16)
@@ -58,6 +56,8 @@ var _world_controller: Node = null
 var _blocked_cells := PackedByteArray()
 var _ground_tiles: Array[Dictionary] = []
 var _leaf_particles: Array[CPUParticles2D] = []
+var _tree_occluders: Array[Sprite2D] = []
+var _ambient_vfx_active := false
 
 
 func configure(section_definition: Dictionary, player: Node2D, world_controller: Node) -> void:
@@ -101,6 +101,7 @@ func _build_section() -> void:
 	_build_theme_content()
 
 
+
 func _prepare_ground_data() -> void:
 	_ground_tiles.clear()
 	var theme := String(definition.get("theme", "residential"))
@@ -114,66 +115,49 @@ func _prepare_ground_data() -> void:
 				"position": position + grid_to_world(Vector2(cell)),
 				"base_color": presentation.get("base_color", PAVEMENT_BASE),
 				"detail_tint": Color.WHITE,
-				"detail_alpha": float(presentation.get("detail_alpha", 0.96)),
+				"detail_alpha": 0.0,
 			})
 			if not bool(presentation.get("walkable", true)):
 				_mark_blocked(cell)
-
 
 func append_ground_tiles(target: Array[Dictionary]) -> void:
 	target.append_array(_ground_tiles)
 
 
 
+
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
 	var road := (
-		(section_coord.y == 0 and cell.y >= center - 1 and cell.y <= center + 1)
-		or (section_coord.x == 0 and cell.x >= center - 1 and cell.x <= center + 1)
+		(section_coord.y == 0 and absi(cell.y - center) <= 2)
+		or (section_coord.x == 0 and absi(cell.x - center) <= 2)
 	)
 	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
 		return {
 			"cell": FLOOR_BLUE,
-			"base_color": WATER_BASE,
-			"detail_alpha": 0.0,
+			"base_color": Color(0.035, 0.12, 0.18, 1.0),
 			"walkable": false,
-		}
-	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
-		var plaza_accent := (cell.x + cell.y) % 5 == 0
-		return {
-			"cell": FLOOR_CYAN if plaza_accent else FLOOR_PLAZA,
-			"base_color": Color(0.10, 0.25, 0.28, 1.0) if plaza_accent else Color(0.19, 0.23, 0.25, 1.0),
-			"detail_alpha": 0.0,
-			"walkable": true,
 		}
 	if road:
 		return {
 			"cell": FLOOR_ROAD,
 			"base_color": Color(0.075, 0.09, 0.11, 1.0),
-			"detail_alpha": 0.0,
 			"walkable": true,
 		}
 	if theme == "garden":
-		var corner_plot := (
-			(cell.x <= 4 or cell.x >= 10)
-			and (cell.y <= 4 or cell.y >= 10)
-		)
-		if corner_plot:
-			return {
-				"cell": FLOOR_GREEN,
-				"base_color": Color(0.12, 0.31, 0.19, 1.0),
-				"detail_alpha": 0.0,
-				"walkable": true,
-			}
-
-	var alternate := posmod(
-		(cell.x + section_coord.x * SECTION_SIZE) * 7
-		+ (cell.y + section_coord.y * SECTION_SIZE) * 11,
-		7
-	) == 0
+		return {
+			"cell": FLOOR_GREEN,
+			"base_color": Color(0.12, 0.23, 0.16, 1.0),
+			"walkable": true,
+		}
+	if theme == "plaza":
+		return {
+			"cell": FLOOR_PLAZA,
+			"base_color": Color(0.21, 0.23, 0.25, 1.0),
+			"walkable": true,
+		}
 	return {
 		"cell": FLOOR_PAVEMENT,
-		"base_color": Color(0.245, 0.27, 0.29, 1.0) if alternate else Color(0.27, 0.295, 0.315, 1.0),
-		"detail_alpha": 0.0,
+		"base_color": Color(0.18, 0.20, 0.22, 1.0),
 		"walkable": true,
 	}
 
@@ -184,14 +168,14 @@ func _build_street_detail() -> void:
 	add_child(props)
 	var theme := String(definition.get("theme", "residential"))
 
-	_build_external_roads(props)
+	_build_custom_ground_patches(props, theme)
 
 	var tree_cells: Array[Vector2i] = []
 	match theme:
 		"garden":
 			tree_cells = [
-				Vector2i(2, 2), Vector2i(11, 2),
-				Vector2i(2, 11), Vector2i(11, 11),
+				Vector2i(3, 3), Vector2i(10, 3),
+				Vector2i(3, 10), Vector2i(10, 10),
 			]
 		"plaza":
 			tree_cells = [Vector2i(2, 11), Vector2i(11, 2)]
@@ -202,16 +186,30 @@ func _build_street_detail() -> void:
 		_:
 			tree_cells = []
 	for index in range(tree_cells.size()):
-		_add_tree(props, tree_cells[index], index)
+		_add_tree(props, tree_cells[index], index, theme)
 
+	# Keep the current street lamps: this is the one element from the temporary
+	# external kit that already matches the desired Central City language.
 	if theme not in ["garden", "canal"]:
 		_add_external_prop(props, "dystopian_street_lamp_a", Vector2i(11, 5), 0.92)
 		_add_external_prop(props, "dystopian_street_lamp_b", Vector2i(11, 9), 0.92)
 
-	if theme in ["plaza", "market", "digilab", "hospital"]:
-		_add_external_prop(props, "dystopian_terminal_a", Vector2i(3, 10), 1.0, false)
-	if theme in ["plaza", "training", "archive"]:
-		_add_external_prop(props, "dystopian_terminal_b", Vector2i(10, 3), 1.0, false)
+	match theme:
+		"plaza":
+			_add_custom_prop(props, "digital-terminal", Vector2i(3, 10), 82.0, true)
+			_add_custom_prop(props, "public-bench", Vector2i(10, 10), 142.0, true)
+			_add_custom_prop(props, "planter", Vector2i(3, 3), 120.0, true)
+		"garden":
+			_add_custom_prop(props, "public-bench", Vector2i(7, 11), 142.0, true)
+			_add_custom_prop(props, "trash-bin", Vector2i(11, 7), 62.0, true)
+			_add_custom_prop(props, "planter", Vector2i(7, 3), 126.0, true)
+		"residential":
+			_add_custom_prop(props, "public-bench", Vector2i(10, 10), 136.0, true)
+			_add_custom_prop(props, "trash-bin", Vector2i(11, 11), 60.0, true)
+			_add_custom_prop(props, "planter", Vector2i(3, 10), 118.0, true)
+		"digilab", "hospital", "training", "market", "archive":
+			_add_custom_prop(props, "digital-terminal", Vector2i(11, 11), 78.0, true)
+			_add_custom_prop(props, "planter", Vector2i(10, 10), 112.0, true)
 
 func _build_theme_content() -> void:
 	var theme := String(definition.get("theme", "residential"))
@@ -269,8 +267,8 @@ func _build_gate() -> void:
 	_place_external_building(root, String(assets[1]), right_origin, Vector2i(3, 5), 0.68)
 	_block_footprint(left_origin, Vector2i(3, 5))
 	_block_footprint(right_origin, Vector2i(3, 5))
-	_add_external_prop(root, "dystopian_terminal_c", Vector2i(5, 7), 1.0, false)
-	_add_external_prop(root, "dystopian_terminal_d", Vector2i(8, 7), 1.0, false)
+	_add_custom_prop(root, "digital-terminal", Vector2i(5, 7), 76.0, false)
+	_add_custom_prop(root, "digital-terminal", Vector2i(8, 7), 76.0, false)
 
 
 func _build_residential_block() -> void:
@@ -467,6 +465,101 @@ func _add_external_prop(
 		_mark_blocked(cell)
 
 
+func _build_custom_ground_patches(parent: Node2D, theme: String) -> void:
+	var center := Vector2i(int(SECTION_SIZE / 2), int(SECTION_SIZE / 2))
+	var center_world := grid_to_world(Vector2(center))
+
+	if theme == "plaza":
+		_add_custom_patch(parent, "plaza-floor", center_world, -1175, 430.0)
+	elif theme == "garden":
+		_add_custom_patch(parent, "grass-ground", center_world, -1175, 430.0)
+	elif theme != "canal":
+		_add_custom_patch(parent, "sidewalk", center_world, -1178, 430.0)
+
+	if section_coord == Vector2i.ZERO:
+		return
+
+	if section_coord.y == 0:
+		_add_custom_patch(parent, "road", grid_to_world(Vector2(3, center.y)), -1165, 285.0)
+		_add_custom_patch(parent, "road", grid_to_world(Vector2(10, center.y)), -1165, 285.0)
+		if absi(section_coord.x) == 1:
+			var cross_x := 11 if section_coord.x < 0 else 2
+			_add_custom_patch(parent, "crosswalk", grid_to_world(Vector2(cross_x, center.y)), -1155, 176.0)
+	elif section_coord.x == 0:
+		_add_custom_patch(parent, "road", grid_to_world(Vector2(center.x, 3)), -1165, 285.0, true)
+		_add_custom_patch(parent, "road", grid_to_world(Vector2(center.x, 10)), -1165, 285.0, true)
+		if absi(section_coord.y) == 1:
+			var cross_y := 11 if section_coord.y < 0 else 2
+			_add_custom_patch(parent, "crosswalk", grid_to_world(Vector2(center.x, cross_y)), -1155, 176.0, true)
+
+	if theme == "garden":
+		_add_custom_curb(parent, 0, Vector2i(2, 7), 118.0)
+		_add_custom_curb(parent, 5, Vector2i(11, 7), 118.0, true)
+
+
+func _add_custom_patch(
+	parent: Node2D,
+	asset_name: String,
+	local_center: Vector2,
+	depth_order: int,
+	target_width: float,
+	flip_h: bool = false
+) -> void:
+	var sprite := CentralCityCustomArtScript.create_ground_patch(
+		asset_name,
+		local_center,
+		depth_order,
+		target_width,
+		flip_h
+	)
+	if sprite != null:
+		parent.add_child(sprite)
+
+
+func _add_custom_prop(
+	parent: Node2D,
+	asset_name: String,
+	cell: Vector2i,
+	target_width: float,
+	blocking: bool = true,
+	offset: Vector2 = Vector2.ZERO
+) -> Sprite2D:
+	var foot := grid_to_world(Vector2(cell))
+	var sprite := CentralCityCustomArtScript.create_ground_prop(
+		asset_name,
+		foot,
+		1000 + int(round(global_position.y + foot.y)),
+		target_width,
+		offset
+	)
+	if sprite != null:
+		parent.add_child(sprite)
+	if blocking:
+		_mark_blocked(cell)
+	return sprite
+
+
+func _add_custom_curb(
+	parent: Node2D,
+	index: int,
+	cell: Vector2i,
+	target_width: float,
+	flip_h: bool = false
+) -> void:
+	var asset_name := "curb_%02d" % index
+	var foot := grid_to_world(Vector2(cell))
+	var sprite := CentralCityCustomArtScript.create_ground_prop(
+		asset_name,
+		foot,
+		-1145,
+		target_width,
+		Vector2.ZERO,
+		flip_h
+	)
+	if sprite != null:
+		parent.add_child(sprite)
+
+
 func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: String, interaction_priority: int) -> void:
 	var actor := ActorScript.new() as HubActor
 	actor.name = title.capitalize().replace(" ", "")
@@ -489,31 +582,33 @@ func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: S
 	_mark_blocked(cell)
 
 
-func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
+
+func _add_tree(parent: Node2D, cell: Vector2i, index: int, theme: String) -> void:
+	var use_medium := theme in ["garden", "plaza"] and index % 2 == 0
+	var asset_name := "medium-tree" if use_medium else "small-tree"
+	var target_width := 205.0 if use_medium else 164.0
+	var tree := _add_custom_prop(parent, asset_name, cell, target_width, true)
+	if tree == null:
+		return
+
+	tree.name = "%s_%d_%d" % [asset_name.capitalize().replace("-", ""), cell.x, cell.y]
+	tree.add_to_group("central_city_tree_occluder")
 	var foot := grid_to_world(Vector2(cell))
-	var texture := AtlasTexture.new()
-	texture.atlas = OAK_TREE_SOURCE
-	texture.region = LARGE_OAK_REGION
-	var tree := Sprite2D.new()
-	tree.name = "Oak_%d_%d" % [cell.x, cell.y]
-	tree.texture = texture
-	tree.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var center_to_foot := LARGE_OAK_FOOT - texture.get_size() * 0.5
-	tree.position = foot + Vector2(0.0, 10.0) - center_to_foot
-	tree.z_index = 1000 + int(round(global_position.y + foot.y))
-	parent.add_child(tree)
+	tree.set_meta("occlusion_foot_local", foot)
+	tree.set_meta("occlusion_half_width", 78.0 if use_medium else 62.0)
+	tree.set_meta("occlusion_depth", 150.0 if use_medium else 116.0)
+	_tree_occluders.append(tree)
+
 	TreeAmbientFXScript.apply(
 		tree,
 		float(index) * 1.37 + float(section_coord.x * 3 + section_coord.y),
-		2.8,
-		4,
+		2.5 if use_medium else 2.0,
+		5 if use_medium else 3,
 		Color(0.62, 0.91, 0.39, 0.72)
 	)
 	var leaves := tree.get_node_or_null("AmbientLeaves") as CPUParticles2D
 	if leaves != null:
 		_leaf_particles.append(leaves)
-	_mark_blocked(cell)
-
 
 func _add_atlas_prop(
 	parent: Node2D,
@@ -534,13 +629,49 @@ func _add_atlas_prop(
 		_mark_blocked(cell)
 
 
+
 func set_ambient_vfx_active(active: bool) -> void:
+	_ambient_vfx_active = active
+	set_process(active)
 	for leaves: CPUParticles2D in _leaf_particles:
 		if leaves == null or not is_instance_valid(leaves):
 			continue
 		leaves.visible = active
 		leaves.emitting = active
+	if not active:
+		for tree: Sprite2D in _tree_occluders:
+			if tree == null or not is_instance_valid(tree):
+				continue
+			var modulate_color := tree.modulate
+			modulate_color.a = 1.0
+			tree.modulate = modulate_color
 
+
+func _process(delta: float) -> void:
+	if not _ambient_vfx_active or _player == null:
+		return
+	for tree: Sprite2D in _tree_occluders:
+		if tree == null or not is_instance_valid(tree):
+			continue
+		var target_alpha := 0.42 if _should_fade_tree_for_player(tree) else 1.0
+		var modulate_color := tree.modulate
+		modulate_color.a = move_toward(modulate_color.a, target_alpha, 7.5 * delta)
+		tree.modulate = modulate_color
+
+
+func _should_fade_tree_for_player(tree: Sprite2D) -> bool:
+	var foot_variant = tree.get_meta("occlusion_foot_local", null)
+	if not foot_variant is Vector2:
+		return false
+	var foot_global := to_global(foot_variant as Vector2)
+	var relative := _player.global_position - foot_global
+	var half_width := float(tree.get_meta("occlusion_half_width", 64.0))
+	var depth := float(tree.get_meta("occlusion_depth", 120.0))
+	return (
+		relative.y <= 8.0
+		and relative.y >= -depth
+		and absf(relative.x) <= half_width
+	)
 
 func _mark_blocked(cell: Vector2i) -> void:
 	if cell.x < 0 or cell.y < 0 or cell.x >= SECTION_SIZE or cell.y >= SECTION_SIZE:
