@@ -1,6 +1,7 @@
 extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
+const CentralCityAssetCatalogScript = preload("res://src/world/runtime/CentralCityAssetCatalog.gd")
 
 
 func _ready() -> void:
@@ -19,18 +20,32 @@ func _ready() -> void:
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
 		area.get_ground_render_node_count() <= 3,
-		"Central City ground must use one global batched renderer instead of section/per-tile CanvasItems"
+		"Central City foundation must stay globally batched"
 	)
 	assert(area.get_ground_tile_count() == 4900, "Central City global ground batch must contain all authored cells")
 	assert(
 		area.get_runtime_node_count() < 1000,
-		"Central City runtime node budget must remain below 3000 nodes"
+		"Central City runtime node budget must remain below 1000 nodes"
 	)
-	assert(area.is_exterior_active(), "Central City exterior must start active")
+
+	var custom_assets := get_tree().get_nodes_in_group("central_city_custom_asset")
+	var ground_modules := get_tree().get_nodes_in_group("central_city_ground_module")
+	var road_modules := get_tree().get_nodes_in_group("central_city_road_module")
+	var crosswalk_modules := get_tree().get_nodes_in_group("central_city_crosswalk_module")
+	var service_accesses := get_tree().get_nodes_in_group("central_city_service_access")
+	assert(custom_assets.size() >= 120, "Central City must be composed from the authored Tblack city kit")
+	assert(ground_modules.size() >= 110, "Central City must use modular ground pieces instead of isolated patches")
+	assert(road_modules.size() == 8, "The current straight-only boulevard must contain exactly eight road modules")
+	assert(crosswalk_modules.size() == 2, "Central Plaza must have two authored crosswalk approaches")
+	assert(service_accesses.size() == 5, "Building-free service districts must keep all five interiors reachable")
+	assert(CentralCityAssetCatalogScript.supports_road_piece("straight"), "Straight road art must be registered")
 	assert(
-		get_tree().get_nodes_in_group("central_city_custom_asset").size() >= 24,
-		"Central City must render its authored Tblack city asset kit"
+		not CentralCityAssetCatalogScript.supports_road_piece("corner")
+		and not CentralCityAssetCatalogScript.supports_road_piece("intersection"),
+		"Future road junction slots must remain explicit until their dedicated assets are supplied"
 	)
+
+	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(
 		get_tree().get_nodes_in_group("central_city_tree_occluder").size() >= 2,
 		"Central City must expose custom tree occluders for player visibility"
