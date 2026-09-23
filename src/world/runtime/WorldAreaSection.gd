@@ -369,12 +369,17 @@ func _build_exterior_shell(
 	var wall_levels := 2
 	for x in range(size.x):
 		for y in range(size.y):
-			var boundary := x == 0 or y == 0 or x == size.x - 1 or y == size.y - 1
 			var cell := origin + Vector2i(x, y)
-			if not boundary:
-				_mark_blocked(cell)
-				continue
 			var doorway := with_door and cell == door_cell
+			if not doorway:
+				_mark_blocked(cell)
+
+			# In an isometric exterior the roof already defines the complete
+			# footprint. Drawing four rings of cube blocks made buildings look
+			# like open fortresses. Render only the two camera-facing facades.
+			var visible_facade := x == size.x - 1 or y == size.y - 1
+			if not visible_facade:
+				continue
 			if doorway:
 				var lintel := CITY.create_block(
 					accent_block,
@@ -386,8 +391,8 @@ func _build_exterior_shell(
 				continue
 
 			for level in range(wall_levels):
-				var block_cell := BLOCK_WALL
-				if level > 0 and (x + y + level) % 4 == 0:
+				var block_cell := BLOCK_WALL_DARK if not with_door else BLOCK_WALL
+				if with_door and level > 0 and (x + y + level) % 4 == 0:
 					block_cell = accent_block
 				var block := CITY.create_block(
 					block_cell,
@@ -396,7 +401,6 @@ func _build_exterior_shell(
 					level
 				)
 				building.add_child(block)
-			_mark_blocked(cell)
 
 	if with_door:
 		_add_service_windows(building, origin, size, service_id, door_side)
@@ -415,16 +419,16 @@ func _build_exterior_shell(
 	for x in range(size.x):
 		for y in range(size.y):
 			var roof_cell := origin + Vector2i(x, y)
-			var trim := (
+			var trim := with_door and (
 				(y == size.y - 1 and door_side == "south" and absi(x - int(size.x / 2)) <= 1)
 				or (x == size.x - 1 and door_side == "east" and absi(y - int(size.y / 2)) <= 1)
 			)
 			roof_tiles.append({
 				"cell": _service_floor_cell(service_id) if trim else FLOOR_ROAD,
 				"position": grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * float(wall_levels)),
-				"base_color": Color(0.27, 0.29, 0.31, 1.0),
+				"base_color": Color(0.18, 0.21, 0.23, 1.0),
 				"detail_tint": Color.WHITE,
-				"detail_alpha": 0.64,
+				"detail_alpha": 0.76,
 			})
 	var roof_depth := 1700 + int(round(global_position.y + grid_to_world(Vector2(door_cell)).y))
 	building.add_child(CITY.create_floor_batch(roof_tiles, roof_depth, "Roof"))

@@ -34,7 +34,9 @@ const mobileViewports = [
 function watchRuntimeErrors(page, label) {
   page.on('pageerror', error => runtimeErrors.push(`${label} pageerror: ${error.message}`));
   page.on('console', message => {
-    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${message.text()}`);
+    const text = message.text();
+    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${text}`);
+    if (text.includes('[WorldPerf]')) console.log(`[BrowserPerf:${label}] ${text}`);
   });
 }
 

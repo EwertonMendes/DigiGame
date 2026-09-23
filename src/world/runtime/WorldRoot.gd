@@ -59,6 +59,7 @@ var _world_ready := false
 var _area_load_layer: CanvasLayer = null
 var _area_load_progress: ProgressBar = null
 var _area_load_status: Label = null
+var _area_banner_presentations := 0
 
 
 func _ready() -> void:
@@ -697,8 +698,13 @@ func _is_interact_event(event: InputEvent) -> bool:
 	return false
 
 
+func get_area_banner_presentation_count() -> int:
+	return _area_banner_presentations
+
+
 func present_area_banner(title: String, subtitle: String = "", duration: float = 1.7) -> void:
 	if _area_title != null:
+		_area_banner_presentations += 1
 		_area_title.present(title, subtitle, duration)
 
 

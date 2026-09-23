@@ -29,6 +29,10 @@ func _ready() -> void:
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the safe plaza lane")
 
+	await _frames(2)
+	var banner_count_before_travel := int(world.call("get_area_banner_presentation_count"))
+	assert(banner_count_before_travel == 1, "Central City main-area banner should present once on entry")
+
 	var initial_child_count := area.get_child_count()
 	_assert_seam_crossing(player, area, Vector2(13.35, 7.0), Vector2(13.65, 7.0), Vector2i(1, 0), "east")
 	_assert_seam_crossing(player, area, Vector2(-0.35, 7.0), Vector2(-0.65, 7.0), Vector2i(-1, 0), "west")
@@ -41,6 +45,11 @@ func _ready() -> void:
 	assert(area.get_section_count() == 25, "Walking must never load or unload parts of Central City")
 	assert(area.get_child_count() == initial_child_count, "Area scene tree must remain stable while exploring")
 	assert(get_tree().current_scene == self, "Exploring Central City must never replace the active scene")
+	await _frames(2)
+	assert(
+		int(world.call("get_area_banner_presentation_count")) == banner_count_before_travel,
+		"Crossing internal authoring sections must never show an area-title banner"
+	)
 
 	WorldState.capture_location("central_city", "central_city", Vector2i(2, 0), player.global_position, "east")
 	var saved := WorldState.to_dict()
