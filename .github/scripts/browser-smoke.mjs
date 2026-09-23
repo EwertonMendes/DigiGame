@@ -1,6 +1,18 @@
 import { chromium } from 'playwright';
 
 const url = process.env.DIGIGAME_URL ?? 'http://127.0.0.1:8000';
+const debugHubUrl = (() => {
+  const target = new URL(url);
+  target.searchParams.set('debug', '1');
+  target.searchParams.set('test_hub', '1');
+  return target.toString();
+})();
+const debugInteriorUrl = (() => {
+  const target = new URL(url);
+  target.searchParams.set('debug', '1');
+  target.searchParams.set('interior_test', 'digilab');
+  return target.toString();
+})();
 const requestedSuite = process.env.SMOKE_SUITE ?? 'desktop';
 const suite = requestedSuite === 'combat' || requestedSuite === 'vfx' ? 'combat-vfx' : requestedSuite;
 const runtimeErrors = [];
@@ -22,7 +34,9 @@ const mobileViewports = [
 function watchRuntimeErrors(page, label) {
   page.on('pageerror', error => runtimeErrors.push(`${label} pageerror: ${error.message}`));
   page.on('console', message => {
-    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${message.text()}`);
+    const text = message.text();
+    if (message.type() === 'error') runtimeErrors.push(`${label} console: ${text}`);
+    if (text.includes('[WorldPerf]')) console.log(`[BrowserPerf:${label}] ${text}`);
   });
 }
 
@@ -49,9 +63,31 @@ async function waitForCanvas(page) {
   }, null, { timeout: 60000 });
 }
 
+async function openWorld(page) {
+  const loadingVisible = waitForConsole(page, '[World] AREA_LOAD_VISIBLE', 15000);
+  const ready = waitForConsole(page, '[World] READY', 60000);
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForCanvas(page);
+  // Regression for slow phones: the engine must present a frame before the
+  // complete Central City has been constructed, replacing the Web 100% loader.
+  await loadingVisible;
+  await ready;
+  await settleFrames(page, 4);
+}
+
+async function openInterior(page) {
+  const worldReady = waitForConsole(page, '[World] READY', 60000);
+  const interiorReady = waitForConsole(page, '[World] INTERIOR_ENTER id=debug_digilab', 60000);
+  await page.goto(debugInteriorUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForCanvas(page);
+  await worldReady;
+  await interiorReady;
+  await settleFrames(page, 5);
+}
+
 async function openHub(page) {
   const ready = waitForConsole(page, '[Hub] READY', 60000);
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(debugHubUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForCanvas(page);
   await ready;
   await settleFrames(page, 3);
@@ -165,9 +201,11 @@ async function exerciseBattleOperatorCloseTransition(page) {
 async function runDesktopSuite() {
   const page = await browser.newPage({ viewport: desktopViewports[0] });
   watchRuntimeErrors(page, 'desktop');
-  await openHub(page);
+  await openWorld(page);
+  await page.screenshot({ path: 'build/world-smoke.png', fullPage: true });
 
-  // Smoke the V2 menu surface without asserting exact pixels/layout values.
+  // Smoke the V2 menu surface from the actual campaign world.
+
   await page.keyboard.press('KeyM');
   await settleFrames(page, 3);
   await page.screenshot({ path: 'build/digimon-technique-library.png', fullPage: true });
@@ -178,9 +216,16 @@ async function runDesktopSuite() {
   await page.waitForTimeout(300);
   await page.keyboard.up('KeyA');
   await settleFrames(page, 2);
-  await page.screenshot({ path: 'build/hub-movement.png', fullPage: true });
+  await page.screenshot({ path: 'build/world-movement.png', fullPage: true });
 
-  await reloadHub(page);
+  // Review a real large interior in the same browser pass. This uses a
+  // developer-only route so QA does not depend on scripted walking coordinates.
+  await openInterior(page);
+  await page.screenshot({ path: 'build/world-interior-digilab.png', fullPage: true });
+
+  // Combat QA still uses the preserved Test Hub, reached only through the
+  // developer-only query route. Normal players never enter this scene.
+  await openHub(page);
   await page.screenshot({ path: 'build/hub-smoke.png', fullPage: true });
   await exerciseBattleOperatorCloseTransition(page);
   await enterTestBattle(page, true);
@@ -241,26 +286,71 @@ async function runMobileSuite() {
     deviceScaleFactor: 1,
   });
   watchRuntimeErrors(page, 'mobile');
-  await openHub(page);
-  await page.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
+  await openWorld(page);
+  await page.screenshot({ path: 'build/world-mobile-portrait.png', fullPage: true });
 
-  // V2 menu should open/close on the mobile-sized viewport, but exact pixels are
-  // deliberately not part of this regression contract.
-  await page.keyboard.press('KeyM');
+  // The campaign touch HUD itself is part of the mobile contract. The player
+  // starts near the City Guide, so prove interaction through the real touch
+  // button before using any keyboard fallback.
+  await page.waitForTimeout(120);
+  const touchInteract = waitForConsole(page, '[World] TOUCH_INTERACT', 10000);
+  await page.touchscreen.tap(307, 767);
+  await touchInteract;
+  await settleFrames(page, 2);
+  await page.screenshot({ path: 'build/world-mobile-dialog.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await settleFrames(page, 2);
+
+  const touchMenu = waitForConsole(page, '[World] TOUCH_MENU', 10000);
+  await page.touchscreen.tap(307, 697);
+  await touchMenu;
   await settleFrames(page, 3);
   await page.screenshot({ path: 'build/digimon-technique-library-mobile.png', fullPage: true });
   await page.keyboard.press('Escape');
+  await settleFrames(page, 2);
 
   const client = await page.context().newCDPSession(page);
-  const hubTouchStarted = waitForConsole(page, '[Hub] TOUCH_MOVE direction=right pressed=true');
-  await dispatchTouch(client, 'touchStart', [{ x: 163, y: 739 }]);
-  await hubTouchStarted;
+  const worldTouchStarted = waitForConsole(page, '[World] TOUCH_MOVE');
+  // The new campaign HUD anchors a compact joystick to the lower-left safe
+  // area. Start in its center and drag right, matching a real thumb gesture.
+  await dispatchTouch(client, 'touchStart', [{ x: 29, y: 815 }]);
+  await page.waitForTimeout(60);
+  await dispatchTouch(client, 'touchMove', [{ x: 43, y: 815 }]);
+  await worldTouchStarted;
   await page.waitForTimeout(300);
   await dispatchTouch(client, 'touchEnd', []);
   await settleFrames(page, 2);
-  await page.screenshot({ path: 'build/hub-mobile-movement.png', fullPage: true });
+  await page.screenshot({ path: 'build/world-mobile-movement.png', fullPage: true });
 
-  await reloadHub(page);
+  // Reproduce the native APK's 1280x720 logical viewport. This is intentionally
+  // not compact, so touch controls must remain visible because touch capability
+  // — not viewport size — owns the mobile HUD decision.
+  const nativeLogicalTouchUi = waitForConsole(
+    page,
+    '[World] TOUCH_UI visible=true touch_runtime=true compact=false',
+    10000,
+  );
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await nativeLogicalTouchUi;
+  await settleFrames(page, 3);
+  await page.screenshot({ path: 'build/world-touch-1280x720.png', fullPage: true });
+
+  const nativeLogicalMenu = waitForConsole(page, '[World] TOUCH_MENU', 10000);
+  await page.touchscreen.tap(1206, 597);
+  await nativeLogicalMenu;
+  await settleFrames(page, 2);
+  await page.screenshot({ path: 'build/world-touch-menu-1280x720.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await settleFrames(page, 2);
+
+  // Return to portrait before switching to the preserved Test Hub.
+  await page.setViewportSize(mobileViewports[0]);
+  await settleFrames(page, 3);
+
+  // Switch to the developer-only Test Hub for the existing battle interaction
+  // coverage; this also proves the legacy Hub remains independently runnable.
+  await openHub(page);
+  await page.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
   const mobileDialogueOpened = waitForConsole(page, '[Hub] DIALOGUE_OPEN');
   await page.touchscreen.tap(320, 776);
   await mobileDialogueOpened;

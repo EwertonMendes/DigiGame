@@ -664,7 +664,7 @@ func reconstruct_digimon(species_name: String, data_amount: int = -1) -> Digimon
 func save_progress() -> bool:
 	if not _persistence_enabled:
 		return true
-	var success := _save_service.save_collection(_collection)
+	var success := _save_service.save_game(_collection, WorldState.to_dict())
 	if success:
 		progress_saved.emit()
 	return success
@@ -672,10 +672,15 @@ func save_progress() -> bool:
 func load_progress() -> bool:
 	if not _persistence_enabled:
 		return false
-	var loaded: PlayerCollection = _save_service.load_collection()
-	if loaded == null or loaded.is_empty():
+	var data: PlayerProgressSaveData = _save_service.load_data()
+	if data == null:
+		return false
+	var loaded: PlayerCollection = CollectionScript.new()
+	loaded.load_dict(data.collection)
+	if loaded.is_empty():
 		return false
 	_collection = loaded
+	WorldState.load_dict(data.world)
 	return true
 
 func set_persistence_enabled(enabled: bool) -> void:
@@ -683,6 +688,7 @@ func set_persistence_enabled(enabled: bool) -> void:
 
 func reset_progress_for_tests(delete_disk_save: bool = false) -> void:
 	_collection = CollectionScript.new()
+	WorldState.reset_to_defaults()
 	if delete_disk_save:
 		_save_service.delete_save()
 	_ensure_starter_collection()

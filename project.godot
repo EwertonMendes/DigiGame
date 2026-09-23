@@ -18,11 +18,12 @@ boot_splash/minimum_display_time=0
 boot_splash/show_image=true
 boot_splash/stretch_mode=1
 boot_splash/use_filter=true
-run/main_scene="res://scenes/world/hub.tscn"
+run/main_scene="res://scenes/world/world_root.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
+WorldState="*res://src/world/runtime/WorldState.gd"
 GlobalVariables="*res://src/GlobalVariables.gd"
 OverworldState="*res://src/state/OverworldState.gd"
 BattleEncounterSession="*res://src/world/BattleEncounterSession.gd"

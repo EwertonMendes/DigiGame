@@ -292,8 +292,8 @@ func _on_transition_finished_after_invalid_battle(_scene_path: String, _context:
 
 
 func _return_to_hub_after_invalid_battle() -> void:
-	if not DigitalSceneTransition.return_to_hub():
-		push_error("Battle runtime could not return to Hub after invalid combat data.")
+	if not DigitalSceneTransition.return_to_world():
+		push_error("Battle runtime could not return to its overworld context after invalid combat data.")
 
 
 func _apply_pending_encounter_override() -> void:

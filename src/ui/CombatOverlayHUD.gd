@@ -730,7 +730,7 @@ func _focus_result_return() -> void:
 
 
 func _return_to_hub() -> void:
-	get_tree().change_scene_to_file("res://scenes/world/hub.tscn")
+	DigitalSceneTransition.return_to_world()
 
 
 func _on_combat_event(event: Dictionary) -> void:

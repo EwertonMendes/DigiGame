@@ -106,6 +106,9 @@ jobs:
         with:
           name: web-smoke-${{ inputs.source_run_id }}
           path: |
+            build/world-smoke.png
+            build/world-movement.png
+            build/world-interior-*.png
             build/web-smoke.png
             build/desktop-*.png
             build/hub-battle-dialog*.png
@@ -118,6 +121,7 @@ jobs:
         with:
           name: mobile-smoke-${{ inputs.source_run_id }}
           path: |
+            build/world-mobile-*.png
             build/hub-mobile-dialog.png
             build/mobile-*.png
           if-no-files-found: error
