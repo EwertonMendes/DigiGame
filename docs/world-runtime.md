@@ -23,11 +23,11 @@ Small and medium interiors remain seamless. Service entrances keep the persisten
 
 `assets/resources/world/central_city.json` defines the 5×5 authoring grid used to compose the complete Central City scene: Central Plaza, DigiLab, Hospital, Training, Data Market, Archive, canals, gardens, residences and city gates.
 
-All 25 sections are present before `[World] READY`. Static ground is rendered as two batched `MeshInstance2D` surfaces per authoring section (base + atlas detail) instead of thousands of per-tile `Node2D/Polygon2D` objects. Area construction yields after small batches of sections behind the opaque loading screen, keeping the first frame responsive without artificially stretching loading across 25 frames. The exterior remains hidden and non-interactive until all sections are ready.
+All 25 sections are present before `[World] READY`. Central City exterior geometry uses a 128×64 isometric grid, while interiors, the developer Hub and battlefields retain their existing 64×32 contracts. The exterior ground is globally batched: one seam-protection base mesh plus one detail mesh per high-resolution Devil's Work.shop surface type. Area construction yields after small batches of sections behind the opaque loading screen, keeping the first frame responsive without terrain pop-in.
 
 Walking across section boundaries only changes district/title metadata; it never mutates the scene tree. This prevents mobile traversal from paying terrain construction/destruction costs and removes visible terrain pop-in.
 
-Central City uses the authored `MCBlocksColorOutline.png` atlas for urban surfaces, architecture and interior props. Roads, sidewalks and plazas are neutral/dark city materials; green is reserved for deliberate park plots. Establishment facades use neutral masonry with service-specific trim, windows and one exterior sign.
+Central City uses the project-supplied `assets/world/devilsworkshop/assets_1024x1024/` collection for its exterior floor. Only each block's authored top face is sampled and projected onto an exact 128×64 diamond, so the 1024px sources provide clean detail without rendering cube side walls between floor cells. The city is now an octagonal digital island with clipped corners, a civic plaza, broad digital promenades, an inner luminous ring, diagonal connectors and district-specific surface families. `MCBlocksColorOutline.png` remains isolated to exterior structures and interior props.
 
 ## Adding a major area
 
@@ -40,7 +40,7 @@ The old prototype Hub is not the normal application entry point. Development bui
 
 ## Performance contract
 
-Central City treats authoring sections as data boundaries, never rendering boundaries. The 4,900 ground cells are batched into at most 75 ground-render nodes across the complete city, and the area regression enforces a 3,000-node runtime budget.
+Central City treats authoring sections as data boundaries, never rendering boundaries. The octagonal island currently renders 4,341 authored ground cells; clipped corner cells are true non-walkable digital void rather than hidden floor. Ground draw calls are bounded by the small curated surface palette instead of section count, and the area regression keeps the runtime node budget below its existing limit.
 
 Static world collision is represented by the authored walkability grid instead of duplicating every blocked cell into PhysicsServer shapes. Player clearance samples preserve collision margins; dynamic bodies and doorway Area2D triggers remain engine-native physics objects.
 
