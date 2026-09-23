@@ -31,21 +31,31 @@ static func ground_specs_for_section(section_coord: Vector2i, theme: String) -> 
 	if theme == "garden":
 		specs.append(_ground("grass-ground", Vector2i(7, 7), -1174))
 
-	# Only straight road pieces are used until dedicated corner/intersection art
-	# exists. The boulevard ends cleanly at the plaza instead of faking junctions.
-	if section_coord.y == 0 and section_coord.x != 0:
-		specs.append(_ground("road", Vector2i(4, 7), -1166, true))
-		specs.append(_ground("road", Vector2i(11, 7), -1166, true))
+	# Straight-road modules follow one exact 7-cell cadence so adjacent pieces
+	# meet edge-to-edge. The dedicated crosswalk tile replaces the road module at
+	# each plaza approach instead of being layered on top of another road image.
+	if section_coord.y == 0:
+		match section_coord.x:
+			-2:
+				specs.append(_ground("road", Vector2i(4, 7), -1166, true))
+				specs.append(_ground("road", Vector2i(11, 7), -1166, true))
+			-1:
+				specs.append(_ground("road", Vector2i(4, 7), -1166, true))
+				specs.append(_ground("crosswalk", Vector2i(11, 7), -1165, true))
+			1:
+				specs.append(_ground("crosswalk", Vector2i(4, 7), -1165, true))
+				specs.append(_ground("road", Vector2i(11, 7), -1166, true))
+			2:
+				specs.append(_ground("road", Vector2i(4, 7), -1166, true))
+				specs.append(_ground("road", Vector2i(11, 7), -1166, true))
 
 	if section_coord == Vector2i.ZERO:
-		specs.append(_ground("plaza-floor", Vector2i(7, 7), -1168))
-		specs.append(_ground("crosswalk", Vector2i(1, 7), -1158, true))
-		specs.append(_ground("crosswalk", Vector2i(13, 7), -1158, true))
+		specs.append(_ground("plaza-floor", Vector2i(7, 7), -1164))
 
 	return specs
 
 
-static func prop_specs_for_section(section_coord: Vector2i, theme: String) -> Array[Dictionary]:
+static func prop_specs_for_section(_section_coord: Vector2i, theme: String) -> Array[Dictionary]:
 	var specs: Array[Dictionary] = []
 
 	match theme:
