@@ -2,6 +2,7 @@ extends Node2D
 class_name WorldAreaSection
 
 const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
+const SHEET = preload("res://src/world/runtime/CentralCitySheetArt.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
@@ -110,10 +111,11 @@ func _prepare_ground_data() -> void:
 			var presentation := _ground_presentation(cell, theme, center)
 			_ground_tiles.append({
 				"cell": presentation.get("cell", FLOOR_PAVEMENT),
+				"sheet_tile": int(presentation.get("sheet_tile", SHEET.PAVEMENT_GRAY)),
 				"position": position + grid_to_world(Vector2(cell)),
 				"base_color": presentation.get("base_color", PAVEMENT_BASE),
-				"detail_tint": Color.WHITE,
-				"detail_alpha": float(presentation.get("detail_alpha", 0.96)),
+				"detail_tint": presentation.get("detail_tint", Color.WHITE),
+				"detail_alpha": float(presentation.get("detail_alpha", 1.0)),
 			})
 			if not bool(presentation.get("walkable", true)):
 				_mark_blocked(cell)
@@ -124,59 +126,119 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
-	# Roads are authored as continuous city avenues, not repeated crosses inside
-	# every 14x14 authoring section. This removes the checkerboard/chunk look.
-	var road := (
-		(section_coord.y == 0 and cell.y >= center - 1 and cell.y <= center + 1)
-		or (section_coord.x == 0 and cell.x >= center - 1 and cell.x <= center + 1)
+	# This branch is a focused visual test: every one of Central City's 4,900
+	# ground cells is now authored from the supplied isometric sheet. Gameplay
+	# collision still comes from the existing logical grid, so replacing the
+	# visual floor does not disturb movement, interiors, saves or section seams.
+	var global_cell := Vector2i(
+		section_coord.x * SECTION_SIZE + cell.x,
+		section_coord.y * SECTION_SIZE + cell.y
 	)
+	var city_center := Vector2i(7, 7)
+	var dx := global_cell.x - city_center.x
+	var dy := global_cell.y - city_center.y
+	var road_ns := absi(dx) <= 1
+	var road_ew := absi(dy) <= 1
+	var road := road_ns or road_ew
+	var central_plaza := absi(dx) <= 6 and absi(dy) <= 6
+
+	# Preserve the authored North Canal blocker while giving it the matching
+	# blue water/pool surface from the new sheet.
 	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
 		return {
-			"cell": FLOOR_BLUE,
-			"base_color": WATER_BASE,
-			"detail_alpha": 0.62,
+			"sheet_tile": SHEET.WATER,
+			"base_color": Color(0.08, 0.23, 0.27, 1.0),
 			"walkable": false,
 		}
-	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
-		var plaza_accent := (cell.x + cell.y) % 5 == 0
-		return {
-			"cell": FLOOR_CYAN if plaza_accent else FLOOR_PLAZA,
-			"base_color": PLAZA_BASE,
-			"detail_alpha": 0.58,
-			"walkable": true,
-		}
+
+	# The two continuous main avenues retain the current world layout, but now
+	# use the supplied road family, crossings and occasional lane markings.
 	if road:
+		var crosswalk_ns := road_ns and absi(dy) in [6, 7]
+		var crosswalk_ew := road_ew and absi(dx) in [6, 7]
+		var tile := SHEET.ROAD_PLAIN
+		if road_ns and road_ew:
+			tile = SHEET.ROAD_TECH
+		elif crosswalk_ns:
+			tile = SHEET.CROSSWALK_A
+		elif crosswalk_ew:
+			tile = SHEET.CROSSWALK_B
+		elif road_ns and dx == 0 and posmod(global_cell.y, 5) == 0:
+			tile = SHEET.ROAD_LANE
+		elif road_ew and dy == 0 and posmod(global_cell.x, 5) == 0:
+			tile = SHEET.ROAD_VARIANT
 		return {
-			"cell": FLOOR_ROAD,
+			"sheet_tile": tile,
 			"base_color": ROAD_BASE,
-			"detail_alpha": 0.46,
 			"walkable": true,
 		}
 
-	# Garden chunks are urban parks: neutral walkable stone remains dominant and
-	# green tiles form deliberate planted plots instead of a giant grass carpet.
-	if theme == "garden":
-		var corner_plot := (
-			(cell.x <= 4 or cell.x >= 10)
-			and (cell.y <= 4 or cell.y >= 10)
-		)
-		if corner_plot:
-			return {
-				"cell": FLOOR_GREEN,
-				"base_color": PARK_BASE,
-				"detail_alpha": 0.52,
-				"walkable": true,
-			}
+	# Central Plaza is one coherent civic floor instead of a seven-cell patch.
+	# A restrained mix of supplied stone/tech pavers breaks repetition while
+	# keeping the plaza readable as one connected space.
+	if central_plaza:
+		var plaza_pattern := posmod(global_cell.x * 3 + global_cell.y * 5, 9)
+		var plaza_tile := SHEET.PAVEMENT_GRAY
+		if plaza_pattern == 0:
+			plaza_tile = SHEET.TECH_PAVER
+		elif plaza_pattern in [3, 6]:
+			plaza_tile = SHEET.PAVEMENT_TAN
+		return {
+			"sheet_tile": plaza_tile,
+			"base_color": Color(0.31, 0.33, 0.34, 1.0),
+			"walkable": true,
+		}
 
-	var alternate := posmod(
-		(cell.x + section_coord.x * SECTION_SIZE) * 7
-		+ (cell.y + section_coord.y * SECTION_SIZE) * 11,
-		7
-	) == 0
+	# Continuous sidewalks run along both avenues, visually separating roads
+	# from the district floors without introducing any new collision boundary.
+	if absi(dx) <= 4 or absi(dy) <= 4:
+		var sidewalk_tile := SHEET.PAVEMENT_STONE
+		if posmod(global_cell.x + global_cell.y, 8) == 0:
+			sidewalk_tile = SHEET.TECH_PAVER
+		return {
+			"sheet_tile": sidewalk_tile,
+			"base_color": PAVEMENT_BASE,
+			"walkable": true,
+		}
+
+	# Districts use the supplied surface families instead of tinting the old
+	# MCBlocks floor. Green spaces remain deliberate insets rather than whole
+	# section carpets so buildings and pedestrian routes keep clear silhouettes.
+	if theme == "garden":
+		var garden_plot := (
+			(cell.x <= 5 or cell.x >= 9)
+			and (cell.y <= 5 or cell.y >= 9)
+		)
+		if garden_plot:
+			var grass_tile := SHEET.GRASS if posmod(global_cell.x + global_cell.y, 3) else SHEET.GRASS_ALT
+			return {
+				"sheet_tile": grass_tile,
+				"base_color": PARK_BASE,
+				"walkable": true,
+		}
+
+	var district_tile := SHEET.PAVEMENT_GRAY
+	match theme:
+		"digilab", "hospital":
+			district_tile = SHEET.TECH_PAVER if posmod(global_cell.x + global_cell.y, 6) == 0 else SHEET.PAVEMENT_GRAY
+		"training":
+			district_tile = SHEET.PAVEMENT_STONE
+		"market":
+			district_tile = SHEET.PAVEMENT_TAN
+		"archive":
+			district_tile = SHEET.PAVEMENT_STONE
+		"residential":
+			district_tile = SHEET.PAVEMENT_STONE if posmod(global_cell.x * 2 + global_cell.y, 5) == 0 else SHEET.PAVEMENT_GRAY
+		"garden":
+			district_tile = SHEET.PAVEMENT_STONE
+		"canal":
+			district_tile = SHEET.PAVEMENT_GRAY
+		_:
+			district_tile = SHEET.PAVEMENT_GRAY
+
 	return {
-		"cell": FLOOR_PAVEMENT,
-		"base_color": PAVEMENT_BASE.darkened(0.04) if alternate else PAVEMENT_BASE,
-		"detail_alpha": 0.38,
+		"sheet_tile": district_tile,
+		"base_color": PAVEMENT_BASE,
 		"walkable": true,
 	}
 
