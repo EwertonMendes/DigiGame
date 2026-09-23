@@ -21,8 +21,17 @@ func _ready() -> void:
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Player must spawn on walkable Central City ground")
 
 	var entry_thresholds := get_tree().get_nodes_in_group("world_interior_threshold")
-	assert(not entry_thresholds.is_empty(), "Loaded area service pads must expose physical entry thresholds")
-	var entry := entry_thresholds[0] as Area2D
+	assert(not entry_thresholds.is_empty(), "Loaded area service entrances must expose physical entry thresholds")
+	var entry: Area2D = null
+	for candidate in entry_thresholds:
+		var candidate_area := candidate as Area2D
+		if candidate_area == null:
+			continue
+		var candidate_payload = candidate_area.get_meta("interior_payload", {})
+		if candidate_payload is Dictionary and String((candidate_payload as Dictionary).get("service", "")) == "digilab":
+			entry = candidate_area
+			break
+	assert(entry != null, "DigiLab exterior must expose its authored doorway threshold")
 	var payload = entry.get_meta("interior_payload", {})
 	assert(payload is Dictionary, "Interior threshold must carry its destination payload")
 	var raw_return = (payload as Dictionary).get("return_position", [])
@@ -50,7 +59,14 @@ func _ready() -> void:
 	await get_tree().create_timer(1.0).timeout
 	assert(not bool(manager.call("is_active")), "Crossing the interior doorway must return to the city")
 	assert(area.is_exterior_active(), "Loaded exterior area must reactivate after exit")
-	assert(player.global_position.is_equal_approx(expected_return), "Exit must restore the authored exterior doorway position")
+	assert(player.global_position.is_equal_approx(expected_return), "Exit must restore the authored exterior return position")
+	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "DigiLab return point must be walkable after exit")
+	var before_escape := player.global_position
+	player.call("_try_move", Vector2(0.0, 12.0))
+	assert(
+		player.global_position.distance_to(before_escape) > 6.0,
+		"Player must be able to walk away immediately after leaving DigiLab"
+	)
 	assert(get_tree().current_scene == self, "Interior exit must remain in the same SceneTree")
 	assert(
 		int(world.call("get_area_banner_presentation_count")) == initial_banner_count,
