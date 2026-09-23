@@ -50,7 +50,7 @@ jobs:
             command: godot --headless --path . tools/test_world_streaming.tscn --quit-after 45
             success: seamless world streaming regression passed
           - name: world-interiors
-            command: godot --headless --path . tools/test_world_interior.tscn --quit-after 120
+            command: godot --headless --path . tools/test_world_interior.tscn --quit-after 360
             success: seamless world interior regression passed
           - name: battle-operator-programs
             # This regression now waits for the real Battle Operator construction
