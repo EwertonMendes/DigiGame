@@ -6,7 +6,7 @@ signal world_flags_changed
 const DEFAULT_REGION := "central_city"
 const DEFAULT_AREA := "central_city"
 const DEFAULT_CHUNK := Vector2i.ZERO
-const DEFAULT_POSITION := Vector2(-96.0, 272.0)
+const DEFAULT_POSITION := Vector2(-192.0, 544.0)
 const DEFAULT_FACING := "south"
 const DEFAULT_WORLD_SCENE := "res://scenes/world/world_root.tscn"
 
