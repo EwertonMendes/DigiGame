@@ -583,13 +583,12 @@ func _on_interaction_requested(action_id: String, payload: Dictionary) -> void:
 			_open_dialog(String(payload.get("title", "CENTRAL CITY")), "This interaction is connected to the new world runtime.")
 
 
-func _on_interior_state_changed(active: bool, title: String) -> void:
+func _on_interior_state_changed(active: bool, _title: String) -> void:
 	_movement_dirty = false
 	_save_elapsed = 0.0
-	if active:
-		if _area_title != null:
-			_area_title.present(title, "Interior · seamless focus", 1.15)
-	else:
+	# Entering a local interior is not an area transition. Area banners are
+	# reserved for major locations explicitly presented by present_area_banner().
+	if not active:
 		if _area_scene != null and _player != null:
 			_current_section = _area_scene.world_to_section(_player.global_position)
 			WorldState.capture_location(

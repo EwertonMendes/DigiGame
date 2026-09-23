@@ -11,6 +11,8 @@ func _ready() -> void:
 	var world := WORLD_SCENE.instantiate()
 	add_child(world)
 	await _wait_for_world_ready(world)
+	await _frames(2)
+	var initial_banner_count := int(world.call("get_area_banner_presentation_count"))
 
 	var player := world.call("get_player") as Node2D
 	var area = world.call("get_area_scene") as WorldAreaScene
@@ -35,6 +37,10 @@ func _ready() -> void:
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Interior spawn must be walkable")
+	assert(
+		int(world.call("get_area_banner_presentation_count")) == initial_banner_count,
+		"Entering a local interior must not display an area-title banner"
+	)
 
 	var exit_thresholds := get_tree().get_nodes_in_group("world_interior_exit_threshold")
 	assert(not exit_thresholds.is_empty(), "Interior must expose a physical exit threshold")
@@ -46,6 +52,10 @@ func _ready() -> void:
 	assert(area.is_exterior_active(), "Loaded exterior area must reactivate after exit")
 	assert(player.global_position.is_equal_approx(expected_return), "Exit must restore the authored exterior doorway position")
 	assert(get_tree().current_scene == self, "Interior exit must remain in the same SceneTree")
+	assert(
+		int(world.call("get_area_banner_presentation_count")) == initial_banner_count,
+		"Returning from a local interior must not display an area-title banner"
+	)
 
 	print("seamless world interior regression passed")
 	get_tree().quit()

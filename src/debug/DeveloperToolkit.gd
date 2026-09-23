@@ -827,7 +827,7 @@ func _refresh_diagnostics() -> void:
 	if _diagnostics == null:
 		return
 	var info := _state.diagnostics(_selected_id)
-	_diagnostics.text = "Scene: %s\nFPS: %d · Time scale %.2f · Memory %.1f MB\nCollection: %d · Squad: %d (Active %d + Reserve %d) · Bits: %d\nSelected: Lv.%d · HP %d · SP %d" % [String(info.get("scene", "")), int(info.get("fps", 0)), float(info.get("time_scale", 1.0)), float(info.get("static_memory", 0)) / 1048576.0, int(info.get("collection_size", 0)), int(info.get("squad_size", 0)), int(info.get("active_size", 0)), int(info.get("reserve_size", 0)), int(info.get("bits", 0)), int(info.get("selected_level", 0)), int(info.get("selected_hp", 0)), int(info.get("selected_sp", 0))]
+	_diagnostics.text = "Scene: %s\nFPS: %d · Frame %.2f ms · Physics %.2f ms\nDraw calls: %d · Render objects: %d · Nodes: %d\nTime scale %.2f · Memory %.1f MB\nCollection: %d · Squad: %d (Active %d + Reserve %d) · Bits: %d\nSelected: Lv.%d · HP %d · SP %d" % [String(info.get("scene", "")), int(info.get("fps", 0)), float(info.get("frame_ms", 0.0)), float(info.get("physics_ms", 0.0)), int(info.get("draw_calls", 0)), int(info.get("render_objects", 0)), int(info.get("node_count", 0)), float(info.get("time_scale", 1.0)), float(info.get("static_memory", 0)) / 1048576.0, int(info.get("collection_size", 0)), int(info.get("squad_size", 0)), int(info.get("active_size", 0)), int(info.get("reserve_size", 0)), int(info.get("bits", 0)), int(info.get("selected_level", 0)), int(info.get("selected_hp", 0)), int(info.get("selected_sp", 0))]
 	var history_lines: Array[String] = []
 	var limit := mini(10, _state.history.size())
 	for index in range(limit):

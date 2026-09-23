@@ -137,6 +137,11 @@ func diagnostics(selected_instance_id: String = "") -> Dictionary:
 	var selected := OverworldState.get_instance_by_id(selected_instance_id)
 	return {
 		"fps": Engine.get_frames_per_second(),
+		"frame_ms": Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+		"physics_ms": Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
+		"node_count": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
+		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
+		"render_objects": int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)),
 		"scene": scene.scene_file_path if scene != null else "",
 		"scene_name": scene.name if scene != null else "",
 		"time_scale": Engine.time_scale,
