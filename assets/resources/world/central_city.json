@@ -1,0 +1,259 @@
+{
+  "id": "central_city",
+  "region": "central_city",
+  "display_name": "Central City",
+  "subtitle": "Recovery District · continuous overworld",
+  "chunk_size": 14,
+  "chunks": [
+    {
+      "coord": [
+        -2,
+        -2
+      ],
+      "theme": "garden",
+      "title": "Verdant Terrace",
+      "subtitle": "A quiet garden district",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -1,
+        -2
+      ],
+      "theme": "residential",
+      "title": "Northwest Residences",
+      "subtitle": "Homes among recovered data",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        0,
+        -2
+      ],
+      "theme": "canal",
+      "title": "North Canal",
+      "subtitle": "Waterways through the city",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        1,
+        -2
+      ],
+      "theme": "archive",
+      "title": "Memory Archive",
+      "subtitle": "Recovered records and research",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        2,
+        -2
+      ],
+      "theme": "garden",
+      "title": "Northeast Terrace",
+      "subtitle": "Green space above the canal",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -2,
+        -1
+      ],
+      "theme": "residential",
+      "title": "West Heights",
+      "subtitle": "Restored homes and side streets",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -1,
+        -1
+      ],
+      "theme": "garden",
+      "title": "DigiLab Gardens",
+      "subtitle": "A calm approach to the laboratory",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        0,
+        -1
+      ],
+      "theme": "training",
+      "title": "Training Ward",
+      "subtitle": "Growth and tactical preparation",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        1,
+        -1
+      ],
+      "theme": "garden",
+      "title": "Hospital Gardens",
+      "subtitle": "Recovery district green space",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        2,
+        -1
+      ],
+      "theme": "residential",
+      "title": "East Heights",
+      "subtitle": "Newly restored housing",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -2,
+        0
+      ],
+      "theme": "residential",
+      "title": "West Commons",
+      "subtitle": "Residential recovery block",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -1,
+        0
+      ],
+      "theme": "digilab",
+      "title": "DigiLab District",
+      "subtitle": "Evolution and reconstruction",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        0,
+        0
+      ],
+      "theme": "plaza",
+      "title": "Central Plaza",
+      "subtitle": "Heart of Central City",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        1,
+        0
+      ],
+      "theme": "hospital",
+      "title": "Hospital District",
+      "subtitle": "Recovery services",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        2,
+        0
+      ],
+      "theme": "gate",
+      "title": "East Gate",
+      "subtitle": "Road toward the outer sectors",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -2,
+        1
+      ],
+      "theme": "garden",
+      "title": "Southwest Gardens",
+      "subtitle": "Community green space",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -1,
+        1
+      ],
+      "theme": "residential",
+      "title": "Southwest Commons",
+      "subtitle": "Homes and small plazas",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        0,
+        1
+      ],
+      "theme": "market",
+      "title": "Data Market",
+      "subtitle": "Shops and civilian services",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        1,
+        1
+      ],
+      "theme": "residential",
+      "title": "Southeast Commons",
+      "subtitle": "Restored neighborhood",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        2,
+        1
+      ],
+      "theme": "garden",
+      "title": "East Gardens",
+      "subtitle": "Trees along the city wall",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -2,
+        2
+      ],
+      "theme": "garden",
+      "title": "Lower Garden",
+      "subtitle": "Quiet edge of the city",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        -1,
+        2
+      ],
+      "theme": "residential",
+      "title": "South Residences",
+      "subtitle": "Homes near the outbound road",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        0,
+        2
+      ],
+      "theme": "gate",
+      "title": "South Gate",
+      "subtitle": "Route toward Green Sector",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        1,
+        2
+      ],
+      "theme": "residential",
+      "title": "Southeast Residences",
+      "subtitle": "Newly restored housing",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    },
+    {
+      "coord": [
+        2,
+        2
+      ],
+      "theme": "garden",
+      "title": "Lower East Terrace",
+      "subtitle": "City-edge green space",
+      "scene_path": "res://scenes/world/world_chunk.tscn"
+    }
+  ]
+}
