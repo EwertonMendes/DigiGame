@@ -1,6 +1,12 @@
 import { chromium } from 'playwright';
 
 const url = process.env.DIGIGAME_URL ?? 'http://127.0.0.1:8000';
+const debugHubUrl = (() => {
+  const target = new URL(url);
+  target.searchParams.set('debug', '1');
+  target.searchParams.set('test_hub', '1');
+  return target.toString();
+})();
 const requestedSuite = process.env.SMOKE_SUITE ?? 'desktop';
 const suite = requestedSuite === 'combat' || requestedSuite === 'vfx' ? 'combat-vfx' : requestedSuite;
 const runtimeErrors = [];
@@ -49,9 +55,17 @@ async function waitForCanvas(page) {
   }, null, { timeout: 60000 });
 }
 
+async function openWorld(page) {
+  const ready = waitForConsole(page, '[World] READY', 60000);
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForCanvas(page);
+  await ready;
+  await settleFrames(page, 4);
+}
+
 async function openHub(page) {
   const ready = waitForConsole(page, '[Hub] READY', 60000);
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(debugHubUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForCanvas(page);
   await ready;
   await settleFrames(page, 3);
@@ -165,9 +179,11 @@ async function exerciseBattleOperatorCloseTransition(page) {
 async function runDesktopSuite() {
   const page = await browser.newPage({ viewport: desktopViewports[0] });
   watchRuntimeErrors(page, 'desktop');
-  await openHub(page);
+  await openWorld(page);
+  await page.screenshot({ path: 'build/world-smoke.png', fullPage: true });
 
-  // Smoke the V2 menu surface without asserting exact pixels/layout values.
+  // Smoke the V2 menu surface from the actual campaign world.
+
   await page.keyboard.press('KeyM');
   await settleFrames(page, 3);
   await page.screenshot({ path: 'build/digimon-technique-library.png', fullPage: true });
@@ -178,9 +194,11 @@ async function runDesktopSuite() {
   await page.waitForTimeout(300);
   await page.keyboard.up('KeyA');
   await settleFrames(page, 2);
-  await page.screenshot({ path: 'build/hub-movement.png', fullPage: true });
+  await page.screenshot({ path: 'build/world-movement.png', fullPage: true });
 
-  await reloadHub(page);
+  // Combat QA still uses the preserved Test Hub, reached only through the
+  // developer-only query route. Normal players never enter this scene.
+  await openHub(page);
   await page.screenshot({ path: 'build/hub-smoke.png', fullPage: true });
   await exerciseBattleOperatorCloseTransition(page);
   await enterTestBattle(page, true);
@@ -241,8 +259,8 @@ async function runMobileSuite() {
     deviceScaleFactor: 1,
   });
   watchRuntimeErrors(page, 'mobile');
-  await openHub(page);
-  await page.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
+  await openWorld(page);
+  await page.screenshot({ path: 'build/world-mobile-portrait.png', fullPage: true });
 
   // V2 menu should open/close on the mobile-sized viewport, but exact pixels are
   // deliberately not part of this regression contract.
@@ -252,15 +270,18 @@ async function runMobileSuite() {
   await page.keyboard.press('Escape');
 
   const client = await page.context().newCDPSession(page);
-  const hubTouchStarted = waitForConsole(page, '[Hub] TOUCH_MOVE direction=right pressed=true');
-  await dispatchTouch(client, 'touchStart', [{ x: 163, y: 739 }]);
-  await hubTouchStarted;
+  const worldTouchStarted = waitForConsole(page, '[World] TOUCH_MOVE');
+  await dispatchTouch(client, 'touchStart', [{ x: 96, y: 739 }]);
+  await worldTouchStarted;
   await page.waitForTimeout(300);
   await dispatchTouch(client, 'touchEnd', []);
   await settleFrames(page, 2);
-  await page.screenshot({ path: 'build/hub-mobile-movement.png', fullPage: true });
+  await page.screenshot({ path: 'build/world-mobile-movement.png', fullPage: true });
 
-  await reloadHub(page);
+  // Switch to the developer-only Test Hub for the existing battle interaction
+  // coverage; this also proves the legacy Hub remains independently runnable.
+  await openHub(page);
+  await page.screenshot({ path: 'build/hub-mobile-portrait.png', fullPage: true });
   const mobileDialogueOpened = waitForConsole(page, '[Hub] DIALOGUE_OPEN');
   await page.touchscreen.tap(320, 776);
   await mobileDialogueOpened;
