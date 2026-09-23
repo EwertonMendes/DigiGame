@@ -33,11 +33,31 @@ func _ready() -> void:
 	var road_modules := get_tree().get_nodes_in_group("central_city_road_module")
 	var crosswalk_modules := get_tree().get_nodes_in_group("central_city_crosswalk_module")
 	var service_accesses := get_tree().get_nodes_in_group("central_city_service_access")
-	assert(custom_assets.size() >= 120, "Central City must be composed from the authored Tblack city kit")
-	assert(ground_modules.size() >= 110, "Central City must use modular ground pieces instead of isolated patches")
+	assert(custom_assets.size() >= 35, "Central City must still use the authored Tblack city kit for roads, plaza, greenery and props")
+	assert(ground_modules.size() >= 14, "Central City must use authored ground modules only where they have a semantic role")
 	assert(road_modules.size() == 6, "The current straight-only boulevard must contain exactly six road modules plus two crosswalk replacements")
 	assert(crosswalk_modules.size() == 2, "Central Plaza must have two authored crosswalk approaches")
 	assert(service_accesses.size() == 5, "Building-free service districts must keep all five interiors reachable")
+	for module in ground_modules:
+		assert(
+			String(module.get_meta("asset_id", "")) != "sidewalk",
+			"Finished sidewalk/platform art must never be tiled as the city-wide pavement foundation"
+		)
+	for prop in get_tree().get_nodes_in_group("central_city_prop"):
+		var section_variant = prop.get_meta("section_coord", null)
+		var cell_variant = prop.get_meta("grid_cell", null)
+		if section_variant is Vector2i and cell_variant is Vector2i:
+			var section_coord: Vector2i = section_variant
+			var cell: Vector2i = cell_variant
+			if section_coord.y == 0 and section_coord != Vector2i.ZERO:
+				assert(
+					String(prop.get_meta("asset_id", "")) == "digital-terminal",
+					"Straight boulevard sections must remain free of decorative props that overlap the road footprint"
+				)
+				assert(
+					cell.y <= 3 or cell.y >= 11,
+					"Boulevard service terminals must remain outside the road footprint"
+				)
 	assert(CentralCityAssetCatalogScript.supports_road_piece("straight"), "Straight road art must be registered")
 	assert(
 		not CentralCityAssetCatalogScript.supports_road_piece("corner")
