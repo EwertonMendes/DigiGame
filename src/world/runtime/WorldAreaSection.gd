@@ -11,6 +11,10 @@ const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purpl
 const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
+const CITY_WALL_LEVELS := 3
+const CITY_WALL_LEVEL_HEIGHT := 32.0
+const CITY_WALL_HEIGHT := CITY_WALL_LEVEL_HEIGHT * CITY_WALL_LEVELS
+const CITY_DOOR_HEIGHT := 64.0
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 
@@ -307,19 +311,38 @@ func _build_plaza() -> void:
 
 
 func _build_gate() -> void:
+	# Gate structures follow the same continuous vector-wall language as the
+	# establishments. MC Blocks are intentionally not used for exterior walls.
 	var props := Node2D.new()
 	props.name = "CityGate"
 	add_child(props)
-	for cell in [Vector2i(4, 5), Vector2i(4, 6), Vector2i(9, 5), Vector2i(9, 6)]:
-		for level in range(3):
-			var block := CITY.create_joined_block(
-				BLOCK_WALL_DARK,
-				grid_to_world(Vector2(cell)),
-				850 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
-				level
-			)
-			props.add_child(block)
-		_mark_blocked(cell)
+	for origin in [Vector2i(4, 5), Vector2i(9, 5)]:
+		var size := Vector2i(1, 2)
+		for x in range(size.x):
+			for y in range(size.y):
+				_mark_blocked(origin + Vector2i(x, y))
+		_build_continuous_facade(
+			props,
+			origin,
+			size,
+			"east",
+			false,
+			Vector2i.ZERO,
+			Color(0.20, 0.25, 0.28, 1.0),
+			Color(0.38, 0.82, 1.0, 1.0),
+			"GateEast"
+		)
+		_build_continuous_facade(
+			props,
+			origin,
+			size,
+			"south",
+			false,
+			Vector2i.ZERO,
+			Color(0.24, 0.29, 0.31, 1.0),
+			Color(0.38, 0.82, 1.0, 1.0),
+			"GateSouth"
+		)
 
 
 func _build_residential_block() -> void:
@@ -413,8 +436,9 @@ func _build_exterior_shell(
 	building.add_to_group("central_city_building")
 	building.set_meta("grid_origin", origin)
 	building.set_meta("grid_size", size)
-	building.set_meta("wall_levels", 3)
+	building.set_meta("wall_levels", CITY_WALL_LEVELS)
 	building.set_meta("service_id", service_id)
+	building.set_meta("wall_renderer", "continuous")
 	add_child(building)
 
 	var door_cell := (
@@ -422,59 +446,44 @@ func _build_exterior_shell(
 		if door_side == "south"
 		else origin + Vector2i(size.x - 1, int(size.y / 2))
 	)
-	# Three MC Blocks levels are the minimum building height for Central City.
-	# The joined presentation closes the transparent padding between adjacent
-	# cubes so the facade reads as a wall assembled from square blocks, not as a
-	# row of detached pillars.
-	var wall_levels := 3
+
+	# Collision still follows the authored footprint, but the visual facade is
+	# now one continuous surface per side instead of one sprite per grid cell.
 	for x in range(size.x):
 		for y in range(size.y):
 			var cell := origin + Vector2i(x, y)
-			var doorway := with_door and cell == door_cell
-			if not doorway:
+			if not (with_door and cell == door_cell):
 				_mark_blocked(cell)
 
-			var visible_facade := x == size.x - 1 or y == size.y - 1
-			if not visible_facade:
-				continue
+	var palette := _wall_palette(service_id, accent, with_door)
+	_build_continuous_facade(
+		building,
+		origin,
+		size,
+		"south",
+		with_door and door_side == "south",
+		door_cell,
+		palette.get("south", Color(0.34, 0.38, 0.40, 1.0)),
+		accent,
+		"SouthFacade"
+	)
+	_build_continuous_facade(
+		building,
+		origin,
+		size,
+		"east",
+		with_door and door_side == "east",
+		door_cell,
+		palette.get("east", Color(0.28, 0.32, 0.34, 1.0)),
+		accent,
+		"EastFacade"
+	)
 
-			if doorway:
-				# Keep a two-block-tall opening and close the wall above it with
-				# the third level.
-				var lintel := CITY.create_joined_block(
-					_facade_block_cell(service_id, wall_levels - 1, x, y, size, with_door),
-					grid_to_world(Vector2(cell)),
-					800 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
-					wall_levels - 1
-				)
-				building.add_child(lintel)
-				continue
-
-			for level in range(wall_levels):
-				var block := CITY.create_joined_block(
-					_facade_block_cell(service_id, level, x, y, size, with_door),
-					grid_to_world(Vector2(cell)),
-					720 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
-					level
-				)
-				building.add_child(block)
-
-	if with_door:
-		var door := CITY.create_prop(
-			DOOR_DARK,
-			grid_to_world(Vector2(door_cell)),
-			1500 + int(round(global_position.y + grid_to_world(Vector2(door_cell)).y)),
-			Vector2(1.75, 1.75)
-		)
-		door.modulate = accent.lightened(0.12)
-		building.add_child(door)
-
-	# No roof layer in this pass. The previous roof diamonds read as floating
-	# floor tiles and obscured the wall language the city needs to establish.
+	# No roof layer. The wall height itself provides the architectural mass.
 	if not title.is_empty():
 		var sign := Label.new()
 		sign.text = title
-		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-96.0, -188.0)
+		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-96.0, -178.0)
 		sign.size = Vector2(192.0, 28.0)
 		sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		sign.add_theme_font_size_override("font_size", 12)
@@ -487,60 +496,121 @@ func _build_exterior_shell(
 	return {"node": building, "door_cell": door_cell}
 
 
-func _facade_block_cell(
-	service_id: String,
-	level: int,
-	x: int,
-	y: int,
+func _build_continuous_facade(
+	parent: Node2D,
+	origin: Vector2i,
 	size: Vector2i,
-	with_door: bool
-) -> Vector2i:
-	var corner := x == size.x - 1 and y == size.y - 1
-	if not with_door:
-		if level == 0:
-			return BLOCK_WHITE if not corner else BLOCK_WALL_DARK
-		return _residential_accent_block()
+	side: String,
+	has_door: bool,
+	door_cell: Vector2i,
+	face_color: Color,
+	accent: Color,
+	node_name: String
+) -> void:
+	var edge_start := Vector2.ZERO
+	var edge_end := Vector2.ZERO
+	var door_start := Vector2.ZERO
+	var door_end := Vector2.ZERO
 
-	if level == 0:
-		# A darker structural base makes each colored service facade feel
-		# anchored while still keeping every block edge connected.
-		if service_id == "hospital":
-			return BLOCK_WHITE if not corner else BLOCK_TEAL
-		return BLOCK_WALL_DARK if not corner else BLOCK_WHITE
+	if side == "south":
+		var first_center := grid_to_world(Vector2(origin + Vector2i(0, size.y - 1)))
+		var last_center := grid_to_world(Vector2(origin + Vector2i(size.x - 1, size.y - 1)))
+		edge_start = first_center + Vector2(-TILE_HALF_WIDTH, 0.0)
+		edge_end = last_center + Vector2(0.0, TILE_HALF_HEIGHT)
+		if has_door:
+			var door_center := grid_to_world(Vector2(door_cell))
+			door_start = door_center + Vector2(-TILE_HALF_WIDTH, 0.0)
+			door_end = door_center + Vector2(0.0, TILE_HALF_HEIGHT)
+	else:
+		var first_center := grid_to_world(Vector2(origin + Vector2i(size.x - 1, 0)))
+		var last_center := grid_to_world(Vector2(origin + Vector2i(size.x - 1, size.y - 1)))
+		edge_start = first_center + Vector2(TILE_HALF_WIDTH, 0.0)
+		edge_end = last_center + Vector2(0.0, TILE_HALF_HEIGHT)
+		if has_door:
+			var door_center := grid_to_world(Vector2(door_cell))
+			door_start = door_center + Vector2(TILE_HALF_WIDTH, 0.0)
+			door_end = door_center + Vector2(0.0, TILE_HALF_HEIGHT)
 
-	if service_id == "hospital":
-		# Hospital stays bright, with cyan corner/interval accents instead of
-		# becoming another gray building.
-		if corner or (x + y) % 3 == 0:
-			return BLOCK_TEAL
-		return BLOCK_WHITE
-	return _service_block_cell(service_id)
+	var depth := 760 + int(round(global_position.y + maxf(edge_start.y, edge_end.y)))
+	if not has_door:
+		parent.add_child(CITY.create_city_wall_segment(
+			edge_start,
+			edge_end,
+			CITY_WALL_HEIGHT,
+			face_color,
+			accent,
+			depth,
+			node_name
+		))
+		return
+
+	if edge_start.distance_to(door_start) > 0.5:
+		parent.add_child(CITY.create_city_wall_segment(
+			edge_start,
+			door_start,
+			CITY_WALL_HEIGHT,
+			face_color,
+			accent,
+			depth,
+			"%sLeft" % node_name
+		))
+	if door_end.distance_to(edge_end) > 0.5:
+		parent.add_child(CITY.create_city_wall_segment(
+			door_end,
+			edge_end,
+			CITY_WALL_HEIGHT,
+			face_color,
+			accent,
+			depth + 1,
+			"%sRight" % node_name
+		))
+
+	# The lintel is the same continuous wall material above the opening. Accent
+	# bands are suppressed here so the long facade stripe remains visually clean.
+	parent.add_child(CITY.create_city_wall_segment(
+		door_start - Vector2(0.0, CITY_DOOR_HEIGHT),
+		door_end - Vector2(0.0, CITY_DOOR_HEIGHT),
+		CITY_WALL_HEIGHT - CITY_DOOR_HEIGHT,
+		face_color,
+		accent,
+		depth + 2,
+		"%sLintel" % node_name,
+		false,
+		true
+	))
+	parent.add_child(CITY.create_city_door_panel(
+		door_start,
+		door_end,
+		CITY_DOOR_HEIGHT,
+		accent,
+		depth + 3,
+		"%sDoor" % node_name
+	))
 
 
-func _residential_accent_block() -> Vector2i:
-	match posmod(section_coord.x * 3 + section_coord.y, 3):
-		0:
-			return BLOCK_BLUE
-		1:
-			return BLOCK_TEAL
-		_:
-			return BLOCK_PURPLE
-
-
-func _service_block_cell(service_id: String) -> Vector2i:
+func _wall_palette(service_id: String, accent: Color, with_door: bool) -> Dictionary:
+	var base := Color(0.31, 0.35, 0.37, 1.0)
 	match service_id:
-		"digilab":
-			return BLOCK_TEAL
 		"hospital":
-			return BLOCK_WHITE
+			base = Color(0.62, 0.66, 0.67, 1.0)
+		"digilab":
+			base = Color(0.25, 0.33, 0.36, 1.0)
 		"training":
-			return BLOCK_LIME
+			base = Color(0.29, 0.35, 0.30, 1.0)
 		"shop":
-			return BLOCK_YELLOW
+			base = Color(0.36, 0.32, 0.24, 1.0)
 		"archive":
-			return BLOCK_PURPLE
+			base = Color(0.31, 0.28, 0.36, 1.0)
+		"residential":
+			base = accent.darkened(0.42)
 		_:
-			return BLOCK_BLUE
+			if with_door:
+				base = accent.darkened(0.55)
+
+	return {
+		"south": base.lightened(0.055),
+		"east": base.darkened(0.075),
+	}
 
 
 func _service_floor_cell(service_id: String) -> Vector2i:
