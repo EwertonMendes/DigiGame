@@ -497,14 +497,6 @@ core.*
 # Add any future generated/private project-specific paths explicitly below.
 
 
-########################################
-### Licensed external city assets    ###
-########################################
-
-# Downloaded at setup/build time. Never commit raw third-party pack files.
-/assets/external/central_city/
-/.cache/external-city-assets/
-
 
 ########################################
 ### Tblack Central City generated    ###
