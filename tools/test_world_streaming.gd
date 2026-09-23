@@ -20,7 +20,8 @@ func _ready() -> void:
 	assert(bool(world.call("can_actor_move_to", (player as Node2D).global_position, player)), "Fresh campaign spawn must be walkable")
 	assert((player as Node2D).global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the safe south-plaza lane")
 	assert(int(streamer.call("get_loaded_chunk_count")) >= 9, "Initial streaming ring must contain the visible 3x3 neighborhood")
-	assert(get_tree().get_nodes_in_group("world_interactable").size() >= 4, "Central City must stream multiple reusable interactables around the plaza")
+	assert(get_tree().get_nodes_in_group("world_interactable").size() >= 1, "Central City must stream reusable NPC/service interactables around the plaza")
+	assert(get_tree().get_nodes_in_group("world_interior_threshold").size() >= 3, "Nearby city services must expose physical seamless-entry thresholds")
 
 	var player_node := player as Node2D
 	player_node.global_position = _grid_to_world(Vector2(21, 7))
