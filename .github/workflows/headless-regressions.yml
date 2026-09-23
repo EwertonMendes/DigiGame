@@ -10,6 +10,8 @@ on:
       - 'src/**'
       - 'database/**'
       - 'assets/resources/**'
+      - 'assets/terrain/tblack-central-city/source/**'
+      - 'tools/prepare_tblack_central_city_assets.py'
       - 'tools/test_*.gd'
       - 'tools/test_*.tscn'
   workflow_dispatch:
