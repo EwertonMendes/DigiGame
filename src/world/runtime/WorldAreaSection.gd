@@ -105,66 +105,84 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 	var ay := absi(delta.y)
 	var city_ring := maxi(ax, ay)
 
-	# Central civic pool: 0064 is used as a visible digital-water focal point,
-	# surrounded by a compact teal promenade. The safe spawn stays on the ring.
+	# Central Plaza is one authored civic space instead of a patchwork of
+	# district materials: 0064 pool, a single teal rim, then 0054 pavement.
 	if ax <= 1 and ay <= 1:
 		return {"surface": CITY.SURFACE_WATER, "walkable": false}
-	if city_ring <= 3:
+	if city_ring == 2:
 		return {"surface": CITY.SURFACE_TECH_TEAL, "walkable": true}
-	if city_ring <= 5:
-		return {"surface": CITY.SURFACE_MAIN, "walkable": true}
-
-	# Broad city promenades and the luminous inner ring.
-	if ax <= 2 or ay <= 2:
-		return {"surface": CITY.SURFACE_MAIN, "walkable": true}
-	if city_ring in [11, 12] and ax <= 22 and ay <= 22:
-		return {"surface": CITY.SURFACE_TECH_TEAL, "walkable": true}
-	if absi(ax - ay) <= 1 and city_ring <= 24:
+	if city_ring <= 6:
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
-	# North canal keeps 0064 as a second water language and remains blocked.
-	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - 7) > 1:
-		return {"surface": CITY.SURFACE_WATER, "walkable": false}
+	# City structure is defined before district styling. A wide north/south and
+	# east/west promenade crosses the whole island, while every 14x14 authoring
+	# section contributes a one-cell 0054 sidewalk around its lot. Neighbouring
+	# sections therefore form coherent two-cell streets between city blocks.
+	if ax <= 1 or ay <= 1:
+		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+	if _is_block_sidewalk(cell):
+		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+
+	# Service districts have a deliberate paved cross through the middle. This
+	# produces four readable future establishment lots and gives the temporary
+	# service pad an obvious pedestrian route from every surrounding sidewalk.
+	if _is_service_district(theme) and _is_service_walkway(cell):
+		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
 	match theme:
 		"garden":
+			# Parks are bounded rectangles: mint edging, green interior and one
+			# consistent checker cross. No coordinate hash/random alternation.
+			var garden_border := cell.x in [2, 11] or cell.y in [2, 11]
 			var garden_cross := cell.x in [6, 7] or cell.y in [6, 7]
-			var garden_edge := cell.x <= 2 or cell.y <= 2 or cell.x >= 11 or cell.y >= 11
-			return {
-				"surface": (
-					CITY.SURFACE_GRASS_CHECKER
-					if garden_cross
-					else CITY.SURFACE_MINT
-					if garden_edge
-					else CITY.SURFACE_GRASS
-				),
-				"walkable": true,
-			}
+			if garden_border:
+				return {"surface": CITY.SURFACE_MINT, "walkable": true}
+			if garden_cross:
+				return {"surface": CITY.SURFACE_GRASS_CHECKER, "walkable": true}
+			return {"surface": CITY.SURFACE_GRASS, "walkable": true}
 		"digilab":
-			var border := cell.x <= 1 or cell.y <= 1 or cell.x >= 12 or cell.y >= 12
-			return {"surface": CITY.SURFACE_MAIN if border else CITY.SURFACE_TECH_TEAL, "walkable": true}
+			return {"surface": CITY.SURFACE_TECH_TEAL, "walkable": true}
 		"hospital":
-			var border := cell.x <= 1 or cell.y <= 1 or cell.x >= 12 or cell.y >= 12
-			return {"surface": CITY.SURFACE_MAIN if border else CITY.SURFACE_TECH_BLUE, "walkable": true}
+			return {"surface": CITY.SURFACE_TECH_BLUE, "walkable": true}
 		"training":
-			var lane := cell.x in [6, 7] or cell.y in [6, 7]
-			return {"surface": CITY.SURFACE_MAIN if lane else CITY.SURFACE_TRAINING, "walkable": true}
+			return {"surface": CITY.SURFACE_TRAINING, "walkable": true}
 		"market":
-			var lane := cell.x in [6, 7] or cell.y in [6, 7]
-			return {"surface": CITY.SURFACE_STONE_SOFT if lane else CITY.SURFACE_MARKET, "walkable": true}
+			return {"surface": CITY.SURFACE_MARKET, "walkable": true}
 		"archive":
-			var border := cell.x <= 1 or cell.y <= 1 or cell.x >= 12 or cell.y >= 12
-			return {"surface": CITY.SURFACE_DARK if border else CITY.SURFACE_TECH_PURPLE, "walkable": true}
+			return {"surface": CITY.SURFACE_TECH_PURPLE, "walkable": true}
 		"gate":
-			var lane := cell.x in [5, 6, 7, 8] or cell.y in [5, 6, 7, 8]
-			return {"surface": CITY.SURFACE_TECH_TEAL if lane else CITY.SURFACE_DARK, "walkable": true}
+			# Gate wards stay sober and directional: dark buildable lots with a
+			# 0054 central outbound lane.
+			if cell.x in [6, 7] or cell.y in [6, 7]:
+				return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+			return {"surface": CITY.SURFACE_DARK, "walkable": true}
 		"canal":
-			return {"surface": CITY.SURFACE_MINT if cell.y >= 9 else CITY.SURFACE_MAIN, "walkable": true}
-		"plaza":
+			# A rectangular canal crosses the block. The center two columns form
+			# the permanent 0054 bridge, keeping the route legible.
+			if cell.y >= 5 and cell.y <= 8 and cell.x >= 2 and cell.x <= 11:
+				if cell.x in [6, 7]:
+					return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+				return {"surface": CITY.SURFACE_WATER, "walkable": false}
 			return {"surface": CITY.SURFACE_MAIN, "walkable": true}
+		"plaza":
+			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 		_:
-			var courtyard := cell.x >= 5 and cell.x <= 8 and cell.y >= 8 and cell.y <= 11
-			return {"surface": CITY.SURFACE_MINT if courtyard else CITY.SURFACE_MAIN, "walkable": true}
+			# 0072 is the neutral city-lot material. Residential and future
+			# establishment blocks stay as large contiguous pads rather than
+			# being sprinkled with unrelated surfaces.
+			return {"surface": CITY.SURFACE_MAIN, "walkable": true}
+
+
+func _is_block_sidewalk(cell: Vector2i) -> bool:
+	return cell.x in [0, SECTION_SIZE - 1] or cell.y in [0, SECTION_SIZE - 1]
+
+
+func _is_service_district(theme: String) -> bool:
+	return theme in ["digilab", "hospital", "training", "market", "archive"]
+
+
+func _is_service_walkway(cell: Vector2i) -> bool:
+	return cell.x in [6, 7] or cell.y in [6, 7]
 
 
 func _global_grid(cell: Vector2i) -> Vector2i:
