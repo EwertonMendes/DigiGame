@@ -369,6 +369,135 @@ static func _hub_surface_texture(surface: String) -> Texture2D:
 			return HUB_WARM
 
 
+static func create_city_wall_segment(
+	ground_start: Vector2,
+	ground_end: Vector2,
+	height: float,
+	base_color: Color,
+	accent_color: Color,
+	depth_order: int,
+	node_name: String = "WallSurface"
+) -> Node2D:
+	var root := Node2D.new()
+	root.name = node_name
+	root.z_index = clampi(depth_order, -4000, 4000)
+	root.add_to_group("central_city_wall_surface")
+
+	var lift := Vector2(0.0, maxf(1.0, height))
+	var face := Polygon2D.new()
+	face.name = "Face"
+	face.polygon = PackedVector2Array([
+		ground_start,
+		ground_end,
+		ground_end - lift,
+		ground_start - lift,
+	])
+	face.color = base_color
+	root.add_child(face)
+
+	var shade_height := height * 0.34
+	var upper := Polygon2D.new()
+	upper.name = "UpperWash"
+	upper.polygon = PackedVector2Array([
+		ground_start - Vector2(0.0, height - shade_height),
+		ground_end - Vector2(0.0, height - shade_height),
+		ground_end - lift,
+		ground_start - lift,
+	])
+	var upper_color := base_color.lightened(0.10)
+	upper.color = Color(upper_color.r, upper_color.g, upper_color.b, 0.28)
+	upper.z_index = 1
+	root.add_child(upper)
+
+	var accent_y := height * 0.64
+	var accent := Line2D.new()
+	accent.name = "AccentBand"
+	accent.points = PackedVector2Array([
+		ground_start - Vector2(0.0, accent_y),
+		ground_end - Vector2(0.0, accent_y),
+	])
+	accent.width = 5.0
+	accent.default_color = Color(accent_color.r, accent_color.g, accent_color.b, 0.82)
+	accent.antialiased = true
+	accent.z_index = 2
+	root.add_child(accent)
+
+	var top_edge := Line2D.new()
+	top_edge.name = "TopEdge"
+	top_edge.points = PackedVector2Array([
+		ground_start - lift,
+		ground_end - lift,
+	])
+	top_edge.width = 2.0
+	var edge_color := accent_color.lightened(0.24)
+	top_edge.default_color = Color(edge_color.r, edge_color.g, edge_color.b, 0.58)
+	top_edge.antialiased = true
+	top_edge.z_index = 3
+	root.add_child(top_edge)
+
+	return root
+
+
+static func create_city_door_panel(
+	ground_start: Vector2,
+	ground_end: Vector2,
+	height: float,
+	accent_color: Color,
+	depth_order: int,
+	node_name: String = "DoorPanel"
+) -> Node2D:
+	var root := Node2D.new()
+	root.name = node_name
+	root.z_index = clampi(depth_order, -4000, 4000)
+	root.add_to_group("central_city_door_surface")
+
+	var bottom_a := ground_start.lerp(ground_end, 0.14)
+	var bottom_b := ground_start.lerp(ground_end, 0.86)
+	var lift := Vector2(0.0, maxf(1.0, height))
+	var top_a := bottom_a - lift
+	var top_b := bottom_b - lift
+
+	var panel := Polygon2D.new()
+	panel.name = "Panel"
+	panel.polygon = PackedVector2Array([
+		bottom_a,
+		bottom_b,
+		top_b,
+		top_a,
+	])
+	panel.color = Color(0.055, 0.075, 0.085, 1.0)
+	root.add_child(panel)
+
+	var frame := Line2D.new()
+	frame.name = "Frame"
+	frame.points = PackedVector2Array([
+		bottom_a,
+		top_a,
+		top_b,
+		bottom_b,
+	])
+	frame.width = 3.0
+	frame.default_color = Color(accent_color.r, accent_color.g, accent_color.b, 0.92)
+	frame.antialiased = true
+	frame.z_index = 1
+	root.add_child(frame)
+
+	var center_line := Line2D.new()
+	center_line.name = "CenterLine"
+	var center_bottom := bottom_a.lerp(bottom_b, 0.5)
+	center_line.points = PackedVector2Array([
+		center_bottom,
+		center_bottom - lift,
+	])
+	center_line.width = 1.5
+	center_line.default_color = Color(accent_color.r, accent_color.g, accent_color.b, 0.42)
+	center_line.antialiased = true
+	center_line.z_index = 2
+	root.add_child(center_line)
+
+	return root
+
+
 static func create_block(
 	cell: Vector2i,
 	top_center: Vector2,
