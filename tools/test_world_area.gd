@@ -68,10 +68,34 @@ func _ready() -> void:
 		"DigiLab doorway must remain walkable"
 	)
 	assert(
-		not digilab_section.is_walkable_world_position(
+		absf(digilab_building.rotation_degrees - (-2.00295)) < 0.01
+		and digilab_building.scale.distance_to(Vector2(0.40, 0.32838876)) < 0.001,
+		"DigiLab source perspective must be corrected to the 64x32 city axes"
+	)
+	var digilab_collision := digilab_section.get_node_or_null(
+		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
+	assert(
+		digilab_collision != null and digilab_collision.polygon.size() == 8,
+		"DigiLab must use the measured concave ground-contact footprint"
+	)
+	assert(
+		digilab_section.is_walkable_world_position(
 			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 5))
 		),
-		"DigiLab building footprint must block movement through the structure"
+		"Open pavement behind the DigiLab must not have an invisible collision barrier"
+	)
+	assert(
+		not digilab_section.is_walkable_world_position(
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 8))
+		),
+		"DigiLab measured footprint must block movement through the center of the structure"
+	)
+	assert(
+		not digilab_section.is_walkable_world_position(
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(2, 11))
+		),
+		"DigiLab measured footprint must cover the lower-left wall that was previously penetrable"
 	)
 	var digilab_payload = digilab_entrance.get_meta("interior_payload", {})
 	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
