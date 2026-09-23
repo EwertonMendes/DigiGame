@@ -6,7 +6,7 @@ signal load_progress(completed: int, total: int)
 signal load_finished
 
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
-const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
+const CITY = preload("res://src/world/runtime/CentralCityHDAtlasArt.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
