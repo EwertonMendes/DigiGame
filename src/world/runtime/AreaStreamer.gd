@@ -51,7 +51,7 @@ func _process(delta: float) -> void:
 	if _player == null or _chunks_root == null or _chunk_scene == null:
 		return
 	if not _queued_coords.is_empty():
-		var coord := _queued_coords.pop_front()
+		var coord: Vector2i = _queued_coords.pop_front()
 		if _chebyshev(coord, _current_chunk) <= ACTIVE_RADIUS:
 			_instantiate_chunk(coord)
 	_elapsed += delta
