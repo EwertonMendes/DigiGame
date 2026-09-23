@@ -152,7 +152,7 @@ func _update_ambient_vfx(force: bool) -> void:
 	if not force and player_section == _last_ambient_section:
 		return
 	_last_ambient_section = player_section
-	for section: WorldAreaSection in _section_list
+	for section: WorldAreaSection in _section_list:
 		var distance := maxi(
 			absi(section.section_coord.x - player_section.x),
 			absi(section.section_coord.y - player_section.y)
