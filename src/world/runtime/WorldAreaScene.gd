@@ -6,7 +6,7 @@ signal load_progress(completed: int, total: int)
 signal load_finished
 
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
-const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
+const SHEET = preload("res://src/world/runtime/CentralCitySheetArt.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
@@ -72,7 +72,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
 			await get_tree().process_frame
 
-	var ground := CITY.create_floor_batch(ground_tiles, -1200, "CityGround")
+	var ground := SHEET.create_ground_batch(ground_tiles, -1200, "CityGround")
 	ground.add_to_group("world_batched_ground")
 	add_child(ground)
 	completed += 1
