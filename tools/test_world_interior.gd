@@ -27,7 +27,8 @@ func _ready() -> void:
 	assert(raw_return is Array and raw_return.size() >= 2, "Interior threshold must define an exterior return point")
 	var expected_return := Vector2(float(raw_return[0]), float(raw_return[1]))
 
-	entry.emit_signal("body_entered", player)
+	player.global_position = entry.global_position
+	await _physics_frames(3)
 	await get_tree().create_timer(1.0).timeout
 	assert(bool(manager.call("is_active")), "Crossing a service doorway must enter its dedicated interior")
 	assert(bool(streamer.call("is_suspended")), "Exterior chunk streaming must pause while the player is inside")
@@ -37,7 +38,9 @@ func _ready() -> void:
 
 	var exit_thresholds := get_tree().get_nodes_in_group("world_interior_exit_threshold")
 	assert(not exit_thresholds.is_empty(), "Interior must expose a physical exit threshold")
-	(exit_thresholds[0] as Area2D).emit_signal("body_entered", player)
+	var exit_threshold := exit_thresholds[0] as Area2D
+	player.global_position = exit_threshold.global_position
+	await _physics_frames(3)
 	await get_tree().create_timer(1.0).timeout
 	assert(not bool(manager.call("is_active")), "Crossing the interior doorway must return to the city")
 	assert(not bool(streamer.call("is_suspended")), "Exterior streaming must resume after exit")
@@ -51,3 +54,8 @@ func _ready() -> void:
 func _frames(count: int) -> void:
 	for _index in range(count):
 		await get_tree().process_frame
+
+
+func _physics_frames(count: int) -> void:
+	for _index in range(count):
+		await get_tree().physics_frame
