@@ -9,16 +9,29 @@ const MODULE_PITCH := 7
 # slots are already represented by CentralCityAssetCatalog and can be populated
 # later without replacing this layout system.
 const SERVICE_THEMES := ["digilab", "hospital", "training", "market", "archive"]
+const SIDEWALK_PLATFORM_THEMES := [
+	"residential",
+	"training",
+	"market",
+	"archive",
+	"gate",
+	"canal",
+]
 
 
 static func ground_specs_for_section(section_coord: Vector2i, theme: String) -> Array[Dictionary]:
 	var specs: Array[Dictionary] = []
 
-	# IMPORTANT: sidewalk.png is a finished sidewalk/platform module with its own
-	# curb and tactile details. It is not a seamless pavement texture. Repeating
-	# it across the map creates the large yellow checkerboard seen in the old
-	# preview, so the common city floor is rendered by the batched pavement
-	# foundation instead. Tblack ground modules are reserved for authored places.
+	# sidewalk.png is a finished raised urban platform, not a seamless pavement
+	# texture. Use one deliberate platform as the visual lot for selected
+	# non-boulevard districts; the city-wide connective surface stays in the
+	# batched pavement foundation.
+	if section_coord.y != 0 and theme in SIDEWALK_PLATFORM_THEMES:
+		specs.append(_ground("sidewalk", Vector2i(7, 7), -1175))
+
+	# Garden art is also an authored destination module, never a section-sized
+	# tint. Keeping one inset per garden district gives parks a readable footprint
+	# while the surrounding pavement still connects every section.
 	if theme == "garden" and section_coord.y != 0:
 		specs.append(_ground("grass-ground", Vector2i(7, 7), -1174))
 
@@ -63,29 +76,32 @@ static func prop_specs_for_section(section_coord: Vector2i, theme: String) -> Ar
 			specs.append(_prop("public-bench", Vector2i(9, 11), true))
 			specs.append(_prop("planter", Vector2i(3, 3), true))
 		"garden":
-			specs.append(_prop("medium-tree", Vector2i(3, 3), true, true))
-			specs.append(_prop("small-tree", Vector2i(10, 10), true, true))
-			specs.append(_prop("public-bench", Vector2i(7, 11), true))
-			specs.append(_prop("planter", Vector2i(8, 3), true))
-			specs.append(_prop("trash-bin", Vector2i(11, 6), true))
+			# Keep garden furniture on the authored park footprint rather than
+			# scattering it over the connective pavement.
+			specs.append(_prop("medium-tree", Vector2i(5, 6), true, true))
+			specs.append(_prop("small-tree", Vector2i(9, 8), true, true))
+			specs.append(_prop("public-bench", Vector2i(7, 10), true))
+			specs.append(_prop("planter", Vector2i(5, 9), true))
+			specs.append(_prop("trash-bin", Vector2i(10, 7), true))
 		"residential":
-			# Keep future building lots visually calm and put furniture near their
-			# edges so later building footprints do not require another redesign.
-			specs.append(_prop("small-tree", Vector2i(3, 11), true, true))
-			specs.append(_prop("public-bench", Vector2i(10, 11), true))
-			specs.append(_prop("planter", Vector2i(10, 3), true))
+			# These props sit on the single authored sidewalk platform. The rest
+			# of the section stays open for the future custom building footprint.
+			specs.append(_prop("small-tree", Vector2i(5, 6), true, true))
+			specs.append(_prop("public-bench", Vector2i(9, 9), true))
+			specs.append(_prop("planter", Vector2i(6, 9), true))
 		"gate":
-			specs.append(_prop("planter", Vector2i(3, 3), true))
-			specs.append(_prop("planter", Vector2i(10, 10), true))
+			specs.append(_prop("planter", Vector2i(5, 5), true))
+			specs.append(_prop("planter", Vector2i(9, 9), true))
 		"canal":
-			# The canal art is intentionally deferred with the rest of the bespoke
-			# city kit. Until then this section remains connected urban pavement.
-			specs.append(_prop("small-tree", Vector2i(3, 10), true, true))
-			specs.append(_prop("public-bench", Vector2i(10, 10), true))
+			# The canal itself is deferred until its bespoke art exists. The
+			# temporary district uses one urban platform, keeping its furniture
+			# visually grounded instead of floating on empty foundation.
+			specs.append(_prop("small-tree", Vector2i(5, 7), true, true))
+			specs.append(_prop("public-bench", Vector2i(9, 9), true))
 		_:
 			if theme in SERVICE_THEMES:
-				specs.append(_prop("small-tree", Vector2i(3, 11), true, true))
-				specs.append(_prop("planter", Vector2i(9, 11), true))
+				specs.append(_prop("small-tree", Vector2i(5, 9), true, true))
+				specs.append(_prop("planter", Vector2i(9, 9), true))
 
 	return specs
 
@@ -94,12 +110,19 @@ static func is_service_theme(theme: String) -> bool:
 	return theme in SERVICE_THEMES
 
 
-static func service_terminal_cell(_theme: String) -> Vector2i:
-	return Vector2i(10, 3)
+static func service_terminal_cell(section_coord: Vector2i, _theme: String) -> Vector2i:
+	# DigiLab/Hospital currently sit on the straight boulevard, so keep their
+	# temporary terminals safely above the road. Other service terminals sit on
+	# their authored sidewalk platform.
+	if section_coord.y == 0:
+		return Vector2i(10, 2)
+	return Vector2i(9, 5)
 
 
-static func service_approach_cell(_theme: String) -> Vector2i:
-	return Vector2i(9, 4)
+static func service_approach_cell(section_coord: Vector2i, _theme: String) -> Vector2i:
+	if section_coord.y == 0:
+		return Vector2i(9, 3)
+	return Vector2i(8, 6)
 
 
 static func service_definition(theme: String) -> Dictionary:
