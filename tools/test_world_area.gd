@@ -28,11 +28,13 @@ func _ready() -> void:
 	)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
-	assert(get_tree().get_nodes_in_group("central_city_wall_block").size() > 0, "Central City structures must use joined wall blocks")
+	assert(get_tree().get_nodes_in_group("central_city_wall_surface").size() > 0, "Central City structures must use continuous procedural wall surfaces")
+	assert(get_tree().get_nodes_in_group("central_city_wall_block").is_empty(), "Central City exterior walls must not use MC Blocks wall sprites")
 	for building_node in get_tree().get_nodes_in_group("central_city_building"):
 		var building := building_node as Node2D
 		assert(building != null, "Central City building metadata must belong to Node2D structures")
-		assert(int(building.get_meta("wall_levels", 0)) >= 3, "Every Central City establishment must be at least three blocks tall")
+		assert(int(building.get_meta("wall_levels", 0)) >= 3, "Every Central City establishment must preserve at least three logical wall levels")
+		assert(String(building.get_meta("wall_renderer", "")) == "continuous", "Central City establishments must use the continuous wall renderer")
 		assert(building.find_child("Roof", true, false) == null, "Central City buildings must not create floating roof tile layers")
 		var origin_variant = building.get_meta("grid_origin", null)
 		var size_variant = building.get_meta("grid_size", null)
