@@ -43,11 +43,26 @@ const STREET_LAMP := Vector2i(6, 53)
 const BENCH := Vector2i(5, 18)
 const CITY_CORE := Vector2i(3, 20)
 
-const ROAD_BASE := Color(0.11, 0.14, 0.16, 1.0)
-const PAVEMENT_BASE := Color(0.31, 0.34, 0.36, 1.0)
-const PLAZA_BASE := Color(0.11, 0.29, 0.31, 1.0)
-const PARK_BASE := Color(0.20, 0.38, 0.22, 1.0)
-const WATER_BASE := Color(0.035, 0.20, 0.32, 1.0)
+const ROAD_BASE := Color(0.075, 0.12, 0.16, 1.0)
+const PAVEMENT_BASE := Color(0.25, 0.31, 0.34, 1.0)
+const PLAZA_BASE := Color(0.075, 0.35, 0.39, 1.0)
+const PARK_BASE := Color(0.13, 0.39, 0.24, 1.0)
+const WATER_BASE := Color(0.035, 0.27, 0.43, 1.0)
+
+# Central City deliberately uses flat MC Blocks-derived color fields for its
+# walkable ground. The authored atlas diamonds have a dark outline around every
+# cell, so repeating them over the whole map made the city look like a visible
+# tile grid. District colors keep the MC Blocks palette while reading as one
+# continuous street / sidewalk surface.
+const RESIDENTIAL_PAVEMENT := Color(0.27, 0.33, 0.38, 1.0)
+const DIGILAB_PAVEMENT := Color(0.19, 0.34, 0.38, 1.0)
+const HOSPITAL_PAVEMENT := Color(0.33, 0.39, 0.41, 1.0)
+const TRAINING_PAVEMENT := Color(0.22, 0.35, 0.27, 1.0)
+const MARKET_PAVEMENT := Color(0.38, 0.31, 0.19, 1.0)
+const ARCHIVE_PAVEMENT := Color(0.30, 0.25, 0.38, 1.0)
+const GATE_PAVEMENT := Color(0.22, 0.28, 0.32, 1.0)
+const GARDEN_PAVEMENT := Color(0.23, 0.34, 0.28, 1.0)
+const CANAL_PAVEMENT := Color(0.20, 0.31, 0.38, 1.0)
 
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
@@ -124,8 +139,9 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
-	# Roads are authored as continuous city avenues, not repeated crosses inside
-	# every 14x14 authoring section. This removes the checkerboard/chunk look.
+	# Roads are continuous city avenues. Ground atlas detail is intentionally
+	# disabled here: MC Blocks floor sprites carry a dark border around each
+	# diamond, which is useful for isolated props but visually noisy when tiled.
 	var road := (
 		(section_coord.y == 0 and cell.y >= center - 1 and cell.y <= center + 1)
 		or (section_coord.x == 0 and cell.x >= center - 1 and cell.x <= center + 1)
@@ -134,27 +150,26 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 		return {
 			"cell": FLOOR_BLUE,
 			"base_color": WATER_BASE,
-			"detail_alpha": 0.62,
+			"detail_alpha": 0.0,
 			"walkable": false,
 		}
 	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
-		var plaza_accent := (cell.x + cell.y) % 5 == 0
 		return {
-			"cell": FLOOR_CYAN if plaza_accent else FLOOR_PLAZA,
+			"cell": FLOOR_PLAZA,
 			"base_color": PLAZA_BASE,
-			"detail_alpha": 0.58,
+			"detail_alpha": 0.0,
 			"walkable": true,
 		}
 	if road:
 		return {
 			"cell": FLOOR_ROAD,
 			"base_color": ROAD_BASE,
-			"detail_alpha": 0.46,
+			"detail_alpha": 0.0,
 			"walkable": true,
 		}
 
-	# Garden chunks are urban parks: neutral walkable stone remains dominant and
-	# green tiles form deliberate planted plots instead of a giant grass carpet.
+	# Garden sections use deliberate planted zones, but the green is still a
+	# continuous field rather than a repeated outlined floor sprite.
 	if theme == "garden":
 		var corner_plot := (
 			(cell.x <= 4 or cell.x >= 10)
@@ -164,21 +179,40 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 			return {
 				"cell": FLOOR_GREEN,
 				"base_color": PARK_BASE,
-				"detail_alpha": 0.52,
+				"detail_alpha": 0.0,
 				"walkable": true,
 			}
 
-	var alternate := posmod(
-		(cell.x + section_coord.x * SECTION_SIZE) * 7
-		+ (cell.y + section_coord.y * SECTION_SIZE) * 11,
-		7
-	) == 0
 	return {
 		"cell": FLOOR_PAVEMENT,
-		"base_color": PAVEMENT_BASE.darkened(0.04) if alternate else PAVEMENT_BASE,
-		"detail_alpha": 0.38,
+		"base_color": _district_pavement_color(theme),
+		"detail_alpha": 0.0,
 		"walkable": true,
 	}
+
+
+func _district_pavement_color(theme: String) -> Color:
+	match theme:
+		"digilab":
+			return DIGILAB_PAVEMENT
+		"hospital":
+			return HOSPITAL_PAVEMENT
+		"training":
+			return TRAINING_PAVEMENT
+		"market":
+			return MARKET_PAVEMENT
+		"archive":
+			return ARCHIVE_PAVEMENT
+		"gate":
+			return GATE_PAVEMENT
+		"garden":
+			return GARDEN_PAVEMENT
+		"canal":
+			return CANAL_PAVEMENT
+		"residential":
+			return RESIDENTIAL_PAVEMENT
+		_:
+			return PAVEMENT_BASE
 
 
 func _build_street_detail() -> void:
