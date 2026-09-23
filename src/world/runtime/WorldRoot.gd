@@ -161,6 +161,12 @@ func request_interior_entry(payload: Dictionary) -> void:
 	_interior_manager.enter_interior(payload.duplicate(true))
 
 
+func request_interior_exit() -> void:
+	if _interior_manager == null or not _interior_manager.is_active() or _interior_manager.is_transitioning():
+		return
+	_interior_manager.exit_interior()
+
+
 func _build_background() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "WorldBackdrop"
@@ -345,8 +351,7 @@ func _on_interaction_requested(action_id: String, payload: Dictionary) -> void:
 		"enter_interior":
 			request_interior_entry(payload)
 		"exit_interior":
-			if _interior_manager != null:
-				_interior_manager.exit_interior()
+			request_interior_exit()
 		"digilab", "training", "hospital":
 			if _services != null:
 				_services.open_service(action_id)
