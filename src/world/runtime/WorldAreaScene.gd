@@ -1,6 +1,10 @@
 extends Node2D
 class_name WorldAreaScene
 
+signal load_started(total: int)
+signal load_progress(completed: int, total: int)
+signal load_finished
+
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
 const SECTION_SIZE := 14
 
@@ -11,19 +15,32 @@ var _sections: Dictionary = {}
 var _exterior_active := true
 
 
-func configure(area_definition: Dictionary, player: Node2D, world_controller: Node) -> void:
+func configure(area_definition: Dictionary, player: Node2D, world_controller: Node) -> bool:
 	_player = player
 	_world_controller = world_controller
 	_definitions.clear()
 	_sections.clear()
+	_exterior_active = false
+	visible = false
+	process_mode = Node.PROCESS_MODE_DISABLED
 
 	var raw_sections = area_definition.get("sections", [])
-	if not raw_sections is Array:
-		push_error("World area requires an authored sections array")
-		return
+	if not raw_sections is Array or raw_sections.is_empty():
+		push_error("World area requires a non-empty authored sections array")
+		return false
 
-	# Build the complete area before gameplay starts. Sections are authoring
-	# units only: there is no runtime queue, radius, pop-in or unload lifecycle.
+	var total := raw_sections.size()
+	var completed := 0
+	load_started.emit(total)
+
+	# Yield before doing any expensive area construction. On Web/mobile this lets
+	# the engine present its first frame and replace the browser's 100% download
+	# bar with the in-game area loader instead of appearing frozen.
+	await get_tree().process_frame
+
+	# Build one authoring section per frame behind the loading screen. The whole
+	# area remains hidden and non-interactive until every section is ready, so
+	# there is still zero terrain pop-in while the player explores.
 	for raw in raw_sections:
 		if not raw is Dictionary:
 			continue
@@ -33,14 +50,23 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		var instance := SECTION_SCENE.instantiate() as WorldAreaSection
 		if instance == null:
 			push_error("World area section scene must use WorldAreaSection.gd")
-			continue
+			return false
 		instance.configure(definition, _player, _world_controller)
 		add_child(instance)
 		var key := _coord_key(coord)
 		_definitions[key] = definition
 		_sections[key] = instance
+		completed += 1
+		load_progress.emit(completed, total)
+		if completed < total:
+			await get_tree().process_frame
 
+	_exterior_active = true
+	visible = true
+	process_mode = Node.PROCESS_MODE_INHERIT
+	load_finished.emit()
 	print("[WorldArea] READY sections=%d" % _sections.size())
+	return completed == total
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:

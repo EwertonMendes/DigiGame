@@ -23,7 +23,9 @@ Small and medium interiors remain seamless. Service entrances keep the persisten
 
 `assets/resources/world/central_city.json` defines the 5×5 authoring grid used to compose the complete Central City scene: Central Plaza, DigiLab, Hospital, Training, Data Market, Archive, canals, gardens, residences and city gates.
 
-All 25 sections are present before `[World] READY`. Walking across section boundaries only changes district/title metadata; it never mutates the scene tree. This prevents mobile traversal from paying terrain construction/destruction costs and removes visible terrain pop-in.
+All 25 sections are present before `[World] READY`. Area construction is staged one authored section per frame behind an opaque in-game loading screen, so slow mobile devices can present their first Godot frame immediately instead of leaving the browser download bar stuck at 100%. The exterior remains hidden and non-interactive until all sections are ready.
+
+Walking across section boundaries only changes district/title metadata; it never mutates the scene tree. This prevents mobile traversal from paying terrain construction/destruction costs and removes visible terrain pop-in.
 
 Central City uses the authored `MCBlocksColorOutline.png` atlas for urban surfaces, architecture and interior props. Roads, sidewalks and plazas are neutral/dark city materials; green is reserved for deliberate park plots. Establishment facades use neutral masonry with service-specific trim, windows and one exterior sign.
 

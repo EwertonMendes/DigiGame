@@ -10,7 +10,7 @@ func _ready() -> void:
 
 	var world := WORLD_SCENE.instantiate()
 	add_child(world)
-	await _frames(8)
+	await _wait_for_world_ready(world)
 
 	var player := world.call("get_player") as Node2D
 	var area = world.call("get_area_scene") as WorldAreaScene
@@ -49,6 +49,14 @@ func _ready() -> void:
 
 	print("seamless world interior regression passed")
 	get_tree().quit()
+
+
+func _wait_for_world_ready(world: Node, max_frames: int = 120) -> void:
+	for _index in range(max_frames):
+		if bool(world.call("is_world_ready")):
+			return
+		await get_tree().process_frame
+	assert(false, "World must finish staged area loading before interior regression")
 
 
 func _frames(count: int) -> void:

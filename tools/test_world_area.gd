@@ -10,10 +10,11 @@ func _ready() -> void:
 
 	var world := WORLD_SCENE.instantiate()
 	add_child(world)
-	await _frames(8)
+	var saw_partial_area := await _wait_for_world_ready(world)
 
 	var player := world.call("get_player") as Node2D
 	var area := world.call("get_area_scene") as WorldAreaScene
+	assert(saw_partial_area, "Area construction must yield across frames instead of blocking the first frame")
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(area.is_exterior_active(), "Central City exterior must start active")
@@ -65,6 +66,21 @@ func _assert_seam_crossing(
 		area.world_to_section(player.global_position) == expected_section,
 		"Crossing %s must resolve to section %s" % [direction_name, str(expected_section)]
 	)
+
+
+func _wait_for_world_ready(world: Node, max_frames: int = 120) -> bool:
+	var saw_partial := false
+	for _index in range(max_frames):
+		var area = world.call("get_area_scene") as WorldAreaScene
+		if area != null:
+			var count := area.get_section_count()
+			if count > 0 and count < 25:
+				saw_partial = true
+		if bool(world.call("is_world_ready")):
+			return saw_partial
+		await get_tree().process_frame
+	assert(false, "World must finish staged area loading within the regression frame budget")
+	return false
 
 
 func _frames(count: int) -> void:

@@ -1,6 +1,8 @@
 extends Node2D
 class_name WorldRoot
 
+signal world_ready
+
 const CatalogScript = preload("res://src/world/runtime/WorldAreaCatalog.gd")
 const ActorScript = preload("res://src/world/runtime/OverworldActor.gd")
 const FollowersScript = preload("res://src/world/runtime/WorldPartyFollowers.gd")
@@ -43,6 +45,10 @@ var _dialog_title: Label = null
 var _dialog_body: Label = null
 var _movement_dirty := false
 var _save_elapsed := 0.0
+var _world_ready := false
+var _area_load_layer: CanvasLayer = null
+var _area_load_progress: ProgressBar = null
+var _area_load_status: Label = null
 
 
 func _ready() -> void:
@@ -53,11 +59,14 @@ func _ready() -> void:
 		WorldState.reset_to_defaults()
 
 	_build_background()
+	_build_area_loading_overlay()
+
 	_area_scene = CENTRAL_CITY_AREA_SCENE.instantiate() as WorldAreaScene
 	if _area_scene == null:
 		push_error("Central City scene must use WorldAreaScene.gd")
 		return
 	add_child(_area_scene)
+	_area_scene.load_progress.connect(_on_area_load_progress)
 
 	var interiors_root := Node2D.new()
 	interiors_root.name = "Interiors"
@@ -66,14 +75,28 @@ func _ready() -> void:
 	actors_root.name = "Actors"
 	add_child(actors_root)
 	_build_player(actors_root)
+	_player.visible = false
+	_player.movement_enabled = false
 
 	var catalog := CatalogScript.new() as WorldAreaCatalog
 	_area_definition = catalog.load_area(AREA_ID)
 	if _area_definition.is_empty():
 		push_error("Central City could not be loaded")
+		_set_area_loading_error("CENTRAL CITY DATA ERROR")
 		return
 
-	_area_scene.configure(_area_definition, _player, self)
+	print("[World] AREA_LOAD_BEGIN")
+	# Explicitly yield once before area construction so Web/mobile can display a
+	# real first frame instead of leaving the browser download bar stuck at 100%.
+	await get_tree().process_frame
+	print("[World] AREA_LOAD_VISIBLE")
+
+	var area_loaded: bool = await _area_scene.configure(_area_definition, _player, self)
+	if not area_loaded:
+		push_error("Central City area construction failed")
+		_set_area_loading_error("CENTRAL CITY LOAD FAILED")
+		return
+
 	_recover_invalid_spawn()
 	_current_section = _area_scene.world_to_section(_player.global_position)
 
@@ -103,15 +126,21 @@ func _ready() -> void:
 
 	_build_world_ui()
 	MusicDirector.play_zone_1()
+	_player.visible = true
+	_player.movement_enabled = true
+	_world_ready = true
+	_finish_area_loading_overlay()
 	call_deferred("_announce_area")
 	var debug_interior := _debug_interior_requested()
 	if not debug_interior.is_empty():
 		call_deferred("_open_debug_interior", debug_interior)
+	world_ready.emit()
+	print("[World] AREA_LOAD_COMPLETE")
 	print("[World] READY area=%s sections=%d" % [AREA_ID, _area_scene.get_section_count()])
 
 
 func _process(delta: float) -> void:
-	if _player == null or _area_scene == null:
+	if not _world_ready or _player == null or _area_scene == null:
 		return
 	if _movement_dirty:
 		_save_elapsed += delta
@@ -122,6 +151,8 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if not _world_ready:
+		return
 	if not event is InputEventScreenTouch:
 		return
 	var touch := event as InputEventScreenTouch
@@ -149,6 +180,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not _world_ready:
+		return
 	if _services != null and _services.is_open():
 		return
 	if _dialog != null and _dialog.visible:
@@ -166,9 +199,15 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func can_actor_move_to(candidate: Vector2, _actor: Node) -> bool:
+	if not _world_ready:
+		return false
 	if _interior_manager != null and _interior_manager.is_active():
 		return _interior_manager.can_move_to(candidate)
 	return _area_scene == null or _area_scene.is_walkable_world_position(candidate)
+
+
+func is_world_ready() -> bool:
+	return _world_ready
 
 
 func get_player() -> OverworldActor:
@@ -195,6 +234,82 @@ func request_interior_exit() -> void:
 	if _interior_manager == null or not _interior_manager.is_active() or _interior_manager.is_transitioning():
 		return
 	_interior_manager.exit_interior()
+
+
+func _build_area_loading_overlay() -> void:
+	_area_load_layer = CanvasLayer.new()
+	_area_load_layer.name = "AreaLoading"
+	_area_load_layer.layer = 100
+	add_child(_area_load_layer)
+
+	var backdrop := ColorRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.color = Color(0.025, 0.055, 0.065, 1.0)
+	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	_area_load_layer.add_child(backdrop)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_area_load_layer.add_child(center)
+
+	var stack := VBoxContainer.new()
+	stack.custom_minimum_size = Vector2(360.0, 120.0)
+	stack.add_theme_constant_override("separation", 12)
+	center.add_child(stack)
+
+	var title := Label.new()
+	title.text = "LOADING CENTRAL CITY"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_color_override("font_color", UI.CYAN)
+	UI.apply_heading_font(title)
+	stack.add_child(title)
+
+	_area_load_status = Label.new()
+	_area_load_status.text = "Preparing area..."
+	_area_load_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_area_load_status.add_theme_font_size_override("font_size", 13)
+	_area_load_status.add_theme_color_override("font_color", UI.MUTED)
+	UI.apply_body_font(_area_load_status)
+	stack.add_child(_area_load_status)
+
+	_area_load_progress = ProgressBar.new()
+	_area_load_progress.min_value = 0.0
+	_area_load_progress.max_value = 100.0
+	_area_load_progress.value = 0.0
+	_area_load_progress.show_percentage = true
+	_area_load_progress.custom_minimum_size = Vector2(360.0, 22.0)
+	stack.add_child(_area_load_progress)
+
+
+func _on_area_load_progress(completed: int, total: int) -> void:
+	if total <= 0:
+		return
+	var percent := float(completed) / float(total) * 100.0
+	if _area_load_progress != null:
+		_area_load_progress.value = percent
+	if _area_load_status != null:
+		_area_load_status.text = "Building city · %d / %d" % [completed, total]
+	if completed == 1 or completed == total or completed % 5 == 0:
+		print("[World] AREA_LOAD_PROGRESS %d/%d" % [completed, total])
+
+
+func _set_area_loading_error(message: String) -> void:
+	if _area_load_status != null:
+		_area_load_status.text = message
+		_area_load_status.add_theme_color_override("font_color", UI.RED)
+
+
+func _finish_area_loading_overlay() -> void:
+	if _area_load_progress != null:
+		_area_load_progress.value = 100.0
+	if _area_load_status != null:
+		_area_load_status.text = "Ready"
+	if _area_load_layer != null:
+		_area_load_layer.queue_free()
+	_area_load_layer = null
+	_area_load_progress = null
+	_area_load_status = null
 
 
 func _build_background() -> void:
@@ -383,6 +498,8 @@ func _layout_ui() -> void:
 
 
 func _on_player_moved(world_position: Vector2) -> void:
+	if not _world_ready:
+		return
 	if _interior_manager != null and (_interior_manager.is_active() or _interior_manager.is_transitioning()):
 		return
 	_movement_dirty = true
