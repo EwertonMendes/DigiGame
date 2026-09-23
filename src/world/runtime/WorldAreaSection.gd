@@ -14,7 +14,7 @@ const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 const FLOOR_PAVEMENT := Vector2i(13, 16)
-const FOUNDATION_COLOR := Color(0.30, 0.32, 0.34, 1.0)
+const FOUNDATION_COLOR := Color(0.41, 0.43, 0.45, 1.0)
 
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
@@ -79,7 +79,7 @@ func _prepare_ground_data() -> void:
 				"position": position + grid_to_world(Vector2(cell)),
 				"base_color": FOUNDATION_COLOR,
 				"detail_tint": Color.WHITE,
-				"detail_alpha": 0.42,
+				"detail_alpha": 0.62,
 			})
 
 
@@ -153,10 +153,10 @@ func _build_service_access(theme: String) -> void:
 	root.add_to_group("central_city_service_access")
 	add_child(root)
 
-	var terminal_cell := CentralCityLayoutScript.service_terminal_cell(theme)
+	var terminal_cell := CentralCityLayoutScript.service_terminal_cell(section_coord, theme)
 	_add_custom_prop(root, "digital-terminal", terminal_cell, true)
 
-	var approach_cell := CentralCityLayoutScript.service_approach_cell(theme)
+	var approach_cell := CentralCityLayoutScript.service_approach_cell(section_coord, theme)
 	var accent: Color = service_def.get("accent", Color(0.28, 0.88, 1.0))
 	_add_entry_marker(root, approach_cell, accent)
 
