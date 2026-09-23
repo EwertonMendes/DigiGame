@@ -8,7 +8,7 @@ class_name CentralCityArt
 const GROUND_GRASS = preload("res://assets/world/devilsworkshop/city_1024/isometric_0056.png")
 const GROUND_GRASS_CHECKER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0053.png")
 const GROUND_MINT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0058.png")
-const GROUND_MAIN = preload("res://assets/world/devilsworkshop/city_1024/isometric_0087.png")
+const GROUND_MAIN = preload("res://assets/world/devilsworkshop/city_1024/isometric_0072.png")
 const GROUND_STONE_SOFT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0054.png")
 const GROUND_TECH_TEAL = preload("res://assets/world/devilsworkshop/city_1024/isometric_0048.png")
 const GROUND_TECH_BLUE = preload("res://assets/world/devilsworkshop/city_1024/isometric_0049.png")
