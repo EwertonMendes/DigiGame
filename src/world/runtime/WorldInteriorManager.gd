@@ -12,7 +12,7 @@ const TRANSITION_ZOOM := 1.52
 var _world_root: Node = null
 var _player: OverworldActor = null
 var _camera: Camera2D = null
-var _streamer: AreaStreamer = null
+var _area_scene: WorldAreaScene = null
 var _interiors_root: Node2D = null
 var _active_interior: WorldInterior = null
 var _return_position := Vector2.ZERO
@@ -24,13 +24,13 @@ func configure(
 	world_root: Node,
 	player: OverworldActor,
 	camera: Camera2D,
-	streamer: AreaStreamer,
+	area_scene: WorldAreaScene,
 	interiors_root: Node2D
 ) -> void:
 	_world_root = world_root
 	_player = player
 	_camera = camera
-	_streamer = streamer
+	_area_scene = area_scene
 	_interiors_root = interiors_root
 	_build_transition_overlay()
 
@@ -67,10 +67,10 @@ func enter_interior(payload: Dictionary) -> bool:
 	interior.configure(payload, _world_root)
 	_active_interior = interior
 	_return_position = _vector2_from_array(payload.get("return_position", []), _player.global_position)
-	if _streamer != null:
-		_streamer.set_suspended(true)
 
 	await _cover_transition()
+	if _area_scene != null:
+		_area_scene.set_exterior_active(false)
 	_player.global_position = interior.get_spawn_world_position()
 	_player.velocity = Vector2.ZERO
 	_camera.position = Vector2.ZERO
@@ -99,9 +99,8 @@ func exit_interior() -> bool:
 	_camera.reset_smoothing()
 	if old_interior != null:
 		old_interior.queue_free()
-	if _streamer != null:
-		_streamer.set_suspended(false)
-		_streamer.refresh_around_player()
+	if _area_scene != null:
+		_area_scene.set_exterior_active(true)
 	interior_state_changed.emit(false, "")
 	await _reveal_transition(EXTERIOR_ZOOM)
 

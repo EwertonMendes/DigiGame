@@ -4,7 +4,7 @@
   "display_name": "Central City",
   "subtitle": "Recovery District · continuous overworld",
   "chunk_size": 14,
-  "chunks": [
+  "sections": [
     {
       "coord": [
         -2,

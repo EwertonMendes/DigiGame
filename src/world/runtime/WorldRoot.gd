@@ -4,7 +4,7 @@ class_name WorldRoot
 const CatalogScript = preload("res://src/world/runtime/WorldAreaCatalog.gd")
 const ActorScript = preload("res://src/world/runtime/OverworldActor.gd")
 const FollowersScript = preload("res://src/world/runtime/WorldPartyFollowers.gd")
-const StreamerScript = preload("res://src/world/runtime/AreaStreamer.gd")
+const CENTRAL_CITY_AREA_SCENE = preload("res://scenes/world/central_city_area.tscn")
 const InteractionScript = preload("res://src/world/runtime/InteractionSystem.gd")
 const ServiceHostScript = preload("res://src/world/runtime/WorldServiceHost.gd")
 const InteriorManagerScript = preload("res://src/world/runtime/WorldInteriorManager.gd")
@@ -24,7 +24,8 @@ const SAFE_CITY_SPAWN := Vector2(-96.0, 272.0)
 
 var _area_definition: Dictionary = {}
 var _player: OverworldActor = null
-var _streamer: AreaStreamer = null
+var _area_scene: WorldAreaScene = null
+var _current_section := Vector2i.ZERO
 var _interaction: InteractionSystem = null
 var _services: WorldServiceHost = null
 var _interior_manager: WorldInteriorManager = null
@@ -52,9 +53,12 @@ func _ready() -> void:
 		WorldState.reset_to_defaults()
 
 	_build_background()
-	var chunks_root := Node2D.new()
-	chunks_root.name = "StreamedChunks"
-	add_child(chunks_root)
+	_area_scene = CENTRAL_CITY_AREA_SCENE.instantiate() as WorldAreaScene
+	if _area_scene == null:
+		push_error("Central City scene must use WorldAreaScene.gd")
+		return
+	add_child(_area_scene)
+
 	var interiors_root := Node2D.new()
 	interiors_root.name = "Interiors"
 	add_child(interiors_root)
@@ -69,12 +73,9 @@ func _ready() -> void:
 		push_error("Central City could not be loaded")
 		return
 
-	_streamer = StreamerScript.new() as AreaStreamer
-	_streamer.name = "AreaStreamer"
-	_streamer.current_chunk_changed.connect(_on_chunk_changed)
-	add_child(_streamer)
-	_streamer.configure(_area_definition, _player, chunks_root, self)
+	_area_scene.configure(_area_definition, _player, self)
 	_recover_invalid_spawn()
+	_current_section = _area_scene.world_to_section(_player.global_position)
 
 	_followers = FollowersScript.new() as WorldPartyFollowers
 	_followers.name = "PartyFollowers"
@@ -97,7 +98,7 @@ func _ready() -> void:
 	_interior_manager = InteriorManagerScript.new() as WorldInteriorManager
 	_interior_manager.name = "WorldInteriorManager"
 	add_child(_interior_manager)
-	_interior_manager.configure(self, _player, _world_camera, _streamer, interiors_root)
+	_interior_manager.configure(self, _player, _world_camera, _area_scene, interiors_root)
 	_interior_manager.interior_state_changed.connect(_on_interior_state_changed)
 
 	_build_world_ui()
@@ -106,11 +107,11 @@ func _ready() -> void:
 	var debug_interior := _debug_interior_requested()
 	if not debug_interior.is_empty():
 		call_deferred("_open_debug_interior", debug_interior)
-	print("[World] READY area=%s chunk=%s" % [AREA_ID, str(_streamer.get_current_chunk())])
+	print("[World] READY area=%s sections=%d" % [AREA_ID, _area_scene.get_section_count()])
 
 
 func _process(delta: float) -> void:
-	if _player == null or _streamer == null:
+	if _player == null or _area_scene == null:
 		return
 	if _movement_dirty:
 		_save_elapsed += delta
@@ -167,15 +168,15 @@ func _unhandled_input(event: InputEvent) -> void:
 func can_actor_move_to(candidate: Vector2, _actor: Node) -> bool:
 	if _interior_manager != null and _interior_manager.is_active():
 		return _interior_manager.can_move_to(candidate)
-	return _streamer == null or _streamer.is_walkable_world_position(candidate)
+	return _area_scene == null or _area_scene.is_walkable_world_position(candidate)
 
 
 func get_player() -> OverworldActor:
 	return _player
 
 
-func get_streamer() -> AreaStreamer:
-	return _streamer
+func get_area_scene() -> WorldAreaScene:
+	return _area_scene
 
 
 func get_interior_manager() -> WorldInteriorManager:
@@ -385,31 +386,35 @@ func _on_player_moved(world_position: Vector2) -> void:
 	if _interior_manager != null and (_interior_manager.is_active() or _interior_manager.is_transitioning()):
 		return
 	_movement_dirty = true
-	if _streamer != null:
+	if _area_scene != null:
+		var next_section := _area_scene.world_to_section(world_position)
 		WorldState.capture_location(
 			REGION_ID,
 			AREA_ID,
-			_streamer.world_to_chunk(world_position),
+			next_section,
 			world_position,
 			_player.facing_direction
 		)
+		if next_section != _current_section:
+			_current_section = next_section
+			_on_section_changed(_current_section)
 
 
-func _on_chunk_changed(chunk: Vector2i) -> void:
-	if _player == null:
+func _on_section_changed(section: Vector2i) -> void:
+	if _player == null or _area_scene == null:
 		return
-	WorldState.capture_location(REGION_ID, AREA_ID, chunk, _player.global_position, _player.facing_direction)
+	WorldState.capture_location(REGION_ID, AREA_ID, section, _player.global_position, _player.facing_direction)
 	_movement_dirty = false
 	_save_elapsed = 0.0
 	OverworldState.save_progress()
-	var chunk_definition := _chunk_definition(chunk)
-	if not chunk_definition.is_empty() and _area_title != null:
+	var section_definition := _area_scene.get_section_definition(section)
+	if not section_definition.is_empty() and _area_title != null:
 		_area_title.present(
-			String(chunk_definition.get("title", "Central City")),
-			String(chunk_definition.get("subtitle", "")),
+			String(section_definition.get("title", "Central City")),
+			String(section_definition.get("subtitle", "")),
 			1.15
 		)
-	print("[World] CHUNK %s" % str(chunk))
+	print("[World] SECTION %s" % str(section))
 
 
 func _on_interaction_candidate_changed(action_text: String) -> void:
@@ -437,7 +442,7 @@ func _on_interaction_requested(action_id: String, payload: Dictionary) -> void:
 		"guide":
 			_open_dialog(
 				"CITY GUIDE",
-				"Welcome to Central City. DigiLab is west of the plaza, the Hospital is east, Training is north and the Data Market is south. Keep walking: districts stream continuously without scene loads."
+				"Welcome to Central City. DigiLab is west of the plaza, the Hospital is east, Training is north and the Data Market is south. The whole city is one continuous area; larger regions use separate area scenes."
 			)
 		"shop":
 			_open_dialog(
@@ -465,8 +470,9 @@ func _on_interior_state_changed(active: bool, title: String) -> void:
 		if _area_title != null:
 			_area_title.present(title, "Interior · seamless focus", 1.15)
 	else:
-		if _streamer != null:
-			_on_chunk_changed(_streamer.get_current_chunk())
+		if _area_scene != null and _player != null:
+			_current_section = _area_scene.world_to_section(_player.global_position)
+			_on_section_changed(_current_section)
 		OverworldState.save_progress()
 	_layout_ui()
 
@@ -576,14 +582,14 @@ func _announce_area() -> void:
 
 
 func _persist_world_location() -> void:
-	if _player == null or _streamer == null:
+	if _player == null or _area_scene == null:
 		return
 	if _interior_manager != null and (_interior_manager.is_active() or _interior_manager.is_transitioning()):
 		return
 	WorldState.capture_location(
 		REGION_ID,
 		AREA_ID,
-		_streamer.get_current_chunk(),
+		_current_section,
 		_player.global_position,
 		_player.facing_direction
 	)
@@ -591,30 +597,15 @@ func _persist_world_location() -> void:
 
 
 func _recover_invalid_spawn() -> void:
-	if _streamer == null or _player == null:
+	if _area_scene == null or _player == null:
 		return
-	if _streamer.is_walkable_world_position(_player.global_position):
+	if _area_scene.is_walkable_world_position(_player.global_position):
 		return
 	_player.global_position = SAFE_CITY_SPAWN
 	_player.velocity = Vector2.ZERO
 	WorldState.capture_location(REGION_ID, AREA_ID, Vector2i.ZERO, SAFE_CITY_SPAWN, _player.facing_direction)
 	OverworldState.save_progress()
 	print("[World] RECOVERED_INVALID_SPAWN position=%s" % str(SAFE_CITY_SPAWN))
-
-
-func _chunk_definition(coord: Vector2i) -> Dictionary:
-	var raw_chunks = _area_definition.get("chunks", [])
-	if not raw_chunks is Array:
-		return {}
-	for raw in raw_chunks:
-		if not raw is Dictionary:
-			continue
-		var entry := raw as Dictionary
-		var raw_coord = entry.get("coord", [])
-		if raw_coord is Array and raw_coord.size() >= 2:
-			if int(raw_coord[0]) == coord.x and int(raw_coord[1]) == coord.y:
-				return entry
-	return {}
 
 
 func _debug_interior_requested() -> String:

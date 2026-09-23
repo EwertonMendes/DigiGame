@@ -13,13 +13,13 @@ func _ready() -> void:
 	await _frames(8)
 
 	var player := world.call("get_player") as Node2D
-	var streamer = world.call("get_streamer")
+	var area = world.call("get_area_scene") as WorldAreaScene
 	var manager = world.call("get_interior_manager")
-	assert(player != null and manager != null, "World must expose player and interior manager")
+	assert(player != null and area != null and manager != null, "World must expose player, area and interior manager")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Player must spawn on walkable Central City ground")
 
 	var entry_thresholds := get_tree().get_nodes_in_group("world_interior_threshold")
-	assert(not entry_thresholds.is_empty(), "Streamed service buildings must expose physical entry thresholds")
+	assert(not entry_thresholds.is_empty(), "Loaded area service buildings must expose physical entry thresholds")
 	var entry := entry_thresholds[0] as Area2D
 	var payload = entry.get_meta("interior_payload", {})
 	assert(payload is Dictionary, "Interior threshold must carry its destination payload")
@@ -31,7 +31,7 @@ func _ready() -> void:
 	await _physics_frames(3)
 	await get_tree().create_timer(1.0).timeout
 	assert(bool(manager.call("is_active")), "Crossing a service doorway must enter its dedicated interior")
-	assert(bool(streamer.call("is_suspended")), "Exterior chunk streaming must pause while the player is inside")
+	assert(not area.is_exterior_active(), "Loaded exterior area must be hidden and paused while the player is inside")
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Interior spawn must be walkable")
@@ -43,7 +43,7 @@ func _ready() -> void:
 	await _physics_frames(3)
 	await get_tree().create_timer(1.0).timeout
 	assert(not bool(manager.call("is_active")), "Crossing the interior doorway must return to the city")
-	assert(not bool(streamer.call("is_suspended")), "Exterior streaming must resume after exit")
+	assert(area.is_exterior_active(), "Loaded exterior area must reactivate after exit")
 	assert(player.global_position.is_equal_approx(expected_return), "Exit must restore the authored exterior doorway position")
 	assert(get_tree().current_scene == self, "Interior exit must remain in the same SceneTree")
 

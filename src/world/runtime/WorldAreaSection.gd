@@ -1,5 +1,5 @@
 extends Node2D
-class_name WorldChunk
+class_name WorldAreaSection
 
 const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
@@ -8,7 +8,7 @@ const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd
 const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
 
-const CHUNK_SIZE := 14
+const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
@@ -50,7 +50,7 @@ const PARK_BASE := Color(0.20, 0.38, 0.22, 1.0)
 const WATER_BASE := Color(0.035, 0.20, 0.32, 1.0)
 
 var definition: Dictionary = {}
-var chunk_coord := Vector2i.ZERO
+var section_coord := Vector2i.ZERO
 
 var _player: Node2D = null
 var _world_controller: Node = null
@@ -60,15 +60,15 @@ var _trees: Array[Sprite2D] = []
 var _elapsed := 0.0
 
 
-func configure(chunk_definition: Dictionary, player: Node2D, world_controller: Node) -> void:
-	definition = chunk_definition.duplicate(true)
+func configure(section_definition: Dictionary, player: Node2D, world_controller: Node) -> void:
+	definition = section_definition.duplicate(true)
 	var raw_coord = definition.get("coord", [0, 0])
-	chunk_coord = Vector2i(int(raw_coord[0]), int(raw_coord[1]))
+	section_coord = Vector2i(int(raw_coord[0]), int(raw_coord[1]))
 	_player = player
 	_world_controller = world_controller
-	position = grid_to_world(Vector2(chunk_coord.x * CHUNK_SIZE, chunk_coord.y * CHUNK_SIZE))
-	name = "Chunk_%d_%d" % [chunk_coord.x, chunk_coord.y]
-	_build_chunk()
+	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
+	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
+	_build_section()
 
 
 func _process(delta: float) -> void:
@@ -80,7 +80,7 @@ func _process(delta: float) -> void:
 func is_walkable_world_position(world_position: Vector2) -> bool:
 	var local_grid := world_to_grid(world_position - global_position)
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
-	if cell.x < 0 or cell.y < 0 or cell.x >= CHUNK_SIZE or cell.y >= CHUNK_SIZE:
+	if cell.x < 0 or cell.y < 0 or cell.x >= SECTION_SIZE or cell.y >= SECTION_SIZE:
 		return false
 	return not _blocked_cells.has(_cell_key(cell))
 
@@ -99,13 +99,14 @@ func world_to_grid(world: Vector2) -> Vector2:
 	)
 
 
-func _build_chunk() -> void:
+func _build_section() -> void:
 	_physics_root = StaticBody2D.new()
 	_physics_root.name = "StaticCollision"
 	add_child(_physics_root)
 	_build_ground()
 	_build_street_detail()
 	_build_theme_content()
+	set_process(not _trees.is_empty())
 
 
 func _build_ground() -> void:
@@ -113,9 +114,9 @@ func _build_ground() -> void:
 	ground.name = "CityGround"
 	add_child(ground)
 	var theme := String(definition.get("theme", "residential"))
-	var center := int(CHUNK_SIZE / 2)
-	for x in range(CHUNK_SIZE):
-		for y in range(CHUNK_SIZE):
+	var center := int(SECTION_SIZE / 2)
+	for x in range(SECTION_SIZE):
+		for y in range(SECTION_SIZE):
 			var cell := Vector2i(x, y)
 			var presentation := _ground_presentation(cell, theme, center)
 			var foot := grid_to_world(Vector2(cell))
@@ -174,8 +175,8 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 			}
 
 	var alternate := posmod(
-		(cell.x + chunk_coord.x * CHUNK_SIZE) * 7
-		+ (cell.y + chunk_coord.y * CHUNK_SIZE) * 11,
+		(cell.x + section_coord.x * SECTION_SIZE) * 7
+		+ (cell.y + section_coord.y * SECTION_SIZE) * 11,
 		7
 	) == 0
 	return {
@@ -244,7 +245,7 @@ func _build_plaza() -> void:
 	var props := Node2D.new()
 	props.name = "CentralPlaza"
 	add_child(props)
-	var center := Vector2i(int(CHUNK_SIZE / 2), int(CHUNK_SIZE / 2))
+	var center := Vector2i(int(SECTION_SIZE / 2), int(SECTION_SIZE / 2))
 	var foot := grid_to_world(Vector2(center))
 	var core := CITY.create_prop(
 		CITY_CORE,
@@ -281,7 +282,7 @@ func _build_residential_block() -> void:
 
 
 func _build_service_exterior(origin: Vector2i, size: Vector2i, accent: Color, title: String, service_id: String) -> void:
-	var interior_id := "%s_%d_%d" % [service_id, chunk_coord.x, chunk_coord.y]
+	var interior_id := "%s_%d_%d" % [service_id, section_coord.x, section_coord.y]
 	var exterior := _build_exterior_shell(
 		origin,
 		size,
@@ -564,7 +565,7 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	parent.add_child(tree)
 	TreeAmbientFXScript.apply(
 		tree,
-		float(index) * 1.37 + float(chunk_coord.x * 3 + chunk_coord.y),
+		float(index) * 1.37 + float(section_coord.x * 3 + section_coord.y),
 		2.8,
 		7,
 		Color(0.62, 0.91, 0.39, 0.72)

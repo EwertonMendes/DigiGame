@@ -46,9 +46,9 @@ jobs:
             # The legacy Test Hub remains an isolated developer integration lab.
             command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 360
             success: hub foundation regression passed
-          - name: world-streaming
-            command: godot --headless --path . tools/test_world_streaming.tscn --quit-after 45
-            success: seamless world streaming regression passed
+          - name: world-area
+            command: godot --headless --path . tools/test_world_area.tscn --quit-after 60
+            success: single-scene world area regression passed
           - name: world-interiors
             command: godot --headless --path . tools/test_world_interior.tscn --quit-after 360
             success: seamless world interior regression passed

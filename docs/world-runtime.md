@@ -1,34 +1,36 @@
-# Seamless world runtime
+# World area runtime
 
-The campaign overworld starts in `scenes/world/world_root.tscn`. The existing `hub.tscn` remains unchanged as a developer-only integration laboratory.
+The campaign overworld starts in `scenes/world/world_root.tscn`. The existing `hub.tscn` remains a developer-only integration laboratory.
 
 ## Runtime contract
 
-- `WorldRoot` owns the persistent player, camera, followers, HUD and service host.
-- `AreaStreamer` keeps nearby authored chunks instantiated, queues adjacent chunks ahead of movement and unloads distant chunks with hysteresis.
-- `WorldChunk` owns local terrain, collision, depth-sorted props, buildings, roof occlusion and interactables.
-- `InteractionSystem` resolves world interactions centrally by explicit priority and distance instead of service-specific input chains.
+- `WorldRoot` owns the persistent player, camera, followers, HUD and service host for the current large area.
+- Each large explorable region is one scene. Central City is `scenes/world/central_city_area.tscn`.
+- `WorldAreaScene` builds every authored section before gameplay begins. Sections organize authoring data only; they are never streamed, queued, popped in or unloaded while the player walks.
+- `WorldAreaSection` owns local terrain, collision, props, buildings and interactables inside the already-loaded area scene.
+- `InteractionSystem` resolves world interactions centrally by explicit priority and distance.
 - `WorldServiceHost` composes the existing DigiLab, Training, Hospital and Digimon screens without inheriting the legacy Hub gameplay chain.
-- `WorldState` persists the logical area, current chunk, exact player position, facing and world-state dictionaries.
-- Battle return is contextual: normal gameplay returns to the seamless world, while battles deliberately launched from the developer Hub return there.
+- `WorldState` persists region, area, exact player position, facing and world-state dictionaries. The existing spatial-cell field remains serialized for save compatibility, but it no longer controls rendering.
+- Battle return is contextual: normal gameplay returns to the current world area, while battles deliberately launched from the developer Hub return there.
+
+## Area boundaries
+
+Streaming is intentionally not used inside a large area. A future transition from Central City to another major region such as Green Sector should load a different area scene at an authored gate/transport boundary. That is the correct place for a loading transition, resource handoff and save checkpoint.
+
+Small and medium interiors remain seamless. Service entrances keep the persistent player/camera and use the existing zoom + digital wash transition without changing scenes. While inside, the already-loaded exterior is hidden and its processing is paused; it is restored before the interior transition reveals the city again.
 
 ## Central City
 
-`assets/resources/world/central_city.json` is the first authored world area. Its 5×5 chunk grid contains Central Plaza, DigiLab, Hospital, Training, Data Market, Archive, canals, gardens, residences and city gates. All current visuals use assets already vendored by DigiGame.
+`assets/resources/world/central_city.json` defines the 5×5 authoring grid used to compose the complete Central City scene: Central Plaza, DigiLab, Hospital, Training, Data Market, Archive, canals, gardens, residences and city gates.
 
-Buildings are physically part of the overworld. Their interiors do not require a scene change: walking through the doorway fades the roof and reveals the interior. Service terminals reuse the same interaction contract that future houses, shops and quest interiors can use.
+All 25 sections are present before `[World] READY`. Walking across section boundaries only changes district/title metadata; it never mutates the scene tree. This prevents mobile traversal from paying terrain construction/destruction costs and removes visible terrain pop-in.
 
-## Adding areas and chunks
+Central City uses the authored `MCBlocksColorOutline.png` atlas for urban surfaces, architecture and interior props. Roads, sidewalks and plazas are neutral/dark city materials; green is reserved for deliberate park plots. Establishment facades use neutral masonry with service-specific trim, windows and one exterior sign.
 
-New content should be data-first. Add chunk rows to an area definition or register a new area file in `WorldAreaCatalog`. Do not add a new monolithic area controller. Specialized chunk scenes may be introduced later as long as they implement the same `configure(definition, player, world_controller)` contract.
+## Adding a major area
+
+Add a dedicated area scene and its data file, register the data in `WorldAreaCatalog`, and load that scene only at a major-region boundary. Do not introduce proximity streaming inside the area. Large-area loading is expected to happen once at the transition; exploration afterwards must be stable.
 
 ## Developer Hub
 
 The old prototype Hub is not the normal application entry point. Development builds expose a **TEST HUB** action in the Developer Toolkit. Automated Web QA can use `?debug=1&test_hub=1`; the route is rejected when developer tools are unavailable.
-
-
-## Central City art direction
-
-Central City uses the authored `MCBlocksColorOutline.png` atlas for its urban surfaces, architecture and interior props. Roads, sidewalks and plazas are neutral/dark city materials; green is reserved for deliberate park plots. Establishment facades use neutral masonry with service-specific trim, windows and one exterior sign.
-
-Service buildings do not reveal a tiny room underneath their roof. Their entrance transitions the persistent player/camera into a large dedicated interior stage in the same SceneTree. The transition uses camera zoom plus a digital color wash; there is no loading screen, black frame or scene replacement. Each service interior has its own functional zones and atlas furniture (lab machinery, recovery bays, training stations, market storage or archive stacks).
