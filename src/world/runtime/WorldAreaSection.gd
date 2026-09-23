@@ -55,6 +55,7 @@ var section_coord := Vector2i.ZERO
 var _player: Node2D = null
 var _world_controller: Node = null
 var _blocked_cells := PackedByteArray()
+var _ground_tiles: Array[Dictionary] = []
 var _leaf_particles: Array[CPUParticles2D] = []
 
 
@@ -94,22 +95,22 @@ func world_to_grid(world: Vector2) -> Vector2:
 
 
 func _build_section() -> void:
-	_build_ground()
+	_prepare_ground_data()
 	_build_street_detail()
 	_build_theme_content()
 
 
-func _build_ground() -> void:
+func _prepare_ground_data() -> void:
+	_ground_tiles.clear()
 	var theme := String(definition.get("theme", "residential"))
 	var center := int(SECTION_SIZE / 2)
-	var floor_tiles: Array[Dictionary] = []
 	for x in range(SECTION_SIZE):
 		for y in range(SECTION_SIZE):
 			var cell := Vector2i(x, y)
 			var presentation := _ground_presentation(cell, theme, center)
-			floor_tiles.append({
+			_ground_tiles.append({
 				"cell": presentation.get("cell", FLOOR_PAVEMENT),
-				"position": grid_to_world(Vector2(cell)),
+				"position": position + grid_to_world(Vector2(cell)),
 				"base_color": presentation.get("base_color", PAVEMENT_BASE),
 				"detail_tint": Color.WHITE,
 				"detail_alpha": float(presentation.get("detail_alpha", 0.96)),
@@ -117,9 +118,9 @@ func _build_ground() -> void:
 			if not bool(presentation.get("walkable", true)):
 				_mark_blocked(cell)
 
-	var ground := CITY.create_floor_batch(floor_tiles, -1200, "CityGround")
-	ground.add_to_group("world_batched_ground")
-	add_child(ground)
+
+func append_ground_tiles(target: Array[Dictionary]) -> void:
+	target.append_array(_ground_tiles)
 
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
@@ -636,13 +637,6 @@ func set_ambient_vfx_active(active: bool) -> void:
 			continue
 		leaves.visible = active
 		leaves.emitting = active
-
-
-func get_ground_render_node_count() -> int:
-	var ground := get_node_or_null("CityGround")
-	if ground == null:
-		return 0
-	return 1 + ground.get_child_count()
 
 
 func _mark_blocked(cell: Vector2i) -> void:

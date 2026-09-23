@@ -18,11 +18,12 @@ func _ready() -> void:
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
-		area.get_ground_render_node_count() <= 75,
-		"Central City ground must stay batched instead of recreating per-tile CanvasItems"
+		area.get_ground_render_node_count() <= 3,
+		"Central City ground must use one global batched renderer instead of section/per-tile CanvasItems"
 	)
+	assert(area.get_ground_tile_count() == 4900, "Central City global ground batch must contain all authored cells")
 	assert(
-		area.get_runtime_node_count() < 3000,
+		area.get_runtime_node_count() < 1000,
 		"Central City runtime node budget must remain below 3000 nodes"
 	)
 	assert(area.is_exterior_active(), "Central City exterior must start active")

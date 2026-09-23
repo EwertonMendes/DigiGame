@@ -6,6 +6,7 @@ signal load_progress(completed: int, total: int)
 signal load_finished
 
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
+const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
@@ -37,8 +38,9 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		return false
 	var raw_sections := raw_sections_value as Array
 
-	var total: int = raw_sections.size()
+	var total: int = raw_sections.size() + 1
 	var completed: int = 0
+	var ground_tiles: Array[Dictionary] = []
 	load_started.emit(total)
 
 	# Yield before doing any expensive area construction. On Web/mobile this lets
@@ -64,10 +66,17 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		_definitions[coord] = definition
 		_sections[coord] = instance
 		_section_list.append(instance)
+		instance.append_ground_tiles(ground_tiles)
 		completed += 1
 		load_progress.emit(completed, total)
 		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
 			await get_tree().process_frame
+
+	var ground := CITY.create_floor_batch(ground_tiles, -1200, "CityGround")
+	ground.add_to_group("world_batched_ground")
+	add_child(ground)
+	completed += 1
+	load_progress.emit(completed, total)
 
 	_exterior_active = true
 	visible = true
@@ -124,10 +133,12 @@ func get_runtime_node_count() -> int:
 
 
 func get_ground_render_node_count() -> int:
-	var total := 0
-	for section: WorldAreaSection in _section_list:
-		total += section.get_ground_render_node_count()
-	return total
+	var ground := get_node_or_null("CityGround")
+	return 0 if ground == null else 1 + ground.get_child_count()
+
+
+func get_ground_tile_count() -> int:
+	return SECTION_SIZE * SECTION_SIZE * _section_list.size()
 
 
 func get_section_definition(coord: Vector2i) -> Dictionary:
