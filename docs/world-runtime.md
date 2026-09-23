@@ -25,3 +25,10 @@ New content should be data-first. Add chunk rows to an area definition or regist
 ## Developer Hub
 
 The old prototype Hub is not the normal application entry point. Development builds expose a **TEST HUB** action in the Developer Toolkit. Automated Web QA can use `?debug=1&test_hub=1`; the route is rejected when developer tools are unavailable.
+
+
+## Central City art direction
+
+Central City uses the authored `MCBlocksColorOutline.png` atlas for its urban surfaces, architecture and interior props. Roads, sidewalks and plazas are neutral/dark city materials; green is reserved for deliberate park plots. Establishment facades use neutral masonry with service-specific trim, windows and one exterior sign.
+
+Service buildings do not reveal a tiny room underneath their roof. Their entrance transitions the persistent player/camera into a large dedicated interior stage in the same SceneTree. The transition uses camera zoom plus a digital color wash; there is no loading screen, black frame or scene replacement. Each service interior has its own functional zones and atlas furniture (lab machinery, recovery bays, training stations, market storage or archive stacks).

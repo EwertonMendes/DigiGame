@@ -1,7 +1,7 @@
 extends Node2D
 class_name WorldInterior
 
-const ART = preload("res://src/world/DevilsWorkshopArt.gd")
+const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
@@ -11,6 +11,34 @@ const TILE_HALF_HEIGHT := 16.0
 const ROOM_SIZE := Vector2i(18, 14)
 const SPAWN_CELL := Vector2i(9, 11)
 const EXIT_CELL := Vector2i(9, 12)
+
+const FLOOR_DARK := Vector2i(12, 16)
+const FLOOR_GRAY := Vector2i(13, 16)
+const FLOOR_CYAN := Vector2i(8, 16)
+const FLOOR_YELLOW := Vector2i(9, 16)
+const FLOOR_GREEN := Vector2i(10, 16)
+const FLOOR_WHITE := Vector2i(5, 16)
+const FLOOR_PURPLE := Vector2i(15, 16)
+
+const WALL_GRAY := Vector2i(3, 13)
+const WALL_DARK := Vector2i(2, 13)
+const WALL_WHITE := Vector2i(11, 13)
+const WALL_TEAL := Vector2i(14, 13)
+const WALL_YELLOW := Vector2i(15, 13)
+const WALL_LIME := Vector2i(16, 13)
+const WALL_PURPLE := Vector2i(5, 13)
+
+const TECH_BEACON := Vector2i(3, 20)
+const TECH_MACHINE_A := Vector2i(10, 36)
+const TECH_MACHINE_B := Vector2i(12, 36)
+const ANVIL := Vector2i(15, 19)
+const CHEST := Vector2i(13, 18)
+const CHEST_ALT := Vector2i(15, 18)
+const BOOKSHELF := Vector2i(12, 3)
+const LECTERN := Vector2i(10, 20)
+const TABLE := Vector2i(0, 21)
+const BENCH := Vector2i(5, 18)
+const LANTERN := Vector2i(6, 53)
 
 var definition: Dictionary = {}
 
@@ -63,8 +91,9 @@ func _build() -> void:
 	_physics_root.name = "InteriorCollision"
 	add_child(_physics_root)
 	_build_floor()
-	_build_back_walls()
+	_build_walls()
 	_build_counter()
+	_build_service_zones()
 	_build_lounge()
 	_build_service_point()
 	_build_exit()
@@ -79,32 +108,24 @@ func _build_floor() -> void:
 		for y in range(ROOM_SIZE.y):
 			var cell := Vector2i(x, y)
 			var edge := x == 0 or y == 0 or x == ROOM_SIZE.x - 1 or y == ROOM_SIZE.y - 1
-			var texture := ART.WARM_BLOCK
-			var base_color := Color(0.30, 0.33, 0.35, 1.0)
-			var detail_tint := Color(0.90, 0.94, 0.96, 1.0)
-			var detail_alpha := 0.34
-			if (x + y) % 7 == 0 and not edge:
-				texture = ART.DATA_BLOCK
-				base_color = Color(
-					0.18 + _accent.r * 0.08,
-					0.22 + _accent.g * 0.08,
-					0.26 + _accent.b * 0.08,
-					1.0
-				)
-				detail_tint = _accent
-				detail_alpha = 0.28
-			var tile := ART.create_surface_tile(
-				texture,
+			var accent_lane := x in [8, 9] or (y == 6 and x >= 5 and x <= 12)
+			var floor_cell := FLOOR_DARK if edge else FLOOR_GRAY
+			if accent_lane and not edge:
+				floor_cell = _accent_floor_cell()
+			if _service_id == "hospital" and not edge and (x + y) % 11 == 0:
+				floor_cell = FLOOR_WHITE
+			var tile := CITY.create_floor_tile(
+				floor_cell,
 				grid_to_world(Vector2(cell)),
 				-900 + x + y,
-				base_color,
-				detail_tint,
-				detail_alpha
+				Color(0.24, 0.27, 0.29, 1.0) if not edge else Color(0.10, 0.12, 0.14, 1.0),
+				Color.WHITE,
+				0.96
 			)
 			floor_root.add_child(tile)
 
 
-func _build_back_walls() -> void:
+func _build_walls() -> void:
 	var walls := Node2D.new()
 	walls.name = "Walls"
 	add_child(walls)
@@ -114,19 +135,41 @@ func _build_back_walls() -> void:
 	for y in range(1, ROOM_SIZE.y - 1):
 		wall_cells.append(Vector2i(0, y))
 		wall_cells.append(Vector2i(ROOM_SIZE.x - 1, y))
-	for cell in wall_cells:
-		_add_wall_stack(walls, cell, 2)
-		_mark_blocked(cell)
 
-	# Low front corners frame the room without hiding the playable floor.
+	for cell in wall_cells:
+		for level in range(2):
+			var atlas_cell := WALL_GRAY
+			if level == 1 and (cell.x + cell.y) % 4 == 0:
+				atlas_cell = _accent_block_cell()
+			elif level == 1 and _service_id == "hospital":
+				atlas_cell = WALL_WHITE
+			var block := CITY.create_block(
+				atlas_cell,
+				grid_to_world(Vector2(cell)),
+				820 + int(round(grid_to_world(Vector2(cell)).y)),
+				level
+			)
+			walls.add_child(block)
+		_mark_blocked(cell)
+		_add_circle_collision(cell, 22.0)
+
+	# Low front corners define the room silhouette without hiding the floor.
 	for x in range(0, 5):
-		var left_cell := Vector2i(x, ROOM_SIZE.y - 1)
-		_add_wall_stack(walls, left_cell, 1)
-		_mark_blocked(left_cell)
+		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
 	for x in range(ROOM_SIZE.x - 5, ROOM_SIZE.x):
-		var right_cell := Vector2i(x, ROOM_SIZE.y - 1)
-		_add_wall_stack(walls, right_cell, 1)
-		_mark_blocked(right_cell)
+		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
+
+
+func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
+	var block := CITY.create_block(
+		WALL_DARK,
+		grid_to_world(Vector2(cell)),
+		820 + int(round(grid_to_world(Vector2(cell)).y)),
+		0
+	)
+	parent.add_child(block)
+	_mark_blocked(cell)
+	_add_circle_collision(cell, 22.0)
 
 
 func _build_counter() -> void:
@@ -135,60 +178,110 @@ func _build_counter() -> void:
 	add_child(counter)
 	for x in range(6, 12):
 		var cell := Vector2i(x, 4)
-		var block := ART.create_full_block(
-			ART.DATA_BLOCK,
+		var atlas_cell := _accent_block_cell() if x in [7, 10] else WALL_DARK
+		var block := CITY.create_block(
+			atlas_cell,
 			grid_to_world(Vector2(cell)),
 			1000 + int(round(grid_to_world(Vector2(cell)).y)),
-			_accent,
 			0
 		)
 		counter.add_child(block)
 		_mark_blocked(cell)
-		_add_circle_collision(cell, 22.0)
+		_add_circle_collision(cell, 20.0)
 
-	# Back console towers make the service point read as an actual establishment.
-	for cell in [Vector2i(7, 2), Vector2i(10, 2)]:
-		for level in range(2):
-			var console := ART.create_full_block(
-				ART.DATA_BLOCK,
+	for cell in [Vector2i(7, 3), Vector2i(10, 3)]:
+		var lamp := CITY.create_prop(
+			LANTERN,
+			grid_to_world(Vector2(cell)),
+			1080 + int(round(grid_to_world(Vector2(cell)).y)),
+			Vector2(1.55, 1.55)
+		)
+		lamp.modulate = _accent.lightened(0.10)
+		counter.add_child(lamp)
+
+
+func _build_service_zones() -> void:
+	match _service_id:
+		"digilab":
+			_add_station(TECH_BEACON, Vector2i(4, 5), Vector2(2.2, 2.2))
+			_add_station(TECH_MACHINE_A, Vector2i(3, 8), Vector2(2.0, 2.0))
+			_add_station(TECH_MACHINE_B, Vector2i(14, 8), Vector2(2.0, 2.0))
+		"hospital":
+			_build_hospital_bays()
+		"training":
+			for cell in [Vector2i(4, 6), Vector2i(4, 9), Vector2i(14, 6), Vector2i(14, 9)]:
+				_add_station(ANVIL, cell, Vector2(1.9, 1.9))
+		"shop":
+			for spec in [
+				[Vector2i(3, 6), CHEST],
+				[Vector2i(4, 6), CHEST_ALT],
+				[Vector2i(13, 6), CHEST],
+				[Vector2i(14, 6), CHEST_ALT],
+				[Vector2i(3, 9), CHEST_ALT],
+				[Vector2i(14, 9), CHEST],
+			]:
+				_add_station(spec[1] as Vector2i, spec[0] as Vector2i, Vector2(1.8, 1.8))
+		"archive":
+			for cell in [Vector2i(3, 5), Vector2i(3, 8), Vector2i(14, 5), Vector2i(14, 8)]:
+				_add_station(BOOKSHELF, cell, Vector2(1.9, 1.9))
+			_add_station(LECTERN, Vector2i(5, 8), Vector2(1.75, 1.75))
+			_add_station(LECTERN, Vector2i(12, 8), Vector2(1.75, 1.75))
+		_:
+			pass
+
+
+func _build_hospital_bays() -> void:
+	for origin in [Vector2i(3, 7), Vector2i(13, 7)]:
+		for dx in range(2):
+			var cell := origin + Vector2i(dx, 0)
+			var pad := CITY.create_floor_tile(
+				FLOOR_WHITE,
 				grid_to_world(Vector2(cell)),
-				1030 + int(round(grid_to_world(Vector2(cell)).y)),
-				_accent.lightened(0.10),
-				level
+				-400 + cell.x + cell.y,
+				Color(0.76, 0.82, 0.84, 1.0),
+				Color.WHITE,
+				1.0
 			)
-			counter.add_child(console)
-		_mark_blocked(cell)
-		_add_circle_collision(cell, 21.0)
+			add_child(pad)
+		_add_station(TECH_MACHINE_A, origin + Vector2i(0, -1), Vector2(1.65, 1.65))
 
 
 func _build_lounge() -> void:
 	var lounge := Node2D.new()
 	lounge.name = "Lounge"
 	add_child(lounge)
-	for cell in [Vector2i(4, 8), Vector2i(5, 8), Vector2i(12, 8), Vector2i(13, 8)]:
-		var seat := ART.create_full_block(
-			ART.WARM_BLOCK,
+	for cell in [Vector2i(5, 10), Vector2i(12, 10)]:
+		var bench := CITY.create_prop(
+			BENCH,
 			grid_to_world(Vector2(cell)),
 			930 + int(round(grid_to_world(Vector2(cell)).y)),
-			Color(0.60, 0.67, 0.70, 1.0),
-			0
+			Vector2(1.8, 1.8)
 		)
-		seat.scale *= Vector2(0.84, 0.72)
-		lounge.add_child(seat)
+		lounge.add_child(bench)
 		_mark_blocked(cell)
-		_add_circle_collision(cell, 18.0)
+		_add_circle_collision(cell, 16.0)
 
-	for cell in [Vector2i(3, 5), Vector2i(14, 5)]:
-		var kiosk := ART.create_full_block(
-			ART.DATA_BLOCK,
-			grid_to_world(Vector2(cell)),
-			940 + int(round(grid_to_world(Vector2(cell)).y)),
-			_accent.darkened(0.12),
-			0
-		)
-		lounge.add_child(kiosk)
-		_mark_blocked(cell)
-		_add_circle_collision(cell, 18.0)
+	var table := CITY.create_prop(
+		TABLE,
+		grid_to_world(Vector2(3, 10)),
+		930 + int(round(grid_to_world(Vector2(3, 10)).y)),
+		Vector2(1.75, 1.75)
+	)
+	lounge.add_child(table)
+	_mark_blocked(Vector2i(3, 10))
+	_add_circle_collision(Vector2i(3, 10), 15.0)
+
+
+func _add_station(atlas_cell: Vector2i, cell: Vector2i, scale: Vector2) -> void:
+	var prop := CITY.create_prop(
+		atlas_cell,
+		grid_to_world(Vector2(cell)),
+		950 + int(round(grid_to_world(Vector2(cell)).y)),
+		scale
+	)
+	add_child(prop)
+	_mark_blocked(cell)
+	_add_circle_collision(cell, 16.0)
 
 
 func _build_service_point() -> void:
@@ -198,26 +291,28 @@ func _build_service_point() -> void:
 	service.z_index = 1200 + int(round(service.position.y))
 	add_child(service)
 
-	var glow := Polygon2D.new()
-	glow.name = "ServiceGlow"
-	glow.polygon = ART.tile_diamond(Vector2(-8.0, -4.0))
-	glow.color = Color(_accent.r, _accent.g, _accent.b, 0.26)
-	glow.position = Vector2(0.0, 4.0)
-	service.add_child(glow)
+	var marker := CITY.create_floor_tile(
+		_accent_floor_cell(),
+		Vector2.ZERO,
+		0,
+		Color(0.11, 0.17, 0.19, 1.0),
+		Color.WHITE,
+		1.0
+	)
+	service.add_child(marker)
 
 	var interactable := InteractableScript.new() as WorldInteractable
-	var action_id := _service_id
 	var prompt_text := "USE SERVICE"
-	if action_id == "shop":
+	if _service_id == "shop":
 		prompt_text = "BROWSE DATA MARKET"
-	elif action_id == "archive":
+	elif _service_id == "archive":
 		prompt_text = "ACCESS ARCHIVE"
 	else:
 		prompt_text = "OPEN %s" % _title
 	interactable.configure(
-		action_id,
+		_service_id,
 		prompt_text,
-		{"service": action_id, "title": _title},
+		{"service": _service_id, "title": _title},
 		92.0,
 		50
 	)
@@ -231,10 +326,14 @@ func _build_exit() -> void:
 	exit_root.z_index = 1180 + int(round(exit_root.position.y))
 	add_child(exit_root)
 
-	var marker := Polygon2D.new()
-	marker.name = "ExitMarker"
-	marker.polygon = ART.tile_diamond(Vector2(-10.0, -5.0))
-	marker.color = Color(0.55, 0.94, 1.0, 0.18)
+	var marker := CITY.create_floor_tile(
+		FLOOR_CYAN,
+		Vector2.ZERO,
+		0,
+		Color(0.12, 0.19, 0.21, 1.0),
+		Color.WHITE,
+		0.92
+	)
 	exit_root.add_child(marker)
 
 	var interactable := InteractableScript.new() as WorldInteractable
@@ -274,17 +373,34 @@ func _build_staff() -> void:
 	actor.add_child(interactable)
 
 
-func _add_wall_stack(parent: Node2D, cell: Vector2i, levels: int) -> void:
-	for level in range(levels):
-		var block := ART.create_full_block(
-			ART.WARM_BLOCK if level == 0 else ART.DATA_BLOCK,
-			grid_to_world(Vector2(cell)),
-			820 + int(round(grid_to_world(Vector2(cell)).y)),
-			Color(0.52, 0.58, 0.62, 1.0) if level == 0 else _accent.darkened(0.18),
-			level
-		)
-		parent.add_child(block)
-	_add_circle_collision(cell, 23.0)
+func _accent_floor_cell() -> Vector2i:
+	match _service_id:
+		"digilab", "hospital":
+			return FLOOR_CYAN
+		"training":
+			return FLOOR_GREEN
+		"shop":
+			return FLOOR_YELLOW
+		"archive":
+			return FLOOR_PURPLE
+		_:
+			return FLOOR_CYAN
+
+
+func _accent_block_cell() -> Vector2i:
+	match _service_id:
+		"digilab":
+			return WALL_TEAL
+		"hospital":
+			return WALL_WHITE
+		"training":
+			return WALL_LIME
+		"shop":
+			return WALL_YELLOW
+		"archive":
+			return WALL_PURPLE
+		_:
+			return WALL_TEAL
 
 
 func _add_circle_collision(cell: Vector2i, radius: float) -> void:
@@ -323,15 +439,15 @@ func _staff_title() -> String:
 func _staff_greeting() -> String:
 	match _service_id:
 		"digilab":
-			return "The DigiLab floor is open. Use the central service point for evolution, expansion and party management."
+			return "The DigiLab has dedicated workstations and a full service floor. Use the central console when you are ready."
 		"hospital":
-			return "Recovery systems are ready. The central service point handles HP and SP treatment."
+			return "The recovery bays are ready. The central service point handles HP and SP treatment."
 		"training":
-			return "Use the training service point when you are ready to spend Capacity on permanent growth."
+			return "The training floor has dedicated stations and open movement space. Use the central service point when you are ready."
 		"shop":
-			return "The market floor is ready for the item economy. This space is already built to support multiple vendors."
+			return "Welcome to the Data Market. Vendor storage and floor space are ready for the item economy."
 		"archive":
-			return "This archive hall is ready for research, records and future encyclopedia systems."
+			return "The reading stations and archive stacks are online. Research systems can expand into this hall without changing the world runtime."
 		_:
 			return "Welcome to Central City."
 
