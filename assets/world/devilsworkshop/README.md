@@ -11,7 +11,7 @@ DigiGame uses a small curated subset of **2D Pixel Art - Isometric Blocks - Free
 - Mirror revision: **11d22b3c4c1c6e9a720bf7e049feb0ec37229184**
 - Mirrored asset directory identifies the source package as **Low_Poly_Pixel_2D_Blocks_DevilsWorkShop_v04**.
 
-The official itch.io page states that the pack contains roughly 700 isometric assets and provides multiple export sizes. DigiGame keeps the original curated 50x50 runtime subset for the Hub/battlefield and now also carries the project-supplied 1024x1024 source collection under `assets_1024x1024/` for high-detail overworld authoring.
+The official itch.io page states that the pack contains roughly 700 isometric assets and provides multiple export sizes. DigiGame keeps the original curated 50x50 runtime subset for the Hub/battlefield and now also carries the project-supplied 1024x1024 source collection under `assets_1024x1024/` for high-detail overworld authoring. That complete source folder is intentionally marked with `.gdignore`; only the Central City selections copied into `city_1024/` are imported/exported by Godot.
 
 ## Runtime files
 
@@ -35,7 +35,7 @@ Any future sprites added from this pack should be recorded here with their exact
 
 ## Central City 128x64 surfaces
 
-Central City uses the 1024x1024 files as **source art**, not as 1024px screen tiles. `CentralCityArt.gd` samples only the authored top face and projects it onto an exact 128x64 isometric gameplay diamond. This preserves source detail while keeping movement/collision geometry deterministic and avoiding visible cube side walls between adjacent floor cells.
+Central City uses curated copies of the 1024x1024 files as **source art**, not as 1024px screen tiles. `CentralCityArt.gd` samples only the authored top face and projects it onto an exact 128x64 isometric gameplay diamond. This preserves source detail while keeping movement/collision geometry deterministic and avoiding visible cube side walls between adjacent floor cells.
 
 Current Central City source surfaces:
 
