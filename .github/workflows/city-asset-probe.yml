@@ -27,6 +27,12 @@ jobs:
           path: .cache/external-city-assets
           key: external-city-assets-v1-dystopian-future
 
+      - name: Prepare asset preprocessing runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --quiet "Pillow==11.3.0"
+
       - name: Stage licensed external city assets
         shell: bash
         run: |
@@ -37,7 +43,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m pip install --disable-pip-version-check --quiet "Pillow==11.3.0"
           python3 tools/probe_external_city_assets.py ".cache/external-city-assets/sources"
           cat build/city-asset-probe/dystopian-inventory.txt
           cat build/city-asset-probe/future-inventory.txt
