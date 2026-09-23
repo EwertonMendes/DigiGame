@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="${1:-assets/external/central_city}"
+RUNTIME_DIR="${1:-assets/external/central_city}"
 CACHE_DIR="${2:-.cache/external-city-assets}"
+SOURCE_DIR="$CACHE_DIR/sources"
 ITCH_VERSION="1.3.0"
 
-mkdir -p "$ROOT_DIR" "$CACHE_DIR"
+mkdir -p "$RUNTIME_DIR" "$CACHE_DIR" "$SOURCE_DIR"
+# Explicitly keep downloaded/extracted source packs outside Godot's resource
+# importer/exporter even though the cache lives under the repository workspace.
+touch "$CACHE_DIR/.gdignore"
 
 download_pack() {
   local slug="$1"
   local url="$2"
-  local dest="$ROOT_DIR/$slug"
+  local dest="$SOURCE_DIR/$slug"
   local cache="$CACHE_DIR/$slug"
 
   rm -rf "$dest"
@@ -66,4 +70,4 @@ if ! python3 -c 'import PIL' >/dev/null 2>&1; then
   exit 1
 fi
 
-python3 tools/prepare_external_city_assets.py "$ROOT_DIR"
+python3 tools/prepare_external_city_assets.py "$SOURCE_DIR" "$RUNTIME_DIR/processed"

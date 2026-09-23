@@ -14,7 +14,7 @@ Central City can use two external isometric city packs:
 
 Raw third-party files are **not committed** to this public repository.
 
-`tools/setup_external_city_assets.sh` downloads the packs from their official itch.io pages into the ignored `assets/external/central_city/` staging directory. CI/build jobs run the same staging step before Godot import/export. This lets the game use the licensed assets without turning the source repository into an asset redistribution mirror.
+`tools/setup_external_city_assets.sh` downloads the pack archives into the ignored `.cache/external-city-assets/` directory. Extracted source files stay under `.cache/external-city-assets/sources/`, which contains a generated `.gdignore` so Godot never imports or exports the source packs. CI/build jobs run the same staging step before Godot import/export. This lets the game use the licensed assets without turning the source repository into an asset redistribution mirror.
 
 The exported game may contain imported/packed versions as part of the game itself. Do not publish the staged source files separately or upload them as GitHub artifacts.
 
@@ -37,10 +37,15 @@ The setup scripts reuse the local `.cache/external-city-assets/` archives after 
 
 ## Runtime preprocessing
 
-The downloaded sources are never consumed directly by Godot. `tools/prepare_external_city_assets.py` creates an ignored optimized set under `assets/external/central_city/processed/`:
+The downloaded sources are never consumed directly by Godot. `tools/prepare_external_city_assets.py` reads source files from the ignored/`.gdignore` cache and writes only the curated runtime set under `assets/external/central_city/processed/`:
 
 - Future Assets buildings are alpha-trimmed and downscaled to at most 480 px on their largest side.
 - Only curated Dystopian sprite-sheet regions used by Central City are extracted.
 - `manifest.json` records stable runtime asset names and processed dimensions.
 
 This keeps the exported game much smaller than importing the original 96 MB Future source pack while preserving enough resolution for the 1280×720 campaign camera.
+
+
+### Export-size rule
+
+Raw pack files must never live under an importable `res://` directory. Only the processed runtime PNGs belong under `assets/external/central_city/processed/`. This prevents Godot's `all_resources` export mode from packaging the original high-resolution sources.

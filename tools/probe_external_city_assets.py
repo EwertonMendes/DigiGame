@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else "assets/external/central_city")
+ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else ".cache/external-city-assets/sources")
 OUT = Path(sys.argv[2] if len(sys.argv) > 2 else "build/city-asset-probe")
 OUT.mkdir(parents=True, exist_ok=True)
 

@@ -5,6 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ItchVersion = "1.3.0"
+$SourceDir = Join-Path $CacheDir "sources"
 
 function Resolve-Python {
     if (Get-Command py -ErrorAction SilentlyContinue) {
@@ -44,7 +45,7 @@ function Stage-Pack {
         [string]$Url
     )
 
-    $dest = Join-Path $RootDir $Slug
+    $dest = Join-Path $SourceDir $Slug
     $cache = Join-Path $CacheDir $Slug
 
     if (Test-Path $dest) {
@@ -85,12 +86,14 @@ function Stage-Pack {
 
 New-Item -ItemType Directory -Force -Path $RootDir | Out-Null
 New-Item -ItemType Directory -Force -Path $CacheDir | Out-Null
+New-Item -ItemType Directory -Force -Path $SourceDir | Out-Null
+New-Item -ItemType File -Force -Path (Join-Path $CacheDir ".gdignore") | Out-Null
 
 Stage-Pack "dystopian" "https://systemfehler-ich.itch.io/dystopian-city-starter-pack"
 Stage-Pack "future" "https://morithedaichi.itch.io/future-assets-free"
 
 Ensure-Pillow
-Invoke-Python @("tools/prepare_external_city_assets.py", $RootDir)
+Invoke-Python @("tools/prepare_external_city_assets.py", $SourceDir, (Join-Path $RootDir "processed"))
 Invoke-Python @("tools/validate_external_city_assets.py")
 
 Write-Host "[CityAssets] Central City external assets are ready for Godot."

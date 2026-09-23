@@ -9,8 +9,10 @@ from typing import Iterable
 
 from PIL import Image
 
-ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else "assets/external/central_city")
-PROCESSED = ROOT / "processed"
+SOURCE_ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else ".cache/external-city-assets/sources")
+PROCESSED = Path(
+    sys.argv[2] if len(sys.argv) > 2 else "assets/external/central_city/processed"
+)
 FUTURE_OUT = PROCESSED / "future"
 DYSTOPIAN_OUT = PROCESSED / "dystopian"
 MAX_FUTURE_DIMENSION = 480
@@ -85,7 +87,7 @@ def save_png(image: Image.Image, path: Path) -> None:
 
 
 def process_future() -> dict[str, dict]:
-    source = ROOT / "future"
+    source = SOURCE_ROOT / "future"
     manifest = {}
     FUTURE_OUT.mkdir(parents=True, exist_ok=True)
     for index in range(1, 38):
@@ -104,7 +106,7 @@ def process_future() -> dict[str, dict]:
 
 
 def process_dystopian() -> dict[str, dict]:
-    source = ROOT / "dystopian"
+    source = SOURCE_ROOT / "dystopian"
     sheet_path = find_file(source, "Dystopian City Starter Pack.png")
     with Image.open(sheet_path) as original:
         sheet = original.convert("RGBA")
