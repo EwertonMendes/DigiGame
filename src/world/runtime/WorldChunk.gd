@@ -459,8 +459,9 @@ func _add_service_windows(
 
 	# A short accent canopy marks the doorway as an actual public entrance.
 	var door_cell := origin + Vector2i(size.x - 1, door_y)
-	for canopy_offset in [Vector2i.ZERO, Vector2i(1, 0)]:
-		var canopy_cell := door_cell + canopy_offset
+	var canopy_offsets: Array[Vector2i] = [Vector2i.ZERO, Vector2i(1, 0)]
+	for canopy_offset: Vector2i in canopy_offsets:
+		var canopy_cell: Vector2i = door_cell + canopy_offset
 		var canopy := CITY.create_floor_tile(
 			_service_floor_cell(service_id),
 			grid_to_world(Vector2(canopy_cell)) - Vector2(0.0, 82.0),
