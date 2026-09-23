@@ -5,7 +5,14 @@ const ATLAS = preload("res://assets/terrain/MCBlocksColorOutline.png")
 const GROUND_ATLAS = preload("res://assets/terrain/central_city_user_sheet/central_city_ground_atlas.png")
 
 const GROUND_ATLAS_CELL_SIZE := 64.0
-const GROUND_DRAW_SIZE := Vector2(88.0, 88.0)
+# The normalized runtime atlas stores only the authored top surface of each
+# supplied tile. Every surface uses this exact diamond inside its 64x64 cell;
+# side walls / relief are deliberately excluded so adjacent city cells meet
+# on one continuous ground plane.
+const GROUND_SURFACE_LEFT := Vector2(1.0, 24.0)
+const GROUND_SURFACE_TOP := Vector2(31.5, 9.0)
+const GROUND_SURFACE_RIGHT := Vector2(62.0, 24.0)
+const GROUND_SURFACE_BOTTOM := Vector2(31.5, 39.0)
 
 const CELL_SIZE := 32.0
 const TILE_WIDTH := 64.0
@@ -187,16 +194,13 @@ static func create_ground_batch(
 	sheet.name = "SheetMesh"
 	sheet.mesh = _build_ground_mesh(tiles)
 	sheet.texture = GROUND_ATLAS
-	sheet.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	# Nearest sampling keeps one atlas cell from bleeding into its neighbour.
+	sheet.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	root.add_child(sheet)
 	return root
 
 
 static func _build_ground_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
-	var ordered_tiles: Array[Dictionary] = []
-	ordered_tiles.assign(tiles)
-	ordered_tiles.sort_custom(_ground_tile_before)
-
 	var vertices := PackedVector2Array()
 	var colors := PackedColorArray()
 	var uvs := PackedVector2Array()
@@ -205,30 +209,30 @@ static func _build_ground_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
 		maxf(1.0, float(GROUND_ATLAS.get_width())),
 		maxf(1.0, float(GROUND_ATLAS.get_height()))
 	)
-	var half := GROUND_DRAW_SIZE * 0.5
-	var inset := 0.5
+	var diamond := tile_diamond()
 
-	for spec: Dictionary in ordered_tiles:
+	for spec: Dictionary in tiles:
 		var center: Vector2 = spec.get("position", Vector2.ZERO)
 		var atlas_cell: Vector2i = spec.get("cell", Vector2i.ZERO)
 		var vertex_start := vertices.size()
 
-		vertices.append(center + Vector2(-half.x, -half.y))
-		vertices.append(center + Vector2(half.x, -half.y))
-		vertices.append(center + Vector2(half.x, half.y))
-		vertices.append(center + Vector2(-half.x, half.y))
+		# Ground geometry is the actual 64x32 isometric cell. The old test used
+		# 88x88 quads, which made neighbouring source sprites overlap and exposed
+		# their authored side walls as stacked relief.
+		for point: Vector2 in diamond:
+			vertices.append(center + point)
 
 		var pixel_origin := Vector2(
 			float(atlas_cell.x) * GROUND_ATLAS_CELL_SIZE,
 			float(atlas_cell.y) * GROUND_ATLAS_CELL_SIZE
 		)
-		var pixel_end := pixel_origin + Vector2(GROUND_ATLAS_CELL_SIZE, GROUND_ATLAS_CELL_SIZE)
-		for pixel_uv: Vector2 in [
-			pixel_origin + Vector2(inset, inset),
-			Vector2(pixel_end.x - inset, pixel_origin.y + inset),
-			pixel_end - Vector2(inset, inset),
-			Vector2(pixel_origin.x + inset, pixel_end.y - inset),
-		]:
+		var pixel_uvs := PackedVector2Array([
+			pixel_origin + GROUND_SURFACE_LEFT,
+			pixel_origin + GROUND_SURFACE_TOP,
+			pixel_origin + GROUND_SURFACE_RIGHT,
+			pixel_origin + GROUND_SURFACE_BOTTOM,
+		])
+		for pixel_uv: Vector2 in pixel_uvs:
 			uvs.append(Vector2(pixel_uv.x / texture_size.x, pixel_uv.y / texture_size.y))
 
 		var tint: Color = spec.get("ground_tint", Color.WHITE)
@@ -254,14 +258,6 @@ static func _build_ground_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
-
-
-static func _ground_tile_before(a: Dictionary, b: Dictionary) -> bool:
-	var a_position: Vector2 = a.get("position", Vector2.ZERO)
-	var b_position: Vector2 = b.get("position", Vector2.ZERO)
-	if is_equal_approx(a_position.y, b_position.y):
-		return a_position.x < b_position.x
-	return a_position.y < b_position.y
 
 
 static func create_block(
