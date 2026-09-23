@@ -324,25 +324,42 @@ func _build_service_point() -> void:
 
 
 func _build_exit() -> void:
-	var exit_root := Node2D.new()
-	exit_root.name = "Exit"
+	var exit_root := Area2D.new()
+	exit_root.name = "ExitThreshold"
+	exit_root.add_to_group("world_interior_exit_threshold")
 	exit_root.position = grid_to_world(Vector2(EXIT_CELL))
-	exit_root.z_index = 1180 + int(round(exit_root.position.y))
+	exit_root.collision_layer = 0
+	exit_root.collision_mask = 1
+	exit_root.monitoring = true
+	exit_root.monitorable = false
 	add_child(exit_root)
 
 	var marker := CITY.create_floor_tile(
 		FLOOR_CYAN,
 		Vector2.ZERO,
 		0,
-		Color(0.12, 0.19, 0.21, 1.0),
+		Color(0.10, 0.17, 0.19, 1.0),
 		Color.WHITE,
-		0.92
+		0.62
 	)
 	exit_root.add_child(marker)
 
-	var interactable := InteractableScript.new() as WorldInteractable
-	interactable.configure("exit_interior", "EXIT", {"title": _title}, 70.0, 80)
-	exit_root.add_child(interactable)
+	var shape_node := CollisionShape2D.new()
+	var shape := CircleShape2D.new()
+	shape.radius = 17.0
+	shape_node.shape = shape
+	shape_node.position = Vector2(0.0, -8.0)
+	exit_root.add_child(shape_node)
+	exit_root.body_entered.connect(_on_exit_threshold_entered)
+
+
+func _on_exit_threshold_entered(body: Node2D) -> void:
+	if _world_controller == null or not _world_controller.has_method("get_player"):
+		return
+	if body != _world_controller.call("get_player"):
+		return
+	if _world_controller.has_method("request_interior_exit"):
+		_world_controller.call_deferred("request_interior_exit")
 
 
 func _build_staff() -> void:
