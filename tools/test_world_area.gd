@@ -1,6 +1,7 @@
 extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
+const CENTRAL_CITY_SHEET := preload("res://assets/terrain/central_city_sheet_atlas.png")
 
 
 func _ready() -> void:
@@ -22,6 +23,11 @@ func _ready() -> void:
 		"Central City ground must use one global batched renderer instead of section/per-tile CanvasItems"
 	)
 	assert(area.get_ground_tile_count() == 4900, "Central City global ground batch must contain all authored cells")
+	var city_ground := area.get_node_or_null("CityGround") as Node2D
+	var sheet_mesh := city_ground.get_node_or_null("SheetTileMesh") as MeshInstance2D if city_ground != null else null
+	assert(city_ground != null and sheet_mesh != null, "Central City ground must use the supplied sheet renderer")
+	assert(sheet_mesh.texture == CENTRAL_CITY_SHEET, "Central City ground must render the normalized project-owner sheet atlas")
+	assert(city_ground.get_node_or_null("DetailMesh") == null, "Legacy MCBlocks floor detail must not remain under the new city ground")
 	assert(
 		area.get_runtime_node_count() < 1000,
 		"Central City runtime node budget must remain below 3000 nodes"
