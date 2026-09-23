@@ -134,7 +134,7 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 		return {
 			"cell": FLOOR_BLUE,
 			"base_color": WATER_BASE,
-			"detail_alpha": 1.0,
+			"detail_alpha": 0.62,
 			"walkable": false,
 		}
 	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
@@ -142,14 +142,14 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 		return {
 			"cell": FLOOR_CYAN if plaza_accent else FLOOR_PLAZA,
 			"base_color": PLAZA_BASE,
-			"detail_alpha": 0.96,
+			"detail_alpha": 0.58,
 			"walkable": true,
 		}
 	if road:
 		return {
 			"cell": FLOOR_ROAD,
 			"base_color": ROAD_BASE,
-			"detail_alpha": 1.0,
+			"detail_alpha": 0.46,
 			"walkable": true,
 		}
 
@@ -164,7 +164,7 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 			return {
 				"cell": FLOOR_GREEN,
 				"base_color": PARK_BASE,
-				"detail_alpha": 0.96,
+				"detail_alpha": 0.52,
 				"walkable": true,
 			}
 
@@ -176,7 +176,7 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 	return {
 		"cell": FLOOR_PAVEMENT,
 		"base_color": PAVEMENT_BASE.darkened(0.04) if alternate else PAVEMENT_BASE,
-		"detail_alpha": 0.95,
+		"detail_alpha": 0.38,
 		"walkable": true,
 	}
 
@@ -289,38 +289,51 @@ func _build_service_exterior(origin: Vector2i, size: Vector2i, accent: Color, ti
 	var door_cell: Vector2i = exterior.get("door_cell", origin + Vector2i(size.x - 1, int(size.y / 2)))
 	var approach_cell := door_cell + Vector2i(1, 0)
 
-	var entrance := Node2D.new()
-	entrance.name = "InteriorEntrance"
-	entrance.position = grid_to_world(Vector2(approach_cell))
-	entrance.z_index = 1250 + int(round(global_position.y + entrance.position.y))
+	var entrance := Area2D.new()
+	entrance.name = "InteriorThreshold"
+	entrance.position = grid_to_world(Vector2(door_cell))
+	entrance.collision_layer = 0
+	entrance.collision_mask = 1
+	entrance.monitoring = true
+	entrance.monitorable = false
 	add_child(entrance)
 
 	var pad := CITY.create_floor_tile(
 		_service_floor_cell(service_id),
 		Vector2.ZERO,
 		0,
-		Color(0.12, 0.18, 0.20, 1.0),
+		Color(0.10, 0.15, 0.17, 1.0),
 		Color.WHITE,
-		0.92
+		0.62
 	)
 	entrance.add_child(pad)
 
+	var threshold_shape := CollisionShape2D.new()
+	var threshold_circle := CircleShape2D.new()
+	threshold_circle.radius = 17.0
+	threshold_shape.shape = threshold_circle
+	threshold_shape.position = Vector2(0.0, -8.0)
+	entrance.add_child(threshold_shape)
+
 	var return_world := global_position + grid_to_world(Vector2(approach_cell))
-	var interactable := InteractableScript.new() as WorldInteractable
-	interactable.configure(
-		"enter_interior",
-		"ENTER %s" % title,
-		{
-			"interior_id": interior_id,
-			"service": service_id,
-			"title": title,
-			"accent": [accent.r, accent.g, accent.b, accent.a],
-			"return_position": [return_world.x, return_world.y],
-		},
-		78.0,
-		60
-	)
-	entrance.add_child(interactable)
+	entrance.set_meta("interior_payload", {
+		"interior_id": interior_id,
+		"service": service_id,
+		"title": title,
+		"accent": [accent.r, accent.g, accent.b, accent.a],
+		"return_position": [return_world.x, return_world.y],
+	})
+	entrance.body_entered.connect(_on_interior_threshold_entered.bind(entrance))
+
+
+func _on_interior_threshold_entered(body: Node2D, entrance: Area2D) -> void:
+	if body != _player or _world_controller == null:
+		return
+	if not _world_controller.has_method("request_interior_entry"):
+		return
+	var payload = entrance.get_meta("interior_payload", {})
+	if payload is Dictionary:
+		_world_controller.call_deferred("request_interior_entry", (payload as Dictionary).duplicate(true))
 
 
 func _build_exterior_shell(
