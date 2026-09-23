@@ -7,7 +7,7 @@ const InteriorScene = preload("res://scenes/world/world_interior.tscn")
 const STAGE_ORIGIN := Vector2(12000.0, 0.0)
 const EXTERIOR_ZOOM := 1.18
 const INTERIOR_ZOOM := 1.30
-const TRANSITION_ZOOM := 1.04
+const TRANSITION_ZOOM := 1.52
 
 var _world_root: Node = null
 var _player: OverworldActor = null
@@ -74,6 +74,7 @@ func enter_interior(payload: Dictionary) -> bool:
 	_player.global_position = interior.get_spawn_world_position()
 	_player.velocity = Vector2.ZERO
 	_camera.position = Vector2.ZERO
+	_camera.reset_smoothing()
 	interior_state_changed.emit(true, String(payload.get("title", "INTERIOR")))
 	await _reveal_transition(INTERIOR_ZOOM)
 
@@ -95,6 +96,7 @@ func exit_interior() -> bool:
 	_player.global_position = _return_position
 	_player.velocity = Vector2.ZERO
 	_camera.position = Vector2.ZERO
+	_camera.reset_smoothing()
 	if old_interior != null:
 		old_interior.queue_free()
 	if _streamer != null:
@@ -119,7 +121,7 @@ func _build_transition_overlay() -> void:
 	_overlay.name = "FocusWash"
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_overlay.color = Color(0.025, 0.12, 0.15, 1.0)
+	_overlay.color = Color(0.08, 0.28, 0.34, 1.0)
 	_overlay.modulate.a = 0.0
 	_overlay.visible = false
 	layer.add_child(_overlay)
@@ -134,8 +136,8 @@ func _cover_transition() -> void:
 	tween.set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD)
 	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(_overlay, "modulate:a", 0.84, 0.20)
-	tween.tween_property(_camera, "zoom", Vector2.ONE * TRANSITION_ZOOM, 0.20)
+	tween.tween_property(_overlay, "modulate:a", 0.48, 0.24)
+	tween.tween_property(_camera, "zoom", Vector2.ONE * TRANSITION_ZOOM, 0.24)
 	await tween.finished
 
 
@@ -146,8 +148,8 @@ func _reveal_transition(target_zoom: float) -> void:
 	tween.set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(_overlay, "modulate:a", 0.0, 0.28)
-	tween.tween_property(_camera, "zoom", Vector2.ONE * target_zoom, 0.30)
+	tween.tween_property(_overlay, "modulate:a", 0.0, 0.30)
+	tween.tween_property(_camera, "zoom", Vector2.ONE * target_zoom, 0.34)
 	await tween.finished
 	_overlay.visible = false
 
