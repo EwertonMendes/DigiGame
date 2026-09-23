@@ -8,18 +8,18 @@ const ATLAS = preload("res://assets/terrain/MCBlocksColorOutline.png")
 # High-resolution Devil's Work.shop source blocks used only for the Central City
 # exterior. The complete 1024x1024 source files stay untouched in the repository;
 # only their authored top faces are sampled onto the gameplay diamond.
-const GROUND_GRASS = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0056.png")
-const GROUND_GRASS_CHECKER = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0053.png")
-const GROUND_MINT = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0058.png")
-const GROUND_STONE = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0055.png")
-const GROUND_STONE_SOFT = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0054.png")
-const GROUND_TECH_TEAL = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0048.png")
-const GROUND_TECH_BLUE = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0049.png")
-const GROUND_TECH_PURPLE = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0050.png")
-const GROUND_DARK = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0063.png")
-const GROUND_WATER = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0064.png")
-const GROUND_YELLOW = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0001.png")
-const GROUND_LIME_CHECKER = preload("res://assets/world/devilsworkshop/assets_1024x1024/isometric_0007.png")
+const GROUND_GRASS = preload("res://assets/world/devilsworkshop/city_1024/isometric_0056.png")
+const GROUND_GRASS_CHECKER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0053.png")
+const GROUND_MINT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0058.png")
+const GROUND_STONE = preload("res://assets/world/devilsworkshop/city_1024/isometric_0055.png")
+const GROUND_STONE_SOFT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0054.png")
+const GROUND_TECH_TEAL = preload("res://assets/world/devilsworkshop/city_1024/isometric_0048.png")
+const GROUND_TECH_BLUE = preload("res://assets/world/devilsworkshop/city_1024/isometric_0049.png")
+const GROUND_TECH_PURPLE = preload("res://assets/world/devilsworkshop/city_1024/isometric_0050.png")
+const GROUND_DARK = preload("res://assets/world/devilsworkshop/city_1024/isometric_0063.png")
+const GROUND_WATER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0064.png")
+const GROUND_YELLOW = preload("res://assets/world/devilsworkshop/city_1024/isometric_0001.png")
+const GROUND_LIME_CHECKER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0007.png")
 
 const CELL_SIZE := 32.0
 const TILE_WIDTH := 128.0
