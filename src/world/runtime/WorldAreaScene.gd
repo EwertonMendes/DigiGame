@@ -24,13 +24,14 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	visible = false
 	process_mode = Node.PROCESS_MODE_DISABLED
 
-	var raw_sections = area_definition.get("sections", [])
-	if not raw_sections is Array or raw_sections.is_empty():
+	var raw_sections_value = area_definition.get("sections", [])
+	if not raw_sections_value is Array or raw_sections_value.is_empty():
 		push_error("World area requires a non-empty authored sections array")
 		return false
+	var raw_sections := raw_sections_value as Array
 
-	var total := raw_sections.size()
-	var completed := 0
+	var total: int = raw_sections.size()
+	var completed: int = 0
 	load_started.emit(total)
 
 	# Yield before doing any expensive area construction. On Web/mobile this lets
