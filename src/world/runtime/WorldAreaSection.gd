@@ -481,11 +481,8 @@ func _add_service_windows(
 		parent.add_child(pane)
 
 	# A short accent canopy marks the doorway as an actual public entrance.
-	var canopy_offsets: Array[Vector2i] = (
-		[Vector2i.ZERO, Vector2i(1, 0)]
-		if door_side == "south"
-		else [Vector2i.ZERO, Vector2i(0, 1)]
-	)
+	var canopy_offsets: Array[Vector2i] = [Vector2i.ZERO]
+	canopy_offsets.append(Vector2i(1, 0) if door_side == "south" else Vector2i(0, 1))
 	for canopy_offset: Vector2i in canopy_offsets:
 		var canopy_cell: Vector2i = door_cell + canopy_offset
 		var canopy := CITY.create_floor_tile(
