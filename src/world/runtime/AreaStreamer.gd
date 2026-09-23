@@ -21,6 +21,7 @@ var _queued_coords: Array[Vector2i] = []
 var _chunk_scene: PackedScene = null
 var _current_chunk := Vector2i(999999, 999999)
 var _elapsed := 0.0
+var _suspended := false
 
 
 func configure(area_definition: Dictionary, player: Node2D, chunks_root: Node2D, world_controller: Node) -> void:
@@ -48,7 +49,7 @@ func configure(area_definition: Dictionary, player: Node2D, chunks_root: Node2D,
 
 
 func _process(delta: float) -> void:
-	if _player == null or _chunks_root == null or _chunk_scene == null:
+	if _suspended or _player == null or _chunks_root == null or _chunk_scene == null:
 		return
 	if not _queued_coords.is_empty():
 		var coord: Vector2i = _queued_coords.pop_front()
@@ -70,6 +71,25 @@ func _process(delta: float) -> void:
 
 func get_current_chunk() -> Vector2i:
 	return _current_chunk
+
+
+func set_suspended(value: bool) -> void:
+	_suspended = value
+
+
+func is_suspended() -> bool:
+	return _suspended
+
+
+func refresh_around_player() -> void:
+	if _player == null or _chunk_scene == null:
+		return
+	var next_chunk := world_to_chunk(_player.global_position)
+	_current_chunk = next_chunk
+	_prime_active_ring(_current_chunk)
+	_queue_preload_ring(_current_chunk)
+	_unload_far_chunks()
+	current_chunk_changed.emit(_current_chunk)
 
 
 func get_loaded_chunk_count() -> int:

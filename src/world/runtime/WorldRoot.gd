@@ -7,6 +7,7 @@ const FollowersScript = preload("res://src/world/runtime/WorldPartyFollowers.gd"
 const StreamerScript = preload("res://src/world/runtime/AreaStreamer.gd")
 const InteractionScript = preload("res://src/world/runtime/InteractionSystem.gd")
 const ServiceHostScript = preload("res://src/world/runtime/WorldServiceHost.gd")
+const InteriorManagerScript = preload("res://src/world/runtime/WorldInteriorManager.gd")
 const PromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
 const AreaTitleScript = preload("res://src/ui/AreaTitleOverlay.gd")
 const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
@@ -19,12 +20,16 @@ const REGION_ID := "central_city"
 const AREA_ID := "central_city"
 const TEST_HUB_SCENE := "res://scenes/world/hub.tscn"
 const AUTO_SAVE_SECONDS := 5.0
+const SAFE_CITY_SPAWN := Vector2(-96.0, 272.0)
 
 var _area_definition: Dictionary = {}
 var _player: OverworldActor = null
 var _streamer: AreaStreamer = null
 var _interaction: InteractionSystem = null
 var _services: WorldServiceHost = null
+var _interior_manager: WorldInteriorManager = null
+var _world_camera: Camera2D = null
+var _followers: WorldPartyFollowers = null
 var _prompt: DigiInteractionPrompt = null
 var _area_title: AreaTitleOverlay = null
 var _mobile_root: Control = null
@@ -48,6 +53,9 @@ func _ready() -> void:
 	var chunks_root := Node2D.new()
 	chunks_root.name = "StreamedChunks"
 	add_child(chunks_root)
+	var interiors_root := Node2D.new()
+	interiors_root.name = "Interiors"
+	add_child(interiors_root)
 	var actors_root := Node2D.new()
 	actors_root.name = "Actors"
 	add_child(actors_root)
@@ -64,11 +72,12 @@ func _ready() -> void:
 	_streamer.current_chunk_changed.connect(_on_chunk_changed)
 	add_child(_streamer)
 	_streamer.configure(_area_definition, _player, chunks_root, self)
+	_recover_invalid_spawn()
 
-	var followers := FollowersScript.new() as WorldPartyFollowers
-	followers.name = "PartyFollowers"
-	followers.configure(self, _player)
-	add_child(followers)
+	_followers = FollowersScript.new() as WorldPartyFollowers
+	_followers.name = "PartyFollowers"
+	_followers.configure(self, _player)
+	add_child(_followers)
 
 	_interaction = InteractionScript.new() as InteractionSystem
 	_interaction.name = "InteractionSystem"
@@ -82,6 +91,12 @@ func _ready() -> void:
 	_services.configure(_player)
 	_services.service_state_changed.connect(_on_service_state_changed)
 	add_child(_services)
+
+	_interior_manager = InteriorManagerScript.new() as WorldInteriorManager
+	_interior_manager.name = "WorldInteriorManager"
+	add_child(_interior_manager)
+	_interior_manager.configure(self, _player, _world_camera, _streamer, interiors_root)
+	_interior_manager.interior_state_changed.connect(_on_interior_state_changed)
 
 	_build_world_ui()
 	MusicDirector.play_zone_1()
@@ -118,6 +133,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func can_actor_move_to(candidate: Vector2, _actor: Node) -> bool:
+	if _interior_manager != null and _interior_manager.is_active():
+		return _interior_manager.can_move_to(candidate)
 	return _streamer == null or _streamer.is_walkable_world_position(candidate)
 
 
@@ -127,6 +144,10 @@ func get_player() -> OverworldActor:
 
 func get_streamer() -> AreaStreamer:
 	return _streamer
+
+
+func get_interior_manager() -> WorldInteriorManager:
+	return _interior_manager
 
 
 func _build_background() -> void:
@@ -150,12 +171,12 @@ func _build_player(parent: Node2D) -> void:
 	parent.add_child(_player)
 	_player.global_position = WorldState.player_position
 	_player.world_position_changed.connect(_on_player_moved)
-	var camera := Camera2D.new()
-	camera.name = "WorldCamera"
-	camera.position_smoothing_enabled = true
-	camera.position_smoothing_speed = 7.5
-	camera.zoom = Vector2.ONE * 1.18
-	_player.add_child(camera)
+	_world_camera = Camera2D.new()
+	_world_camera.name = "WorldCamera"
+	_world_camera.position_smoothing_enabled = true
+	_world_camera.position_smoothing_speed = 7.5
+	_world_camera.zoom = Vector2.ONE * 1.18
+	_player.add_child(_world_camera)
 
 
 func _build_world_ui() -> void:
@@ -266,6 +287,8 @@ func _layout_ui() -> void:
 
 
 func _on_player_moved(world_position: Vector2) -> void:
+	if _interior_manager != null and (_interior_manager.is_active() or _interior_manager.is_transitioning()):
+		return
 	_movement_dirty = true
 	if _streamer != null:
 		WorldState.capture_location(
@@ -308,6 +331,14 @@ func _on_interaction_candidate_changed(action_text: String) -> void:
 
 func _on_interaction_requested(action_id: String, payload: Dictionary) -> void:
 	match action_id:
+		"enter_interior":
+			if _interior_manager != null:
+				_persist_world_location()
+				OverworldState.save_progress()
+				_interior_manager.enter_interior(payload)
+		"exit_interior":
+			if _interior_manager != null:
+				_interior_manager.exit_interior()
 		"digilab", "training", "hospital":
 			if _services != null:
 				_services.open_service(action_id)
@@ -324,10 +355,28 @@ func _on_interaction_requested(action_id: String, payload: Dictionary) -> void:
 		"archive":
 			_open_dialog(
 				"DIGITAL ARCHIVE",
-				"The Archive is prepared as a streamed service interior. Future research and encyclopedia systems can attach here without adding a new world controller."
+				"The Archive is prepared as a full interior service space for research, records and future encyclopedia systems."
+			)
+		"interior_greeting":
+			_open_dialog(
+				String(payload.get("title", "CITY STAFF")),
+				String(payload.get("body", "Welcome to Central City."))
 			)
 		_:
 			_open_dialog(String(payload.get("title", "CENTRAL CITY")), "This interaction is connected to the new world runtime.")
+
+
+func _on_interior_state_changed(active: bool, title: String) -> void:
+	_movement_dirty = false
+	_save_elapsed = 0.0
+	if active:
+		if _area_title != null:
+			_area_title.present(title, "Interior · seamless focus", 1.15)
+	else:
+		if _streamer != null:
+			_on_chunk_changed(_streamer.get_current_chunk())
+		OverworldState.save_progress()
+	_layout_ui()
 
 
 func _on_service_state_changed(open: bool, _service_id: String) -> void:
@@ -404,6 +453,8 @@ func _announce_area() -> void:
 func _persist_world_location() -> void:
 	if _player == null or _streamer == null:
 		return
+	if _interior_manager != null and (_interior_manager.is_active() or _interior_manager.is_transitioning()):
+		return
 	WorldState.capture_location(
 		REGION_ID,
 		AREA_ID,
@@ -412,6 +463,18 @@ func _persist_world_location() -> void:
 		_player.facing_direction
 	)
 	_movement_dirty = false
+
+
+func _recover_invalid_spawn() -> void:
+	if _streamer == null or _player == null:
+		return
+	if _streamer.is_walkable_world_position(_player.global_position):
+		return
+	_player.global_position = SAFE_CITY_SPAWN
+	_player.velocity = Vector2.ZERO
+	WorldState.capture_location(REGION_ID, AREA_ID, Vector2i.ZERO, SAFE_CITY_SPAWN, _player.facing_direction)
+	OverworldState.save_progress()
+	print("[World] RECOVERED_INVALID_SPAWN position=%s" % str(SAFE_CITY_SPAWN))
 
 
 func _chunk_definition(coord: Vector2i) -> Dictionary:

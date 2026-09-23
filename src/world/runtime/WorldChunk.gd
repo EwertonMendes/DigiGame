@@ -6,14 +6,6 @@ const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
-const ROCK_TEXTURE = preload("res://assets/world/hawkbirdtree/rock.png")
-const CRATE_TEXTURE = preload("res://assets/world/hawkbirdtree/crate.png")
-const GRASS_TEXTURE = preload("res://assets/world/hawkbirdtree/grass.png")
-const PATH_TEXTURE = preload("res://assets/world/hawkbirdtree/path.png")
-const FLOWER_RED_TEXTURE = preload("res://assets/world/hawkbirdtree/flowers_red.png")
-const FLOWER_PURPLE_TEXTURE = preload("res://assets/world/hawkbirdtree/flowers_purple.png")
-const FLOWER_YELLOW_TEXTURE = preload("res://assets/world/hawkbirdtree/flowers_yellow.png")
-const WATER_TEXTURE = preload("res://assets/world/hawkbirdtree/water.png")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
 
 const CHUNK_SIZE := 14
@@ -21,6 +13,18 @@ const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
+
+const CITY_STONE := Color(0.39, 0.42, 0.43, 1.0)
+const CITY_STONE_ALT := Color(0.35, 0.38, 0.40, 1.0)
+const ROAD_BASE := Color(0.25, 0.31, 0.34, 1.0)
+const ROAD_DETAIL := Color(0.90, 0.94, 0.95, 1.0)
+const PLAZA_BASE := Color(0.12, 0.29, 0.34, 1.0)
+const PLAZA_DETAIL := Color(0.62, 0.93, 1.0, 1.0)
+const GARDEN_BASE := Color(0.27, 0.45, 0.29, 1.0)
+const GARDEN_ALT := Color(0.23, 0.40, 0.27, 1.0)
+const GARDEN_DETAIL := Color(0.90, 1.0, 0.86, 1.0)
+const WATER_BASE := Color(0.045, 0.25, 0.34, 1.0)
+const WATER_DETAIL := Color(0.62, 0.91, 1.0, 1.0)
 
 var definition: Dictionary = {}
 var chunk_coord := Vector2i.ZERO
@@ -30,7 +34,6 @@ var _world_controller: Node = null
 var _physics_root: StaticBody2D = null
 var _blocked_cells: Dictionary = {}
 var _trees: Array[Sprite2D] = []
-var _roofs: Array[Dictionary] = []
 var _elapsed := 0.0
 
 
@@ -49,7 +52,6 @@ func _process(delta: float) -> void:
 	_elapsed += delta
 	for tree: Sprite2D in _trees:
 		TreeAmbientFXScript.animate(tree, _elapsed)
-	_update_roofs(delta)
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
@@ -79,7 +81,7 @@ func _build_chunk() -> void:
 	_physics_root.name = "StaticCollision"
 	add_child(_physics_root)
 	_build_ground()
-	_build_edge_detail()
+	_build_street_detail()
 	_build_theme_content()
 
 
@@ -93,13 +95,16 @@ func _build_ground() -> void:
 		for y in range(CHUNK_SIZE):
 			var cell := Vector2i(x, y)
 			var presentation := _ground_presentation(cell, theme, center)
-			var sprite := Sprite2D.new()
-			sprite.texture = presentation.get("texture") as Texture2D
-			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			var foot := grid_to_world(Vector2(cell))
-			sprite.position = foot + Vector2(0.0, 16.0)
-			sprite.z_index = -1200 + int(round(global_position.y + foot.y))
-			ground.add_child(sprite)
+			var tile := ART.create_surface_tile(
+				presentation.get("texture") as Texture2D,
+				foot,
+				-1200 + int(round(global_position.y + foot.y)),
+				presentation.get("base_color", CITY_STONE) as Color,
+				presentation.get("detail_tint", Color.WHITE) as Color,
+				float(presentation.get("detail_alpha", 0.30))
+			)
+			ground.add_child(tile)
 			if not bool(presentation.get("walkable", true)):
 				_mark_blocked(cell)
 				_add_diamond_collision(cell)
@@ -107,28 +112,56 @@ func _build_ground() -> void:
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
 	var road := absi(cell.x - center) <= 1 or absi(cell.y - center) <= 1
-	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
-		return {"texture": PATH_TEXTURE, "walkable": true}
 	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
-		return {"texture": WATER_TEXTURE, "walkable": false}
+		return {
+			"texture": ART.WATER_BLOCK,
+			"base_color": WATER_BASE,
+			"detail_tint": WATER_DETAIL,
+			"detail_alpha": 0.62,
+			"walkable": false,
+		}
+	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
+		return {
+			"texture": ART.DATA_BLOCK,
+			"base_color": PLAZA_BASE,
+			"detail_tint": PLAZA_DETAIL,
+			"detail_alpha": 0.44,
+			"walkable": true,
+		}
 	if road:
-		return {"texture": PATH_TEXTURE, "walkable": true}
+		return {
+			"texture": ART.WARM_BLOCK,
+			"base_color": ROAD_BASE,
+			"detail_tint": ROAD_DETAIL,
+			"detail_alpha": 0.31,
+			"walkable": true,
+		}
 	var world_x := cell.x + chunk_coord.x * CHUNK_SIZE
 	var world_y := cell.y + chunk_coord.y * CHUNK_SIZE
-	var variation := posmod(world_x * 11 + world_y * 7, 23)
+	var alternate := posmod(world_x * 7 + world_y * 11, 9) < 3
 	if theme == "garden":
-		if variation in [2, 13]:
-			return {"texture": FLOWER_PURPLE_TEXTURE, "walkable": true}
-		if variation in [5, 17]:
-			return {"texture": FLOWER_YELLOW_TEXTURE, "walkable": true}
-		if variation == 9:
-			return {"texture": FLOWER_RED_TEXTURE, "walkable": true}
-	return {"texture": GRASS_TEXTURE, "walkable": true}
+		return {
+			"texture": ART.GRASS_BLOCK,
+			"base_color": GARDEN_ALT if alternate else GARDEN_BASE,
+			"detail_tint": GARDEN_DETAIL,
+			"detail_alpha": 0.40,
+			"walkable": true,
+		}
+	var stone := CITY_STONE_ALT if alternate else CITY_STONE
+	if theme in ["digilab", "hospital", "training", "market", "archive"]:
+		stone = stone.darkened(0.05)
+	return {
+		"texture": ART.WARM_BLOCK,
+		"base_color": stone,
+		"detail_tint": Color(0.94, 0.96, 0.96, 1.0),
+		"detail_alpha": 0.27,
+		"walkable": true,
+	}
 
 
-func _build_edge_detail() -> void:
+func _build_street_detail() -> void:
 	var props := Node2D.new()
-	props.name = "EdgeDetail"
+	props.name = "StreetDetail"
 	add_child(props)
 	var theme := String(definition.get("theme", "residential"))
 	var tree_cells: Array[Vector2i] = []
@@ -140,14 +173,26 @@ func _build_edge_detail() -> void:
 			]
 		"plaza":
 			tree_cells = [Vector2i(2, 11), Vector2i(11, 2)]
+		"residential":
+			tree_cells = [Vector2i(2, 11)]
 		"canal":
 			tree_cells = [Vector2i(2, 10), Vector2i(11, 10)]
 		_:
-			tree_cells = [Vector2i(2, 2), Vector2i(11, 11)]
+			tree_cells = []
 	for index in range(tree_cells.size()):
 		_add_tree(props, tree_cells[index], index)
-	if theme in ["residential", "market", "gate"]:
-		_add_prop(props, ROCK_TEXTURE, Vector2i(11, 3), Vector2(0.0, -15.0), "Rock")
+
+	if theme in ["digilab", "hospital", "training", "market", "archive", "residential"]:
+		for cell in [Vector2i(11, 4), Vector2i(11, 9)]:
+			var bollard := ART.create_full_block(
+				ART.DATA_BLOCK,
+				grid_to_world(Vector2(cell)),
+				880 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
+				Color(0.46, 0.72, 0.78, 1.0),
+				0
+			)
+			bollard.scale *= Vector2(0.48, 0.48)
+			props.add_child(bollard)
 
 
 func _build_theme_content() -> void:
@@ -156,19 +201,19 @@ func _build_theme_content() -> void:
 		"plaza":
 			_build_plaza()
 		"digilab":
-			_build_service_building(Vector2i(1, 1), Color(0.36, 0.88, 1.0), "DIGILAB", "digilab")
+			_build_service_exterior(Vector2i(1, 1), Vector2i(5, 5), Color(0.36, 0.88, 1.0), "DIGILAB", "digilab")
 		"hospital":
-			_build_service_building(Vector2i(1, 1), Color(0.42, 1.0, 0.86), "DIGI HOSPITAL", "hospital")
+			_build_service_exterior(Vector2i(1, 1), Vector2i(5, 5), Color(0.42, 1.0, 0.86), "DIGI HOSPITAL", "hospital")
 		"training":
-			_build_service_building(Vector2i(1, 1), Color(0.50, 0.96, 0.55), "TRAINING CENTER", "training")
+			_build_service_exterior(Vector2i(1, 1), Vector2i(5, 5), Color(0.50, 0.96, 0.55), "TRAINING CENTER", "training")
 		"market":
-			_build_service_building(Vector2i(1, 1), Color(1.0, 0.78, 0.34), "DATA MARKET", "shop")
+			_build_service_exterior(Vector2i(1, 1), Vector2i(5, 5), Color(1.0, 0.78, 0.34), "DATA MARKET", "shop")
 		"archive":
-			_build_service_building(Vector2i(1, 1), Color(0.65, 0.58, 1.0), "DIGITAL ARCHIVE", "archive")
+			_build_service_exterior(Vector2i(1, 1), Vector2i(5, 5), Color(0.65, 0.58, 1.0), "DIGITAL ARCHIVE", "archive")
 		"gate":
 			_build_gate()
 		"residential":
-			_build_residential_houses()
+			_build_residential_block()
 
 
 func _build_plaza() -> void:
@@ -200,7 +245,7 @@ func _build_gate() -> void:
 				ART.WARM_BLOCK,
 				grid_to_world(Vector2(cell)),
 				850 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
-				Color(0.82, 0.88, 0.88, 1.0),
+				Color(0.72, 0.78, 0.80, 1.0),
 				level
 			)
 			props.add_child(block)
@@ -208,109 +253,124 @@ func _build_gate() -> void:
 		_add_block_collision(cell, 24.0)
 
 
-func _build_residential_houses() -> void:
-	_build_shell(Vector2i(1, 1), Vector2i(4, 4), Color(0.56, 0.76, 0.72, 1.0), "ResidenceA", "")
-	_build_shell(Vector2i(9, 8), Vector2i(4, 4), Color(0.66, 0.66, 0.82, 1.0), "ResidenceB", "")
+func _build_residential_block() -> void:
+	_build_exterior_shell(Vector2i(1, 1), Vector2i(4, 4), Color(0.52, 0.69, 0.72), "ResidenceA", "", false)
+	_build_exterior_shell(Vector2i(9, 8), Vector2i(4, 4), Color(0.62, 0.62, 0.78), "ResidenceB", "", false)
 
 
-func _build_service_building(origin: Vector2i, accent: Color, title: String, action_id: String) -> void:
-	var shell := _build_shell(origin, Vector2i(6, 6), accent, title.capitalize().replace(" ", ""), title)
-	var building := shell.get("node") as Node2D
-	if building == null:
-		return
-	var interior_center: Vector2i = shell.get("interior_center", origin + Vector2i(3, 3))
-	var terminal := Node2D.new()
-	terminal.name = "ServiceTerminal"
-	terminal.position = grid_to_world(Vector2(interior_center))
-	terminal.z_index = 1100 + int(round(global_position.y + terminal.position.y))
-	building.add_child(terminal)
-	var base := Sprite2D.new()
-	base.texture = CRATE_TEXTURE
-	base.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	base.position = Vector2(0.0, -28.0)
-	base.modulate = accent
-	terminal.add_child(base)
-	var label := Label.new()
-	label.text = title
-	label.position = Vector2(-82.0, -82.0)
-	label.size = Vector2(164.0, 24.0)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 11)
-	label.add_theme_color_override("font_color", accent)
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
-	label.add_theme_constant_override("outline_size", 4)
-	terminal.add_child(label)
+func _build_service_exterior(origin: Vector2i, size: Vector2i, accent: Color, title: String, service_id: String) -> void:
+	var interior_id := "%s_%d_%d" % [service_id, chunk_coord.x, chunk_coord.y]
+	var exterior := _build_exterior_shell(origin, size, accent, title.capitalize().replace(" ", ""), title, true)
+	var door_cell: Vector2i = exterior.get("door_cell", origin + Vector2i(size.x - 1, int(size.y / 2)))
+	var approach_cell := door_cell + Vector2i(1, 0)
+	var entrance := Node2D.new()
+	entrance.name = "InteriorEntrance"
+	entrance.position = grid_to_world(Vector2(approach_cell))
+	entrance.z_index = 1250 + int(round(global_position.y + entrance.position.y))
+	add_child(entrance)
+
+	var pad := Polygon2D.new()
+	pad.name = "EntrancePad"
+	pad.polygon = ART.tile_diamond(Vector2(-9.0, -4.0))
+	pad.color = Color(accent.r, accent.g, accent.b, 0.22)
+	entrance.add_child(pad)
+
+	var return_world := global_position + grid_to_world(Vector2(approach_cell))
 	var interactable := InteractableScript.new() as WorldInteractable
-	interactable.configure(action_id, "OPEN %s" % title, {"service": action_id, "title": title}, 76.0, 30)
-	terminal.add_child(interactable)
+	interactable.configure(
+		"enter_interior",
+		"ENTER %s" % title,
+		{
+			"interior_id": interior_id,
+			"service": service_id,
+			"title": title,
+			"accent": [accent.r, accent.g, accent.b, accent.a],
+			"return_position": [return_world.x, return_world.y],
+		},
+		76.0,
+		60
+	)
+	entrance.add_child(interactable)
 
 
-func _build_shell(
+func _build_exterior_shell(
 	origin: Vector2i,
 	size: Vector2i,
 	accent: Color,
 	node_name: String,
-	title: String
+	title: String,
+	with_door: bool
 ) -> Dictionary:
 	var building := Node2D.new()
 	building.name = node_name
 	add_child(building)
-	var doorway := Vector2i(origin.x + size.x - 1, origin.y + int(size.y / 2))
+	var door_cell := origin + Vector2i(size.x - 1, int(size.y / 2))
+
+	# Two authored block levels create a real facade. The roof is built from the
+	# same isometric tile kit instead of a flat polygon floating over the scene.
 	for x in range(size.x):
 		for y in range(size.y):
 			var boundary := x == 0 or y == 0 or x == size.x - 1 or y == size.y - 1
-			if not boundary:
-				continue
 			var cell := origin + Vector2i(x, y)
-			if cell == doorway:
-				continue
-			var block := ART.create_full_block(
-				ART.DATA_BLOCK if accent.b > accent.r + 0.12 else ART.WARM_BLOCK,
-				grid_to_world(Vector2(cell)),
-				720 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
-				accent,
-				0
-			)
-			building.add_child(block)
-			_mark_blocked(cell)
-			_add_block_collision(cell, 22.0)
+			if boundary:
+				var doorway := with_door and cell == door_cell
+				if not doorway:
+					for level in range(2):
+						var texture := ART.DATA_BLOCK if level == 1 and (x + y) % 2 == 0 else ART.WARM_BLOCK
+						var tint := accent.darkened(0.16) if level == 1 else Color(0.58, 0.62, 0.64, 1.0)
+						var block := ART.create_full_block(
+							texture,
+							grid_to_world(Vector2(cell)),
+							720 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
+							tint,
+							level
+						)
+						building.add_child(block)
+					_mark_blocked(cell)
+					_add_block_collision(cell, 22.0)
+				elif with_door:
+					# A raised lintel makes the entrance visibly architectural.
+					var lintel := ART.create_full_block(
+						ART.DATA_BLOCK,
+						grid_to_world(Vector2(cell)),
+						760 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
+						accent,
+						1
+					)
+					building.add_child(lintel)
+			elif with_door:
+				# Exterior shells are visual buildings; their playable interior is
+				# a dedicated scene reached through the entrance transition.
+				_mark_blocked(cell)
 
-	var roof := Polygon2D.new()
-	roof.name = "Roof"
-	roof.polygon = PackedVector2Array([
-		grid_to_world(Vector2(origin.x - 0.35, origin.y - 0.35)),
-		grid_to_world(Vector2(origin.x + size.x - 0.65, origin.y - 0.35)),
-		grid_to_world(Vector2(origin.x + size.x - 0.65, origin.y + size.y - 0.65)),
-		grid_to_world(Vector2(origin.x - 0.35, origin.y + size.y - 0.65)),
-	])
-	roof.color = Color(accent.r * 0.42, accent.g * 0.42, accent.b * 0.48, 0.92)
-	roof.position.y -= 46.0
-	var roof_center := grid_to_world(Vector2(origin + Vector2i(int(size.x / 2), int(size.y / 2))))
-	roof.z_index = 1700 + int(round(global_position.y + roof_center.y))
-	building.add_child(roof)
-	_roofs.append({
-		"node": roof,
-		"rect": Rect2(Vector2(origin.x + 1, origin.y + 1), Vector2(size.x - 2, size.y - 2)),
-		"alpha": 0.92,
-	})
+	for x in range(size.x):
+		for y in range(size.y):
+			var roof_cell := origin + Vector2i(x, y)
+			var roof := ART.create_surface_tile(
+				ART.DATA_BLOCK,
+				grid_to_world(Vector2(roof_cell)) - Vector2(0.0, ART.BLOCK_LEVEL_HEIGHT * 2.0),
+				1580 + int(round(global_position.y + grid_to_world(Vector2(roof_cell)).y)),
+				accent.darkened(0.28),
+				accent.lightened(0.10),
+				0.42
+			)
+			roof.name = "Roof_%d_%d" % [x, y]
+			building.add_child(roof)
 
 	if not title.is_empty():
 		var sign := Label.new()
 		sign.text = title
-		sign.position = grid_to_world(Vector2(origin + Vector2i(size.x - 1, int(size.y / 2)))) + Vector2(-72.0, -74.0)
-		sign.size = Vector2(144.0, 22.0)
+		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-94.0, -114.0)
+		sign.size = Vector2(188.0, 26.0)
 		sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		sign.add_theme_font_size_override("font_size", 10)
-		sign.add_theme_color_override("font_color", accent)
-		sign.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
-		sign.add_theme_constant_override("outline_size", 4)
-		sign.z_index = 1750 + int(round(global_position.y + sign.position.y))
+		sign.add_theme_font_size_override("font_size", 12)
+		sign.add_theme_color_override("font_color", accent.lightened(0.22))
+		sign.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.96))
+		sign.add_theme_constant_override("outline_size", 5)
+		sign.z_index = 1900 + int(round(global_position.y + sign.position.y))
 		building.add_child(sign)
 
-	return {
-		"node": building,
-		"interior_center": origin + Vector2i(int(size.x / 2), int(size.y / 2)),
-	}
+	return {"node": building, "door_cell": door_cell}
 
 
 func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: String, interaction_priority: int) -> void:
@@ -360,19 +420,6 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	_add_circle_collision(foot, 23.0)
 
 
-func _add_prop(parent: Node2D, texture: Texture2D, cell: Vector2i, offset: Vector2, label: String) -> void:
-	var foot := grid_to_world(Vector2(cell))
-	var sprite := Sprite2D.new()
-	sprite.name = label
-	sprite.texture = texture
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	sprite.position = foot + offset
-	sprite.z_index = 1000 + int(round(global_position.y + foot.y))
-	parent.add_child(sprite)
-	_mark_blocked(cell)
-	_add_circle_collision(foot, 16.0)
-
-
 func _add_diamond_collision(cell: Vector2i) -> void:
 	var polygon := CollisionPolygon2D.new()
 	polygon.position = grid_to_world(Vector2(cell))
@@ -404,20 +451,3 @@ func _mark_blocked(cell: Vector2i) -> void:
 
 func _cell_key(cell: Vector2i) -> String:
 	return "%d:%d" % [cell.x, cell.y]
-
-
-func _update_roofs(delta: float) -> void:
-	if _player == null:
-		return
-	var local_grid := world_to_grid(_player.global_position - global_position)
-	for entry: Dictionary in _roofs:
-		var roof := entry.get("node") as CanvasItem
-		if roof == null:
-			continue
-		var rect: Rect2 = entry.get("rect", Rect2())
-		var target := 0.10 if rect.has_point(local_grid) else 0.92
-		var alpha := move_toward(float(entry.get("alpha", 0.92)), target, delta * 3.6)
-		entry["alpha"] = alpha
-		var color := roof.modulate
-		color.a = alpha
-		roof.modulate = color
