@@ -1,7 +1,7 @@
 extends Node2D
 class_name WorldAreaSection
 
-const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
+const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
@@ -9,8 +9,10 @@ const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
 
 const SECTION_SIZE := 14
-const TILE_HALF_WIDTH := 32.0
-const TILE_HALF_HEIGHT := 16.0
+const TILE_HALF_WIDTH := 64.0
+const TILE_HALF_HEIGHT := 32.0
+const CITY_CENTER_GLOBAL := Vector2i(7, 7)
+const CITY_SHAPE_MANHATTAN_RADIUS := 54
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 
@@ -89,8 +91,8 @@ func grid_to_world(grid: Vector2) -> Vector2:
 
 func world_to_grid(world: Vector2) -> Vector2:
 	return Vector2(
-		world.x / 64.0 + world.y / 32.0,
-		-world.x / 64.0 + world.y / 32.0
+		world.x / CITY.TILE_WIDTH + world.y / CITY.TILE_HEIGHT,
+		-world.x / CITY.TILE_WIDTH + world.y / CITY.TILE_HEIGHT
 	)
 
 
@@ -108,12 +110,16 @@ func _prepare_ground_data() -> void:
 		for y in range(SECTION_SIZE):
 			var cell := Vector2i(x, y)
 			var presentation := _ground_presentation(cell, theme, center)
+			if not bool(presentation.get("render", true)):
+				_mark_blocked(cell)
+				continue
+			var surface := String(presentation.get("surface", CITY.SURFACE_STONE))
 			_ground_tiles.append({
-				"cell": presentation.get("cell", FLOOR_PAVEMENT),
+				"surface": surface,
 				"position": position + grid_to_world(Vector2(cell)),
-				"base_color": presentation.get("base_color", PAVEMENT_BASE),
-				"detail_tint": Color.WHITE,
-				"detail_alpha": float(presentation.get("detail_alpha", 0.96)),
+				"base_color": presentation.get("base_color", CITY.surface_base_color(surface)),
+				"detail_tint": presentation.get("detail_tint", Color.WHITE),
+				"detail_alpha": float(presentation.get("detail_alpha", 1.0)),
 			})
 			if not bool(presentation.get("walkable", true)):
 				_mark_blocked(cell)
@@ -124,61 +130,137 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
-	# Roads are authored as continuous city avenues, not repeated crosses inside
-	# every 14x14 authoring section. This removes the checkerboard/chunk look.
-	var road := (
-		(section_coord.y == 0 and cell.y >= center - 1 and cell.y <= center + 1)
-		or (section_coord.x == 0 and cell.x >= center - 1 and cell.x <= center + 1)
-	)
-	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
+	var global_grid := _global_grid(cell)
+	var delta := global_grid - CITY_CENTER_GLOBAL
+	var ax := absi(delta.x)
+	var ay := absi(delta.y)
+	var city_ring := maxi(ax, ay)
+
+	# Central City is now an octagonal digital island rather than a filled 5x5
+	# square. The clipped corners expose the live digital backdrop and make the
+	# city silhouette readable even before props/buildings are considered.
+	if not _is_city_land(cell):
 		return {
-			"cell": FLOOR_BLUE,
-			"base_color": WATER_BASE,
-			"detail_alpha": 0.62,
+			"render": false,
 			"walkable": false,
 		}
-	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
-		var plaza_accent := (cell.x + cell.y) % 5 == 0
+
+	# The North Canal is the only non-walkable surface inside the island. It uses
+	# the bright circuit-water block from the complete high-resolution pack.
+	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
 		return {
-			"cell": FLOOR_CYAN if plaza_accent else FLOOR_PLAZA,
-			"base_color": PLAZA_BASE,
-			"detail_alpha": 0.58,
+			"surface": CITY.SURFACE_WATER,
+			"walkable": false,
+		}
+
+	# The city is organized around a deliberately simple digital civic language:
+	# a central plaza, two broad promenades, a luminous inner ring and diagonal
+	# pedestrian connectors. No asphalt/road metaphor is required.
+	if city_ring <= 5:
+		return {
+			"surface": CITY.SURFACE_TECH_TEAL if city_ring == 5 else CITY.SURFACE_STONE,
 			"walkable": true,
 		}
-	if road:
+	if ax <= 2 or ay <= 2:
 		return {
-			"cell": FLOOR_ROAD,
-			"base_color": ROAD_BASE,
-			"detail_alpha": 0.46,
+			"surface": CITY.SURFACE_STONE,
+			"walkable": true,
+		}
+	if city_ring in [11, 12] and ax <= 22 and ay <= 22:
+		return {
+			"surface": CITY.SURFACE_TECH_TEAL,
+			"walkable": true,
+		}
+	if absi(ax - ay) <= 1 and city_ring <= 24:
+		return {
+			"surface": CITY.SURFACE_STONE_SOFT,
 			"walkable": true,
 		}
 
-	# Garden chunks are urban parks: neutral walkable stone remains dominant and
-	# green tiles form deliberate planted plots instead of a giant grass carpet.
-	if theme == "garden":
-		var corner_plot := (
-			(cell.x <= 4 or cell.x >= 10)
-			and (cell.y <= 4 or cell.y >= 10)
-		)
-		if corner_plot:
+	# District materials are authored as contiguous fields/pads. This avoids the
+	# checkerboard noise of the discarded experiment while still giving each
+	# service quarter a strong identity.
+	match theme:
+		"garden":
+			var garden_cross := cell.x in [6, 7] or cell.y in [6, 7]
+			var garden_edge := cell.x <= 2 or cell.y <= 2 or cell.x >= 11 or cell.y >= 11
 			return {
-				"cell": FLOOR_GREEN,
-				"base_color": PARK_BASE,
-				"detail_alpha": 0.52,
+				"surface": (
+					CITY.SURFACE_GRASS_CHECKER
+					if garden_cross
+					else CITY.SURFACE_MINT
+					if garden_edge
+					else CITY.SURFACE_GRASS
+				),
+				"walkable": true,
+			}
+		"digilab":
+			var lab_border := cell.x <= 1 or cell.y <= 1 or cell.x >= 12 or cell.y >= 12
+			return {
+				"surface": CITY.SURFACE_STONE if lab_border else CITY.SURFACE_TECH_TEAL,
+				"walkable": true,
+			}
+		"hospital":
+			var hospital_border := cell.x <= 1 or cell.y <= 1 or cell.x >= 12 or cell.y >= 12
+			return {
+				"surface": CITY.SURFACE_STONE if hospital_border else CITY.SURFACE_TECH_BLUE,
+				"walkable": true,
+			}
+		"training":
+			var training_lane := cell.x in [6, 7] or cell.y in [6, 7]
+			return {
+				"surface": CITY.SURFACE_STONE if training_lane else CITY.SURFACE_LIME_CHECKER,
+				"walkable": true,
+			}
+		"market":
+			var market_lane := cell.x in [6, 7] or cell.y in [6, 7]
+			return {
+				"surface": CITY.SURFACE_STONE_SOFT if market_lane else CITY.SURFACE_YELLOW,
+				"walkable": true,
+			}
+		"archive":
+			var archive_border := cell.x <= 1 or cell.y <= 1 or cell.x >= 12 or cell.y >= 12
+			return {
+				"surface": CITY.SURFACE_DARK if archive_border else CITY.SURFACE_TECH_PURPLE,
+				"walkable": true,
+			}
+		"gate":
+			var gate_lane := cell.x in [5, 6, 7, 8] or cell.y in [5, 6, 7, 8]
+			return {
+				"surface": CITY.SURFACE_TECH_TEAL if gate_lane else CITY.SURFACE_DARK,
+				"walkable": true,
+			}
+		"canal":
+			return {
+				"surface": CITY.SURFACE_MINT if cell.y >= 9 else CITY.SURFACE_STONE_SOFT,
+				"walkable": true,
+			}
+		"plaza":
+			return {
+				"surface": CITY.SURFACE_STONE,
+				"walkable": true,
+			}
+		_:
+			var courtyard := cell.x >= 5 and cell.x <= 8 and cell.y >= 8 and cell.y <= 11
+			return {
+				"surface": CITY.SURFACE_MINT if courtyard else CITY.SURFACE_STONE_SOFT,
 				"walkable": true,
 			}
 
-	var alternate := posmod(
-		(cell.x + section_coord.x * SECTION_SIZE) * 7
-		+ (cell.y + section_coord.y * SECTION_SIZE) * 11,
-		7
-	) == 0
-	return {
-		"cell": FLOOR_PAVEMENT,
-		"base_color": PAVEMENT_BASE.darkened(0.04) if alternate else PAVEMENT_BASE,
-		"detail_alpha": 0.38,
-		"walkable": true,
-	}
+
+func _global_grid(cell: Vector2i) -> Vector2i:
+	return section_coord * SECTION_SIZE + cell
+
+
+func _is_city_land(cell: Vector2i) -> bool:
+	var delta := _global_grid(cell) - CITY_CENTER_GLOBAL
+	var ax := absi(delta.x)
+	var ay := absi(delta.y)
+	return (
+		ax <= 34
+		and ay <= 34
+		and ax + ay <= CITY_SHAPE_MANHATTAN_RADIUS
+	)
 
 
 func _build_street_detail() -> void:
@@ -324,9 +406,9 @@ func _build_service_exterior(accent: Color, title: String, service_id: String) -
 
 	var threshold_shape := CollisionShape2D.new()
 	var threshold_circle := CircleShape2D.new()
-	threshold_circle.radius = 17.0
+	threshold_circle.radius = 34.0
 	threshold_shape.shape = threshold_circle
-	threshold_shape.position = Vector2(0.0, -8.0)
+	threshold_shape.position = Vector2(0.0, -16.0)
 	entrance.add_child(threshold_shape)
 
 	var return_world := global_position + grid_to_world(Vector2(approach_cell))
@@ -446,10 +528,10 @@ func _build_exterior_shell(
 	if not title.is_empty():
 		var sign := Label.new()
 		sign.text = title
-		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-96.0, -158.0)
-		sign.size = Vector2(192.0, 28.0)
+		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-192.0, -316.0)
+		sign.size = Vector2(384.0, 52.0)
 		sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		sign.add_theme_font_size_override("font_size", 12)
+		sign.add_theme_font_size_override("font_size", 18)
 		sign.add_theme_color_override("font_color", accent.lightened(0.20))
 		sign.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.96))
 		sign.add_theme_constant_override("outline_size", 5)
@@ -501,7 +583,7 @@ func _add_service_windows(
 		var canopy_cell: Vector2i = door_cell + canopy_offset
 		var canopy := CITY.create_floor_tile(
 			_service_floor_cell(service_id),
-			grid_to_world(Vector2(canopy_cell)) - Vector2(0.0, 82.0),
+			grid_to_world(Vector2(canopy_cell)) - Vector2(0.0, 164.0),
 			1650 + int(round(global_position.y + grid_to_world(Vector2(canopy_cell)).y)),
 			Color(0.16, 0.18, 0.20, 1.0),
 			Color.WHITE,
@@ -581,12 +663,14 @@ func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: S
 	label.add_theme_constant_override("outline_size", 4)
 	actor.add_child(label)
 	var interactable := InteractableScript.new() as WorldInteractable
-	interactable.configure(action_id, prompt_text, {"speaker": title}, 82.0, interaction_priority)
+	interactable.configure(action_id, prompt_text, {"speaker": title}, 124.0, interaction_priority)
 	actor.add_child(interactable)
 	_mark_blocked(cell)
 
 
 func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
+	if not _is_city_land(cell):
+		return
 	var foot := grid_to_world(Vector2(cell))
 	var texture := AtlasTexture.new()
 	texture.atlas = OAK_TREE_SOURCE
@@ -595,8 +679,9 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	tree.name = "Oak_%d_%d" % [cell.x, cell.y]
 	tree.texture = texture
 	tree.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var center_to_foot := LARGE_OAK_FOOT - texture.get_size() * 0.5
-	tree.position = foot + Vector2(0.0, 10.0) - center_to_foot
+	tree.scale = Vector2(2.0, 2.0)
+	var center_to_foot := (LARGE_OAK_FOOT - texture.get_size() * 0.5) * tree.scale
+	tree.position = foot + Vector2(0.0, 20.0) - center_to_foot
 	tree.z_index = 1000 + int(round(global_position.y + foot.y))
 	parent.add_child(tree)
 	TreeAmbientFXScript.apply(
@@ -619,6 +704,8 @@ func _add_atlas_prop(
 	scale: Vector2,
 	blocking: bool = true
 ) -> void:
+	if not _is_city_land(cell):
+		return
 	var foot := grid_to_world(Vector2(cell))
 	var prop := CITY.create_prop(
 		atlas_cell,
