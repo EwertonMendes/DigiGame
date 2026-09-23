@@ -43,7 +43,7 @@ Current Central City source surfaces:
 
 | Source file | Central City role |
 |---|---|
-| `isometric_0087.png` | primary playful city floor |
+| `isometric_0072.png` | primary neutral/buildable city-lot floor |
 | `isometric_0056.png` | primary garden grass |
 | `isometric_0053.png` | checker garden accents |
 | `isometric_0058.png` | mint/teal planted terraces |
@@ -56,6 +56,6 @@ Current Central City source surfaces:
 | `isometric_0009.png` | Data Market district replacement |
 | `isometric_0007.png` | luminous Training district grid |
 
-The complete 1024x1024 source library remains under `assets_1024x1024/` behind `.gdignore`. Only selected runtime surfaces are copied into `city_1024/`, so Web/APK exports do not import the entire source collection.
+The complete 1024x1024 source library remains under `assets_1024x1024/` behind `.gdignore`. Only selected runtime surfaces are copied into `city_1024/`, so Web/APK exports do not import the entire source collection. Source 0054 is the city's canonical sidewalk/pavement material: it defines the main cross-city promenades, section-block boundaries, service approaches, bridges and the paved civic plaza instead of being scattered decoratively.
 
 MCBlocks has been retired from DigiGame. Central City exterior service buildings are temporarily represented by labeled floor pads until their dedicated structure artwork is authored, and the seamless service interiors now use Devil's Work.shop surfaces as well.
