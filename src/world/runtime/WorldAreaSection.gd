@@ -16,12 +16,27 @@ const CITY_CENTER_GLOBAL := Vector2i(7, 7)
 const CITY_SHAPE_MANHATTAN_RADIUS := 54
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
-const DIGILAB_SCALE := Vector2(0.40, 0.40)
+# The authored PNG is close to isometric, but its two ground axes are not an
+# exact 2:1 pair. A small perspective correction plus rotation maps the actual
+# base edges to the city's +/-26.565° grid instead of visually "eyeballing" it.
+const DIGILAB_SCALE := Vector2(0.40, 0.32838876)
+const DIGILAB_ROTATION_DEGREES := -2.00295
 const DIGILAB_DOOR_PIXEL := Vector2(754.0, 1054.0)
 const DIGILAB_DOOR_CELL := Vector2i(8, 10)
 const DIGILAB_RETURN_CELL := Vector2i(9, 11)
-const DIGILAB_FOOTPRINT_MIN := Vector2i(1, 1)
-const DIGILAB_FOOTPRINT_MAX := Vector2i(11, 9)
+# Ground-contact footprint measured from the supplied source. The concave notch
+# follows the staircase/door opening, so the player can reach the threshold
+# while every visible ground-level wall remains solid.
+const DIGILAB_FOOTPRINT_SOURCE := [
+	Vector2(635.0, 509.0),
+	Vector2(1217.0, 895.0),
+	Vector2(844.0, 1103.0),
+	Vector2(802.0, 1027.0),
+	Vector2(706.0, 1081.0),
+	Vector2(748.0, 1156.0),
+	Vector2(635.0, 1219.0),
+	Vector2(53.0, 833.0),
+]
 
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
@@ -29,6 +44,7 @@ var section_coord := Vector2i.ZERO
 var _player: Node2D = null
 var _world_controller: Node = null
 var _blocked_cells := PackedByteArray()
+var _blocked_polygons: Array[PackedVector2Array] = []
 var _ground_tiles: Array[Dictionary] = []
 var _leaf_particles: Array[CPUParticles2D] = []
 
@@ -41,17 +57,24 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	_world_controller = world_controller
 	_blocked_cells.resize(SECTION_SIZE * SECTION_SIZE)
 	_blocked_cells.fill(0)
+	_blocked_polygons.clear()
 	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
 	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
 	_build_section()
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
-	var local_grid := world_to_grid(world_position - global_position)
+	var local_position := world_position - global_position
+	var local_grid := world_to_grid(local_position)
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
 	if cell.x < 0 or cell.y < 0 or cell.x >= SECTION_SIZE or cell.y >= SECTION_SIZE:
 		return false
-	return _blocked_cells[cell.y * SECTION_SIZE + cell.x] == 0
+	if _blocked_cells[cell.y * SECTION_SIZE + cell.x] != 0:
+		return false
+	for polygon: PackedVector2Array in _blocked_polygons:
+		if Geometry2D.is_point_in_polygon(local_position, polygon):
+			return false
+	return true
 
 
 func grid_to_world(grid: Vector2) -> Vector2:
@@ -278,8 +301,11 @@ func _build_digilab_exterior() -> void:
 	sprite.texture = DIGILAB_TEXTURE
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.scale = DIGILAB_SCALE
+	sprite.rotation_degrees = DIGILAB_ROTATION_DEGREES
 	var texture_center := DIGILAB_TEXTURE.get_size() * 0.5
-	var authored_door_offset := (DIGILAB_DOOR_PIXEL - texture_center) * DIGILAB_SCALE
+	var authored_door_offset := (
+		(DIGILAB_DOOR_PIXEL - texture_center) * DIGILAB_SCALE
+	).rotated(sprite.rotation)
 	sprite.position = door_world - authored_door_offset
 	# Match the actor depth convention to preserve natural occlusion. At the
 	# doorway itself the player stays one layer in front of the facade.
@@ -291,12 +317,11 @@ func _build_digilab_exterior() -> void:
 	door_marker.position = door_world
 	exterior.add_child(door_marker)
 
-	# The visible structure occupies the lot above the 0054 forecourt. Logical
-	# cell blocking keeps actors from walking through the building while the
-	# door and its approach remain open.
-	for x in range(DIGILAB_FOOTPRINT_MIN.x, DIGILAB_FOOTPRINT_MAX.x + 1):
-		for y in range(DIGILAB_FOOTPRINT_MIN.y, DIGILAB_FOOTPRINT_MAX.y + 1):
-			_mark_blocked(Vector2i(x, y))
+	# Use the same measured source footprint for both world walkability and
+	# physics. This replaces the old rectangular cell approximation, which was
+	# too large behind the lab and too small along the lower-left wall.
+	var footprint := _digilab_footprint(door_world)
+	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
 
 	var entrance := _create_service_threshold(
 		"DigiLabEntrance",
@@ -308,6 +333,37 @@ func _build_digilab_exterior() -> void:
 		14.0
 	)
 	exterior.add_child(entrance)
+
+
+func _digilab_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in DIGILAB_FOOTPRINT_SOURCE:
+		polygon.append(_digilab_source_to_local(source_point, door_world))
+	return polygon
+
+
+func _digilab_source_to_local(source_pixel: Vector2, door_world: Vector2) -> Vector2:
+	var scaled := (source_pixel - DIGILAB_DOOR_PIXEL) * DIGILAB_SCALE
+	return door_world + scaled.rotated(deg_to_rad(DIGILAB_ROTATION_DEGREES))
+
+
+func _register_blocking_polygon(
+	parent: Node2D,
+	node_name: String,
+	polygon: PackedVector2Array
+) -> void:
+	_blocked_polygons.append(polygon)
+
+	var body := StaticBody2D.new()
+	body.name = node_name
+	body.collision_layer = 1
+	body.collision_mask = 0
+	parent.add_child(body)
+
+	var collision := CollisionPolygon2D.new()
+	collision.name = "CollisionPolygon2D"
+	collision.polygon = polygon
+	body.add_child(collision)
 
 
 func _build_service_pad(accent: Color, title: String, service_id: String, surface: String) -> void:
