@@ -4,7 +4,7 @@ class_name WorldInteriorManager
 signal interior_state_changed(active: bool, title: String)
 
 const InteriorScene = preload("res://scenes/world/world_interior.tscn")
-const STAGE_ORIGIN := Vector2(12000.0, 8000.0)
+const STAGE_ORIGIN := Vector2(12000.0, 0.0)
 const EXTERIOR_ZOOM := 1.18
 const INTERIOR_ZOOM := 1.30
 const TRANSITION_ZOOM := 1.04
