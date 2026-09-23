@@ -27,3 +27,14 @@ bash tools/setup_external_city_assets.sh
 ```
 
 The script requires Node/npm, `unzip`, and internet access.
+
+
+## Runtime preprocessing
+
+The downloaded sources are never consumed directly by Godot. `tools/prepare_external_city_assets.py` creates an ignored optimized set under `assets/external/central_city/processed/`:
+
+- Future Assets buildings are alpha-trimmed and downscaled to at most 480 px on their largest side.
+- Only curated Dystopian sprite-sheet regions used by Central City are extracted.
+- `manifest.json` records stable runtime asset names and processed dimensions.
+
+This keeps the exported game much smaller than importing the original 96 MB Future source pack while preserving enough resolution for the 1280×720 campaign camera.

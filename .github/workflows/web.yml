@@ -24,10 +24,24 @@ jobs:
   build-web:
     name: Fast Web gate
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 8
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Restore external city asset cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/external-city-assets
+          key: external-city-assets-v1-dystopian-future
+
+      - name: Stage optimized external Central City assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --quiet "Pillow==11.3.0"
+          bash tools/setup_external_city_assets.sh
+          python3 tools/validate_external_city_assets.py
 
       - name: Validate app branding configuration
         shell: bash

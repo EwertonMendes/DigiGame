@@ -55,3 +55,11 @@ download_pack "dystopian" "https://systemfehler-ich.itch.io/dystopian-city-start
 download_pack "future" "https://morithedaichi.itch.io/future-assets-free"
 
 echo "[CityAssets] External city assets staged successfully."
+
+
+if ! python3 -c 'import PIL' >/dev/null 2>&1; then
+  echo "::error::Pillow is required to prepare optimized city assets. Install Pillow 11.3.0."
+  exit 1
+fi
+
+python3 tools/prepare_external_city_assets.py "$ROOT_DIR"
