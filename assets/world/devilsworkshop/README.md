@@ -11,7 +11,7 @@ DigiGame uses a small curated subset of **2D Pixel Art - Isometric Blocks - Free
 - Mirror revision: **11d22b3c4c1c6e9a720bf7e049feb0ec37229184**
 - Mirrored asset directory identifies the source package as **Low_Poly_Pixel_2D_Blocks_DevilsWorkShop_v04**.
 
-The official itch.io page states that the pack contains roughly 700 isometric assets and provides 50x50 no-alias PNG exports. DigiGame deliberately commits only the four 50x50 sprites needed by the current environments so the Web build does not absorb the full asset archive.
+The official itch.io page states that the pack contains roughly 700 isometric assets and provides multiple export sizes. DigiGame keeps the original curated 50x50 runtime subset for the Hub/battlefield and now also carries the project-supplied 1024x1024 source collection under `assets_1024x1024/` for high-detail overworld authoring.
 
 ## Runtime files
 
@@ -31,3 +31,27 @@ The committed PNG pixels are unchanged. The source image is a complete 50x50 blo
 > Isometric block artwork: Ajay Karat | Devil's Work.shop — licensed under CC BY 4.0.
 
 Any future sprites added from this pack should be recorded here with their exact upstream filename and immutable blob hash before being used at runtime.
+
+
+## Central City 128x64 surfaces
+
+Central City uses the 1024x1024 files as **source art**, not as 1024px screen tiles. `CentralCityArt.gd` samples only the authored top face and projects it onto an exact 128x64 isometric gameplay diamond. This preserves source detail while keeping movement/collision geometry deterministic and avoiding visible cube side walls between adjacent floor cells.
+
+Current Central City source surfaces:
+
+| Source file | Central City role |
+|---|---|
+| `isometric_0056.png` | primary garden grass |
+| `isometric_0053.png` | checker garden accents |
+| `isometric_0058.png` | mint/teal planted terraces |
+| `isometric_0055.png` | primary civic stone |
+| `isometric_0054.png` | secondary neutral paving |
+| `isometric_0048.png` | teal digital promenade / DigiLab |
+| `isometric_0049.png` | blue Hospital district |
+| `isometric_0050.png` | purple Archive district |
+| `isometric_0063.png` | dark gate / edge paving |
+| `isometric_0064.png` | circuit-water canal |
+| `isometric_0001.png` | warm Data Market paving |
+| `isometric_0007.png` | luminous Training district grid |
+
+The 64x32 Hub and battlefield renderer remains unchanged; the 128x64 contract is isolated to the Central City exterior.
