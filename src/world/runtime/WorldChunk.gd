@@ -291,6 +291,7 @@ func _build_service_exterior(origin: Vector2i, size: Vector2i, accent: Color, ti
 
 	var entrance := Area2D.new()
 	entrance.name = "InteriorThreshold"
+	entrance.add_to_group("world_interior_threshold")
 	entrance.position = grid_to_world(Vector2(door_cell))
 	entrance.collision_layer = 0
 	entrance.collision_mask = 1
