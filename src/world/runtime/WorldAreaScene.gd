@@ -72,7 +72,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
 			await get_tree().process_frame
 
-	var ground := CITY.create_floor_batch(ground_tiles, -1200, "CityGround")
+	var ground := CITY.create_ground_batch(ground_tiles, -1200, "CityGround")
 	ground.add_to_group("world_batched_ground")
 	add_child(ground)
 	completed += 1
