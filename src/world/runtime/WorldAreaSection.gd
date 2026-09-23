@@ -28,12 +28,10 @@ const FLOOR_BLUE := Vector2i(16, 16)
 # These are intentionally separate from the MCBlocks floor constants above:
 # MCBlocks continues to own buildings, roofs, interior thresholds and props.
 const GROUND_ROAD_PLAIN := Vector2i(0, 0)
-const GROUND_ROAD_LANE := Vector2i(1, 0)
-const GROUND_ROAD_EDGE := Vector2i(2, 0)
-const GROUND_ROAD_ALT := Vector2i(3, 0)
-const GROUND_CROSSWALK_A := Vector2i(4, 0)
-const GROUND_CROSSWALK_B := Vector2i(0, 1)
-const GROUND_ROAD_ARROW := Vector2i(1, 1)
+# Source road markings point along the isometric Y axis (/ on screen).
+const GROUND_ROAD_LANE_Y := Vector2i(1, 0)
+const GROUND_CROSSWALK_Y := Vector2i(4, 0)
+const GROUND_ROAD_ARROW_Y := Vector2i(1, 1)
 const GROUND_ROAD_TECH := Vector2i(2, 1)
 const GROUND_PAVEMENT := Vector2i(3, 1)
 const GROUND_PAVEMENT_TAN := Vector2i(4, 1)
@@ -44,6 +42,11 @@ const GROUND_GRASS_ALT := Vector2i(3, 2)
 const GROUND_SAND := Vector2i(4, 2)
 const GROUND_DIRT := Vector2i(0, 3)
 const GROUND_WATER := Vector2i(1, 3)
+# These three cells are normalized 90-degree rotations generated from the same
+# supplied road artwork. They point along the isometric X axis (\ on screen).
+const GROUND_ROAD_LANE_X := Vector2i(2, 3)
+const GROUND_CROSSWALK_X := Vector2i(3, 3)
+const GROUND_ROAD_ARROW_X := Vector2i(4, 3)
 
 const BLOCK_WALL := Vector2i(3, 13)
 const BLOCK_WALL_DARK := Vector2i(2, 13)
@@ -148,19 +151,21 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
 	var global_x := section_coord.x * SECTION_SIZE + cell.x
 	var global_y := section_coord.y * SECTION_SIZE + cell.y
+	# "Horizontal" here follows the isometric X axis (\ on screen).
 	var horizontal_road := (
 		section_coord.y == 0
 		and cell.y >= center - 1
 		and cell.y <= center + 1
 	)
+	# "Vertical" follows the isometric Y axis (/ on screen).
 	var vertical_road := (
 		section_coord.x == 0
 		and cell.x >= center - 1
 		and cell.x <= center + 1
 	)
 
-	# The canal remains a physical water strip from the authored city layout.
-	# The central bridge stays open so the north-south avenue is never broken.
+	# North Canal remains a flat non-walkable surface. The center bridge stays
+	# open so the north-south avenue keeps its authored connection.
 	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
 		return {
 			"cell": GROUND_WATER,
@@ -168,122 +173,122 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 			"walkable": false,
 		}
 
-	# Central Plaza deliberately interrupts the avenue asphalt and reads as one
-	# civic surface. Crosswalks frame the four road approaches.
+	# Central Plaza is intentionally calm and coherent: one stone field with a
+	# continuous tech-paver border instead of per-cell random alternation.
 	if theme == "plaza":
 		var dx := absi(cell.x - center)
 		var dy := absi(cell.y - center)
 		if dx <= 3 and dy <= 3:
-			var plaza_cell := GROUND_TECH_PAVER if posmod(global_x + global_y, 4) == 0 else GROUND_PAVEMENT_STONE
 			return {
-				"cell": plaza_cell,
+				"cell": GROUND_TECH_PAVER if maxi(dx, dy) == 3 else GROUND_PAVEMENT_STONE,
 				"base_color": PLAZA_BASE,
 				"walkable": true,
 			}
+		# Zebra stripes are chosen by ROAD direction, not by whichever source
+		# sprite happened to be available. This keeps every approach aligned.
 		if horizontal_road and cell.x in [2, 3, 11, 12]:
 			return {
-				"cell": GROUND_CROSSWALK_A if cell.x < center else GROUND_CROSSWALK_B,
+				"cell": GROUND_CROSSWALK_X,
 				"base_color": ROAD_BASE,
 				"walkable": true,
 			}
 		if vertical_road and cell.y in [2, 3, 11, 12]:
 			return {
-				"cell": GROUND_CROSSWALK_B if cell.y < center else GROUND_CROSSWALK_A,
+				"cell": GROUND_CROSSWALK_Y,
 				"base_color": ROAD_BASE,
 				"walkable": true,
 			}
 
-	if horizontal_road and vertical_road:
-		return {
-			"cell": GROUND_ROAD_TECH,
-			"base_color": ROAD_BASE,
-			"walkable": true,
-		}
+	# Avenues use plain asphalt on the outer lanes. Only the center lane receives
+	# sparse authored markings; this avoids the noisy "every tile is a road sign"
+	# look from the first test.
 	if horizontal_road:
-		var horizontal_cell := GROUND_ROAD_LANE if cell.y == center else GROUND_ROAD_PLAIN
-		if posmod(global_x, 11) == 0 and cell.y == center:
-			horizontal_cell = GROUND_ROAD_ARROW
+		var horizontal_cell := GROUND_ROAD_PLAIN
+		if cell.y == center:
+			if posmod(global_x, 10) == 4:
+				horizontal_cell = GROUND_ROAD_ARROW_X
+			elif posmod(global_x, 2) == 0:
+				horizontal_cell = GROUND_ROAD_LANE_X
 		return {
 			"cell": horizontal_cell,
 			"base_color": ROAD_BASE,
 			"walkable": true,
 		}
 	if vertical_road:
-		var vertical_cell := GROUND_ROAD_ALT if cell.x == center else GROUND_ROAD_EDGE
-		if posmod(global_y, 13) == 0 and cell.x == center:
-			vertical_cell = GROUND_ROAD_TECH
+		var vertical_cell := GROUND_ROAD_PLAIN
+		if cell.x == center:
+			if posmod(global_y, 10) == 4:
+				vertical_cell = GROUND_ROAD_ARROW_Y
+			elif posmod(global_y, 2) == 0:
+				vertical_cell = GROUND_ROAD_LANE_Y
 		return {
 			"cell": vertical_cell,
 			"base_color": ROAD_BASE,
 			"walkable": true,
 		}
 
-	# District surfaces are still deterministic authored choices rather than
-	# random terrain. This keeps section borders invisible while giving the
-	# supplied sheet enough variety to judge how it works as a city kit.
-	var pattern := posmod(global_x * 7 + global_y * 11, 17)
+	# District paving is authored in contiguous areas. The previous test picked
+	# different materials per cell, creating a checkerboard even though the
+	# source sheet itself was fine.
 	match theme:
 		"garden":
 			var planted_plot := (
 				(cell.x <= 4 or cell.x >= 10)
 				and (cell.y <= 4 or cell.y >= 10)
 			)
-			if planted_plot:
-				return {
-					"cell": GROUND_GRASS_ALT if pattern in [0, 5, 10] else GROUND_GRASS,
-					"base_color": PARK_BASE,
-					"walkable": true,
-				}
 			return {
-				"cell": GROUND_PAVEMENT_STONE if pattern % 4 == 0 else GROUND_PAVEMENT,
-				"base_color": PAVEMENT_BASE,
+				"cell": GROUND_GRASS if planted_plot else GROUND_PAVEMENT_STONE,
+				"base_color": PARK_BASE if planted_plot else PAVEMENT_BASE,
 				"walkable": true,
 			}
 		"digilab":
+			var lab_apron := cell.x >= 1 and cell.x <= 10 and cell.y >= 1 and cell.y <= 6
 			return {
-				"cell": GROUND_TECH_PAVER if pattern in [0, 1, 8] else GROUND_PAVEMENT,
+				"cell": GROUND_TECH_PAVER if lab_apron else GROUND_PAVEMENT_STONE,
 				"base_color": PAVEMENT_BASE,
 				"walkable": true,
 			}
 		"hospital":
 			return {
-				"cell": GROUND_PAVEMENT_STONE if pattern % 5 == 0 else GROUND_PAVEMENT,
+				"cell": GROUND_PAVEMENT_STONE,
 				"base_color": PAVEMENT_BASE,
 				"walkable": true,
 			}
 		"training":
 			return {
-				"cell": GROUND_TECH_PAVER if pattern % 4 == 0 else GROUND_PAVEMENT_STONE,
+				"cell": GROUND_PAVEMENT,
 				"base_color": PAVEMENT_BASE,
 				"walkable": true,
 			}
 		"market":
+			# Market frontage sits on one warm paving field; the far side of the
+			# avenue stays neutral so the road remains the district divider.
 			return {
-				"cell": GROUND_PAVEMENT_TAN if pattern < 7 else GROUND_PAVEMENT_STONE,
+				"cell": GROUND_PAVEMENT_TAN if cell.x <= 5 else GROUND_PAVEMENT_STONE,
 				"base_color": PAVEMENT_BASE,
 				"walkable": true,
 			}
 		"archive":
 			return {
-				"cell": GROUND_PAVEMENT_STONE if pattern < 10 else GROUND_TECH_PAVER,
+				"cell": GROUND_PAVEMENT_STONE,
 				"base_color": PAVEMENT_BASE,
 				"walkable": true,
 			}
 		"gate":
 			return {
-				"cell": GROUND_SAND if pattern in [0, 8, 16] else GROUND_PAVEMENT_STONE,
+				"cell": GROUND_PAVEMENT_STONE,
 				"base_color": PAVEMENT_BASE,
 				"walkable": true,
 			}
 		"canal":
 			return {
-				"cell": GROUND_PAVEMENT_STONE if pattern % 3 == 0 else GROUND_PAVEMENT,
+				"cell": GROUND_PAVEMENT_STONE,
 				"base_color": PAVEMENT_BASE,
 				"walkable": true,
 			}
 		_:
 			return {
-				"cell": GROUND_PAVEMENT_STONE if pattern in [0, 9] else GROUND_PAVEMENT,
+				"cell": GROUND_PAVEMENT,
 				"base_color": PAVEMENT_BASE,
 				"walkable": true,
 			}
