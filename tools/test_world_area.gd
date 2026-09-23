@@ -22,6 +22,14 @@ func _ready() -> void:
 		"Central City ground must use one global batched renderer instead of section/per-tile CanvasItems"
 	)
 	assert(area.get_ground_tile_count() == 4900, "Central City global ground batch must contain all authored cells")
+	var city_ground := area.get_node_or_null("CityGround")
+	var supplied_sheet_mesh := city_ground.get_node_or_null("SheetMesh") as MeshInstance2D if city_ground != null else null
+	assert(supplied_sheet_mesh != null, "Central City test ground must use the supplied-sheet batch mesh")
+	assert(
+		supplied_sheet_mesh.texture != null
+		and supplied_sheet_mesh.texture.resource_path == "res://assets/terrain/central_city_user_sheet/central_city_ground_atlas.png",
+		"Central City ground must render from the normalized project-owner supplied sheet"
+	)
 	assert(
 		area.get_runtime_node_count() < 1000,
 		"Central City runtime node budget must remain below 3000 nodes"
