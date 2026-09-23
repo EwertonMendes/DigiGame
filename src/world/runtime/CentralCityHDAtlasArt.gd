@@ -8,22 +8,22 @@ class_name CentralCityHDAtlasArt
 const ORIGINAL = preload("res://src/world/runtime/CityAtlasArt.gd")
 const HD_ATLAS = preload("res://assets/terrain/central_city_hd_test_atlas.png")
 
-const HD_CELL_SIZE := 64.0
+const HD_CELL_SIZE := 32.0
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const TILE_HALF_WIDTH := TILE_WIDTH * 0.5
 const TILE_HALF_HEIGHT := TILE_HEIGHT * 0.5
 const FLOOR_OVERSCAN := Vector2(0.55, 0.28)
 
-# The generated source was normalized programmatically to the doubled MC Blocks
-# floor diamond. World-space geometry remains exactly 64x32.
-const FLOOR_LEFT := Vector2(8.0, 42.0)
-const FLOOR_TOP := Vector2(32.0, 28.0)
-const FLOOR_RIGHT := Vector2(56.0, 42.0)
-const FLOOR_BOTTOM := Vector2(32.0, 56.0)
+# The AI source was normalized to the exact MC Blocks cell geometry. The compact
+# test atlas stores 32px cells and uses smooth 2x display scaling, preserving the
+# same 64x32 world footprint without nearest-neighbor pixelation.
+const FLOOR_LEFT := Vector2(4.0, 21.0)
+const FLOOR_TOP := Vector2(16.0, 14.0)
+const FLOOR_RIGHT := Vector2(28.0, 21.0)
+const FLOOR_BOTTOM := Vector2(16.0, 28.0)
 
-# MC Blocks uses 32px atlas cells at 2x display scale. The HD test atlas uses
-# 64px cells at 1x, so a building level remains exactly 32 world pixels high.
+# One structural level remains exactly 32 world pixels high.
 const BLOCK_LEVEL_HEIGHT := 32.0
 
 
@@ -203,10 +203,9 @@ static func create_block(
 	var sprite := Sprite2D.new()
 	sprite.texture = atlas_texture(cell)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	sprite.scale = Vector2.ONE
-	# Normalized block art ends at y=48 inside a 64px cell, i.e. 16px below
-	# the sprite center. Aligning the sprite center to top_center preserves the
-	# same one-cell ground footprint while level stacking stays at 32px.
+	sprite.scale = Vector2(2.0, 2.0)
+	# The compact atlas is 32px per cell. Smooth 2x rendering reproduces the
+	# exact world-space footprint of the normalized 64px source.
 	sprite.position = top_center - Vector2(0.0, float(level) * BLOCK_LEVEL_HEIGHT)
 	sprite.z_index = clampi(depth_order + level, -4000, 4000)
 	sprite.modulate = tint
@@ -229,12 +228,12 @@ static func create_prop(
 	sprite.texture = atlas_texture(cell)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 
-	# Existing call sites express scale for a 32px MC Blocks cell. Halve it for
-	# the 64px HD cell so the physical world size is preserved.
-	var hd_scale := scale * 0.5
+	# Call-site scales already target a 32px atlas cell, so the compact HD test
+	# atlas can use them directly while keeping linear filtering.
+	var hd_scale := scale
 	sprite.scale = hd_scale
 
-	var foot_y := 54.0 if cell == Vector2i(15, 47) else 50.0
+	var foot_y := 27.0 if cell == Vector2i(15, 47) else 25.0
 	var center_to_foot := (foot_y - HD_CELL_SIZE * 0.5) * hd_scale.y
 	sprite.position = ground_anchor + offset - Vector2(0.0, center_to_foot)
 	sprite.z_index = clampi(depth_order, -4000, 4000)
