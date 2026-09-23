@@ -296,6 +296,8 @@ static func create_joined_block(
 	)
 	sprite.z_index = clampi(depth_order + level, -4000, 4000)
 	sprite.modulate = tint
+	sprite.add_to_group("central_city_wall_block")
+	sprite.set_meta("wall_level", level)
 	return sprite
 
 
