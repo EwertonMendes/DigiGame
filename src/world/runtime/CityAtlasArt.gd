@@ -2,6 +2,10 @@ extends RefCounted
 class_name CityAtlasArt
 
 const ATLAS = preload("res://assets/terrain/MCBlocksColorOutline.png")
+const HUB_GRASS = preload("res://assets/world/devilsworkshop/blocks/isometric_pixel_0000.png")
+const HUB_WARM = preload("res://assets/world/devilsworkshop/blocks/isometric_pixel_0001.png")
+const HUB_DATA = preload("res://assets/world/devilsworkshop/blocks/isometric_pixel_0005.png")
+const HUB_WATER = preload("res://assets/world/devilsworkshop/blocks/isometric_pixel_0020.png")
 
 const CELL_SIZE := 32.0
 const TILE_WIDTH := 64.0
@@ -18,9 +22,9 @@ const BLOCK_LEVEL_HEIGHT := 32.0
 # each cube; at the original scale this reads as detached blocks. A small,
 # uniform overscale closes that authored padding without changing the grid,
 # collision footprint or atlas source.
-const JOINED_BLOCK_SCALE := Vector2(2.24, 2.24)
-const JOINED_BLOCK_TOP_CENTER_OFFSET := Vector2(0.0, 13.45)
-const JOINED_BLOCK_LEVEL_HEIGHT := 30.0
+const JOINED_BLOCK_SCALE := Vector2(2.30, 2.30)
+const JOINED_BLOCK_TOP_CENTER_OFFSET := Vector2(0.0, 13.80)
+const JOINED_BLOCK_LEVEL_HEIGHT := 28.0
 
 # Every flat-floor icon in row 16 shares this authored diamond footprint
 # inside its 32x32 atlas cell.
@@ -37,6 +41,17 @@ const FLOOR_SAMPLE_LEFT := Vector2(6.0, 21.0)
 const FLOOR_SAMPLE_TOP := Vector2(16.0, 16.0)
 const FLOOR_SAMPLE_RIGHT := Vector2(26.0, 21.0)
 const FLOOR_SAMPLE_BOTTOM := Vector2(16.0, 26.0)
+
+
+# Central City ground now reuses the exact top-face textures from the approved
+# Test Hub. Those source blocks have no heavy black border baked into the
+# sampled top face, and the detail is intentionally blended over an opaque base
+# just like HubVisualRedesign.gd. This keeps roads and paving textured while the
+# 64x32 gameplay diamonds read as continuous surfaces.
+const HUB_SOURCE_LEFT := Vector2(4.5, 13.0)
+const HUB_SOURCE_TOP := Vector2(25.0, 1.5)
+const HUB_SOURCE_RIGHT := Vector2(45.5, 13.0)
+const HUB_SOURCE_BOTTOM := Vector2(25.0, 24.5)
 
 
 static func tile_diamond(overscan := Vector2.ZERO) -> PackedVector2Array:
@@ -117,61 +132,50 @@ static func create_floor_batch(
 
 	var base := MeshInstance2D.new()
 	base.name = "BaseMesh"
-	base.mesh = _build_floor_mesh(tiles, false)
+	base.mesh = _build_base_floor_mesh(tiles)
 	base.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	root.add_child(base)
 
-	var has_visible_detail := false
+	# Batch detail by source texture. Central City can therefore reuse the same
+	# four approved Hub materials without creating thousands of Polygon2D nodes.
+	var groups: Dictionary = {}
 	for spec: Dictionary in tiles:
-		if float(spec.get("detail_alpha", 1.0)) > 0.001:
-			has_visible_detail = true
-			break
-	if has_visible_detail:
+		var alpha := clampf(float(spec.get("detail_alpha", 0.0)), 0.0, 1.0)
+		if alpha <= 0.001:
+			continue
+		var surface := String(spec.get("surface", "warm"))
+		if not groups.has(surface):
+			groups[surface] = []
+		(groups[surface] as Array).append(spec)
+
+	for surface_variant in groups.keys():
+		var surface := String(surface_variant)
+		var detail_tiles: Array = groups[surface]
 		var detail := MeshInstance2D.new()
-		detail.name = "DetailMesh"
-		detail.mesh = _build_floor_mesh(tiles, true)
-		detail.texture = ATLAS
-		detail.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		detail.name = "Detail_%s" % surface.capitalize()
+		detail.mesh = _build_hub_surface_mesh(detail_tiles, _hub_surface_texture(surface))
+		detail.texture = _hub_surface_texture(surface)
+		detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		detail.z_index = 1
 		root.add_child(detail)
+
 	return root
 
 
-static func _build_floor_mesh(tiles: Array[Dictionary], textured: bool) -> ArrayMesh:
+static func _build_base_floor_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
 	var vertices := PackedVector2Array()
 	var colors := PackedColorArray()
-	var uvs := PackedVector2Array()
 	var indices := PackedInt32Array()
-	var texture_size := Vector2(maxf(1.0, float(ATLAS.get_width())), maxf(1.0, float(ATLAS.get_height())))
-	var diamond := tile_diamond(Vector2.ZERO if textured else FLOOR_OVERSCAN)
+	var diamond := tile_diamond(FLOOR_OVERSCAN)
 
 	for spec: Dictionary in tiles:
 		var center: Vector2 = spec.get("position", Vector2.ZERO)
 		var vertex_start := vertices.size()
 		for point: Vector2 in diamond:
 			vertices.append(center + point)
-
-		if textured:
-			var atlas_cell: Vector2i = spec.get("cell", Vector2i.ZERO)
-			var cell_origin := Vector2(float(atlas_cell.x) * CELL_SIZE, float(atlas_cell.y) * CELL_SIZE)
-			var pixel_uvs := PackedVector2Array([
-				cell_origin + FLOOR_SAMPLE_LEFT,
-				cell_origin + FLOOR_SAMPLE_TOP,
-				cell_origin + FLOOR_SAMPLE_RIGHT,
-				cell_origin + FLOOR_SAMPLE_BOTTOM,
-			])
-			for pixel_uv: Vector2 in pixel_uvs:
-				uvs.append(Vector2(pixel_uv.x / texture_size.x, pixel_uv.y / texture_size.y))
-			var detail_tint: Color = spec.get("detail_tint", Color.WHITE)
-			var detail_alpha := clampf(float(spec.get("detail_alpha", 1.0)), 0.0, 1.0)
-			var detail_color := Color(detail_tint.r, detail_tint.g, detail_tint.b, detail_alpha)
-			for _index in range(4):
-				colors.append(detail_color)
-		else:
-			var base_color: Color = spec.get("base_color", Color.WHITE)
-			for _index in range(4):
-				colors.append(base_color)
-
+		var base_color: Color = spec.get("base_color", Color.WHITE)
+		for _index in range(4):
+			colors.append(base_color)
 		indices.append_array(PackedInt32Array([
 			vertex_start,
 			vertex_start + 1,
@@ -185,13 +189,74 @@ static func _build_floor_mesh(tiles: Array[Dictionary], textured: bool) -> Array
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_COLOR] = colors
-	if textured:
-		arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
 
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
+
+
+static func _build_hub_surface_mesh(tiles: Array, texture: Texture2D) -> ArrayMesh:
+	var vertices := PackedVector2Array()
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+	var diamond := tile_diamond()
+	var texture_size := Vector2(
+		maxf(1.0, float(texture.get_width())),
+		maxf(1.0, float(texture.get_height()))
+	)
+	var source_uvs := PackedVector2Array([
+		HUB_SOURCE_LEFT,
+		HUB_SOURCE_TOP,
+		HUB_SOURCE_RIGHT,
+		HUB_SOURCE_BOTTOM,
+	])
+
+	for raw_spec in tiles:
+		var spec := raw_spec as Dictionary
+		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var vertex_start := vertices.size()
+		for point: Vector2 in diamond:
+			vertices.append(center + point)
+		for pixel_uv: Vector2 in source_uvs:
+			uvs.append(Vector2(pixel_uv.x / texture_size.x, pixel_uv.y / texture_size.y))
+		var detail_tint: Color = spec.get("detail_tint", Color.WHITE)
+		var detail_alpha := clampf(float(spec.get("detail_alpha", 0.42)), 0.0, 1.0)
+		var detail_color := Color(detail_tint.r, detail_tint.g, detail_tint.b, detail_alpha)
+		for _index in range(4):
+			colors.append(detail_color)
+		indices.append_array(PackedInt32Array([
+			vertex_start,
+			vertex_start + 1,
+			vertex_start + 2,
+			vertex_start,
+			vertex_start + 2,
+			vertex_start + 3,
+		]))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+static func _hub_surface_texture(surface: String) -> Texture2D:
+	match surface:
+		"grass":
+			return HUB_GRASS
+		"data":
+			return HUB_DATA
+		"water":
+			return HUB_WATER
+		_:
+			return HUB_WARM
 
 
 static func create_block(
@@ -220,10 +285,9 @@ static func create_joined_block(
 ) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.texture = atlas_texture(cell)
-	# Linear filtering is intentional only for the larger Central City wall
-	# modules. It softens the doubled pixel stair-stepping without replacing the
-	# MC Blocks artwork or changing its authored silhouette.
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	# Preserve the authored MC Blocks wall pixels. Joining comes from calibrated
+	# scale/overlap, not from blurring the individual block sprites.
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.scale = JOINED_BLOCK_SCALE
 	sprite.position = (
 		top_center
