@@ -101,6 +101,9 @@ func _ready() -> void:
 	_build_world_ui()
 	MusicDirector.play_zone_1()
 	call_deferred("_announce_area")
+	var debug_interior := _debug_interior_requested()
+	if not debug_interior.is_empty():
+		call_deferred("_open_debug_interior", debug_interior)
 	print("[World] READY area=%s chunk=%s" % [AREA_ID, str(_streamer.get_current_chunk())])
 
 
@@ -148,6 +151,14 @@ func get_streamer() -> AreaStreamer:
 
 func get_interior_manager() -> WorldInteriorManager:
 	return _interior_manager
+
+
+func request_interior_entry(payload: Dictionary) -> void:
+	if _interior_manager == null or _interior_manager.is_active() or _interior_manager.is_transitioning():
+		return
+	_persist_world_location()
+	OverworldState.save_progress()
+	_interior_manager.enter_interior(payload.duplicate(true))
 
 
 func _build_background() -> void:
@@ -332,10 +343,7 @@ func _on_interaction_candidate_changed(action_text: String) -> void:
 func _on_interaction_requested(action_id: String, payload: Dictionary) -> void:
 	match action_id:
 		"enter_interior":
-			if _interior_manager != null:
-				_persist_world_location()
-				OverworldState.save_progress()
-				_interior_manager.enter_interior(payload)
+			request_interior_entry(payload)
 		"exit_interior":
 			if _interior_manager != null:
 				_interior_manager.exit_interior()
@@ -490,6 +498,50 @@ func _chunk_definition(coord: Vector2i) -> Dictionary:
 			if int(raw_coord[0]) == coord.x and int(raw_coord[1]) == coord.y:
 				return entry
 	return {}
+
+
+func _debug_interior_requested() -> String:
+	if not DebugAccessScript.is_available():
+		return ""
+	for arg in OS.get_cmdline_user_args():
+		var normalized := String(arg).strip_edges().to_lower()
+		if normalized.begins_with("--interior-test="):
+			return normalized.trim_prefix("--interior-test=")
+	if OS.has_feature("web"):
+		var raw = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('interior_test')", true)
+		var value := String(raw).strip_edges().to_lower()
+		if value in ["digilab", "hospital", "training", "shop", "archive"]:
+			return value
+	return ""
+
+
+func _open_debug_interior(service_id: String) -> void:
+	if _interior_manager == null or _player == null:
+		return
+	var titles := {
+		"digilab": "DIGILAB",
+		"hospital": "DIGI HOSPITAL",
+		"training": "TRAINING CENTER",
+		"shop": "DATA MARKET",
+		"archive": "DIGITAL ARCHIVE",
+	}
+	var accents := {
+		"digilab": Color(0.28, 0.88, 1.0, 1.0),
+		"hospital": Color(0.66, 0.96, 1.0, 1.0),
+		"training": Color(0.56, 0.95, 0.43, 1.0),
+		"shop": Color(1.0, 0.78, 0.28, 1.0),
+		"archive": Color(0.72, 0.52, 1.0, 1.0),
+	}
+	if not titles.has(service_id):
+		return
+	var accent: Color = accents[service_id]
+	request_interior_entry({
+		"interior_id": "debug_%s" % service_id,
+		"service": service_id,
+		"title": String(titles[service_id]),
+		"accent": [accent.r, accent.g, accent.b, accent.a],
+		"return_position": [_player.global_position.x, _player.global_position.y],
+	})
 
 
 func _debug_hub_requested() -> bool:
