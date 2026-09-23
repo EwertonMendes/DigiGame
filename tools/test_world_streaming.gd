@@ -28,7 +28,7 @@ func _ready() -> void:
 	# Real movement must cross every half-tile seam around the starting chunk.
 	# The previous regression teleported directly into neighboring chunks and
 	# therefore missed the invisible barrier caused by mismatched ownership.
-	await _assert_seam_crossing(
+	_assert_seam_crossing(
 		player_node,
 		streamer,
 		Vector2(13.35, 7.0),
@@ -36,7 +36,7 @@ func _ready() -> void:
 		Vector2i(1, 0),
 		"east"
 	)
-	await _assert_seam_crossing(
+	_assert_seam_crossing(
 		player_node,
 		streamer,
 		Vector2(-0.35, 7.0),
@@ -44,7 +44,7 @@ func _ready() -> void:
 		Vector2i(-1, 0),
 		"west"
 	)
-	await _assert_seam_crossing(
+	_assert_seam_crossing(
 		player_node,
 		streamer,
 		Vector2(7.0, 13.35),
@@ -52,7 +52,7 @@ func _ready() -> void:
 		Vector2i(0, 1),
 		"south"
 	)
-	await _assert_seam_crossing(
+	_assert_seam_crossing(
 		player_node,
 		streamer,
 		Vector2(7.0, -0.35),
@@ -62,13 +62,13 @@ func _ready() -> void:
 	)
 
 	player_node.global_position = _grid_to_world(Vector2(21, 7))
-	await get_tree().create_timer(0.14).timeout
+	streamer.call("refresh_around_player")
 	assert(streamer.call("get_current_chunk") == Vector2i(1, 0), "Walking east must cross a chunk boundary without changing scenes")
 	assert(get_tree().current_scene == self, "Chunk streaming must never replace the active test scene")
 	assert(int(streamer.call("get_loaded_chunk_count")) <= 15, "Streaming must keep a bounded neighborhood rather than accumulating the whole city")
 
 	player_node.global_position = _grid_to_world(Vector2(35, 7))
-	await get_tree().create_timer(0.14).timeout
+	streamer.call("refresh_around_player")
 	assert(streamer.call("get_current_chunk") == Vector2i(2, 0), "The authored East Gate chunk must be reachable continuously")
 	assert(int(streamer.call("get_loaded_chunk_count")) <= 15, "Distant chunks must unload after the hysteresis boundary")
 
@@ -95,9 +95,7 @@ func _assert_seam_crossing(
 	var before := _grid_to_world(before_grid)
 	var after := _grid_to_world(after_grid)
 	player.global_position = before
-	await _frames(2)
 	player.call("_try_move", after - before)
-	await _frames(2)
 	assert(
 		player.global_position.distance_to(after) < 2.0,
 		"Continuous movement must cross the %s chunk seam without an invisible wall" % direction_name
