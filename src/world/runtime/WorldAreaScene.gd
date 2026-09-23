@@ -7,6 +7,7 @@ signal load_finished
 
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
 const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
+const ExternalCityArtScript = preload("res://src/world/runtime/ExternalCityArt.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
@@ -83,6 +84,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	process_mode = Node.PROCESS_MODE_INHERIT
 	_update_ambient_vfx(true)
 	load_finished.emit()
+	print("[ExternalCity] READY available=%s" % str(ExternalCityArtScript.is_available()))
 	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d" % [
 		_sections.size(),
 		get_runtime_node_count(),

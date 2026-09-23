@@ -20,7 +20,11 @@
       ],
       "theme": "residential",
       "title": "Northwest Residences",
-      "subtitle": "Homes among recovered data"
+      "subtitle": "Homes among recovered data",
+      "building_assets": [
+        "future_11",
+        "future_20"
+      ]
     },
     {
       "coord": [
@@ -38,7 +42,9 @@
       ],
       "theme": "archive",
       "title": "Memory Archive",
-      "subtitle": "Recovered records and research"
+      "subtitle": "Recovered records and research",
+      "building_asset": "future_06",
+      "building_scale": 0.84
     },
     {
       "coord": [
@@ -56,7 +62,11 @@
       ],
       "theme": "residential",
       "title": "West Heights",
-      "subtitle": "Restored homes and side streets"
+      "subtitle": "Restored homes and side streets",
+      "building_assets": [
+        "future_34",
+        "future_29"
+      ]
     },
     {
       "coord": [
@@ -74,7 +84,9 @@
       ],
       "theme": "training",
       "title": "Training Ward",
-      "subtitle": "Growth and tactical preparation"
+      "subtitle": "Growth and tactical preparation",
+      "building_asset": "future_33",
+      "building_scale": 0.82
     },
     {
       "coord": [
@@ -92,7 +104,11 @@
       ],
       "theme": "residential",
       "title": "East Heights",
-      "subtitle": "Newly restored housing"
+      "subtitle": "Newly restored housing",
+      "building_assets": [
+        "future_12",
+        "future_21"
+      ]
     },
     {
       "coord": [
@@ -101,7 +117,11 @@
       ],
       "theme": "residential",
       "title": "West Commons",
-      "subtitle": "Residential recovery block"
+      "subtitle": "Residential recovery block",
+      "building_assets": [
+        "future_18",
+        "future_20"
+      ]
     },
     {
       "coord": [
@@ -110,7 +130,9 @@
       ],
       "theme": "digilab",
       "title": "DigiLab District",
-      "subtitle": "Evolution and reconstruction"
+      "subtitle": "Evolution and reconstruction",
+      "building_asset": "future_27",
+      "building_scale": 0.9
     },
     {
       "coord": [
@@ -119,7 +141,8 @@
       ],
       "theme": "plaza",
       "title": "Central Plaza",
-      "subtitle": "Heart of Central City"
+      "subtitle": "Heart of Central City",
+      "landmark_asset": "future_26"
     },
     {
       "coord": [
@@ -128,7 +151,9 @@
       ],
       "theme": "hospital",
       "title": "Hospital District",
-      "subtitle": "Recovery services"
+      "subtitle": "Recovery services",
+      "building_asset": "future_19",
+      "building_scale": 0.88
     },
     {
       "coord": [
@@ -137,7 +162,11 @@
       ],
       "theme": "gate",
       "title": "East Gate",
-      "subtitle": "Road toward the outer sectors"
+      "subtitle": "Road toward the outer sectors",
+      "building_assets": [
+        "future_13",
+        "future_24"
+      ]
     },
     {
       "coord": [
@@ -155,7 +184,11 @@
       ],
       "theme": "residential",
       "title": "Southwest Commons",
-      "subtitle": "Homes and small plazas"
+      "subtitle": "Homes and small plazas",
+      "building_assets": [
+        "future_35",
+        "future_11"
+      ]
     },
     {
       "coord": [
@@ -164,7 +197,9 @@
       ],
       "theme": "market",
       "title": "Data Market",
-      "subtitle": "Shops and civilian services"
+      "subtitle": "Shops and civilian services",
+      "building_asset": "future_32",
+      "building_scale": 0.84
     },
     {
       "coord": [
@@ -173,7 +208,11 @@
       ],
       "theme": "residential",
       "title": "Southeast Commons",
-      "subtitle": "Restored neighborhood"
+      "subtitle": "Restored neighborhood",
+      "building_assets": [
+        "future_29",
+        "future_34"
+      ]
     },
     {
       "coord": [
@@ -200,7 +239,11 @@
       ],
       "theme": "residential",
       "title": "South Residences",
-      "subtitle": "Homes near the outbound road"
+      "subtitle": "Homes near the outbound road",
+      "building_assets": [
+        "future_12",
+        "future_36"
+      ]
     },
     {
       "coord": [
@@ -209,7 +252,11 @@
       ],
       "theme": "gate",
       "title": "South Gate",
-      "subtitle": "Route toward Green Sector"
+      "subtitle": "Route toward Green Sector",
+      "building_assets": [
+        "future_13",
+        "future_24"
+      ]
     },
     {
       "coord": [
@@ -218,7 +265,11 @@
       ],
       "theme": "residential",
       "title": "Southeast Residences",
-      "subtitle": "Newly restored housing"
+      "subtitle": "Newly restored housing",
+      "building_assets": [
+        "future_21",
+        "future_20"
+      ]
     },
     {
       "coord": [

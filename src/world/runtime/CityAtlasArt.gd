@@ -101,13 +101,19 @@ static func create_floor_batch(
 	base.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	root.add_child(base)
 
-	var detail := MeshInstance2D.new()
-	detail.name = "DetailMesh"
-	detail.mesh = _build_floor_mesh(tiles, true)
-	detail.texture = ATLAS
-	detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	detail.z_index = 1
-	root.add_child(detail)
+	var has_detail := false
+	for spec: Dictionary in tiles:
+		if float(spec.get("detail_alpha", 1.0)) > 0.001:
+			has_detail = true
+			break
+	if has_detail:
+		var detail := MeshInstance2D.new()
+		detail.name = "DetailMesh"
+		detail.mesh = _build_floor_mesh(tiles, true)
+		detail.texture = ATLAS
+		detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		detail.z_index = 1
+		root.add_child(detail)
 	return root
 
 
