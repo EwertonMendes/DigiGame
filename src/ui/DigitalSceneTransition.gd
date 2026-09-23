@@ -5,8 +5,10 @@ signal transition_midpoint(scene_path: String, context: String)
 signal transition_finished(scene_path: String, context: String)
 
 const TRANSITION_SHADER = preload("res://shaders/digital_scene_transition.gdshader")
+const WORLD_SCENE_PATH := "res://scenes/world/world_root.tscn"
 const HUB_SCENE_PATH := "res://scenes/world/hub.tscn"
 const CONTEXT_BATTLE := "battle"
+const CONTEXT_WORLD := "world"
 const CONTEXT_HUB := "hub"
 const LOAD_TIMEOUT_MS := 8000
 
@@ -51,6 +53,12 @@ func request_scene(scene_path: String, context: String = "generic") -> bool:
 
 func return_to_hub() -> bool:
 	return request_scene(HUB_SCENE_PATH, CONTEXT_HUB)
+
+
+func return_to_world() -> bool:
+	var target := WorldState.get_return_scene_path(WORLD_SCENE_PATH)
+	var context := CONTEXT_HUB if target == HUB_SCENE_PATH else CONTEXT_WORLD
+	return request_scene(target, context)
 
 
 func enter_battle(scene_path: String) -> bool:
@@ -210,7 +218,7 @@ func _configure_palette(context: String) -> void:
 		_material.set_shader_parameter("primary_color", Color(0.40, 0.82, 1.0, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.60, 0.48, 1.0, 1.0))
 		_material.set_shader_parameter("cover_color", Color(0.035, 0.070, 0.145, 1.0))
-	elif context == CONTEXT_HUB:
+	elif context == CONTEXT_HUB or context == CONTEXT_WORLD:
 		_material.set_shader_parameter("primary_color", Color(0.35, 0.93, 0.84, 1.0))
 		_material.set_shader_parameter("accent_color", Color(0.38, 0.66, 1.0, 1.0))
 		_material.set_shader_parameter("cover_color", Color(0.025, 0.080, 0.115, 1.0))

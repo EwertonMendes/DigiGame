@@ -102,4 +102,4 @@ func _on_result_return_requested() -> void:
 func _return_to_terminal_commons() -> void:
 	if DigitalSceneTransition.is_transitioning():
 		return
-	DigitalSceneTransition.return_to_hub()
+	DigitalSceneTransition.return_to_world()

@@ -9,9 +9,13 @@ const DEFAULT_PATH := "user://digigame-save.json"
 var _migration = MigrationScript.new()
 
 func save_collection(collection: PlayerCollection, path: String = DEFAULT_PATH) -> bool:
+	return save_game(collection, {}, path)
+
+
+func save_game(collection: PlayerCollection, world_state: Dictionary, path: String = DEFAULT_PATH) -> bool:
 	if collection == null:
 		return false
-	var dto: PlayerProgressSaveData = SaveDataScript.from_collection(collection)
+	var dto: PlayerProgressSaveData = SaveDataScript.from_collection(collection, world_state)
 	return save_data(dto, path)
 
 func save_data(data: PlayerProgressSaveData, path: String = DEFAULT_PATH) -> bool:

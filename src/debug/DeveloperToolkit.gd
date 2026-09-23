@@ -12,6 +12,8 @@ const BattlefieldCatalogScript = preload("res://src/world/BattlefieldCatalog.gd"
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
 const BATTLE_SCENE := "res://scenes/main.tscn"
+const TEST_HUB_SCENE := "res://scenes/world/hub.tscn"
+const WORLD_SCENE := "res://scenes/world/world_root.tscn"
 const CLOSED_LAYER := 60
 const OPEN_LAYER := 180
 const MAX_FRAME_SIZE := Vector2(1180, 720)
@@ -213,6 +215,8 @@ func _build_ui() -> void:
 	header.add_child(heading)
 	heading.add_child(_label("DEVELOPER TOOLKIT", 23, UI.TEXT, true))
 	heading.add_child(_label("Progression, collection and battle state laboratory", 10, UI.SUBTLE))
+	var test_hub := _action("TEST HUB", _open_test_hub, UI.CYAN, 40)
+	header.add_child(test_hub)
 	var sprite_test := _action("SPRITE TEST", _open_sprite_test, UI.PURPLE, 40)
 	header.add_child(sprite_test)
 	header.add_child(_action("CLOSE · ESC", close, UI.MUTED, 40))
@@ -543,7 +547,11 @@ func _build_diagnostics_tab(tabs: TabContainer) -> void:
 	_diagnostics = _label("", 11, UI.TEXT)
 	_diagnostics.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(_diagnostics)
-	page.add_child(_button_row([_action("OPEN SPRITE TEST", _open_sprite_test, UI.PURPLE)]))
+	page.add_child(_button_row([
+		_action("TEST HUB", _open_test_hub, UI.CYAN),
+		_action("RETURN WORLD", _return_to_world, UI.GREEN),
+		_action("OPEN SPRITE TEST", _open_sprite_test, UI.PURPLE),
+	]))
 	page.add_child(_section_label("DEBUG ACTION HISTORY", UI.GOLD))
 	_history = _label("No debug mutations yet.", 10, UI.SUBTLE)
 	_history.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1205,6 +1213,10 @@ func _start_debug_battle() -> void:
 		var species := _roster.species(String(descriptor.get("species_seed", "")))
 		names.append("%s Lv.%d · T%s · %s" % [String(species.get("name", "?")), int(descriptor.get("level", 1)), String(descriptor.get("tier", "E")), _footprint_label(String(descriptor.get("footprint", "single")))])
 	_state.log_action("Battle sandbox", "%d enemies · %s" % [enemies.size(), ", ".join(names)])
+	var current_scene_path := WORLD_SCENE
+	if get_tree().current_scene != null and not get_tree().current_scene.scene_file_path.is_empty():
+		current_scene_path = get_tree().current_scene.scene_file_path
+	WorldState.stage_return_scene(current_scene_path, {"source": "developer_toolkit_battle"})
 	close()
 	if not DigitalSceneTransition.enter_battle(BATTLE_SCENE):
 		_status.text = "Battle transition is currently busy."
@@ -1231,6 +1243,23 @@ func _on_species_picked(seed: String) -> void:
 			return
 		_battle_roster[index]["species_seed"] = seed
 		_refresh_battle_roster()
+
+func _open_test_hub() -> void:
+	if get_tree().current_scene != null and get_tree().current_scene.scene_file_path == TEST_HUB_SCENE:
+		_status.text = "Already in the Test Hub."
+		return
+	close()
+	DigitalSceneTransition.request_scene(TEST_HUB_SCENE, "debug_hub")
+
+
+func _return_to_world() -> void:
+	if get_tree().current_scene != null and get_tree().current_scene.scene_file_path == WORLD_SCENE:
+		_status.text = "Already in the campaign world."
+		return
+	WorldState.clear_return_scene()
+	close()
+	DigitalSceneTransition.request_scene(WORLD_SCENE, "world")
+
 
 func _open_sprite_test() -> void:
 	var scene := get_tree().current_scene

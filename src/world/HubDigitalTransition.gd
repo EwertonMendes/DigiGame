@@ -758,6 +758,7 @@ func _begin_battle_transition(program_id: String, selected_names: Array[String])
 		"[Hub] START_BATTLE_PROGRAM program=%s field=%s%s"
 		% [program_id, _selected_battlefield_id, roster_suffix]
 	)
+	WorldState.stage_return_scene("res://scenes/world/hub.tscn", {"source": "debug_hub"})
 	if not DigitalSceneTransition.enter_battle(BATTLE_SCENE_PATH):
 		BattleEncounterSession.clear_pending_encounter()
 		_transitioning = false
