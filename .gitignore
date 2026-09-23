@@ -495,3 +495,12 @@ core.*
 
 # Never ignore project source/assets/data by broad extension patterns.
 # Add any future generated/private project-specific paths explicitly below.
+
+
+########################################
+### Licensed external city assets    ###
+########################################
+
+# Downloaded at setup/build time. Never commit raw third-party pack files.
+/assets/external/central_city/
+/.cache/external-city-assets/
