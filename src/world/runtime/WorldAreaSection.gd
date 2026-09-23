@@ -35,19 +35,19 @@ const BLOCK_PURPLE := Vector2i(5, 13)
 const BLOCK_BLUE := Vector2i(6, 13)
 const DOOR_DARK := Vector2i(15, 47)
 
-const ROAD_BASE := Color(0.075, 0.12, 0.16, 1.0)
-const PAVEMENT_BASE := Color(0.25, 0.31, 0.34, 1.0)
-const PLAZA_BASE := Color(0.075, 0.35, 0.39, 1.0)
-const PARK_BASE := Color(0.13, 0.39, 0.24, 1.0)
-const WATER_BASE := Color(0.035, 0.27, 0.43, 1.0)
+# Match the approved Test Hub surface treatment: an opaque calm base plus a
+# low-opacity authored top-face texture. This preserves material detail without
+# turning every 64x32 gameplay diamond into a high-contrast outlined tile.
+const ROAD_BASE := Color(0.18, 0.21, 0.22, 1.0)
+const PAVEMENT_BASE := Color(0.31, 0.34, 0.35, 1.0)
+const PLAZA_BASE := Color(0.17, 0.34, 0.39, 1.0)
+const PARK_BASE := Color(0.30, 0.52, 0.29, 1.0)
+const WATER_BASE := Color(0.055, 0.29, 0.37, 1.0)
 
-# These colors sit underneath the real MC Blocks floor texture. They are not
-# replacements for the atlas; they only keep the inner-cropped texture visually
-# coherent at the tiny overscan used to hide seams.
-const CYAN_ACCENT_BASE := Color(0.10, 0.30, 0.34, 1.0)
-const YELLOW_ACCENT_BASE := Color(0.38, 0.29, 0.12, 1.0)
-const GREEN_ACCENT_BASE := Color(0.15, 0.34, 0.20, 1.0)
-const PURPLE_ACCENT_BASE := Color(0.27, 0.20, 0.36, 1.0)
+const CYAN_ACCENT_BASE := Color(0.18, 0.34, 0.43, 1.0)
+const YELLOW_ACCENT_BASE := Color(0.38, 0.33, 0.22, 1.0)
+const GREEN_ACCENT_BASE := Color(0.26, 0.46, 0.28, 1.0)
+const PURPLE_ACCENT_BASE := Color(0.30, 0.27, 0.38, 1.0)
 
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
@@ -113,7 +113,8 @@ func _prepare_ground_data() -> void:
 				"position": position + grid_to_world(Vector2(cell)),
 				"base_color": presentation.get("base_color", PAVEMENT_BASE),
 				"detail_tint": presentation.get("detail_tint", Color.WHITE),
-				"detail_alpha": float(presentation.get("detail_alpha", 0.96)),
+				"detail_alpha": float(presentation.get("detail_alpha", 0.42)),
+				"surface": String(presentation.get("surface", "warm")),
 			})
 			if not bool(presentation.get("walkable", true)):
 				_mark_blocked(cell)
@@ -124,9 +125,9 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
-	# Keep MC Blocks as the actual floor art. CityAtlasArt crops only the dark
-	# authored outline from the diamond and linearly filters the interior pixels,
-	# so repeated tiles read as one continuous material instead of a black grid.
+	# Central City now uses the exact same top-face source family and blending
+	# strategy as Terminal Commons (the Test Hub). The surface texture stays
+	# subtle over an opaque base, so seams exist only as gentle material changes.
 	var road := (
 		(section_coord.y == 0 and cell.y >= center - 1 and cell.y <= center + 1)
 		or (section_coord.x == 0 and cell.x >= center - 1 and cell.x <= center + 1)
@@ -134,24 +135,30 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 	if road:
 		return {
 			"cell": FLOOR_ROAD,
+			"surface": "warm",
 			"base_color": ROAD_BASE,
-			"detail_alpha": 0.96,
+			"detail_tint": Color(0.82, 0.87, 0.84, 1.0),
+			"detail_alpha": 0.26,
 			"walkable": true,
 		}
 
 	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
 		return {
 			"cell": FLOOR_BLUE,
+			"surface": "water",
 			"base_color": WATER_BASE,
-			"detail_alpha": 0.96,
+			"detail_tint": Color(0.72, 0.94, 1.0, 1.0),
+			"detail_alpha": 0.62,
 			"walkable": false,
 		}
 
 	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
 		return {
 			"cell": FLOOR_PLAZA,
+			"surface": "water",
 			"base_color": PLAZA_BASE,
-			"detail_alpha": 0.94,
+			"detail_tint": Color(0.78, 0.94, 1.0, 1.0),
+			"detail_alpha": 0.46,
 			"walkable": true,
 		}
 
@@ -163,27 +170,30 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 		if corner_plot:
 			return {
 				"cell": FLOOR_GREEN,
+				"surface": "grass",
 				"base_color": PARK_BASE,
-				"detail_alpha": 0.94,
+				"detail_tint": Color(0.92, 1.0, 0.88, 1.0),
+				"detail_alpha": 0.38,
 				"walkable": true,
 			}
 
-	# Service districts get a compact MC Blocks accent forecourt instead of
-	# tinting an entire 14x14 section. This keeps the city connected and lets the
-	# building itself provide the district identity.
 	var service_accent := _service_ground_accent(theme)
 	if not service_accent.is_empty() and _is_service_forecourt(cell, theme):
 		return {
 			"cell": service_accent.get("cell", FLOOR_PAVEMENT),
+			"surface": String(service_accent.get("surface", "data")),
 			"base_color": service_accent.get("base_color", PAVEMENT_BASE),
-			"detail_alpha": 0.92,
+			"detail_tint": service_accent.get("detail_tint", Color.WHITE),
+			"detail_alpha": float(service_accent.get("detail_alpha", 0.30)),
 			"walkable": true,
 		}
 
 	return {
 		"cell": FLOOR_PAVEMENT,
+		"surface": "warm",
 		"base_color": PAVEMENT_BASE,
-		"detail_alpha": 0.94,
+		"detail_tint": Color(0.86, 0.90, 0.82, 1.0),
+		"detail_alpha": 0.24,
 		"walkable": true,
 	}
 
@@ -191,25 +201,51 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 func _service_ground_accent(theme: String) -> Dictionary:
 	match theme:
 		"digilab", "hospital":
-			return {"cell": FLOOR_CYAN, "base_color": CYAN_ACCENT_BASE}
+			return {
+				"cell": FLOOR_CYAN,
+				"surface": "data",
+				"base_color": CYAN_ACCENT_BASE,
+				"detail_tint": Color(0.74, 0.82, 1.0, 1.0),
+				"detail_alpha": 0.32,
+			}
 		"training":
-			return {"cell": FLOOR_GREEN, "base_color": GREEN_ACCENT_BASE}
+			return {
+				"cell": FLOOR_GREEN,
+				"surface": "grass",
+				"base_color": GREEN_ACCENT_BASE,
+				"detail_tint": Color(0.90, 1.0, 0.86, 1.0),
+				"detail_alpha": 0.34,
+			}
 		"market":
-			return {"cell": FLOOR_YELLOW, "base_color": YELLOW_ACCENT_BASE}
+			return {
+				"cell": FLOOR_YELLOW,
+				"surface": "warm",
+				"base_color": YELLOW_ACCENT_BASE,
+				"detail_tint": Color(1.0, 0.93, 0.72, 1.0),
+				"detail_alpha": 0.28,
+			}
 		"archive":
-			return {"cell": FLOOR_PURPLE, "base_color": PURPLE_ACCENT_BASE}
+			return {
+				"cell": FLOOR_PURPLE,
+				"surface": "data",
+				"base_color": PURPLE_ACCENT_BASE,
+				"detail_tint": Color(0.92, 0.82, 1.0, 1.0),
+				"detail_alpha": 0.28,
+			}
 		_:
 			return {}
 
 
 func _is_service_forecourt(cell: Vector2i, theme: String) -> bool:
+	# Accent paving is a narrow sidewalk/entry zone beside the road. It never
+	# paints over the three-cell-wide road itself.
 	match theme:
 		"digilab", "hospital":
-			return cell.x >= 3 and cell.x <= 9 and cell.y >= 6 and cell.y <= 10
-		"archive":
-			return cell.x >= 3 and cell.x <= 9 and cell.y >= 7 and cell.y <= 10
+			return cell.y == 5 and cell.x >= 3 and cell.x <= 9
 		"training", "market":
-			return cell.x >= 6 and cell.x <= 10 and cell.y >= 4 and cell.y <= 9
+			return cell.x == 5 and cell.y >= 3 and cell.y <= 9
+		"archive":
+			return cell.y == 6 and cell.x >= 3 and cell.x <= 9
 		_:
 			return false
 
@@ -275,7 +311,7 @@ func _build_gate() -> void:
 	props.name = "CityGate"
 	add_child(props)
 	for cell in [Vector2i(4, 5), Vector2i(4, 6), Vector2i(9, 5), Vector2i(9, 6)]:
-		for level in range(2):
+		for level in range(3):
 			var block := CITY.create_joined_block(
 				BLOCK_WALL_DARK,
 				grid_to_world(Vector2(cell)),
@@ -295,15 +331,18 @@ func _build_residential_block() -> void:
 
 
 func _build_service_exterior(accent: Color, title: String, service_id: String) -> void:
-	var origin := Vector2i(2, 1)
+	# Establishments sit beside the avenue with one clear pedestrian tile
+	# between the doorway and the three-cell road. No facade is allowed to claim
+	# a road cell.
+	var origin := Vector2i(2, 0)
 	var size := Vector2i(8, 5)
 	var door_side := "south"
 	if service_id in ["training", "shop"]:
-		origin = Vector2i(1, 2)
+		origin = Vector2i(0, 2)
 		size = Vector2i(5, 8)
 		door_side = "east"
 	elif service_id == "archive":
-		origin = Vector2i(2, 2)
+		origin = Vector2i(2, 1)
 		size = Vector2i(8, 5)
 
 	var interior_id := "%s_%d_%d" % [service_id, section_coord.x, section_coord.y]
@@ -330,15 +369,6 @@ func _build_service_exterior(accent: Color, title: String, service_id: String) -
 	entrance.monitorable = false
 	add_child(entrance)
 
-	var pad := CITY.create_floor_tile(
-		_service_floor_cell(service_id),
-		Vector2.ZERO,
-		0,
-		Color(0.10, 0.15, 0.17, 1.0),
-		Color.WHITE,
-		0.92
-	)
-	entrance.add_child(pad)
 
 	var threshold_shape := CollisionShape2D.new()
 	var threshold_circle := CircleShape2D.new()
@@ -387,9 +417,11 @@ func _build_exterior_shell(
 		if door_side == "south"
 		else origin + Vector2i(size.x - 1, int(size.y / 2))
 	)
-	# Every building now uses two complete MC Blocks wall levels. This keeps the
-	# visible facades as joined square modules instead of sparse gray cubes.
-	var wall_levels := 2
+	# Three MC Blocks levels are the minimum building height for Central City.
+	# The joined presentation closes the transparent padding between adjacent
+	# cubes so the facade reads as a wall assembled from square blocks, not as a
+	# row of detached pillars.
+	var wall_levels := 3
 	for x in range(size.x):
 		for y in range(size.y):
 			var cell := origin + Vector2i(x, y)
@@ -397,24 +429,15 @@ func _build_exterior_shell(
 			if not doorway:
 				_mark_blocked(cell)
 
-			# Only the two camera-facing sides need wall sprites in this
-			# isometric projection. Every visible facade coordinate is filled,
-			# so the wall reads as one continuous assembled structure.
 			var visible_facade := x == size.x - 1 or y == size.y - 1
 			if not visible_facade:
 				continue
 
 			if doorway:
-				var lintel_cell := _facade_block_cell(
-					service_id,
-					wall_levels - 1,
-					x,
-					y,
-					size,
-					with_door
-				)
+				# Keep a two-block-tall opening and close the wall above it with
+				# the third level.
 				var lintel := CITY.create_joined_block(
-					lintel_cell,
+					_facade_block_cell(service_id, wall_levels - 1, x, y, size, with_door),
 					grid_to_world(Vector2(cell)),
 					800 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
 					wall_levels - 1
@@ -441,33 +464,12 @@ func _build_exterior_shell(
 		door.modulate = accent.lightened(0.12)
 		building.add_child(door)
 
-	# Roofs use the same seamless fill principle as the city ground. MC Blocks
-	# remains the asset source for walls/props, while the roof cap avoids
-	# repeating the outlined floor diamond on every cell.
-	var roof_tiles: Array[Dictionary] = []
-	var roof_base := _roof_color_for_service(service_id, with_door)
-	for x in range(size.x):
-		for y in range(size.y):
-			var roof_cell := origin + Vector2i(x, y)
-			var trim := with_door and (
-				(y == size.y - 1 and door_side == "south" and absi(x - int(size.x / 2)) <= 1)
-				or (x == size.x - 1 and door_side == "east" and absi(y - int(size.y / 2)) <= 1)
-			)
-			var roof_color := accent.darkened(0.48) if trim else roof_base
-			roof_tiles.append({
-				"cell": _service_floor_cell(service_id),
-				"position": grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.JOINED_BLOCK_LEVEL_HEIGHT * float(wall_levels)),
-				"base_color": roof_color,
-				"detail_tint": Color.WHITE,
-				"detail_alpha": 0.90,
-			})
-	var roof_depth := 1700 + int(round(global_position.y + grid_to_world(Vector2(door_cell)).y))
-	building.add_child(CITY.create_floor_batch(roof_tiles, roof_depth, "Roof"))
-
+	# No roof layer in this pass. The previous roof diamonds read as floating
+	# floor tiles and obscured the wall language the city needs to establish.
 	if not title.is_empty():
 		var sign := Label.new()
 		sign.text = title
-		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-96.0, -158.0)
+		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-96.0, -188.0)
 		sign.size = Vector2(192.0, 28.0)
 		sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		sign.add_theme_font_size_override("font_size", 12)
@@ -518,24 +520,6 @@ func _residential_accent_block() -> Vector2i:
 			return BLOCK_TEAL
 		_:
 			return BLOCK_PURPLE
-
-
-func _roof_color_for_service(service_id: String, with_door: bool) -> Color:
-	if not with_door:
-		return Color(0.20, 0.27, 0.32, 1.0)
-	match service_id:
-		"digilab":
-			return Color(0.11, 0.27, 0.31, 1.0)
-		"hospital":
-			return Color(0.30, 0.37, 0.39, 1.0)
-		"training":
-			return Color(0.15, 0.30, 0.20, 1.0)
-		"shop":
-			return Color(0.33, 0.26, 0.13, 1.0)
-		"archive":
-			return Color(0.24, 0.18, 0.32, 1.0)
-		_:
-			return Color(0.20, 0.27, 0.31, 1.0)
 
 
 func _service_block_cell(service_id: String) -> Vector2i:
