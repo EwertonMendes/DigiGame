@@ -13,7 +13,6 @@ const FLOWER_RED_TEXTURE = preload("res://assets/world/hawkbirdtree/flowers_red.
 const FLOWER_PURPLE_TEXTURE = preload("res://assets/world/hawkbirdtree/flowers_purple.png")
 const FLOWER_YELLOW_TEXTURE = preload("res://assets/world/hawkbirdtree/flowers_yellow.png")
 const WATER_TEXTURE = preload("res://assets/world/hawkbirdtree/water.png")
-const TREE_TEXTURE = preload("res://assets/world/hawkbirdtree/tree.png")
 const ROCK_TEXTURE = preload("res://assets/world/hawkbirdtree/rock.png")
 const CRATE_TEXTURE = preload("res://assets/world/hawkbirdtree/crate.png")
 
@@ -159,24 +158,6 @@ func _build_props() -> void:
 	var props := Node2D.new()
 	props.name = "Props"
 	add_child(props)
-	var tree_grids: Array[Vector2i] = [
-		Vector2i(-5, -5), Vector2i(0, -5), Vector2i(5, -5),
-		Vector2i(-5, 0), Vector2i(5, 0), Vector2i(-5, 5), Vector2i(5, 5),
-	]
-	for index in range(tree_grids.size()):
-		var foot_position := _grid_to_world(Vector2(tree_grids[index]))
-		var tree := Sprite2D.new()
-		tree.name = "Tree%02d" % index
-		tree.texture = TREE_TEXTURE
-		tree.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tree.position = foot_position + Vector2(0.0, -47.0)
-		tree.z_index = 1000 + int(round(foot_position.y))
-		tree.set_meta("base_rotation", -0.012 if index % 2 == 0 else 0.012)
-		tree.set_meta("phase", float(index) * 0.8)
-		props.add_child(tree)
-		_trees.append(tree)
-		_blockers.append({"position": foot_position, "radius": 31.0})
-
 	_add_prop(props, ROCK_TEXTURE, Vector2i(-4, 2), Vector2(0.0, -15.0), 20.0, "Rock")
 	_add_prop(props, ROCK_TEXTURE, Vector2i(3, -4), Vector2(0.0, -15.0), 20.0, "Rock")
 	_add_prop(props, CRATE_TEXTURE, Vector2i(4, 3), Vector2(0.0, -31.0), 27.0, "SupplyCrate")

@@ -2,6 +2,11 @@ extends "res://src/world/HubController.gd"
 
 const ART = preload("res://src/world/DevilsWorkshopArt.gd")
 const AreaTitleOverlayScript = preload("res://src/ui/AreaTitleOverlay.gd")
+const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
+const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
+
+const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
+const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 
 const PLATFORM_MIN := -6
 const PLATFORM_MAX := 6
@@ -82,17 +87,22 @@ func _announce_current_area() -> void:
 		_area_title_overlay.present(AREA_TITLE, AREA_SUBTITLE, 1.75)
 
 
-# The old hub animated whole terrain sprites. Terrain is intentionally stable;
-# readable motion should come from characters, portals and authored VFX.
-func _process(_delta: float) -> void:
+# Keep every terrain surface exactly as authored. Only the two oak trees use
+# ambient presentation motion.
+func _process(delta: float) -> void:
+	_elapsed += delta
+	for tree: Sprite2D in _trees:
+		TreeAmbientFXScript.animate(tree, _elapsed)
 	_refresh_interaction()
 
 
 func _build_world() -> void:
 	_blockers.clear()
+	_trees.clear()
 	_build_lower_water_terrace()
 	_build_platform_foundation()
 	_build_recovery_platform()
+	_build_oak_trees()
 
 
 func _build_ambient_particles() -> void:
@@ -256,6 +266,64 @@ func _surface_presentation(grid: Vector2i) -> Dictionary:
 		"detail_tint": GRASS_DETAIL,
 		"detail_alpha": 0.42,
 	}
+
+
+func _build_oak_trees() -> void:
+	var props := Node2D.new()
+	props.name = "OakTrees"
+	add_child(props)
+
+	# Two trees only, framing the commons while keeping every service lane clear.
+	var tree_grids: Array[Vector2i] = [
+		Vector2i(-5, 4),
+		Vector2i(4, -5),
+	]
+
+	for index in range(tree_grids.size()):
+		var grid := tree_grids[index]
+		var foot_position := _grid_to_world(Vector2(grid))
+		var texture := _large_oak_texture()
+		var tree := Sprite2D.new()
+		tree.name = "OakTree%02d" % index
+		tree.texture = texture
+		tree.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tree.position = _oak_position_for_foot(grid, texture)
+		tree.z_index = 1000 + int(round(foot_position.y))
+		props.add_child(tree)
+
+		TreeAmbientFXScript.apply(
+			tree,
+			float(index) * 1.73,
+			3.25,
+			9,
+			Color(0.68, 0.94, 0.42, 0.78) if index == 0 else Color(0.44, 0.86, 0.35, 0.72)
+		)
+		_trees.append(tree)
+		_blockers.append({"position": foot_position, "radius": 27.0})
+
+
+func _large_oak_texture() -> AtlasTexture:
+	var texture := AtlasTexture.new()
+	texture.atlas = OAK_TREE_SOURCE
+	texture.region = LARGE_OAK_REGION
+	return texture
+
+
+func _oak_position_for_foot(grid: Vector2i, texture: Texture2D) -> Vector2:
+	var tile_center := _grid_to_world(Vector2(grid))
+	var center_to_near_edge := ART.TILE_HALF_HEIGHT
+	var tile_depth := maxf(1.0, center_to_near_edge * 2.0)
+	var rendered_height := texture.get_height()
+	var extra_height_tiles := maxf(0.0, (rendered_height - tile_depth) / tile_depth)
+	var visual_depth_ratio := clampf(
+		0.35 + extra_height_tiles * 0.50,
+		0.35,
+		0.90
+	)
+	var ground_anchor := tile_center + Vector2(0.0, center_to_near_edge * visual_depth_ratio)
+	var texture_center := texture.get_size() * 0.5
+	var center_to_foot := LARGE_OAK_FOOT - texture_center
+	return ground_anchor - center_to_foot
 
 
 func _platform_outline() -> PackedVector2Array:

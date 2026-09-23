@@ -17,8 +17,7 @@ The runtime PNGs are committed locally so Web and desktop builds never depend on
 | `flowers_purple.png` | `(128, 192, 64, 64)` |
 | `flowers_yellow.png` | `(192, 192, 64, 64)` |
 | `water.png` | `(896, 1152, 64, 32)` |
-| `tree.png` | `(768, 208, 64, 94)` |
 | `crate.png` | `(896, 832, 64, 64)` |
 | `rock.png` | `(784, 868, 30, 22)`, bottom-centered on a 32×32 transparent canvas |
 
-The author describes the pack as a work in progress and notes that some water tiles are animation frames. DigiGame adds gentle water shimmer, tree sway, particles, and a portal animation at runtime without changing the source PNGs.
+The author describes the pack as a work in progress and notes that some water tiles are animation frames. Tree visuals are sourced separately from `assets/terrain/Oak_Tree.png`; this directory no longer carries a Hub-specific tree sprite.

@@ -17,7 +17,6 @@ EXPECTED_BLOBS = {
     "assets/world/hawkbirdtree/grass.png": "47e4ee0336dea862f1c5674d3f1058741e54553e",
     "assets/world/hawkbirdtree/path.png": "db7799925c93012cb599aac1442ee6acc5d7d091",
     "assets/world/hawkbirdtree/rock.png": "fafc912930746dcf6761c85599f0a5ded6709f3e",
-    "assets/world/hawkbirdtree/tree.png": "61233eec4a9dc8fe6b7f3aec47d7cbbb5a1119ba",
     "assets/world/hawkbirdtree/water.png": "a43634cb304e617607dd921b82c3c4a191d2afe2",
     "assets/terrain/kenney/grass.png": "cb244de5ff52525b5afb7d8d64ce3180d0c32f54",
     "assets/terrain/kenney/earth.png": "c7d48eea143016d148d46db5d1ffad8b234078fa",
