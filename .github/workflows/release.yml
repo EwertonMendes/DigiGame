@@ -31,11 +31,11 @@ on:
       - tools/validate_app_icon.py
       - tools/prepare_release_metadata.py
       - docs/releases.md
-      - tools/setup_external_city_assets.sh
-      - tools/setup_external_city_assets.ps1
-      - tools/prepare_external_city_assets.py
-      - tools/validate_external_city_assets.py
-      - src/world/runtime/ExternalCityArt.gd
+      - tools/prepare_tblack_central_city_assets.py
+      - assets/terrain/tblack-central-city/source/**
+      - src/world/runtime/CentralCityAssetCatalog.gd
+      - src/world/runtime/CentralCityCustomArt.gd
+      - src/world/runtime/CentralCityLayout.gd
       - src/world/runtime/WorldAreaSection.gd
       - assets/resources/world/central_city.json
 
@@ -126,19 +126,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Restore external city asset cache
-        uses: actions/cache@v4
-        with:
-          path: .cache/external-city-assets
-          key: external-city-assets-v1-dystopian-future
-
-      - name: Stage optimized external Central City assets
+      - name: Prepare Tblack Central City runtime assets
         shell: bash
         run: |
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check --quiet "Pillow==11.3.0"
-          bash tools/setup_external_city_assets.sh
-          python3 tools/validate_external_city_assets.py
           python3 tools/prepare_tblack_central_city_assets.py
 
       - name: Validate app branding configuration
