@@ -368,7 +368,7 @@ func _build_exterior_shell(
 		else origin + Vector2i(size.x - 1, int(size.y / 2))
 	)
 	var accent_block := _service_block_cell(service_id)
-	var wall_levels := 2
+	var wall_levels := 2 if with_door else 1
 	for x in range(size.x):
 		for y in range(size.y):
 			var cell := origin + Vector2i(x, y)
@@ -393,7 +393,7 @@ func _build_exterior_shell(
 				continue
 
 			for level in range(wall_levels):
-				var block_cell := BLOCK_WALL_DARK if not with_door else BLOCK_WALL
+				var block_cell := BLOCK_WALL
 				if with_door and level > 0 and (x + y + level) % 4 == 0:
 					block_cell = accent_block
 				var block := CITY.create_block(
@@ -426,11 +426,11 @@ func _build_exterior_shell(
 				or (x == size.x - 1 and door_side == "east" and absi(y - int(size.y / 2)) <= 1)
 			)
 			roof_tiles.append({
-				"cell": _service_floor_cell(service_id) if trim else FLOOR_ROAD,
+				"cell": _service_floor_cell(service_id) if trim else FLOOR_PAVEMENT,
 				"position": grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * float(wall_levels)),
-				"base_color": Color(0.18, 0.21, 0.23, 1.0),
+				"base_color": Color(0.30, 0.32, 0.34, 1.0),
 				"detail_tint": Color.WHITE,
-				"detail_alpha": 0.76,
+				"detail_alpha": 0.52,
 			})
 	var roof_depth := 1700 + int(round(global_position.y + grid_to_world(Vector2(door_cell)).y))
 	building.add_child(CITY.create_floor_batch(roof_tiles, roof_depth, "Roof"))
