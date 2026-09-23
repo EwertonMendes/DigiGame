@@ -80,3 +80,114 @@ for pack_name in ("dystopian", "future"):
     build(pack_name)
 
 print("[CityAssetsProbe] PASS")
+
+
+def dystopian_components():
+    sheet_path = ROOT / "dystopian" / "Dystopian City Starter Pack" / "Dystopian City Starter Pack.png"
+    if not sheet_path.exists():
+        raise SystemExit(f"Dystopian sheet not found: {sheet_path}")
+
+    with Image.open(sheet_path) as src:
+        image = src.convert("RGBA")
+    alpha = image.getchannel("A")
+
+    # Merge pixels that belong to the same authored sprite but have a few
+    # transparent pixels between outline/shadow/glow parts.
+    mask = alpha.point(lambda a: 255 if a > 8 else 0)
+    from PIL import ImageFilter
+    expanded = mask.filter(ImageFilter.MaxFilter(9))
+
+    width, height = expanded.size
+    pix = expanded.load()
+    seen = bytearray(width * height)
+    components = []
+
+    def visit(sx, sy):
+        stack = [(sx, sy)]
+        seen[sy * width + sx] = 1
+        min_x = max_x = sx
+        min_y = max_y = sy
+        count = 0
+        while stack:
+            x, y = stack.pop()
+            count += 1
+            min_x = min(min_x, x)
+            max_x = max(max_x, x)
+            min_y = min(min_y, y)
+            max_y = max(max_y, y)
+            for nx, ny in ((x-1,y),(x+1,y),(x,y-1),(x,y+1)):
+                if nx < 0 or ny < 0 or nx >= width or ny >= height:
+                    continue
+                idx = ny * width + nx
+                if seen[idx] or pix[nx, ny] == 0:
+                    continue
+                seen[idx] = 1
+                stack.append((nx, ny))
+        return min_x, min_y, max_x + 1, max_y + 1, count
+
+    for y in range(height):
+        for x in range(width):
+            idx = y * width + x
+            if seen[idx] or pix[x, y] == 0:
+                continue
+            box = visit(x, y)
+            if box[4] < 40:
+                continue
+            pad = 6
+            x0 = max(0, box[0] - pad)
+            y0 = max(0, box[1] - pad)
+            x1 = min(width, box[2] + pad)
+            y1 = min(height, box[3] + pad)
+            components.append((x0, y0, x1, y1))
+
+    components.sort(key=lambda b: (b[1], b[0]))
+
+    inv = OUT / "dystopian-components.txt"
+    cols = 5
+    thumb_w = 180
+    thumb_h = 180
+    label_h = 48
+    rows = math.ceil(len(components) / cols)
+    canvas = Image.new(
+        "RGBA",
+        (
+            MARGIN + cols * (thumb_w + MARGIN),
+            MARGIN + rows * (thumb_h + label_h + MARGIN),
+        ),
+        (18, 22, 28, 255),
+    )
+    draw = ImageDraw.Draw(canvas)
+
+    with inv.open("w", encoding="utf-8") as fh:
+        for index, box in enumerate(components):
+            crop = image.crop(box)
+            bbox = crop.getbbox()
+            if bbox:
+                crop = crop.crop(bbox)
+            fh.write(
+                f"{index:03d}\tbox={box[0]},{box[1]},{box[2]},{box[3]}"
+                f"\tsize={crop.width}x{crop.height}\n"
+            )
+
+            col = index % cols
+            row = index // cols
+            x = MARGIN + col * (thumb_w + MARGIN)
+            y = MARGIN + row * (thumb_h + label_h + MARGIN)
+            preview = crop.copy()
+            preview.thumbnail((thumb_w - 12, thumb_h - 12), Image.Resampling.NEAREST)
+            px = x + (thumb_w - preview.width) // 2
+            py = y + (thumb_h - preview.height) // 2
+            canvas.alpha_composite(preview, (px, py))
+            draw.rectangle((x, y, x + thumb_w, y + thumb_h), outline=(70, 82, 96, 255), width=1)
+            draw.text(
+                (x + 5, y + thumb_h + 5),
+                f"#{index:03d}  {crop.width}x{crop.height}",
+                fill=(220, 230, 240, 255),
+                font=font,
+            )
+
+    canvas.save(OUT / "dystopian-components.png")
+    print(f"[CityAssetsProbe] dystopian components: {len(components)}")
+
+
+dystopian_components()
