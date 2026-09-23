@@ -271,7 +271,11 @@ async function runMobileSuite() {
 
   const client = await page.context().newCDPSession(page);
   const worldTouchStarted = waitForConsole(page, '[World] TOUCH_MOVE');
-  await dispatchTouch(client, 'touchStart', [{ x: 96, y: 739 }]);
+  // The new campaign HUD anchors a compact joystick to the lower-left safe
+  // area. Start in its center and drag right, matching a real thumb gesture.
+  await dispatchTouch(client, 'touchStart', [{ x: 29, y: 815 }]);
+  await page.waitForTimeout(60);
+  await dispatchTouch(client, 'touchMove', [{ x: 43, y: 815 }]);
   await worldTouchStarted;
   await page.waitForTimeout(300);
   await dispatchTouch(client, 'touchEnd', []);
