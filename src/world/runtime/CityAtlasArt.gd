@@ -61,26 +61,28 @@ static func create_floor_tile(
 	base.z_index = 0
 	root.add_child(base)
 
-	var cell_origin := Vector2(float(cell.x) * CELL_SIZE, float(cell.y) * CELL_SIZE)
-	var detail := Polygon2D.new()
-	detail.name = "AtlasFloor"
-	detail.polygon = tile_diamond()
-	detail.texture = ATLAS
-	detail.uv = PackedVector2Array([
-		cell_origin + FLOOR_LEFT,
-		cell_origin + FLOOR_TOP,
-		cell_origin + FLOOR_RIGHT,
-		cell_origin + FLOOR_BOTTOM,
-	])
-	detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	detail.color = Color(
-		detail_tint.r,
-		detail_tint.g,
-		detail_tint.b,
-		clampf(detail_alpha, 0.0, 1.0)
-	)
-	detail.z_index = 1
-	root.add_child(detail)
+	var resolved_detail_alpha := clampf(detail_alpha, 0.0, 1.0)
+	if resolved_detail_alpha > 0.001:
+		var cell_origin := Vector2(float(cell.x) * CELL_SIZE, float(cell.y) * CELL_SIZE)
+		var detail := Polygon2D.new()
+		detail.name = "AtlasFloor"
+		detail.polygon = tile_diamond()
+		detail.texture = ATLAS
+		detail.uv = PackedVector2Array([
+			cell_origin + FLOOR_LEFT,
+			cell_origin + FLOOR_TOP,
+			cell_origin + FLOOR_RIGHT,
+			cell_origin + FLOOR_BOTTOM,
+		])
+		detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		detail.color = Color(
+			detail_tint.r,
+			detail_tint.g,
+			detail_tint.b,
+			resolved_detail_alpha
+		)
+		detail.z_index = 1
+		root.add_child(detail)
 	return root
 
 
@@ -101,13 +103,19 @@ static func create_floor_batch(
 	base.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	root.add_child(base)
 
-	var detail := MeshInstance2D.new()
-	detail.name = "DetailMesh"
-	detail.mesh = _build_floor_mesh(tiles, true)
-	detail.texture = ATLAS
-	detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	detail.z_index = 1
-	root.add_child(detail)
+	var has_visible_detail := false
+	for spec: Dictionary in tiles:
+		if float(spec.get("detail_alpha", 1.0)) > 0.001:
+			has_visible_detail = true
+			break
+	if has_visible_detail:
+		var detail := MeshInstance2D.new()
+		detail.name = "DetailMesh"
+		detail.mesh = _build_floor_mesh(tiles, true)
+		detail.texture = ATLAS
+		detail.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		detail.z_index = 1
+		root.add_child(detail)
 	return root
 
 
