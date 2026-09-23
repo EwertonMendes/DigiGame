@@ -241,12 +241,13 @@ func _build_plaza() -> void:
 	add_child(props)
 	var center := Vector2i(int(SECTION_SIZE / 2), int(SECTION_SIZE / 2))
 	var foot := grid_to_world(Vector2(center))
-	var landmark_name := String(definition.get("landmark_asset", "future_26"))
+	var landmark_name := String(definition.get("landmark_asset", "future_37"))
+	var landmark_scale := float(definition.get("landmark_scale", 0.50))
 	var landmark := ExternalCityArtScript.create_ground_sprite(
 		landmark_name,
 		foot,
 		1050 + int(round(global_position.y + foot.y)),
-		0.72
+		landmark_scale
 	)
 	if landmark != null:
 		props.add_child(landmark)

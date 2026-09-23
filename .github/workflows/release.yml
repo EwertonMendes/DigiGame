@@ -32,6 +32,7 @@ on:
       - tools/prepare_release_metadata.py
       - docs/releases.md
       - tools/setup_external_city_assets.sh
+      - tools/setup_external_city_assets.ps1
       - tools/prepare_external_city_assets.py
       - tools/validate_external_city_assets.py
       - src/world/runtime/ExternalCityArt.gd

@@ -142,7 +142,8 @@
       "theme": "plaza",
       "title": "Central Plaza",
       "subtitle": "Heart of Central City",
-      "landmark_asset": "future_26"
+      "landmark_asset": "future_37",
+      "landmark_scale": 0.5
     },
     {
       "coord": [

@@ -10,7 +10,7 @@ MANIFEST = ROOT / "manifest.json"
 REQUIRED = {
     "future_06", "future_11", "future_12", "future_18", "future_19",
     "future_13", "future_20", "future_21", "future_22", "future_24", "future_26", "future_27",
-    "future_29", "future_32", "future_33", "future_34", "future_35",
+    "future_29", "future_32", "future_33", "future_34", "future_35", "future_37",
     "future_36", "dystopian_road_a", "dystopian_road_b",
     "dystopian_street_lamp_a", "dystopian_street_lamp_b",
     "dystopian_terminal_a", "dystopian_terminal_b",

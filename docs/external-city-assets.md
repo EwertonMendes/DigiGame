@@ -26,7 +26,13 @@ On Linux/macOS/WSL:
 bash tools/setup_external_city_assets.sh
 ```
 
-The script requires Node/npm, `unzip`, and internet access.
+On Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/setup_external_city_assets.ps1
+```
+
+The setup scripts reuse the local `.cache/external-city-assets/` archives after the first download. Windows setup installs Pillow locally when necessary. Node.js LTS and Python 3 are required.
 
 
 ## Runtime preprocessing

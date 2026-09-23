@@ -16,12 +16,16 @@ download_pack() {
   rm -rf "$dest"
   mkdir -p "$dest" "$cache"
 
-  echo "[CityAssets] Downloading $slug from $url"
-  npx --yes "itchio-downloader@${ITCH_VERSION}" \
-    --url "$url" \
-    --downloadDirectory "$cache"
-
   mapfile -t archives < <(find "$cache" -type f \( -iname '*.zip' -o -iname '*.7z' -o -iname '*.rar' \) | sort)
+  if [[ ${#archives[@]} -eq 0 ]]; then
+    echo "[CityAssets] Downloading $slug from $url"
+    npx --yes "itchio-downloader@${ITCH_VERSION}" \
+      --url "$url" \
+      --downloadDirectory "$cache"
+    mapfile -t archives < <(find "$cache" -type f \( -iname '*.zip' -o -iname '*.7z' -o -iname '*.rar' \) | sort)
+  else
+    echo "[CityAssets] Reusing cached archive for $slug"
+  fi
   if [[ ${#archives[@]} -eq 0 ]]; then
     echo "::error::No downloadable archive found for $slug"
     find "$cache" -maxdepth 3 -type f -print || true
