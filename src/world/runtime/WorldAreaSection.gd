@@ -34,14 +34,6 @@ const BLOCK_LIME := Vector2i(16, 13)
 const BLOCK_PURPLE := Vector2i(5, 13)
 const BLOCK_BLUE := Vector2i(6, 13)
 const DOOR_DARK := Vector2i(15, 47)
-const WINDOW_CYAN := Vector2i(10, 15)
-const WINDOW_WHITE := Vector2i(15, 15)
-const WINDOW_GREEN := Vector2i(12, 15)
-const WINDOW_YELLOW := Vector2i(11, 15)
-const WINDOW_PURPLE := Vector2i(17, 15)
-const STREET_LAMP := Vector2i(6, 53)
-const BENCH := Vector2i(5, 18)
-const CITY_CORE := Vector2i(3, 20)
 
 const ROAD_BASE := Color(0.075, 0.12, 0.16, 1.0)
 const PAVEMENT_BASE := Color(0.25, 0.31, 0.34, 1.0)
@@ -49,20 +41,13 @@ const PLAZA_BASE := Color(0.075, 0.35, 0.39, 1.0)
 const PARK_BASE := Color(0.13, 0.39, 0.24, 1.0)
 const WATER_BASE := Color(0.035, 0.27, 0.43, 1.0)
 
-# Central City deliberately uses flat MC Blocks-derived color fields for its
-# walkable ground. The authored atlas diamonds have a dark outline around every
-# cell, so repeating them over the whole map made the city look like a visible
-# tile grid. District colors keep the MC Blocks palette while reading as one
-# continuous street / sidewalk surface.
-const RESIDENTIAL_PAVEMENT := Color(0.27, 0.33, 0.38, 1.0)
-const DIGILAB_PAVEMENT := Color(0.19, 0.34, 0.38, 1.0)
-const HOSPITAL_PAVEMENT := Color(0.33, 0.39, 0.41, 1.0)
-const TRAINING_PAVEMENT := Color(0.22, 0.35, 0.27, 1.0)
-const MARKET_PAVEMENT := Color(0.38, 0.31, 0.19, 1.0)
-const ARCHIVE_PAVEMENT := Color(0.30, 0.25, 0.38, 1.0)
-const GATE_PAVEMENT := Color(0.22, 0.28, 0.32, 1.0)
-const GARDEN_PAVEMENT := Color(0.23, 0.34, 0.28, 1.0)
-const CANAL_PAVEMENT := Color(0.20, 0.31, 0.38, 1.0)
+# These colors sit underneath the real MC Blocks floor texture. They are not
+# replacements for the atlas; they only keep the inner-cropped texture visually
+# coherent at the tiny overscan used to hide seams.
+const CYAN_ACCENT_BASE := Color(0.10, 0.30, 0.34, 1.0)
+const YELLOW_ACCENT_BASE := Color(0.38, 0.29, 0.12, 1.0)
+const GREEN_ACCENT_BASE := Color(0.15, 0.34, 0.20, 1.0)
+const PURPLE_ACCENT_BASE := Color(0.27, 0.20, 0.36, 1.0)
 
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
@@ -127,7 +112,7 @@ func _prepare_ground_data() -> void:
 				"cell": presentation.get("cell", FLOOR_PAVEMENT),
 				"position": position + grid_to_world(Vector2(cell)),
 				"base_color": presentation.get("base_color", PAVEMENT_BASE),
-				"detail_tint": Color.WHITE,
+				"detail_tint": presentation.get("detail_tint", Color.WHITE),
 				"detail_alpha": float(presentation.get("detail_alpha", 0.96)),
 			})
 			if not bool(presentation.get("walkable", true)):
@@ -139,37 +124,37 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 
 
 func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Dictionary:
-	# Roads are continuous city avenues. Ground atlas detail is intentionally
-	# disabled here: MC Blocks floor sprites carry a dark border around each
-	# diamond, which is useful for isolated props but visually noisy when tiled.
+	# Keep MC Blocks as the actual floor art. CityAtlasArt crops only the dark
+	# authored outline from the diamond and linearly filters the interior pixels,
+	# so repeated tiles read as one continuous material instead of a black grid.
 	var road := (
 		(section_coord.y == 0 and cell.y >= center - 1 and cell.y <= center + 1)
 		or (section_coord.x == 0 and cell.x >= center - 1 and cell.x <= center + 1)
 	)
-	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
-		return {
-			"cell": FLOOR_BLUE,
-			"base_color": WATER_BASE,
-			"detail_alpha": 0.0,
-			"walkable": false,
-		}
-	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
-		return {
-			"cell": FLOOR_PLAZA,
-			"base_color": PLAZA_BASE,
-			"detail_alpha": 0.0,
-			"walkable": true,
-		}
 	if road:
 		return {
 			"cell": FLOOR_ROAD,
 			"base_color": ROAD_BASE,
-			"detail_alpha": 0.0,
+			"detail_alpha": 0.96,
 			"walkable": true,
 		}
 
-	# Garden sections use deliberate planted zones, but the green is still a
-	# continuous field rather than a repeated outlined floor sprite.
+	if theme == "canal" and cell.y in [2, 3] and absi(cell.x - center) > 1:
+		return {
+			"cell": FLOOR_BLUE,
+			"base_color": WATER_BASE,
+			"detail_alpha": 0.96,
+			"walkable": false,
+		}
+
+	if theme == "plaza" and absi(cell.x - center) <= 3 and absi(cell.y - center) <= 3:
+		return {
+			"cell": FLOOR_PLAZA,
+			"base_color": PLAZA_BASE,
+			"detail_alpha": 0.94,
+			"walkable": true,
+		}
+
 	if theme == "garden":
 		var corner_plot := (
 			(cell.x <= 4 or cell.x >= 10)
@@ -179,46 +164,63 @@ func _ground_presentation(cell: Vector2i, theme: String, center: int) -> Diction
 			return {
 				"cell": FLOOR_GREEN,
 				"base_color": PARK_BASE,
-				"detail_alpha": 0.0,
+				"detail_alpha": 0.94,
 				"walkable": true,
 			}
 
+	# Service districts get a compact MC Blocks accent forecourt instead of
+	# tinting an entire 14x14 section. This keeps the city connected and lets the
+	# building itself provide the district identity.
+	var service_accent := _service_ground_accent(theme)
+	if not service_accent.is_empty() and _is_service_forecourt(cell, theme):
+		return {
+			"cell": service_accent.get("cell", FLOOR_PAVEMENT),
+			"base_color": service_accent.get("base_color", PAVEMENT_BASE),
+			"detail_alpha": 0.92,
+			"walkable": true,
+		}
+
 	return {
 		"cell": FLOOR_PAVEMENT,
-		"base_color": _district_pavement_color(theme),
-		"detail_alpha": 0.0,
+		"base_color": PAVEMENT_BASE,
+		"detail_alpha": 0.94,
 		"walkable": true,
 	}
 
 
-func _district_pavement_color(theme: String) -> Color:
+func _service_ground_accent(theme: String) -> Dictionary:
 	match theme:
-		"digilab":
-			return DIGILAB_PAVEMENT
-		"hospital":
-			return HOSPITAL_PAVEMENT
+		"digilab", "hospital":
+			return {"cell": FLOOR_CYAN, "base_color": CYAN_ACCENT_BASE}
 		"training":
-			return TRAINING_PAVEMENT
+			return {"cell": FLOOR_GREEN, "base_color": GREEN_ACCENT_BASE}
 		"market":
-			return MARKET_PAVEMENT
+			return {"cell": FLOOR_YELLOW, "base_color": YELLOW_ACCENT_BASE}
 		"archive":
-			return ARCHIVE_PAVEMENT
-		"gate":
-			return GATE_PAVEMENT
-		"garden":
-			return GARDEN_PAVEMENT
-		"canal":
-			return CANAL_PAVEMENT
-		"residential":
-			return RESIDENTIAL_PAVEMENT
+			return {"cell": FLOOR_PURPLE, "base_color": PURPLE_ACCENT_BASE}
 		_:
-			return PAVEMENT_BASE
+			return {}
+
+
+func _is_service_forecourt(cell: Vector2i, theme: String) -> bool:
+	match theme:
+		"digilab", "hospital":
+			return cell.x >= 3 and cell.x <= 9 and cell.y >= 6 and cell.y <= 10
+		"archive":
+			return cell.x >= 3 and cell.x <= 9 and cell.y >= 7 and cell.y <= 10
+		"training", "market":
+			return cell.x >= 6 and cell.x <= 10 and cell.y >= 4 and cell.y <= 9
+		_:
+			return false
 
 
 func _build_street_detail() -> void:
-	var props := Node2D.new()
-	props.name = "StreetFurniture"
-	add_child(props)
+	# Keep this pass intentionally clean: only trees remain as environmental
+	# decoration. Lamps, benches, fires and other small props can return after the
+	# ground/building language is stable.
+	var trees := Node2D.new()
+	trees.name = "Trees"
+	add_child(trees)
 	var theme := String(definition.get("theme", "residential"))
 
 	var tree_cells: Array[Vector2i] = []
@@ -236,16 +238,9 @@ func _build_street_detail() -> void:
 			tree_cells = [Vector2i(2, 11)]
 		_:
 			tree_cells = []
+
 	for index in range(tree_cells.size()):
-		_add_tree(props, tree_cells[index], index)
-
-	if theme != "garden" and theme != "canal":
-		for cell in [Vector2i(11, 5), Vector2i(11, 9)]:
-			_add_atlas_prop(props, STREET_LAMP, cell, Vector2(1.65, 1.65))
-
-	if theme in ["plaza", "garden"]:
-		for cell in [Vector2i(4, 10), Vector2i(10, 4)]:
-			_add_atlas_prop(props, BENCH, cell, Vector2(1.75, 1.75), false)
+		_add_tree(trees, tree_cells[index], index)
 
 
 func _build_theme_content() -> void:
@@ -270,19 +265,8 @@ func _build_theme_content() -> void:
 
 
 func _build_plaza() -> void:
-	var props := Node2D.new()
-	props.name = "CentralPlaza"
-	add_child(props)
-	var center := Vector2i(int(SECTION_SIZE / 2), int(SECTION_SIZE / 2))
-	var foot := grid_to_world(Vector2(center))
-	var core := CITY.create_prop(
-		CITY_CORE,
-		foot,
-		980 + int(round(global_position.y + foot.y)),
-		Vector2(2.25, 2.25)
-	)
-	props.add_child(core)
-	_mark_blocked(center)
+	# The plaza stays structurally clean for this pass. The guide is gameplay
+	# content, while the previous decorative core prop is intentionally removed.
 	_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
 
 
@@ -292,7 +276,7 @@ func _build_gate() -> void:
 	add_child(props)
 	for cell in [Vector2i(4, 5), Vector2i(4, 6), Vector2i(9, 5), Vector2i(9, 6)]:
 		for level in range(2):
-			var block := CITY.create_block(
+			var block := CITY.create_joined_block(
 				BLOCK_WALL_DARK,
 				grid_to_world(Vector2(cell)),
 				850 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
@@ -352,7 +336,7 @@ func _build_service_exterior(accent: Color, title: String, service_id: String) -
 		0,
 		Color(0.10, 0.15, 0.17, 1.0),
 		Color.WHITE,
-		0.62
+		0.92
 	)
 	entrance.add_child(pad)
 
@@ -429,7 +413,7 @@ func _build_exterior_shell(
 					size,
 					with_door
 				)
-				var lintel := CITY.create_block(
+				var lintel := CITY.create_joined_block(
 					lintel_cell,
 					grid_to_world(Vector2(cell)),
 					800 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
@@ -439,7 +423,7 @@ func _build_exterior_shell(
 				continue
 
 			for level in range(wall_levels):
-				var block := CITY.create_block(
+				var block := CITY.create_joined_block(
 					_facade_block_cell(service_id, level, x, y, size, with_door),
 					grid_to_world(Vector2(cell)),
 					720 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
@@ -448,7 +432,6 @@ func _build_exterior_shell(
 				building.add_child(block)
 
 	if with_door:
-		_add_service_windows(building, origin, size, service_id, door_side)
 		var door := CITY.create_prop(
 			DOOR_DARK,
 			grid_to_world(Vector2(door_cell)),
@@ -473,10 +456,10 @@ func _build_exterior_shell(
 			var roof_color := accent.darkened(0.48) if trim else roof_base
 			roof_tiles.append({
 				"cell": _service_floor_cell(service_id),
-				"position": grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * float(wall_levels)),
+				"position": grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.JOINED_BLOCK_LEVEL_HEIGHT * float(wall_levels)),
 				"base_color": roof_color,
 				"detail_tint": Color.WHITE,
-				"detail_alpha": 0.0,
+				"detail_alpha": 0.90,
 			})
 	var roof_depth := 1700 + int(round(global_position.y + grid_to_world(Vector2(door_cell)).y))
 	building.add_child(CITY.create_floor_batch(roof_tiles, roof_depth, "Roof"))
@@ -555,81 +538,6 @@ func _roof_color_for_service(service_id: String, with_door: bool) -> Color:
 			return Color(0.20, 0.27, 0.31, 1.0)
 
 
-func _add_service_windows(
-	parent: Node2D,
-	origin: Vector2i,
-	size: Vector2i,
-	service_id: String,
-	door_side: String
-) -> void:
-	var pane_cell := _service_window_cell(service_id)
-	var facade_cells: Array[Vector2i] = []
-	var door_cell := Vector2i.ZERO
-	if door_side == "south":
-		var door_x := int(size.x / 2)
-		door_cell = origin + Vector2i(door_x, size.y - 1)
-		for local_x in range(1, size.x - 1):
-			if local_x != door_x:
-				facade_cells.append(origin + Vector2i(local_x, size.y - 1))
-	else:
-		var door_y := int(size.y / 2)
-		door_cell = origin + Vector2i(size.x - 1, door_y)
-		for local_y in range(1, size.y - 1):
-			if local_y != door_y:
-				facade_cells.append(origin + Vector2i(size.x - 1, local_y))
-
-	for cell: Vector2i in facade_cells:
-		var foot := grid_to_world(Vector2(cell))
-		var pane := CITY.create_prop(
-			pane_cell,
-			foot,
-			1480 + int(round(global_position.y + foot.y)),
-			Vector2(1.48, 1.48),
-			Color.WHITE,
-			Vector2(0.0, -38.0)
-		)
-		parent.add_child(pane)
-
-	# A short accent canopy marks the doorway as an actual public entrance.
-	var canopy_offsets: Array[Vector2i] = [Vector2i.ZERO]
-	canopy_offsets.append(Vector2i(1, 0) if door_side == "south" else Vector2i(0, 1))
-	for canopy_offset: Vector2i in canopy_offsets:
-		var canopy_cell: Vector2i = door_cell + canopy_offset
-		var canopy := CITY.create_floor_tile(
-			_service_floor_cell(service_id),
-			grid_to_world(Vector2(canopy_cell)) - Vector2(0.0, 82.0),
-			1650 + int(round(global_position.y + grid_to_world(Vector2(canopy_cell)).y)),
-			Color(0.16, 0.18, 0.20, 1.0),
-			Color.WHITE,
-			0.86
-		)
-		parent.add_child(canopy)
-
-
-func _service_window_cell(service_id: String) -> Vector2i:
-	match service_id:
-		"digilab":
-			return WINDOW_CYAN
-		"hospital":
-			return WINDOW_WHITE
-		"training":
-			return WINDOW_GREEN
-		"shop":
-			return WINDOW_YELLOW
-		"archive":
-			return WINDOW_PURPLE
-		_:
-			return WINDOW_CYAN
-
-
-func _is_window_cell(x: int, y: int, size: Vector2i) -> bool:
-	if y == 0 and x in [1, size.x - 2]:
-		return true
-	if x == 0 and y in [1, size.y - 2]:
-		return true
-	return false
-
-
 func _service_block_cell(service_id: String) -> Vector2i:
 	match service_id:
 		"digilab":
@@ -706,25 +614,6 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	if leaves != null:
 		_leaf_particles.append(leaves)
 	_mark_blocked(cell)
-
-
-func _add_atlas_prop(
-	parent: Node2D,
-	atlas_cell: Vector2i,
-	cell: Vector2i,
-	scale: Vector2,
-	blocking: bool = true
-) -> void:
-	var foot := grid_to_world(Vector2(cell))
-	var prop := CITY.create_prop(
-		atlas_cell,
-		foot,
-		1000 + int(round(global_position.y + foot.y)),
-		scale
-	)
-	parent.add_child(prop)
-	if blocking:
-		_mark_blocked(cell)
 
 
 func set_ambient_vfx_active(active: bool) -> void:
