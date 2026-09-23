@@ -410,6 +410,11 @@ func _build_exterior_shell(
 ) -> Dictionary:
 	var building := Node2D.new()
 	building.name = node_name
+	building.add_to_group("central_city_building")
+	building.set_meta("grid_origin", origin)
+	building.set_meta("grid_size", size)
+	building.set_meta("wall_levels", 3)
+	building.set_meta("service_id", service_id)
 	add_child(building)
 
 	var door_cell := (
