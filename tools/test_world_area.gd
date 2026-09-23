@@ -33,15 +33,21 @@ func _ready() -> void:
 	var road_modules := get_tree().get_nodes_in_group("central_city_road_module")
 	var crosswalk_modules := get_tree().get_nodes_in_group("central_city_crosswalk_module")
 	var service_accesses := get_tree().get_nodes_in_group("central_city_service_access")
-	assert(custom_assets.size() >= 35, "Central City must still use the authored Tblack city kit for roads, plaza, greenery and props")
-	assert(ground_modules.size() >= 14, "Central City must use authored ground modules only where they have a semantic role")
+	assert(custom_assets.size() >= 45, "Central City must use the authored Tblack city kit for roads, district platforms, plaza, greenery and props")
+	assert(ground_modules.size() >= 29, "Central City must use a deliberate set of authored ground modules without checkerboard repetition")
 	assert(road_modules.size() == 6, "The current straight-only boulevard must contain exactly six road modules plus two crosswalk replacements")
 	assert(crosswalk_modules.size() == 2, "Central Plaza must have two authored crosswalk approaches")
 	assert(service_accesses.size() == 5, "Building-free service districts must keep all five interiors reachable")
+	var sidewalk_modules: Array = []
 	for module in ground_modules:
+		if String(module.get_meta("asset_id", "")) == "sidewalk":
+			sidewalk_modules.append(module)
+	assert(sidewalk_modules.size() == 12, "Finished sidewalk art must appear only as one authored district platform in eligible non-boulevard sections")
+	for module in sidewalk_modules:
+		var sidewalk_section = module.get_meta("section_coord", Vector2i.ZERO)
 		assert(
-			String(module.get_meta("asset_id", "")) != "sidewalk",
-			"Finished sidewalk/platform art must never be tiled as the city-wide pavement foundation"
+			sidewalk_section is Vector2i and (sidewalk_section as Vector2i).y != 0,
+			"Sidewalk district platforms must never overlap the straight boulevard"
 		)
 	for prop in get_tree().get_nodes_in_group("central_city_prop"):
 		var section_variant = prop.get_meta("section_coord", null)
