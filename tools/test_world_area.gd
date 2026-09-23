@@ -28,6 +28,23 @@ func _ready() -> void:
 	)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
+	assert(get_tree().get_nodes_in_group("central_city_wall_block").size() > 0, "Central City structures must use joined wall blocks")
+	for building_node in get_tree().get_nodes_in_group("central_city_building"):
+		var building := building_node as Node2D
+		assert(building != null, "Central City building metadata must belong to Node2D structures")
+		assert(int(building.get_meta("wall_levels", 0)) >= 3, "Every Central City establishment must be at least three blocks tall")
+		assert(building.find_child("Roof", true, false) == null, "Central City buildings must not create floating roof tile layers")
+		var origin_variant = building.get_meta("grid_origin", null)
+		var size_variant = building.get_meta("grid_size", null)
+		if origin_variant is Vector2i and size_variant is Vector2i:
+			var building_origin: Vector2i = origin_variant
+			var building_size: Vector2i = size_variant
+			var definition := area.get_section_definition((building.get_parent() as WorldAreaSection).section_coord)
+			var theme := String(definition.get("theme", ""))
+			if theme in ["digilab", "hospital"]:
+				assert(building_origin.y + building_size.y - 1 <= 4, "Horizontal-road establishments must stay above the road with a sidewalk buffer")
+			elif theme in ["training", "market"]:
+				assert(building_origin.x + building_size.x - 1 <= 4, "Vertical-road establishments must stay left of the road with a sidewalk buffer")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the safe plaza lane")
 
 	await _frames(2)
