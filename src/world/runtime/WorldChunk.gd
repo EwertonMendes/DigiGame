@@ -34,6 +34,11 @@ const BLOCK_LIME := Vector2i(16, 13)
 const BLOCK_PURPLE := Vector2i(5, 13)
 const BLOCK_BLUE := Vector2i(6, 13)
 const DOOR_DARK := Vector2i(15, 47)
+const WINDOW_CYAN := Vector2i(10, 15)
+const WINDOW_WHITE := Vector2i(15, 15)
+const WINDOW_GREEN := Vector2i(12, 15)
+const WINDOW_YELLOW := Vector2i(11, 15)
+const WINDOW_PURPLE := Vector2i(17, 15)
 const STREET_LAMP := Vector2i(6, 53)
 const BENCH := Vector2i(5, 18)
 const CITY_CORE := Vector2i(3, 20)
@@ -372,9 +377,7 @@ func _build_exterior_shell(
 
 			for level in range(2):
 				var block_cell := BLOCK_WALL
-				if level == 1 and _is_window_cell(x, y, size):
-					block_cell = BLOCK_GLASS
-				elif level == 1 and (x + y) % 4 == 0:
+				if level == 1 and (x + y) % 4 == 0:
 					block_cell = accent_block
 				var block := CITY.create_block(
 					block_cell,
@@ -387,6 +390,7 @@ func _build_exterior_shell(
 			_add_block_collision(cell, 21.5)
 
 	if with_door:
+		_add_service_windows(building, origin, size, service_id)
 		var door := CITY.create_prop(
 			DOOR_DARK,
 			grid_to_world(Vector2(door_cell)),
@@ -406,9 +410,9 @@ func _build_exterior_shell(
 				_service_floor_cell(service_id) if trim else FLOOR_ROAD,
 				grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * 2.0),
 				1580 + int(round(global_position.y + grid_to_world(Vector2(roof_cell)).y)),
-				Color(0.10, 0.12, 0.14, 1.0),
+				Color(0.17, 0.19, 0.21, 1.0),
 				Color.WHITE,
-				0.96
+				0.72
 			)
 			building.add_child(roof)
 
@@ -426,6 +430,46 @@ func _build_exterior_shell(
 		building.add_child(sign)
 
 	return {"node": building, "door_cell": door_cell}
+
+
+func _add_service_windows(
+	parent: Node2D,
+	origin: Vector2i,
+	size: Vector2i,
+	service_id: String
+) -> void:
+	var pane_cell := _service_window_cell(service_id)
+	var facade_cells: Array[Vector2i] = [
+		origin + Vector2i(size.x - 1, 1),
+		origin + Vector2i(size.x - 1, size.y - 2),
+	]
+	for cell: Vector2i in facade_cells:
+		var foot := grid_to_world(Vector2(cell))
+		var pane := CITY.create_prop(
+			pane_cell,
+			foot,
+			1480 + int(round(global_position.y + foot.y)),
+			Vector2(1.55, 1.55),
+			Color.WHITE,
+			Vector2(0.0, -34.0)
+		)
+		parent.add_child(pane)
+
+
+func _service_window_cell(service_id: String) -> Vector2i:
+	match service_id:
+		"digilab":
+			return WINDOW_CYAN
+		"hospital":
+			return WINDOW_WHITE
+		"training":
+			return WINDOW_GREEN
+		"shop":
+			return WINDOW_YELLOW
+		"archive":
+			return WINDOW_PURPLE
+		_:
+			return WINDOW_CYAN
 
 
 func _is_window_cell(x: int, y: int, size: Vector2i) -> bool:
