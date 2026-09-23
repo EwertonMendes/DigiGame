@@ -23,7 +23,7 @@ const REGION_ID := "central_city"
 const AREA_ID := "central_city"
 const TEST_HUB_SCENE := "res://scenes/world/hub.tscn"
 const AUTO_SAVE_SECONDS := 5.0
-const SAFE_CITY_SPAWN := Vector2(-96.0, 272.0)
+const SAFE_CITY_SPAWN := Vector2(-192.0, 544.0)
 const ACTOR_CLEARANCE := 7.0
 const CLEARANCE_SAMPLES: Array[Vector2] = [
 	Vector2.ZERO,
@@ -350,6 +350,9 @@ func _build_player(parent: Node2D) -> void:
 	_player = ActorScript.new() as OverworldActor
 	_player.name = "Player"
 	_player.configure(PLAYER_TEXTURE, true, self, WorldState.player_facing)
+	# Central City now uses a 128x64 exterior grid; keep traversal responsive
+	# without changing movement speed in the 64x32 test Hub or battlefields.
+	_player.move_speed = 220.0
 	parent.add_child(_player)
 	_player.global_position = WorldState.player_position
 	_player.world_position_changed.connect(_on_player_moved)
@@ -357,7 +360,7 @@ func _build_player(parent: Node2D) -> void:
 	_world_camera.name = "WorldCamera"
 	_world_camera.position_smoothing_enabled = true
 	_world_camera.position_smoothing_speed = 7.5
-	_world_camera.zoom = Vector2.ONE * 1.18
+	_world_camera.zoom = Vector2.ONE * 0.92
 	_player.add_child(_world_camera)
 
 
