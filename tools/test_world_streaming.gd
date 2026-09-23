@@ -24,6 +24,40 @@ func _ready() -> void:
 	assert(get_tree().get_nodes_in_group("world_interior_threshold").size() >= 3, "Nearby city services must expose physical seamless-entry thresholds")
 
 	var player_node := player as Node2D
+
+	# Real movement must cross the half-tile seam between authored chunks. The
+	# previous regression teleported directly into the next chunk and therefore
+	# missed the invisible barrier created by mismatched chunk/cell ownership.
+	var east_before := _grid_to_world(Vector2(13.35, 7.0))
+	var east_after := _grid_to_world(Vector2(13.65, 7.0))
+	player_node.global_position = east_before
+	await _frames(2)
+	player_node.call("_try_move", east_after - east_before)
+	await _frames(2)
+	assert(
+		player_node.global_position.distance_to(east_after) < 2.0,
+		"Continuous movement must cross the east chunk seam without an invisible wall"
+	)
+	assert(
+		streamer.call("world_to_chunk", player_node.global_position) == Vector2i(1, 0),
+		"Crossing the east seam must hand ownership to chunk 1,0 at the tile edge"
+	)
+
+	var south_before := _grid_to_world(Vector2(7.0, 13.35))
+	var south_after := _grid_to_world(Vector2(7.0, 13.65))
+	player_node.global_position = south_before
+	await _frames(2)
+	player_node.call("_try_move", south_after - south_before)
+	await _frames(2)
+	assert(
+		player_node.global_position.distance_to(south_after) < 2.0,
+		"Continuous movement must cross the south chunk seam without an invisible wall"
+	)
+	assert(
+		streamer.call("world_to_chunk", player_node.global_position) == Vector2i(0, 1),
+		"Crossing the south seam must hand ownership to chunk 0,1 at the tile edge"
+	)
+
 	player_node.global_position = _grid_to_world(Vector2(21, 7))
 	await _frames(12)
 	assert(streamer.call("get_current_chunk") == Vector2i(1, 0), "Walking east must cross a chunk boundary without changing scenes")
