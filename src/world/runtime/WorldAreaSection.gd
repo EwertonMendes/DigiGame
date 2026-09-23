@@ -54,7 +54,7 @@ var section_coord := Vector2i.ZERO
 
 var _player: Node2D = null
 var _world_controller: Node = null
-var _blocked_cells: Dictionary = {}
+var _blocked_cells := PackedByteArray()
 var _leaf_particles: Array[CPUParticles2D] = []
 
 
@@ -64,6 +64,8 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	section_coord = Vector2i(int(raw_coord[0]), int(raw_coord[1]))
 	_player = player
 	_world_controller = world_controller
+	_blocked_cells.resize(SECTION_SIZE * SECTION_SIZE)
+	_blocked_cells.fill(0)
 	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
 	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
 	_build_section()
@@ -74,7 +76,7 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
 	if cell.x < 0 or cell.y < 0 or cell.x >= SECTION_SIZE or cell.y >= SECTION_SIZE:
 		return false
-	return not _blocked_cells.has(_cell_key(cell))
+	return _blocked_cells[cell.y * SECTION_SIZE + cell.x] == 0
 
 
 func grid_to_world(grid: Vector2) -> Vector2:
@@ -637,8 +639,6 @@ func get_ground_render_node_count() -> int:
 
 
 func _mark_blocked(cell: Vector2i) -> void:
-	_blocked_cells[_cell_key(cell)] = true
-
-
-func _cell_key(cell: Vector2i) -> String:
-	return "%d:%d" % [cell.x, cell.y]
+	if cell.x < 0 or cell.y < 0 or cell.x >= SECTION_SIZE or cell.y >= SECTION_SIZE:
+		return
+	_blocked_cells[cell.y * SECTION_SIZE + cell.x] = 1

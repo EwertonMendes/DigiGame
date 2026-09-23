@@ -28,4 +28,6 @@ func _ready() -> void:
 
 
 func can_interact(player: Node2D) -> bool:
-	return enabled and player != null and global_position.distance_to(player.global_position) <= interaction_radius
+	if not enabled or player == null:
+		return false
+	return global_position.distance_squared_to(player.global_position) <= interaction_radius * interaction_radius

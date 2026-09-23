@@ -107,16 +107,16 @@ func _rebuild_registry() -> void:
 func _refresh_candidate() -> void:
 	var best: WorldInteractable = null
 	var best_priority := -2147483648
-	var best_distance := INF
+	var best_distance_squared := INF
 	if _player != null:
 		for candidate: WorldInteractable in _interactables:
 			if candidate == null or not is_instance_valid(candidate) or not candidate.can_interact(_player):
 				continue
-			var distance := _player.global_position.distance_to(candidate.global_position)
-			if candidate.priority > best_priority or (candidate.priority == best_priority and distance < best_distance):
+			var distance_squared := _player.global_position.distance_squared_to(candidate.global_position)
+			if candidate.priority > best_priority or (candidate.priority == best_priority and distance_squared < best_distance_squared):
 				best = candidate
 				best_priority = candidate.priority
-				best_distance = distance
+				best_distance_squared = distance_squared
 	if best == _current:
 		return
 	_current = best

@@ -15,6 +15,7 @@ var _player: Node2D = null
 var _world_controller: Node = null
 var _definitions: Dictionary = {}
 var _sections: Dictionary = {}
+var _section_list: Array[WorldAreaSection] = []
 var _exterior_active := true
 var _ambient_elapsed := 0.0
 var _last_ambient_section := Vector2i(999999, 999999)
@@ -25,6 +26,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	_world_controller = world_controller
 	_definitions.clear()
 	_sections.clear()
+	_section_list.clear()
 	_exterior_active = false
 	visible = false
 	process_mode = Node.PROCESS_MODE_DISABLED
@@ -59,9 +61,9 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 			return false
 		instance.configure(definition, _player, _world_controller)
 		add_child(instance)
-		var key := _coord_key(coord)
-		_definitions[key] = definition
-		_sections[key] = instance
+		_definitions[coord] = definition
+		_sections[coord] = instance
+		_section_list.append(instance)
 		completed += 1
 		load_progress.emit(completed, total)
 		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
@@ -92,7 +94,7 @@ func _process(delta: float) -> void:
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
 	var coord := world_to_section(world_position)
-	var section = _sections.get(_coord_key(coord))
+	var section = _sections.get(coord)
 	if section == null or not is_instance_valid(section):
 		return false
 	return bool((section as WorldAreaSection).is_walkable_world_position(world_position))
@@ -110,11 +112,11 @@ func world_to_section(world_position: Vector2) -> Vector2i:
 
 
 func has_section(coord: Vector2i) -> bool:
-	return _sections.has(_coord_key(coord))
+	return _sections.has(coord)
 
 
 func get_section_count() -> int:
-	return _sections.size()
+	return _section_list.size()
 
 
 func get_runtime_node_count() -> int:
@@ -123,14 +125,13 @@ func get_runtime_node_count() -> int:
 
 func get_ground_render_node_count() -> int:
 	var total := 0
-	for raw_section in _sections.values():
-		if raw_section is WorldAreaSection:
-			total += (raw_section as WorldAreaSection).get_ground_render_node_count()
+	for section: WorldAreaSection in _section_list:
+		total += section.get_ground_render_node_count()
 	return total
 
 
 func get_section_definition(coord: Vector2i) -> Dictionary:
-	var raw = _definitions.get(_coord_key(coord), {})
+	var raw = _definitions.get(coord, {})
 	return (raw as Dictionary).duplicate(true) if raw is Dictionary else {}
 
 
@@ -151,11 +152,7 @@ func _update_ambient_vfx(force: bool) -> void:
 	if not force and player_section == _last_ambient_section:
 		return
 	_last_ambient_section = player_section
-	for key in _sections:
-		var raw_section = _sections[key]
-		if not raw_section is WorldAreaSection:
-			continue
-		var section := raw_section as WorldAreaSection
+	for section: WorldAreaSection in _section_list
 		var distance := maxi(
 			absi(section.section_coord.x - player_section.x),
 			absi(section.section_coord.y - player_section.y)
@@ -169,6 +166,3 @@ func _count_nodes(node: Node) -> int:
 		total += _count_nodes(child)
 	return total
 
-
-func _coord_key(coord: Vector2i) -> String:
-	return "%d:%d" % [coord.x, coord.y]
