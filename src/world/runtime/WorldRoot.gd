@@ -35,6 +35,8 @@ var _area_title: AreaTitleOverlay = null
 var _mobile_root: Control = null
 var _touch_joystick: TouchJoystick = null
 var _touch_interact: Button = null
+var _touch_menu: Button = null
+var _fallback_action_touch := -1
 var _dialog: PanelContainer = null
 var _dialog_title: Label = null
 var _dialog_body: Label = null
@@ -116,6 +118,33 @@ func _process(delta: float) -> void:
 			_save_elapsed = 0.0
 			_persist_world_location()
 			OverworldState.save_progress()
+
+
+func _input(event: InputEvent) -> void:
+	if not event is InputEventScreenTouch:
+		return
+	var touch := event as InputEventScreenTouch
+	if touch.pressed:
+		if _fallback_action_touch != -1:
+			return
+		if _mobile_root == null or not _mobile_root.visible:
+			return
+		if _touch_menu != null and _control_contains_viewport_point(_touch_menu, touch.position, 10.0):
+			_fallback_action_touch = touch.index
+			_on_touch_menu()
+			get_viewport().set_input_as_handled()
+			return
+		if (
+			_touch_interact != null
+			and not _touch_interact.disabled
+			and _control_contains_viewport_point(_touch_interact, touch.position, 10.0)
+		):
+			_fallback_action_touch = touch.index
+			_on_touch_interact()
+			get_viewport().set_input_as_handled()
+			return
+	elif touch.index == _fallback_action_touch:
+		_fallback_action_touch = -1
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -259,26 +288,48 @@ func _build_mobile_controls(root: Control) -> void:
 	_mobile_root.name = "MobileControls"
 	_mobile_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_mobile_root)
+
 	_touch_joystick = TouchJoystickScript.new() as TouchJoystick
+	_touch_joystick.name = "MovementJoystick"
 	_touch_joystick.direction_changed.connect(_on_touch_direction)
 	_mobile_root.add_child(_touch_joystick)
+
+	_touch_menu = Button.new()
+	_touch_menu.name = "Menu"
+	_touch_menu.text = "MENU"
+	_touch_menu.custom_minimum_size = Vector2(118.0, 58.0)
+	_touch_menu.focus_mode = Control.FOCUS_NONE
+	_touch_menu.button_down.connect(_on_touch_menu)
+	_style_touch_button(_touch_menu, UI.BLUE)
+	_mobile_root.add_child(_touch_menu)
+
 	_touch_interact = Button.new()
+	_touch_interact.name = "Interact"
 	_touch_interact.text = "INTERACT"
-	_touch_interact.custom_minimum_size = Vector2(118, 58)
+	_touch_interact.custom_minimum_size = Vector2(118.0, 58.0)
 	_touch_interact.focus_mode = Control.FOCUS_NONE
-	_touch_interact.pressed.connect(_on_touch_interact)
+	# button_down responds on contact instead of waiting for a synthesized click.
+	# _input above is an explicit ScreenTouch fallback for mobile Web/APK devices
+	# where GUI mouse emulation can be inconsistent.
+	_touch_interact.button_down.connect(_on_touch_interact)
+	_style_touch_button(_touch_interact, UI.CYAN)
 	_mobile_root.add_child(_touch_interact)
 
 
 func _layout_ui() -> void:
 	if _prompt == null:
 		return
-	var viewport_size := get_viewport().get_visible_rect().size
-	var compact := UI.is_compact(get_viewport(), 760.0)
+	var viewport_obj := get_viewport()
+	var viewport_size := viewport_obj.get_visible_rect().size
+	var physical := UI.physical_window_size(viewport_obj)
+	var ui_scale := UI.ui_scale(viewport_obj)
+	var compact := UI.is_compact(viewport_obj, 760.0)
+	var touch_layout := UI.is_touch_runtime() or compact
+	var landscape := physical.x > physical.y
 	var prompt_width := minf(270.0, viewport_size.x - 28.0)
 	_prompt.position = Vector2(
 		(viewport_size.x - prompt_width) * 0.5,
-		viewport_size.y - (92.0 if not compact else 190.0)
+		viewport_size.y - (92.0 if not touch_layout else 190.0)
 	)
 	_prompt.size = Vector2(prompt_width, 54.0)
 
@@ -292,15 +343,42 @@ func _layout_ui() -> void:
 		_dialog.size = Vector2(dialog_width, dialog_height)
 
 	if _mobile_root != null:
-		_mobile_root.visible = compact and (_services == null or not _services.is_open()) and (_dialog == null or not _dialog.visible)
-		_mobile_root.position = Vector2.ZERO
-		_mobile_root.size = viewport_size
+		var blocked := (_services != null and _services.is_open()) or (_dialog != null and _dialog.visible)
+		_mobile_root.visible = touch_layout and not blocked
+		_mobile_root.scale = Vector2.ONE * ui_scale
+
+		var edge := 18.0 if landscape else 24.0
+		var bottom := 18.0 if landscape else 30.0
+		var joystick_side := 146.0 if landscape else clampf(physical.x * 0.42, 158.0, 174.0)
+		_mobile_root.position = Vector2(
+			edge * ui_scale,
+			(physical.y - joystick_side - bottom) * ui_scale
+		)
+		_mobile_root.size = Vector2(maxf(1.0, physical.x - edge * 2.0), joystick_side)
+
 		if _touch_joystick != null:
-			_touch_joystick.position = Vector2(18.0, viewport_size.y - 178.0)
-			_touch_joystick.size = Vector2(156.0, 156.0)
+			_touch_joystick.position = Vector2.ZERO
+			_touch_joystick.size = Vector2(joystick_side, joystick_side)
+
+		var action_width := 112.0 if landscape else 118.0
+		var action_height := 54.0 if landscape else 60.0
+		var action_gap := 10.0
+		var action_x := maxf(joystick_side + 24.0, _mobile_root.size.x - action_width)
+		var action_y := maxf(
+			0.0,
+			(joystick_side - (action_height * 2.0 + action_gap)) * 0.5
+		)
+		if _touch_menu != null:
+			_touch_menu.position = Vector2(action_x, action_y)
+			_touch_menu.size = Vector2(action_width, action_height)
 		if _touch_interact != null:
-			_touch_interact.position = Vector2(viewport_size.x - 142.0, viewport_size.y - 100.0)
-			_touch_interact.size = Vector2(118.0, 58.0)
+			_touch_interact.position = Vector2(action_x, action_y + action_height + action_gap)
+			_touch_interact.size = Vector2(action_width, action_height)
+
+		print(
+			"[World] TOUCH_UI visible=%s touch_runtime=%s compact=%s physical=%s"
+			% [str(_mobile_root.visible), str(UI.is_touch_runtime()), str(compact), str(physical)]
+		)
 
 
 func _on_player_moved(world_position: Vector2) -> void:
@@ -338,7 +416,8 @@ func _on_interaction_candidate_changed(action_text: String) -> void:
 	if _prompt == null:
 		return
 	var blocked := (_services != null and _services.is_open()) or (_dialog != null and _dialog.visible)
-	_prompt.visible = not action_text.is_empty() and not blocked and not UI.is_compact(get_viewport(), 760.0)
+	var touch_layout := UI.is_touch_runtime() or UI.is_compact(get_viewport(), 760.0)
+	_prompt.visible = not action_text.is_empty() and not blocked and not touch_layout
 	if not action_text.is_empty():
 		_prompt.set_action(action_text)
 	if _touch_interact != null:
@@ -437,9 +516,42 @@ func _on_touch_direction(direction: Vector2) -> void:
 		print("[World] TOUCH_MOVE direction=%s" % str(direction))
 
 
+func _on_touch_menu() -> void:
+	if _services == null or _services.is_open() or (_dialog != null and _dialog.visible):
+		return
+	print("[World] TOUCH_MENU")
+	_services.open_main_menu()
+
+
 func _on_touch_interact() -> void:
-	if _interaction != null and not (_services != null and _services.is_open()):
-		_interaction.try_interact()
+	if _interaction == null or (_services != null and _services.is_open()):
+		return
+	if _dialog != null and _dialog.visible:
+		return
+	if _interaction.try_interact():
+		print("[World] TOUCH_INTERACT")
+
+
+func _style_touch_button(button: Button, accent: Color) -> void:
+	button.add_theme_color_override("font_color", UI.TEXT)
+	button.add_theme_color_override("font_hover_color", UI.TEXT)
+	button.add_theme_color_override("font_pressed_color", UI.TEXT)
+	button.add_theme_color_override("font_disabled_color", UI.DISABLED)
+	button.add_theme_stylebox_override("normal", UI.action_style(accent, "normal"))
+	button.add_theme_stylebox_override("hover", UI.action_style(accent, "hover"))
+	button.add_theme_stylebox_override("pressed", UI.action_style(accent, "pressed"))
+	button.add_theme_stylebox_override("disabled", UI.action_style(accent, "disabled"))
+	UI.apply_heading_font(button)
+
+
+func _control_contains_viewport_point(control: Control, viewport_pos: Vector2, padding: float = 0.0) -> bool:
+	if control == null or not control.visible:
+		return false
+	var local_pos := control.get_global_transform_with_canvas().affine_inverse() * viewport_pos
+	return Rect2(
+		Vector2(-padding, -padding),
+		control.size + Vector2.ONE * padding * 2.0
+	).has_point(local_pos)
 
 
 func _is_interact_event(event: InputEvent) -> bool:
