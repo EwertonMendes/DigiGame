@@ -18,8 +18,8 @@ const BLOCK_LEVEL_HEIGHT := 32.0
 # each cube; at the original scale this reads as detached blocks. A small,
 # uniform overscale closes that authored padding without changing the grid,
 # collision footprint or atlas source.
-const JOINED_BLOCK_SCALE := Vector2(2.18, 2.18)
-const JOINED_BLOCK_TOP_CENTER_OFFSET := Vector2(0.0, 13.1)
+const JOINED_BLOCK_SCALE := Vector2(2.24, 2.24)
+const JOINED_BLOCK_TOP_CENTER_OFFSET := Vector2(0.0, 13.45)
 const JOINED_BLOCK_LEVEL_HEIGHT := 30.0
 
 # Every flat-floor icon in row 16 shares this authored diamond footprint
