@@ -283,12 +283,25 @@ async function runMobileSuite() {
   await openWorld(page);
   await page.screenshot({ path: 'build/world-mobile-portrait.png', fullPage: true });
 
-  // V2 menu should open/close on the mobile-sized viewport, but exact pixels are
-  // deliberately not part of this regression contract.
-  await page.keyboard.press('KeyM');
+  // The campaign touch HUD itself is part of the mobile contract. The player
+  // starts near the City Guide, so prove interaction through the real touch
+  // button before using any keyboard fallback.
+  await page.waitForTimeout(120);
+  const touchInteract = waitForConsole(page, '[World] TOUCH_INTERACT', 10000);
+  await page.touchscreen.tap(307, 767);
+  await touchInteract;
+  await settleFrames(page, 2);
+  await page.screenshot({ path: 'build/world-mobile-dialog.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await settleFrames(page, 2);
+
+  const touchMenu = waitForConsole(page, '[World] TOUCH_MENU', 10000);
+  await page.touchscreen.tap(307, 697);
+  await touchMenu;
   await settleFrames(page, 3);
   await page.screenshot({ path: 'build/digimon-technique-library-mobile.png', fullPage: true });
   await page.keyboard.press('Escape');
+  await settleFrames(page, 2);
 
   const client = await page.context().newCDPSession(page);
   const worldTouchStarted = waitForConsole(page, '[World] TOUCH_MOVE');
@@ -302,6 +315,31 @@ async function runMobileSuite() {
   await dispatchTouch(client, 'touchEnd', []);
   await settleFrames(page, 2);
   await page.screenshot({ path: 'build/world-mobile-movement.png', fullPage: true });
+
+  // Reproduce the native APK's 1280x720 logical viewport. This is intentionally
+  // not compact, so touch controls must remain visible because touch capability
+  // — not viewport size — owns the mobile HUD decision.
+  const nativeLogicalTouchUi = waitForConsole(
+    page,
+    '[World] TOUCH_UI visible=true touch_runtime=true compact=false',
+    10000,
+  );
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await nativeLogicalTouchUi;
+  await settleFrames(page, 3);
+  await page.screenshot({ path: 'build/world-touch-1280x720.png', fullPage: true });
+
+  const nativeLogicalMenu = waitForConsole(page, '[World] TOUCH_MENU', 10000);
+  await page.touchscreen.tap(1206, 597);
+  await nativeLogicalMenu;
+  await settleFrames(page, 2);
+  await page.screenshot({ path: 'build/world-touch-menu-1280x720.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await settleFrames(page, 2);
+
+  // Return to portrait before switching to the preserved Test Hub.
+  await page.setViewportSize(mobileViewports[0]);
+  await settleFrames(page, 3);
 
   // Switch to the developer-only Test Hub for the existing battle interaction
   // coverage; this also proves the legacy Hub remains independently runnable.
