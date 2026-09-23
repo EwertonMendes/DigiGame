@@ -7,6 +7,12 @@ const debugHubUrl = (() => {
   target.searchParams.set('test_hub', '1');
   return target.toString();
 })();
+const debugInteriorUrl = (() => {
+  const target = new URL(url);
+  target.searchParams.set('debug', '1');
+  target.searchParams.set('interior_test', 'digilab');
+  return target.toString();
+})();
 const requestedSuite = process.env.SMOKE_SUITE ?? 'desktop';
 const suite = requestedSuite === 'combat' || requestedSuite === 'vfx' ? 'combat-vfx' : requestedSuite;
 const runtimeErrors = [];
@@ -61,6 +67,16 @@ async function openWorld(page) {
   await waitForCanvas(page);
   await ready;
   await settleFrames(page, 4);
+}
+
+async function openInterior(page) {
+  const worldReady = waitForConsole(page, '[World] READY', 60000);
+  const interiorReady = waitForConsole(page, '[World] INTERIOR_ENTER id=debug_digilab', 60000);
+  await page.goto(debugInteriorUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForCanvas(page);
+  await worldReady;
+  await interiorReady;
+  await settleFrames(page, 5);
 }
 
 async function openHub(page) {
@@ -195,6 +211,11 @@ async function runDesktopSuite() {
   await page.keyboard.up('KeyA');
   await settleFrames(page, 2);
   await page.screenshot({ path: 'build/world-movement.png', fullPage: true });
+
+  // Review a real large interior in the same browser pass. This uses a
+  // developer-only route so QA does not depend on scripted walking coordinates.
+  await openInterior(page);
+  await page.screenshot({ path: 'build/world-interior-digilab.png', fullPage: true });
 
   // Combat QA still uses the preserved Test Hub, reached only through the
   // developer-only query route. Normal players never enter this scene.
