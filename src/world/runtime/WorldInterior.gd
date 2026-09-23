@@ -212,15 +212,18 @@ func _build_service_zones() -> void:
 			for cell in [Vector2i(4, 6), Vector2i(4, 9), Vector2i(14, 6), Vector2i(14, 9)]:
 				_add_station(ANVIL, cell, Vector2(1.9, 1.9))
 		"shop":
-			for spec in [
-				[Vector2i(3, 6), CHEST],
-				[Vector2i(4, 6), CHEST_ALT],
-				[Vector2i(13, 6), CHEST],
-				[Vector2i(14, 6), CHEST_ALT],
-				[Vector2i(3, 9), CHEST_ALT],
-				[Vector2i(14, 9), CHEST],
-			]:
-				_add_station(spec[1] as Vector2i, spec[0] as Vector2i, Vector2(1.8, 1.8))
+			var market_stations: Array[Dictionary] = [
+				{"cell": Vector2i(3, 6), "asset": CHEST},
+				{"cell": Vector2i(4, 6), "asset": CHEST_ALT},
+				{"cell": Vector2i(13, 6), "asset": CHEST},
+				{"cell": Vector2i(14, 6), "asset": CHEST_ALT},
+				{"cell": Vector2i(3, 9), "asset": CHEST_ALT},
+				{"cell": Vector2i(14, 9), "asset": CHEST},
+			]
+			for spec: Dictionary in market_stations:
+				var station_cell: Vector2i = spec.get("cell", Vector2i.ZERO)
+				var station_asset: Vector2i = spec.get("asset", CHEST)
+				_add_station(station_asset, station_cell, Vector2(1.8, 1.8))
 		"archive":
 			for cell in [Vector2i(3, 5), Vector2i(3, 8), Vector2i(14, 5), Vector2i(14, 8)]:
 				_add_station(BOOKSHELF, cell, Vector2(1.9, 1.9))
@@ -231,9 +234,10 @@ func _build_service_zones() -> void:
 
 
 func _build_hospital_bays() -> void:
-	for origin in [Vector2i(3, 7), Vector2i(13, 7)]:
-		for dx in range(2):
-			var cell := origin + Vector2i(dx, 0)
+	var bay_origins: Array[Vector2i] = [Vector2i(3, 7), Vector2i(13, 7)]
+	for origin: Vector2i in bay_origins:
+		for dx: int in range(2):
+			var cell: Vector2i = origin + Vector2i(dx, 0)
 			var pad := CITY.create_floor_tile(
 				FLOOR_WHITE,
 				grid_to_world(Vector2(cell)),
