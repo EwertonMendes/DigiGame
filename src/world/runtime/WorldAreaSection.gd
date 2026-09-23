@@ -14,7 +14,7 @@ const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 const FLOOR_PAVEMENT := Vector2i(13, 16)
-const FOUNDATION_COLOR := Color(0.16, 0.18, 0.20, 1.0)
+const FOUNDATION_COLOR := Color(0.30, 0.32, 0.34, 1.0)
 
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
@@ -79,7 +79,7 @@ func _prepare_ground_data() -> void:
 				"position": position + grid_to_world(Vector2(cell)),
 				"base_color": FOUNDATION_COLOR,
 				"detail_tint": Color.WHITE,
-				"detail_alpha": 0.0,
+				"detail_alpha": 0.42,
 			})
 
 
