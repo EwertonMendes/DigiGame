@@ -35,7 +35,7 @@ func _ready() -> void:
 	var service_accesses := get_tree().get_nodes_in_group("central_city_service_access")
 	assert(custom_assets.size() >= 120, "Central City must be composed from the authored Tblack city kit")
 	assert(ground_modules.size() >= 110, "Central City must use modular ground pieces instead of isolated patches")
-	assert(road_modules.size() == 8, "The current straight-only boulevard must contain exactly eight road modules")
+	assert(road_modules.size() == 6, "The current straight-only boulevard must contain exactly six road modules plus two crosswalk replacements")
 	assert(crosswalk_modules.size() == 2, "Central Plaza must have two authored crosswalk approaches")
 	assert(service_accesses.size() == 5, "Building-free service districts must keep all five interiors reachable")
 	assert(CentralCityAssetCatalogScript.supports_road_piece("straight"), "Straight road art must be registered")
