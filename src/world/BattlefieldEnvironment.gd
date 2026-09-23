@@ -2,6 +2,7 @@ extends Node2D
 class_name BattlefieldEnvironment
 
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 
 const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
 const OAK_SMALL_SOURCE = preload("res://assets/terrain/Oak_Tree_Small.png")
@@ -34,15 +35,21 @@ const ROCK_FOOT := Vector2(13.5, 21.0)
 
 var _field: Node2D = null
 var _large_tree_occluders: Array[Sprite2D] = []
+var _animated_trees: Array[Sprite2D] = []
+var _ambient_elapsed := 0.0
 
 
 func _process(delta: float) -> void:
+	_ambient_elapsed += delta
+	for tree: Sprite2D in _animated_trees:
+		TreeAmbientFXScript.animate(tree, _ambient_elapsed)
 	_update_large_tree_occlusion(delta)
 
 
 func configure(field: Node2D, props: Array[Dictionary]) -> void:
 	_field = field
 	_large_tree_occluders.clear()
+	_animated_trees.clear()
 	var tree_index := 0
 	var rock_index := 0
 	for prop: Dictionary in props:
@@ -73,10 +80,21 @@ func _build_tree(grid: Vector2i, variant: String, index: int) -> void:
 	)
 	tree.set_meta("obstacle_kind", "tree")
 	tree.set_meta("grid", grid)
-	add_child(tree)
-	if bool(descriptor.get("large_canopy_occluder", false)):
+	var is_large := bool(descriptor.get("large_canopy_occluder", false))
+	if is_large:
 		tree.set_meta("large_canopy_occluder", true)
 		_large_tree_occluders.append(tree)
+
+	add_child(tree)
+	var phase := float(index) * 1.13 + float(grid.x + grid.y) * 0.21
+	TreeAmbientFXScript.apply(
+		tree,
+		phase,
+		2.75 if is_large else 2.15,
+		8 if is_large else 5,
+		Color(0.72, 0.93, 0.43, 0.74) if index % 2 == 0 else Color(0.48, 0.84, 0.35, 0.70)
+	)
+	_animated_trees.append(tree)
 
 
 func _build_stump(grid: Vector2i) -> void:
