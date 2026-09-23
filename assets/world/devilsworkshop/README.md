@@ -33,25 +33,29 @@ The committed PNG pixels are unchanged. The source image is a complete 50x50 blo
 Any future sprites added from this pack should be recorded here with their exact upstream filename and immutable blob hash before being used at runtime.
 
 
-## Central City 128x64 surfaces
+## Central City high-resolution source surfaces
 
-Central City uses curated copies of the 1024x1024 files as **source art**, not as 1024px screen tiles. `CentralCityArt.gd` samples only the authored top face and projects it onto an exact 128x64 isometric gameplay diamond. This preserves source detail while keeping movement/collision geometry deterministic and avoiding visible cube side walls between adjacent floor cells.
+Central City uses curated copies of the 1024x1024 files as **source art**, while gameplay stays on DigiGame's original **64x32** isometric grid. `CentralCityArt.gd` samples the authored top face onto the exact gameplay diamond, preserving the new pack's detail without making the player or props look undersized.
+
+Only perimeter cells render the original block side faces. Interior city cells remain flat, while the outer island edge exposes the authored Devil's Work.shop depth for a cleaner isometric silhouette.
 
 Current Central City source surfaces:
 
 | Source file | Central City role |
 |---|---|
+| `isometric_0087.png` | primary playful city floor |
 | `isometric_0056.png` | primary garden grass |
 | `isometric_0053.png` | checker garden accents |
 | `isometric_0058.png` | mint/teal planted terraces |
-| `isometric_0055.png` | primary civic stone |
 | `isometric_0054.png` | secondary neutral paving |
 | `isometric_0048.png` | teal digital promenade / DigiLab |
 | `isometric_0049.png` | blue Hospital district |
 | `isometric_0050.png` | purple Archive district |
 | `isometric_0063.png` | dark gate / edge paving |
-| `isometric_0064.png` | circuit-water canal |
-| `isometric_0001.png` | warm Data Market paving |
+| `isometric_0064.png` | central digital-water plaza and canal |
+| `isometric_0009.png` | Data Market district replacement |
 | `isometric_0007.png` | luminous Training district grid |
 
-The 64x32 Hub and battlefield renderer remains unchanged; the 128x64 contract is isolated to the Central City exterior.
+The complete 1024x1024 source library remains under `assets_1024x1024/` behind `.gdignore`. Only selected runtime surfaces are copied into `city_1024/`, so Web/APK exports do not import the entire source collection.
+
+MCBlocks has been retired from DigiGame. Central City exterior service buildings are temporarily represented by labeled floor pads until their dedicated structure artwork is authored, and the seamless service interiors now use Devil's Work.shop surfaces as well.
