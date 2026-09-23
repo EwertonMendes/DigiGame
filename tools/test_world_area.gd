@@ -18,17 +18,30 @@ func _ready() -> void:
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
-		area.get_ground_render_node_count() <= 3,
-		"Central City ground must use one global batched renderer instead of section/per-tile CanvasItems"
+		area.get_ground_render_node_count() <= 14,
+		"Central City ground must stay globally batched by high-resolution surface type"
 	)
-	assert(area.get_ground_tile_count() == 4900, "Central City global ground batch must contain all authored cells")
+	assert(area.get_ground_tile_count() == 4341, "Central City octagonal island must omit only the authored corner void")
+	assert(
+		area.get_node_or_null("CityGround/Surface_tech_teal") != null,
+		"Central City must render the high-resolution digital promenade surface"
+	)
 	assert(
 		area.get_runtime_node_count() < 1000,
 		"Central City runtime node budget must remain below 3000 nodes"
 	)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
-	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the safe plaza lane")
+	assert(player.global_position.is_equal_approx(Vector2(-192.0, 544.0)), "Fresh campaign spawn must use the 128x64 safe plaza lane")
+
+	assert(
+		not area.is_walkable_world_position(_grid_to_world(Vector2(-28, -28))),
+		"Clipped northwest corner must be digital void rather than invisible walkable floor"
+	)
+	assert(
+		(_grid_to_world(Vector2(1, 0)) - _grid_to_world(Vector2.ZERO)).is_equal_approx(Vector2(64.0, 32.0)),
+		"Central City exterior grid must be 128x64"
+	)
 
 	await _frames(2)
 	var banner_count_before_travel := int(world.call("get_area_banner_presentation_count"))
@@ -108,6 +121,6 @@ func _frames(count: int) -> void:
 
 func _grid_to_world(grid: Vector2) -> Vector2:
 	return Vector2(
-		(grid.x - grid.y) * 32.0,
-		(grid.x + grid.y) * 16.0
+		(grid.x - grid.y) * 64.0,
+		(grid.x + grid.y) * 32.0
 	)
