@@ -52,6 +52,9 @@ jobs:
           - name: world-interiors
             command: godot --headless --path . tools/test_world_interior.tscn --quit-after 360
             success: seamless world interior regression passed
+          - name: terrain-atlas-probe
+            command: godot --headless --path . -s tools/probe_city_tiles.gd
+            success: "[TerrainAtlasProbe] PASS"
           - name: battle-operator-programs
             # This regression now waits for the real Battle Operator construction
             # tween before asserting final focus/material/backdrop state.
@@ -214,3 +217,12 @@ jobs:
             echo "::warning::Godot emitted shutdown diagnostics after the regression had already passed."
             cat /tmp/regression-after-success.log
           fi
+      - name: Upload terrain atlas probe
+        if: matrix.name == 'terrain-atlas-probe'
+        uses: actions/upload-artifact@v4
+        with:
+          name: terrain-atlas-probe-${{ github.run_id }}
+          path: build/terrain-atlas-preview.png
+          if-no-files-found: error
+          retention-days: 2
+
