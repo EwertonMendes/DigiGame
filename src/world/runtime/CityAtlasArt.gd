@@ -2,6 +2,10 @@ extends RefCounted
 class_name CityAtlasArt
 
 const ATLAS = preload("res://assets/terrain/MCBlocksColorOutline.png")
+const GROUND_ATLAS = preload("res://assets/terrain/central_city_user_sheet/central_city_ground_atlas.png")
+
+const GROUND_ATLAS_CELL_SIZE := 64.0
+const GROUND_DRAW_SIZE := Vector2(88.0, 88.0)
 
 const CELL_SIZE := 32.0
 const TILE_WIDTH := 64.0
@@ -166,6 +170,98 @@ static func _build_floor_mesh(tiles: Array[Dictionary], textured: bool) -> Array
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
+
+
+static func create_ground_batch(
+	tiles: Array[Dictionary],
+	depth_order: int,
+	node_name: String = "GroundBatch"
+) -> Node2D:
+	var root := Node2D.new()
+	root.name = node_name
+	root.z_index = clampi(depth_order, -4000, 4000)
+	if tiles.is_empty():
+		return root
+
+	var sheet := MeshInstance2D.new()
+	sheet.name = "SheetMesh"
+	sheet.mesh = _build_ground_mesh(tiles)
+	sheet.texture = GROUND_ATLAS
+	sheet.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	root.add_child(sheet)
+	return root
+
+
+static func _build_ground_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
+	var ordered_tiles: Array[Dictionary] = []
+	ordered_tiles.assign(tiles)
+	ordered_tiles.sort_custom(_ground_tile_before)
+
+	var vertices := PackedVector2Array()
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+	var texture_size := Vector2(
+		maxf(1.0, float(GROUND_ATLAS.get_width())),
+		maxf(1.0, float(GROUND_ATLAS.get_height()))
+	)
+	var half := GROUND_DRAW_SIZE * 0.5
+	var inset := 0.5
+
+	for spec: Dictionary in ordered_tiles:
+		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var atlas_cell: Vector2i = spec.get("cell", Vector2i.ZERO)
+		var vertex_start := vertices.size()
+
+		vertices.append(center + Vector2(-half.x, -half.y))
+		vertices.append(center + Vector2(half.x, -half.y))
+		vertices.append(center + Vector2(half.x, half.y))
+		vertices.append(center + Vector2(-half.x, half.y))
+
+		var pixel_origin := Vector2(
+			float(atlas_cell.x) * GROUND_ATLAS_CELL_SIZE,
+			float(atlas_cell.y) * GROUND_ATLAS_CELL_SIZE
+		)
+		var pixel_end := pixel_origin + Vector2(GROUND_ATLAS_CELL_SIZE, GROUND_ATLAS_CELL_SIZE)
+		for pixel_uv: Vector2 in [
+			pixel_origin + Vector2(inset, inset),
+			Vector2(pixel_end.x - inset, pixel_origin.y + inset),
+			pixel_end - Vector2(inset, inset),
+			Vector2(pixel_origin.x + inset, pixel_end.y - inset),
+		]:
+			uvs.append(Vector2(pixel_uv.x / texture_size.x, pixel_uv.y / texture_size.y))
+
+		var tint: Color = spec.get("ground_tint", Color.WHITE)
+		for _index in range(4):
+			colors.append(tint)
+
+		indices.append_array(PackedInt32Array([
+			vertex_start,
+			vertex_start + 1,
+			vertex_start + 2,
+			vertex_start,
+			vertex_start + 2,
+			vertex_start + 3,
+		]))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+static func _ground_tile_before(a: Dictionary, b: Dictionary) -> bool:
+	var a_position: Vector2 = a.get("position", Vector2.ZERO)
+	var b_position: Vector2 = b.get("position", Vector2.ZERO)
+	if is_equal_approx(a_position.y, b_position.y):
+		return a_position.x < b_position.x
+	return a_position.y < b_position.y
 
 
 static func create_block(
