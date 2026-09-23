@@ -35,6 +35,7 @@ func _ready() -> void:
 		get_tree().get_nodes_in_group("central_city_tree_occluder").size() >= 2,
 		"Central City must expose custom tree occluders for player visibility"
 	)
+	await _assert_tree_occlusion(player)
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the safe plaza lane")
 
@@ -70,6 +71,36 @@ func _ready() -> void:
 
 	print("single-scene world area regression passed")
 	get_tree().quit()
+
+
+func _assert_tree_occlusion(player: Node2D) -> void:
+	var trees := get_tree().get_nodes_in_group("central_city_tree_occluder")
+	assert(not trees.is_empty(), "Custom city tree occlusion requires at least one authored tree")
+	var tree := trees[0] as Sprite2D
+	assert(tree != null, "Custom city tree occluder must be a Sprite2D")
+
+	var section: Node = tree
+	while section != null and not section is WorldAreaSection:
+		section = section.get_parent()
+	assert(section is WorldAreaSection, "Custom city tree must belong to a WorldAreaSection")
+
+	var foot_variant = tree.get_meta("occlusion_foot_local", null)
+	assert(foot_variant is Vector2, "Custom city tree must expose its authored foot anchor")
+	var foot_global := (section as WorldAreaSection).to_global(foot_variant as Vector2)
+
+	player.global_position = foot_global + Vector2(0.0, -48.0)
+	await _frames(10)
+	assert(
+		tree.modulate.a < 0.80,
+		"Tree canopy must fade when the Tamer walks behind it"
+	)
+
+	player.global_position = foot_global + Vector2(160.0, 40.0)
+	await _frames(12)
+	assert(
+		tree.modulate.a > 0.95,
+		"Tree canopy must restore full opacity after the Tamer clears it"
+	)
 
 
 func _assert_seam_crossing(
