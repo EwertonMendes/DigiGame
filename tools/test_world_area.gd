@@ -51,6 +51,8 @@ func _ready() -> void:
 	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
 	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
+	var digilab_upper := digilab_section.get_node_or_null("DigiLabExterior/UpperOccluder") as Sprite2D
+	assert(digilab_upper != null, "DigiLab must split upper occlusion from the foreground facade")
 	assert(
 		digilab_building.texture != null
 		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab.png",
@@ -71,6 +73,19 @@ func _ready() -> void:
 		absf(digilab_building.rotation_degrees - (-2.00295)) < 0.01
 		and digilab_building.scale.distance_to(Vector2(0.40, 0.32838876)) < 0.001,
 		"DigiLab source perspective must be corrected to the 64x32 city axes"
+	)
+	assert(
+		digilab_building.z_index == 880
+		and digilab_upper.z_index == 1800
+		and digilab_upper.region_enabled
+		and absf(digilab_upper.region_rect.size.y - 700.0) < 0.01,
+		"DigiLab must keep the lower facade in front of actors while reserving occlusion for the upper/back art"
+	)
+	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 5), "digilab")
+	assert(
+		digilab_floor is Dictionary
+		and String((digilab_floor as Dictionary).get("surface", "")) == "stone_soft",
+		"DigiLab lot must use the standard gray 0054 pavement instead of green/teal ground"
 	)
 	var digilab_collision := digilab_section.get_node_or_null(
 		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
@@ -100,7 +115,7 @@ func _ready() -> void:
 	var digilab_payload = digilab_entrance.get_meta("interior_payload", {})
 	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
 	var digilab_return = (digilab_payload as Dictionary).get("return_position", [])
-	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(Vector2(9, 11))
+	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(Vector2(10, 12))
 	assert(
 		digilab_return is Array
 		and digilab_return.size() >= 2
