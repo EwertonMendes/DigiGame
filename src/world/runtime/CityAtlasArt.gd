@@ -376,7 +376,9 @@ static func create_city_wall_segment(
 	base_color: Color,
 	accent_color: Color,
 	depth_order: int,
-	node_name: String = "WallSurface"
+	node_name: String = "WallSurface",
+	show_accent: bool = true,
+	show_top_edge: bool = true
 ) -> Node2D:
 	var root := Node2D.new()
 	root.name = node_name
@@ -409,31 +411,33 @@ static func create_city_wall_segment(
 	upper.z_index = 1
 	root.add_child(upper)
 
-	var accent_y := height * 0.64
-	var accent := Line2D.new()
-	accent.name = "AccentBand"
-	accent.points = PackedVector2Array([
-		ground_start - Vector2(0.0, accent_y),
-		ground_end - Vector2(0.0, accent_y),
-	])
-	accent.width = 5.0
-	accent.default_color = Color(accent_color.r, accent_color.g, accent_color.b, 0.82)
-	accent.antialiased = true
-	accent.z_index = 2
-	root.add_child(accent)
+	if show_accent:
+		var accent_y := height * 0.64
+		var accent := Line2D.new()
+		accent.name = "AccentBand"
+		accent.points = PackedVector2Array([
+			ground_start - Vector2(0.0, accent_y),
+			ground_end - Vector2(0.0, accent_y),
+		])
+		accent.width = 5.0
+		accent.default_color = Color(accent_color.r, accent_color.g, accent_color.b, 0.82)
+		accent.antialiased = true
+		accent.z_index = 2
+		root.add_child(accent)
 
-	var top_edge := Line2D.new()
-	top_edge.name = "TopEdge"
-	top_edge.points = PackedVector2Array([
-		ground_start - lift,
-		ground_end - lift,
-	])
-	top_edge.width = 2.0
-	var edge_color := accent_color.lightened(0.24)
-	top_edge.default_color = Color(edge_color.r, edge_color.g, edge_color.b, 0.58)
-	top_edge.antialiased = true
-	top_edge.z_index = 3
-	root.add_child(top_edge)
+	if show_top_edge:
+		var top_edge := Line2D.new()
+		top_edge.name = "TopEdge"
+		top_edge.points = PackedVector2Array([
+			ground_start - lift,
+			ground_end - lift,
+		])
+		top_edge.width = 2.0
+		var edge_color := accent_color.lightened(0.24)
+		top_edge.default_color = Color(edge_color.r, edge_color.g, edge_color.b, 0.58)
+		top_edge.antialiased = true
+		top_edge.z_index = 3
+		root.add_child(top_edge)
 
 	return root
 
