@@ -11,7 +11,7 @@ DigiGame uses a small curated subset of **2D Pixel Art - Isometric Blocks - Free
 - Mirror revision: **11d22b3c4c1c6e9a720bf7e049feb0ec37229184**
 - Mirrored asset directory identifies the source package as **Low_Poly_Pixel_2D_Blocks_DevilsWorkShop_v04**.
 
-The official itch.io page states that the pack contains roughly 700 isometric assets and provides 50x50 no-alias PNG exports. DigiGame deliberately commits only the four 50x50 sprites needed by the current environments so the Web build does not absorb the full asset archive.
+The official itch.io page states that the pack contains roughly 700 isometric assets and provides multiple export sizes. DigiGame keeps the original curated 50x50 runtime subset for the Hub/battlefield and now also carries the project-supplied 1024x1024 source collection under `assets_1024x1024/` for high-detail overworld authoring. That complete source folder is intentionally marked with `.gdignore`; only the Central City selections copied into `city_1024/` are imported/exported by Godot.
 
 ## Runtime files
 
@@ -31,3 +31,31 @@ The committed PNG pixels are unchanged. The source image is a complete 50x50 blo
 > Isometric block artwork: Ajay Karat | Devil's Work.shop — licensed under CC BY 4.0.
 
 Any future sprites added from this pack should be recorded here with their exact upstream filename and immutable blob hash before being used at runtime.
+
+
+## Central City high-resolution source surfaces
+
+Central City uses curated copies of the 1024x1024 files as **source art**, while gameplay stays on DigiGame's original **64x32** isometric grid. `CentralCityArt.gd` samples the authored top face onto the exact gameplay diamond, preserving the new pack's detail without making the player or props look undersized.
+
+Only perimeter cells render the original block side faces. Interior city cells remain flat, while the outer island edge exposes the authored Devil's Work.shop depth for a cleaner isometric silhouette.
+
+Current Central City source surfaces:
+
+| Source file | Central City role |
+|---|---|
+| `isometric_0072.png` | primary neutral/buildable city-lot floor |
+| `isometric_0056.png` | primary garden grass |
+| `isometric_0053.png` | checker garden accents |
+| `isometric_0058.png` | mint/teal planted terraces |
+| `isometric_0054.png` | secondary neutral paving |
+| `isometric_0048.png` | teal digital promenade / DigiLab |
+| `isometric_0049.png` | blue Hospital district |
+| `isometric_0050.png` | purple Archive district |
+| `isometric_0063.png` | dark gate / edge paving |
+| `isometric_0064.png` | central digital-water plaza and canal |
+| `isometric_0009.png` | Data Market district replacement |
+| `isometric_0007.png` | luminous Training district grid |
+
+The complete 1024x1024 source library remains under `assets_1024x1024/` behind `.gdignore`. Only selected runtime surfaces are copied into `city_1024/`, so Web/APK exports do not import the entire source collection. Source 0054 is the city's canonical sidewalk/pavement material: it defines the main cross-city promenades, section-block boundaries, service approaches, bridges and the paved civic plaza instead of being scattered decoratively.
+
+MCBlocks has been retired from DigiGame. Central City exterior service buildings are temporarily represented by labeled floor pads until their dedicated structure artwork is authored, and the seamless service interiors now use Devil's Work.shop surfaces as well.

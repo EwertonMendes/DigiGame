@@ -6,7 +6,7 @@ signal load_progress(completed: int, total: int)
 signal load_finished
 
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
-const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
+const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
@@ -20,6 +20,7 @@ var _section_list: Array[WorldAreaSection] = []
 var _exterior_active := true
 var _ambient_elapsed := 0.0
 var _last_ambient_section := Vector2i(999999, 999999)
+var _ground_tile_count := 0
 
 
 func configure(area_definition: Dictionary, player: Node2D, world_controller: Node) -> bool:
@@ -28,6 +29,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	_definitions.clear()
 	_sections.clear()
 	_section_list.clear()
+	_ground_tile_count = 0
 	_exterior_active = false
 	visible = false
 	process_mode = Node.PROCESS_MODE_DISABLED
@@ -72,7 +74,8 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
 			await get_tree().process_frame
 
-	var ground := CITY.create_floor_batch(ground_tiles, -1200, "CityGround")
+	_ground_tile_count = ground_tiles.size()
+	var ground := CITY.create_ground_batch(ground_tiles, -1200, "CityGround")
 	ground.add_to_group("world_batched_ground")
 	add_child(ground)
 	completed += 1
@@ -111,8 +114,8 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 
 func world_to_section(world_position: Vector2) -> Vector2i:
 	var grid := Vector2(
-		world_position.x / 64.0 + world_position.y / 32.0,
-		-world_position.x / 64.0 + world_position.y / 32.0
+		world_position.x / CITY.TILE_WIDTH + world_position.y / CITY.TILE_HEIGHT,
+		-world_position.x / CITY.TILE_WIDTH + world_position.y / CITY.TILE_HEIGHT
 	)
 	return Vector2i(
 		floori((grid.x + 0.5) / float(SECTION_SIZE)),
@@ -138,7 +141,7 @@ func get_ground_render_node_count() -> int:
 
 
 func get_ground_tile_count() -> int:
-	return SECTION_SIZE * SECTION_SIZE * _section_list.size()
+	return _ground_tile_count
 
 
 func get_section_definition(coord: Vector2i) -> Dictionary:
