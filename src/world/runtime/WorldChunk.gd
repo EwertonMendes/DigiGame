@@ -357,6 +357,7 @@ func _build_exterior_shell(
 
 	var door_cell := origin + Vector2i(size.x - 1, int(size.y / 2))
 	var accent_block := _service_block_cell(service_id)
+	var wall_levels := 3 if with_door else 2
 	for x in range(size.x):
 		for y in range(size.y):
 			var boundary := x == 0 or y == 0 or x == size.x - 1 or y == size.y - 1
@@ -370,14 +371,14 @@ func _build_exterior_shell(
 					accent_block,
 					grid_to_world(Vector2(cell)),
 					800 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
-					1
+					wall_levels - 1
 				)
 				building.add_child(lintel)
 				continue
 
-			for level in range(2):
+			for level in range(wall_levels):
 				var block_cell := BLOCK_WALL
-				if level == 1 and (x + y) % 4 == 0:
+				if level > 0 and (x + y + level) % 4 == 0:
 					block_cell = accent_block
 				var block := CITY.create_block(
 					block_cell,
@@ -408,18 +409,18 @@ func _build_exterior_shell(
 			var trim := y == size.y - 1 and x >= size.x - 3
 			var roof := CITY.create_floor_tile(
 				_service_floor_cell(service_id) if trim else FLOOR_ROAD,
-				grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * 2.0),
+				grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * float(wall_levels)),
 				1580 + int(round(global_position.y + grid_to_world(Vector2(roof_cell)).y)),
-				Color(0.17, 0.19, 0.21, 1.0),
+				Color(0.27, 0.29, 0.31, 1.0),
 				Color.WHITE,
-				0.72
+				0.64
 			)
 			building.add_child(roof)
 
 	if not title.is_empty():
 		var sign := Label.new()
 		sign.text = title
-		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-96.0, -126.0)
+		sign.position = grid_to_world(Vector2(door_cell)) + Vector2(-96.0, -158.0)
 		sign.size = Vector2(192.0, 28.0)
 		sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		sign.add_theme_font_size_override("font_size", 12)
@@ -439,21 +440,36 @@ func _add_service_windows(
 	service_id: String
 ) -> void:
 	var pane_cell := _service_window_cell(service_id)
-	var facade_cells: Array[Vector2i] = [
-		origin + Vector2i(size.x - 1, 1),
-		origin + Vector2i(size.x - 1, size.y - 2),
-	]
-	for cell: Vector2i in facade_cells:
+	var door_y := int(size.y / 2)
+	for local_y in range(1, size.y - 1):
+		if local_y == door_y:
+			continue
+		var cell := origin + Vector2i(size.x - 1, local_y)
 		var foot := grid_to_world(Vector2(cell))
-		var pane := CITY.create_prop(
-			pane_cell,
-			foot,
-			1480 + int(round(global_position.y + foot.y)),
-			Vector2(1.55, 1.55),
+		for story in range(2):
+			var pane := CITY.create_prop(
+				pane_cell,
+				foot,
+				1480 + int(round(global_position.y + foot.y)) + story,
+				Vector2(1.45, 1.45),
+				Color.WHITE,
+				Vector2(0.0, -34.0 - 31.0 * float(story))
+			)
+			parent.add_child(pane)
+
+	# A short accent canopy marks the doorway as an actual public entrance.
+	var door_cell := origin + Vector2i(size.x - 1, door_y)
+	for canopy_offset in [Vector2i.ZERO, Vector2i(1, 0)]:
+		var canopy_cell := door_cell + canopy_offset
+		var canopy := CITY.create_floor_tile(
+			_service_floor_cell(service_id),
+			grid_to_world(Vector2(canopy_cell)) - Vector2(0.0, 82.0),
+			1650 + int(round(global_position.y + grid_to_world(Vector2(canopy_cell)).y)),
+			Color(0.16, 0.18, 0.20, 1.0),
 			Color.WHITE,
-			Vector2(0.0, -34.0)
+			0.86
 		)
-		parent.add_child(pane)
+		parent.add_child(canopy)
 
 
 func _service_window_cell(service_id: String) -> Vector2i:
