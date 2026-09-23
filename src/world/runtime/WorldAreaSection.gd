@@ -403,8 +403,9 @@ func _build_exterior_shell(
 		if door_side == "south"
 		else origin + Vector2i(size.x - 1, int(size.y / 2))
 	)
-	var accent_block := _service_block_cell(service_id)
-	var wall_levels := 2 if with_door else 1
+	# Every building now uses two complete MC Blocks wall levels. This keeps the
+	# visible facades as joined square modules instead of sparse gray cubes.
+	var wall_levels := 2
 	for x in range(size.x):
 		for y in range(size.y):
 			var cell := origin + Vector2i(x, y)
@@ -412,15 +413,24 @@ func _build_exterior_shell(
 			if not doorway:
 				_mark_blocked(cell)
 
-			# In an isometric exterior the roof already defines the complete
-			# footprint. Drawing four rings of cube blocks made buildings look
-			# like open fortresses. Render only the two camera-facing facades.
+			# Only the two camera-facing sides need wall sprites in this
+			# isometric projection. Every visible facade coordinate is filled,
+			# so the wall reads as one continuous assembled structure.
 			var visible_facade := x == size.x - 1 or y == size.y - 1
 			if not visible_facade:
 				continue
+
 			if doorway:
+				var lintel_cell := _facade_block_cell(
+					service_id,
+					wall_levels - 1,
+					x,
+					y,
+					size,
+					with_door
+				)
 				var lintel := CITY.create_block(
-					accent_block,
+					lintel_cell,
 					grid_to_world(Vector2(cell)),
 					800 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
 					wall_levels - 1
@@ -429,11 +439,8 @@ func _build_exterior_shell(
 				continue
 
 			for level in range(wall_levels):
-				var block_cell := BLOCK_WALL
-				if with_door and level > 0 and (x + y + level) % 4 == 0:
-					block_cell = accent_block
 				var block := CITY.create_block(
-					block_cell,
+					_facade_block_cell(service_id, level, x, y, size, with_door),
 					grid_to_world(Vector2(cell)),
 					720 + int(round(global_position.y + grid_to_world(Vector2(cell)).y)),
 					level
@@ -451,9 +458,11 @@ func _build_exterior_shell(
 		door.modulate = accent.lightened(0.12)
 		building.add_child(door)
 
-	# Roofs are static and never need one CanvasItem per tile. Batch the whole
-	# footprint into two meshes while retaining the authored atlas detail.
+	# Roofs use the same seamless fill principle as the city ground. MC Blocks
+	# remains the asset source for walls/props, while the roof cap avoids
+	# repeating the outlined floor diamond on every cell.
 	var roof_tiles: Array[Dictionary] = []
+	var roof_base := _roof_color_for_service(service_id, with_door)
 	for x in range(size.x):
 		for y in range(size.y):
 			var roof_cell := origin + Vector2i(x, y)
@@ -461,18 +470,13 @@ func _build_exterior_shell(
 				(y == size.y - 1 and door_side == "south" and absi(x - int(size.x / 2)) <= 1)
 				or (x == size.x - 1 and door_side == "east" and absi(y - int(size.y / 2)) <= 1)
 			)
-			var roof_cell_asset := _service_floor_cell(service_id) if trim else FLOOR_PLAZA
-			var roof_color := (
-				Color(0.22, 0.29, 0.32, 1.0)
-				if with_door
-				else Color(0.25, 0.30, 0.33, 1.0)
-			)
+			var roof_color := accent.darkened(0.48) if trim else roof_base
 			roof_tiles.append({
-				"cell": roof_cell_asset,
+				"cell": _service_floor_cell(service_id),
 				"position": grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * float(wall_levels)),
 				"base_color": roof_color,
-				"detail_tint": Color(0.92, 0.98, 1.0, 1.0),
-				"detail_alpha": 0.60,
+				"detail_tint": Color.WHITE,
+				"detail_alpha": 0.0,
 			})
 	var roof_depth := 1700 + int(round(global_position.y + grid_to_world(Vector2(door_cell)).y))
 	building.add_child(CITY.create_floor_batch(roof_tiles, roof_depth, "Roof"))
@@ -491,6 +495,64 @@ func _build_exterior_shell(
 		building.add_child(sign)
 
 	return {"node": building, "door_cell": door_cell}
+
+
+func _facade_block_cell(
+	service_id: String,
+	level: int,
+	x: int,
+	y: int,
+	size: Vector2i,
+	with_door: bool
+) -> Vector2i:
+	var corner := x == size.x - 1 and y == size.y - 1
+	if not with_door:
+		if level == 0:
+			return BLOCK_WHITE if not corner else BLOCK_WALL_DARK
+		return _residential_accent_block()
+
+	if level == 0:
+		# A darker structural base makes each colored service facade feel
+		# anchored while still keeping every block edge connected.
+		if service_id == "hospital":
+			return BLOCK_WHITE if not corner else BLOCK_TEAL
+		return BLOCK_WALL_DARK if not corner else BLOCK_WHITE
+
+	if service_id == "hospital":
+		# Hospital stays bright, with cyan corner/interval accents instead of
+		# becoming another gray building.
+		if corner or (x + y) % 3 == 0:
+			return BLOCK_TEAL
+		return BLOCK_WHITE
+	return _service_block_cell(service_id)
+
+
+func _residential_accent_block() -> Vector2i:
+	match posmod(section_coord.x * 3 + section_coord.y, 3):
+		0:
+			return BLOCK_BLUE
+		1:
+			return BLOCK_TEAL
+		_:
+			return BLOCK_PURPLE
+
+
+func _roof_color_for_service(service_id: String, with_door: bool) -> Color:
+	if not with_door:
+		return Color(0.20, 0.27, 0.32, 1.0)
+	match service_id:
+		"digilab":
+			return Color(0.11, 0.27, 0.31, 1.0)
+		"hospital":
+			return Color(0.30, 0.37, 0.39, 1.0)
+		"training":
+			return Color(0.15, 0.30, 0.20, 1.0)
+		"shop":
+			return Color(0.33, 0.26, 0.13, 1.0)
+		"archive":
+			return Color(0.24, 0.18, 0.32, 1.0)
+		_:
+			return Color(0.20, 0.27, 0.31, 1.0)
 
 
 func _add_service_windows(
