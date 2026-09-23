@@ -1,7 +1,7 @@
 extends Node2D
 class_name WorldAreaSection
 
-const CITY = preload("res://src/world/runtime/CityAtlasArt.gd")
+const CITY = preload("res://src/world/runtime/CentralCityHDAtlasArt.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
