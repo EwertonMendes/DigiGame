@@ -268,10 +268,11 @@ func _build_gate() -> void:
 
 
 func _build_residential_block() -> void:
-	# Continuous frontage along the north side leaves a coherent public space in
-	# front instead of scattering isolated cubes around the section.
-	_build_exterior_shell(Vector2i(1, 1), Vector2i(6, 5), Color(0.42, 0.72, 0.74), "ResidenceA", "", false, "residential", "south")
-	_build_exterior_shell(Vector2i(7, 1), Vector2i(5, 5), Color(0.58, 0.60, 0.78), "ResidenceB", "", false, "residential", "south")
+	# Compact residential masses read as buildings instead of perimeter walls.
+	# The two volumes share a small courtyard gap but remain close enough to form
+	# a coherent block along the city street.
+	_build_exterior_shell(Vector2i(2, 2), Vector2i(5, 4), Color(0.42, 0.72, 0.74), "ResidenceA", "", false, "residential", "south")
+	_build_exterior_shell(Vector2i(7, 2), Vector2i(5, 4), Color(0.58, 0.60, 0.78), "ResidenceB", "", false, "residential", "south")
 
 
 func _build_service_exterior(accent: Color, title: String, service_id: String) -> void:
@@ -425,12 +426,18 @@ func _build_exterior_shell(
 				(y == size.y - 1 and door_side == "south" and absi(x - int(size.x / 2)) <= 1)
 				or (x == size.x - 1 and door_side == "east" and absi(y - int(size.y / 2)) <= 1)
 			)
+			var roof_cell_asset := _service_floor_cell(service_id) if trim else FLOOR_PLAZA
+			var roof_color := (
+				Color(0.22, 0.29, 0.32, 1.0)
+				if with_door
+				else Color(0.25, 0.30, 0.33, 1.0)
+			)
 			roof_tiles.append({
-				"cell": _service_floor_cell(service_id) if trim else FLOOR_PAVEMENT,
+				"cell": roof_cell_asset,
 				"position": grid_to_world(Vector2(roof_cell)) - Vector2(0.0, CITY.BLOCK_LEVEL_HEIGHT * float(wall_levels)),
-				"base_color": Color(0.30, 0.32, 0.34, 1.0),
-				"detail_tint": Color.WHITE,
-				"detail_alpha": 0.52,
+				"base_color": roof_color,
+				"detail_tint": Color(0.92, 0.98, 1.0, 1.0),
+				"detail_alpha": 0.60,
 			})
 	var roof_depth := 1700 + int(round(global_position.y + grid_to_world(Vector2(door_cell)).y))
 	building.add_child(CITY.create_floor_batch(roof_tiles, roof_depth, "Roof"))
