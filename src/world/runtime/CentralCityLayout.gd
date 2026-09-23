@@ -8,27 +8,18 @@ const MODULE_PITCH := 7
 # authors one clean boulevard split around Central Plaza. Corner/T/intersection
 # slots are already represented by CentralCityAssetCatalog and can be populated
 # later without replacing this layout system.
-const SIDEWALK_CENTERS: Array[Vector2i] = [
-	Vector2i(3, 3),
-	Vector2i(10, 3),
-	Vector2i(3, 10),
-	Vector2i(10, 10),
-]
-
 const SERVICE_THEMES := ["digilab", "hospital", "training", "market", "archive"]
 
 
 static func ground_specs_for_section(section_coord: Vector2i, theme: String) -> Array[Dictionary]:
 	var specs: Array[Dictionary] = []
 
-	# Four 7x7 modules tile each 14x14 authoring section on one deterministic
-	# cadence. This removes the old single floating patch and the large gaps it
-	# created between sections.
-	for cell: Vector2i in SIDEWALK_CENTERS:
-		specs.append(_ground("sidewalk", cell, -1178))
-
-	# Greenery is an intentional inset over pavement, never a whole-section tint.
-	if theme == "garden":
+	# IMPORTANT: sidewalk.png is a finished sidewalk/platform module with its own
+	# curb and tactile details. It is not a seamless pavement texture. Repeating
+	# it across the map creates the large yellow checkerboard seen in the old
+	# preview, so the common city floor is rendered by the batched pavement
+	# foundation instead. Tblack ground modules are reserved for authored places.
+	if theme == "garden" and section_coord.y != 0:
 		specs.append(_ground("grass-ground", Vector2i(7, 7), -1174))
 
 	# Straight-road modules follow one exact 7-cell cadence so adjacent pieces
@@ -55,8 +46,15 @@ static func ground_specs_for_section(section_coord: Vector2i, theme: String) -> 
 	return specs
 
 
-static func prop_specs_for_section(_section_coord: Vector2i, theme: String) -> Array[Dictionary]:
+static func prop_specs_for_section(section_coord: Vector2i, theme: String) -> Array[Dictionary]:
 	var specs: Array[Dictionary] = []
+
+	# Keep the straight boulevard visually clean. Its module already includes the
+	# roadway, curb and narrow pedestrian edge, so adding large furniture next to
+	# it makes props appear to sit on top of the road. Service terminals are added
+	# separately at a known safe access cell.
+	if section_coord.y == 0 and section_coord != Vector2i.ZERO:
+		return specs
 
 	match theme:
 		"plaza":
