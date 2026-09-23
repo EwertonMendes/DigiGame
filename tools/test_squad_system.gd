@@ -68,6 +68,8 @@ func _ready() -> void:
 		"collection": payload,
 	})
 	assert(not normalized.is_empty(), "Current Squad v1 save contract must be accepted")
+	assert(int(normalized.get("save_version", 0)) == 2 and String(normalized.get("save_format", "")) == "world-v2", "Squad v1 must migrate to the World v2 envelope")
+	assert((normalized.get("world", {}) as Dictionary).has("position"), "Migrated saves must receive world position state")
 	assert(migration.migrate({"save_version": 6, "collection": payload}).is_empty(), "Prototype v6 saves must be invalid after the reset")
 	assert(migration.migrate({"save_version": 1, "collection": payload}).is_empty(), "A pre-Squad payload without the format marker must not masquerade as v1")
 

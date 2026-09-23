@@ -43,10 +43,12 @@ jobs:
             command: godot --headless --path . tools/test_attack_patterns.tscn --quit-after 5
             success: advanced attack pattern regression passed
           - name: hub-foundation
-            # This integration flow now waits for real open/close construction
-            # tweens across Training, DigiLab, Hospital and Battle Operator.
+            # The legacy Test Hub remains an isolated developer integration lab.
             command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 360
             success: hub foundation regression passed
+          - name: world-streaming
+            command: godot --headless --path . tools/test_world_streaming.tscn --quit-after 45
+            success: seamless world streaming regression passed
           - name: battle-operator-programs
             # This regression now waits for the real Battle Operator construction
             # tween before asserting final focus/material/backdrop state.

@@ -253,7 +253,7 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	collection.add_item("expansion_fragment", 4)
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.delete_save(TEST_SAVE_PATH)
-	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "Squad v1 collection save must write")
+	assert(save_service.save_collection(collection, TEST_SAVE_PATH), "World v2 collection save must write")
 	var loaded: PlayerCollection = save_service.load_collection(TEST_SAVE_PATH)
 	assert(loaded != null and loaded.get_instances().size() == collection.get_instances().size(), "Save/load must preserve collection")
 	var restored := loaded.get_instance(first.id)
@@ -265,10 +265,10 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	assert(loaded.get_storage_instances().size() == 1 and loaded.get_storage_instances()[0].id == seventh.id, "Save/load must preserve Storage separation")
 	assert(loaded.get_item_count("expansion_fragment") == 4, "Save/load must preserve generic inventory")
 	var save_data := save_service.load_data(TEST_SAVE_PATH)
-	assert(save_data != null and save_data.save_version == 1 and save_data.save_format == "squad-v1", "New saves must use the Squad v1 contract")
+	assert(save_data != null and save_data.save_version == 2 and save_data.save_format == "world-v2", "New saves must use the World v2 contract")
 
-	# Prototype saves are intentionally invalidated. The game has not shipped,
-	# so Squad v1 is a clean persistence contract rather than a migration layer.
+	# Squad v1 is the one supported pre-world migration. Older prototype
+	# contracts remain intentionally invalidated.
 	var migration: SaveMigration = MigrationScript.new()
 	assert(migration.migrate({"save_version": 6, "collection": collection.to_dict()}).is_empty(), "Prototype v6 saves must be rejected")
 	assert(migration.migrate({"save_version": 1, "collection": collection.to_dict()}).is_empty(), "Version alone must not accidentally accept a pre-Squad save")
@@ -278,7 +278,10 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 		"collection": collection.to_dict(),
 	}
 	var normalized := migration.migrate(current_payload)
-	assert(not normalized.is_empty(), "Current Squad v1 saves must normalize")
+	assert(not normalized.is_empty(), "Current Squad v1 saves must migrate")
+	assert(int(normalized.get("save_version", 0)) == 2 and String(normalized.get("save_format", "")) == "world-v2", "Squad v1 migration must produce World v2")
+	var normalized_world := normalized.get("world", {}) as Dictionary
+	assert(String(normalized_world.get("area", "")) == "central_city", "Squad v1 migration must receive the default world location")
 	var normalized_collection := normalized.get("collection", {}) as Dictionary
 	assert((normalized_collection.get("activeSquadIds", []) as Array).size() == 3, "Squad v1 save must persist three Active slots")
 	assert((normalized_collection.get("reserveSquadIds", []) as Array).size() == 3, "Squad v1 save must persist three Reserve slots")
