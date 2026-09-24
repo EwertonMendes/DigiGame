@@ -44,6 +44,18 @@ func _ready() -> void:
 	assert(sprite_lab != null, "Sprite-test controller must create the lab UI")
 	assert(int(sprite_lab.call("get_testable_species_count")) >= 7, "Sprite test lab must discover packaged Digimon resources")
 	assert(Array(sprite_lab.call("get_testable_species_names")).has("Metal Greymon"), "Sprite test lab must include Metal Greymon")
+	for rank in ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]:
+		var rank_button := sprite_lab.get("_rank_checks").get(rank) as CheckButton
+		assert(rank_button != null and rank_button.button_pressed, "Sprite Test rank filters must start enabled: %s" % rank)
+	sprite_lab.call("set_search_query", "metal gre")
+	var searched_names: Array = sprite_lab.call("get_filtered_species_names")
+	assert(searched_names.has("Metal Greymon"), "Sprite Test text search must match Digimon names")
+	assert(searched_names.all(func(value): return String(value).to_lower().contains("metal gre")), "Sprite Test text search must remove non-matching species")
+	sprite_lab.call("set_rank_enabled", "Ultimate", false)
+	assert(not Array(sprite_lab.call("get_filtered_species_names")).has("Metal Greymon"), "Sprite Test rank filters must exclude unchecked ranks")
+	sprite_lab.call("set_rank_enabled", "Ultimate", true)
+	sprite_lab.call("set_search_query", "")
+	assert(Array(sprite_lab.call("get_filtered_species_names")).has("Metal Greymon"), "Sprite Test filters must restore matching species when re-enabled")
 	sprite_lab.call("open_lab")
 	await get_tree().process_frame
 	await get_tree().process_frame
