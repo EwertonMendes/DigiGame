@@ -7,6 +7,9 @@ const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
+const DIGILAB_TEXTURE = preload("res://assets/world/tblack/digilab/digilab.png")
+const DIGILAB_DOOR_SEMI_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-semi-open.png")
+const DIGILAB_DOOR_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-open.png")
 
 const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
@@ -15,6 +18,89 @@ const CITY_CENTER_GLOBAL := Vector2i(7, 7)
 const CITY_SHAPE_MANHATTAN_RADIUS := 54
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
+# The authored PNG is close to isometric, but its two ground axes are not an
+# exact 2:1 pair. A small perspective correction plus rotation maps the actual
+# base edges to the city's +/-26.565° grid instead of visually "eyeballing" it.
+const DIGILAB_SCALE := Vector2(0.40, 0.32838876)
+const DIGILAB_ROTATION_DEGREES := -2.00295
+const DIGILAB_BASE_Z := 880
+const DIGILAB_UPPER_OCCLUDER_Z := 1800
+const DIGILAB_UPPER_OCCLUDER_CUTOFF_Y := 700.0
+const DIGILAB_DOOR_FRAME_SECONDS := 0.10
+const DIGILAB_DOOR_OPEN_HOLD_SECONDS := 0.14
+const DIGILAB_DOOR_PIXEL := Vector2(754.0, 1054.0)
+const DIGILAB_DOOR_CELL := Vector2i(8, 10)
+const DIGILAB_RETURN_CELL := Vector2i(10, 12)
+# Ground-contact footprint measured from the supplied source. The concave notch
+# follows the staircase/door opening, so the player can reach the threshold
+# while every visible ground-level wall remains solid.
+# Additional side guards are intentional movement envelopes for the player
+# capsule around the two visually protruding lower wings. The main footprint
+# follows ground contact; these guards keep the 64px-tall trainer sprite from
+# visually entering the side facades at oblique angles.
+const DIGILAB_LEFT_SIDE_GUARD_SOURCE := [
+	Vector2(35.0, 690.0),
+	Vector2(320.0, 720.0),
+	Vector2(470.0, 900.0),
+	Vector2(430.0, 1040.0),
+	Vector2(300.0, 1090.0),
+	Vector2(35.0, 860.0),
+]
+const DIGILAB_RIGHT_SIDE_GUARD_SOURCE := [
+	# Starts below the rear-open pavement. The reviewed penetration happens on
+	# the lower utility wing, not on the walkable space behind the lab.
+	Vector2(980.0, 760.0),
+	Vector2(1210.0, 780.0),
+	Vector2(1240.0, 970.0),
+	Vector2(1090.0, 1130.0),
+	Vector2(920.0, 1120.0),
+	Vector2(880.0, 940.0),
+]
+const DIGILAB_UPPER_RIGHT_GUARD_SOURCE := [
+	# Dedicated guard for the cyan antenna / upper-right utility platform seen
+	# in playtest. It extends higher than the lower wing guard but deliberately
+	# starts to the right of the rear-open pavement around source (925, 671).
+	Vector2(1040.0, 625.0),
+	Vector2(1165.0, 665.0),
+	Vector2(1235.0, 755.0),
+	Vector2(1235.0, 900.0),
+	Vector2(1170.0, 960.0),
+	Vector2(1030.0, 900.0),
+	Vector2(970.0, 775.0),
+]
+
+const DIGILAB_FOOTPRINT_SOURCE := [
+	# Preserve the open pavement behind the lab, then bulge only where the
+	# authored right-side utility cluster actually reaches the ground.
+	Vector2(635.0, 509.0),
+	Vector2(1030.0, 760.0),
+	Vector2(1217.0, 895.0),
+	# Right facade / utility corner.
+	Vector2(1217.0, 947.0),
+	Vector2(1160.0, 1015.0),
+	Vector2(985.0, 1130.0),
+	Vector2(930.0, 1145.0),
+	Vector2(890.0, 1115.0),
+	Vector2(850.0, 1110.0),
+	# Door recess: intentionally cuts inward so the staircase and threshold stay
+	# reachable rather than becoming part of the collision hull.
+	Vector2(763.0, 957.0),
+	Vector2(667.0, 1011.0),
+	Vector2(748.0, 1156.0),
+	# Front-left facade and utility wing.
+	Vector2(635.0, 1230.0),
+	Vector2(585.0, 1205.0),
+	Vector2(525.0, 1165.0),
+	Vector2(490.0, 1130.0),
+	Vector2(390.0, 1050.0),
+	Vector2(350.0, 1030.0),
+	Vector2(305.0, 1050.0),
+	Vector2(54.0, 835.0),
+	# Small source-silhouette correction for the far-left corner seen in the
+	# playtest video, without extending the collision into the pavement behind.
+	Vector2(40.0, 850.0),
+	Vector2(80.0, 800.0),
+]
 
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
@@ -22,7 +108,11 @@ var section_coord := Vector2i.ZERO
 var _player: Node2D = null
 var _world_controller: Node = null
 var _blocked_cells := PackedByteArray()
+var _blocked_polygons: Array[PackedVector2Array] = []
 var _ground_tiles: Array[Dictionary] = []
+var _digilab_building_sprite: Sprite2D = null
+var _digilab_upper_sprite: Sprite2D = null
+var _digilab_entry_in_progress := false
 var _leaf_particles: Array[CPUParticles2D] = []
 
 
@@ -34,17 +124,24 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	_world_controller = world_controller
 	_blocked_cells.resize(SECTION_SIZE * SECTION_SIZE)
 	_blocked_cells.fill(0)
+	_blocked_polygons.clear()
 	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
 	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
 	_build_section()
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
-	var local_grid := world_to_grid(world_position - global_position)
+	var local_position := world_position - global_position
+	var local_grid := world_to_grid(local_position)
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
 	if cell.x < 0 or cell.y < 0 or cell.x >= SECTION_SIZE or cell.y >= SECTION_SIZE:
 		return false
-	return _blocked_cells[cell.y * SECTION_SIZE + cell.x] == 0
+	if _blocked_cells[cell.y * SECTION_SIZE + cell.x] != 0:
+		return false
+	for polygon: PackedVector2Array in _blocked_polygons:
+		if Geometry2D.is_point_in_polygon(local_position, polygon):
+			return false
+	return true
 
 
 func grid_to_world(grid: Vector2) -> Vector2:
@@ -123,10 +220,14 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 	if _is_block_sidewalk(cell):
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
-	# Service districts have a deliberate paved cross through the middle. This
-	# produces four readable future establishment lots and gives the temporary
-	# service pad an obvious pedestrian route from every surrounding sidewalk.
-	if _is_service_district(theme) and _is_service_walkway(cell):
+	# DigiLab now has a real exterior. Keep its structure on the teal lot and
+	# reserve a paved 0054 forecourt directly in front of the authored door.
+	if theme == "digilab" and _is_digilab_pavement(cell):
+		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+
+	# The remaining service districts still use the temporary paved cross until
+	# their dedicated exterior art is authored.
+	if theme != "digilab" and _is_service_district(theme) and _is_service_walkway(cell):
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
 	match theme:
@@ -141,7 +242,7 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 				return {"surface": CITY.SURFACE_GRASS_CHECKER, "walkable": true}
 			return {"surface": CITY.SURFACE_GRASS, "walkable": true}
 		"digilab":
-			return {"surface": CITY.SURFACE_TECH_TEAL, "walkable": true}
+			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 		"hospital":
 			return {"surface": CITY.SURFACE_TECH_BLUE, "walkable": true}
 		"training":
@@ -175,6 +276,12 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 
 func _is_block_sidewalk(cell: Vector2i) -> bool:
 	return cell.x in [0, SECTION_SIZE - 1] or cell.y in [0, SECTION_SIZE - 1]
+
+
+func _is_digilab_pavement(cell: Vector2i) -> bool:
+	if cell.y in [10, 11] and cell.x >= 5 and cell.x <= 11:
+		return true
+	return cell in [Vector2i(9, 11), Vector2i(10, 12), Vector2i(11, 13)]
 
 
 func _is_service_district(theme: String) -> bool:
@@ -236,7 +343,7 @@ func _build_theme_content() -> void:
 		"plaza":
 			_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
 		"digilab":
-			_build_service_pad(Color(0.28, 0.88, 1.0), "DIGILAB", "digilab", CITY.SURFACE_TECH_TEAL)
+			_build_digilab_exterior()
 		"hospital":
 			_build_service_pad(Color(0.66, 0.96, 1.0), "DIGI HOSPITAL", "hospital", CITY.SURFACE_TECH_BLUE)
 		"training":
@@ -247,21 +354,170 @@ func _build_theme_content() -> void:
 			_build_service_pad(Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive", CITY.SURFACE_TECH_PURPLE)
 
 
+func _build_digilab_exterior() -> void:
+	if not _is_city_land(DIGILAB_DOOR_CELL):
+		return
+
+	var exterior := Node2D.new()
+	exterior.name = "DigiLabExterior"
+	add_child(exterior)
+
+	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
+	var sprite := _create_digilab_sprite(
+		"Building",
+		door_world,
+		Rect2(),
+		DIGILAB_BASE_Z
+	)
+	_digilab_building_sprite = sprite
+	exterior.add_child(sprite)
+
+	# One full-image sprite cannot represent a large isometric building correctly
+	# with a single Y-sort threshold: players at the lower-left exterior could be
+	# placed behind the whole PNG even though they were standing in front of the
+	# facade. Keep the full building below actors, then render only the genuinely
+	# upper/back portion as a dedicated occlusion layer.
+	var upper_region := Rect2(
+		Vector2.ZERO,
+		Vector2(float(DIGILAB_TEXTURE.get_width()), DIGILAB_UPPER_OCCLUDER_CUTOFF_Y)
+	)
+	var upper_occluder := _create_digilab_sprite(
+		"UpperOccluder",
+		door_world,
+		upper_region,
+		DIGILAB_UPPER_OCCLUDER_Z
+	)
+	_digilab_upper_sprite = upper_occluder
+	exterior.add_child(upper_occluder)
+
+	var door_marker := Marker2D.new()
+	door_marker.name = "DoorAnchor"
+	door_marker.position = door_world
+	exterior.add_child(door_marker)
+
+	# Use the same measured source footprint for both world walkability and
+	# physics. This replaces the old rectangular cell approximation, which was
+	# too large behind the lab and too small along the lower-left wall.
+	var footprint := _digilab_footprint(door_world)
+	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
+	_register_blocking_polygon(
+		exterior,
+		"LeftSideGuardCollision",
+		_digilab_source_polygon_to_local(DIGILAB_LEFT_SIDE_GUARD_SOURCE, door_world)
+	)
+	_register_blocking_polygon(
+		exterior,
+		"RightSideGuardCollision",
+		_digilab_source_polygon_to_local(DIGILAB_RIGHT_SIDE_GUARD_SOURCE, door_world)
+	)
+	_register_blocking_polygon(
+		exterior,
+		"UpperRightGuardCollision",
+		_digilab_source_polygon_to_local(DIGILAB_UPPER_RIGHT_GUARD_SOURCE, door_world)
+	)
+
+	var entrance := _create_service_threshold(
+		"DigiLabEntrance",
+		"digilab",
+		"DIGILAB",
+		Color(0.28, 0.88, 1.0),
+		DIGILAB_DOOR_CELL,
+		DIGILAB_RETURN_CELL,
+		14.0
+	)
+	exterior.add_child(entrance)
+
+
+func _create_digilab_sprite(
+	node_name: String,
+	door_world: Vector2,
+	source_region: Rect2,
+	depth: int
+) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.name = node_name
+	sprite.texture = DIGILAB_TEXTURE
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.scale = DIGILAB_SCALE
+	sprite.rotation_degrees = DIGILAB_ROTATION_DEGREES
+	sprite.z_index = depth
+
+	var texture_center := DIGILAB_TEXTURE.get_size() * 0.5
+	var authored_door_offset := (
+		(DIGILAB_DOOR_PIXEL - texture_center) * DIGILAB_SCALE
+	).rotated(sprite.rotation)
+	var full_position := door_world - authored_door_offset
+
+	if source_region.size != Vector2.ZERO:
+		sprite.region_enabled = true
+		sprite.region_rect = source_region
+		var region_center := source_region.position + source_region.size * 0.5
+		var region_center_offset := (
+			(region_center - texture_center) * DIGILAB_SCALE
+		).rotated(sprite.rotation)
+		sprite.position = full_position + region_center_offset
+	else:
+		sprite.position = full_position
+	return sprite
+
+
+func _digilab_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in DIGILAB_FOOTPRINT_SOURCE:
+		polygon.append(_digilab_source_to_local(source_point, door_world))
+	return polygon
+
+
+func _digilab_source_polygon_to_local(
+	source_polygon: Array,
+	door_world: Vector2
+) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for raw_point in source_polygon:
+		if raw_point is Vector2:
+			polygon.append(_digilab_source_to_local(raw_point as Vector2, door_world))
+	return polygon
+
+
+func _digilab_source_to_local(source_pixel: Vector2, door_world: Vector2) -> Vector2:
+	var scaled := (source_pixel - DIGILAB_DOOR_PIXEL) * DIGILAB_SCALE
+	return door_world + scaled.rotated(deg_to_rad(DIGILAB_ROTATION_DEGREES))
+
+
+func _register_blocking_polygon(
+	parent: Node2D,
+	node_name: String,
+	polygon: PackedVector2Array
+) -> void:
+	_blocked_polygons.append(polygon)
+
+	var body := StaticBody2D.new()
+	body.name = node_name
+	body.collision_layer = 1
+	body.collision_mask = 0
+	parent.add_child(body)
+
+	var collision := CollisionPolygon2D.new()
+	collision.name = "CollisionPolygon2D"
+	collision.polygon = polygon
+	body.add_child(collision)
+
+
 func _build_service_pad(accent: Color, title: String, service_id: String, surface: String) -> void:
 	var pad_cell := Vector2i(7, 7)
 	if not _is_city_land(pad_cell):
 		return
 	var approach_cell := pad_cell + Vector2i(1, 0)
-	var interior_id := "%s_%d_%d" % [service_id, section_coord.x, section_coord.y]
 
-	var entrance := Area2D.new()
-	entrance.name = "%sPad" % title.capitalize().replace(" ", "")
-	entrance.add_to_group("world_interior_threshold")
-	entrance.position = grid_to_world(Vector2(pad_cell))
-	entrance.collision_layer = 0
-	entrance.collision_mask = 1
-	entrance.monitoring = true
-	entrance.monitorable = false
+	var entrance := _create_service_threshold(
+		"%sPad" % title.capitalize().replace(" ", ""),
+		service_id,
+		title,
+		accent,
+		pad_cell,
+		approach_cell,
+		17.0
+	)
 	add_child(entrance)
 
 	var pad := CITY.create_surface_tile(surface, Vector2.ZERO, 0, 1.0)
@@ -280,14 +536,34 @@ func _build_service_pad(accent: Color, title: String, service_id: String, surfac
 	label.z_index = 4
 	entrance.add_child(label)
 
+
+func _create_service_threshold(
+	node_name: String,
+	service_id: String,
+	title: String,
+	accent: Color,
+	cell: Vector2i,
+	return_cell: Vector2i,
+	radius: float
+) -> Area2D:
+	var entrance := Area2D.new()
+	entrance.name = node_name
+	entrance.add_to_group("world_interior_threshold")
+	entrance.position = grid_to_world(Vector2(cell))
+	entrance.collision_layer = 0
+	entrance.collision_mask = 1
+	entrance.monitoring = true
+	entrance.monitorable = false
+
 	var threshold_shape := CollisionShape2D.new()
 	var threshold_circle := CircleShape2D.new()
-	threshold_circle.radius = 17.0
+	threshold_circle.radius = radius
 	threshold_shape.shape = threshold_circle
-	threshold_shape.position = Vector2(0.0, -8.0)
+	threshold_shape.position = Vector2(0.0, -6.0)
 	entrance.add_child(threshold_shape)
 
-	var return_world := global_position + grid_to_world(Vector2(approach_cell))
+	var return_world := global_position + grid_to_world(Vector2(return_cell))
+	var interior_id := "%s_%d_%d" % [service_id, section_coord.x, section_coord.y]
 	entrance.set_meta("interior_payload", {
 		"interior_id": interior_id,
 		"service": service_id,
@@ -296,6 +572,7 @@ func _build_service_pad(accent: Color, title: String, service_id: String, surfac
 		"return_position": [return_world.x, return_world.y],
 	})
 	entrance.body_entered.connect(_on_interior_threshold_entered.bind(entrance))
+	return entrance
 
 
 func _on_interior_threshold_entered(body: Node2D, entrance: Area2D) -> void:
@@ -304,8 +581,78 @@ func _on_interior_threshold_entered(body: Node2D, entrance: Area2D) -> void:
 	if not _world_controller.has_method("request_interior_entry"):
 		return
 	var payload = entrance.get_meta("interior_payload", {})
-	if payload is Dictionary:
-		_world_controller.call_deferred("request_interior_entry", (payload as Dictionary).duplicate(true))
+	if not payload is Dictionary:
+		return
+	var destination := payload as Dictionary
+	if String(destination.get("service", "")) == "digilab":
+		if _digilab_entry_in_progress:
+			return
+		_animate_digilab_entry(entrance, destination.duplicate(true))
+		return
+	_world_controller.call_deferred("request_interior_entry", destination.duplicate(true))
+
+
+func _animate_digilab_entry(entrance: Area2D, payload: Dictionary) -> void:
+	_digilab_entry_in_progress = true
+	var player_actor := _player as HubActor
+	var previous_movement_enabled := true
+	if player_actor != null:
+		previous_movement_enabled = player_actor.movement_enabled
+		player_actor.movement_enabled = false
+		player_actor.velocity = Vector2.ZERO
+
+	# Closed is the idle frame. Crossing the authored doorway advances through
+	# the two supplied frames before the seamless interior handoff.
+	_set_digilab_door_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE)
+	await get_tree().create_timer(DIGILAB_DOOR_FRAME_SECONDS).timeout
+	if not is_inside_tree():
+		return
+	_set_digilab_door_texture(DIGILAB_DOOR_OPEN_TEXTURE)
+	await get_tree().create_timer(DIGILAB_DOOR_OPEN_HOLD_SECONDS).timeout
+	if not is_inside_tree():
+		return
+
+	if player_actor != null:
+		player_actor.movement_enabled = previous_movement_enabled
+	if _world_controller != null and _world_controller.has_method("request_interior_entry"):
+		_world_controller.call_deferred("request_interior_entry", payload)
+
+	# Keep the exterior on the fully-open frame while the player is inside.
+	# Closing is a separate return animation driven by WorldInteriorManager after
+	# the city is visible again.
+	_digilab_entry_in_progress = false
+	entrance.set_deferred("monitoring", true)
+
+
+func handles_service(service_id: String) -> bool:
+	return String(definition.get("theme", "")) == service_id
+
+
+func play_service_return_animation(service_id: String) -> void:
+	if service_id != "digilab" or not handles_service(service_id):
+		return
+	if _digilab_building_sprite == null or not is_instance_valid(_digilab_building_sprite):
+		return
+
+	# The exterior stayed on the open frame while the interior was active.
+	# Once the city has been revealed again, close the same authored doorway in
+	# reverse order so entering and leaving read as one continuous interaction.
+	_set_digilab_door_texture(DIGILAB_DOOR_OPEN_TEXTURE)
+	await get_tree().create_timer(DIGILAB_DOOR_OPEN_HOLD_SECONDS).timeout
+	if not is_inside_tree():
+		return
+	_set_digilab_door_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE)
+	await get_tree().create_timer(DIGILAB_DOOR_FRAME_SECONDS).timeout
+	if not is_inside_tree():
+		return
+	_set_digilab_door_texture(DIGILAB_TEXTURE)
+
+
+func _set_digilab_door_texture(texture: Texture2D) -> void:
+	if _digilab_building_sprite != null and is_instance_valid(_digilab_building_sprite):
+		_digilab_building_sprite.texture = texture
+	if _digilab_upper_sprite != null and is_instance_valid(_digilab_upper_sprite):
+		_digilab_upper_sprite.texture = texture
 
 
 func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: String, interaction_priority: int) -> void:

@@ -159,6 +159,15 @@ func is_exterior_active() -> bool:
 	return _exterior_active
 
 
+func play_service_return_animation(service_id: String) -> void:
+	if service_id.is_empty():
+		return
+	for section: WorldAreaSection in _section_list:
+		if section != null and is_instance_valid(section) and section.handles_service(service_id):
+			await section.play_service_return_animation(service_id)
+			return
+
+
 func _update_ambient_vfx(force: bool) -> void:
 	if _player == null:
 		return

@@ -24,7 +24,7 @@ func _ready() -> void:
 	assert(area.get_ground_tile_count() == 4341, "Central City octagonal island must omit only the authored corner void")
 	assert(
 		area.get_node_or_null("CityGround/Surface_main") != null,
-		"Central City must render 0087 as its primary high-resolution city surface"
+		"Central City must render 0072 as its primary high-resolution city surface"
 	)
 	assert(
 		area.get_node_or_null("CityGround/Surface_tech_teal") != null,
@@ -46,6 +46,139 @@ func _ready() -> void:
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the 64x32 safe plaza lane")
+
+	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
+	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
+	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
+	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
+	var digilab_upper := digilab_section.get_node_or_null("DigiLabExterior/UpperOccluder") as Sprite2D
+	assert(digilab_upper != null, "DigiLab must split upper occlusion from the foreground facade")
+	assert(
+		digilab_building.texture != null
+		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab.png",
+		"DigiLab exterior must use the project-supplied Tblack building asset"
+	)
+	assert(
+		ResourceLoader.exists("res://assets/world/tblack/digilab/digilab-door-semi-open.png")
+		and ResourceLoader.exists("res://assets/world/tblack/digilab/digilab-door-open.png"),
+		"DigiLab door animation must ship both project-supplied opening frames"
+	)
+	var digilab_entrance := digilab_section.get_node_or_null("DigiLabExterior/DigiLabEntrance") as Area2D
+	assert(digilab_entrance != null, "DigiLab exterior must expose a doorway threshold")
+	var expected_door := digilab_section.grid_to_world(Vector2(8, 10))
+	assert(
+		digilab_entrance.position.is_equal_approx(expected_door),
+		"DigiLab teleport threshold must be anchored to the authored door position"
+	)
+	assert(
+		digilab_section.is_walkable_world_position(digilab_section.global_position + expected_door),
+		"DigiLab doorway must remain walkable"
+	)
+	assert(
+		absf(digilab_building.rotation_degrees - (-2.00295)) < 0.01
+		and digilab_building.scale.distance_to(Vector2(0.40, 0.32838876)) < 0.001,
+		"DigiLab source perspective must be corrected to the 64x32 city axes"
+	)
+	assert(
+		digilab_building.z_index == 880
+		and digilab_upper.z_index == 1800
+		and digilab_upper.region_enabled
+		and absf(digilab_upper.region_rect.size.y - 700.0) < 0.01,
+		"DigiLab must keep the lower facade in front of actors while reserving occlusion for the upper/back art"
+	)
+	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 5), "digilab")
+	assert(
+		digilab_floor is Dictionary
+		and String((digilab_floor as Dictionary).get("surface", "")) == "stone_soft",
+		"DigiLab lot must use the standard gray 0054 pavement instead of green/teal ground"
+	)
+	var digilab_collision := digilab_section.get_node_or_null(
+		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
+	var digilab_left_guard := digilab_section.get_node_or_null(
+		"DigiLabExterior/LeftSideGuardCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
+	var digilab_right_guard := digilab_section.get_node_or_null(
+		"DigiLabExterior/RightSideGuardCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
+	var digilab_upper_right_guard := digilab_section.get_node_or_null(
+		"DigiLabExterior/UpperRightGuardCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
+	assert(
+		digilab_collision != null and digilab_collision.polygon.size() == 22,
+		"DigiLab must use the detailed measured ground-contact footprint"
+	)
+	assert(
+		digilab_left_guard != null and digilab_left_guard.polygon.size() == 6
+		and digilab_right_guard != null and digilab_right_guard.polygon.size() == 6
+		and digilab_upper_right_guard != null and digilab_upper_right_guard.polygon.size() == 7,
+		"DigiLab side and upper-right utilities must expose dedicated player-clearance guards"
+	)
+	assert(
+		digilab_section.is_walkable_world_position(
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 5))
+		),
+		"Open pavement behind the DigiLab must not have an invisible collision barrier"
+	)
+	assert(
+		not digilab_section.is_walkable_world_position(
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 8))
+		),
+		"DigiLab measured footprint must block movement through the center of the structure"
+	)
+	assert(
+		not digilab_section.is_walkable_world_position(
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(2, 11))
+		),
+		"DigiLab measured footprint must cover the lower-left wall that was previously penetrable"
+	)
+	# Regression points are expressed in source-image coordinates so they track
+	# the exact visible corners reviewed in-game instead of relying on coarse
+	# grid cells.
+	var digilab_door_local := digilab_section.grid_to_world(Vector2(8, 10))
+	for source_point: Vector2 in [
+		Vector2(80.0, 820.0),   # far-left rear/side corner
+		Vector2(250.0, 860.0),  # left lower wing: player must not visually enter facade
+		Vector2(410.0, 930.0),  # left inner corner reviewed in screenshot
+		Vector2(980.0, 820.0),  # right utility cluster inner edge
+		Vector2(1090.0, 700.0), # upper-right cyan antenna platform reviewed in screenshot
+		Vector2(1180.0, 760.0), # upper-right outer utility corner
+		Vector2(1160.0, 900.0), # right protruding wing reviewed in screenshot
+		Vector2(330.0, 1020.0), # lower-left utility wing
+		Vector2(1020.0, 760.0), # right cylinder / utility cluster
+		Vector2(1140.0, 930.0), # far-right side wall
+		Vector2(970.0, 1080.0), # lower-right facade corner
+	]:
+		var local_corner = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
+		assert(
+			local_corner is Vector2
+			and not digilab_section.is_walkable_world_position(
+				digilab_section.global_position + (local_corner as Vector2)
+			),
+			"DigiLab visible corner %s must be covered by the measured footprint" % str(source_point)
+		)
+	for source_point: Vector2 in [
+		Vector2(15.0, 875.0),    # pavement just outside expanded left guard
+		Vector2(1252.0, 1000.0), # pavement just outside expanded right guard
+	]:
+		var local_clear = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
+		assert(
+			local_clear is Vector2
+			and digilab_section.is_walkable_world_position(
+				digilab_section.global_position + (local_clear as Vector2)
+			),
+			"DigiLab pavement just outside %s must stay walkable" % str(source_point)
+		)
+	var digilab_payload = digilab_entrance.get_meta("interior_payload", {})
+	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
+	var digilab_return = (digilab_payload as Dictionary).get("return_position", [])
+	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(Vector2(10, 12))
+	assert(
+		digilab_return is Array
+		and digilab_return.size() >= 2
+		and Vector2(float(digilab_return[0]), float(digilab_return[1])).is_equal_approx(expected_return),
+		"DigiLab interior exit must return directly in front of the authored door"
+	)
 
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(-28, -28))),
