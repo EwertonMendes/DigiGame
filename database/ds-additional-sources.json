@@ -71,6 +71,12 @@
       2,
       3,
       1
+    ],
+    "rear_rows_first_up_reversed": [
+      2,
+      3,
+      1,
+      0
     ]
   },
   "profiles": {
@@ -1061,9 +1067,13 @@
       "profile": "four_rows_rightmost_triples",
       "pattern": "compact_interleaved",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "source_defect_completed_with_generated_horizontal_mirror",
       "review_batch": "champion-backfill-2026-09-24-c",
-      "review_note": "Assigned from the current audit raw source groups before runtime materialization; final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test confirmed the source sheet has no distinct right-facing movement frames. Preserve the reviewed left-facing groups and synthesize down_right/up_right offline as exact horizontal mirrors, matching the Vilemon handling.",
+      "horizontal_mirror_from": {
+        "down_right": "down_left",
+        "up_right": "up_left"
+      }
     },
     "Gaogamon": {
       "source_id": 140,
@@ -1095,11 +1105,11 @@
       "source_sha256": "e5a669d4e1580b5fbb138c01d803ff464522930a6a74d0c2e20fd89c1c6ce10c",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/142_Leppamon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_c",
       "review_batch": "champion-backfill-2026-09-24-c",
-      "review_note": "Assigned from the current audit raw source groups before runtime materialization; final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down facings are correct; only up_left/up_right are inverted."
     },
     "Sunflowmon": {
       "source_id": 143,
@@ -1107,11 +1117,11 @@
       "source_sha256": "230a10bbc5988b288bac403a8b9e07c3091669ea20ad664dbe8fe43878f53eee",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/143_Sunflowmon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_c",
       "review_batch": "champion-backfill-2026-09-24-c",
-      "review_note": "Assigned from the current audit raw source groups before runtime materialization; final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down facings are correct; only up_left/up_right are inverted."
     },
     "Gawappamon": {
       "source_id": 144,
@@ -1227,11 +1237,11 @@
       "source_sha256": "1226a8c148737e650283f62320b1bd80c354233d0a22641c804d1ff9a22a3450",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/155_Octomon.png",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "rear_rows_first_up_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_c",
       "review_batch": "champion-backfill-2026-09-24-c",
-      "review_note": "Assigned from the current audit raw source groups before runtime materialization; final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down facings are correct; only up_left/up_right are inverted. Preserve current down mapping and swap only the up pair."
     },
     "Coelamon": {
       "source_id": 157,
