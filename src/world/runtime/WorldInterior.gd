@@ -96,26 +96,36 @@ func _build_floor() -> void:
 
 
 func _build_digilab_floor(floor_root: Node2D) -> void:
-	# Each supplied Tblack floor image already contains a four-panel top face.
-	# Render it as one 2x2 gameplay panel instead of squeezing the whole source
-	# into every 64x32 cell. This preserves the authored line work and shading
-	# while the logical movement/collision grid remains exactly 64x32 per cell.
-	const PANEL_SPAN := 2
-	for x in range(0, ROOM_SIZE.x, PANEL_SPAN):
-		for y in range(0, ROOM_SIZE.y, PANEL_SPAN):
-			var panel_cell := Vector2i(x / PANEL_SPAN, y / PANEL_SPAN)
-			var surface := _digilab_panel_surface(panel_cell)
-			var panel_center := grid_to_world(Vector2(x, y) + Vector2(0.5, 0.5))
-			var panel := CITY.create_surface_panel(
+	# The 1024x1024 Tblack floors are authored as coherent 2x2 isometric
+	# modules. Slice those modules into four independent 64x32 gameplay cells
+	# instead of scaling the whole module into one cell or enlarging the visual
+	# grid to 128x64. This keeps the original grid size and preserves far more
+	# of the source line work because each cell samples only its own quadrant.
+	const SOURCE_MODULE_SIZE := 2
+	for x in range(ROOM_SIZE.x):
+		for y in range(ROOM_SIZE.y):
+			var cell := Vector2i(x, y)
+			var module_cell := Vector2i(
+				cell.x / SOURCE_MODULE_SIZE,
+				cell.y / SOURCE_MODULE_SIZE
+			)
+			var source_cell := Vector2i(
+				cell.x % SOURCE_MODULE_SIZE,
+				cell.y % SOURCE_MODULE_SIZE
+			)
+			var surface := _digilab_panel_surface(module_cell)
+			var tile := CITY.create_surface_tile_slice(
 				surface,
-				panel_center,
+				grid_to_world(Vector2(cell)),
 				-900 + x + y,
-				PANEL_SPAN,
+				source_cell,
+				SOURCE_MODULE_SIZE,
 				1.0
 			)
-			panel.name = "FloorPanel_%02d_%02d" % [panel_cell.x, panel_cell.y]
-			panel.set_meta("cell_span", PANEL_SPAN)
-			floor_root.add_child(panel)
+			tile.name = "Floor_%02d_%02d" % [x, y]
+			tile.set_meta("source_module_size", SOURCE_MODULE_SIZE)
+			tile.set_meta("source_cell", source_cell)
+			floor_root.add_child(tile)
 
 
 func _floor_surface(cell: Vector2i, edge: bool) -> String:
@@ -197,9 +207,9 @@ func _build_counter() -> void:
 
 
 func _build_service_zones() -> void:
-	# DigiLab's authored 2x2 floor panels already communicate its service layout.
-	# Do not stack additional single-cell decals over them; that was the source
-	# of the noisy, low-detail look in the first pass.
+	# DigiLab's modularized authored floor already communicates its service
+	# layout. Do not stack extra decals over it; keeping one clean visual layer
+	# preserves the fine 64x32 tile detail.
 	if _service_id == "digilab":
 		return
 
