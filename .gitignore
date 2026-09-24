@@ -497,5 +497,6 @@ core.*
 # Game character assets are authored/generated project inputs and must win over
 # generic toolchain temp-name patterns (for example, `stingmon` matching `stXXXXXX`).
 !assets/characters/
-!assets/characters/**
+!assets/characters/*/
+!assets/characters/*/**
 # Add any future generated/private project-specific paths explicitly below.
