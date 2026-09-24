@@ -12,6 +12,8 @@ const AUTO_STEP := 1.1
 const PADDING := 56.0
 const INSPECT_SCALES: Array[float] = [1.0, 1.5, 2.0]
 const RESOURCE_ROOT := "res://assets/resources"
+const DATABASE_PATH := "res://database/base-digimon-list.json"
+const RANK_ORDER: Array[String] = ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]
 const RESOURCE_FALLBACKS: Array[String] = [
 	"agumon.tres",
 	"gabumon.tres",
@@ -23,6 +25,8 @@ const RESOURCE_FALLBACKS: Array[String] = [
 ]
 
 var _picker: OptionButton
+var _search_edit: LineEdit
+var _rank_checks: Dictionary = {}
 var _field: Control
 var _field_dark: ColorRect
 var _name_label: Label
@@ -31,6 +35,7 @@ var _auto_button: Button
 var _zoom_button: Button
 var _touch_joystick: Control
 var _entries: Array[Dictionary] = []
+var _filtered_entries: Array[Dictionary] = []
 var _index := 0
 var _follower: OverworldDigimonFollower = null
 var _touch := Vector2.ZERO
@@ -88,6 +93,11 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey:
 		var key := event as InputEventKey
+		if _search_edit != null and _search_edit.has_focus():
+			if key.pressed and not key.echo and key.physical_keycode == KEY_ESCAPE:
+				close_lab()
+				get_viewport().set_input_as_handled()
+			return
 		if key.pressed and not key.echo:
 			match key.physical_keycode:
 				KEY_ESCAPE:
@@ -157,6 +167,29 @@ func _build_ui() -> void:
 	var close := _button("CLOSE", UI.MUTED)
 	close.pressed.connect(close_lab)
 	header.add_child(close)
+
+	var filters := HBoxContainer.new()
+	filters.add_theme_constant_override("separation", 8)
+	root.add_child(filters)
+	_search_edit = LineEdit.new()
+	_search_edit.name = "SpeciesSearch"
+	_search_edit.placeholder_text = "Type a Digimon name..."
+	_search_edit.clear_button_enabled = true
+	_search_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_search_edit.custom_minimum_size.x = 260
+	_search_edit.add_theme_font_size_override("font_size", 12)
+	_search_edit.text_changed.connect(_on_search_changed)
+	filters.add_child(_search_edit)
+	for rank in RANK_ORDER:
+		var check := CheckButton.new()
+		check.name = "Rank%s" % rank.replace("-", "").replace(" ", "")
+		check.text = rank
+		check.button_pressed = true
+		check.focus_mode = Control.FOCUS_NONE
+		check.toggled.connect(_on_rank_toggled.bind(rank))
+		UI.apply_body_font(check)
+		_rank_checks[rank] = check
+		filters.add_child(check)
 
 	var toolbar := HBoxContainer.new()
 	toolbar.add_theme_constant_override("separation", 8)
@@ -251,17 +284,14 @@ func _build_ui() -> void:
 
 func _load_entries() -> void:
 	_entries.clear()
+	_filtered_entries.clear()
 	_picker.clear()
+	var ranks := _load_rank_index()
 
-	# ResourceLoader.list_directory() is export-aware. DirAccess can expose only
-	# imported/remapped files inside Web PCKs, which made the lab empty in the
-	# playable PR preview even though the .tres resources were packaged.
 	var filenames: Array[String] = []
 	for raw_filename in ResourceLoader.list_directory(RESOURCE_ROOT):
 		filenames.append(String(raw_filename))
 	if filenames.is_empty():
-		# Keep the current test roster usable even on platforms that cannot list
-		# the resource directory. Normal builds still auto-discover new .tres files.
 		for fallback in RESOURCE_FALLBACKS:
 			filenames.append(fallback)
 
@@ -278,22 +308,86 @@ func _load_entries() -> void:
 		var display := resource.display_name.strip_edges()
 		if display.is_empty():
 			display = key.capitalize()
-		_entries.append({"key": key, "name": display, "path": path})
+		var rank := String(ranks.get(_compact_name(display), ""))
+		_entries.append({"key": key, "name": display, "path": path, "rank": rank})
 
 	_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return String(a.get("name", "")) < String(b.get("name", ""))
+		return String(a.get("name", "")).naturalnocasecmp_to(String(b.get("name", ""))) < 0
 	)
-	var metal := -1
-	for i in range(_entries.size()):
-		_picker.add_item(String(_entries[i].get("name", "")))
-		if String(_entries[i].get("name", "")).to_lower() == "metal greymon":
-			metal = i
-	if _entries.is_empty():
-		_name_label.text = "NO SPRITES FOUND"
-		_state_label.text = "No packaged Digimon field resources were discovered."
+	_apply_filters("Metal Greymon")
+
+
+func _load_rank_index() -> Dictionary:
+	var result: Dictionary = {}
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(DATABASE_PATH))
+	if not parsed is Array:
+		return result
+	for raw_entry in parsed:
+		if not raw_entry is Dictionary:
+			continue
+		var entry := raw_entry as Dictionary
+		result[_compact_name(String(entry.get("name", "")))] = String(entry.get("rank", ""))
+	return result
+
+
+func _compact_name(value: String) -> String:
+	var result := ""
+	for character in value.to_lower():
+		if (character >= "a" and character <= "z") or (character >= "0" and character <= "9"):
+			result += character
+	return result
+
+
+func _rank_enabled(rank: String) -> bool:
+	if rank.is_empty():
+		return true
+	var check := _rank_checks.get(rank) as CheckButton
+	return check == null or check.button_pressed
+
+
+func _apply_filters(preferred_name: String = "") -> void:
+	var previous_name := preferred_name
+	if previous_name.is_empty() and not _filtered_entries.is_empty() and _index >= 0 and _index < _filtered_entries.size():
+		previous_name = String(_filtered_entries[_index].get("name", ""))
+	_filtered_entries.clear()
+	_picker.clear()
+	var query := _search_edit.text.strip_edges().to_lower() if _search_edit != null else ""
+	for entry in _entries:
+		var name := String(entry.get("name", ""))
+		var key := String(entry.get("key", ""))
+		var rank := String(entry.get("rank", ""))
+		if not _rank_enabled(rank):
+			continue
+		if not query.is_empty() and name.to_lower().find(query) < 0 and key.to_lower().find(query) < 0:
+			continue
+		_filtered_entries.append(entry)
+		_picker.add_item("%s · %s" % [name, rank] if not rank.is_empty() else name)
+
+	_picker.disabled = _filtered_entries.is_empty()
+	if _filtered_entries.is_empty():
+		_index = -1
+		_dispose_follower()
+		_name_label.text = "NO MATCHES"
+		_state_label.text = "Adjust the name search or rank filters."
 		return
-	_index = metal if metal >= 0 else 0
+
+	_index = 0
+	if not previous_name.is_empty():
+		for i in range(_filtered_entries.size()):
+			if String(_filtered_entries[i].get("name", "")).nocasecmp_to(previous_name) == 0:
+				_index = i
+				break
 	_picker.select(_index)
+	if visible:
+		_spawn_selected()
+
+
+func _on_search_changed(_value: String) -> void:
+	_apply_filters()
+
+
+func _on_rank_toggled(_pressed: bool, _rank: String) -> void:
+	_apply_filters()
 
 
 func get_testable_species_count() -> int:
@@ -307,11 +401,33 @@ func get_testable_species_names() -> Array[String]:
 	return names
 
 
+func get_filtered_species_names() -> Array[String]:
+	var names: Array[String] = []
+	for entry in _filtered_entries:
+		names.append(String(entry.get("name", "")))
+	return names
+
+
+func set_search_query(value: String) -> void:
+	if _search_edit == null:
+		return
+	_search_edit.text = value
+	_apply_filters()
+
+
+func set_rank_enabled(rank: String, enabled: bool) -> void:
+	var check := _rank_checks.get(rank) as CheckButton
+	if check == null:
+		return
+	check.set_pressed_no_signal(enabled)
+	_apply_filters()
+
+
 func _spawn_selected() -> void:
-	if not visible or _entries.is_empty():
+	if not visible or _filtered_entries.is_empty() or _index < 0 or _index >= _filtered_entries.size():
 		return
 	_dispose_follower()
-	var entry := _entries[_index]
+	var entry := _filtered_entries[_index]
 	var resource := load(String(entry.get("path", ""))) as Digimon
 	if resource == null:
 		return
@@ -324,7 +440,7 @@ func _spawn_selected() -> void:
 
 
 func _select_species(index: int) -> void:
-	if index < 0 or index >= _entries.size():
+	if index < 0 or index >= _filtered_entries.size():
 		return
 	_index = index
 	_auto = false
@@ -334,9 +450,9 @@ func _select_species(index: int) -> void:
 
 
 func _select_relative(offset: int) -> void:
-	if _entries.is_empty():
+	if _filtered_entries.is_empty():
 		return
-	_index = posmod(_index + offset, _entries.size())
+	_index = posmod(_index + offset, _filtered_entries.size())
 	_picker.select(_index)
 	_select_species(_index)
 
