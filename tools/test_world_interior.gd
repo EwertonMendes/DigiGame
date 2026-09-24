@@ -5,9 +5,10 @@ const DIGILAB_FLOOR_1_PATH := "res://assets/world/tblack/digilab/floor/floor-1.p
 const DIGILAB_WALL_PATHS := {
 	"straight_left": "res://assets/world/tblack/digilab/wall/runtime/wall-straight-left.svg",
 	"straight_right": "res://assets/world/tblack/digilab/wall/runtime/wall-straight-right.svg",
-	"inner_corner": "res://assets/world/tblack/digilab/wall/runtime/inner-corner.svg",
-	"outer_corner": "res://assets/world/tblack/digilab/wall/runtime/outer-corner.svg",
-	"joint_pillar": "res://assets/world/tblack/digilab/wall/runtime/joint-pillar.svg",
+	"corner_back_left": "res://assets/world/tblack/digilab/wall/runtime/corner-back-left.svg",
+	"corner_back_right": "res://assets/world/tblack/digilab/wall/runtime/corner-back-right.svg",
+	"corner_front_left": "res://assets/world/tblack/digilab/wall/runtime/corner-front-left.svg",
+	"corner_front_right": "res://assets/world/tblack/digilab/wall/runtime/corner-front-right.svg",
 	"door_frame": "res://assets/world/tblack/digilab/wall/runtime/door-frame.svg",
 	"low_divider": "res://assets/world/tblack/digilab/wall/runtime/low-divider.svg",
 	"wall_end_cap": "res://assets/world/tblack/digilab/wall/runtime/wall-end-cap.svg",
@@ -165,24 +166,29 @@ func _assert_digilab_floor_assets(interior: WorldInterior) -> void:
 	var floor_root := interior.get_node_or_null("Floor")
 	assert(floor_root != null, "DigiLab interior must expose its floor root")
 	assert(
-		floor_root.get_child_count() == 252,
-		"DigiLab 18x14 floor must keep one visual tile per 64x32 gameplay cell"
+		floor_root.get_child_count() == 1,
+		"DigiLab floor must batch all 252 logical cells into one render node"
 	)
 
-	for child in floor_root.get_children():
-		var detail := child.get_node_or_null("TopFaceDetail") as Polygon2D
-		assert(detail != null and detail.texture != null, "Every DigiLab floor tile must keep the authored Floor 1 texture")
-		assert(detail.polygon.size() == 4, "DigiLab floor tiles must remain exact isometric diamonds")
-		assert(
-			is_equal_approx(absf(detail.polygon[0].x), 32.0)
-			and is_equal_approx(absf(detail.polygon[1].y), 16.0),
-			"DigiLab visual tiles must remain exactly 64x32"
-		)
-		assert(
-			detail.texture.resource_path == DIGILAB_FLOOR_1_PATH,
-			"Every DigiLab floor cell must use the complete Floor 1 source; Floor 2 must not be rendered"
-		)
-		assert(detail.uv.size() == 4, "Every DigiLab tile must keep the complete authored top-face UV mapping")
+	var batch := floor_root.get_child(0) as MultiMeshInstance2D
+	assert(batch != null and batch.multimesh != null, "DigiLab floor must use MultiMeshInstance2D")
+	assert(
+		batch.multimesh.instance_count == 252,
+		"DigiLab 18x14 floor batch must preserve exactly 252 logical grid cells"
+	)
+	assert(
+		batch.texture != null and batch.texture.resource_path == DIGILAB_FLOOR_1_PATH,
+		"DigiLab floor batch must render only the authored Floor 1 source"
+	)
+	assert(
+		String(batch.get_meta("render_backend", "")) == "multimesh",
+		"DigiLab floor must keep the batched render backend"
+	)
+	assert(
+		(batch.get_meta("grid_size", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(64.0, 32.0)),
+		"DigiLab floor batch must preserve the canonical 64x32 grid"
+	)
+
 
 func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 	var walls := interior.get_node_or_null("Walls")
@@ -191,86 +197,107 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 
 	var authored := walls.get_node_or_null("AuthoredWalls")
 	assert(authored != null, "DigiLab must compose walls under one authored wall root")
-	assert(authored.get_child_count() == 68, "DigiLab wall shell must keep the exact reviewed grid-edge composition")
+	assert(
+		authored.get_child_count() == 8,
+		"DigiLab wall renderer must stay at eight visual nodes: three batches, four corners and one doorway"
+	)
 	assert(
 		(authored.get_meta("grid_size", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(64.0, 32.0)),
 		"Runtime DigiLab walls must remain bound to the 64x32 world grid"
 	)
 	assert(
-		String(authored.get_meta("layout_contract", "")) == "grid-native-vector",
-		"DigiLab wall placement must use the grid-native vector contract"
+		String(authored.get_meta("layout_contract", "")) == "grid-native-vector-batched",
+		"DigiLab wall placement must use the batched grid-native vector contract"
 	)
 
-	var counts: Dictionary = {}
+	var logical_counts: Dictionary = {}
 	var anchors_by_kind: Dictionary = {}
+	var batch_kinds: Dictionary = {}
+
 	for child in authored.get_children():
+		if child is MultiMeshInstance2D:
+			var batch := child as MultiMeshInstance2D
+			assert(batch.multimesh != null and batch.texture != null, "Every wall batch must own a MultiMesh and texture")
+			var kind := String(batch.get_meta("digilab_wall_batch", ""))
+			assert(kind in ["straight_right", "straight_left", "low_divider"], "Only repeated straight/divider modules may be batched")
+			assert(
+				String(batch.get_meta("normalization_contract", "")) == "grid-native-vector-batch",
+				"Wall batches must use the deterministic grid-native batch contract"
+			)
+			assert(
+				String(batch.get_meta("source_kind", "")) == "runtime_svg",
+				"Wall batches must render prebuilt runtime SVGs"
+			)
+			assert(DIGILAB_WALL_PATHS.has(kind), "Wall batch must declare a known wall role")
+			assert(
+				batch.texture.resource_path == String(DIGILAB_WALL_PATHS[kind]),
+				"Wall batch must use the exact grid-native SVG for its role"
+			)
+			var batch_count := int(batch.get_meta("batch_count", 0))
+			assert(batch_count > 0 and batch.multimesh.instance_count == batch_count, "Wall batch metadata must match MultiMesh instance count")
+			logical_counts[kind] = batch_count
+			batch_kinds[kind] = true
+			var grid_anchors := batch.get_meta("grid_anchors", []) as Array
+			assert(grid_anchors.size() == batch_count, "Wall batch must retain every logical grid anchor")
+			anchors_by_kind[kind] = grid_anchors
+			var span := batch.get_meta("grid_span", Vector2.ZERO) as Vector2
+			if kind == "straight_right":
+				assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Back wall modules must own one X-grid edge")
+			elif kind == "straight_left":
+				assert(span.is_equal_approx(Vector2(0.0, 1.0)), "Side wall modules must own one Y-grid edge")
+			else:
+				assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Front dividers must own one X-grid edge")
+			continue
+
 		var sprite := child as Sprite2D
-		assert(sprite != null and sprite.texture != null, "Every DigiLab wall piece must be a textured Sprite2D")
-		assert(sprite.scale.is_equal_approx(Vector2.ONE), "Grid-native wall assets must render at exact scale 1")
-		assert(is_zero_approx(sprite.rotation), "Grid-native wall assets must never be rotated at runtime")
-		assert(not sprite.flip_h and not sprite.flip_v, "Grid-native wall assets must never be mirrored at runtime")
+		assert(sprite != null and sprite.texture != null, "Non-batched wall nodes must be connector/door Sprite2D assets")
+		assert(sprite.scale.is_equal_approx(Vector2.ONE), "Grid-native connector assets must render at scale 1")
+		assert(is_zero_approx(sprite.rotation), "Grid-native connector assets must never rotate at runtime")
+		assert(not sprite.flip_h and not sprite.flip_v, "Grid-native connector assets must never mirror at runtime")
 		assert(
 			String(sprite.get_meta("normalization_contract", "")) == "grid-native-vector",
-			"Every wall node must use the deterministic grid-native vector contract"
+			"Connector assets must use the deterministic grid-native vector contract"
 		)
-		assert(
-			String(sprite.get_meta("source_kind", "")) == "runtime_svg",
-			"Every wall node must render the prebuilt runtime SVG, not the 1254x1254 AI source PNG"
-		)
-
 		var kind := String(sprite.get_meta("digilab_wall_piece", ""))
-		assert(DIGILAB_WALL_PATHS.has(kind), "Every runtime wall sprite must declare a known wall role")
+		assert(
+			kind in ["corner_back_left", "corner_back_right", "corner_front_left", "corner_front_right", "door_frame"],
+			"Only orientation-specific corners and the doorway may remain individual sprites"
+		)
+		assert(DIGILAB_WALL_PATHS.has(kind), "Connector sprite must declare a known role")
 		assert(
 			sprite.texture.resource_path == String(DIGILAB_WALL_PATHS[kind]),
-			"Each runtime wall role must use its exact grid-native SVG"
+			"Connector sprite must use its exact orientation-specific SVG"
 		)
-		counts[kind] = int(counts.get(kind, 0)) + 1
-
+		logical_counts[kind] = int(logical_counts.get(kind, 0)) + 1
 		var anchor := sprite.get_meta("grid_anchor_cell", Vector2(-1000.0, -1000.0)) as Vector2
 		assert(
 			is_equal_approx(anchor.x, round(anchor.x))
 			and is_equal_approx(anchor.y, round(anchor.y)),
-			"All runtime wall anchors must sit on exact integer grid vertices"
+			"Connector anchors must sit on exact integer grid vertices"
 		)
-		if not anchors_by_kind.has(kind):
-			anchors_by_kind[kind] = []
-		(anchors_by_kind[kind] as Array).append(anchor)
+		anchors_by_kind[kind] = [anchor]
 
-		var span := sprite.get_meta("grid_span", Vector2.ZERO) as Vector2
-		match kind:
-			"straight_right":
-				assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Right wall module must own exactly one X-grid edge")
-			"straight_left":
-				assert(span.is_equal_approx(Vector2(0.0, 1.0)), "Left wall module must own exactly one Y-grid edge")
-			"low_divider":
-				assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Low divider must own exactly one X-grid edge")
-			"door_frame":
-				assert(span.is_equal_approx(Vector2(4.0, 0.0)), "Door frame must own exactly four X-grid edges")
-			_:
-				assert(span.is_zero_approx(), "Joint/corner assets must not extend the wall run")
+	assert(batch_kinds.size() == 3, "DigiLab must use exactly three repeated-geometry wall batches")
+	assert(int(logical_counts.get("straight_right", 0)) == 17, "Back wall must keep seventeen one-edge modules")
+	assert(int(logical_counts.get("straight_left", 0)) == 26, "Side walls must keep twenty-six one-edge modules")
+	assert(int(logical_counts.get("low_divider", 0)) == 13, "Front boundary must keep thirteen one-edge low dividers")
+	assert(int(logical_counts.get("door_frame", 0)) == 1, "Front boundary must keep exactly one four-edge doorway")
+	for corner_kind in ["corner_back_left", "corner_back_right", "corner_front_left", "corner_front_right"]:
+		assert(int(logical_counts.get(corner_kind, 0)) == 1, "Each orientation-specific corner must appear exactly once: %s" % corner_kind)
 
-		var visual_height := float(sprite.get_meta("visual_height", 0.0))
-		if kind == "low_divider":
-			assert(is_equal_approx(visual_height, 34.0), "Only the front divider may use the intentional low-wall height")
-		else:
-			assert(is_equal_approx(visual_height, 72.0), "Every full-height DigiLab wall component must share one exact height")
-
-	assert(int(counts.get("straight_right", 0)) == 17, "Back wall must contain exactly 17 one-edge modules")
-	assert(int(counts.get("straight_left", 0)) == 26, "Left and right walls must contain exactly 13 one-edge modules each")
-	assert(int(counts.get("inner_corner", 0)) == 2, "Back wall must use exactly two inner joint covers")
-	assert(int(counts.get("outer_corner", 0)) == 2, "Front boundary must use exactly two outer joint covers")
-	assert(int(counts.get("joint_pillar", 0)) == 7, "Long wall runs must keep the seven reviewed structural seam pillars")
-	assert(int(counts.get("low_divider", 0)) == 13, "Front boundary must contain thirteen one-edge divider modules")
-	assert(int(counts.get("door_frame", 0)) == 1, "Front boundary must contain exactly one four-edge doorway")
-
-	_assert_anchor_present(anchors_by_kind, "inner_corner", Vector2(0.0, 0.0))
-	_assert_anchor_present(anchors_by_kind, "inner_corner", Vector2(17.0, 0.0))
-	_assert_anchor_present(anchors_by_kind, "outer_corner", Vector2(0.0, 13.0))
-	_assert_anchor_present(anchors_by_kind, "outer_corner", Vector2(17.0, 13.0))
+	_assert_anchor_present(anchors_by_kind, "corner_back_left", Vector2(0.0, 0.0))
+	_assert_anchor_present(anchors_by_kind, "corner_back_right", Vector2(17.0, 0.0))
+	_assert_anchor_present(anchors_by_kind, "corner_front_left", Vector2(0.0, 13.0))
+	_assert_anchor_present(anchors_by_kind, "corner_front_right", Vector2(17.0, 13.0))
 	_assert_anchor_present(anchors_by_kind, "door_frame", Vector2(7.0, 13.0))
 
-	# Runtime end-cap is part of the canonical kit for future partial wall runs,
-	# even though the current closed shell terminates into corners/door pillars.
+	var physics_root := interior.get_node_or_null("InteriorCollision")
+	assert(physics_root != null, "DigiLab interior must expose its collision root")
+	assert(
+		String(physics_root.get_meta("digilab_wall_collision_backend", "")) == "blocked-cells-only",
+		"DigiLab walls must not duplicate blocked-cell movement rules with per-tile PhysicsServer colliders"
+	)
+
 	assert(ResourceLoader.exists(DIGILAB_WALL_PATHS["wall_end_cap"]), "Canonical DigiLab end-cap SVG must remain available")
 
 
