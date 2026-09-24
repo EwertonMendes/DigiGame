@@ -34,6 +34,10 @@ var _state_label: Label
 var _auto_button: Button
 var _zoom_button: Button
 var _touch_joystick: Control
+var _stats_label: Label
+var _total_species_count := 0
+var _species_with_sprite_count := 0
+var _species_without_sprite_count := 0
 var _entries: Array[Dictionary] = []
 var _filtered_entries: Array[Dictionary] = []
 var _index := 0
@@ -168,6 +172,20 @@ func _build_ui() -> void:
 	close.pressed.connect(close_lab)
 	header.add_child(close)
 
+	var stats_panel := PanelContainer.new()
+	stats_panel.add_theme_stylebox_override("panel", UI.panel(UI.CYAN, 0.72, 0.16, 8, 1))
+	root.add_child(stats_panel)
+	var stats_margin := MarginContainer.new()
+	stats_margin.add_theme_constant_override("margin_left", 12)
+	stats_margin.add_theme_constant_override("margin_top", 7)
+	stats_margin.add_theme_constant_override("margin_right", 12)
+	stats_margin.add_theme_constant_override("margin_bottom", 7)
+	stats_panel.add_child(stats_margin)
+	_stats_label = _label("TOTAL DIGIMON: --   •   WITH SPRITE: --   •   WITHOUT SPRITE: --", 12, UI.CYAN)
+	_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stats_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stats_margin.add_child(_stats_label)
+
 	var filters := HBoxContainer.new()
 	filters.add_theme_constant_override("separation", 8)
 	root.add_child(filters)
@@ -287,6 +305,8 @@ func _load_entries() -> void:
 	_filtered_entries.clear()
 	_picker.clear()
 	var ranks := _load_rank_index()
+	_total_species_count = ranks.size()
+	var sprite_species: Dictionary = {}
 
 	var filenames: Array[String] = []
 	for raw_filename in ResourceLoader.list_directory(RESOURCE_ROOT):
@@ -308,8 +328,15 @@ func _load_entries() -> void:
 		var display := resource.display_name.strip_edges()
 		if display.is_empty():
 			display = key.capitalize()
-		var rank := String(ranks.get(_compact_name(display), ""))
+		var compact_display := _compact_name(display)
+		var rank := String(ranks.get(compact_display, ""))
 		_entries.append({"key": key, "name": display, "path": path, "rank": rank})
+		if ranks.has(compact_display):
+			sprite_species[compact_display] = true
+
+	_species_with_sprite_count = sprite_species.size()
+	_species_without_sprite_count = maxi(0, _total_species_count - _species_with_sprite_count)
+	_refresh_stats()
 
 	_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.get("name", "")).naturalnocasecmp_to(String(b.get("name", ""))) < 0
@@ -336,6 +363,16 @@ func _compact_name(value: String) -> String:
 		if (character >= "a" and character <= "z") or (character >= "0" and character <= "9"):
 			result += character
 	return result
+
+
+func _refresh_stats() -> void:
+	if _stats_label == null:
+		return
+	_stats_label.text = "TOTAL DIGIMON: %d   •   WITH SPRITE: %d   •   WITHOUT SPRITE: %d" % [
+		_total_species_count,
+		_species_with_sprite_count,
+		_species_without_sprite_count,
+	]
 
 
 func _rank_enabled(rank: String) -> bool:
@@ -388,6 +425,18 @@ func _on_search_changed(_value: String) -> void:
 
 func _on_rank_toggled(_pressed: bool, _rank: String) -> void:
 	_apply_filters()
+
+
+func get_total_species_count() -> int:
+	return _total_species_count
+
+
+func get_species_with_sprite_count() -> int:
+	return _species_with_sprite_count
+
+
+func get_species_without_sprite_count() -> int:
+	return _species_without_sprite_count
 
 
 func get_testable_species_count() -> int:
