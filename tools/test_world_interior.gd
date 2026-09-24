@@ -80,6 +80,11 @@ func _ready() -> void:
 		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab-door-open.png",
 		"DigiLab door must remain fully open while the player is inside"
 	)
+	for _index in range(90):
+		if not bool(manager.call("is_transitioning")):
+			break
+		await get_tree().process_frame
+	assert(not bool(manager.call("is_transitioning")), "DigiLab entry transition must finish before testing interior exit")
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Interior spawn must be walkable")
