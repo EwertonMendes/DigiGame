@@ -34,48 +34,56 @@ const SPECS := {
 		"anchor_px": Vector2(32.0, 104.0),
 		"span": Vector2(1.0, 0.0),
 		"priority": 0,
+		"visual_height": WALL_HEIGHT,
 	},
 	KIND_STRAIGHT_LEFT: {
 		"texture": WALL_STRAIGHT_LEFT,
 		"anchor_px": Vector2(96.0, 104.0),
 		"span": Vector2(0.0, 1.0),
 		"priority": 0,
+		"visual_height": WALL_HEIGHT,
 	},
 	KIND_INNER_CORNER: {
 		"texture": INNER_CORNER,
 		"anchor_px": Vector2(56.0, 124.0),
 		"span": Vector2.ZERO,
 		"priority": 20,
+		"visual_height": WALL_HEIGHT,
 	},
 	KIND_OUTER_CORNER: {
 		"texture": OUTER_CORNER,
 		"anchor_px": Vector2(56.0, 124.0),
 		"span": Vector2.ZERO,
 		"priority": 20,
+		"visual_height": WALL_HEIGHT,
 	},
 	KIND_JOINT_PILLAR: {
 		"texture": JOINT_PILLAR,
 		"anchor_px": Vector2(56.0, 124.0),
 		"span": Vector2.ZERO,
 		"priority": 15,
+		"visual_height": WALL_HEIGHT,
 	},
 	KIND_DOOR_FRAME: {
 		"texture": DOOR_FRAME,
 		"anchor_px": Vector2(36.0, 138.0),
 		"span": Vector2(4.0, 0.0),
 		"priority": 25,
+		"visual_height": WALL_HEIGHT,
 	},
 	KIND_LOW_DIVIDER: {
 		"texture": LOW_DIVIDER,
 		"anchor_px": Vector2(32.0, 72.0),
 		"span": Vector2(1.0, 0.0),
 		"priority": 0,
+		"visual_height": 34.0,
 	},
 	KIND_WALL_END_CAP: {
 		"texture": WALL_END_CAP,
 		"anchor_px": Vector2(48.0, 112.0),
 		"span": Vector2.ZERO,
 		"priority": 15,
+		"visual_height": WALL_HEIGHT,
 	},
 }
 
@@ -103,7 +111,7 @@ static func create_piece(
 	sprite.set_meta("grid_anchor_cell", grid_anchor)
 	sprite.set_meta("grid_span", spec["span"])
 	sprite.set_meta("asset_anchor_px", spec["anchor_px"])
-	sprite.set_meta("wall_height", WALL_HEIGHT)
+	sprite.set_meta("visual_height", float(spec.get("visual_height", WALL_HEIGHT)))
 	sprite.set_meta("normalization_contract", "grid-native-vector")
 	sprite.set_meta("source_kind", "runtime_svg")
 	return sprite
