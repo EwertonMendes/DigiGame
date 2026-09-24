@@ -38,8 +38,11 @@ func _ready() -> void:
 	assert(portal != null, "Hub must create the animated test battle portal")
 	assert(dialog != null, "Hub must expose the Battle Operator service workspace")
 	assert(party_followers != null, "Hub must create the overworld active-party follower system")
-	var sprite_lab := DeveloperToolkit.get("_sprite_test_lab") as DigimonSpriteTestLab
-	assert(sprite_lab != null, "Global Developer Toolkit must own the Sprite Test lab independently of the current world scene")
+	assert(hub.get_node_or_null("SpriteTestDebug") == null, "Hub must not own a scene-specific Sprite Test controller now that the tool is global")
+	var sprite_lab := DigimonSpriteTestLab.new()
+	add_child(sprite_lab)
+	await get_tree().process_frame
+	assert(sprite_lab != null, "Sprite Test lab must initialize independently of a specific overworld scene")
 	assert(int(sprite_lab.call("get_testable_species_count")) >= 7, "Sprite test lab must discover packaged Digimon resources")
 	assert(Array(sprite_lab.call("get_testable_species_names")).has("Metal Greymon"), "Sprite test lab must include Metal Greymon")
 	for rank in ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]:
@@ -62,6 +65,8 @@ func _ready() -> void:
 	var sprite_test_visual := sprite_test_follower.get_node_or_null("Sprite2D") as Sprite2D
 	assert(sprite_test_visual != null and sprite_test_visual.texture != null, "Sprite test lab must render the selected field texture")
 	sprite_lab.call("close_lab")
+	sprite_lab.queue_free()
+	await get_tree().process_frame
 	assert(player.position.distance_to(operator.position) <= 94.0, "Operator must be reachable from spawn immediately")
 	assert(bool(hub.call("can_actor_move_to", player.position, player)), "Spawn must be walkable")
 
