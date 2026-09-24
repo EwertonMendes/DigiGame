@@ -5,7 +5,9 @@ on:
     branches:
       - feat/ds-sprite-backfill-debug-tools
     paths:
+      - '.github/workflows/audit-missing-ds-sources.yml'
       - 'tools/audit_missing_ds_sources.py'
+      - 'tools/audit_missing_ds_semantics.py'
       - 'database/base-digimon-list.json'
       - 'database/ds-additional-sources.json'
       - 'assets/resources/**'
