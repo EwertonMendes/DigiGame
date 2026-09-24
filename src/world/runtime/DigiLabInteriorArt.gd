@@ -1,10 +1,16 @@
 extends RefCounted
 class_name DigiLabInteriorArt
 
-# Authored 1254x1254 source pieces supplied for the DigiLab interior.
-# Runtime normalization trims transparent padding, finds the actual floor
-# contact band and anchors that contact point directly to the 64x32 world grid.
-# The source PNGs remain untouched, preserving their full authored detail.
+# DigiLab wall sources are authored as 1254x1254 transparent PNGs.
+# They are normalized as ONE coherent kit:
+# - trim transparent padding deterministically
+# - derive ONE canonical uniform scale from wall-straight-right
+# - reuse that exact scale for every full-size/low wall asset
+# - position pieces by explicit floor connectors, never by opaque-width guesses
+# - never rotate/flip a source at runtime
+#
+# This keeps all pieces in the same visual scale and makes their grid placement
+# a data contract instead of a heuristic.
 const WALL_STRAIGHT_LEFT = preload("res://assets/world/tblack/digilab/wall/wall-straight-left.png")
 const WALL_STRAIGHT_RIGHT = preload("res://assets/world/tblack/digilab/wall/wall-straight-right.png")
 const INNER_CORNER = preload("res://assets/world/tblack/digilab/wall/inner-corner.png")
@@ -23,59 +29,44 @@ const KIND_DOOR_FRAME := "door_frame"
 const KIND_LOW_DIVIDER := "low_divider"
 const KIND_WALL_END_CAP := "wall_end_cap"
 
-const ALPHA_THRESHOLD := 0.08
-const CONTACT_BAND_RATIO := 0.18
-const MIN_SCALE := 0.035
-const MAX_SCALE := 0.32
+const SOURCE_CANVAS_SIZE := Vector2i(1254, 1254)
 
-static var _metrics_cache: Dictionary = {}
+# The right straight wall is the master scale reference. Its two authored base
+# connectors are mapped to exactly 3.625 grid cells on the X axis. Every other
+# asset reuses the resulting uniform scale unchanged.
+const MASTER_GRID_SPAN := 3.625
+const MASTER_ANCHOR_FRAC := Vector2(0.075, 0.455)
+const MASTER_END_FRAC := Vector2(0.905, 0.900)
+
+static var _canonical_scale_cache := -1.0
+static var _normalized_cache: Dictionary = {}
 
 
 static func create_piece(
 	kind: String,
-	anchor: Vector2,
-	depth_order: int,
-	flip_h: bool = false
+	world_anchor: Vector2,
+	grid_anchor: Vector2,
+	depth_order: int
 ) -> Sprite2D:
-	var texture := piece_texture(kind)
-	var metrics := _texture_metrics(texture)
-	var used_rect: Rect2i = metrics.get("used_rect", Rect2i())
-	var contact_center_x := float(metrics.get("contact_center_x", used_rect.position.x + used_rect.size.x * 0.5))
-	var contact_y := float(metrics.get("contact_y", used_rect.end.y - 1))
-	var contact_width := maxf(float(metrics.get("contact_width", used_rect.size.x)), 1.0)
-	var target_contact_width := _target_contact_width(kind)
-	var normalized_scale := clampf(target_contact_width / contact_width, MIN_SCALE, MAX_SCALE)
-
+	var normalized := _normalized_piece(kind)
 	var sprite := Sprite2D.new()
-	sprite.name = _piece_node_name(kind)
-	sprite.texture = texture
-	sprite.region_enabled = true
-	sprite.region_rect = Rect2(used_rect)
+	sprite.name = "Wall_%s" % kind.to_pascal_case()
+	sprite.texture = normalized.texture
 	sprite.centered = false
-	sprite.flip_h = flip_h
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	sprite.scale = Vector2(normalized_scale, normalized_scale)
-
-	var local_contact_x := contact_center_x - float(used_rect.position.x)
-	if flip_h:
-		local_contact_x = float(used_rect.size.x) - local_contact_x
-	var local_contact_y := contact_y - float(used_rect.position.y)
-	sprite.position = anchor - Vector2(
-		local_contact_x * normalized_scale,
-		local_contact_y * normalized_scale
-	)
+	sprite.position = world_anchor - normalized.anchor_px
 	sprite.z_index = clampi(depth_order, -4000, 4000)
 
-	# Metadata is deliberately kept on the runtime node so regression tests can
-	# verify the normalization contract without depending on source canvas
-	# margins or hard-coded editor positions.
 	sprite.set_meta("digilab_wall_piece", kind)
-	sprite.set_meta("grid_anchor", anchor)
-	sprite.set_meta("source_used_rect", used_rect)
-	sprite.set_meta("source_contact_width", contact_width)
-	sprite.set_meta("target_contact_width", target_contact_width)
-	sprite.set_meta("normalized_contact_width", contact_width * normalized_scale)
-	sprite.set_meta("normalized_scale", normalized_scale)
+	sprite.set_meta("grid_anchor_cell", grid_anchor)
+	sprite.set_meta("source_path", piece_texture(kind).resource_path)
+	sprite.set_meta("source_canvas_size", SOURCE_CANVAS_SIZE)
+	sprite.set_meta("trimmed_source_rect", normalized.source_rect)
+	sprite.set_meta("canonical_scale", normalized.scale)
+	sprite.set_meta("normalized_size", normalized.size)
+	sprite.set_meta("anchor_px", normalized.anchor_px)
+	sprite.set_meta("connector_deltas", connector_deltas(kind))
+	sprite.set_meta("normalization_contract", "trim+single-master-scale+explicit-connectors")
 	return sprite
 
 
@@ -102,77 +93,123 @@ static func piece_texture(kind: String) -> Texture2D:
 			return WALL_STRAIGHT_RIGHT
 
 
-static func _target_contact_width(kind: String) -> float:
+static func connector_deltas(kind: String) -> Array[Vector2]:
 	match kind:
-		KIND_STRAIGHT_LEFT, KIND_STRAIGHT_RIGHT:
-			return 40.0
-		KIND_INNER_CORNER, KIND_OUTER_CORNER:
-			return 62.0
-		KIND_JOINT_PILLAR:
-			return 28.0
+		KIND_STRAIGHT_RIGHT:
+			return [Vector2(MASTER_GRID_SPAN, 0.0)]
+		KIND_STRAIGHT_LEFT:
+			return [Vector2(0.0, 3.5)]
+		KIND_INNER_CORNER:
+			return [Vector2(2.5, 0.0), Vector2(0.0, 2.5)]
+		KIND_OUTER_CORNER:
+			return [Vector2(-2.5, 0.0), Vector2(0.0, -2.5)]
 		KIND_DOOR_FRAME:
-			return 116.0
+			return [Vector2(3.0, 0.0)]
 		KIND_LOW_DIVIDER:
-			# The generated divider has a narrower opaque contact band than its
-			# visible rail. A slightly wider target lets adjacent 64x32 modules
-			# meet cleanly instead of reading as detached fence posts.
-			return 56.0
+			return [Vector2(3.75, 0.0)]
 		KIND_WALL_END_CAP:
-			return 34.0
+			return [Vector2(0.0, 3.5)]
+		KIND_JOINT_PILLAR:
+			return []
 		_:
-			return 40.0
+			return []
 
 
-static func _piece_node_name(kind: String) -> String:
-	return "Wall_%s" % kind.to_pascal_case()
+static func _normalized_piece(kind: String) -> Dictionary:
+	if _normalized_cache.has(kind):
+		return _normalized_cache[kind]
 
-
-static func _texture_metrics(texture: Texture2D) -> Dictionary:
-	var path := texture.resource_path
-	if _metrics_cache.has(path):
-		return _metrics_cache[path]
-
-	var image := texture.get_image()
+	var source := piece_texture(kind)
+	var image := source.get_image()
 	if image == null or image.is_empty():
-		var fallback := {
-			"used_rect": Rect2i(0, 0, texture.get_width(), texture.get_height()),
-			"contact_center_x": float(texture.get_width()) * 0.5,
-			"contact_y": float(texture.get_height() - 1),
-			"contact_width": float(texture.get_width()),
+		push_error("Unable to read DigiLab wall source: %s" % source.resource_path)
+		return {
+			"texture": source,
+			"anchor_px": Vector2.ZERO,
+			"source_rect": Rect2i(0, 0, source.get_width(), source.get_height()),
+			"scale": 1.0,
+			"size": Vector2(source.get_width(), source.get_height()),
 		}
-		_metrics_cache[path] = fallback
-		return fallback
 
 	var used_rect := image.get_used_rect()
 	if used_rect.size.x <= 0 or used_rect.size.y <= 0:
-		used_rect = Rect2i(0, 0, image.get_width(), image.get_height())
+		used_rect = Rect2i(Vector2i.ZERO, image.get_size())
 
-	var band_height := maxi(8, int(round(float(used_rect.size.y) * CONTACT_BAND_RATIO)))
-	var scan_start_y := maxi(used_rect.position.y, used_rect.end.y - band_height)
-	var min_x := used_rect.end.x
-	var max_x := used_rect.position.x
-	var max_y := used_rect.position.y
-	var found := false
+	var cropped := image.get_region(used_rect)
+	var canonical_scale := _canonical_scale()
+	var target_size := Vector2i(
+		maxi(1, int(round(float(cropped.get_width()) * canonical_scale))),
+		maxi(1, int(round(float(cropped.get_height()) * canonical_scale)))
+	)
+	cropped.resize(target_size.x, target_size.y, Image.INTERPOLATE_LANCZOS)
+	var texture := ImageTexture.create_from_image(cropped)
 
-	for y in range(scan_start_y, used_rect.end.y):
-		for x in range(used_rect.position.x, used_rect.end.x):
-			if image.get_pixel(x, y).a < ALPHA_THRESHOLD:
-				continue
-			found = true
-			min_x = mini(min_x, x)
-			max_x = maxi(max_x, x)
-			max_y = maxi(max_y, y)
+	var anchor_frac := _anchor_fraction(kind)
+	var anchor_px := Vector2(
+		anchor_frac.x * float(target_size.x),
+		anchor_frac.y * float(target_size.y)
+	)
 
-	if not found:
-		min_x = used_rect.position.x
-		max_x = used_rect.end.x - 1
-		max_y = used_rect.end.y - 1
-
-	var metrics := {
-		"used_rect": used_rect,
-		"contact_center_x": (float(min_x) + float(max_x)) * 0.5,
-		"contact_y": float(max_y),
-		"contact_width": float(maxi(max_x - min_x + 1, 1)),
+	var normalized := {
+		"texture": texture,
+		"anchor_px": anchor_px,
+		"source_rect": used_rect,
+		"scale": canonical_scale,
+		"size": Vector2(target_size),
 	}
-	_metrics_cache[path] = metrics
-	return metrics
+	_normalized_cache[kind] = normalized
+	return normalized
+
+
+static func _canonical_scale() -> float:
+	if _canonical_scale_cache > 0.0:
+		return _canonical_scale_cache
+
+	var image := WALL_STRAIGHT_RIGHT.get_image()
+	if image == null or image.is_empty():
+		_canonical_scale_cache = 0.125
+		return _canonical_scale_cache
+
+	var used_rect := image.get_used_rect()
+	if used_rect.size.x <= 0 or used_rect.size.y <= 0:
+		used_rect = Rect2i(Vector2i.ZERO, image.get_size())
+
+	var source_size := Vector2(used_rect.size)
+	var source_anchor := Vector2(
+		MASTER_ANCHOR_FRAC.x * source_size.x,
+		MASTER_ANCHOR_FRAC.y * source_size.y
+	)
+	var source_end := Vector2(
+		MASTER_END_FRAC.x * source_size.x,
+		MASTER_END_FRAC.y * source_size.y
+	)
+	var source_distance := maxf(source_anchor.distance_to(source_end), 1.0)
+
+	# One X-grid cell advances (32, 16) pixels in the 64x32 isometric grid.
+	var target_distance := Vector2(32.0 * MASTER_GRID_SPAN, 16.0 * MASTER_GRID_SPAN).length()
+	_canonical_scale_cache = target_distance / source_distance
+	return _canonical_scale_cache
+
+
+static func _anchor_fraction(kind: String) -> Vector2:
+	# Fractions are measured against each trimmed authored asset. They represent
+	# the floor connector where the piece joins the grid, not its image center.
+	match kind:
+		KIND_STRAIGHT_RIGHT:
+			return MASTER_ANCHOR_FRAC
+		KIND_STRAIGHT_LEFT:
+			return Vector2(0.915, 0.455)
+		KIND_INNER_CORNER:
+			return Vector2(0.500, 0.665)
+		KIND_OUTER_CORNER:
+			return Vector2(0.500, 0.855)
+		KIND_JOINT_PILLAR:
+			return Vector2(0.500, 0.900)
+		KIND_DOOR_FRAME:
+			return Vector2(0.245, 0.650)
+		KIND_LOW_DIVIDER:
+			return Vector2(0.120, 0.505)
+		KIND_WALL_END_CAP:
+			return Vector2(0.855, 0.500)
+		_:
+			return Vector2(0.5, 1.0)
