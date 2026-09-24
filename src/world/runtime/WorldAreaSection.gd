@@ -617,14 +617,35 @@ func _animate_digilab_entry(entrance: Area2D, payload: Dictionary) -> void:
 	if _world_controller != null and _world_controller.has_method("request_interior_entry"):
 		_world_controller.call_deferred("request_interior_entry", payload)
 
-	# The exterior is hidden by the interior manager on the deferred call. Reset
-	# the idle artwork only after that handoff, so the player never sees the door
-	# snap shut before entering and it is closed again when returning to the city.
-	await get_tree().process_frame
-	await get_tree().process_frame
-	_set_digilab_door_texture(DIGILAB_TEXTURE)
+	# Keep the exterior on the fully-open frame while the player is inside.
+	# Closing is a separate return animation driven by WorldInteriorManager after
+	# the city is visible again.
 	_digilab_entry_in_progress = false
 	entrance.set_deferred("monitoring", true)
+
+
+func handles_service(service_id: String) -> bool:
+	return String(definition.get("theme", "")) == service_id
+
+
+func play_service_return_animation(service_id: String) -> void:
+	if service_id != "digilab" or not handles_service(service_id):
+		return
+	if _digilab_building_sprite == null or not is_instance_valid(_digilab_building_sprite):
+		return
+
+	# The exterior stayed on the open frame while the interior was active.
+	# Once the city has been revealed again, close the same authored doorway in
+	# reverse order so entering and leaving read as one continuous interaction.
+	_set_digilab_door_texture(DIGILAB_DOOR_OPEN_TEXTURE)
+	await get_tree().create_timer(DIGILAB_DOOR_OPEN_HOLD_SECONDS).timeout
+	if not is_inside_tree():
+		return
+	_set_digilab_door_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE)
+	await get_tree().create_timer(DIGILAB_DOOR_FRAME_SECONDS).timeout
+	if not is_inside_tree():
+		return
+	_set_digilab_door_texture(DIGILAB_TEXTURE)
 
 
 func _set_digilab_door_texture(texture: Texture2D) -> void:
