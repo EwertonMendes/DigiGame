@@ -38,10 +38,8 @@ func _ready() -> void:
 	assert(portal != null, "Hub must create the animated test battle portal")
 	assert(dialog != null, "Hub must expose the Battle Operator service workspace")
 	assert(party_followers != null, "Hub must create the overworld active-party follower system")
-	var sprite_debug := hub.get_node_or_null("SpriteTestDebug")
-	assert(sprite_debug != null, "Hub must create the temporary sprite-test controller")
-	var sprite_lab := sprite_debug.get_node_or_null("SpriteTestDebugUI/DigimonSpriteTestLab")
-	assert(sprite_lab != null, "Sprite-test controller must create the lab UI")
+	var sprite_lab := DeveloperToolkit.get("_sprite_test_lab") as DigimonSpriteTestLab
+	assert(sprite_lab != null, "Global Developer Toolkit must own the Sprite Test lab independently of the current world scene")
 	assert(int(sprite_lab.call("get_testable_species_count")) >= 7, "Sprite test lab must discover packaged Digimon resources")
 	assert(Array(sprite_lab.call("get_testable_species_names")).has("Metal Greymon"), "Sprite test lab must include Metal Greymon")
 	for rank in ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]:
