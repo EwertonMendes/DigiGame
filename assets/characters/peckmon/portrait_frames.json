@@ -1,0 +1,14 @@
+{
+  "source": "Peckmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Peckmon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "ebe24dc2e18e10fe4a4b08139869a4230a185828f0197a564146b3ff075b949d"
+}

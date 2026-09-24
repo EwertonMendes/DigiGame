@@ -1,0 +1,14 @@
+{
+  "source": "Apemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Apemon.webp",
+  "frame_width": 89,
+  "frame_height": 81,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "12dc38541defd2a0674b3131aeba76677668a4fe5abbad307be202a880c7bbe0"
+}

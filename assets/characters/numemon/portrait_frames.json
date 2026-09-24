@@ -1,0 +1,14 @@
+{
+  "source": "Numemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Numemon.webp",
+  "frame_width": 56,
+  "frame_height": 73,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "998e82bfca8945e5026ada512d42c1c0ee5074e4948fc66209c4102e3e54a40e"
+}

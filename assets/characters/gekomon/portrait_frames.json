@@ -1,0 +1,14 @@
+{
+  "source": "Gekomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Gekomon.webp",
+  "frame_width": 59,
+  "frame_height": 84,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "670df633684c3988ede63c2ac081008620e271caccccd13b3bc2123e7cb4206f"
+}

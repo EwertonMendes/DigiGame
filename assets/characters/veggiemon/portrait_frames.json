@@ -1,0 +1,14 @@
+{
+  "source": "Veggiemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Veggiemon.webp",
+  "frame_width": 86,
+  "frame_height": 69,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "0e5a786ee3fd089425ff43f1edc1c727659681dacfd12c27b9fc4edb350886f7"
+}

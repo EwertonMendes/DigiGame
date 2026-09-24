@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 95,
+  "source_archive_file": "sprite thread/095_Veggiemon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/095_Veggiemon.png",
+  "source_sha256": "688f946cff978eca861e4627c6d70b192ab9d2a39d31356e746db5c7fe4b71f8",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 98134,
+      "confidence_margin": 81190
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 82672,
+      "confidence_margin": 53120
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    31
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 4,
+        "y": 172,
+        "w": 23,
+        "h": 28
+      },
+      {
+        "x": 41,
+        "y": 174,
+        "w": 24,
+        "h": 27
+      },
+      {
+        "x": 79,
+        "y": 172,
+        "w": 22,
+        "h": 28
+      }
+    ],
+    "down_right": [
+      {
+        "x": 204,
+        "y": 171,
+        "w": 23,
+        "h": 28
+      },
+      {
+        "x": 166,
+        "y": 173,
+        "w": 24,
+        "h": 27
+      },
+      {
+        "x": 130,
+        "y": 171,
+        "w": 22,
+        "h": 28
+      }
+    ],
+    "up_left": [
+      {
+        "x": 4,
+        "y": 206,
+        "w": 23,
+        "h": 28
+      },
+      {
+        "x": 42,
+        "y": 206,
+        "w": 24,
+        "h": 26
+      },
+      {
+        "x": 79,
+        "y": 207,
+        "w": 22,
+        "h": 28
+      }
+    ],
+    "up_right": [
+      {
+        "x": 204,
+        "y": 205,
+        "w": 23,
+        "h": 28
+      },
+      {
+        "x": 165,
+        "y": 205,
+        "w": 24,
+        "h": 26
+      },
+      {
+        "x": 130,
+        "y": 206,
+        "w": 22,
+        "h": 28
+      }
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 32,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/veggiemon/field.png"
+}

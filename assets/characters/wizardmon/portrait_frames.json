@@ -1,0 +1,14 @@
+{
+  "source": "Wizardmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Wizardmon.webp",
+  "frame_width": 106,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "9aeac5a2ce6945631ba70654ea7cdaaa0502d1bc40c294ae110a85bdbd840cc0"
+}

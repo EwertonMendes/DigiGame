@@ -1,0 +1,14 @@
+{
+  "source": "Togemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Togemon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "20924a9f59656e0220d625d761e19d9afe04b8860fbf317e0f8ee95dc806eb7c"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Dokugumon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Dokugumon.webp",
+  "frame_width": 99,
+  "frame_height": 67,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "418cf94030c9bedcf1d6a9a704ae42b041897888be9c09d8e95c49e345e46c80"
+}
