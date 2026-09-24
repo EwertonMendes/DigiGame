@@ -213,6 +213,9 @@ def manager_walk_frames(spec: dict[str, Any], sheet: Image.Image) -> dict[str, l
             frames.append(keyed_crop(sheet, box, background, tolerance))
         if len(frames) == 3:
             result[direction] = frames
+    for target, source_direction in dict(spec.get("mirror") or {}).items():
+        if target in DIRECTIONS and source_direction in result and target not in result:
+            result[target] = [ImageOps.mirror(frame) for frame in result[source_direction]]
     return result
 
 
