@@ -568,10 +568,11 @@ func _on_field_resized() -> void:
 
 
 func _refresh_state() -> void:
-	if _follower == null or _entries.is_empty():
+	if _follower == null or _filtered_entries.is_empty() or _index < 0:
 		return
-	var resource := load(String(_entries[_index].get("path", ""))) as Digimon
-	_state_label.text = "Facing: %s\nLayout: %s - %dx%d\nRuntime sprite scale: 1.5x\nInspection multiplier: %.1fx" % [String(_follower.get("facing_direction")), resource.sprite_layout, resource.sprite_hframes, resource.sprite_vframes, INSPECT_SCALES[_inspect_index]]
+	var entry := _filtered_entries[_index]
+	var resource := load(String(entry.get("path", ""))) as Digimon
+	_state_label.text = "Rank: %s\nFacing: %s\nLayout: %s - %dx%d\nRuntime sprite scale: 1.5x\nInspection multiplier: %.1fx" % [String(entry.get("rank", "Unknown")), String(_follower.get("facing_direction")), resource.sprite_layout, resource.sprite_hframes, resource.sprite_vframes, INSPECT_SCALES[_inspect_index]]
 
 
 func _button(text_value: String, accent: Color) -> Button:
