@@ -43,12 +43,14 @@ const DIGILAB_LEFT_SIDE_GUARD_SOURCE := [
 	Vector2(35.0, 860.0),
 ]
 const DIGILAB_RIGHT_SIDE_GUARD_SOURCE := [
-	Vector2(930.0, 650.0),
-	Vector2(1210.0, 760.0),
+	# Starts below the rear-open pavement. The reviewed penetration happens on
+	# the lower utility wing, not on the walkable space behind the lab.
+	Vector2(980.0, 760.0),
+	Vector2(1210.0, 780.0),
 	Vector2(1240.0, 970.0),
 	Vector2(1090.0, 1130.0),
 	Vector2(920.0, 1120.0),
-	Vector2(860.0, 930.0),
+	Vector2(880.0, 940.0),
 ]
 
 const DIGILAB_FOOTPRINT_SOURCE := [
