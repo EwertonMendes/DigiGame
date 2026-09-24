@@ -91,8 +91,8 @@ func _ready() -> void:
 		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
 	) as CollisionPolygon2D
 	assert(
-		digilab_collision != null and digilab_collision.polygon.size() == 8,
-		"DigiLab must use the measured concave ground-contact footprint"
+		digilab_collision != null and digilab_collision.polygon.size() == 22,
+		"DigiLab must use the detailed measured ground-contact footprint"
 	)
 	assert(
 		digilab_section.is_walkable_world_position(
@@ -112,6 +112,37 @@ func _ready() -> void:
 		),
 		"DigiLab measured footprint must cover the lower-left wall that was previously penetrable"
 	)
+	# Regression points are expressed in source-image coordinates so they track
+	# the exact visible corners reviewed in-game instead of relying on coarse
+	# grid cells.
+	var digilab_door_local := digilab_section.grid_to_world(Vector2(8, 10))
+	for source_point: Vector2 in [
+		Vector2(80.0, 820.0),   # far-left rear/side corner
+		Vector2(330.0, 1020.0), # lower-left utility wing
+		Vector2(1020.0, 760.0), # right cylinder / utility cluster
+		Vector2(1140.0, 930.0), # far-right side wall
+		Vector2(970.0, 1080.0), # lower-right facade corner
+	]:
+		var local_corner = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
+		assert(
+			local_corner is Vector2
+			and not digilab_section.is_walkable_world_position(
+				digilab_section.global_position + (local_corner as Vector2)
+			),
+			"DigiLab visible corner %s must be covered by the measured footprint" % str(source_point)
+		)
+	for source_point: Vector2 in [
+		Vector2(20.0, 850.0),   # just outside left wall
+		Vector2(1240.0, 1000.0), # just outside right wall
+	]:
+		var local_clear = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
+		assert(
+			local_clear is Vector2
+			and digilab_section.is_walkable_world_position(
+				digilab_section.global_position + (local_clear as Vector2)
+			),
+			"DigiLab pavement just outside %s must stay walkable" % str(source_point)
+		)
 	var digilab_payload = digilab_entrance.get_meta("interior_payload", {})
 	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
 	var digilab_return = (digilab_payload as Dictionary).get("return_position", [])
