@@ -1,0 +1,14 @@
+{
+  "source": "Roachmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Roachmon.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "e9d6265fc6b290b0243d22e88f08dae7895410a36754064903002fc5117ca913"
+}

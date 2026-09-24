@@ -1,0 +1,190 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 111,
+  "source_archive_file": "sprite thread/111_Ankylomon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/111_Ankylomon.png",
+  "source_sha256": "31cd99c6ff8ebb6df7811a21ee66b5621c9b2d6cc79ef9318a7f66c29f3fa45c",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 123366,
+      "confidence_margin": 174796
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 102658,
+      "confidence_margin": 255264
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 216,
+      "source_bottom": 254,
+      "height": 38
+    },
+    "down_right": {
+      "source_top": 216,
+      "source_bottom": 254,
+      "height": 38
+    },
+    "up_left": {
+      "source_top": 280,
+      "source_bottom": 312,
+      "height": 32
+    },
+    "up_right": {
+      "source_top": 280,
+      "source_bottom": 312,
+      "height": 32
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    38
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 12,
+        "y": 220,
+        "w": 30,
+        "h": 34
+      },
+      {
+        "x": 60,
+        "y": 222,
+        "w": 31,
+        "h": 30
+      },
+      {
+        "x": 115,
+        "y": 216,
+        "w": 29,
+        "h": 35
+      }
+    ],
+    "down_right": [
+      {
+        "x": 276,
+        "y": 220,
+        "w": 30,
+        "h": 34
+      },
+      {
+        "x": 227,
+        "y": 222,
+        "w": 31,
+        "h": 30
+      },
+      {
+        "x": 174,
+        "y": 216,
+        "w": 29,
+        "h": 35
+      }
+    ],
+    "up_left": [
+      {
+        "x": 14,
+        "y": 281,
+        "w": 31,
+        "h": 31
+      },
+      {
+        "x": 64,
+        "y": 280,
+        "w": 30,
+        "h": 32
+      },
+      {
+        "x": 117,
+        "y": 281,
+        "w": 31,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 273,
+        "y": 281,
+        "w": 31,
+        "h": 31
+      },
+      {
+        "x": 224,
+        "y": 280,
+        "w": 30,
+        "h": 32
+      },
+      {
+        "x": 170,
+        "y": 281,
+        "w": 31,
+        "h": 30
+      }
+    ]
+  },
+  "cell_width": 35,
+  "cell_height": 39,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/ankylomon/field.png"
+}

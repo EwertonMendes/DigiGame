@@ -1,0 +1,14 @@
+{
+  "source": "Gargomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Gargomon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "185f69309abd8f4adc44aef491ad0c13e80fef9bdfa568d2a839f1506295d952"
+}

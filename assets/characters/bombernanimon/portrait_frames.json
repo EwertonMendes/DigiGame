@@ -1,0 +1,14 @@
+{
+  "source": "BomberNanimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/BomberNanimon.webp",
+  "frame_width": 56,
+  "frame_height": 72,
+  "frame_count": 4,
+  "durations_ms": [
+    180,
+    180,
+    180,
+    180
+  ],
+  "source_sha256": "b401191c358baf238eaeec32e5090b42ab14c2760ba2c27d81ce518fb2ffa6be"
+}

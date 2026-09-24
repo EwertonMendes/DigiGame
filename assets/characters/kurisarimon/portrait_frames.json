@@ -1,0 +1,14 @@
+{
+  "source": "Kurisarimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Kurisarimon.webp",
+  "frame_width": 87,
+  "frame_height": 84,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "097af522eca5b834b01e7157bc3ef5fc1b5e10c39cdf29299350323696d39c8f"
+}
