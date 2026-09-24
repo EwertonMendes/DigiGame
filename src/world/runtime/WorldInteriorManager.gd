@@ -16,6 +16,7 @@ var _area_scene: WorldAreaScene = null
 var _interiors_root: Node2D = null
 var _active_interior: WorldInterior = null
 var _return_position := Vector2.ZERO
+var _active_payload: Dictionary = {}
 var _transitioning := false
 var _overlay: ColorRect = null
 
@@ -66,6 +67,7 @@ func enter_interior(payload: Dictionary) -> bool:
 	_interiors_root.add_child(interior)
 	interior.configure(payload, _world_root)
 	_active_interior = interior
+	_active_payload = payload.duplicate(true)
 	_return_position = _vector2_from_array(payload.get("return_position", []), _player.global_position)
 
 	await _cover_transition()
@@ -92,6 +94,7 @@ func exit_interior() -> bool:
 
 	await _cover_transition()
 	var old_interior := _active_interior
+	var service_id := String(_active_payload.get("service", ""))
 	_active_interior = null
 	_player.global_position = _return_position
 	_player.velocity = Vector2.ZERO
@@ -103,6 +106,13 @@ func exit_interior() -> bool:
 		_area_scene.set_exterior_active(true)
 	interior_state_changed.emit(false, "")
 	await _reveal_transition(EXTERIOR_ZOOM)
+
+	# The exterior is now visible with the DigiLab still on its fully-open frame.
+	# Close it only after the city is back on screen, preserving the same visual
+	# language in reverse instead of snapping shut behind the transition.
+	if _area_scene != null and not service_id.is_empty():
+		await _area_scene.play_service_return_animation(service_id)
+	_active_payload.clear()
 
 	_transitioning = false
 	_lock_player(false)
