@@ -7,7 +7,6 @@ on:
     paths:
       - '.github/workflows/audit-missing-ds-sources.yml'
       - 'tools/audit_missing_ds_sources.py'
-      - 'tools/audit_missing_ds_semantics.py'
       - 'database/base-digimon-list.json'
       - 'database/ds-additional-sources.json'
       - 'assets/resources/**'
@@ -32,21 +31,10 @@ jobs:
       - name: Build raw source audit
         run: python3 tools/audit_missing_ds_sources.py
 
-      - name: Fetch reviewed DWDS semantic recipes
-        shell: bash
-        run: git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/DigimonWorldSpriteManager
-
-      - name: Cross-check source facings against reviewed recipes
-        env:
-          DIGIMON_SPRITE_MANAGER_ROOT: /tmp/DigimonWorldSpriteManager
-        run: python3 tools/audit_missing_ds_semantics.py --include-existing
-
       - name: Upload raw movement audit
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ds-missing-source-audit
-          path: |
-            /tmp/ds-missing-source-audit
-            /tmp/ds-semantic-audit
+          path: /tmp/ds-missing-source-audit
           retention-days: 3
