@@ -9,6 +9,9 @@ on:
       - 'database/base-digimon-list.json'
       - 'database/ds-additional-sources.json'
       - 'assets/resources/**'
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
