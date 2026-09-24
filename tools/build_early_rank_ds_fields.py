@@ -76,6 +76,10 @@ COMMUNITY_SOURCES: dict[str, tuple[str, str]] = {
     "Flamon": ("https://i1136.photobucket.com/albums/n483/PixelDots/Digimon%20Sprites/Flamemon_zpsb381aecd.gif", "Wooded-Wolf community DS-style sprite"),
 }
 
+# Project-owner authored directional fields that must never be replaced by the
+# legacy community-source rebuild path.
+PROJECT_SUPPLIED_FIELD_OVERRIDES: set[str] = {"Mochimon"}
+
 
 def normalize(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", value.lower())
@@ -357,7 +361,23 @@ def main() -> None:
         key = portrait_key(entry)
         directory = Path("assets/characters") / key
         directory.mkdir(parents=True, exist_ok=True)
-        if name in WTW_IDS:
+        preserve_existing_field = False
+        if name in PROJECT_SUPPLIED_FIELD_OVERRIDES:
+            field_path = directory / "field.png"
+            metadata_path = directory / "field.json"
+            if not field_path.is_file() or not metadata_path.is_file():
+                raise RuntimeError(f"{name}: project-supplied field override is missing")
+            strip = Image.open(field_path).convert("RGBA")
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            if strip.size != (384, 32):
+                raise RuntimeError(f"{name}: project-supplied field must be a 384x32 12-frame strip, got {strip.size}")
+            if metadata.get("source_kind") != "project_supplied_directional":
+                raise RuntimeError(f"{name}: project-supplied field metadata source kind is invalid")
+            if int(metadata.get("cell_width", 0)) != 32 or int(metadata.get("cell_height", 0)) != 32:
+                raise RuntimeError(f"{name}: project-supplied field metadata must describe 32x32 cells")
+            preserve_existing_field = True
+            supplied_count += 1
+        elif name in WTW_IDS:
             strip, metadata = build_official_wtw(archive, WTW_IDS[name])
             official_count += 1
         elif name in COMMUNITY_SOURCES:
@@ -368,9 +388,10 @@ def main() -> None:
             raise RuntimeError(f"No DS field source mapped for canonical species {name}")
 
         field_path = directory / "field.png"
-        strip.save(field_path, "PNG", optimize=True)
-        metadata["field_path"] = f"res://assets/characters/{key}/field.png"
-        (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+        if not preserve_existing_field:
+            strip.save(field_path, "PNG", optimize=True)
+            metadata["field_path"] = f"res://assets/characters/{key}/field.png"
+            (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         resource_path = write_resource(entry, key, float(metadata["runtime_scale"]))
 
         row = dict(old_rows.get(name, {}))
@@ -403,13 +424,16 @@ def main() -> None:
         "ranks": list(EARLY_RANKS),
         "count": len(built),
         "counts_by_rank": {rank: sum(1 for row in built if str(row.get("rank")) == rank) for rank in EARLY_RANKS},
-        "field_sources": {"official_ds": official_count, "community_ds_style_exception": exception_count, "project_original": sum(1 for row in built if str(row.get("field_source_kind", "")) == "project_original")},
+        "field_sources": {"official_ds": official_count, "community_ds_style_exception": exception_count, "project_supplied_directional": supplied_count, "project_original": sum(1 for row in built if str(row.get("field_source_kind", "")) == "project_original")},
         "species": built,
     }
     args.manifest.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    if official_count != 82 or exception_count != 5:
-        raise RuntimeError(f"Unexpected source split: official={official_count}, exceptions={exception_count}")
-    print("built complete early-rank field roster: 82 WithTheWill DS sheets + 5 explicit exceptions")
+    if official_count != 82 or exception_count != 4 or supplied_count != 1:
+        raise RuntimeError(
+            f"Unexpected source split: official={official_count}, "
+            f"exceptions={exception_count}, project_supplied={supplied_count}"
+        )
+    print("built complete early-rank field roster: 82 WithTheWill DS sheets + 4 explicit exceptions + 1 project-supplied field")
 
 
 if __name__ == "__main__":
