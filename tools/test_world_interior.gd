@@ -34,14 +34,35 @@ func _ready() -> void:
 	assert(entry != null, "DigiLab exterior must expose its authored doorway threshold")
 	var payload = entry.get_meta("interior_payload", {})
 	assert(payload is Dictionary, "Interior threshold must carry its destination payload")
+	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
+	assert(digilab_section != null, "DigiLab section must be loaded for interior regression")
+	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
+	assert(digilab_building != null, "DigiLab exterior building must be present before entry")
+	assert(
+		digilab_building.texture != null
+		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab.png",
+		"DigiLab must start with the closed-door base frame"
+	)
 	var raw_return = (payload as Dictionary).get("return_position", [])
 	assert(raw_return is Array and raw_return.size() >= 2, "Interior threshold must define an exterior return point")
 	var expected_return := Vector2(float(raw_return[0]), float(raw_return[1]))
 
 	player.global_position = entry.global_position
-	await _physics_frames(3)
-	await get_tree().create_timer(1.0).timeout
-	assert(bool(manager.call("is_active")), "Crossing a service pad must enter its dedicated interior")
+	await _physics_frames(2)
+	assert(
+		digilab_building.texture != null
+		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab-door-semi-open.png",
+		"DigiLab doorway must advance to the supplied semi-open frame before teleporting"
+	)
+	await get_tree().create_timer(0.12).timeout
+	assert(
+		digilab_building.texture != null
+		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab-door-open.png",
+		"DigiLab doorway must show the supplied open frame before interior handoff"
+	)
+	assert(not bool(manager.call("is_active")), "DigiLab must finish the door-opening animation before teleport")
+	await get_tree().create_timer(0.35).timeout
+	assert(bool(manager.call("is_active")), "Crossing the DigiLab doorway must enter its dedicated interior")
 	assert(not area.is_exterior_active(), "Loaded exterior area must be hidden and paused while the player is inside")
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
@@ -59,6 +80,11 @@ func _ready() -> void:
 	await get_tree().create_timer(1.0).timeout
 	assert(not bool(manager.call("is_active")), "Crossing the interior doorway must return to the city")
 	assert(area.is_exterior_active(), "Loaded exterior area must reactivate after exit")
+	assert(
+		digilab_building.texture != null
+		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab.png",
+		"DigiLab door must reset to the closed base frame before the exterior is shown again"
+	)
 	assert(player.global_position.is_equal_approx(expected_return), "Exit must restore the authored exterior return position")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "DigiLab return point must be walkable after exit")
 	var before_escape := player.global_position
