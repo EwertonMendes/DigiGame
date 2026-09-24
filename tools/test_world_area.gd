@@ -90,9 +90,20 @@ func _ready() -> void:
 	var digilab_collision := digilab_section.get_node_or_null(
 		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
 	) as CollisionPolygon2D
+	var digilab_left_guard := digilab_section.get_node_or_null(
+		"DigiLabExterior/LeftSideGuardCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
+	var digilab_right_guard := digilab_section.get_node_or_null(
+		"DigiLabExterior/RightSideGuardCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
 	assert(
 		digilab_collision != null and digilab_collision.polygon.size() == 22,
 		"DigiLab must use the detailed measured ground-contact footprint"
+	)
+	assert(
+		digilab_left_guard != null and digilab_left_guard.polygon.size() == 6
+		and digilab_right_guard != null and digilab_right_guard.polygon.size() == 6,
+		"DigiLab side wings must expose dedicated player-clearance guards"
 	)
 	assert(
 		digilab_section.is_walkable_world_position(
@@ -118,6 +129,10 @@ func _ready() -> void:
 	var digilab_door_local := digilab_section.grid_to_world(Vector2(8, 10))
 	for source_point: Vector2 in [
 		Vector2(80.0, 820.0),   # far-left rear/side corner
+		Vector2(250.0, 860.0),  # left lower wing: player must not visually enter facade
+		Vector2(410.0, 930.0),  # left inner corner reviewed in screenshot
+		Vector2(980.0, 820.0),  # right utility cluster inner edge
+		Vector2(1160.0, 900.0), # right protruding wing reviewed in screenshot
 		Vector2(330.0, 1020.0), # lower-left utility wing
 		Vector2(1020.0, 760.0), # right cylinder / utility cluster
 		Vector2(1140.0, 930.0), # far-right side wall
@@ -132,8 +147,8 @@ func _ready() -> void:
 			"DigiLab visible corner %s must be covered by the measured footprint" % str(source_point)
 		)
 	for source_point: Vector2 in [
-		Vector2(20.0, 850.0),   # just outside left wall
-		Vector2(1240.0, 1000.0), # just outside right wall
+		Vector2(15.0, 875.0),    # pavement just outside expanded left guard
+		Vector2(1252.0, 1000.0), # pavement just outside expanded right guard
 	]:
 		var local_clear = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
 		assert(
