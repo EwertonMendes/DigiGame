@@ -238,6 +238,7 @@ def main() -> None:
     rows = missing_database_rows()
     audited: list[dict[str, Any]] = []
     unresolved: list[str] = []
+    unresolved_candidates: list[dict[str, Any]] = []
     ambiguous: list[dict[str, Any]] = []
 
     for entry in rows:
@@ -255,6 +256,7 @@ def main() -> None:
             member = resolve_unnumbered_member(archive, name)
         if member is None:
             unresolved.append(name)
+            unresolved_candidates.append({"name": name, "candidates": suggest_archive_members(archive, name)})
             continue
 
         payload = archive.read(member)
@@ -288,6 +290,7 @@ def main() -> None:
     ]
     (OUT / "manifest.json").write_text(json.dumps(serializable, indent=2) + "\n", encoding="utf-8")
     (OUT / "unresolved.json").write_text(json.dumps(unresolved, indent=2) + "\n", encoding="utf-8")
+    (OUT / "unresolved-candidates.json").write_text(json.dumps(unresolved_candidates, indent=2) + "\n", encoding="utf-8")
     (OUT / "ambiguous-profiles.json").write_text(json.dumps(ambiguous, indent=2) + "\n", encoding="utf-8")
     render_pages(audited)
     print(f"missing database species: {len(rows)}")
@@ -300,4 +303,16 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main()\n\ndef suggest_archive_members(archive, species: str, limit: int = 6) -> list[dict[str, Any]]:
+    target = compact(UNNUMBERED_SOURCE_ALIASES.get(species, species))
+    scored: list[tuple[float, str]] = []
+    for member in archive.namelist():
+        if not member.startswith("sprite thread/") or not member.lower().endswith((".png", ".gif")):
+            continue
+        stem = normalized_member_stem(member)
+        if not stem:
+            continue
+        scored.append((SequenceMatcher(None, target, stem).ratio(), member))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [{"score": round(score, 4), "member": member} for score, member in scored[:limit]]
+
