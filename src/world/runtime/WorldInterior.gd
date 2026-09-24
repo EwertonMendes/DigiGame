@@ -161,90 +161,84 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	var authored := Node2D.new()
 	authored.name = "AuthoredWalls"
 	authored.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
-	authored.set_meta("layout_contract", "explicit-connectors")
+	authored.set_meta("layout_contract", "grid-native-vector")
 	walls.add_child(authored)
 
 	var last_x := float(ROOM_SIZE.x - 1)
 	var front_y := float(ROOM_SIZE.y - 1)
 
-	# The generated kit does not contain all four rotational variants of every
-	# corner. Use each corner only where its authored axes are actually correct.
-	# Back-left: the inner corner already owns the first 2.5 cells of both runs.
-	_add_digilab_wall_piece(
-		authored,
-		DIGILAB_ART.KIND_INNER_CORNER,
-		Vector2(0.0, 0.0)
-	)
-
-	# Back wall: four multi-cell modules connect the inner corner to the
-	# back-right structural joint. We no longer repeat a full wall every cell.
-	var back_x := 2.5
-	for _index in range(4):
+	# Full-height perimeter. Every straight SVG owns exactly one 64x32 grid
+	# edge, so adjacent modules share the exact same connector point. There is
+	# no scale inference and no fractional gap/overlap between wall cells.
+	for x in range(ROOM_SIZE.x - 1):
 		_add_digilab_wall_piece(
 			authored,
 			DIGILAB_ART.KIND_STRAIGHT_RIGHT,
-			Vector2(back_x, 0.0)
+			Vector2(float(x), 0.0)
 		)
-		back_x += DIGILAB_ART.MASTER_GRID_SPAN
 
-	# The supplied corner art has no sideways rotational variant for this
-	# location, so a dedicated structural pillar forms the real joint between
-	# the back and right wall without rotating any source sprite.
-	_add_digilab_wall_piece(
-		authored,
-		DIGILAB_ART.KIND_JOINT_PILLAR,
-		Vector2(last_x, 0.0)
-	)
-
-	# Left wall: two straight modules continue from the inner corner. The
-	# authored end-cap owns the final run into the open front boundary.
-	for y in [2.5, 6.0]:
+	for y in range(ROOM_SIZE.y - 1):
 		_add_digilab_wall_piece(
 			authored,
 			DIGILAB_ART.KIND_STRAIGHT_LEFT,
-			Vector2(0.0, y)
+			Vector2(0.0, float(y))
 		)
-	_add_digilab_wall_piece(
-		authored,
-		DIGILAB_ART.KIND_WALL_END_CAP,
-		Vector2(0.0, 9.5)
-	)
-
-	# Right wall: exactly three modules. Their final connector meets the
-	# authored outer corner at y=10.5, so no filler sprite or arbitrary overlap
-	# is needed.
-	for y in [0.0, 3.5, 7.0]:
 		_add_digilab_wall_piece(
 			authored,
 			DIGILAB_ART.KIND_STRAIGHT_LEFT,
-			Vector2(last_x, y)
+			Vector2(last_x, float(y))
 		)
 
-	# Front-right is the only front corner whose axes match the supplied outer
-	# corner artwork. Its two authored arms point back along -X and -Y.
-	_add_digilab_wall_piece(
-		authored,
-		DIGILAB_ART.KIND_OUTER_CORNER,
-		Vector2(last_x, front_y)
-	)
+	# Corner pieces are compact joint covers rather than AI-authored wall runs.
+	# They only cover the shared connector, so they cannot change wall length.
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_INNER_CORNER, Vector2(0.0, 0.0))
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_INNER_CORNER, Vector2(last_x, 0.0))
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_OUTER_CORNER, Vector2(0.0, front_y))
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_OUTER_CORNER, Vector2(last_x, front_y))
 
-	# Front boundary is intentionally lower so the room remains readable. The
-	# left side uses two low-divider modules, the center is the real door frame,
-	# and one final divider meets the outer-corner arm on the right.
-	for x in [0.0, 3.75, 10.5]:
+	# Structural pillars sit exactly on selected grid vertices and cover module
+	# seams without creating a second wall footprint.
+	for x in [4, 8, 12]:
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_JOINT_PILLAR,
+			Vector2(float(x), 0.0)
+		)
+	for y in [4, 8]:
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_JOINT_PILLAR,
+			Vector2(0.0, float(y))
+		)
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_JOINT_PILLAR,
+			Vector2(last_x, float(y))
+		)
+
+	# Front boundary stays intentionally low for room readability. The doorway
+	# owns exactly four X-grid edges from x=7 to x=11; dividers terminate on
+	# those same connector coordinates, so the entrance has no floating caps.
+	for x in range(0, 7):
 		_add_digilab_wall_piece(
 			authored,
 			DIGILAB_ART.KIND_LOW_DIVIDER,
-			Vector2(x, front_y)
+			Vector2(float(x), front_y)
+		)
+	for x in range(11, ROOM_SIZE.x - 1):
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_LOW_DIVIDER,
+			Vector2(float(x), front_y)
 		)
 	_add_digilab_wall_piece(
 		authored,
 		DIGILAB_ART.KIND_DOOR_FRAME,
-		Vector2(7.5, front_y)
+		Vector2(7.0, front_y)
 	)
 
-	# Collision remains grid-authored and independent from presentation. The
-	# normalized textures can be refined again later without moving gameplay.
+	# Collision is authored from the same grid boundary, independently from the
+	# vector artwork. A visual asset can be refined without ever moving physics.
 	for x in range(ROOM_SIZE.x):
 		_mark_blocked(Vector2i(x, 0))
 		_add_circle_collision(Vector2i(x, 0), 22.0)
