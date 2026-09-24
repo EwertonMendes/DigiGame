@@ -2,6 +2,7 @@ extends Node2D
 class_name WorldInterior
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
+const DIGILAB_ART = preload("res://src/world/runtime/DigiLabInteriorArt.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
@@ -123,6 +124,11 @@ func _build_walls() -> void:
 	var walls := Node2D.new()
 	walls.name = "Walls"
 	add_child(walls)
+
+	if _service_id == "digilab":
+		_build_digilab_walls(walls)
+		return
+
 	var wall_cells: Array[Vector2i] = []
 	for x in range(ROOM_SIZE.x):
 		wall_cells.append(Vector2i(x, 0))
@@ -149,6 +155,134 @@ func _build_walls() -> void:
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
 	for x in range(ROOM_SIZE.x - 5, ROOM_SIZE.x):
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
+
+
+func _build_digilab_walls(walls: Node2D) -> void:
+	var authored := Node2D.new()
+	authored.name = "AuthoredWalls"
+	authored.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
+	walls.add_child(authored)
+
+	# Back corners establish the exact meeting point of the two wall axes.
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_INNER_CORNER, Vector2(0.0, 0.0), false)
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_INNER_CORNER,
+		Vector2(float(ROOM_SIZE.x - 1), 0.0),
+		true
+	)
+
+	# Straight pieces are anchored at edge midpoints, not cell centers. This
+	# keeps every base on the same 64x32 grid line and lets adjacent modules
+	# meet at deterministic integer-grid joints.
+	for x in range(1, ROOM_SIZE.x - 2):
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_STRAIGHT_RIGHT,
+			Vector2(float(x) + 0.5, 0.0),
+			false
+		)
+
+	for y in range(1, ROOM_SIZE.y - 2):
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_STRAIGHT_LEFT,
+			Vector2(0.0, float(y) + 0.5),
+			false
+		)
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_STRAIGHT_LEFT,
+			Vector2(float(ROOM_SIZE.x - 1), float(y) + 0.5),
+			true
+		)
+
+	# Structural joints intentionally sit on module seams. They are not used as
+	# arbitrary decoration; their only job is to visually close long wall runs.
+	for x in [4, 8, 12]:
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_JOINT_PILLAR,
+			Vector2(float(x), 0.0),
+			false
+		)
+	for y in [4, 8]:
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_JOINT_PILLAR,
+			Vector2(0.0, float(y)),
+			false
+		)
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_JOINT_PILLAR,
+			Vector2(float(ROOM_SIZE.x - 1), float(y)),
+			true
+		)
+
+	# The front remains intentionally open. Low dividers terminate into end caps
+	# and the authored door frame owns the center opening used by the exit trigger.
+	var front_y := float(ROOM_SIZE.y - 1)
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_OUTER_CORNER, Vector2(0.0, front_y), false)
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_OUTER_CORNER,
+		Vector2(float(ROOM_SIZE.x - 1), front_y),
+		true
+	)
+	for x in range(1, 5):
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_LOW_DIVIDER,
+			Vector2(float(x) + 0.5, front_y),
+			false
+		)
+	for x in range(12, 16):
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_LOW_DIVIDER,
+			Vector2(float(x) + 0.5, front_y),
+			false
+		)
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_WALL_END_CAP, Vector2(5.0, front_y), false)
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_WALL_END_CAP, Vector2(12.0, front_y), true)
+	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_DOOR_FRAME, Vector2(8.5, front_y), false)
+
+	# Collision remains grid-authored and independent from the presentation
+	# sprites. Asset dimensions can be refined without ever shifting walkability.
+	for x in range(ROOM_SIZE.x):
+		_mark_blocked(Vector2i(x, 0))
+		_add_circle_collision(Vector2i(x, 0), 22.0)
+	for y in range(1, ROOM_SIZE.y - 1):
+		for x in [0, ROOM_SIZE.x - 1]:
+			var side_cell := Vector2i(x, y)
+			_mark_blocked(side_cell)
+			_add_circle_collision(side_cell, 22.0)
+	for x in range(0, 5):
+		var front_left := Vector2i(x, ROOM_SIZE.y - 1)
+		_mark_blocked(front_left)
+		_add_circle_collision(front_left, 22.0)
+	for x in range(ROOM_SIZE.x - 5, ROOM_SIZE.x):
+		var front_right := Vector2i(x, ROOM_SIZE.y - 1)
+		_mark_blocked(front_right)
+		_add_circle_collision(front_right, 22.0)
+
+
+func _add_digilab_wall_piece(
+	parent: Node2D,
+	kind: String,
+	grid_anchor: Vector2,
+	flip_h: bool
+) -> void:
+	var world_anchor := grid_to_world(grid_anchor)
+	var piece := DIGILAB_ART.create_piece(
+		kind,
+		world_anchor,
+		820 + int(round(world_anchor.y)),
+		flip_h
+	)
+	piece.set_meta("grid_anchor_cell", grid_anchor)
+	parent.add_child(piece)
 
 
 func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
