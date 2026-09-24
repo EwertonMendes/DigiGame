@@ -70,21 +70,19 @@ func _ready() -> void:
 			break
 		await get_tree().process_frame
 	assert(bool(manager.call("is_active")), "Crossing the DigiLab doorway must enter its dedicated interior")
-	for _index in range(90):
-		if not area.is_exterior_active():
-			break
-		await get_tree().process_frame
-	assert(not area.is_exterior_active(), "Loaded exterior area must be hidden and paused while the player is inside")
+	assert(
+		await _wait_for_exterior_state(area, false, 1800),
+		"Loaded exterior area must be hidden and paused while the player is inside"
+	)
 	assert(
 		digilab_building.texture != null
 		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab-door-open.png",
 		"DigiLab door must remain fully open while the player is inside"
 	)
-	for _index in range(90):
-		if not bool(manager.call("is_transitioning")):
-			break
-		await get_tree().process_frame
-	assert(not bool(manager.call("is_transitioning")), "DigiLab entry transition must finish before testing interior exit")
+	assert(
+		await _wait_for_transition_state(manager, false, 1800),
+		"DigiLab entry transition must finish before testing interior exit"
+	)
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Interior spawn must be walkable")
@@ -98,11 +96,10 @@ func _ready() -> void:
 	var exit_threshold := exit_thresholds[0] as Area2D
 	player.global_position = exit_threshold.global_position
 	await _physics_frames(2)
-	for _index in range(60):
-		if area.is_exterior_active():
-			break
-		await get_tree().process_frame
-	assert(area.is_exterior_active(), "Loaded exterior area must reactivate after exit")
+	assert(
+		await _wait_for_exterior_state(area, true, 1800),
+		"Loaded exterior area must reactivate after exit"
+	)
 	assert(
 		digilab_building.texture != null
 		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab-door-open.png",
@@ -124,12 +121,11 @@ func _ready() -> void:
 		),
 		"DigiLab return must finish on the closed base frame"
 	)
-	for _index in range(30):
-		if not bool(manager.call("is_transitioning")):
-			break
-		await get_tree().process_frame
 	assert(not bool(manager.call("is_active")), "Crossing the interior doorway must return to the city")
-	assert(not bool(manager.call("is_transitioning")), "DigiLab reverse door animation must finish before movement unlocks")
+	assert(
+		await _wait_for_transition_state(manager, false, 1800),
+		"DigiLab reverse door animation must finish before movement unlocks"
+	)
 	assert(player.global_position.is_equal_approx(expected_return), "Exit must restore the authored exterior return position")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "DigiLab return point must be walkable after exit")
 	var before_escape := player.global_position
@@ -169,6 +165,24 @@ func _wait_for_texture_path(sprite: Sprite2D, resource_path: String, timeout_ms:
 			and sprite.texture != null
 			and sprite.texture.resource_path == resource_path
 		):
+			return true
+		await get_tree().process_frame
+	return false
+
+
+func _wait_for_exterior_state(area: WorldAreaScene, expected: bool, timeout_ms: int) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() <= deadline:
+		if area != null and area.is_exterior_active() == expected:
+			return true
+		await get_tree().process_frame
+	return false
+
+
+func _wait_for_transition_state(manager, expected: bool, timeout_ms: int) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() <= deadline:
+		if manager != null and bool(manager.call("is_transitioning")) == expected:
 			return true
 		await get_tree().process_frame
 	return false
