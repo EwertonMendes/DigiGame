@@ -2,7 +2,6 @@ extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
 const DIGILAB_FLOOR_1_PATH := "res://assets/world/tblack/digilab/floor/floor-1.png"
-const DIGILAB_FLOOR_2_PATH := "res://assets/world/tblack/digilab/floor/floor-2.png"
 
 
 func _ready() -> void:
@@ -156,42 +155,23 @@ func _assert_digilab_floor_assets(interior: WorldInterior) -> void:
 	assert(floor_root != null, "DigiLab interior must expose its floor root")
 	assert(
 		floor_root.get_child_count() == 252,
-		"DigiLab 18x14 floor must keep one authored visual tile per 64x32 gameplay cell"
+		"DigiLab 18x14 floor must keep one visual tile per 64x32 gameplay cell"
 	)
 
-	var saw_floor_1 := false
-	var saw_floor_2 := false
-	var source_cells: Dictionary = {}
 	for child in floor_root.get_children():
-		assert(
-			int(child.get_meta("source_module_size", 0)) == 2,
-			"Every DigiLab tile must come from a 2x2 authored source module"
-		)
-		var source_cell = child.get_meta("source_cell", Vector2i(-1, -1))
-		assert(source_cell is Vector2i, "Every DigiLab tile must expose its modular source coordinate")
-		source_cells["%d:%d" % [source_cell.x, source_cell.y]] = true
-
 		var detail := child.get_node_or_null("TopFaceDetail") as Polygon2D
-		assert(detail != null and detail.texture != null, "Every DigiLab floor tile must keep an authored top-face texture")
+		assert(detail != null and detail.texture != null, "Every DigiLab floor tile must keep the authored Floor 1 texture")
 		assert(detail.polygon.size() == 4, "DigiLab floor tiles must remain exact isometric diamonds")
 		assert(
 			is_equal_approx(absf(detail.polygon[0].x), 32.0)
 			and is_equal_approx(absf(detail.polygon[1].y), 16.0),
 			"DigiLab visual tiles must remain exactly 64x32"
 		)
-		assert(detail.uv.size() == 4, "Every DigiLab tile must use its own four-point source UV slice")
-		var texture_path := detail.texture.resource_path
 		assert(
-			texture_path == DIGILAB_FLOOR_1_PATH or texture_path == DIGILAB_FLOOR_2_PATH,
-			"DigiLab floor tiles must use only the supplied Tblack floor assets"
+			detail.texture.resource_path == DIGILAB_FLOOR_1_PATH,
+			"Every DigiLab floor cell must use the complete Floor 1 source; Floor 2 must not be rendered"
 		)
-		saw_floor_1 = saw_floor_1 or texture_path == DIGILAB_FLOOR_1_PATH
-		saw_floor_2 = saw_floor_2 or texture_path == DIGILAB_FLOOR_2_PATH
-
-	assert(source_cells.size() == 4, "DigiLab modular slicing must use all four quadrants of each 2x2 source module")
-	assert(saw_floor_1, "DigiLab floor must use floor-1 as the clean primary field")
-	assert(saw_floor_2, "DigiLab floor must use floor-2 for the authored service axis")
-
+		assert(detail.uv.size() == 4, "Every DigiLab tile must keep the complete authored top-face UV mapping")
 
 func _wait_for_world_ready(world: Node, max_frames: int = 120) -> void:
 	for _index in range(max_frames):
