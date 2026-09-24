@@ -1206,7 +1206,7 @@
       "portrait_metadata": "res://assets/characters/flymon/portrait_frames.json",
       "source_id": 168,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         33,
         36
