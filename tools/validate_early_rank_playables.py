@@ -130,7 +130,7 @@ def main() -> int:
         if fmeta.get("directions") != ["down_left", "down_right", "up_left", "up_right"]:
             fail(f"{name}: invalid field direction order")
         source_kind = str(fmeta.get("source_kind", ""))
-        if source_kind not in {"official_ds", "community_ds_style_exception", "project_original"}:
+        if source_kind not in {"official_ds", "community_ds_style_exception", "project_original", "project_supplied_directional"}:
             fail(f"{name}: unsupported field source kind {source_kind!r}")
         if str(row.get("field_source_kind", "")) != source_kind:
             fail(f"{name}: manifest/field source kind mismatch")
@@ -162,6 +162,8 @@ def main() -> int:
         fail(f"Expected the WtW/DS roster to provide the overwhelming majority of fields, got {source_counts}")
     if source_counts.get("project_original", 0) != 1:
         fail(f"Expected exactly one project-original early-rank playable, got {source_counts}")
+    if source_counts.get("project_supplied_directional", 0) != 1:
+        fail(f"Expected exactly one project-supplied early-rank field, got {source_counts}")
 
     print(
         f"early-rank playable validation passed: {EXPECTED_EARLY_COUNT} species, "

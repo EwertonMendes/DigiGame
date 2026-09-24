@@ -12,8 +12,9 @@
   },
   "field_sources": {
     "official_ds": 82,
-    "community_ds_style_exception": 5,
-    "project_original": 1
+    "community_ds_style_exception": 4,
+    "project_original": 1,
+    "project_supplied_directional": 1
   },
   "species": [
     {
@@ -285,7 +286,7 @@
       "frame_count": 2,
       "field_sprite": "res://assets/characters/mochimon/field.png",
       "field_metadata": "res://assets/characters/mochimon/field.json",
-      "field_source_kind": "community_ds_style_exception",
+      "field_source_kind": "project_supplied_directional",
       "field_frame_count": 12
     },
     {

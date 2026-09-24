@@ -247,8 +247,12 @@ def main() -> None:
         metadata_path = directory / "field.json"
         field_path = directory / "field.png"
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-        if metadata.get("source_kind") == "community_ds_style_exception":
+        source_kind = metadata.get("source_kind")
+        if source_kind == "community_ds_style_exception":
             community.append(name)
+            continue
+        if source_kind == "project_supplied_directional":
+            project_supplied.append(name)
             continue
 
         resource_path = Path("assets/resources") / f"{name.strip().lower()}.tres"
@@ -313,6 +317,7 @@ def main() -> None:
         "corrected_from_reviewed_project_extractors": corrected_project,
         "trusted_explicit_wtw_four_facing": trusted_explicit,
         "community_synthetic_four_facing": community,
+        "project_supplied_directional": project_supplied,
         "already_reviewed_outside_early_rank": ["Greymon", "Metal Greymon"],
         "unresolved": unresolved,
     }
@@ -320,7 +325,7 @@ def main() -> None:
     print(
         "facing audit: "
         f"spec={len(corrected)} manual={len(corrected_manual)} project={len(corrected_project)} "
-        f"explicit={len(trusted_explicit)} community={len(community)} "
+        f"explicit={len(trusted_explicit)} community={len(community)} project_supplied={len(project_supplied)} "
         f"audited={audited_total}/{len(entries)} unresolved={len(unresolved)}"
     )
     if unresolved:
