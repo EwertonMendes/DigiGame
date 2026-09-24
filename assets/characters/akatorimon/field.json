@@ -8,12 +8,12 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "two_rows_of_six",
-  "review_pattern": "canonical_rows",
+  "review_pattern": "canonical_rows_front_reversed",
   "runtime_group_indices": [
-    0,
     1,
-    2,
-    3
+    0,
+    3,
+    2
   ],
   "canonical_runtime_order": [
     "down_left",
@@ -103,30 +103,10 @@
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 18,
-        "y": 224,
-        "w": 24,
-        "h": 28
-      },
-      {
-        "x": 52,
-        "y": 222,
-        "w": 22,
-        "h": 31
-      },
-      {
-        "x": 84,
+        "x": 118,
         "y": 224,
         "w": 24,
         "h": 30
-      }
-    ],
-    "down_right": [
-      {
-        "x": 184,
-        "y": 224,
-        "w": 24,
-        "h": 28
       },
       {
         "x": 152,
@@ -135,38 +115,38 @@
         "h": 31
       },
       {
-        "x": 118,
+        "x": 184,
+        "y": 224,
+        "w": 24,
+        "h": 28
+      }
+    ],
+    "down_right": [
+      {
+        "x": 84,
         "y": 224,
         "w": 24,
         "h": 30
-      }
-    ],
-    "up_left": [
-      {
-        "x": 21,
-        "y": 262,
-        "w": 22,
-        "h": 30
       },
       {
-        "x": 53,
-        "y": 260,
+        "x": 52,
+        "y": 222,
         "w": 22,
         "h": 31
       },
       {
-        "x": 85,
+        "x": 18,
+        "y": 224,
+        "w": 24,
+        "h": 28
+      }
+    ],
+    "up_left": [
+      {
+        "x": 118,
         "y": 262,
         "w": 23,
         "h": 29
-      }
-    ],
-    "up_right": [
-      {
-        "x": 183,
-        "y": 262,
-        "w": 22,
-        "h": 30
       },
       {
         "x": 151,
@@ -175,10 +155,30 @@
         "h": 31
       },
       {
-        "x": 118,
+        "x": 183,
+        "y": 262,
+        "w": 22,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 85,
         "y": 262,
         "w": 23,
         "h": 29
+      },
+      {
+        "x": 53,
+        "y": 260,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 21,
+        "y": 262,
+        "w": 22,
+        "h": 30
       }
     ]
   },

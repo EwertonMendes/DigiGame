@@ -1546,7 +1546,7 @@
       "portrait_metadata": "res://assets/characters/stingmon/portrait_frames.json",
       "source_id": 109,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         35,
         43
@@ -1586,7 +1586,7 @@
       "portrait_metadata": "res://assets/characters/ankylomon/portrait_frames.json",
       "source_id": 111,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         35,
         39
@@ -1606,7 +1606,7 @@
       "portrait_metadata": "res://assets/characters/gargomon/portrait_frames.json",
       "source_id": 112,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         36,
         42
@@ -1626,7 +1626,7 @@
       "portrait_metadata": "res://assets/characters/kyubimon/portrait_frames.json",
       "source_id": 114,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         36,
         39
@@ -1646,7 +1646,7 @@
       "portrait_metadata": "res://assets/characters/kurisarimon/portrait_frames.json",
       "source_id": 115,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "field_cell": [
         36,
         36
@@ -1686,7 +1686,7 @@
       "portrait_metadata": "res://assets/characters/vilemon/portrait_frames.json",
       "source_id": 117,
       "profile": "four_rows_rightmost_triples",
-      "pattern": "compact_interleaved",
+      "pattern": "compact_interleaved_horizontal_reversed",
       "field_cell": [
         33,
         35
@@ -1706,7 +1706,7 @@
       "portrait_metadata": "res://assets/characters/aquilamon/portrait_frames.json",
       "source_id": 118,
       "profile": "four_rows_rightmost_triples",
-      "pattern": "compact_interleaved",
+      "pattern": "compact_interleaved_up_reversed",
       "field_cell": [
         37,
         38
@@ -1726,7 +1726,7 @@
       "portrait_metadata": "res://assets/characters/roachmon/portrait_frames.json",
       "source_id": 119,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "front_rows_reversed_rear_rows_canonical",
       "field_cell": [
         34,
         38
@@ -1806,7 +1806,7 @@
       "portrait_metadata": "res://assets/characters/reptiledramon/portrait_frames.json",
       "source_id": 124,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "field_cell": [
         36,
         43
@@ -1866,7 +1866,7 @@
       "portrait_metadata": "res://assets/characters/kiwimon/portrait_frames.json",
       "source_id": 128,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         32,
         34
@@ -1886,7 +1886,7 @@
       "portrait_metadata": "res://assets/characters/unimon/portrait_frames.json",
       "source_id": 129,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "field_cell": [
         35,
         36
@@ -1926,7 +1926,7 @@
       "portrait_metadata": "res://assets/characters/akatorimon/portrait_frames.json",
       "source_id": 132,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "field_cell": [
         32,
         35
