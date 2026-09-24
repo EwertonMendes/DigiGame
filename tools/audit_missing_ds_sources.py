@@ -302,8 +302,7 @@ def main() -> None:
             print(f"  - {name}")
 
 
-if __name__ == "__main__":
-    main()\n\ndef suggest_archive_members(archive, species: str, limit: int = 6) -> list[dict[str, Any]]:
+def suggest_archive_members(archive, species: str, limit: int = 6) -> list[dict[str, Any]]:
     target = compact(UNNUMBERED_SOURCE_ALIASES.get(species, species))
     scored: list[tuple[float, str]] = []
     for member in archive.namelist():
@@ -315,4 +314,8 @@ if __name__ == "__main__":
         scored.append((SequenceMatcher(None, target, stem).ratio(), member))
     scored.sort(key=lambda item: (-item[0], item[1]))
     return [{"score": round(score, 4), "member": member} for score, member in scored[:limit]]
+
+
+if __name__ == "__main__":
+    main()
 
