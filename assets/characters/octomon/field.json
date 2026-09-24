@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": null,
+  "source_archive_file": "sprite thread/155_Octomon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/155_Octomon.png",
+  "source_sha256": "1226a8c148737e650283f62320b1bd80c354233d0a22641c804d1ff9a22a3450",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      1,
+      2,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        1,
+        2,
+        0
+      ],
+      "pixel_error": 248902,
+      "confidence_margin": 10686
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 171504
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 224,
+      "source_bottom": 255,
+      "height": 31
+    },
+    "down_right": {
+      "source_top": 224,
+      "source_bottom": 255,
+      "height": 31
+    },
+    "up_left": {
+      "source_top": 187,
+      "source_bottom": 218,
+      "height": 31
+    },
+    "up_right": {
+      "source_top": 187,
+      "source_bottom": 218,
+      "height": 31
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    33
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 44,
+        "y": 225,
+        "w": 27,
+        "h": 30
+      },
+      {
+        "x": 80,
+        "y": 224,
+        "w": 29,
+        "h": 30
+      },
+      {
+        "x": 119,
+        "y": 225,
+        "w": 32,
+        "h": 30
+      }
+    ],
+    "down_right": [
+      {
+        "x": 203,
+        "y": 224,
+        "w": 29,
+        "h": 30
+      },
+      {
+        "x": 241,
+        "y": 225,
+        "w": 27,
+        "h": 30
+      },
+      {
+        "x": 161,
+        "y": 225,
+        "w": 32,
+        "h": 30
+      }
+    ],
+    "up_left": [
+      {
+        "x": 44,
+        "y": 188,
+        "w": 29,
+        "h": 29
+      },
+      {
+        "x": 83,
+        "y": 187,
+        "w": 29,
+        "h": 30
+      },
+      {
+        "x": 122,
+        "y": 189,
+        "w": 29,
+        "h": 29
+      }
+    ],
+    "up_right": [
+      {
+        "x": 239,
+        "y": 188,
+        "w": 29,
+        "h": 29
+      },
+      {
+        "x": 200,
+        "y": 187,
+        "w": 29,
+        "h": 30
+      },
+      {
+        "x": 161,
+        "y": 189,
+        "w": 29,
+        "h": 29
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 34,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/octomon/field.png"
+}

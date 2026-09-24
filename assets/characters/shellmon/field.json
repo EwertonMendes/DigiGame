@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 158,
+  "source_archive_file": "sprite thread/158_Shellmon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/158_Shellmon.png",
+  "source_sha256": "42bbffe8fb547f4b2ae3a47ce2b7978e26472cc58bc3e153cc55ad40807bafcb",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 130314,
+      "confidence_margin": 87298
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 107212,
+      "confidence_margin": 45214
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 296,
+      "source_bottom": 328,
+      "height": 32
+    },
+    "down_right": {
+      "source_top": 296,
+      "source_bottom": 328,
+      "height": 32
+    },
+    "up_left": {
+      "source_top": 260,
+      "source_bottom": 291,
+      "height": 31
+    },
+    "up_right": {
+      "source_top": 260,
+      "source_bottom": 291,
+      "height": 31
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    33
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 65,
+        "y": 298,
+        "w": 28,
+        "h": 30
+      },
+      {
+        "x": 103,
+        "y": 297,
+        "w": 29,
+        "h": 29
+      },
+      {
+        "x": 142,
+        "y": 296,
+        "w": 30,
+        "h": 29
+      }
+    ],
+    "down_right": [
+      {
+        "x": 261,
+        "y": 298,
+        "w": 28,
+        "h": 30
+      },
+      {
+        "x": 222,
+        "y": 297,
+        "w": 29,
+        "h": 29
+      },
+      {
+        "x": 182,
+        "y": 296,
+        "w": 30,
+        "h": 29
+      }
+    ],
+    "up_left": [
+      {
+        "x": 63,
+        "y": 260,
+        "w": 31,
+        "h": 29
+      },
+      {
+        "x": 104,
+        "y": 261,
+        "w": 30,
+        "h": 29
+      },
+      {
+        "x": 143,
+        "y": 262,
+        "w": 29,
+        "h": 29
+      }
+    ],
+    "up_right": [
+      {
+        "x": 260,
+        "y": 260,
+        "w": 31,
+        "h": 29
+      },
+      {
+        "x": 220,
+        "y": 261,
+        "w": 30,
+        "h": 29
+      },
+      {
+        "x": 182,
+        "y": 262,
+        "w": 29,
+        "h": 29
+      }
+    ]
+  },
+  "cell_width": 35,
+  "cell_height": 34,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/shellmon/field.png"
+}

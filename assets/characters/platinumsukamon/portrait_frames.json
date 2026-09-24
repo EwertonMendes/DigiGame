@@ -1,0 +1,14 @@
+{
+  "source": "PlatinumSukamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/PlatinumSukamon.webp",
+  "frame_width": 104,
+  "frame_height": 99,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "7266b9472e8893c9ddb3566026647d0f9e613535d32eb2324fc8b2230674d204"
+}

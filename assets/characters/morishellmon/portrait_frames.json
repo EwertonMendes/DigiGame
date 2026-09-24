@@ -1,0 +1,14 @@
+{
+  "source": "MoriShellmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MoriShellmon.webp",
+  "frame_width": 113,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "d3b803275b2a6f4cef314ca1f947d9dda675ca131c805388d61ffeb24d6385b5"
+}

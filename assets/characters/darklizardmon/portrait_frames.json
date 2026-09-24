@@ -1,0 +1,14 @@
+{
+  "source": "DarkLizardmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/DarkLizardmon.webp",
+  "frame_width": 85,
+  "frame_height": 93,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "fdf1b3865b26bafa5322a527a7fb047bb36e4c65291167f9a9a455078691fb6f"
+}

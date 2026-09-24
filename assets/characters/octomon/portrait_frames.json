@@ -1,0 +1,14 @@
+{
+  "source": "Octomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Octomon.webp",
+  "frame_width": 97,
+  "frame_height": 84,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "44b65835ef47dc8acb0763cd8e9ecbab1a85e62a6f378fe0ff708205d12b31f1"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Ebidramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ebidramon.webp",
+  "frame_width": 126,
+  "frame_height": 145,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "b47cc7d8c651084c629911633d4c9e99d8415164ef1a6bc99e6d22b1b8d4fd7c"
+}

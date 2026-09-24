@@ -1,0 +1,14 @@
+{
+  "source": "Gaogamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Gaogamon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "1060e7155e98f95fff1719de2a8a6865a589e3557caab9a3d83d67a5d02a2b2d"
+}

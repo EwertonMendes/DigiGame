@@ -1,0 +1,14 @@
+{
+  "source": "Sunflowmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Sunflowmon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "624d6b50ff8e103f65ed745b24f20d5f1ea2c745b9efad31e2f67a800f8b566e"
+}
