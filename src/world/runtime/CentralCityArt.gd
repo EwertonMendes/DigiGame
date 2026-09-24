@@ -228,6 +228,45 @@ static func create_surface_tile(
 	return create_surface_panel(surface, top_center, depth_order, 1, detail_alpha, detail_tint)
 
 
+static func create_surface_tile_slice(
+	surface: String,
+	top_center: Vector2,
+	depth_order: int,
+	source_cell: Vector2i,
+	source_grid_size: int = 2,
+	detail_alpha: float = 1.0,
+	detail_tint: Color = Color.WHITE
+) -> Node2D:
+	var root := Node2D.new()
+	root.position = top_center
+	root.z_index = clampi(depth_order, -4000, 4000)
+
+	var base := Polygon2D.new()
+	base.name = "Base"
+	base.polygon = tile_diamond(FLOOR_OVERSCAN)
+	base.color = surface_base_color(surface)
+	root.add_child(base)
+
+	var detail := Polygon2D.new()
+	detail.name = "TopFaceDetail"
+	detail.polygon = tile_diamond()
+	detail.texture = surface_texture(surface)
+	detail.uv = surface_top_face_cell_uvs(surface, source_cell, source_grid_size)
+	# The source is still sampled from the full 1024x1024 texture, but each
+	# gameplay tile now receives only its authored sub-tile. Linear filtering
+	# keeps the HD-2D edges smooth without crushing four cells into one.
+	detail.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	detail.color = Color(
+		detail_tint.r,
+		detail_tint.g,
+		detail_tint.b,
+		clampf(detail_alpha, 0.0, 1.0)
+	)
+	detail.z_index = 1
+	root.add_child(detail)
+	return root
+
+
 static func create_surface_panel(
 	surface: String,
 	top_center: Vector2,
@@ -287,6 +326,49 @@ static func surface_top_face_uvs(surface: String) -> PackedVector2Array:
 				SOURCE_TOP_RIGHT,
 				SOURCE_TOP_BOTTOM,
 			])
+
+
+static func surface_top_face_cell_uvs(
+	surface: String,
+	source_cell: Vector2i,
+	source_grid_size: int = 2
+) -> PackedVector2Array:
+	var grid_size := maxi(source_grid_size, 1)
+	var clamped_cell := Vector2i(
+		clampi(source_cell.x, 0, grid_size - 1),
+		clampi(source_cell.y, 0, grid_size - 1)
+	)
+	var u0 := float(clamped_cell.x) / float(grid_size)
+	var v0 := float(clamped_cell.y) / float(grid_size)
+	var u1 := float(clamped_cell.x + 1) / float(grid_size)
+	var v1 := float(clamped_cell.y + 1) / float(grid_size)
+
+	return PackedVector2Array([
+		_surface_top_face_point(surface, u0, v1),
+		_surface_top_face_point(surface, u0, v0),
+		_surface_top_face_point(surface, u1, v0),
+		_surface_top_face_point(surface, u1, v1),
+	])
+
+
+static func _surface_top_face_point(surface: String, u: float, v: float) -> Vector2:
+	var face := surface_top_face_uvs(surface)
+	var left := face[0]
+	var top := face[1]
+	var right := face[2]
+	var bottom := face[3]
+	var clamped_u := clampf(u, 0.0, 1.0)
+	var clamped_v := clampf(v, 0.0, 1.0)
+
+	# Bilinear interpolation uses all four authored diamond corners. This keeps
+	# the modular slices aligned even when the source export is a few pixels
+	# asymmetric from antialiasing or perspective cleanup.
+	return (
+		top * (1.0 - clamped_u) * (1.0 - clamped_v)
+		+ right * clamped_u * (1.0 - clamped_v)
+		+ left * (1.0 - clamped_u) * clamped_v
+		+ bottom * clamped_u * clamped_v
+	)
 
 
 static func create_full_block(
