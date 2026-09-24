@@ -31,12 +31,13 @@ const DIGILAB_RETURN_CELL := Vector2i(10, 12)
 # follows the staircase/door opening, so the player can reach the threshold
 # while every visible ground-level wall remains solid.
 const DIGILAB_FOOTPRINT_SOURCE := [
-	# Back ridge.
-	Vector2(635.0, 495.0),
-	Vector2(1180.0, 630.0),
-	# Right utility wing / rear corner.
-	Vector2(1230.0, 690.0),
-	Vector2(1230.0, 960.0),
+	# Preserve the open pavement behind the lab, then bulge only where the
+	# authored right-side utility cluster actually reaches the ground.
+	Vector2(635.0, 509.0),
+	Vector2(1030.0, 760.0),
+	Vector2(1217.0, 895.0),
+	# Right facade / utility corner.
+	Vector2(1217.0, 947.0),
 	Vector2(1160.0, 1015.0),
 	Vector2(985.0, 1130.0),
 	Vector2(930.0, 1145.0),
@@ -55,9 +56,11 @@ const DIGILAB_FOOTPRINT_SOURCE := [
 	Vector2(390.0, 1050.0),
 	Vector2(350.0, 1030.0),
 	Vector2(305.0, 1050.0),
-	Vector2(45.0, 840.0),
-	Vector2(45.0, 770.0),
-	Vector2(55.0, 640.0),
+	Vector2(54.0, 835.0),
+	# Small source-silhouette correction for the far-left corner seen in the
+	# playtest video, without extending the collision into the pavement behind.
+	Vector2(40.0, 850.0),
+	Vector2(80.0, 800.0),
 ]
 
 var definition: Dictionary = {}
