@@ -180,7 +180,8 @@ def load_manager_sheet(spec: dict[str, Any], urls: dict[str, str]) -> Image.Imag
     if not path.is_file():
         url = urls.get(sheet_id)
         if not url:
-            return None
+            bucket = sheet_id[:2]
+            url = f"https://www.spriters-resource.com/resources/sheets/{bucket}/{sheet_id}.png"
         import subprocess
         path.parent.mkdir(parents=True, exist_ok=True)
         result = subprocess.run(
@@ -298,9 +299,6 @@ def main() -> None:
     urls = sheet_url_index()
     if not manager_specs:
         raise RuntimeError(f"No DigimonWorldSpriteManager specs found under {MANAGER_SPECS}")
-    if not urls:
-        raise RuntimeError("No Spriters Resource sheet URL index; run manager downloader --urls-only first")
-
     rows: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
 
