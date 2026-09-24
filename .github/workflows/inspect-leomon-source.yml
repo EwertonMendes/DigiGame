@@ -1,0 +1,66 @@
+name: Inspect Leomon DS source
+
+on:
+  push:
+    branches:
+      - fix/ds-sprite-agumon-line-leomon
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install image tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+      - name: Export WtW Leomon source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/leomon-audit
+          PYTHONPATH=tools python3 - <<'PY'
+          from pathlib import Path
+          from build_early_rank_ds_fields import load_wtw_archive
+          archive = load_wtw_archive()
+          member = 'sprite thread/100_Leomon.png'
+          Path('/tmp/leomon-audit/wtw-100-leomon.png').write_bytes(archive.read(member))
+          print(member)
+          PY
+      - name: Bake SpriteManager Leomon semantic reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/digimon-sprite-manager
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          manager = Path('/tmp/digimon-sprite-manager')
+          sys.path.insert(0, str(manager))
+          sys.path.insert(0, str(manager / 'src'))
+          import config
+          from core import downloader, baker
+          spec = manager / 'specs/digimon/086.extract.json'
+          data = json.loads(spec.read_text())
+          config.ensure_dirs()
+          downloader.fetch_gallery(log=lambda *_: None)
+          urls = dict(downloader.derive_urls(log=lambda *_: None))
+          sid = str(data.get('sheet_id'))
+          url = urls[sid]
+          dest = Path(config.RAW_DIR) / f'{sid}.png'
+          ok, code, size = downloader._curl(url, str(dest))
+          if not ok or size <= 0:
+              raise RuntimeError(f'failed SpriteManager source {sid}, HTTP {code}')
+          out = Path('/tmp/leomon-audit/manager')
+          out.mkdir(parents=True, exist_ok=True)
+          result = baker.bake(str(spec), out_dir=str(out), log=lambda *_: None)
+          Path('/tmp/leomon-audit/manager-result.json').write_text(json.dumps(result, indent=2, default=str) + '\n')
+          print(result)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leomon-source-audit
+          path: /tmp/leomon-audit
+          retention-days: 1
