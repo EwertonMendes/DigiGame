@@ -155,30 +155,40 @@ func _assert_digilab_floor_assets(interior: WorldInterior) -> void:
 	var floor_root := interior.get_node_or_null("Floor")
 	assert(floor_root != null, "DigiLab interior must expose its floor root")
 	assert(
-		floor_root.get_child_count() == 63,
-		"DigiLab 18x14 floor must render as 9x7 authored 2x2 panels instead of 252 downscaled single-cell copies"
+		floor_root.get_child_count() == 252,
+		"DigiLab 18x14 floor must keep one authored visual tile per 64x32 gameplay cell"
 	)
 
 	var saw_floor_1 := false
 	var saw_floor_2 := false
+	var source_cells: Dictionary = {}
 	for child in floor_root.get_children():
-		assert(int(child.get_meta("cell_span", 0)) == 2, "Every DigiLab floor panel must span exactly 2x2 gameplay cells")
-		var detail := child.get_node_or_null("TopFaceDetail") as Polygon2D
-		assert(detail != null and detail.texture != null, "Every DigiLab floor panel must keep an authored top-face texture")
-		assert(detail.polygon.size() == 4, "DigiLab floor panels must remain exact isometric diamonds")
 		assert(
-			is_equal_approx(absf(detail.polygon[0].x), 64.0)
-			and is_equal_approx(absf(detail.polygon[1].y), 32.0),
-			"DigiLab source art must render at 128x64 per panel so its detail is not crushed into 64x32"
+			int(child.get_meta("source_module_size", 0)) == 2,
+			"Every DigiLab tile must come from a 2x2 authored source module"
 		)
+		var source_cell = child.get_meta("source_cell", Vector2i(-1, -1))
+		assert(source_cell is Vector2i, "Every DigiLab tile must expose its modular source coordinate")
+		source_cells["%d:%d" % [source_cell.x, source_cell.y]] = true
+
+		var detail := child.get_node_or_null("TopFaceDetail") as Polygon2D
+		assert(detail != null and detail.texture != null, "Every DigiLab floor tile must keep an authored top-face texture")
+		assert(detail.polygon.size() == 4, "DigiLab floor tiles must remain exact isometric diamonds")
+		assert(
+			is_equal_approx(absf(detail.polygon[0].x), 32.0)
+			and is_equal_approx(absf(detail.polygon[1].y), 16.0),
+			"DigiLab visual tiles must remain exactly 64x32"
+		)
+		assert(detail.uv.size() == 4, "Every DigiLab tile must use its own four-point source UV slice")
 		var texture_path := detail.texture.resource_path
 		assert(
 			texture_path == DIGILAB_FLOOR_1_PATH or texture_path == DIGILAB_FLOOR_2_PATH,
-			"DigiLab floor panels must use only the supplied Tblack floor assets"
+			"DigiLab floor tiles must use only the supplied Tblack floor assets"
 		)
 		saw_floor_1 = saw_floor_1 or texture_path == DIGILAB_FLOOR_1_PATH
 		saw_floor_2 = saw_floor_2 or texture_path == DIGILAB_FLOOR_2_PATH
 
+	assert(source_cells.size() == 4, "DigiLab modular slicing must use all four quadrants of each 2x2 source module")
 	assert(saw_floor_1, "DigiLab floor must use floor-1 as the clean primary field")
 	assert(saw_floor_2, "DigiLab floor must use floor-2 for the authored service axis")
 
