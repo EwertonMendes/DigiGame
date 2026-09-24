@@ -1,0 +1,14 @@
+{
+  "source": "Frigimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Frigimon.webp",
+  "frame_width": 53,
+  "frame_height": 77,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "7fded4e0a0223603fac1e42bcbe9be5fcb425ec6d0681cf856279c28cbbad676"
+}

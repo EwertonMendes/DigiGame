@@ -1,0 +1,14 @@
+{
+  "source": "Clockmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Clockmon.webp",
+  "frame_width": 120,
+  "frame_height": 109,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "9d87640b2d8866e9ab7b0e9838733e08326f8f26eaa42c408aead1f5d771e574"
+}

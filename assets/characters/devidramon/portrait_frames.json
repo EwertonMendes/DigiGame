@@ -1,0 +1,14 @@
+{
+  "source": "Devidramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Devidramon.webp",
+  "frame_width": 99,
+  "frame_height": 108,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "9581e012e9888cae5a3e5bc9a4236604e6c7a212bb776c354cd305b8da374c5f"
+}

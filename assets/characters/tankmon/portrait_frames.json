@@ -1,0 +1,14 @@
+{
+  "source": "Tankmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Tankmon.webp",
+  "frame_width": 104,
+  "frame_height": 88,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "b07770ed44f4371daf83bb444de24d1d4a9d05fa0a4a52d07d9a2b160227b727"
+}

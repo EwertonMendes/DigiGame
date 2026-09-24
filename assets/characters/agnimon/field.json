@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": null,
+  "source_archive_file": "sprite thread/Agnimon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/Agnimon.png",
+  "source_sha256": "2adef2eccf2378c62483656f8fac916111d87ebb1c320d27fdba10777f0bcff6",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 172096,
+      "confidence_margin": 278828
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 145302,
+      "confidence_margin": 304614
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 260,
+      "source_bottom": 305,
+      "height": 45
+    },
+    "down_right": {
+      "source_top": 260,
+      "source_bottom": 305,
+      "height": 45
+    },
+    "up_left": {
+      "source_top": 317,
+      "source_bottom": 363,
+      "height": 46
+    },
+    "up_right": {
+      "source_top": 317,
+      "source_bottom": 363,
+      "height": 46
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    48
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 20,
+        "y": 261,
+        "w": 31,
+        "h": 44
+      },
+      {
+        "x": 58,
+        "y": 260,
+        "w": 26,
+        "h": 43
+      },
+      {
+        "x": 91,
+        "y": 261,
+        "w": 29,
+        "h": 42
+      }
+    ],
+    "down_right": [
+      {
+        "x": 223,
+        "y": 261,
+        "w": 31,
+        "h": 44
+      },
+      {
+        "x": 190,
+        "y": 260,
+        "w": 26,
+        "h": 43
+      },
+      {
+        "x": 154,
+        "y": 261,
+        "w": 29,
+        "h": 42
+      }
+    ],
+    "up_left": [
+      {
+        "x": 21,
+        "y": 318,
+        "w": 27,
+        "h": 44
+      },
+      {
+        "x": 59,
+        "y": 317,
+        "w": 24,
+        "h": 44
+      },
+      {
+        "x": 87,
+        "y": 318,
+        "w": 30,
+        "h": 45
+      }
+    ],
+    "up_right": [
+      {
+        "x": 226,
+        "y": 318,
+        "w": 27,
+        "h": 44
+      },
+      {
+        "x": 191,
+        "y": 317,
+        "w": 24,
+        "h": 44
+      },
+      {
+        "x": 157,
+        "y": 318,
+        "w": 30,
+        "h": 45
+      }
+    ]
+  },
+  "cell_width": 35,
+  "cell_height": 49,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/agnimon/field.png"
+}
