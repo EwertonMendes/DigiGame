@@ -97,20 +97,58 @@ func _build_floor() -> void:
 
 
 func _build_digilab_floor(floor_root: Node2D) -> void:
-	# Keep the canonical 64x32 interior grid and render the complete authored
-	# Floor 1 top face into every cell. The source remains the original
-	# 1024x1024 texture; only the runtime diamond is 64x32.
+	# DigiLab uses one material across all 252 logical cells, so render those
+	# diamonds through one MultiMesh instead of 252 Node2D + 504 Polygon2D
+	# objects. The gameplay grid remains unchanged; this only removes render/
+	# scene-tree overhead on mobile and Web.
+	var texture := CITY.surface_texture(CITY.SURFACE_DIGILAB_FLOOR_1)
+	var raw_uvs := CITY.surface_top_face_uvs(CITY.SURFACE_DIGILAB_FLOOR_1)
+	var texture_size := texture.get_size()
+	var normalized_uvs := PackedVector2Array()
+	for uv in raw_uvs:
+		normalized_uvs.append(Vector2(
+			uv.x / maxf(texture_size.x, 1.0),
+			uv.y / maxf(texture_size.y, 1.0)
+		))
+
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([
+		Vector3(-TILE_HALF_WIDTH - 0.35, 0.0, 0.0),
+		Vector3(0.0, -TILE_HALF_HEIGHT - 0.25, 0.0),
+		Vector3(TILE_HALF_WIDTH + 0.35, 0.0, 0.0),
+		Vector3(0.0, TILE_HALF_HEIGHT + 0.25, 0.0),
+	])
+	arrays[Mesh.ARRAY_TEX_UV] = normalized_uvs
+	arrays[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 0, 2, 3])
+
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_2D
+	multimesh.mesh = mesh
+	multimesh.instance_count = ROOM_SIZE.x * ROOM_SIZE.y
+
+	var index := 0
 	for x in range(ROOM_SIZE.x):
 		for y in range(ROOM_SIZE.y):
-			var cell := Vector2i(x, y)
-			var tile := CITY.create_surface_tile(
-				CITY.SURFACE_DIGILAB_FLOOR_1,
-				grid_to_world(Vector2(cell)),
-				-900 + x + y,
-				1.0
+			multimesh.set_instance_transform_2d(
+				index,
+				Transform2D(0.0, grid_to_world(Vector2(x, y)))
 			)
-			tile.name = "Floor_%02d_%02d" % [x, y]
-			floor_root.add_child(tile)
+			index += 1
+
+	var batch := MultiMeshInstance2D.new()
+	batch.name = "FloorBatch"
+	batch.multimesh = multimesh
+	batch.texture = texture
+	batch.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	batch.z_index = -900
+	batch.set_meta("tile_count", ROOM_SIZE.x * ROOM_SIZE.y)
+	batch.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
+	batch.set_meta("render_backend", "multimesh")
+	floor_root.add_child(batch)
 
 
 func _floor_surface(cell: Vector2i, edge: bool) -> String:
@@ -161,100 +199,111 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	var authored := Node2D.new()
 	authored.name = "AuthoredWalls"
 	authored.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
-	authored.set_meta("layout_contract", "grid-native-vector")
+	authored.set_meta("layout_contract", "grid-native-vector-batched")
 	walls.add_child(authored)
 
 	var last_x := float(ROOM_SIZE.x - 1)
 	var front_y := float(ROOM_SIZE.y - 1)
 
-	# Full-height perimeter. Every straight SVG owns exactly one 64x32 grid
-	# edge, so adjacent modules share the exact same connector point. There is
-	# no scale inference and no fractional gap/overlap between wall cells.
+	# Repeated straight modules are submitted in three GPU batches. They still
+	# occupy one exact grid edge each, but no longer add dozens of Sprite2D
+	# nodes/draw submissions to this mobile-sensitive interior.
+	var back_grid: Array[Vector2] = []
 	for x in range(ROOM_SIZE.x - 1):
-		_add_digilab_wall_piece(
-			authored,
-			DIGILAB_ART.KIND_STRAIGHT_RIGHT,
-			Vector2(float(x), 0.0)
-		)
+		back_grid.append(Vector2(float(x), 0.0))
+	_add_digilab_wall_batch(
+		authored,
+		DIGILAB_ART.KIND_STRAIGHT_RIGHT,
+		back_grid,
+		820
+	)
 
+	var side_grid: Array[Vector2] = []
 	for y in range(ROOM_SIZE.y - 1):
-		_add_digilab_wall_piece(
-			authored,
-			DIGILAB_ART.KIND_STRAIGHT_LEFT,
-			Vector2(0.0, float(y))
-		)
-		_add_digilab_wall_piece(
-			authored,
-			DIGILAB_ART.KIND_STRAIGHT_LEFT,
-			Vector2(last_x, float(y))
-		)
+		side_grid.append(Vector2(0.0, float(y)))
+		side_grid.append(Vector2(last_x, float(y)))
+	_add_digilab_wall_batch(
+		authored,
+		DIGILAB_ART.KIND_STRAIGHT_LEFT,
+		side_grid,
+		820
+	)
 
-	# Corner pieces are compact joint covers rather than AI-authored wall runs.
-	# They only cover the shared connector, so they cannot change wall length.
-	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_INNER_CORNER, Vector2(0.0, 0.0))
-	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_INNER_CORNER, Vector2(last_x, 0.0))
-	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_OUTER_CORNER, Vector2(0.0, front_y))
-	_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_OUTER_CORNER, Vector2(last_x, front_y))
-
-	# Structural pillars sit exactly on selected grid vertices and cover module
-	# seams without creating a second wall footprint.
-	for x in [4, 8, 12]:
-		_add_digilab_wall_piece(
-			authored,
-			DIGILAB_ART.KIND_JOINT_PILLAR,
-			Vector2(float(x), 0.0)
-		)
-	for y in [4, 8]:
-		_add_digilab_wall_piece(
-			authored,
-			DIGILAB_ART.KIND_JOINT_PILLAR,
-			Vector2(0.0, float(y))
-		)
-		_add_digilab_wall_piece(
-			authored,
-			DIGILAB_ART.KIND_JOINT_PILLAR,
-			Vector2(last_x, float(y))
-		)
-
-	# Front boundary stays intentionally low for room readability. The doorway
-	# owns exactly four X-grid edges from x=7 to x=11; dividers terminate on
-	# those same connector coordinates, so the entrance has no floating caps.
+	var front_grid: Array[Vector2] = []
 	for x in range(0, 7):
-		_add_digilab_wall_piece(
-			authored,
-			DIGILAB_ART.KIND_LOW_DIVIDER,
-			Vector2(float(x), front_y)
-		)
+		front_grid.append(Vector2(float(x), front_y))
 	for x in range(11, ROOM_SIZE.x - 1):
-		_add_digilab_wall_piece(
-			authored,
-			DIGILAB_ART.KIND_LOW_DIVIDER,
-			Vector2(float(x), front_y)
-		)
+		front_grid.append(Vector2(float(x), front_y))
+	_add_digilab_wall_batch(
+		authored,
+		DIGILAB_ART.KIND_LOW_DIVIDER,
+		front_grid,
+		830
+	)
+
+	# Corners are orientation-specific connector sleeves. Each one overlaps a
+	# half edge of both adjacent runs, so there is no floating post or visible
+	# "sticker" seam at the four room vertices.
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_CORNER_BACK_LEFT,
+		Vector2(0.0, 0.0)
+	)
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_CORNER_BACK_RIGHT,
+		Vector2(last_x, 0.0)
+	)
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_CORNER_FRONT_LEFT,
+		Vector2(0.0, front_y)
+	)
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_CORNER_FRONT_RIGHT,
+		Vector2(last_x, front_y)
+	)
+
+	# The doorway includes low-wall sleeves on both ends. It owns x=7..11
+	# exactly and visually underlaps the neighboring front divider modules.
 	_add_digilab_wall_piece(
 		authored,
 		DIGILAB_ART.KIND_DOOR_FRAME,
 		Vector2(7.0, front_y)
 	)
 
-	# Collision is authored from the same grid boundary, independently from the
-	# vector artwork. A visual asset can be refined without ever moving physics.
+	# Movement in interiors is resolved by WorldInteriorManager ->
+	# is_walkable_world_position(), so duplicating the same wall boundary with
+	# dozens of PhysicsServer shapes only costs CPU. Keep the authoritative
+	# blocked-cell map and do not build redundant DigiLab wall colliders.
 	for x in range(ROOM_SIZE.x):
 		_mark_blocked(Vector2i(x, 0))
-		_add_circle_collision(Vector2i(x, 0), 22.0)
 	for y in range(1, ROOM_SIZE.y - 1):
-		for x in [0, ROOM_SIZE.x - 1]:
-			var side_cell := Vector2i(x, y)
-			_mark_blocked(side_cell)
-			_add_circle_collision(side_cell, 22.0)
+		_mark_blocked(Vector2i(0, y))
+		_mark_blocked(Vector2i(ROOM_SIZE.x - 1, y))
 	for x in range(0, 7):
-		var front_left := Vector2i(x, ROOM_SIZE.y - 1)
-		_mark_blocked(front_left)
-		_add_circle_collision(front_left, 22.0)
+		_mark_blocked(Vector2i(x, ROOM_SIZE.y - 1))
 	for x in range(11, ROOM_SIZE.x):
-		var front_right := Vector2i(x, ROOM_SIZE.y - 1)
-		_mark_blocked(front_right)
-		_add_circle_collision(front_right, 22.0)
+		_mark_blocked(Vector2i(x, ROOM_SIZE.y - 1))
+
+
+func _add_digilab_wall_batch(
+	parent: Node2D,
+	kind: String,
+	grid_anchors: Array[Vector2],
+	depth_order: int
+) -> void:
+	var world_anchors: Array[Vector2] = []
+	for grid_anchor in grid_anchors:
+		world_anchors.append(grid_to_world(grid_anchor))
+	var batch := DIGILAB_ART.create_batch(
+		kind,
+		world_anchors,
+		grid_anchors,
+		depth_order
+	)
+	parent.add_child(batch)
 
 
 func _add_digilab_wall_piece(
@@ -263,15 +312,11 @@ func _add_digilab_wall_piece(
 	grid_anchor: Vector2
 ) -> void:
 	var world_anchor := grid_to_world(grid_anchor)
-	var depth_y := world_anchor.y
-	for delta in DIGILAB_ART.connector_deltas(kind):
-		depth_y = maxf(depth_y, grid_to_world(grid_anchor + delta).y)
-
 	var piece := DIGILAB_ART.create_piece(
 		kind,
 		world_anchor,
 		grid_anchor,
-		820 + int(round(depth_y))
+		850 + int(round(world_anchor.y))
 	)
 	parent.add_child(piece)
 
