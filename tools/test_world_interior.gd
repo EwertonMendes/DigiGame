@@ -70,6 +70,10 @@ func _ready() -> void:
 			break
 		await get_tree().process_frame
 	assert(bool(manager.call("is_active")), "Crossing the DigiLab doorway must enter its dedicated interior")
+	for _index in range(20):
+		if not area.is_exterior_active():
+			break
+		await get_tree().process_frame
 	assert(not area.is_exterior_active(), "Loaded exterior area must be hidden and paused while the player is inside")
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
