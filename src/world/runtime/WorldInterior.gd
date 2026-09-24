@@ -277,6 +277,7 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	# is_walkable_world_position(), so duplicating the same wall boundary with
 	# dozens of PhysicsServer shapes only costs CPU. Keep the authoritative
 	# blocked-cell map and do not build redundant DigiLab wall colliders.
+	_physics_root.set_meta("digilab_wall_collision_backend", "blocked-cells-only")
 	for x in range(ROOM_SIZE.x):
 		_mark_blocked(Vector2i(x, 0))
 	for y in range(1, ROOM_SIZE.y - 1):
