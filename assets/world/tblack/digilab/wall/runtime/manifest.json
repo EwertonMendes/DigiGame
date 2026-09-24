@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "grid": [
+    64,
+    32
+  ],
+  "wall_height": 72,
+  "assets": {
+    "wall-straight-right.svg": {
+      "anchor": [
+        32,
+        104
+      ],
+      "span": [
+        1,
+        0
+      ],
+      "size": [
+        128,
+        128
+      ]
+    },
+    "wall-straight-left.svg": {
+      "anchor": [
+        96,
+        104
+      ],
+      "span": [
+        0,
+        1
+      ],
+      "size": [
+        128,
+        128
+      ]
+    },
+    "inner-corner.svg": {
+      "anchor": [
+        56,
+        124
+      ],
+      "span": [
+        0,
+        0
+      ],
+      "size": [
+        112,
+        144
+      ]
+    },
+    "outer-corner.svg": {
+      "anchor": [
+        56,
+        124
+      ],
+      "span": [
+        0,
+        0
+      ],
+      "size": [
+        112,
+        144
+      ]
+    },
+    "joint-pillar.svg": {
+      "anchor": [
+        56,
+        124
+      ],
+      "span": [
+        0,
+        0
+      ],
+      "size": [
+        112,
+        144
+      ]
+    },
+    "door-frame.svg": {
+      "anchor": [
+        36,
+        138
+      ],
+      "span": [
+        4,
+        0
+      ],
+      "size": [
+        224,
+        220
+      ]
+    },
+    "low-divider.svg": {
+      "anchor": [
+        32,
+        72
+      ],
+      "span": [
+        1,
+        0
+      ],
+      "size": [
+        128,
+        96
+      ]
+    },
+    "wall-end-cap.svg": {
+      "anchor": [
+        48,
+        112
+      ],
+      "span": [
+        0,
+        0
+      ],
+      "size": [
+        96,
+        132
+      ]
+    }
+  }
+}
