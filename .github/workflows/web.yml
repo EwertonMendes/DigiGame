@@ -41,6 +41,12 @@ jobs:
           set -euo pipefail
           python3 tools/validate_runtime_assets.py
 
+      - name: Reject stale generated DS assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/validate_additional_ds_sync.py
+
       - name: Restore Godot Web toolchain cache
         id: godot-toolchain
         uses: actions/cache@v4
@@ -80,9 +86,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .godot/imported
-          key: godot-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', '**/*.gd', '**/*.tscn', '**/*.tres', 'assets/**/*') }}
-          restore-keys: |
-            godot-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-
+          key: godot-imported-v2-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', '**/*.gd', '**/*.tscn', '**/*.tres', 'assets/**/*', 'database/ds-additional-sources.json') }}
 
       - name: Import and validate project
         shell: bash
