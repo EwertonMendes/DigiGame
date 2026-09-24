@@ -8,12 +8,26 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "four_rows_rightmost_triples",
-  "review_pattern": "compact_interleaved_horizontal_reversed",
+  "review_pattern": "compact_interleaved",
   "runtime_group_indices": [
-    2,
     0,
-    3,
+    2,
+    1,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    0,
+    1,
     1
+  ],
+  "horizontal_mirror_from": {
+    "down_right": "down_left",
+    "up_right": "up_left"
+  },
+  "generated_horizontal_mirrors": [
+    "down_right",
+    "up_right"
   ],
   "canonical_runtime_order": [
     "down_left",
@@ -51,32 +65,32 @@
   "pose_alignment": {
     "down_right": {
       "compared_with": "down_left",
-      "policy": "deterministic_mirror_pose_match",
+      "policy": "generated_horizontal_mirror_from_left",
       "source_phase_order": [
         0,
         1,
         2
       ],
-      "pixel_error": 498756,
-      "confidence_margin": 28742
+      "pixel_error": 0,
+      "confidence_margin": null
     },
     "up_right": {
       "compared_with": "up_left",
-      "policy": "deterministic_mirror_pose_match",
+      "policy": "generated_horizontal_mirror_from_left",
       "source_phase_order": [
         0,
         1,
         2
       ],
-      "pixel_error": 461544,
-      "confidence_margin": 0
+      "pixel_error": 0,
+      "confidence_margin": null
     }
   },
   "vertical_alignment_policy": "frame_bottom",
   "source_group_envelopes": {
     "down_left": {
-      "source_top": 152,
-      "source_bottom": 184,
+      "source_top": 81,
+      "source_bottom": 113,
       "height": 32
     },
     "down_right": {
@@ -85,8 +99,8 @@
       "height": 32
     },
     "up_left": {
-      "source_top": 188,
-      "source_bottom": 220,
+      "source_top": 117,
+      "source_bottom": 149,
       "height": 32
     },
     "up_right": {
@@ -104,19 +118,19 @@
     "down_left": [
       {
         "x": 179,
-        "y": 152,
+        "y": 81,
         "w": 29,
         "h": 31
       },
       {
         "x": 212,
-        "y": 153,
+        "y": 82,
         "w": 29,
         "h": 28
       },
       {
         "x": 245,
-        "y": 153,
+        "y": 82,
         "w": 29,
         "h": 31
       }
@@ -144,19 +158,19 @@
     "up_left": [
       {
         "x": 181,
-        "y": 188,
+        "y": 117,
         "w": 26,
         "h": 30
       },
       {
         "x": 211,
-        "y": 189,
+        "y": 118,
         "w": 29,
         "h": 31
       },
       {
         "x": 243,
-        "y": 189,
+        "y": 118,
         "w": 29,
         "h": 31
       }

@@ -8,13 +8,21 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "two_rows_of_six",
-  "review_pattern": "canonical_rows_front_reversed",
+  "review_pattern": "canonical_rows",
   "runtime_group_indices": [
-    1,
     0,
-    3,
-    2
+    1,
+    2,
+    3
   ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
   "canonical_runtime_order": [
     "down_left",
     "down_right",
@@ -103,28 +111,8 @@
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 148,
-        "y": 201,
-        "w": 30,
-        "h": 31
-      },
-      {
-        "x": 187,
-        "y": 200,
-        "w": 31,
-        "h": 30
-      },
-      {
-        "x": 228,
+        "x": 27,
         "y": 198,
-        "w": 30,
-        "h": 31
-      }
-    ],
-    "down_right": [
-      {
-        "x": 107,
-        "y": 201,
         "w": 30,
         "h": 31
       },
@@ -135,38 +123,38 @@
         "h": 30
       },
       {
-        "x": 27,
+        "x": 107,
+        "y": 201,
+        "w": 30,
+        "h": 31
+      }
+    ],
+    "down_right": [
+      {
+        "x": 228,
         "y": 198,
+        "w": 30,
+        "h": 31
+      },
+      {
+        "x": 187,
+        "y": 200,
+        "w": 31,
+        "h": 30
+      },
+      {
+        "x": 148,
+        "y": 201,
         "w": 30,
         "h": 31
       }
     ],
     "up_left": [
       {
-        "x": 148,
-        "y": 237,
-        "w": 32,
-        "h": 31
-      },
-      {
-        "x": 189,
-        "y": 236,
-        "w": 31,
-        "h": 31
-      },
-      {
-        "x": 230,
+        "x": 28,
         "y": 234,
         "w": 27,
         "h": 32
-      }
-    ],
-    "up_right": [
-      {
-        "x": 105,
-        "y": 237,
-        "w": 32,
-        "h": 31
       },
       {
         "x": 65,
@@ -175,10 +163,30 @@
         "h": 31
       },
       {
-        "x": 28,
+        "x": 105,
+        "y": 237,
+        "w": 32,
+        "h": 31
+      }
+    ],
+    "up_right": [
+      {
+        "x": 230,
         "y": 234,
         "w": 27,
         "h": 32
+      },
+      {
+        "x": 189,
+        "y": 236,
+        "w": 31,
+        "h": 31
+      },
+      {
+        "x": 148,
+        "y": 237,
+        "w": 32,
+        "h": 31
       }
     ]
   },

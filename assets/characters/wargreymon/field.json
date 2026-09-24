@@ -15,6 +15,14 @@
     3,
     1
   ],
+  "effective_runtime_group_indices": [
+    2,
+    0,
+    3,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
   "canonical_runtime_order": [
     "down_left",
     "down_right",
