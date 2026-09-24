@@ -38,7 +38,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet; then
+          if [[ -z "$(git status --porcelain -- \
+            assets/characters \
+            assets/resources \
+            database/additional-ds-playables.json \
+            database/ds-directional-resource-audit.json)" ]]; then
             echo 'Additional DS rebuild is deterministic: committed outputs already match the pinned sources.'
             exit 0
           fi
