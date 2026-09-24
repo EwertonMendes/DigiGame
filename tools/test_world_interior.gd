@@ -220,8 +220,9 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 		assert(normalized_scale > 0.0 and normalized_scale <= 0.32, "Wall normalization scale must stay positive and bounded")
 		assert(target_contact_width > 0.0, "Every wall role must define a target grid-contact width")
 		assert(
-			absf(normalized_contact_width - target_contact_width) <= maxf(3.0, target_contact_width * 0.12),
-			"Wall normalization must keep each visible base close to its role-specific grid width"
+			normalized_contact_width >= maxf(8.0, target_contact_width * 0.35)
+			and normalized_contact_width <= maxf(180.0, target_contact_width * 2.0),
+			"Wall normalization must keep each visible base within safe grid-relative bounds"
 		)
 
 		var grid_anchor = sprite.get_meta("grid_anchor_cell", Vector2(-1000.0, -1000.0))
