@@ -152,18 +152,47 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         }
 
     keyed = keyed_source(source, background)
+    vertical_alignment = str(spec.get("vertical_alignment", "frame_bottom"))
+    if vertical_alignment not in {"frame_bottom", "source_group_envelope"}:
+        raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
+
     frames: list[Image.Image] = []
+    frame_placements: list[tuple[int, int]] = []
     audited_boxes: dict[str, list[dict[str, int]]] = {}
+    source_group_envelopes: dict[str, dict[str, int]] = {}
     for direction in DIRECTIONS:
         ordered_boxes = [raw_frames[direction][index] for index in source_frame_order[direction]]
         audited_boxes[direction] = ordered_boxes
-        frames.extend(crop_component(keyed, box) for box in ordered_boxes)
+        group_top = min(box["y"] for box in ordered_boxes)
+        group_bottom = max(box["y"] + box["h"] for box in ordered_boxes)
+        envelope_height = group_bottom - group_top
+        source_group_envelopes[direction] = {
+            "source_top": group_top,
+            "source_bottom": group_bottom,
+            "height": envelope_height,
+        }
+        for box in ordered_boxes:
+            frame = crop_component(keyed, box)
+            frames.append(frame)
+            if vertical_alignment == "source_group_envelope":
+                frame_placements.append((box["y"] - group_top, envelope_height))
+            else:
+                frame_placements.append((0, frame.height))
 
     cell_w = max(32, max(frame.width for frame in frames) + 4)
-    cell_h = max(32, max(frame.height for frame in frames) + 4)
+    if vertical_alignment == "source_group_envelope":
+        cell_h = max(32, max(envelope_height for _, envelope_height in frame_placements) + 4)
+    else:
+        cell_h = max(32, max(frame.height for frame in frames) + 4)
+
     strip = Image.new("RGBA", (cell_w * FRAME_COUNT, cell_h), (0, 0, 0, 0))
     for index, frame in enumerate(frames):
-        strip.alpha_composite(frame, (index * cell_w + (cell_w - frame.width) // 2, cell_h - frame.height - 1))
+        offset_y, envelope_height = frame_placements[index]
+        if vertical_alignment == "source_group_envelope":
+            y = cell_h - envelope_height - 1 + offset_y
+        else:
+            y = cell_h - frame.height - 1
+        strip.alpha_composite(frame, (index * cell_w + (cell_w - frame.width) // 2, y))
     for index in range(FRAME_COUNT):
         if strip.crop((index * cell_w, 0, (index + 1) * cell_w, cell_h)).getbbox() is None:
             raise RuntimeError(f"{name}: generated empty runtime frame {index}")
@@ -189,7 +218,13 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "canonical_runtime_phases": list(PHASES),
         "source_frame_order": source_frame_order,
         "pose_alignment": pose_alignment,
-        "anchor_policy": "bottom_center_in_uniform_species_cell",
+        "vertical_alignment_policy": vertical_alignment,
+        "source_group_envelopes": source_group_envelopes,
+        "anchor_policy": (
+            "source_group_envelope_bottom_center"
+            if vertical_alignment == "source_group_envelope"
+            else "bottom_center_in_uniform_species_cell"
+        ),
         "frame_anchor": [cell_w // 2, cell_h - 1],
         "audited_source_frames": audited_boxes,
         "cell_width": cell_w,
