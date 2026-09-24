@@ -34,13 +34,7 @@ jobs:
 
       - name: Fetch reviewed DWDS semantic recipes
         shell: bash
-        run: |
-          set -euo pipefail
-          git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/DigimonWorldSpriteManager
-          (
-            cd /tmp/DigimonWorldSpriteManager
-            PYTHONPATH=".:src" python3 Scripts/download_sheets.py --urls-only
-          )
+        run: git clone --depth 1 https://github.com/netraular/DigimonWorldSpriteManager.git /tmp/DigimonWorldSpriteManager
 
       - name: Cross-check source facings against reviewed recipes
         env:
