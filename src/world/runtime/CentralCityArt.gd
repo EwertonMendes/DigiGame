@@ -35,6 +35,19 @@ const SOURCE_TOP_WIDTH := 840.0
 const SOURCE_TOP_HEIGHT := 471.0
 const SOURCE_TOP_CENTER_Y := 266.0
 
+# Tblack's DigiLab floor art is authored on the same 1024x1024 canvas, but its
+# top face is larger than the Devil's Work.shop source diamond. Keep dedicated
+# UVs so the complete authored panel (including its border/detail work) is used
+# instead of cropping it to the legacy source coordinates.
+const DIGILAB_FLOOR_1_TOP_LEFT := Vector2(63.0, 261.0)
+const DIGILAB_FLOOR_1_TOP_TOP := Vector2(503.0, 5.0)
+const DIGILAB_FLOOR_1_TOP_RIGHT := Vector2(945.0, 261.0)
+const DIGILAB_FLOOR_1_TOP_BOTTOM := Vector2(503.0, 512.0)
+const DIGILAB_FLOOR_2_TOP_LEFT := Vector2(71.0, 259.0)
+const DIGILAB_FLOOR_2_TOP_TOP := Vector2(503.0, 8.0)
+const DIGILAB_FLOOR_2_TOP_RIGHT := Vector2(936.0, 259.0)
+const DIGILAB_FLOOR_2_TOP_BOTTOM := Vector2(503.0, 508.0)
+
 # Full blocks are used only where authored depth is desirable (map perimeter
 # and the temporary Devil's Work.shop interior shell). Non-uniform scaling
 # maps the source top face exactly to the 64x32 gameplay diamond.
@@ -65,11 +78,18 @@ const SURFACE_DIGILAB_FLOOR_2 := "digilab_floor_2"
 
 
 static func tile_diamond(overscan := Vector2.ZERO) -> PackedVector2Array:
+	return panel_diamond(1, overscan)
+
+
+static func panel_diamond(cell_span: int, overscan := Vector2.ZERO) -> PackedVector2Array:
+	var span := maxi(cell_span, 1)
+	var half_width := TILE_HALF_WIDTH * float(span)
+	var half_height := TILE_HALF_HEIGHT * float(span)
 	return PackedVector2Array([
-		Vector2(-TILE_HALF_WIDTH - overscan.x, 0.0),
-		Vector2(0.0, -TILE_HALF_HEIGHT - overscan.y),
-		Vector2(TILE_HALF_WIDTH + overscan.x, 0.0),
-		Vector2(0.0, TILE_HALF_HEIGHT + overscan.y),
+		Vector2(-half_width - overscan.x, 0.0),
+		Vector2(0.0, -half_height - overscan.y),
+		Vector2(half_width + overscan.x, 0.0),
+		Vector2(0.0, half_height + overscan.y),
 	])
 
 
@@ -205,26 +225,33 @@ static func create_surface_tile(
 	detail_alpha: float = 1.0,
 	detail_tint: Color = Color.WHITE
 ) -> Node2D:
+	return create_surface_panel(surface, top_center, depth_order, 1, detail_alpha, detail_tint)
+
+
+static func create_surface_panel(
+	surface: String,
+	top_center: Vector2,
+	depth_order: int,
+	cell_span: int,
+	detail_alpha: float = 1.0,
+	detail_tint: Color = Color.WHITE
+) -> Node2D:
+	var span := maxi(cell_span, 1)
 	var root := Node2D.new()
 	root.position = top_center
 	root.z_index = clampi(depth_order, -4000, 4000)
 
 	var base := Polygon2D.new()
 	base.name = "Base"
-	base.polygon = tile_diamond(FLOOR_OVERSCAN)
+	base.polygon = panel_diamond(span, FLOOR_OVERSCAN * float(span))
 	base.color = surface_base_color(surface)
 	root.add_child(base)
 
 	var detail := Polygon2D.new()
 	detail.name = "TopFaceDetail"
-	detail.polygon = tile_diamond()
+	detail.polygon = panel_diamond(span)
 	detail.texture = surface_texture(surface)
-	detail.uv = PackedVector2Array([
-		SOURCE_TOP_LEFT,
-		SOURCE_TOP_TOP,
-		SOURCE_TOP_RIGHT,
-		SOURCE_TOP_BOTTOM,
-	])
+	detail.uv = surface_top_face_uvs(surface)
 	detail.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	detail.color = Color(
 		detail_tint.r,
@@ -235,6 +262,31 @@ static func create_surface_tile(
 	detail.z_index = 1
 	root.add_child(detail)
 	return root
+
+
+static func surface_top_face_uvs(surface: String) -> PackedVector2Array:
+	match surface:
+		SURFACE_DIGILAB_FLOOR_1:
+			return PackedVector2Array([
+				DIGILAB_FLOOR_1_TOP_LEFT,
+				DIGILAB_FLOOR_1_TOP_TOP,
+				DIGILAB_FLOOR_1_TOP_RIGHT,
+				DIGILAB_FLOOR_1_TOP_BOTTOM,
+			])
+		SURFACE_DIGILAB_FLOOR_2:
+			return PackedVector2Array([
+				DIGILAB_FLOOR_2_TOP_LEFT,
+				DIGILAB_FLOOR_2_TOP_TOP,
+				DIGILAB_FLOOR_2_TOP_RIGHT,
+				DIGILAB_FLOOR_2_TOP_BOTTOM,
+			])
+		_:
+			return PackedVector2Array([
+				SOURCE_TOP_LEFT,
+				SOURCE_TOP_TOP,
+				SOURCE_TOP_RIGHT,
+				SOURCE_TOP_BOTTOM,
+			])
 
 
 static func create_full_block(
