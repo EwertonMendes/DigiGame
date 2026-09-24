@@ -109,9 +109,9 @@ def main() -> None:
                 target_bbox = target_cell.getbbox()
                 if source_bbox is None or target_bbox is None:
                     raise RuntimeError(f"{name}: generated mirror contains an empty frame")
-                expected = source_cell.crop(source_bbox).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+                expected_mirror = source_cell.crop(source_bbox).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 actual = target_cell.crop(target_bbox)
-                if expected.size != actual.size or ImageChops.difference(expected, actual).getbbox() is not None:
+                if expected_mirror.size != actual.size or ImageChops.difference(expected_mirror, actual).getbbox() is not None:
                     raise RuntimeError(
                         f"{name}: {target_direction} phase {phase} is not the exact horizontal mirror of {source_direction}"
                     )
