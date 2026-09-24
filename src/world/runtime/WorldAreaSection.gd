@@ -31,14 +31,33 @@ const DIGILAB_RETURN_CELL := Vector2i(10, 12)
 # follows the staircase/door opening, so the player can reach the threshold
 # while every visible ground-level wall remains solid.
 const DIGILAB_FOOTPRINT_SOURCE := [
-	Vector2(635.0, 509.0),
-	Vector2(1217.0, 895.0),
-	Vector2(844.0, 1103.0),
+	# Back ridge.
+	Vector2(635.0, 495.0),
+	Vector2(1180.0, 630.0),
+	# Right utility wing / rear corner.
+	Vector2(1230.0, 690.0),
+	Vector2(1230.0, 960.0),
+	Vector2(1160.0, 1015.0),
+	Vector2(985.0, 1130.0),
+	Vector2(930.0, 1145.0),
+	Vector2(890.0, 1115.0),
+	Vector2(850.0, 1110.0),
+	# Door recess: intentionally cuts inward so the staircase and threshold stay
+	# reachable rather than becoming part of the collision hull.
 	Vector2(763.0, 957.0),
 	Vector2(667.0, 1011.0),
 	Vector2(748.0, 1156.0),
-	Vector2(635.0, 1219.0),
-	Vector2(53.0, 833.0),
+	# Front-left facade and utility wing.
+	Vector2(635.0, 1230.0),
+	Vector2(585.0, 1205.0),
+	Vector2(525.0, 1165.0),
+	Vector2(490.0, 1130.0),
+	Vector2(390.0, 1050.0),
+	Vector2(350.0, 1030.0),
+	Vector2(305.0, 1050.0),
+	Vector2(45.0, 840.0),
+	Vector2(45.0, 770.0),
+	Vector2(55.0, 640.0),
 ]
 
 var definition: Dictionary = {}
