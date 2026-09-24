@@ -30,6 +30,27 @@ const DIGILAB_RETURN_CELL := Vector2i(10, 12)
 # Ground-contact footprint measured from the supplied source. The concave notch
 # follows the staircase/door opening, so the player can reach the threshold
 # while every visible ground-level wall remains solid.
+# Additional side guards are intentional movement envelopes for the player
+# capsule around the two visually protruding lower wings. The main footprint
+# follows ground contact; these guards keep the 64px-tall trainer sprite from
+# visually entering the side facades at oblique angles.
+const DIGILAB_LEFT_SIDE_GUARD_SOURCE := [
+	Vector2(35.0, 690.0),
+	Vector2(320.0, 720.0),
+	Vector2(470.0, 900.0),
+	Vector2(430.0, 1040.0),
+	Vector2(300.0, 1090.0),
+	Vector2(35.0, 860.0),
+]
+const DIGILAB_RIGHT_SIDE_GUARD_SOURCE := [
+	Vector2(930.0, 650.0),
+	Vector2(1210.0, 760.0),
+	Vector2(1240.0, 970.0),
+	Vector2(1090.0, 1130.0),
+	Vector2(920.0, 1120.0),
+	Vector2(860.0, 930.0),
+]
+
 const DIGILAB_FOOTPRINT_SOURCE := [
 	# Preserve the open pavement behind the lab, then bulge only where the
 	# authored right-side utility cluster actually reaches the ground.
@@ -356,6 +377,16 @@ func _build_digilab_exterior() -> void:
 	# too large behind the lab and too small along the lower-left wall.
 	var footprint := _digilab_footprint(door_world)
 	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
+	_register_blocking_polygon(
+		exterior,
+		"LeftSideGuardCollision",
+		_digilab_source_polygon_to_local(DIGILAB_LEFT_SIDE_GUARD_SOURCE, door_world)
+	)
+	_register_blocking_polygon(
+		exterior,
+		"RightSideGuardCollision",
+		_digilab_source_polygon_to_local(DIGILAB_RIGHT_SIDE_GUARD_SOURCE, door_world)
+	)
 
 	var entrance := _create_service_threshold(
 		"DigiLabEntrance",
@@ -406,6 +437,17 @@ func _digilab_footprint(door_world: Vector2) -> PackedVector2Array:
 	var polygon := PackedVector2Array()
 	for source_point: Vector2 in DIGILAB_FOOTPRINT_SOURCE:
 		polygon.append(_digilab_source_to_local(source_point, door_world))
+	return polygon
+
+
+func _digilab_source_polygon_to_local(
+	source_polygon: Array,
+	door_world: Vector2
+) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for raw_point in source_polygon:
+		if raw_point is Vector2:
+			polygon.append(_digilab_source_to_local(raw_point as Vector2, door_world))
 	return polygon
 
 
