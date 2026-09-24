@@ -517,6 +517,14 @@
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/301_MetalEtemon.png",
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first"
+    },
+    "Leomon": {
+      "source_id": 100,
+      "source_member": "sprite thread/100_Leomon.png",
+      "source_sha256": "a13b5b6d33008f77a342882ee3d6933317d15ee648aadea914695e082276b23e",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/100_Leomon.png",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first"
     }
   }
 }

@@ -1,0 +1,167 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 100,
+  "source_archive_file": "sprite thread/100_Leomon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/100_Leomon.png",
+  "source_sha256": "a13b5b6d33008f77a342882ee3d6933317d15ee648aadea914695e082276b23e",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 108338,
+      "confidence_margin": 242406
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 201408,
+      "confidence_margin": 127626
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 14,
+        "y": 296,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 60,
+        "y": 295,
+        "w": 26,
+        "h": 38
+      },
+      {
+        "x": 101,
+        "y": 296,
+        "w": 25,
+        "h": 36
+      }
+    ],
+    "down_right": [
+      {
+        "x": 232,
+        "y": 296,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 191,
+        "y": 295,
+        "w": 26,
+        "h": 38
+      },
+      {
+        "x": 151,
+        "y": 296,
+        "w": 25,
+        "h": 36
+      }
+    ],
+    "up_left": [
+      {
+        "x": 13,
+        "y": 250,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 60,
+        "y": 249,
+        "w": 25,
+        "h": 38
+      },
+      {
+        "x": 101,
+        "y": 250,
+        "w": 25,
+        "h": 39
+      }
+    ],
+    "up_right": [
+      {
+        "x": 232,
+        "y": 250,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 192,
+        "y": 249,
+        "w": 25,
+        "h": 38
+      },
+      {
+        "x": 151,
+        "y": 250,
+        "w": 25,
+        "h": 39
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/leomon/field.png"
+}
