@@ -7,7 +7,9 @@ const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
-const DIGILAB_TEXTURE = preload("res://assets/world/tblack/digilab.png")
+const DIGILAB_TEXTURE = preload("res://assets/world/tblack/digilab/digilab.png")
+const DIGILAB_DOOR_SEMI_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-semi-open.png")
+const DIGILAB_DOOR_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-open.png")
 
 const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
@@ -24,6 +26,8 @@ const DIGILAB_ROTATION_DEGREES := -2.00295
 const DIGILAB_BASE_Z := 880
 const DIGILAB_UPPER_OCCLUDER_Z := 1800
 const DIGILAB_UPPER_OCCLUDER_CUTOFF_Y := 700.0
+const DIGILAB_DOOR_FRAME_SECONDS := 0.10
+const DIGILAB_DOOR_OPEN_HOLD_SECONDS := 0.14
 const DIGILAB_DOOR_PIXEL := Vector2(754.0, 1054.0)
 const DIGILAB_DOOR_CELL := Vector2i(8, 10)
 const DIGILAB_RETURN_CELL := Vector2i(10, 12)
@@ -51,6 +55,18 @@ const DIGILAB_RIGHT_SIDE_GUARD_SOURCE := [
 	Vector2(1090.0, 1130.0),
 	Vector2(920.0, 1120.0),
 	Vector2(880.0, 940.0),
+]
+const DIGILAB_UPPER_RIGHT_GUARD_SOURCE := [
+	# Dedicated guard for the cyan antenna / upper-right utility platform seen
+	# in playtest. It extends higher than the lower wing guard but deliberately
+	# starts to the right of the rear-open pavement around source (925, 671).
+	Vector2(1040.0, 625.0),
+	Vector2(1165.0, 665.0),
+	Vector2(1235.0, 755.0),
+	Vector2(1235.0, 900.0),
+	Vector2(1170.0, 960.0),
+	Vector2(1030.0, 900.0),
+	Vector2(970.0, 775.0),
 ]
 
 const DIGILAB_FOOTPRINT_SOURCE := [
@@ -94,6 +110,9 @@ var _world_controller: Node = null
 var _blocked_cells := PackedByteArray()
 var _blocked_polygons: Array[PackedVector2Array] = []
 var _ground_tiles: Array[Dictionary] = []
+var _digilab_building_sprite: Sprite2D = null
+var _digilab_upper_sprite: Sprite2D = null
+var _digilab_entry_in_progress := false
 var _leaf_particles: Array[CPUParticles2D] = []
 
 
@@ -350,6 +369,7 @@ func _build_digilab_exterior() -> void:
 		Rect2(),
 		DIGILAB_BASE_Z
 	)
+	_digilab_building_sprite = sprite
 	exterior.add_child(sprite)
 
 	# One full-image sprite cannot represent a large isometric building correctly
@@ -367,6 +387,7 @@ func _build_digilab_exterior() -> void:
 		upper_region,
 		DIGILAB_UPPER_OCCLUDER_Z
 	)
+	_digilab_upper_sprite = upper_occluder
 	exterior.add_child(upper_occluder)
 
 	var door_marker := Marker2D.new()
@@ -388,6 +409,11 @@ func _build_digilab_exterior() -> void:
 		exterior,
 		"RightSideGuardCollision",
 		_digilab_source_polygon_to_local(DIGILAB_RIGHT_SIDE_GUARD_SOURCE, door_world)
+	)
+	_register_blocking_polygon(
+		exterior,
+		"UpperRightGuardCollision",
+		_digilab_source_polygon_to_local(DIGILAB_UPPER_RIGHT_GUARD_SOURCE, door_world)
 	)
 
 	var entrance := _create_service_threshold(
@@ -555,8 +581,57 @@ func _on_interior_threshold_entered(body: Node2D, entrance: Area2D) -> void:
 	if not _world_controller.has_method("request_interior_entry"):
 		return
 	var payload = entrance.get_meta("interior_payload", {})
-	if payload is Dictionary:
-		_world_controller.call_deferred("request_interior_entry", (payload as Dictionary).duplicate(true))
+	if not payload is Dictionary:
+		return
+	var destination := payload as Dictionary
+	if String(destination.get("service", "")) == "digilab":
+		if _digilab_entry_in_progress:
+			return
+		_animate_digilab_entry(entrance, destination.duplicate(true))
+		return
+	_world_controller.call_deferred("request_interior_entry", destination.duplicate(true))
+
+
+func _animate_digilab_entry(entrance: Area2D, payload: Dictionary) -> void:
+	_digilab_entry_in_progress = true
+	var player_actor := _player as HubActor
+	var previous_movement_enabled := true
+	if player_actor != null:
+		previous_movement_enabled = player_actor.movement_enabled
+		player_actor.movement_enabled = false
+		player_actor.velocity = Vector2.ZERO
+
+	# Closed is the idle frame. Crossing the authored doorway advances through
+	# the two supplied frames before the seamless interior handoff.
+	_set_digilab_door_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE)
+	await get_tree().create_timer(DIGILAB_DOOR_FRAME_SECONDS).timeout
+	if not is_inside_tree():
+		return
+	_set_digilab_door_texture(DIGILAB_DOOR_OPEN_TEXTURE)
+	await get_tree().create_timer(DIGILAB_DOOR_OPEN_HOLD_SECONDS).timeout
+	if not is_inside_tree():
+		return
+
+	if player_actor != null:
+		player_actor.movement_enabled = previous_movement_enabled
+	if _world_controller != null and _world_controller.has_method("request_interior_entry"):
+		_world_controller.call_deferred("request_interior_entry", payload)
+
+	# The exterior is hidden by the interior manager on the deferred call. Reset
+	# the idle artwork only after that handoff, so the player never sees the door
+	# snap shut before entering and it is closed again when returning to the city.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_set_digilab_door_texture(DIGILAB_TEXTURE)
+	_digilab_entry_in_progress = false
+	entrance.set_deferred("monitoring", true)
+
+
+func _set_digilab_door_texture(texture: Texture2D) -> void:
+	if _digilab_building_sprite != null and is_instance_valid(_digilab_building_sprite):
+		_digilab_building_sprite.texture = texture
+	if _digilab_upper_sprite != null and is_instance_valid(_digilab_upper_sprite):
+		_digilab_upper_sprite.texture = texture
 
 
 func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: String, interaction_priority: int) -> void:
