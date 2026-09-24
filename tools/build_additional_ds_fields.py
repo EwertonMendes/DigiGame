@@ -124,8 +124,30 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     if sorted(permutation) != [0, 1, 2, 3]:
         raise RuntimeError(f"{name}: invalid direction permutation {permutation}")
 
+    mirror_config = spec.get("horizontal_mirror_from", {})
+    if not isinstance(mirror_config, dict):
+        raise RuntimeError(f"{name}: horizontal_mirror_from must be an object")
+    allowed_horizontal_mirrors = {
+        "down_right": "down_left",
+        "up_right": "up_left",
+    }
+    horizontal_mirror_from: dict[str, str] = {}
+    for target_direction, source_direction in mirror_config.items():
+        target_direction = str(target_direction)
+        source_direction = str(source_direction)
+        if allowed_horizontal_mirrors.get(target_direction) != source_direction:
+            raise RuntimeError(
+                f"{name}: unsupported horizontal mirror {target_direction} <- {source_direction}; "
+                "only right-facing frames may be synthesized from the matching left-facing direction"
+            )
+        horizontal_mirror_from[target_direction] = source_direction
+
     raw_groups = movement_groups(source, profile)
     raw_frames = {direction: raw_groups[permutation[index]] for index, direction in enumerate(DIRECTIONS)}
+    effective_runtime_group_indices = list(permutation)
+    for target_direction, source_direction in horizontal_mirror_from.items():
+        raw_frames[target_direction] = raw_frames[source_direction]
+        effective_runtime_group_indices[DIRECTIONS.index(target_direction)] = permutation[DIRECTIONS.index(source_direction)]
     background, _ = _components(source)
     source_frame_order: dict[str, list[int]] = {
         "down_left": [0, 1, 2],
@@ -135,6 +157,16 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     }
     pose_alignment: dict[str, Any] = {}
     for left_direction, right_direction in (("down_left", "down_right"), ("up_left", "up_right")):
+        if horizontal_mirror_from.get(right_direction) == left_direction:
+            source_frame_order[right_direction] = list(source_frame_order[left_direction])
+            pose_alignment[right_direction] = {
+                "compared_with": left_direction,
+                "policy": "generated_horizontal_mirror_from_left",
+                "source_phase_order": list(source_frame_order[left_direction]),
+                "pixel_error": 0,
+                "confidence_margin": None,
+            }
+            continue
         candidates = pose_match_candidates(
             source,
             background,
@@ -173,6 +205,8 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         }
         for box in ordered_boxes:
             frame = crop_component(keyed, box)
+            if direction in horizontal_mirror_from:
+                frame = frame.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             frames.append(frame)
             if vertical_alignment == "source_group_envelope":
                 frame_placements.append((box["y"] - group_top, envelope_height))
@@ -214,6 +248,9 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "extraction_profile": profile_name,
         "review_pattern": pattern_name,
         "runtime_group_indices": permutation,
+        "effective_runtime_group_indices": effective_runtime_group_indices,
+        "horizontal_mirror_from": horizontal_mirror_from,
+        "generated_horizontal_mirrors": sorted(horizontal_mirror_from),
         "canonical_runtime_order": list(DIRECTIONS),
         "canonical_runtime_phases": list(PHASES),
         "source_frame_order": source_frame_order,
