@@ -53,6 +53,12 @@
       2,
       1,
       0
+    ],
+    "front_rows_reversed_rear_rows_canonical": [
+      1,
+      0,
+      2,
+      3
     ]
   },
   "profiles": {
@@ -554,10 +560,11 @@
       "source_sha256": "eaaf1a0382baf1a5b7fa61f1dfd51aabefeaab021e23504aed059238346bdd66",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/104_Tailmon.png",
       "profile": "four_rows_rightmost_triples",
-      "pattern": "compact_interleaved",
+      "pattern": "compact_interleaved_horizontal_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation",
-      "review_batch": "champion-backfill-2026-09-24-a"
+      "review_status": "corrected_after_runtime_visual_review",
+      "review_batch": "champion-backfill-2026-09-24-a",
+      "review_note": "Horizontal facing was inverted in the first backfill; corrected from in-game Sprite Test feedback."
     },
     "Flymon": {
       "source_id": 168,
@@ -565,10 +572,11 @@
       "source_sha256": "7ec12400422ac1d21ea259282cf163faf232cd4cc961fd06487b63044906934b",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/168_Flymon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation",
-      "review_batch": "champion-backfill-2026-09-24-a"
+      "review_status": "corrected_after_runtime_visual_review",
+      "review_batch": "champion-backfill-2026-09-24-a",
+      "review_note": "Horizontal facing was inverted in the first backfill; corrected from in-game Sprite Test feedback."
     },
     "Guardromon": {
       "source_id": 107,
@@ -598,10 +606,11 @@
       "source_sha256": "097969c627ac43e8262883da0e63b35d8f625c7fe272830344c3831240b1d17c",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/090_Seadramon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows_rear_reversed",
+      "pattern": "front_rows_reversed_rear_rows_canonical",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation",
-      "review_batch": "champion-backfill-2026-09-24-a"
+      "review_status": "corrected_after_runtime_visual_review",
+      "review_batch": "champion-backfill-2026-09-24-a",
+      "review_note": "Horizontal facing was inverted in the first backfill; corrected from in-game Sprite Test feedback."
     },
     "Fugamon": {
       "source_id": 151,
@@ -642,10 +651,11 @@
       "source_sha256": "8e43d078d385b3631b3da9cbf379def14740efb79c9f9f64a0ccf5b8f6df1695",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/091_Numemon.png",
       "profile": "four_rows_rightmost_triples",
-      "pattern": "compact_interleaved",
+      "pattern": "compact_interleaved_horizontal_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation",
-      "review_batch": "champion-backfill-2026-09-24-a"
+      "review_status": "corrected_after_runtime_visual_review",
+      "review_batch": "champion-backfill-2026-09-24-a",
+      "review_note": "Horizontal facing was inverted in the first backfill; corrected from in-game Sprite Test feedback."
     },
     "Angemon": {
       "source_id": 94,
@@ -653,10 +663,11 @@
       "source_sha256": "c19a52464a12fea7026443a077469c128d3587e711ca18792ef22b97220dbb81",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/094_Angemon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation",
-      "review_batch": "champion-backfill-2026-09-24-a"
+      "review_status": "corrected_after_runtime_visual_review",
+      "review_batch": "champion-backfill-2026-09-24-a",
+      "review_note": "Horizontal facing was inverted in the first backfill; corrected from in-game Sprite Test feedback."
     },
     "Veggiemon": {
       "source_id": 95,
@@ -675,10 +686,11 @@
       "source_sha256": "521c37d061863e51b6c1c1a94ee2b8bf2a57a7dce1aa3cd8a62c3f959782556b",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/097_Bakemon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation",
-      "review_batch": "champion-backfill-2026-09-24-a"
+      "review_status": "corrected_after_runtime_visual_review",
+      "review_batch": "champion-backfill-2026-09-24-a",
+      "review_note": "Horizontal facing was inverted in the first backfill; corrected from in-game Sprite Test feedback."
     },
     "Sukamon": {
       "source_id": 98,
@@ -730,10 +742,11 @@
       "source_sha256": "1d13c1e82729f89673c40df9597d68096df9797f315737214f80072844005bea",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/105_Wizardmon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation",
-      "review_batch": "champion-backfill-2026-09-24-a"
+      "review_status": "corrected_after_runtime_visual_review",
+      "review_batch": "champion-backfill-2026-09-24-a",
+      "review_note": "Horizontal facing was inverted in the first backfill; corrected from in-game Sprite Test feedback."
     },
     "Togemon": {
       "source_id": 106,
@@ -741,10 +754,11 @@
       "source_sha256": "6cde017078c3974093672588e8db339f95174549fced5a87db2a8283cb2fa3c7",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/106_Togemon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_front_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation",
-      "review_batch": "champion-backfill-2026-09-24-a"
+      "review_status": "corrected_after_runtime_visual_review",
+      "review_batch": "champion-backfill-2026-09-24-a",
+      "review_note": "Horizontal facing was inverted in the first backfill; corrected from in-game Sprite Test feedback."
     }
   }
 }
