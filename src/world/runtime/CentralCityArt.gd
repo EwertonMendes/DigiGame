@@ -17,6 +17,8 @@ const GROUND_DARK = preload("res://assets/world/devilsworkshop/city_1024/isometr
 const GROUND_WATER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0064.png")
 const GROUND_MARKET = preload("res://assets/world/devilsworkshop/city_1024/isometric_0009.png")
 const GROUND_TRAINING = preload("res://assets/world/devilsworkshop/city_1024/isometric_0007.png")
+const GROUND_DIGILAB_FLOOR_1 = preload("res://assets/world/tblack/digilab/floor/floor-1.png")
+const GROUND_DIGILAB_FLOOR_2 = preload("res://assets/world/tblack/digilab/floor/floor-2.png")
 
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
@@ -58,6 +60,8 @@ const SURFACE_DARK := "dark"
 const SURFACE_WATER := "water"
 const SURFACE_MARKET := "market"
 const SURFACE_TRAINING := "training"
+const SURFACE_DIGILAB_FLOOR_1 := "digilab_floor_1"
+const SURFACE_DIGILAB_FLOOR_2 := "digilab_floor_2"
 
 
 static func tile_diamond(overscan := Vector2.ZERO) -> PackedVector2Array:
@@ -93,6 +97,10 @@ static func surface_texture(surface: String) -> Texture2D:
 			return GROUND_MARKET
 		SURFACE_TRAINING:
 			return GROUND_TRAINING
+		SURFACE_DIGILAB_FLOOR_1:
+			return GROUND_DIGILAB_FLOOR_1
+		SURFACE_DIGILAB_FLOOR_2:
+			return GROUND_DIGILAB_FLOOR_2
 		_:
 			return GROUND_MAIN
 
@@ -121,6 +129,10 @@ static func surface_base_color(surface: String) -> Color:
 			return Color(0.10, 0.66, 0.28, 1.0)
 		SURFACE_TRAINING:
 			return Color(0.40, 0.68, 0.14, 1.0)
+		SURFACE_DIGILAB_FLOOR_1:
+			return Color(0.82, 0.83, 0.82, 1.0)
+		SURFACE_DIGILAB_FLOOR_2:
+			return Color(0.68, 0.70, 0.70, 1.0)
 		_:
 			return Color(0.55, 0.72, 0.24, 1.0)
 
