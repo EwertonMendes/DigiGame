@@ -55,8 +55,13 @@ func _ready() -> void:
 	assert(digilab_upper != null, "DigiLab must split upper occlusion from the foreground facade")
 	assert(
 		digilab_building.texture != null
-		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab.png",
+		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab.png",
 		"DigiLab exterior must use the project-supplied Tblack building asset"
+	)
+	assert(
+		ResourceLoader.exists("res://assets/world/tblack/digilab/digilab-door-semi-open.png")
+		and ResourceLoader.exists("res://assets/world/tblack/digilab/digilab-door-open.png"),
+		"DigiLab door animation must ship both project-supplied opening frames"
 	)
 	var digilab_entrance := digilab_section.get_node_or_null("DigiLabExterior/DigiLabEntrance") as Area2D
 	assert(digilab_entrance != null, "DigiLab exterior must expose a doorway threshold")
@@ -96,14 +101,18 @@ func _ready() -> void:
 	var digilab_right_guard := digilab_section.get_node_or_null(
 		"DigiLabExterior/RightSideGuardCollision/CollisionPolygon2D"
 	) as CollisionPolygon2D
+	var digilab_upper_right_guard := digilab_section.get_node_or_null(
+		"DigiLabExterior/UpperRightGuardCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
 	assert(
 		digilab_collision != null and digilab_collision.polygon.size() == 22,
 		"DigiLab must use the detailed measured ground-contact footprint"
 	)
 	assert(
 		digilab_left_guard != null and digilab_left_guard.polygon.size() == 6
-		and digilab_right_guard != null and digilab_right_guard.polygon.size() == 6,
-		"DigiLab side wings must expose dedicated player-clearance guards"
+		and digilab_right_guard != null and digilab_right_guard.polygon.size() == 6
+		and digilab_upper_right_guard != null and digilab_upper_right_guard.polygon.size() == 7,
+		"DigiLab side and upper-right utilities must expose dedicated player-clearance guards"
 	)
 	assert(
 		digilab_section.is_walkable_world_position(
@@ -132,6 +141,8 @@ func _ready() -> void:
 		Vector2(250.0, 860.0),  # left lower wing: player must not visually enter facade
 		Vector2(410.0, 930.0),  # left inner corner reviewed in screenshot
 		Vector2(980.0, 820.0),  # right utility cluster inner edge
+		Vector2(1090.0, 700.0), # upper-right cyan antenna platform reviewed in screenshot
+		Vector2(1180.0, 760.0), # upper-right outer utility corner
 		Vector2(1160.0, 900.0), # right protruding wing reviewed in screenshot
 		Vector2(330.0, 1020.0), # lower-left utility wing
 		Vector2(1020.0, 760.0), # right cylinder / utility cluster
