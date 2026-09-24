@@ -96,35 +96,19 @@ func _build_floor() -> void:
 
 
 func _build_digilab_floor(floor_root: Node2D) -> void:
-	# The 1024x1024 Tblack floors are authored as coherent 2x2 isometric
-	# modules. Slice those modules into four independent 64x32 gameplay cells
-	# instead of scaling the whole module into one cell or enlarging the visual
-	# grid to 128x64. This keeps the original grid size and preserves far more
-	# of the source line work because each cell samples only its own quadrant.
-	const SOURCE_MODULE_SIZE := 2
+	# Keep the canonical 64x32 interior grid and render the complete authored
+	# Floor 1 top face into every cell. The source remains the original
+	# 1024x1024 texture; only the runtime diamond is 64x32.
 	for x in range(ROOM_SIZE.x):
 		for y in range(ROOM_SIZE.y):
 			var cell := Vector2i(x, y)
-			var module_cell := Vector2i(
-				cell.x / SOURCE_MODULE_SIZE,
-				cell.y / SOURCE_MODULE_SIZE
-			)
-			var source_cell := Vector2i(
-				cell.x % SOURCE_MODULE_SIZE,
-				cell.y % SOURCE_MODULE_SIZE
-			)
-			var surface := _digilab_panel_surface(module_cell)
-			var tile := CITY.create_surface_tile_slice(
-				surface,
+			var tile := CITY.create_surface_tile(
+				CITY.SURFACE_DIGILAB_FLOOR_1,
 				grid_to_world(Vector2(cell)),
 				-900 + x + y,
-				source_cell,
-				SOURCE_MODULE_SIZE,
 				1.0
 			)
 			tile.name = "Floor_%02d_%02d" % [x, y]
-			tile.set_meta("source_module_size", SOURCE_MODULE_SIZE)
-			tile.set_meta("source_cell", source_cell)
 			floor_root.add_child(tile)
 
 
@@ -133,17 +117,6 @@ func _floor_surface(cell: Vector2i, edge: bool) -> String:
 	if accent_lane and not edge:
 		return _accent_surface()
 	return CITY.SURFACE_DARK if edge else CITY.SURFACE_MAIN
-
-
-func _digilab_panel_surface(panel_cell: Vector2i) -> String:
-	# Floor 1 is the calm base. Floor 2 is intentionally limited to the main
-	# approach and service axis so its richer detail reads as authored structure
-	# instead of visual noise repeated across the entire room.
-	var center_approach := panel_cell.x == 4 and panel_cell.y >= 2
-	var service_axis := panel_cell.y == 2 and panel_cell.x >= 2 and panel_cell.x <= 6
-	if center_approach or service_axis:
-		return CITY.SURFACE_DIGILAB_FLOOR_2
-	return CITY.SURFACE_DIGILAB_FLOOR_1
 
 
 func _build_walls() -> void:
