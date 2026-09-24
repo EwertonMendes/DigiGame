@@ -839,11 +839,11 @@
       "source_sha256": "d2f9463d931240ae9fe9740dd477400533135063ca36e658cfdb1cf0d6421d82",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/115_Chrysalimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows_front_reversed",
+      "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_b",
+      "review_status": "corrected_after_second_runtime_visual_review_batch_b",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Sprite Test correction: both down and up left/right pairs were inverted."
+      "review_note": "Second Sprite Test correction: current down and up left/right pairs remained inverted, so both current horizontal pairs were swapped back directly."
     },
     "Seasarmon": {
       "source_id": 116,
@@ -863,11 +863,15 @@
       "source_sha256": "6c1480d86ec2ba483f0b7007533e580b167241184853392552c27b72bb1b9005",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/117_Evilmon.png",
       "profile": "four_rows_rightmost_triples",
-      "pattern": "compact_interleaved_horizontal_reversed",
+      "pattern": "compact_interleaved",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_b",
+      "review_status": "source_defect_completed_with_generated_horizontal_mirror",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Sprite Test correction: both right facings resolved to the opposite side. Swap left/right within both down and up pairs while preserving front/back."
+      "review_note": "The source sheet duplicates left-facing movement art in the right-facing rows. Preserve the reviewed down_left/up_left source frames and synthesize down_right/up_right offline as exact horizontal mirrors in the deterministic builder.",
+      "horizontal_mirror_from": {
+        "down_right": "down_left",
+        "up_right": "up_left"
+      }
     },
     "Aquilamon": {
       "source_id": 118,
@@ -887,11 +891,11 @@
       "source_sha256": "f467ffc7fd856cec844219816c2f98abaaa2f30fb9627d7c916013a6ab9d46ed",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/119_Gokimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "front_rows_reversed_rear_rows_canonical",
+      "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_b",
+      "review_status": "corrected_after_second_runtime_visual_review_batch_b",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Sprite Test correction: down_left/down_right were inverted; up pair remains unchanged."
+      "review_note": "Second Sprite Test correction: current down_left/down_right remained inverted, so the current down pair was swapped back directly; up remains unchanged."
     },
     "Hookmon": {
       "source_id": 121,
@@ -935,11 +939,11 @@
       "source_sha256": "dbfc61aefa0d5df02de39ff59539ad6cf6078823208bc69c3d1fa1b3b434a578",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/124_Raptordramon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows_front_reversed",
+      "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_b",
+      "review_status": "corrected_after_second_runtime_visual_review_batch_b",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Sprite Test correction: both down and up left/right pairs were inverted."
+      "review_note": "Second Sprite Test correction: current runtime directions formed a full diagonal cross (DL showed UR, DR showed UL, UL showed DR, UR showed DL). Applied the direct diagonal swap DL<->UR and DR<->UL."
     },
     "Starmon": {
       "source_id": 126,
@@ -983,11 +987,11 @@
       "source_sha256": "be5a65da0a42e961cf33405be96a237fe93d5c63d2b6102d9f855d60ced1a291",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/129_Unimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows_front_reversed",
+      "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_b",
+      "review_status": "corrected_after_second_runtime_visual_review_batch_b",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Sprite Test correction: both down and up left/right pairs were inverted."
+      "review_note": "Second Sprite Test correction: current runtime directions formed a full diagonal cross (DL showed UR, DR showed UL, UL showed DR, UR showed DL). Applied the direct diagonal swap DL<->UR and DR<->UL."
     },
     "Sorcerymon": {
       "source_id": 130,
@@ -1007,11 +1011,11 @@
       "source_sha256": "42ef4b125534b2c8b20c7d749760489255215991d0a6835ab94a97af026f6580",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/132_Akatorimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows_front_reversed",
+      "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_b",
+      "review_status": "corrected_after_second_runtime_visual_review_batch_b",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Sprite Test correction: both down and up left/right pairs were inverted."
+      "review_note": "Second Sprite Test correction: current runtime directions formed a full diagonal cross (DL showed UR, DR showed UL, UL showed DR, UR showed DL). Applied the direct diagonal swap DL<->UR and DR<->UL."
     }
   }
 }
