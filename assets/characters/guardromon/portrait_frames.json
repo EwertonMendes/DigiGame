@@ -1,0 +1,14 @@
+{
+  "source": "Guardromon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Guardromon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "ac67c49506a089713786a1e73ecc5dd4052b2489053620e3b28c8ff7836724c9"
+}

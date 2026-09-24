@@ -1,0 +1,14 @@
+{
+  "source": "Unimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Unimon.webp",
+  "frame_width": 89,
+  "frame_height": 119,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "513bb848d2d18ace4602338dcc5fe52ac0ee3da92120befe20f74d00961b66d4"
+}

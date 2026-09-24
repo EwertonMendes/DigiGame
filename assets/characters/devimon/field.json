@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 88,
+  "source_archive_file": "sprite thread/088_Devimon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/088_Devimon.png",
+  "source_sha256": "34b539193710e789fec94979bb392fbca3cb004f3f0d8f153db53494a698d79d",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 240268,
+      "confidence_margin": 184822
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 130870,
+      "confidence_margin": 264792
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 266,
+      "source_bottom": 305,
+      "height": 39
+    },
+    "down_right": {
+      "source_top": 266,
+      "source_bottom": 305,
+      "height": 39
+    },
+    "up_left": {
+      "source_top": 306,
+      "source_bottom": 346,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 306,
+      "source_bottom": 346,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    43
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 13,
+        "y": 266,
+        "w": 28,
+        "h": 39
+      },
+      {
+        "x": 53,
+        "y": 268,
+        "w": 24,
+        "h": 35
+      },
+      {
+        "x": 96,
+        "y": 266,
+        "w": 31,
+        "h": 38
+      }
+    ],
+    "down_right": [
+      {
+        "x": 232,
+        "y": 266,
+        "w": 28,
+        "h": 39
+      },
+      {
+        "x": 196,
+        "y": 268,
+        "w": 24,
+        "h": 35
+      },
+      {
+        "x": 146,
+        "y": 266,
+        "w": 31,
+        "h": 38
+      }
+    ],
+    "up_left": [
+      {
+        "x": 13,
+        "y": 307,
+        "w": 27,
+        "h": 39
+      },
+      {
+        "x": 53,
+        "y": 306,
+        "w": 24,
+        "h": 40
+      },
+      {
+        "x": 98,
+        "y": 307,
+        "w": 32,
+        "h": 39
+      }
+    ],
+    "up_right": [
+      {
+        "x": 233,
+        "y": 307,
+        "w": 27,
+        "h": 39
+      },
+      {
+        "x": 196,
+        "y": 306,
+        "w": 24,
+        "h": 40
+      },
+      {
+        "x": 143,
+        "y": 307,
+        "w": 32,
+        "h": 39
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 44,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/devimon/field.png"
+}

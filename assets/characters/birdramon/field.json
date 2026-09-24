@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 110,
+  "source_archive_file": "sprite thread/110_Birdramon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/110_Birdramon.png",
+  "source_sha256": "e8c142798351e8798e04c992616453481824d6e18abddc3bc836eaef694556f5",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "four_rows_rightmost_triples",
+  "review_pattern": "compact_interleaved",
+  "runtime_group_indices": [
+    0,
+    2,
+    1,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    2,
+    1,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 102212,
+      "confidence_margin": 258826
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 118430,
+      "confidence_margin": 208144
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 31,
+      "source_bottom": 62,
+      "height": 31
+    },
+    "down_right": {
+      "source_top": 113,
+      "source_bottom": 144,
+      "height": 31
+    },
+    "up_left": {
+      "source_top": 66,
+      "source_bottom": 102,
+      "height": 36
+    },
+    "up_right": {
+      "source_top": 148,
+      "source_bottom": 184,
+      "height": 36
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    39
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 228,
+        "y": 33,
+        "w": 30,
+        "h": 29
+      },
+      {
+        "x": 266,
+        "y": 31,
+        "w": 32,
+        "h": 31
+      },
+      {
+        "x": 309,
+        "y": 34,
+        "w": 29,
+        "h": 25
+      }
+    ],
+    "down_right": [
+      {
+        "x": 308,
+        "y": 115,
+        "w": 30,
+        "h": 29
+      },
+      {
+        "x": 268,
+        "y": 113,
+        "w": 32,
+        "h": 31
+      },
+      {
+        "x": 228,
+        "y": 116,
+        "w": 29,
+        "h": 25
+      }
+    ],
+    "up_left": [
+      {
+        "x": 234,
+        "y": 68,
+        "w": 25,
+        "h": 34
+      },
+      {
+        "x": 270,
+        "y": 67,
+        "w": 30,
+        "h": 35
+      },
+      {
+        "x": 306,
+        "y": 66,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "up_right": [
+      {
+        "x": 307,
+        "y": 150,
+        "w": 25,
+        "h": 34
+      },
+      {
+        "x": 266,
+        "y": 149,
+        "w": 30,
+        "h": 35
+      },
+      {
+        "x": 228,
+        "y": 148,
+        "w": 32,
+        "h": 36
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 40,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/birdramon/field.png"
+}

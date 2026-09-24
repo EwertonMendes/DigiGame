@@ -1,0 +1,14 @@
+{
+  "source": "Ankylomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ankylomon.webp",
+  "frame_width": 128,
+  "frame_height": 120,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "c247f4c0280639416593e64ba9976f62b1cd100e25d0bd8bfe729ff6bcc9b7b6"
+}

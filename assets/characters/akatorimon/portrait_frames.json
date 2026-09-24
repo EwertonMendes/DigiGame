@@ -1,0 +1,14 @@
+{
+  "source": "Akatorimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Akatorimon.webp",
+  "frame_width": 69,
+  "frame_height": 95,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "d0c94a2f6bf609682e0eb5938ac8960ede46548ba19ff54cdd81d2e2c5d712f7"
+}

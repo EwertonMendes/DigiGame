@@ -15,6 +15,14 @@
     2,
     3
   ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
   "canonical_runtime_order": [
     "down_left",
     "down_right",
@@ -70,6 +78,29 @@
       ],
       "pixel_error": 217626,
       "confidence_margin": 118746
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 228,
+      "source_bottom": 267,
+      "height": 39
+    },
+    "down_right": {
+      "source_top": 223,
+      "source_bottom": 262,
+      "height": 39
+    },
+    "up_left": {
+      "source_top": 278,
+      "source_bottom": 315,
+      "height": 37
+    },
+    "up_right": {
+      "source_top": 274,
+      "source_bottom": 311,
+      "height": 37
     }
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",

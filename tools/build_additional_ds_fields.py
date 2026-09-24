@@ -124,8 +124,30 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     if sorted(permutation) != [0, 1, 2, 3]:
         raise RuntimeError(f"{name}: invalid direction permutation {permutation}")
 
+    mirror_config = spec.get("horizontal_mirror_from", {})
+    if not isinstance(mirror_config, dict):
+        raise RuntimeError(f"{name}: horizontal_mirror_from must be an object")
+    allowed_horizontal_mirrors = {
+        "down_right": "down_left",
+        "up_right": "up_left",
+    }
+    horizontal_mirror_from: dict[str, str] = {}
+    for target_direction, source_direction in mirror_config.items():
+        target_direction = str(target_direction)
+        source_direction = str(source_direction)
+        if allowed_horizontal_mirrors.get(target_direction) != source_direction:
+            raise RuntimeError(
+                f"{name}: unsupported horizontal mirror {target_direction} <- {source_direction}; "
+                "only right-facing frames may be synthesized from the matching left-facing direction"
+            )
+        horizontal_mirror_from[target_direction] = source_direction
+
     raw_groups = movement_groups(source, profile)
     raw_frames = {direction: raw_groups[permutation[index]] for index, direction in enumerate(DIRECTIONS)}
+    effective_runtime_group_indices = list(permutation)
+    for target_direction, source_direction in horizontal_mirror_from.items():
+        raw_frames[target_direction] = raw_frames[source_direction]
+        effective_runtime_group_indices[DIRECTIONS.index(target_direction)] = permutation[DIRECTIONS.index(source_direction)]
     background, _ = _components(source)
     source_frame_order: dict[str, list[int]] = {
         "down_left": [0, 1, 2],
@@ -135,6 +157,16 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     }
     pose_alignment: dict[str, Any] = {}
     for left_direction, right_direction in (("down_left", "down_right"), ("up_left", "up_right")):
+        if horizontal_mirror_from.get(right_direction) == left_direction:
+            source_frame_order[right_direction] = list(source_frame_order[left_direction])
+            pose_alignment[right_direction] = {
+                "compared_with": left_direction,
+                "policy": "generated_horizontal_mirror_from_left",
+                "source_phase_order": list(source_frame_order[left_direction]),
+                "pixel_error": 0,
+                "confidence_margin": None,
+            }
+            continue
         candidates = pose_match_candidates(
             source,
             background,
@@ -152,18 +184,49 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         }
 
     keyed = keyed_source(source, background)
+    vertical_alignment = str(spec.get("vertical_alignment", "frame_bottom"))
+    if vertical_alignment not in {"frame_bottom", "source_group_envelope"}:
+        raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
+
     frames: list[Image.Image] = []
+    frame_placements: list[tuple[int, int]] = []
     audited_boxes: dict[str, list[dict[str, int]]] = {}
+    source_group_envelopes: dict[str, dict[str, int]] = {}
     for direction in DIRECTIONS:
         ordered_boxes = [raw_frames[direction][index] for index in source_frame_order[direction]]
         audited_boxes[direction] = ordered_boxes
-        frames.extend(crop_component(keyed, box) for box in ordered_boxes)
+        group_top = min(box["y"] for box in ordered_boxes)
+        group_bottom = max(box["y"] + box["h"] for box in ordered_boxes)
+        envelope_height = group_bottom - group_top
+        source_group_envelopes[direction] = {
+            "source_top": group_top,
+            "source_bottom": group_bottom,
+            "height": envelope_height,
+        }
+        for box in ordered_boxes:
+            frame = crop_component(keyed, box)
+            if direction in horizontal_mirror_from:
+                frame = frame.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            frames.append(frame)
+            if vertical_alignment == "source_group_envelope":
+                frame_placements.append((box["y"] - group_top, envelope_height))
+            else:
+                frame_placements.append((0, frame.height))
 
     cell_w = max(32, max(frame.width for frame in frames) + 4)
-    cell_h = max(32, max(frame.height for frame in frames) + 4)
+    if vertical_alignment == "source_group_envelope":
+        cell_h = max(32, max(envelope_height for _, envelope_height in frame_placements) + 4)
+    else:
+        cell_h = max(32, max(frame.height for frame in frames) + 4)
+
     strip = Image.new("RGBA", (cell_w * FRAME_COUNT, cell_h), (0, 0, 0, 0))
     for index, frame in enumerate(frames):
-        strip.alpha_composite(frame, (index * cell_w + (cell_w - frame.width) // 2, cell_h - frame.height - 1))
+        offset_y, envelope_height = frame_placements[index]
+        if vertical_alignment == "source_group_envelope":
+            y = cell_h - envelope_height - 1 + offset_y
+        else:
+            y = cell_h - frame.height - 1
+        strip.alpha_composite(frame, (index * cell_w + (cell_w - frame.width) // 2, y))
     for index in range(FRAME_COUNT):
         if strip.crop((index * cell_w, 0, (index + 1) * cell_w, cell_h)).getbbox() is None:
             raise RuntimeError(f"{name}: generated empty runtime frame {index}")
@@ -185,11 +248,20 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "extraction_profile": profile_name,
         "review_pattern": pattern_name,
         "runtime_group_indices": permutation,
+        "effective_runtime_group_indices": effective_runtime_group_indices,
+        "horizontal_mirror_from": horizontal_mirror_from,
+        "generated_horizontal_mirrors": sorted(horizontal_mirror_from),
         "canonical_runtime_order": list(DIRECTIONS),
         "canonical_runtime_phases": list(PHASES),
         "source_frame_order": source_frame_order,
         "pose_alignment": pose_alignment,
-        "anchor_policy": "bottom_center_in_uniform_species_cell",
+        "vertical_alignment_policy": vertical_alignment,
+        "source_group_envelopes": source_group_envelopes,
+        "anchor_policy": (
+            "source_group_envelope_bottom_center"
+            if vertical_alignment == "source_group_envelope"
+            else "bottom_center_in_uniform_species_cell"
+        ),
         "frame_anchor": [cell_w // 2, cell_h - 1],
         "audited_source_frames": audited_boxes,
         "cell_width": cell_w,

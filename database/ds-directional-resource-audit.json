@@ -1,13 +1,13 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 147,
+  "directional_resource_count": 187,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 56,
+  "additional_source_rebuilt_resource_count": 96,
   "project_original_resource_count": 1,
   "project_supplied_resource_count": 1,
-  "audited_resource_count": 147,
+  "audited_resource_count": 187,
   "directional_resources": [
     {
       "name": "AeroVeedramon",
@@ -28,6 +28,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Akatorimon",
+      "resource": "assets/resources/akatorimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "AncientGarurumon",
       "resource": "assets/resources/ancientgarurumon.tres",
       "layout_source": "explicit",
@@ -36,6 +42,30 @@
     {
       "name": "AncientGreymon",
       "resource": "assets/resources/ancientgreymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Angemon",
+      "resource": "assets/resources/angemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Ankylomon",
+      "resource": "assets/resources/ankylomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Apemon",
+      "resource": "assets/resources/apemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Aquilamon",
+      "resource": "assets/resources/aquilamon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -52,10 +82,22 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Bakemon",
+      "resource": "assets/resources/bakemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Betamon",
       "resource": "assets/resources/betamon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Birdramon",
+      "resource": "assets/resources/birdramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Biyomon",
@@ -96,6 +138,12 @@
     {
       "name": "Blue Metal Greymon",
       "resource": "assets/resources/blue metal greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "BomberNanimon",
+      "resource": "assets/resources/bombernanimon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -184,6 +232,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Devimon",
+      "resource": "assets/resources/devimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Dinohumon",
       "resource": "assets/resources/dinohumon.tres",
       "layout_source": "explicit",
@@ -202,10 +256,22 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Dokugumon",
+      "resource": "assets/resources/dokugumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Dorimon",
       "resource": "assets/resources/dorimon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Dorugamon",
+      "resource": "assets/resources/dorugamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Dorumon",
@@ -256,6 +322,18 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Flymon",
+      "resource": "assets/resources/flymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Fugamon",
+      "resource": "assets/resources/fugamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Gabumon",
       "resource": "assets/resources/gabumon.tres",
       "layout_source": "explicit",
@@ -274,8 +352,26 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Gargomon",
+      "resource": "assets/resources/gargomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Garurumon",
       "resource": "assets/resources/garurumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Gatomon",
+      "resource": "assets/resources/gatomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Gekomon",
+      "resource": "assets/resources/gekomon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -334,8 +430,20 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Grizzmon",
+      "resource": "assets/resources/grizzmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Growlmon",
       "resource": "assets/resources/growlmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Guardromon",
+      "resource": "assets/resources/guardromon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -368,6 +476,12 @@
       "resource": "assets/resources/hawkmon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Hookmon",
+      "resource": "assets/resources/hookmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Ikkakumon",
@@ -424,6 +538,18 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Kiwimon",
+      "resource": "assets/resources/kiwimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Kokatorimon",
+      "resource": "assets/resources/kokatorimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Kokomon",
       "resource": "assets/resources/kokomon.tres",
       "layout_source": "explicit",
@@ -472,6 +598,24 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Kurisarimon",
+      "resource": "assets/resources/kurisarimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Kuwagamon",
+      "resource": "assets/resources/kuwagamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Kyubimon",
+      "resource": "assets/resources/kyubimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Lalamon",
       "resource": "assets/resources/lalamon.tres",
       "layout_source": "explicit",
@@ -516,6 +660,12 @@
     {
       "name": "Megidramon",
       "resource": "assets/resources/megidramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Mekanorimon",
+      "resource": "assets/resources/mekanorimon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -604,6 +754,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Numemon",
+      "resource": "assets/resources/numemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Ogremon",
       "resource": "assets/resources/ogremon.tres",
       "layout_source": "explicit",
@@ -658,6 +814,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Peckmon",
+      "resource": "assets/resources/peckmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Penguinmon",
       "resource": "assets/resources/penguinmon.tres",
       "layout_source": "explicit",
@@ -694,8 +856,20 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Reptiledramon",
+      "resource": "assets/resources/reptiledramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Rize Greymon",
       "resource": "assets/resources/rize greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Roachmon",
+      "resource": "assets/resources/roachmon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -704,6 +878,18 @@
       "resource": "assets/resources/salamon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Seadramon",
+      "resource": "assets/resources/seadramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Seasarmon",
+      "resource": "assets/resources/seasarmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Shamamon",
@@ -742,6 +928,30 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Sorcerymon",
+      "resource": "assets/resources/sorcerymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Starmon",
+      "resource": "assets/resources/starmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Stingmon",
+      "resource": "assets/resources/stingmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Sukamon",
+      "resource": "assets/resources/sukamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Sunmon",
       "resource": "assets/resources/sunmon.tres",
       "layout_source": "explicit",
@@ -776,6 +986,12 @@
       "resource": "assets/resources/terriermon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Togemon",
+      "resource": "assets/resources/togemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Tokomon",
@@ -826,6 +1042,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Unimon",
+      "resource": "assets/resources/unimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Veedramon",
       "resource": "assets/resources/veedramon.tres",
       "layout_source": "explicit",
@@ -838,6 +1060,12 @@
       "coverage": "early_ds"
     },
     {
+      "name": "Veggiemon",
+      "resource": "assets/resources/veggiemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Vermilimon",
       "resource": "assets/resources/vermilimon.tres",
       "layout_source": "explicit",
@@ -846,6 +1074,12 @@
     {
       "name": "Vikemon",
       "resource": "assets/resources/vikemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Vilemon",
+      "resource": "assets/resources/vilemon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -870,6 +1104,12 @@
     {
       "name": "Were Garurumon",
       "resource": "assets/resources/were garurumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Wizardmon",
+      "resource": "assets/resources/wizardmon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },

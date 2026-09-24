@@ -1,0 +1,14 @@
+{
+  "source": "Sorcerymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Sorcerymon.webp",
+  "frame_width": 97,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "6ccc04c9e99f65ff6363635b9a45cb55e9b51dff63ca7e15d0144d78746cb8a7"
+}

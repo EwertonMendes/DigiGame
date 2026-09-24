@@ -1,0 +1,14 @@
+{
+  "source": "Hookmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Hookmon.webp",
+  "frame_width": 120,
+  "frame_height": 120,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2652df7830fd61dbc7be4e939338170e7db71a9aa06d6800d7bea85473516f3d"
+}

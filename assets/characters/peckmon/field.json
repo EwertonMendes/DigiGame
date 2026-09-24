@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 146,
+  "source_archive_file": "sprite thread/146_Peckmon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/146_Peckmon.png",
+  "source_sha256": "4e8a56d6110321c17fd0516f0e5872da6ced1725500a5185735c4f179fbd1fb4",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 277982
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 321206
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 294,
+      "source_bottom": 331,
+      "height": 37
+    },
+    "down_right": {
+      "source_top": 294,
+      "source_bottom": 331,
+      "height": 37
+    },
+    "up_left": {
+      "source_top": 255,
+      "source_bottom": 292,
+      "height": 37
+    },
+    "up_right": {
+      "source_top": 255,
+      "source_bottom": 292,
+      "height": 37
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    39
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 30,
+        "y": 295,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 67,
+        "y": 294,
+        "w": 25,
+        "h": 36
+      },
+      {
+        "x": 102,
+        "y": 295,
+        "w": 29,
+        "h": 33
+      }
+    ],
+    "down_right": [
+      {
+        "x": 215,
+        "y": 295,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 180,
+        "y": 294,
+        "w": 25,
+        "h": 36
+      },
+      {
+        "x": 141,
+        "y": 295,
+        "w": 29,
+        "h": 33
+      }
+    ],
+    "up_left": [
+      {
+        "x": 40,
+        "y": 257,
+        "w": 22,
+        "h": 35
+      },
+      {
+        "x": 73,
+        "y": 255,
+        "w": 24,
+        "h": 36
+      },
+      {
+        "x": 107,
+        "y": 257,
+        "w": 24,
+        "h": 33
+      }
+    ],
+    "up_right": [
+      {
+        "x": 210,
+        "y": 257,
+        "w": 22,
+        "h": 35
+      },
+      {
+        "x": 175,
+        "y": 255,
+        "w": 24,
+        "h": 36
+      },
+      {
+        "x": 141,
+        "y": 257,
+        "w": 24,
+        "h": 33
+      }
+    ]
+  },
+  "cell_width": 33,
+  "cell_height": 40,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/peckmon/field.png"
+}

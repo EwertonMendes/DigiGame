@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageChops
 
 CONFIG = Path("database/ds-additional-sources.json")
 MANIFEST = Path("database/additional-ds-playables.json")
@@ -61,6 +61,32 @@ def main() -> None:
                 f"{name}: runtime direction mapping drifted; "
                 f"expected={patterns[pattern_name]} actual={meta.get('runtime_group_indices')}"
             )
+
+        mirror_from = config["species"][name].get("horizontal_mirror_from", {})
+        if not isinstance(mirror_from, dict):
+            raise RuntimeError(f"{name}: horizontal_mirror_from must be an object")
+        allowed_horizontal_mirrors = {
+            "down_right": "down_left",
+            "up_right": "up_left",
+        }
+        for target_direction, source_direction in mirror_from.items():
+            if allowed_horizontal_mirrors.get(str(target_direction)) != str(source_direction):
+                raise RuntimeError(
+                    f"{name}: invalid generated mirror {target_direction} <- {source_direction}"
+                )
+        if meta.get("horizontal_mirror_from", {}) != mirror_from:
+            raise RuntimeError(f"{name}: generated horizontal mirror metadata drifted")
+
+        expected_effective = list(patterns[pattern_name])
+        for target_direction, source_direction in mirror_from.items():
+            expected_effective[DIRECTIONS.index(str(target_direction))] = patterns[pattern_name][
+                DIRECTIONS.index(str(source_direction))
+            ]
+        if meta.get("effective_runtime_group_indices", meta.get("runtime_group_indices")) != expected_effective:
+            raise RuntimeError(
+                f"{name}: effective runtime source groups drifted; "
+                f"expected={expected_effective} actual={meta.get('effective_runtime_group_indices')}"
+            )
         if row.get("pattern") != pattern_name:
             raise RuntimeError(f"{name}: generated manifest pattern differs from reviewed source convention")
 
@@ -72,6 +98,23 @@ def main() -> None:
         for index in range(12):
             if image.crop((index * cell_w, 0, (index + 1) * cell_w, cell_h)).getbbox() is None:
                 raise RuntimeError(f"{name}: empty directional frame {index}")
+
+        for target_direction, source_direction in mirror_from.items():
+            target_base = DIRECTIONS.index(str(target_direction)) * 3
+            source_base = DIRECTIONS.index(str(source_direction)) * 3
+            for phase in range(3):
+                source_cell = image.crop(((source_base + phase) * cell_w, 0, (source_base + phase + 1) * cell_w, cell_h))
+                target_cell = image.crop(((target_base + phase) * cell_w, 0, (target_base + phase + 1) * cell_w, cell_h))
+                source_bbox = source_cell.getbbox()
+                target_bbox = target_cell.getbbox()
+                if source_bbox is None or target_bbox is None:
+                    raise RuntimeError(f"{name}: generated mirror contains an empty frame")
+                expected_mirror = source_cell.crop(source_bbox).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+                actual = target_cell.crop(target_bbox)
+                if expected_mirror.size != actual.size or ImageChops.difference(expected_mirror, actual).getbbox() is not None:
+                    raise RuntimeError(
+                        f"{name}: {target_direction} phase {phase} is not the exact horizontal mirror of {source_direction}"
+                    )
 
         portrait_meta = json.loads(portrait_meta_path.read_text(encoding="utf-8"))
         portrait = Image.open(portrait_path).convert("RGBA")

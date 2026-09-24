@@ -38,12 +38,36 @@ func _ready() -> void:
 	assert(portal != null, "Hub must create the animated test battle portal")
 	assert(dialog != null, "Hub must expose the Battle Operator service workspace")
 	assert(party_followers != null, "Hub must create the overworld active-party follower system")
-	var sprite_debug := hub.get_node_or_null("SpriteTestDebug")
-	assert(sprite_debug != null, "Hub must create the temporary sprite-test controller")
-	var sprite_lab := sprite_debug.get_node_or_null("SpriteTestDebugUI/DigimonSpriteTestLab")
-	assert(sprite_lab != null, "Sprite-test controller must create the lab UI")
+	assert(hub.get_node_or_null("SpriteTestDebug") == null, "Hub must not own a scene-specific Sprite Test controller now that the tool is global")
+	var sprite_lab := DigimonSpriteTestLab.new()
+	add_child(sprite_lab)
+	await get_tree().process_frame
+	assert(sprite_lab != null, "Sprite Test lab must initialize independently of a specific overworld scene")
 	assert(int(sprite_lab.call("get_testable_species_count")) >= 7, "Sprite test lab must discover packaged Digimon resources")
+	var sprite_total := int(sprite_lab.call("get_total_species_count"))
+	var sprite_with := int(sprite_lab.call("get_species_with_sprite_count"))
+	var sprite_without := int(sprite_lab.call("get_species_without_sprite_count"))
+	assert(sprite_total > 0, "Sprite Test coverage must load the canonical Digimon database")
+	assert(sprite_with > 0 and sprite_with <= sprite_total, "Sprite Test coverage must count canonical Digimon with usable field sprites")
+	assert(sprite_without >= 0 and sprite_total == sprite_with + sprite_without, "Sprite Test coverage totals must balance")
+	var sprite_stats_label := sprite_lab.get("_stats_label") as Label
+	assert(sprite_stats_label != null, "Sprite Test must expose the roster coverage summary at the top")
+	assert(sprite_stats_label.text.contains(str(sprite_total)), "Sprite Test total count must be rendered in the top summary")
+	assert(sprite_stats_label.text.contains(str(sprite_with)), "Sprite Test with-sprite count must be rendered in the top summary")
+	assert(sprite_stats_label.text.contains(str(sprite_without)), "Sprite Test without-sprite count must be rendered in the top summary")
 	assert(Array(sprite_lab.call("get_testable_species_names")).has("Metal Greymon"), "Sprite test lab must include Metal Greymon")
+	for rank in ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]:
+		var rank_button := sprite_lab.get("_rank_checks").get(rank) as CheckButton
+		assert(rank_button != null and rank_button.button_pressed, "Sprite Test rank filters must start enabled: %s" % rank)
+	sprite_lab.call("set_search_query", "metal gre")
+	var searched_names: Array = sprite_lab.call("get_filtered_species_names")
+	assert(searched_names.has("Metal Greymon"), "Sprite Test text search must match Digimon names")
+	assert(searched_names.all(func(value): return String(value).to_lower().contains("metal gre")), "Sprite Test text search must remove non-matching species")
+	sprite_lab.call("set_rank_enabled", "Ultimate", false)
+	assert(not Array(sprite_lab.call("get_filtered_species_names")).has("Metal Greymon"), "Sprite Test rank filters must exclude unchecked ranks")
+	sprite_lab.call("set_rank_enabled", "Ultimate", true)
+	sprite_lab.call("set_search_query", "")
+	assert(Array(sprite_lab.call("get_filtered_species_names")).has("Metal Greymon"), "Sprite Test filters must restore matching species when re-enabled")
 	sprite_lab.call("open_lab")
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -52,6 +76,8 @@ func _ready() -> void:
 	var sprite_test_visual := sprite_test_follower.get_node_or_null("Sprite2D") as Sprite2D
 	assert(sprite_test_visual != null and sprite_test_visual.texture != null, "Sprite test lab must render the selected field texture")
 	sprite_lab.call("close_lab")
+	sprite_lab.queue_free()
+	await get_tree().process_frame
 	assert(player.position.distance_to(operator.position) <= 94.0, "Operator must be reachable from spawn immediately")
 	assert(bool(hub.call("can_actor_move_to", player.position, player)), "Spawn must be walkable")
 

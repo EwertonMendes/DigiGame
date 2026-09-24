@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 94,
+  "source_archive_file": "sprite thread/094_Angemon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/094_Angemon.png",
+  "source_sha256": "c19a52464a12fea7026443a077469c128d3587e711ca18792ef22b97220dbb81",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows_rear_reversed",
+  "runtime_group_indices": [
+    0,
+    1,
+    3,
+    2
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    3,
+    2
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 133732,
+      "confidence_margin": 282940
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 254058,
+      "confidence_margin": 169686
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 342,
+      "source_bottom": 380,
+      "height": 38
+    },
+    "down_right": {
+      "source_top": 341,
+      "source_bottom": 380,
+      "height": 39
+    },
+    "up_left": {
+      "source_top": 417,
+      "source_bottom": 453,
+      "height": 36
+    },
+    "up_right": {
+      "source_top": 417,
+      "source_bottom": 453,
+      "height": 36
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    41
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 13,
+        "y": 342,
+        "w": 24,
+        "h": 38
+      },
+      {
+        "x": 50,
+        "y": 344,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 87,
+        "y": 342,
+        "w": 27,
+        "h": 38
+      }
+    ],
+    "down_right": [
+      {
+        "x": 289,
+        "y": 341,
+        "w": 24,
+        "h": 38
+      },
+      {
+        "x": 249,
+        "y": 343,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 212,
+        "y": 342,
+        "w": 27,
+        "h": 38
+      }
+    ],
+    "up_left": [
+      {
+        "x": 210,
+        "y": 421,
+        "w": 27,
+        "h": 32
+      },
+      {
+        "x": 249,
+        "y": 417,
+        "w": 24,
+        "h": 36
+      },
+      {
+        "x": 292,
+        "y": 418,
+        "w": 26,
+        "h": 35
+      }
+    ],
+    "up_right": [
+      {
+        "x": 90,
+        "y": 421,
+        "w": 27,
+        "h": 32
+      },
+      {
+        "x": 54,
+        "y": 417,
+        "w": 24,
+        "h": 36
+      },
+      {
+        "x": 9,
+        "y": 418,
+        "w": 26,
+        "h": 35
+      }
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 42,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/angemon/field.png"
+}

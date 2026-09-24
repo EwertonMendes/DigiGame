@@ -1,0 +1,14 @@
+{
+  "source": "Kiwimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Kiwimon.webp",
+  "frame_width": 67,
+  "frame_height": 72,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "d863445f3bb194ed2539ed8ad46416ace7c62396913fd05ab598c28073c4850f"
+}
