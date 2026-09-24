@@ -2,6 +2,16 @@ extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
 const DIGILAB_FLOOR_1_PATH := "res://assets/world/tblack/digilab/floor/floor-1.png"
+const DIGILAB_WALL_PATHS := {
+	"straight_left": "res://assets/world/tblack/digilab/wall/wall-straight-left.png",
+	"straight_right": "res://assets/world/tblack/digilab/wall/wall-straight-right.png",
+	"inner_corner": "res://assets/world/tblack/digilab/wall/inner-corner.png",
+	"outer_corner": "res://assets/world/tblack/digilab/wall/outer-corner.png",
+	"joint_pillar": "res://assets/world/tblack/digilab/wall/joint-pillar.png",
+	"door_frame": "res://assets/world/tblack/digilab/wall/door-frame.png",
+	"low_divider": "res://assets/world/tblack/digilab/wall/low-divider.png",
+	"wall_end_cap": "res://assets/world/tblack/digilab/wall/wall-end-cap.png",
+}
 
 
 func _ready() -> void:
@@ -89,6 +99,7 @@ func _ready() -> void:
 	var active_interior := interiors_root.get_child(0) as WorldInterior
 	assert(active_interior != null, "Streamed DigiLab interior must use WorldInterior")
 	_assert_digilab_floor_assets(active_interior)
+	_assert_digilab_wall_assets(active_interior)
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Interior spawn must be walkable")
@@ -172,6 +183,62 @@ func _assert_digilab_floor_assets(interior: WorldInterior) -> void:
 			"Every DigiLab floor cell must use the complete Floor 1 source; Floor 2 must not be rendered"
 		)
 		assert(detail.uv.size() == 4, "Every DigiLab tile must keep the complete authored top-face UV mapping")
+
+func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
+	var walls := interior.get_node_or_null("Walls")
+	assert(walls != null, "DigiLab interior must expose its wall root")
+	assert(walls.get_child_count() == 1, "DigiLab must not mix legacy block walls with the authored wall kit")
+
+	var authored := walls.get_node_or_null("AuthoredWalls")
+	assert(authored != null, "DigiLab must compose walls under one authored wall root")
+	assert(authored.get_child_count() == 59, "DigiLab wall composition must keep the reviewed modular piece count")
+	assert(
+		(authored.get_meta("grid_size", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(64.0, 32.0)),
+		"Authored DigiLab walls must remain bound to the 64x32 world grid"
+	)
+
+	var seen_kinds: Dictionary = {}
+	var seen_anchors: Dictionary = {}
+	for child in authored.get_children():
+		var sprite := child as Sprite2D
+		assert(sprite != null and sprite.texture != null, "Every authored DigiLab wall piece must be a textured Sprite2D")
+		assert(sprite.region_enabled, "Wall normalization must trim transparent source padding at runtime")
+		assert(sprite.region_rect.size.x > 0.0 and sprite.region_rect.size.y > 0.0, "Normalized wall region must contain visible source pixels")
+		assert(sprite.region_rect.size.x <= 1254.0 and sprite.region_rect.size.y <= 1254.0, "Wall region must stay inside the supplied 1254x1254 source canvas")
+
+		var kind := String(sprite.get_meta("digilab_wall_piece", ""))
+		assert(DIGILAB_WALL_PATHS.has(kind), "Every authored wall sprite must declare a known wall-piece role")
+		assert(
+			sprite.texture.resource_path == String(DIGILAB_WALL_PATHS[kind]),
+			"Each wall-piece role must use its matching supplied Tblack texture"
+		)
+		seen_kinds[kind] = true
+
+		var normalized_scale := float(sprite.get_meta("normalized_scale", 0.0))
+		var target_contact_width := float(sprite.get_meta("target_contact_width", 0.0))
+		var normalized_contact_width := float(sprite.get_meta("normalized_contact_width", 0.0))
+		assert(normalized_scale > 0.0 and normalized_scale <= 0.32, "Wall normalization scale must stay positive and bounded")
+		assert(target_contact_width > 0.0, "Every wall role must define a target grid-contact width")
+		assert(
+			absf(normalized_contact_width - target_contact_width) <= maxf(3.0, target_contact_width * 0.12),
+			"Wall normalization must keep each visible base close to its role-specific grid width"
+		)
+
+		var grid_anchor = sprite.get_meta("grid_anchor_cell", Vector2(-1000.0, -1000.0))
+		assert(grid_anchor is Vector2, "Every wall piece must retain its authored grid anchor")
+		var anchor := grid_anchor as Vector2
+		assert(
+			is_equal_approx(anchor.x * 2.0, round(anchor.x * 2.0))
+			and is_equal_approx(anchor.y * 2.0, round(anchor.y * 2.0)),
+			"Wall anchors may use only integer or half-cell coordinates"
+		)
+		var anchor_key := "%s@%.1f,%.1f" % [kind, anchor.x, anchor.y]
+		assert(not seen_anchors.has(anchor_key), "Authored wall composition must not duplicate the same piece on the same grid anchor")
+		seen_anchors[anchor_key] = true
+
+	for kind in DIGILAB_WALL_PATHS.keys():
+		assert(seen_kinds.has(kind), "DigiLab wall composition must exercise every supplied wall asset role: %s" % kind)
+
 
 func _wait_for_world_ready(world: Node, max_frames: int = 120) -> void:
 	for _index in range(max_frames):
