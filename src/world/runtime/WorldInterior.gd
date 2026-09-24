@@ -79,18 +79,41 @@ func _build_floor() -> void:
 		for y in range(ROOM_SIZE.y):
 			var cell := Vector2i(x, y)
 			var edge := x == 0 or y == 0 or x == ROOM_SIZE.x - 1 or y == ROOM_SIZE.y - 1
-			var accent_lane := x in [8, 9] or (y == 6 and x >= 5 and x <= 12)
-			var surface := CITY.SURFACE_DARK if edge else CITY.SURFACE_MAIN
-			if accent_lane and not edge:
-				surface = _accent_surface()
+			var surface := _floor_surface(cell, edge)
+			var detail_alpha := 1.0 if _service_id == "digilab" else 0.94
 			var tile := CITY.create_surface_tile(
 				surface,
 				grid_to_world(Vector2(cell)),
 				-900 + x + y,
-				0.94
+				detail_alpha
 			)
 			tile.name = "Floor_%02d_%02d" % [x, y]
 			floor_root.add_child(tile)
+
+
+func _floor_surface(cell: Vector2i, edge: bool) -> String:
+	if _service_id == "digilab":
+		return _digilab_floor_surface(cell, edge)
+
+	var accent_lane := cell.x in [8, 9] or (cell.y == 6 and cell.x >= 5 and cell.x <= 12)
+	if accent_lane and not edge:
+		return _accent_surface()
+	return CITY.SURFACE_DARK if edge else CITY.SURFACE_MAIN
+
+
+func _digilab_floor_surface(cell: Vector2i, edge: bool) -> String:
+	# Keep the authored floor restrained: floor-1 is the clean field while
+	# floor-2 forms a symmetrical service cross and a perimeter/threshold frame.
+	# Both textures share the same 1024x1024 isometric source contract, so the
+	# existing 64x32 gameplay grid remains untouched.
+	if edge:
+		return CITY.SURFACE_DIGILAB_FLOOR_2
+
+	var entrance_lane := cell.x in [8, 9] and cell.y >= 6
+	var service_lane := cell.y in [5, 6] and cell.x >= 5 and cell.x <= 12
+	if entrance_lane or service_lane:
+		return CITY.SURFACE_DIGILAB_FLOOR_2
+	return CITY.SURFACE_DIGILAB_FLOOR_1
 
 
 func _build_walls() -> void:
@@ -167,8 +190,11 @@ func _build_service_zones() -> void:
 		"archive":
 			cells = [Vector2i(3, 5), Vector2i(3, 8), Vector2i(14, 5), Vector2i(14, 8)]
 	for cell in cells:
+		var pad_surface := _accent_surface()
+		if _service_id == "digilab":
+			pad_surface = CITY.SURFACE_DIGILAB_FLOOR_2
 		var pad := CITY.create_surface_tile(
-			_accent_surface(),
+			pad_surface,
 			grid_to_world(Vector2(cell)),
 			-350 + cell.x + cell.y,
 			1.0
@@ -184,7 +210,10 @@ func _build_service_point() -> void:
 	service.z_index = 1200 + int(round(service.position.y))
 	add_child(service)
 
-	var marker := CITY.create_surface_tile(_accent_surface(), Vector2.ZERO, 0, 1.0)
+	var marker_surface := _accent_surface()
+	if _service_id == "digilab":
+		marker_surface = CITY.SURFACE_DIGILAB_FLOOR_2
+	var marker := CITY.create_surface_tile(marker_surface, Vector2.ZERO, 0, 1.0)
 	service.add_child(marker)
 
 	var interactable := InteractableScript.new() as WorldInteractable
@@ -216,7 +245,10 @@ func _build_exit() -> void:
 	exit_root.monitorable = false
 	add_child(exit_root)
 
-	var marker := CITY.create_surface_tile(CITY.SURFACE_TECH_TEAL, Vector2.ZERO, 0, 0.88)
+	var marker_surface := CITY.SURFACE_TECH_TEAL
+	if _service_id == "digilab":
+		marker_surface = CITY.SURFACE_DIGILAB_FLOOR_2
+	var marker := CITY.create_surface_tile(marker_surface, Vector2.ZERO, 0, 1.0 if _service_id == "digilab" else 0.88)
 	exit_root.add_child(marker)
 
 	var shape_node := CollisionShape2D.new()
