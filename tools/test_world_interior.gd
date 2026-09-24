@@ -191,54 +191,108 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 
 	var authored := walls.get_node_or_null("AuthoredWalls")
 	assert(authored != null, "DigiLab must compose walls under one authored wall root")
-	assert(authored.get_child_count() == 59, "DigiLab wall composition must keep the reviewed modular piece count")
+	assert(authored.get_child_count() == 17, "DigiLab must use the reviewed multi-cell wall composition, not one full wall per grid cell")
 	assert(
 		(authored.get_meta("grid_size", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(64.0, 32.0)),
 		"Authored DigiLab walls must remain bound to the 64x32 world grid"
 	)
+	assert(
+		String(authored.get_meta("layout_contract", "")) == "explicit-connectors",
+		"DigiLab wall placement must be driven by explicit connectors"
+	)
 
 	var seen_kinds: Dictionary = {}
 	var seen_anchors: Dictionary = {}
+	var canonical_scale := -1.0
+	var anchors_by_kind: Dictionary = {}
+
 	for child in authored.get_children():
 		var sprite := child as Sprite2D
 		assert(sprite != null and sprite.texture != null, "Every authored DigiLab wall piece must be a textured Sprite2D")
-		assert(sprite.region_enabled, "Wall normalization must trim transparent source padding at runtime")
-		assert(sprite.region_rect.size.x > 0.0 and sprite.region_rect.size.y > 0.0, "Normalized wall region must contain visible source pixels")
-		assert(sprite.region_rect.size.x <= 1254.0 and sprite.region_rect.size.y <= 1254.0, "Wall region must stay inside the supplied 1254x1254 source canvas")
+		assert(not sprite.region_enabled, "Normalized DigiLab walls must use already-cropped runtime textures")
+		assert(sprite.scale.is_equal_approx(Vector2.ONE), "Normalized wall textures must render at scale 1 after preprocessing")
+		assert(is_zero_approx(sprite.rotation), "Wall sources must never be arbitrarily rotated in the interior")
+		assert(not sprite.flip_h and not sprite.flip_v, "Wall sources must use their authored orientation, not runtime mirroring")
 
 		var kind := String(sprite.get_meta("digilab_wall_piece", ""))
 		assert(DIGILAB_WALL_PATHS.has(kind), "Every authored wall sprite must declare a known wall-piece role")
 		assert(
-			sprite.texture.resource_path == String(DIGILAB_WALL_PATHS[kind]),
-			"Each wall-piece role must use its matching supplied Tblack texture"
+			String(sprite.get_meta("source_path", "")) == String(DIGILAB_WALL_PATHS[kind]),
+			"Each wall-piece role must retain the matching Tblack source path"
 		)
-		seen_kinds[kind] = true
-
-		var normalized_scale := float(sprite.get_meta("normalized_scale", 0.0))
-		var target_contact_width := float(sprite.get_meta("target_contact_width", 0.0))
-		var normalized_contact_width := float(sprite.get_meta("normalized_contact_width", 0.0))
-		assert(normalized_scale > 0.0 and normalized_scale <= 0.32, "Wall normalization scale must stay positive and bounded")
-		assert(target_contact_width > 0.0, "Every wall role must define a target grid-contact width")
 		assert(
-			normalized_contact_width >= maxf(8.0, target_contact_width * 0.35)
-			and normalized_contact_width <= maxf(180.0, target_contact_width * 2.0),
-			"Wall normalization must keep each visible base within safe grid-relative bounds"
+			sprite.get_meta("source_canvas_size", Vector2i.ZERO) == Vector2i(1254, 1254),
+			"Every DigiLab wall source must keep the supplied 1254x1254 source contract"
 		)
+		assert(
+			String(sprite.get_meta("normalization_contract", "")) == "trim+single-master-scale+explicit-connectors",
+			"Wall normalization must use the deterministic single-scale contract"
+		)
+
+		var trimmed_rect := sprite.get_meta("trimmed_source_rect", Rect2i()) as Rect2i
+		assert(trimmed_rect.size.x > 0 and trimmed_rect.size.y > 0, "Every wall source must be trimmed to visible pixels")
+		assert(trimmed_rect.size.x <= 1254 and trimmed_rect.size.y <= 1254, "Trimmed wall pixels must stay inside the source canvas")
+
+		var normalized_size := sprite.get_meta("normalized_size", Vector2.ZERO) as Vector2
+		assert(normalized_size.x > 0.0 and normalized_size.y > 0.0, "Every normalized wall texture must have a positive rendered size")
+		assert(normalized_size.x < 512.0 and normalized_size.y < 512.0, "No normalized DigiLab wall piece may balloon beyond the reviewed runtime envelope")
+
+		var piece_scale := float(sprite.get_meta("canonical_scale", 0.0))
+		assert(piece_scale > 0.0 and piece_scale < 0.30, "DigiLab wall master scale must be positive and bounded")
+		if canonical_scale < 0.0:
+			canonical_scale = piece_scale
+		else:
+			assert(
+				is_equal_approx(piece_scale, canonical_scale),
+				"All DigiLab wall assets must reuse exactly one canonical visual scale"
+			)
 
 		var grid_anchor = sprite.get_meta("grid_anchor_cell", Vector2(-1000.0, -1000.0))
 		assert(grid_anchor is Vector2, "Every wall piece must retain its authored grid anchor")
 		var anchor := grid_anchor as Vector2
 		assert(
-			is_equal_approx(anchor.x * 2.0, round(anchor.x * 2.0))
-			and is_equal_approx(anchor.y * 2.0, round(anchor.y * 2.0)),
-			"Wall anchors may use only integer or half-cell coordinates"
+			is_equal_approx(anchor.x * 8.0, round(anchor.x * 8.0))
+			and is_equal_approx(anchor.y * 8.0, round(anchor.y * 8.0)),
+			"Wall anchors may use only deterministic eighth-cell grid coordinates"
 		)
-		var anchor_key := "%s@%.1f,%.1f" % [kind, anchor.x, anchor.y]
-		assert(not seen_anchors.has(anchor_key), "Authored wall composition must not duplicate the same piece on the same grid anchor")
+
+		var anchor_key := "%s@%.3f,%.3f" % [kind, anchor.x, anchor.y]
+		assert(not seen_anchors.has(anchor_key), "The same wall role must never be duplicated on the same connector anchor")
 		seen_anchors[anchor_key] = true
+		seen_kinds[kind] = true
+
+		if not anchors_by_kind.has(kind):
+			anchors_by_kind[kind] = []
+		(anchors_by_kind[kind] as Array).append(anchor)
 
 	for kind in DIGILAB_WALL_PATHS.keys():
 		assert(seen_kinds.has(kind), "DigiLab wall composition must exercise every supplied wall asset role: %s" % kind)
+
+	# Architectural seam contract. These checks protect the exact multi-cell
+	# chains that replaced the broken per-cell wall repetition.
+	_assert_anchor_present(anchors_by_kind, "inner_corner", Vector2(0.0, 0.0))
+	_assert_anchor_present(anchors_by_kind, "joint_pillar", Vector2(17.0, 0.0))
+	_assert_anchor_present(anchors_by_kind, "outer_corner", Vector2(17.0, 13.0))
+	_assert_anchor_present(anchors_by_kind, "wall_end_cap", Vector2(0.0, 9.5))
+	_assert_anchor_present(anchors_by_kind, "door_frame", Vector2(7.5, 13.0))
+
+	for expected_x in [2.5, 6.125, 9.75, 13.375]:
+		_assert_anchor_present(anchors_by_kind, "straight_right", Vector2(expected_x, 0.0))
+	for expected_y in [2.5, 6.0]:
+		_assert_anchor_present(anchors_by_kind, "straight_left", Vector2(0.0, expected_y))
+	for expected_y in [0.0, 3.5, 7.0]:
+		_assert_anchor_present(anchors_by_kind, "straight_left", Vector2(17.0, expected_y))
+	for expected_x in [0.0, 3.75, 10.5]:
+		_assert_anchor_present(anchors_by_kind, "low_divider", Vector2(expected_x, 13.0))
+
+
+func _assert_anchor_present(anchors_by_kind: Dictionary, kind: String, expected: Vector2) -> void:
+	assert(anchors_by_kind.has(kind), "Missing wall role while validating connector anchors: %s" % kind)
+	for value in anchors_by_kind[kind]:
+		var anchor := value as Vector2
+		if anchor.is_equal_approx(expected):
+			return
+	assert(false, "Missing %s wall anchor at %s" % [kind, expected])
 
 
 func _wait_for_world_ready(world: Node, max_frames: int = 120) -> void:
