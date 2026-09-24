@@ -8,6 +8,7 @@ const StateToolsScript = preload("res://src/debug/DebugStateTools.gd")
 const RosterToolsScript = preload("res://src/debug/DebugRosterTools.gd")
 const SpeciesPickerScript = preload("res://src/debug/DebugSpeciesPicker.gd")
 const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
+const SpriteTestLabScript = preload("res://src/ui/DigimonSpriteTestLab.gd")
 const BattlefieldCatalogScript = preload("res://src/world/BattlefieldCatalog.gd")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
 
@@ -42,6 +43,10 @@ var _collection_buttons: Array[Button] = []
 var _collection_ids: Array[String] = []
 var _collection_previews: Array[DigimonWalkPreview] = []
 var _species_picker: DebugSpeciesPicker
+var _return_world_header: Button
+var _sprite_test_layer: CanvasLayer
+var _sprite_test_lab: DigimonSpriteTestLab
+var _sprite_test_paused_before_open := false
 
 var _digimon_preview_host: Control
 var _digimon_summary: Label
@@ -123,6 +128,8 @@ func _process(_delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if not _available or not event is InputEventKey:
 		return
+	if _sprite_test_lab != null and _sprite_test_lab.visible:
+		return
 	var key := event as InputEventKey
 	if key.pressed and not key.echo and key.physical_keycode == KEY_F2:
 		toggle()
@@ -150,6 +157,8 @@ func open() -> void:
 		return
 	_open = true
 	layer = OPEN_LAYER
+	if _return_world_header != null:
+		_return_world_header.visible = _is_test_hub_scene()
 	_paused_before_open = get_tree().paused
 	get_tree().paused = true
 	_backdrop.visible = true
@@ -215,6 +224,10 @@ func _build_ui() -> void:
 	header.add_child(heading)
 	heading.add_child(_label("DEVELOPER TOOLKIT", 23, UI.TEXT, true))
 	heading.add_child(_label("Progression, collection and battle state laboratory", 10, UI.SUBTLE))
+	_return_world_header = _action("OVERWORLD", _return_to_world, UI.GREEN, 40)
+	_return_world_header.name = "ReturnOverworld"
+	_return_world_header.visible = _is_test_hub_scene()
+	header.add_child(_return_world_header)
 	var test_hub := _action("TEST HUB", _open_test_hub, UI.CYAN, 40)
 	header.add_child(test_hub)
 	var sprite_test := _action("SPRITE TEST", _open_sprite_test, UI.PURPLE, 40)
@@ -256,6 +269,19 @@ func _build_ui() -> void:
 	_species_picker.species_selected.connect(_on_species_picked)
 	_species_picker.dismissed.connect(func() -> void: _picker_context = "")
 	add_child(_species_picker)
+	_build_sprite_test_host()
+
+
+func _build_sprite_test_host() -> void:
+	_sprite_test_layer = CanvasLayer.new()
+	_sprite_test_layer.name = "GlobalSpriteTestLayer"
+	_sprite_test_layer.layer = OPEN_LAYER + 40
+	_sprite_test_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sprite_test_layer)
+	_sprite_test_lab = SpriteTestLabScript.new() as DigimonSpriteTestLab
+	_sprite_test_lab.name = "GlobalSpriteTestLab"
+	_sprite_test_lab.close_requested.connect(_on_global_sprite_test_closed)
+	_sprite_test_layer.add_child(_sprite_test_lab)
 
 func _build_collection_sidebar(parent: Control) -> void:
 	_collection_panel = PanelContainer.new()
@@ -1262,13 +1288,21 @@ func _return_to_world() -> void:
 
 
 func _open_sprite_test() -> void:
-	var scene := get_tree().current_scene
-	var debug_node := scene.get_node_or_null("SpriteTestDebug") if scene != null else null
-	if debug_node == null or not debug_node.has_method("_open_lab"):
-		_status.text = "Sprite Test is available from the Hub scene."
+	if _sprite_test_lab == null:
+		_status.text = "Sprite Test failed to initialize."
 		return
 	close()
-	debug_node.call("_open_lab")
+	_sprite_test_paused_before_open = get_tree().paused
+	get_tree().paused = true
+	_sprite_test_lab.open_lab()
+
+
+func _on_global_sprite_test_closed() -> void:
+	get_tree().paused = _sprite_test_paused_before_open
+
+
+func _is_test_hub_scene() -> bool:
+	return get_tree().current_scene != null and get_tree().current_scene.scene_file_path == TEST_HUB_SCENE
 
 func _on_state_changed() -> void:
 	if _open:
