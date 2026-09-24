@@ -70,7 +70,7 @@ func _ready() -> void:
 			break
 		await get_tree().process_frame
 	assert(bool(manager.call("is_active")), "Crossing the DigiLab doorway must enter its dedicated interior")
-	for _index in range(20):
+	for _index in range(90):
 		if not area.is_exterior_active():
 			break
 		await get_tree().process_frame
