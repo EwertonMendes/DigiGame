@@ -8,12 +8,12 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "four_rows_rightmost_triples",
-  "review_pattern": "compact_interleaved_horizontal_reversed",
+  "review_pattern": "compact_interleaved_down_reversed",
   "runtime_group_indices": [
     2,
     0,
-    3,
-    1
+    1,
+    3
   ],
   "canonical_runtime_order": [
     "down_left",
@@ -72,6 +72,29 @@
       "confidence_margin": 155810
     }
   },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 81,
+      "source_bottom": 108,
+      "height": 27
+    },
+    "down_right": {
+      "source_top": 4,
+      "source_bottom": 31,
+      "height": 27
+    },
+    "up_left": {
+      "source_top": 39,
+      "source_bottom": 68,
+      "height": 29
+    },
+    "up_right": {
+      "source_top": 116,
+      "source_bottom": 145,
+      "height": 29
+    }
+  },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
     18,
@@ -120,29 +143,9 @@
     ],
     "up_left": [
       {
-        "x": 240,
-        "y": 118,
-        "w": 27,
-        "h": 27
-      },
-      {
-        "x": 284,
-        "y": 116,
-        "w": 24,
-        "h": 28
-      },
-      {
-        "x": 320,
-        "y": 117,
+        "x": 239,
+        "y": 40,
         "w": 32,
-        "h": 27
-      }
-    ],
-    "up_right": [
-      {
-        "x": 324,
-        "y": 41,
-        "w": 27,
         "h": 27
       },
       {
@@ -152,9 +155,29 @@
         "h": 28
       },
       {
-        "x": 239,
-        "y": 40,
+        "x": 324,
+        "y": 41,
+        "w": 27,
+        "h": 27
+      }
+    ],
+    "up_right": [
+      {
+        "x": 320,
+        "y": 117,
         "w": 32,
+        "h": 27
+      },
+      {
+        "x": 284,
+        "y": 116,
+        "w": 24,
+        "h": 28
+      },
+      {
+        "x": 240,
+        "y": 118,
+        "w": 27,
         "h": 27
       }
     ]

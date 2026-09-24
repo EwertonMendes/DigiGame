@@ -8,10 +8,10 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "two_rows_of_six",
-  "review_pattern": "canonical_rows_front_reversed",
+  "review_pattern": "canonical_rows_rear_reversed",
   "runtime_group_indices": [
-    1,
     0,
+    1,
     3,
     2
   ],
@@ -72,6 +72,29 @@
       "confidence_margin": 233384
     }
   },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 264,
+      "source_bottom": 302,
+      "height": 38
+    },
+    "down_right": {
+      "source_top": 264,
+      "source_bottom": 302,
+      "height": 38
+    },
+    "up_left": {
+      "source_top": 311,
+      "source_bottom": 349,
+      "height": 38
+    },
+    "up_right": {
+      "source_top": 311,
+      "source_bottom": 349,
+      "height": 38
+    }
+  },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
     18,
@@ -80,30 +103,10 @@
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 140,
-        "y": 266,
-        "w": 32,
-        "h": 36
-      },
-      {
-        "x": 191,
-        "y": 268,
-        "w": 22,
-        "h": 34
-      },
-      {
-        "x": 231,
+        "x": 3,
         "y": 264,
         "w": 26,
         "h": 38
-      }
-    ],
-    "down_right": [
-      {
-        "x": 88,
-        "y": 266,
-        "w": 32,
-        "h": 36
       },
       {
         "x": 47,
@@ -112,10 +115,30 @@
         "h": 34
       },
       {
-        "x": 3,
+        "x": 88,
+        "y": 266,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "down_right": [
+      {
+        "x": 231,
         "y": 264,
         "w": 26,
         "h": 38
+      },
+      {
+        "x": 191,
+        "y": 268,
+        "w": 22,
+        "h": 34
+      },
+      {
+        "x": 140,
+        "y": 266,
+        "w": 32,
+        "h": 36
       }
     ],
     "up_left": [

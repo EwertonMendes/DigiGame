@@ -72,6 +72,29 @@
       "confidence_margin": 230810
     }
   },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 226,
+      "source_bottom": 265,
+      "height": 39
+    },
+    "down_right": {
+      "source_top": 228,
+      "source_bottom": 267,
+      "height": 39
+    },
+    "up_left": {
+      "source_top": 274,
+      "source_bottom": 314,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 276,
+      "source_bottom": 316,
+      "height": 40
+    }
+  },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
     17,
