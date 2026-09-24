@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 
 from audit_missing_ds_sources import (
     OUT as STRUCTURAL_OUT,
