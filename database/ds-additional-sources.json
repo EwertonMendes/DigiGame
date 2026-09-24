@@ -839,11 +839,11 @@
       "source_sha256": "d2f9463d931240ae9fe9740dd477400533135063ca36e658cfdb1cf0d6421d82",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/115_Chrysalimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_third_runtime_visual_review_batch_b",
+      "review_status": "corrected_from_recorded_runtime_video",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Third Sprite Test correction: current left facings had front/back swapped with each other and current right facings had front/back swapped with each other. Swap down/up while preserving left/right, resulting in [2,3,0,1]."
+      "review_note": "Recorded Sprite Test video from PR preview build 7264c09 proves mapping [2,3,0,1] swaps down/up within each side: DL displays visual UL, UL visual DL, DR visual UR, UR visual DR. Applying the exact inverse returns the source groups to canonical [0,1,2,3]."
     },
     "Seasarmon": {
       "source_id": 116,
@@ -891,11 +891,11 @@
       "source_sha256": "f467ffc7fd856cec844219816c2f98abaaa2f30fb9627d7c916013a6ab9d46ed",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/119_Gokimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first_horizontal_reversed",
+      "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_third_runtime_visual_review_batch_b",
+      "review_status": "corrected_from_recorded_runtime_video",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Third Sprite Test correction: the current output formed a full diagonal cross (DL showed UR, DR showed UL, UL showed DR, UR showed DL). Apply the direct diagonal correction, resulting in source-group mapping [3,2,1,0]."
+      "review_note": "Recorded Sprite Test video from PR preview build 7264c09 proves mapping [3,2,1,0] is a full diagonal cross: DL displays visual UR, DR visual UL, UL visual DR, UR visual DL. Applying the exact inverse returns the source groups to canonical [0,1,2,3]."
     },
     "Hookmon": {
       "source_id": 121,
