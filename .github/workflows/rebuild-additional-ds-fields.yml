@@ -6,14 +6,6 @@ on:
       - fix/ds-sprite-agumon-line-*
       - feat/agumon-evolution-ds-sprites
       - feat/garurumon-line-ds-sprites
-      - feat/ds-sprite-backfill-debug-tools
-  pull_request:
-    branches:
-      - master
-    paths:
-      - '.github/workflows/rebuild-additional-ds-fields.yml'
-      - 'database/ds-additional-sources.json'
-      - 'tools/build_additional_ds_fields.py'
   workflow_dispatch:
 
 permissions:
@@ -21,13 +13,13 @@ permissions:
 
 jobs:
   rebuild:
-    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip additional-ds-rebuild]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[skip additional-ds-rebuild]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Install sprite tooling
@@ -57,5 +49,4 @@ jobs:
             database/additional-ds-playables.json \
             database/ds-directional-resource-audit.json
           git commit -m 'feat: regenerate additional DS runtime sprites [skip additional-ds-rebuild]'
-          TARGET_BRANCH="${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}"
-          git push origin "HEAD:${TARGET_BRANCH}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
