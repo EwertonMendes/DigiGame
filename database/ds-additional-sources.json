@@ -839,11 +839,11 @@
       "source_sha256": "d2f9463d931240ae9fe9740dd477400533135063ca36e658cfdb1cf0d6421d82",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/115_Chrysalimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_second_runtime_visual_review_batch_b",
+      "review_status": "corrected_after_third_runtime_visual_review_batch_b",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Second Sprite Test correction: current down and up left/right pairs remained inverted, so both current horizontal pairs were swapped back directly."
+      "review_note": "Third Sprite Test correction: current left facings had front/back swapped with each other and current right facings had front/back swapped with each other. Swap down/up while preserving left/right, resulting in [2,3,0,1]."
     },
     "Seasarmon": {
       "source_id": 116,
@@ -891,11 +891,11 @@
       "source_sha256": "f467ffc7fd856cec844219816c2f98abaaa2f30fb9627d7c916013a6ab9d46ed",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/119_Gokimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first_horizontal_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_second_runtime_visual_review_batch_b",
+      "review_status": "corrected_after_third_runtime_visual_review_batch_b",
       "review_batch": "champion-backfill-2026-09-24-b",
-      "review_note": "Second Sprite Test correction: current down_left/down_right remained inverted, so the current down pair was swapped back directly; up remains unchanged."
+      "review_note": "Third Sprite Test correction: the current output formed a full diagonal cross (DL showed UR, DR showed UL, UL showed DR, UR showed DL). Apply the direct diagonal correction, resulting in source-group mapping [3,2,1,0]."
     },
     "Hookmon": {
       "source_id": 121,
