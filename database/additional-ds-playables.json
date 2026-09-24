@@ -2066,7 +2066,7 @@
       "portrait_metadata": "res://assets/characters/reppamon/portrait_frames.json",
       "source_id": 142,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         36,
         45
@@ -2086,7 +2086,7 @@
       "portrait_metadata": "res://assets/characters/sunflowmon/portrait_frames.json",
       "source_id": 143,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         34,
         40
@@ -2286,7 +2286,7 @@
       "portrait_metadata": "res://assets/characters/octomon/portrait_frames.json",
       "source_id": null,
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "rear_rows_first_up_reversed",
       "field_cell": [
         36,
         34
