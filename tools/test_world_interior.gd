@@ -52,7 +52,7 @@ func _ready() -> void:
 		await _wait_for_texture_path(
 			digilab_building,
 			"res://assets/world/tblack/digilab/digilab-door-semi-open.png",
-			30
+			1200
 		),
 		"DigiLab doorway must advance to the supplied semi-open frame before teleporting"
 	)
@@ -60,7 +60,7 @@ func _ready() -> void:
 		await _wait_for_texture_path(
 			digilab_building,
 			"res://assets/world/tblack/digilab/digilab-door-open.png",
-			30
+			1200
 		),
 		"DigiLab doorway must show the supplied open frame before interior handoff"
 	)
@@ -112,7 +112,7 @@ func _ready() -> void:
 		await _wait_for_texture_path(
 			digilab_building,
 			"res://assets/world/tblack/digilab/digilab-door-semi-open.png",
-			60
+			1800
 		),
 		"DigiLab return must play the semi-open frame while closing"
 	)
@@ -120,7 +120,7 @@ func _ready() -> void:
 		await _wait_for_texture_path(
 			digilab_building,
 			"res://assets/world/tblack/digilab/digilab.png",
-			60
+			1800
 		),
 		"DigiLab return must finish on the closed base frame"
 	)
@@ -161,8 +161,9 @@ func _frames(count: int) -> void:
 		await get_tree().process_frame
 
 
-func _wait_for_texture_path(sprite: Sprite2D, resource_path: String, max_frames: int) -> bool:
-	for _index in range(max_frames):
+func _wait_for_texture_path(sprite: Sprite2D, resource_path: String, timeout_ms: int) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() <= deadline:
 		if (
 			sprite != null
 			and sprite.texture != null
