@@ -48,20 +48,27 @@ func _ready() -> void:
 	var expected_return := Vector2(float(raw_return[0]), float(raw_return[1]))
 
 	player.global_position = entry.global_position
-	await _physics_frames(2)
 	assert(
-		digilab_building.texture != null
-		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab-door-semi-open.png",
+		await _wait_for_texture_path(
+			digilab_building,
+			"res://assets/world/tblack/digilab/digilab-door-semi-open.png",
+			30
+		),
 		"DigiLab doorway must advance to the supplied semi-open frame before teleporting"
 	)
-	await get_tree().create_timer(0.12).timeout
 	assert(
-		digilab_building.texture != null
-		and digilab_building.texture.resource_path == "res://assets/world/tblack/digilab/digilab-door-open.png",
+		await _wait_for_texture_path(
+			digilab_building,
+			"res://assets/world/tblack/digilab/digilab-door-open.png",
+			30
+		),
 		"DigiLab doorway must show the supplied open frame before interior handoff"
 	)
 	assert(not bool(manager.call("is_active")), "DigiLab must finish the door-opening animation before teleport")
-	await get_tree().create_timer(0.35).timeout
+	for _index in range(45):
+		if bool(manager.call("is_active")):
+			break
+		await get_tree().process_frame
 	assert(bool(manager.call("is_active")), "Crossing the DigiLab doorway must enter its dedicated interior")
 	assert(not area.is_exterior_active(), "Loaded exterior area must be hidden and paused while the player is inside")
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
@@ -114,6 +121,18 @@ func _wait_for_world_ready(world: Node, max_frames: int = 120) -> void:
 func _frames(count: int) -> void:
 	for _index in range(count):
 		await get_tree().process_frame
+
+
+func _wait_for_texture_path(sprite: Sprite2D, resource_path: String, max_frames: int) -> bool:
+	for _index in range(max_frames):
+		if (
+			sprite != null
+			and sprite.texture != null
+			and sprite.texture.resource_path == resource_path
+		):
+			return true
+		await get_tree().process_frame
+	return false
 
 
 func _physics_frames(count: int) -> void:
