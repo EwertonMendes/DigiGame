@@ -578,11 +578,11 @@
       "source_sha256": "7ec12400422ac1d21ea259282cf163faf232cd4cc961fd06487b63044906934b",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/168_Flymon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "corrected_after_second_runtime_visual_review",
+      "review_status": "corrected_after_third_runtime_visual_review",
       "review_batch": "champion-backfill-2026-09-24-a",
-      "review_note": "Direction groups corrected from explicit in-game Sprite Test feedback on 2026-09-24."
+      "review_note": "Final Flymon correction from in-game Sprite Test: front/back groups were swapped while left/right within each side were correct. Runtime mapping now swaps down/up preserving left/right."
     },
     "Guardromon": {
       "source_id": 107,
