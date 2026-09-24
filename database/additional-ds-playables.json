@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 55,
+  "count": 56,
   "species": [
     {
       "name": "Geo Greymon",
@@ -1110,6 +1110,26 @@
       "field_cell": [
         36,
         42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Leomon",
+      "seed": "a7c0f3e9-1d5b-4e6a-8c2b-9f3a5e0d7b6c",
+      "rank": "Champion",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/leomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/leomon/field.png",
+      "field_metadata": "res://assets/characters/leomon/field.json",
+      "portrait_strip": "res://assets/characters/leomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/leomon/portrait_frames.json",
+      "source_id": 100,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
       ],
       "portrait_frames": 4
     }

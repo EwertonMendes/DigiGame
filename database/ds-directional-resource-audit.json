@@ -1,13 +1,13 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 146,
+  "directional_resource_count": 147,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 55,
+  "additional_source_rebuilt_resource_count": 56,
   "project_original_resource_count": 1,
   "project_supplied_resource_count": 1,
-  "audited_resource_count": 146,
+  "audited_resource_count": 147,
   "directional_resources": [
     {
       "name": "AeroVeedramon",
@@ -476,6 +476,12 @@
       "resource": "assets/resources/lalamon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Leomon",
+      "resource": "assets/resources/leomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Lopmon",

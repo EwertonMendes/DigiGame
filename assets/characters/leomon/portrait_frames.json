@@ -1,0 +1,14 @@
+{
+  "source": "Leomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Leomon.webp",
+  "frame_width": 81,
+  "frame_height": 108,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "dbef9d3f2137b290fef80c62c49bd512e0d03bcdc7db6e5f0729cacdc598de02"
+}
