@@ -2,6 +2,7 @@ extends Node2D
 class_name WorldInterior
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
+const DIGILAB_ART = preload("res://src/world/runtime/DigiLabInteriorArt.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
@@ -96,20 +97,58 @@ func _build_floor() -> void:
 
 
 func _build_digilab_floor(floor_root: Node2D) -> void:
-	# Keep the canonical 64x32 interior grid and render the complete authored
-	# Floor 1 top face into every cell. The source remains the original
-	# 1024x1024 texture; only the runtime diamond is 64x32.
+	# DigiLab uses one material across all 252 logical cells, so render those
+	# diamonds through one MultiMesh instead of 252 Node2D + 504 Polygon2D
+	# objects. The gameplay grid remains unchanged; this only removes render/
+	# scene-tree overhead on mobile and Web.
+	var texture := CITY.surface_texture(CITY.SURFACE_DIGILAB_FLOOR_1)
+	var raw_uvs := CITY.surface_top_face_uvs(CITY.SURFACE_DIGILAB_FLOOR_1)
+	var texture_size := texture.get_size()
+	var normalized_uvs := PackedVector2Array()
+	for uv in raw_uvs:
+		normalized_uvs.append(Vector2(
+			uv.x / maxf(texture_size.x, 1.0),
+			uv.y / maxf(texture_size.y, 1.0)
+		))
+
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([
+		Vector3(-TILE_HALF_WIDTH - 0.35, 0.0, 0.0),
+		Vector3(0.0, -TILE_HALF_HEIGHT - 0.25, 0.0),
+		Vector3(TILE_HALF_WIDTH + 0.35, 0.0, 0.0),
+		Vector3(0.0, TILE_HALF_HEIGHT + 0.25, 0.0),
+	])
+	arrays[Mesh.ARRAY_TEX_UV] = normalized_uvs
+	arrays[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 0, 2, 3])
+
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_2D
+	multimesh.mesh = mesh
+	multimesh.instance_count = ROOM_SIZE.x * ROOM_SIZE.y
+
+	var index := 0
 	for x in range(ROOM_SIZE.x):
 		for y in range(ROOM_SIZE.y):
-			var cell := Vector2i(x, y)
-			var tile := CITY.create_surface_tile(
-				CITY.SURFACE_DIGILAB_FLOOR_1,
-				grid_to_world(Vector2(cell)),
-				-900 + x + y,
-				1.0
+			multimesh.set_instance_transform_2d(
+				index,
+				Transform2D(0.0, grid_to_world(Vector2(x, y)))
 			)
-			tile.name = "Floor_%02d_%02d" % [x, y]
-			floor_root.add_child(tile)
+			index += 1
+
+	var batch := MultiMeshInstance2D.new()
+	batch.name = "FloorBatch"
+	batch.multimesh = multimesh
+	batch.texture = texture
+	batch.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	batch.z_index = -900
+	batch.set_meta("tile_count", ROOM_SIZE.x * ROOM_SIZE.y)
+	batch.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
+	batch.set_meta("render_backend", "multimesh")
+	floor_root.add_child(batch)
 
 
 func _floor_surface(cell: Vector2i, edge: bool) -> String:
@@ -123,6 +162,11 @@ func _build_walls() -> void:
 	var walls := Node2D.new()
 	walls.name = "Walls"
 	add_child(walls)
+
+	if _service_id == "digilab":
+		_build_digilab_walls(walls)
+		return
+
 	var wall_cells: Array[Vector2i] = []
 	for x in range(ROOM_SIZE.x):
 		wall_cells.append(Vector2i(x, 0))
@@ -149,6 +193,133 @@ func _build_walls() -> void:
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
 	for x in range(ROOM_SIZE.x - 5, ROOM_SIZE.x):
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
+
+
+func _build_digilab_walls(walls: Node2D) -> void:
+	var authored := Node2D.new()
+	authored.name = "AuthoredWalls"
+	authored.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
+	authored.set_meta("layout_contract", "grid-native-vector-batched")
+	walls.add_child(authored)
+
+	var last_x := float(ROOM_SIZE.x - 1)
+	var front_y := float(ROOM_SIZE.y - 1)
+
+	# Repeated straight modules are submitted in three GPU batches. They still
+	# occupy one exact grid edge each, but no longer add dozens of Sprite2D
+	# nodes/draw submissions to this mobile-sensitive interior.
+	var back_grid: Array[Vector2] = []
+	for x in range(ROOM_SIZE.x - 1):
+		back_grid.append(Vector2(float(x), 0.0))
+	_add_digilab_wall_batch(
+		authored,
+		DIGILAB_ART.KIND_STRAIGHT_RIGHT,
+		back_grid,
+		820
+	)
+
+	var side_grid: Array[Vector2] = []
+	for y in range(ROOM_SIZE.y - 1):
+		side_grid.append(Vector2(0.0, float(y)))
+		side_grid.append(Vector2(last_x, float(y)))
+	_add_digilab_wall_batch(
+		authored,
+		DIGILAB_ART.KIND_STRAIGHT_LEFT,
+		side_grid,
+		820
+	)
+
+	var front_grid: Array[Vector2] = []
+	for x in range(0, 7):
+		front_grid.append(Vector2(float(x), front_y))
+	for x in range(11, ROOM_SIZE.x - 1):
+		front_grid.append(Vector2(float(x), front_y))
+	_add_digilab_wall_batch(
+		authored,
+		DIGILAB_ART.KIND_LOW_DIVIDER,
+		front_grid,
+		830
+	)
+
+	# Corners are orientation-specific connector sleeves. Each one overlaps a
+	# half edge of both adjacent runs, so there is no floating post or visible
+	# "sticker" seam at the four room vertices.
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_CORNER_BACK_LEFT,
+		Vector2(0.0, 0.0)
+	)
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_CORNER_BACK_RIGHT,
+		Vector2(last_x, 0.0)
+	)
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_CORNER_FRONT_LEFT,
+		Vector2(0.0, front_y)
+	)
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_CORNER_FRONT_RIGHT,
+		Vector2(last_x, front_y)
+	)
+
+	# The doorway includes low-wall sleeves on both ends. It owns x=7..11
+	# exactly and visually underlaps the neighboring front divider modules.
+	_add_digilab_wall_piece(
+		authored,
+		DIGILAB_ART.KIND_DOOR_FRAME,
+		Vector2(7.0, front_y)
+	)
+
+	# Movement in interiors is resolved by WorldInteriorManager ->
+	# is_walkable_world_position(), so duplicating the same wall boundary with
+	# dozens of PhysicsServer shapes only costs CPU. Keep the authoritative
+	# blocked-cell map and do not build redundant DigiLab wall colliders.
+	_physics_root.set_meta("digilab_wall_collision_backend", "blocked-cells-only")
+	for x in range(ROOM_SIZE.x):
+		_mark_blocked(Vector2i(x, 0))
+	for y in range(1, ROOM_SIZE.y - 1):
+		_mark_blocked(Vector2i(0, y))
+		_mark_blocked(Vector2i(ROOM_SIZE.x - 1, y))
+	for x in range(0, 7):
+		_mark_blocked(Vector2i(x, ROOM_SIZE.y - 1))
+	for x in range(11, ROOM_SIZE.x):
+		_mark_blocked(Vector2i(x, ROOM_SIZE.y - 1))
+
+
+func _add_digilab_wall_batch(
+	parent: Node2D,
+	kind: String,
+	grid_anchors: Array[Vector2],
+	depth_order: int
+) -> void:
+	var world_anchors: Array[Vector2] = []
+	for grid_anchor in grid_anchors:
+		world_anchors.append(grid_to_world(grid_anchor))
+	var batch := DIGILAB_ART.create_batch(
+		kind,
+		world_anchors,
+		grid_anchors,
+		depth_order
+	)
+	parent.add_child(batch)
+
+
+func _add_digilab_wall_piece(
+	parent: Node2D,
+	kind: String,
+	grid_anchor: Vector2
+) -> void:
+	var world_anchor := grid_to_world(grid_anchor)
+	var piece := DIGILAB_ART.create_piece(
+		kind,
+		world_anchor,
+		grid_anchor,
+		850 + int(round(world_anchor.y))
+	)
+	parent.add_child(piece)
 
 
 func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
