@@ -534,7 +534,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Apemon": {
       "source_id": 125,
@@ -544,7 +545,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Gatomon": {
       "source_id": 104,
@@ -554,7 +556,8 @@
       "profile": "four_rows_rightmost_triples",
       "pattern": "compact_interleaved",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Flymon": {
       "source_id": 168,
@@ -564,7 +567,8 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Guardromon": {
       "source_id": 107,
@@ -574,7 +578,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Dokugumon": {
       "source_id": 187,
@@ -584,7 +589,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Seadramon": {
       "source_id": 90,
@@ -594,7 +600,8 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows_rear_reversed",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Fugamon": {
       "source_id": 151,
@@ -604,7 +611,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Mekanorimon": {
       "source_id": 85,
@@ -614,7 +622,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Devimon": {
       "source_id": 88,
@@ -624,7 +633,8 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Numemon": {
       "source_id": 91,
@@ -634,7 +644,8 @@
       "profile": "four_rows_rightmost_triples",
       "pattern": "compact_interleaved",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Angemon": {
       "source_id": 94,
@@ -644,7 +655,8 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Veggiemon": {
       "source_id": 95,
@@ -654,7 +666,8 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Bakemon": {
       "source_id": 97,
@@ -664,7 +677,8 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Sukamon": {
       "source_id": 98,
@@ -674,7 +688,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Kokatorimon": {
       "source_id": 99,
@@ -684,7 +699,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Kuwagamon": {
       "source_id": 101,
@@ -694,7 +710,8 @@
       "profile": "two_rows_of_six",
       "pattern": "rear_rows_first",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Gekomon": {
       "source_id": 103,
@@ -704,7 +721,8 @@
       "profile": "four_rows_rightmost_triples",
       "pattern": "compact_interleaved",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Wizardmon": {
       "source_id": 105,
@@ -714,7 +732,8 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     },
     "Togemon": {
       "source_id": 106,
@@ -724,7 +743,8 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "visual_source_group_review",
-      "review_status": "approved_for_runtime_generation"
+      "review_status": "approved_for_runtime_generation",
+      "review_batch": "champion-backfill-2026-09-24-a"
     }
   }
 }
