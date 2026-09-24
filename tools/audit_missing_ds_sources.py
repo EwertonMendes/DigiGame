@@ -261,6 +261,10 @@ def main() -> None:
         image = Image.open(io.BytesIO(payload)).convert("RGBA")
         candidates = extract_candidates(image, config)
         if not candidates:
+            unresolved_dir = OUT / "unresolved-sources"
+            unresolved_dir.mkdir(parents=True, exist_ok=True)
+            safe_name = re.sub(r"[^a-zA-Z0-9._-]+", "_", name).strip("_") or "species"
+            image.save(unresolved_dir / f"{safe_name}.png", "PNG")
             unresolved.append(f"{name} [source={member}, no 4x3 movement profile]")
             continue
         profile_name = next(name for name in PROFILE_PREFERENCE if name in candidates)
@@ -271,6 +275,7 @@ def main() -> None:
             "rank": str(entry["rank"]),
             "source": member,
             "source_id": source_id,
+            "source_sha256": hashlib.sha256(payload).hexdigest(),
             "profile": profile_name,
             "groups": candidates[profile_name],
             "source_bytes": payload,
