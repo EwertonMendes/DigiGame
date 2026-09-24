@@ -113,9 +113,12 @@ static func _target_contact_width(kind: String) -> float:
 		KIND_DOOR_FRAME:
 			return 116.0
 		KIND_LOW_DIVIDER:
-			return 40.0
+			# The generated divider has a narrower opaque contact band than its
+			# visible rail. A slightly wider target lets adjacent 64x32 modules
+			# meet cleanly instead of reading as detached fence posts.
+			return 56.0
 		KIND_WALL_END_CAP:
-			return 30.0
+			return 34.0
 		_:
 			return 40.0
 
