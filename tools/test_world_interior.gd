@@ -1,6 +1,7 @@
 extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
+const DIGILAB_FLOOR_1_PATH := "res://assets/world/tblack/digilab/floor/floor-1.png"
 
 
 func _ready() -> void:
@@ -83,6 +84,11 @@ func _ready() -> void:
 		await _wait_for_transition_state(manager, false, 1800),
 		"DigiLab entry transition must finish before testing interior exit"
 	)
+	var interiors_root := world.get_node_or_null("Interiors") as Node2D
+	assert(interiors_root != null and interiors_root.get_child_count() == 1, "DigiLab must create exactly one streamed interior")
+	var active_interior := interiors_root.get_child(0) as WorldInterior
+	assert(active_interior != null, "Streamed DigiLab interior must use WorldInterior")
+	_assert_digilab_floor_assets(active_interior)
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Interior spawn must be walkable")
@@ -143,6 +149,29 @@ func _ready() -> void:
 	print("seamless world interior regression passed")
 	get_tree().quit()
 
+
+func _assert_digilab_floor_assets(interior: WorldInterior) -> void:
+	var floor_root := interior.get_node_or_null("Floor")
+	assert(floor_root != null, "DigiLab interior must expose its floor root")
+	assert(
+		floor_root.get_child_count() == 252,
+		"DigiLab 18x14 floor must keep one visual tile per 64x32 gameplay cell"
+	)
+
+	for child in floor_root.get_children():
+		var detail := child.get_node_or_null("TopFaceDetail") as Polygon2D
+		assert(detail != null and detail.texture != null, "Every DigiLab floor tile must keep the authored Floor 1 texture")
+		assert(detail.polygon.size() == 4, "DigiLab floor tiles must remain exact isometric diamonds")
+		assert(
+			is_equal_approx(absf(detail.polygon[0].x), 32.0)
+			and is_equal_approx(absf(detail.polygon[1].y), 16.0),
+			"DigiLab visual tiles must remain exactly 64x32"
+		)
+		assert(
+			detail.texture.resource_path == DIGILAB_FLOOR_1_PATH,
+			"Every DigiLab floor cell must use the complete Floor 1 source; Floor 2 must not be rendered"
+		)
+		assert(detail.uv.size() == 4, "Every DigiLab tile must keep the complete authored top-face UV mapping")
 
 func _wait_for_world_ready(world: Node, max_frames: int = 120) -> void:
 	for _index in range(max_frames):

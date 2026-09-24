@@ -75,14 +75,16 @@ func _build_floor() -> void:
 	var floor_root := Node2D.new()
 	floor_root.name = "Floor"
 	add_child(floor_root)
+
+	if _service_id == "digilab":
+		_build_digilab_floor(floor_root)
+		return
+
 	for x in range(ROOM_SIZE.x):
 		for y in range(ROOM_SIZE.y):
 			var cell := Vector2i(x, y)
 			var edge := x == 0 or y == 0 or x == ROOM_SIZE.x - 1 or y == ROOM_SIZE.y - 1
-			var accent_lane := x in [8, 9] or (y == 6 and x >= 5 and x <= 12)
-			var surface := CITY.SURFACE_DARK if edge else CITY.SURFACE_MAIN
-			if accent_lane and not edge:
-				surface = _accent_surface()
+			var surface := _floor_surface(cell, edge)
 			var tile := CITY.create_surface_tile(
 				surface,
 				grid_to_world(Vector2(cell)),
@@ -91,6 +93,30 @@ func _build_floor() -> void:
 			)
 			tile.name = "Floor_%02d_%02d" % [x, y]
 			floor_root.add_child(tile)
+
+
+func _build_digilab_floor(floor_root: Node2D) -> void:
+	# Keep the canonical 64x32 interior grid and render the complete authored
+	# Floor 1 top face into every cell. The source remains the original
+	# 1024x1024 texture; only the runtime diamond is 64x32.
+	for x in range(ROOM_SIZE.x):
+		for y in range(ROOM_SIZE.y):
+			var cell := Vector2i(x, y)
+			var tile := CITY.create_surface_tile(
+				CITY.SURFACE_DIGILAB_FLOOR_1,
+				grid_to_world(Vector2(cell)),
+				-900 + x + y,
+				1.0
+			)
+			tile.name = "Floor_%02d_%02d" % [x, y]
+			floor_root.add_child(tile)
+
+
+func _floor_surface(cell: Vector2i, edge: bool) -> String:
+	var accent_lane := cell.x in [8, 9] or (cell.y == 6 and cell.x >= 5 and cell.x <= 12)
+	if accent_lane and not edge:
+		return _accent_surface()
+	return CITY.SURFACE_DARK if edge else CITY.SURFACE_MAIN
 
 
 func _build_walls() -> void:
@@ -154,6 +180,12 @@ func _build_counter() -> void:
 
 
 func _build_service_zones() -> void:
+	# DigiLab's modularized authored floor already communicates its service
+	# layout. Do not stack extra decals over it; keeping one clean visual layer
+	# preserves the fine 64x32 tile detail.
+	if _service_id == "digilab":
+		return
+
 	var cells: Array[Vector2i] = []
 	match _service_id:
 		"digilab":
@@ -184,8 +216,9 @@ func _build_service_point() -> void:
 	service.z_index = 1200 + int(round(service.position.y))
 	add_child(service)
 
-	var marker := CITY.create_surface_tile(_accent_surface(), Vector2.ZERO, 0, 1.0)
-	service.add_child(marker)
+	if _service_id != "digilab":
+		var marker := CITY.create_surface_tile(_accent_surface(), Vector2.ZERO, 0, 1.0)
+		service.add_child(marker)
 
 	var interactable := InteractableScript.new() as WorldInteractable
 	var prompt_text := "USE SERVICE"
@@ -216,8 +249,9 @@ func _build_exit() -> void:
 	exit_root.monitorable = false
 	add_child(exit_root)
 
-	var marker := CITY.create_surface_tile(CITY.SURFACE_TECH_TEAL, Vector2.ZERO, 0, 0.88)
-	exit_root.add_child(marker)
+	if _service_id != "digilab":
+		var marker := CITY.create_surface_tile(CITY.SURFACE_TECH_TEAL, Vector2.ZERO, 0, 0.88)
+		exit_root.add_child(marker)
 
 	var shape_node := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
