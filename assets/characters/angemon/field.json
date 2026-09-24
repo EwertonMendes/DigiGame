@@ -8,12 +8,12 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "two_rows_of_six",
-  "review_pattern": "canonical_rows",
+  "review_pattern": "canonical_rows_front_reversed",
   "runtime_group_indices": [
-    0,
     1,
-    2,
-    3
+    0,
+    3,
+    2
   ],
   "canonical_runtime_order": [
     "down_left",
@@ -80,29 +80,9 @@
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 13,
-        "y": 342,
-        "w": 24,
-        "h": 38
-      },
-      {
-        "x": 50,
-        "y": 344,
-        "w": 27,
-        "h": 36
-      },
-      {
-        "x": 87,
+        "x": 212,
         "y": 342,
         "w": 27,
-        "h": 38
-      }
-    ],
-    "down_right": [
-      {
-        "x": 289,
-        "y": 341,
-        "w": 24,
         "h": 38
       },
       {
@@ -112,38 +92,38 @@
         "h": 36
       },
       {
-        "x": 212,
+        "x": 289,
+        "y": 341,
+        "w": 24,
+        "h": 38
+      }
+    ],
+    "down_right": [
+      {
+        "x": 87,
         "y": 342,
         "w": 27,
+        "h": 38
+      },
+      {
+        "x": 50,
+        "y": 344,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 13,
+        "y": 342,
+        "w": 24,
         "h": 38
       }
     ],
     "up_left": [
       {
-        "x": 9,
-        "y": 418,
-        "w": 26,
-        "h": 35
-      },
-      {
-        "x": 54,
-        "y": 417,
-        "w": 24,
-        "h": 36
-      },
-      {
-        "x": 90,
+        "x": 210,
         "y": 421,
         "w": 27,
         "h": 32
-      }
-    ],
-    "up_right": [
-      {
-        "x": 292,
-        "y": 418,
-        "w": 26,
-        "h": 35
       },
       {
         "x": 249,
@@ -152,10 +132,30 @@
         "h": 36
       },
       {
-        "x": 210,
+        "x": 292,
+        "y": 418,
+        "w": 26,
+        "h": 35
+      }
+    ],
+    "up_right": [
+      {
+        "x": 90,
         "y": 421,
         "w": 27,
         "h": 32
+      },
+      {
+        "x": 54,
+        "y": 417,
+        "w": 24,
+        "h": 36
+      },
+      {
+        "x": 9,
+        "y": 418,
+        "w": 26,
+        "h": 35
       }
     ]
   },
