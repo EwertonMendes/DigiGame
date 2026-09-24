@@ -44,6 +44,17 @@ func _ready() -> void:
 	await get_tree().process_frame
 	assert(sprite_lab != null, "Sprite Test lab must initialize independently of a specific overworld scene")
 	assert(int(sprite_lab.call("get_testable_species_count")) >= 7, "Sprite test lab must discover packaged Digimon resources")
+	var sprite_total := int(sprite_lab.call("get_total_species_count"))
+	var sprite_with := int(sprite_lab.call("get_species_with_sprite_count"))
+	var sprite_without := int(sprite_lab.call("get_species_without_sprite_count"))
+	assert(sprite_total > 0, "Sprite Test coverage must load the canonical Digimon database")
+	assert(sprite_with > 0 and sprite_with <= sprite_total, "Sprite Test coverage must count canonical Digimon with usable field sprites")
+	assert(sprite_without >= 0 and sprite_total == sprite_with + sprite_without, "Sprite Test coverage totals must balance")
+	var sprite_stats_label := sprite_lab.get("_stats_label") as Label
+	assert(sprite_stats_label != null, "Sprite Test must expose the roster coverage summary at the top")
+	assert(sprite_stats_label.text.contains(str(sprite_total)), "Sprite Test total count must be rendered in the top summary")
+	assert(sprite_stats_label.text.contains(str(sprite_with)), "Sprite Test with-sprite count must be rendered in the top summary")
+	assert(sprite_stats_label.text.contains(str(sprite_without)), "Sprite Test without-sprite count must be rendered in the top summary")
 	assert(Array(sprite_lab.call("get_testable_species_names")).has("Metal Greymon"), "Sprite test lab must include Metal Greymon")
 	for rank in ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]:
 		var rank_button := sprite_lab.get("_rank_checks").get(rank) as CheckButton
