@@ -1,0 +1,35 @@
+name: Audit missing DS field sources
+
+on:
+  push:
+    branches:
+      - feat/ds-sprite-backfill-debug-tools
+    paths:
+      - 'tools/audit_missing_ds_sources.py'
+      - 'database/base-digimon-list.json'
+      - 'database/ds-additional-sources.json'
+      - 'assets/resources/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install sprite tooling
+        run: python3 -m pip install --disable-pip-version-check pillow numpy scipy
+
+      - name: Build raw source audit
+        run: python3 tools/audit_missing_ds_sources.py
+
+      - name: Upload raw movement audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: ds-missing-source-audit
+          path: /tmp/ds-missing-source-audit
+          retention-days: 3
