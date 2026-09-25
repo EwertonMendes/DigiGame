@@ -8,21 +8,25 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "explicit_groups",
-  "review_pattern": "canonical_rows",
+  "review_pattern": "rear_rows_first",
   "runtime_group_indices": [
-    0,
-    1,
     2,
-    3
+    3,
+    0,
+    1
   ],
   "effective_runtime_group_indices": [
-    0,
-    1,
     2,
-    3
+    3,
+    0,
+    0
   ],
-  "horizontal_mirror_from": {},
-  "generated_horizontal_mirrors": [],
+  "horizontal_mirror_from": {
+    "up_right": "up_left"
+  },
+  "generated_horizontal_mirrors": [
+    "up_right"
+  ],
   "canonical_runtime_order": [
     "down_left",
     "down_right",
@@ -51,9 +55,9 @@
       0
     ],
     "up_right": [
-      2,
+      0,
       1,
-      0
+      2
     ]
   },
   "pose_alignment": {
@@ -65,66 +69,66 @@
         1,
         0
       ],
-      "pixel_error": 76342,
-      "confidence_margin": 199794
+      "pixel_error": 83830,
+      "confidence_margin": 145482
     },
     "up_right": {
       "compared_with": "up_left",
-      "policy": "deterministic_mirror_pose_match",
+      "policy": "generated_horizontal_mirror",
       "source_phase_order": [
-        2,
+        0,
         1,
-        0
+        2
       ],
-      "pixel_error": 83830,
-      "confidence_margin": 145482
+      "pixel_error": 0,
+      "confidence_margin": null
     }
   },
   "vertical_alignment_policy": "frame_bottom",
   "source_group_envelopes": {
     "down_left": {
-      "source_top": 268,
-      "source_bottom": 304,
+      "source_top": 309,
+      "source_bottom": 345,
       "height": 36
     },
     "down_right": {
+      "source_top": 309,
+      "source_bottom": 345,
+      "height": 36
+    },
+    "up_left": {
       "source_top": 268,
       "source_bottom": 304,
       "height": 36
     },
-    "up_left": {
-      "source_top": 309,
-      "source_bottom": 345,
-      "height": 36
-    },
     "up_right": {
-      "source_top": 309,
-      "source_bottom": 345,
+      "source_top": 268,
+      "source_bottom": 304,
       "height": 36
     }
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
     18,
-    40
+    33
   ],
   "audited_source_frames": {
     "down_left": [
       {
         "x": 99,
-        "y": 268,
+        "y": 309,
         "w": 32,
         "h": 36
       },
       {
         "x": 132,
-        "y": 268,
+        "y": 309,
         "w": 32,
         "h": 36
       },
       {
         "x": 165,
-        "y": 268,
+        "y": 309,
         "w": 32,
         "h": 36
       }
@@ -132,19 +136,19 @@
     "down_right": [
       {
         "x": 264,
-        "y": 268,
+        "y": 309,
         "w": 32,
         "h": 36
       },
       {
         "x": 231,
-        "y": 268,
+        "y": 309,
         "w": 32,
         "h": 36
       },
       {
         "x": 198,
-        "y": 268,
+        "y": 309,
         "w": 32,
         "h": 36
       }
@@ -152,46 +156,46 @@
     "up_left": [
       {
         "x": 99,
-        "y": 309,
+        "y": 268,
         "w": 32,
         "h": 36
       },
       {
         "x": 132,
-        "y": 309,
+        "y": 268,
         "w": 32,
         "h": 36
       },
       {
         "x": 165,
-        "y": 309,
+        "y": 268,
         "w": 32,
         "h": 36
       }
     ],
     "up_right": [
       {
-        "x": 264,
-        "y": 309,
+        "x": 99,
+        "y": 268,
         "w": 32,
         "h": 36
       },
       {
-        "x": 231,
-        "y": 309,
+        "x": 132,
+        "y": 268,
         "w": 32,
         "h": 36
       },
       {
-        "x": 198,
-        "y": 309,
+        "x": 165,
+        "y": 268,
         "w": 32,
         "h": 36
       }
     ]
   },
   "cell_width": 36,
-  "cell_height": 41,
+  "cell_height": 34,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/mammothmon/field.png"

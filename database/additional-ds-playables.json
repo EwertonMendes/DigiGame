@@ -5526,7 +5526,7 @@
       "portrait_metadata": "res://assets/characters/saberleomon/portrait_frames.json",
       "source_id": 300,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         41
@@ -6086,7 +6086,7 @@
       "portrait_metadata": "res://assets/characters/raremon/portrait_frames.json",
       "source_id": 102,
       "profile": "explicit_groups",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "field_cell": [
         37,
         40
@@ -6126,7 +6126,7 @@
       "portrait_metadata": "res://assets/characters/kogamon/portrait_frames.json",
       "source_id": 174,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         42,
         42
@@ -6146,10 +6146,10 @@
       "portrait_metadata": "res://assets/characters/mammothmon/portrait_frames.json",
       "source_id": 204,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
-        41
+        34
       ],
       "portrait_frames": 4
     },
@@ -6186,7 +6186,7 @@
       "portrait_metadata": "res://assets/characters/whamon/portrait_frames.json",
       "source_id": 250,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         47,
         46
