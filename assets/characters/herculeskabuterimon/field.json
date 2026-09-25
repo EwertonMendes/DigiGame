@@ -51,9 +51,9 @@
       0
     ],
     "up_right": [
-      0,
       2,
-      1
+      1,
+      0
     ]
   },
   "pose_alignment": {
@@ -72,12 +72,12 @@
       "compared_with": "up_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
-        0,
         2,
-        1
+        1,
+        0
       ],
-      "pixel_error": 504590,
-      "confidence_margin": 255248
+      "pixel_error": 708,
+      "confidence_margin": 546322
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -171,10 +171,10 @@
     ],
     "up_right": [
       {
-        "x": 63,
-        "y": 275,
-        "w": 18,
-        "h": 8
+        "x": 404,
+        "y": 259,
+        "w": 32,
+        "h": 37
       },
       {
         "x": 366,
