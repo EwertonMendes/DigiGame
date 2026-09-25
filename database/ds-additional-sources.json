@@ -3988,187 +3988,23 @@
       "source_id": 156,
       "source_sha256": "a3d809141d9abdaa0bd5cdb6234971ecd4e6e6b1fdb536efd7373cacd25034b8",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/156_Gesomon.png",
-      "profile": "explicit_groups",
+      "profile": "two_rows_lower_region_of_six",
       "pattern": "canonical_rows",
-      "explicit_groups": [
-        [
-          {
-            "x": 80,
-            "y": 238,
-            "w": 21,
-            "h": 34
-          },
-          {
-            "x": 104,
-            "y": 238,
-            "w": 34,
-            "h": 34
-          },
-          {
-            "x": 141,
-            "y": 238,
-            "w": 34,
-            "h": 34
-          }
-        ],
-        [
-          {
-            "x": 178,
-            "y": 238,
-            "w": 34,
-            "h": 34
-          },
-          {
-            "x": 215,
-            "y": 238,
-            "w": 34,
-            "h": 34
-          },
-          {
-            "x": 252,
-            "y": 238,
-            "w": 34,
-            "h": 34
-          }
-        ],
-        [
-          {
-            "x": 76,
-            "y": 274,
-            "w": 25,
-            "h": 34
-          },
-          {
-            "x": 104,
-            "y": 274,
-            "w": 34,
-            "h": 34
-          },
-          {
-            "x": 141,
-            "y": 274,
-            "w": 34,
-            "h": 34
-          }
-        ],
-        [
-          {
-            "x": 178,
-            "y": 274,
-            "w": 34,
-            "h": 34
-          },
-          {
-            "x": 215,
-            "y": 274,
-            "w": 34,
-            "h": 34
-          },
-          {
-            "x": 252,
-            "y": 274,
-            "w": 34,
-            "h": 34
-          }
-        ]
-      ],
       "review_method": "explicit_wtw_source_frame_audit",
       "review_status": "corrected_after_runtime_visual_review_batch_k",
       "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: replace the degraded archived Photobucket copy with the exact WTW sprite URL supplied by the reviewer. Existing audited field-grid boxes are retained against the original-layout source."
+      "review_note": "Sprite Test correction: use the exact reviewer-supplied WTW source and structurally detect only the two lower six-frame field rows, excluding the Photobucket watermark/battle area and the bottom extra pose triplet."
     },
     "Kogamon": {
       "source_id": 174,
       "source_sha256": "23460f10d415b3fa126ecb2cfcf4d9056d43ca32a10cbcba69545cc0c760b895",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
-      "profile": "explicit_groups",
+      "profile": "two_rows_lower_region_of_six",
       "pattern": "canonical_rows",
-      "explicit_groups": [
-        [
-          {
-            "x": 1,
-            "y": 158,
-            "w": 34,
-            "h": 36
-          },
-          {
-            "x": 38,
-            "y": 158,
-            "w": 34,
-            "h": 36
-          },
-          {
-            "x": 75,
-            "y": 158,
-            "w": 34,
-            "h": 36
-          }
-        ],
-        [
-          {
-            "x": 112,
-            "y": 158,
-            "w": 34,
-            "h": 36
-          },
-          {
-            "x": 149,
-            "y": 158,
-            "w": 34,
-            "h": 36
-          },
-          {
-            "x": 186,
-            "y": 158,
-            "w": 34,
-            "h": 36
-          }
-        ],
-        [
-          {
-            "x": 7,
-            "y": 196,
-            "w": 28,
-            "h": 33
-          },
-          {
-            "x": 38,
-            "y": 196,
-            "w": 34,
-            "h": 33
-          },
-          {
-            "x": 75,
-            "y": 196,
-            "w": 34,
-            "h": 36
-          }
-        ],
-        [
-          {
-            "x": 112,
-            "y": 196,
-            "w": 34,
-            "h": 36
-          },
-          {
-            "x": 149,
-            "y": 196,
-            "w": 34,
-            "h": 36
-          },
-          {
-            "x": 186,
-            "y": 196,
-            "w": 34,
-            "h": 36
-          }
-        ]
-      ],
       "review_method": "explicit_wtw_source_frame_audit",
       "review_status": "corrected_after_runtime_visual_review_batch_k",
       "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: replace the degraded archived Photobucket copy with the exact WTW sprite URL supplied by the reviewer. Existing audited field-grid boxes are retained against the original-layout source."
+      "review_note": "Sprite Test correction: use the exact reviewer-supplied WTW source and structurally detect only the two lower six-frame field rows, excluding the Photobucket watermark/battle area and the bottom extra pose triplet."
     },
     "Mammothmon": {
       "source_id": 204,
