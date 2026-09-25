@@ -59,6 +59,11 @@ func _test_xp_and_stats(database: DigimonDatabase, factory: DigimonFactory, prog
 	for stat_key: String in DigimonInstance.STAT_KEYS:
 		agumon.aptitudes[stat_key] = 0
 		agumon.training[stat_key] = 0
+	assert(int(species.get("int", -1)) == 56, "Agumon canonical INT must come from the species catalogue")
+	assert(calculator.get_stat(agumon, species, "int") == 56, "Level 1 Agumon INT must use the canonical base value")
+	assert(int(database.get_by_name("koromon").get("int", -1)) == 27, "Koromon canonical INT must remain 27")
+	assert(int(database.get_by_name("greymon").get("int", -1)) == 72, "Greymon canonical INT must remain 72")
+	assert(not species.has("checked"), "Retired checked metadata must not survive in the canonical species catalogue")
 	assert(calculator.get_all_stats(agumon, species) == calculator.get_all_stats(agumon, species), "Stat calculation must be deterministic")
 	var required: int = progression.exp_to_next_level(agumon)
 	var level_result: Dictionary = progression.apply_experience(agumon, required)

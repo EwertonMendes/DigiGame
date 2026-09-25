@@ -14,6 +14,8 @@ class_name Digimon
 @export var initial_position: Vector2i
 @export var type: String
 @export var display_name: String
+# Legacy serialized fields kept so existing .tres resources remain compatible.
+# Gameplay base stats come exclusively from database/base-digimon-list.json.
 @export var level: int
 @export var hp: int
 @export var mp: int

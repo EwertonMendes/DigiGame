@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Sync canonical early-rank Digimon visuals and battle resources.
 
-The canonical catalogue and animated WebPs live in EwertonMendes/digimon-ng.
-For every Fresh, In-Training (the project's Baby tier), and Rookie entry this
+The canonical species catalogue lives locally in database/base-digimon-list.json.
+Only portrait WebPs are fetched from EwertonMendes/digimon-ng. For every Fresh,
+In-Training (the project's Baby tier), and Rookie entry this
 script keeps the original WebP under a Godot-ignored source directory, builds a
 deterministic PNG frame strip/metadata for runtime playback, and creates a
 battle-compatible Digimon resource when a bespoke field resource does not
@@ -26,8 +27,7 @@ from urllib.parse import quote
 from PIL import Image, ImageSequence
 
 SOURCE_ROOT = "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public"
-DATABASE_URL = f"{SOURCE_ROOT}/database/base-digimon-list.json"
-EXPECTED_DATABASE_SHA256 = "edefcfa2275267760498b65971038beb4e35227e123e69c8a189a220612e9f15"
+DATABASE_PATH = Path("database/base-digimon-list.json")
 EARLY_RANKS = ("Fresh", "In-Training", "Rookie")
 MANIFEST_PATH = Path("database/early-rank-playables.json")
 PORTRAIT_TARGET_MAX_DIMENSION = 56.0
@@ -50,30 +50,11 @@ def fetch(url: str) -> bytes:
     return result.stdout
 
 
-def load_database_payload() -> tuple[bytes, list[dict[str, Any]]]:
-    payload = fetch(DATABASE_URL)
-    digest = hashlib.sha256(payload).hexdigest()
-    if digest != EXPECTED_DATABASE_SHA256:
-        raise RuntimeError(
-            "Canonical database differs from the JSON supplied for this feature: "
-            f"expected {EXPECTED_DATABASE_SHA256}, got {digest}"
-        )
-
-    parsed = json.loads(payload.decode("utf-8"))
-    if not isinstance(parsed, list) or len(parsed) != 408:
-        raise RuntimeError(f"Unexpected Digimon database shape/count: {len(parsed)}")
-    return payload, parsed
-
-
-def sync_database(payload: bytes) -> None:
-    database_dir = Path("database")
-    database_dir.mkdir(parents=True, exist_ok=True)
-    (database_dir / "base-digimon-list.json").write_bytes(payload)
-    print(
-        "database: synced canonical catalogue "
-        f"({hashlib.sha256(payload).hexdigest()})"
-    )
-
+def load_local_database() -> list[dict[str, Any]]:
+    parsed = json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
+    if not isinstance(parsed, list) or not parsed:
+        raise RuntimeError("Canonical Digimon database must be a non-empty array")
+    return parsed
 
 def early_rank_entries(database: list[dict[str, Any]]) -> list[dict[str, Any]]:
     entries = [entry for entry in database if str(entry.get("rank", "")) in EARLY_RANKS]
@@ -220,8 +201,7 @@ def write_manifest(entries: list[dict[str, Any]], manifest_rows: list[dict[str, 
 
 
 def main() -> None:
-    payload, database = load_database_payload()
-    sync_database(payload)
+    database = load_local_database()
     entries = early_rank_entries(database)
     manifest_rows: list[dict[str, Any]] = []
 

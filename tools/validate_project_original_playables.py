@@ -85,8 +85,8 @@ def main() -> int:
         seed = str(spec["seed"])
         key = str(spec["portrait_key"])
         entry = db_by_seed.get(seed)
-        if entry is None or entry != spec.get("database_entry"):
-            fail(f"{name}: database entry drifted from project-original manifest")
+        if entry is None:
+            fail(f"{name}: canonical database entry is missing")
 
         parent_seed = str(spec["evolves_from_seed"])
         parent = db_by_seed.get(parent_seed)
