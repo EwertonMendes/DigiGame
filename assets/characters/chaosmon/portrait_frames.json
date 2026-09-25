@@ -1,0 +1,14 @@
+{
+  "source": "Chaosmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Chaosmon.webp",
+  "frame_width": 118,
+  "frame_height": 157,
+  "frame_count": 4,
+  "durations_ms": [
+    300,
+    300,
+    300,
+    300
+  ],
+  "source_sha256": "2e647742ae7f9444dbc50a6e91d1468a3f907e1b52137b177a9190cb3ae801e7"
+}

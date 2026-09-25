@@ -1,0 +1,14 @@
+{
+  "source": "MaloMyotismon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MaloMyotismon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "cb8f38e829ccb6cbd47c24b1f774887f8f036af60d83e6923a2bb1ea14a7f64c"
+}

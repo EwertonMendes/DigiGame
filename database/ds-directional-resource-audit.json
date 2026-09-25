@@ -1,13 +1,13 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 370,
+  "directional_resource_count": 390,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 279,
+  "additional_source_rebuilt_resource_count": 299,
   "project_original_resource_count": 1,
   "project_supplied_resource_count": 1,
-  "audited_resource_count": 370,
+  "audited_resource_count": 390,
   "directional_resources": [
     {
       "name": "AeroVeedramon",
@@ -106,6 +106,18 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Apocalymon",
+      "resource": "assets/resources/apocalymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Apollomon",
+      "resource": "assets/resources/apollomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Aquilamon",
       "resource": "assets/resources/aquilamon.tres",
       "layout_source": "explicit",
@@ -174,6 +186,12 @@
     {
       "name": "Beelzemon",
       "resource": "assets/resources/beelzemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Beelzemon (Blast Mode)",
+      "resource": "assets/resources/beelzemon (blast mode).tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -322,6 +340,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Chaosmon",
+      "resource": "assets/resources/chaosmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Cherrymon",
       "resource": "assets/resources/cherrymon.tres",
       "layout_source": "explicit",
@@ -460,6 +484,18 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Diaboromon",
+      "resource": "assets/resources/diaboromon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Dianamon",
+      "resource": "assets/resources/dianamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Diatrymon",
       "resource": "assets/resources/diatrymon.tres",
       "layout_source": "explicit",
@@ -558,6 +594,12 @@
     {
       "name": "Drimogemon",
       "resource": "assets/resources/drimogemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Duftmon",
+      "resource": "assets/resources/duftmon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -748,6 +790,18 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Ghoulmon (Black)",
+      "resource": "assets/resources/ghoulmon (black).tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "GigaSeadramon",
+      "resource": "assets/resources/gigaseadramon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Gigadramon",
       "resource": "assets/resources/gigadramon.tres",
       "layout_source": "explicit",
@@ -844,6 +898,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Gryphonmon",
+      "resource": "assets/resources/gryphonmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Guardromon",
       "resource": "assets/resources/guardromon.tres",
       "layout_source": "explicit",
@@ -888,6 +948,12 @@
     {
       "name": "HiAndromon",
       "resource": "assets/resources/hiandromon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Holydramon",
+      "resource": "assets/resources/holydramon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -1240,6 +1306,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "MaloMyotismon",
+      "resource": "assets/resources/malomyotismon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "MameTyramon",
       "resource": "assets/resources/mametyramon.tres",
       "layout_source": "explicit",
@@ -1360,6 +1432,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Minervamon",
+      "resource": "assets/resources/minervamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Minomon",
       "resource": "assets/resources/minomon.tres",
       "layout_source": "explicit",
@@ -1452,6 +1530,12 @@
     {
       "name": "Nanimon",
       "resource": "assets/resources/nanimon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Neptunmon",
+      "resource": "assets/resources/neptunmon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -1642,6 +1726,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Preciomon",
+      "resource": "assets/resources/preciomon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "PrinceMamemon",
       "resource": "assets/resources/princemamemon.tres",
       "layout_source": "explicit",
@@ -1652,6 +1742,12 @@
       "resource": "assets/resources/pukamon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "Pukumon",
+      "resource": "assets/resources/pukumon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Puppetmon",
@@ -1828,6 +1924,18 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Shine Greymon (Burst Mode)",
+      "resource": "assets/resources/shine greymon (burst mode).tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Shine Greymon (Ruin Mode)",
+      "resource": "assets/resources/shine greymon (ruin mode).tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "ShogunGekomon",
       "resource": "assets/resources/shogungekomon.tres",
       "layout_source": "explicit",
@@ -1854,6 +1962,12 @@
     {
       "name": "Skull Greymon",
       "resource": "assets/resources/skull greymon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Skull Mammothmon",
+      "resource": "assets/resources/skull mammothmon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -2214,6 +2328,12 @@
     {
       "name": "Zanbamon",
       "resource": "assets/resources/zanbamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "ZeedMillenniummon",
+      "resource": "assets/resources/zeedmillenniummon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },

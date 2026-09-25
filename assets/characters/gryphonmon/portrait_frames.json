@@ -1,0 +1,14 @@
+{
+  "source": "Gryphonmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Gryphonmon.webp",
+  "frame_width": 107,
+  "frame_height": 116,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "fd75fbffc8707d6b8f84516a5f076946e9409e1630c8d4bfb0806a989420c25a"
+}

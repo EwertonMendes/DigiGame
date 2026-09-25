@@ -1,0 +1,14 @@
+{
+  "source": "Holydramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Holydramon.webp",
+  "frame_width": 150,
+  "frame_height": 200,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "feba8f1224915f6a512a1071d3e0b9e358001089c16799b36c5cbde485e9f85a"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Minervamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Minervamon.webp",
+  "frame_width": 80,
+  "frame_height": 120,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "3f1bc893e683b8c4b8e08c1f6859ac4ed8bc177f9342826c7a14a56c9dbafb8a"
+}

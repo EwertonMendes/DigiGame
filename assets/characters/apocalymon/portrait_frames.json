@@ -1,0 +1,14 @@
+{
+  "source": "Apocalymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Apocalymon.webp",
+  "frame_width": 136,
+  "frame_height": 142,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "973a3ae2e8ff027cf15911e717e81147a6c14afd52a1b60b03a8552c4142d06f"
+}

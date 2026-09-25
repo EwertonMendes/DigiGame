@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 329,
+  "source_archive_file": "sprite thread/329_Pukumon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "3fa6abd25fb087679dc1cae89696c278e1673e85da07a33bfdfa4ab06194a463",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 220278,
+      "confidence_margin": 62550
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 81664,
+      "confidence_margin": 99488
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 286,
+      "source_bottom": 314,
+      "height": 28
+    },
+    "down_right": {
+      "source_top": 286,
+      "source_bottom": 314,
+      "height": 28
+    },
+    "up_left": {
+      "source_top": 255,
+      "source_bottom": 280,
+      "height": 25
+    },
+    "up_right": {
+      "source_top": 255,
+      "source_bottom": 280,
+      "height": 25
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    31
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 67,
+        "y": 286,
+        "w": 30,
+        "h": 28
+      },
+      {
+        "x": 107,
+        "y": 286,
+        "w": 31,
+        "h": 27
+      },
+      {
+        "x": 148,
+        "y": 287,
+        "w": 28,
+        "h": 26
+      }
+    ],
+    "down_right": [
+      {
+        "x": 265,
+        "y": 286,
+        "w": 30,
+        "h": 28
+      },
+      {
+        "x": 224,
+        "y": 286,
+        "w": 31,
+        "h": 27
+      },
+      {
+        "x": 186,
+        "y": 287,
+        "w": 28,
+        "h": 26
+      }
+    ],
+    "up_left": [
+      {
+        "x": 69,
+        "y": 257,
+        "w": 28,
+        "h": 23
+      },
+      {
+        "x": 108,
+        "y": 255,
+        "w": 29,
+        "h": 24
+      },
+      {
+        "x": 147,
+        "y": 256,
+        "w": 29,
+        "h": 24
+      }
+    ],
+    "up_right": [
+      {
+        "x": 265,
+        "y": 257,
+        "w": 28,
+        "h": 23
+      },
+      {
+        "x": 225,
+        "y": 255,
+        "w": 29,
+        "h": 24
+      },
+      {
+        "x": 186,
+        "y": 256,
+        "w": 29,
+        "h": 24
+      }
+    ]
+  },
+  "cell_width": 35,
+  "cell_height": 32,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/pukumon/field.png"
+}

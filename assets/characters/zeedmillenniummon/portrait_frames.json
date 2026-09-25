@@ -1,0 +1,14 @@
+{
+  "source": "ZeedMillenniummon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/ZeedMillenniummon.webp",
+  "frame_width": 109,
+  "frame_height": 134,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "b32bc594e824606324c1e2c92981d4fc0fe370f2e878042468edc83f0ad26a92"
+}

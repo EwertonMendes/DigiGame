@@ -1,0 +1,14 @@
+{
+  "source": "Ghoulmon (Black).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ghoulmon%20%28Black%29.webp",
+  "frame_width": 153,
+  "frame_height": 126,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "ac56b34587e5cf095a629c8e45e83973c4c8d39df2206aad3ae4f52af8ce3c69"
+}

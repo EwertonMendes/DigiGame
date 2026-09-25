@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 327,
+  "source_archive_file": "sprite thread/327_Diablomon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "899d522161c60827c746adc2c9a2d7f90e3ad6558ee4cdaa86498b91fd14d3e4",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 134898,
+      "confidence_margin": 175996
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 110142,
+      "confidence_margin": 292130
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 298,
+      "source_bottom": 338,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 298,
+      "source_bottom": 338,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 256,
+      "source_bottom": 296,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 256,
+      "source_bottom": 296,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 130,
+        "y": 299,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 170,
+        "y": 298,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 211,
+        "y": 299,
+        "w": 32,
+        "h": 39
+      }
+    ],
+    "down_right": [
+      {
+        "x": 336,
+        "y": 299,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 295,
+        "y": 298,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 253,
+        "y": 299,
+        "w": 32,
+        "h": 39
+      }
+    ],
+    "up_left": [
+      {
+        "x": 132,
+        "y": 257,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 173,
+        "y": 256,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 214,
+        "y": 257,
+        "w": 29,
+        "h": 36
+      }
+    ],
+    "up_right": [
+      {
+        "x": 332,
+        "y": 257,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 291,
+        "y": 256,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 253,
+        "y": 257,
+        "w": 29,
+        "h": 36
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/diaboromon/field.png"
+}

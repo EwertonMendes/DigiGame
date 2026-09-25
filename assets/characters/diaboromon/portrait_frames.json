@@ -1,0 +1,14 @@
+{
+  "source": "Diaboromon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Diaboromon.webp",
+  "frame_width": 190,
+  "frame_height": 127,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "25c55a9d0b607271e5f0223e6185ba1b3c9f528b435f2b38e399476f71a29a68"
+}
