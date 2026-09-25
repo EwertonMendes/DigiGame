@@ -6,7 +6,6 @@ on:
       - fix/ds-sprite-agumon-line-*
       - feat/agumon-evolution-ds-sprites
       - feat/garurumon-line-ds-sprites
-      - feat/ds-sprite-backfill-batch-3
   workflow_dispatch:
 
 permissions:
