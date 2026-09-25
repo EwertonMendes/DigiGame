@@ -3228,11 +3228,11 @@
       "source_sha256": "cc0fe2405476a652a5011e831d5d33ae8f8c79b9e45ddf6f41aafddcf5d2e797",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
-      "review_method": "raw_audit_group_visual_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: left/right is correct, but front/back is inverted. Swap only DOWN<->UP while preserving side."
+      "pattern": "rear_rows_first",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_single_species_visual_review",
+      "review_batch": "saberleomon-2026-09-25",
+      "review_note": "Single-species Sprite Test correction: SaberLeomon's source groups were front/back inverted while left/right, crops, and animation phases were correct. Runtime mapping is now [G2,G3,G0,G1] (rear_rows_first), preserving the exact authored frame pixels and crops."
     },
     "VenomMyotismon": {
       "source_id": 312,
