@@ -182,6 +182,40 @@ def keyed_source_with_tolerance(
     return Image.fromarray(rgba, "RGBA")
 
 
+def keyed_source_preserving_outline(
+    image: Image.Image,
+    background_rgb: tuple[int, int, int],
+    tolerance: int,
+    outline_radius: int,
+) -> Image.Image:
+    """Remove a flat matte while preserving same-color outline pixels near authored art.
+
+    Some legacy WTW sheets use black both for the canvas and for one/two-pixel
+    sprite outlines. A global black color-key destroys the silhouette. Instead,
+    seed the foreground from pixels that differ from the matte and keep matte-
+    colored pixels only when they are within outline_radius pixels of that
+    authored foreground.
+    """
+    rgba = np.array(image.convert("RGBA"), copy=True)
+    background = np.asarray(background_rgb, dtype=np.int16)
+    delta = np.max(np.abs(rgba[:, :, :3].astype(np.int16) - background), axis=2)
+    seed = (delta > tolerance) & (rgba[:, :, 3] > 0)
+    keep = seed.copy()
+    radius = int(outline_radius)
+    if radius < 0 or radius > 4:
+        raise RuntimeError(f"Invalid background_outline_radius {radius}; expected 0..4")
+    if radius:
+        padded = np.pad(seed, radius, mode="constant", constant_values=False)
+        dilated = np.zeros_like(seed)
+        h, w = seed.shape
+        for dy in range(2 * radius + 1):
+            for dx in range(2 * radius + 1):
+                dilated |= padded[dy:dy + h, dx:dx + w]
+        keep |= dilated
+    rgba[(~keep) & (rgba[:, :, 3] > 0), 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
 def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     profile_name = str(spec["profile"])
     pattern_name = str(spec["pattern"])
@@ -265,7 +299,16 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     background_tolerance = int(spec.get("background_tolerance", 0))
     if not 0 <= background_tolerance <= 255:
         raise RuntimeError(f"{name}: invalid background_tolerance {background_tolerance}")
-    keyed = keyed_source_with_tolerance(source, background, background_tolerance)
+    background_outline_radius = int(spec.get("background_outline_radius", 0))
+    if background_outline_radius:
+        keyed = keyed_source_preserving_outline(
+            source,
+            background,
+            background_tolerance,
+            background_outline_radius,
+        )
+    else:
+        keyed = keyed_source_with_tolerance(source, background, background_tolerance)
     vertical_alignment = str(spec.get("vertical_alignment", "frame_bottom"))
     if vertical_alignment not in {"frame_bottom", "source_group_envelope"}:
         raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
@@ -354,6 +397,8 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     }
     if background_tolerance > 0:
         metadata["background_tolerance"] = background_tolerance
+    if background_outline_radius > 0:
+        metadata["background_outline_radius"] = background_outline_radius
     (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     return metadata
 
