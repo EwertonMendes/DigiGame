@@ -3902,7 +3902,7 @@
       "source_sha256": "e7225fb1f025029e76d4db95eaf3c1c5f83d1ab647a393703a76c0e514e9ba27",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "explicit_groups",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "explicit_groups": [
         [
           {
@@ -3985,10 +3985,10 @@
           }
         ]
       ],
-      "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: left/right is correct, but front/back is inverted. Swap only DOWN<->UP while preserving side.",
+      "review_method": "targeted_visual_source_audit",
+      "review_status": "corrected_during_targeted_nine_sprite_audit",
+      "review_batch": "targeted-nine-2026-09-25",
+      "review_note": "Targeted visual audit: the previously applied front/back swap was reversed. In the WTW six-frame field source, G0 is the front-left walk triplet and G2 is the back-left triplet; keep the required synthesized right facings, but map runtime DOWN from G0 and UP from G2.",
       "horizontal_mirror_from": {
         "down_right": "down_left",
         "up_right": "up_left"
@@ -4093,11 +4093,11 @@
       "source_sha256": "23460f10d415b3fa126ecb2cfcf4d9056d43ca32a10cbcba69545cc0c760b895",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
-      "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction using the exact reviewer-supplied WTW source: tighten the first field row below the Photobucket overlay so the six movement frames are retained without watermark text; preserve the clean second row.",
+      "pattern": "rear_rows_first",
+      "review_method": "targeted_visual_source_audit",
+      "review_status": "corrected_during_targeted_nine_sprite_audit",
+      "review_batch": "targeted-nine-2026-09-25",
+      "review_note": "Targeted visual audit: the two clean field rows were mapped front/back in reverse. Keep the previously tightened first-row boxes that exclude the Photobucket overlay without cutting the Digimon, but map the lower face/rear-depth semantics correctly with rear_rows_first. No watermark pixels are admitted.",
       "explicit_groups": [
         [
           {
@@ -4186,7 +4186,7 @@
       "source_sha256": "294cb933c8cfcc8a7ee4257d763764a1c67f0dd9e4a61d611f7eb5f0b5b14dca",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/204_Mammon.png",
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "explicit_groups": [
         [
           {
@@ -4269,10 +4269,13 @@
           }
         ]
       ],
-      "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: replace the degraded archived Photobucket copy with the exact WTW sprite URL supplied by the reviewer. Existing audited field-grid boxes are retained against the original-layout source."
+      "review_method": "targeted_visual_source_audit",
+      "review_status": "corrected_during_targeted_nine_sprite_audit",
+      "review_batch": "targeted-nine-2026-09-25",
+      "review_note": "Targeted visual audit: front/back was inverted, and raw G1 contains detached foreign pixels in multiple frames (including a horizontal strip, a vertical strip, and a lone pixel). G1's actual Digimon bodies duplicate the clean opposite facing as mirrors, so runtime UP_RIGHT is synthesized from clean UP_LEFT instead of masking or offsetting the contaminated frames. Clean authored front G2/G3 remain untouched.",
+      "horizontal_mirror_from": {
+        "up_right": "up_left"
+      }
     },
     "LadyDevimon": {
       "source_id": 216,
@@ -4377,7 +4380,7 @@
       "source_sha256": "34c80eadf69e5260dca42e8be0f3bf16ae306fc0d720af9f61272fb3deff87dc",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/250_Whamon.png",
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "explicit_groups": [
         [
           {
@@ -4460,10 +4463,10 @@
           }
         ]
       ],
-      "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: replace the degraded archived Photobucket copy with the exact WTW sprite URL supplied by the reviewer. Existing audited field-grid boxes are retained against the original-layout source."
+      "review_method": "targeted_visual_source_audit",
+      "review_status": "corrected_during_targeted_nine_sprite_audit",
+      "review_batch": "targeted-nine-2026-09-25",
+      "review_note": "Targeted visual audit of the WTW field rows: the current runtime had the dorsal/rear row in DOWN and the face/mouth row in UP. Swap front/back only with rear_rows_first; retain the authored left/right frames, phase ordering, and existing full tail/fin crops."
     },
     "Rosemon": {
       "source_id": 308,
@@ -4553,11 +4556,17 @@
           }
         ]
       ],
-      "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: replace the degraded archived Photobucket copy with the exact WTW sprite URL supplied by the reviewer. Existing audited field-grid boxes are retained against the original-layout source.",
-      "background_tolerance": 100
+      "review_method": "targeted_visual_source_audit",
+      "review_status": "corrected_during_targeted_nine_sprite_audit",
+      "review_batch": "targeted-nine-2026-09-25",
+      "review_note": "Targeted visual audit: direction groups and crops are already semantically correct. Replace broad global blue-matte tolerance with exact per-frame border-connected matte removal so only the legacy WTW canvas is removed and authored costume/hair/cape pixels are preserved.",
+      "frame_background_policy": "border_connected_matte",
+      "frame_background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "frame_background_tolerance": 0
     },
     "Seraphimon": {
       "source_id": 318,
@@ -4647,11 +4656,17 @@
           }
         ]
       ],
-      "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: replace the degraded archived Photobucket copy with the exact WTW sprite URL supplied by the reviewer. Existing audited field-grid boxes are retained against the original-layout source.",
-      "background_tolerance": 100
+      "review_method": "targeted_visual_source_audit",
+      "review_status": "corrected_during_targeted_nine_sprite_audit",
+      "review_batch": "targeted-nine-2026-09-25",
+      "review_note": "Targeted visual audit: direction groups and wing crops are already semantically correct. Replace broad global blue-matte tolerance with exact per-frame border-connected matte removal so blue/gold authored armor and wing pixels cannot be erased by a wide color tolerance.",
+      "frame_background_policy": "border_connected_matte",
+      "frame_background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "frame_background_tolerance": 0
     },
     "Parasimon": {
       "source_id": 343,
