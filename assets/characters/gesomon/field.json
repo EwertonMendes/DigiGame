@@ -195,6 +195,15 @@
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/gesomon/field.png",
+  "mask_source_member": "sprite thread/156_Gesomon.png",
+  "mask_source_sha256": "7501e62c3466d76105552ad22d8d9051fefc35a64267cd23edc9b4f0b787edbc",
+  "mask_background_rgb": [
+    0,
+    0,
+    0
+  ],
+  "mask_background_tolerance": 64,
+  "mask_dilate_radius": 1,
   "frame_background_policy": "row_border_matte",
   "frame_background_rgb": [
     0,
