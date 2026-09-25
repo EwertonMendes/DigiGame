@@ -3993,7 +3993,7 @@
       "review_method": "explicit_wtw_source_frame_audit",
       "review_status": "corrected_after_runtime_visual_review_batch_k",
       "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction using the exact reviewer-supplied WTW source: select the clean two-row field grid and preserve the authored black outline even though the legacy source canvas is also black, using the reusable near-foreground matte preservation policy.",
+      "review_note": "Sprite Test correction using the exact reviewer-supplied WTW source: select the clean two-row field grid and preserve the authored black body/outline even though the legacy source canvas is also black, using the reusable near-foreground matte preservation policy at radius 4.",
       "explicit_groups": [
         [
           {
@@ -4076,7 +4076,7 @@
           }
         ]
       ],
-      "background_outline_radius": 2
+      "background_outline_radius": 4
     },
     "Kogamon": {
       "source_id": 174,
