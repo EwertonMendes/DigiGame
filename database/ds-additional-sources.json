@@ -2195,11 +2195,11 @@
       "source_sha256": "b4ddde07ce5a18b9d5929b803f6a3238af307d745d0fd6ce9c0132de6a7d5f6e",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_f",
+      "review_status": "corrected_after_runtime_visual_review_batch_f2",
       "review_batch": "backfill-2026-09-25-f",
-      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side: G0=down_left, G1=down_right, G2=up_left, G3=up_right."
+      "review_note": "Sprite Test correction: down_left/down_right are correct; only up_left/up_right are inverted. Preserve DOWN and swap only the UP pair: G0=down_left, G1=down_right, G3=up_left, G2=up_right."
     },
     "Lilamon": {
       "source_id": 259,
