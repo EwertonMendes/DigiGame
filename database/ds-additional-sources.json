@@ -4100,7 +4100,7 @@
       "review_method": "exact_source_box_runtime_review",
       "review_status": "corrected_from_sprite_test_feedback",
       "review_batch": "kogamon-exact-crop-2026-09-25",
-      "review_note": "Use the crisp direct WTW/Photobucket source. The first movement row intentionally starts at y=166 to sit below the legacy overlay; exact source-box cropping is mandatory so the old 2px padding cannot pull overlay/neighbour residue back into the frame. Preserve full box/envelope placement to avoid per-frame bounce. Additionally discard only tiny disconnected alpha islands (<=12 px) touching the exact crop border; this targets the remaining loose source-residue dots without touching connected sprite pixels.",
+      "review_note": "Use the crisp direct WTW/Photobucket source. The first movement row intentionally starts at y=166 to sit below the legacy overlay; exact source-box cropping is mandatory so the old 2px padding cannot pull overlay/neighbour residue back into the frame. Preserve full box/envelope placement to avoid per-frame bounce. Additionally discard only tiny disconnected alpha islands (<=12 px) touching the exact crop border; this targets the remaining loose source-residue dots without touching connected sprite pixels. Finally remove only disconnected alpha components up to 8 px anywhere inside the exact crop; this targets the remaining isolated residue dot cluster while leaving the connected Digimon silhouette untouched.",
       "explicit_groups": [
         [
           {
@@ -4185,7 +4185,8 @@
       ],
       "vertical_alignment": "source_group_envelope",
       "preserve_source_box": true,
-      "border_island_cleanup_max_pixels": 12
+      "border_island_cleanup_max_pixels": 12,
+      "alpha_island_cleanup_max_pixels": 8
     },
     "Mammothmon": {
       "source_id": 204,
