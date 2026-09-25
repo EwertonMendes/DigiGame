@@ -80,7 +80,8 @@
       "confidence_margin": 354486
     }
   },
-  "vertical_alignment_policy": "frame_bottom",
+  "vertical_alignment_policy": "source_group_envelope",
+  "preserve_source_box": true,
   "source_group_envelopes": {
     "down_left": {
       "source_top": 339,
@@ -103,10 +104,10 @@
       "height": 40
     }
   },
-  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "anchor_policy": "source_group_envelope_bottom_center",
   "frame_anchor": [
-    23,
-    45
+    22,
+    43
   ],
   "audited_source_frames": {
     "down_left": [
@@ -190,8 +191,8 @@
       }
     ]
   },
-  "cell_width": 47,
-  "cell_height": 46,
+  "cell_width": 44,
+  "cell_height": 44,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/whamon/field.png"

@@ -86,7 +86,8 @@
       "confidence_margin": null
     }
   },
-  "vertical_alignment_policy": "frame_bottom",
+  "vertical_alignment_policy": "source_group_envelope",
+  "preserve_source_box": false,
   "source_group_envelopes": {
     "down_left": {
       "source_top": 8,
@@ -109,10 +110,10 @@
       "height": 29
     }
   },
-  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "anchor_policy": "source_group_envelope_bottom_center",
   "frame_anchor": [
     18,
-    33
+    34
   ],
   "audited_source_frames": {
     "down_left": [
@@ -197,7 +198,7 @@
     ]
   },
   "cell_width": 36,
-  "cell_height": 34,
+  "cell_height": 35,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/parasimon/field.png"

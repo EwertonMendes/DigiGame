@@ -81,6 +81,7 @@
     }
   },
   "vertical_alignment_policy": "frame_bottom",
+  "preserve_source_box": false,
   "source_group_envelopes": {
     "down_left": {
       "source_top": 221,
