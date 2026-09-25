@@ -9,29 +9,6 @@
       "portrait_key": "grassagumon",
       "field_source": "res://assets/characters/grassagumon/source/sheet.png",
       "portrait_source": "res://assets/characters/grassagumon/source/portrait_frames.png",
-      "database_entry": {
-        "seed": "670c2bb3-b540-415d-b34b-4c8c33d64ce0",
-        "name": "Grass Agumon",
-        "img": "/assets/digimons/GrassAgumon.png",
-        "rank": "Rookie",
-        "species": "Dragon",
-        "attribute": "Data",
-        "element": "plant",
-        "hp": 108,
-        "mp": 124,
-        "atk": 76,
-        "def": 69,
-        "speed": 56,
-        "bitFarmingRate": 27,
-        "digiEvolutionSeedList": [],
-        "degenerateSeedList": [
-          "edc9812f-82a6-487f-9a4d-52b845643176"
-        ],
-        "evolutionRequirements": [],
-        "checked": true,
-        "MOV": 4,
-        "movementType": "ground"
-      },
       "evolves_from_seed": "edc9812f-82a6-487f-9a4d-52b845643176",
       "learnset": [
         {
@@ -52,18 +29,78 @@
       ],
       "field": {
         "source_boxes": [
-          [0, 0, 48, 48],
-          [48, 0, 48, 48],
-          [96, 0, 48, 48],
-          [144, 0, 48, 48],
-          [192, 0, 48, 48],
-          [240, 0, 48, 48],
-          [0, 48, 48, 48],
-          [48, 48, 48, 48],
-          [96, 48, 48, 48],
-          [144, 48, 48, 48],
-          [192, 48, 48, 48],
-          [240, 48, 48, 48]
+          [
+            0,
+            0,
+            48,
+            48
+          ],
+          [
+            48,
+            0,
+            48,
+            48
+          ],
+          [
+            96,
+            0,
+            48,
+            48
+          ],
+          [
+            144,
+            0,
+            48,
+            48
+          ],
+          [
+            192,
+            0,
+            48,
+            48
+          ],
+          [
+            240,
+            0,
+            48,
+            48
+          ],
+          [
+            0,
+            48,
+            48,
+            48
+          ],
+          [
+            48,
+            48,
+            48,
+            48
+          ],
+          [
+            96,
+            48,
+            48,
+            48
+          ],
+          [
+            144,
+            48,
+            48,
+            48
+          ],
+          [
+            192,
+            48,
+            48,
+            48
+          ],
+          [
+            240,
+            48,
+            48,
+            48
+          ]
         ],
         "directions": [
           "down_left",
@@ -77,7 +114,18 @@
           "step_b"
         ],
         "runtime_frame_indices": [
-          0, 1, 2, 5, 4, 3, 11, 10, 9, 6, 7, 8
+          0,
+          1,
+          2,
+          5,
+          4,
+          3,
+          11,
+          10,
+          9,
+          6,
+          7,
+          8
         ],
         "cell_width": 66,
         "cell_height": 66,
