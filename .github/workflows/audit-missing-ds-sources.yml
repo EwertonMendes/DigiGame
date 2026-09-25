@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - feat/ds-sprite-backfill-debug-tools
-      - feat/ds-sprite-backfill-ultimate-batch-3
     paths:
       - '.github/workflows/audit-missing-ds-sources.yml'
       - 'tools/audit_missing_ds_sources.py'
