@@ -65,8 +65,8 @@
         1,
         0
       ],
-      "pixel_error": 282363,
-      "confidence_margin": 130572
+      "pixel_error": 74616,
+      "confidence_margin": 124634
     },
     "up_right": {
       "compared_with": "up_left",
@@ -86,14 +86,14 @@
   "alpha_island_cleanup_max_pixels": 0,
   "source_group_envelopes": {
     "down_left": {
-      "source_top": 196,
-      "source_bottom": 229,
-      "height": 33
+      "source_top": 192,
+      "source_bottom": 224,
+      "height": 32
     },
     "down_right": {
-      "source_top": 196,
-      "source_bottom": 229,
-      "height": 33
+      "source_top": 192,
+      "source_bottom": 224,
+      "height": 32
     },
     "up_left": {
       "source_top": 166,
@@ -109,47 +109,47 @@
   "anchor_policy": "source_group_envelope_bottom_center",
   "frame_anchor": [
     19,
-    36
+    35
   ],
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 7,
-        "y": 196,
-        "w": 28,
-        "h": 33
+        "x": 12,
+        "y": 192,
+        "w": 33,
+        "h": 32
       },
       {
-        "x": 38,
-        "y": 196,
-        "w": 34,
-        "h": 33
+        "x": 45,
+        "y": 192,
+        "w": 33,
+        "h": 32
       },
       {
-        "x": 75,
-        "y": 196,
-        "w": 34,
-        "h": 33
+        "x": 78,
+        "y": 192,
+        "w": 33,
+        "h": 32
       }
     ],
     "down_right": [
       {
-        "x": 186,
-        "y": 196,
-        "w": 34,
-        "h": 33
+        "x": 177,
+        "y": 192,
+        "w": 33,
+        "h": 32
       },
       {
-        "x": 149,
-        "y": 196,
-        "w": 34,
-        "h": 33
+        "x": 144,
+        "y": 192,
+        "w": 33,
+        "h": 32
       },
       {
-        "x": 112,
-        "y": 196,
-        "w": 34,
-        "h": 33
+        "x": 111,
+        "y": 192,
+        "w": 33,
+        "h": 32
       }
     ],
     "up_left": [
@@ -194,7 +194,7 @@
     ]
   },
   "cell_width": 38,
-  "cell_height": 37,
+  "cell_height": 36,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/kogamon/field.png"
