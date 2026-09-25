@@ -1,0 +1,14 @@
+{
+  "source": "Piedmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Piedmon.webp",
+  "frame_width": 85,
+  "frame_height": 142,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "6647f6e8159d7f261a811783aa9ed4814f43bbabd08964d17013644defca2867"
+}

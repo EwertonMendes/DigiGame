@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 380,
+  "source_archive_file": "sprite thread/380_ChronomonHoly.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "b6a1991b8e3eee2b3259a8a1563159fff21e835c600b9ac4c0bd425a83a41780",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 419236,
+      "confidence_margin": 50432
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 378288,
+      "confidence_margin": 69796
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 308,
+      "source_bottom": 344,
+      "height": 36
+    },
+    "down_right": {
+      "source_top": 309,
+      "source_bottom": 345,
+      "height": 36
+    },
+    "up_left": {
+      "source_top": 351,
+      "source_bottom": 389,
+      "height": 38
+    },
+    "up_right": {
+      "source_top": 352,
+      "source_bottom": 390,
+      "height": 38
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    39
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 3,
+        "y": 308,
+        "w": 27,
+        "h": 35
+      },
+      {
+        "x": 35,
+        "y": 308,
+        "w": 29,
+        "h": 36
+      },
+      {
+        "x": 72,
+        "y": 308,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "down_right": [
+      {
+        "x": 193,
+        "y": 309,
+        "w": 27,
+        "h": 35
+      },
+      {
+        "x": 159,
+        "y": 309,
+        "w": 29,
+        "h": 36
+      },
+      {
+        "x": 119,
+        "y": 309,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "up_left": [
+      {
+        "x": 3,
+        "y": 351,
+        "w": 23,
+        "h": 35
+      },
+      {
+        "x": 33,
+        "y": 352,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 68,
+        "y": 353,
+        "w": 30,
+        "h": 36
+      }
+    ],
+    "up_right": [
+      {
+        "x": 197,
+        "y": 352,
+        "w": 23,
+        "h": 35
+      },
+      {
+        "x": 163,
+        "y": 353,
+        "w": 27,
+        "h": 36
+      },
+      {
+        "x": 125,
+        "y": 354,
+        "w": 30,
+        "h": 36
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 40,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/chronomonholymode/field.png"
+}

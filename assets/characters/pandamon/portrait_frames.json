@@ -1,0 +1,14 @@
+{
+  "source": "Pandamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Pandamon.webp",
+  "frame_width": 88,
+  "frame_height": 103,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "662598588f73a85aaa0030bf58d3c0a115c154d6a8346b7e8eefcb90d4113f84"
+}

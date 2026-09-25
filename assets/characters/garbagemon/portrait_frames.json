@@ -1,0 +1,14 @@
+{
+  "source": "Garbagemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Garbagemon.webp",
+  "frame_width": 100,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "b1cbb05f590da62d31e3c7be748593d6ce09ceae9e0d6e15947dc6a5fcd8f986"
+}

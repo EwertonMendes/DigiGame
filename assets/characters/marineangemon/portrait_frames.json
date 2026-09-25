@@ -1,0 +1,14 @@
+{
+  "source": "MarineAngemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MarineAngemon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "5e1493fe399744a6289a80a70ee71d199564364a138a7cb95ab8c0a116a80a81"
+}

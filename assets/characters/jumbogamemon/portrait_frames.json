@@ -1,0 +1,14 @@
+{
+  "source": "JumboGamemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/JumboGamemon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "1e31b4d304995a1d46984ed63a9a8fbe2894d0dc2984754576560df74ffca552"
+}

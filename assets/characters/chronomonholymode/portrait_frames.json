@@ -1,0 +1,14 @@
+{
+  "source": "Chronomon (Holy Mode).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Chronomon%20%28Holy%20Mode%29.webp",
+  "frame_width": 133,
+  "frame_height": 156,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "04e1b700da2dbcfced89fd3a5897793d238d7eb68e6c4f123b1622c4f396b98b"
+}

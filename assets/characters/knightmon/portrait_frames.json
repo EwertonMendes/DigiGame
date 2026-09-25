@@ -1,0 +1,14 @@
+{
+  "source": "Knightmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Knightmon.webp",
+  "frame_width": 82,
+  "frame_height": 129,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "e40579e9c6f531304846d955611ea2bfaacfd6eaecf83c716f0c73de4217ec66"
+}

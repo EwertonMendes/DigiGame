@@ -1,0 +1,14 @@
+{
+  "source": "Marine_Devimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Marine_Devimon.webp",
+  "frame_width": 92,
+  "frame_height": 126,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "4f52382a696ca6680d9ba21dc27f396ad53b3b2d0a2f95be7162ee7effbb3a2d"
+}

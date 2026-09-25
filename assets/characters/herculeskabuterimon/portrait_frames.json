@@ -1,0 +1,14 @@
+{
+  "source": "HerculesKabuterimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/HerculesKabuterimon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "f8a78432872b324c3e7eae2c5211c5276e4b22a9e2deab1e516a98112ee5e970"
+}

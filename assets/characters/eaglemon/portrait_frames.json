@@ -1,0 +1,14 @@
+{
+  "source": "Eaglemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Eaglemon.webp",
+  "frame_width": 107,
+  "frame_height": 99,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "db11f615425c1a21b703c86d82cd76e14922d1bd63a6e35c75255dee22bffac7"
+}

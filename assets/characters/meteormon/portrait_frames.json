@@ -1,0 +1,14 @@
+{
+  "source": "Meteormon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Meteormon.webp",
+  "frame_width": 63,
+  "frame_height": 73,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "ebcd8d79f70f75ecdd47534467a2866186c8b2d8d6535dcbc4dd88b16482193b"
+}

@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 345,
+  "source_archive_file": "sprite thread/345_SlashAngemon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "c2efbf32e9d735cb15e2cec13f2a1f8aedd6b991dc1b15196ef0e7eb06915775",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 433940
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 453588
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 321,
+      "source_bottom": 361,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 321,
+      "source_bottom": 361,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 277,
+      "source_bottom": 316,
+      "height": 39
+    },
+    "up_right": {
+      "source_top": 277,
+      "source_bottom": 316,
+      "height": 39
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 75,
+        "y": 322,
+        "w": 26,
+        "h": 37
+      },
+      {
+        "x": 111,
+        "y": 321,
+        "w": 30,
+        "h": 39
+      },
+      {
+        "x": 151,
+        "y": 322,
+        "w": 32,
+        "h": 39
+      }
+    ],
+    "down_right": [
+      {
+        "x": 275,
+        "y": 322,
+        "w": 26,
+        "h": 37
+      },
+      {
+        "x": 235,
+        "y": 321,
+        "w": 30,
+        "h": 39
+      },
+      {
+        "x": 193,
+        "y": 322,
+        "w": 32,
+        "h": 39
+      }
+    ],
+    "up_left": [
+      {
+        "x": 72,
+        "y": 278,
+        "w": 28,
+        "h": 38
+      },
+      {
+        "x": 111,
+        "y": 277,
+        "w": 30,
+        "h": 37
+      },
+      {
+        "x": 151,
+        "y": 278,
+        "w": 32,
+        "h": 35
+      }
+    ],
+    "up_right": [
+      {
+        "x": 276,
+        "y": 278,
+        "w": 28,
+        "h": 38
+      },
+      {
+        "x": 235,
+        "y": 277,
+        "w": 30,
+        "h": 37
+      },
+      {
+        "x": 193,
+        "y": 278,
+        "w": 32,
+        "h": 35
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/slangemon/field.png"
+}

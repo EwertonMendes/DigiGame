@@ -1,0 +1,14 @@
+{
+  "source": "Imperialdramon (Paladin Mode).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Imperialdramon%20%28Paladin%20Mode%29.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2b3753266a2a955feb62b12152852ad22c7b363fa53c3a62f589c03c0d4faa95"
+}

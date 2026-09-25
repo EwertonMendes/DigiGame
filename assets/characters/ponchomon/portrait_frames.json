@@ -1,0 +1,14 @@
+{
+  "source": "Ponchomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ponchomon.webp",
+  "frame_width": 99,
+  "frame_height": 113,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "94a5e508e3c2fc03181ce33c79d0531a41741eaf85da1dc3b3740c9e7f289e25"
+}

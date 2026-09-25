@@ -1,0 +1,14 @@
+{
+  "source": "Babamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Babamon.webp",
+  "frame_width": 69,
+  "frame_height": 97,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "ac535fe94ebf7bfceb580445660663be8ae5e9a6e19f8e38a5d33e1c08b756e9"
+}

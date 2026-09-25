@@ -1,0 +1,14 @@
+{
+  "source": "Lanksmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Lanksmon.webp",
+  "frame_width": 99,
+  "frame_height": 106,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "fd16d0acb404b50a2c125ea933f39433de203697c815a0d212ffa1297c162b67"
+}

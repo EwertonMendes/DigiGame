@@ -1,0 +1,14 @@
+{
+  "source": "Vademon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Vademon.webp",
+  "frame_width": 54,
+  "frame_height": 81,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2f229bda5a000db67feb3a84296adeb3e7c667d1cba7df893a45509b963b990a"
+}

@@ -1,0 +1,13 @@
+{
+  "source": "Sinduramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Sinduramon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 3,
+  "durations_ms": [
+    100,
+    100,
+    200
+  ],
+  "source_sha256": "658e32a2ca9c99e86981a2a3d0e1624e1c6abebf54505875cf51d277ef96cc36"
+}

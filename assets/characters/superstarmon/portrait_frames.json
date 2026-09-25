@@ -1,0 +1,14 @@
+{
+  "source": "SuperStarmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/SuperStarmon.webp",
+  "frame_width": 66,
+  "frame_height": 86,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "6f802148744005fc893c094ddb0e0c21cfb7457793df48213b7853841033018b"
+}

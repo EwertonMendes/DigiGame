@@ -1,0 +1,14 @@
+{
+  "source": "Rosemon (Burst Mode).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Rosemon%20%28Burst%20Mode%29.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "3afd7f65788c4277e430864a96f13b8a6c9c368630f6e5799f1e4f075ce48d89"
+}

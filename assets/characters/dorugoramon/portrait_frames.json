@@ -1,0 +1,14 @@
+{
+  "source": "Dorugoramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Dorugoramon.webp",
+  "frame_width": 200,
+  "frame_height": 200,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "126d172bf7d27b60101b61b94ea7358082be3c0570a1ad1f8bfae57a04686937"
+}

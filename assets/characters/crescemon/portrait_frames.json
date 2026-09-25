@@ -1,0 +1,14 @@
+{
+  "source": "Crescemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Crescemon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "6c6d6011fe52b9118e9819e87084267a67ed26f24467716cb12e993b1b83df02"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "ExTyrannomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/ExTyrannomon.webp",
+  "frame_width": 80,
+  "frame_height": 80,
+  "frame_count": 4,
+  "durations_ms": [
+    300,
+    300,
+    300,
+    300
+  ],
+  "source_sha256": "eb88097de570505f8d4ac8f50d3a4ba1e194db19c62298304a4292dac8844615"
+}

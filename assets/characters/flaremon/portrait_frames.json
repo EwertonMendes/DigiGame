@@ -1,0 +1,14 @@
+{
+  "source": "Flaremon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Flaremon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "9b864c134ab40349809c3b593b27f0b984d18b4cadd31de7db612f48e58711ff"
+}

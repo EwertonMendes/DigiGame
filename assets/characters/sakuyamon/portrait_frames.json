@@ -1,0 +1,14 @@
+{
+  "source": "Sakuyamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Sakuyamon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "958028bf5c7a430a4fabec55dd8fcc4e91713888502c0e2561df173c14c44250"
+}

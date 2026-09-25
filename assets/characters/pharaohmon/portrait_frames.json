@@ -1,0 +1,14 @@
+{
+  "source": "Pharaohmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Pharaohmon.webp",
+  "frame_width": 86,
+  "frame_height": 137,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "f7a0e3c468e3a3974fcc0bb5a4ab431960a41c71e1df5cc2238294e291de06f3"
+}

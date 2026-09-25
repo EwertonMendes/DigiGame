@@ -1,0 +1,14 @@
+{
+  "source": "Susanoomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Susanoomon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "e058977bc4db6acd1e696a20815fad215a164e991bf5dca364faf04221d2b69c"
+}

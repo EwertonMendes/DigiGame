@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 245,
+  "source_archive_file": "sprite thread/245_Deramon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "13101c1d416515f0ee52abf9d486de1da58e4e6951395a0d27b02a6ac1c3d631",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 172556,
+      "confidence_margin": 70292
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 164750,
+      "confidence_margin": 17464
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 194,
+      "source_bottom": 220,
+      "height": 26
+    },
+    "down_right": {
+      "source_top": 195,
+      "source_bottom": 221,
+      "height": 26
+    },
+    "up_left": {
+      "source_top": 229,
+      "source_bottom": 255,
+      "height": 26
+    },
+    "up_right": {
+      "source_top": 230,
+      "source_bottom": 256,
+      "height": 26
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    31
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 4,
+        "y": 194,
+        "w": 25,
+        "h": 26
+      },
+      {
+        "x": 42,
+        "y": 197,
+        "w": 26,
+        "h": 23
+      },
+      {
+        "x": 83,
+        "y": 195,
+        "w": 25,
+        "h": 23
+      }
+    ],
+    "down_right": [
+      {
+        "x": 220,
+        "y": 195,
+        "w": 25,
+        "h": 26
+      },
+      {
+        "x": 181,
+        "y": 198,
+        "w": 26,
+        "h": 23
+      },
+      {
+        "x": 141,
+        "y": 196,
+        "w": 25,
+        "h": 23
+      }
+    ],
+    "up_left": [
+      {
+        "x": 5,
+        "y": 229,
+        "w": 27,
+        "h": 25
+      },
+      {
+        "x": 43,
+        "y": 230,
+        "w": 28,
+        "h": 25
+      },
+      {
+        "x": 85,
+        "y": 230,
+        "w": 27,
+        "h": 25
+      }
+    ],
+    "up_right": [
+      {
+        "x": 217,
+        "y": 230,
+        "w": 27,
+        "h": 25
+      },
+      {
+        "x": 178,
+        "y": 231,
+        "w": 28,
+        "h": 25
+      },
+      {
+        "x": 137,
+        "y": 231,
+        "w": 27,
+        "h": 25
+      }
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 32,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/deramon/field.png"
+}

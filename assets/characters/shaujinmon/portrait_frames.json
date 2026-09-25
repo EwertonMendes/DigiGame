@@ -1,0 +1,14 @@
+{
+  "source": "Shaujinmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Shaujinmon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "17640cd3f9e057f42b0f4aaa0deeba118f7c34aacc9d43e3051d71f5b34b3848"
+}
