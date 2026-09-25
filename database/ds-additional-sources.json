@@ -4097,10 +4097,10 @@
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
       "profile": "explicit_groups",
       "pattern": "rear_rows_first",
-      "review_method": "exact_source_box_runtime_review",
-      "review_status": "corrected_from_sprite_test_feedback",
-      "review_batch": "kogamon-down-audited-baseline-2026-09-25",
-      "review_note": "Kogamon-only final correction. Keep UP groups untouched because Sprite Test confirms them correct. Restore the historically audited DOWN component boxes (including the narrower first DL frame and 33px-high first two DL phases) to avoid neighbouring-source pixels. Preserve each exact box without padding/trim, disable all island cleanup so legitimate pixels are not deleted, and bottom-align only DOWN-left/DOWN-right so their walk phases share a stable runtime baseline without changing UP placement.",
+      "review_method": "video_confirmed_exact_source_crop",
+      "review_status": "corrected_from_recorded_sprite_test",
+      "review_batch": "kogamon-down-video-fix-2026-09-25",
+      "review_note": "Kogamon-only correction confirmed from the recorded Sprite Test video. UP-left and UP-right remain untouched. The DOWN row at y=196 was leaking visible purple/yellow pixels from the extra pose row directly below whenever 36px-high boxes were used, especially on DOWN-right. Use exact no-padding source boxes ending at y=228 (h=33) for all six DOWN phases, preserving each box as-is with a shared source-group envelope. No trim, border cleanup, alpha-island cleanup, mirroring change, or UP modification.",
       "explicit_groups": [
         [
           {
@@ -4159,7 +4159,7 @@
             "x": 75,
             "y": 196,
             "w": 34,
-            "h": 36
+            "h": 33
           }
         ],
         [
@@ -4167,30 +4167,26 @@
             "x": 112,
             "y": 196,
             "w": 34,
-            "h": 36
+            "h": 33
           },
           {
             "x": 149,
             "y": 196,
             "w": 34,
-            "h": 36
+            "h": 33
           },
           {
             "x": 186,
             "y": 196,
             "w": 34,
-            "h": 36
+            "h": 33
           }
         ]
       ],
       "vertical_alignment": "source_group_envelope",
       "preserve_source_box": true,
       "border_island_cleanup_max_pixels": 0,
-      "alpha_island_cleanup_max_pixels": 0,
-      "vertical_alignment_by_direction": {
-        "down_left": "frame_bottom",
-        "down_right": "frame_bottom"
-      }
+      "alpha_island_cleanup_max_pixels": 0
     },
     "Mammothmon": {
       "source_id": 204,
