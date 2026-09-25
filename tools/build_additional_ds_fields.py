@@ -474,11 +474,8 @@ def main() -> None:
                 raise RuntimeError(f"{name}: source_member or source_url is required")
             payload = fetch(source_url)
         actual_sha = sha256(payload)
-        expected_sha = str(spec["source_sha256"])
-        if expected_sha != "AUTO_PIN_TEMP" and actual_sha != expected_sha:
+        if actual_sha != str(spec["source_sha256"]):
             raise RuntimeError(f"{name}: source SHA changed ({actual_sha}); refusing to infer from changed art")
-        if expected_sha == "AUTO_PIN_TEMP":
-            print(f"AUTO_PIN_TEMP {name}: {actual_sha}")
         source = Image.open(io.BytesIO(payload)).convert("RGBA")
         field = build_field(name, source, payload, spec, config)
         portrait = build_portrait(by_name[name])
