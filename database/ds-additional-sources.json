@@ -4269,13 +4269,14 @@
           }
         ]
       ],
-      "review_method": "targeted_visual_source_audit",
-      "review_status": "corrected_during_targeted_nine_sprite_audit",
-      "review_batch": "targeted-nine-2026-09-25",
-      "review_note": "Targeted visual audit: front/back was inverted, and raw G1 contains detached foreign pixels in multiple frames (including a horizontal strip, a vertical strip, and a lone pixel). G1's actual Digimon bodies duplicate the clean opposite facing as mirrors, so runtime UP_RIGHT is synthesized from clean UP_LEFT instead of masking or offsetting the contaminated frames. Clean authored front G2/G3 remain untouched.",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_single_species_visual_review",
+      "review_batch": "mammothmon-2026-09-25",
+      "review_note": "Single-species correction from Sprite Test feedback: Mammothmon front/back groups were inverted and bottom-aligning individually trimmed frames caused visible vertical hopping. Preserve the audited authored movement boxes, map rear/front with rear_rows_first, and align frames by their shared source-group envelope so the original DS baseline is retained without per-frame bounce.",
       "horizontal_mirror_from": {
         "up_right": "up_left"
-      }
+      },
+      "vertical_alignment": "source_group_envelope"
     },
     "LadyDevimon": {
       "source_id": 216,
