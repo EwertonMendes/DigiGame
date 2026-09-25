@@ -276,6 +276,38 @@ def crop_frame_border_connected_matte(
     return frame.crop(bbox)
 
 
+def remove_tiny_alpha_islands(frame: Image.Image, max_pixels: int) -> Image.Image:
+    """Remove tiny disconnected alpha components while preserving connected sprite art."""
+    if max_pixels <= 0:
+        return frame
+    rgba = np.array(frame.convert("RGBA"), copy=True)
+    mask = rgba[:, :, 3] > 0
+    height, width = mask.shape
+    visited = np.zeros_like(mask)
+    for start_y in range(height):
+        for start_x in range(width):
+            if visited[start_y, start_x] or not mask[start_y, start_x]:
+                continue
+            stack = [(start_y, start_x)]
+            component: list[tuple[int, int]] = []
+            visited[start_y, start_x] = True
+            while stack:
+                yy, xx = stack.pop()
+                component.append((yy, xx))
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        if dx == 0 and dy == 0:
+                            continue
+                        ny, nx = yy + dy, xx + dx
+                        if 0 <= ny < height and 0 <= nx < width and mask[ny, nx] and not visited[ny, nx]:
+                            visited[ny, nx] = True
+                            stack.append((ny, nx))
+            if len(component) <= max_pixels:
+                for yy, xx in component:
+                    rgba[yy, xx, 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
 def remove_small_border_islands(frame: Image.Image, max_pixels: int) -> Image.Image:
     """Remove tiny disconnected alpha islands touching a crop border.
 
@@ -434,9 +466,14 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
     preserve_source_box = bool(spec.get("preserve_source_box", False))
     border_island_cleanup_max_pixels = int(spec.get("border_island_cleanup_max_pixels", 0))
+    alpha_island_cleanup_max_pixels = int(spec.get("alpha_island_cleanup_max_pixels", 0))
     if border_island_cleanup_max_pixels < 0 or border_island_cleanup_max_pixels > 64:
         raise RuntimeError(
             f"{name}: border_island_cleanup_max_pixels must be within 0..64"
+        )
+    if alpha_island_cleanup_max_pixels < 0 or alpha_island_cleanup_max_pixels > 32:
+        raise RuntimeError(
+            f"{name}: alpha_island_cleanup_max_pixels must be within 0..32"
         )
     if preserve_source_box and frame_background_policy == "border_connected_matte":
         raise RuntimeError(
@@ -479,6 +516,8 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
                 frame = crop_component(keyed, box)
             if border_island_cleanup_max_pixels:
                 frame = remove_small_border_islands(frame, border_island_cleanup_max_pixels)
+            if alpha_island_cleanup_max_pixels:
+                frame = remove_tiny_alpha_islands(frame, alpha_island_cleanup_max_pixels)
             if direction in horizontal_mirror_from:
                 frame = frame.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             frames.append(frame)
@@ -532,6 +571,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "vertical_alignment_policy": vertical_alignment,
         "preserve_source_box": preserve_source_box,
         "border_island_cleanup_max_pixels": border_island_cleanup_max_pixels,
+        "alpha_island_cleanup_max_pixels": alpha_island_cleanup_max_pixels,
         "source_group_envelopes": source_group_envelopes,
         "anchor_policy": (
             "source_group_envelope_bottom_center"
