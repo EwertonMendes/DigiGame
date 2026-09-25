@@ -630,11 +630,11 @@
       "source_sha256": "7ec12400422ac1d21ea259282cf163faf232cd4cc961fd06487b63044906934b",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/168_Flymon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
-      "review_method": "single_species_alignment_review",
-      "review_status": "corrected_single_species_alignment_review",
-      "review_batch": "flymon-2026-09-25",
-      "review_note": "Single-species correction: preserve Flymon's current reviewed direction mapping, but keep the original source-row vertical envelope across each three-frame walk cycle instead of independently bottom-aligning trimmed frames. This changes only frame placement, not facing groups or authored sprite pixels.",
+      "pattern": "rear_rows_first",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: left/right is correct, but DOWN and UP are swapped at the same side. Map [DL,DR,UL,UR] from [G2,G3,G0,G1] without changing horizontal semantics.",
       "vertical_alignment": "source_group_envelope"
     },
     "Guardromon": {
@@ -3229,11 +3229,11 @@
       "source_sha256": "cc0fe2405476a652a5011e831d5d33ae8f8c79b9e45ddf6f41aafddcf5d2e797",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "rear_rows_first_horizontal_reversed",
       "review_method": "single_species_runtime_visual_review",
-      "review_status": "corrected_single_species_visual_review",
-      "review_batch": "saberleomon-2026-09-25",
-      "review_note": "Single-species correction: preserve the already reviewed rear_rows_first facing mapping and exact authored frame crops, while retaining each source row's vertical envelope across the walk triplet instead of bottom-aligning trimmed frames independently. Direction semantics remain unchanged from the prior SaberLeomon fix.",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: UP/DOWN depth is correct, but left/right is crossed. Preserve rear_rows_first depth and swap only the horizontal group at each depth: [G3,G2,G1,G0].",
       "vertical_alignment": "source_group_envelope"
     },
     "VenomMyotismon": {
@@ -3987,13 +3987,13 @@
           }
         ]
       ],
-      "review_method": "single_species_direction_review",
-      "review_status": "corrected_single_species_direction_review",
-      "review_batch": "raremon-2026-09-25",
-      "review_note": "Single-species correction: Raremon's two authored movement triplets are ordered front first and rear second. Restore canonical_rows so DOWN uses the first triplet and UP uses the second, keep right facings synthesized only by horizontal mirror at the same depth, and retain the authored source-group vertical envelope across animation phases.",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: front/back is correct, but left/right is crossed. Keep canonical front/back and treat the authored triplets as the right-facing source; synthesize matching left facings by horizontal mirror.",
       "horizontal_mirror_from": {
-        "down_right": "down_left",
-        "up_right": "up_left"
+        "down_left": "down_right",
+        "up_left": "up_right"
       },
       "vertical_alignment": "source_group_envelope"
     },
@@ -4480,7 +4480,7 @@
       "source_sha256": "c2992b05f5c3ade734eb666776fa231af75ed3afc58114c4ef029c3a749e4920",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/308_Rosemon.png",
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "explicit_groups": [
         [
           {
@@ -4563,10 +4563,10 @@
           }
         ]
       ],
-      "review_method": "single_species_alignment_review",
-      "review_status": "corrected_single_species_alignment_review",
-      "review_batch": "rosemon-2026-09-25",
-      "review_note": "Single-species correction: retain Rosemon's audited canonical directional mapping and source boxes, while preserving the authored source-row vertical envelope through each three-frame walk cycle instead of bottom-aligning trimmed frames independently. No direction remap or sprite-pixel substitution is introduced.",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: DOWN facings are correct; only UP-left and UP-right are reversed. Preserve G0/G1 for DOWN and swap only rear groups G2/G3.",
       "frame_background_policy": "border_connected_matte",
       "frame_background_rgb": [
         123,
@@ -4581,7 +4581,7 @@
       "source_sha256": "9e4a1cbac20515276df950800aaa102c96421ed6508e18bae72bbfb54f517d72",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/318_Seraphimon.png",
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "explicit_groups": [
         [
           {
@@ -4664,10 +4664,10 @@
           }
         ]
       ],
-      "review_method": "single_species_alignment_review",
-      "review_status": "corrected_single_species_alignment_review",
-      "review_batch": "seraphimon-2026-09-25",
-      "review_note": "Single-species correction: keep Seraphimon's audited canonical direction groups and exact source-frame boxes, but preserve the authored source-row vertical envelope across each walk triplet instead of bottom-aligning individually trimmed frames. This keeps the original DS motion baseline without changing facing semantics.",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: DOWN facings are correct; only UP-left and UP-right are reversed. Preserve G0/G1 for DOWN and swap only rear groups G2/G3.",
       "frame_background_policy": "border_connected_matte",
       "frame_background_rgb": [
         123,
@@ -4683,7 +4683,7 @@
       "source_sha256": "ba2f21f6c5439c6f762bbf66fa0e9d196e5f37da6cfcc4301f220958cd9e5613",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "explicit_groups": [
         [
           {
@@ -4766,10 +4766,10 @@
           }
         ]
       ],
-      "review_method": "single_species_direction_review",
-      "review_status": "corrected_single_species_direction_review",
-      "review_batch": "parasimon-2026-09-25",
-      "review_note": "Single-species correction: Parasimon's authored movement triplets are front first and rear second. Restore canonical_rows so DOWN uses the first triplet and UP uses the second, synthesize only the matching right-facing mirrors, and preserve the original source-group vertical envelope across the three movement phases.",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: left/right is correct, but DOWN and UP are swapped at the same side. Map [DL,DR,UL,UR] from [G2,G3,G0,G1] without changing horizontal semantics.",
       "horizontal_mirror_from": {
         "down_right": "down_left",
         "up_right": "up_left"
