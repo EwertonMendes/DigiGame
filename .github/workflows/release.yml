@@ -18,20 +18,6 @@ on:
         required: true
         default: true
         type: boolean
-  pull_request:
-    branches:
-      - master
-    paths:
-      - .github/workflows/release.yml
-      - export_presets.cfg
-      - project.godot
-      - assets/ui/icons/favicon.png
-      - assets/ui/branding/boot_splash.png
-      - assets/ui/icons/android_adaptive_background.svg
-      - tools/validate_app_icon.py
-      - tools/prepare_release_metadata.py
-      - docs/releases.md
-
 permissions:
   contents: read
 
@@ -61,19 +47,12 @@ jobs:
           MANUAL_VERSION: ${{ inputs.version }}
           MANUAL_PUBLISH: ${{ inputs.publish_release }}
           MANUAL_PRERELEASE: ${{ inputs.prerelease }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
-          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-            raw_version="$MANUAL_VERSION"
-            publish_release="${MANUAL_PUBLISH:-false}"
-            prerelease="${MANUAL_PRERELEASE:-true}"
-          else
-            raw_version="0.0.0-pr.${PR_NUMBER}"
-            publish_release="false"
-            prerelease="true"
-          fi
+          raw_version="$MANUAL_VERSION"
+          publish_release="${MANUAL_PUBLISH:-false}"
+          prerelease="${MANUAL_PRERELEASE:-true}"
 
           version="${raw_version#v}"
           if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
