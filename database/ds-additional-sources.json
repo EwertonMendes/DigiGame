@@ -4090,53 +4090,53 @@
     },
     "Kogamon": {
       "source_id": 174,
-      "source_sha256": "23460f10d415b3fa126ecb2cfcf4d9056d43ca32a10cbcba69545cc0c760b895",
-      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
+      "source_sha256": "ace84e7d67a6874e53cd4b72ea70dc1e53b23b38b928b8ab3656c6bffb2e2134",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "explicit_groups",
       "pattern": "rear_rows_first",
-      "review_method": "targeted_visual_source_audit",
-      "review_status": "corrected_during_targeted_nine_sprite_audit",
-      "review_batch": "targeted-nine-2026-09-25",
-      "review_note": "Targeted visual audit: the two clean field rows were mapped front/back in reverse. Keep the previously tightened first-row boxes that exclude the Photobucket overlay without cutting the Digimon, but map the lower face/rear-depth semantics correctly with rear_rows_first. No watermark pixels are admitted.",
+      "review_method": "single_species_source_crop_review",
+      "review_status": "corrected_single_species_crop_review",
+      "review_batch": "kogamon-2026-09-25",
+      "review_note": "Single-species correction: stop cropping eight pixels from the top of Kogamon's first movement row to dodge the Photobucket overlay. Revert to the clean pinned WTW archive member, restore the complete authored 36px row bounds, and retain source-group-envelope alignment so no authored pixels are lost or vertically re-anchored per frame.",
       "explicit_groups": [
         [
           {
             "x": 1,
-            "y": 166,
+            "y": 158,
             "w": 34,
-            "h": 28
+            "h": 36
           },
           {
             "x": 38,
-            "y": 166,
+            "y": 158,
             "w": 34,
-            "h": 28
+            "h": 36
           },
           {
             "x": 75,
-            "y": 166,
+            "y": 158,
             "w": 34,
-            "h": 28
+            "h": 36
           }
         ],
         [
           {
             "x": 112,
-            "y": 166,
+            "y": 158,
             "w": 34,
-            "h": 28
+            "h": 36
           },
           {
             "x": 149,
-            "y": 166,
+            "y": 158,
             "w": 34,
-            "h": 28
+            "h": 36
           },
           {
             "x": 186,
-            "y": 166,
+            "y": 158,
             "w": 34,
-            "h": 28
+            "h": 36
           }
         ],
         [
@@ -4179,7 +4179,9 @@
             "h": 36
           }
         ]
-      ]
+      ],
+      "source_member": "sprite thread/174_Kougamon.png",
+      "vertical_alignment": "source_group_envelope"
     },
     "Mammothmon": {
       "source_id": 204,
