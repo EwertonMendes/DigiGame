@@ -4467,10 +4467,11 @@
           }
         ]
       ],
-      "review_method": "targeted_visual_source_audit",
-      "review_status": "corrected_during_targeted_nine_sprite_audit",
-      "review_batch": "targeted-nine-2026-09-25",
-      "review_note": "Targeted visual audit of the WTW field rows: the current runtime had the dorsal/rear row in DOWN and the face/mouth row in UP. Swap front/back only with rear_rows_first; retain the authored left/right frames, phase ordering, and existing full tail/fin crops."
+      "review_method": "single_species_alignment_review",
+      "review_status": "corrected_single_species_alignment_review",
+      "review_batch": "whamon-2026-09-25",
+      "review_note": "Single-species correction: keep Whamon's existing canonical directional mapping and audited source boxes, but preserve the authored source-row vertical envelope across each three-frame walk cycle instead of bottom-aligning individually trimmed crops. This avoids artificial per-frame vertical re-anchoring without changing sprite pixels or direction semantics.",
+      "vertical_alignment": "source_group_envelope"
     },
     "Rosemon": {
       "source_id": 308,
