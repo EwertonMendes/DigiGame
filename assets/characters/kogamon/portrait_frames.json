@@ -1,0 +1,14 @@
+{
+  "source": "Kogamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Kogamon.webp",
+  "frame_width": 133,
+  "frame_height": 89,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "acf994ef11b0472ed8c6231f74cdd46e7b3896c0a42e070cbaab359aac05d4f6"
+}

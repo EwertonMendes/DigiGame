@@ -1,0 +1,199 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 387,
+  "source_archive_file": "sprite thread/387_MirageGaogamonBurst.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "d3582654158fe2970e35bf615eea416bf68a7417d2b4d1558c74236bbc58faf0",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "explicit_groups",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 108672,
+      "confidence_margin": 564914
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 233940,
+      "confidence_margin": 296030
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "background_tolerance": 0,
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 400,
+      "source_bottom": 442,
+      "height": 42
+    },
+    "down_right": {
+      "source_top": 400,
+      "source_bottom": 442,
+      "height": 42
+    },
+    "up_left": {
+      "source_top": 449,
+      "source_bottom": 491,
+      "height": 42
+    },
+    "up_right": {
+      "source_top": 449,
+      "source_bottom": 491,
+      "height": 42
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    24,
+    49
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 78,
+        "y": 400,
+        "w": 33,
+        "h": 42
+      },
+      {
+        "x": 119,
+        "y": 400,
+        "w": 40,
+        "h": 42
+      },
+      {
+        "x": 167,
+        "y": 400,
+        "w": 40,
+        "h": 42
+      }
+    ],
+    "down_right": [
+      {
+        "x": 355,
+        "y": 400,
+        "w": 33,
+        "h": 42
+      },
+      {
+        "x": 307,
+        "y": 400,
+        "w": 40,
+        "h": 42
+      },
+      {
+        "x": 259,
+        "y": 400,
+        "w": 40,
+        "h": 42
+      }
+    ],
+    "up_left": [
+      {
+        "x": 71,
+        "y": 449,
+        "w": 40,
+        "h": 42
+      },
+      {
+        "x": 119,
+        "y": 449,
+        "w": 40,
+        "h": 42
+      },
+      {
+        "x": 167,
+        "y": 449,
+        "w": 40,
+        "h": 42
+      }
+    ],
+    "up_right": [
+      {
+        "x": 355,
+        "y": 449,
+        "w": 40,
+        "h": 42
+      },
+      {
+        "x": 307,
+        "y": 449,
+        "w": 40,
+        "h": 42
+      },
+      {
+        "x": 259,
+        "y": 449,
+        "w": 40,
+        "h": 42
+      }
+    ]
+  },
+  "cell_width": 48,
+  "cell_height": 50,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/miragegaogamonburstmode/field.png"
+}

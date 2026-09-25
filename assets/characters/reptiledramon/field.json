@@ -81,6 +81,7 @@
     }
   },
   "vertical_alignment_policy": "frame_bottom",
+  "background_tolerance": 0,
   "source_group_envelopes": {
     "down_left": {
       "source_top": 293,

@@ -1,0 +1,199 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 308,
+  "source_archive_file": "sprite thread/308_Rosemon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "d4419fb95efdaecadf1aed73deacd5e68b37a56875526477d8923f0084a7d37d",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "explicit_groups",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 146150,
+      "confidence_margin": 27520
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 324136,
+      "confidence_margin": 37930
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "background_tolerance": 100,
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 300,
+      "source_bottom": 336,
+      "height": 36
+    },
+    "down_right": {
+      "source_top": 300,
+      "source_bottom": 336,
+      "height": 36
+    },
+    "up_left": {
+      "source_top": 359,
+      "source_bottom": 395,
+      "height": 36
+    },
+    "up_right": {
+      "source_top": 359,
+      "source_bottom": 395,
+      "height": 36
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    35
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 5,
+        "y": 300,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 47,
+        "y": 300,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 95,
+        "y": 300,
+        "w": 30,
+        "h": 36
+      }
+    ],
+    "down_right": [
+      {
+        "x": 238,
+        "y": 300,
+        "w": 29,
+        "h": 36
+      },
+      {
+        "x": 196,
+        "y": 300,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 149,
+        "y": 300,
+        "w": 30,
+        "h": 36
+      }
+    ],
+    "up_left": [
+      {
+        "x": 5,
+        "y": 359,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 47,
+        "y": 359,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 95,
+        "y": 359,
+        "w": 30,
+        "h": 36
+      }
+    ],
+    "up_right": [
+      {
+        "x": 238,
+        "y": 359,
+        "w": 29,
+        "h": 36
+      },
+      {
+        "x": 196,
+        "y": 359,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 149,
+        "y": 359,
+        "w": 30,
+        "h": 36
+      }
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 36,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/rosemon/field.png"
+}
