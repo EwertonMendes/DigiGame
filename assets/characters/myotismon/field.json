@@ -17,12 +17,16 @@
   ],
   "effective_runtime_group_indices": [
     0,
-    1,
+    0,
     2,
     3
   ],
-  "horizontal_mirror_from": {},
-  "generated_horizontal_mirrors": [],
+  "horizontal_mirror_from": {
+    "down_right": "down_left"
+  },
+  "generated_horizontal_mirrors": [
+    "down_right"
+  ],
   "canonical_runtime_order": [
     "down_left",
     "down_right",
@@ -47,8 +51,8 @@
     ],
     "down_right": [
       0,
-      2,
-      1
+      1,
+      2
     ],
     "up_right": [
       0,
@@ -59,14 +63,14 @@
   "pose_alignment": {
     "down_right": {
       "compared_with": "down_left",
-      "policy": "deterministic_mirror_pose_match",
+      "policy": "generated_horizontal_mirror",
       "source_phase_order": [
         0,
-        2,
-        1
+        1,
+        2
       ],
-      "pixel_error": 471296,
-      "confidence_margin": 2368
+      "pixel_error": 0,
+      "confidence_margin": null
     },
     "up_right": {
       "compared_with": "up_left",
@@ -131,21 +135,21 @@
     ],
     "down_right": [
       {
-        "x": 339,
+        "x": 234,
         "y": 144,
         "w": 25,
         "h": 41
       },
       {
-        "x": 404,
+        "x": 267,
         "y": 145,
-        "w": 26,
+        "w": 24,
         "h": 40
       },
       {
-        "x": 372,
+        "x": 299,
         "y": 145,
-        "w": 24,
+        "w": 26,
         "h": 40
       }
     ],

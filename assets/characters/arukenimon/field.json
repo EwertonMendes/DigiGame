@@ -17,12 +17,18 @@
   ],
   "effective_runtime_group_indices": [
     0,
-    1,
-    2,
+    0,
+    3,
     3
   ],
-  "horizontal_mirror_from": {},
-  "generated_horizontal_mirrors": [],
+  "horizontal_mirror_from": {
+    "down_right": "down_left",
+    "up_left": "up_right"
+  },
+  "generated_horizontal_mirrors": [
+    "down_right",
+    "up_left"
+  ],
   "canonical_runtime_order": [
     "down_left",
     "down_right",
@@ -59,25 +65,25 @@
   "pose_alignment": {
     "down_right": {
       "compared_with": "down_left",
-      "policy": "deterministic_mirror_pose_match",
+      "policy": "generated_horizontal_mirror",
       "source_phase_order": [
         0,
         1,
         2
       ],
-      "pixel_error": 551240,
-      "confidence_margin": 30358
+      "pixel_error": 0,
+      "confidence_margin": null
     },
-    "up_right": {
-      "compared_with": "up_left",
-      "policy": "deterministic_mirror_pose_match",
+    "up_left": {
+      "compared_with": "up_right",
+      "policy": "generated_horizontal_mirror",
       "source_phase_order": [
         0,
         1,
         2
       ],
-      "pixel_error": 536970,
-      "confidence_margin": 16664
+      "pixel_error": 0,
+      "confidence_margin": null
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -88,13 +94,13 @@
       "height": 33
     },
     "down_right": {
-      "source_top": 235,
-      "source_bottom": 268,
+      "source_top": 236,
+      "source_bottom": 269,
       "height": 33
     },
     "up_left": {
-      "source_top": 283,
-      "source_bottom": 320,
+      "source_top": 282,
+      "source_bottom": 319,
       "height": 37
     },
     "up_right": {
@@ -131,40 +137,40 @@
     ],
     "down_right": [
       {
-        "x": 158,
-        "y": 238,
+        "x": 4,
+        "y": 239,
         "w": 29,
         "h": 30
       },
       {
-        "x": 207,
-        "y": 237,
+        "x": 53,
+        "y": 238,
         "w": 30,
         "h": 31
       },
       {
-        "x": 257,
-        "y": 235,
+        "x": 103,
+        "y": 236,
         "w": 31,
         "h": 33
       }
     ],
     "up_left": [
       {
-        "x": 3,
-        "y": 283,
+        "x": 157,
+        "y": 282,
         "w": 30,
         "h": 34
       },
       {
-        "x": 57,
-        "y": 285,
+        "x": 211,
+        "y": 284,
         "w": 27,
         "h": 34
       },
       {
-        "x": 105,
-        "y": 287,
+        "x": 259,
+        "y": 286,
         "w": 32,
         "h": 33
       }

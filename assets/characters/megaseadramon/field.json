@@ -7,7 +7,7 @@
   "source_sha256": "c77d38e528178f1dfea0e5d54f3b505e8cd4e1dd10fb4ce92c249ebe9c845e01",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "extraction_profile": "four_rows_rightmost_triples",
+  "extraction_profile": "four_rows_first_two_leftmost_last_two_rightmost",
   "review_pattern": "compact_interleaved",
   "runtime_group_indices": [
     0,
@@ -47,13 +47,13 @@
     ],
     "down_right": [
       2,
-      0,
-      1
+      1,
+      0
     ],
     "up_right": [
+      2,
       1,
-      0,
-      2
+      0
     ]
   },
   "pose_alignment": {
@@ -62,30 +62,30 @@
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
         2,
-        0,
-        1
+        1,
+        0
       ],
-      "pixel_error": 425539,
-      "confidence_margin": 5444
+      "pixel_error": 144676,
+      "confidence_margin": 203330
     },
     "up_right": {
       "compared_with": "up_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
+        2,
         1,
-        0,
-        2
+        0
       ],
-      "pixel_error": 322916,
-      "confidence_margin": 171292
+      "pixel_error": 148864,
+      "confidence_margin": 207216
     }
   },
   "vertical_alignment_policy": "frame_bottom",
   "source_group_envelopes": {
     "down_left": {
-      "source_top": 107,
+      "source_top": 109,
       "source_bottom": 149,
-      "height": 42
+      "height": 40
     },
     "down_right": {
       "source_top": 202,
@@ -94,8 +94,8 @@
     },
     "up_left": {
       "source_top": 155,
-      "source_bottom": 201,
-      "height": 46
+      "source_bottom": 194,
+      "height": 39
     },
     "up_right": {
       "source_top": 248,
@@ -106,10 +106,16 @@
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
     18,
-    48
+    43
   ],
   "audited_source_frames": {
     "down_left": [
+      {
+        "x": 176,
+        "y": 110,
+        "w": 31,
+        "h": 38
+      },
       {
         "x": 212,
         "y": 109,
@@ -121,12 +127,6 @@
         "y": 109,
         "w": 33,
         "h": 40
-      },
-      {
-        "x": 294,
-        "y": 107,
-        "w": 30,
-        "h": 40
       }
     ],
     "down_right": [
@@ -137,19 +137,25 @@
         "h": 38
       },
       {
-        "x": 179,
-        "y": 202,
-        "w": 33,
-        "h": 40
-      },
-      {
         "x": 215,
         "y": 202,
         "w": 30,
         "h": 37
+      },
+      {
+        "x": 179,
+        "y": 202,
+        "w": 33,
+        "h": 40
       }
     ],
     "up_left": [
+      {
+        "x": 176,
+        "y": 155,
+        "w": 31,
+        "h": 38
+      },
       {
         "x": 212,
         "y": 156,
@@ -161,15 +167,15 @@
         "y": 155,
         "w": 28,
         "h": 36
-      },
-      {
-        "x": 295,
-        "y": 156,
-        "w": 31,
-        "h": 45
       }
     ],
     "up_right": [
+      {
+        "x": 250,
+        "y": 248,
+        "w": 31,
+        "h": 38
+      },
       {
         "x": 213,
         "y": 249,
@@ -181,17 +187,11 @@
         "y": 248,
         "w": 28,
         "h": 36
-      },
-      {
-        "x": 250,
-        "y": 248,
-        "w": 31,
-        "h": 38
       }
     ]
   },
   "cell_width": 37,
-  "cell_height": 49,
+  "cell_height": 44,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/megaseadramon/field.png"

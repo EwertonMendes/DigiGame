@@ -65,7 +65,7 @@
   "pose_alignment": {
     "down_right": {
       "compared_with": "down_left",
-      "policy": "generated_horizontal_mirror_from_left",
+      "policy": "generated_horizontal_mirror",
       "source_phase_order": [
         0,
         1,
@@ -76,7 +76,7 @@
     },
     "up_right": {
       "compared_with": "up_left",
-      "policy": "generated_horizontal_mirror_from_left",
+      "policy": "generated_horizontal_mirror",
       "source_phase_order": [
         0,
         1,
