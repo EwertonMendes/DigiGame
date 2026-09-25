@@ -4099,8 +4099,8 @@
       "pattern": "rear_rows_first",
       "review_method": "exact_source_box_runtime_review",
       "review_status": "corrected_from_sprite_test_feedback",
-      "review_batch": "kogamon-down-final-crop-2026-09-25-c",
-      "review_note": "Sprite Test final correction: keep UP untouched. DOWN uses uniform exact 34x36 source cells at y=196 with the authored 37px stride, no padding and no per-frame trim. Remove only disconnected alpha components up to 12 px to discard isolated source-residue dots; do not run border cleanup, so connected authored silhouette pixels remain intact and the shared DOWN baseline stays fixed.",
+      "review_batch": "kogamon-down-audited-baseline-2026-09-25",
+      "review_note": "Kogamon-only final correction. Keep UP groups untouched because Sprite Test confirms them correct. Restore the historically audited DOWN component boxes (including the narrower first DL frame and 33px-high first two DL phases) to avoid neighbouring-source pixels. Preserve each exact box without padding/trim, disable all island cleanup so legitimate pixels are not deleted, and bottom-align only DOWN-left/DOWN-right so their walk phases share a stable runtime baseline without changing UP placement.",
       "explicit_groups": [
         [
           {
@@ -4144,16 +4144,16 @@
         ],
         [
           {
-            "x": 1,
+            "x": 7,
             "y": 196,
-            "w": 34,
-            "h": 36
+            "w": 28,
+            "h": 33
           },
           {
             "x": 38,
             "y": 196,
             "w": 34,
-            "h": 36
+            "h": 33
           },
           {
             "x": 75,
@@ -4186,7 +4186,11 @@
       "vertical_alignment": "source_group_envelope",
       "preserve_source_box": true,
       "border_island_cleanup_max_pixels": 0,
-      "alpha_island_cleanup_max_pixels": 12
+      "alpha_island_cleanup_max_pixels": 0,
+      "vertical_alignment_by_direction": {
+        "down_left": "frame_bottom",
+        "down_right": "frame_bottom"
+      }
     },
     "Mammothmon": {
       "source_id": 204,
