@@ -3985,14 +3985,15 @@
           }
         ]
       ],
-      "review_method": "targeted_visual_source_audit",
-      "review_status": "corrected_during_targeted_nine_sprite_audit",
-      "review_batch": "targeted-nine-2026-09-25",
-      "review_note": "Targeted visual audit: the previously applied front/back swap was reversed. In the WTW six-frame field source, G0 is the front-left walk triplet and G2 is the back-left triplet; keep the required synthesized right facings, but map runtime DOWN from G0 and UP from G2.",
+      "review_method": "single_species_direction_review",
+      "review_status": "corrected_single_species_direction_review",
+      "review_batch": "raremon-2026-09-25",
+      "review_note": "Single-species correction: Raremon's two authored movement triplets are ordered front first and rear second. Restore canonical_rows so DOWN uses the first triplet and UP uses the second, keep right facings synthesized only by horizontal mirror at the same depth, and retain the authored source-group vertical envelope across animation phases.",
       "horizontal_mirror_from": {
         "down_right": "down_left",
         "up_right": "up_left"
-      }
+      },
+      "vertical_alignment": "source_group_envelope"
     },
     "Gesomon": {
       "source_id": 156,
