@@ -46,14 +46,14 @@
       2
     ],
     "down_right": [
+      1,
       0,
-      2,
-      1
+      2
     ],
     "up_right": [
+      1,
       0,
-      2,
-      1
+      2
     ]
   },
   "pose_alignment": {
@@ -61,23 +61,23 @@
       "compared_with": "down_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
+        1,
         0,
-        2,
-        1
+        2
       ],
-      "pixel_error": 710686,
-      "confidence_margin": 37956
+      "pixel_error": 692261,
+      "confidence_margin": 64994
     },
     "up_right": {
       "compared_with": "up_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
+        1,
         0,
-        2,
-        1
+        2
       ],
-      "pixel_error": 687043,
-      "confidence_margin": 122660
+      "pixel_error": 682356,
+      "confidence_margin": 71274
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -111,12 +111,6 @@
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 80,
-        "y": 238,
-        "w": 21,
-        "h": 34
-      },
-      {
         "x": 104,
         "y": 238,
         "w": 34,
@@ -124,6 +118,12 @@
       },
       {
         "x": 141,
+        "y": 238,
+        "w": 34,
+        "h": 34
+      },
+      {
+        "x": 178,
         "y": 238,
         "w": 34,
         "h": 34
@@ -131,12 +131,6 @@
     ],
     "down_right": [
       {
-        "x": 178,
-        "y": 238,
-        "w": 34,
-        "h": 34
-      },
-      {
         "x": 252,
         "y": 238,
         "w": 34,
@@ -147,15 +141,15 @@
         "y": 238,
         "w": 34,
         "h": 34
+      },
+      {
+        "x": 289,
+        "y": 238,
+        "w": 34,
+        "h": 34
       }
     ],
     "up_left": [
-      {
-        "x": 76,
-        "y": 274,
-        "w": 25,
-        "h": 34
-      },
       {
         "x": 104,
         "y": 274,
@@ -167,15 +161,15 @@
         "y": 274,
         "w": 34,
         "h": 34
-      }
-    ],
-    "up_right": [
+      },
       {
         "x": 178,
         "y": 274,
         "w": 34,
         "h": 34
-      },
+      }
+    ],
+    "up_right": [
       {
         "x": 252,
         "y": 274,
@@ -184,6 +178,12 @@
       },
       {
         "x": 215,
+        "y": 274,
+        "w": 34,
+        "h": 34
+      },
+      {
+        "x": 289,
         "y": 274,
         "w": 34,
         "h": 34
