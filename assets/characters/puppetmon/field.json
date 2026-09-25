@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 307,
+  "source_archive_file": "sprite thread/307_Pinnochimon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "30c548c77ef40bc2adaa22d6086e138b7645e4fff436ba82e357bdf1e02175ab",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      0,
+      1,
+      2
+    ],
+    "up_right": [
+      0,
+      1,
+      2
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 352,
+      "confidence_margin": 104914
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 141922,
+      "confidence_margin": 34054
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 119,
+      "source_bottom": 154,
+      "height": 35
+    },
+    "down_right": {
+      "source_top": 119,
+      "source_bottom": 154,
+      "height": 35
+    },
+    "up_left": {
+      "source_top": 163,
+      "source_bottom": 198,
+      "height": 35
+    },
+    "up_right": {
+      "source_top": 163,
+      "source_bottom": 198,
+      "height": 35
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    38
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 258,
+        "y": 119,
+        "w": 24,
+        "h": 35
+      },
+      {
+        "x": 290,
+        "y": 121,
+        "w": 24,
+        "h": 33
+      },
+      {
+        "x": 322,
+        "y": 121,
+        "w": 24,
+        "h": 33
+      }
+    ],
+    "down_right": [
+      {
+        "x": 362,
+        "y": 119,
+        "w": 24,
+        "h": 35
+      },
+      {
+        "x": 394,
+        "y": 121,
+        "w": 24,
+        "h": 33
+      },
+      {
+        "x": 426,
+        "y": 121,
+        "w": 24,
+        "h": 33
+      }
+    ],
+    "up_left": [
+      {
+        "x": 258,
+        "y": 163,
+        "w": 24,
+        "h": 35
+      },
+      {
+        "x": 289,
+        "y": 164,
+        "w": 25,
+        "h": 33
+      },
+      {
+        "x": 322,
+        "y": 164,
+        "w": 24,
+        "h": 33
+      }
+    ],
+    "up_right": [
+      {
+        "x": 362,
+        "y": 163,
+        "w": 24,
+        "h": 35
+      },
+      {
+        "x": 394,
+        "y": 164,
+        "w": 25,
+        "h": 33
+      },
+      {
+        "x": 426,
+        "y": 164,
+        "w": 24,
+        "h": 33
+      }
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 39,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/puppetmon/field.png"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Alphamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Alphamon.webp",
+  "frame_width": 120,
+  "frame_height": 155,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "4821312f7af21a837473916d19ee2d14f011062ca2bfe178c775e6fffc94f6eb"
+}

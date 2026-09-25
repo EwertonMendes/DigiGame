@@ -1,0 +1,14 @@
+{
+  "source": "Ophanimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ophanimon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "5b6dce9cd1119def124416754141ad5a66d290edf48f6d4aa1352bc8a32e6e0d"
+}

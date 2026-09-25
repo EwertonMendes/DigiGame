@@ -1,0 +1,14 @@
+{
+  "source": "Argomon Mega.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Argomon%20Mega.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "ff46804285be9024335dbedc03c7a1dee313688d146e222b07db5a32636dc8aa"
+}

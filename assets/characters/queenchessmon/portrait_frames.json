@@ -1,0 +1,14 @@
+{
+  "source": "QueenChessmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/QueenChessmon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "99c3f072a3c0f735edcd6aa7b066deb1897d9c077590c385443d1843e7a097c4"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Jijimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Jijimon.webp",
+  "frame_width": 95,
+  "frame_height": 92,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "6ba3422669b55b6682a3028846fbbb2f3cfbc1cdc5484eba5cf72de2ac0ed75b"
+}

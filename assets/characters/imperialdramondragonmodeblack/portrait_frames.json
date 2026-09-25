@@ -1,0 +1,14 @@
+{
+  "source": "Imperialdramon (Dragon Mode) (Black).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Imperialdramon%20%28Dragon%20Mode%29%20%28Black%29.webp",
+  "frame_width": 118,
+  "frame_height": 134,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "9229e6c565f7dd198082a567c53c3752de436b02e276e8291cf5abe1589dc3ae"
+}

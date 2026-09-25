@@ -1,0 +1,14 @@
+{
+  "source": "Phoenixmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Phoenixmon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "b9c1e80c229457f3c060ed578370f073760c841f0a415b0dd339dee14a263bca"
+}

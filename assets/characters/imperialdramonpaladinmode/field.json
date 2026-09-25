@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 316,
+  "source_archive_file": "sprite thread/316_ImperaildramonPaladin.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "e761c3b0c7b83f56fb5aeb29c541f2a782c723aa7f85819600697f571c885913",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 229892,
+      "confidence_margin": 293118
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 479906
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 319,
+      "source_bottom": 361,
+      "height": 42
+    },
+    "down_right": {
+      "source_top": 319,
+      "source_bottom": 361,
+      "height": 42
+    },
+    "up_left": {
+      "source_top": 366,
+      "source_bottom": 408,
+      "height": 42
+    },
+    "up_right": {
+      "source_top": 366,
+      "source_bottom": 408,
+      "height": 42
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    45
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 37,
+        "y": 320,
+        "w": 31,
+        "h": 41
+      },
+      {
+        "x": 85,
+        "y": 319,
+        "w": 30,
+        "h": 42
+      },
+      {
+        "x": 133,
+        "y": 319,
+        "w": 31,
+        "h": 42
+      }
+    ],
+    "down_right": [
+      {
+        "x": 321,
+        "y": 320,
+        "w": 31,
+        "h": 41
+      },
+      {
+        "x": 274,
+        "y": 319,
+        "w": 30,
+        "h": 42
+      },
+      {
+        "x": 225,
+        "y": 319,
+        "w": 31,
+        "h": 42
+      }
+    ],
+    "up_left": [
+      {
+        "x": 36,
+        "y": 367,
+        "w": 32,
+        "h": 41
+      },
+      {
+        "x": 85,
+        "y": 366,
+        "w": 30,
+        "h": 42
+      },
+      {
+        "x": 134,
+        "y": 366,
+        "w": 30,
+        "h": 42
+      }
+    ],
+    "up_right": [
+      {
+        "x": 321,
+        "y": 367,
+        "w": 32,
+        "h": 41
+      },
+      {
+        "x": 274,
+        "y": 366,
+        "w": 30,
+        "h": 42
+      },
+      {
+        "x": 225,
+        "y": 366,
+        "w": 30,
+        "h": 42
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 46,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/imperialdramonpaladinmode/field.png"
+}

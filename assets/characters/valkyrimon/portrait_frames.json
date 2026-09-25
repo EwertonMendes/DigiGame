@@ -1,0 +1,14 @@
+{
+  "source": "Valkyrimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Valkyrimon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "5816e2d76a01cb1e487efc013b460b28057a2891e58af5bb785c3411745bef3e"
+}

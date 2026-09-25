@@ -1,0 +1,14 @@
+{
+  "source": "Seahomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Seahomon.webp",
+  "frame_width": 99,
+  "frame_height": 113,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "cf7b6df5b1699ee25eecc51db5a744295876dfb33306153fe6bc65cae85704cc"
+}

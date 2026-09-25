@@ -1,0 +1,14 @@
+{
+  "source": "Zanbamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Zanbamon.webp",
+  "frame_width": 110,
+  "frame_height": 112,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "f4c903341dd4138937078c1676404f8c4200fb3a079e6f62dc863dbd5af7b7e2"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "MirageGaogamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MirageGaogamon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "3130bdfeb1d6eca8419b9480cc5a891341b78cdb20aa4d0efbde5abf74d1b026"
+}

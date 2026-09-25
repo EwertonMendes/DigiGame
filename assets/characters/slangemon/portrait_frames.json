@@ -1,0 +1,14 @@
+{
+  "source": "SL Angemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/SL%20Angemon.webp",
+  "frame_width": 116,
+  "frame_height": 128,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "67c5f11b87b4e2d3d86f94ea354748f5f8f9f7d4f4bb051e3b0581fe5e47d7cc"
+}

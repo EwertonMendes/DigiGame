@@ -1,0 +1,14 @@
+{
+  "source": "Creepymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Creepymon.webp",
+  "frame_width": 115,
+  "frame_height": 149,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "c7beb34667feb3756d9e70a27727377751df96f8878aa582817eaa8f7f07d832"
+}

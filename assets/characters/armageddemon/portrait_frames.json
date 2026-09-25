@@ -1,0 +1,14 @@
+{
+  "source": "Armageddemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Armageddemon.webp",
+  "frame_width": 200,
+  "frame_height": 200,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "5f4febb744a25daf550a7abc216b8778a7dc46fda6013e837920cc7bfb01b206"
+}

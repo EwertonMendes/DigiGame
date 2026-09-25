@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 381,
+  "source_archive_file": "sprite thread/381_LilithmonLarge.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "1652d1409b1c13622f513f37b05580909a3e38ae9f7cad5d0687d77c275cad6e",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 468988,
+      "confidence_margin": 186656
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 434626,
+      "confidence_margin": 194470
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 430,
+      "source_bottom": 481,
+      "height": 51
+    },
+    "down_right": {
+      "source_top": 428,
+      "source_bottom": 479,
+      "height": 51
+    },
+    "up_left": {
+      "source_top": 491,
+      "source_bottom": 541,
+      "height": 50
+    },
+    "up_right": {
+      "source_top": 489,
+      "source_bottom": 539,
+      "height": 50
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    25,
+    51
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 10,
+        "y": 433,
+        "w": 40,
+        "h": 48
+      },
+      {
+        "x": 71,
+        "y": 432,
+        "w": 40,
+        "h": 46
+      },
+      {
+        "x": 136,
+        "y": 430,
+        "w": 47,
+        "h": 46
+      }
+    ],
+    "down_right": [
+      {
+        "x": 350,
+        "y": 431,
+        "w": 40,
+        "h": 48
+      },
+      {
+        "x": 289,
+        "y": 430,
+        "w": 40,
+        "h": 46
+      },
+      {
+        "x": 217,
+        "y": 428,
+        "w": 47,
+        "h": 46
+      }
+    ],
+    "up_left": [
+      {
+        "x": 6,
+        "y": 496,
+        "w": 46,
+        "h": 45
+      },
+      {
+        "x": 70,
+        "y": 494,
+        "w": 41,
+        "h": 46
+      },
+      {
+        "x": 139,
+        "y": 491,
+        "w": 39,
+        "h": 48
+      }
+    ],
+    "up_right": [
+      {
+        "x": 348,
+        "y": 494,
+        "w": 46,
+        "h": 45
+      },
+      {
+        "x": 289,
+        "y": 492,
+        "w": 41,
+        "h": 46
+      },
+      {
+        "x": 222,
+        "y": 489,
+        "w": 39,
+        "h": 48
+      }
+    ]
+  },
+  "cell_width": 51,
+  "cell_height": 52,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/lilithmon/field.png"
+}

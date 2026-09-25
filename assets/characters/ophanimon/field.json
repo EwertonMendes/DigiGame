@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 337,
+  "source_archive_file": "sprite thread/337_Orphanimon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "5ed3ac2770f34708223871035c9baae40025dfe835dd224c94242346f72bb496",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 337240,
+      "confidence_margin": 104514
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 749196,
+      "confidence_margin": 10210
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 229,
+      "source_bottom": 276,
+      "height": 47
+    },
+    "down_right": {
+      "source_top": 230,
+      "source_bottom": 277,
+      "height": 47
+    },
+    "up_left": {
+      "source_top": 291,
+      "source_bottom": 338,
+      "height": 47
+    },
+    "up_right": {
+      "source_top": 295,
+      "source_bottom": 341,
+      "height": 46
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    49
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 30,
+        "y": 230,
+        "w": 30,
+        "h": 46
+      },
+      {
+        "x": 67,
+        "y": 229,
+        "w": 31,
+        "h": 45
+      },
+      {
+        "x": 105,
+        "y": 229,
+        "w": 30,
+        "h": 45
+      }
+    ],
+    "down_right": [
+      {
+        "x": 224,
+        "y": 231,
+        "w": 30,
+        "h": 46
+      },
+      {
+        "x": 186,
+        "y": 230,
+        "w": 31,
+        "h": 45
+      },
+      {
+        "x": 149,
+        "y": 230,
+        "w": 30,
+        "h": 45
+      }
+    ],
+    "up_left": [
+      {
+        "x": 110,
+        "y": 291,
+        "w": 31,
+        "h": 44
+      },
+      {
+        "x": 148,
+        "y": 291,
+        "w": 32,
+        "h": 45
+      },
+      {
+        "x": 185,
+        "y": 294,
+        "w": 31,
+        "h": 44
+      }
+    ],
+    "up_right": [
+      {
+        "x": 297,
+        "y": 305,
+        "w": 31,
+        "h": 36
+      },
+      {
+        "x": 260,
+        "y": 295,
+        "w": 31,
+        "h": 45
+      },
+      {
+        "x": 220,
+        "y": 295,
+        "w": 32,
+        "h": 45
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 50,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/ophanimon/field.png"
+}

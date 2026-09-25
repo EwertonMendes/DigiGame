@@ -1,0 +1,14 @@
+{
+  "source": "Devitamamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Devitamamon.webp",
+  "frame_width": 140,
+  "frame_height": 141,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "810eafb85194836df210213401b847111c07a57365943e1732a6003a9e5214f7"
+}
