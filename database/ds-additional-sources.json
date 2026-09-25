@@ -1784,11 +1784,11 @@
       "source_sha256": "b832ed710950f8684ac7bcd507a0e9e6c6d84bd84aeb450a4b8a2cfe20ae1ac2",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/209_Tylomon.png",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "rear_rows_first_up_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "corrected_after_second_runtime_visual_review_batch_e",
+      "review_status": "corrected_after_runtime_visual_review_batch_e",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Second Sprite Test correction: down facings remain correct. Inspecting audited source coordinates shows current up_left is sourced from the right half of the top row and up_right from the left half; restore up source-group order to [0,1] while preserving down [2,3]. Final mapping [2,3,0,1]."
+      "review_note": "Final Sprite Test correction before merge: down facings are correct; only up_left/up_right are inverted. Preserve down and swap only the up pair, mapping [2,3,1,0]."
     },
     "Scorpiomon": {
       "source_id": 210,
