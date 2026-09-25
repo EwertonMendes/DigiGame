@@ -3666,7 +3666,7 @@
       "portrait_metadata": "res://assets/characters/divermon/portrait_frames.json",
       "source_id": 242,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         32,
         34
@@ -3686,7 +3686,7 @@
       "portrait_metadata": "res://assets/characters/kimeramon/portrait_frames.json",
       "source_id": 243,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         45
@@ -3866,7 +3866,7 @@
       "portrait_metadata": "res://assets/characters/tyilinmon/portrait_frames.json",
       "source_id": 258,
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "field_cell": [
         34,
         46
@@ -3886,7 +3886,7 @@
       "portrait_metadata": "res://assets/characters/lilamon/portrait_frames.json",
       "source_id": 259,
       "profile": "four_rows_rightmost_triples",
-      "pattern": "compact_interleaved",
+      "pattern": "compact_interleaved_up_reversed",
       "field_cell": [
         32,
         40
@@ -3906,7 +3906,7 @@
       "portrait_metadata": "res://assets/characters/shadramon/portrait_frames.json",
       "source_id": 260,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         35,
         35
@@ -4206,7 +4206,7 @@
       "portrait_metadata": "res://assets/characters/brachiomon/portrait_frames.json",
       "source_id": 279,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         32,
         42
@@ -4306,7 +4306,7 @@
       "portrait_metadata": "res://assets/characters/rockchessmon/portrait_frames.json",
       "source_id": 285,
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "field_cell": [
         36,
         34
