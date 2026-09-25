@@ -4840,9 +4840,8 @@
     },
     "MirageGaogamon (Burst Mode)": {
       "source_id": 387,
-      "source_member": "sprite thread/387_MirageGaogamonBurst.png",
-      "source_sha256": "d3582654158fe2970e35bf615eea416bf68a7417d2b4d1558c74236bbc58faf0",
-      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "source_sha256": "AUTO_PIN_TEMP",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/387_MirageGaogamonBurst.png",
       "profile": "explicit_groups",
       "pattern": "canonical_rows",
       "explicit_groups": [
@@ -4928,9 +4927,9 @@
         ]
       ],
       "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "ready_for_sprite_test_validation",
-      "review_batch": "backfill-2026-09-25-j",
-      "review_note": "WTW-only explicit audit: selects the two six-frame movement rows and excludes the lower-right extra animation triplet. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_status": "audit_repair_direct_wtw_source_pending",
+      "review_batch": "full-pr179-audit-2026-09-25",
+      "review_note": "Full PR #179 visual audit: current runtime field was visibly invalid (12 blurred blocks). Temporarily fetch the exact WTW item 387 source linked by the official thread to capture and pin its SHA before rebuilding."
     },
     "Ravemon (Burst Mode)": {
       "source_id": 388,
