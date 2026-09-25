@@ -6106,10 +6106,10 @@
       "portrait_metadata": "res://assets/characters/gesomon/portrait_frames.json",
       "source_id": 156,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
-        42,
-        39
+        37,
+        36
       ],
       "portrait_frames": 4
     },

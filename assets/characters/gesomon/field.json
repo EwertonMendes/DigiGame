@@ -8,18 +8,18 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "explicit_groups",
-  "review_pattern": "canonical_rows",
+  "review_pattern": "rear_rows_first",
   "runtime_group_indices": [
-    0,
-    1,
     2,
-    3
+    3,
+    0,
+    1
   ],
   "effective_runtime_group_indices": [
-    0,
-    1,
     2,
-    3
+    3,
+    0,
+    1
   ],
   "horizontal_mirror_from": {},
   "generated_horizontal_mirrors": [],
@@ -46,14 +46,14 @@
       2
     ],
     "down_right": [
+      2,
       1,
-      0,
-      2
+      0
     ],
     "up_right": [
+      2,
       1,
-      0,
-      2
+      0
     ]
   },
   "pose_alignment": {
@@ -61,137 +61,137 @@
       "compared_with": "down_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
+        2,
         1,
-        0,
-        2
+        0
       ],
-      "pixel_error": 692261,
-      "confidence_margin": 64994
+      "pixel_error": 137416,
+      "confidence_margin": 157450
     },
     "up_right": {
       "compared_with": "up_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
+        2,
         1,
-        0,
-        2
+        0
       ],
-      "pixel_error": 682356,
-      "confidence_margin": 71274
+      "pixel_error": 269232,
+      "confidence_margin": 112400
     }
   },
   "vertical_alignment_policy": "frame_bottom",
   "source_group_envelopes": {
     "down_left": {
-      "source_top": 238,
-      "source_bottom": 272,
-      "height": 34
+      "source_top": 276,
+      "source_bottom": 306,
+      "height": 30
     },
     "down_right": {
-      "source_top": 238,
-      "source_bottom": 272,
-      "height": 34
+      "source_top": 276,
+      "source_bottom": 306,
+      "height": 30
     },
     "up_left": {
-      "source_top": 274,
-      "source_bottom": 308,
-      "height": 34
+      "source_top": 241,
+      "source_bottom": 271,
+      "height": 30
     },
     "up_right": {
-      "source_top": 274,
-      "source_bottom": 308,
-      "height": 34
+      "source_top": 241,
+      "source_bottom": 271,
+      "height": 30
     }
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
-    21,
-    38
+    18,
+    35
   ],
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 104,
-        "y": 238,
-        "w": 34,
-        "h": 34
+        "x": 84,
+        "y": 277,
+        "w": 29,
+        "h": 28
       },
       {
-        "x": 141,
-        "y": 238,
-        "w": 34,
-        "h": 34
+        "x": 122,
+        "y": 276,
+        "w": 28,
+        "h": 29
       },
       {
-        "x": 178,
-        "y": 238,
-        "w": 34,
-        "h": 34
+        "x": 159,
+        "y": 277,
+        "w": 31,
+        "h": 29
       }
     ],
     "down_right": [
       {
-        "x": 252,
-        "y": 238,
-        "w": 34,
-        "h": 34
+        "x": 276,
+        "y": 277,
+        "w": 29,
+        "h": 28
       },
       {
-        "x": 215,
-        "y": 238,
-        "w": 34,
-        "h": 34
+        "x": 239,
+        "y": 276,
+        "w": 28,
+        "h": 29
       },
       {
-        "x": 289,
-        "y": 238,
-        "w": 34,
-        "h": 34
+        "x": 199,
+        "y": 277,
+        "w": 31,
+        "h": 29
       }
     ],
     "up_left": [
       {
-        "x": 104,
-        "y": 274,
-        "w": 34,
-        "h": 34
+        "x": 90,
+        "y": 242,
+        "w": 28,
+        "h": 29
       },
       {
-        "x": 141,
-        "y": 274,
-        "w": 34,
-        "h": 34
+        "x": 126,
+        "y": 241,
+        "w": 26,
+        "h": 30
       },
       {
-        "x": 178,
-        "y": 274,
-        "w": 34,
-        "h": 34
+        "x": 161,
+        "y": 242,
+        "w": 29,
+        "h": 29
       }
     ],
     "up_right": [
       {
-        "x": 252,
-        "y": 274,
-        "w": 34,
-        "h": 34
+        "x": 271,
+        "y": 242,
+        "w": 30,
+        "h": 29
       },
       {
-        "x": 215,
-        "y": 274,
-        "w": 34,
-        "h": 34
+        "x": 237,
+        "y": 241,
+        "w": 26,
+        "h": 30
       },
       {
-        "x": 289,
-        "y": 274,
-        "w": 34,
-        "h": 34
+        "x": 199,
+        "y": 242,
+        "w": 29,
+        "h": 29
       }
     ]
   },
-  "cell_width": 42,
-  "cell_height": 39,
+  "cell_width": 37,
+  "cell_height": 36,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/gesomon/field.png",
