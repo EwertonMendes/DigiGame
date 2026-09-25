@@ -81,9 +81,13 @@
     }
   },
   "vertical_alignment_policy": "source_group_envelope",
+  "vertical_alignment_by_direction": {
+    "down_left": "frame_bottom",
+    "down_right": "frame_bottom"
+  },
   "preserve_source_box": true,
   "border_island_cleanup_max_pixels": 0,
-  "alpha_island_cleanup_max_pixels": 12,
+  "alpha_island_cleanup_max_pixels": 0,
   "source_group_envelopes": {
     "down_left": {
       "source_top": 196,
@@ -114,16 +118,16 @@
   "audited_source_frames": {
     "down_left": [
       {
-        "x": 1,
+        "x": 7,
         "y": 196,
-        "w": 34,
-        "h": 36
+        "w": 28,
+        "h": 33
       },
       {
         "x": 38,
         "y": 196,
         "w": 34,
-        "h": 36
+        "h": 33
       },
       {
         "x": 75,
