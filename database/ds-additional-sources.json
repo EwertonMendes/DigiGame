@@ -3131,6 +3131,126 @@
       "review_status": "corrected_after_runtime_visual_review_batch_g2",
       "review_batch": "backfill-2026-09-25-g",
       "review_note": "Sprite Test correction for crossed facings: raw groups resolve as G1=down_left, G0=down_right, G3=up_left, G2=up_right. Map canonical [DL,DR,UL,UR] = [G1,G0,G3,G2]."
+    },
+    "Yatagaramon": {
+      "source_id": 283,
+      "source_member": "sprite thread/283_YatagaramonSmall.png",
+      "source_sha256": "afcf7f0778847f2f90f37aa0fcf23fed260204c76e569689dd6fd859ceaff2ea",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Okuwamon": {
+      "source_id": null,
+      "source_member": "sprite thread/206_Ookuwamon.png",
+      "source_sha256": "a72ba51d65dfec5facef3061f4e78dbccf5f88303fde1906ba80d2aa45000aa7",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "MachGaogamon": {
+      "source_id": 257,
+      "source_member": "sprite thread/257_MachGaogamonGarmmon.png",
+      "source_sha256": "57210e27e2069dc9f44881e97a5aca202253dfc25d3a25402262dcaddddc6bc8",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Lucemon Chaos Mode": {
+      "source_id": 265,
+      "source_member": "sprite thread/265_LucemonFDM.png",
+      "source_sha256": "4e182962661502e41bb2bf92c01841c1879556572b2aafa1e83b9fa40cad8d43",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "compact_interleaved",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G0=down_left, G2=down_right, G1=up_left, G3=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "GranKuwagamon": {
+      "source_id": 365,
+      "source_member": "sprite thread/365_GranKuwagamon.png",
+      "source_sha256": "af4d2eb6459d2ea1d42be72dd4ddcbe70498e1004ea17ddfb2046b096a834069",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "MetalSeadramon": {
+      "source_id": 359,
+      "source_member": "sprite thread/359_MetalSeadramon.png",
+      "source_sha256": "6bbe030e6166bf125601f2812b66162c95569c1284fa3caa03d37680d807b70c",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "SaberLeomon": {
+      "source_id": 300,
+      "source_member": "sprite thread/300_SaberLeomon.png",
+      "source_sha256": "cc0fe2405476a652a5011e831d5d33ae8f8c79b9e45ddf6f41aafddcf5d2e797",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "VenomMyotismon": {
+      "source_id": 312,
+      "source_member": "sprite thread/312_VenomVamdemon.png",
+      "source_sha256": "ae1171db9661a7353a7901bcff773195b5f09736c2b5ebe995f52020e4850863",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Ghoulmon": {
+      "source_id": 317,
+      "source_member": "sprite thread/317_Deathmon.png",
+      "source_sha256": "83c7c32c538e8eac176cabfd943ffe8539ee834e2cbc3a8b6bf8ac46d341a1ab",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Gallantmon (Crimson Mode)": {
+      "source_id": 324,
+      "source_member": "sprite thread/324_DukemonCrimsonUpdate.png",
+      "source_sha256": "5490299e057a177f73d24b830219c93df1703e662acf19b28bacbcab754822e9",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
     }
   }
 }
