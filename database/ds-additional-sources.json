@@ -4561,17 +4561,18 @@
           }
         ]
       ],
-      "review_method": "targeted_visual_source_audit",
-      "review_status": "corrected_during_targeted_nine_sprite_audit",
-      "review_batch": "targeted-nine-2026-09-25",
-      "review_note": "Targeted visual audit: direction groups and crops are already semantically correct. Replace broad global blue-matte tolerance with exact per-frame border-connected matte removal so only the legacy WTW canvas is removed and authored costume/hair/cape pixels are preserved.",
+      "review_method": "single_species_alignment_review",
+      "review_status": "corrected_single_species_alignment_review",
+      "review_batch": "rosemon-2026-09-25",
+      "review_note": "Single-species correction: retain Rosemon's audited canonical directional mapping and source boxes, while preserving the authored source-row vertical envelope through each three-frame walk cycle instead of bottom-aligning trimmed frames independently. No direction remap or sprite-pixel substitution is introduced.",
       "frame_background_policy": "border_connected_matte",
       "frame_background_rgb": [
         123,
         198,
         255
       ],
-      "frame_background_tolerance": 0
+      "frame_background_tolerance": 0,
+      "vertical_alignment": "source_group_envelope"
     },
     "Seraphimon": {
       "source_id": 318,
