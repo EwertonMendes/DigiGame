@@ -82,6 +82,7 @@
   },
   "vertical_alignment_policy": "frame_bottom",
   "preserve_source_box": false,
+  "border_island_cleanup_max_pixels": 0,
   "source_group_envelopes": {
     "down_left": {
       "source_top": 224,
