@@ -1,0 +1,14 @@
+{
+  "source": "Volcanomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Volcanomon.webp",
+  "frame_width": 89,
+  "frame_height": 131,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "28d2cd4ebea1f4f4011d26f1c29d171dd4f94c86ba3cc51c18f3486337c8d7ec"
+}

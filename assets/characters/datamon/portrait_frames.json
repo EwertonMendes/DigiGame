@@ -1,0 +1,14 @@
+{
+  "source": "Datamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Datamon.webp",
+  "frame_width": 94,
+  "frame_height": 46,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "73166718137932764f2ef9f5706eacfb3f935ea33cfc2a5bd4de894e20b92fa6"
+}

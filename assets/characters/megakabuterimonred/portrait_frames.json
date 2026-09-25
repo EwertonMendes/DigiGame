@@ -1,0 +1,14 @@
+{
+  "source": "MegaKabuterimon_Red.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MegaKabuterimon_Red.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "b79286a38d417df0e5ace2e2495d95f94632c379f32abd2d040f3815348e4015"
+}

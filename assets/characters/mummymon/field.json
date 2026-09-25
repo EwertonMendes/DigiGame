@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 228,
+  "source_archive_file": "sprite thread/228_Mummymon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/228_Mummymon.png",
+  "source_sha256": "424230ae60c7abb3c31ba6ed0715fb5d8aa537b8dca49852966b2837f871f40b",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 271172,
+      "confidence_margin": 150180
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 370422
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 238,
+      "source_bottom": 277,
+      "height": 39
+    },
+    "down_right": {
+      "source_top": 238,
+      "source_bottom": 277,
+      "height": 39
+    },
+    "up_left": {
+      "source_top": 285,
+      "source_bottom": 324,
+      "height": 39
+    },
+    "up_right": {
+      "source_top": 285,
+      "source_bottom": 324,
+      "height": 39
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    41
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 2,
+        "y": 238,
+        "w": 24,
+        "h": 38
+      },
+      {
+        "x": 38,
+        "y": 239,
+        "w": 24,
+        "h": 35
+      },
+      {
+        "x": 76,
+        "y": 239,
+        "w": 25,
+        "h": 38
+      }
+    ],
+    "down_right": [
+      {
+        "x": 194,
+        "y": 238,
+        "w": 24,
+        "h": 38
+      },
+      {
+        "x": 158,
+        "y": 239,
+        "w": 24,
+        "h": 35
+      },
+      {
+        "x": 119,
+        "y": 239,
+        "w": 25,
+        "h": 38
+      }
+    ],
+    "up_left": [
+      {
+        "x": 2,
+        "y": 285,
+        "w": 22,
+        "h": 37
+      },
+      {
+        "x": 36,
+        "y": 286,
+        "w": 26,
+        "h": 38
+      },
+      {
+        "x": 78,
+        "y": 286,
+        "w": 20,
+        "h": 36
+      }
+    ],
+    "up_right": [
+      {
+        "x": 196,
+        "y": 285,
+        "w": 22,
+        "h": 37
+      },
+      {
+        "x": 158,
+        "y": 286,
+        "w": 26,
+        "h": 38
+      },
+      {
+        "x": 122,
+        "y": 286,
+        "w": 20,
+        "h": 36
+      }
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 42,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/mummymon/field.png"
+}

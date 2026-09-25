@@ -1,0 +1,14 @@
+{
+  "source": "Monzaemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Monzaemon.webp",
+  "frame_width": 123,
+  "frame_height": 156,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "42f2b74d58cc195be0337c6541d673239f0750d326a118faab126af8cf6a37fc"
+}

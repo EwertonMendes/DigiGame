@@ -1,0 +1,14 @@
+{
+  "source": "Lillymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Lillymon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "e8b8f18d9e8f83ce29e44c57a6ff252c25d3d7593144a4ec243d237ed4d31f46"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Dinobeemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Dinobeemon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "6df93d395b69757f7a57a3db9c1ce8ddff369a3a86ebabe461a0423d1093ad93"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "ShogunGekomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/ShogunGekomon.webp",
+  "frame_width": 150,
+  "frame_height": 154,
+  "frame_count": 4,
+  "durations_ms": [
+    350,
+    350,
+    350,
+    350
+  ],
+  "source_sha256": "db80d1e1b331962c11011f682ac8b83f288c31bc369268a8fc41588a958ad915"
+}

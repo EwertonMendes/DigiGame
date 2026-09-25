@@ -1,0 +1,14 @@
+{
+  "source": "Mummymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Mummymon.webp",
+  "frame_width": 64,
+  "frame_height": 110,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "7bd1d56ec5dcec6ce971fab709a9d31c5883b31edc9f190c6b36d6daf2e20e99"
+}

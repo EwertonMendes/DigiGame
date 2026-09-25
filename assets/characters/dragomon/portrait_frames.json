@@ -1,0 +1,14 @@
+{
+  "source": "Dragomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Dragomon.webp",
+  "frame_width": 84,
+  "frame_height": 114,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "e3a353f037b7cbe5b7bde91a002ed513acf8ebb44350321d494c699e3c232a4a"
+}

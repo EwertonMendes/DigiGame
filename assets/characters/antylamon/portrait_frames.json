@@ -1,0 +1,14 @@
+{
+  "source": "Antylamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Antylamon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "83674798b1df8e944b2377fed3fc8ab95388c0eebee4f6fe878eafe6b4bed6f5"
+}

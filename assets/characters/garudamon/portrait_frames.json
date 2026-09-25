@@ -1,0 +1,14 @@
+{
+  "source": "Garudamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Garudamon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "2c17167cec9a0cc65546eddb601952298ba6676d8a3d458308528eccbf10cabe"
+}

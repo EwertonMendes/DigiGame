@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 212,
+  "source_archive_file": "sprite thread/212_Dagomon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/212_Dagomon.png",
+  "source_sha256": "ffd0d0670c9dac0ea6ef9e5988609e04e8ce931afd92eeac99049917096656a6",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 445320
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 122618,
+      "confidence_margin": 273038
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 300,
+      "source_bottom": 340,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 300,
+      "source_bottom": 340,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 254,
+      "source_bottom": 294,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 254,
+      "source_bottom": 294,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    43
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 14,
+        "y": 301,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 57,
+        "y": 300,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 99,
+        "y": 300,
+        "w": 32,
+        "h": 40
+      }
+    ],
+    "down_right": [
+      {
+        "x": 226,
+        "y": 301,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 183,
+        "y": 300,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 141,
+        "y": 300,
+        "w": 32,
+        "h": 40
+      }
+    ],
+    "up_left": [
+      {
+        "x": 21,
+        "y": 256,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 63,
+        "y": 255,
+        "w": 31,
+        "h": 38
+      },
+      {
+        "x": 103,
+        "y": 254,
+        "w": 28,
+        "h": 40
+      }
+    ],
+    "up_right": [
+      {
+        "x": 219,
+        "y": 256,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 178,
+        "y": 255,
+        "w": 31,
+        "h": 38
+      },
+      {
+        "x": 141,
+        "y": 254,
+        "w": 28,
+        "h": 40
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 44,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/dragomon/field.png"
+}

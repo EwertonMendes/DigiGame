@@ -1,0 +1,14 @@
+{
+  "source": "Arukenimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Arukenimon.webp",
+  "frame_width": 117,
+  "frame_height": 110,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "397df8c0849c5ea669093cd849ac32ee0ff6360abfaab8b44157a3b10d0fe746"
+}

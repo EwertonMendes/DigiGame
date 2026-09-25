@@ -1,0 +1,14 @@
+{
+  "source": "BlackRapidmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/BlackRapidmon.webp",
+  "frame_width": 115,
+  "frame_height": 143,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "d988a8325449d13662ac0f00cf9fc19b998813f7be5f691e059784dfef6b1ae2"
+}

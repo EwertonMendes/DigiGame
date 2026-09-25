@@ -1,0 +1,14 @@
+{
+  "source": "Taomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Taomon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "8c96d4812943d8eef00e28124b789730bf110ff4d2527f5f6901a65421f7f311"
+}

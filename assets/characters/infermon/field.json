@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 233,
+  "source_archive_file": "sprite thread/233_Infermon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/233_Infermon.png",
+  "source_sha256": "119db01baacc849f8791ccc0ce7e5c49c510d78410b154953e92f27c98a605ab",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 285740
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 292674
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 219,
+      "source_bottom": 248,
+      "height": 29
+    },
+    "down_right": {
+      "source_top": 216,
+      "source_bottom": 245,
+      "height": 29
+    },
+    "up_left": {
+      "source_top": 264,
+      "source_bottom": 297,
+      "height": 33
+    },
+    "up_right": {
+      "source_top": 261,
+      "source_bottom": 294,
+      "height": 33
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    19,
+    34
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 1,
+        "y": 221,
+        "w": 32,
+        "h": 27
+      },
+      {
+        "x": 50,
+        "y": 219,
+        "w": 32,
+        "h": 28
+      },
+      {
+        "x": 103,
+        "y": 219,
+        "w": 28,
+        "h": 28
+      }
+    ],
+    "down_right": [
+      {
+        "x": 256,
+        "y": 218,
+        "w": 32,
+        "h": 27
+      },
+      {
+        "x": 207,
+        "y": 216,
+        "w": 32,
+        "h": 28
+      },
+      {
+        "x": 158,
+        "y": 216,
+        "w": 28,
+        "h": 28
+      }
+    ],
+    "up_left": [
+      {
+        "x": 3,
+        "y": 267,
+        "w": 32,
+        "h": 30
+      },
+      {
+        "x": 52,
+        "y": 264,
+        "w": 32,
+        "h": 31
+      },
+      {
+        "x": 105,
+        "y": 265,
+        "w": 30,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 254,
+        "y": 264,
+        "w": 32,
+        "h": 30
+      },
+      {
+        "x": 205,
+        "y": 261,
+        "w": 32,
+        "h": 31
+      },
+      {
+        "x": 154,
+        "y": 262,
+        "w": 30,
+        "h": 30
+      }
+    ]
+  },
+  "cell_width": 38,
+  "cell_height": 35,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/infermon/field.png"
+}

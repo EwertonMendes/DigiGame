@@ -1,0 +1,14 @@
+{
+  "source": "Grademon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Grademon.webp",
+  "frame_width": 132,
+  "frame_height": 161,
+  "frame_count": 4,
+  "durations_ms": [
+    300,
+    300,
+    300,
+    300
+  ],
+  "source_sha256": "bc4e72ac3c1c1a33a6e70f78e561663b6819d4a6bfbc685f2e011658bed08b8c"
+}
