@@ -2633,12 +2633,12 @@
       "source_member": "sprite thread/337_Orphanimon.png",
       "source_sha256": "5ed3ac2770f34708223871035c9baae40025dfe835dd224c94242346f72bb496",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
-      "profile": "two_rows_of_six",
+      "profile": "single_row_four_triples",
       "pattern": "rear_rows_first",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_g",
+      "review_status": "corrected_after_runtime_visual_review_batch_g2",
       "review_batch": "backfill-2026-09-25-g",
-      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side."
+      "review_note": "Sprite Test correction using the supplied source-sheet inspection: the movement strip is a single row of 12 DS sprites ordered G0=up_left, G1=up_right, G2=down_left, G3=down_right, with 3 walk frames per facing. Use only that 12-frame row and map it to canonical runtime order [DL,DR,UL,UR] = [G2,G3,G0,G1]."
     },
     "Beelzemon": {
       "source_id": 348,
@@ -2646,11 +2646,11 @@
       "source_sha256": "fffa9a9109f7b052056da5bef9fc9cd9c0501ecc5af1985a17d35b3669a8041b",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_g",
+      "review_status": "corrected_after_runtime_visual_review_batch_g2",
       "review_batch": "backfill-2026-09-25-g",
-      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side."
+      "review_note": "Sprite Test correction: down_left/down_right are correct; only up_left/up_right are inverted. Preserve DOWN and swap only the UP pair."
     },
     "MarineAngemon": {
       "source_id": 302,
@@ -2802,11 +2802,11 @@
       "source_sha256": "b334b08a89c2a68668bbd51380c03a3359f986eb272a917bd8fb4db7c7dcbd8d",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "compact_interleaved",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_g",
+      "review_status": "corrected_after_runtime_visual_review_batch_g2",
       "review_batch": "backfill-2026-09-25-g",
-      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side."
+      "review_note": "Sprite Test correction from observed facing cycle: current raw groups resolve as G0=down_left, G2=down_right, G1=up_left, G3=up_right. Map canonical [DL,DR,UL,UR] = [G0,G2,G1,G3]."
     },
     "Imperialdramon (Dragon Mode) (Black)": {
       "source_id": 334,
@@ -3030,11 +3030,11 @@
       "source_sha256": "65fece6e79785df777dd3519b60297d4ca8edc9aaf8f15f961352736e02d5df2",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows_front_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_g",
+      "review_status": "corrected_after_runtime_visual_review_batch_g2",
       "review_batch": "backfill-2026-09-25-g",
-      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side."
+      "review_note": "Sprite Test correction for crossed facings: raw groups resolve as G1=down_left, G0=down_right, G3=up_left, G2=up_right. Map canonical [DL,DR,UL,UR] = [G1,G0,G3,G2]."
     },
     "QueenChessmon": {
       "source_id": 378,
@@ -3126,11 +3126,11 @@
       "source_sha256": "3b5596a1e578aeecb0510c9390f83c395e6196fa67a13645995c73fc0f23d88a",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "single_row_four_triples",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows_front_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "corrected_after_runtime_visual_review_batch_g",
+      "review_status": "corrected_after_runtime_visual_review_batch_g2",
       "review_batch": "backfill-2026-09-25-g",
-      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side."
+      "review_note": "Sprite Test correction for crossed facings: raw groups resolve as G1=down_left, G0=down_right, G3=up_left, G2=up_right. Map canonical [DL,DR,UL,UR] = [G1,G0,G3,G2]."
     }
   }
 }
