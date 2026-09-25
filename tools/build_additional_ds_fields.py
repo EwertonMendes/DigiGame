@@ -583,7 +583,6 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "source_frame_order": source_frame_order,
         "pose_alignment": pose_alignment,
         "vertical_alignment_policy": vertical_alignment,
-        "vertical_alignment_by_direction": vertical_alignment_by_direction,
         "preserve_source_box": preserve_source_box,
         "border_island_cleanup_max_pixels": border_island_cleanup_max_pixels,
         "alpha_island_cleanup_max_pixels": alpha_island_cleanup_max_pixels,
@@ -601,6 +600,8 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "frames_per_direction": 3,
         "field_path": f"res://assets/characters/{key}/field.png",
     }
+    if vertical_alignment_by_direction:
+        metadata["vertical_alignment_by_direction"] = vertical_alignment_by_direction
     if background_tolerance > 0:
         metadata["background_tolerance"] = background_tolerance
     if background_outline_radius > 0:
