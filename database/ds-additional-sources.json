@@ -3881,10 +3881,16 @@
         ]
       ],
       "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: replace the degraded archived Photobucket copy with the exact WTW sprite URL supplied by the reviewer. Existing audited field-grid boxes are retained against the original-layout source.",
-      "background_tolerance": 100
+      "review_status": "corrected_during_full_pr179_visual_audit",
+      "review_batch": "full-pr179-audit-2026-09-25",
+      "review_note": "Full PR #179 visual audit: replace broad global blue-matte tolerance with per-frame border-connected matte removal against the WTW blue canvas, preserving authored blue pixels in Kabuterimon.",
+      "frame_background_policy": "border_connected_matte",
+      "frame_background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "frame_background_tolerance": 0
     },
     "Raremon": {
       "source_id": 102,
@@ -3991,9 +3997,9 @@
       "profile": "explicit_groups",
       "pattern": "canonical_rows",
       "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction using the exact reviewer-supplied WTW source: select the clean two-row field grid and preserve the authored black body/outline even though the legacy source canvas is also black, using the reusable near-foreground matte preservation policy at radius 4.",
+      "review_status": "corrected_during_full_pr179_visual_audit",
+      "review_batch": "full-pr179-audit-2026-09-25",
+      "review_note": "Full PR #179 visual audit: the exact WTW field grid uses a white matte while Gesomon itself contains large authored white regions. Remove only matte-colored pixels connected to each frame crop border so internal same-color body pixels are preserved.",
       "explicit_groups": [
         [
           {
@@ -4076,7 +4082,13 @@
           }
         ]
       ],
-      "background_outline_radius": 4
+      "frame_background_policy": "border_connected_matte",
+      "frame_background_rgb": [
+        255,
+        255,
+        255
+      ],
+      "frame_background_tolerance": 0
     },
     "Kogamon": {
       "source_id": 174,

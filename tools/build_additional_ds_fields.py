@@ -216,6 +216,65 @@ def keyed_source_preserving_outline(
     return Image.fromarray(rgba, "RGBA")
 
 
+def crop_frame_border_connected_matte(
+    source: Image.Image,
+    box: dict[str, int],
+    background_rgb: tuple[int, int, int],
+    tolerance: int,
+) -> Image.Image:
+    """Key only matte pixels connected to the border of one authored frame crop.
+
+    Legacy WTW sheets sometimes reuse the matte color inside the Digimon itself
+    (Gesomon white body, Kabuterimon blue details). A global color key destroys
+    those authored pixels. Flooding from the crop border removes only actual
+    surrounding matte while preserving same-color pixels enclosed by the sprite.
+    """
+    x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
+    pad = 2
+    crop = source.crop((
+        max(0, x - pad),
+        max(0, y - pad),
+        min(source.width, x + w + pad),
+        min(source.height, y + h + pad),
+    )).convert("RGBA")
+    rgba = np.array(crop, copy=True)
+    background = np.asarray(background_rgb, dtype=np.int16)
+    delta = np.max(np.abs(rgba[:, :, :3].astype(np.int16) - background), axis=2)
+    matte = (delta <= tolerance) & (rgba[:, :, 3] > 0)
+    connected = np.zeros_like(matte)
+    h_px, w_px = matte.shape
+    stack: list[tuple[int, int]] = []
+    for xx in range(w_px):
+        if matte[0, xx]:
+            stack.append((0, xx))
+        if h_px > 1 and matte[h_px - 1, xx]:
+            stack.append((h_px - 1, xx))
+    for yy in range(h_px):
+        if matte[yy, 0]:
+            stack.append((yy, 0))
+        if w_px > 1 and matte[yy, w_px - 1]:
+            stack.append((yy, w_px - 1))
+    while stack:
+        yy, xx = stack.pop()
+        if connected[yy, xx] or not matte[yy, xx]:
+            continue
+        connected[yy, xx] = True
+        if yy > 0:
+            stack.append((yy - 1, xx))
+        if yy + 1 < h_px:
+            stack.append((yy + 1, xx))
+        if xx > 0:
+            stack.append((yy, xx - 1))
+        if xx + 1 < w_px:
+            stack.append((yy, xx + 1))
+    rgba[connected, 3] = 0
+    frame = Image.fromarray(rgba, "RGBA")
+    bbox = frame.getbbox()
+    if bbox is None:
+        raise RuntimeError(f"Source component became empty after border matte removal: {box}")
+    return frame.crop(bbox)
+
+
 def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     profile_name = str(spec["profile"])
     pattern_name = str(spec["pattern"])
@@ -250,7 +309,16 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     for target_direction, source_direction in horizontal_mirror_from.items():
         raw_frames[target_direction] = raw_frames[source_direction]
         effective_runtime_group_indices[DIRECTIONS.index(target_direction)] = permutation[DIRECTIONS.index(source_direction)]
-    background, _ = _components(source)
+    inferred_background, _ = _components(source)
+    frame_background_rgb = spec.get("frame_background_rgb")
+    if frame_background_rgb is not None:
+        if not isinstance(frame_background_rgb, list) or len(frame_background_rgb) != 3:
+            raise RuntimeError(f"{name}: frame_background_rgb must contain exactly three values")
+        background = tuple(int(value) for value in frame_background_rgb)
+        if any(value < 0 or value > 255 for value in background):
+            raise RuntimeError(f"{name}: invalid frame_background_rgb {background}")
+    else:
+        background = inferred_background
     source_frame_order: dict[str, list[int]] = {
         "down_left": [0, 1, 2],
         "up_left": [0, 1, 2],
@@ -300,7 +368,15 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     if not 0 <= background_tolerance <= 255:
         raise RuntimeError(f"{name}: invalid background_tolerance {background_tolerance}")
     background_outline_radius = int(spec.get("background_outline_radius", 0))
-    if background_outline_radius:
+    frame_background_policy = str(spec.get("frame_background_policy", "global_key"))
+    frame_background_tolerance = int(spec.get("frame_background_tolerance", 0))
+    if not 0 <= frame_background_tolerance <= 255:
+        raise RuntimeError(f"{name}: invalid frame_background_tolerance {frame_background_tolerance}")
+    if frame_background_policy not in {"global_key", "border_connected_matte"}:
+        raise RuntimeError(f"{name}: unknown frame_background_policy {frame_background_policy}")
+    if frame_background_policy == "border_connected_matte":
+        keyed = source
+    elif background_outline_radius:
         keyed = keyed_source_preserving_outline(
             source,
             background,
@@ -329,7 +405,15 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             "height": envelope_height,
         }
         for box in ordered_boxes:
-            frame = crop_component(keyed, box)
+            if frame_background_policy == "border_connected_matte":
+                frame = crop_frame_border_connected_matte(
+                    source,
+                    box,
+                    background,
+                    frame_background_tolerance,
+                )
+            else:
+                frame = crop_component(keyed, box)
             if direction in horizontal_mirror_from:
                 frame = frame.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             frames.append(frame)
@@ -399,6 +483,10 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         metadata["background_tolerance"] = background_tolerance
     if background_outline_radius > 0:
         metadata["background_outline_radius"] = background_outline_radius
+    if frame_background_policy != "global_key":
+        metadata["frame_background_policy"] = frame_background_policy
+        metadata["frame_background_rgb"] = list(background)
+        metadata["frame_background_tolerance"] = frame_background_tolerance
     (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     return metadata
 
@@ -481,6 +569,14 @@ def main() -> None:
             audit_dir = Path("assets/characters") / compact_key(name)
             audit_dir.mkdir(parents=True, exist_ok=True)
             (audit_dir / "wtw_source_audit.png").write_bytes(payload)
+            if name == "Gesomon":
+                audit_crop = source.crop((90, 225, 340, 320))
+            else:
+                audit_crop = source.crop((215, 115, 340, 290))
+            audit_crop.resize(
+                (audit_crop.width * 4, audit_crop.height * 4),
+                Image.Resampling.NEAREST,
+            ).save(audit_dir / "wtw_field_grid_audit.png", "PNG")
         field = build_field(name, source, payload, spec, config)
         portrait = build_portrait(by_name[name])
         resource = write_resource(by_name[name], field)
