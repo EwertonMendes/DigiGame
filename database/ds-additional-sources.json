@@ -99,6 +99,9 @@
     },
     "four_rows_leftmost_triples": {
       "kind": "four_rows_leftmost_triples"
+    },
+    "four_rows_first_two_leftmost_last_two_rightmost": {
+      "kind": "four_rows_first_two_leftmost_last_two_rightmost"
     }
   },
   "species": {
@@ -1633,11 +1636,11 @@
       "source_sha256": "5e38fca7a727609a95ee8f4e7bed8e981dc389d7ce17b17eaa84be5dcdfa40ea",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/208_Angewomon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_e",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down_left/down_right are correct; only up_left/up_right are inverted."
     },
     "Mega Kabuterimon (Blue)": {
       "source_id": 205,
@@ -1683,21 +1686,25 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "source_defect_completed_with_bidirectional_horizontal_mirrors",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test confirmed down_left and up_right are correct, while down_right duplicates down_left and up_left duplicates up_right in the source sheet. Preserve the two valid facings and synthesize down_right from down_left plus up_left from up_right as exact horizontal mirrors.",
+      "horizontal_mirror_from": {
+        "down_right": "down_left",
+        "up_left": "up_right"
+      }
     },
     "MegaSeadramon": {
       "source_id": 211,
       "source_member": "sprite thread/211_MegaSeadramon.png",
       "source_sha256": "c77d38e528178f1dfea0e5d54f3b505e8cd4e1dd10fb4ce92c249ebe9c845e01",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/211_MegaSeadramon.png",
-      "profile": "four_rows_rightmost_triples",
+      "profile": "four_rows_first_two_leftmost_last_two_rightmost",
       "pattern": "compact_interleaved",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_source_frame_selection_after_runtime_visual_review",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test confirmed down_right/up_right are correct, while the first two source rows included one extra victory-jump frame. Extract the leftmost three movement cells from rows 1-2 and the rightmost three from rows 3-4, keeping exactly three movement frames per direction."
     },
     "Volcanomon": {
       "source_id": null,
@@ -1777,11 +1784,11 @@
       "source_sha256": "b832ed710950f8684ac7bcd507a0e9e6c6d84bd84aeb450a4b8a2cfe20ae1ac2",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/209_Tylomon.png",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "rear_rows_first_up_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_e",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: preserve the current down pair and swap only up_left/up_right."
     },
     "Scorpiomon": {
       "source_id": 210,
@@ -1815,9 +1822,12 @@
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "source_defect_completed_with_generated_horizontal_mirror",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test confirmed both up facings and down_left are correct, while down_right duplicates down_left in the source. Synthesize only down_right as the exact horizontal mirror of down_left.",
+      "horizontal_mirror_from": {
+        "down_right": "down_left"
+      }
     },
     "Garudamon": {
       "source_id": 217,
@@ -1849,11 +1859,11 @@
       "source_sha256": "e5533af455bd8846b1229dfaa8fd0d04cc5dce883d8bd119c428fc43c5beaad2",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/219_Lillymon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_e",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down_left/down_right are correct; only up_left/up_right are inverted."
     },
     "Datamon": {
       "source_id": 221,
@@ -1873,11 +1883,11 @@
       "source_sha256": "524e1725b2fa446dbcab27e7137ce2f3cf80916fd352bccd35363f39e4387c67",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/223_HolyAngemon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_e",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down_left/down_right are correct; only up_left/up_right are inverted."
     },
     "Dinobeemon": {
       "source_id": 225,
@@ -1933,11 +1943,11 @@
       "source_sha256": "1ebcb9676285e9cfbceed095ea2d6e99f1e3ab3eac024a3aa792819c3bdbd450",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/230_Rapidmon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_e",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down_left/down_right are correct; only up_left/up_right are inverted."
     },
     "Taomon": {
       "source_id": 231,
@@ -1945,11 +1955,11 @@
       "source_sha256": "8c05abb74be27cb3702099857a83f7745268ba8206ff204e93197d7d5c116457",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/231_Taomon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_e",
       "review_batch": "backfill-2026-09-25-e",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down_left/down_right are correct; only up_left/up_right are inverted."
     },
     "Parrotmon": {
       "source_id": 232,
