@@ -4097,10 +4097,10 @@
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
       "profile": "explicit_groups",
       "pattern": "rear_rows_first",
-      "review_method": "video_confirmed_exact_source_crop",
-      "review_status": "corrected_from_recorded_sprite_test",
-      "review_batch": "kogamon-down-video-fix-2026-09-25",
-      "review_note": "Kogamon-only correction confirmed from the recorded Sprite Test video. UP-left and UP-right remain untouched. The DOWN row at y=196 was leaking visible purple/yellow pixels from the extra pose row directly below whenever 36px-high boxes were used, especially on DOWN-right. Use exact no-padding source boxes ending at y=228 (h=33) for all six DOWN phases, preserving each box as-is with a shared source-group envelope. No trim, border cleanup, alpha-island cleanup, mirroring change, or UP modification.",
+      "review_method": "user_sheet_fixed_grid_rebuild",
+      "review_status": "rebuilt_from_clean_sheet_grid",
+      "review_batch": "kogamon-down-clean-grid-2026-09-25",
+      "review_note": "Kogamon-only rebuild from the clean sheet supplied by the user. UP remains untouched. DOWN is no longer derived from component bounds or inferred 37px spacing: it uses the actual fixed six-cell grid on the clean sheet, y=192, h=32, x=[12,45,78,111,144,177], w=33. Preserve the complete transparent cell for each phase with no trim, no padding, no residue cleanup and one shared source-group envelope so authored intra-cell foot placement is retained and animation cannot bounce from per-frame re-anchoring.",
       "explicit_groups": [
         [
           {
@@ -4144,42 +4144,42 @@
         ],
         [
           {
-            "x": 7,
-            "y": 196,
-            "w": 28,
-            "h": 33
+            "x": 12,
+            "y": 192,
+            "w": 33,
+            "h": 32
           },
           {
-            "x": 38,
-            "y": 196,
-            "w": 34,
-            "h": 33
+            "x": 45,
+            "y": 192,
+            "w": 33,
+            "h": 32
           },
           {
-            "x": 75,
-            "y": 196,
-            "w": 34,
-            "h": 33
+            "x": 78,
+            "y": 192,
+            "w": 33,
+            "h": 32
           }
         ],
         [
           {
-            "x": 112,
-            "y": 196,
-            "w": 34,
-            "h": 33
+            "x": 111,
+            "y": 192,
+            "w": 33,
+            "h": 32
           },
           {
-            "x": 149,
-            "y": 196,
-            "w": 34,
-            "h": 33
+            "x": 144,
+            "y": 192,
+            "w": 33,
+            "h": 32
           },
           {
-            "x": 186,
-            "y": 196,
-            "w": 34,
-            "h": 33
+            "x": 177,
+            "y": 192,
+            "w": 33,
+            "h": 32
           }
         ]
       ],
