@@ -3883,14 +3883,18 @@
       "review_method": "explicit_wtw_source_frame_audit",
       "review_status": "corrected_during_full_pr179_visual_audit",
       "review_batch": "full-pr179-audit-2026-09-25",
-      "review_note": "Full PR #179 visual audit against the exact WTW field grid: authored groups are G0=down_left, G1=up_left, G2=down_right, G3=up_right. Runtime canonical order must therefore use [G0,G2,G1,G3]. Matte cleanup is audited separately.",
+      "review_note": "Full PR #179 visual audit: WTW groups are G0=down_left, G1=up_left, G2=down_right, G3=up_right. G0/G1 overlap legacy Photobucket watermark artifacts; preserve clean authored G2/G3 and synthesize matching left facings offline by horizontal mirror. Canonical runtime order remains [DL,DR,UL,UR].",
       "frame_background_policy": "border_connected_matte",
       "frame_background_rgb": [
         123,
         198,
         255
       ],
-      "frame_background_tolerance": 0
+      "frame_background_tolerance": 0,
+      "horizontal_mirror_from": {
+        "down_left": "down_right",
+        "up_left": "up_right"
+      }
     },
     "Raremon": {
       "source_id": 102,
@@ -3999,7 +4003,7 @@
       "review_method": "explicit_wtw_source_frame_audit",
       "review_status": "corrected_during_full_pr179_visual_audit",
       "review_batch": "full-pr179-audit-2026-09-25",
-      "review_note": "Full PR #179 visual audit: the exact WTW field grid uses a white matte while Gesomon itself contains large authored white regions. Remove only matte-colored pixels connected to each frame crop border so internal same-color body pixels are preserved.",
+      "review_note": "Full PR #179 visual audit: WTW field row 1 crosses a black/white source-canvas boundary while Gesomon itself uses both colors. Use per-row border matte detection, flood only border-connected matte, and preserve a two-pixel dark authored outline near surviving foreground.",
       "explicit_groups": [
         [
           {
@@ -4082,13 +4086,9 @@
           }
         ]
       ],
-      "frame_background_policy": "border_connected_matte",
-      "frame_background_rgb": [
-        255,
-        255,
-        255
-      ],
-      "frame_background_tolerance": 0
+      "frame_background_policy": "row_border_matte",
+      "frame_background_tolerance": 8,
+      "frame_dark_outline_radius": 2
     },
     "Kogamon": {
       "source_id": 174,

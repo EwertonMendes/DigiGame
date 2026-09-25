@@ -275,6 +275,92 @@ def crop_frame_border_connected_matte(
     return frame.crop(bbox)
 
 
+def crop_frame_row_border_matte(
+    source: Image.Image,
+    box: dict[str, int],
+    tolerance: int,
+    dark_outline_radius: int,
+) -> Image.Image:
+    """Remove legacy matte using the local border color of each source row.
+
+    Some WTW captures place one field frame across different matte bands (notably
+    Gesomon's black/white boundary). The local left/right crop border identifies
+    the matte for each scanline. Only matching pixels connected to the crop edge
+    are removed, so same-color authored fills enclosed by the sprite survive.
+    """
+    x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
+    pad = 2
+    crop = source.crop((
+        max(0, x - pad),
+        max(0, y - pad),
+        min(source.width, x + w + pad),
+        min(source.height, y + h + pad),
+    )).convert("RGBA")
+    rgba = np.array(crop, copy=True)
+    h_px, w_px = rgba.shape[:2]
+    row_background = np.zeros((h_px, 3), dtype=np.int16)
+    edge_span = min(3, max(1, w_px // 4))
+    for yy in range(h_px):
+        samples = np.concatenate(
+            (rgba[yy, :edge_span, :3], rgba[yy, w_px - edge_span:, :3]),
+            axis=0,
+        )
+        colors, counts = np.unique(samples, axis=0, return_counts=True)
+        row_background[yy] = colors[int(np.argmax(counts))].astype(np.int16)
+
+    delta = np.max(
+        np.abs(rgba[:, :, :3].astype(np.int16) - row_background[:, None, :]),
+        axis=2,
+    )
+    matte = (delta <= tolerance) & (rgba[:, :, 3] > 0)
+    connected = np.zeros_like(matte)
+    stack: list[tuple[int, int]] = []
+    for xx in range(w_px):
+        if matte[0, xx]:
+            stack.append((0, xx))
+        if h_px > 1 and matte[h_px - 1, xx]:
+            stack.append((h_px - 1, xx))
+    for yy in range(h_px):
+        if matte[yy, 0]:
+            stack.append((yy, 0))
+        if w_px > 1 and matte[yy, w_px - 1]:
+            stack.append((yy, w_px - 1))
+    while stack:
+        yy, xx = stack.pop()
+        if connected[yy, xx] or not matte[yy, xx]:
+            continue
+        connected[yy, xx] = True
+        if yy > 0:
+            stack.append((yy - 1, xx))
+        if yy + 1 < h_px:
+            stack.append((yy + 1, xx))
+        if xx > 0:
+            stack.append((yy, xx - 1))
+        if xx + 1 < w_px:
+            stack.append((yy, xx + 1))
+
+    keep = (rgba[:, :, 3] > 0) & (~connected)
+    radius = int(dark_outline_radius)
+    if radius < 0 or radius > 4:
+        raise RuntimeError(f"Invalid frame_dark_outline_radius {radius}; expected 0..4")
+    if radius:
+        dark_rows = np.mean(row_background, axis=1) < 64
+        padded = np.pad(keep, radius, mode="constant", constant_values=False)
+        near_foreground = np.zeros_like(keep)
+        for dy in range(2 * radius + 1):
+            for dx in range(2 * radius + 1):
+                near_foreground |= padded[dy:dy + h_px, dx:dx + w_px]
+        restore = connected & near_foreground & dark_rows[:, None]
+        keep |= restore
+
+    rgba[(~keep) & (rgba[:, :, 3] > 0), 3] = 0
+    frame = Image.fromarray(rgba, "RGBA")
+    bbox = frame.getbbox()
+    if bbox is None:
+        raise RuntimeError(f"Source component became empty after row-border matte removal: {box}")
+    return frame.crop(bbox)
+
+
 def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     profile_name = str(spec["profile"])
     pattern_name = str(spec["pattern"])
@@ -372,9 +458,9 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     frame_background_tolerance = int(spec.get("frame_background_tolerance", 0))
     if not 0 <= frame_background_tolerance <= 255:
         raise RuntimeError(f"{name}: invalid frame_background_tolerance {frame_background_tolerance}")
-    if frame_background_policy not in {"global_key", "border_connected_matte"}:
+    if frame_background_policy not in {"global_key", "border_connected_matte", "row_border_matte"}:
         raise RuntimeError(f"{name}: unknown frame_background_policy {frame_background_policy}")
-    if frame_background_policy == "border_connected_matte":
+    if frame_background_policy in {"border_connected_matte", "row_border_matte"}:
         keyed = source
     elif background_outline_radius:
         keyed = keyed_source_preserving_outline(
@@ -411,6 +497,13 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
                     box,
                     background,
                     frame_background_tolerance,
+                )
+            elif frame_background_policy == "row_border_matte":
+                frame = crop_frame_row_border_matte(
+                    source,
+                    box,
+                    frame_background_tolerance,
+                    int(spec.get("frame_dark_outline_radius", 0)),
                 )
             else:
                 frame = crop_component(keyed, box)
@@ -487,6 +580,8 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         metadata["frame_background_policy"] = frame_background_policy
         metadata["frame_background_rgb"] = list(background)
         metadata["frame_background_tolerance"] = frame_background_tolerance
+        if int(spec.get("frame_dark_outline_radius", 0)) > 0:
+            metadata["frame_dark_outline_radius"] = int(spec["frame_dark_outline_radius"])
     (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     return metadata
 
