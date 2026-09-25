@@ -4678,7 +4678,7 @@
       "source_sha256": "ba2f21f6c5439c6f762bbf66fa0e9d196e5f37da6cfcc4301f220958cd9e5613",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "explicit_groups",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "explicit_groups": [
         [
           {
@@ -4761,14 +4761,15 @@
           }
         ]
       ],
-      "review_method": "explicit_wtw_source_frame_audit",
-      "review_status": "corrected_after_runtime_visual_review_batch_k",
-      "review_batch": "backfill-2026-09-25-k",
-      "review_note": "Sprite Test correction: left/right is correct, but front/back is inverted. Swap only DOWN<->UP while preserving side.",
+      "review_method": "single_species_direction_review",
+      "review_status": "corrected_single_species_direction_review",
+      "review_batch": "parasimon-2026-09-25",
+      "review_note": "Single-species correction: Parasimon's authored movement triplets are front first and rear second. Restore canonical_rows so DOWN uses the first triplet and UP uses the second, synthesize only the matching right-facing mirrors, and preserve the original source-group vertical envelope across the three movement phases.",
       "horizontal_mirror_from": {
         "down_right": "down_left",
         "up_right": "up_left"
-      }
+      },
+      "vertical_alignment": "source_group_envelope"
     },
     "MoonMillenniummon": {
       "source_id": 371,
