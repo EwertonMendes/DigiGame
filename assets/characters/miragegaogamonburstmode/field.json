@@ -2,9 +2,9 @@
   "source_kind": "official_ds",
   "source_variant": "withthewill_additional_audited",
   "source_id": 387,
-  "source_archive_file": "sprite thread/387_MirageGaogamonBurst.png",
-  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
-  "source_sha256": "d3582654158fe2970e35bf615eea416bf68a7417d2b4d1558c74236bbc58faf0",
+  "source_archive_file": null,
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/387_MirageGaogamonBurst.png",
+  "source_sha256": "a8bef6c0e41ecbe2731e50ea69589834a13cb6f3097d7c8b0811328bc6e7c93d",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "explicit_groups",
@@ -65,8 +65,8 @@
         1,
         0
       ],
-      "pixel_error": 108672,
-      "confidence_margin": 564914
+      "pixel_error": 290276,
+      "confidence_margin": 87658
     },
     "up_right": {
       "compared_with": "up_left",
@@ -76,8 +76,8 @@
         1,
         0
       ],
-      "pixel_error": 233940,
-      "confidence_margin": 296030
+      "pixel_error": 151296,
+      "confidence_margin": 356906
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -105,8 +105,8 @@
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
-    24,
-    49
+    18,
+    42
   ],
   "audited_source_frames": {
     "down_left": [
@@ -190,8 +190,8 @@
       }
     ]
   },
-  "cell_width": 48,
-  "cell_height": 50,
+  "cell_width": 36,
+  "cell_height": 43,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/miragegaogamonburstmode/field.png"

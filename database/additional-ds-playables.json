@@ -6288,8 +6288,8 @@
       "profile": "explicit_groups",
       "pattern": "canonical_rows",
       "field_cell": [
-        48,
-        50
+        36,
+        43
       ],
       "portrait_frames": 4
     },
