@@ -276,6 +276,47 @@ def crop_frame_border_connected_matte(
     return frame.crop(bbox)
 
 
+def remove_small_border_islands(frame: Image.Image, max_pixels: int) -> Image.Image:
+    """Remove tiny disconnected alpha islands touching a crop border.
+
+    Legacy sprite sheets can contain a few pixels from a neighbouring cell or
+    watermark at the edge of an otherwise correct explicit frame box. Only
+    small connected components that touch the frame border are removed; the
+    Digimon's main connected artwork is left untouched.
+    """
+    if max_pixels <= 0:
+        return frame
+    rgba = np.array(frame.convert("RGBA"), copy=True)
+    mask = rgba[:, :, 3] > 0
+    height, width = mask.shape
+    visited = np.zeros_like(mask)
+    for start_y in range(height):
+        for start_x in range(width):
+            if visited[start_y, start_x] or not mask[start_y, start_x]:
+                continue
+            stack = [(start_y, start_x)]
+            component: list[tuple[int, int]] = []
+            touches_border = False
+            visited[start_y, start_x] = True
+            while stack:
+                yy, xx = stack.pop()
+                component.append((yy, xx))
+                if yy == 0 or xx == 0 or yy == height - 1 or xx == width - 1:
+                    touches_border = True
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        if dx == 0 and dy == 0:
+                            continue
+                        ny, nx = yy + dy, xx + dx
+                        if 0 <= ny < height and 0 <= nx < width and mask[ny, nx] and not visited[ny, nx]:
+                            visited[ny, nx] = True
+                            stack.append((ny, nx))
+            if touches_border and len(component) <= max_pixels:
+                for yy, xx in component:
+                    rgba[yy, xx, 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
 def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     profile_name = str(spec["profile"])
     pattern_name = str(spec["pattern"])
@@ -392,6 +433,11 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     if vertical_alignment not in {"frame_bottom", "source_group_envelope"}:
         raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
     preserve_source_box = bool(spec.get("preserve_source_box", False))
+    border_island_cleanup_max_pixels = int(spec.get("border_island_cleanup_max_pixels", 0))
+    if border_island_cleanup_max_pixels < 0 or border_island_cleanup_max_pixels > 64:
+        raise RuntimeError(
+            f"{name}: border_island_cleanup_max_pixels must be within 0..64"
+        )
     if preserve_source_box and frame_background_policy == "border_connected_matte":
         raise RuntimeError(
             f"{name}: preserve_source_box is not supported with border_connected_matte; "
@@ -431,6 +477,8 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
                 )
             else:
                 frame = crop_component(keyed, box)
+            if border_island_cleanup_max_pixels:
+                frame = remove_small_border_islands(frame, border_island_cleanup_max_pixels)
             if direction in horizontal_mirror_from:
                 frame = frame.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             frames.append(frame)
@@ -483,6 +531,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "pose_alignment": pose_alignment,
         "vertical_alignment_policy": vertical_alignment,
         "preserve_source_box": preserve_source_box,
+        "border_island_cleanup_max_pixels": border_island_cleanup_max_pixels,
         "source_group_envelopes": source_group_envelopes,
         "anchor_policy": (
             "source_group_envelope_bottom_center"
