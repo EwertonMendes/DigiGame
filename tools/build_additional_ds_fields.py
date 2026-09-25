@@ -222,12 +222,10 @@ def crop_frame_border_connected_matte(
     background_rgb: tuple[int, int, int],
     tolerance: int,
 ) -> Image.Image:
-    """Key only matte pixels connected to the border of one authored frame crop.
+    """Remove only matte pixels connected to the border of one authored frame.
 
-    Legacy WTW sheets sometimes reuse the matte color inside the Digimon itself
-    (Gesomon white body, Kabuterimon blue details). A global color key destroys
-    those authored pixels. Flooding from the crop border removes only actual
-    surrounding matte while preserving same-color pixels enclosed by the sprite.
+    This preserves same-color pixels enclosed by the Digimon itself while
+    removing legacy opaque WTW/Photobucket canvas colors around the sprite.
     """
     x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
     pad = 2
@@ -241,6 +239,7 @@ def crop_frame_border_connected_matte(
     background = np.asarray(background_rgb, dtype=np.int16)
     delta = np.max(np.abs(rgba[:, :, :3].astype(np.int16) - background), axis=2)
     matte = (delta <= tolerance) & (rgba[:, :, 3] > 0)
+
     connected = np.zeros_like(matte)
     h_px, w_px = matte.shape
     stack: list[tuple[int, int]] = []
@@ -254,6 +253,7 @@ def crop_frame_border_connected_matte(
             stack.append((yy, 0))
         if w_px > 1 and matte[yy, w_px - 1]:
             stack.append((yy, w_px - 1))
+
     while stack:
         yy, xx = stack.pop()
         if connected[yy, xx] or not matte[yy, xx]:
@@ -267,6 +267,7 @@ def crop_frame_border_connected_matte(
             stack.append((yy, xx - 1))
         if xx + 1 < w_px:
             stack.append((yy, xx + 1))
+
     rgba[connected, 3] = 0
     frame = Image.fromarray(rgba, "RGBA")
     bbox = frame.getbbox()
@@ -275,190 +276,7 @@ def crop_frame_border_connected_matte(
     return frame.crop(bbox)
 
 
-def crop_frame_row_border_matte(
-    source: Image.Image,
-    box: dict[str, int],
-    tolerance: int,
-    dark_outline_radius: int,
-) -> Image.Image:
-    """Remove legacy matte using the local border color of each source row.
-
-    Some WTW captures place one field frame across different matte bands (notably
-    Gesomon's black/white boundary). The local left/right crop border identifies
-    the matte for each scanline. Only matching pixels connected to the crop edge
-    are removed, so same-color authored fills enclosed by the sprite survive.
-    """
-    x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
-    pad = 2
-    crop = source.crop((
-        max(0, x - pad),
-        max(0, y - pad),
-        min(source.width, x + w + pad),
-        min(source.height, y + h + pad),
-    )).convert("RGBA")
-    rgba = np.array(crop, copy=True)
-    h_px, w_px = rgba.shape[:2]
-    row_background = np.zeros((h_px, 3), dtype=np.int16)
-    edge_span = min(3, max(1, w_px // 4))
-    for yy in range(h_px):
-        samples = np.concatenate(
-            (rgba[yy, :edge_span, :3], rgba[yy, w_px - edge_span:, :3]),
-            axis=0,
-        )
-        colors, counts = np.unique(samples, axis=0, return_counts=True)
-        row_background[yy] = colors[int(np.argmax(counts))].astype(np.int16)
-
-    delta = np.max(
-        np.abs(rgba[:, :, :3].astype(np.int16) - row_background[:, None, :]),
-        axis=2,
-    )
-    matte = (delta <= tolerance) & (rgba[:, :, 3] > 0)
-    connected = np.zeros_like(matte)
-    stack: list[tuple[int, int]] = []
-    for xx in range(w_px):
-        if matte[0, xx]:
-            stack.append((0, xx))
-        if h_px > 1 and matte[h_px - 1, xx]:
-            stack.append((h_px - 1, xx))
-    for yy in range(h_px):
-        if matte[yy, 0]:
-            stack.append((yy, 0))
-        if w_px > 1 and matte[yy, w_px - 1]:
-            stack.append((yy, w_px - 1))
-    while stack:
-        yy, xx = stack.pop()
-        if connected[yy, xx] or not matte[yy, xx]:
-            continue
-        connected[yy, xx] = True
-        if yy > 0:
-            stack.append((yy - 1, xx))
-        if yy + 1 < h_px:
-            stack.append((yy + 1, xx))
-        if xx > 0:
-            stack.append((yy, xx - 1))
-        if xx + 1 < w_px:
-            stack.append((yy, xx + 1))
-
-    keep = (rgba[:, :, 3] > 0) & (~connected)
-    radius = int(dark_outline_radius)
-    if radius < 0 or radius > 4:
-        raise RuntimeError(f"Invalid frame_dark_outline_radius {radius}; expected 0..4")
-    if radius:
-        dark_rows = np.mean(row_background, axis=1) < 64
-        padded = np.pad(keep, radius, mode="constant", constant_values=False)
-        near_foreground = np.zeros_like(keep)
-        for dy in range(2 * radius + 1):
-            for dx in range(2 * radius + 1):
-                near_foreground |= padded[dy:dy + h_px, dx:dx + w_px]
-        restore = connected & near_foreground & dark_rows[:, None]
-        keep |= restore
-
-    close_radius = int(getattr(crop_frame_row_border_matte, "_close_radius", 0))
-    fill_holes = bool(getattr(crop_frame_row_border_matte, "_fill_holes", False))
-    if close_radius:
-        padded = np.pad(keep, close_radius, mode="constant", constant_values=False)
-        dilated = np.zeros_like(keep)
-        for dy in range(2 * close_radius + 1):
-            for dx in range(2 * close_radius + 1):
-                dilated |= padded[dy:dy + h_px, dx:dx + w_px]
-        padded_dilated = np.pad(dilated, close_radius, mode="constant", constant_values=False)
-        eroded = np.ones_like(keep)
-        for dy in range(2 * close_radius + 1):
-            for dx in range(2 * close_radius + 1):
-                eroded &= padded_dilated[dy:dy + h_px, dx:dx + w_px]
-        keep = eroded
-
-    if fill_holes:
-        outside = np.zeros_like(keep)
-        stack = []
-        inverse = ~keep
-        for xx in range(w_px):
-            if inverse[0, xx]:
-                stack.append((0, xx))
-            if h_px > 1 and inverse[h_px - 1, xx]:
-                stack.append((h_px - 1, xx))
-        for yy in range(h_px):
-            if inverse[yy, 0]:
-                stack.append((yy, 0))
-            if w_px > 1 and inverse[yy, w_px - 1]:
-                stack.append((yy, w_px - 1))
-        while stack:
-            yy, xx = stack.pop()
-            if outside[yy, xx] or not inverse[yy, xx]:
-                continue
-            outside[yy, xx] = True
-            if yy > 0:
-                stack.append((yy - 1, xx))
-            if yy + 1 < h_px:
-                stack.append((yy + 1, xx))
-            if xx > 0:
-                stack.append((yy, xx - 1))
-            if xx + 1 < w_px:
-                stack.append((yy, xx + 1))
-        keep = ~outside
-
-    rgba[(~keep) & (rgba[:, :, 3] > 0), 3] = 0
-    frame = Image.fromarray(rgba, "RGBA")
-    bbox = frame.getbbox()
-    if bbox is None:
-        raise RuntimeError(f"Source component became empty after row-border matte removal: {box}")
-    return frame.crop(bbox)
-
-
-def crop_frame_with_external_mask(
-    source: Image.Image,
-    mask_source: Image.Image,
-    box: dict[str, int],
-    mask_background_rgb: tuple[int, int, int],
-    mask_tolerance: int,
-    dilate_radius: int,
-) -> Image.Image:
-    """Apply a geometry-only mask from another copy of the same WTW source frame."""
-    x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
-    pad = 2
-    bounds = (
-        max(0, x - pad),
-        max(0, y - pad),
-        min(source.width, x + w + pad),
-        min(source.height, y + h + pad),
-    )
-    crop = source.crop(bounds).convert("RGBA")
-    mask_crop = mask_source.crop(bounds).convert("RGBA")
-    rgba = np.array(crop, copy=True)
-    mask_rgba = np.array(mask_crop, copy=True)
-    background = np.asarray(mask_background_rgb, dtype=np.int16)
-    delta = np.max(
-        np.abs(mask_rgba[:, :, :3].astype(np.int16) - background),
-        axis=2,
-    )
-    keep = (delta > mask_tolerance) & (mask_rgba[:, :, 3] > 0)
-    radius = int(dilate_radius)
-    if radius < 0 or radius > 4:
-        raise RuntimeError(f"Invalid mask_dilate_radius {radius}; expected 0..4")
-    if radius:
-        padded = np.pad(keep, radius, mode="constant", constant_values=False)
-        expanded = np.zeros_like(keep)
-        h_px, w_px = keep.shape
-        for dy in range(2 * radius + 1):
-            for dx in range(2 * radius + 1):
-                expanded |= padded[dy:dy + h_px, dx:dx + w_px]
-        keep = expanded
-    rgba[(~keep) & (rgba[:, :, 3] > 0), 3] = 0
-    frame = Image.fromarray(rgba, "RGBA")
-    bbox = frame.getbbox()
-    if bbox is None:
-        raise RuntimeError(f"External WTW mask produced empty frame: {box}")
-    return frame.crop(bbox)
-
-
-def build_field(
-    name: str,
-    source: Image.Image,
-    source_bytes: bytes,
-    spec: dict[str, Any],
-    config: dict[str, Any],
-    mask_source: Image.Image | None = None,
-) -> dict[str, Any]:
+def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     profile_name = str(spec["profile"])
     pattern_name = str(spec["pattern"])
     profile = config["profiles"][profile_name]
@@ -492,16 +310,7 @@ def build_field(
     for target_direction, source_direction in horizontal_mirror_from.items():
         raw_frames[target_direction] = raw_frames[source_direction]
         effective_runtime_group_indices[DIRECTIONS.index(target_direction)] = permutation[DIRECTIONS.index(source_direction)]
-    inferred_background, _ = _components(source)
-    frame_background_rgb = spec.get("frame_background_rgb")
-    if frame_background_rgb is not None:
-        if not isinstance(frame_background_rgb, list) or len(frame_background_rgb) != 3:
-            raise RuntimeError(f"{name}: frame_background_rgb must contain exactly three values")
-        background = tuple(int(value) for value in frame_background_rgb)
-        if any(value < 0 or value > 255 for value in background):
-            raise RuntimeError(f"{name}: invalid frame_background_rgb {background}")
-    else:
-        background = inferred_background
+    background, _ = _components(source)
     source_frame_order: dict[str, list[int]] = {
         "down_left": [0, 1, 2],
         "up_left": [0, 1, 2],
@@ -551,13 +360,24 @@ def build_field(
     if not 0 <= background_tolerance <= 255:
         raise RuntimeError(f"{name}: invalid background_tolerance {background_tolerance}")
     background_outline_radius = int(spec.get("background_outline_radius", 0))
+
     frame_background_policy = str(spec.get("frame_background_policy", "global_key"))
+    if frame_background_policy not in {"global_key", "source_alpha", "border_connected_matte"}:
+        raise RuntimeError(f"{name}: unknown frame_background_policy {frame_background_policy}")
     frame_background_tolerance = int(spec.get("frame_background_tolerance", 0))
     if not 0 <= frame_background_tolerance <= 255:
         raise RuntimeError(f"{name}: invalid frame_background_tolerance {frame_background_tolerance}")
-    if frame_background_policy not in {"global_key", "border_connected_matte", "row_border_matte", "source_alpha"}:
-        raise RuntimeError(f"{name}: unknown frame_background_policy {frame_background_policy}")
-    if frame_background_policy in {"border_connected_matte", "row_border_matte", "source_alpha"}:
+    frame_background_rgb_raw = spec.get("frame_background_rgb")
+    if frame_background_rgb_raw is None:
+        frame_background_rgb = tuple(int(value) for value in background)
+    else:
+        if not isinstance(frame_background_rgb_raw, list) or len(frame_background_rgb_raw) != 3:
+            raise RuntimeError(f"{name}: frame_background_rgb must contain exactly three values")
+        frame_background_rgb = tuple(int(value) for value in frame_background_rgb_raw)
+        if any(value < 0 or value > 255 for value in frame_background_rgb):
+            raise RuntimeError(f"{name}: invalid frame_background_rgb {frame_background_rgb}")
+
+    if frame_background_policy in {"source_alpha", "border_connected_matte"}:
         keyed = source
     elif background_outline_radius:
         keyed = keyed_source_preserving_outline(
@@ -590,34 +410,12 @@ def build_field(
         for box in ordered_boxes:
             if frame_background_policy == "source_alpha":
                 frame = crop_component(source, box)
-            elif mask_source is not None:
-                mask_background_rgb_raw = spec.get("mask_background_rgb", [0, 0, 0])
-                if not isinstance(mask_background_rgb_raw, list) or len(mask_background_rgb_raw) != 3:
-                    raise RuntimeError(f"{name}: mask_background_rgb must contain exactly three values")
-                mask_background_rgb = tuple(int(value) for value in mask_background_rgb_raw)
-                frame = crop_frame_with_external_mask(
-                    source,
-                    mask_source,
-                    box,
-                    mask_background_rgb,
-                    int(spec.get("mask_background_tolerance", 0)),
-                    int(spec.get("mask_dilate_radius", 0)),
-                )
             elif frame_background_policy == "border_connected_matte":
                 frame = crop_frame_border_connected_matte(
                     source,
                     box,
-                    background,
+                    frame_background_rgb,
                     frame_background_tolerance,
-                )
-            elif frame_background_policy == "row_border_matte":
-                crop_frame_row_border_matte._close_radius = int(spec.get("frame_shape_close_radius", 0))
-                crop_frame_row_border_matte._fill_holes = bool(spec.get("frame_fill_holes", False))
-                frame = crop_frame_row_border_matte(
-                    source,
-                    box,
-                    frame_background_tolerance,
-                    int(spec.get("frame_dark_outline_radius", 0)),
                 )
             else:
                 frame = crop_component(keyed, box)
@@ -690,22 +488,11 @@ def build_field(
         metadata["background_tolerance"] = background_tolerance
     if background_outline_radius > 0:
         metadata["background_outline_radius"] = background_outline_radius
-    if mask_source is not None:
-        metadata["mask_source_member"] = str(spec["mask_source_member"])
-        metadata["mask_source_sha256"] = str(spec["mask_source_sha256"])
-        metadata["mask_background_rgb"] = list(spec.get("mask_background_rgb", [0, 0, 0]))
-        metadata["mask_background_tolerance"] = int(spec.get("mask_background_tolerance", 0))
-        metadata["mask_dilate_radius"] = int(spec.get("mask_dilate_radius", 0))
     if frame_background_policy != "global_key":
         metadata["frame_background_policy"] = frame_background_policy
-        metadata["frame_background_rgb"] = list(background)
-        metadata["frame_background_tolerance"] = frame_background_tolerance
-        if int(spec.get("frame_dark_outline_radius", 0)) > 0:
-            metadata["frame_dark_outline_radius"] = int(spec["frame_dark_outline_radius"])
-        if int(spec.get("frame_shape_close_radius", 0)) > 0:
-            metadata["frame_shape_close_radius"] = int(spec["frame_shape_close_radius"])
-        if bool(spec.get("frame_fill_holes", False)):
-            metadata["frame_fill_holes"] = True
+        if frame_background_policy == "border_connected_matte":
+            metadata["frame_background_rgb"] = list(frame_background_rgb)
+            metadata["frame_background_tolerance"] = frame_background_tolerance
     (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     return metadata
 
@@ -784,42 +571,7 @@ def main() -> None:
         if actual_sha != str(spec["source_sha256"]):
             raise RuntimeError(f"{name}: source SHA changed ({actual_sha}); refusing to infer from changed art")
         source = Image.open(io.BytesIO(payload)).convert("RGBA")
-        mask_source_image: Image.Image | None = None
-        mask_member = spec.get("mask_source_member")
-        if mask_member:
-            mask_payload = source_member(archive, str(mask_member))
-            actual_mask_sha = sha256(mask_payload)
-            if actual_mask_sha != str(spec["mask_source_sha256"]):
-                raise RuntimeError(
-                    f"{name}: mask source SHA changed ({actual_mask_sha}); refusing to use changed geometry"
-                )
-            mask_source_image = Image.open(io.BytesIO(mask_payload)).convert("RGBA")
-        if name in {"Gesomon", "Kabuterimon"}:
-            audit_dir = Path("assets/characters") / compact_key(name)
-            audit_dir.mkdir(parents=True, exist_ok=True)
-            (audit_dir / "wtw_source_audit.png").write_bytes(payload)
-            archive_member = {
-                "Gesomon": "sprite thread/156_Gesomon.png",
-                "Kabuterimon": "sprite thread/092_Kabuterimon.png",
-            }[name]
-            archive_payload = source_member(archive, archive_member)
-            (audit_dir / "wtw_archive_source_audit.png").write_bytes(archive_payload)
-            if name == "Gesomon":
-                audit_crop = source.crop((90, 225, 340, 320))
-            else:
-                audit_crop = source.crop((215, 115, 340, 290))
-            audit_crop.resize(
-                (audit_crop.width * 4, audit_crop.height * 4),
-                Image.Resampling.NEAREST,
-            ).save(audit_dir / "wtw_field_grid_audit.png", "PNG")
-        field = build_field(
-            name,
-            source,
-            payload,
-            spec,
-            config,
-            mask_source=mask_source_image,
-        )
+        field = build_field(name, source, payload, spec, config)
         portrait = build_portrait(by_name[name])
         resource = write_resource(by_name[name], field)
         key = compact_key(name)

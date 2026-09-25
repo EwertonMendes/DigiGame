@@ -6,7 +6,6 @@ on:
       - fix/ds-sprite-agumon-line-*
       - feat/agumon-evolution-ds-sprites
       - feat/garurumon-line-ds-sprites
-      - feat/ds-sprite-backfill-final-49
   workflow_dispatch:
 
 permissions:
@@ -33,17 +32,6 @@ jobs:
         run: |
           python3 tools/validate_additional_ds_fields.py
           python3 tools/validate_all_ds_directional_facings.py
-
-      - name: Upload temporary WTW audit sources
-        uses: actions/upload-artifact@v4
-        with:
-          name: wtw-audit-sources
-          path: |
-            assets/characters/gesomon/wtw_source_audit.png
-            assets/characters/gesomon/wtw_archive_source_audit.png
-            assets/characters/kabuterimon/wtw_source_audit.png
-            assets/characters/kabuterimon/wtw_archive_source_audit.png
-          if-no-files-found: error
 
       - name: Commit generated runtime assets when changed
         shell: bash
