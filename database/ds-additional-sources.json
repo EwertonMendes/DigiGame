@@ -3229,11 +3229,11 @@
       "source_sha256": "cc0fe2405476a652a5011e831d5d33ae8f8c79b9e45ddf6f41aafddcf5d2e797",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first_horizontal_reversed",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "single_species_runtime_visual_review",
       "review_status": "corrected_from_sprite_test_feedback",
-      "review_batch": "direction-fix-2026-09-25",
-      "review_note": "Sprite Test: UP/DOWN depth is correct, but left/right is crossed. Preserve rear_rows_first depth and swap only the horizontal group at each depth: [G3,G2,G1,G0].",
+      "review_batch": "saberleomon-final-direction-fix-2026-09-25",
+      "review_note": "Sprite Test final correction: DOWN-left currently shows UP-left, DOWN-right shows UP-right, UP-left shows DOWN-right, and UP-right shows DOWN-left. Map runtime as [G0,G1,G3,G2], preserving the authored DOWN pair and swapping only the rear horizontal pair.",
       "vertical_alignment": "source_group_envelope"
     },
     "VenomMyotismon": {
@@ -4099,8 +4099,8 @@
       "pattern": "rear_rows_first",
       "review_method": "exact_source_box_runtime_review",
       "review_status": "corrected_from_sprite_test_feedback",
-      "review_batch": "kogamon-exact-crop-2026-09-25",
-      "review_note": "Use the crisp direct WTW/Photobucket source. The first movement row intentionally starts at y=166 to sit below the legacy overlay; exact source-box cropping is mandatory so the old 2px padding cannot pull overlay/neighbour residue back into the frame. Preserve full box/envelope placement to avoid per-frame bounce. Additionally discard only tiny disconnected alpha islands (<=12 px) touching the exact crop border; this targets the remaining loose source-residue dots without touching connected sprite pixels. Finally remove only disconnected alpha components up to 8 px anywhere inside the exact crop; this targets the remaining isolated residue dot cluster while leaving the connected Digimon silhouette untouched.",
+      "review_batch": "kogamon-down-final-crop-2026-09-25",
+      "review_note": "Sprite Test final correction: UP-left/UP-right are already correct and must remain untouched. Normalize only the DOWN source row to the exact authored 37px stride using uniform 34x36 cells at y=196 for both DL and DR. This removes the old 28x33 / 34x33 asymmetric crops that caused clipping and baseline hopping, while retaining the existing exact-box and tiny-residue cleanup.",
       "explicit_groups": [
         [
           {
@@ -4144,16 +4144,16 @@
         ],
         [
           {
-            "x": 7,
+            "x": 1,
             "y": 196,
-            "w": 28,
-            "h": 33
+            "w": 34,
+            "h": 36
           },
           {
             "x": 38,
             "y": 196,
             "w": 34,
-            "h": 33
+            "h": 36
           },
           {
             "x": 75,
@@ -4689,7 +4689,7 @@
       "source_sha256": "ba2f21f6c5439c6f762bbf66fa0e9d196e5f37da6cfcc4301f220958cd9e5613",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "explicit_groups",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "explicit_groups": [
         [
           {
@@ -4774,11 +4774,11 @@
       ],
       "review_method": "single_species_runtime_visual_review",
       "review_status": "corrected_from_sprite_test_feedback",
-      "review_batch": "direction-fix-2026-09-25",
-      "review_note": "Sprite Test: left/right is correct, but DOWN and UP are swapped at the same side. Map [DL,DR,UL,UR] from [G2,G3,G0,G1] without changing horizontal semantics.",
+      "review_batch": "parasimon-final-direction-fix-2026-09-25",
+      "review_note": "Sprite Test final correction: current slots are crossed diagonally (DL shows UR, DR shows UL, UL shows DR, UR shows DL). Use canonical depth groups, keep the authored right-facing triplet as source at each depth, and synthesize only the matching left-facing mirror: DL<-mirror(DR), UL<-mirror(UR).",
       "horizontal_mirror_from": {
-        "down_right": "down_left",
-        "up_right": "up_left"
+        "down_left": "down_right",
+        "up_left": "up_right"
       },
       "vertical_alignment": "source_group_envelope"
     },
