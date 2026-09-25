@@ -432,6 +432,10 @@ def main() -> None:
         if actual_sha != str(spec["source_sha256"]):
             raise RuntimeError(f"{name}: source SHA changed ({actual_sha}); refusing to infer from changed art")
         source = Image.open(io.BytesIO(payload)).convert("RGBA")
+        if name in {"Gesomon", "Kogamon"} and not spec.get("source_member"):
+            debug_dir = Path("assets/debug_wtw_sources")
+            debug_dir.mkdir(parents=True, exist_ok=True)
+            source.save(debug_dir / f"{compact_key(name)}.png", "PNG")
         field = build_field(name, source, payload, spec, config)
         portrait = build_portrait(by_name[name])
         resource = write_resource(by_name[name], field)
