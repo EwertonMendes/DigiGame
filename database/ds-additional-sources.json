@@ -631,10 +631,11 @@
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/168_Flymon.png",
       "profile": "two_rows_of_six",
       "pattern": "canonical_rows",
-      "review_method": "visual_source_group_review",
-      "review_status": "corrected_by_direct_runtime_front_back_swap",
-      "review_batch": "champion-backfill-2026-09-24-a",
-      "review_note": "Direct final correction requested from Sprite Test: take the currently generated Flymon directions and swap down_left with up_left plus down_right with up_right, preserving left/right exactly. Resulting source-group mapping is [0,1,2,3]."
+      "review_method": "single_species_alignment_review",
+      "review_status": "corrected_single_species_alignment_review",
+      "review_batch": "flymon-2026-09-25",
+      "review_note": "Single-species correction: preserve Flymon's current reviewed direction mapping, but keep the original source-row vertical envelope across each three-frame walk cycle instead of independently bottom-aligning trimmed frames. This changes only frame placement, not facing groups or authored sprite pixels.",
+      "vertical_alignment": "source_group_envelope"
     },
     "Guardromon": {
       "source_id": 107,
