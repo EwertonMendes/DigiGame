@@ -353,6 +353,50 @@ def crop_frame_row_border_matte(
         restore = connected & near_foreground & dark_rows[:, None]
         keep |= restore
 
+    close_radius = int(getattr(crop_frame_row_border_matte, "_close_radius", 0))
+    fill_holes = bool(getattr(crop_frame_row_border_matte, "_fill_holes", False))
+    if close_radius:
+        padded = np.pad(keep, close_radius, mode="constant", constant_values=False)
+        dilated = np.zeros_like(keep)
+        for dy in range(2 * close_radius + 1):
+            for dx in range(2 * close_radius + 1):
+                dilated |= padded[dy:dy + h_px, dx:dx + w_px]
+        padded_dilated = np.pad(dilated, close_radius, mode="constant", constant_values=False)
+        eroded = np.ones_like(keep)
+        for dy in range(2 * close_radius + 1):
+            for dx in range(2 * close_radius + 1):
+                eroded &= padded_dilated[dy:dy + h_px, dx:dx + w_px]
+        keep = eroded
+
+    if fill_holes:
+        outside = np.zeros_like(keep)
+        stack = []
+        inverse = ~keep
+        for xx in range(w_px):
+            if inverse[0, xx]:
+                stack.append((0, xx))
+            if h_px > 1 and inverse[h_px - 1, xx]:
+                stack.append((h_px - 1, xx))
+        for yy in range(h_px):
+            if inverse[yy, 0]:
+                stack.append((yy, 0))
+            if w_px > 1 and inverse[yy, w_px - 1]:
+                stack.append((yy, w_px - 1))
+        while stack:
+            yy, xx = stack.pop()
+            if outside[yy, xx] or not inverse[yy, xx]:
+                continue
+            outside[yy, xx] = True
+            if yy > 0:
+                stack.append((yy - 1, xx))
+            if yy + 1 < h_px:
+                stack.append((yy + 1, xx))
+            if xx > 0:
+                stack.append((yy, xx - 1))
+            if xx + 1 < w_px:
+                stack.append((yy, xx + 1))
+        keep = ~outside
+
     rgba[(~keep) & (rgba[:, :, 3] > 0), 3] = 0
     frame = Image.fromarray(rgba, "RGBA")
     bbox = frame.getbbox()
@@ -565,6 +609,8 @@ def build_field(
                     frame_background_tolerance,
                 )
             elif frame_background_policy == "row_border_matte":
+                crop_frame_row_border_matte._close_radius = int(spec.get("frame_shape_close_radius", 0))
+                crop_frame_row_border_matte._fill_holes = bool(spec.get("frame_fill_holes", False))
                 frame = crop_frame_row_border_matte(
                     source,
                     box,
@@ -654,6 +700,10 @@ def build_field(
         metadata["frame_background_tolerance"] = frame_background_tolerance
         if int(spec.get("frame_dark_outline_radius", 0)) > 0:
             metadata["frame_dark_outline_radius"] = int(spec["frame_dark_outline_radius"])
+        if int(spec.get("frame_shape_close_radius", 0)) > 0:
+            metadata["frame_shape_close_radius"] = int(spec["frame_shape_close_radius"])
+        if bool(spec.get("frame_fill_holes", False)):
+            metadata["frame_fill_holes"] = True
     (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     return metadata
 

@@ -4003,7 +4003,7 @@
       "review_method": "explicit_wtw_source_frame_audit",
       "review_status": "corrected_during_full_pr179_visual_audit",
       "review_batch": "full-pr179-audit-2026-09-25",
-      "review_note": "Full PR #179 visual audit: use the exact crisp WTW URL for final pixels and the same WTW archive member only as a silhouette mask. The archive copy is too blurred for rendering but preserves frame geometry on a black matte; the mask prevents the crisp source's black/white canvas bands from deleting authored black/white Gesomon pixels.",
+      "review_note": "Full PR #179 visual audit: use only the crisp WTW URL pixels. The field row crosses black/white legacy matte bands, so transparency is rebuilt per frame from row-local border matte, followed by a 2px binary closing and interior-hole fill to reconnect the authored silhouette without changing RGB sprite pixels.",
       "explicit_groups": [
         [
           {
@@ -4088,16 +4088,9 @@
       ],
       "frame_background_policy": "row_border_matte",
       "frame_background_tolerance": 8,
-      "frame_dark_outline_radius": 2,
-      "mask_source_member": "sprite thread/156_Gesomon.png",
-      "mask_source_sha256": "7501e62c3466d76105552ad22d8d9051fefc35a64267cd23edc9b4f0b787edbc",
-      "mask_background_rgb": [
-        0,
-        0,
-        0
-      ],
-      "mask_background_tolerance": 64,
-      "mask_dilate_radius": 1
+      "frame_dark_outline_radius": 1,
+      "frame_shape_close_radius": 2,
+      "frame_fill_holes": true
     },
     "Kogamon": {
       "source_id": 174,
