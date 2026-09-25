@@ -569,6 +569,12 @@ def main() -> None:
             audit_dir = Path("assets/characters") / compact_key(name)
             audit_dir.mkdir(parents=True, exist_ok=True)
             (audit_dir / "wtw_source_audit.png").write_bytes(payload)
+            archive_member = {
+                "Gesomon": "sprite thread/156_Gesomon.png",
+                "Kabuterimon": "sprite thread/092_Kabuterimon.png",
+            }[name]
+            archive_payload = source_member(archive, archive_member)
+            (audit_dir / "wtw_archive_source_audit.png").write_bytes(archive_payload)
             if name == "Gesomon":
                 audit_crop = source.crop((90, 225, 340, 320))
             else:
