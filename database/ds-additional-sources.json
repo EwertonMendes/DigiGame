@@ -1369,11 +1369,11 @@
       "source_sha256": "037a2c63aab5a9b7a7b87e975385ad323d1134e07d4bcba4fd563dec812617d8",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/167_Snimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "compact_interleaved_up_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_d",
       "review_batch": "backfill-2026-09-24-d",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction derived from observed facings: current DL showed DR, DR showed UL, UL showed DL, while UR was correct. Source-group semantics therefore resolve to DL=0, DR=2, UL=3, UR=1, giving [0,2,3,1]."
     },
     "Yanmamon": {
       "source_id": 169,
@@ -1621,11 +1621,11 @@
       "source_sha256": "0a9b91d65389e62bde358a887e83063a5e0ba6d40828a42505d6ecda6bd8be8b",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/238_Kyukimon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_d",
       "review_batch": "backfill-2026-09-24-d",
-      "review_note": "Assigned from the current audit raw movement groups before runtime materialization. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: both down facings are correct; only up_left/up_right are inverted. Preserve down and swap only the up pair."
     }
   }
 }
