@@ -3233,7 +3233,8 @@
       "review_method": "single_species_runtime_visual_review",
       "review_status": "corrected_single_species_visual_review",
       "review_batch": "saberleomon-2026-09-25",
-      "review_note": "Single-species Sprite Test correction: SaberLeomon's source groups were front/back inverted while left/right, crops, and animation phases were correct. Runtime mapping is now [G2,G3,G0,G1] (rear_rows_first), preserving the exact authored frame pixels and crops."
+      "review_note": "Single-species correction: preserve the already reviewed rear_rows_first facing mapping and exact authored frame crops, while retaining each source row's vertical envelope across the walk triplet instead of bottom-aligning trimmed frames independently. Direction semantics remain unchanged from the prior SaberLeomon fix.",
+      "vertical_alignment": "source_group_envelope"
     },
     "VenomMyotismon": {
       "source_id": 312,
