@@ -4406,7 +4406,7 @@
       "portrait_metadata": "res://assets/characters/seahomon/portrait_frames.json",
       "source_id": 292,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         35,
         42
@@ -4525,7 +4525,7 @@
       "portrait_strip": "res://assets/characters/herculeskabuterimon/portrait_frames.png",
       "portrait_metadata": "res://assets/characters/herculeskabuterimon/portrait_frames.json",
       "source_id": 299,
-      "profile": "four_rows_rightmost_triples",
+      "profile": "four_rows_first_two_rightmost_last_two_leftmost",
       "pattern": "compact_interleaved",
       "field_cell": [
         36,
@@ -4566,7 +4566,7 @@
       "portrait_metadata": "res://assets/characters/ophanimon/portrait_frames.json",
       "source_id": 337,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         50
@@ -4586,7 +4586,7 @@
       "portrait_metadata": "res://assets/characters/beelzemon/portrait_frames.json",
       "source_id": 348,
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "field_cell": [
         33,
         45
@@ -4606,7 +4606,7 @@
       "portrait_metadata": "res://assets/characters/marineangemon/portrait_frames.json",
       "source_id": 302,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         34,
         32
@@ -4746,7 +4746,7 @@
       "portrait_metadata": "res://assets/characters/devitamamon/portrait_frames.json",
       "source_id": 320,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         35
@@ -4785,7 +4785,7 @@
       "portrait_strip": "res://assets/characters/cherubimonevil/portrait_frames.png",
       "portrait_metadata": "res://assets/characters/cherubimonevil/portrait_frames.json",
       "source_id": 322,
-      "profile": "four_rows_rightmost_triples",
+      "profile": "four_rows_outer_right_inner_left",
       "pattern": "compact_interleaved",
       "field_cell": [
         38,
@@ -4826,7 +4826,7 @@
       "portrait_metadata": "res://assets/characters/sakuyamon/portrait_frames.json",
       "source_id": 326,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         32,
         40
@@ -4846,7 +4846,7 @@
       "portrait_metadata": "res://assets/characters/armageddemon/portrait_frames.json",
       "source_id": 332,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         49
@@ -4886,7 +4886,7 @@
       "portrait_metadata": "res://assets/characters/boltmon/portrait_frames.json",
       "source_id": 335,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         32,
         42
@@ -4926,7 +4926,7 @@
       "portrait_metadata": "res://assets/characters/zanbamon/portrait_frames.json",
       "source_id": 338,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         35,
         42
@@ -4986,7 +4986,7 @@
       "portrait_metadata": "res://assets/characters/babamon/portrait_frames.json",
       "source_id": 341,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         32,
         33
@@ -5006,7 +5006,7 @@
       "portrait_metadata": "res://assets/characters/anubismon/portrait_frames.json",
       "source_id": 342,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         34
@@ -5066,7 +5066,7 @@
       "portrait_metadata": "res://assets/characters/dorugoramon/portrait_frames.json",
       "source_id": 347,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         42
@@ -5226,7 +5226,7 @@
       "portrait_metadata": "res://assets/characters/jumbogamemon/portrait_frames.json",
       "source_id": 376,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         44
@@ -5306,7 +5306,7 @@
       "portrait_metadata": "res://assets/characters/lilithmon/portrait_frames.json",
       "source_id": 381,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         51,
         52
@@ -5366,7 +5366,7 @@
       "portrait_metadata": "res://assets/characters/rosemonburstmode/portrait_frames.json",
       "source_id": 393,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         34,
         43
@@ -5386,7 +5386,7 @@
       "portrait_metadata": "res://assets/characters/argomonmega/portrait_frames.json",
       "source_id": 394,
       "profile": "single_row_four_triples",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         42

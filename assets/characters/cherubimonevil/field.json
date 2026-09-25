@@ -7,7 +7,7 @@
   "source_sha256": "3aeaeac128980601bf3986bedf3049cbd2c42c11ac243596cddb1e0e04082e47",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "extraction_profile": "four_rows_rightmost_triples",
+  "extraction_profile": "four_rows_outer_right_inner_left",
   "review_pattern": "compact_interleaved",
   "runtime_group_indices": [
     0,
@@ -46,14 +46,14 @@
       2
     ],
     "down_right": [
+      2,
       1,
-      0,
-      2
+      0
     ],
     "up_right": [
+      2,
       1,
-      0,
-      2
+      0
     ]
   },
   "pose_alignment": {
@@ -61,23 +61,23 @@
       "compared_with": "down_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
+        2,
         1,
-        0,
-        2
+        0
       ],
-      "pixel_error": 509843,
-      "confidence_margin": 44678
+      "pixel_error": 158942,
+      "confidence_margin": 245076
     },
     "up_right": {
       "compared_with": "up_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
+        2,
         1,
-        0,
-        2
+        0
       ],
-      "pixel_error": 248159,
-      "confidence_margin": 171464
+      "pixel_error": 121964,
+      "confidence_margin": 220626
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -88,9 +88,9 @@
       "height": 39
     },
     "down_right": {
-      "source_top": 273,
+      "source_top": 276,
       "source_bottom": 315,
-      "height": 42
+      "height": 39
     },
     "up_left": {
       "source_top": 225,
@@ -143,13 +143,19 @@
         "h": 38
       },
       {
-        "x": 407,
-        "y": 273,
+        "x": 283,
+        "y": 276,
         "w": 32,
-        "h": 38
+        "h": 39
       }
     ],
     "up_left": [
+      {
+        "x": 282,
+        "y": 226,
+        "w": 31,
+        "h": 38
+      },
       {
         "x": 322,
         "y": 225,
@@ -161,15 +167,15 @@
         "y": 226,
         "w": 32,
         "h": 39
-      },
-      {
-        "x": 408,
-        "y": 225,
-        "w": 27,
-        "h": 37
       }
     ],
     "up_right": [
+      {
+        "x": 363,
+        "y": 321,
+        "w": 31,
+        "h": 38
+      },
       {
         "x": 324,
         "y": 320,
@@ -181,12 +187,6 @@
         "y": 321,
         "w": 32,
         "h": 39
-      },
-      {
-        "x": 363,
-        "y": 321,
-        "w": 31,
-        "h": 38
       }
     ]
   },

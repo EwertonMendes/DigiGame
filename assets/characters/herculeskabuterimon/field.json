@@ -7,7 +7,7 @@
   "source_sha256": "a22ce7af194d576ffee3c652382a81805f29ed330ea0b845fa05b3cd40296e2e",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
-  "extraction_profile": "four_rows_rightmost_triples",
+  "extraction_profile": "four_rows_first_two_rightmost_last_two_leftmost",
   "review_pattern": "compact_interleaved",
   "runtime_group_indices": [
     0,
@@ -46,14 +46,14 @@
       2
     ],
     "down_right": [
+      2,
       1,
-      0,
-      2
+      0
     ],
     "up_right": [
-      1,
       0,
-      2
+      2,
+      1
     ]
   },
   "pose_alignment": {
@@ -61,23 +61,23 @@
       "compared_with": "down_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
+        2,
         1,
-        0,
-        2
+        0
       ],
-      "pixel_error": 328921,
-      "confidence_margin": 250154
+      "pixel_error": 166546,
+      "confidence_margin": 321074
     },
     "up_right": {
       "compared_with": "up_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
-        1,
         0,
-        2
+        2,
+        1
       ],
-      "pixel_error": 324052,
-      "confidence_margin": 296494
+      "pixel_error": 504590,
+      "confidence_margin": 255248
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -98,9 +98,9 @@
       "height": 39
     },
     "up_right": {
-      "source_top": 259,
-      "source_bottom": 296,
-      "height": 37
+      "source_top": 258,
+      "source_bottom": 297,
+      "height": 39
     }
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
@@ -143,10 +143,10 @@
         "h": 37
       },
       {
-        "x": 453,
-        "y": 226,
-        "w": 28,
-        "h": 31
+        "x": 323,
+        "y": 220,
+        "w": 31,
+        "h": 37
       }
     ],
     "up_left": [
@@ -171,10 +171,10 @@
     ],
     "up_right": [
       {
-        "x": 404,
-        "y": 259,
-        "w": 32,
-        "h": 37
+        "x": 63,
+        "y": 275,
+        "w": 18,
+        "h": 8
       },
       {
         "x": 366,
@@ -183,10 +183,10 @@
         "h": 36
       },
       {
-        "x": 451,
-        "y": 259,
+        "x": 325,
+        "y": 258,
         "w": 32,
-        "h": 37
+        "h": 39
       }
     ]
   },
