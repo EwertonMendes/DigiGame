@@ -194,5 +194,6 @@
   "cell_height": 39,
   "frame_count": 12,
   "frames_per_direction": 3,
-  "field_path": "res://assets/characters/gesomon/field.png"
+  "field_path": "res://assets/characters/gesomon/field.png",
+  "background_outline_radius": 2
 }
