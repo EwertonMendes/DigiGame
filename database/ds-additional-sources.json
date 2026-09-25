@@ -4093,53 +4093,53 @@
     },
     "Kogamon": {
       "source_id": 174,
-      "source_sha256": "ace84e7d67a6874e53cd4b72ea70dc1e53b23b38b928b8ab3656c6bffb2e2134",
-      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "source_sha256": "23460f10d415b3fa126ecb2cfcf4d9056d43ca32a10cbcba69545cc0c760b895",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
       "profile": "explicit_groups",
       "pattern": "rear_rows_first",
       "review_method": "exact_source_box_runtime_review",
       "review_status": "corrected_from_sprite_test_feedback",
-      "review_batch": "crop-baseline-fix-2026-09-25",
-      "review_note": "Sprite Test: facings are correct, but several frames contain neighboring-frame residue and visible bounce. Use exact audited source boxes with no crop padding and preserve the full source-box/envelope coordinates instead of trimming/re-bottom-aligning each frame independently.",
+      "review_batch": "kogamon-exact-crop-2026-09-25",
+      "review_note": "Use the crisp direct WTW/Photobucket source. The first movement row intentionally starts at y=166 to sit below the legacy overlay; exact source-box cropping is mandatory so the old 2px padding cannot pull overlay/neighbour residue back into the frame. Preserve full box/envelope placement to avoid per-frame bounce.",
       "explicit_groups": [
         [
           {
             "x": 1,
-            "y": 158,
+            "y": 166,
             "w": 34,
-            "h": 36
+            "h": 28
           },
           {
             "x": 38,
-            "y": 158,
+            "y": 166,
             "w": 34,
-            "h": 36
+            "h": 28
           },
           {
             "x": 75,
-            "y": 158,
+            "y": 166,
             "w": 34,
-            "h": 36
+            "h": 28
           }
         ],
         [
           {
             "x": 112,
-            "y": 158,
+            "y": 166,
             "w": 34,
-            "h": 36
+            "h": 28
           },
           {
             "x": 149,
-            "y": 158,
+            "y": 166,
             "w": 34,
-            "h": 36
+            "h": 28
           },
           {
             "x": 186,
-            "y": 158,
+            "y": 166,
             "w": 34,
-            "h": 36
+            "h": 28
           }
         ],
         [
@@ -4183,7 +4183,6 @@
           }
         ]
       ],
-      "source_member": "sprite thread/174_Kougamon.png",
       "vertical_alignment": "source_group_envelope",
       "preserve_source_box": true
     },
