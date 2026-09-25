@@ -81,7 +81,6 @@
     }
   },
   "vertical_alignment_policy": "frame_bottom",
-  "background_tolerance": 100,
   "source_group_envelopes": {
     "down_left": {
       "source_top": 300,
@@ -195,5 +194,6 @@
   "cell_height": 36,
   "frame_count": 12,
   "frames_per_direction": 3,
-  "field_path": "res://assets/characters/rosemon/field.png"
+  "field_path": "res://assets/characters/rosemon/field.png",
+  "background_tolerance": 100
 }
