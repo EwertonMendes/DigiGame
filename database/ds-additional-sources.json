@@ -4097,10 +4097,10 @@
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "explicit_groups",
       "pattern": "rear_rows_first",
-      "review_method": "single_species_source_crop_review",
-      "review_status": "corrected_single_species_crop_review",
-      "review_batch": "kogamon-2026-09-25",
-      "review_note": "Single-species correction: stop cropping eight pixels from the top of Kogamon's first movement row to dodge the Photobucket overlay. Revert to the clean pinned WTW archive member, restore the complete authored 36px row bounds, and retain source-group-envelope alignment so no authored pixels are lost or vertically re-anchored per frame.",
+      "review_method": "exact_source_box_runtime_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "crop-baseline-fix-2026-09-25",
+      "review_note": "Sprite Test: facings are correct, but several frames contain neighboring-frame residue and visible bounce. Use exact audited source boxes with no crop padding and preserve the full source-box/envelope coordinates instead of trimming/re-bottom-aligning each frame independently.",
       "explicit_groups": [
         [
           {
@@ -4184,7 +4184,8 @@
         ]
       ],
       "source_member": "sprite thread/174_Kougamon.png",
-      "vertical_alignment": "source_group_envelope"
+      "vertical_alignment": "source_group_envelope",
+      "preserve_source_box": true
     },
     "Mammothmon": {
       "source_id": 204,
@@ -4274,14 +4275,15 @@
           }
         ]
       ],
-      "review_method": "single_species_runtime_visual_review",
-      "review_status": "corrected_single_species_visual_review",
-      "review_batch": "mammothmon-2026-09-25",
-      "review_note": "Single-species correction from Sprite Test feedback: Mammothmon front/back groups were inverted and bottom-aligning individually trimmed frames caused visible vertical hopping. Preserve the audited authored movement boxes, map rear/front with rear_rows_first, and align frames by their shared source-group envelope so the original DS baseline is retained without per-frame bounce.",
+      "review_method": "exact_source_box_runtime_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "crop-baseline-fix-2026-09-25",
+      "review_note": "Sprite Test: facings are correct; UP-left/UP-right contain stray pixels and the walk still has slight bounce. Use exact audited source boxes with no 2px neighbor padding and preserve the full source-box/envelope placement so neighboring-frame pixels cannot leak in and per-frame trimming cannot change the baseline.",
       "horizontal_mirror_from": {
         "up_right": "up_left"
       },
-      "vertical_alignment": "source_group_envelope"
+      "vertical_alignment": "source_group_envelope",
+      "preserve_source_box": true
     },
     "LadyDevimon": {
       "source_id": 216,
@@ -4469,11 +4471,12 @@
           }
         ]
       ],
-      "review_method": "single_species_alignment_review",
-      "review_status": "corrected_single_species_alignment_review",
-      "review_batch": "whamon-2026-09-25",
-      "review_note": "Single-species correction: keep Whamon's existing canonical directional mapping and audited source boxes, but preserve the authored source-row vertical envelope across each three-frame walk cycle instead of bottom-aligning individually trimmed crops. This avoids artificial per-frame vertical re-anchoring without changing sprite pixels or direction semantics.",
-      "vertical_alignment": "source_group_envelope"
+      "review_method": "exact_source_box_runtime_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "crop-baseline-fix-2026-09-25",
+      "review_note": "Sprite Test: facings are correct; one DOWN-right walk frame shows a thin neighboring-frame residue line. Keep the existing mapping and boxes, but crop the exact audited cell with zero neighboring padding while preserving source placement.",
+      "vertical_alignment": "source_group_envelope",
+      "preserve_source_box": true
     },
     "Rosemon": {
       "source_id": 308,
