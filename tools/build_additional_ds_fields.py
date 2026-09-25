@@ -555,9 +555,9 @@ def build_field(
     frame_background_tolerance = int(spec.get("frame_background_tolerance", 0))
     if not 0 <= frame_background_tolerance <= 255:
         raise RuntimeError(f"{name}: invalid frame_background_tolerance {frame_background_tolerance}")
-    if frame_background_policy not in {"global_key", "border_connected_matte", "row_border_matte"}:
+    if frame_background_policy not in {"global_key", "border_connected_matte", "row_border_matte", "source_alpha"}:
         raise RuntimeError(f"{name}: unknown frame_background_policy {frame_background_policy}")
-    if frame_background_policy in {"border_connected_matte", "row_border_matte"}:
+    if frame_background_policy in {"border_connected_matte", "row_border_matte", "source_alpha"}:
         keyed = source
     elif background_outline_radius:
         keyed = keyed_source_preserving_outline(
@@ -588,7 +588,9 @@ def build_field(
             "height": envelope_height,
         }
         for box in ordered_boxes:
-            if mask_source is not None:
+            if frame_background_policy == "source_alpha":
+                frame = crop_component(source, box)
+            elif mask_source is not None:
                 mask_background_rgb_raw = spec.get("mask_background_rgb", [0, 0, 0])
                 if not isinstance(mask_background_rgb_raw, list) or len(mask_background_rgb_raw) != 3:
                     raise RuntimeError(f"{name}: mask_background_rgb must contain exactly three values")
