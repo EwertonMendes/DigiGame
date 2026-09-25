@@ -2,9 +2,9 @@
   "source_kind": "official_ds",
   "source_variant": "withthewill_additional_audited",
   "source_id": 174,
-  "source_archive_file": "sprite thread/174_Kougamon.png",
-  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
-  "source_sha256": "ace84e7d67a6874e53cd4b72ea70dc1e53b23b38b928b8ab3656c6bffb2e2134",
+  "source_archive_file": null,
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
+  "source_sha256": "23460f10d415b3fa126ecb2cfcf4d9056d43ca32a10cbcba69545cc0c760b895",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "explicit_groups",
@@ -65,8 +65,8 @@
         1,
         0
       ],
-      "pixel_error": 986786,
-      "confidence_margin": 154392
+      "pixel_error": 632075,
+      "confidence_margin": 14894
     },
     "up_right": {
       "compared_with": "up_left",
@@ -76,8 +76,8 @@
         1,
         0
       ],
-      "pixel_error": 148866,
-      "confidence_margin": 123294
+      "pixel_error": 177409,
+      "confidence_margin": 169430
     }
   },
   "vertical_alignment_policy": "source_group_envelope",
@@ -94,14 +94,14 @@
       "height": 36
     },
     "up_left": {
-      "source_top": 158,
+      "source_top": 166,
       "source_bottom": 194,
-      "height": 36
+      "height": 28
     },
     "up_right": {
-      "source_top": 158,
+      "source_top": 166,
       "source_bottom": 194,
-      "height": 36
+      "height": 28
     }
   },
   "anchor_policy": "source_group_envelope_bottom_center",
@@ -153,41 +153,41 @@
     "up_left": [
       {
         "x": 1,
-        "y": 158,
+        "y": 166,
         "w": 34,
-        "h": 36
+        "h": 28
       },
       {
         "x": 38,
-        "y": 158,
+        "y": 166,
         "w": 34,
-        "h": 36
+        "h": 28
       },
       {
         "x": 75,
-        "y": 158,
+        "y": 166,
         "w": 34,
-        "h": 36
+        "h": 28
       }
     ],
     "up_right": [
       {
         "x": 186,
-        "y": 158,
+        "y": 166,
         "w": 34,
-        "h": 36
+        "h": 28
       },
       {
         "x": 149,
-        "y": 158,
+        "y": 166,
         "w": 34,
-        "h": 36
+        "h": 28
       },
       {
         "x": 112,
-        "y": 158,
+        "y": 166,
         "w": 34,
-        "h": 36
+        "h": 28
       }
     ]
   },
