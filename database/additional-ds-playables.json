@@ -6066,7 +6066,7 @@
       "portrait_metadata": "res://assets/characters/kabuterimon/portrait_frames.json",
       "source_id": 92,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "compact_interleaved",
       "field_cell": [
         38,
         42
