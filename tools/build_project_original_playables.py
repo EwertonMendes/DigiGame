@@ -31,6 +31,23 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _canonical_entry(spec: dict[str, Any]) -> dict[str, Any]:
+    database = json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
+    seed = str(spec["seed"])
+    name_key = str(spec["name"]).casefold()
+    entry = next(
+        (
+            row for row in database
+            if str(row.get("seed", "")) == seed
+            or str(row.get("name", "")).casefold() == name_key
+        ),
+        None,
+    )
+    if entry is None:
+        raise RuntimeError(f"{spec['name']}: canonical database entry is missing")
+    return dict(entry)
+
+
 def _remove_connected_black_background(image: Image.Image, threshold: int = 8) -> Image.Image:
     """Remove only dark pixels connected to a frame edge, preserving black outlines."""
     rgba = image.convert("RGBA")
@@ -186,7 +203,7 @@ def _build_species_assets(spec: dict[str, Any]) -> dict[str, Any]:
     }
     (directory / "portrait_frames.json").write_text(json.dumps(portrait_metadata, indent=2) + "\n", encoding="utf-8")
 
-    entry = dict(spec["database_entry"])
+    entry = _canonical_entry(spec)
     resource_path = ROOT / "assets/resources" / f"{name.lower()}.tres"
     resource_path.parent.mkdir(parents=True, exist_ok=True)
     resource_text = f'''[gd_resource type="Resource" script_class="Digimon" load_steps=3 format=3]\n\n[ext_resource type="Script" path="res://src/resources/Digimon.gd" id="1_script"]\n[ext_resource type="Texture2D" path="res://assets/characters/{key}/field.png" id="2_texture"]\n\n[resource]\nscript = ExtResource("1_script")\ntexture = ExtResource("2_texture")\ninitial_frame = 0\ninitial_facing = "down_left"\nsprite_hframes = 12\nsprite_vframes = 1\nsprite_layout = "directional_12"\nsprite_scale = Vector2({float(field["runtime_scale"]):.4f}, {float(field["runtime_scale"]):.4f})\nsprite_frame_duration = 0.120\nsprite_deviation = Vector2(0, 20)\nparticle_deviation = Vector2(0, 10)\ninitial_position = Vector2i(0, 0)\ntype = {json.dumps(str(entry.get("attribute", "Free")))}\ndisplay_name = {json.dumps(name)}\nlevel = 1\nhp = {max(1, int(entry["hp"]))}\nmp = {max(0, int(entry["mp"]))}\nattack = {max(1, int(entry["atk"]))}\ndefense = {max(1, int(entry["def"]))}\nage = 1\nbattles = 0\nvictories = 0\ndefeats = 0\n'''
@@ -211,28 +228,24 @@ def _build_species_assets(spec: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _sync_database(specs: list[dict[str, Any]]) -> None:
+def _validate_database_integration(specs: list[dict[str, Any]]) -> None:
     database = json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
     if not isinstance(database, list):
         raise RuntimeError("base-digimon-list.json root must be an array")
+    by_seed = {str(row.get("seed", "")): row for row in database}
     for spec in specs:
-        entry = dict(spec["database_entry"])
         seed = str(spec["seed"])
-        name_key = str(spec["name"]).casefold()
-        existing_index = next((i for i, row in enumerate(database) if str(row.get("seed", "")) == seed or str(row.get("name", "")).casefold() == name_key), -1)
-        if existing_index >= 0:
-            database[existing_index] = entry
-        else:
-            agumon_index = next((i for i, row in enumerate(database) if str(row.get("name", "")) == "Agumon"), len(database) - 1)
-            database.insert(agumon_index + 1, entry)
+        entry = by_seed.get(seed)
+        if entry is None:
+            raise RuntimeError(f"{spec['name']}: canonical database entry is missing")
         parent_seed = str(spec["evolves_from_seed"])
-        parent = next((row for row in database if str(row.get("seed", "")) == parent_seed), None)
+        parent = by_seed.get(parent_seed)
         if parent is None:
             raise RuntimeError(f"{spec['name']}: missing evolution parent seed {parent_seed}")
-        routes = parent.setdefault("digiEvolutionSeedList", [])
-        if seed not in routes:
-            routes.append(seed)
-    DATABASE_PATH.write_text(json.dumps(database, indent=2) + "\n", encoding="utf-8")
+        if seed not in parent.get("digiEvolutionSeedList", []):
+            raise RuntimeError(f"{spec['name']}: canonical parent evolution route is missing")
+        if parent_seed not in entry.get("degenerateSeedList", []):
+            raise RuntimeError(f"{spec['name']}: canonical degeneration route is missing")
 
 
 def _sync_early_manifest(rows: list[dict[str, Any]]) -> None:
@@ -260,7 +273,7 @@ def _sync_learnsets(specs: list[dict[str, Any]]) -> None:
     names = {str(spec["name"]) for spec in specs}
     learnsets = [row for row in learnsets if str(row.get("speciesSeed", "")) not in seeds and str(row.get("species", "")) not in names]
     for spec in specs:
-        entry = dict(spec["database_entry"])
+        entry = _canonical_entry(spec)
         learnsets.append({"speciesSeed": str(spec["seed"]), "species": str(spec["name"]), "rank": str(entry.get("rank", "")), "skills": list(spec.get("learnset", []))})
     database = json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
     order = {str(row.get("seed", "")): index for index, row in enumerate(database)}
@@ -278,9 +291,9 @@ def main() -> int:
     specs = [row for row in manifest.get("species", []) if isinstance(row, dict)]
     if not specs:
         raise RuntimeError("Project-original playable manifest contains no species")
+    _validate_database_integration(specs)
     rows = [_build_species_assets(spec) for spec in specs]
     if not args.assets_only:
-        _sync_database(specs)
         _sync_early_manifest(rows)
         _sync_learnsets(specs)
     print("project-original playables built: " + ", ".join(str(spec["name"]) for spec in specs))

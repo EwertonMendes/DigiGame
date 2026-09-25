@@ -8,7 +8,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATABASE = ROOT / "database" / "base-digimon-list.json"
 BALANCE = ROOT / "database" / "progression-balance.json"
-REQUIRED_STATS = ("hp", "mp", "atk", "def", "speed")
+REQUIRED_STATS = ("hp", "mp", "atk", "def", "int", "speed")
+CANONICAL_ORDER = (
+    "hp", "mp", "atk", "def", "int", "speed", "bitFarmingRate",
+    "MOV", "movementType", "digiEvolutionSeedList", "degenerateSeedList",
+    "evolutionRequirements",
+)
 SUPPORTED_STATS = {"hp", "mp", "sp", "atk", "attack", "def", "defense", "int", "speed"}
 KNOWN_REQUIREMENTS = {
     "level", "potential", "abi", "stat", "item", "link", "battles_won",
@@ -28,6 +33,41 @@ def fail(message: str) -> None:
 
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def validate_canonical_species(entry: dict, name: str) -> None:
+    if "checked" in entry:
+        fail(f"{name}: retired checked property must not be present")
+
+    missing = [key for key in CANONICAL_ORDER if key not in entry]
+    if missing:
+        fail(f"{name}: missing canonical fields {missing}")
+
+    keys = list(entry)
+    positions = [keys.index(key) for key in CANONICAL_ORDER]
+    if positions != sorted(positions):
+        fail(
+            f"{name}: canonical property order is invalid; expected "
+            "hp/mp/atk/def/int/speed/bitFarmingRate/MOV/movementType before route lists"
+        )
+
+    try:
+        mov = int(entry["MOV"])
+    except (TypeError, ValueError):
+        fail(f"{name}: MOV must be numeric")
+    if not 1 <= mov <= 8:
+        fail(f"{name}: MOV must be between 1 and 8")
+
+    movement_type = str(entry["movementType"]).strip()
+    if not movement_type:
+        fail(f"{name}: movementType cannot be empty")
+
+    try:
+        bit_rate = int(entry["bitFarmingRate"])
+    except (TypeError, ValueError):
+        fail(f"{name}: bitFarmingRate must be numeric")
+    if bit_rate < 0:
+        fail(f"{name}: bitFarmingRate cannot be negative")
 
 
 def route_targets(entry: dict, forward: bool) -> list[tuple[str, list]]:
@@ -153,6 +193,9 @@ def main() -> int:
             fail(f"duplicate Digimon name: {name}")
         seeds[seed] = name
         names.add(name_key)
+
+        validate_canonical_species(entry, name)
+
         rank = str(entry.get("rank", "")).strip()
         if not rank or rank not in KNOWN_RANKS:
             fail(f"{name}: invalid or missing rank {rank!r}")
@@ -160,11 +203,12 @@ def main() -> int:
             fail(f"{name}: dataRequired must be positive")
         for stat in REQUIRED_STATS:
             try:
-                value = int(entry.get(stat, 0))
+                value = int(entry[stat])
             except (TypeError, ValueError):
                 fail(f"{name}: {stat} must be numeric")
-            if value < 0:
-                fail(f"{name}: {stat} cannot be negative")
+            minimum = 0 if stat == "mp" else 1
+            if value < minimum:
+                fail(f"{name}: {stat} must be >= {minimum}")
 
     edges = 0
     for entry in data:
