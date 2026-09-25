@@ -4099,8 +4099,8 @@
       "pattern": "rear_rows_first",
       "review_method": "exact_source_box_runtime_review",
       "review_status": "corrected_from_sprite_test_feedback",
-      "review_batch": "kogamon-down-final-crop-2026-09-25",
-      "review_note": "Sprite Test final correction: UP-left/UP-right are already correct and must remain untouched. Normalize only the DOWN source row to the exact authored 37px stride using uniform 34x36 cells at y=196 for both DL and DR. This removes the old 28x33 / 34x33 asymmetric crops that caused clipping and baseline hopping, while retaining the existing exact-box and tiny-residue cleanup.",
+      "review_batch": "kogamon-down-final-crop-2026-09-25-b",
+      "review_note": "Sprite Test final correction: keep UP untouched. DOWN uses uniform exact 34x36 source cells at y=196 with the authored 37px stride. Disable all island cleanup for Kogamon now that the source boxes are exact, because disconnected-pixel cleanup can remove legitimate authored details and make frames look clipped. No padding or per-frame trim is used, so baseline and neighbouring-frame isolation remain stable.",
       "explicit_groups": [
         [
           {
@@ -4185,8 +4185,8 @@
       ],
       "vertical_alignment": "source_group_envelope",
       "preserve_source_box": true,
-      "border_island_cleanup_max_pixels": 12,
-      "alpha_island_cleanup_max_pixels": 8
+      "border_island_cleanup_max_pixels": 0,
+      "alpha_island_cleanup_max_pixels": 0
     },
     "Mammothmon": {
       "source_id": 204,
