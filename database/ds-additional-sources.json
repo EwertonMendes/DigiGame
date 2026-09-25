@@ -4662,17 +4662,18 @@
           }
         ]
       ],
-      "review_method": "targeted_visual_source_audit",
-      "review_status": "corrected_during_targeted_nine_sprite_audit",
-      "review_batch": "targeted-nine-2026-09-25",
-      "review_note": "Targeted visual audit: direction groups and wing crops are already semantically correct. Replace broad global blue-matte tolerance with exact per-frame border-connected matte removal so blue/gold authored armor and wing pixels cannot be erased by a wide color tolerance.",
+      "review_method": "single_species_alignment_review",
+      "review_status": "corrected_single_species_alignment_review",
+      "review_batch": "seraphimon-2026-09-25",
+      "review_note": "Single-species correction: keep Seraphimon's audited canonical direction groups and exact source-frame boxes, but preserve the authored source-row vertical envelope across each walk triplet instead of bottom-aligning individually trimmed frames. This keeps the original DS motion baseline without changing facing semantics.",
       "frame_background_policy": "border_connected_matte",
       "frame_background_rgb": [
         123,
         198,
         255
       ],
-      "frame_background_tolerance": 0
+      "frame_background_tolerance": 0,
+      "vertical_alignment": "source_group_envelope"
     },
     "Parasimon": {
       "source_id": 343,
