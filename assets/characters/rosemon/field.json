@@ -2,9 +2,9 @@
   "source_kind": "official_ds",
   "source_variant": "withthewill_additional_audited",
   "source_id": 308,
-  "source_archive_file": "sprite thread/308_Rosemon.png",
-  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
-  "source_sha256": "d4419fb95efdaecadf1aed73deacd5e68b37a56875526477d8923f0084a7d37d",
+  "source_archive_file": null,
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/308_Rosemon.png",
+  "source_sha256": "c2992b05f5c3ade734eb666776fa231af75ed3afc58114c4ef029c3a749e4920",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "explicit_groups",
@@ -65,8 +65,8 @@
         1,
         0
       ],
-      "pixel_error": 146150,
-      "confidence_margin": 27520
+      "pixel_error": 133824,
+      "confidence_margin": 147748
     },
     "up_right": {
       "compared_with": "up_left",
@@ -76,8 +76,8 @@
         1,
         0
       ],
-      "pixel_error": 324136,
-      "confidence_margin": 37930
+      "pixel_error": 0,
+      "confidence_margin": 250186
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -105,8 +105,8 @@
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
-    16,
-    35
+    17,
+    38
   ],
   "audited_source_frames": {
     "down_left": [
@@ -190,8 +190,8 @@
       }
     ]
   },
-  "cell_width": 32,
-  "cell_height": 36,
+  "cell_width": 34,
+  "cell_height": 39,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/rosemon/field.png",

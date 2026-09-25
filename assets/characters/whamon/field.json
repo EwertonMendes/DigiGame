@@ -2,9 +2,9 @@
   "source_kind": "official_ds",
   "source_variant": "withthewill_additional_audited",
   "source_id": 250,
-  "source_archive_file": "sprite thread/250_Whamon.png",
-  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
-  "source_sha256": "7c38aba0aeaf55b32404cd6cfab510cc4c6b467dbfa0d2742150c68d035a786c",
+  "source_archive_file": null,
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/250_Whamon.png",
+  "source_sha256": "34c80eadf69e5260dca42e8be0f3bf16ae306fc0d720af9f61272fb3deff87dc",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "explicit_groups",
@@ -65,8 +65,8 @@
         1,
         0
       ],
-      "pixel_error": 485635,
-      "confidence_margin": 213532
+      "pixel_error": 80930,
+      "confidence_margin": 354486
     },
     "up_right": {
       "compared_with": "up_left",
@@ -76,8 +76,8 @@
         1,
         0
       ],
-      "pixel_error": 504807,
-      "confidence_margin": 110986
+      "pixel_error": 571120,
+      "confidence_margin": 22688
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -105,8 +105,8 @@
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
-    24,
-    47
+    23,
+    45
   ],
   "audited_source_frames": {
     "down_left": [
@@ -190,8 +190,8 @@
       }
     ]
   },
-  "cell_width": 48,
-  "cell_height": 48,
+  "cell_width": 47,
+  "cell_height": 46,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/whamon/field.png"

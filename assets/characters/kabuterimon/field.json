@@ -2,9 +2,9 @@
   "source_kind": "official_ds",
   "source_variant": "withthewill_additional_audited",
   "source_id": 92,
-  "source_archive_file": "sprite thread/092_Kabuterimon.png",
-  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
-  "source_sha256": "18b5626d0a8c156c400c34cde095ee37300bb13588be52bebcf7f2ef9ed24029",
+  "source_archive_file": null,
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/092_Kabuterimon.png",
+  "source_sha256": "068d0027163f647bc1d97c5c15edcadbe1cc743b47f9b531c8b10bb13f07551c",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "explicit_groups",
@@ -46,14 +46,14 @@
       2
     ],
     "down_right": [
-      2,
+      0,
       1,
-      0
+      2
     ],
     "up_right": [
       1,
-      0,
-      2
+      2,
+      0
     ]
   },
   "pose_alignment": {
@@ -61,23 +61,23 @@
       "compared_with": "down_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
-        2,
+        0,
         1,
-        0
+        2
       ],
-      "pixel_error": 106253,
-      "confidence_margin": 780
+      "pixel_error": 1332345,
+      "confidence_margin": 26724
     },
     "up_right": {
       "compared_with": "up_left",
       "policy": "deterministic_mirror_pose_match",
       "source_phase_order": [
         1,
-        0,
-        2
+        2,
+        0
       ],
-      "pixel_error": 271276,
-      "confidence_margin": 7768
+      "pixel_error": 718842,
+      "confidence_margin": 370
     }
   },
   "vertical_alignment_policy": "frame_bottom",
@@ -105,8 +105,8 @@
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
   "frame_anchor": [
-    16,
-    31
+    19,
+    41
   ],
   "audited_source_frames": {
     "down_left": [
@@ -131,7 +131,7 @@
     ],
     "down_right": [
       {
-        "x": 298,
+        "x": 228,
         "y": 170,
         "w": 30,
         "h": 34
@@ -143,7 +143,7 @@
         "h": 34
       },
       {
-        "x": 228,
+        "x": 298,
         "y": 170,
         "w": 30,
         "h": 34
@@ -177,21 +177,21 @@
         "h": 34
       },
       {
-        "x": 228,
+        "x": 298,
         "y": 250,
         "w": 30,
         "h": 34
       },
       {
-        "x": 298,
+        "x": 228,
         "y": 250,
         "w": 30,
         "h": 34
       }
     ]
   },
-  "cell_width": 32,
-  "cell_height": 32,
+  "cell_width": 38,
+  "cell_height": 42,
   "frame_count": 12,
   "frames_per_direction": 3,
   "field_path": "res://assets/characters/kabuterimon/field.png",

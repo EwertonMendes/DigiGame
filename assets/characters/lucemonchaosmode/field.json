@@ -8,18 +8,18 @@
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "two_rows_of_six",
-  "review_pattern": "compact_interleaved",
+  "review_pattern": "compact_interleaved_up_reversed",
   "runtime_group_indices": [
     0,
     2,
-    1,
-    3
+    3,
+    1
   ],
   "effective_runtime_group_indices": [
     0,
     2,
-    1,
-    3
+    3,
+    1
   ],
   "horizontal_mirror_from": {},
   "generated_horizontal_mirrors": [],
@@ -93,14 +93,14 @@
       "height": 47
     },
     "up_left": {
-      "source_top": 166,
-      "source_bottom": 212,
-      "height": 46
-    },
-    "up_right": {
       "source_top": 218,
       "source_bottom": 267,
       "height": 49
+    },
+    "up_right": {
+      "source_top": 166,
+      "source_bottom": 212,
+      "height": 46
     }
   },
   "anchor_policy": "bottom_center_in_uniform_species_cell",
@@ -151,42 +151,42 @@
     ],
     "up_left": [
       {
-        "x": 125,
-        "y": 166,
-        "w": 32,
-        "h": 46
-      },
-      {
-        "x": 161,
-        "y": 167,
-        "w": 30,
-        "h": 44
-      },
-      {
-        "x": 203,
-        "y": 171,
-        "w": 32,
-        "h": 41
-      }
-    ],
-    "up_right": [
-      {
         "x": 132,
         "y": 221,
         "w": 32,
         "h": 46
       },
       {
-        "x": 212,
-        "y": 218,
-        "w": 30,
-        "h": 44
-      },
-      {
         "x": 168,
         "y": 222,
         "w": 32,
         "h": 41
+      },
+      {
+        "x": 212,
+        "y": 218,
+        "w": 30,
+        "h": 44
+      }
+    ],
+    "up_right": [
+      {
+        "x": 125,
+        "y": 166,
+        "w": 32,
+        "h": 46
+      },
+      {
+        "x": 203,
+        "y": 171,
+        "w": 32,
+        "h": 41
+      },
+      {
+        "x": 161,
+        "y": 167,
+        "w": 30,
+        "h": 44
       }
     ]
   },

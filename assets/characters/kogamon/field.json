@@ -2,9 +2,9 @@
   "source_kind": "official_ds",
   "source_variant": "withthewill_additional_audited",
   "source_id": 174,
-  "source_archive_file": "sprite thread/174_Kougamon.png",
-  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
-  "source_sha256": "ace84e7d67a6874e53cd4b72ea70dc1e53b23b38b928b8ab3656c6bffb2e2134",
+  "source_archive_file": null,
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
+  "source_sha256": "23460f10d415b3fa126ecb2cfcf4d9056d43ca32a10cbcba69545cc0c760b895",
   "rebuilt_from_source": true,
   "existing_runtime_strip_used_as_input": false,
   "extraction_profile": "explicit_groups",
@@ -65,8 +65,8 @@
         1,
         0
       ],
-      "pixel_error": 148866,
-      "confidence_margin": 123294
+      "pixel_error": 200193,
+      "confidence_margin": 331132
     },
     "up_right": {
       "compared_with": "up_left",
@@ -76,8 +76,8 @@
         1,
         0
       ],
-      "pixel_error": 986786,
-      "confidence_margin": 154392
+      "pixel_error": 632075,
+      "confidence_margin": 14894
     }
   },
   "vertical_alignment_policy": "frame_bottom",

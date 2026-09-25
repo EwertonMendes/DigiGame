@@ -16,18 +16,18 @@
     3
   ],
   "effective_runtime_group_indices": [
-    0,
-    0,
-    2,
-    2
+    1,
+    1,
+    3,
+    3
   ],
   "horizontal_mirror_from": {
-    "down_right": "down_left",
-    "up_right": "up_left"
+    "down_left": "down_right",
+    "up_left": "up_right"
   },
   "generated_horizontal_mirrors": [
-    "down_right",
-    "up_right"
+    "down_left",
+    "up_left"
   ],
   "canonical_runtime_order": [
     "down_left",
@@ -63,8 +63,8 @@
     ]
   },
   "pose_alignment": {
-    "down_right": {
-      "compared_with": "down_left",
+    "down_left": {
+      "compared_with": "down_right",
       "policy": "generated_horizontal_mirror",
       "source_phase_order": [
         0,
@@ -74,8 +74,8 @@
       "pixel_error": 0,
       "confidence_margin": null
     },
-    "up_right": {
-      "compared_with": "up_left",
+    "up_left": {
+      "compared_with": "up_right",
       "policy": "generated_horizontal_mirror",
       "source_phase_order": [
         0,

@@ -5466,7 +5466,7 @@
       "portrait_metadata": "res://assets/characters/lucemonchaosmode/portrait_frames.json",
       "source_id": 265,
       "profile": "two_rows_of_six",
-      "pattern": "compact_interleaved",
+      "pattern": "compact_interleaved_up_reversed",
       "field_cell": [
         39,
         50
@@ -5526,7 +5526,7 @@
       "portrait_metadata": "res://assets/characters/saberleomon/portrait_frames.json",
       "source_id": 300,
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "field_cell": [
         36,
         41
@@ -5606,7 +5606,7 @@
       "portrait_metadata": "res://assets/characters/holydramon/portrait_frames.json",
       "source_id": 369,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "compact_interleaved",
       "field_cell": [
         35,
         43
@@ -5725,10 +5725,10 @@
       "portrait_strip": "res://assets/characters/preciomon/portrait_frames.png",
       "portrait_metadata": "res://assets/characters/preciomon/portrait_frames.json",
       "source_id": 331,
-      "profile": "four_rows_rightmost_triples",
+      "profile": "four_rows_first_left_rest_right",
       "pattern": "compact_interleaved",
       "field_cell": [
-        36,
+        35,
         44
       ],
       "portrait_frames": 4
@@ -5826,7 +5826,7 @@
       "portrait_metadata": "res://assets/characters/skullmammothmon/portrait_frames.json",
       "source_id": 364,
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         43
@@ -5866,7 +5866,7 @@
       "portrait_metadata": "res://assets/characters/dianamon/portrait_frames.json",
       "source_id": 384,
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "rear_rows_first_horizontal_reversed",
       "field_cell": [
         36,
         43
@@ -5886,7 +5886,7 @@
       "portrait_metadata": "res://assets/characters/shinegreymonburstmode/portrait_frames.json",
       "source_id": 385,
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "compact_interleaved",
       "field_cell": [
         36,
         44
@@ -6006,7 +6006,7 @@
       "portrait_metadata": "res://assets/characters/ravemon/portrait_frames.json",
       "source_id": 377,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "g1_g3_g2_g0",
       "field_cell": [
         35,
         43
@@ -6026,7 +6026,7 @@
       "portrait_metadata": "res://assets/characters/lampmon/portrait_frames.json",
       "source_id": 298,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         35,
         42
@@ -6046,7 +6046,7 @@
       "portrait_metadata": "res://assets/characters/sleipmon/portrait_frames.json",
       "source_id": 373,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "canonical_rows_rear_reversed",
       "field_cell": [
         36,
         44
@@ -6068,8 +6068,8 @@
       "profile": "explicit_groups",
       "pattern": "canonical_rows",
       "field_cell": [
-        32,
-        32
+        38,
+        42
       ],
       "portrait_frames": 4
     },
@@ -6086,7 +6086,7 @@
       "portrait_metadata": "res://assets/characters/raremon/portrait_frames.json",
       "source_id": 102,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         37,
         40
@@ -6109,7 +6109,7 @@
       "pattern": "canonical_rows",
       "field_cell": [
         42,
-        42
+        39
       ],
       "portrait_frames": 4
     },
@@ -6148,8 +6148,8 @@
       "profile": "explicit_groups",
       "pattern": "canonical_rows",
       "field_cell": [
-        40,
-        44
+        36,
+        41
       ],
       "portrait_frames": 4
     },
@@ -6188,8 +6188,8 @@
       "profile": "explicit_groups",
       "pattern": "canonical_rows",
       "field_cell": [
-        48,
-        48
+        47,
+        46
       ],
       "portrait_frames": 4
     },
@@ -6208,8 +6208,8 @@
       "profile": "explicit_groups",
       "pattern": "canonical_rows",
       "field_cell": [
-        32,
-        36
+        34,
+        39
       ],
       "portrait_frames": 4
     },
@@ -6228,8 +6228,8 @@
       "profile": "explicit_groups",
       "pattern": "canonical_rows",
       "field_cell": [
-        32,
-        35
+        34,
+        43
       ],
       "portrait_frames": 4
     },
@@ -6246,7 +6246,7 @@
       "portrait_metadata": "res://assets/characters/parasimon/portrait_frames.json",
       "source_id": 343,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         34
@@ -6306,10 +6306,10 @@
       "portrait_metadata": "res://assets/characters/ravemonburstmode/portrait_frames.json",
       "source_id": 388,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "compact_interleaved",
       "field_cell": [
         35,
-        46
+        43
       ],
       "portrait_frames": 4
     }
