@@ -464,6 +464,18 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     vertical_alignment = str(spec.get("vertical_alignment", "frame_bottom"))
     if vertical_alignment not in {"frame_bottom", "source_group_envelope"}:
         raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
+    vertical_alignment_by_direction_raw = spec.get("vertical_alignment_by_direction", {})
+    if not isinstance(vertical_alignment_by_direction_raw, dict):
+        raise RuntimeError(f"{name}: vertical_alignment_by_direction must be an object")
+    vertical_alignment_by_direction: dict[str, str] = {}
+    for direction, mode in vertical_alignment_by_direction_raw.items():
+        direction = str(direction)
+        mode = str(mode)
+        if direction not in DIRECTIONS:
+            raise RuntimeError(f"{name}: unknown direction override {direction}")
+        if mode not in {"frame_bottom", "source_group_envelope"}:
+            raise RuntimeError(f"{name}: invalid vertical alignment override {direction}={mode}")
+        vertical_alignment_by_direction[direction] = mode
     preserve_source_box = bool(spec.get("preserve_source_box", False))
     border_island_cleanup_max_pixels = int(spec.get("border_island_cleanup_max_pixels", 0))
     alpha_island_cleanup_max_pixels = int(spec.get("alpha_island_cleanup_max_pixels", 0))
@@ -482,7 +494,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         )
 
     frames: list[Image.Image] = []
-    frame_placements: list[tuple[int, int]] = []
+    frame_placements: list[tuple[str, int, int]] = []
     audited_boxes: dict[str, list[dict[str, int]]] = {}
     source_group_envelopes: dict[str, dict[str, int]] = {}
     for direction in DIRECTIONS:
@@ -521,21 +533,23 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             if direction in horizontal_mirror_from:
                 frame = frame.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             frames.append(frame)
-            if vertical_alignment == "source_group_envelope":
-                frame_placements.append((box["y"] - group_top, envelope_height))
+            direction_alignment = vertical_alignment_by_direction.get(direction, vertical_alignment)
+            if direction_alignment == "source_group_envelope":
+                frame_placements.append((direction_alignment, box["y"] - group_top, envelope_height))
             else:
-                frame_placements.append((0, frame.height))
+                frame_placements.append((direction_alignment, 0, frame.height))
 
     cell_w = max(32, max(frame.width for frame in frames) + 4)
-    if vertical_alignment == "source_group_envelope":
-        cell_h = max(32, max(envelope_height for _, envelope_height in frame_placements) + 4)
-    else:
-        cell_h = max(32, max(frame.height for frame in frames) + 4)
+    placement_heights = [
+        envelope_height if mode == "source_group_envelope" else frames[index].height
+        for index, (mode, _offset_y, envelope_height) in enumerate(frame_placements)
+    ]
+    cell_h = max(32, max(placement_heights) + 4)
 
     strip = Image.new("RGBA", (cell_w * FRAME_COUNT, cell_h), (0, 0, 0, 0))
     for index, frame in enumerate(frames):
-        offset_y, envelope_height = frame_placements[index]
-        if vertical_alignment == "source_group_envelope":
+        alignment_mode, offset_y, envelope_height = frame_placements[index]
+        if alignment_mode == "source_group_envelope":
             y = cell_h - envelope_height - 1 + offset_y
         else:
             y = cell_h - frame.height - 1
@@ -569,6 +583,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "source_frame_order": source_frame_order,
         "pose_alignment": pose_alignment,
         "vertical_alignment_policy": vertical_alignment,
+        "vertical_alignment_by_direction": vertical_alignment_by_direction,
         "preserve_source_box": preserve_source_box,
         "border_island_cleanup_max_pixels": border_island_cleanup_max_pixels,
         "alpha_island_cleanup_max_pixels": alpha_island_cleanup_max_pixels,
