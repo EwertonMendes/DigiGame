@@ -2075,11 +2075,11 @@
       "source_sha256": "caa64c8311d557e7920f10b731b43cca320cfebdb2070eadb643a1a6ffb3fc7c",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_f",
       "review_batch": "backfill-2026-09-25-f",
-      "review_note": "Raw audit semantic mapping recorded before materialization: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Source left/right groups were distinct in the audit review sheet; no offline mirror was required. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side: G2=down_left, G3=down_right, G0=up_left, G1=up_right."
     },
     "Kimeramon": {
       "source_id": 243,
@@ -2087,11 +2087,11 @@
       "source_sha256": "e9c95e0b9fad07fe987ea7ef5ea32067ed7050a7912ecd0feeb5103860f59e12",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_f",
       "review_batch": "backfill-2026-09-25-f",
-      "review_note": "Raw audit semantic mapping recorded before materialization: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Source left/right groups were distinct in the audit review sheet; no offline mirror was required. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side: G2=down_left, G3=down_right, G0=up_left, G1=up_right."
     },
     "Deramon": {
       "source_id": 245,
@@ -2195,11 +2195,11 @@
       "source_sha256": "b4ddde07ce5a18b9d5929b803f6a3238af307d745d0fd6ce9c0132de6a7d5f6e",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_f",
       "review_batch": "backfill-2026-09-25-f",
-      "review_note": "Raw audit semantic mapping recorded before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Source left/right groups were distinct in the audit review sheet; no offline mirror was required. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side: G0=down_left, G1=down_right, G2=up_left, G3=up_right."
     },
     "Lilamon": {
       "source_id": 259,
@@ -2207,11 +2207,11 @@
       "source_sha256": "9fb14e44e93e029516afcbc31096542bf587009a0ddb2526fe9e2e3ba147a72b",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "four_rows_rightmost_triples",
-      "pattern": "compact_interleaved",
+      "pattern": "compact_interleaved_up_reversed",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_f",
       "review_batch": "backfill-2026-09-25-f",
-      "review_note": "Raw audit semantic mapping recorded before materialization: G0=down_left, G2=down_right, G1=up_left, G3=up_right. Source left/right groups were distinct in the audit review sheet; no offline mirror was required. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: down_left/down_right are correct; only up_left/up_right are inverted. Preserve down and swap only the up pair: G0=down_left, G2=down_right, G3=up_left, G1=up_right."
     },
     "Shadramon": {
       "source_id": 260,
@@ -2219,11 +2219,11 @@
       "source_sha256": "d8812f6a377b8f840cbe68acd9f19aac774afc0ee86f5108340c84a103363e9a",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_f",
       "review_batch": "backfill-2026-09-25-f",
-      "review_note": "Raw audit semantic mapping recorded before materialization: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Source left/right groups were distinct in the audit review sheet; no offline mirror was required. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side: G2=down_left, G3=down_right, G0=up_left, G1=up_right."
     },
     "Matadormon": {
       "source_id": 261,
@@ -2399,11 +2399,11 @@
       "source_sha256": "c39db72916152cafe6683e46e24d4ec1ece94846307aab866c87a952fdb22337",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_f",
       "review_batch": "backfill-2026-09-25-f",
-      "review_note": "Raw audit semantic mapping recorded before materialization: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Source left/right groups were distinct in the audit review sheet; no offline mirror was required. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side: G2=down_left, G3=down_right, G0=up_left, G1=up_right."
     },
     "Allomon": {
       "source_id": 280,
@@ -2459,11 +2459,11 @@
       "source_sha256": "f8b623c7757c649ec04e86c60fb22007c8111815efedaa5710c21e06ebbe77fa",
       "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
       "profile": "two_rows_of_six",
-      "pattern": "rear_rows_first",
+      "pattern": "canonical_rows",
       "review_method": "raw_audit_group_visual_review",
-      "review_status": "ready_for_sprite_test_validation",
+      "review_status": "corrected_after_runtime_visual_review_batch_f",
       "review_batch": "backfill-2026-09-25-f",
-      "review_note": "Raw audit semantic mapping recorded before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Source left/right groups were distinct in the audit review sheet; no offline mirror was required. Final semantic facing approval remains the Sprite Test visual pass."
+      "review_note": "Sprite Test correction: left/right facings are correct, but front/back are inverted. Swap only down<->up while preserving side: G0=down_left, G1=down_right, G2=up_left, G3=up_right."
     },
     "Flaremon": {
       "source_id": 286,
