@@ -1,0 +1,201 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": null,
+  "source_archive_file": "sprite thread/328_Neptunmon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "c21458d9b430f4cf4ee75f43d510021694158e52de48f74f841ea434eb2f7f31",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 172830,
+      "confidence_margin": 325160
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 167818,
+      "confidence_margin": 230858
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "preserve_source_box": false,
+  "border_island_cleanup_max_pixels": 0,
+  "alpha_island_cleanup_max_pixels": 0,
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 363,
+      "source_bottom": 403,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 363,
+      "source_bottom": 403,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 317,
+      "source_bottom": 357,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 317,
+      "source_bottom": 357,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    43
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 83,
+        "y": 364,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 124,
+        "y": 363,
+        "w": 29,
+        "h": 38
+      },
+      {
+        "x": 163,
+        "y": 363,
+        "w": 28,
+        "h": 39
+      }
+    ],
+    "down_right": [
+      {
+        "x": 277,
+        "y": 364,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 238,
+        "y": 363,
+        "w": 29,
+        "h": 38
+      },
+      {
+        "x": 200,
+        "y": 363,
+        "w": 28,
+        "h": 39
+      }
+    ],
+    "up_left": [
+      {
+        "x": 81,
+        "y": 318,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 122,
+        "y": 317,
+        "w": 28,
+        "h": 38
+      },
+      {
+        "x": 160,
+        "y": 317,
+        "w": 31,
+        "h": 40
+      }
+    ],
+    "up_right": [
+      {
+        "x": 279,
+        "y": 318,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 241,
+        "y": 317,
+        "w": 28,
+        "h": 38
+      },
+      {
+        "x": 200,
+        "y": 317,
+        "w": 31,
+        "h": 40
+      }
+    ]
+  },
+  "cell_width": 35,
+  "cell_height": 44,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/neptunmon/field.png"
+}

@@ -1,0 +1,201 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 359,
+  "source_archive_file": "sprite thread/359_MetalSeadramon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "6bbe030e6166bf125601f2812b66162c95569c1284fa3caa03d37680d807b70c",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      0,
+      1,
+      2
+    ],
+    "up_right": [
+      0,
+      1,
+      2
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 158420,
+      "confidence_margin": 457094
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 321462,
+      "confidence_margin": 192978
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "preserve_source_box": false,
+  "border_island_cleanup_max_pixels": 0,
+  "alpha_island_cleanup_max_pixels": 0,
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 67,
+      "source_bottom": 113,
+      "height": 46
+    },
+    "down_right": {
+      "source_top": 67,
+      "source_bottom": 113,
+      "height": 46
+    },
+    "up_left": {
+      "source_top": 120,
+      "source_bottom": 166,
+      "height": 46
+    },
+    "up_right": {
+      "source_top": 120,
+      "source_bottom": 166,
+      "height": 46
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    49
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 356,
+        "y": 68,
+        "w": 31,
+        "h": 45
+      },
+      {
+        "x": 394,
+        "y": 70,
+        "w": 30,
+        "h": 43
+      },
+      {
+        "x": 432,
+        "y": 67,
+        "w": 31,
+        "h": 46
+      }
+    ],
+    "down_right": [
+      {
+        "x": 479,
+        "y": 68,
+        "w": 31,
+        "h": 45
+      },
+      {
+        "x": 519,
+        "y": 70,
+        "w": 30,
+        "h": 43
+      },
+      {
+        "x": 555,
+        "y": 67,
+        "w": 31,
+        "h": 46
+      }
+    ],
+    "up_left": [
+      {
+        "x": 356,
+        "y": 121,
+        "w": 30,
+        "h": 45
+      },
+      {
+        "x": 394,
+        "y": 123,
+        "w": 31,
+        "h": 43
+      },
+      {
+        "x": 433,
+        "y": 120,
+        "w": 30,
+        "h": 46
+      }
+    ],
+    "up_right": [
+      {
+        "x": 479,
+        "y": 121,
+        "w": 30,
+        "h": 45
+      },
+      {
+        "x": 518,
+        "y": 123,
+        "w": 31,
+        "h": 43
+      },
+      {
+        "x": 554,
+        "y": 120,
+        "w": 30,
+        "h": 46
+      }
+    ]
+  },
+  "cell_width": 35,
+  "cell_height": 50,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/metalseadramon/field.png"
+}

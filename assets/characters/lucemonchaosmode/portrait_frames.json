@@ -1,0 +1,14 @@
+{
+  "source": "Lucemon_Chaos_Mode.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Lucemon_Chaos_Mode.webp",
+  "frame_width": 126,
+  "frame_height": 170,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "9286c9dc5eabe9cc25f6b79c2b8949427bcfdfb8071eb25961b9cc52553cd1af"
+}

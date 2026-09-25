@@ -1,0 +1,14 @@
+{
+  "source": "Yatagaramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Yatagaramon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "e9a44dc67f87f6b1fb5d70bd29d920b754b4b02f2f76b799c2043ac17ea3ad4f"
+}

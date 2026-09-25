@@ -1,0 +1,14 @@
+{
+  "source": "Neptunmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Neptunmon.webp",
+  "frame_width": 143,
+  "frame_height": 164,
+  "frame_count": 4,
+  "durations_ms": [
+    300,
+    300,
+    300,
+    300
+  ],
+  "source_sha256": "26c2e13680974ba196807343e4bd30bf663d738bbe9cd70488bd8f58598df742"
+}

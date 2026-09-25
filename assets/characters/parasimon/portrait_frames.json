@@ -1,0 +1,14 @@
+{
+  "source": "Parasimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Parasimon.webp",
+  "frame_width": 166,
+  "frame_height": 131,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "ae1d40329d6815778b73f368b252d80273d2ab711acf3eb58b46c84ecf679930"
+}

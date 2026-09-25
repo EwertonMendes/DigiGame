@@ -1,0 +1,14 @@
+{
+  "source": "Lampmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Lampmon.webp",
+  "frame_width": 110,
+  "frame_height": 128,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "111fe66145b78866283eeb1167aed91d4dbb88b1a775a0ab68cefcf44815d9c6"
+}

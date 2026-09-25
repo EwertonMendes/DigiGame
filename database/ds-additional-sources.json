@@ -77,6 +77,12 @@
       3,
       1,
       0
+    ],
+    "g1_g3_g2_g0": [
+      1,
+      3,
+      2,
+      0
     ]
   },
   "profiles": {
@@ -119,6 +125,18 @@
         "right",
         "left",
         "left",
+        "right"
+      ]
+    },
+    "explicit_groups": {
+      "kind": "explicit_groups"
+    },
+    "four_rows_first_left_rest_right": {
+      "kind": "four_rows_selected_triples",
+      "triplet_sides": [
+        "left",
+        "right",
+        "right",
         "right"
       ]
     }
@@ -612,11 +630,12 @@
       "source_sha256": "7ec12400422ac1d21ea259282cf163faf232cd4cc961fd06487b63044906934b",
       "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/168_Flymon.png",
       "profile": "two_rows_of_six",
-      "pattern": "canonical_rows",
-      "review_method": "visual_source_group_review",
-      "review_status": "corrected_by_direct_runtime_front_back_swap",
-      "review_batch": "champion-backfill-2026-09-24-a",
-      "review_note": "Direct final correction requested from Sprite Test: take the currently generated Flymon directions and swap down_left with up_left plus down_right with up_right, preserving left/right exactly. Resulting source-group mapping is [0,1,2,3]."
+      "pattern": "rear_rows_first",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: left/right is correct, but DOWN and UP are swapped at the same side. Map [DL,DR,UL,UR] from [G2,G3,G0,G1] without changing horizontal semantics.",
+      "vertical_alignment": "source_group_envelope"
     },
     "Guardromon": {
       "source_id": 107,
@@ -3131,6 +3150,1921 @@
       "review_status": "corrected_after_runtime_visual_review_batch_g2",
       "review_batch": "backfill-2026-09-25-g",
       "review_note": "Sprite Test correction for crossed facings: raw groups resolve as G1=down_left, G0=down_right, G3=up_left, G2=up_right. Map canonical [DL,DR,UL,UR] = [G1,G0,G3,G2]."
+    },
+    "Yatagaramon": {
+      "source_id": 283,
+      "source_member": "sprite thread/283_YatagaramonSmall.png",
+      "source_sha256": "afcf7f0778847f2f90f37aa0fcf23fed260204c76e569689dd6fd859ceaff2ea",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Okuwamon": {
+      "source_id": null,
+      "source_member": "sprite thread/206_Ookuwamon.png",
+      "source_sha256": "a72ba51d65dfec5facef3061f4e78dbccf5f88303fde1906ba80d2aa45000aa7",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "MachGaogamon": {
+      "source_id": 257,
+      "source_member": "sprite thread/257_MachGaogamonGarmmon.png",
+      "source_sha256": "57210e27e2069dc9f44881e97a5aca202253dfc25d3a25402262dcaddddc6bc8",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Lucemon Chaos Mode": {
+      "source_id": 265,
+      "source_member": "sprite thread/265_LucemonFDM.png",
+      "source_sha256": "4e182962661502e41bb2bf92c01841c1879556572b2aafa1e83b9fa40cad8d43",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "compact_interleaved_up_reversed",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: DOWN is correct; only up_left/up_right are reversed. Preserve DOWN and swap only the UP pair."
+    },
+    "GranKuwagamon": {
+      "source_id": 365,
+      "source_member": "sprite thread/365_GranKuwagamon.png",
+      "source_sha256": "af4d2eb6459d2ea1d42be72dd4ddcbe70498e1004ea17ddfb2046b096a834069",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "MetalSeadramon": {
+      "source_id": 359,
+      "source_member": "sprite thread/359_MetalSeadramon.png",
+      "source_sha256": "6bbe030e6166bf125601f2812b66162c95569c1284fa3caa03d37680d807b70c",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "SaberLeomon": {
+      "source_id": 300,
+      "source_member": "sprite thread/300_SaberLeomon.png",
+      "source_sha256": "cc0fe2405476a652a5011e831d5d33ae8f8c79b9e45ddf6f41aafddcf5d2e797",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows_rear_reversed",
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "saberleomon-final-direction-fix-2026-09-25",
+      "review_note": "Sprite Test final correction: DOWN-left currently shows UP-left, DOWN-right shows UP-right, UP-left shows DOWN-right, and UP-right shows DOWN-left. Map runtime as [G0,G1,G3,G2], preserving the authored DOWN pair and swapping only the rear horizontal pair.",
+      "vertical_alignment": "source_group_envelope"
+    },
+    "VenomMyotismon": {
+      "source_id": 312,
+      "source_member": "sprite thread/312_VenomVamdemon.png",
+      "source_sha256": "ae1171db9661a7353a7901bcff773195b5f09736c2b5ebe995f52020e4850863",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Ghoulmon": {
+      "source_id": 317,
+      "source_member": "sprite thread/317_Deathmon.png",
+      "source_sha256": "83c7c32c538e8eac176cabfd943ffe8539ee834e2cbc3a8b6bf8ac46d341a1ab",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Gallantmon (Crimson Mode)": {
+      "source_id": 324,
+      "source_member": "sprite thread/324_DukemonCrimsonUpdate.png",
+      "source_sha256": "5490299e057a177f73d24b830219c93df1703e662acf19b28bacbcab754822e9",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-h",
+      "review_note": "Only the WithTheWill source thread/archive is used for this batch. Raw audit mapping: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Final semantic facing approval remains the Sprite Test visual pass."
+    },
+    "Holydramon": {
+      "source_id": 369,
+      "source_member": "sprite thread/369_Holydramon.png",
+      "source_sha256": "6f6222762997a7b49dda047083a21c10208d6683972fdd8b0aecf8c482aa3f46",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "compact_interleaved",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: down_left and up_right are correct; down_right and up_left are swapped. Use [G0,G2,G1,G3]."
+    },
+    "GigaSeadramon": {
+      "source_id": 303,
+      "source_member": "sprite thread/303_GigaSeadramon.png",
+      "source_sha256": "1f1cdd0bcdc64abeb89c99b48caf683ebc6d06a7c7a0ffad835551060cc3a078",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G0=down_left, G2=down_right, G1=up_left, G3=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Diaboromon": {
+      "source_id": 327,
+      "source_member": "sprite thread/327_Diablomon.png",
+      "source_sha256": "899d522161c60827c746adc2c9a2d7f90e3ad6558ee4cdaa86498b91fd14d3e4",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Neptunmon": {
+      "source_id": null,
+      "source_member": "sprite thread/328_Neptunmon.png",
+      "source_sha256": "c21458d9b430f4cf4ee75f43d510021694158e52de48f74f841ea434eb2f7f31",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Pukumon": {
+      "source_id": 329,
+      "source_member": "sprite thread/329_Pukumon.png",
+      "source_sha256": "3fa6abd25fb087679dc1cae89696c278e1673e85da07a33bfdfa4ab06194a463",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Gryphonmon": {
+      "source_id": null,
+      "source_member": "sprite thread/330_Gryphomon.png",
+      "source_sha256": "ca6eb784942c1f32ed173395374d3ffda2fa6629fb6690817ad1de19d0feafbb",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Preciomon": {
+      "source_id": 331,
+      "source_member": "sprite thread/331_Plesiomon.png",
+      "source_sha256": "e77ed390b706bb1f98c1180f12b4d6461f74b05bd57e29b6e71d2a29e945985f",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "four_rows_first_left_rest_right",
+      "pattern": "compact_interleaved",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: only down_left contained a victory/open-mouth component. Select the leftmost 3 movement frames for raw G0; keep rightmost 3 for the other three rows."
+    },
+    "MaloMyotismon": {
+      "source_id": 333,
+      "source_member": "sprite thread/333_BelialVamdemon.png",
+      "source_sha256": "05c73e6b6e2462cfae68466ba946c7d8ff999ea47058b3883594871ba94b3eb6",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Apocalymon": {
+      "source_id": 351,
+      "source_member": "sprite thread/351_Apocalymon.png",
+      "source_sha256": "e79ad9d4dc6b1c966c11144fc096335f48616c1c1e28276436155ecd17472573",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "ZeedMillenniummon": {
+      "source_id": 355,
+      "source_member": "sprite thread/355_ZeedMilleniumon.png",
+      "source_sha256": "4caed3c0eb0465b060fbc89c63e9118d39ad1443ef830bac30526c16e045627b",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Ghoulmon (Black)": {
+      "source_id": 356,
+      "source_member": "sprite thread/356_DeathmonBlack.png",
+      "source_sha256": "a13e51f004d8f1706f41333c297b461c5a588635f311523424cd63b575b43a00",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Skull Mammothmon": {
+      "source_id": 364,
+      "source_member": "sprite thread/364_SkullMammon.png",
+      "source_sha256": "1387c275813fbd954b98604b7b8d340a48d46829ef266a968c3426c7f945b59e",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: left/right is correct, but front/back is inverted. Swap only DOWN<->UP while preserving side."
+    },
+    "Apollomon": {
+      "source_id": 383,
+      "source_member": "sprite thread/383_Apollomon.png",
+      "source_sha256": "266dc7908f9ef51e3431fa5d09b3f90835a85db21e74a628b8f23b19f8419570",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Dianamon": {
+      "source_id": 384,
+      "source_member": "sprite thread/384_Dianamon.png",
+      "source_sha256": "1ac373c09cb60830b28a8f91e079d518f1dca22cee35d71c7960e314290dc5a7",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first_horizontal_reversed",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: both depths have left/right reversed. Preserve front/back and swap left/right for DOWN and UP."
+    },
+    "Shine Greymon (Burst Mode)": {
+      "source_id": 385,
+      "source_member": "sprite thread/385_ShineGreymonBurst.png",
+      "source_sha256": "286d17771f90c057b375081a2c799908a4d6ad90906bf202129aaad1e39ccdee",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "compact_interleaved",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: observed cycle resolves raw groups as G0=down_left, G2=down_right, G1=up_left, G3=up_right."
+    },
+    "Shine Greymon (Ruin Mode)": {
+      "source_id": 386,
+      "source_member": "sprite thread/386_ShineGreymonRuin.png",
+      "source_sha256": "765662642cd8615c8e5b35b09f9ebeea2d1007761e0900b9dc19bc9b9ab687c7",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Beelzemon (Blast Mode)": {
+      "source_id": 392,
+      "source_member": "sprite thread/392_BeelzebumonBlast.png",
+      "source_sha256": "bc87cdcd3c5602a0e345370559f7e999586a8d9d6a5784cd044d9fc0dcf57ba2",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G2=down_left, G3=down_right, G0=up_left, G1=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Minervamon": {
+      "source_id": 395,
+      "source_member": "sprite thread/395_Minervamon.png",
+      "source_sha256": "3c991edafd8ed644268a6ffd74b87b0bb5c872724514897f981f76292e0fd5fb",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Duftmon": {
+      "source_id": 396,
+      "source_member": "sprite thread/396_Duftmon.png",
+      "source_sha256": "a9486de942a238953fd4daab68a9c05f54a547c911c7e3659ffdc4e9a5bb49f8",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Chaosmon": {
+      "source_id": 397,
+      "source_member": "sprite thread/397_Chaosmon.png",
+      "source_sha256": "f8a478230ac98634192324bcdf9fb5dcd54d00ed1551b69ce0add0c74eb2bfd2",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "review_method": "raw_audit_group_visual_review",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-i",
+      "review_note": "WithTheWill-only batch. Raw group review before materialization: G0=down_left, G1=down_right, G2=up_left, G3=up_right. Ravemon and Lampmon were intentionally excluded because their current audit groups contain non-movement content. Final facing approval remains the Sprite Test visual pass."
+    },
+    "Ravemon": {
+      "source_id": 377,
+      "source_member": "sprite thread/377_Ravemon.png",
+      "source_sha256": "4ccdc1b1fee295be3f9d173b2a40cf3f34e52a9c0dd3cbcab55fe4f28adedea8",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "explicit_groups",
+      "pattern": "g1_g3_g2_g0",
+      "explicit_groups": [
+        [
+          {
+            "x": 188,
+            "y": 201,
+            "w": 25,
+            "h": 36
+          },
+          {
+            "x": 226,
+            "y": 200,
+            "w": 29,
+            "h": 38
+          },
+          {
+            "x": 262,
+            "y": 200,
+            "w": 31,
+            "h": 38
+          }
+        ],
+        [
+          {
+            "x": 22,
+            "y": 139,
+            "w": 28,
+            "h": 39
+          },
+          {
+            "x": 60,
+            "y": 141,
+            "w": 29,
+            "h": 38
+          },
+          {
+            "x": 104,
+            "y": 143,
+            "w": 25,
+            "h": 34
+          }
+        ],
+        [
+          {
+            "x": 185,
+            "y": 242,
+            "w": 31,
+            "h": 38
+          },
+          {
+            "x": 223,
+            "y": 242,
+            "w": 29,
+            "h": 38
+          },
+          {
+            "x": 265,
+            "y": 243,
+            "w": 25,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 23,
+            "y": 184,
+            "w": 25,
+            "h": 34
+          },
+          {
+            "x": 63,
+            "y": 182,
+            "w": 29,
+            "h": 38
+          },
+          {
+            "x": 102,
+            "y": 180,
+            "w": 28,
+            "h": 39
+          }
+        ]
+      ],
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: up_left was correct; observed remaining cycle resolves canonical [DL,DR,UL,UR] as [G1,G3,G2,G0]."
+    },
+    "Lampmon": {
+      "source_id": 298,
+      "source_member": "sprite thread/298_Lampmon.png",
+      "source_sha256": "c2579b66eb3a226c6bef2f00a6d472d6a49652500fb57b9122c28fc142b6ce3b",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "explicit_groups",
+      "pattern": "rear_rows_first",
+      "explicit_groups": [
+        [
+          {
+            "x": 62,
+            "y": 266,
+            "w": 30,
+            "h": 37
+          },
+          {
+            "x": 102,
+            "y": 266,
+            "w": 30,
+            "h": 37
+          },
+          {
+            "x": 141,
+            "y": 267,
+            "w": 29,
+            "h": 37
+          }
+        ],
+        [
+          {
+            "x": 180,
+            "y": 267,
+            "w": 29,
+            "h": 37
+          },
+          {
+            "x": 218,
+            "y": 266,
+            "w": 30,
+            "h": 37
+          },
+          {
+            "x": 258,
+            "y": 266,
+            "w": 30,
+            "h": 37
+          }
+        ],
+        [
+          {
+            "x": 61,
+            "y": 310,
+            "w": 31,
+            "h": 37
+          },
+          {
+            "x": 102,
+            "y": 310,
+            "w": 30,
+            "h": 37
+          },
+          {
+            "x": 141,
+            "y": 310,
+            "w": 29,
+            "h": 38
+          }
+        ],
+        [
+          {
+            "x": 180,
+            "y": 310,
+            "w": 29,
+            "h": 38
+          },
+          {
+            "x": 218,
+            "y": 310,
+            "w": 30,
+            "h": 37
+          },
+          {
+            "x": 258,
+            "y": 310,
+            "w": 30,
+            "h": 37
+          }
+        ]
+      ],
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: left/right is correct, but front/back is inverted. Swap only DOWN<->UP while preserving side."
+    },
+    "Sleipmon": {
+      "source_id": 373,
+      "source_member": "sprite thread/373_SleipmonLarge.gif",
+      "source_sha256": "52b88517cbf438ba7e4c9005d78f8c910d21c8586e88ce9929a432c031690c54",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "explicit_groups",
+      "pattern": "canonical_rows_rear_reversed",
+      "explicit_groups": [
+        [
+          {
+            "x": 389,
+            "y": 187,
+            "w": 30,
+            "h": 40
+          },
+          {
+            "x": 427,
+            "y": 188,
+            "w": 31,
+            "h": 39
+          },
+          {
+            "x": 466,
+            "y": 188,
+            "w": 30,
+            "h": 39
+          }
+        ],
+        [
+          {
+            "x": 511,
+            "y": 187,
+            "w": 30,
+            "h": 40
+          },
+          {
+            "x": 549,
+            "y": 188,
+            "w": 31,
+            "h": 39
+          },
+          {
+            "x": 588,
+            "y": 188,
+            "w": 30,
+            "h": 39
+          }
+        ],
+        [
+          {
+            "x": 389,
+            "y": 235,
+            "w": 31,
+            "h": 40
+          },
+          {
+            "x": 428,
+            "y": 236,
+            "w": 31,
+            "h": 39
+          },
+          {
+            "x": 466,
+            "y": 236,
+            "w": 30,
+            "h": 39
+          }
+        ],
+        [
+          {
+            "x": 510,
+            "y": 235,
+            "w": 31,
+            "h": 40
+          },
+          {
+            "x": 548,
+            "y": 236,
+            "w": 31,
+            "h": 39
+          },
+          {
+            "x": 588,
+            "y": 236,
+            "w": 30,
+            "h": 39
+          }
+        ]
+      ],
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: DOWN is correct; only up_left/up_right are reversed. Preserve DOWN and swap only the UP pair."
+    },
+    "Kabuterimon": {
+      "source_id": 92,
+      "source_sha256": "068d0027163f647bc1d97c5c15edcadbe1cc743b47f9b531c8b10bb13f07551c",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/092_Kabuterimon.png",
+      "profile": "explicit_groups",
+      "pattern": "compact_interleaved",
+      "explicit_groups": [
+        [
+          {
+            "x": 228,
+            "y": 129,
+            "w": 30,
+            "h": 34
+          },
+          {
+            "x": 263,
+            "y": 129,
+            "w": 30,
+            "h": 34
+          },
+          {
+            "x": 298,
+            "y": 129,
+            "w": 30,
+            "h": 34
+          }
+        ],
+        [
+          {
+            "x": 228,
+            "y": 170,
+            "w": 30,
+            "h": 34
+          },
+          {
+            "x": 263,
+            "y": 170,
+            "w": 30,
+            "h": 34
+          },
+          {
+            "x": 298,
+            "y": 170,
+            "w": 30,
+            "h": 34
+          }
+        ],
+        [
+          {
+            "x": 228,
+            "y": 209,
+            "w": 30,
+            "h": 34
+          },
+          {
+            "x": 263,
+            "y": 209,
+            "w": 30,
+            "h": 34
+          },
+          {
+            "x": 298,
+            "y": 209,
+            "w": 30,
+            "h": 34
+          }
+        ],
+        [
+          {
+            "x": 228,
+            "y": 250,
+            "w": 30,
+            "h": 34
+          },
+          {
+            "x": 263,
+            "y": 250,
+            "w": 30,
+            "h": 34
+          },
+          {
+            "x": 298,
+            "y": 250,
+            "w": 30,
+            "h": 34
+          }
+        ]
+      ],
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "corrected_during_full_pr179_visual_audit",
+      "review_batch": "full-pr179-audit-2026-09-25",
+      "review_note": "Full PR #179 visual audit: WTW groups are G0=down_left, G1=up_left, G2=down_right, G3=up_right. G0/G1 overlap legacy Photobucket watermark artifacts; preserve clean authored G2/G3 and synthesize matching left facings offline by horizontal mirror. Canonical runtime order remains [DL,DR,UL,UR].",
+      "frame_background_policy": "border_connected_matte",
+      "frame_background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "frame_background_tolerance": 0,
+      "horizontal_mirror_from": {
+        "down_left": "down_right",
+        "up_left": "up_right"
+      }
+    },
+    "Raremon": {
+      "source_id": 102,
+      "source_member": "sprite thread/102_Raremon.png",
+      "source_sha256": "e7225fb1f025029e76d4db95eaf3c1c5f83d1ab647a393703a76c0e514e9ba27",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "explicit_groups",
+      "pattern": "canonical_rows",
+      "explicit_groups": [
+        [
+          {
+            "x": 28,
+            "y": 9,
+            "w": 30,
+            "h": 33
+          },
+          {
+            "x": 68,
+            "y": 9,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 110,
+            "y": 9,
+            "w": 33,
+            "h": 34
+          }
+        ],
+        [
+          {
+            "x": 28,
+            "y": 9,
+            "w": 30,
+            "h": 33
+          },
+          {
+            "x": 68,
+            "y": 9,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 110,
+            "y": 9,
+            "w": 33,
+            "h": 34
+          }
+        ],
+        [
+          {
+            "x": 154,
+            "y": 10,
+            "w": 32,
+            "h": 32
+          },
+          {
+            "x": 194,
+            "y": 10,
+            "w": 31,
+            "h": 33
+          },
+          {
+            "x": 235,
+            "y": 11,
+            "w": 31,
+            "h": 33
+          }
+        ],
+        [
+          {
+            "x": 154,
+            "y": 10,
+            "w": 32,
+            "h": 32
+          },
+          {
+            "x": 194,
+            "y": 10,
+            "w": 31,
+            "h": 33
+          },
+          {
+            "x": 235,
+            "y": 11,
+            "w": 31,
+            "h": 33
+          }
+        ]
+      ],
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: front/back is correct, but left/right is crossed. Keep canonical front/back and treat the authored triplets as the right-facing source; synthesize matching left facings by horizontal mirror.",
+      "horizontal_mirror_from": {
+        "down_left": "down_right",
+        "up_left": "up_right"
+      },
+      "vertical_alignment": "source_group_envelope"
+    },
+    "Gesomon": {
+      "source_id": 156,
+      "source_sha256": "a3d809141d9abdaa0bd5cdb6234971ecd4e6e6b1fdb536efd7373cacd25034b8",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/156_Gesomon.png",
+      "profile": "explicit_groups",
+      "pattern": "rear_rows_first",
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "corrected_during_full_pr179_visual_audit",
+      "review_batch": "full-pr179-audit-2026-09-25",
+      "review_note": "Full PR #179 visual audit against the exact WTW PNG. Previous explicit boxes were horizontally offset and cut every field frame. The 12 boxes now match the opaque alpha components in the source. Neighboring WTW species using the same layout (Ebidramon 154, Coelamon 157, Rukamon 164) confirm rear_rows_first semantics: bottom row is front/down, top row is rear/up.",
+      "explicit_groups": [
+        [
+          {
+            "x": 90,
+            "y": 242,
+            "w": 28,
+            "h": 29
+          },
+          {
+            "x": 126,
+            "y": 241,
+            "w": 26,
+            "h": 30
+          },
+          {
+            "x": 161,
+            "y": 242,
+            "w": 29,
+            "h": 29
+          }
+        ],
+        [
+          {
+            "x": 199,
+            "y": 242,
+            "w": 29,
+            "h": 29
+          },
+          {
+            "x": 237,
+            "y": 241,
+            "w": 26,
+            "h": 30
+          },
+          {
+            "x": 271,
+            "y": 242,
+            "w": 30,
+            "h": 29
+          }
+        ],
+        [
+          {
+            "x": 84,
+            "y": 277,
+            "w": 29,
+            "h": 28
+          },
+          {
+            "x": 122,
+            "y": 276,
+            "w": 28,
+            "h": 29
+          },
+          {
+            "x": 159,
+            "y": 277,
+            "w": 31,
+            "h": 29
+          }
+        ],
+        [
+          {
+            "x": 199,
+            "y": 277,
+            "w": 31,
+            "h": 29
+          },
+          {
+            "x": 239,
+            "y": 276,
+            "w": 28,
+            "h": 29
+          },
+          {
+            "x": 276,
+            "y": 277,
+            "w": 29,
+            "h": 28
+          }
+        ]
+      ],
+      "frame_background_policy": "source_alpha"
+    },
+    "Kogamon": {
+      "source_id": 174,
+      "source_sha256": "23460f10d415b3fa126ecb2cfcf4d9056d43ca32a10cbcba69545cc0c760b895",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/174_Kougamon.png",
+      "profile": "explicit_groups",
+      "pattern": "rear_rows_first",
+      "review_method": "user_sheet_fixed_grid_rebuild",
+      "review_status": "rebuilt_from_clean_sheet_grid",
+      "review_batch": "kogamon-down-clean-grid-2026-09-25",
+      "review_note": "Kogamon-only rebuild from the clean sheet supplied by the user. UP remains untouched. DOWN is no longer derived from component bounds or inferred 37px spacing: it uses the actual fixed six-cell grid on the clean sheet, y=192, h=32, x=[12,45,78,111,144,177], w=33. Preserve the complete transparent cell for each phase with no trim, no padding, no residue cleanup and one shared source-group envelope so authored intra-cell foot placement is retained and animation cannot bounce from per-frame re-anchoring.",
+      "explicit_groups": [
+        [
+          {
+            "x": 1,
+            "y": 166,
+            "w": 34,
+            "h": 28
+          },
+          {
+            "x": 38,
+            "y": 166,
+            "w": 34,
+            "h": 28
+          },
+          {
+            "x": 75,
+            "y": 166,
+            "w": 34,
+            "h": 28
+          }
+        ],
+        [
+          {
+            "x": 112,
+            "y": 166,
+            "w": 34,
+            "h": 28
+          },
+          {
+            "x": 149,
+            "y": 166,
+            "w": 34,
+            "h": 28
+          },
+          {
+            "x": 186,
+            "y": 166,
+            "w": 34,
+            "h": 28
+          }
+        ],
+        [
+          {
+            "x": 12,
+            "y": 192,
+            "w": 33,
+            "h": 32
+          },
+          {
+            "x": 45,
+            "y": 192,
+            "w": 33,
+            "h": 32
+          },
+          {
+            "x": 78,
+            "y": 192,
+            "w": 33,
+            "h": 32
+          }
+        ],
+        [
+          {
+            "x": 111,
+            "y": 192,
+            "w": 33,
+            "h": 32
+          },
+          {
+            "x": 144,
+            "y": 192,
+            "w": 33,
+            "h": 32
+          },
+          {
+            "x": 177,
+            "y": 192,
+            "w": 33,
+            "h": 32
+          }
+        ]
+      ],
+      "vertical_alignment": "source_group_envelope",
+      "preserve_source_box": true,
+      "border_island_cleanup_max_pixels": 0,
+      "alpha_island_cleanup_max_pixels": 0
+    },
+    "Mammothmon": {
+      "source_id": 204,
+      "source_sha256": "294cb933c8cfcc8a7ee4257d763764a1c67f0dd9e4a61d611f7eb5f0b5b14dca",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/204_Mammon.png",
+      "profile": "explicit_groups",
+      "pattern": "rear_rows_first",
+      "explicit_groups": [
+        [
+          {
+            "x": 99,
+            "y": 268,
+            "w": 32,
+            "h": 36
+          },
+          {
+            "x": 132,
+            "y": 268,
+            "w": 32,
+            "h": 36
+          },
+          {
+            "x": 165,
+            "y": 268,
+            "w": 32,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 198,
+            "y": 268,
+            "w": 32,
+            "h": 36
+          },
+          {
+            "x": 231,
+            "y": 268,
+            "w": 32,
+            "h": 36
+          },
+          {
+            "x": 264,
+            "y": 268,
+            "w": 32,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 99,
+            "y": 309,
+            "w": 32,
+            "h": 36
+          },
+          {
+            "x": 132,
+            "y": 309,
+            "w": 32,
+            "h": 36
+          },
+          {
+            "x": 165,
+            "y": 309,
+            "w": 32,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 198,
+            "y": 309,
+            "w": 32,
+            "h": 36
+          },
+          {
+            "x": 231,
+            "y": 309,
+            "w": 32,
+            "h": 36
+          },
+          {
+            "x": 264,
+            "y": 309,
+            "w": 32,
+            "h": 36
+          }
+        ]
+      ],
+      "review_method": "exact_source_box_runtime_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "crop-baseline-fix-2026-09-25",
+      "review_note": "Sprite Test: facings are correct; UP-left/UP-right contain stray pixels and the walk still has slight bounce. Use exact audited source boxes with no 2px neighbor padding and preserve the full source-box/envelope placement so neighboring-frame pixels cannot leak in and per-frame trimming cannot change the baseline. Additionally discard only tiny disconnected alpha islands (<=12 px) that touch a frame border, covering the reported stray line without altering connected Digimon artwork.",
+      "horizontal_mirror_from": {
+        "up_right": "up_left"
+      },
+      "vertical_alignment": "source_group_envelope",
+      "preserve_source_box": true,
+      "border_island_cleanup_max_pixels": 12
+    },
+    "LadyDevimon": {
+      "source_id": 216,
+      "source_member": "sprite thread/216_LadyDevimon.png",
+      "source_sha256": "879700560cdfd6b11903aa9ea75aa0229ec34d627d470c8eaa1c5a16a398799a",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "explicit_groups",
+      "pattern": "canonical_rows",
+      "explicit_groups": [
+        [
+          {
+            "x": 18,
+            "y": 7,
+            "w": 26,
+            "h": 40
+          },
+          {
+            "x": 54,
+            "y": 7,
+            "w": 30,
+            "h": 39
+          },
+          {
+            "x": 92,
+            "y": 5,
+            "w": 28,
+            "h": 42
+          }
+        ],
+        [
+          {
+            "x": 18,
+            "y": 7,
+            "w": 26,
+            "h": 40
+          },
+          {
+            "x": 54,
+            "y": 7,
+            "w": 30,
+            "h": 39
+          },
+          {
+            "x": 92,
+            "y": 5,
+            "w": 28,
+            "h": 42
+          }
+        ],
+        [
+          {
+            "x": 130,
+            "y": 6,
+            "w": 24,
+            "h": 39
+          },
+          {
+            "x": 165,
+            "y": 5,
+            "w": 30,
+            "h": 41
+          },
+          {
+            "x": 206,
+            "y": 5,
+            "w": 28,
+            "h": 41
+          }
+        ],
+        [
+          {
+            "x": 130,
+            "y": 6,
+            "w": 24,
+            "h": 39
+          },
+          {
+            "x": 165,
+            "y": 5,
+            "w": 30,
+            "h": 41
+          },
+          {
+            "x": 206,
+            "y": 5,
+            "w": 28,
+            "h": 41
+          }
+        ]
+      ],
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: both authored triplets point right. Keep them as down_right/up_right and synthesize matching left facings offline by horizontal mirror.",
+      "horizontal_mirror_from": {
+        "down_left": "down_right",
+        "up_left": "up_right"
+      }
+    },
+    "Whamon": {
+      "source_id": 250,
+      "source_sha256": "34c80eadf69e5260dca42e8be0f3bf16ae306fc0d720af9f61272fb3deff87dc",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/250_Whamon.png",
+      "profile": "explicit_groups",
+      "pattern": "rear_rows_first",
+      "explicit_groups": [
+        [
+          {
+            "x": 63,
+            "y": 295,
+            "w": 40,
+            "h": 40
+          },
+          {
+            "x": 106,
+            "y": 295,
+            "w": 40,
+            "h": 40
+          },
+          {
+            "x": 149,
+            "y": 295,
+            "w": 40,
+            "h": 40
+          }
+        ],
+        [
+          {
+            "x": 192,
+            "y": 295,
+            "w": 40,
+            "h": 40
+          },
+          {
+            "x": 235,
+            "y": 295,
+            "w": 40,
+            "h": 40
+          },
+          {
+            "x": 278,
+            "y": 295,
+            "w": 39,
+            "h": 40
+          }
+        ],
+        [
+          {
+            "x": 65,
+            "y": 339,
+            "w": 38,
+            "h": 40
+          },
+          {
+            "x": 106,
+            "y": 339,
+            "w": 40,
+            "h": 40
+          },
+          {
+            "x": 149,
+            "y": 339,
+            "w": 40,
+            "h": 40
+          }
+        ],
+        [
+          {
+            "x": 192,
+            "y": 339,
+            "w": 40,
+            "h": 40
+          },
+          {
+            "x": 235,
+            "y": 339,
+            "w": 40,
+            "h": 40
+          },
+          {
+            "x": 278,
+            "y": 339,
+            "w": 35,
+            "h": 40
+          }
+        ]
+      ],
+      "review_method": "exact_source_box_runtime_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "crop-baseline-fix-2026-09-25",
+      "review_note": "Sprite Test: facings are correct; one DOWN-right walk frame shows a thin neighboring-frame residue line. Keep the existing mapping and boxes, but crop the exact audited cell with zero neighboring padding while preserving source placement. Additionally discard only tiny disconnected alpha islands (<=12 px) touching the frame border, covering the reported thin residue line while preserving the whale sprite itself.",
+      "vertical_alignment": "source_group_envelope",
+      "preserve_source_box": true,
+      "border_island_cleanup_max_pixels": 12
+    },
+    "Rosemon": {
+      "source_id": 308,
+      "source_sha256": "c2992b05f5c3ade734eb666776fa231af75ed3afc58114c4ef029c3a749e4920",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/308_Rosemon.png",
+      "profile": "explicit_groups",
+      "pattern": "canonical_rows_rear_reversed",
+      "explicit_groups": [
+        [
+          {
+            "x": 5,
+            "y": 300,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 47,
+            "y": 300,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 95,
+            "y": 300,
+            "w": 30,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 149,
+            "y": 300,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 196,
+            "y": 300,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 238,
+            "y": 300,
+            "w": 29,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 5,
+            "y": 359,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 47,
+            "y": 359,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 95,
+            "y": 359,
+            "w": 30,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 149,
+            "y": 359,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 196,
+            "y": 359,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 238,
+            "y": 359,
+            "w": 29,
+            "h": 36
+          }
+        ]
+      ],
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: DOWN facings are correct; only UP-left and UP-right are reversed. Preserve G0/G1 for DOWN and swap only rear groups G2/G3.",
+      "frame_background_policy": "border_connected_matte",
+      "frame_background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "frame_background_tolerance": 0,
+      "vertical_alignment": "source_group_envelope"
+    },
+    "Seraphimon": {
+      "source_id": 318,
+      "source_sha256": "9e4a1cbac20515276df950800aaa102c96421ed6508e18bae72bbfb54f517d72",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/318_Seraphimon.png",
+      "profile": "explicit_groups",
+      "pattern": "canonical_rows_rear_reversed",
+      "explicit_groups": [
+        [
+          {
+            "x": 4,
+            "y": 312,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 42,
+            "y": 312,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 82,
+            "y": 312,
+            "w": 30,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 136,
+            "y": 312,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 177,
+            "y": 312,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 215,
+            "y": 312,
+            "w": 30,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 4,
+            "y": 365,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 42,
+            "y": 365,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 82,
+            "y": 365,
+            "w": 30,
+            "h": 36
+          }
+        ],
+        [
+          {
+            "x": 136,
+            "y": 365,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 177,
+            "y": 365,
+            "w": 30,
+            "h": 36
+          },
+          {
+            "x": 215,
+            "y": 365,
+            "w": 30,
+            "h": 36
+          }
+        ]
+      ],
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "direction-fix-2026-09-25",
+      "review_note": "Sprite Test: DOWN facings are correct; only UP-left and UP-right are reversed. Preserve G0/G1 for DOWN and swap only rear groups G2/G3.",
+      "frame_background_policy": "border_connected_matte",
+      "frame_background_rgb": [
+        123,
+        198,
+        255
+      ],
+      "frame_background_tolerance": 0,
+      "vertical_alignment": "source_group_envelope"
+    },
+    "Parasimon": {
+      "source_id": 343,
+      "source_member": "sprite thread/343_Parasimon.png",
+      "source_sha256": "ba2f21f6c5439c6f762bbf66fa0e9d196e5f37da6cfcc4301f220958cd9e5613",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "explicit_groups",
+      "pattern": "canonical_rows",
+      "explicit_groups": [
+        [
+          {
+            "x": 54,
+            "y": 10,
+            "w": 31,
+            "h": 28
+          },
+          {
+            "x": 107,
+            "y": 9,
+            "w": 30,
+            "h": 29
+          },
+          {
+            "x": 157,
+            "y": 9,
+            "w": 31,
+            "h": 28
+          }
+        ],
+        [
+          {
+            "x": 54,
+            "y": 10,
+            "w": 31,
+            "h": 28
+          },
+          {
+            "x": 107,
+            "y": 9,
+            "w": 30,
+            "h": 29
+          },
+          {
+            "x": 157,
+            "y": 9,
+            "w": 31,
+            "h": 28
+          }
+        ],
+        [
+          {
+            "x": 210,
+            "y": 8,
+            "w": 31,
+            "h": 30
+          },
+          {
+            "x": 268,
+            "y": 10,
+            "w": 32,
+            "h": 28
+          },
+          {
+            "x": 329,
+            "y": 11,
+            "w": 31,
+            "h": 28
+          }
+        ],
+        [
+          {
+            "x": 210,
+            "y": 8,
+            "w": 31,
+            "h": 30
+          },
+          {
+            "x": 268,
+            "y": 10,
+            "w": 32,
+            "h": 28
+          },
+          {
+            "x": 329,
+            "y": 11,
+            "w": 31,
+            "h": 28
+          }
+        ]
+      ],
+      "review_method": "single_species_runtime_visual_review",
+      "review_status": "corrected_from_sprite_test_feedback",
+      "review_batch": "parasimon-final-direction-fix-2026-09-25",
+      "review_note": "Sprite Test final correction: current slots are crossed diagonally (DL shows UR, DR shows UL, UL shows DR, UR shows DL). Use canonical depth groups, keep the authored right-facing triplet as source at each depth, and synthesize only the matching left-facing mirror: DL<-mirror(DR), UL<-mirror(UR).",
+      "horizontal_mirror_from": {
+        "down_left": "down_right",
+        "up_left": "up_right"
+      },
+      "vertical_alignment": "source_group_envelope"
+    },
+    "MoonMillenniummon": {
+      "source_id": 371,
+      "source_member": "sprite thread/371_MoonMilleniumon.png",
+      "source_sha256": "6184e4277e71defd4c67f208e98924688f9a18d0eef89837809c2bf3ecbd8558",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "explicit_groups",
+      "pattern": "canonical_rows",
+      "explicit_groups": [
+        [
+          {
+            "x": 128,
+            "y": 161,
+            "w": 16,
+            "h": 30
+          },
+          {
+            "x": 153,
+            "y": 161,
+            "w": 16,
+            "h": 30
+          },
+          {
+            "x": 175,
+            "y": 161,
+            "w": 16,
+            "h": 30
+          }
+        ],
+        [
+          {
+            "x": 207,
+            "y": 162,
+            "w": 16,
+            "h": 30
+          },
+          {
+            "x": 231,
+            "y": 161,
+            "w": 16,
+            "h": 30
+          },
+          {
+            "x": 252,
+            "y": 158,
+            "w": 16,
+            "h": 30
+          }
+        ],
+        [
+          {
+            "x": 57,
+            "y": 162,
+            "w": 16,
+            "h": 30
+          },
+          {
+            "x": 79,
+            "y": 162,
+            "w": 16,
+            "h": 30
+          },
+          {
+            "x": 104,
+            "y": 162,
+            "w": 16,
+            "h": 30
+          }
+        ],
+        [
+          {
+            "x": 57,
+            "y": 162,
+            "w": 16,
+            "h": 30
+          },
+          {
+            "x": 79,
+            "y": 162,
+            "w": 16,
+            "h": 30
+          },
+          {
+            "x": 104,
+            "y": 162,
+            "w": 16,
+            "h": 30
+          }
+        ]
+      ],
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "ready_for_sprite_test_validation",
+      "review_batch": "backfill-2026-09-25-j",
+      "review_note": "WTW sheet provides three authored three-frame crystal facings. The two distinct side/front groups are preserved; the shared rear triplet supplies up_left and is mirrored offline for up_right. Final semantic facing approval remains the Sprite Test visual pass.",
+      "horizontal_mirror_from": {
+        "up_right": "up_left"
+      }
+    },
+    "MirageGaogamon (Burst Mode)": {
+      "source_id": 387,
+      "source_sha256": "a8bef6c0e41ecbe2731e50ea69589834a13cb6f3097d7c8b0811328bc6e7c93d",
+      "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Ultimate/387_MirageGaogamonBurst.png",
+      "profile": "explicit_groups",
+      "pattern": "rear_rows_first",
+      "explicit_groups": [
+        [
+          {
+            "x": 78,
+            "y": 400,
+            "w": 33,
+            "h": 42
+          },
+          {
+            "x": 119,
+            "y": 400,
+            "w": 40,
+            "h": 42
+          },
+          {
+            "x": 167,
+            "y": 400,
+            "w": 40,
+            "h": 42
+          }
+        ],
+        [
+          {
+            "x": 259,
+            "y": 400,
+            "w": 40,
+            "h": 42
+          },
+          {
+            "x": 307,
+            "y": 400,
+            "w": 40,
+            "h": 42
+          },
+          {
+            "x": 355,
+            "y": 400,
+            "w": 33,
+            "h": 42
+          }
+        ],
+        [
+          {
+            "x": 71,
+            "y": 449,
+            "w": 40,
+            "h": 42
+          },
+          {
+            "x": 119,
+            "y": 449,
+            "w": 40,
+            "h": 42
+          },
+          {
+            "x": 167,
+            "y": 449,
+            "w": 40,
+            "h": 42
+          }
+        ],
+        [
+          {
+            "x": 259,
+            "y": 449,
+            "w": 40,
+            "h": 42
+          },
+          {
+            "x": 307,
+            "y": 449,
+            "w": 40,
+            "h": 42
+          },
+          {
+            "x": 355,
+            "y": 449,
+            "w": 40,
+            "h": 42
+          }
+        ]
+      ],
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "corrected_after_full_pr179_visual_audit",
+      "review_batch": "full-pr179-audit-2026-09-25",
+      "review_note": "Full PR #179 visual audit: (1) replaced the degraded archived item with the exact WTW item 387 Photobucket source pinned at a8bef6c0e41ecbe2731e50ea69589834a13cb6f3097d7c8b0811328bc6e7c93d; (2) runtime inspection showed front/back inverted while left/right remained correct, so map source rear row first to canonical DOWN/UP via rear_rows_first. Exact source boxes remain unchanged."
+    },
+    "Ravemon (Burst Mode)": {
+      "source_id": 388,
+      "source_member": "sprite thread/388_RavemonBurst.png",
+      "source_sha256": "059dd9978c98d88785f7dd129ccb575ca09c63a276d3702a24b8008e76224b9a",
+      "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+      "profile": "explicit_groups",
+      "pattern": "compact_interleaved",
+      "explicit_groups": [
+        [
+          {
+            "x": 21,
+            "y": 166,
+            "w": 30,
+            "h": 38
+          },
+          {
+            "x": 55,
+            "y": 166,
+            "w": 29,
+            "h": 37
+          },
+          {
+            "x": 89,
+            "y": 166,
+            "w": 27,
+            "h": 38
+          }
+        ],
+        [
+          {
+            "x": 125,
+            "y": 168,
+            "w": 27,
+            "h": 36
+          },
+          {
+            "x": 159,
+            "y": 168,
+            "w": 29,
+            "h": 36
+          },
+          {
+            "x": 193,
+            "y": 169,
+            "w": 31,
+            "h": 35
+          }
+        ],
+        [
+          {
+            "x": 20,
+            "y": 207,
+            "w": 27,
+            "h": 38
+          },
+          {
+            "x": 53,
+            "y": 207,
+            "w": 28,
+            "h": 37
+          },
+          {
+            "x": 87,
+            "y": 207,
+            "w": 28,
+            "h": 38
+          }
+        ],
+        [
+          {
+            "x": 123,
+            "y": 210,
+            "w": 31,
+            "h": 35
+          },
+          {
+            "x": 161,
+            "y": 213,
+            "w": 28,
+            "h": 32
+          },
+          {
+            "x": 197,
+            "y": 213,
+            "w": 27,
+            "h": 32
+          }
+        ]
+      ],
+      "review_method": "explicit_wtw_source_frame_audit",
+      "review_status": "corrected_after_runtime_visual_review_batch_k",
+      "review_batch": "backfill-2026-09-25-k",
+      "review_note": "Sprite Test correction: down_left and up_right semantics retained; swap down_right/up_left via compact interleaving. Tighten the final up-right source box to exclude the detached artifact above the head."
     }
   }
 }

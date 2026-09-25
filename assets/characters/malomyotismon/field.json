@@ -1,0 +1,201 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 333,
+  "source_archive_file": "sprite thread/333_BelialVamdemon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "05c73e6b6e2462cfae68466ba946c7d8ff999ea47058b3883594871ba94b3eb6",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 375990
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 408414
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "preserve_source_box": false,
+  "border_island_cleanup_max_pixels": 0,
+  "alpha_island_cleanup_max_pixels": 0,
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 297,
+      "source_bottom": 336,
+      "height": 39
+    },
+    "down_right": {
+      "source_top": 297,
+      "source_bottom": 336,
+      "height": 39
+    },
+    "up_left": {
+      "source_top": 339,
+      "source_bottom": 378,
+      "height": 39
+    },
+    "up_right": {
+      "source_top": 339,
+      "source_bottom": 378,
+      "height": 39
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 1,
+        "y": 297,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 39,
+        "y": 300,
+        "w": 32,
+        "h": 35
+      },
+      {
+        "x": 76,
+        "y": 298,
+        "w": 32,
+        "h": 38
+      }
+    ],
+    "down_right": [
+      {
+        "x": 190,
+        "y": 297,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 152,
+        "y": 300,
+        "w": 32,
+        "h": 35
+      },
+      {
+        "x": 115,
+        "y": 298,
+        "w": 32,
+        "h": 38
+      }
+    ],
+    "up_left": [
+      {
+        "x": 0,
+        "y": 339,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 36,
+        "y": 340,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 77,
+        "y": 341,
+        "w": 30,
+        "h": 37
+      }
+    ],
+    "up_right": [
+      {
+        "x": 191,
+        "y": 339,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 155,
+        "y": 340,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 116,
+        "y": 341,
+        "w": 30,
+        "h": 37
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/malomyotismon/field.png"
+}

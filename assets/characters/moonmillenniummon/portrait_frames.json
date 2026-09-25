@@ -1,0 +1,14 @@
+{
+  "source": "MoonMillenniummon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MoonMillenniummon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "d30d13646b5c54ee089785bbf3ce83065104a9d20ae7d552ce79e47f01d43ed8"
+}

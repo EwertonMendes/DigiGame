@@ -1,0 +1,14 @@
+{
+  "source": "Whamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Whamon.webp",
+  "frame_width": 120,
+  "frame_height": 142,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "f3bd93ee667668dae282b802f127e8591d9c3054eef44bd1f8ed2fbce9ab306a"
+}

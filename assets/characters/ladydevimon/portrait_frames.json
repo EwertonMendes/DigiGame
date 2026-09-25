@@ -1,0 +1,14 @@
+{
+  "source": "LadyDevimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/LadyDevimon.webp",
+  "frame_width": 80,
+  "frame_height": 126,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "a56a71523ee787a98c9704e75917dbdbc4da34f49b295f1775d75fe37fe2c5fb"
+}

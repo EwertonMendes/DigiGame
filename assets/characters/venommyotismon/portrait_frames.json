@@ -1,0 +1,14 @@
+{
+  "source": "VenomMyotismon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/VenomMyotismon.webp",
+  "frame_width": 118,
+  "frame_height": 160,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "213c6e2617e1e9d0620afa756eb774f7fed5b14798679c9ce8b44145f5038af2"
+}

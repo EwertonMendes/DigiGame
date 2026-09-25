@@ -1,0 +1,14 @@
+{
+  "source": "Gallantmon (Crimson Mode).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Gallantmon%20%28Crimson%20Mode%29.webp",
+  "frame_width": 154,
+  "frame_height": 148,
+  "frame_count": 4,
+  "durations_ms": [
+    300,
+    300,
+    300,
+    300
+  ],
+  "source_sha256": "96e577c936643277c98cacd747ebb0106c76b99a3edd856f471077c718b14321"
+}
