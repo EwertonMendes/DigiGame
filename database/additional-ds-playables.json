@@ -6286,7 +6286,7 @@
       "portrait_metadata": "res://assets/characters/miragegaogamonburstmode/portrait_frames.json",
       "source_id": 387,
       "profile": "explicit_groups",
-      "pattern": "canonical_rows",
+      "pattern": "rear_rows_first",
       "field_cell": [
         36,
         43
