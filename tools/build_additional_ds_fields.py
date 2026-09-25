@@ -338,7 +338,6 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "source_frame_order": source_frame_order,
         "pose_alignment": pose_alignment,
         "vertical_alignment_policy": vertical_alignment,
-        "background_tolerance": background_tolerance,
         "source_group_envelopes": source_group_envelopes,
         "anchor_policy": (
             "source_group_envelope_bottom_center"
@@ -353,6 +352,8 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "frames_per_direction": 3,
         "field_path": f"res://assets/characters/{key}/field.png",
     }
+    if background_tolerance > 0:
+        metadata["background_tolerance"] = background_tolerance
     (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     return metadata
 
