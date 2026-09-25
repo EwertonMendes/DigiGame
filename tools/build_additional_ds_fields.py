@@ -16,6 +16,7 @@ from typing import Any
 from urllib.parse import quote
 
 from PIL import Image, ImageSequence
+import numpy as np
 
 from build_early_rank_ds_fields import _components, _group_by_y, load_wtw_archive
 from materialize_ds_direction_registry import crop_component, keyed_source, pose_match_candidates
@@ -57,7 +58,41 @@ def source_member(archive, expected: str) -> bytes:
     return archive.read(expected)
 
 
-def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[dict[str, int]]]:
+def movement_groups(
+    image: Image.Image,
+    profile: dict[str, Any],
+    explicit_groups: Any = None,
+) -> list[list[dict[str, int]]]:
+    kind = str(profile.get("kind", ""))
+    if kind == "explicit_groups":
+        if not isinstance(explicit_groups, list) or len(explicit_groups) != 4:
+            raise RuntimeError("explicit_groups profile requires exactly four direction groups")
+        groups: list[list[dict[str, int]]] = []
+        for group_index, group in enumerate(explicit_groups):
+            if not isinstance(group, list) or len(group) != 3:
+                raise RuntimeError(
+                    f"explicit_groups direction {group_index} must contain exactly three source boxes"
+                )
+            normalized: list[dict[str, int]] = []
+            for frame_index, box in enumerate(group):
+                if not isinstance(box, dict):
+                    raise RuntimeError(
+                        f"explicit_groups direction {group_index} frame {frame_index} must be an object"
+                    )
+                normalized_box = {key: int(box[key]) for key in ("x", "y", "w", "h")}
+                x, y, w, h = (
+                    normalized_box["x"], normalized_box["y"],
+                    normalized_box["w"], normalized_box["h"],
+                )
+                if w <= 0 or h <= 0 or x < 0 or y < 0 or x + w > image.width or y + h > image.height:
+                    raise RuntimeError(
+                        f"explicit_groups box is outside source bounds: {normalized_box} "
+                        f"for {image.width}x{image.height}"
+                    )
+                normalized.append(normalized_box)
+            groups.append(normalized)
+        return groups
+
     _background, components = _components(image)
     min_cx_ratio = float(profile.get("min_cx_ratio", 0.0))
     max_cx_ratio = float(profile.get("max_cx_ratio", 1.0))
@@ -84,8 +119,6 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
         and min_cy <= item["cy"] <= max_cy
     ]
     rows = _group_by_y(candidates, tolerance=8.0)
-    kind = str(profile.get("kind", ""))
-
     if kind == "two_rows_of_six":
         six_rows = [sorted(row, key=lambda item: item["cx"]) for row in rows if len(row) >= 6]
         if len(six_rows) < 2:
@@ -135,6 +168,20 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
     return [[exact_box(item) for item in group] for group in groups]
 
 
+def keyed_source_with_tolerance(
+    image: Image.Image,
+    background_rgb: tuple[int, int, int],
+    tolerance: int,
+) -> Image.Image:
+    if tolerance <= 0:
+        return keyed_source(image, background_rgb)
+    rgba = np.array(image.convert("RGBA"), copy=True)
+    background = np.asarray(background_rgb, dtype=np.int16)
+    delta = np.max(np.abs(rgba[:, :, :3].astype(np.int16) - background), axis=2)
+    rgba[(delta <= tolerance) & (rgba[:, :, 3] > 0), 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
 def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     profile_name = str(spec["profile"])
     pattern_name = str(spec["pattern"])
@@ -163,7 +210,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             )
         horizontal_mirror_from[target_direction] = source_direction
 
-    raw_groups = movement_groups(source, profile)
+    raw_groups = movement_groups(source, profile, spec.get("explicit_groups"))
     raw_frames = {direction: raw_groups[permutation[index]] for index, direction in enumerate(DIRECTIONS)}
     effective_runtime_group_indices = list(permutation)
     for target_direction, source_direction in horizontal_mirror_from.items():
@@ -215,7 +262,10 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             "confidence_margin": int(candidates[1][0] - best_cost),
         }
 
-    keyed = keyed_source(source, background)
+    background_tolerance = int(spec.get("background_tolerance", 0))
+    if not 0 <= background_tolerance <= 255:
+        raise RuntimeError(f"{name}: invalid background_tolerance {background_tolerance}")
+    keyed = keyed_source_with_tolerance(source, background, background_tolerance)
     vertical_alignment = str(spec.get("vertical_alignment", "frame_bottom"))
     if vertical_alignment not in {"frame_bottom", "source_group_envelope"}:
         raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
@@ -288,6 +338,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "source_frame_order": source_frame_order,
         "pose_alignment": pose_alignment,
         "vertical_alignment_policy": vertical_alignment,
+        "background_tolerance": background_tolerance,
         "source_group_envelopes": source_group_envelopes,
         "anchor_policy": (
             "source_group_envelope_bottom_center"
