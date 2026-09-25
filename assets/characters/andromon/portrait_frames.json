@@ -1,0 +1,14 @@
+{
+  "source": "Andromon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Andromon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "c31f483ccd19125a73e2a0e21e9dc4240080b45e2b8531ac7ef64e9849ea8538"
+}

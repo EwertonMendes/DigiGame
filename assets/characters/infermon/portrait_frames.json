@@ -1,0 +1,14 @@
+{
+  "source": "Infermon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Infermon.webp",
+  "frame_width": 112,
+  "frame_height": 93,
+  "frame_count": 4,
+  "durations_ms": [
+    100,
+    250,
+    100,
+    250
+  ],
+  "source_sha256": "f6a4244b48d8b01b5867b2ad26dac8f808728ea5f78fc4cf1c085978873a1990"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Angewomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Angewomon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "23c648ae6cfdac5218d625a6c40e468b26ad02a025db9b1878e2fd16f56b6a0d"
+}

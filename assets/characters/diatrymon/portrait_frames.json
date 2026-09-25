@@ -1,0 +1,14 @@
+{
+  "source": "Diatrymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Diatrymon.webp",
+  "frame_width": 148,
+  "frame_height": 143,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "59269887e64dbc65aee2b36c6829071f7c134975c9dcde83a3cb0e90d72649a1"
+}

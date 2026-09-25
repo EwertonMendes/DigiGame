@@ -1,0 +1,14 @@
+{
+  "source": "Sangloupmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Sangloupmon.webp",
+  "frame_width": 140,
+  "frame_height": 152,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "b4a0a500b62f601fd9742a0f21e894b587921ad35da0a274a06b713d8ddc2b7e"
+}

@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 234,
+  "source_archive_file": "sprite thread/234_BlackRapidmon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/234_BlackRapidmon.png",
+  "source_sha256": "b1d31af6954d1b9b0d5a733f4baeba687229cd7c7d737569fabc5e410d98cbcb",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 131864,
+      "confidence_margin": 200588
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 260472
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 331,
+      "source_bottom": 371,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 331,
+      "source_bottom": 371,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 287,
+      "source_bottom": 327,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 287,
+      "source_bottom": 327,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 64,
+        "y": 333,
+        "w": 30,
+        "h": 35
+      },
+      {
+        "x": 105,
+        "y": 331,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 145,
+        "y": 333,
+        "w": 32,
+        "h": 38
+      }
+    ],
+    "down_right": [
+      {
+        "x": 269,
+        "y": 333,
+        "w": 30,
+        "h": 35
+      },
+      {
+        "x": 227,
+        "y": 331,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 186,
+        "y": 333,
+        "w": 32,
+        "h": 38
+      }
+    ],
+    "up_left": [
+      {
+        "x": 64,
+        "y": 289,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 104,
+        "y": 287,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 145,
+        "y": 289,
+        "w": 32,
+        "h": 35
+      }
+    ],
+    "up_right": [
+      {
+        "x": 267,
+        "y": 289,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 227,
+        "y": 287,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 186,
+        "y": 289,
+        "w": 32,
+        "h": 35
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/blackrapidmon/field.png"
+}

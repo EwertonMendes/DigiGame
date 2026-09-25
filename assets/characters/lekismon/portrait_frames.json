@@ -1,0 +1,14 @@
+{
+  "source": "Lekismon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Lekismon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "ce0778016a01297fcebf7d713c5e1079265b8ea14a1cec71254b37462dac3b93"
+}

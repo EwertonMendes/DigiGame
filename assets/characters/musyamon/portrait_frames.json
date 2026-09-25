@@ -1,0 +1,14 @@
+{
+  "source": "Musyamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Musyamon.webp",
+  "frame_width": 99,
+  "frame_height": 111,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "3e9b30d50a957f87fb5cb15ad07c8952255d7b8a57cae3ea9599a815aa13be77"
+}

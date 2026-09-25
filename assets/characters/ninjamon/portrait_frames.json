@@ -1,0 +1,14 @@
+{
+  "source": "Ninjamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ninjamon.webp",
+  "frame_width": 100,
+  "frame_height": 93,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "470eaa6dc5bb9c99fe64353af183664fd8d305c8af5d9fdbefe67ef5bb6f8352"
+}

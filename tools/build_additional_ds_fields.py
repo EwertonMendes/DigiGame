@@ -103,6 +103,12 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
         if len(movement_rows) < 4:
             raise RuntimeError(f"Expected four movement rows, got {[len(row) for row in rows]}")
         groups = movement_rows[:4]
+    elif kind == "four_rows_first_two_leftmost_last_two_rightmost":
+        movement_rows = [sorted(row, key=lambda item: item["cx"]) for row in rows if len(row) >= 3]
+        if len(movement_rows) < 4:
+            raise RuntimeError(f"Expected four movement rows, got {[len(row) for row in rows]}")
+        first, second, third, fourth = movement_rows[:4]
+        groups = [first[:3], second[:3], third[-3:], fourth[-3:]]
     elif kind == "four_rows_leftmost_triples":
         movement_rows = [sorted(row, key=lambda item: item["cx"])[:3] for row in rows if len(row) >= 3]
         if len(movement_rows) < 4:
@@ -128,17 +134,19 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     if not isinstance(mirror_config, dict):
         raise RuntimeError(f"{name}: horizontal_mirror_from must be an object")
     allowed_horizontal_mirrors = {
-        "down_right": "down_left",
-        "up_right": "up_left",
+        ("down_left", "down_right"),
+        ("down_right", "down_left"),
+        ("up_left", "up_right"),
+        ("up_right", "up_left"),
     }
     horizontal_mirror_from: dict[str, str] = {}
     for target_direction, source_direction in mirror_config.items():
         target_direction = str(target_direction)
         source_direction = str(source_direction)
-        if allowed_horizontal_mirrors.get(target_direction) != source_direction:
+        if (target_direction, source_direction) not in allowed_horizontal_mirrors:
             raise RuntimeError(
                 f"{name}: unsupported horizontal mirror {target_direction} <- {source_direction}; "
-                "only right-facing frames may be synthesized from the matching left-facing direction"
+                "only matching left/right facings at the same front/back depth may be synthesized"
             )
         horizontal_mirror_from[target_direction] = source_direction
 
@@ -161,8 +169,19 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             source_frame_order[right_direction] = list(source_frame_order[left_direction])
             pose_alignment[right_direction] = {
                 "compared_with": left_direction,
-                "policy": "generated_horizontal_mirror_from_left",
+                "policy": "generated_horizontal_mirror",
                 "source_phase_order": list(source_frame_order[left_direction]),
+                "pixel_error": 0,
+                "confidence_margin": None,
+            }
+            continue
+        if horizontal_mirror_from.get(left_direction) == right_direction:
+            source_frame_order[right_direction] = [0, 1, 2]
+            source_frame_order[left_direction] = list(source_frame_order[right_direction])
+            pose_alignment[left_direction] = {
+                "compared_with": right_direction,
+                "policy": "generated_horizontal_mirror",
+                "source_phase_order": list(source_frame_order[right_direction]),
                 "pixel_error": 0,
                 "confidence_margin": None,
             }

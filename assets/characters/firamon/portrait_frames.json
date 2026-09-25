@@ -1,0 +1,14 @@
+{
+  "source": "Firamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Firamon.webp",
+  "frame_width": 121,
+  "frame_height": 119,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "f19cf3f9dd92f300d986435760597706817ad8818d6b78db03fde4f20f1da56f"
+}

@@ -1,0 +1,15 @@
+{
+  "source": "Agnimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Agnimon.webp",
+  "frame_width": 150,
+  "frame_height": 200,
+  "frame_count": 5,
+  "durations_ms": [
+    500,
+    500,
+    500,
+    500,
+    500
+  ],
+  "source_sha256": "8ef71b893eee589a1cd2c3290e32c16fa62948cb0e9bbf94249a218d86771cad"
+}

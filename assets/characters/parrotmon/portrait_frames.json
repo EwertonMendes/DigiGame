@@ -1,0 +1,13 @@
+{
+  "source": "Parrotmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Parrotmon.webp",
+  "frame_width": 109,
+  "frame_height": 109,
+  "frame_count": 3,
+  "durations_ms": [
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "19332035538881bc5481c6351999eb30d4b6133994d0b11e73e95e872ca01239"
+}

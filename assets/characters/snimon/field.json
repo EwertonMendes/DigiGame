@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 167,
+  "source_archive_file": "sprite thread/167_Snimon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/167_Snimon.png",
+  "source_sha256": "037a2c63aab5a9b7a7b87e975385ad323d1134e07d4bcba4fd563dec812617d8",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "compact_interleaved_up_reversed",
+  "runtime_group_indices": [
+    0,
+    2,
+    3,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    2,
+    3,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 109236,
+      "confidence_margin": 189978
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 102854,
+      "confidence_margin": 152948
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 188,
+      "source_bottom": 219,
+      "height": 31
+    },
+    "down_right": {
+      "source_top": 227,
+      "source_bottom": 258,
+      "height": 31
+    },
+    "up_left": {
+      "source_top": 226,
+      "source_bottom": 257,
+      "height": 31
+    },
+    "up_right": {
+      "source_top": 187,
+      "source_bottom": 220,
+      "height": 33
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    34
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 43,
+        "y": 188,
+        "w": 29,
+        "h": 31
+      },
+      {
+        "x": 76,
+        "y": 188,
+        "w": 30,
+        "h": 30
+      },
+      {
+        "x": 109,
+        "y": 188,
+        "w": 32,
+        "h": 31
+      }
+    ],
+    "down_right": [
+      {
+        "x": 108,
+        "y": 227,
+        "w": 29,
+        "h": 31
+      },
+      {
+        "x": 74,
+        "y": 227,
+        "w": 30,
+        "h": 30
+      },
+      {
+        "x": 39,
+        "y": 227,
+        "w": 32,
+        "h": 31
+      }
+    ],
+    "up_left": [
+      {
+        "x": 167,
+        "y": 228,
+        "w": 29,
+        "h": 29
+      },
+      {
+        "x": 201,
+        "y": 226,
+        "w": 30,
+        "h": 30
+      },
+      {
+        "x": 235,
+        "y": 226,
+        "w": 31,
+        "h": 30
+      }
+    ],
+    "up_right": [
+      {
+        "x": 237,
+        "y": 191,
+        "w": 29,
+        "h": 29
+      },
+      {
+        "x": 202,
+        "y": 189,
+        "w": 30,
+        "h": 30
+      },
+      {
+        "x": 167,
+        "y": 187,
+        "w": 31,
+        "h": 30
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 35,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/snimon/field.png"
+}

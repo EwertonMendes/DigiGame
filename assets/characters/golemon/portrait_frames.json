@@ -1,0 +1,14 @@
+{
+  "source": "Golemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Golemon.webp",
+  "frame_width": 98,
+  "frame_height": 111,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "0adf22a40d43eb601ca88067b9b027853ec4f2bd22aeeeaa32963984a6bea5b0"
+}

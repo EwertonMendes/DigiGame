@@ -1,0 +1,14 @@
+{
+  "source": "Shellmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Shellmon.webp",
+  "frame_width": 113,
+  "frame_height": 100,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "a454d28e0e3f82beca38372c9e16e355d304c7bb0fe6efdd55be2d19af267d5c"
+}

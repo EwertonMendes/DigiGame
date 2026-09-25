@@ -1,0 +1,14 @@
+{
+  "source": "Scorpiomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Scorpiomon.webp",
+  "frame_width": 117,
+  "frame_height": 99,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "d7c59940ec5598beeafec33c33422f7b4a2103c781d85013caf2ed9ba05e0acd"
+}

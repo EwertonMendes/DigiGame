@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 145,
+  "source_archive_file": "sprite thread/145_Sangloupmon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/145_Sangloupmon.png",
+  "source_sha256": "4f8ceb51ef5648581a77b333831e7be468c25e4b9d4be3579caa4eb123dc6456",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "four_rows_rightmost_triples",
+  "review_pattern": "compact_interleaved",
+  "runtime_group_indices": [
+    0,
+    2,
+    1,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    2,
+    1,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 156556,
+      "confidence_margin": 343818
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 401296
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 137,
+      "source_bottom": 176,
+      "height": 39
+    },
+    "down_right": {
+      "source_top": 231,
+      "source_bottom": 270,
+      "height": 39
+    },
+    "up_left": {
+      "source_top": 185,
+      "source_bottom": 224,
+      "height": 39
+    },
+    "up_right": {
+      "source_top": 279,
+      "source_bottom": 318,
+      "height": 39
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    41
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 238,
+        "y": 137,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 281,
+        "y": 139,
+        "w": 31,
+        "h": 35
+      },
+      {
+        "x": 323,
+        "y": 139,
+        "w": 32,
+        "h": 37
+      }
+    ],
+    "down_right": [
+      {
+        "x": 328,
+        "y": 231,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 286,
+        "y": 233,
+        "w": 31,
+        "h": 35
+      },
+      {
+        "x": 243,
+        "y": 233,
+        "w": 32,
+        "h": 37
+      }
+    ],
+    "up_left": [
+      {
+        "x": 239,
+        "y": 185,
+        "w": 32,
+        "h": 37
+      },
+      {
+        "x": 282,
+        "y": 185,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 328,
+        "y": 186,
+        "w": 30,
+        "h": 38
+      }
+    ],
+    "up_right": [
+      {
+        "x": 327,
+        "y": 279,
+        "w": 32,
+        "h": 37
+      },
+      {
+        "x": 284,
+        "y": 279,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 240,
+        "y": 280,
+        "w": 30,
+        "h": 38
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 42,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/sangloupmon/field.png"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Omekamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Omekamon.webp",
+  "frame_width": 125,
+  "frame_height": 101,
+  "frame_count": 4,
+  "durations_ms": [
+    220,
+    220,
+    220,
+    220
+  ],
+  "source_sha256": "3df6c2254f5be9157110dc00f2a268266399ad890bec76a45a688f038046d650"
+}

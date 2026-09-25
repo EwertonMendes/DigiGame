@@ -1,0 +1,14 @@
+{
+  "source": "KaratsukiNumemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/KaratsukiNumemon.webp",
+  "frame_width": 68,
+  "frame_height": 63,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "1e1d5fe953c26bb64574170b2c67213f8ac8954b2e4c0272221ed83a86698026"
+}

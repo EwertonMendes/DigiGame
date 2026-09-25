@@ -1,0 +1,14 @@
+{
+  "source": "Yanmamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Yanmamon.webp",
+  "frame_width": 107,
+  "frame_height": 86,
+  "frame_count": 4,
+  "durations_ms": [
+    100,
+    100,
+    100,
+    100
+  ],
+  "source_sha256": "f656a909e7d84915528fc176f08aabdde918e8a9c92ab681e5b3f6dde35e1e0b"
+}

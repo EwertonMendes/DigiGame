@@ -1,0 +1,14 @@
+{
+  "source": "Saberdramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Saberdramon.webp",
+  "frame_width": 120,
+  "frame_height": 131,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    100,
+    250
+  ],
+  "source_sha256": "eb158c9ea068a635ef3953cf7199e2e43b9df9247c511bf5145500e11d42ca7f"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "KnightChessmon (White).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/KnightChessmon%20%28White%29.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "9c4aa3b1640407762a46617532a8f1b63bc48c549701e8eb9a88d2ddca1a04c4"
+}

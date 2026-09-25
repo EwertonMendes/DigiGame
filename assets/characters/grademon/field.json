@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": null,
+  "source_archive_file": "sprite thread/Grademon.png",
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Adult/Grademon.png",
+  "source_sha256": "d5538b0de85c96e80aae3110b22d9e01757893233a476aec523145e910961244",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 438000
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 189356
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 324,
+      "source_bottom": 371,
+      "height": 47
+    },
+    "down_right": {
+      "source_top": 324,
+      "source_bottom": 371,
+      "height": 47
+    },
+    "up_left": {
+      "source_top": 381,
+      "source_bottom": 424,
+      "height": 43
+    },
+    "up_right": {
+      "source_top": 381,
+      "source_bottom": 424,
+      "height": 43
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    49
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 9,
+        "y": 325,
+        "w": 32,
+        "h": 46
+      },
+      {
+        "x": 53,
+        "y": 324,
+        "w": 30,
+        "h": 46
+      },
+      {
+        "x": 94,
+        "y": 325,
+        "w": 32,
+        "h": 43
+      }
+    ],
+    "down_right": [
+      {
+        "x": 248,
+        "y": 325,
+        "w": 32,
+        "h": 46
+      },
+      {
+        "x": 206,
+        "y": 324,
+        "w": 30,
+        "h": 46
+      },
+      {
+        "x": 163,
+        "y": 325,
+        "w": 32,
+        "h": 43
+      }
+    ],
+    "up_left": [
+      {
+        "x": 7,
+        "y": 382,
+        "w": 32,
+        "h": 42
+      },
+      {
+        "x": 49,
+        "y": 381,
+        "w": 30,
+        "h": 42
+      },
+      {
+        "x": 91,
+        "y": 382,
+        "w": 30,
+        "h": 42
+      }
+    ],
+    "up_right": [
+      {
+        "x": 245,
+        "y": 382,
+        "w": 32,
+        "h": 42
+      },
+      {
+        "x": 205,
+        "y": 381,
+        "w": 30,
+        "h": 42
+      },
+      {
+        "x": 163,
+        "y": 382,
+        "w": 30,
+        "h": 42
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 50,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/grademon/field.png"
+}

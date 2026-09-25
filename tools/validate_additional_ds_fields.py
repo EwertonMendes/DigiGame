@@ -66,11 +66,13 @@ def main() -> None:
         if not isinstance(mirror_from, dict):
             raise RuntimeError(f"{name}: horizontal_mirror_from must be an object")
         allowed_horizontal_mirrors = {
-            "down_right": "down_left",
-            "up_right": "up_left",
+            ("down_left", "down_right"),
+            ("down_right", "down_left"),
+            ("up_left", "up_right"),
+            ("up_right", "up_left"),
         }
         for target_direction, source_direction in mirror_from.items():
-            if allowed_horizontal_mirrors.get(str(target_direction)) != str(source_direction):
+            if (str(target_direction), str(source_direction)) not in allowed_horizontal_mirrors:
                 raise RuntimeError(
                     f"{name}: invalid generated mirror {target_direction} <- {source_direction}"
                 )
