@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": null,
+  "source_archive_file": "sprite thread/206_Ookuwamon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "a72ba51d65dfec5facef3061f4e78dbccf5f88303fde1906ba80d2aa45000aa7",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 329998
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 142294,
+      "confidence_margin": 245204
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 317,
+      "source_bottom": 357,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 316,
+      "source_bottom": 356,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 274,
+      "source_bottom": 313,
+      "height": 39
+    },
+    "up_right": {
+      "source_top": 275,
+      "source_bottom": 314,
+      "height": 39
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 77,
+        "y": 317,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 119,
+        "y": 317,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 163,
+        "y": 320,
+        "w": 32,
+        "h": 37
+      }
+    ],
+    "down_right": [
+      {
+        "x": 291,
+        "y": 316,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 249,
+        "y": 316,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 205,
+        "y": 319,
+        "w": 32,
+        "h": 37
+      }
+    ],
+    "up_left": [
+      {
+        "x": 82,
+        "y": 274,
+        "w": 32,
+        "h": 37
+      },
+      {
+        "x": 124,
+        "y": 275,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 164,
+        "y": 277,
+        "w": 31,
+        "h": 36
+      }
+    ],
+    "up_right": [
+      {
+        "x": 286,
+        "y": 275,
+        "w": 32,
+        "h": 37
+      },
+      {
+        "x": 246,
+        "y": 276,
+        "w": 30,
+        "h": 36
+      },
+      {
+        "x": 205,
+        "y": 278,
+        "w": 31,
+        "h": 36
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/okuwamon/field.png"
+}

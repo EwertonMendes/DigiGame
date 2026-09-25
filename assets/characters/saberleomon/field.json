@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 300,
+  "source_archive_file": "sprite thread/300_SaberLeomon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "cc0fe2405476a652a5011e831d5d33ae8f8c79b9e45ddf6f41aafddcf5d2e797",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 258680,
+      "confidence_margin": 118906
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 131444,
+      "confidence_margin": 225418
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 294,
+      "source_bottom": 327,
+      "height": 33
+    },
+    "down_right": {
+      "source_top": 293,
+      "source_bottom": 326,
+      "height": 33
+    },
+    "up_left": {
+      "source_top": 239,
+      "source_bottom": 276,
+      "height": 37
+    },
+    "up_right": {
+      "source_top": 238,
+      "source_bottom": 275,
+      "height": 37
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    40
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 8,
+        "y": 295,
+        "w": 28,
+        "h": 32
+      },
+      {
+        "x": 55,
+        "y": 294,
+        "w": 30,
+        "h": 33
+      },
+      {
+        "x": 101,
+        "y": 297,
+        "w": 31,
+        "h": 30
+      }
+    ],
+    "down_right": [
+      {
+        "x": 269,
+        "y": 294,
+        "w": 28,
+        "h": 32
+      },
+      {
+        "x": 220,
+        "y": 293,
+        "w": 30,
+        "h": 33
+      },
+      {
+        "x": 173,
+        "y": 296,
+        "w": 31,
+        "h": 30
+      }
+    ],
+    "up_left": [
+      {
+        "x": 7,
+        "y": 239,
+        "w": 30,
+        "h": 37
+      },
+      {
+        "x": 56,
+        "y": 242,
+        "w": 31,
+        "h": 33
+      },
+      {
+        "x": 102,
+        "y": 246,
+        "w": 32,
+        "h": 29
+      }
+    ],
+    "up_right": [
+      {
+        "x": 268,
+        "y": 238,
+        "w": 30,
+        "h": 37
+      },
+      {
+        "x": 218,
+        "y": 241,
+        "w": 31,
+        "h": 33
+      },
+      {
+        "x": 171,
+        "y": 245,
+        "w": 32,
+        "h": 29
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 41,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/saberleomon/field.png"
+}

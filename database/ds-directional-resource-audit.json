@@ -1,13 +1,13 @@
 {
   "runtime_default_layout": "directional_12",
   "canonical_reference": "Agumon",
-  "directional_resource_count": 360,
+  "directional_resource_count": 370,
   "preserved_resource_count": 3,
   "source_rebuilt_resource_count": 86,
-  "additional_source_rebuilt_resource_count": 269,
+  "additional_source_rebuilt_resource_count": 279,
   "project_original_resource_count": 1,
   "project_supplied_resource_count": 1,
-  "audited_resource_count": 360,
+  "audited_resource_count": 370,
   "directional_resources": [
     {
       "name": "AeroVeedramon",
@@ -670,6 +670,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Gallantmon (Crimson Mode)",
+      "resource": "assets/resources/gallantmon (crimson mode).tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Gaogamon",
       "resource": "assets/resources/gaogamon.tres",
       "layout_source": "explicit",
@@ -736,6 +742,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Ghoulmon",
+      "resource": "assets/resources/ghoulmon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Gigadramon",
       "resource": "assets/resources/gigadramon.tres",
       "layout_source": "explicit",
@@ -792,6 +804,12 @@
     {
       "name": "Grademon",
       "resource": "assets/resources/grademon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "GranKuwagamon",
+      "resource": "assets/resources/grankuwagamon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -1186,10 +1204,22 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "Lucemon Chaos Mode",
+      "resource": "assets/resources/lucemon chaos mode.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Lunamon",
       "resource": "assets/resources/lunamon.tres",
       "layout_source": "explicit",
       "coverage": "early_ds"
+    },
+    {
+      "name": "MachGaogamon",
+      "resource": "assets/resources/machgaogamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
     },
     {
       "name": "Machinedramon",
@@ -1302,6 +1332,12 @@
     {
       "name": "MetalMamemon",
       "resource": "assets/resources/metalmamemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "MetalSeadramon",
+      "resource": "assets/resources/metalseadramon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -1446,6 +1482,12 @@
     {
       "name": "Ogremon",
       "resource": "assets/resources/ogremon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Okuwamon",
+      "resource": "assets/resources/okuwamon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -1686,6 +1728,12 @@
     {
       "name": "SL Angemon",
       "resource": "assets/resources/sl angemon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "SaberLeomon",
+      "resource": "assets/resources/saberleomon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },
@@ -2068,6 +2116,12 @@
       "coverage": "additional_ds"
     },
     {
+      "name": "VenomMyotismon",
+      "resource": "assets/resources/venommyotismon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
       "name": "Vermilimon",
       "resource": "assets/resources/vermilimon.tres",
       "layout_source": "explicit",
@@ -2148,6 +2202,12 @@
     {
       "name": "Yanmamon",
       "resource": "assets/resources/yanmamon.tres",
+      "layout_source": "explicit",
+      "coverage": "additional_ds"
+    },
+    {
+      "name": "Yatagaramon",
+      "resource": "assets/resources/yatagaramon.tres",
       "layout_source": "explicit",
       "coverage": "additional_ds"
     },

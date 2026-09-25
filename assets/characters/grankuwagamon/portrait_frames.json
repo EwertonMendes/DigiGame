@@ -1,0 +1,14 @@
+{
+  "source": "GranKuwagamon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/GranKuwagamon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "84ebc3a363fd5f2524ff5f467703b2c19123bc8c45bf2090f04ba3354a1f104b"
+}
