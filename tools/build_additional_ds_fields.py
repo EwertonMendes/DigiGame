@@ -109,6 +109,19 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
             raise RuntimeError(f"Expected four movement rows, got {[len(row) for row in rows]}")
         first, second, third, fourth = movement_rows[:4]
         groups = [first[:3], second[:3], third[-3:], fourth[-3:]]
+    elif kind == "four_rows_selected_triples":
+        movement_rows = [sorted(row, key=lambda item: item["cx"]) for row in rows if len(row) >= 3]
+        if len(movement_rows) < 4:
+            raise RuntimeError(f"Expected four movement rows, got {[len(row) for row in rows]}")
+        sides = profile.get("triplet_sides")
+        if not isinstance(sides, list) or len(sides) != 4 or any(side not in {"left", "right"} for side in sides):
+            raise RuntimeError(
+                "four_rows_selected_triples requires triplet_sides with exactly four 'left'/'right' values"
+            )
+        groups = [
+            row[:3] if side == "left" else row[-3:]
+            for row, side in zip(movement_rows[:4], sides)
+        ]
     elif kind == "four_rows_leftmost_triples":
         movement_rows = [sorted(row, key=lambda item: item["cx"])[:3] for row in rows if len(row) >= 3]
         if len(movement_rows) < 4:
