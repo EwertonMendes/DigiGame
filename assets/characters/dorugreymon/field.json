@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 241,
+  "source_archive_file": "sprite thread/241_Dorugremon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "474acbe4a447e06c450afec6792af9a7a2bbe084c044c90a633910735ca94b53",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 202450,
+      "confidence_margin": 244080
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 189346,
+      "confidence_margin": 324090
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 398,
+      "source_bottom": 438,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 398,
+      "source_bottom": 438,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 331,
+      "source_bottom": 371,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 331,
+      "source_bottom": 371,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 83,
+        "y": 399,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 128,
+        "y": 398,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 171,
+        "y": 399,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "down_right": [
+      {
+        "x": 321,
+        "y": 399,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 277,
+        "y": 398,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 233,
+        "y": 399,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "up_left": [
+      {
+        "x": 84,
+        "y": 332,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 127,
+        "y": 331,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 171,
+        "y": 331,
+        "w": 32,
+        "h": 38
+      }
+    ],
+    "up_right": [
+      {
+        "x": 320,
+        "y": 332,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 278,
+        "y": 331,
+        "w": 31,
+        "h": 39
+      },
+      {
+        "x": 233,
+        "y": 331,
+        "w": 32,
+        "h": 38
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/dorugreymon/field.png"
+}

@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 290,
+  "source_archive_file": "sprite thread/290_Prariemon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "5b0781507ec8ff1795434b59dbc883414368046f69036dbb2736bc6d166c3989",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "canonical_rows",
+  "runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "effective_runtime_group_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 274264
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 226574
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 208,
+      "source_bottom": 240,
+      "height": 32
+    },
+    "down_right": {
+      "source_top": 206,
+      "source_bottom": 238,
+      "height": 32
+    },
+    "up_left": {
+      "source_top": 248,
+      "source_bottom": 280,
+      "height": 32
+    },
+    "up_right": {
+      "source_top": 246,
+      "source_bottom": 278,
+      "height": 32
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    16,
+    34
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 6,
+        "y": 209,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 39,
+        "y": 209,
+        "w": 26,
+        "h": 29
+      },
+      {
+        "x": 76,
+        "y": 208,
+        "w": 26,
+        "h": 31
+      }
+    ],
+    "down_right": [
+      {
+        "x": 195,
+        "y": 207,
+        "w": 22,
+        "h": 31
+      },
+      {
+        "x": 158,
+        "y": 207,
+        "w": 26,
+        "h": 29
+      },
+      {
+        "x": 121,
+        "y": 206,
+        "w": 26,
+        "h": 31
+      }
+    ],
+    "up_left": [
+      {
+        "x": 5,
+        "y": 249,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 39,
+        "y": 249,
+        "w": 24,
+        "h": 31
+      },
+      {
+        "x": 79,
+        "y": 248,
+        "w": 22,
+        "h": 29
+      }
+    ],
+    "up_right": [
+      {
+        "x": 196,
+        "y": 247,
+        "w": 22,
+        "h": 30
+      },
+      {
+        "x": 160,
+        "y": 247,
+        "w": 24,
+        "h": 31
+      },
+      {
+        "x": 122,
+        "y": 246,
+        "w": 22,
+        "h": 29
+      }
+    ]
+  },
+  "cell_width": 32,
+  "cell_height": 35,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/prairiemon/field.png"
+}

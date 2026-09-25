@@ -11,7 +11,7 @@
     "step_a",
     "step_b"
   ],
-  "count": 176,
+  "count": 219,
   "species": [
     {
       "name": "Geo Greymon",
@@ -3530,6 +3530,866 @@
       "field_cell": [
         36,
         43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Pandamon",
+      "seed": "f525814d-b2a1-4988-b767-ccb7cdb61454",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/pandamon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/pandamon/field.png",
+      "field_metadata": "res://assets/characters/pandamon/field.json",
+      "portrait_strip": "res://assets/characters/pandamon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/pandamon/portrait_frames.json",
+      "source_id": 235,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Marine Devimon",
+      "seed": "b4cf1769-9b50-4aeb-be2b-f0aaaad4d5e0",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/marine devimon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/marinedevimon/field.png",
+      "field_metadata": "res://assets/characters/marinedevimon/field.json",
+      "portrait_strip": "res://assets/characters/marinedevimon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/marinedevimon/portrait_frames.json",
+      "source_id": 236,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Karatenmon",
+      "seed": "ea1c73e6-dca5-405c-a89d-983e495a89b3",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/karatenmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/karatenmon/field.png",
+      "field_metadata": "res://assets/characters/karatenmon/field.json",
+      "portrait_strip": "res://assets/characters/karatenmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/karatenmon/portrait_frames.json",
+      "source_id": 237,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Sinduramon",
+      "seed": "3806f254-dcf8-44b7-9384-edddef3c6bba",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/sinduramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/sinduramon/field.png",
+      "field_metadata": "res://assets/characters/sinduramon/field.json",
+      "portrait_strip": "res://assets/characters/sinduramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/sinduramon/portrait_frames.json",
+      "source_id": 239,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        34,
+        34
+      ],
+      "portrait_frames": 3
+    },
+    {
+      "name": "Pipismon",
+      "seed": "11431f1e-5428-4cd4-a0de-559e4e7e0f64",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/pipismon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/pipismon/field.png",
+      "field_metadata": "res://assets/characters/pipismon/field.json",
+      "portrait_strip": "res://assets/characters/pipismon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/pipismon/portrait_frames.json",
+      "source_id": 240,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "DoruGreymon",
+      "seed": "0cd5fdf6-ff56-4196-92f7-79f0c32bcc31",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/dorugreymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/dorugreymon/field.png",
+      "field_metadata": "res://assets/characters/dorugreymon/field.json",
+      "portrait_strip": "res://assets/characters/dorugreymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/dorugreymon/portrait_frames.json",
+      "source_id": 241,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Divermon",
+      "seed": "49896ce6-92dd-46ff-af5f-699bc73a9507",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/divermon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/divermon/field.png",
+      "field_metadata": "res://assets/characters/divermon/field.json",
+      "portrait_strip": "res://assets/characters/divermon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/divermon/portrait_frames.json",
+      "source_id": 242,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        32,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Kimeramon",
+      "seed": "8c0f5a17-16a5-409a-bac1-1c63aeaa611a",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/kimeramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/kimeramon/field.png",
+      "field_metadata": "res://assets/characters/kimeramon/field.json",
+      "portrait_strip": "res://assets/characters/kimeramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/kimeramon/portrait_frames.json",
+      "source_id": 243,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        45
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Deramon",
+      "seed": "b5a7b775-04b8-436a-b17a-29f7307c682e",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/deramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/deramon/field.png",
+      "field_metadata": "res://assets/characters/deramon/field.json",
+      "portrait_strip": "res://assets/characters/deramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/deramon/portrait_frames.json",
+      "source_id": 245,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        32,
+        32
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Silphymon",
+      "seed": "de7c5e6e-92fc-4f99-98b1-abe628acedd2",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/silphymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/silphymon/field.png",
+      "field_metadata": "res://assets/characters/silphymon/field.json",
+      "portrait_strip": "res://assets/characters/silphymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/silphymon/portrait_frames.json",
+      "source_id": 246,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        32,
+        36
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "SuperStarmon",
+      "seed": "4b81a3d1-02d9-433b-8591-eeef611f6a02",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/superstarmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/superstarmon/field.png",
+      "field_metadata": "res://assets/characters/superstarmon/field.json",
+      "portrait_strip": "res://assets/characters/superstarmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/superstarmon/portrait_frames.json",
+      "source_id": 247,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        33,
+        35
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Mamemon",
+      "seed": "2f601348-8b9f-456e-98e5-b2133a734203",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/mamemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/mamemon/field.png",
+      "field_metadata": "res://assets/characters/mamemon/field.json",
+      "portrait_strip": "res://assets/characters/mamemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/mamemon/portrait_frames.json",
+      "source_id": 251,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        32
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Toucanmon",
+      "seed": "1fc3d08b-7a62-4c3e-bf9d-3a179f5a3642",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/toucanmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/toucanmon/field.png",
+      "field_metadata": "res://assets/characters/toucanmon/field.json",
+      "portrait_strip": "res://assets/characters/toucanmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/toucanmon/portrait_frames.json",
+      "source_id": 252,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        32
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Aurumon",
+      "seed": "75c6c6ce-68c9-4c32-a678-d9f59406d3a0",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/aurumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/aurumon/field.png",
+      "field_metadata": "res://assets/characters/aurumon/field.json",
+      "portrait_strip": "res://assets/characters/aurumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/aurumon/portrait_frames.json",
+      "source_id": 253,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Meteormon",
+      "seed": "61eb3964-e387-42d0-83aa-2e2b60f38008",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/meteormon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/meteormon/field.png",
+      "field_metadata": "res://assets/characters/meteormon/field.json",
+      "portrait_strip": "res://assets/characters/meteormon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/meteormon/portrait_frames.json",
+      "source_id": 254,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        35
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Gigadramon",
+      "seed": "e11a28bb-64a3-49bc-8770-065728c1d8fa",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/gigadramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/gigadramon/field.png",
+      "field_metadata": "res://assets/characters/gigadramon/field.json",
+      "portrait_strip": "res://assets/characters/gigadramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/gigadramon/portrait_frames.json",
+      "source_id": 255,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        35,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Tyilinmon",
+      "seed": "1dc4e899-b0db-435f-a9e3-6fa7c94836aa",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/tyilinmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/tyilinmon/field.png",
+      "field_metadata": "res://assets/characters/tyilinmon/field.json",
+      "portrait_strip": "res://assets/characters/tyilinmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/tyilinmon/portrait_frames.json",
+      "source_id": 258,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        34,
+        46
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Lilamon",
+      "seed": "978dfa7e-4c2e-4390-b40f-ac1cd8f0bbea",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/lilamon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/lilamon/field.png",
+      "field_metadata": "res://assets/characters/lilamon/field.json",
+      "portrait_strip": "res://assets/characters/lilamon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/lilamon/portrait_frames.json",
+      "source_id": 259,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        32,
+        40
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Shadramon",
+      "seed": "e7db2137-9d39-40f4-9fef-8ef42bcff938",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/shadramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/shadramon/field.png",
+      "field_metadata": "res://assets/characters/shadramon/field.json",
+      "portrait_strip": "res://assets/characters/shadramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/shadramon/portrait_frames.json",
+      "source_id": 260,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        35,
+        35
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Matadormon",
+      "seed": "68de0bbe-a11d-4452-bdb6-f6b4478d06ad",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/matadormon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/matadormon/field.png",
+      "field_metadata": "res://assets/characters/matadormon/field.json",
+      "portrait_strip": "res://assets/characters/matadormon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/matadormon/portrait_frames.json",
+      "source_id": 261,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Kabukimon",
+      "seed": "d9652444-162c-4443-8001-d29b9d23c57b",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/kabukimon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/kabukimon/field.png",
+      "field_metadata": "res://assets/characters/kabukimon/field.json",
+      "portrait_strip": "res://assets/characters/kabukimon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/kabukimon/portrait_frames.json",
+      "source_id": 262,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        36
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Cherrymon",
+      "seed": "52112c31-2f69-435d-bc56-69f4be1e508d",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/cherrymon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/cherrymon/field.png",
+      "field_metadata": "res://assets/characters/cherrymon/field.json",
+      "portrait_strip": "res://assets/characters/cherrymon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/cherrymon/portrait_frames.json",
+      "source_id": 263,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Garbagemon",
+      "seed": "8f22778f-d315-42f9-8eb9-83c63c8603ba",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/garbagemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/garbagemon/field.png",
+      "field_metadata": "res://assets/characters/garbagemon/field.json",
+      "portrait_strip": "res://assets/characters/garbagemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/garbagemon/portrait_frames.json",
+      "source_id": 264,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        34,
+        35
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "MameTyramon",
+      "seed": "3481f925-3014-43ed-8f3a-715232b923f3",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/mametyramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/mametyramon/field.png",
+      "field_metadata": "res://assets/characters/mametyramon/field.json",
+      "portrait_strip": "res://assets/characters/mametyramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/mametyramon/portrait_frames.json",
+      "source_id": 266,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        32
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Giromon",
+      "seed": "e88b06f2-180d-4cb7-926a-8c215d717e5b",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/giromon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/giromon/field.png",
+      "field_metadata": "res://assets/characters/giromon/field.json",
+      "portrait_strip": "res://assets/characters/giromon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/giromon/portrait_frames.json",
+      "source_id": 267,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        32
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Vademon",
+      "seed": "b651ef8e-ee49-40e6-8854-434a5e6217db",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/vademon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/vademon/field.png",
+      "field_metadata": "res://assets/characters/vademon/field.json",
+      "portrait_strip": "res://assets/characters/vademon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/vademon/portrait_frames.json",
+      "source_id": 268,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Tekkamon",
+      "seed": "823fd608-feb2-415c-99be-f144a51fbd91",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/tekkamon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/tekkamon/field.png",
+      "field_metadata": "res://assets/characters/tekkamon/field.json",
+      "portrait_strip": "res://assets/characters/tekkamon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/tekkamon/portrait_frames.json",
+      "source_id": 270,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        32
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Big Mamemon",
+      "seed": "b7d29106-ee09-4b38-913f-cdb1ef06b347",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/big mamemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/bigmamemon/field.png",
+      "field_metadata": "res://assets/characters/bigmamemon/field.json",
+      "portrait_strip": "res://assets/characters/bigmamemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/bigmamemon/portrait_frames.json",
+      "source_id": 271,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "EXTyrannomon",
+      "seed": "1b765eb3-b253-4266-a449-f48cc1713dac",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/extyrannomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/extyrannomon/field.png",
+      "field_metadata": "res://assets/characters/extyrannomon/field.json",
+      "portrait_strip": "res://assets/characters/extyrannomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/extyrannomon/portrait_frames.json",
+      "source_id": 272,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        33,
+        41
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Phantomon",
+      "seed": "01cf1fc3-911e-4a79-a14a-c2de553edecb",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/phantomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/phantomon/field.png",
+      "field_metadata": "res://assets/characters/phantomon/field.json",
+      "portrait_strip": "res://assets/characters/phantomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/phantomon/portrait_frames.json",
+      "source_id": 274,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Vajiramon",
+      "seed": "a5598598-d29a-4858-8f30-ec5f2acf107b",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/vajiramon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/vajiramon/field.png",
+      "field_metadata": "res://assets/characters/vajiramon/field.json",
+      "portrait_strip": "res://assets/characters/vajiramon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/vajiramon/portrait_frames.json",
+      "source_id": 275,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "GrapLeomon",
+      "seed": "64eecdac-3722-4999-941c-eb21a60fd301",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/grapleomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/grapleomon/field.png",
+      "field_metadata": "res://assets/characters/grapleomon/field.json",
+      "portrait_strip": "res://assets/characters/grapleomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/grapleomon/portrait_frames.json",
+      "source_id": 277,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Knightmon",
+      "seed": "2dd48272-ac88-4367-a6d6-59b6dc3de237",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/knightmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/knightmon/field.png",
+      "field_metadata": "res://assets/characters/knightmon/field.json",
+      "portrait_strip": "res://assets/characters/knightmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/knightmon/portrait_frames.json",
+      "source_id": 278,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        34,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Brachiomon",
+      "seed": "db096107-34c6-4f22-b8a1-8b5c7265edb2",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/brachiomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/brachiomon/field.png",
+      "field_metadata": "res://assets/characters/brachiomon/field.json",
+      "portrait_strip": "res://assets/characters/brachiomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/brachiomon/portrait_frames.json",
+      "source_id": 279,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        32,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Allomon",
+      "seed": "2b4b8b25-e810-45a2-a7f1-3e6642b50352",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/allomon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/allomon/field.png",
+      "field_metadata": "res://assets/characters/allomon/field.json",
+      "portrait_strip": "res://assets/characters/allomon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/allomon/portrait_frames.json",
+      "source_id": 280,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        45
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Lanksmon",
+      "seed": "43cdb81a-3316-4e2b-8c6d-4bc9f8aa99f0",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/lanksmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/lanksmon/field.png",
+      "field_metadata": "res://assets/characters/lanksmon/field.json",
+      "portrait_strip": "res://assets/characters/lanksmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/lanksmon/portrait_frames.json",
+      "source_id": 281,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        35,
+        44
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Shaujinmon",
+      "seed": "965f036a-e7a9-4a59-b192-db5b57636af8",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/shaujinmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/shaujinmon/field.png",
+      "field_metadata": "res://assets/characters/shaujinmon/field.json",
+      "portrait_strip": "res://assets/characters/shaujinmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/shaujinmon/portrait_frames.json",
+      "source_id": 282,
+      "profile": "single_row_four_triples",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        32,
+        38
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "BishopChessmon",
+      "seed": "d8bbebbb-b512-4ae6-a499-cfe208cce34b",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/bishopchessmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/bishopchessmon/field.png",
+      "field_metadata": "res://assets/characters/bishopchessmon/field.json",
+      "portrait_strip": "res://assets/characters/bishopchessmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/bishopchessmon/portrait_frames.json",
+      "source_id": 284,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        32,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "RockChessmon",
+      "seed": "6c121f02-4c0e-46a2-b2c7-f0b602267107",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/rockchessmon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/rockchessmon/field.png",
+      "field_metadata": "res://assets/characters/rockchessmon/field.json",
+      "portrait_strip": "res://assets/characters/rockchessmon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/rockchessmon/portrait_frames.json",
+      "source_id": 285,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        34
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Flaremon",
+      "seed": "622e72a1-7f0f-465e-b4f4-2ba9fb6a73a0",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/flaremon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/flaremon/field.png",
+      "field_metadata": "res://assets/characters/flaremon/field.json",
+      "portrait_strip": "res://assets/characters/flaremon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/flaremon/portrait_frames.json",
+      "source_id": 286,
+      "profile": "two_rows_of_six",
+      "pattern": "rear_rows_first",
+      "field_cell": [
+        36,
+        43
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Crescemon",
+      "seed": "c77b7715-f25c-4b3a-b77f-199188d1e7f7",
+      "rank": "Ultimate",
+      "attribute": "Virus",
+      "resource": "res://assets/resources/crescemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/crescemon/field.png",
+      "field_metadata": "res://assets/characters/crescemon/field.json",
+      "portrait_strip": "res://assets/characters/crescemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/crescemon/portrait_frames.json",
+      "source_id": 287,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        36,
+        42
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Prairiemon",
+      "seed": "c4cfed7d-2b3b-4fa4-8a4f-09ef2b709c7e",
+      "rank": "Ultimate",
+      "attribute": "Data",
+      "resource": "res://assets/resources/prairiemon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/prairiemon/field.png",
+      "field_metadata": "res://assets/characters/prairiemon/field.json",
+      "portrait_strip": "res://assets/characters/prairiemon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/prairiemon/portrait_frames.json",
+      "source_id": 290,
+      "profile": "two_rows_of_six",
+      "pattern": "canonical_rows",
+      "field_cell": [
+        32,
+        35
+      ],
+      "portrait_frames": 4
+    },
+    {
+      "name": "Kongoumon",
+      "seed": "846e2f00-60d3-4d9a-bb62-792154622ea6",
+      "rank": "Ultimate",
+      "attribute": "Vaccine",
+      "resource": "res://assets/resources/kongoumon.tres",
+      "visual_mode": "directional_12",
+      "field_sprite": "res://assets/characters/kongoumon/field.png",
+      "field_metadata": "res://assets/characters/kongoumon/field.json",
+      "portrait_strip": "res://assets/characters/kongoumon/portrait_frames.png",
+      "portrait_metadata": "res://assets/characters/kongoumon/portrait_frames.json",
+      "source_id": 291,
+      "profile": "four_rows_rightmost_triples",
+      "pattern": "compact_interleaved",
+      "field_cell": [
+        36,
+        44
       ],
       "portrait_frames": 4
     }

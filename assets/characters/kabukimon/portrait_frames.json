@@ -1,0 +1,14 @@
+{
+  "source": "Kabukimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Kabukimon.webp",
+  "frame_width": 80,
+  "frame_height": 96,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "b31374522105a068a336a9af0e0e8099baa294ae181b8b57f16bdae38b4e30f4"
+}

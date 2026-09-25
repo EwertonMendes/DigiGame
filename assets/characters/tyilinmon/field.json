@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 258,
+  "source_archive_file": "sprite thread/258_Qilinmon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "b4ddde07ce5a18b9d5929b803f6a3238af307d745d0fd6ce9c0132de6a7d5f6e",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      0,
+      1,
+      2
+    ],
+    "up_right": [
+      0,
+      1,
+      2
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 330022
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 336642
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 210,
+      "source_bottom": 252,
+      "height": 42
+    },
+    "down_right": {
+      "source_top": 210,
+      "source_bottom": 252,
+      "height": 42
+    },
+    "up_left": {
+      "source_top": 163,
+      "source_bottom": 203,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 163,
+      "source_bottom": 203,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    17,
+    45
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 271,
+        "y": 213,
+        "w": 30,
+        "h": 39
+      },
+      {
+        "x": 309,
+        "y": 211,
+        "w": 30,
+        "h": 41
+      },
+      {
+        "x": 347,
+        "y": 210,
+        "w": 30,
+        "h": 42
+      }
+    ],
+    "down_right": [
+      {
+        "x": 393,
+        "y": 213,
+        "w": 30,
+        "h": 39
+      },
+      {
+        "x": 431,
+        "y": 211,
+        "w": 30,
+        "h": 41
+      },
+      {
+        "x": 469,
+        "y": 210,
+        "w": 30,
+        "h": 42
+      }
+    ],
+    "up_left": [
+      {
+        "x": 271,
+        "y": 163,
+        "w": 30,
+        "h": 40
+      },
+      {
+        "x": 309,
+        "y": 165,
+        "w": 30,
+        "h": 38
+      },
+      {
+        "x": 347,
+        "y": 163,
+        "w": 30,
+        "h": 40
+      }
+    ],
+    "up_right": [
+      {
+        "x": 393,
+        "y": 163,
+        "w": 30,
+        "h": 40
+      },
+      {
+        "x": 431,
+        "y": 165,
+        "w": 30,
+        "h": 38
+      },
+      {
+        "x": 469,
+        "y": 163,
+        "w": 30,
+        "h": 40
+      }
+    ]
+  },
+  "cell_width": 34,
+  "cell_height": 46,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/tyilinmon/field.png"
+}

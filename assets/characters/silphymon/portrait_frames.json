@@ -1,0 +1,14 @@
+{
+  "source": "Silphymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Silphymon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "f58c031bc1c9f97c9bb9ae7d026b87abd098a0c7fbcd5283788186e19ec570e0"
+}

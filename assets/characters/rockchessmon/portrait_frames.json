@@ -1,0 +1,14 @@
+{
+  "source": "RockChessmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/RockChessmon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "f1cb7a993fd9418eb334b19412ef0d2144ed32916a2de9ca10254cf8a9c0f68c"
+}

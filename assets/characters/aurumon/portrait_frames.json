@@ -1,0 +1,14 @@
+{
+  "source": "Aurumon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Aurumon.webp",
+  "frame_width": 64,
+  "frame_height": 85,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "7794d6d903e4179d8b674a913129e0bd01a9389c232287ba829486657ea7ee44"
+}

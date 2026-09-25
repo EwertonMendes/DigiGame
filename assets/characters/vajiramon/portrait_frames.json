@@ -1,0 +1,14 @@
+{
+  "source": "Vajiramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Vajiramon.webp",
+  "frame_width": 109,
+  "frame_height": 159,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "ee067e98c6727ada864955c578be85b02f099ba27ffa4e247a2a26fa6b0f9ad0"
+}

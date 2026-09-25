@@ -1,0 +1,14 @@
+{
+  "source": "Tyilinmon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Tyilinmon.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "c55e1b1554b4703ee0e26f9f4f2a64b3c4b29b3fcb6a28d69ae0091c1ac47cc8"
+}

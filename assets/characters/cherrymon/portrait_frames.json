@@ -1,0 +1,14 @@
+{
+  "source": "Cherrymon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Cherrymon.webp",
+  "frame_width": 97,
+  "frame_height": 124,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "a2c3efa5c58bd9f8c71be4852626fb832b23d5884e0bab69493b86abe9592699"
+}

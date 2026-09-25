@@ -1,0 +1,14 @@
+{
+  "source": "Allomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Allomon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "e57b841dcb086e91eafa74bb6b8f23926a38104833e0f0de46684ec39c0d795d"
+}

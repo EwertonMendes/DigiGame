@@ -1,0 +1,198 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 237,
+  "source_archive_file": "sprite thread/237_Karatenmon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "8bda76b1294bada0274c382ff320ac9b66ac13fa0bb747659e76b1bc21dd6c6b",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 262050,
+      "confidence_margin": 253760
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 112278,
+      "confidence_margin": 292812
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 335,
+      "source_bottom": 375,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 335,
+      "source_bottom": 375,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 290,
+      "source_bottom": 330,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 290,
+      "source_bottom": 330,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    43
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 68,
+        "y": 335,
+        "w": 29,
+        "h": 40
+      },
+      {
+        "x": 107,
+        "y": 336,
+        "w": 30,
+        "h": 38
+      },
+      {
+        "x": 147,
+        "y": 340,
+        "w": 29,
+        "h": 32
+      }
+    ],
+    "down_right": [
+      {
+        "x": 265,
+        "y": 335,
+        "w": 29,
+        "h": 40
+      },
+      {
+        "x": 225,
+        "y": 336,
+        "w": 30,
+        "h": 38
+      },
+      {
+        "x": 186,
+        "y": 340,
+        "w": 29,
+        "h": 32
+      }
+    ],
+    "up_left": [
+      {
+        "x": 59,
+        "y": 296,
+        "w": 32,
+        "h": 34
+      },
+      {
+        "x": 104,
+        "y": 290,
+        "w": 28,
+        "h": 39
+      },
+      {
+        "x": 151,
+        "y": 292,
+        "w": 25,
+        "h": 37
+      }
+    ],
+    "up_right": [
+      {
+        "x": 271,
+        "y": 296,
+        "w": 32,
+        "h": 34
+      },
+      {
+        "x": 230,
+        "y": 290,
+        "w": 28,
+        "h": 39
+      },
+      {
+        "x": 186,
+        "y": 292,
+        "w": 25,
+        "h": 37
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 44,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/karatenmon/field.png"
+}
