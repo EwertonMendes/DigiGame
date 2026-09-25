@@ -4100,7 +4100,7 @@
       "review_method": "exact_source_box_runtime_review",
       "review_status": "corrected_from_sprite_test_feedback",
       "review_batch": "kogamon-exact-crop-2026-09-25",
-      "review_note": "Use the crisp direct WTW/Photobucket source. The first movement row intentionally starts at y=166 to sit below the legacy overlay; exact source-box cropping is mandatory so the old 2px padding cannot pull overlay/neighbour residue back into the frame. Preserve full box/envelope placement to avoid per-frame bounce.",
+      "review_note": "Use the crisp direct WTW/Photobucket source. The first movement row intentionally starts at y=166 to sit below the legacy overlay; exact source-box cropping is mandatory so the old 2px padding cannot pull overlay/neighbour residue back into the frame. Preserve full box/envelope placement to avoid per-frame bounce. Additionally discard only tiny disconnected alpha islands (<=12 px) touching the exact crop border; this targets the remaining loose source-residue dots without touching connected sprite pixels.",
       "explicit_groups": [
         [
           {
@@ -4184,7 +4184,8 @@
         ]
       ],
       "vertical_alignment": "source_group_envelope",
-      "preserve_source_box": true
+      "preserve_source_box": true,
+      "border_island_cleanup_max_pixels": 12
     },
     "Mammothmon": {
       "source_id": 204,
@@ -4277,12 +4278,13 @@
       "review_method": "exact_source_box_runtime_review",
       "review_status": "corrected_from_sprite_test_feedback",
       "review_batch": "crop-baseline-fix-2026-09-25",
-      "review_note": "Sprite Test: facings are correct; UP-left/UP-right contain stray pixels and the walk still has slight bounce. Use exact audited source boxes with no 2px neighbor padding and preserve the full source-box/envelope placement so neighboring-frame pixels cannot leak in and per-frame trimming cannot change the baseline.",
+      "review_note": "Sprite Test: facings are correct; UP-left/UP-right contain stray pixels and the walk still has slight bounce. Use exact audited source boxes with no 2px neighbor padding and preserve the full source-box/envelope placement so neighboring-frame pixels cannot leak in and per-frame trimming cannot change the baseline. Additionally discard only tiny disconnected alpha islands (<=12 px) that touch a frame border, covering the reported stray line without altering connected Digimon artwork.",
       "horizontal_mirror_from": {
         "up_right": "up_left"
       },
       "vertical_alignment": "source_group_envelope",
-      "preserve_source_box": true
+      "preserve_source_box": true,
+      "border_island_cleanup_max_pixels": 12
     },
     "LadyDevimon": {
       "source_id": 216,
@@ -4473,9 +4475,10 @@
       "review_method": "exact_source_box_runtime_review",
       "review_status": "corrected_from_sprite_test_feedback",
       "review_batch": "crop-baseline-fix-2026-09-25",
-      "review_note": "Sprite Test: facings are correct; one DOWN-right walk frame shows a thin neighboring-frame residue line. Keep the existing mapping and boxes, but crop the exact audited cell with zero neighboring padding while preserving source placement.",
+      "review_note": "Sprite Test: facings are correct; one DOWN-right walk frame shows a thin neighboring-frame residue line. Keep the existing mapping and boxes, but crop the exact audited cell with zero neighboring padding while preserving source placement. Additionally discard only tiny disconnected alpha islands (<=12 px) touching the frame border, covering the reported thin residue line while preserving the whale sprite itself.",
       "vertical_alignment": "source_group_envelope",
-      "preserve_source_box": true
+      "preserve_source_box": true,
+      "border_island_cleanup_max_pixels": 12
     },
     "Rosemon": {
       "source_id": 308,
