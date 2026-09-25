@@ -81,10 +81,6 @@
     }
   },
   "vertical_alignment_policy": "source_group_envelope",
-  "vertical_alignment_by_direction": {
-    "down_left": "frame_bottom",
-    "down_right": "frame_bottom"
-  },
   "preserve_source_box": true,
   "border_island_cleanup_max_pixels": 0,
   "alpha_island_cleanup_max_pixels": 0,
@@ -201,5 +197,9 @@
   "cell_height": 40,
   "frame_count": 12,
   "frames_per_direction": 3,
-  "field_path": "res://assets/characters/kogamon/field.png"
+  "field_path": "res://assets/characters/kogamon/field.png",
+  "vertical_alignment_by_direction": {
+    "down_left": "frame_bottom",
+    "down_right": "frame_bottom"
+  }
 }

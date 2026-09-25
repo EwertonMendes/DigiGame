@@ -85,7 +85,6 @@
     }
   },
   "vertical_alignment_policy": "frame_bottom",
-  "vertical_alignment_by_direction": {},
   "preserve_source_box": false,
   "border_island_cleanup_max_pixels": 0,
   "alpha_island_cleanup_max_pixels": 0,
