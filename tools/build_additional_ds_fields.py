@@ -391,6 +391,12 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
     vertical_alignment = str(spec.get("vertical_alignment", "frame_bottom"))
     if vertical_alignment not in {"frame_bottom", "source_group_envelope"}:
         raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
+    preserve_source_box = bool(spec.get("preserve_source_box", False))
+    if preserve_source_box and frame_background_policy == "border_connected_matte":
+        raise RuntimeError(
+            f"{name}: preserve_source_box is not supported with border_connected_matte; "
+            "use source_alpha/global_key or add an exact matte implementation first"
+        )
 
     frames: list[Image.Image] = []
     frame_placements: list[tuple[int, int]] = []
@@ -408,7 +414,13 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             "height": envelope_height,
         }
         for box in ordered_boxes:
-            if frame_background_policy == "source_alpha":
+            if preserve_source_box:
+                x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
+                frame_source = source if frame_background_policy == "source_alpha" else keyed
+                frame = frame_source.crop((x, y, x + w, y + h))
+                if frame.getbbox() is None:
+                    raise RuntimeError(f"{name}: exact source box became empty: {box}")
+            elif frame_background_policy == "source_alpha":
                 frame = crop_component(source, box)
             elif frame_background_policy == "border_connected_matte":
                 frame = crop_frame_border_connected_matte(
@@ -470,6 +482,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "source_frame_order": source_frame_order,
         "pose_alignment": pose_alignment,
         "vertical_alignment_policy": vertical_alignment,
+        "preserve_source_box": preserve_source_box,
         "source_group_envelopes": source_group_envelopes,
         "anchor_policy": (
             "source_group_envelope_bottom_center"
