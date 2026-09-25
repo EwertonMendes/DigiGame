@@ -110,7 +110,8 @@
         "right",
         "left",
         "left"
-      ]
+      ],
+      "min_cx_ratio": 0.2
     },
     "four_rows_outer_right_inner_left": {
       "kind": "four_rows_selected_triples",
@@ -2613,7 +2614,7 @@
       "review_method": "raw_audit_group_visual_review",
       "review_status": "corrected_after_runtime_visual_review_batch_g",
       "review_batch": "backfill-2026-09-25-g",
-      "review_note": "Sprite Test correction: both right-facing rows contained a fourth victory-jump component. Keep the approved left-facing triplets, and select the leftmost three components for both right-facing source rows so only the 3 walk frames remain per angle."
+      "review_note": "Sprite Test correction: both right-facing rows contained a fourth victory-jump component. Restrict extraction to the actual movement-sprite region first, then keep the approved left-facing triplets and select the first three movement components for both right-facing rows; this excludes both the victory frame and unrelated tiny sheet fragments."
     },
     "Kuzuhamon": {
       "source_id": 357,
