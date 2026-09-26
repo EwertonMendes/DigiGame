@@ -146,12 +146,13 @@ const TRAINING_CENTER_FOOTPRINT_SOURCE := [
 ]
 
 # The Hospital is authored symmetrically around a straight-down entrance. Its
-# source diagonals are slightly steeper than DigiGame's exact 64x32 projection,
-# so normalize Y independently while keeping zero rotation. This preserves the
-# centered medical facade and prevents the subtle "crooked" look that appears
-# when a near-isometric source is scaled uniformly.
-const HOSPITAL_SCALE := Vector2(0.35, 0.30975)
-const HOSPITAL_ROTATION_DEGREES := 0.0
+# source diagonals are slightly steeper and not perfectly symmetric around
+# screen-down. Normalize Y independently, then apply the small measured rotation
+# that maps the dominant +34/-32 degree source axes onto the city's exact
+# +/-26.565 degree 64x32 grid. This keeps the centered medical facade straight
+# instead of visually leaning to one side.
+const HOSPITAL_SCALE := Vector2(0.35, 0.26943834)
+const HOSPITAL_ROTATION_DEGREES := -0.87567
 const HOSPITAL_BASE_Z := 880
 const HOSPITAL_UPPER_OCCLUDER_Z := 1800
 const HOSPITAL_UPPER_OCCLUDER_CUTOFF_Y := 650.0
