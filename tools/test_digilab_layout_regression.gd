@@ -290,10 +290,18 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 	}
 	var uniform_width := -1.0
 	if bits != null and bits.visible and tabs_root.position.x + tabs_root.size.x > bits.position.x - 1.0:
-		print("[digilab-layout] HeaderTabs escaped behind Bits")
+		print("[digilab-layout] HeaderTabs escaped behind Bits: tabs=(%.1f + %.1f = %.1f) bits=(%.1f, %.1f) close_x=%.1f header_w=%.1f" % [
+			tabs_root.position.x,
+			tabs_root.size.x,
+			tabs_root.position.x + tabs_root.size.x,
+			bits.position.x,
+			bits.size.x,
+			close.position.x,
+			header.size.x,
+		])
 		return false
 	if tabs_root.position.x + tabs_root.size.x > close.position.x - 1.0:
-		print("[digilab-layout] HeaderTabs escaped behind Close")
+		print("[digilab-layout] HeaderTabs escaped behind Close: tabs_end=%.1f close_x=%.1f" % [tabs_root.position.x + tabs_root.size.x, close.position.x])
 		return false
 	for tab_id: String in ["convert", "party", "fusion", "ascension"]:
 		var button: Button = header.get_tab_button(tab_id)
