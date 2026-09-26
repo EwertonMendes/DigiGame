@@ -67,6 +67,107 @@ static func create_landscape_island(
 	}
 
 
+static func create_lamp_surround(
+	node_name: String,
+	center: Vector2,
+	accent: Color,
+	landscaped: bool = false
+) -> Node2D:
+	var root := Node2D.new()
+	root.name = node_name
+
+	# The lamp is planted directly into the real ground plane. The surrounding
+	# urban treatment is therefore a ring around the pedestal, never a filled
+	# tile underneath it. The transparent center lets the existing road/paver
+	# remain visible where the sprite's own graphite foot enters the ground.
+	var outer_half_w := 30.0
+	var outer_half_h := 15.0
+	var inner_half_w := 11.0
+	var inner_half_h := 5.5
+	var outer := PackedVector2Array([
+		center + Vector2(-outer_half_w, 0.0),
+		center + Vector2(0.0, -outer_half_h),
+		center + Vector2(outer_half_w, 0.0),
+		center + Vector2(0.0, outer_half_h),
+	])
+	var inner := PackedVector2Array([
+		center + Vector2(-inner_half_w, 0.0),
+		center + Vector2(0.0, -inner_half_h),
+		center + Vector2(inner_half_w, 0.0),
+		center + Vector2(0.0, inner_half_h),
+	])
+
+	for index in range(4):
+		var next := (index + 1) % 4
+		var strip := PackedVector2Array([
+			outer[index],
+			outer[next],
+			inner[next],
+			inner[index],
+		])
+		var paver := CITY.create_paver_polygon(
+			strip,
+			Color(0.58, 0.60, 0.59, 1.0),
+			index
+		)
+		paver.name = "PaverRing_%d" % index
+		paver.z_index = 0
+		root.add_child(paver)
+
+	var outer_border := Line2D.new()
+	outer_border.name = "OuterBorder"
+	var outer_points := outer.duplicate()
+	outer_points.append(outer[0])
+	outer_border.points = outer_points
+	outer_border.width = 2.0
+	outer_border.default_color = Color(0.20, 0.23, 0.24, 1.0)
+	outer_border.antialiased = false
+	outer_border.z_index = 2
+	root.add_child(outer_border)
+
+	var inner_border := Line2D.new()
+	inner_border.name = "GroundContactBorder"
+	var inner_points := inner.duplicate()
+	inner_points.append(inner[0])
+	inner_border.points = inner_points
+	inner_border.width = 1.0
+	inner_border.default_color = Color(0.42, 0.44, 0.43, 1.0)
+	inner_border.antialiased = false
+	inner_border.z_index = 2
+	root.add_child(inner_border)
+
+	if landscaped:
+		# Keep greenery around the post, not under it. Two shallow side beds
+		# integrate plaza lamps with the existing tree islands while preserving
+		# the transparent center contact.
+		for side in [-1.0, 1.0]:
+			var grass_center := center + Vector2(side * 18.0, 0.0)
+			var grass := Polygon2D.new()
+			grass.name = "LandscapeBed_%s" % ("L" if side < 0.0 else "R")
+			grass.polygon = PackedVector2Array([
+				grass_center + Vector2(-8.0, 0.0),
+				grass_center + Vector2(0.0, -4.0),
+				grass_center + Vector2(8.0, 0.0),
+				grass_center + Vector2(0.0, 4.0),
+			])
+			grass.color = Color(0.30, 0.63, 0.20, 1.0)
+			grass.z_index = 1
+			root.add_child(grass)
+
+	var accent_line := Line2D.new()
+	accent_line.name = "FrontAccent"
+	accent_line.points = PackedVector2Array([
+		outer[0].lerp(outer[3], 0.22),
+		outer[0].lerp(outer[3], 0.78),
+	])
+	accent_line.width = 2.0
+	accent_line.default_color = accent
+	accent_line.antialiased = false
+	accent_line.z_index = 3
+	root.add_child(accent_line)
+	return root
+
+
 static func create_civic_pool_frame(center: Vector2) -> Node2D:
 	var root := Node2D.new()
 	root.name = "CivicPoolFrame"
