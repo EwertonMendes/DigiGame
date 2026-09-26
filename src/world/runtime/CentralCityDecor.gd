@@ -24,19 +24,33 @@ static func build_for_section(
 	if config.is_empty():
 		return {"root": root, "count": 0, "assets": PackedStringArray()}
 
-	var profiles_value = config.get("profiles", {})
-	if not profiles_value is Dictionary:
-		return {"root": root, "count": 0, "assets": PackedStringArray()}
-	var profiles := profiles_value as Dictionary
-	var variants_value = profiles.get(theme, profiles.get("residential", []))
-	if not variants_value is Array or variants_value.is_empty():
-		return {"root": root, "count": 0, "assets": PackedStringArray()}
-	var variants := variants_value as Array
-	var variant_index := posmod(section_coord.x * 31 + section_coord.y * 17, variants.size())
-	var placements_value = variants[variant_index]
-	if not placements_value is Array:
-		return {"root": root, "count": 0, "assets": PackedStringArray()}
-	var placements := placements_value as Array
+	# Prefer an explicitly authored district composition. Street furniture is
+	# urban infrastructure, so important districts need exact placements tied
+	# to entrances, foundation edges, plaza borders and bridge heads instead of
+	# being scattered by a generic theme template.
+	var placements: Array = []
+	var sections_value = config.get("sections", {})
+	if sections_value is Dictionary:
+		var sections := sections_value as Dictionary
+		var section_key := "%d,%d" % [section_coord.x, section_coord.y]
+		var authored_value = sections.get(section_key, null)
+		if authored_value is Array:
+			placements = authored_value as Array
+
+	if placements.is_empty():
+		var profiles_value = config.get("profiles", {})
+		if not profiles_value is Dictionary:
+			return {"root": root, "count": 0, "assets": PackedStringArray()}
+		var profiles := profiles_value as Dictionary
+		var variants_value = profiles.get(theme, profiles.get("residential", []))
+		if not variants_value is Array or variants_value.is_empty():
+			return {"root": root, "count": 0, "assets": PackedStringArray()}
+		var variants := variants_value as Array
+		var variant_index := posmod(section_coord.x * 31 + section_coord.y * 17, variants.size())
+		var placements_value = variants[variant_index]
+		if not placements_value is Array:
+			return {"root": root, "count": 0, "assets": PackedStringArray()}
+		placements = placements_value as Array
 
 	var assets_value = config.get("assets", {})
 	if not assets_value is Dictionary:
