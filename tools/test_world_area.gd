@@ -128,11 +128,17 @@ func _ready() -> void:
 		and absf(digilab_upper.region_rect.size.y - 700.0) < 0.01,
 		"DigiLab must keep the lower facade in front of actors while reserving occlusion for the upper/back art"
 	)
-	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 5), "digilab")
+	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 4), "digilab")
 	assert(
 		digilab_floor is Dictionary
 		and String((digilab_floor as Dictionary).get("surface", "")) == "stone_soft",
-		"DigiLab lot must use the standard gray 0054 pavement instead of green/teal ground"
+		"DigiLab building lot must keep neutral civic paving outside the pedestrian route"
+	)
+	var digilab_approach = digilab_section.call("_ground_presentation", Vector2i(8, 10), "digilab")
+	assert(
+		digilab_approach is Dictionary
+		and String((digilab_approach as Dictionary).get("surface", "")) == "path",
+		"DigiLab entrance must connect to the brighter city pedestrian network"
 	)
 	var digilab_collision := digilab_section.get_node_or_null(
 		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
