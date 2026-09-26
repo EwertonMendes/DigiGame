@@ -111,6 +111,8 @@ static func build_for_section(
 					surround_style == "landscape"
 				)
 			surround.z_index = GROUND_DECOR_Z
+			if surround_style.begins_with("seating"):
+				surround.set_meta("ground_center", ground_center)
 			root.add_child(surround)
 
 		var sprite := Sprite2D.new()
