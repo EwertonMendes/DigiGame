@@ -2,8 +2,14 @@ extends RefCounted
 class_name QuestService
 
 const FusionProgressScript = preload("res://src/digimon/FusionProgressService.gd")
+const FusionCatalogScript = preload("res://src/digimon/FusionCatalog.gd")
 
 var _fusion_progress = FusionProgressScript.new()
+var _fusion_catalog: FusionCatalog = FusionCatalogScript.new()
+
+
+func _init() -> void:
+	_fusion_catalog.load_default()
 
 const STATE_LOCKED := "locked"
 const STATE_AVAILABLE := "available"
@@ -152,7 +158,7 @@ func _apply_rewards(collection: PlayerCollection, rewards: Dictionary) -> Dictio
 			var amount := maxi(0, int(raw_fusion_data[raw_fusion_id]))
 			if fusion_id.is_empty() or amount <= 0:
 				continue
-			var progress := _fusion_progress.add_data(collection, fusion_id, amount)
+			var progress := _fusion_progress.add_data(collection, fusion_id, amount, _fusion_catalog, "quest_reward")
 			var gained := int(progress.get("gained", 0))
 			if gained > 0:
 				fusion_applied[fusion_id] = gained
