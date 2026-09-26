@@ -139,6 +139,69 @@ static func create_lamp_surround(
 	return root
 
 
+static func create_bench_surround(
+	node_name: String,
+	center: Vector2,
+	accent: Color,
+	mirror_axis: bool = false
+) -> Node2D:
+	var root := Node2D.new()
+	root.name = node_name
+
+	# Benches need a civic seating bay, not a pedestal. The pad is flush with
+	# the surrounding pavement and follows the same 64x32 isometric axes as the
+	# authored bench art. This visually ties the furniture to the streetscape
+	# without making it look raised or pasted on top of a planter.
+	var long_axis := Vector2(44.0, 22.0)
+	var short_axis := Vector2(-12.0, 6.0)
+	if mirror_axis:
+		long_axis.x *= -1.0
+		short_axis.x *= -1.0
+	var outer := PackedVector2Array([
+		center - long_axis - short_axis,
+		center + long_axis - short_axis,
+		center + long_axis + short_axis,
+		center - long_axis + short_axis,
+	])
+	var paver := CITY.create_paver_polygon(
+		outer,
+		Color(0.60, 0.61, 0.59, 1.0),
+		0
+	)
+	paver.name = "PaverPad"
+	paver.z_index = 0
+	root.add_child(paver)
+
+	var border := Line2D.new()
+	border.name = "OuterBorder"
+	var border_points := outer.duplicate()
+	border_points.append(outer[0])
+	border.points = border_points
+	border.width = 2.0
+	border.default_color = Color(0.20, 0.23, 0.24, 1.0)
+	border.antialiased = false
+	border.z_index = 2
+	root.add_child(border)
+
+	# Keep the cyan strip on the street-facing edge only. It gives the seating
+	# bay the same infrastructure language as the approved lamp surrounds while
+	# leaving the bench feet visibly planted directly on the pavers.
+	var front_a := outer[2]
+	var front_b := outer[3]
+	var accent_line := Line2D.new()
+	accent_line.name = "FrontAccent"
+	accent_line.points = PackedVector2Array([
+		front_a.lerp(front_b, 0.18),
+		front_a.lerp(front_b, 0.82),
+	])
+	accent_line.width = 2.0
+	accent_line.default_color = accent
+	accent_line.antialiased = false
+	accent_line.z_index = 3
+	root.add_child(accent_line)
+	return root
+
+
 static func create_civic_pool_frame(center: Vector2) -> Node2D:
 	var root := Node2D.new()
 	root.name = "CivicPoolFrame"
