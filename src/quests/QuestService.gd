@@ -146,9 +146,10 @@ func _apply_rewards(collection: PlayerCollection, rewards: Dictionary) -> Dictio
 		for raw_seed in raw_data.keys():
 			var seed := String(raw_seed).strip_edges()
 			var amount := maxi(0, int(raw_data[raw_seed]))
-			if not seed.is_empty() and amount > 0:
-				collection.add_digi_data(seed, amount)
-				data_applied[seed] = amount
+			if seed.is_empty() or amount <= 0 or not _fusion_catalog.get_by_result_seed(seed).is_empty():
+				continue
+			collection.add_digi_data(seed, amount)
+			data_applied[seed] = amount
 		applied["digi_data"] = data_applied
 	var raw_fusion_data = rewards.get("fusion_data", {})
 	if raw_fusion_data is Dictionary:
