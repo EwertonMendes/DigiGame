@@ -1,186 +1,125 @@
 {
-  "version": 1,
+  "version": 2,
   "assets": {
     "bench_ne": {
-      "path": "res://assets/world/tblack/city/props/bench_ne.svg",
+      "path": "res://assets/world/tblack/city/props_v2/bench_ne.png",
       "foot": [
-        48,
-        63
+        56,
+        68
       ],
       "scale": 1,
       "blocker": [
-        42,
+        44,
         12
       ]
     },
     "bench_nw": {
-      "path": "res://assets/world/tblack/city/props/bench_nw.svg",
+      "path": "res://assets/world/tblack/city/props_v2/bench_nw.png",
       "foot": [
-        48,
-        63
+        56,
+        68
       ],
       "scale": 1,
       "blocker": [
-        42,
+        44,
         12
-      ]
-    },
-    "planter_flower": {
-      "path": "res://assets/world/tblack/city/props/planter_flower.svg",
-      "foot": [
-        46,
-        72
-      ],
-      "scale": 1,
-      "blocker": [
-        28,
-        14
-      ]
-    },
-    "planter_shrub": {
-      "path": "res://assets/world/tblack/city/props/planter_shrub.svg",
-      "foot": [
-        46,
-        76
-      ],
-      "scale": 1,
-      "blocker": [
-        28,
-        14
       ]
     },
     "lamp_cyan": {
-      "path": "res://assets/world/tblack/city/props/lamp_cyan.svg",
+      "path": "res://assets/world/tblack/city/props_v2/lamp_cyan.png",
       "foot": [
-        29,
-        77
+        24,
+        78
       ],
       "scale": 1,
       "blocker": [
-        12,
-        7
+        10,
+        6
       ]
     },
     "lamp_warm": {
-      "path": "res://assets/world/tblack/city/props/lamp_warm.svg",
+      "path": "res://assets/world/tblack/city/props_v2/lamp_warm.png",
       "foot": [
-        29,
-        77
+        24,
+        78
       ],
       "scale": 1,
       "blocker": [
-        12,
-        7
+        10,
+        6
+      ]
+    },
+    "planter_long_ne": {
+      "path": "res://assets/world/tblack/city/props_v2/planter_long_ne.png",
+      "foot": [
+        56,
+        65
+      ],
+      "scale": 1,
+      "blocker": [
+        48,
+        10
+      ]
+    },
+    "planter_long_nw": {
+      "path": "res://assets/world/tblack/city/props_v2/planter_long_nw.png",
+      "foot": [
+        56,
+        65
+      ],
+      "scale": 1,
+      "blocker": [
+        48,
+        10
       ]
     },
     "terminal": {
-      "path": "res://assets/world/tblack/city/props/terminal.svg",
+      "path": "res://assets/world/tblack/city/props_v2/terminal.png",
       "foot": [
-        34,
-        73
+        29,
+        71
       ],
       "scale": 1,
       "blocker": [
-        20,
-        12
+        16,
+        10
       ]
     },
     "holo_sign": {
-      "path": "res://assets/world/tblack/city/props/holo_sign.svg",
+      "path": "res://assets/world/tblack/city/props_v2/holo_sign.png",
       "foot": [
-        44,
-        96
+        36,
+        93
       ],
       "scale": 1,
       "blocker": [
-        20,
+        18,
         10
       ],
       "shader": "hologram"
     },
-    "bin": {
-      "path": "res://assets/world/tblack/city/props/bin.svg",
-      "foot": [
-        24,
-        54
-      ],
-      "scale": 1,
-      "blocker": [
-        14,
-        9
-      ]
-    },
-    "bollard": {
-      "path": "res://assets/world/tblack/city/props/bollard.svg",
-      "foot": [
-        17,
-        44
-      ],
-      "scale": 1,
-      "blocker": [
-        8,
-        6
-      ]
-    },
     "railing_ne": {
-      "path": "res://assets/world/tblack/city/props/railing_ne.svg",
+      "path": "res://assets/world/tblack/city/props_v2/railing_ne.png",
       "foot": [
         48,
-        47
+        49
       ],
       "scale": 1,
       "blocker": [
-        38,
-        8
+        40,
+        7
       ]
     },
     "railing_nw": {
-      "path": "res://assets/world/tblack/city/props/railing_nw.svg",
+      "path": "res://assets/world/tblack/city/props_v2/railing_nw.png",
       "foot": [
         48,
-        47
+        49
       ],
       "scale": 1,
       "blocker": [
-        38,
-        8
-      ]
-    },
-    "street_marker": {
-      "path": "res://assets/world/tblack/city/props/street_marker.svg",
-      "foot": [
-        27,
-        26
-      ],
-      "scale": 1,
-      "blocker": [
-        0,
-        0
-      ],
-      "layer": "ground"
-    },
-    "flower_bed_ne": {
-      "path": "res://assets/world/tblack/city/props/flower_bed_ne.svg",
-      "foot": [
-        56,
-        59
-      ],
-      "scale": 1,
-      "blocker": [
-        50,
-        10
-      ]
-    },
-    "flower_bed_nw": {
-      "path": "res://assets/world/tblack/city/props/flower_bed_nw.svg",
-      "foot": [
-        56,
-        59
-      ],
-      "scale": 1,
-      "blocker": [
-        50,
-        10
+        40,
+        7
       ]
     }
   },
@@ -190,99 +129,57 @@
         {
           "asset": "lamp_cyan",
           "cell": [
-            2.6,
-            3
+            3,
+            4.1
           ]
         },
         {
           "asset": "lamp_cyan",
           "cell": [
-            10.9,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            2.7,
-            10.4
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            10.8,
-            10.4
+            10.2,
+            9.8
           ]
         },
         {
           "asset": "bench_ne",
           "cell": [
-            3.6,
-            8.8
+            3,
+            8.7
           ]
         },
         {
           "asset": "bench_nw",
           "cell": [
-            9.9,
-            4.6
+            10,
+            4.8
           ]
         },
         {
-          "asset": "planter_flower",
+          "asset": "planter_long_ne",
           "cell": [
-            3.7,
-            5.2
+            3.4,
+            2.3
           ]
         },
         {
-          "asset": "planter_shrub",
-          "cell": [
-            5.1,
-            3.6
-          ]
-        },
-        {
-          "asset": "planter_flower",
+          "asset": "planter_long_nw",
           "cell": [
             10.2,
-            8.8
-          ]
-        },
-        {
-          "asset": "planter_shrub",
-          "cell": [
-            8.8,
-            10.3
-          ]
-        },
-        {
-          "asset": "flower_bed_ne",
-          "cell": [
-            4.2,
-            2.5
-          ]
-        },
-        {
-          "asset": "flower_bed_nw",
-          "cell": [
-            9.5,
-            10.9
+            11
           ]
         },
         {
           "asset": "terminal",
           "cell": [
-            2.6,
-            7.3
+            2,
+            6.6
           ]
         },
         {
           "asset": "holo_sign",
           "cell": [
-            10.9,
-            6.2
+            11.5,
+            6.1
           ],
           "accent": [
             0.35,
@@ -298,57 +195,29 @@
         {
           "asset": "lamp_cyan",
           "cell": [
-            1.8,
-            6.3
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            12,
-            7
+            1.7,
+            6.4
           ]
         },
         {
           "asset": "bench_ne",
           "cell": [
-            4.2,
-            6
+            5,
+            10.9
           ]
         },
         {
-          "asset": "bench_nw",
+          "asset": "planter_long_ne",
           "cell": [
-            9.6,
-            7.8
-          ]
-        },
-        {
-          "asset": "flower_bed_ne",
-          "cell": [
-            3.8,
-            3.7
-          ]
-        },
-        {
-          "asset": "flower_bed_nw",
-          "cell": [
-            9.9,
-            10
-          ]
-        },
-        {
-          "asset": "planter_shrub",
-          "cell": [
-            3.6,
-            9.5
-          ]
-        },
-        {
-          "asset": "planter_flower",
-          "cell": [
-            10,
+            10.6,
             4
+          ]
+        },
+        {
+          "asset": "terminal",
+          "cell": [
+            11.9,
+            8.4
           ]
         }
       ],
@@ -356,57 +225,29 @@
         {
           "asset": "lamp_cyan",
           "cell": [
-            6.2,
-            1.8
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            7.1,
-            12
+            11.8,
+            6.8
           ]
         },
         {
           "asset": "bench_nw",
           "cell": [
-            5.9,
-            4.2
+            8.9,
+            2.8
           ]
         },
         {
-          "asset": "bench_ne",
+          "asset": "planter_long_nw",
           "cell": [
-            8,
-            9.5
+            3.3,
+            9.9
           ]
         },
         {
-          "asset": "flower_bed_nw",
+          "asset": "terminal",
           "cell": [
-            3.7,
+            2,
             5
-          ]
-        },
-        {
-          "asset": "flower_bed_ne",
-          "cell": [
-            10.1,
-            8.9
-          ]
-        },
-        {
-          "asset": "planter_flower",
-          "cell": [
-            4.5,
-            10
-          ]
-        },
-        {
-          "asset": "planter_shrub",
-          "cell": [
-            9.4,
-            3.8
           ]
         }
       ]
@@ -416,50 +257,29 @@
         {
           "asset": "lamp_cyan",
           "cell": [
-            1.7,
+            1.8,
             4
-          ]
-        },
-        {
-          "asset": "lamp_warm",
-          "cell": [
-            11.8,
-            9.7
           ]
         },
         {
           "asset": "bench_ne",
           "cell": [
-            4,
-            10.9
+            4.2,
+            10.8
           ]
         },
         {
-          "asset": "flower_bed_ne",
-          "cell": [
-            3,
-            3.1
-          ]
-        },
-        {
-          "asset": "planter_shrub",
+          "asset": "planter_long_ne",
           "cell": [
             10.4,
-            5
-          ]
-        },
-        {
-          "asset": "bin",
-          "cell": [
-            11.7,
-            11.2
+            4
           ]
         },
         {
           "asset": "terminal",
           "cell": [
-            2,
-            7.4
+            11.8,
+            8.7
           ]
         }
       ],
@@ -467,50 +287,29 @@
         {
           "asset": "lamp_warm",
           "cell": [
-            3,
-            1.8
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            10.7,
-            11.8
+            11.7,
+            9.8
           ]
         },
         {
           "asset": "bench_nw",
           "cell": [
-            9.7,
+            9.5,
             2.7
           ]
         },
         {
-          "asset": "flower_bed_nw",
+          "asset": "planter_long_nw",
           "cell": [
             3.1,
             9.6
           ]
         },
         {
-          "asset": "planter_flower",
-          "cell": [
-            9.8,
-            9.8
-          ]
-        },
-        {
-          "asset": "bin",
-          "cell": [
-            2,
-            5.4
-          ]
-        },
-        {
           "asset": "terminal",
           "cell": [
-            11.7,
-            6.6
+            2,
+            5.3
           ]
         }
       ]
@@ -520,71 +319,43 @@
         {
           "asset": "railing_ne",
           "cell": [
-            3.8,
+            3.4,
             4.4
           ]
         },
         {
           "asset": "railing_ne",
           "cell": [
-            9.2,
+            9.5,
             4.4
           ]
         },
         {
           "asset": "railing_ne",
           "cell": [
-            3.8,
-            8.9
+            3.4,
+            9
           ]
         },
         {
           "asset": "railing_ne",
           "cell": [
-            9.2,
-            8.9
+            9.5,
+            9
           ]
         },
         {
           "asset": "lamp_cyan",
           "cell": [
-            5,
-            4.2
+            5.1,
+            3.5
           ]
         },
         {
           "asset": "lamp_cyan",
           "cell": [
-            8,
-            9.1
-          ]
-        },
-        {
-          "asset": "bench_ne",
-          "cell": [
-            2.8,
-            10.4
-          ]
-        },
-        {
-          "asset": "bench_nw",
-          "cell": [
-            10.5,
-            3.2
-          ]
-        },
-        {
-          "asset": "flower_bed_ne",
-          "cell": [
-            2,
-            7
-          ]
-        },
-        {
-          "asset": "flower_bed_nw",
-          "cell": [
-            11.4,
-            6.8
+            8.2,
+            10
           ]
         }
       ]
@@ -602,76 +373,41 @@
           "asset": "lamp_warm",
           "cell": [
             11.4,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_warm",
-          "cell": [
-            6.7,
-            11.6
+            10.7
           ]
         },
         {
           "asset": "bench_ne",
           "cell": [
-            3.5,
-            9.8
+            3.2,
+            9.6
           ]
         },
         {
-          "asset": "bench_nw",
+          "asset": "planter_long_ne",
           "cell": [
-            10,
-            4
-          ]
-        },
-        {
-          "asset": "flower_bed_ne",
-          "cell": [
-            3.1,
-            3
-          ]
-        },
-        {
-          "asset": "flower_bed_nw",
-          "cell": [
-            10.3,
-            10.1
+            10.2,
+            3.3
           ]
         },
         {
           "asset": "terminal",
           "cell": [
-            2.1,
-            6.6
-          ]
-        },
-        {
-          "asset": "terminal",
-          "cell": [
-            11.6,
-            7
+            2,
+            6.5
           ]
         },
         {
           "asset": "holo_sign",
           "cell": [
-            9.8,
-            6
+            11.2,
+            6.3
           ],
           "accent": [
             1,
             0.72,
             0.25,
             1
-          ]
-        },
-        {
-          "asset": "bin",
-          "cell": [
-            4.8,
-            11.4
           ]
         }
       ]
@@ -682,62 +418,35 @@
           "asset": "lamp_cyan",
           "cell": [
             2,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            11.4,
-            10.5
-          ]
-        },
-        {
-          "asset": "bench_ne",
-          "cell": [
-            3.1,
-            10.2
+            3.1
           ]
         },
         {
           "asset": "bench_nw",
           "cell": [
-            10.3,
+            10.2,
             3.2
           ]
         },
         {
-          "asset": "flower_bed_ne",
+          "asset": "planter_long_nw",
           "cell": [
             3.1,
-            4
+            9.7
           ]
         },
         {
-          "asset": "flower_bed_nw",
+          "asset": "terminal",
           "cell": [
-            10.4,
-            9.3
-          ]
-        },
-        {
-          "asset": "holo_sign",
-          "cell": [
-            2.2,
-            7.8
-          ],
-          "accent": [
-            0.74,
-            0.48,
-            1,
-            1
+            11.6,
+            8.5
           ]
         },
         {
           "asset": "holo_sign",
           "cell": [
-            11.3,
-            5.3
+            2.1,
+            6.4
           ],
           "accent": [
             0.74,
@@ -754,49 +463,21 @@
           "asset": "lamp_cyan",
           "cell": [
             3,
-            2
+            2.3
           ]
         },
         {
           "asset": "lamp_cyan",
           "cell": [
-            10.5,
-            11.5
-          ]
-        },
-        {
-          "asset": "bollard",
-          "cell": [
-            5.2,
-            5
-          ]
-        },
-        {
-          "asset": "bollard",
-          "cell": [
-            8.8,
-            5
-          ]
-        },
-        {
-          "asset": "bollard",
-          "cell": [
-            5.2,
-            8.8
-          ]
-        },
-        {
-          "asset": "bollard",
-          "cell": [
-            8.8,
-            8.8
+            10.8,
+            11
           ]
         },
         {
           "asset": "holo_sign",
           "cell": [
             3,
-            7.1
+            7
           ],
           "accent": [
             0.35,
@@ -806,30 +487,17 @@
           ]
         },
         {
-          "asset": "holo_sign",
+          "asset": "planter_long_ne",
           "cell": [
-            10.7,
-            6.1
-          ],
-          "accent": [
-            0.35,
-            0.95,
-            1,
-            1
+            10.2,
+            3.8
           ]
         },
         {
-          "asset": "flower_bed_ne",
+          "asset": "bench_nw",
           "cell": [
-            2.7,
-            10
-          ]
-        },
-        {
-          "asset": "flower_bed_nw",
-          "cell": [
-            10.8,
-            3.5
+            4,
+            10.2
           ]
         }
       ]
@@ -840,47 +508,40 @@
           "asset": "lamp_cyan",
           "cell": [
             1.8,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            11.9,
-            10.8
+            4.2
           ]
         },
         {
           "asset": "bench_ne",
           "cell": [
             2.3,
-            8.2
+            9.7
           ]
         },
         {
-          "asset": "flower_bed_ne",
+          "asset": "planter_long_ne",
           "cell": [
-            2.1,
-            10.8
+            10.6,
+            2.6
           ]
         },
         {
-          "asset": "planter_shrub",
+          "asset": "terminal",
           "cell": [
-            10.9,
-            2.1
+            1.8,
+            6.3
           ]
         },
         {
           "asset": "holo_sign",
           "cell": [
-            2.1,
-            5
+            11.5,
+            7.3
           ],
           "accent": [
-            0.52,
-            1,
             0.48,
+            1,
+            0.42,
             1
           ]
         }
@@ -892,42 +553,41 @@
           "asset": "lamp_cyan",
           "cell": [
             2,
-            3
+            3.4
           ]
         },
         {
-          "asset": "lamp_cyan",
+          "asset": "bench_nw",
           "cell": [
-            11.6,
-            10.7
+            11,
+            3.7
           ]
         },
         {
-          "asset": "bench_ne",
+          "asset": "planter_long_nw",
           "cell": [
-            2.3,
-            8.4
-          ]
-        },
-        {
-          "asset": "flower_bed_nw",
-          "cell": [
-            10.8,
-            3.5
-          ]
-        },
-        {
-          "asset": "planter_shrub",
-          "cell": [
-            2.4,
-            10.1
+            2.7,
+            10.4
           ]
         },
         {
           "asset": "terminal",
           "cell": [
             1.9,
-            5.2
+            6.1
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            11.3,
+            8.2
+          ],
+          "accent": [
+            0.32,
+            0.82,
+            1,
+            1
           ]
         }
       ]
@@ -938,42 +598,41 @@
           "asset": "lamp_cyan",
           "cell": [
             2,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            11.7,
-            10.8
+            3.4
           ]
         },
         {
           "asset": "bench_ne",
           "cell": [
-            2.3,
-            8.5
+            2.6,
+            9.8
           ]
         },
         {
-          "asset": "flower_bed_ne",
+          "asset": "planter_long_ne",
           "cell": [
-            2.7,
-            10.3
-          ]
-        },
-        {
-          "asset": "planter_flower",
-          "cell": [
-            10.6,
-            4
+            10.7,
+            3.3
           ]
         },
         {
           "asset": "terminal",
           "cell": [
             1.9,
-            5.2
+            6
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            11.2,
+            8.1
+          ],
+          "accent": [
+            0.35,
+            0.95,
+            1,
+            1
           ]
         }
       ]
