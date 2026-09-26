@@ -67,6 +67,89 @@ static func create_landscape_island(
 	}
 
 
+static func create_lamp_bay(
+	node_name: String,
+	center: Vector2,
+	accent: Color,
+	landscaped: bool = false
+) -> Node2D:
+	var root := Node2D.new()
+	root.name = node_name
+
+	# A lamp should read as installed infrastructure rather than a sprite dropped
+	# on the road. Give every post a small flush isometric socket using the same
+	# civic materials as building foundations. It stays at ground level so it
+	# never competes with the raised building/landscape hierarchy.
+	var half_width := 30.0
+	var half_height := 15.0
+	var outer := PackedVector2Array([
+		center + Vector2(-half_width, 0.0),
+		center + Vector2(0.0, -half_height),
+		center + Vector2(half_width, 0.0),
+		center + Vector2(0.0, half_height),
+	])
+	var top_color := Color(0.58, 0.60, 0.59, 1.0)
+	var top := CITY.create_paver_polygon(outer, top_color, 0)
+	top.name = "PaverSocket"
+	root.add_child(top)
+
+	var border := Line2D.new()
+	border.name = "SocketBorder"
+	var border_points := outer.duplicate()
+	border_points.append(outer[0])
+	border.points = border_points
+	border.width = 2.0
+	border.default_color = Color(0.20, 0.23, 0.24, 1.0)
+	border.antialiased = false
+	border.z_index = 1
+	root.add_child(border)
+
+	if landscaped:
+		# A narrow planted inset gives civic/plaza lamps the same deliberate
+		# landscape integration as the larger tree islands without inventing a
+		# flower sprite before its final art is approved.
+		var green_half_w := 20.0
+		var green_half_h := 9.0
+		var green := Polygon2D.new()
+		green.name = "LandscapeInset"
+		green.polygon = PackedVector2Array([
+			center + Vector2(-green_half_w, 0.0),
+			center + Vector2(0.0, -green_half_h),
+			center + Vector2(green_half_w, 0.0),
+			center + Vector2(0.0, green_half_h),
+		])
+		green.color = Color(0.30, 0.63, 0.20, 1.0)
+		green.z_index = 2
+		root.add_child(green)
+
+	# The dark mounting socket visually explains where the pole is fixed and
+	# prevents the base from looking as though it is hovering over pavement.
+	var socket := Polygon2D.new()
+	socket.name = "MountingSocket"
+	socket.polygon = PackedVector2Array([
+		center + Vector2(-9.0, 0.0),
+		center + Vector2(0.0, -4.5),
+		center + Vector2(9.0, 0.0),
+		center + Vector2(0.0, 4.5),
+	])
+	socket.color = Color(0.12, 0.15, 0.17, 1.0)
+	socket.z_index = 3
+	root.add_child(socket)
+
+	var accent_line := Line2D.new()
+	accent_line.name = "SocketAccent"
+	accent_line.points = PackedVector2Array([
+		outer[0].lerp(outer[3], 0.25),
+		outer[0].lerp(outer[3], 0.78),
+	])
+	accent_line.width = 2.0
+	accent_line.default_color = accent
+	accent_line.antialiased = false
+	accent_line.z_index = 4
+	root.add_child(accent_line)
+	return root
+
+
 static func create_civic_pool_frame(center: Vector2) -> Node2D:
 	var root := Node2D.new()
 	root.name = "CivicPoolFrame"
