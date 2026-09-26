@@ -103,10 +103,13 @@ const DIGILAB_FOOTPRINT_SOURCE := [
 	Vector2(80.0, 800.0),
 ]
 
-# The Training Center source is already authored on the city isometric axes, so
-# it only needs a uniform scale. Its down-left-facing entrance sits at the
-# bottom-center of the visible facade and is aligned to a dedicated forecourt.
-const TRAINING_CENTER_SCALE := Vector2(0.36, 0.36)
+# The Training Center source is close to the city isometric axes, but its
+# authored vertical projection is slightly too tall and the two roof axes are
+# not perfectly balanced. Correct both geometrically so the structure follows
+# the same +/-26.565 degree 64x32 grid as the surrounding city instead of
+# reading as a subtly side-turned building.
+const TRAINING_CENTER_SCALE := Vector2(0.36, 0.28231)
+const TRAINING_CENTER_ROTATION_DEGREES := -2.20613
 const TRAINING_CENTER_BASE_Z := 880
 const TRAINING_CENTER_UPPER_OCCLUDER_Z := 1800
 const TRAINING_CENTER_UPPER_OCCLUDER_CUTOFF_Y := 720.0
@@ -257,11 +260,10 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 	if _is_block_sidewalk(cell):
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
-	# Authored service exteriors keep a controlled 0054 foundation/forecourt
-	# rather than the old generic service cross beneath their structure art.
+	# Authored service exteriors use the neutral 0054 city pavement instead of
+	# temporary colored service pads. DigiLab keeps its explicit door forecourt;
+	# Training uses the same neutral pavement across its whole authored lot.
 	if theme == "digilab" and _is_digilab_pavement(cell):
-		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-	if theme == "training" and _is_training_center_pavement(cell):
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
 	# Services without dedicated exterior art retain the temporary paved cross.
@@ -284,7 +286,7 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 		"hospital":
 			return {"surface": CITY.SURFACE_TECH_BLUE, "walkable": true}
 		"training":
-			return {"surface": CITY.SURFACE_TRAINING, "walkable": true}
+			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 		"market":
 			return {"surface": CITY.SURFACE_MARKET, "walkable": true}
 		"archive":
@@ -320,14 +322,6 @@ func _is_digilab_pavement(cell: Vector2i) -> bool:
 	if cell.y in [10, 11] and cell.x >= 5 and cell.x <= 11:
 		return true
 	return cell in [Vector2i(9, 11), Vector2i(10, 12), Vector2i(11, 13)]
-
-
-func _is_training_center_pavement(cell: Vector2i) -> bool:
-	# The building occupies the central lot while a three-cell-wide stone path
-	# continues from the down-left-facing stairs to the district sidewalk.
-	if cell.x >= 3 and cell.x <= 10 and cell.y >= 3 and cell.y <= 11:
-		return true
-	return cell.x in [6, 7, 8] and cell.y >= 10
 
 
 func _is_service_district(theme: String) -> bool:
@@ -539,12 +533,13 @@ func _create_training_center_sprite(
 	sprite.texture = TRAINING_CENTER_TEXTURE
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.scale = TRAINING_CENTER_SCALE
+	sprite.rotation_degrees = TRAINING_CENTER_ROTATION_DEGREES
 	sprite.z_index = depth
 
 	var texture_center := TRAINING_CENTER_TEXTURE.get_size() * 0.5
 	var authored_door_offset := (
 		(TRAINING_CENTER_DOOR_PIXEL - texture_center) * TRAINING_CENTER_SCALE
-	)
+	).rotated(sprite.rotation)
 	var full_position := door_world - authored_door_offset
 
 	if source_region.size != Vector2.ZERO:
@@ -553,7 +548,7 @@ func _create_training_center_sprite(
 		var region_center := source_region.position + source_region.size * 0.5
 		var region_center_offset := (
 			(region_center - texture_center) * TRAINING_CENTER_SCALE
-		)
+		).rotated(sprite.rotation)
 		sprite.position = full_position + region_center_offset
 	else:
 		sprite.position = full_position
@@ -568,7 +563,8 @@ func _training_center_footprint(door_world: Vector2) -> PackedVector2Array:
 
 
 func _training_center_source_to_local(source_pixel: Vector2, door_world: Vector2) -> Vector2:
-	return door_world + (source_pixel - TRAINING_CENTER_DOOR_PIXEL) * TRAINING_CENTER_SCALE
+	var scaled := (source_pixel - TRAINING_CENTER_DOOR_PIXEL) * TRAINING_CENTER_SCALE
+	return door_world + scaled.rotated(deg_to_rad(TRAINING_CENTER_ROTATION_DEGREES))
 
 
 func _create_digilab_sprite(
