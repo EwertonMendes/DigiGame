@@ -49,6 +49,8 @@ var _mobile_root: Control = null
 var _touch_joystick: TouchJoystick = null
 var _touch_interact: Button = null
 var _touch_menu: Button = null
+var _touch_run: Button = null
+var _touch_run_enabled := false
 var _fallback_action_touch := -1
 var _dialog: PanelContainer = null
 var _dialog_title: Label = null
@@ -175,6 +177,11 @@ func _input(event: InputEvent) -> void:
 		if _fallback_action_touch != -1:
 			return
 		if _mobile_root == null or not _mobile_root.visible:
+			return
+		if _touch_run != null and _control_contains_viewport_point(_touch_run, touch.position, 10.0):
+			_fallback_action_touch = touch.index
+			_toggle_touch_run()
+			get_viewport().set_input_as_handled()
 			return
 		if _touch_menu != null and _control_contains_viewport_point(_touch_menu, touch.position, 10.0):
 			_fallback_action_touch = touch.index
@@ -439,6 +446,15 @@ func _build_mobile_controls(root: Control) -> void:
 	_style_touch_button(_touch_menu, UI.BLUE)
 	_mobile_root.add_child(_touch_menu)
 
+	_touch_run = Button.new()
+	_touch_run.name = "RunToggle"
+	_touch_run.text = "RUN"
+	_touch_run.custom_minimum_size = Vector2(118.0, 58.0)
+	_touch_run.focus_mode = Control.FOCUS_NONE
+	_touch_run.button_down.connect(_on_touch_run_button_down)
+	_style_touch_button(_touch_run, UI.BLUE)
+	_mobile_root.add_child(_touch_run)
+
 	_touch_interact = Button.new()
 	_touch_interact.name = "Interact"
 	_touch_interact.text = "INTERACT"
@@ -500,15 +516,16 @@ func _layout_ui() -> void:
 		var action_height := 54.0 if landscape else 60.0
 		var action_gap := 10.0
 		var action_x := maxf(joystick_side + 24.0, _mobile_root.size.x - action_width)
-		var action_y := maxf(
-			0.0,
-			(joystick_side - (action_height * 2.0 + action_gap)) * 0.5
-		)
+		var action_stack_height := action_height * 3.0 + action_gap * 2.0
+		var action_y := minf(0.0, joystick_side - action_stack_height)
 		if _touch_menu != null:
 			_touch_menu.position = Vector2(action_x, action_y)
 			_touch_menu.size = Vector2(action_width, action_height)
+		if _touch_run != null:
+			_touch_run.position = Vector2(action_x, action_y + action_height + action_gap)
+			_touch_run.size = Vector2(action_width, action_height)
 		if _touch_interact != null:
-			_touch_interact.position = Vector2(action_x, action_y + action_height + action_gap)
+			_touch_interact.position = Vector2(action_x, action_y + (action_height + action_gap) * 2.0)
 			_touch_interact.size = Vector2(action_width, action_height)
 
 		print(
@@ -652,6 +669,32 @@ func _on_touch_menu() -> void:
 		return
 	print("[World] TOUCH_MENU")
 	_services.open_main_menu()
+
+
+func _on_touch_run_button_down() -> void:
+	# Raw ScreenTouch fallback runs first on touch devices. Ignore the later GUI
+	# button event for that same contact so a single tap never toggles twice.
+	if _fallback_action_touch != -1:
+		return
+	_toggle_touch_run()
+
+
+func _toggle_touch_run() -> void:
+	if _player == null or (_services != null and _services.is_open()):
+		return
+	if _dialog != null and _dialog.visible:
+		return
+	_touch_run_enabled = not _touch_run_enabled
+	_player.set_touch_run_enabled(_touch_run_enabled)
+	_update_touch_run_button()
+	print("[World] TOUCH_RUN enabled=%s" % str(_touch_run_enabled))
+
+
+func _update_touch_run_button() -> void:
+	if _touch_run == null:
+		return
+	_touch_run.text = "WALK" if _touch_run_enabled else "RUN"
+	_style_touch_button(_touch_run, UI.GREEN if _touch_run_enabled else UI.BLUE)
 
 
 func _on_touch_interact() -> void:
