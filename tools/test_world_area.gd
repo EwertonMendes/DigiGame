@@ -201,11 +201,16 @@ func _ready() -> void:
 		hospital_lighting != null and hospital_lighting.get_decoration_count() <= 1,
 		"Hospital may use at most one safe outer-sidewalk lamp instead of posts covering its entrance"
 	)
+	var canal_assets := canal_lighting.get_decoration_asset_ids() if canal_lighting != null else PackedStringArray()
+	print("[WorldAreaTest] canal decor count=%d assets=%s" % [
+		canal_lighting.get_decoration_count() if canal_lighting != null else -1,
+		str(canal_assets),
+	])
 	assert(
 		canal_lighting != null
 		and canal_lighting.get_decoration_count() >= 4
-		and canal_lighting.get_decoration_asset_ids().has("bench_ne")
-		and canal_lighting.get_decoration_asset_ids().has("bench_nw"),
+		and canal_assets.has("bench_ne")
+		and canal_assets.has("bench_nw"),
 		"North Canal must keep bridge-head lamps plus deliberate seating near its landscape nodes"
 	)
 	assert(
