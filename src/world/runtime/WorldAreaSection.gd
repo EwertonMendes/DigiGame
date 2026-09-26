@@ -2,6 +2,8 @@ extends Node2D
 class_name WorldAreaSection
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
+const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
+const CITY_DECOR = preload("res://src/world/runtime/CentralCityDecor.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
@@ -201,6 +203,8 @@ var _digilab_building_sprite: Sprite2D = null
 var _digilab_upper_sprite: Sprite2D = null
 var _digilab_entry_in_progress := false
 var _leaf_particles: Array[CPUParticles2D] = []
+var _decoration_count := 0
+var _decoration_asset_ids := PackedStringArray()
 
 
 func configure(section_definition: Dictionary, player: Node2D, world_controller: Node) -> void:
@@ -212,6 +216,8 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	_blocked_cells.resize(SECTION_SIZE * SECTION_SIZE)
 	_blocked_cells.fill(0)
 	_blocked_polygons.clear()
+	_decoration_count = 0
+	_decoration_asset_ids = PackedStringArray()
 	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
 	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
 	_build_section()
@@ -249,6 +255,7 @@ func _build_section() -> void:
 	_prepare_ground_data()
 	_build_natural_details()
 	_build_theme_content()
+	_build_city_decorations()
 
 
 func _prepare_ground_data() -> void:
@@ -289,94 +296,26 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 	var ay := absi(delta.y)
 	var city_ring := maxi(ax, ay)
 
-	# Central Plaza is one authored civic space instead of a patchwork of
-	# district materials: 0064 pool, a single teal rim, then 0054 pavement.
+	# Central City's gray hardscape is the circulation layer. Roads and walking
+	# routes are defined by the negative space between raised civic lots,
+	# landscape islands and buildings instead of painting bright tactical bands
+	# over the gameplay grid.
 	if ax <= 1 and ay <= 1:
 		return {"surface": CITY.SURFACE_WATER, "walkable": false}
 	if city_ring == 2:
-		return {"surface": CITY.SURFACE_TECH_TEAL, "walkable": true}
-	if city_ring <= 6:
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
-	# City structure is defined before district styling. A wide north/south and
-	# east/west promenade crosses the whole island, while every 14x14 authoring
-	# section contributes a one-cell 0054 sidewalk around its lot. Neighbouring
-	# sections therefore form coherent two-cell streets between city blocks.
-	if ax <= 1 or ay <= 1:
-		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-	if _is_block_sidewalk(cell):
-		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+	if theme == "canal":
+		if cell.y >= 5 and cell.y <= 8 and cell.x >= 2 and cell.x <= 11:
+			# The two center columns are the authored pedestrian bridge.
+			if cell.x in [6, 7]:
+				return {"surface": CITY.SURFACE_MAIN, "walkable": true}
+			return {"surface": CITY.SURFACE_WATER, "walkable": false}
 
-	# Authored service exteriors use the neutral 0054 city pavement instead of
-	# temporary colored service pads. DigiLab keeps its explicit door forecourt;
-	# Training uses the same neutral pavement across its whole authored lot.
-	if theme == "digilab" and _is_digilab_pavement(cell):
-		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-
-	# Services without dedicated exterior art retain the temporary paved cross.
-	if theme not in ["digilab", "training", "hospital"] and _is_service_district(theme) and _is_service_walkway(cell):
-		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-
-	match theme:
-		"garden":
-			# Parks are bounded rectangles: mint edging, green interior and one
-			# consistent checker cross. No coordinate hash/random alternation.
-			var garden_border := cell.x in [2, 11] or cell.y in [2, 11]
-			var garden_cross := cell.x in [6, 7] or cell.y in [6, 7]
-			if garden_border:
-				return {"surface": CITY.SURFACE_MINT, "walkable": true}
-			if garden_cross:
-				return {"surface": CITY.SURFACE_GRASS_CHECKER, "walkable": true}
-			return {"surface": CITY.SURFACE_GRASS, "walkable": true}
-		"digilab":
-			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-		"hospital":
-			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-		"training":
-			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-		"market":
-			return {"surface": CITY.SURFACE_MARKET, "walkable": true}
-		"archive":
-			return {"surface": CITY.SURFACE_TECH_PURPLE, "walkable": true}
-		"gate":
-			# Gate wards stay sober and directional: dark buildable lots with a
-			# 0054 central outbound lane.
-			if cell.x in [6, 7] or cell.y in [6, 7]:
-				return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-			return {"surface": CITY.SURFACE_DARK, "walkable": true}
-		"canal":
-			# A rectangular canal crosses the block. The center two columns form
-			# the permanent 0054 bridge, keeping the route legible.
-			if cell.y >= 5 and cell.y <= 8 and cell.x >= 2 and cell.x <= 11:
-				if cell.x in [6, 7]:
-					return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-				return {"surface": CITY.SURFACE_WATER, "walkable": false}
-			return {"surface": CITY.SURFACE_MAIN, "walkable": true}
-		"plaza":
-			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
-		_:
-			# 0072 is the neutral city-lot material. Residential and future
-			# establishment blocks stay as large contiguous pads rather than
-			# being sprinkled with unrelated surfaces.
-			return {"surface": CITY.SURFACE_MAIN, "walkable": true}
-
-
-func _is_block_sidewalk(cell: Vector2i) -> bool:
-	return cell.x in [0, SECTION_SIZE - 1] or cell.y in [0, SECTION_SIZE - 1]
-
-
-func _is_digilab_pavement(cell: Vector2i) -> bool:
-	if cell.y in [10, 11] and cell.x >= 5 and cell.x <= 11:
-		return true
-	return cell in [Vector2i(9, 11), Vector2i(10, 12), Vector2i(11, 13)]
-
-
-func _is_service_district(theme: String) -> bool:
-	return theme in ["digilab", "hospital", "training", "market", "archive"]
-
-
-func _is_service_walkway(cell: Vector2i) -> bool:
-	return cell.x in [6, 7] or cell.y in [6, 7]
+	# Buildings, market/archive staging areas, parks and residences all share the
+	# same medium-gray micro-paver field. Their identity now comes from raised
+	# foundations, planted blocks, street furniture and architecture.
+	return {"surface": CITY.SURFACE_MAIN, "walkable": true}
 
 
 func _global_grid(cell: Vector2i) -> Vector2i:
@@ -411,23 +350,42 @@ func _build_natural_details() -> void:
 	var tree_cells: Array[Vector2i] = []
 	match theme:
 		"garden":
-			tree_cells = [Vector2i(2, 2), Vector2i(11, 2), Vector2i(2, 11), Vector2i(11, 11)]
+			if posmod(section_coord.x + section_coord.y, 2) == 0:
+				tree_cells = [Vector2i(3, 3), Vector2i(10, 10), Vector2i(3, 10)]
+			else:
+				tree_cells = [Vector2i(10, 3), Vector2i(3, 10), Vector2i(10, 10)]
 		"plaza":
 			tree_cells = [Vector2i(2, 11), Vector2i(11, 2)]
 		"canal":
-			tree_cells = [Vector2i(2, 10), Vector2i(11, 10)]
+			tree_cells = [Vector2i(2, 10), Vector2i(11, 3)]
 		"residential":
 			tree_cells = [Vector2i(2, 11)]
 		_:
 			tree_cells = []
+
 	for index in range(tree_cells.size()):
-		_add_tree(props, tree_cells[index], index)
+		var cell := tree_cells[index]
+		if not _is_city_land(cell):
+			continue
+		var island_data := CITY_URBAN.create_landscape_island(
+			"LandscapeIsland_%d" % index,
+			grid_to_world(Vector2(cell))
+		)
+		var island_root = island_data.get("root")
+		if island_root is Node2D:
+			props.add_child(island_root as Node2D)
+		var blocker = island_data.get("blocker")
+		if blocker is PackedVector2Array:
+			_blocked_polygons.append(blocker as PackedVector2Array)
+		_add_tree(props, cell, index)
 
 
 func _build_theme_content() -> void:
 	var theme := String(definition.get("theme", "residential"))
 	match theme:
 		"plaza":
+			var civic_frame := CITY_URBAN.create_civic_pool_frame(grid_to_world(Vector2(7, 7)))
+			add_child(civic_frame)
 			_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
 		"digilab":
 			_build_digilab_exterior()
@@ -441,6 +399,67 @@ func _build_theme_content() -> void:
 			_build_service_pad(Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive", CITY.SURFACE_TECH_PURPLE)
 
 
+func get_decoration_count() -> int:
+	return _decoration_count
+
+
+func get_decoration_asset_ids() -> PackedStringArray:
+	return _decoration_asset_ids.duplicate()
+
+
+func _build_city_decorations() -> void:
+	var theme := String(definition.get("theme", "residential"))
+	var result := CITY_DECOR.build_for_section(
+		section_coord,
+		theme,
+		global_position,
+		Callable(self, "_can_place_city_decoration"),
+		Callable(self, "_register_city_decoration_blocker")
+	)
+	var root = result.get("root")
+	_decoration_count = int(result.get("count", 0))
+	var asset_ids: PackedStringArray = result.get("assets", PackedStringArray())
+	_decoration_asset_ids = asset_ids
+	if root is Node2D and _decoration_count > 0:
+		add_child(root as Node2D)
+	elif root is Node:
+		(root as Node).free()
+
+
+func _can_place_city_decoration(grid_position: Vector2, blocker_size: Vector2) -> bool:
+	var center := grid_to_world(grid_position)
+	var probes: Array[Vector2] = [center]
+	if blocker_size.x > 0.0 and blocker_size.y > 0.0:
+		var half_w := blocker_size.x * 0.5
+		var half_h := blocker_size.y * 0.5
+		probes.append(center + Vector2(-half_w, 0.0))
+		probes.append(center + Vector2(half_w, 0.0))
+		probes.append(center + Vector2(0.0, -half_h))
+		probes.append(center + Vector2(0.0, half_h))
+	for probe: Vector2 in probes:
+		if not _is_local_world_open_for_decoration(probe):
+			return false
+	return true
+
+
+func _is_local_world_open_for_decoration(local_position: Vector2) -> bool:
+	var local_grid := world_to_grid(local_position)
+	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
+	if cell.x < 0 or cell.y < 0 or cell.x >= SECTION_SIZE or cell.y >= SECTION_SIZE:
+		return false
+	if _blocked_cells[cell.y * SECTION_SIZE + cell.x] != 0:
+		return false
+	for polygon: PackedVector2Array in _blocked_polygons:
+		if Geometry2D.is_point_in_polygon(local_position, polygon):
+			return false
+	return true
+
+
+func _register_city_decoration_blocker(polygon: PackedVector2Array) -> void:
+	if polygon.size() >= 3:
+		_blocked_polygons.append(polygon)
+
+
 func _build_digilab_exterior() -> void:
 	if not _is_city_land(DIGILAB_DOOR_CELL):
 		return
@@ -450,6 +469,14 @@ func _build_digilab_exterior() -> void:
 	add_child(exterior)
 
 	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
+	var footprint := _digilab_footprint(door_world)
+	var foundation := CITY_URBAN.create_service_foundation(
+		"DigiLabFoundation",
+		footprint,
+		Color(0.42, 0.94, 0.38, 1.0)
+	)
+	exterior.add_child(foundation)
+
 	var sprite := _create_digilab_sprite(
 		"Building",
 		door_world,
@@ -485,7 +512,6 @@ func _build_digilab_exterior() -> void:
 	# Use the same measured source footprint for both world walkability and
 	# physics. This replaces the old rectangular cell approximation, which was
 	# too large behind the lab and too small along the lower-left wall.
-	var footprint := _digilab_footprint(door_world)
 	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
 	_register_blocking_polygon(
 		exterior,
@@ -524,6 +550,14 @@ func _build_training_center_exterior() -> void:
 	add_child(exterior)
 
 	var door_world := grid_to_world(Vector2(TRAINING_CENTER_DOOR_CELL))
+	var footprint := _training_center_footprint(door_world)
+	var foundation := CITY_URBAN.create_service_foundation(
+		"TrainingCenterFoundation",
+		footprint,
+		Color(0.25, 0.82, 1.0, 1.0)
+	)
+	exterior.add_child(foundation)
+
 	var building := _create_training_center_sprite(
 		"Building",
 		door_world,
@@ -554,7 +588,7 @@ func _build_training_center_exterior() -> void:
 	_register_blocking_polygon(
 		exterior,
 		"FootprintCollision",
-		_training_center_footprint(door_world)
+		footprint
 	)
 
 	var entrance := _create_service_threshold(
@@ -578,6 +612,14 @@ func _build_hospital_exterior() -> void:
 	add_child(exterior)
 
 	var door_world := grid_to_world(Vector2(HOSPITAL_DOOR_CELL))
+	var footprint := _hospital_footprint(door_world)
+	var foundation := CITY_URBAN.create_service_foundation(
+		"HospitalFoundation",
+		footprint,
+		Color(0.31, 0.90, 0.96, 1.0)
+	)
+	exterior.add_child(foundation)
+
 	var building := _create_hospital_sprite(
 		"Building",
 		door_world,
@@ -609,7 +651,7 @@ func _build_hospital_exterior() -> void:
 	_register_blocking_polygon(
 		exterior,
 		"FootprintCollision",
-		_hospital_footprint(door_world)
+		footprint
 	)
 
 	var entrance := _create_service_threshold(

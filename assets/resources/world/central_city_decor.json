@@ -1,0 +1,196 @@
+{
+  "version": 5,
+  "assets": {
+    "lamp_blue": {
+      "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
+      "foot": [
+        24,
+        111
+      ],
+      "scale": 1,
+      "blocker": [
+        8,
+        6
+      ],
+      "clearance": [
+        60,
+        30
+      ],
+      "accent": [
+        0.18,
+        0.87,
+        1,
+        1
+      ]
+    },
+    "lamp_yellow": {
+      "path": "res://assets/world/tblack/city/props_v2/lamp_yellow.png",
+      "foot": [
+        24,
+        111
+      ],
+      "scale": 1,
+      "blocker": [
+        8,
+        6
+      ],
+      "clearance": [
+        60,
+        30
+      ],
+      "accent": [
+        1,
+        0.76,
+        0.2,
+        1
+      ]
+    }
+  },
+  "sections": {
+    "0,0": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          2.2,
+          5.2
+        ],
+        "role": "plaza_northwest_landscape_edge",
+        "bay": "landscape"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          8.8,
+          2.5
+        ],
+        "role": "plaza_northeast_landscape_edge",
+        "bay": "landscape"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          11.5,
+          8.5
+        ],
+        "role": "plaza_southeast_landscape_edge",
+        "bay": "landscape"
+      }
+    ],
+    "-1,0": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          12.2,
+          6.5
+        ],
+        "role": "digilab_outer_sidewalk_node",
+        "bay": "civic"
+      }
+    ],
+    "0,-1": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          13,
+          6
+        ],
+        "role": "training_outer_sidewalk_node",
+        "bay": "civic"
+      }
+    ],
+    "1,0": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          11.5,
+          6
+        ],
+        "role": "hospital_outer_sidewalk_node",
+        "bay": "civic"
+      }
+    ],
+    "0,-2": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          5,
+          4
+        ],
+        "role": "north_bridge_west_head",
+        "bay": "civic"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          8,
+          4
+        ],
+        "role": "north_bridge_east_head",
+        "bay": "civic"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          5,
+          9
+        ],
+        "role": "south_bridge_west_head",
+        "bay": "civic"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          8,
+          9
+        ],
+        "role": "south_bridge_east_head",
+        "bay": "civic"
+      }
+    ],
+    "0,1": [
+      {
+        "asset": "lamp_yellow",
+        "cell": [
+          4.5,
+          8
+        ],
+        "role": "market_pad_west_edge",
+        "bay": "civic"
+      },
+      {
+        "asset": "lamp_yellow",
+        "cell": [
+          9.5,
+          6
+        ],
+        "role": "market_pad_east_edge",
+        "bay": "civic"
+      }
+    ],
+    "1,-2": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          4.5,
+          8
+        ],
+        "role": "archive_pad_west_edge",
+        "bay": "civic"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          9.5,
+          6
+        ],
+        "role": "archive_pad_east_edge",
+        "bay": "civic"
+      }
+    ]
+  },
+  "profiles": {
+    "residential": [
+      []
+    ]
+  }
+}
