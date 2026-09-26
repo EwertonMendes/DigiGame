@@ -59,11 +59,13 @@ direction used by Central City.
 
 The blue lamp is the default civic/technology light. The yellow variant is reserved for
 warmer destinations such as Data Market. Lamps are no longer allowed to sit directly on raw
-road paving: every active placement gets a small flush isometric paving socket with graphite
-mounting plate and district accent; selected plaza lamps also get a narrow green landscape
-inset. The socket uses a larger placement-clearance envelope than the pole collision itself,
-so it cannot overlap building foundations, door approaches, tree islands or other blocked
-urban geometry.
+road paving: every active placement gets a small flush isometric paving socket with district
+accent; selected plaza lamps also get a narrow green landscape inset. The lamp sprite's own
+graphite pedestal is seated into a tight gray mounting collar/inset rather than a second black
+plate, so the pole reads as fixed into the paving instead of hovering above it. The socket
+uses a larger placement-clearance envelope than the physical pole collision itself, so it
+cannot overlap building foundations, door approaches, tree islands or other blocked urban
+geometry.
 
 The current composition is intentionally sparse. Service buildings use at most one verified
 outer-sidewalk lamp, while the Central Plaza uses only outer-edge lamps kept away from the
