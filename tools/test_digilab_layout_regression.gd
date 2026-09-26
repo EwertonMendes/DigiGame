@@ -361,8 +361,10 @@ func _fusion_workspace_is_valid(screen: Control) -> bool:
 	if list_panel == null or detail_panel == null or detail_scroll == null or pager == null:
 		return false
 	if not list_panel.visible or not detail_panel.visible or list_panel.size.x < 100.0 or detail_panel.size.x < 100.0:
+		print("[digilab-layout] Fusion panels are not visibly laid out")
 		return false
-	if detail_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
+	if detail_scroll.size.x < 100.0 or detail_scroll.size.y < 100.0:
+		print("[digilab-layout] Fusion detail viewport has no usable area")
 		return false
 	var definitions := OverworldState.get_fusion_definitions()
 	if list_buttons.size() != mini(5, definitions.size()):
