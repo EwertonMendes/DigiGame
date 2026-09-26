@@ -75,9 +75,9 @@ func _ready() -> void:
 		"DigiLab doorway must remain walkable"
 	)
 	assert(
-		absf(digilab_building.rotation_degrees - (-2.00295)) < 0.01
-		and digilab_building.scale.distance_to(Vector2(0.40, 0.32838876)) < 0.001,
-		"DigiLab source perspective must be corrected to the 64x32 city axes"
+		absf(digilab_building.rotation_degrees - (-2.48231)) < 0.01
+		and digilab_building.scale.distance_to(Vector2(0.40, 0.31635585)) < 0.001,
+		"DigiLab source projection must be corrected to the exact 64x32 city axes"
 	)
 	assert(
 		digilab_building.z_index == 880
@@ -178,6 +178,93 @@ func _ready() -> void:
 		and digilab_return.size() >= 2
 		and Vector2(float(digilab_return[0]), float(digilab_return[1])).is_equal_approx(expected_return),
 		"DigiLab interior exit must return directly in front of the authored door"
+	)
+
+	var training_section := area.get_node_or_null("Section_0_-1") as WorldAreaSection
+	assert(training_section != null, "Training Center must remain in the authored north-central section")
+	var training_building := training_section.get_node_or_null("TrainingCenterExterior/Building") as Sprite2D
+	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/UpperOccluder") as Sprite2D
+	assert(training_building != null, "Training district must render the authored Training Center exterior")
+	assert(training_upper != null, "Training Center must split upper occlusion from its foreground facade")
+	assert(
+		training_building.texture != null
+		and training_building.texture.resource_path == "res://assets/world/tblack/training-center/training-center.png",
+		"Training Center exterior must use the supplied project asset"
+	)
+	assert(
+		training_building.scale.distance_to(Vector2(0.36, 0.28231)) < 0.001
+		and absf(training_building.rotation_degrees - (-2.20613)) < 0.01,
+		"Training Center source projection must be corrected to the 64x32 city axes"
+	)
+	assert(
+		training_building.z_index == 880
+		and training_upper.z_index == 1800
+		and training_upper.region_enabled
+		and absf(training_upper.region_rect.size.y - 720.0) < 0.01,
+		"Training Center depth split must keep the facade readable while allowing rear occlusion"
+	)
+	var training_entrance := training_section.get_node_or_null(
+		"TrainingCenterExterior/TrainingCenterEntrance"
+	) as Area2D
+	assert(training_entrance != null, "Training Center must expose its static doorway threshold")
+	var expected_training_door := training_section.grid_to_world(Vector2(7, 11))
+	assert(
+		training_entrance.position.is_equal_approx(expected_training_door),
+		"Training Center threshold must align to the authored down-left-facing door"
+	)
+	assert(
+		training_section.is_walkable_world_position(training_section.global_position + expected_training_door),
+		"Training Center stairs and doorway must remain walkable"
+	)
+	var training_forecourt = training_section.call("_ground_presentation", Vector2i(7, 12), "training")
+	var training_lot = training_section.call("_ground_presentation", Vector2i(2, 2), "training")
+	assert(
+		training_forecourt is Dictionary
+		and String((training_forecourt as Dictionary).get("surface", "")) == "stone_soft",
+		"Training Center entrance must meet the standard 0054 city pavement"
+	)
+	assert(
+		training_lot is Dictionary
+		and String((training_lot as Dictionary).get("surface", "")) == "stone_soft",
+		"Training Center district must use the same neutral 0054 pavement as the DigiLab surroundings"
+	)
+	var training_collision := training_section.get_node_or_null(
+		"TrainingCenterExterior/FootprintCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
+	assert(
+		training_collision != null and training_collision.polygon.size() == 21,
+		"Training Center must use the measured source-space ground-contact footprint"
+	)
+	assert(
+		not training_section.is_walkable_world_position(
+			training_section.global_position + training_section.grid_to_world(Vector2(7, 7))
+		),
+		"Training Center structure footprint must block movement through the building"
+	)
+	var training_door_local := training_section.grid_to_world(Vector2(7, 11))
+	for source_point: Vector2 in [
+		Vector2(100.0, 820.0),
+		Vector2(610.0, 850.0),
+		Vector2(1120.0, 800.0),
+		Vector2(650.0, 1120.0),
+	]:
+		var local_corner = training_section.call("_training_center_source_to_local", source_point, training_door_local)
+		assert(
+			local_corner is Vector2
+			and not training_section.is_walkable_world_position(
+				training_section.global_position + (local_corner as Vector2)
+			),
+			"Training Center visible structure point %s must be collision-covered" % str(source_point)
+		)
+	var training_payload = training_entrance.get_meta("interior_payload", {})
+	assert(training_payload is Dictionary, "Training Center doorway must preserve the service payload")
+	var training_return = (training_payload as Dictionary).get("return_position", [])
+	var expected_training_return := training_section.global_position + training_section.grid_to_world(Vector2(7, 13))
+	assert(
+		training_return is Array
+		and training_return.size() >= 2
+		and Vector2(float(training_return[0]), float(training_return[1])).is_equal_approx(expected_training_return),
+		"Training Center interior exit must return to the paved approach in front of the door"
 	)
 
 	assert(
