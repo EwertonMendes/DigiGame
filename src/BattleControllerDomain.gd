@@ -1176,10 +1176,11 @@ func _build_battle_result(victory: bool) -> Dictionary:
 			bits += maxi(1, int(species.get("bitFarmingRate", 5))) * maxi(1, level)
 			var species_name := String(species.get("name", "Unknown"))
 			var rank := String(species.get("rank", "Rookie"))
-			var data_gain := _digi_data_for_rank(rank) + maxi(0, level - 1)
-			if _status_system.has_status(actor, "data_mark"):
+			var data_gain := 0 if rank == "Fusion" or not bool(species.get("reconstructable", true)) else _digi_data_for_rank(rank) + maxi(0, level - 1)
+			if data_gain > 0 and _status_system.has_status(actor, "data_mark"):
 				data_gain = int(ceil(float(data_gain) * 1.25))
-			digi_data[species_name] = int(digi_data.get(species_name, 0)) + data_gain
+			if data_gain > 0:
+				digi_data[species_name] = int(digi_data.get(species_name, 0)) + data_gain
 	return {
 		"victory": victory,
 		"acts": _battle_act_number,
@@ -1307,6 +1308,7 @@ func _digi_data_for_rank(rank: String) -> int:
 		"ultimate": return 28
 		"mega": return 40
 		"ultra": return 55
+		"fusion": return 0
 	return 10
 
 
