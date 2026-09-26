@@ -54,8 +54,8 @@ func _ready() -> void:
 		"Central City runtime node budget must remain below 1000 nodes"
 	)
 	assert(
-		area.get_decoration_count() >= 30,
-		"Central City must keep a restrained authored lighting pass around its urban structure"
+		area.get_decoration_count() >= 20,
+		"Central City must keep a restrained authored lighting pass at actual urban anchors"
 	)
 	var plaza_section := area.get_node_or_null("Section_0_0") as WorldAreaSection
 	assert(plaza_section != null, "Central Plaza section must remain available for decoration regression coverage")
@@ -72,6 +72,48 @@ func _ready() -> void:
 	assert(
 		plaza_assets.has("lamp_blue"),
 		"Central Plaza must use the approved blue generated lamp asset"
+	)
+	assert(
+		plaza_section.get_decoration_count() >= 3,
+		"Central Plaza lamps must mark the civic-frame perimeter rather than open random pavement"
+	)
+
+	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
+	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
+	var hospital_lighting := area.get_node_or_null("Section_1_0") as WorldAreaSection
+	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
+	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
+	assert(
+		digilab_lighting != null and digilab_lighting.get_decoration_count() >= 2,
+		"DigiLab lamps must hug the authored foundation perimeter"
+	)
+	assert(
+		training_lighting != null and training_lighting.get_decoration_count() >= 2,
+		"Training Center lamps must mark its foundation and entrance"
+	)
+	assert(
+		hospital_lighting != null and hospital_lighting.get_decoration_count() >= 2,
+		"Hospital lamps must mark its foundation and entrance"
+	)
+	assert(
+		canal_lighting != null and canal_lighting.get_decoration_count() >= 2,
+		"North Canal lamps must mark bridge heads instead of open pavement"
+	)
+	assert(
+		market_lighting != null
+		and market_lighting.get_decoration_asset_ids().has("lamp_yellow"),
+		"Data Market must reserve the approved warm lamp for its service node"
+	)
+
+	var quiet_garden := area.get_node_or_null("Section_-2_-2") as WorldAreaSection
+	var quiet_residential := area.get_node_or_null("Section_-1_-2") as WorldAreaSection
+	assert(
+		quiet_garden != null and quiet_garden.get_decoration_count() == 0,
+		"Unfinished garden blocks must not receive free-floating lamps before their urban edges exist"
+	)
+	assert(
+		quiet_residential != null and quiet_residential.get_decoration_count() == 0,
+		"Unfinished residential blocks must not receive free-floating lamps before their urban edges exist"
 	)
 	for prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
