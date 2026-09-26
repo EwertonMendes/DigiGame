@@ -54,15 +54,15 @@ func _ready() -> void:
 		"Central City runtime node budget must remain below 1000 nodes"
 	)
 	assert(
-		area.get_decoration_count() >= 20,
-		"Central City must keep a restrained authored lighting pass at actual urban anchors"
+		area.get_decoration_count() >= 8 and area.get_decoration_count() <= 14,
+		"Central City lighting must stay sparse and limited to authored urban anchors"
 	)
 	var plaza_section := area.get_node_or_null("Section_0_0") as WorldAreaSection
 	assert(plaza_section != null, "Central Plaza section must remain available for decoration regression coverage")
 	assert(
 		plaza_section.get_node_or_null("CityDecor") != null
-		and plaza_section.get_decoration_count() >= 3,
-		"Central Plaza must keep a composed civic-lighting layer without visual scatter"
+		and plaza_section.get_decoration_count() >= 2,
+		"Central Plaza must keep a sparse civic-lighting composition away from the guide and pool"
 	)
 	assert(
 		plaza_section.get_node_or_null("CivicPoolFrame") != null,
@@ -74,8 +74,13 @@ func _ready() -> void:
 		"Central Plaza must use the approved blue generated lamp asset"
 	)
 	assert(
-		plaza_section.get_decoration_count() >= 3,
-		"Central Plaza lamps must mark the civic-frame perimeter rather than open random pavement"
+		plaza_section.get_decoration_count() >= 2,
+		"Central Plaza lamps must stay on the outer civic/landscape edge rather than crowding the guide or pool"
+	)
+	assert(
+		plaza_section.get_node_or_null("CityDecor/LampBay_01/PaverSocket") != null
+		and plaza_section.get_node_or_null("CityDecor/LampBay_01/MountingSocket") != null,
+		"Approved lamps must be grounded by an authored flush paving socket"
 	)
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
@@ -84,16 +89,16 @@ func _ready() -> void:
 	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
 	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
 	assert(
-		digilab_lighting != null and digilab_lighting.get_decoration_count() >= 2,
-		"DigiLab lamps must hug the authored foundation perimeter"
+		digilab_lighting != null and digilab_lighting.get_decoration_count() <= 1,
+		"DigiLab may use at most one safe outer-sidewalk lamp until more surrounding streets exist"
 	)
 	assert(
-		training_lighting != null and training_lighting.get_decoration_count() >= 2,
-		"Training Center lamps must mark its foundation and entrance"
+		training_lighting != null and training_lighting.get_decoration_count() <= 1,
+		"Training Center may use at most one safe outer-sidewalk lamp instead of posts covering its facade"
 	)
 	assert(
-		hospital_lighting != null and hospital_lighting.get_decoration_count() >= 2,
-		"Hospital lamps must mark its foundation and entrance"
+		hospital_lighting != null and hospital_lighting.get_decoration_count() <= 1,
+		"Hospital may use at most one safe outer-sidewalk lamp instead of posts covering its entrance"
 	)
 	assert(
 		canal_lighting != null and canal_lighting.get_decoration_count() >= 2,
@@ -107,6 +112,8 @@ func _ready() -> void:
 
 	var quiet_garden := area.get_node_or_null("Section_-2_-2") as WorldAreaSection
 	var quiet_residential := area.get_node_or_null("Section_-1_-2") as WorldAreaSection
+	var east_gate := area.get_node_or_null("Section_2_0") as WorldAreaSection
+	var south_gate := area.get_node_or_null("Section_0_2") as WorldAreaSection
 	assert(
 		quiet_garden != null and quiet_garden.get_decoration_count() == 0,
 		"Unfinished garden blocks must not receive free-floating lamps before their urban edges exist"
@@ -114,6 +121,11 @@ func _ready() -> void:
 	assert(
 		quiet_residential != null and quiet_residential.get_decoration_count() == 0,
 		"Unfinished residential blocks must not receive free-floating lamps before their urban edges exist"
+	)
+	assert(
+		east_gate != null and east_gate.get_decoration_count() == 0
+		and south_gate != null and south_gate.get_decoration_count() == 0,
+		"Unbuilt gate districts must stay unlit until their actual gate/curb geometry exists"
 	)
 	for prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
