@@ -118,7 +118,7 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(3.45, 11.0))
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 11.0))
 	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
 	assert(
 		not plaza_section.is_walkable_world_position(first_plaza_bench_world),
@@ -149,10 +149,15 @@ func _ready() -> void:
 		bench_surround_count == 2,
 		"Central Plaza benches must sit in compact flush seating bays attached to the front facades of landscape islands"
 	)
-	var southwest_tree_front := plaza_section.grid_to_world(Vector2(2.0, 11.0)) + Vector2(46.4, 23.2)
+	var southwest_tree_center := plaza_section.grid_to_world(Vector2(2.0, 11.0))
+	var southwest_tree_outer_edge := southwest_tree_center + Vector2(39.2, 19.6)
 	assert(
-		first_plaza_bench_local.distance_to(southwest_tree_front) < 1.0,
-		"Plaza front facade seating must stay attached to the shrub planter instead of drifting into open pavement"
+		(first_plaza_bench_local - southwest_tree_center).is_equal_approx(Vector2(70.4, 35.2)),
+		"Plaza seating must stay aligned to the planter's isometric side at the authored offset"
+	)
+	assert(
+		first_plaza_bench_local.distance_to(southwest_tree_outer_edge) > 30.0,
+		"Bench sprite must sit fully outside the landscape island instead of overlapping grass or planter paving"
 	)
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
