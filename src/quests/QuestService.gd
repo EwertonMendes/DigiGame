@@ -1,6 +1,21 @@
 extends RefCounted
 class_name QuestService
 
+const FusionProgressScript = preload("res://src/digimon/FusionProgressService.gd")
+const FusionCatalogScript = preload("res://src/digimon/FusionCatalog.gd")
+
+static var _shared_fusion_catalog: FusionCatalog = null
+
+var _fusion_progress = FusionProgressScript.new()
+var _fusion_catalog: FusionCatalog = null
+
+
+func _init() -> void:
+	if _shared_fusion_catalog == null:
+		_shared_fusion_catalog = FusionCatalogScript.new() as FusionCatalog
+		_shared_fusion_catalog.load_default()
+	_fusion_catalog = _shared_fusion_catalog
+
 const STATE_LOCKED := "locked"
 const STATE_AVAILABLE := "available"
 const STATE_ACTIVE := "active"
@@ -125,7 +140,7 @@ func _all_objectives_complete(definition: QuestDefinition, progress: Dictionary)
 	return true
 
 func _apply_rewards(collection: PlayerCollection, rewards: Dictionary) -> Dictionary:
-	var applied := {"bits": 0, "digi_data": {}, "items": {}, "flags": {}, "unsupported": {}}
+	var applied := {"bits": 0, "digi_data": {}, "fusion_data": {}, "items": {}, "flags": {}, "unsupported": {}}
 	var bits := maxi(0, int(rewards.get("bits", rewards.get("money", 0))))
 	if bits > 0:
 		collection.bits += bits
@@ -136,10 +151,24 @@ func _apply_rewards(collection: PlayerCollection, rewards: Dictionary) -> Dictio
 		for raw_seed in raw_data.keys():
 			var seed := String(raw_seed).strip_edges()
 			var amount := maxi(0, int(raw_data[raw_seed]))
-			if not seed.is_empty() and amount > 0:
-				collection.add_digi_data(seed, amount)
-				data_applied[seed] = amount
+			if seed.is_empty() or amount <= 0 or not _fusion_catalog.get_by_result_seed(seed).is_empty():
+				continue
+			collection.add_digi_data(seed, amount)
+			data_applied[seed] = amount
 		applied["digi_data"] = data_applied
+	var raw_fusion_data = rewards.get("fusion_data", {})
+	if raw_fusion_data is Dictionary:
+		var fusion_applied: Dictionary = {}
+		for raw_fusion_id in raw_fusion_data.keys():
+			var fusion_id := String(raw_fusion_id).to_lower().strip_edges()
+			var amount := maxi(0, int(raw_fusion_data[raw_fusion_id]))
+			if fusion_id.is_empty() or amount <= 0:
+				continue
+			var progress := _fusion_progress.add_data(collection, fusion_id, amount, _fusion_catalog, "quest_reward")
+			var gained := int(progress.get("gained", 0))
+			if gained > 0:
+				fusion_applied[fusion_id] = gained
+		applied["fusion_data"] = fusion_applied
 	var raw_items = rewards.get("items", {})
 	if raw_items is Dictionary:
 		var items_applied: Dictionary = {}
@@ -162,7 +191,7 @@ func _apply_rewards(collection: PlayerCollection, rewards: Dictionary) -> Dictio
 		applied["flags"] = flags_applied
 	for raw_key in rewards.keys():
 		var key := String(raw_key)
-		if not ["bits", "money", "digi_data", "items", "flags"].has(key):
+		if not ["bits", "money", "digi_data", "fusion_data", "items", "flags"].has(key):
 			(applied["unsupported"] as Dictionary)[key] = rewards[raw_key]
 	return applied
 

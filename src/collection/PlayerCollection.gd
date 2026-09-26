@@ -28,6 +28,7 @@ var _hospital_ids: Array[String] = []
 # This is durable domain state, not UI state, so discharge can restore intent.
 var _hospital_return_slots: Dictionary = {}
 var _digi_data_by_seed: Dictionary = {}
+var _fusion_data_by_id: Dictionary = {}
 
 func is_empty() -> bool:
 	return _instances_by_id.is_empty()
@@ -398,6 +399,105 @@ func get_digi_data(species_seed: String) -> int:
 func get_all_digi_data() -> Dictionary:
 	return _digi_data_by_seed.duplicate(true)
 
+
+func add_fusion_data(fusion_id: String, amount: int) -> int:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	if clean_id.is_empty():
+		return 0
+	var before := get_fusion_data(clean_id)
+	if amount <= 0 or before >= 100:
+		return before
+	_fusion_data_by_id[clean_id] = clampi(before + amount, 0, 100)
+	return int(_fusion_data_by_id[clean_id])
+
+
+func get_fusion_data(fusion_id: String) -> int:
+	return clampi(int(_fusion_data_by_id.get(fusion_id.to_lower().strip_edges(), 0)), 0, 100)
+
+
+func set_fusion_data(fusion_id: String, value: int) -> int:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	if clean_id.is_empty():
+		return 0
+	var target := clampi(value, 0, 100)
+	if target <= 0:
+		_fusion_data_by_id.erase(clean_id)
+		return 0
+	_fusion_data_by_id[clean_id] = target
+	return target
+
+
+func get_all_fusion_data() -> Dictionary:
+	return _fusion_data_by_id.duplicate(true)
+
+
+func commit_fusion(
+	material_ids: Array[String],
+	result: DigimonInstance,
+	item_costs: Dictionary,
+	destination_role: String,
+	destination_index: int,
+	preferred_key: String,
+	species_name: String
+) -> bool:
+	if result == null or result.id.strip_edges().is_empty() or _instances_by_id.has(result.id) or material_ids.size() < 2:
+		return false
+	var seen: Dictionary = {}
+	var normalized: Array[String] = []
+	for raw_id: String in material_ids:
+		var instance_id := raw_id.strip_edges()
+		if instance_id.is_empty() or seen.has(instance_id) or not _instances_by_id.has(instance_id) or _hospital_ids.has(instance_id):
+			return false
+		var material := get_instance(instance_id)
+		if material == null or material.is_fainted() or not material.equipment.is_empty():
+			return false
+		seen[instance_id] = true
+		normalized.append(instance_id)
+	for raw_item_id in item_costs.keys():
+		var item_id := String(raw_item_id).strip_edges()
+		var amount := maxi(0, int(item_costs[raw_item_id]))
+		if item_id.is_empty() or amount <= 0 or get_item_count(item_id) < amount:
+			return false
+	if destination_role not in ["", SQUAD_ROLE_ACTIVE, SQUAD_ROLE_RESERVE]:
+		return false
+
+	var rollback_state := to_dict()
+	var next_active := _active_party_ids.duplicate()
+	var next_reserve := _reserve_party_ids.duplicate()
+	for instance_id: String in normalized:
+		next_active.erase(instance_id)
+		next_reserve.erase(instance_id)
+
+	for instance_id: String in normalized:
+		_hospital_return_slots.erase(instance_id)
+		if not _erase_instance_record(instance_id):
+			load_dict(rollback_state)
+			return false
+
+	for raw_item_id in item_costs.keys():
+		var item_id := String(raw_item_id).strip_edges()
+		var amount := maxi(0, int(item_costs[raw_item_id]))
+		var remaining := get_item_count(item_id) - amount
+		if remaining > 0:
+			inventory[item_id] = remaining
+		else:
+			inventory.erase(item_id)
+
+	if add_instance(result, preferred_key, species_name).is_empty():
+		load_dict(rollback_state)
+		return false
+	if destination_role == SQUAD_ROLE_ACTIVE:
+		next_active.insert(clampi(destination_index, 0, next_active.size()), result.id)
+	elif destination_role == SQUAD_ROLE_RESERVE:
+		next_reserve.insert(clampi(destination_index, 0, next_reserve.size()), result.id)
+	_active_party_ids = next_active
+	_reserve_party_ids = next_reserve
+	if not location_invariant_error().is_empty():
+		load_dict(rollback_state)
+		return false
+	return true
+
+
 func get_item_count(item_id: String) -> int:
 	return maxi(0, int(inventory.get(item_id.strip_edges(), 0)))
 
@@ -469,6 +569,7 @@ func to_dict() -> Dictionary:
 		"hospitalReturnSlots": _hospital_return_slots.duplicate(true),
 		"bits": bits,
 		"digiData": get_all_digi_data(),
+		"fusionData": get_all_fusion_data(),
 		"progressionFlags": progression_flags.duplicate(true),
 		"questStates": quest_states.duplicate(true),
 		"unlockedTechniqueRecords": unlocked_technique_records.duplicate(),
@@ -486,6 +587,7 @@ func load_dict(data: Dictionary) -> void:
 	_hospital_ids.clear()
 	_hospital_return_slots.clear()
 	_digi_data_by_seed.clear()
+	_fusion_data_by_id.clear()
 	unlocked_technique_records.clear()
 	technique_research.clear()
 	inventory.clear()
@@ -507,6 +609,14 @@ func load_dict(data: Dictionary) -> void:
 			var points := clampi(int(raw_research[raw_skill_id]), 0, 2)
 			if not skill_id.is_empty() and points > 0 and not unlocked_technique_records.has(skill_id):
 				technique_research[skill_id] = points
+
+	var raw_fusion_data = data.get("fusionData", {})
+	if raw_fusion_data is Dictionary:
+		for raw_fusion_id in raw_fusion_data.keys():
+			var fusion_id := String(raw_fusion_id).to_lower().strip_edges()
+			var amount := clampi(int(raw_fusion_data[raw_fusion_id]), 0, 100)
+			if not fusion_id.is_empty() and amount > 0:
+				_fusion_data_by_id[fusion_id] = amount
 
 	var raw_inventory = data.get("inventory", {})
 	if raw_inventory is Dictionary:

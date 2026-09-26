@@ -6,10 +6,12 @@ signal close_requested
 const CreateScreenScript = preload("res://src/ui/DigiWorkspaceLabConvertScreen.gd")
 const PartyStorageScript = preload("res://src/ui/DigiWorkspacePartyStorageScreen.gd")
 const AscensionExpansionScript = preload("res://src/ui/DigiWorkspaceAscensionExpansionScreen.gd")
+const FusionScreenScript = preload("res://src/ui/DigiWorkspaceFusionScreen.gd")
 
 var _create_screen: DigiLabConvertScreen
 var _party_screen: DigiLabPartyStorageScreen
 var _ascension_screen: AscensionExpansionScreen
+var _fusion_screen: DigiWorkspaceFusionScreen
 var _active_tab := "convert"
 var _pending_ascension_instance_id := ""
 
@@ -48,6 +50,14 @@ func _build() -> void:
 	_ascension_screen.tab_requested.connect(_switch_tab)
 	add_child(_ascension_screen)
 
+	_fusion_screen = FusionScreenScript.new() as DigiWorkspaceFusionScreen
+	_fusion_screen.name = "Fusion"
+	_fusion_screen.visible = false
+	_fusion_screen.set_close_lifecycle_managed(true)
+	_fusion_screen.close_requested.connect(_request_close)
+	_fusion_screen.tab_requested.connect(_switch_tab)
+	add_child(_fusion_screen)
+
 
 func get_transition_surface() -> DigiUiTransitionSurface:
 	match _active_tab:
@@ -55,6 +65,8 @@ func get_transition_surface() -> DigiUiTransitionSurface:
 			return _party_screen.get_transition_surface() if _party_screen != null else null
 		"ascension":
 			return _ascension_screen.get_transition_surface() if _ascension_screen != null else null
+		"fusion":
+			return _fusion_screen.get_transition_surface() if _fusion_screen != null else null
 		_:
 			return _create_screen.get_transition_surface() if _create_screen != null else null
 
@@ -86,7 +98,7 @@ func is_open() -> bool:
 
 
 func _switch_tab(tab_id: String, force: bool = false) -> void:
-	var next_tab := tab_id if tab_id in ["convert", "party", "ascension"] else "convert"
+	var next_tab := tab_id if tab_id in ["convert", "party", "fusion", "ascension"] else "convert"
 	if next_tab == "ascension" and _pending_ascension_instance_id.is_empty() and _active_tab == "party" and _party_screen != null:
 		_pending_ascension_instance_id = _party_screen.get_selected_instance_id()
 	elif next_tab != "ascension":
@@ -107,6 +119,8 @@ func _open_active_workspace() -> void:
 			var preferred_id := _pending_ascension_instance_id
 			_pending_ascension_instance_id = ""
 			_ascension_screen.open_screen(preferred_id)
+		"fusion":
+			_fusion_screen.open_screen()
 		_:
 			_create_screen.open_lab()
 
@@ -126,3 +140,5 @@ func _hide_screens() -> void:
 		_party_screen.visible = false
 	if _ascension_screen != null:
 		_ascension_screen.visible = false
+	if _fusion_screen != null:
+		_fusion_screen.visible = false

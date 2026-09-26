@@ -23,6 +23,15 @@ static func specs() -> Array[Dictionary]:
 			"min_width": 194.0,
 		},
 		{
+			"id": "fusion",
+			"label": "Fusion",
+			"compact_label": "Fusion",
+			"icon": "evolution",
+			"enabled": true,
+			"angled": true,
+			"min_width": 148.0,
+		},
+		{
 			"id": "ascension",
 			"label": "Ascension / Expansion",
 			"compact_label": "Ascension",

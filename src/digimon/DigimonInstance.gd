@@ -40,6 +40,7 @@ var equipment: Array[String] = []
 var evolution_history: Array[Dictionary] = []
 var species_history: Array[String] = []
 var evolution_goal_seed: String = ""
+var fusion_origin: Dictionary = {}
 var origin: String = "generated"
 
 
@@ -227,6 +228,7 @@ func to_dict() -> Dictionary:
 		"evolutionHistory": evolution_history.duplicate(true),
 		"speciesHistory": species_history.duplicate(),
 		"evolutionGoalSeed": evolution_goal_seed,
+		"fusionOrigin": fusion_origin.duplicate(true),
 		"origin": origin,
 	}
 
@@ -332,6 +334,8 @@ static func from_dict(data: Dictionary) -> DigimonInstance:
 		instance.species_history.append(instance.species_seed)
 
 	instance.evolution_goal_seed = String(data.get("evolutionGoalSeed", ""))
+	var raw_fusion_origin = data.get("fusionOrigin", {})
+	instance.fusion_origin = (raw_fusion_origin as Dictionary).duplicate(true) if raw_fusion_origin is Dictionary else {}
 	instance.origin = String(data.get("origin", "generated"))
 	return instance
 

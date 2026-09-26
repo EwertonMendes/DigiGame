@@ -159,6 +159,7 @@ func _rebuild_graph() -> void:
 	if _instance == null or _database == null:
 		return
 	_graph = _graph_service.build_connected_graph(_instance.species_seed, _database)
+	_inject_fusion_degenerations()
 	var history_edges := _graph_service.history_edge_keys(_instance.evolution_history)
 	_goal_path.clear()
 	var goal_edges: Dictionary = {}
@@ -213,8 +214,9 @@ func _refresh_detail() -> void:
 				_detail_body.add_child(_label(String(goal_species.get("name", "Unknown")), 14, UI.PURPLE.lightened(0.18), true))
 		return
 
-	var direction := _graph_service.route_direction(_instance.species_seed, _selected_seed, _database)
-	var path := _graph_service.find_shortest_path(_instance.species_seed, _selected_seed, _database)
+	var fusion_degeneration := _is_current_fusion_material(_selected_seed)
+	var direction := "degeneration" if fusion_degeneration else _graph_service.route_direction(_instance.species_seed, _selected_seed, _database)
+	var path: Array[String] = [_instance.species_seed, _selected_seed] if fusion_degeneration else _graph_service.find_shortest_path(_instance.species_seed, _selected_seed, _database)
 	if not path.is_empty():
 		_detail_body.add_child(_section_label("ROUTE", UI.CYAN))
 		_detail_body.add_child(_route_path_label(path))
@@ -504,3 +506,57 @@ func _section_label(text: String, accent: Color) -> Label:
 	var label := _label(text, 10, accent.lightened(0.12), true)
 	label.add_theme_constant_override("outline_size", 1)
 	return label
+
+
+func _fusion_material_seeds() -> Array[String]:
+	var result: Array[String] = []
+	if _instance == null or _instance.fusion_origin.is_empty():
+		return result
+	var raw = _instance.fusion_origin.get("materialSeeds", [])
+	if raw is Array:
+		for value in raw:
+			var seed := String(value).strip_edges()
+			if not seed.is_empty() and not result.has(seed):
+				result.append(seed)
+	return result
+
+
+func _is_current_fusion_material(seed: String) -> bool:
+	if _instance == null:
+		return false
+	var current := _database.get_by_seed(_instance.species_seed)
+	return String(current.get("rank", "")) == "Fusion" and _fusion_material_seeds().has(seed)
+
+
+func _inject_fusion_degenerations() -> void:
+	if _instance == null:
+		return
+	var current := _database.get_by_seed(_instance.species_seed)
+	if String(current.get("rank", "")) != "Fusion":
+		return
+	var nodes := _graph.get("nodes", []) as Array
+	var edges := _graph.get("edges", []) as Array
+	for seed: String in _fusion_material_seeds():
+		var species := _database.get_by_seed(seed)
+		if species.is_empty():
+			continue
+		var exists := false
+		for raw_node in nodes:
+			if raw_node is Dictionary and String((raw_node as Dictionary).get("seed", "")) == seed:
+				exists = true
+				break
+		if not exists:
+			nodes.append({
+				"seed": seed,
+				"name": String(species.get("name", "Unknown")),
+				"rank": String(species.get("rank", "Unknown")),
+				"rank_index": _graph_service.rank_index(String(species.get("rank", "Unknown"))),
+				"type": String(species.get("type", species.get("attribute", "Free"))),
+				"family": String(species.get("family", species.get("species", "Unknown"))),
+			})
+		var a := seed
+		var b := _instance.species_seed
+		var edge_key := "%s|%s" % [a, b] if a < b else "%s|%s" % [b, a]
+		edges.append({"from": seed, "to": _instance.species_seed, "key": edge_key, "requirements": [], "fusionDegeneration": true})
+	_graph["nodes"] = nodes
+	_graph["edges"] = edges

@@ -91,7 +91,7 @@ func _build() -> void:
 	filter_row.add_child(_search)
 	_rank = OptionButton.new()
 	_rank.custom_minimum_size = Vector2(170, 40)
-	for label in ["ALL RANKS", "FRESH", "IN-TRAINING", "ROOKIE", "CHAMPION", "ULTIMATE", "MEGA", "ULTRA", "ARMOR", "HYBRID"]:
+	for label in ["ALL RANKS", "FRESH", "IN-TRAINING", "ROOKIE", "CHAMPION", "ULTIMATE", "MEGA", "ULTRA", "FUSION"]:
 		_rank.add_item(label)
 	UI.apply_body_font(_rank)
 	_rank.item_selected.connect(func(_index: int) -> void: _rebuild_results())
