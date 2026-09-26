@@ -279,9 +279,9 @@ func _ready() -> void:
 		"Hospital exterior must use the project-supplied hospital asset"
 	)
 	assert(
-		hospital_building.scale.distance_to(Vector2(0.35, 0.30975)) < 0.001
-		and absf(hospital_building.rotation_degrees) < 0.01,
-		"Hospital source projection must be normalized without introducing a visible tilt"
+		hospital_building.scale.distance_to(Vector2(0.35, 0.26943834)) < 0.001
+		and absf(hospital_building.rotation_degrees - (-0.87567)) < 0.01,
+		"Hospital source projection must be corrected to the exact 64x32 city axes"
 	)
 	assert(
 		hospital_building.z_index == 880
