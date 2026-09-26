@@ -87,19 +87,19 @@ static func build_for_section(
 		var foot := _vec2(asset.get("foot", [texture.get_width() * 0.5, texture.get_height()]))
 		var scale_value := float(asset.get("scale", 1.0))
 		var world_foot := _grid_to_world(cell)
+		# The sprite depth anchor is intentionally the front-most foot. Ground
+		# treatments and collision use the centroid of the four contact points,
+		# which sits slightly behind that sorting anchor on an isometric bench.
+		var ground_center := world_foot + _vec2(asset.get("ground_offset", [0.0, 0.0]))
 
 		var surround_style := String(placement.get("surround", ""))
 		if not surround_style.is_empty():
 			var accent := _color(placement.get("accent", asset.get("accent", [0.24, 0.88, 1.0, 1.0])))
 			var surround: Node2D
 			if surround_style.begins_with("seating"):
-				# The bench foot remains the depth/collision anchor. Its flush paving
-				# can shift a few pixels toward the planter so the visible bay sits
-				# exactly beneath all four feet and tucks under the planter facade.
-				var surround_center := world_foot + _vec2(placement.get("surround_offset", [0.0, 0.0]))
 				surround = CITY_URBAN.create_bench_surround(
 					"BenchSurround_%02d" % (count + 1),
-					surround_center,
+					ground_center,
 					accent,
 					surround_style.ends_with("_nw")
 				)
@@ -131,10 +131,11 @@ static func build_for_section(
 			sprite.z_index = DECOR_BASE_Z + int(round(global_origin.y + world_foot.y))
 		root.add_child(sprite)
 
-		var collision_polygon := _collision_polygon(world_foot, asset)
+		var collision_polygon := _collision_polygon(ground_center, asset)
 		if collision_polygon.size() >= 3:
 			register_blocker.call(collision_polygon)
 			sprite.set_meta("collision_polygon", collision_polygon)
+		sprite.set_meta("ground_center", ground_center)
 		used[asset_id] = true
 		count += 1
 
