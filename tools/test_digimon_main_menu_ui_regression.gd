@@ -55,13 +55,16 @@ func _ready() -> void:
 	var expected_edge := 10.0 if compact else 24.0
 	var expected_top_gap := 12.0 if compact else 16.0
 	assert(header != null and header.is_workspace_mode(), "Main Digimon header must use the shared workspace header variant")
+	assert(not header.uses_workspace_full_label_tabs(), "DigiLab-specific four-tab fitting must never leak into the main Digimon header")
 	assert(header.get_tab_button("party") != null and header.get_tab_button("digipedia") != null and header.get_tab_button("system") != null, "Main header must expose Party, Digipedia and System tabs")
+	var expected_main_labels := {"party": "Party", "digipedia": "Digipedia", "system": "System"}
 	var main_tab_width := -1.0
 	for tab_id in ["party", "digipedia", "system"]:
 		var main_tab := header.get_tab_button(tab_id)
 		assert(main_tab is DigiAngledTab, "Main header tabs must use the angled game tab shape")
+		assert(bool(main_tab.call("_has_point", main_tab.size * 0.5)), "Main Digimon angled tabs must keep a valid central pointer hitbox")
 		var main_label := main_tab.get_meta("tab_label") as Label
-		assert(main_label != null and main_label.visible and not main_label.text.strip_edges().is_empty(), "Main Digimon tabs must keep their icon and text label visible")
+		assert(main_label != null and main_label.visible and main_label.text == String(expected_main_labels[tab_id]), "Main Digimon tabs must preserve their exact authored names")
 		assert(main_label.size.x >= 24.0, "Main Digimon tab labels must receive real rendered width, not just exist in metadata")
 		if main_tab_width < 0.0:
 			main_tab_width = main_tab.size.x
