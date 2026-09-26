@@ -118,14 +118,14 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(5.0, 12.4))
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(3.45, 11.0))
 	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
 	assert(
 		not plaza_section.is_walkable_world_position(first_plaza_bench_world),
 		"Bench center must block movement through the visible seat footprint"
 	)
 	assert(
-		plaza_section.is_walkable_world_position(first_plaza_bench_world + Vector2(45.0, 0.0)),
+		plaza_section.is_walkable_world_position(first_plaza_bench_world + Vector2(34.0, 0.0)),
 		"Bench collision must follow the isometric seat footprint instead of creating a broad invisible box"
 	)
 
@@ -142,12 +142,17 @@ func _ready() -> void:
 		bench_atlas != null
 		and bench_atlas.atlas != null
 		and bench_atlas.atlas.resource_path == "res://assets/world/tblack/city/props_v2/bench.png"
-		and first_plaza_bench.scale.is_equal_approx(Vector2(0.14, 0.14)),
+		and first_plaza_bench.scale.is_equal_approx(Vector2(0.10, 0.10)),
 		"Approved bench must render from the user-supplied bench.png sheet at gameplay scale"
 	)
 	assert(
 		bench_surround_count == 2,
-		"Central Plaza benches must sit in authored flush seating bays instead of floating beside landscape islands"
+		"Central Plaza benches must sit in compact flush seating bays attached to the front facades of landscape islands"
+	)
+	var southwest_tree_front := plaza_section.grid_to_world(Vector2(2.0, 11.0)) + Vector2(46.4, 23.2)
+	assert(
+		first_plaza_bench_local.distance_to(southwest_tree_front) < 1.0,
+		"Plaza front facade seating must stay attached to the shrub planter instead of drifting into open pavement"
 	)
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
