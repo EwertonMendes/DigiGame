@@ -39,17 +39,18 @@ func _ready() -> void:
 
 	var convert: Control = digilab.get("_create_screen") as Control
 	var party: Control = digilab.get("_party_screen") as Control
+	var fusion: Control = digilab.get("_fusion_screen") as Control
 	var ascension: Control = digilab.get("_ascension_screen") as Control
-	if not _check(convert != null and party != null and ascension != null, "DigiLab must build all three primary workspaces"):
+	if not _check(convert != null and party != null and fusion != null and ascension != null, "DigiLab must build all four primary workspaces"):
 		return
-	if not _check(convert.visible and not party.visible and not ascension.visible, "DigiLab must open on Convert Digi Data"):
+	if not _check(convert.visible and not party.visible and not fusion.visible and not ascension.visible, "DigiLab must open on Convert Digi Data"):
 		return
 	var lab_background := convert.find_child("DigiLabBackgroundImage", true, false) as TextureRect
 	if not _check(lab_background != null and lab_background.texture != null and lab_background.texture.resource_path.ends_with("digi_lab.webp"), "DigiLab must use its dedicated laboratory background"):
 		return
 	if not _check(_workspace_background_is_visible(convert), "Convert Digi Data must render the laboratory background above the legacy backdrop and below transparent workspace chrome"):
 		return
-	if not _check(_primary_tabs_are_valid(convert, "convert"), "Convert Digi Data must expose the three primary tabs"):
+	if not _check(_primary_tabs_are_valid(convert, "convert"), "Convert Digi Data must expose all four primary tabs"):
 		return
 	if not _check(_workspace_contract_is_valid(convert, "_list_scroll", "_detail_scroll", "_roster_pager"), "Convert Digi Data must use the paged no-scroll workspace contract"):
 		return
@@ -71,9 +72,38 @@ func _ready() -> void:
 		return
 	if not _check(_workspace_background_is_visible(party), "Party / Storage must keep the laboratory background visible"):
 		return
-	if not _check(_primary_tabs_are_valid(party, "party"), "Party / Storage must expose the three primary tabs"):
+	if not _check(_primary_tabs_are_valid(party, "party"), "Party / Storage must expose all four primary tabs"):
 		return
 	if not _check(_workspace_contract_is_valid(party, "_list_scroll", "_detail_scroll", "_workspace_pager"), "Party / Storage must use the paged no-scroll workspace contract"):
+		return
+
+	# Clicking the authored Fusion tab from Party / Storage must route through the
+	# DigiLab hub on the first attempt. Keyboard-only navigation is not enough.
+	var party_header_for_fusion := party.get("_header") as DigiModalHeader
+	var fusion_tab := party_header_for_fusion.get_tab_button("fusion") if party_header_for_fusion != null else null
+	if not _check(fusion_tab != null and bool(fusion_tab.call("_has_point", fusion_tab.size * 0.5)), "Fusion tab must expose a valid central pointer hitbox"):
+		return
+	fusion_tab.pressed.emit()
+	await _frames(4)
+	if not _check(fusion.visible and not party.visible and String(digilab.get("_active_tab")) == "fusion", "Party / Storage -> Fusion click must open Fusion immediately"):
+		return
+	if not _check(_workspace_background_is_visible(fusion), "Fusion must render the laboratory background below its workspace content"):
+		return
+	if not _check(_primary_tabs_are_valid(fusion, "fusion"), "Fusion must expose all four primary tabs"):
+		return
+	if not _check(_fusion_workspace_is_valid(fusion), "Fusion workspace must render its database, detail surface and normalized pager"):
+		return
+	if not _check(_find_label_containing(fusion, "Fusion Data is awarded by story progress") == null, "Fusion must not render the removed explanatory paragraph"):
+		return
+	print("[digilab-layout] fusion ok")
+
+	var fusion_header := fusion.get("_header") as DigiModalHeader
+	var party_tab := fusion_header.get_tab_button("party") if fusion_header != null else null
+	if not _check(party_tab != null and bool(party_tab.call("_has_point", party_tab.size * 0.5)), "Party / Storage tab must remain pointer-clickable from Fusion"):
+		return
+	party_tab.pressed.emit()
+	await _frames(4)
+	if not _check(party.visible and not fusion.visible and String(digilab.get("_active_tab")) == "party", "Fusion -> Party / Storage click must return immediately"):
 		return
 	if not _check(party.get("_roster_segments") is DigiSegmentedTabs, "Party / Storage must expose separate Party and Storage segments"):
 		return
@@ -124,7 +154,7 @@ func _ready() -> void:
 		return
 	if not _check(String(ascension.call("get_selected_instance_id")) == selected_id, "Ascension / Expansion must open on the Digimon selected in Party / Storage"):
 		return
-	if not _check(_primary_tabs_are_valid(ascension, "ascension"), "Ascension / Expansion must expose the three primary tabs"):
+	if not _check(_primary_tabs_are_valid(ascension, "ascension"), "Ascension / Expansion must expose all four primary tabs"):
 		return
 	if not _check(_workspace_contract_is_valid(ascension, "_list_scroll", "_detail_scroll", "_workspace_pager"), "Ascension / Expansion must use the paged no-scroll workspace contract"):
 		return
@@ -170,24 +200,37 @@ func _ready() -> void:
 		return
 	print("[digilab-layout] expansion bounds ok")
 
-	# DigiModalHeader uses the same adjacent-tab method for LB/RB and L1/R1.
-	# Moving left from Ascension must therefore return to Party / Storage.
+	# Primary navigation order is now Convert -> Party / Storage -> Fusion ->
+	# Ascension / Expansion. Exercise both directions so the extra workspace
+	# cannot silently disappear from keyboard/gamepad navigation.
 	var ascension_header: DigiModalHeader = ascension.get("_header") as DigiModalHeader
 	if not _check(ascension_header != null and ascension_header.select_adjacent_tab(-1), "Previous shoulder tab navigation must work from Ascension"):
 		return
 	await _frames(4)
-	if not _check(party.visible and not ascension.visible, "LB/L1-equivalent navigation must move from Ascension to Party / Storage"):
+	if not _check(fusion.visible and not ascension.visible, "Previous tab from Ascension must open Fusion"):
+		return
+
+	fusion_header = fusion.get("_header") as DigiModalHeader
+	if not _check(fusion_header != null and fusion_header.select_adjacent_tab(-1), "Previous shoulder tab navigation must work from Fusion"):
+		return
+	await _frames(4)
+	if not _check(party.visible and not fusion.visible, "Previous tab from Fusion must open Party / Storage"):
 		return
 
 	var party_header: DigiModalHeader = party.get("_header") as DigiModalHeader
 	if not _check(party_header != null and party_header.select_adjacent_tab(1), "Next shoulder tab navigation must work from Party / Storage"):
 		return
 	await _frames(4)
-	if not _check(ascension.visible and not party.visible, "RB/R1-equivalent navigation must move from Party / Storage to Ascension"):
+	if not _check(fusion.visible and not party.visible, "Next tab from Party / Storage must open Fusion"):
 		return
-	if not _check(String(ascension.call("get_selected_instance_id")) == selected_id, "Shoulder navigation from Party / Storage must preserve the selected Digimon context"):
+
+	fusion_header = fusion.get("_header") as DigiModalHeader
+	if not _check(fusion_header != null and fusion_header.select_adjacent_tab(1), "Next shoulder tab navigation must work from Fusion"):
 		return
-	print("[digilab-layout] shoulder tabs ok")
+	await _frames(4)
+	if not _check(ascension.visible and not fusion.visible, "Next tab from Fusion must open Ascension / Expansion"):
+		return
+	print("[digilab-layout] four-tab navigation ok")
 
 	digilab.call("close_view")
 	# queue_free() is deferred. Wait for the Hub to actually leave the tree before
@@ -232,35 +275,86 @@ func _workspace_background_is_visible(screen: Control) -> bool:
 
 func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 	var header: DigiModalHeader = screen.get("_header") as DigiModalHeader
-	if header == null or not header.is_workspace_mode():
+	if header == null or not header.is_workspace_mode() or not header.uses_workspace_full_label_tabs():
 		return false
 	var tabs_root := header.get_node_or_null("HeaderTabs") as Control
-	if tabs_root == null:
+	var bits := header.get_bits_display() as Control
+	var close := header.get_close_button() as Control
+	if tabs_root == null or close == null:
 		return false
+	var expected_labels := {
+		"convert": "Convert Digi Data",
+		"party": "Party / Storage",
+		"fusion": "Fusion",
+		"ascension": "Ascension / Expansion",
+	}
 	var uniform_width := -1.0
-	for tab_id: String in ["convert", "party", "ascension"]:
+	var tabs_rect := tabs_root.get_global_rect()
+	for tab_id: String in ["convert", "party", "fusion", "ascension"]:
 		var button: Button = header.get_tab_button(tab_id)
 		if button == null or button.disabled or button.focus_mode != Control.FOCUS_NONE:
 			return false
+		if not button is DigiAngledTab or not bool(button.call("_has_point", button.size * 0.5)):
+			print("[digilab-layout] invalid angled-tab pointer hitbox: %s" % tab_id)
+			return false
 		var label := button.get_meta("tab_label") as Label
-		if label == null or not label.visible or label.text.strip_edges().is_empty():
-			print("[digilab-layout] missing visible name for primary tab %s" % tab_id)
+		if label == null or not label.visible or label.text != String(expected_labels[tab_id]):
+			print("[digilab-layout] primary tab lost its full authored name: %s -> %s" % [tab_id, label.text if label != null else "<missing>"])
 			return false
-		if label.size.x < 24.0:
-			print("[digilab-layout] primary tab label has no usable rendered width: %s (%.1f px)" % [tab_id, label.size.x])
+		if label.size.x < 24.0 or label.get_combined_minimum_size().x < 24.0:
+			print("[digilab-layout] primary tab label has no usable rendered width: %s" % tab_id)
 			return false
-		if label.size.x > button.size.x:
-			print("[digilab-layout] primary tab label exceeds tab bounds: %s" % tab_id)
+		var button_rect := button.get_global_rect()
+		var label_rect := label.get_global_rect()
+		if label_rect.position.x < button_rect.position.x - 1.0 or label_rect.end.x > button_rect.end.x + 1.0:
+			print("[digilab-layout] primary tab label escaped button bounds: %s" % tab_id)
+			return false
+		if button_rect.position.x < tabs_rect.position.x - 1.0 or button_rect.end.x > tabs_rect.end.x + 1.0:
+			print("[digilab-layout] primary tab escaped HeaderTabs bounds: %s" % tab_id)
+			return false
+		if bits != null and bits.visible and button_rect.intersects(bits.get_global_rect()):
+			print("[digilab-layout] primary tab overlaps Bits: %s" % tab_id)
+			return false
+		if button_rect.intersects(close.get_global_rect()):
+			print("[digilab-layout] primary tab overlaps Close: %s" % tab_id)
 			return false
 		if uniform_width < 0.0:
 			uniform_width = button.size.x
-		elif not is_equal_approx(button.size.x, uniform_width):
-			print("[digilab-layout] primary tabs must share one content-driven width")
+		elif absf(button.size.x - uniform_width) > 1.0:
+			print("[digilab-layout] primary tabs must share one fitted width")
 			return false
-		if button.position.x + button.size.x > tabs_root.size.x + 1.0:
-			print("[digilab-layout] primary tab escaped behind header controls: %s" % tab_id)
-			return false
-	return uniform_width >= 170.0 and header.get_tab_button(active_id) != null
+	return uniform_width >= 120.0 and header.get_tab_button(active_id) != null
+
+
+func _fusion_workspace_is_valid(screen: Control) -> bool:
+	var list_panel := screen.get("_list_panel") as Control
+	var detail_panel := screen.get("_detail_panel") as Control
+	var detail_scroll := screen.get("_detail_scroll") as ScrollContainer
+	var pager := screen.get("_pager") as DigiPager
+	var list_buttons := screen.get("_list_buttons") as Array
+	if list_panel == null or detail_panel == null or detail_scroll == null or pager == null:
+		return false
+	if not list_panel.visible or not detail_panel.visible or list_panel.size.x < 100.0 or detail_panel.size.x < 100.0:
+		return false
+	if detail_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
+		return false
+	var definitions := OverworldState.get_fusion_definitions()
+	if list_buttons.size() != mini(5, definitions.size()):
+		print("[digilab-layout] Fusion database must render five cards per desktop page")
+		return false
+	var pager_parent := pager.get_parent() as MarginContainer
+	if pager_parent == null:
+		print("[digilab-layout] Fusion pager must live inside a normalized margin container")
+		return false
+	if pager_parent.get_theme_constant("margin_left") < 8 or pager_parent.get_theme_constant("margin_right") < 8 or pager_parent.get_theme_constant("margin_bottom") < 6:
+		print("[digilab-layout] Fusion pager margins are too small")
+		return false
+	var pager_rect := pager.get_global_rect()
+	var list_rect := list_panel.get_global_rect()
+	if pager_rect.position.x <= list_rect.position.x + 2.0 or pager_rect.end.x >= list_rect.end.x - 2.0:
+		print("[digilab-layout] Fusion pager touches list panel borders")
+		return false
+	return true
 
 
 func _workspace_contract_is_valid(screen: Control, list_scroll_key: String, detail_scroll_key: String, pager_key: String) -> bool:
