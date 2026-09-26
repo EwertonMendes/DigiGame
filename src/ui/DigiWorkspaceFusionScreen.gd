@@ -153,7 +153,7 @@ func _build() -> void:
 	list_stack.add_theme_constant_override("separation", 0)
 	_list_panel.add_child(list_stack)
 	_list_header = SectionHeaderScript.new() as DigiSectionHeader
-	_list_header.configure("FUSION DATABASE", "Unlock at 100% Fusion Data", V2.ORANGE, "evolution")
+	_list_header.configure("FUSION DATABASE", "Unlock at 100% Fusion Data", V2.CYAN, "evolution")
 	_list_header.set_workspace_mode(true)
 	list_stack.add_child(_list_header)
 	var list_margin := _margin(10, 9, 10, 6)
@@ -180,7 +180,7 @@ func _build() -> void:
 	detail_stack.add_theme_constant_override("separation", 0)
 	_detail_panel.add_child(detail_stack)
 	_detail_header = SectionHeaderScript.new() as DigiSectionHeader
-	_detail_header.configure("FUSION", "Combine prepared Digimon into a new permanent individual", V2.ORANGE, "evolution")
+	_detail_header.configure("FUSION", "Combine prepared Digimon into a new permanent individual", V2.CYAN, "evolution")
 	_detail_header.set_workspace_mode(true)
 	detail_stack.add_child(_detail_header)
 	var detail_margin := _margin(12, 10, 8, 10)
@@ -267,7 +267,7 @@ func _fusion_button(definition: Dictionary) -> Button:
 	button.clip_contents = true
 	button.pressed.connect(_select_fusion.bind(fusion_id))
 	button.focus_entered.connect(_preview_fusion.bind(fusion_id))
-	var accent := V2.CYAN if unlocked else V2.MUTED
+	var accent := V2.CYAN
 	button.add_theme_stylebox_override("normal", V2.hospital_panel_style(accent, selected))
 	button.add_theme_stylebox_override("hover", V2.hospital_button_style(accent, "hover"))
 	button.add_theme_stylebox_override("focus", V2.hospital_button_style(accent, "focus"))
@@ -371,7 +371,7 @@ func _refresh_detail() -> void:
 
 func _locked_card(result_species: Dictionary, data: int) -> Control:
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", V2.panel_style(Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.74), 8))
+	panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.76), Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.34), 8))
 	var margin := _margin(18, 18, 18, 18)
 	panel.add_child(margin)
 	var stack := VBoxContainer.new()
