@@ -15,8 +15,10 @@ static func configure_gamepad_actions() -> void:
 	_ensure_button("ui_left", JOY_BUTTON_DPAD_LEFT)
 	_ensure_button("ui_right", JOY_BUTTON_DPAD_RIGHT)
 	_ensure_button("game_menu", JOY_BUTTON_START)
+	_ensure_button("player_run", JOY_BUTTON_B)
 	_ensure_key("game_menu", KEY_ESCAPE)
 	_ensure_key("game_menu", KEY_M)
+	_ensure_key("player_run", KEY_SHIFT)
 
 	_ensure_axis("ui_left", JOY_AXIS_LEFT_X, -1.0)
 	_ensure_axis("ui_right", JOY_AXIS_LEFT_X, 1.0)

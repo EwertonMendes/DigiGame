@@ -15,6 +15,16 @@ func _ready() -> void:
 	var player := world.call("get_player") as Node2D
 	var area := world.call("get_area_scene") as WorldAreaScene
 	assert(saw_partial_area, "Area construction must yield across frames instead of blocking the first frame")
+	assert(InputMap.has_action("player_run"), "Player run action must be registered when the overworld actor initializes")
+	var run_button := world.get_node_or_null("WorldUI/Root/MobileControls/RunToggle") as Button
+	assert(run_button != null and run_button.text == "RUN", "Touch HUD must expose RUN as the default walk-mode action")
+	assert(not bool(player.call("is_touch_run_enabled")), "Touch running must default to walking")
+	world.call("_toggle_touch_run")
+	assert(bool(player.call("is_touch_run_enabled")), "Touch RUN must enable the player run state")
+	assert(run_button.text == "WALK", "Touch run button must offer WALK while running is active")
+	world.call("_toggle_touch_run")
+	assert(not bool(player.call("is_touch_run_enabled")), "Touch WALK must restore normal movement")
+	assert(run_button.text == "RUN", "Touch run button must return to RUN after walking is restored")
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
