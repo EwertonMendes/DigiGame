@@ -145,13 +145,13 @@ const TRAINING_CENTER_FOOTPRINT_SOURCE := [
 	Vector2(80.0, 870.0),
 ]
 
-# The Hospital is authored symmetrically around a straight-down entrance. Keep
-# the measured small rotation that removes the side-lean, but preserve more of
-# the source's vertical presence than a strict mathematical 64x32 remap would.
-# The extra Y scale is intentional presentation compensation: width stays fixed,
-# the building no longer reads as compressed, and the doorway remains tall
-# enough relative to the trainer sprite without moving its world anchor.
-const HOSPITAL_SCALE := Vector2(0.35, 0.30)
+# The Hospital artwork is already authored with the correct internal
+# proportions, including its doorway. Never anisotropically squash/stretch this
+# sprite to force the city projection: doing so changes the apparent doorway
+# height and makes the building read compressed next to the trainer. Preserve
+# the source aspect ratio with one uniform render scale, and use only the small
+# measured rotation to align its heading to the surrounding isometric grid.
+const HOSPITAL_SCALE := Vector2(0.35, 0.35)
 const HOSPITAL_ROTATION_DEGREES := -0.87567
 const HOSPITAL_BASE_Z := 880
 const HOSPITAL_UPPER_OCCLUDER_Z := 1800
