@@ -290,7 +290,7 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 	}
 	var uniform_width := -1.0
 	if bits != null and bits.visible and tabs_root.position.x + tabs_root.size.x > bits.position.x - 1.0:
-		print("[digilab-layout] HeaderTabs escaped behind Bits: tabs=(%.1f + %.1f = %.1f) bits=(%.1f, %.1f) close_x=%.1f header_w=%.1f" % [
+		print("[digilab-layout] HeaderTabs escaped behind Bits: tabs=(%.1f + %.1f = %.1f) bits=(%.1f, %.1f) close_x=%.1f header_w=%.1f root_min=%s" % [
 			tabs_root.position.x,
 			tabs_root.size.x,
 			tabs_root.position.x + tabs_root.size.x,
@@ -298,7 +298,26 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 			bits.size.x,
 			close.position.x,
 			header.size.x,
+			str(tabs_root.get_combined_minimum_size()),
 		])
+		for debug_id: String in ["convert", "party", "fusion", "ascension"]:
+			var debug_button := header.get_tab_button(debug_id)
+			if debug_button == null:
+				continue
+			var debug_label := debug_button.get_meta("tab_label") as Label
+			var debug_row := debug_button.get_meta("tab_row") as Control
+			var debug_host := debug_button.get_meta("tab_content_host") as Control
+			print("[digilab-layout] tab %s size=%s min=%s custom=%s label=%s label_min=%s row_min=%s host_min=%s font=%d" % [
+				debug_id,
+				str(debug_button.size),
+				str(debug_button.get_combined_minimum_size()),
+				str(debug_button.custom_minimum_size),
+				str(debug_label.size if debug_label != null else Vector2.ZERO),
+				str(debug_label.get_combined_minimum_size() if debug_label != null else Vector2.ZERO),
+				str(debug_row.get_combined_minimum_size() if debug_row != null else Vector2.ZERO),
+				str(debug_host.get_combined_minimum_size() if debug_host != null else Vector2.ZERO),
+				debug_label.get_theme_font_size("font_size") if debug_label != null else 0,
+			])
 		return false
 	if tabs_root.position.x + tabs_root.size.x > close.position.x - 1.0:
 		print("[digilab-layout] HeaderTabs escaped behind Close: tabs_end=%.1f close_x=%.1f" % [tabs_root.position.x + tabs_root.size.x, close.position.x])
