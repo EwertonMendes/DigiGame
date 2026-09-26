@@ -186,16 +186,21 @@ func _ready() -> void:
 		"Plaza bench collision must remain centered with the visible seat at the planter-face midpoint"
 	)
 
-	# The endpoint is clear pavement beyond the narrow bench footprint. A pure
-	# point-in-polygon destination check would tunnel through it; the mirrored
-	# StaticBody2D must stop the CharacterBody2D during the swept movement.
+	# Exercise the same incremental movement contract used by the runtime rather
+	# than teleporting across the prop in one synthetic 90px step. Repeated
+	# frame-sized advances must stop before entering the fitted bench footprint.
 	var original_player_position := player.global_position
 	player.global_position = expected_ground_world + Vector2(0.0, -45.0)
 	player.set("velocity", Vector2.ZERO)
-	player.call("_try_move", Vector2(0.0, 90.0))
+	for _step in range(24):
+		player.call("_try_move", Vector2(0.0, 4.0))
 	assert(
 		player.global_position.y < expected_ground_world.y - 8.0,
-		"Player movement must not tunnel through a bench during a large movement step"
+		"Incremental player movement must stop before entering the bench footprint"
+	)
+	assert(
+		not bool(world.call("can_actor_move_to", expected_ground_world, player)),
+		"Bench ground center must remain forbidden to the player clearance model"
 	)
 	player.global_position = original_player_position
 	player.set("velocity", Vector2.ZERO)
