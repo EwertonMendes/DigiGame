@@ -11,11 +11,10 @@ const RANK_POWER := {
 	"In-Training": 1,
 	"Rookie": 2,
 	"Champion": 3,
-	"Armor": 3,
 	"Ultimate": 4,
-	"Hybrid": 4,
 	"Mega": 5,
 	"Ultra": 6,
+	"Fusion": 7,
 }
 
 var _balance = BalanceScript.new()
@@ -32,7 +31,7 @@ func promotion_preview(collection: PlayerCollection, database: DigimonDatabase, 
 		"target_tier": "",
 		"bits_cost": 0,
 		"minimum_rank": "Fresh",
-		"fusion_required": false,
+		"donor_required": false,
 	}
 	if collection == null or database == null:
 		return result
@@ -53,10 +52,10 @@ func promotion_preview(collection: PlayerCollection, database: DigimonDatabase, 
 		return result
 	var minimum_rank := _balance.tier_minimum_rank(next_tier)
 	var bits_cost := _balance.tier_promotion_bits(next_tier)
-	var fusion_required := _balance.tier_fusion_required(next_tier)
+	var donor_required := _balance.tier_donor_required(next_tier)
 	result["bits_cost"] = bits_cost
 	result["minimum_rank"] = minimum_rank
-	result["fusion_required"] = fusion_required
+	result["donor_required"] = donor_required
 	result["current_rank"] = String(species.get("rank", "Fresh"))
 	if not _rank_meets(String(species.get("rank", "Fresh")), minimum_rank):
 		result["reason"] = "rank_too_low"
@@ -64,7 +63,7 @@ func promotion_preview(collection: PlayerCollection, database: DigimonDatabase, 
 	if collection.bits < bits_cost:
 		result["reason"] = "insufficient_bits"
 		return result
-	if fusion_required:
+	if donor_required:
 		var donor := collection.get_instance(donor_id)
 		if donor == null or donor == target:
 			result["reason"] = "donor_required"
@@ -88,7 +87,7 @@ func promote(collection: PlayerCollection, database: DigimonDatabase, target_id:
 	if not bool(preview.get("success", false)):
 		return preview
 	var target := collection.get_instance(target_id)
-	var donor := collection.get_instance(donor_id) if bool(preview.get("fusion_required", false)) else null
+	var donor := collection.get_instance(donor_id) if bool(preview.get("donor_required", false)) else null
 	var species := database.get_by_seed(target.species_seed)
 	var old_hp_max := _calculator.get_stat(target, species, "hp")
 	var old_sp_max := _calculator.get_stat(target, species, "mp")
