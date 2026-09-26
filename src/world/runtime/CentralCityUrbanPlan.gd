@@ -152,8 +152,11 @@ static func create_bench_surround(
 	# the surrounding pavement and follows the same 64x32 isometric axes as the
 	# authored bench art. This visually ties the furniture to the streetscape
 	# without making it look raised or pasted on top of a planter.
-	var long_axis := Vector2(44.0, 22.0)
-	var short_axis := Vector2(-12.0, 6.0)
+	# Match the reduced gameplay bench footprint closely. The bay is only
+	# slightly wider than the four visible feet, so it reads as the paving
+	# directly under the seat rather than a detached platform.
+	var long_axis := Vector2(29.0, 14.5)
+	var short_axis := Vector2(-6.0, 3.0)
 	if mirror_axis:
 		long_axis.x *= -1.0
 		short_axis.x *= -1.0
@@ -183,9 +186,10 @@ static func create_bench_surround(
 	border.z_index = 2
 	root.add_child(border)
 
-	# Keep the cyan strip on the street-facing edge only. It gives the seating
-	# bay the same infrastructure language as the approved lamp surrounds while
-	# leaving the bench feet visibly planted directly on the pavers.
+	# Keep the cyan strip on the street-facing edge only. The rear edge is meant
+	# to meet the concrete facade of a landscape island, visually joining the
+	# bench bay to the shrub/tree planter instead of leaving it floating in open
+	# pavement.
 	var front_a := outer[2]
 	var front_b := outer[3]
 	var accent_line := Line2D.new()
