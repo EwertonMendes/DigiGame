@@ -166,7 +166,7 @@ func _build_fusion_debug_tab(tabs: TabContainer) -> void:
 	_style_field(_fusion_debug_select)
 	for definition: Dictionary in OverworldState.get_fusion_definitions():
 		var fusion_id := String(definition.get("id", ""))
-		var result_species := OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
+		var result_species: Dictionary = OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
 		_fusion_debug_select.add_item(String(result_species.get("name", fusion_id)))
 		_fusion_debug_select.set_item_metadata(_fusion_debug_select.item_count - 1, fusion_id)
 	_fusion_debug_select.item_selected.connect(_on_fusion_debug_selected)
@@ -209,7 +209,7 @@ func _refresh_fusion_debug_lab() -> void:
 		if String(candidate.get("id", "")) == fusion_id:
 			definition = candidate
 			break
-	var species := OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
+	var species: Dictionary = OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
 	_fusion_debug_summary.text = "%s · %d / 100 · %s" % [
 		String(species.get("name", fusion_id)).to_upper(),
 		progress,
