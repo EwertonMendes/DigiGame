@@ -44,6 +44,12 @@ The old prototype Hub is not the normal application entry point. Development bui
 
 Central City treats authoring sections as data boundaries, never rendering boundaries. The octagonal island currently renders 4,341 authored ground cells; clipped corner cells are true non-walkable digital void rather than hidden floor. Ground draw calls are bounded by the small curated surface palette instead of section count, and the area regression keeps the runtime node budget below its existing limit.
 
+### Central City landscaping
+
+Exterior landscaping is authored separately from section runtime logic. `CentralCityDecor.gd` loads the replaceable catalog/profiles in `assets/resources/world/central_city_decor.json` and populates each district after terrain, trees and service exteriors have registered their walkability. Placements use fractional logical coordinates, so benches, planters, lamps and signage do not visually snap to the 64×32 gameplay grid.
+
+The current foundation kit lives under `assets/world/tblack/city/props/` and covers seating, flower/shrub planters, cyan/warm lamps, public terminals, holographic wayfinding, bins, bollards, canal railings and subtle ground markers. Static props have no per-frame scripts; holographic signs use one lightweight canvas shader. Small screen-space ground footprints are registered directly with the area's existing polygon walkability instead of blocking whole cells or adding a physics body per prop. Asset IDs remain stable in the JSON catalog so final pixel-art replacements can change texture, anchor, scale and footprint without rewriting district placement code.
+
 Static world collision is represented by the authored walkability grid instead of duplicating every blocked cell into PhysicsServer shapes. Player clearance samples preserve collision margins; dynamic bodies and doorway Area2D triggers remain engine-native physics objects.
 
 Tree canopy sway is shader-driven. Leaf particles are only emitted in the player's nearby section neighborhood, managed by one area-level cadence rather than per-tree GDScript processing.
