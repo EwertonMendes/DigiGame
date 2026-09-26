@@ -128,7 +128,7 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 11.0))
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 12.2))
 	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
 	var expected_ground_world := plaza_section.global_position + expected_ground_center
 	assert(
@@ -177,14 +177,13 @@ func _ready() -> void:
 		)
 
 	var southwest_tree_center := plaza_section.grid_to_world(Vector2(2.0, 11.0))
-	var southwest_tree_outer_edge := southwest_tree_center + Vector2(39.2, 19.6)
 	assert(
-		(first_plaza_bench_local - southwest_tree_center).is_equal_approx(Vector2(70.4, 35.2)),
-		"Plaza seating must stay aligned to the planter's isometric side at the authored offset"
+		(first_plaza_bench_local - southwest_tree_center).is_equal_approx(Vector2(32.0, 54.4)),
+		"Plaza bench anchor must be shifted along the planter face so the visible seat is centered instead of hugging the corner"
 	)
 	assert(
-		first_plaza_bench_local.distance_to(southwest_tree_outer_edge) > 30.0,
-		"Bench sprite must sit fully outside the landscape island instead of overlapping grass or planter paving"
+		(expected_ground_center - southwest_tree_center).is_equal_approx(Vector2(17.0, 46.4)),
+		"Plaza bench collision must follow the centered visible seat without drifting back toward the planter corner"
 	)
 
 	# The endpoint is clear pavement beyond the narrow bench footprint. A pure
@@ -222,9 +221,9 @@ func _ready() -> void:
 	assert(
 		canal_lighting != null
 		and canal_lighting.get_decoration_count() >= 4
-		and canal_assets.has("bench_ne")
-		and canal_assets.has("bench_nw"),
-		"North Canal must keep bridge-head lamps plus deliberate seating near its landscape nodes"
+		and canal_assets.has("bench_nw")
+		and not canal_assets.has("bench_ne"),
+		"North Canal benches must use the orientation matching their centered planter faces, including the seat nearest Digital Archive"
 	)
 	assert(
 		market_lighting != null
