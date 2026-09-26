@@ -34,6 +34,7 @@ var _subtitle_text := "Digital Monsters"
 var _bits := 0
 var _show_bits := true
 var _workspace_mode := false
+var _workspace_full_label_tabs := false
 
 
 func _ready() -> void:
@@ -80,6 +81,18 @@ func set_workspace_mode(enabled: bool) -> void:
 
 func is_workspace_mode() -> bool:
 	return _workspace_mode
+
+
+func set_workspace_full_label_tabs(enabled: bool) -> void:
+	if _workspace_full_label_tabs == enabled:
+		return
+	_workspace_full_label_tabs = enabled
+	if _tabs_root != null:
+		_layout()
+
+
+func uses_workspace_full_label_tabs() -> bool:
+	return _workspace_full_label_tabs
 
 
 func set_active_tab(tab_id: String) -> void:
@@ -492,7 +505,26 @@ func _layout_workspace() -> void:
 		_tabs_root.clip_contents = true
 
 		var tab_count := maxi(1, _tab_specs.size())
-		var tab_width := maxf(96.0, (_tabs_root.size.x + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count))
+		var maximum_uniform_width := (_tabs_root.size.x + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count)
+		if _workspace_full_label_tabs:
+			_layout_workspace_full_label_tabs(angled_tabs, maximum_uniform_width)
+			return
+		var desired_uniform_width := 172.0 if angled_tabs else 126.0
+		for value in _tab_buttons.values():
+			var button := value as Button
+			if button == null:
+				continue
+			var preferred := float(button.get_meta("preferred_min_width", 126.0))
+			var label := button.get_meta("tab_label") as Label
+			var full_label := String(button.get_meta("full_label", ""))
+			var measured_text_width := 0.0
+			if label != null:
+				var font := label.get_theme_font("font")
+				measured_text_width = font.get_string_size(full_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+			var content_width := measured_text_width + 20.0 + 8.0 + (54.0 if angled_tabs else 30.0)
+			desired_uniform_width = maxf(desired_uniform_width, maxf(preferred, content_width))
+
+		var tab_width := minf(desired_uniform_width, maximum_uniform_width)
 		for value in _tab_buttons.values():
 			var button := value as Button
 			if button == null:
@@ -505,18 +537,94 @@ func _layout_workspace() -> void:
 			var row := button.get_meta("tab_row") as HBoxContainer
 			if label != null:
 				var full_label := String(button.get_meta("full_label", ""))
-				var content_padding := 20.0 + 8.0 + (46.0 if angled_tabs else 26.0)
-				var chosen_font_size := 15
-				while chosen_font_size > 9 and _measure_tab_label(label, full_label, chosen_font_size) + content_padding > tab_width:
-					chosen_font_size -= 1
+				var compact_label := String(button.get_meta("compact_label", full_label))
+				var content_padding := 20.0 + 8.0 + (54.0 if angled_tabs else 30.0)
+				var full_font_size := 15 if tab_width >= 150.0 else 13
+				var full_text_width := _measure_tab_label(label, full_label, full_font_size)
+				var chosen_label := full_label
+				var chosen_font_size := full_font_size
+				if full_text_width + content_padding > tab_width and compact_label != full_label:
+					chosen_label = compact_label
+					chosen_font_size = 13
+					var compact_text_width := _measure_tab_label(label, compact_label, chosen_font_size)
+					if compact_text_width + content_padding > tab_width:
+						chosen_font_size = 11
 				label.visible = true
-				label.text = full_label
-				label.custom_minimum_size.x = 0.0
-				label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+				label.text = chosen_label
 				label.add_theme_font_size_override("font_size", chosen_font_size)
 				label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 				label.clip_text = true
+				_set_tab_label_intrinsic_width(label)
 			if icon != null:
 				icon.custom_minimum_size = Vector2(20.0, 20.0)
 			if row != null:
 				row.add_theme_constant_override("separation", 8)
+
+
+func _layout_workspace_full_label_tabs(angled_tabs: bool, tab_width: float) -> void:
+	# DigiLab opts into this policy because it has four long primary labels.
+	# Shared workspaces keep the original content-driven behavior above.
+	var icon_size := 20.0
+	var separation := 6
+	var safe_margin := 20
+	var font_size := 15
+	var longest_text := 0.0
+
+	while font_size > 9:
+		longest_text = 0.0
+		for value in _tab_buttons.values():
+			var button := value as Button
+			if button == null:
+				continue
+			var label := button.get_meta("tab_label") as Label
+			if label == null:
+				continue
+			var full_label := String(button.get_meta("full_label", ""))
+			longest_text = maxf(longest_text, _measure_tab_label(label, full_label, font_size))
+		var required := longest_text + icon_size + float(separation) + float(safe_margin * 2) + 4.0
+		if required <= tab_width:
+			break
+		font_size -= 1
+
+	# Preserve every authored label. If the smallest readable font still needs
+	# room, reduce only the angled safe inset for this DigiLab header instance.
+	longest_text = 0.0
+	for value in _tab_buttons.values():
+		var button := value as Button
+		if button == null:
+			continue
+		var label := button.get_meta("tab_label") as Label
+		if label == null:
+			continue
+		longest_text = maxf(longest_text, _measure_tab_label(label, String(button.get_meta("full_label", "")), font_size))
+	var remaining_for_margins := tab_width - longest_text - icon_size - float(separation) - 4.0
+	safe_margin = clampi(int(floor(remaining_for_margins * 0.5)), 8, 20) if angled_tabs else 0
+
+	for value in _tab_buttons.values():
+		var button := value as Button
+		if button == null:
+			continue
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_stretch_ratio = 1.0
+		button.custom_minimum_size = Vector2(tab_width, 50.0)
+
+		var label := button.get_meta("tab_label") as Label
+		var icon := button.get_meta("tab_icon") as DigiProceduralIcon
+		var row := button.get_meta("tab_row") as HBoxContainer
+		var content_host := button.get_meta("tab_content_host") as Control
+		if label != null:
+			label.visible = true
+			label.text = String(button.get_meta("full_label", ""))
+			label.add_theme_font_size_override("font_size", font_size)
+			label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			label.clip_text = true
+			label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			_set_tab_label_intrinsic_width(label)
+		if icon != null:
+			icon.custom_minimum_size = Vector2(icon_size, icon_size)
+		if row != null:
+			row.add_theme_constant_override("separation", separation)
+		if angled_tabs and content_host is MarginContainer:
+			var safe := content_host as MarginContainer
+			safe.add_theme_constant_override("margin_left", safe_margin)
+			safe.add_theme_constant_override("margin_right", safe_margin)
