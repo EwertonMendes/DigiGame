@@ -7,6 +7,7 @@ signal tab_requested(tab_id: String)
 const V2 = preload("res://src/ui/components/DigiUiTheme.gd")
 const PrimaryTabs = preload("res://src/ui/components/DigiLabPrimaryTabs.gd")
 const WorkspaceChrome = preload("res://src/ui/components/DigiLabWorkspaceChrome.gd")
+const WorkspaceBackdrop = preload("res://src/ui/components/DigiLabWorkspaceBackdrop.gd")
 const ModalHeaderScript = preload("res://src/ui/components/DigiModalHeader.gd")
 const SectionHeaderScript = preload("res://src/ui/components/DigiSectionHeader.gd")
 const InputHintBarScript = preload("res://src/ui/components/DigiInputHintBar.gd")
@@ -120,10 +121,8 @@ func _build() -> void:
 	_transition_surface.name = "FusionWorkspaceTransition"
 	add_child(_transition_surface)
 
-	var backdrop := ColorRect.new()
-	backdrop.color = V2.BACKDROP
-	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	var backdrop := WorkspaceBackdrop.new() as DigiLabWorkspaceBackdrop
+	backdrop.name = "DigiLabWorkspaceBackdrop"
 	_transition_surface.add_transition_child(backdrop)
 
 	_frame = PanelContainer.new()
@@ -131,6 +130,7 @@ func _build() -> void:
 	_frame.clip_contents = true
 	_frame.add_theme_stylebox_override("panel", V2.surface_style(V2.BACKDROP, Color.TRANSPARENT, 0))
 	_transition_surface.add_transition_child(_frame)
+	WorkspaceChrome.install_background(_transition_surface.get_content_root(), backdrop, _frame)
 	_root = Control.new()
 	_root.clip_contents = true
 	_frame.add_child(_root)
@@ -145,7 +145,7 @@ func _build() -> void:
 
 	_list_panel = PanelContainer.new()
 	_list_panel.clip_contents = true
-	WorkspaceChrome.style_workspace_panel(_list_panel, V2.ORANGE)
+	WorkspaceChrome.style_workspace_panel(_list_panel, V2.CYAN)
 	_root.add_child(_list_panel)
 	var list_stack := VBoxContainer.new()
 	list_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -163,14 +163,16 @@ func _build() -> void:
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 7)
 	list_margin.add_child(_list)
+	var pager_margin := _margin(10, 2, 10, 8)
 	_pager = PagerScript.new() as DigiPager
 	_pager.set_workspace_mode(true)
 	_pager.page_delta_requested.connect(_turn_page)
-	list_stack.add_child(_pager)
+	pager_margin.add_child(_pager)
+	list_stack.add_child(pager_margin)
 
 	_detail_panel = PanelContainer.new()
 	_detail_panel.clip_contents = true
-	WorkspaceChrome.style_workspace_panel(_detail_panel, V2.ORANGE)
+	WorkspaceChrome.style_workspace_panel(_detail_panel, V2.CYAN)
 	_root.add_child(_detail_panel)
 	var detail_stack := VBoxContainer.new()
 	detail_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -236,7 +238,7 @@ func _refresh_list() -> void:
 		_list.add_child(_empty("No Fusion recipes are configured."))
 		_pager.configure(0, 1)
 		return
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 5, 4, 3)
 	var page_count := maxi(1, ceili(float(definitions.size()) / float(capacity)))
 	_page = clampi(_page, 0, page_count - 1)
 	var start := _page * capacity
@@ -265,7 +267,7 @@ func _fusion_button(definition: Dictionary) -> Button:
 	button.clip_contents = true
 	button.pressed.connect(_select_fusion.bind(fusion_id))
 	button.focus_entered.connect(_preview_fusion.bind(fusion_id))
-	var accent := V2.ORANGE if unlocked else V2.MUTED
+	var accent := V2.CYAN if unlocked else V2.MUTED
 	button.add_theme_stylebox_override("normal", V2.hospital_panel_style(accent, selected))
 	button.add_theme_stylebox_override("hover", V2.hospital_button_style(accent, "hover"))
 	button.add_theme_stylebox_override("focus", V2.hospital_button_style(accent, "focus"))
@@ -393,15 +395,12 @@ func _locked_card(result_species: Dictionary, data: int) -> Control:
 	var label := _line("FUSION DATA  %d / 100" % data, 13, V2.ORANGE, true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(label)
-	var hint := _label("Fusion Data is awarded by story progress, missions, bosses and other discoveries. At 100%, this recipe is permanently revealed.", 11, V2.MUTED)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stack.add_child(hint)
 	return panel
 
 
 func _result_card(species: Dictionary, preview: Dictionary) -> Control:
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.06), Color(V2.ORANGE.r, V2.ORANGE.g, V2.ORANGE.b, 0.42), 8))
+	panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.05), Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.42), 8))
 	var margin := _margin(14, 12, 14, 12)
 	panel.add_child(margin)
 	var row := HBoxContainer.new()
@@ -427,7 +426,7 @@ func _material_picker(slot: Dictionary) -> Control:
 	var seed := String(slot.get("speciesSeed", ""))
 	var species := _database.get_by_seed(seed)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.72), Color(V2.BORDER.r, V2.BORDER.g, V2.BORDER.b, 0.48), 7))
+	panel.add_theme_stylebox_override("panel", V2.surface_style(Color(V2.SURFACE.r, V2.SURFACE.g, V2.SURFACE.b, 0.72), Color(V2.CYAN.r, V2.CYAN.g, V2.CYAN.b, 0.30), 7))
 	var margin := _margin(11, 8, 11, 8)
 	panel.add_child(margin)
 	var stack := VBoxContainer.new()
@@ -451,7 +450,8 @@ func _material_picker(slot: Dictionary) -> Control:
 		var selected_index := 0
 		for candidate: DigimonInstance in eligible:
 			var candidate_species := _database.get_by_seed(candidate.species_seed)
-			var location := OverworldState.get_collection_location(candidate.id).to_upper()
+			var role := OverworldState.get_squad_role(candidate.id)
+			var location := "ACTIVE" if role == PlayerCollection.SQUAD_ROLE_ACTIVE else ("RESERVE" if role == PlayerCollection.SQUAD_ROLE_RESERVE else "STORAGE")
 			picker.add_item("%s · Lv %d · Tier %s · %s" % [candidate.get_display_name(String(candidate_species.get("name", "Digimon"))), candidate.level, candidate.tier, location])
 			picker.set_item_metadata(picker.item_count - 1, candidate.id)
 			if candidate.id == current:
@@ -513,7 +513,7 @@ func _confirm_fusion() -> void:
 
 func _turn_page(delta: int) -> void:
 	var definitions := OverworldState.get_fusion_definitions()
-	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 4, 3, 2)
+	var capacity := WorkspaceChrome.page_capacity(get_viewport(), 5, 4, 3)
 	var page_count := maxi(1, ceili(float(definitions.size()) / float(capacity)))
 	var next_page := clampi(_page + delta, 0, page_count - 1)
 	if next_page == _page:
