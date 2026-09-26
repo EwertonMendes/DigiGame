@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="30" height="46" viewBox="0 0 30 46">
-<ellipse cx="15" cy="41" rx="9" ry="3" fill="#10171c"/><path fill="#27333a" d="m8 36 7-4 7 4-7 5z"/>
-<rect x="11" y="12" width="8" height="25" fill="#33424a"/><path fill="#1f2b32" d="M15 12h4v25h-4z"/>
-<path fill="#4ce8ff" d="m8 11 7-4 7 4-7 5z"/><path fill="#0faec9" d="M8 11v6l7 4v-5z"/><path fill="#0b829a" d="m15 16 7-5v6l-7 4z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="48" viewBox="0 0 34 48" shape-rendering="crispEdges">
+<ellipse cx="17" cy="44" rx="10" ry="3" fill="#11181d" opacity=".5"/><path fill="#243039" d="m9 39 8-5 8 5-8 5z"/>
+<path fill="#435159" d="M12 15h10v24H12z"/><path fill="#232e34" d="M17 15h5v24h-5z"/>
+<path fill="#22d9ef" d="m9 14 8-5 8 5-8 5z"/><path fill="#0d9db6" d="M9 14v6l8 5v-6z"/><path fill="#08768b" d="m17 19 8-5v6l-8 5z"/>
+<path fill="#b5fbff" d="m13 13 4-2 4 2-4 3z"/></svg>
