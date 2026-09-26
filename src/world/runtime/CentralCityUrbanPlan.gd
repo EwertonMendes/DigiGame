@@ -186,10 +186,10 @@ static func create_bench_surround(
 	border.z_index = 2
 	root.add_child(border)
 
-	# Keep the cyan strip on the street-facing edge only. The rear edge is meant
-	# to meet the concrete facade of a landscape island, visually joining the
-	# bench bay to the shrub/tree planter instead of leaving it floating in open
-	# pavement.
+	# Keep the cyan strip on the street-facing edge only. The rear edge sits
+	# immediately beside the concrete facade of a landscape island. The bay stays
+	# completely outside the grass/planter footprint while still reading as part
+	# of the same streetscape module.
 	var front_a := outer[2]
 	var front_b := outer[3]
 	var accent_line := Line2D.new()
