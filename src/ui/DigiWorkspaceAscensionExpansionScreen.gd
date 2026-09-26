@@ -341,7 +341,7 @@ func _tier_workspace(instance: DigimonInstance) -> Control:
 	body.add_child(requirements)
 	requirements.add_child(_pill("%d BITS" % int(initial.get("bits_cost", 0)), V2.AMBER))
 	requirements.add_child(_pill("%s+ FORM" % String(initial.get("minimum_rank", "Fresh")).to_upper(), V2.CYAN))
-	var needs_donor := bool(initial.get("fusion_required", false))
+	var needs_donor := bool(initial.get("donor_required", false))
 	if needs_donor:
 		requirements.add_child(_pill("SAME-SPECIES DONOR", V2.PURPLE))
 
@@ -556,7 +556,7 @@ func _open_donor_picker(target_id: String) -> void:
 			"species": String(species.get("name", "")),
 			"accent": V2.PURPLE,
 		})
-	_donor_picker.configure("SELECT FUSION DONOR", "Only valid exact-species Storage donors are shown.", entries, V2.PURPLE)
+	_donor_picker.configure("SELECT ASCENSION DONOR", "Only valid exact-species Storage donors are shown.", entries, V2.PURPLE)
 	_donor_picker.open_picker(get_viewport().gui_get_focus_owner())
 
 
@@ -647,7 +647,7 @@ func _request_promotion(picker: OptionButton = null) -> void:
 		target_tier,
 		int(preview.get("bits_cost", 0)),
 	]
-	if bool(preview.get("fusion_required", false)):
+	if bool(preview.get("donor_required", false)):
 		var donor: DigimonInstance = OverworldState.get_instance_by_id(donor_id)
 		if donor != null:
 			var donor_species: Dictionary = _database.get_by_seed(donor.species_seed)
