@@ -492,23 +492,7 @@ func _layout_workspace() -> void:
 		_tabs_root.clip_contents = true
 
 		var tab_count := maxi(1, _tab_specs.size())
-		var maximum_uniform_width := (_tabs_root.size.x + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count)
-		var desired_uniform_width := 172.0 if angled_tabs else 126.0
-		for value in _tab_buttons.values():
-			var button := value as Button
-			if button == null:
-				continue
-			var preferred := float(button.get_meta("preferred_min_width", 126.0))
-			var label := button.get_meta("tab_label") as Label
-			var full_label := String(button.get_meta("full_label", ""))
-			var measured_text_width := 0.0
-			if label != null:
-				var font := label.get_theme_font("font")
-				measured_text_width = font.get_string_size(full_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-			var content_width := measured_text_width + 20.0 + 8.0 + (54.0 if angled_tabs else 30.0)
-			desired_uniform_width = maxf(desired_uniform_width, maxf(preferred, content_width))
-
-		var tab_width := minf(desired_uniform_width, maximum_uniform_width)
+		var tab_width := maxf(96.0, (_tabs_root.size.x + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count))
 		for value in _tab_buttons.values():
 			var button := value as Button
 			if button == null:
@@ -521,24 +505,17 @@ func _layout_workspace() -> void:
 			var row := button.get_meta("tab_row") as HBoxContainer
 			if label != null:
 				var full_label := String(button.get_meta("full_label", ""))
-				var compact_label := String(button.get_meta("compact_label", full_label))
-				var content_padding := 20.0 + 8.0 + (54.0 if angled_tabs else 30.0)
-				var full_font_size := 15 if tab_width >= 150.0 else 13
-				var full_text_width := _measure_tab_label(label, full_label, full_font_size)
-				var chosen_label := full_label
-				var chosen_font_size := full_font_size
-				if full_text_width + content_padding > tab_width and compact_label != full_label:
-					chosen_label = compact_label
-					chosen_font_size = 13
-					var compact_text_width := _measure_tab_label(label, compact_label, chosen_font_size)
-					if compact_text_width + content_padding > tab_width:
-						chosen_font_size = 11
+				var content_padding := 20.0 + 8.0 + (46.0 if angled_tabs else 26.0)
+				var chosen_font_size := 15
+				while chosen_font_size > 9 and _measure_tab_label(label, full_label, chosen_font_size) + content_padding > tab_width:
+					chosen_font_size -= 1
 				label.visible = true
-				label.text = chosen_label
+				label.text = full_label
+				label.custom_minimum_size.x = 0.0
+				label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 				label.add_theme_font_size_override("font_size", chosen_font_size)
 				label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 				label.clip_text = true
-				_set_tab_label_intrinsic_width(label)
 			if icon != null:
 				icon.custom_minimum_size = Vector2(20.0, 20.0)
 			if row != null:
