@@ -95,8 +95,9 @@ func _test_material_guards() -> void:
 
 	assert(collection.set_squad_ids([ex.id], [], 0, 3, 3), "Hospital guard fixture must place the material in Active")
 	assert(collection.admit_to_hospital(ex.id), "Hospital guard fixture must admit the material")
-	var hospitalized := _fusion.get_preview(collection, "paildramon")
-	assert(not bool(hospitalized.get("can_fuse", false)), "Hospitalized material must be rejected")
+	var hospitalized_ids: Array[String] = [ex.id, sting.id]
+	var hospitalized := _fusion.get_preview(collection, "paildramon", hospitalized_ids)
+	assert(not bool(hospitalized.get("can_fuse", false)), "Explicitly selected hospitalized material must be rejected without substituting another copy")
 
 
 func _test_paildramon_fusion_and_degeneration() -> void:
