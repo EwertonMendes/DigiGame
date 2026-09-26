@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -238,35 +238,27 @@
       {
         "asset": "bench_nw",
         "cell": [
-          3.45,
+          4.2,
           11
         ],
-        "role": "plaza_southwest_tree_front_facade_seating",
+        "role": "plaza_southwest_tree_side_seating",
         "surround": "seating_nw",
         "clearance": [
           0,
           0
-        ],
-        "surround_offset": [
-          -6,
-          -3
         ]
       },
       {
         "asset": "bench_ne",
         "cell": [
           11,
-          3.45
+          4.2
         ],
-        "role": "plaza_northeast_tree_front_facade_seating",
+        "role": "plaza_northeast_tree_side_seating",
         "surround": "seating_ne",
         "clearance": [
           0,
           0
-        ],
-        "surround_offset": [
-          6,
-          -3
         ]
       }
     ],
@@ -343,35 +335,27 @@
       {
         "asset": "bench_nw",
         "cell": [
-          3.45,
+          4.2,
           10
         ],
-        "role": "canal_southwest_tree_front_facade_seating",
+        "role": "canal_southwest_tree_side_seating",
         "surround": "seating_nw",
         "clearance": [
           0,
           0
-        ],
-        "surround_offset": [
-          -6,
-          -3
         ]
       },
       {
         "asset": "bench_ne",
         "cell": [
           11,
-          4.45
+          5.2
         ],
-        "role": "canal_northeast_tree_front_facade_seating",
+        "role": "canal_northeast_tree_side_seating",
         "surround": "seating_ne",
         "clearance": [
           0,
           0
-        ],
-        "surround_offset": [
-          6,
-          -3
         ]
       }
     ],
