@@ -24,6 +24,7 @@ var _status_text := ""
 var _page := 0
 
 var _transition_surface: DigiUiTransitionSurface
+var _backdrop: ColorRect
 var _frame: PanelContainer
 var _root: Control
 var _header: DigiModalHeader
@@ -121,16 +122,26 @@ func _build() -> void:
 	_transition_surface.name = "FusionWorkspaceTransition"
 	add_child(_transition_surface)
 
-	var backdrop := WorkspaceBackdrop.new() as DigiLabWorkspaceBackdrop
-	backdrop.name = "DigiLabWorkspaceBackdrop"
-	_transition_surface.add_transition_child(backdrop)
+	# Match every other DigiLab workspace layer contract:
+	# legacy/base backdrop -> laboratory image -> transparent workspace frame.
+	_backdrop = ColorRect.new()
+	_backdrop.name = "FusionBaseBackdrop"
+	_backdrop.color = V2.BACKDROP
+	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_transition_surface.add_transition_child(_backdrop)
 
 	_frame = PanelContainer.new()
 	_frame.name = "FusionWorkspace"
 	_frame.clip_contents = true
 	_frame.add_theme_stylebox_override("panel", V2.surface_style(V2.BACKDROP, Color.TRANSPARENT, 0))
 	_transition_surface.add_transition_child(_frame)
+
+	var backdrop := WorkspaceBackdrop.new() as DigiLabWorkspaceBackdrop
+	backdrop.name = "DigiLabWorkspaceBackdrop"
+	_transition_surface.add_transition_child(backdrop)
 	WorkspaceChrome.install_background(_transition_surface.get_content_root(), backdrop, _frame)
+
 	_root = Control.new()
 	_root.clip_contents = true
 	_frame.add_child(_root)
