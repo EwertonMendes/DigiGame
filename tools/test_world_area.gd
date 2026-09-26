@@ -118,7 +118,7 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(2.8, 12.8))
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(5.0, 12.4))
 	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
 	assert(
 		not plaza_section.is_walkable_world_position(first_plaza_bench_world),
@@ -127,6 +127,27 @@ func _ready() -> void:
 	assert(
 		plaza_section.is_walkable_world_position(first_plaza_bench_world + Vector2(45.0, 0.0)),
 		"Bench collision must follow the isometric seat footprint instead of creating a broad invisible box"
+	)
+
+	var first_plaza_bench: Sprite2D = null
+	var bench_surround_count := 0
+	for child in plaza_decor.get_children():
+		if child is Sprite2D and String(child.name).begins_with("Bench"):
+			first_plaza_bench = child as Sprite2D
+		elif child is Node2D and String(child.name).begins_with("BenchSurround"):
+			bench_surround_count += 1
+	assert(first_plaza_bench != null, "Central Plaza must instantiate the approved bench art")
+	var bench_atlas := first_plaza_bench.texture as AtlasTexture
+	assert(
+		bench_atlas != null
+		and bench_atlas.atlas != null
+		and bench_atlas.atlas.resource_path == "res://assets/world/tblack/city/props_v2/bench.png"
+		and first_plaza_bench.scale.is_equal_approx(Vector2(0.14, 0.14)),
+		"Approved bench must render from the user-supplied bench.png sheet at gameplay scale"
+	)
+	assert(
+		bench_surround_count == 2,
+		"Central Plaza benches must sit in authored flush seating bays instead of floating beside landscape islands"
 	)
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
@@ -179,11 +200,12 @@ func _ready() -> void:
 	for prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
 		"res://assets/world/tblack/city/props_v2/lamp_yellow.png",
-		"res://assets/world/tblack/city/props_v2/bench_ne.png",
-		"res://assets/world/tblack/city/props_v2/bench_nw.png",
+		"res://assets/world/tblack/city/props_v2/bench.png",
 	]:
 		assert(ResourceLoader.exists(prop_path), "Approved Central City prop asset must be vendored: %s" % prop_path)
 	for rejected_prop_path: String in [
+		"res://assets/world/tblack/city/props_v2/bench_ne.png",
+		"res://assets/world/tblack/city/props_v2/bench_nw.png",
 		"res://assets/world/tblack/city/props_v2/planter_long_ne.png",
 		"res://assets/world/tblack/city/props_v2/planter_long_nw.png",
 		"res://assets/world/tblack/city/props_v2/terminal.png",
