@@ -118,7 +118,7 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(3.2, 10.2))
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(2.8, 12.8))
 	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
 	assert(
 		not plaza_section.is_walkable_world_position(first_plaza_bench_world),
