@@ -1,5 +1,5 @@
 {
-  "version": 12,
+  "version": 13,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -157,6 +157,10 @@
         0.87,
         1,
         1
+      ],
+      "ground_offset": [
+        15,
+        -8
       ]
     },
     "bench_nw": {
@@ -203,6 +207,10 @@
         0.87,
         1,
         1
+      ],
+      "ground_offset": [
+        -15,
+        -8
       ]
     }
   },
