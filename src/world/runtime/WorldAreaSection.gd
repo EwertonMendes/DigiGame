@@ -20,10 +20,12 @@ const CITY_SHAPE_MANHATTAN_RADIUS := 54
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 # The authored PNG is close to isometric, but its two ground axes are not an
-# exact 2:1 pair. A small perspective correction plus rotation maps the actual
-# base edges to the city's +/-26.565° grid instead of visually "eyeballing" it.
-const DIGILAB_SCALE := Vector2(0.40, 0.32838876)
-const DIGILAB_ROTATION_DEGREES := -2.00295
+# exact 2:1 pair. Match the same geometric correction strategy used by the
+# Training Center: compress the source Y projection and rotate the complete
+# authored structure so both dominant facade/roof axes land on the city's
+# exact +/-26.565 degree 64x32 grid.
+const DIGILAB_SCALE := Vector2(0.40, 0.31635585)
+const DIGILAB_ROTATION_DEGREES := -2.48231
 const DIGILAB_BASE_Z := 880
 const DIGILAB_UPPER_OCCLUDER_Z := 1800
 const DIGILAB_UPPER_OCCLUDER_CUTOFF_Y := 700.0
