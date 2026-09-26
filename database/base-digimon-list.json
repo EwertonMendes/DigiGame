@@ -2799,9 +2799,7 @@
     "bitFarmingRate": 38,
     "MOV": 4,
     "movementType": "ground",
-    "digiEvolutionSeedList": [
-      "9799592e-7012-4855-b1a8-2f5d1e27e196"
-    ],
+    "digiEvolutionSeedList": [],
     "degenerateSeedList": [
       "4e6904cc-d3c0-4363-b8a8-bebc1da167ab"
     ],
@@ -3582,9 +3580,7 @@
     "bitFarmingRate": 52,
     "MOV": 4,
     "movementType": "ground",
-    "digiEvolutionSeedList": [
-      "528427d9-196e-4b85-9680-ccf401515ff7"
-    ],
+    "digiEvolutionSeedList": [],
     "degenerateSeedList": [
       "083241cc-fcf8-4101-a58d-09b0e6b375b6"
     ],
@@ -3758,7 +3754,6 @@
     "MOV": 4,
     "movementType": "ground",
     "digiEvolutionSeedList": [
-      "de7c5e6e-92fc-4f99-98b1-abe628acedd2",
       "24772f7f-d86c-4e77-bc3b-c9f4b0ef7f9c",
       "1fc3d08b-7a62-4c3e-bf9d-3a179f5a3642",
       "2b4b8b25-e810-45a2-a7f1-3e6642b50352"
@@ -3817,8 +3812,7 @@
     "MOV": 4,
     "movementType": "ground",
     "digiEvolutionSeedList": [
-      "0fc5bcd7-7cbe-4aa7-8c60-1225d2b297d9",
-      "36fad7a1-ec3c-4781-bc2b-db41f0d79e01"
+      "0fc5bcd7-7cbe-4aa7-8c60-1225d2b297d9"
     ],
     "degenerateSeedList": [
       "d9a452f3-71d0-4b1a-9bee-8e4c36b9e1a3"
@@ -5755,8 +5749,7 @@
     "movementType": "ground",
     "digiEvolutionSeedList": [
       "df67cc96-4a69-4f26-88d6-2c98ccaecfe6",
-      "1f8b2c41-6d7a-4f1d-8a79-1d3c2a96c1b7",
-      "49d973b4-549f-45ff-9c41-e43dcc8b43f6"
+      "1f8b2c41-6d7a-4f1d-8a79-1d3c2a96c1b7"
     ],
     "degenerateSeedList": [
       "70dbb38a-690e-45b3-bfc5-eccba64fbd9b"
@@ -5785,8 +5778,7 @@
     "MOV": 4,
     "movementType": "ground",
     "digiEvolutionSeedList": [
-      "f1b3b3b4-1b3b-4b3b-8b3b-3b3b3b3b3b3b",
-      "42528387-e8e5-4a69-adaa-7089aeb620a1"
+      "f1b3b3b4-1b3b-4b3b-8b3b-3b3b3b3b3b3b"
     ],
     "degenerateSeedList": [
       "70dbb38a-690e-45b3-bfc5-eccba64fbd9b",
@@ -6166,8 +6158,7 @@
     "movementType": "ground",
     "digiEvolutionSeedList": [
       "d9f9c182-731b-4f21-8e2f-167b2d663e34",
-      "e6a29e6f-9a3d-41a3-87c3-7c0c573b42de",
-      "49d973b4-549f-45ff-9c41-e43dcc8b43f6"
+      "e6a29e6f-9a3d-41a3-87c3-7c0c573b42de"
     ],
     "degenerateSeedList": [
       "80c6f1b9-648a-49b3-92c9-01d6e2f4bc8e"
@@ -6816,7 +6807,7 @@
     "seed": "36fad7a1-ec3c-4781-bc2b-db41f0d79e01",
     "name": "Paildramon",
     "img": "/assets/digimons/Paildramon.webp",
-    "rank": "Ultimate",
+    "rank": "Fusion",
     "species": "Dragon",
     "attribute": "Vaccine",
     "hp": 231,
@@ -6828,25 +6819,16 @@
     "bitFarmingRate": 90,
     "MOV": 5,
     "movementType": "ground",
-    "digiEvolutionSeedList": [
-      "f9a2b8c3-4e5d-4f7b-9c1e-8d6f3a2b5c7e",
-      "a1b3c5d7-6e8f-4a2b-9c4d-5e7f8a9b1c2d"
-    ],
-    "degenerateSeedList": [
-      "b9c0f3a7-2d5a-4e6b-8c1d-9f0e3a5d7b2c"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 44
-      }
-    ]
+    "digiEvolutionSeedList": [],
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "9799592e-7012-4855-b1a8-2f5d1e27e196",
     "name": "Dinobeemon",
     "img": "/assets/digimons/Dinobeemon.webp",
-    "rank": "Ultimate",
+    "rank": "Fusion",
     "species": "Insect/Plant",
     "attribute": "Data",
     "hp": 216,
@@ -6858,18 +6840,10 @@
     "bitFarmingRate": 72,
     "MOV": 5,
     "movementType": "ground",
-    "digiEvolutionSeedList": [
-      "e40a8d93-221c-4bd5-8bec-e574d0c1b087"
-    ],
-    "degenerateSeedList": [
-      "9f207e7b-2e92-4cfc-8e44-94cf25e0fdb5"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 45
-      }
-    ]
+    "digiEvolutionSeedList": [],
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "952a2766-db94-4c37-9c25-efee8bfdc9a3",
@@ -7064,8 +7038,7 @@
     "MOV": 5,
     "movementType": "ground",
     "digiEvolutionSeedList": [
-      "fb4c9abd-426d-44aa-b06f-6a3dfa21196a",
-      "86d24d95-9244-48cd-94e0-be4e74f9ddf1"
+      "fb4c9abd-426d-44aa-b06f-6a3dfa21196a"
     ],
     "degenerateSeedList": [
       "a5d7b9c0-2f1a-4e6b-8c3d-9f0a5e3d7b2c"
@@ -7393,7 +7366,7 @@
     "seed": "de7c5e6e-92fc-4f99-98b1-abe628acedd2",
     "name": "Silphymon",
     "img": "/assets/digimons/Silphymon.webp",
-    "rank": "Ultimate",
+    "rank": "Fusion",
     "species": "Bird",
     "attribute": "Vaccine",
     "hp": 219,
@@ -7405,18 +7378,10 @@
     "bitFarmingRate": 77,
     "MOV": 5,
     "movementType": "ground",
-    "digiEvolutionSeedList": [
-      "e30d7b71-6e51-45af-a30e-b53b4a04735a"
-    ],
-    "degenerateSeedList": [
-      "d7b9c0e3-1a5f-4e6b-8c2d-9f0a3e5d7c6b"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 41
-      }
-    ]
+    "digiEvolutionSeedList": [],
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "4b81a3d1-02d9-433b-8591-eeef611f6a02",
@@ -7689,8 +7654,7 @@
     "MOV": 5,
     "movementType": "ground",
     "digiEvolutionSeedList": [
-      "02cb1173-7e3d-477a-b388-6e46acb9aa65",
-      "4e9ee336-86e1-43aa-bb62-93a10f82a0f6"
+      "02cb1173-7e3d-477a-b388-6e46acb9aa65"
     ],
     "degenerateSeedList": [
       "b3c9f0e7-1a5d-4e6b-8c2b-9f0d5a3e7c6b",
@@ -8317,9 +8281,7 @@
     "bitFarmingRate": 77,
     "MOV": 5,
     "movementType": "ground",
-    "digiEvolutionSeedList": [
-      "b2c4d6e8-7f9a-4b3c-8d5e-6f8a9b1c2d3e"
-    ],
+    "digiEvolutionSeedList": [],
     "degenerateSeedList": [
       "d7b9c0e3-1a5f-4e6b-8c2d-9f0a3e5d7c6b"
     ],
@@ -8756,7 +8718,7 @@
     "seed": "528427d9-196e-4b85-9680-ccf401515ff7",
     "name": "Shakkoumon",
     "img": "/assets/digimons/Shakkoumon.webp",
-    "rank": "Ultimate",
+    "rank": "Fusion",
     "species": "Holy",
     "attribute": "Vaccine",
     "hp": 235,
@@ -8769,15 +8731,9 @@
     "MOV": 4,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "d6e3a9c0-2f5b-4e7a-8c1d-9f0a3e5d7b2c"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 44
-      }
-    ]
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "6d7a3c5b-f3f8-4ab8-a55a-0a9e3cda3c62",
@@ -9602,7 +9558,7 @@
     "seed": "49d973b4-549f-45ff-9c41-e43dcc8b43f6",
     "name": "Omnimon",
     "img": "/assets/digimons/Omnimon.webp",
-    "rank": "Mega",
+    "rank": "Fusion",
     "species": "Holy",
     "attribute": "Vaccine",
     "hp": 334,
@@ -9615,16 +9571,9 @@
     "MOV": 6,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "a5e0bfb7-8d2a-4ef1-9636-cbb9db1fe1d0",
-      "25fc7b61-17ae-453b-94f7-4fa4f9171633"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 60
-      }
-    ]
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "f9a2b8c3-4e5d-4f7b-9c1e-8d6f3a2b5c7e",
@@ -9643,9 +9592,7 @@
     "MOV": 6,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "36fad7a1-ec3c-4781-bc2b-db41f0d79e01"
-    ],
+    "degenerateSeedList": [],
     "evolutionRequirements": [
       {
         "type": "level",
@@ -9670,9 +9617,7 @@
     "MOV": 6,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "36fad7a1-ec3c-4781-bc2b-db41f0d79e01"
-    ],
+    "degenerateSeedList": [],
     "evolutionRequirements": [
       {
         "type": "level",
@@ -9684,7 +9629,7 @@
     "seed": "b2c4d6e8-7f9a-4b3c-8d5e-6f8a9b1c2d3e",
     "name": "Imperialdramon (Paladin Mode)",
     "img": "/assets/digimons/Imperialdramon (Paladin Mode).webp",
-    "rank": "Mega",
+    "rank": "Fusion",
     "species": "Holy",
     "attribute": "Vaccine",
     "hp": 341,
@@ -9697,15 +9642,9 @@
     "MOV": 6,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "2b4b8b25-e810-45a2-a7f1-3e6642b50352"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 52
-      }
-    ]
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "c3d5e7f9-8a1b-4c2d-9e6f-7a9b1c2d3e4f",
@@ -10117,7 +10056,7 @@
     "seed": "86d24d95-9244-48cd-94e0-be4e74f9ddf1",
     "name": "Armageddemon",
     "img": "/assets/digimons/Armageddemon.webp",
-    "rank": "Mega",
+    "rank": "Fusion",
     "species": "Dark",
     "attribute": "Virus",
     "hp": 341,
@@ -10130,15 +10069,9 @@
     "MOV": 6,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "6c695951-a9dc-4fea-aab4-792814356e9f"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 57
-      }
-    ]
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "53885aa6-dd9b-4667-b582-422d76781132",
@@ -10184,9 +10117,7 @@
     "MOV": 6,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "9799592e-7012-4855-b1a8-2f5d1e27e196"
-    ],
+    "degenerateSeedList": [],
     "evolutionRequirements": [
       {
         "type": "level",
@@ -10752,7 +10683,6 @@
     "movementType": "ground",
     "digiEvolutionSeedList": [],
     "degenerateSeedList": [
-      "de7c5e6e-92fc-4f99-98b1-abe628acedd2",
       "75c6c6ce-68c9-4c32-a678-d9f59406d3a0"
     ],
     "evolutionRequirements": [
@@ -10902,7 +10832,7 @@
     "seed": "42528387-e8e5-4a69-adaa-7089aeb620a1",
     "name": "Millenniummon",
     "img": "/assets/digimons/Millenniummon.webp",
-    "rank": "Mega",
+    "rank": "Fusion",
     "species": "Dark",
     "attribute": "Virus",
     "hp": 316,
@@ -10915,15 +10845,9 @@
     "MOV": 6,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "66e5a6ea-93a5-47f8-91d9-8601857496f6"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 55
-      }
-    ]
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "cb130bef-eec8-4f09-8b50-f5c66118fe5f",
@@ -11482,7 +11406,7 @@
     "seed": "4e9ee336-86e1-43aa-bb62-93a10f82a0f6",
     "name": "Chaosmon",
     "img": "/assets/digimons/Chaosmon.webp",
-    "rank": "Mega",
+    "rank": "Fusion",
     "species": "Holy",
     "attribute": "Vaccine",
     "hp": 300,
@@ -11495,15 +11419,9 @@
     "MOV": 6,
     "movementType": "ground",
     "digiEvolutionSeedList": [],
-    "degenerateSeedList": [
-      "1dc4e899-b0db-435f-a9e3-6fa7c94836aa"
-    ],
-    "evolutionRequirements": [
-      {
-        "type": "level",
-        "value": 55
-      }
-    ]
+    "degenerateSeedList": [],
+    "evolutionRequirements": [],
+    "reconstructable": false
   },
   {
     "seed": "1f8b2c41-6d7a-4f1d-8a79-1d3c2a96c1b7",
