@@ -87,7 +87,7 @@ func set_workspace_full_label_tabs(enabled: bool) -> void:
 	if _workspace_full_label_tabs == enabled:
 		return
 	_workspace_full_label_tabs = enabled
-	if _tabs_root != null:
+	if _tabs_root != null and _workspace_mode:
 		_layout()
 
 
@@ -280,6 +280,9 @@ func _rebuild_tabs() -> void:
 	if _tabs_root == null:
 		return
 	for child in _tabs_root.get_children():
+		# Detach synchronously so queued-for-free tabs cannot participate in the
+		# same HBox minimum-size pass or temporarily intercept pointer input.
+		_tabs_root.remove_child(child)
 		child.queue_free()
 	_tab_buttons.clear()
 
