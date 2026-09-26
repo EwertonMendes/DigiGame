@@ -318,40 +318,6 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 	return {"surface": CITY.SURFACE_MAIN, "walkable": true}
 
 
-func _is_minor_pedestrian_route(cell: Vector2i) -> bool:
-	return cell.x in [6, 7] or cell.y in [6, 7]
-
-
-func _is_service_approach_path(cell: Vector2i, theme: String) -> bool:
-	match theme:
-		"digilab":
-			return (cell.x in [7, 8] and cell.y >= 7) or (cell.y in [6, 7] and cell.x >= 8)
-		"hospital":
-			return (cell.x in [6, 7] and cell.y >= 7) or (cell.y in [6, 7] and cell.x <= 7)
-		"training":
-			return cell.x in [6, 7] or (cell.y in [10, 11] and cell.x >= 5 and cell.x <= 8)
-		_:
-			return _is_minor_pedestrian_route(cell)
-
-
-func _is_block_sidewalk(cell: Vector2i) -> bool:
-	return cell.x in [0, SECTION_SIZE - 1] or cell.y in [0, SECTION_SIZE - 1]
-
-
-func _is_digilab_pavement(cell: Vector2i) -> bool:
-	if cell.y in [10, 11] and cell.x >= 5 and cell.x <= 11:
-		return true
-	return cell in [Vector2i(9, 11), Vector2i(10, 12), Vector2i(11, 13)]
-
-
-func _is_service_district(theme: String) -> bool:
-	return theme in ["digilab", "hospital", "training", "market", "archive"]
-
-
-func _is_service_walkway(cell: Vector2i) -> bool:
-	return cell.x in [6, 7] or cell.y in [6, 7]
-
-
 func _global_grid(cell: Vector2i) -> Vector2i:
 	return section_coord * SECTION_SIZE + cell
 
