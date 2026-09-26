@@ -11,6 +11,7 @@ const DIGILAB_TEXTURE = preload("res://assets/world/tblack/digilab/digilab.png")
 const DIGILAB_DOOR_SEMI_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-semi-open.png")
 const DIGILAB_DOOR_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-open.png")
 const TRAINING_CENTER_TEXTURE = preload("res://assets/world/tblack/training-center/training-center.png")
+const HOSPITAL_TEXTURE = preload("res://assets/world/tblack/hospital/hospital.png")
 
 const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
@@ -144,6 +145,50 @@ const TRAINING_CENTER_FOOTPRINT_SOURCE := [
 	Vector2(80.0, 870.0),
 ]
 
+# The Hospital artwork is already authored with the correct internal
+# proportions, including its doorway. Never anisotropically squash/stretch this
+# sprite to force the city projection: doing so changes the apparent doorway
+# height and makes the building read compressed next to the trainer. Preserve
+# the source aspect ratio with one uniform render scale, and use only the small
+# measured rotation to align its heading to the surrounding isometric grid.
+const HOSPITAL_SCALE := Vector2(0.35, 0.35)
+const HOSPITAL_ROTATION_DEGREES := -0.87567
+const HOSPITAL_BASE_Z := 880
+const HOSPITAL_UPPER_OCCLUDER_Z := 1800
+const HOSPITAL_UPPER_OCCLUDER_CUTOFF_Y := 650.0
+const HOSPITAL_DOOR_PIXEL := Vector2(627.0, 1000.0)
+const HOSPITAL_DOOR_CELL := Vector2i(7, 10)
+const HOSPITAL_RETURN_CELL := Vector2i(9, 12)
+# Measured ground-contact silhouette for the supplied 1254x1254 asset. The
+# centered concave recess keeps the stairs and straight-down doorway walkable.
+const HOSPITAL_FOOTPRINT_SOURCE := [
+	Vector2(54.0, 750.0),
+	Vector2(160.0, 670.0),
+	Vector2(310.0, 655.0),
+	Vector2(430.0, 600.0),
+	Vector2(520.0, 585.0),
+	Vector2(627.0, 590.0),
+	Vector2(735.0, 585.0),
+	Vector2(825.0, 600.0),
+	Vector2(945.0, 655.0),
+	Vector2(1095.0, 670.0),
+	Vector2(1200.0, 750.0),
+	Vector2(1200.0, 865.0),
+	Vector2(1100.0, 940.0),
+	Vector2(980.0, 1020.0),
+	Vector2(820.0, 1090.0),
+	Vector2(735.0, 1110.0),
+	Vector2(700.0, 1035.0),
+	Vector2(690.0, 930.0),
+	Vector2(565.0, 930.0),
+	Vector2(555.0, 1035.0),
+	Vector2(520.0, 1110.0),
+	Vector2(435.0, 1090.0),
+	Vector2(275.0, 1020.0),
+	Vector2(155.0, 940.0),
+	Vector2(55.0, 865.0),
+]
+
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
 
@@ -269,7 +314,7 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
 	# Services without dedicated exterior art retain the temporary paved cross.
-	if theme not in ["digilab", "training"] and _is_service_district(theme) and _is_service_walkway(cell):
+	if theme not in ["digilab", "training", "hospital"] and _is_service_district(theme) and _is_service_walkway(cell):
 		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 
 	match theme:
@@ -286,7 +331,7 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 		"digilab":
 			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 		"hospital":
-			return {"surface": CITY.SURFACE_TECH_BLUE, "walkable": true}
+			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 		"training":
 			return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
 		"market":
@@ -387,7 +432,7 @@ func _build_theme_content() -> void:
 		"digilab":
 			_build_digilab_exterior()
 		"hospital":
-			_build_service_pad(Color(0.66, 0.96, 1.0), "DIGI HOSPITAL", "hospital", CITY.SURFACE_TECH_BLUE)
+			_build_hospital_exterior()
 		"training":
 			_build_training_center_exterior()
 		"market":
@@ -522,6 +567,106 @@ func _build_training_center_exterior() -> void:
 		18.0
 	)
 	exterior.add_child(entrance)
+
+
+func _build_hospital_exterior() -> void:
+	if not _is_city_land(HOSPITAL_DOOR_CELL):
+		return
+
+	var exterior := Node2D.new()
+	exterior.name = "HospitalExterior"
+	add_child(exterior)
+
+	var door_world := grid_to_world(Vector2(HOSPITAL_DOOR_CELL))
+	var building := _create_hospital_sprite(
+		"Building",
+		door_world,
+		Rect2(),
+		HOSPITAL_BASE_Z
+	)
+	exterior.add_child(building)
+
+	# Use the same foreground/upper split as the other authored city services:
+	# the facade remains below nearby actors, while the roof and rear medical
+	# tower can occlude actors correctly when they walk behind the hospital.
+	var upper_region := Rect2(
+		Vector2.ZERO,
+		Vector2(float(HOSPITAL_TEXTURE.get_width()), HOSPITAL_UPPER_OCCLUDER_CUTOFF_Y)
+	)
+	var upper_occluder := _create_hospital_sprite(
+		"UpperOccluder",
+		door_world,
+		upper_region,
+		HOSPITAL_UPPER_OCCLUDER_Z
+	)
+	exterior.add_child(upper_occluder)
+
+	var door_marker := Marker2D.new()
+	door_marker.name = "DoorAnchor"
+	door_marker.position = door_world
+	exterior.add_child(door_marker)
+
+	_register_blocking_polygon(
+		exterior,
+		"FootprintCollision",
+		_hospital_footprint(door_world)
+	)
+
+	var entrance := _create_service_threshold(
+		"HospitalEntrance",
+		"hospital",
+		"DIGI HOSPITAL",
+		Color(0.28, 0.92, 0.96),
+		HOSPITAL_DOOR_CELL,
+		HOSPITAL_RETURN_CELL,
+		18.0
+	)
+	exterior.add_child(entrance)
+
+
+func _create_hospital_sprite(
+	node_name: String,
+	door_world: Vector2,
+	source_region: Rect2,
+	depth: int
+) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.name = node_name
+	sprite.texture = HOSPITAL_TEXTURE
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.scale = HOSPITAL_SCALE
+	sprite.rotation_degrees = HOSPITAL_ROTATION_DEGREES
+	sprite.z_index = depth
+
+	var texture_center := HOSPITAL_TEXTURE.get_size() * 0.5
+	var authored_door_offset := (
+		(HOSPITAL_DOOR_PIXEL - texture_center) * HOSPITAL_SCALE
+	).rotated(sprite.rotation)
+	var full_position := door_world - authored_door_offset
+
+	if source_region.size != Vector2.ZERO:
+		sprite.region_enabled = true
+		sprite.region_rect = source_region
+		var region_center := source_region.position + source_region.size * 0.5
+		var region_center_offset := (
+			(region_center - texture_center) * HOSPITAL_SCALE
+		).rotated(sprite.rotation)
+		sprite.position = full_position + region_center_offset
+	else:
+		sprite.position = full_position
+	return sprite
+
+
+func _hospital_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in HOSPITAL_FOOTPRINT_SOURCE:
+		polygon.append(_hospital_source_to_local(source_point, door_world))
+	return polygon
+
+
+func _hospital_source_to_local(source_pixel: Vector2, door_world: Vector2) -> Vector2:
+	var scaled := (source_pixel - HOSPITAL_DOOR_PIXEL) * HOSPITAL_SCALE
+	return door_world + scaled.rotated(deg_to_rad(HOSPITAL_ROTATION_DEGREES))
 
 
 func _create_training_center_sprite(
