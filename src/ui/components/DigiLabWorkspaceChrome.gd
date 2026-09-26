@@ -33,6 +33,7 @@ static func configure_header(header: DigiModalHeader) -> void:
 	if header == null:
 		return
 	header.set_workspace_mode(true)
+	header.set_workspace_full_label_tabs(true)
 	header.configure("DIGI LAB", "Reconstruction & Progression", OverworldState.get_bits(), true)
 
 
