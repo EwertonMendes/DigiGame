@@ -9,6 +9,8 @@ const CollectionScript = preload("res://src/collection/PlayerCollection.gd")
 const EvolutionScript = preload("res://src/digimon/DigimonEvolutionService.gd")
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const SaveMigrationScript = preload("res://src/save/SaveMigration.gd")
+const QuestDefinitionScript = preload("res://src/quests/QuestDefinition.gd")
+const QuestServiceScript = preload("res://src/quests/QuestService.gd")
 
 var _database: DigimonDatabase
 var _catalog: FusionCatalog
@@ -34,6 +36,7 @@ func _ready() -> void:
 	_test_paildramon_fusion_and_degeneration()
 	_test_repeated_species_materials()
 	_test_nested_fusion_materials()
+	_test_quest_fusion_data_contract()
 	_test_v2_save_migration()
 
 	print("fusion system regression passed")
@@ -250,6 +253,30 @@ func _test_nested_fusion_materials() -> void:
 	assert(String(_database.get_by_seed(paladin.species_seed).get("name", "")) == "Imperialdramon (Paladin Mode)", "Nested Fusion result must be Paladin Mode")
 	var material_seeds = paladin.fusion_origin.get("materialSeeds", [])
 	assert(material_seeds is Array and (material_seeds as Array).has(omnimon.species_seed) and (material_seeds as Array).has(fighter.species_seed), "Nested Fusion origin must record its immediate Fusion components")
+
+
+func _test_quest_fusion_data_contract() -> void:
+	var collection: PlayerCollection = CollectionScript.new()
+	var definition: QuestDefinition = QuestDefinitionScript.new()
+	definition.quest_id = "fusion_data_regression"
+	definition.initial_state = QuestService.STATE_LOCKED
+	definition.objectives = [{"type": "battle_wins", "amount": 1}]
+	var omnimon_definition := _catalog.get_by_id("omnimon")
+	var omnimon_seed := String(omnimon_definition.get("resultSeed", ""))
+	definition.rewards = {
+		"fusion_data": {"omnimon": 65},
+		"digi_data": {omnimon_seed: 99},
+	}
+	var service: QuestService = QuestServiceScript.new()
+	assert(service.set_available(collection, definition), "Fusion Data quest fixture must become available")
+	assert(service.start(collection, definition), "Fusion Data quest fixture must start")
+	var result := service.record_battle_win(collection, definition, 1)
+	assert(bool(result.get("completed", false)), "Fusion Data quest fixture must complete")
+	assert(collection.get_fusion_data("omnimon") == 65, "Quest rewards must grant Fusion Data through the dedicated progression channel")
+	assert(collection.get_digi_data(omnimon_seed) == 0, "Quest rewards must never create normal Digi Data for Fusion species")
+	var rewards := result.get("rewards", {}) as Dictionary
+	assert(int((rewards.get("fusion_data", {}) as Dictionary).get("omnimon", 0)) == 65, "Quest result must report applied Fusion Data")
+	assert((rewards.get("digi_data", {}) as Dictionary).is_empty(), "Rejected Fusion Digi Data must not be reported as applied")
 
 
 func _test_v2_save_migration() -> void:
