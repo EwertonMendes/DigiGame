@@ -268,8 +268,8 @@ func _ready() -> void:
 	var training_lot = training_section.call("_ground_presentation", Vector2i(2, 2), "training")
 	assert(
 		training_forecourt is Dictionary
-		and String((training_forecourt as Dictionary).get("surface", "")) == "stone_soft",
-		"Training Center entrance must meet the standard 0054 city pavement"
+		and String((training_forecourt as Dictionary).get("surface", "")) == "path",
+		"Training Center entrance must meet the connected pedestrian route"
 	)
 	assert(
 		training_lot is Dictionary
@@ -351,11 +351,17 @@ func _ready() -> void:
 		hospital_section.is_walkable_world_position(hospital_section.global_position + expected_hospital_door),
 		"Hospital stairs and doorway must remain walkable"
 	)
-	var hospital_lot = hospital_section.call("_ground_presentation", Vector2i(5, 5), "hospital")
+	var hospital_lot = hospital_section.call("_ground_presentation", Vector2i(5, 4), "hospital")
 	assert(
 		hospital_lot is Dictionary
 		and String((hospital_lot as Dictionary).get("surface", "")) == "stone_soft",
-		"Hospital district must use the same neutral 0054 pavement as the authored city services"
+		"Hospital lot must keep neutral civic paving outside the pedestrian route"
+	)
+	var hospital_approach = hospital_section.call("_ground_presentation", Vector2i(7, 10), "hospital")
+	assert(
+		hospital_approach is Dictionary
+		and String((hospital_approach as Dictionary).get("surface", "")) == "path",
+		"Hospital entrance must connect to the brighter city pedestrian network"
 	)
 	var hospital_collision := hospital_section.get_node_or_null(
 		"HospitalExterior/FootprintCollision/CollisionPolygon2D"
