@@ -93,9 +93,13 @@ static func build_for_section(
 			var accent := _color(placement.get("accent", asset.get("accent", [0.24, 0.88, 1.0, 1.0])))
 			var surround: Node2D
 			if surround_style.begins_with("seating"):
+				# The bench foot remains the depth/collision anchor. Its flush paving
+				# can shift a few pixels toward the planter so the visible bay sits
+				# exactly beneath all four feet and tucks under the planter facade.
+				var surround_center := world_foot + _vec2(placement.get("surround_offset", [0.0, 0.0]))
 				surround = CITY_URBAN.create_bench_surround(
 					"BenchSurround_%02d" % (count + 1),
-					world_foot,
+					surround_center,
 					accent,
 					surround_style.ends_with("_nw")
 				)
