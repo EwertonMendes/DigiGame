@@ -128,7 +128,7 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 12.2))
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 11.6))
 	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
 	var expected_ground_world := plaza_section.global_position + expected_ground_center
 	assert(
@@ -178,12 +178,12 @@ func _ready() -> void:
 
 	var southwest_tree_center := plaza_section.grid_to_world(Vector2(2.0, 11.0))
 	assert(
-		(first_plaza_bench_local - southwest_tree_center).is_equal_approx(Vector2(32.0, 54.4)),
-		"Plaza bench anchor must be shifted along the planter face so the visible seat is centered instead of hugging the corner"
+		(first_plaza_bench_local - southwest_tree_center).is_equal_approx(Vector2(51.2, 44.8)),
+		"Plaza bench anchor must sit at the exact midpoint between the two planter-face corner-biased placements"
 	)
 	assert(
-		(expected_ground_center - southwest_tree_center).is_equal_approx(Vector2(17.0, 46.4)),
-		"Plaza bench collision must follow the centered visible seat without drifting back toward the planter corner"
+		(expected_ground_center - southwest_tree_center).is_equal_approx(Vector2(36.2, 36.8)),
+		"Plaza bench collision must remain centered with the visible seat at the planter-face midpoint"
 	)
 
 	# The endpoint is clear pavement beyond the narrow bench footprint. A pure
