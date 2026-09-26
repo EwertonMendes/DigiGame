@@ -2,7 +2,6 @@ extends RefCounted
 class_name CentralCityDecor
 
 const CONFIG_PATH := "res://assets/resources/world/central_city_decor.json"
-const HOLOGRAM_SHADER = preload("res://shaders/city_hologram.gdshader")
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const DECOR_BASE_Z := 1000
@@ -78,7 +77,6 @@ static func build_for_section(
 			sprite.z_index = GROUND_DECOR_Z
 		else:
 			sprite.z_index = DECOR_BASE_Z + int(round(global_origin.y + world_foot.y))
-		_apply_optional_material(sprite, asset, placement)
 		root.add_child(sprite)
 
 		if blocker.x > 0.0 and blocker.y > 0.0:
@@ -119,16 +117,6 @@ static func _texture_for(asset_id: String, path: String) -> Texture2D:
 	var texture := resource as Texture2D
 	_texture_cache[asset_id] = texture
 	return texture
-
-
-static func _apply_optional_material(sprite: Sprite2D, asset: Dictionary, placement: Dictionary) -> void:
-	if String(asset.get("shader", "")) != "hologram":
-		return
-	var material := ShaderMaterial.new()
-	material.shader = HOLOGRAM_SHADER
-	var accent := _color(placement.get("accent", [0.35, 0.92, 1.0, 1.0]))
-	material.set_shader_parameter("accent", accent)
-	sprite.material = material
 
 
 static func _blocker_polygon(center: Vector2, size: Vector2) -> PackedVector2Array:
