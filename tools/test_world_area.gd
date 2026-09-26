@@ -279,9 +279,9 @@ func _ready() -> void:
 		"Hospital exterior must use the project-supplied hospital asset"
 	)
 	assert(
-		hospital_building.scale.distance_to(Vector2(0.35, 0.30)) < 0.001
+		hospital_building.scale.distance_to(Vector2(0.35, 0.35)) < 0.001
 		and absf(hospital_building.rotation_degrees - (-0.87567)) < 0.01,
-		"Hospital must keep its corrected alignment without compressing the authored vertical proportions"
+		"Hospital must preserve its authored aspect ratio while correcting only its grid heading"
 	)
 	assert(
 		hospital_building.z_index == 880
