@@ -24,16 +24,13 @@ func _ready() -> void:
 	assert(area.get_ground_tile_count() == 4341, "Central City octagonal island must omit only the authored corner void")
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
-	var promenade_paving := area.get_node_or_null("CityGround/Surface_tech_teal") as MeshInstance2D
-	var path_paving := area.get_node_or_null("CityGround/Surface_path") as MeshInstance2D
+	var civic_paving := area.get_node_or_null("CityGround/Surface_stone_soft") as MeshInstance2D
 	assert(
-		main_paving != null and promenade_paving != null and path_paving != null,
-		"Central City must keep neutral lots, civic accents and a dedicated pedestrian-path batch"
+		main_paving != null and civic_paving != null,
+		"Central City must keep one continuous gray circulation field plus civic accent paving"
 	)
 	assert(
-		main_paving.texture == null
-		and promenade_paving.texture == null
-		and path_paving.texture == null,
+		main_paving.texture == null and civic_paving.texture == null,
 		"Central City hardscape tops must be procedural rather than one texture per gameplay tile"
 	)
 	var paver_material := main_paving.material as ShaderMaterial
@@ -57,34 +54,37 @@ func _ready() -> void:
 		"Central City runtime node budget must remain below 1000 nodes"
 	)
 	assert(
-		area.get_decoration_count() >= 120,
-		"Central City must ship a meaningful authored landscaping pass instead of sparse one-off props"
+		area.get_decoration_count() >= 60,
+		"Central City must keep a restrained authored street-furniture pass around its urban structure"
 	)
 	var plaza_section := area.get_node_or_null("Section_0_0") as WorldAreaSection
 	assert(plaza_section != null, "Central Plaza section must remain available for decoration regression coverage")
 	assert(
 		plaza_section.get_node_or_null("CityDecor") != null
-		and plaza_section.get_decoration_count() >= 10,
-		"Central Plaza must render a dense reusable urban landscaping kit"
+		and plaza_section.get_decoration_count() >= 6,
+		"Central Plaza must keep a composed street-furniture layer without visual scatter"
+	)
+	assert(
+		plaza_section.get_node_or_null("CivicPoolFrame") != null,
+		"Central Plaza must frame its digital pool with a raised civic structure"
 	)
 	var plaza_assets := plaza_section.get_decoration_asset_ids()
 	assert(
 		plaza_assets.has("bench_ne")
 		and plaza_assets.has("lamp_cyan")
-		and plaza_assets.has("planter_flower")
+		and plaza_assets.has("planter_long_ne")
 		and plaza_assets.has("holo_sign"),
-		"Central Plaza must exercise seating, lighting, planting and holographic wayfinding assets"
+		"Central Plaza must exercise seating, lighting, structured planting and holographic wayfinding"
 	)
 	for prop_path: String in [
-		"res://assets/world/tblack/city/props/bench_ne.svg",
-		"res://assets/world/tblack/city/props/planter_flower.svg",
-		"res://assets/world/tblack/city/props/lamp_cyan.svg",
-		"res://assets/world/tblack/city/props/holo_sign.svg",
-		"res://assets/world/tblack/city/props/railing_ne.svg",
-		"res://assets/world/tblack/city/props/flower_bed_ne.svg",
-		"res://assets/world/tblack/city/props/flower_bed_nw.svg",
+		"res://assets/world/tblack/city/props_v2/bench_ne.png",
+		"res://assets/world/tblack/city/props_v2/bench_nw.png",
+		"res://assets/world/tblack/city/props_v2/planter_long_ne.png",
+		"res://assets/world/tblack/city/props_v2/lamp_cyan.png",
+		"res://assets/world/tblack/city/props_v2/holo_sign.png",
+		"res://assets/world/tblack/city/props_v2/railing_ne.png",
 	]:
-		assert(ResourceLoader.exists(prop_path), "Central City landscaping asset must be vendored: %s" % prop_path)
+		assert(ResourceLoader.exists(prop_path), "Central City pixel street-furniture asset must be vendored: %s" % prop_path)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the 64x32 safe plaza lane")
@@ -129,16 +129,17 @@ func _ready() -> void:
 		"DigiLab must keep the lower facade in front of actors while reserving occlusion for the upper/back art"
 	)
 	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 4), "digilab")
-	assert(
-		digilab_floor is Dictionary
-		and String((digilab_floor as Dictionary).get("surface", "")) == "stone_soft",
-		"DigiLab building lot must keep neutral civic paving outside the pedestrian route"
-	)
 	var digilab_approach = digilab_section.call("_ground_presentation", Vector2i(8, 10), "digilab")
 	assert(
-		digilab_approach is Dictionary
-		and String((digilab_approach as Dictionary).get("surface", "")) == "path",
-		"DigiLab entrance must connect to the brighter city pedestrian network"
+		digilab_floor is Dictionary
+		and digilab_approach is Dictionary
+		and String((digilab_floor as Dictionary).get("surface", "")) == "main"
+		and String((digilab_approach as Dictionary).get("surface", "")) == "main",
+		"DigiLab circulation must come from the continuous gray city field, not painted path cells"
+	)
+	assert(
+		digilab_section.get_node_or_null("DigiLabExterior/DigiLabFoundation/Top") != null,
+		"DigiLab must sit on an authored raised foundation derived from its measured footprint"
 	)
 	var digilab_collision := digilab_section.get_node_or_null(
 		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
@@ -268,13 +269,14 @@ func _ready() -> void:
 	var training_lot = training_section.call("_ground_presentation", Vector2i(2, 2), "training")
 	assert(
 		training_forecourt is Dictionary
-		and String((training_forecourt as Dictionary).get("surface", "")) == "path",
-		"Training Center entrance must meet the connected pedestrian route"
+		and training_lot is Dictionary
+		and String((training_forecourt as Dictionary).get("surface", "")) == "main"
+		and String((training_lot as Dictionary).get("surface", "")) == "main",
+		"Training Center must be surrounded by one continuous gray circulation field"
 	)
 	assert(
-		training_lot is Dictionary
-		and String((training_lot as Dictionary).get("surface", "")) == "stone_soft",
-		"Training Center district must use the same neutral 0054 pavement as the DigiLab surroundings"
+		training_section.get_node_or_null("TrainingCenterExterior/TrainingCenterFoundation/Top") != null,
+		"Training Center must sit on a raised foundation instead of blending into the street"
 	)
 	var training_collision := training_section.get_node_or_null(
 		"TrainingCenterExterior/FootprintCollision/CollisionPolygon2D"
@@ -352,16 +354,17 @@ func _ready() -> void:
 		"Hospital stairs and doorway must remain walkable"
 	)
 	var hospital_lot = hospital_section.call("_ground_presentation", Vector2i(5, 4), "hospital")
-	assert(
-		hospital_lot is Dictionary
-		and String((hospital_lot as Dictionary).get("surface", "")) == "stone_soft",
-		"Hospital lot must keep neutral civic paving outside the pedestrian route"
-	)
 	var hospital_approach = hospital_section.call("_ground_presentation", Vector2i(7, 10), "hospital")
 	assert(
-		hospital_approach is Dictionary
-		and String((hospital_approach as Dictionary).get("surface", "")) == "path",
-		"Hospital entrance must connect to the brighter city pedestrian network"
+		hospital_lot is Dictionary
+		and hospital_approach is Dictionary
+		and String((hospital_lot as Dictionary).get("surface", "")) == "main"
+		and String((hospital_approach as Dictionary).get("surface", "")) == "main",
+		"Hospital circulation must be defined by the gray street field around its raised lot"
+	)
+	assert(
+		hospital_section.get_node_or_null("HospitalExterior/HospitalFoundation/Top") != null,
+		"Hospital must sit on a raised foundation instead of blending into the street"
 	)
 	var hospital_collision := hospital_section.get_node_or_null(
 		"HospitalExterior/FootprintCollision/CollisionPolygon2D"
