@@ -79,8 +79,25 @@ func _ready() -> void:
 	)
 	assert(
 		plaza_section.get_node_or_null("CityDecor/LampBay_01/PaverSocket") != null
-		and plaza_section.get_node_or_null("CityDecor/LampBay_01/MountingSocket") != null,
-		"Approved lamps must be grounded by an authored flush paving socket"
+		and plaza_section.get_node_or_null("CityDecor/LampBay_01/MountingCollar") != null
+		and plaza_section.get_node_or_null("CityDecor/LampBay_01/MountingInset") != null,
+		"Approved lamps must be seated into the paving with a tight material collar, never a black floating plate"
+	)
+
+	var first_plaza_lamp_local := plaza_section.grid_to_world(Vector2(2.2, 5.2))
+	var first_plaza_lamp_world := plaza_section.global_position + first_plaza_lamp_local
+	assert(
+		not plaza_section.is_walkable_world_position(first_plaza_lamp_world),
+		"Lamp pedestal center must block movement"
+	)
+	assert(
+		plaza_section.is_walkable_world_position(first_plaza_lamp_world + Vector2(11.0, 0.0)),
+		"Lamp collision must hug the pedestal rather than exposing a large invisible square"
+	)
+	assert(
+		not bool(world.call("can_actor_move_to", first_plaza_lamp_world + Vector2(12.0, 0.0), player))
+		and bool(world.call("can_actor_move_to", first_plaza_lamp_world + Vector2(18.0, 0.0), player)),
+		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
