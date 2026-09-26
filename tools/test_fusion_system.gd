@@ -84,6 +84,15 @@ func _test_material_guards() -> void:
 	assert(not bool(equipped.get("can_fuse", false)), "Equipped material must be rejected instead of silently destroying equipment")
 	ex.equipment.clear()
 
+	var alternate_ex := _factory.create_player_by_name("ExVeemon", 36, 100)
+	collection.add_instance(alternate_ex, "guard_exveemon_alternate", "ExVeemon")
+	ex.current_hp = 0
+	var explicit_ids: Array[String] = [ex.id, sting.id]
+	var explicit_invalid := _fusion.get_preview(collection, "paildramon", explicit_ids)
+	assert(not bool(explicit_invalid.get("can_fuse", false)), "An invalid explicit material must fail closed instead of silently consuming another eligible copy")
+	assert(String((explicit_invalid.get("selected_ids", []) as Array)[0]).is_empty(), "Invalid explicit slot must remain unresolved")
+	_refill(ex)
+
 	assert(collection.set_squad_ids([ex.id], [], 0, 3, 3), "Hospital guard fixture must place the material in Active")
 	assert(collection.admit_to_hospital(ex.id), "Hospital guard fixture must admit the material")
 	var hospitalized := _fusion.get_preview(collection, "paildramon")
