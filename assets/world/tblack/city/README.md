@@ -35,8 +35,7 @@ Each asset entry defines:
 - `path`: runtime texture path;
 - `foot`: exact pixel anchor touching the ground plane;
 - `scale`: authored render scale;
-- `blocker`: small ground-plane walkability footprint;
-- optional shader metadata.
+- `blocker`: small ground-plane walkability footprint.
 
 District profiles contain stable asset IDs and fractional logical-grid positions. Replacing
 a prop never requires editing section code: keep its asset ID and update the catalog path,
@@ -44,23 +43,21 @@ anchor, scale or blocker.
 
 ## Current runtime kit
 
-The rejected SVG prototype kit was removed. Runtime street furniture now lives under
-`assets/world/tblack/city/props_v2/` as transparent PNG pixel art rendered with nearest
-filtering.
+All previously generated prototype decorations were removed. The runtime kit currently
+contains only the two approved AI-generated street lamps, extracted from the accepted
+two-lamp sheet and normalized as individual transparent PNG sprites:
 
-The intentionally small kit contains:
+- `lamp_blue.png`: cyan/blue technological city lamp;
+- `lamp_yellow.png`: warm yellow civic/market lamp.
 
-- benches in both isometric ground directions;
-- cyan and warm civic lamps;
-- long planted flower beds in both directions;
-- public data terminals;
-- framed holographic wayfinding signs;
-- canal railings in both directions.
+Both assets are stored under `assets/world/tblack/city/props_v2/`, rendered with nearest
+filtering, use a bottom-center ground anchor and preserve the fixed isometric viewing
+direction used by Central City.
 
-The palette is derived from the existing authored city exteriors: graphite structure,
-light-gray civic materials, cyan data accents, warm market lighting and saturated planting.
-Props are placed in deliberate groups around destinations and raised lots rather than
-uniformly scattered across open pavement.
+The blue lamp is the default civic/technology light. The yellow variant is reserved for
+warmer areas such as Data Market and selected residential blocks. Lamp placement is
+deliberately sparse and rhythmic around open circulation areas; foundations and raised
+landscape islands remain the primary elements that define the city's urban structure.
 
-Holographic signs use `city_hologram.gdshader`. Other props are static and have no
-per-frame script processing.
+Future decoration families should be added one at a time only after their final art has
+been visually approved.
