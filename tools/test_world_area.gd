@@ -267,6 +267,88 @@ func _ready() -> void:
 		"Training Center interior exit must return to the paved approach in front of the door"
 	)
 
+	var hospital_section := area.get_node_or_null("Section_1_0") as WorldAreaSection
+	assert(hospital_section != null, "Digi Hospital must remain in the authored east-central section")
+	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/Building") as Sprite2D
+	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/UpperOccluder") as Sprite2D
+	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
+	assert(hospital_upper != null, "Hospital must split upper occlusion from its foreground facade")
+	assert(
+		hospital_building.texture != null
+		and hospital_building.texture.resource_path == "res://assets/world/tblack/hospital/hospital.png",
+		"Hospital exterior must use the project-supplied hospital asset"
+	)
+	assert(
+		hospital_building.scale.distance_to(Vector2(0.35, 0.30975)) < 0.001
+		and absf(hospital_building.rotation_degrees) < 0.01,
+		"Hospital source projection must be normalized without introducing a visible tilt"
+	)
+	assert(
+		hospital_building.z_index == 880
+		and hospital_upper.z_index == 1800
+		and hospital_upper.region_enabled
+		and absf(hospital_upper.region_rect.size.y - 650.0) < 0.01,
+		"Hospital depth split must keep the front facade readable while allowing rear occlusion"
+	)
+	var hospital_entrance := hospital_section.get_node_or_null(
+		"HospitalExterior/HospitalEntrance"
+	) as Area2D
+	assert(hospital_entrance != null, "Hospital must expose its authored doorway threshold")
+	var expected_hospital_door := hospital_section.grid_to_world(Vector2(7, 10))
+	assert(
+		hospital_entrance.position.is_equal_approx(expected_hospital_door),
+		"Hospital threshold must align to the centered straight-down door"
+	)
+	assert(
+		hospital_section.is_walkable_world_position(hospital_section.global_position + expected_hospital_door),
+		"Hospital stairs and doorway must remain walkable"
+	)
+	var hospital_lot = hospital_section.call("_ground_presentation", Vector2i(5, 5), "hospital")
+	assert(
+		hospital_lot is Dictionary
+		and String((hospital_lot as Dictionary).get("surface", "")) == "stone_soft",
+		"Hospital district must use the same neutral 0054 pavement as the authored city services"
+	)
+	var hospital_collision := hospital_section.get_node_or_null(
+		"HospitalExterior/FootprintCollision/CollisionPolygon2D"
+	) as CollisionPolygon2D
+	assert(
+		hospital_collision != null and hospital_collision.polygon.size() == 25,
+		"Hospital must use the measured source-space ground-contact footprint"
+	)
+	assert(
+		not hospital_section.is_walkable_world_position(
+			hospital_section.global_position + hospital_section.grid_to_world(Vector2(7, 7))
+		),
+		"Hospital structure footprint must block movement through the building"
+	)
+	var hospital_door_local := hospital_section.grid_to_world(Vector2(7, 10))
+	for source_point: Vector2 in [
+		Vector2(120.0, 820.0),
+		Vector2(350.0, 900.0),
+		Vector2(930.0, 900.0),
+		Vector2(1130.0, 820.0),
+	]:
+		var hospital_local = hospital_section.call("_hospital_source_to_local", source_point, hospital_door_local)
+		assert(
+			hospital_local is Vector2
+			and not hospital_section.is_walkable_world_position(
+				hospital_section.global_position + (hospital_local as Vector2)
+			),
+			"Hospital visible structure point %s must be collision-covered" % str(source_point)
+		)
+	var hospital_payload = hospital_entrance.get_meta("interior_payload", {})
+	assert(hospital_payload is Dictionary, "Hospital doorway must preserve the service payload")
+	assert(String((hospital_payload as Dictionary).get("service", "")) == "hospital", "Hospital doorway must open the hospital service")
+	var hospital_return = (hospital_payload as Dictionary).get("return_position", [])
+	var expected_hospital_return := hospital_section.global_position + hospital_section.grid_to_world(Vector2(9, 12))
+	assert(
+		hospital_return is Array
+		and hospital_return.size() >= 2
+		and Vector2(float(hospital_return[0]), float(hospital_return[1])).is_equal_approx(expected_hospital_return),
+		"Hospital interior exit must return straight down the centered entrance approach"
+	)
+
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(-28, -28))),
 		"Clipped northwest corner must be digital void rather than invisible walkable floor"
