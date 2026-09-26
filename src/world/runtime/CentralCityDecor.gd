@@ -87,32 +87,21 @@ static func build_for_section(
 		var foot := _vec2(asset.get("foot", [texture.get_width() * 0.5, texture.get_height()]))
 		var scale_value := float(asset.get("scale", 1.0))
 		var world_foot := _grid_to_world(cell)
-		# The sprite depth anchor is intentionally the front-most foot. Ground
-		# treatments and collision use the centroid of the four contact points,
-		# which sits slightly behind that sorting anchor on an isometric bench.
+		# The sprite depth anchor is intentionally the front-most foot. Collision
+		# uses the centroid of the four contact points, which sits slightly behind
+		# that sorting anchor on an isometric bench.
 		var ground_center := world_foot + _vec2(asset.get("ground_offset", [0.0, 0.0]))
 
 		var surround_style := String(placement.get("surround", ""))
 		if not surround_style.is_empty():
 			var accent := _color(placement.get("accent", asset.get("accent", [0.24, 0.88, 1.0, 1.0])))
-			var surround: Node2D
-			if surround_style.begins_with("seating"):
-				surround = CITY_URBAN.create_bench_surround(
-					"BenchSurround_%02d" % (count + 1),
-					ground_center,
-					accent,
-					surround_style.ends_with("_nw")
-				)
-			else:
-				surround = CITY_URBAN.create_lamp_surround(
-					"LampSurround_%02d" % (count + 1),
-					world_foot,
-					accent,
-					surround_style == "landscape"
-				)
+			var surround := CITY_URBAN.create_lamp_surround(
+				"LampSurround_%02d" % (count + 1),
+				world_foot,
+				accent,
+				surround_style == "landscape"
+			)
 			surround.z_index = GROUND_DECOR_Z
-			if surround_style.begins_with("seating"):
-				surround.set_meta("ground_center", ground_center)
 			root.add_child(surround)
 
 		var sprite := Sprite2D.new()
@@ -135,7 +124,7 @@ static func build_for_section(
 
 		var collision_polygon := _collision_polygon(ground_center, asset)
 		if collision_polygon.size() >= 3:
-			register_blocker.call(collision_polygon)
+			register_blocker.call(collision_polygon, asset_id)
 			sprite.set_meta("collision_polygon", collision_polygon)
 		sprite.set_meta("ground_center", ground_center)
 		used[asset_id] = true
