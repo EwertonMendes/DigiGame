@@ -120,12 +120,14 @@ func _ready() -> void:
 
 	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 11.0))
 	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
+	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
+	var expected_ground_world := plaza_section.global_position + expected_ground_center
 	assert(
-		not plaza_section.is_walkable_world_position(first_plaza_bench_world),
-		"Bench center must block movement through the visible seat footprint"
+		not plaza_section.is_walkable_world_position(expected_ground_world),
+		"Bench ground footprint must block movement through the visible four-foot contact area"
 	)
 	assert(
-		plaza_section.is_walkable_world_position(first_plaza_bench_world + Vector2(34.0, 0.0)),
+		plaza_section.is_walkable_world_position(expected_ground_world + Vector2(34.0, 0.0)),
 		"Bench collision must follow the isometric seat footprint instead of creating a broad invisible box"
 	)
 
@@ -153,7 +155,6 @@ func _ready() -> void:
 		"Central Plaza benches must sit in compact flush seating bays attached to the front facades of landscape islands"
 	)
 	assert(first_bench_surround != null, "Central Plaza bench must have a matching ground seating bay")
-	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
 	assert(
 		(first_plaza_bench.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center)
 		and (first_bench_surround.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center),
