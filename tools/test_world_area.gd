@@ -77,14 +77,23 @@ func _ready() -> void:
 		plaza_section.get_decoration_count() >= 2,
 		"Central Plaza lamps must stay on the outer civic/landscape edge rather than crowding the guide or pool"
 	)
+	var plaza_decor := plaza_section.get_node_or_null("CityDecor")
 	assert(
-		plaza_section.get_node_or_null("CityDecor/LampBay_01/PaverSocket") != null
-		and plaza_section.get_node_or_null("CityDecor/LampBay_01/MountingCollar") != null
-		and plaza_section.get_node_or_null("CityDecor/LampBay_01/MountingInset") != null,
-		"Approved lamps must be seated into the paving with a tight material collar, never a black floating plate"
+		plaza_decor != null
+		and plaza_section.get_node_or_null("CityDecor/LampBay_01") == null,
+		"City lamps must mount directly into the ground with no visible socket, plate or square underneath"
 	)
-
+	var first_plaza_lamp: Sprite2D = null
+	for child in plaza_decor.get_children():
+		if child is Sprite2D:
+			first_plaza_lamp = child as Sprite2D
+			break
 	var first_plaza_lamp_local := plaza_section.grid_to_world(Vector2(2.2, 5.2))
+	assert(
+		first_plaza_lamp != null
+		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 48.0)),
+		"Lamp sprite must be lowered so the center of its visible pedestal sits on the authored ground contact"
+	)
 	var first_plaza_lamp_world := plaza_section.global_position + first_plaza_lamp_local
 	assert(
 		not plaza_section.is_walkable_world_position(first_plaza_lamp_world),
