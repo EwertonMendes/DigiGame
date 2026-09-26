@@ -448,6 +448,9 @@ func commit_fusion(
 		var instance_id := raw_id.strip_edges()
 		if instance_id.is_empty() or seen.has(instance_id) or not _instances_by_id.has(instance_id) or _hospital_ids.has(instance_id):
 			return false
+		var material := get_instance(instance_id)
+		if material == null or material.is_fainted() or not material.equipment.is_empty():
+			return false
 		seen[instance_id] = true
 		normalized.append(instance_id)
 	for raw_item_id in item_costs.keys():
