@@ -192,14 +192,14 @@ func _ready() -> void:
 	# StaticBody2D must stop the CharacterBody2D during the swept movement.
 	var original_player_position := player.global_position
 	player.global_position = expected_ground_world + Vector2(0.0, -45.0)
-	player.velocity = Vector2.ZERO
+	player.set("velocity", Vector2.ZERO)
 	player.call("_try_move", Vector2(0.0, 90.0))
 	assert(
 		player.global_position.y < expected_ground_world.y - 8.0,
 		"Player movement must not tunnel through a bench during a large movement step"
 	)
 	player.global_position = original_player_position
-	player.velocity = Vector2.ZERO
+	player.set("velocity", Vector2.ZERO)
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
