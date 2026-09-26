@@ -2,6 +2,7 @@ extends RefCounted
 class_name DebugStateTools
 
 const CollectionScript = preload("res://src/collection/PlayerCollection.gd")
+const FactoryScript = preload("res://src/digimon/DigimonFactory.gd")
 const SnapshotStoreScript = preload("res://src/debug/DebugSnapshotStore.gd")
 const HISTORY_LIMIT := 120
 
@@ -92,20 +93,226 @@ func set_fusion_data(fusion_id: String, value: int) -> bool:
 
 
 func unlock_all_fusions() -> int:
+	return set_all_fusion_data(100)
+
+
+func lock_all_fusions() -> int:
+	return set_all_fusion_data(0)
+
+
+func set_all_fusion_data(value: int) -> int:
 	var collection := _collection()
 	if collection == null:
 		return 0
+	var target := clampi(value, 0, 100)
 	var count := 0
 	for definition: Dictionary in OverworldState.get_fusion_definitions():
 		var fusion_id := String(definition.get("id", ""))
 		if fusion_id.is_empty():
 			continue
-		collection.set_fusion_data(fusion_id, 100)
-		OverworldState.fusion_progress_changed.emit(fusion_id, {"fusion_id": fusion_id, "after": 100, "unlocked": true})
+		collection.set_fusion_data(fusion_id, target)
+		OverworldState.fusion_progress_changed.emit(fusion_id, {"fusion_id": fusion_id, "after": target, "unlocked": target >= 100})
 		count += 1
 	_emit_full_state_changed()
-	log_action("Unlock all Fusions", "%d recipes" % count)
+	log_action("Set all Fusion Data", "%d recipes = %d" % [count, target])
 	return count
+
+
+func adjust_fusion_data(fusion_id: String, delta: int) -> bool:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	var collection := _collection()
+	if collection == null or clean_id.is_empty() or _fusion_definition(clean_id).is_empty():
+		return false
+	var before := collection.get_fusion_data(clean_id)
+	var target := collection.set_fusion_data(clean_id, before + delta)
+	_emit_full_state_changed()
+	OverworldState.fusion_progress_changed.emit(clean_id, {
+		"fusion_id": clean_id,
+		"before": before,
+		"after": target,
+		"gained": target - before,
+		"unlocked": target >= 100,
+		"newly_unlocked": before < 100 and target >= 100,
+	})
+	log_action("Adjust Fusion Data", "%s · %+d → %d" % [clean_id, delta, target])
+	return true
+
+
+func fusion_material_status(fusion_id: String) -> Dictionary:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	var definition := _fusion_definition(clean_id)
+	var collection := _collection()
+	var result := {"fusion_id": clean_id, "rows": [], "items": []}
+	if collection == null or definition.is_empty():
+		return result
+	var database := OverworldState.get_database() as DigimonDatabase
+	for material: Dictionary in definition.get("materials", []):
+		var kind := String(material.get("type", "digimon"))
+		if kind == "item":
+			var item_id := String(material.get("itemId", ""))
+			var required := maxi(1, int(material.get("amount", 1)))
+			(result["items"] as Array).append({
+				"itemId": item_id,
+				"required": required,
+				"owned": collection.get_item_count(item_id),
+			})
+			continue
+		var seed := String(material.get("speciesSeed", ""))
+		var required := maxi(1, int(material.get("amount", 1)))
+		var min_level := clampi(int(material.get("minLevel", 1)), 1, 99)
+		var active := 0
+		var reserve := 0
+		var storage := 0
+		var blocked := 0
+		for instance: DigimonInstance in collection.get_instances():
+			if instance.species_seed != seed:
+				continue
+			if collection.is_hospitalized(instance.id) or instance.level < min_level or instance.is_fainted() or not instance.equipment.is_empty():
+				blocked += 1
+				continue
+			var role := collection.get_squad_role(instance.id)
+			if role == PlayerCollection.SQUAD_ROLE_ACTIVE:
+				active += 1
+			elif role == PlayerCollection.SQUAD_ROLE_RESERVE:
+				reserve += 1
+			else:
+				storage += 1
+		var species := database.get_by_seed(seed)
+		(result["rows"] as Array).append({
+			"speciesSeed": seed,
+			"name": String(species.get("name", seed)),
+			"required": required,
+			"minLevel": min_level,
+			"active": active,
+			"reserve": reserve,
+			"storage": storage,
+			"eligible": active + reserve + storage,
+			"blocked": blocked,
+		})
+	return result
+
+
+func spawn_fusion_materials(fusion_id: String, level_bonus: int = 0) -> Dictionary:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	var definition := _fusion_definition(clean_id)
+	var collection := _collection()
+	var result := {"success": false, "spawned": 0, "items": 0, "instance_ids": []}
+	if collection == null or definition.is_empty():
+		return result
+	var database := OverworldState.get_database() as DigimonDatabase
+	var factory := FactoryScript.new(database) as DigimonFactory
+	for material: Dictionary in definition.get("materials", []):
+		var kind := String(material.get("type", "digimon"))
+		var amount := maxi(1, int(material.get("amount", 1)))
+		if kind == "item":
+			var item_id := String(material.get("itemId", "")).strip_edges()
+			if not item_id.is_empty():
+				collection.add_item(item_id, amount)
+				result["items"] = int(result["items"]) + amount
+			continue
+		var seed := String(material.get("speciesSeed", "")).strip_edges()
+		var base_level := clampi(int(material.get("minLevel", 1)), 1, 99)
+		var level := clampi(base_level + maxi(0, level_bonus), 1, 99)
+		for _index in range(amount):
+			var instance := factory.create_player_by_seed(seed, level, 100)
+			if instance == null:
+				continue
+			instance.origin = "debug:fusion_material:%s" % clean_id
+			var species := database.get_by_seed(seed)
+			var key := collection.add_instance(instance, "", String(species.get("name", "digimon")))
+			if key.is_empty():
+				continue
+			(result["instance_ids"] as Array).append(instance.id)
+			result["spawned"] = int(result["spawned"]) + 1
+	result["success"] = int(result["spawned"]) > 0 or int(result["items"]) > 0
+	_emit_full_state_changed()
+	log_action("Spawn Fusion materials", "%s · %d Digimon · %d items" % [clean_id, int(result["spawned"]), int(result["items"])])
+	return result
+
+
+func remove_debug_fusion_materials(fusion_id: String) -> int:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	var collection := _collection()
+	if collection == null or clean_id.is_empty():
+		return 0
+	var prefix := "debug:fusion_material:%s" % clean_id
+	var ids: Array[String] = []
+	for instance: DigimonInstance in collection.get_instances():
+		if instance.origin == prefix:
+			ids.append(instance.id)
+	for instance_id: String in ids:
+		collection.remove_instance(instance_id)
+	if not ids.is_empty():
+		_emit_full_state_changed()
+	log_action("Remove Fusion test materials", "%s · %d removed" % [clean_id, ids.size()])
+	return ids.size()
+
+
+func force_fusion_without_materials(fusion_id: String) -> Dictionary:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	var definition := _fusion_definition(clean_id)
+	var collection := _collection()
+	var result := {"success": false, "reason": "invalid_debug_fusion"}
+	if collection == null or definition.is_empty():
+		return result
+	var database := OverworldState.get_database() as DigimonDatabase
+	var factory := FactoryScript.new(database) as DigimonFactory
+	var spawned_ids: Array[String] = []
+	var original_item_counts: Dictionary = {}
+	var previous_data := collection.get_fusion_data(clean_id)
+	collection.set_fusion_data(clean_id, 100)
+
+	for material: Dictionary in definition.get("materials", []):
+		var kind := String(material.get("type", "digimon"))
+		var amount := maxi(1, int(material.get("amount", 1)))
+		if kind == "item":
+			var item_id := String(material.get("itemId", "")).strip_edges()
+			if item_id.is_empty():
+				continue
+			original_item_counts[item_id] = collection.get_item_count(item_id)
+			collection.add_item(item_id, amount)
+			continue
+		var seed := String(material.get("speciesSeed", "")).strip_edges()
+		var level := clampi(int(material.get("minLevel", 1)), 1, 99)
+		for _index in range(amount):
+			var instance := factory.create_player_by_seed(seed, level, 100)
+			if instance == null:
+				continue
+			instance.origin = "debug:fusion_force:%s" % clean_id
+			var species := database.get_by_seed(seed)
+			var key := collection.add_instance(instance, "", String(species.get("name", "digimon")))
+			if not key.is_empty():
+				spawned_ids.append(instance.id)
+
+	result = OverworldState.fuse_digimon(clean_id, spawned_ids)
+
+	for raw_item_id in original_item_counts.keys():
+		var item_id := String(raw_item_id)
+		var original := int(original_item_counts[raw_item_id])
+		var current := collection.get_item_count(item_id)
+		if current < original:
+			collection.add_item(item_id, original - current)
+		elif current > original:
+			collection.consume_item(item_id, current - original)
+
+	if not bool(result.get("success", false)):
+		for instance_id: String in spawned_ids:
+			if collection.has_instance(instance_id):
+				collection.remove_instance(instance_id)
+
+	collection.set_fusion_data(clean_id, previous_data)
+	OverworldState.fusion_progress_changed.emit(clean_id, {"fusion_id": clean_id, "after": previous_data, "unlocked": previous_data >= 100})
+	_emit_full_state_changed()
+	log_action("Force Fusion without materials", "%s · %s" % [clean_id, "success" if bool(result.get("success", false)) else String(result.get("reason", "failed"))])
+	return result
+
+
+func _fusion_definition(fusion_id: String) -> Dictionary:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	for definition: Dictionary in OverworldState.get_fusion_definitions():
+		if String(definition.get("id", "")) == clean_id:
+			return definition
+	return {}
 
 
 func set_flag(flag_id: String, value: bool) -> bool:
