@@ -23,8 +23,7 @@ MOV_BY_RANK = {
     "Ultimate": 4,
     "Mega": 5,
     "Ultra": 5,
-    "Armor": 4,
-    "Hybrid": 5,
+    "Fusion": 6,
 }
 MOV_OVERRIDES = {
     "agumon": 4,
