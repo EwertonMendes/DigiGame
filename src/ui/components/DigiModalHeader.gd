@@ -508,6 +508,7 @@ func _layout_workspace() -> void:
 		var maximum_uniform_width := (target_tabs_width + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count)
 		if _workspace_full_label_tabs:
 			_layout_workspace_full_label_tabs(angled_tabs, maximum_uniform_width)
+			_tabs_root.update_minimum_size()
 			_tabs_root.size = Vector2(target_tabs_width, 50.0)
 			_tabs_root.queue_sort()
 			return
@@ -624,11 +625,16 @@ func _layout_workspace_full_label_tabs(angled_tabs: bool, tab_width: float) -> v
 			label.clip_text = true
 			label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 			_set_tab_label_intrinsic_width(label)
+			label.update_minimum_size()
 		if icon != null:
 			icon.custom_minimum_size = Vector2(icon_size, icon_size)
+			icon.update_minimum_size()
 		if row != null:
 			row.add_theme_constant_override("separation", separation)
+			row.update_minimum_size()
 		if angled_tabs and content_host is MarginContainer:
 			var safe := content_host as MarginContainer
 			safe.add_theme_constant_override("margin_left", safe_margin)
 			safe.add_theme_constant_override("margin_right", safe_margin)
+			safe.update_minimum_size()
+		button.update_minimum_size()
