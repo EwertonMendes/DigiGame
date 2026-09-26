@@ -15,6 +15,16 @@ func _ready() -> void:
 	var player := world.call("get_player") as Node2D
 	var area := world.call("get_area_scene") as WorldAreaScene
 	assert(saw_partial_area, "Area construction must yield across frames instead of blocking the first frame")
+	assert(InputMap.has_action("player_run"), "Player run action must be registered when the overworld actor initializes")
+	var run_button := world.get_node_or_null("WorldUI/Root/MobileControls/RunToggle") as Button
+	assert(run_button != null and run_button.text == "RUN", "Touch HUD must expose RUN as the default walk-mode action")
+	assert(not bool(player.call("is_touch_run_enabled")), "Touch running must default to walking")
+	world.call("_toggle_touch_run")
+	assert(bool(player.call("is_touch_run_enabled")), "Touch RUN must enable the player run state")
+	assert(run_button.text == "WALK", "Touch run button must offer WALK while running is active")
+	world.call("_toggle_touch_run")
+	assert(not bool(player.call("is_touch_run_enabled")), "Touch WALK must restore normal movement")
+	assert(run_button.text == "RUN", "Touch run button must return to RUN after walking is restored")
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
@@ -119,27 +129,23 @@ func _ready() -> void:
 	)
 
 	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 11.0))
-	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
 	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
 	var expected_ground_world := plaza_section.global_position + expected_ground_center
 	assert(
 		not plaza_section.is_walkable_world_position(expected_ground_world),
-		"Bench ground footprint must block movement through the visible four-foot contact area"
+		"Bench ground footprint must block movement through the visible seat contact area"
 	)
 	assert(
 		plaza_section.is_walkable_world_position(expected_ground_world + Vector2(34.0, 0.0)),
-		"Bench collision must follow the isometric seat footprint instead of creating a broad invisible box"
+		"Bench collision must stay fitted to the seat instead of creating a broad invisible wall"
 	)
 
 	var first_plaza_bench: Sprite2D = null
-	var first_bench_surround: Node2D = null
 	var bench_surround_count := 0
 	for child in plaza_decor.get_children():
 		if child is Sprite2D and String(child.name).begins_with("Bench") and first_plaza_bench == null:
 			first_plaza_bench = child as Sprite2D
 		elif child is Node2D and String(child.name).begins_with("BenchSurround"):
-			if first_bench_surround == null:
-				first_bench_surround = child as Node2D
 			bench_surround_count += 1
 	assert(first_plaza_bench != null, "Central Plaza must instantiate the approved bench art")
 	var bench_atlas := first_plaza_bench.texture as AtlasTexture
@@ -151,28 +157,25 @@ func _ready() -> void:
 		"Approved bench must render from the user-supplied bench.png sheet at gameplay scale"
 	)
 	assert(
-		bench_surround_count == 2,
-		"Central Plaza benches must sit in compact flush seating bays attached to the front facades of landscape islands"
+		bench_surround_count == 0,
+		"Benches must sit directly on the normal city pavement without an exclusive floor or seating bay"
 	)
-	assert(first_bench_surround != null, "Central Plaza bench must have a matching ground seating bay")
 	assert(
-		(first_plaza_bench.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center)
-		and (first_bench_surround.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center),
-		"Bench collision and paving must share the visible four-foot ground centroid instead of the depth-sort anchor"
+		(first_plaza_bench.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center),
+		"Bench collision must stay aligned to the visible four-foot ground centroid"
 	)
-	var first_bench_border := first_bench_surround.get_node_or_null("OuterBorder") as Line2D
-	assert(first_bench_border != null, "Bench seating bay must expose its fitted outer border")
-	var border_min := Vector2(INF, INF)
-	var border_max := Vector2(-INF, -INF)
-	for point: Vector2 in first_bench_border.points:
-		border_min.x = minf(border_min.x, point.x)
-		border_min.y = minf(border_min.y, point.y)
-		border_max.x = maxf(border_max.x, point.x)
-		border_max.y = maxf(border_max.y, point.y)
+
+	var bench_collision_body := plaza_section.get_node_or_null("BenchCollisions") as StaticBody2D
 	assert(
-		(border_max - border_min).is_equal_approx(Vector2(64.0, 32.0)),
-		"Bench paving must fit exactly one compact 64x32 isometric footprint under the four feet"
+		bench_collision_body != null and bench_collision_body.get_child_count() == 2,
+		"Central Plaza benches must expose fitted physics collision in addition to walkability blockers"
 	)
+	for child in bench_collision_body.get_children():
+		assert(
+			child is CollisionPolygon2D and (child as CollisionPolygon2D).polygon.size() >= 4,
+			"Each bench must use its fitted isometric collision polygon for swept CharacterBody2D collision"
+		)
+
 	var southwest_tree_center := plaza_section.grid_to_world(Vector2(2.0, 11.0))
 	var southwest_tree_outer_edge := southwest_tree_center + Vector2(39.2, 19.6)
 	assert(
@@ -183,6 +186,20 @@ func _ready() -> void:
 		first_plaza_bench_local.distance_to(southwest_tree_outer_edge) > 30.0,
 		"Bench sprite must sit fully outside the landscape island instead of overlapping grass or planter paving"
 	)
+
+	# The endpoint is clear pavement beyond the narrow bench footprint. A pure
+	# point-in-polygon destination check would tunnel through it; the mirrored
+	# StaticBody2D must stop the CharacterBody2D during the swept movement.
+	var original_player_position := player.global_position
+	player.global_position = expected_ground_world + Vector2(0.0, -45.0)
+	player.velocity = Vector2.ZERO
+	player.call("_try_move", Vector2(0.0, 90.0))
+	assert(
+		player.global_position.y < expected_ground_world.y - 8.0,
+		"Player movement must not tunnel through a bench during a large movement step"
+	)
+	player.global_position = original_player_position
+	player.velocity = Vector2.ZERO
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
