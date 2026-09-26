@@ -27,7 +27,7 @@ func calculate(player_snapshots: Array[Dictionary], defeated_enemy_snapshots: Ar
 
 
 func digi_data_for_enemy(enemy_level: int, species: Dictionary, profile: String = "wild", difficulty_modifier: float = 1.0) -> int:
-	if species.is_empty():
+	if species.is_empty() or String(species.get("rank", "")) == "Fusion" or not bool(species.get("reconstructable", true)):
 		return 0
 	var base := _balance.digi_data_base_for_rank(String(species.get("rank", "Rookie")), 10)
 	var level_rate := _balance.reward_number("digiDataLevelMultiplierPerLevel", 0.0)
@@ -57,7 +57,8 @@ func _apply_enemy_economic_rewards(rewards: BattleRewards, enemy: Dictionary, di
 	rewards.bits += bits_for_enemy(level, species, profile, modifier)
 	var species_name := String(species.get("name", seed))
 	var data_gain := digi_data_for_enemy(level, species, profile, modifier)
-	rewards.digi_data[species_name] = int(rewards.digi_data.get(species_name, 0)) + data_gain
+	if data_gain > 0:
+		rewards.digi_data[species_name] = int(rewards.digi_data.get(species_name, 0)) + data_gain
 
 
 func _apply_player_xp(rewards: BattleRewards, player: Dictionary, enemies: Array[Dictionary], difficulty: float) -> void:
