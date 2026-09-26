@@ -192,9 +192,9 @@ func _ready() -> void:
 		"Training Center exterior must use the supplied project asset"
 	)
 	assert(
-		training_building.scale.distance_to(Vector2(0.36, 0.36)) < 0.001
-		and absf(training_building.rotation_degrees) < 0.001,
-		"Training Center must preserve the authored isometric axes with uniform scaling"
+		training_building.scale.distance_to(Vector2(0.36, 0.28231)) < 0.001
+		and absf(training_building.rotation_degrees - (-2.20613)) < 0.01,
+		"Training Center source projection must be corrected to the 64x32 city axes"
 	)
 	assert(
 		training_building.z_index == 880
@@ -217,16 +217,16 @@ func _ready() -> void:
 		"Training Center stairs and doorway must remain walkable"
 	)
 	var training_forecourt = training_section.call("_ground_presentation", Vector2i(7, 12), "training")
-	var training_lawn = training_section.call("_ground_presentation", Vector2i(2, 2), "training")
+	var training_lot = training_section.call("_ground_presentation", Vector2i(2, 2), "training")
 	assert(
 		training_forecourt is Dictionary
 		and String((training_forecourt as Dictionary).get("surface", "")) == "stone_soft",
-		"Training Center entrance must meet a dedicated 0054 stone forecourt"
+		"Training Center entrance must meet the standard 0054 city pavement"
 	)
 	assert(
-		training_lawn is Dictionary
-		and String((training_lawn as Dictionary).get("surface", "")) == "training",
-		"Training district must retain its green identity outside the authored building lot"
+		training_lot is Dictionary
+		and String((training_lot as Dictionary).get("surface", "")) == "stone_soft",
+		"Training Center district must use the same neutral 0054 pavement as the DigiLab surroundings"
 	)
 	var training_collision := training_section.get_node_or_null(
 		"TrainingCenterExterior/FootprintCollision/CollisionPolygon2D"
