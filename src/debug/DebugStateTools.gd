@@ -59,7 +59,7 @@ func set_digi_data(species_name_or_seed: String, value: int) -> bool:
 	var species := database.get_by_seed(species_name_or_seed)
 	if species.is_empty():
 		species = database.get_by_name(species_name_or_seed)
-	if species.is_empty():
+	if species.is_empty() or String(species.get("rank", "")) == "Fusion" or not bool(species.get("reconstructable", true)):
 		return false
 	var seed := String(species.get("seed", ""))
 	var current := collection.get_digi_data(seed)
