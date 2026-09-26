@@ -336,10 +336,10 @@
       {
         "asset": "bench_nw",
         "cell": [
-          8,
-          1
+          2.5,
+          2.2
         ],
-        "role": "canal_northeast_promenade_seating",
+        "role": "canal_northwest_promenade_seating",
         "surround": "seating_nw"
       }
     ],
