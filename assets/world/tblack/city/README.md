@@ -24,9 +24,12 @@ script or placement code should need to change.
 
 ## Current visual language
 
-The temporary/foundation kit follows the Central City exterior palette: graphite structure,
-light gray civic materials, cyan data lighting, warm market lighting and saturated planted
-greens. Holographic signs use `city_hologram.gdshader`; all other props are static and have
+The foundation kit follows the Central City exterior palette: graphite structure,
+light-gray civic materials, cyan data lighting, warm market lighting and saturated planted
+greens. The second-pass assets intentionally use deeper isometric silhouettes and larger
+landscape masses so benches, planters and signs read like street furniture instead of UI
+icons placed on the map. Long flower beds and clustered props are preferred over uniform
+single-object scattering. Holographic signs use `city_hologram.gdshader`; all other props are static and have
 no per-frame script processing.
 
 Large buildings remain dedicated authored assets. This kit is only for repeatable city-scale
