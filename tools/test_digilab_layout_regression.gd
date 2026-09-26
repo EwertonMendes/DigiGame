@@ -289,7 +289,12 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 		"ascension": "Ascension / Expansion",
 	}
 	var uniform_width := -1.0
-	var tabs_rect := tabs_root.get_global_rect()
+	if bits != null and bits.visible and tabs_root.position.x + tabs_root.size.x > bits.position.x - 1.0:
+		print("[digilab-layout] HeaderTabs escaped behind Bits")
+		return false
+	if tabs_root.position.x + tabs_root.size.x > close.position.x - 1.0:
+		print("[digilab-layout] HeaderTabs escaped behind Close")
+		return false
 	for tab_id: String in ["convert", "party", "fusion", "ascension"]:
 		var button: Button = header.get_tab_button(tab_id)
 		if button == null or button.disabled or button.focus_mode != Control.FOCUS_NONE:
@@ -309,14 +314,8 @@ func _primary_tabs_are_valid(screen: Control, active_id: String) -> bool:
 		if label_rect.position.x < button_rect.position.x - 1.0 or label_rect.end.x > button_rect.end.x + 1.0:
 			print("[digilab-layout] primary tab label escaped button bounds: %s" % tab_id)
 			return false
-		if button_rect.position.x < tabs_rect.position.x - 1.0 or button_rect.end.x > tabs_rect.end.x + 1.0:
+		if button.position.x < -1.0 or button.position.x + button.size.x > tabs_root.size.x + 1.0:
 			print("[digilab-layout] primary tab escaped HeaderTabs bounds: %s" % tab_id)
-			return false
-		if bits != null and bits.visible and button_rect.intersects(bits.get_global_rect()):
-			print("[digilab-layout] primary tab overlaps Bits: %s" % tab_id)
-			return false
-		if button_rect.intersects(close.get_global_rect()):
-			print("[digilab-layout] primary tab overlaps Close: %s" % tab_id)
 			return false
 		if uniform_width < 0.0:
 			uniform_width = button.size.x
