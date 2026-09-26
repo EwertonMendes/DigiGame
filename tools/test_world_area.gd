@@ -54,15 +54,15 @@ func _ready() -> void:
 		"Central City runtime node budget must remain below 1000 nodes"
 	)
 	assert(
-		area.get_decoration_count() >= 60,
-		"Central City must keep a restrained authored street-furniture pass around its urban structure"
+		area.get_decoration_count() >= 30,
+		"Central City must keep a restrained authored lighting pass around its urban structure"
 	)
 	var plaza_section := area.get_node_or_null("Section_0_0") as WorldAreaSection
 	assert(plaza_section != null, "Central Plaza section must remain available for decoration regression coverage")
 	assert(
 		plaza_section.get_node_or_null("CityDecor") != null
-		and plaza_section.get_decoration_count() >= 6,
-		"Central Plaza must keep a composed street-furniture layer without visual scatter"
+		and plaza_section.get_decoration_count() >= 3,
+		"Central Plaza must keep a composed civic-lighting layer without visual scatter"
 	)
 	assert(
 		plaza_section.get_node_or_null("CivicPoolFrame") != null,
@@ -70,21 +70,28 @@ func _ready() -> void:
 	)
 	var plaza_assets := plaza_section.get_decoration_asset_ids()
 	assert(
-		plaza_assets.has("bench_ne")
-		and plaza_assets.has("lamp_cyan")
-		and plaza_assets.has("planter_long_ne")
-		and plaza_assets.has("holo_sign"),
-		"Central Plaza must exercise seating, lighting, structured planting and holographic wayfinding"
+		plaza_assets.has("lamp_blue"),
+		"Central Plaza must use the approved blue generated lamp asset"
 	)
 	for prop_path: String in [
+		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
+		"res://assets/world/tblack/city/props_v2/lamp_yellow.png",
+	]:
+		assert(ResourceLoader.exists(prop_path), "Approved Central City lamp asset must be vendored: %s" % prop_path)
+	for rejected_prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/bench_ne.png",
 		"res://assets/world/tblack/city/props_v2/bench_nw.png",
 		"res://assets/world/tblack/city/props_v2/planter_long_ne.png",
-		"res://assets/world/tblack/city/props_v2/lamp_cyan.png",
+		"res://assets/world/tblack/city/props_v2/planter_long_nw.png",
+		"res://assets/world/tblack/city/props_v2/terminal.png",
 		"res://assets/world/tblack/city/props_v2/holo_sign.png",
 		"res://assets/world/tblack/city/props_v2/railing_ne.png",
+		"res://assets/world/tblack/city/props_v2/railing_nw.png",
 	]:
-		assert(ResourceLoader.exists(prop_path), "Central City pixel street-furniture asset must be vendored: %s" % prop_path)
+		assert(
+			not ResourceLoader.exists(rejected_prop_path),
+			"Rejected prototype decoration must stay removed: %s" % rejected_prop_path
+		)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the 64x32 safe plaza lane")
