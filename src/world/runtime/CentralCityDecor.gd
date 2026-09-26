@@ -70,10 +70,14 @@ static func build_for_section(
 			continue
 		var asset := asset_value as Dictionary
 		var cell := _vec2(placement.get("cell", [0.0, 0.0]))
-		var clearance := _vec2(asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
+		var clearance := _vec2(
+			placement.get("clearance", asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
+		)
 		# Validate the complete authored furniture bay, not only its physical
-		# collision footprint. This keeps lamps and benches away from foundations,
-		# entrances, landscape islands and other authored blockers.
+		# collision footprint. Exact planter-front seating can deliberately reduce
+		# this envelope at placement level because its rear paving is supposed to
+		# meet the landscape-island facade; the bench center still has to be on an
+		# open walkable point before its fitted blocker is registered.
 		if not bool(can_place.call(cell, clearance)):
 			continue
 
