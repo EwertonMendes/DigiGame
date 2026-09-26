@@ -24,16 +24,13 @@ func _ready() -> void:
 	assert(area.get_ground_tile_count() == 4341, "Central City octagonal island must omit only the authored corner void")
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
-	var promenade_paving := area.get_node_or_null("CityGround/Surface_tech_teal") as MeshInstance2D
-	var market_paving := area.get_node_or_null("CityGround/Surface_market") as MeshInstance2D
+	var civic_paving := area.get_node_or_null("CityGround/Surface_stone_soft") as MeshInstance2D
 	assert(
-		main_paving != null and promenade_paving != null and market_paving != null,
-		"Central City must keep its authored hardscape surface batches"
+		main_paving != null and civic_paving != null,
+		"Central City must keep one continuous gray circulation field plus civic accent paving"
 	)
 	assert(
-		main_paving.texture == null
-		and promenade_paving.texture == null
-		and market_paving.texture == null,
+		main_paving.texture == null and civic_paving.texture == null,
 		"Central City hardscape tops must be procedural rather than one texture per gameplay tile"
 	)
 	var paver_material := main_paving.material as ShaderMaterial
@@ -56,6 +53,148 @@ func _ready() -> void:
 		area.get_runtime_node_count() < 1000,
 		"Central City runtime node budget must remain below 1000 nodes"
 	)
+	assert(
+		area.get_decoration_count() >= 12 and area.get_decoration_count() <= 18,
+		"Central City furniture must stay sparse and limited to authored urban anchors"
+	)
+	var plaza_section := area.get_node_or_null("Section_0_0") as WorldAreaSection
+	assert(plaza_section != null, "Central Plaza section must remain available for decoration regression coverage")
+	assert(
+		plaza_section.get_node_or_null("CityDecor") != null
+		and plaza_section.get_decoration_count() >= 4,
+		"Central Plaza must keep sparse lighting and seating composed around its urban edges"
+	)
+	assert(
+		plaza_section.get_node_or_null("CivicPoolFrame") != null,
+		"Central Plaza must frame its digital pool with a raised civic structure"
+	)
+	var plaza_assets := plaza_section.get_decoration_asset_ids()
+	assert(
+		plaza_assets.has("lamp_blue")
+		and plaza_assets.has("bench_ne")
+		and plaza_assets.has("bench_nw"),
+		"Central Plaza must use the approved lamp and both approved isometric bench orientations"
+	)
+	assert(
+		plaza_section.get_decoration_count() >= 2,
+		"Central Plaza lamps must stay on the outer civic/landscape edge rather than crowding the guide or pool"
+	)
+	var plaza_decor := plaza_section.get_node_or_null("CityDecor")
+	assert(
+		plaza_decor != null
+		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/PaverPad") != null
+		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/LandscapeBed") != null,
+		"Plaza lamps must keep their approved paver/canteiro integration"
+	)
+	assert(
+		plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingSocket") == null
+		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingCollar") == null
+		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingInset") == null,
+		"Lamp surrounds must never add a dark pedestal, socket or floating square under the sprite"
+	)
+	var first_plaza_lamp: Sprite2D = null
+	for child in plaza_decor.get_children():
+		if child is Sprite2D:
+			first_plaza_lamp = child as Sprite2D
+			break
+	var first_plaza_lamp_local := plaza_section.grid_to_world(Vector2(2.2, 5.2))
+	assert(
+		first_plaza_lamp != null
+		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 48.0)),
+		"Lamp sprite must be lowered so the center of its visible pedestal sits on the authored ground contact"
+	)
+	var first_plaza_lamp_world := plaza_section.global_position + first_plaza_lamp_local
+	assert(
+		not plaza_section.is_walkable_world_position(first_plaza_lamp_world),
+		"Lamp pedestal center must block movement"
+	)
+	assert(
+		plaza_section.is_walkable_world_position(first_plaza_lamp_world + Vector2(11.0, 0.0)),
+		"Lamp collision must hug the pedestal rather than exposing a large invisible square"
+	)
+	assert(
+		not bool(world.call("can_actor_move_to", first_plaza_lamp_world + Vector2(12.0, 0.0), player))
+		and bool(world.call("can_actor_move_to", first_plaza_lamp_world + Vector2(18.0, 0.0), player)),
+		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
+	)
+
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(2.8, 12.8))
+	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
+	assert(
+		not plaza_section.is_walkable_world_position(first_plaza_bench_world),
+		"Bench center must block movement through the visible seat footprint"
+	)
+	assert(
+		plaza_section.is_walkable_world_position(first_plaza_bench_world + Vector2(45.0, 0.0)),
+		"Bench collision must follow the isometric seat footprint instead of creating a broad invisible box"
+	)
+
+	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
+	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
+	var hospital_lighting := area.get_node_or_null("Section_1_0") as WorldAreaSection
+	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
+	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
+	assert(
+		digilab_lighting != null and digilab_lighting.get_decoration_count() <= 1,
+		"DigiLab may use at most one safe outer-sidewalk lamp until more surrounding streets exist"
+	)
+	assert(
+		training_lighting != null and training_lighting.get_decoration_count() <= 1,
+		"Training Center may use at most one safe outer-sidewalk lamp instead of posts covering its facade"
+	)
+	assert(
+		hospital_lighting != null and hospital_lighting.get_decoration_count() <= 1,
+		"Hospital may use at most one safe outer-sidewalk lamp instead of posts covering its entrance"
+	)
+	assert(
+		canal_lighting != null
+		and canal_lighting.get_decoration_count() >= 4
+		and canal_lighting.get_decoration_asset_ids().has("bench_ne")
+		and canal_lighting.get_decoration_asset_ids().has("bench_nw"),
+		"North Canal must keep bridge-head lamps plus deliberate seating near its landscape nodes"
+	)
+	assert(
+		market_lighting != null
+		and market_lighting.get_decoration_asset_ids().has("lamp_yellow"),
+		"Data Market must reserve the approved warm lamp for its service node"
+	)
+
+	var quiet_garden := area.get_node_or_null("Section_-2_-2") as WorldAreaSection
+	var quiet_residential := area.get_node_or_null("Section_-1_-2") as WorldAreaSection
+	var east_gate := area.get_node_or_null("Section_2_0") as WorldAreaSection
+	var south_gate := area.get_node_or_null("Section_0_2") as WorldAreaSection
+	assert(
+		quiet_garden != null and quiet_garden.get_decoration_count() == 0,
+		"Unfinished garden blocks must not receive free-floating lamps before their urban edges exist"
+	)
+	assert(
+		quiet_residential != null and quiet_residential.get_decoration_count() == 0,
+		"Unfinished residential blocks must not receive free-floating lamps before their urban edges exist"
+	)
+	assert(
+		east_gate != null and east_gate.get_decoration_count() == 0
+		and south_gate != null and south_gate.get_decoration_count() == 0,
+		"Unbuilt gate districts must stay unlit until their actual gate/curb geometry exists"
+	)
+	for prop_path: String in [
+		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
+		"res://assets/world/tblack/city/props_v2/lamp_yellow.png",
+		"res://assets/world/tblack/city/props_v2/bench_ne.png",
+		"res://assets/world/tblack/city/props_v2/bench_nw.png",
+	]:
+		assert(ResourceLoader.exists(prop_path), "Approved Central City prop asset must be vendored: %s" % prop_path)
+	for rejected_prop_path: String in [
+		"res://assets/world/tblack/city/props_v2/planter_long_ne.png",
+		"res://assets/world/tblack/city/props_v2/planter_long_nw.png",
+		"res://assets/world/tblack/city/props_v2/terminal.png",
+		"res://assets/world/tblack/city/props_v2/holo_sign.png",
+		"res://assets/world/tblack/city/props_v2/railing_ne.png",
+		"res://assets/world/tblack/city/props_v2/railing_nw.png",
+	]:
+		assert(
+			not ResourceLoader.exists(rejected_prop_path),
+			"Rejected prototype decoration must stay removed: %s" % rejected_prop_path
+		)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the 64x32 safe plaza lane")
@@ -99,11 +238,18 @@ func _ready() -> void:
 		and absf(digilab_upper.region_rect.size.y - 700.0) < 0.01,
 		"DigiLab must keep the lower facade in front of actors while reserving occlusion for the upper/back art"
 	)
-	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 5), "digilab")
+	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 4), "digilab")
+	var digilab_approach = digilab_section.call("_ground_presentation", Vector2i(8, 10), "digilab")
 	assert(
 		digilab_floor is Dictionary
-		and String((digilab_floor as Dictionary).get("surface", "")) == "stone_soft",
-		"DigiLab lot must use the standard gray 0054 pavement instead of green/teal ground"
+		and digilab_approach is Dictionary
+		and String((digilab_floor as Dictionary).get("surface", "")) == "main"
+		and String((digilab_approach as Dictionary).get("surface", "")) == "main",
+		"DigiLab circulation must come from the continuous gray city field, not painted path cells"
+	)
+	assert(
+		digilab_section.get_node_or_null("DigiLabExterior/DigiLabFoundation/Top") != null,
+		"DigiLab must sit on an authored raised foundation derived from its measured footprint"
 	)
 	var digilab_collision := digilab_section.get_node_or_null(
 		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
@@ -233,13 +379,14 @@ func _ready() -> void:
 	var training_lot = training_section.call("_ground_presentation", Vector2i(2, 2), "training")
 	assert(
 		training_forecourt is Dictionary
-		and String((training_forecourt as Dictionary).get("surface", "")) == "stone_soft",
-		"Training Center entrance must meet the standard 0054 city pavement"
+		and training_lot is Dictionary
+		and String((training_forecourt as Dictionary).get("surface", "")) == "main"
+		and String((training_lot as Dictionary).get("surface", "")) == "main",
+		"Training Center must be surrounded by one continuous gray circulation field"
 	)
 	assert(
-		training_lot is Dictionary
-		and String((training_lot as Dictionary).get("surface", "")) == "stone_soft",
-		"Training Center district must use the same neutral 0054 pavement as the DigiLab surroundings"
+		training_section.get_node_or_null("TrainingCenterExterior/TrainingCenterFoundation/Top") != null,
+		"Training Center must sit on a raised foundation instead of blending into the street"
 	)
 	var training_collision := training_section.get_node_or_null(
 		"TrainingCenterExterior/FootprintCollision/CollisionPolygon2D"
@@ -316,11 +463,18 @@ func _ready() -> void:
 		hospital_section.is_walkable_world_position(hospital_section.global_position + expected_hospital_door),
 		"Hospital stairs and doorway must remain walkable"
 	)
-	var hospital_lot = hospital_section.call("_ground_presentation", Vector2i(5, 5), "hospital")
+	var hospital_lot = hospital_section.call("_ground_presentation", Vector2i(5, 4), "hospital")
+	var hospital_approach = hospital_section.call("_ground_presentation", Vector2i(7, 10), "hospital")
 	assert(
 		hospital_lot is Dictionary
-		and String((hospital_lot as Dictionary).get("surface", "")) == "stone_soft",
-		"Hospital district must use the same neutral 0054 pavement as the authored city services"
+		and hospital_approach is Dictionary
+		and String((hospital_lot as Dictionary).get("surface", "")) == "main"
+		and String((hospital_approach as Dictionary).get("surface", "")) == "main",
+		"Hospital circulation must be defined by the gray street field around its raised lot"
+	)
+	assert(
+		hospital_section.get_node_or_null("HospitalExterior/HospitalFoundation/Top") != null,
+		"Hospital must sit on a raised foundation instead of blending into the street"
 	)
 	var hospital_collision := hospital_section.get_node_or_null(
 		"HospitalExterior/FootprintCollision/CollisionPolygon2D"

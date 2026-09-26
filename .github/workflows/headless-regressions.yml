@@ -141,6 +141,10 @@ jobs:
             "seamless world interior regression passed" \
             godot --headless --path . tools/test_world_interior.tscn --quit-after 360
 
+          run_regression world-area \
+            "single-scene world area regression passed" \
+            godot --headless --path . tools/test_world_area.tscn --quit-after 360
+
           run_regression battle-ui-lifecycle \
             "battle ui lifecycle regression passed" \
             godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn

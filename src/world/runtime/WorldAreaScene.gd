@@ -86,10 +86,11 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	process_mode = Node.PROCESS_MODE_INHERIT
 	_update_ambient_vfx(true)
 	load_finished.emit()
-	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d" % [
+	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d decor=%d" % [
 		_sections.size(),
 		get_runtime_node_count(),
 		get_ground_render_node_count(),
+		get_decoration_count(),
 	])
 	return completed == total
 
@@ -142,6 +143,14 @@ func get_ground_render_node_count() -> int:
 
 func get_ground_tile_count() -> int:
 	return _ground_tile_count
+
+
+func get_decoration_count() -> int:
+	var total := 0
+	for section: WorldAreaSection in _section_list:
+		if section != null and is_instance_valid(section):
+			total += section.get_decoration_count()
+	return total
 
 
 func get_section_definition(coord: Vector2i) -> Dictionary:
