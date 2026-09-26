@@ -33,6 +33,7 @@ func _ready() -> void:
 	_test_catalog_contract()
 	_test_fusion_data_caps_and_persists()
 	_test_material_guards()
+	_test_material_discovery_across_locations()
 	_test_paildramon_fusion_and_degeneration()
 	_test_repeated_species_materials()
 	_test_nested_fusion_materials()
@@ -102,6 +103,31 @@ func _test_material_guards() -> void:
 	var hospitalized_ids: Array[String] = [ex.id, sting.id]
 	var hospitalized := _fusion.get_preview(collection, "paildramon", hospitalized_ids)
 	assert(not bool(hospitalized.get("can_fuse", false)), "Explicitly selected hospitalized material must be rejected without substituting another copy")
+
+
+func _test_material_discovery_across_locations() -> void:
+	var collection: PlayerCollection = CollectionScript.new()
+	collection.set_fusion_data("paildramon", 100)
+
+	var active_ex := _factory.create_player_by_name("ExVeemon", 35, 100)
+	var reserve_ex := _factory.create_player_by_name("ExVeemon", 36, 100)
+	var storage_sting := _factory.create_player_by_name("Stingmon", 37, 100)
+	collection.add_instance(active_ex, "location_active_ex", "ExVeemon")
+	collection.add_instance(reserve_ex, "location_reserve_ex", "ExVeemon")
+	collection.add_instance(storage_sting, "location_storage_sting", "Stingmon")
+	assert(collection.set_squad_ids([active_ex.id], [reserve_ex.id], 0, 3, 3), "Location fixture must assign Active and Reserve material copies")
+
+	var ex_candidates := _fusion.get_eligible_instances(collection, "paildramon", 0)
+	var sting_candidates := _fusion.get_eligible_instances(collection, "paildramon", 1)
+	var ex_ids: Array[String] = []
+	for candidate: DigimonInstance in ex_candidates:
+		ex_ids.append(candidate.id)
+	assert(ex_ids.has(active_ex.id), "Fusion material lookup must include Active Digimon")
+	assert(ex_ids.has(reserve_ex.id), "Fusion material lookup must include Reserve Digimon")
+	assert(sting_candidates.any(func(candidate: DigimonInstance) -> bool: return candidate.id == storage_sting.id), "Fusion material lookup must include Storage Digimon")
+
+	var preview := _fusion.get_preview(collection, "paildramon")
+	assert(bool(preview.get("can_fuse", false)), "Fusion preview must combine eligible materials across Active / Reserve / Storage")
 
 
 func _test_paildramon_fusion_and_degeneration() -> void:
