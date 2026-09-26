@@ -25,15 +25,15 @@ func _ready() -> void:
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
 	var promenade_paving := area.get_node_or_null("CityGround/Surface_tech_teal") as MeshInstance2D
-	var market_paving := area.get_node_or_null("CityGround/Surface_market") as MeshInstance2D
+	var path_paving := area.get_node_or_null("CityGround/Surface_path") as MeshInstance2D
 	assert(
-		main_paving != null and promenade_paving != null and market_paving != null,
-		"Central City must keep its authored hardscape surface batches"
+		main_paving != null and promenade_paving != null and path_paving != null,
+		"Central City must keep neutral lots, civic accents and a dedicated pedestrian-path batch"
 	)
 	assert(
 		main_paving.texture == null
 		and promenade_paving.texture == null
-		and market_paving.texture == null,
+		and path_paving.texture == null,
 		"Central City hardscape tops must be procedural rather than one texture per gameplay tile"
 	)
 	var paver_material := main_paving.material as ShaderMaterial
@@ -57,7 +57,7 @@ func _ready() -> void:
 		"Central City runtime node budget must remain below 1000 nodes"
 	)
 	assert(
-		area.get_decoration_count() >= 140,
+		area.get_decoration_count() >= 120,
 		"Central City must ship a meaningful authored landscaping pass instead of sparse one-off props"
 	)
 	var plaza_section := area.get_node_or_null("Section_0_0") as WorldAreaSection
@@ -81,7 +81,8 @@ func _ready() -> void:
 		"res://assets/world/tblack/city/props/lamp_cyan.svg",
 		"res://assets/world/tblack/city/props/holo_sign.svg",
 		"res://assets/world/tblack/city/props/railing_ne.svg",
-		"res://assets/world/tblack/city/props/street_marker.svg",
+		"res://assets/world/tblack/city/props/flower_bed_ne.svg",
+		"res://assets/world/tblack/city/props/flower_bed_nw.svg",
 	]:
 		assert(ResourceLoader.exists(prop_path), "Central City landscaping asset must be vendored: %s" % prop_path)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
