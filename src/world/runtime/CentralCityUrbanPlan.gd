@@ -155,8 +155,10 @@ static func create_bench_surround(
 	# Match the reduced gameplay bench footprint closely. The bay is only
 	# slightly wider than the four visible feet, so it reads as the paving
 	# directly under the seat rather than a detached platform.
-	var long_axis := Vector2(29.0, 14.5)
-	var short_axis := Vector2(-6.0, 3.0)
+	# One compact 64x32 isometric footprint: just enough paver to sit under
+	# the four bench feet, with no detached strip extending into the street.
+	var long_axis := Vector2(27.0, 13.5)
+	var short_axis := Vector2(-5.0, 2.5)
 	if mirror_axis:
 		long_axis.x *= -1.0
 		short_axis.x *= -1.0
