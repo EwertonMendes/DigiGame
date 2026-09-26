@@ -19,20 +19,33 @@ func _ready() -> void:
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
 		area.get_ground_render_node_count() <= 16,
-		"Central City ground must stay globally batched by the curated Devil surface palette"
+		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(area.get_ground_tile_count() == 4341, "Central City octagonal island must omit only the authored corner void")
+
+	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
+	var promenade_paving := area.get_node_or_null("CityGround/Surface_tech_teal") as MeshInstance2D
+	var market_paving := area.get_node_or_null("CityGround/Surface_market") as MeshInstance2D
 	assert(
-		area.get_node_or_null("CityGround/Surface_main") != null,
-		"Central City must render 0072 as its primary high-resolution city surface"
+		main_paving != null and promenade_paving != null and market_paving != null,
+		"Central City must keep its authored hardscape surface batches"
 	)
 	assert(
-		area.get_node_or_null("CityGround/Surface_tech_teal") != null,
-		"Central City must render the high-resolution digital promenade surface"
+		main_paving.texture == null
+		and promenade_paving.texture == null
+		and market_paving.texture == null,
+		"Central City hardscape tops must be procedural rather than one texture per gameplay tile"
+	)
+	var paver_material := main_paving.material as ShaderMaterial
+	assert(
+		paver_material != null
+		and paver_material.shader != null
+		and paver_material.shader.resource_path == "res://shaders/city_paver_floor.gdshader",
+		"Central City hardscape must use the dedicated continuous micro-paver shader"
 	)
 	assert(
-		area.get_node_or_null("CityGround/Surface_market") != null,
-		"Central City market must render the 0009 replacement surface"
+		is_equal_approx(float(paver_material.get_shader_parameter("pavers_per_cell")), 4.0),
+		"One 64x32 gameplay cell must visually contain four paving subdivisions per ground axis"
 	)
 	var edge_blocks := area.get_node_or_null("CityGround/EdgeBlocks")
 	assert(
@@ -41,7 +54,7 @@ func _ready() -> void:
 	)
 	assert(
 		area.get_runtime_node_count() < 1000,
-		"Central City runtime node budget must remain below 3000 nodes"
+		"Central City runtime node budget must remain below 1000 nodes"
 	)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
