@@ -5,6 +5,7 @@ signal squad_changed(active_ids: Array, reserve_ids: Array)
 signal collection_changed
 signal account_rewards_changed(bits: int, digi_data: Dictionary)
 signal technique_progress_changed
+signal fusion_progress_changed(fusion_id: String, progress: Dictionary)
 signal inventory_changed(inventory: Dictionary)
 signal hospital_state_changed(instance_id: String, status: String)
 signal progress_saved
@@ -21,6 +22,9 @@ const AscensionServiceScript = preload("res://src/digimon/DigimonAscensionServic
 const StatCalculatorScript = preload("res://src/digimon/DigimonStatCalculator.gd")
 const HospitalCalculatorScript = preload("res://src/hospital/HospitalRecoveryCalculator.gd")
 const HospitalServiceScript = preload("res://src/hospital/HospitalService.gd")
+const FusionCatalogScript = preload("res://src/digimon/FusionCatalog.gd")
+const FusionProgressScript = preload("res://src/digimon/FusionProgressService.gd")
+const FusionServiceScript = preload("res://src/digimon/FusionService.gd")
 
 const DEFAULT_ACTIVE_PARTY := ["botamon", "agumon", "gabumon"]
 
@@ -36,6 +40,9 @@ var _ascension = AscensionServiceScript.new()
 var _stat_calculator: DigimonStatCalculator = StatCalculatorScript.new()
 var _hospital_calculator: HospitalRecoveryCalculator = HospitalCalculatorScript.new()
 var _hospital_service: HospitalService = HospitalServiceScript.new(_hospital_calculator)
+var _fusion_catalog: FusionCatalog = FusionCatalogScript.new()
+var _fusion_progress: FusionProgressService = FusionProgressScript.new()
+var _fusion_service: FusionService = null
 var _persistence_enabled := true
 
 func _ready() -> void:
@@ -569,7 +576,7 @@ func get_digi_data() -> Dictionary:
 	for raw_seed in _collection.get_all_digi_data().keys():
 		var seed := String(raw_seed)
 		var species := _database.get_by_seed(seed)
-		if species.is_empty():
+		if species.is_empty() or String(species.get("rank", "")) == "Fusion" or not bool(species.get("reconstructable", true)):
 			continue
 		result[String(species.get("name", seed))] = _collection.get_digi_data(seed)
 	return result
@@ -578,6 +585,50 @@ func get_digi_data_for(species_name_or_seed: String) -> int:
 	var seed := _resolve_species_seed(species_name_or_seed)
 	return _collection.get_digi_data(seed) if not seed.is_empty() else 0
 
+func get_fusion_definitions() -> Array[Dictionary]:
+	_ensure_database()
+	return _fusion_catalog.get_all()
+
+
+func get_fusion_data(fusion_id: String = ""):
+	_ensure_starter_collection()
+	if fusion_id.strip_edges().is_empty():
+		return _collection.get_all_fusion_data()
+	return _collection.get_fusion_data(fusion_id)
+
+
+func grant_fusion_data(fusion_id: String, amount: int, source: String = "") -> Dictionary:
+	_ensure_database()
+	var progress := _fusion_progress.add_data(_collection, fusion_id, amount, _fusion_catalog, source)
+	if bool(progress.get("success", false)) and int(progress.get("gained", 0)) > 0:
+		fusion_progress_changed.emit(String(progress.get("fusion_id", "")), progress)
+		_save_after_mutation()
+	return progress
+
+
+func get_fusion_preview(fusion_id: String, selected_ids: Array[String] = []) -> Dictionary:
+	_ensure_database()
+	return _fusion_service.get_preview(_collection, fusion_id, selected_ids) if _fusion_service != null else {}
+
+
+func get_fusion_eligible_instances(fusion_id: String, slot_index: int) -> Array[DigimonInstance]:
+	_ensure_database()
+	return _fusion_service.get_eligible_instances(_collection, fusion_id, slot_index) if _fusion_service != null else []
+
+
+func fuse_digimon(fusion_id: String, selected_ids: Array[String] = []) -> Dictionary:
+	_ensure_database()
+	if _fusion_service == null:
+		return {"success": false, "reason": "fusion_unavailable"}
+	var result := _fusion_service.fuse(_collection, fusion_id, selected_ids)
+	if bool(result.get("success", false)):
+		collection_changed.emit()
+		_emit_squad_changed()
+		inventory_changed.emit(get_inventory())
+		_save_after_mutation()
+	return result
+
+
 func get_reconstruction_requirement(species_name_or_seed: String) -> int:
 	var seed := _resolve_species_seed(species_name_or_seed)
 	if seed.is_empty():
@@ -585,7 +636,7 @@ func get_reconstruction_requirement(species_name_or_seed: String) -> int:
 	var species := _database.get_by_seed(seed)
 	return maxi(1, int(species.get("dataRequired", _balance.reconstruction_int("defaultRequired", 100))))
 
-func apply_account_rewards(bits: int, digi_data: Dictionary, items: Dictionary = {}) -> Dictionary:
+func apply_account_rewards(bits: int, digi_data: Dictionary, items: Dictionary = {}, fusion_data: Dictionary = {}) -> Dictionary:
 	_ensure_database()
 	_collection.bits += maxi(0, bits)
 	var progress: Dictionary = {}
@@ -594,9 +645,11 @@ func apply_account_rewards(bits: int, digi_data: Dictionary, items: Dictionary =
 		var seed := _resolve_species_seed(token)
 		if seed.is_empty():
 			continue
+		var species := _database.get_by_seed(seed)
+		if species.is_empty() or String(species.get("rank", "")) == "Fusion" or not bool(species.get("reconstructable", true)):
+			continue
 		var before := _collection.get_digi_data(seed)
 		var after := _collection.add_digi_data(seed, maxi(0, int(digi_data[raw_species])))
-		var species := _database.get_by_seed(seed)
 		var name := String(species.get("name", token))
 		var required := get_reconstruction_requirement(seed)
 		progress[seed] = {
@@ -611,6 +664,14 @@ func apply_account_rewards(bits: int, digi_data: Dictionary, items: Dictionary =
 			"ready": after >= required,
 			"newly_ready": before < required and after >= required,
 		}
+	for raw_fusion_id in fusion_data.keys():
+		var fusion_id := String(raw_fusion_id).to_lower().strip_edges()
+		var fusion_amount := maxi(0, int(fusion_data[raw_fusion_id]))
+		if fusion_id.is_empty() or fusion_amount <= 0:
+			continue
+		var fusion_progress := _fusion_progress.add_data(_collection, fusion_id, fusion_amount, _fusion_catalog, "account_reward")
+		if int(fusion_progress.get("gained", 0)) > 0:
+			fusion_progress_changed.emit(fusion_id, fusion_progress)
 	for raw_item_id in items.keys():
 		var item_id := String(raw_item_id).strip_edges()
 		var amount := maxi(0, int(items[raw_item_id]))
@@ -626,6 +687,9 @@ func can_reconstruct_digimon(species_name: String, data_amount: int = -1) -> boo
 	var seed := _resolve_species_seed(species_name)
 	if seed.is_empty():
 		return false
+	var species := _database.get_by_seed(seed)
+	if species.is_empty() or String(species.get("rank", "")) == "Fusion" or not bool(species.get("reconstructable", true)):
+		return false
 	var required := get_reconstruction_requirement(seed)
 	var amount := required if data_amount < 0 else data_amount
 	var minimum_spend := maxi(required, _balance.reconstruction_int("minSpend", required))
@@ -640,7 +704,7 @@ func reconstruct_digimon(species_name: String, data_amount: int = -1) -> Digimon
 	var species := _database.get_by_name(species_name)
 	if species.is_empty():
 		species = _database.get_by_seed(species_name)
-	if species.is_empty():
+	if species.is_empty() or String(species.get("rank", "")) == "Fusion" or not bool(species.get("reconstructable", true)):
 		return null
 	var seed := String(species.get("seed", ""))
 	var required := get_reconstruction_requirement(seed)
@@ -696,6 +760,9 @@ func reset_progress_for_tests(delete_disk_save: bool = false) -> void:
 	collection_changed.emit()
 	account_rewards_changed.emit(_collection.bits, get_digi_data())
 	inventory_changed.emit(get_inventory())
+	for raw_fusion_id in _collection.get_all_fusion_data().keys():
+		var fusion_id := String(raw_fusion_id)
+		fusion_progress_changed.emit(fusion_id, {"fusion_id": fusion_id, "after": _collection.get_fusion_data(fusion_id)})
 
 func _ensure_starter_collection() -> void:
 	if not _collection.is_empty():
@@ -787,6 +854,12 @@ func _ensure_database() -> void:
 			return
 	if _factory == null:
 		_factory = FactoryScript.new(_database)
+	if not _fusion_catalog.is_loaded():
+		if not _fusion_catalog.load_default(_database):
+			push_error("Could not initialize Fusion catalogue")
+			return
+	if _fusion_service == null:
+		_fusion_service = FusionServiceScript.new(_database, _fusion_catalog)
 
 func _resolve_species_seed(species_name_or_seed: String) -> String:
 	_ensure_database()
