@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -26,323 +26,285 @@
       ]
     }
   },
+  "sections": {
+    "0,0": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          3,
+          7
+        ],
+        "role": "plaza_west_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          11,
+          7
+        ],
+        "role": "plaza_east_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          7,
+          3
+        ],
+        "role": "plaza_north_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          7,
+          11
+        ],
+        "role": "plaza_south_edge"
+      }
+    ],
+    "-1,0": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          1.2,
+          8.8
+        ],
+        "role": "digilab_left_foundation_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          10.6,
+          7.8
+        ],
+        "role": "digilab_right_foundation_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          4.7,
+          13.1
+        ],
+        "role": "digilab_front_left_corner"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          9.8,
+          12.4
+        ],
+        "role": "digilab_front_right_corner"
+      }
+    ],
+    "0,-1": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          2,
+          7
+        ],
+        "role": "training_left_foundation_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          10.6,
+          6.5
+        ],
+        "role": "training_right_foundation_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          5.3,
+          12.4
+        ],
+        "role": "training_entrance_left"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          8.8,
+          12.4
+        ],
+        "role": "training_entrance_right"
+      }
+    ],
+    "1,0": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          0.35,
+          8
+        ],
+        "role": "hospital_left_foundation_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          9.7,
+          7.1
+        ],
+        "role": "hospital_right_foundation_edge"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          4.8,
+          12.8
+        ],
+        "role": "hospital_entrance_left"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          8.5,
+          12.5
+        ],
+        "role": "hospital_entrance_right"
+      }
+    ],
+    "0,-2": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          5,
+          4.1
+        ],
+        "role": "north_bridge_west_head"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          8,
+          4.1
+        ],
+        "role": "north_bridge_east_head"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          5,
+          9
+        ],
+        "role": "south_bridge_west_head"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          8,
+          9
+        ],
+        "role": "south_bridge_east_head"
+      }
+    ],
+    "0,1": [
+      {
+        "asset": "lamp_yellow",
+        "cell": [
+          5,
+          8.8
+        ],
+        "role": "market_service_edge_west"
+      },
+      {
+        "asset": "lamp_yellow",
+        "cell": [
+          9,
+          5.2
+        ],
+        "role": "market_service_edge_east"
+      }
+    ],
+    "1,-2": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          5,
+          8.8
+        ],
+        "role": "archive_service_edge_west"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          9,
+          5.2
+        ],
+        "role": "archive_service_edge_east"
+      }
+    ],
+    "2,0": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          9.7,
+          5
+        ],
+        "role": "east_gate_inner_north"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          9.7,
+          9
+        ],
+        "role": "east_gate_inner_south"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          12.3,
+          5
+        ],
+        "role": "east_gate_outer_north"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          12.3,
+          9
+        ],
+        "role": "east_gate_outer_south"
+      }
+    ],
+    "0,2": [
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          5,
+          9.7
+        ],
+        "role": "south_gate_inner_west"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          9,
+          9.7
+        ],
+        "role": "south_gate_inner_east"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          5,
+          12.3
+        ],
+        "role": "south_gate_outer_west"
+      },
+      {
+        "asset": "lamp_blue",
+        "cell": [
+          9,
+          12.3
+        ],
+        "role": "south_gate_outer_east"
+      }
+    ]
+  },
   "profiles": {
-    "plaza": [
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            3.2,
-            4
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            10.8,
-            4
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            3.2,
-            10
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            10.8,
-            10
-          ]
-        }
-      ]
-    ],
-    "garden": [
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            2,
-            6.3
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.8,
-            7.2
-          ]
-        }
-      ],
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            6.1,
-            2
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            7,
-            11.8
-          ]
-        }
-      ]
-    ],
     "residential": [
-      [
-        {
-          "asset": "lamp_yellow",
-          "cell": [
-            2,
-            4
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.7,
-            9.8
-          ]
-        }
-      ],
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            3,
-            2
-          ]
-        },
-        {
-          "asset": "lamp_yellow",
-          "cell": [
-            10.7,
-            11.7
-          ]
-        }
-      ]
-    ],
-    "canal": [
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            4.8,
-            3.7
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            8.2,
-            3.7
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            4.8,
-            10
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            8.2,
-            10
-          ]
-        }
-      ]
-    ],
-    "market": [
-      [
-        {
-          "asset": "lamp_yellow",
-          "cell": [
-            2,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_yellow",
-          "cell": [
-            11.4,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_yellow",
-          "cell": [
-            2,
-            10.8
-          ]
-        },
-        {
-          "asset": "lamp_yellow",
-          "cell": [
-            11.4,
-            10.8
-          ]
-        }
-      ]
-    ],
-    "archive": [
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            2,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.5,
-            3
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            6.8,
-            11.5
-          ]
-        }
-      ]
-    ],
-    "gate": [
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            3,
-            2.2
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            10.7,
-            2.2
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            3,
-            11
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            10.7,
-            11
-          ]
-        }
-      ]
-    ],
-    "digilab": [
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            1.8,
-            3.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.8,
-            3.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            1.8,
-            10.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.8,
-            10.5
-          ]
-        }
-      ]
-    ],
-    "training": [
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            1.8,
-            3.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.8,
-            3.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            1.8,
-            10.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.8,
-            10.5
-          ]
-        }
-      ]
-    ],
-    "hospital": [
-      [
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            1.8,
-            3.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.8,
-            3.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            1.8,
-            10.5
-          ]
-        },
-        {
-          "asset": "lamp_blue",
-          "cell": [
-            11.8,
-            10.5
-          ]
-        }
-      ]
+      []
     ]
   }
 }
