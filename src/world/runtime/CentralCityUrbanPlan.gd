@@ -76,83 +76,54 @@ static func create_lamp_surround(
 	var root := Node2D.new()
 	root.name = node_name
 
-	# The lamp is planted directly into the real ground plane. The surrounding
-	# urban treatment is therefore a ring around the pedestal, never a filled
-	# tile underneath it. The transparent center lets the existing road/paver
-	# remain visible where the sprite's own graphite foot enters the ground.
-	var outer_half_w := 30.0
-	var outer_half_h := 15.0
-	var inner_half_w := 11.0
-	var inner_half_h := 5.5
+	# The surrounding module belongs to the city floor, not to the pole.
+	# Keep a clean light paver pad/canteiro beneath and around the lamp, while
+	# the sprite's own graphite pedestal remains the only physical lamp base.
+	# Because the sprite anchor is lowered into the ground contact, there is no
+	# extra dark socket/collar between pedestal and pavement.
+	var half_width := 30.0
+	var half_height := 15.0
 	var outer := PackedVector2Array([
-		center + Vector2(-outer_half_w, 0.0),
-		center + Vector2(0.0, -outer_half_h),
-		center + Vector2(outer_half_w, 0.0),
-		center + Vector2(0.0, outer_half_h),
+		center + Vector2(-half_width, 0.0),
+		center + Vector2(0.0, -half_height),
+		center + Vector2(half_width, 0.0),
+		center + Vector2(0.0, half_height),
 	])
-	var inner := PackedVector2Array([
-		center + Vector2(-inner_half_w, 0.0),
-		center + Vector2(0.0, -inner_half_h),
-		center + Vector2(inner_half_w, 0.0),
-		center + Vector2(0.0, inner_half_h),
-	])
+	var paver := CITY.create_paver_polygon(
+		outer,
+		Color(0.58, 0.60, 0.59, 1.0),
+		0
+	)
+	paver.name = "PaverPad"
+	paver.z_index = 0
+	root.add_child(paver)
 
-	for index in range(4):
-		var next := (index + 1) % 4
-		var strip := PackedVector2Array([
-			outer[index],
-			outer[next],
-			inner[next],
-			inner[index],
-		])
-		var paver := CITY.create_paver_polygon(
-			strip,
-			Color(0.58, 0.60, 0.59, 1.0),
-			index
-		)
-		paver.name = "PaverRing_%d" % index
-		paver.z_index = 0
-		root.add_child(paver)
-
-	var outer_border := Line2D.new()
-	outer_border.name = "OuterBorder"
-	var outer_points := outer.duplicate()
-	outer_points.append(outer[0])
-	outer_border.points = outer_points
-	outer_border.width = 2.0
-	outer_border.default_color = Color(0.20, 0.23, 0.24, 1.0)
-	outer_border.antialiased = false
-	outer_border.z_index = 2
-	root.add_child(outer_border)
-
-	var inner_border := Line2D.new()
-	inner_border.name = "GroundContactBorder"
-	var inner_points := inner.duplicate()
-	inner_points.append(inner[0])
-	inner_border.points = inner_points
-	inner_border.width = 1.0
-	inner_border.default_color = Color(0.42, 0.44, 0.43, 1.0)
-	inner_border.antialiased = false
-	inner_border.z_index = 2
-	root.add_child(inner_border)
+	var border := Line2D.new()
+	border.name = "OuterBorder"
+	var border_points := outer.duplicate()
+	border_points.append(outer[0])
+	border.points = border_points
+	border.width = 2.0
+	border.default_color = Color(0.20, 0.23, 0.24, 1.0)
+	border.antialiased = false
+	border.z_index = 2
+	root.add_child(border)
 
 	if landscaped:
-		# Keep greenery around the post, not under it. Two shallow side beds
-		# integrate plaza lamps with the existing tree islands while preserving
-		# the transparent center contact.
-		for side in [-1.0, 1.0]:
-			var grass_center := center + Vector2(side * 18.0, 0.0)
-			var grass := Polygon2D.new()
-			grass.name = "LandscapeBed_%s" % ("L" if side < 0.0 else "R")
-			grass.polygon = PackedVector2Array([
-				grass_center + Vector2(-8.0, 0.0),
-				grass_center + Vector2(0.0, -4.0),
-				grass_center + Vector2(8.0, 0.0),
-				grass_center + Vector2(0.0, 4.0),
-			])
-			grass.color = Color(0.30, 0.63, 0.20, 1.0)
-			grass.z_index = 1
-			root.add_child(grass)
+		# Landscape variants keep the green canteiro that visually tied the
+		# earlier approved composition together. It is ground treatment only:
+		# no raised pedestal and no dark mounting square.
+		var green := Polygon2D.new()
+		green.name = "LandscapeBed"
+		green.polygon = PackedVector2Array([
+			center + Vector2(-20.0, 0.0),
+			center + Vector2(0.0, -9.0),
+			center + Vector2(20.0, 0.0),
+			center + Vector2(0.0, 9.0),
+		])
+		green.color = Color(0.30, 0.63, 0.20, 1.0)
+		green.z_index = 1
+		root.add_child(green)
 
 	var accent_line := Line2D.new()
 	accent_line.name = "FrontAccent"
