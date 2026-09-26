@@ -458,6 +458,7 @@ func commit_fusion(
 	if destination_role not in ["", SQUAD_ROLE_ACTIVE, SQUAD_ROLE_RESERVE]:
 		return false
 
+	var rollback_state := to_dict()
 	var next_active := _active_party_ids.duplicate()
 	var next_reserve := _reserve_party_ids.duplicate()
 	for instance_id: String in normalized:
@@ -467,6 +468,7 @@ func commit_fusion(
 	for instance_id: String in normalized:
 		_hospital_return_slots.erase(instance_id)
 		if not _erase_instance_record(instance_id):
+			load_dict(rollback_state)
 			return false
 
 	for raw_item_id in item_costs.keys():
@@ -479,6 +481,7 @@ func commit_fusion(
 			inventory.erase(item_id)
 
 	if add_instance(result, preferred_key, species_name).is_empty():
+		load_dict(rollback_state)
 		return false
 	if destination_role == SQUAD_ROLE_ACTIVE:
 		next_active.insert(clampi(destination_index, 0, next_active.size()), result.id)
@@ -486,7 +489,10 @@ func commit_fusion(
 		next_reserve.insert(clampi(destination_index, 0, next_reserve.size()), result.id)
 	_active_party_ids = next_active
 	_reserve_party_ids = next_reserve
-	return location_invariant_error().is_empty()
+	if not location_invariant_error().is_empty():
+		load_dict(rollback_state)
+		return false
+	return true
 
 
 func get_item_count(item_id: String) -> int:
