@@ -2,7 +2,7 @@ extends RefCounted
 class_name EvolutionGraphService
 
 const RANK_ORDER: Array[String] = [
-	"Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega", "Ultra", "Armor", "Hybrid"
+	"Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega", "Ultra", "Fusion"
 ]
 
 
