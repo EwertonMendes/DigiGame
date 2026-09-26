@@ -33,6 +33,7 @@ func _ready() -> void:
 	_test_material_guards()
 	_test_paildramon_fusion_and_degeneration()
 	_test_repeated_species_materials()
+	_test_nested_fusion_materials()
 	_test_v2_save_migration()
 
 	print("fusion system regression passed")
@@ -208,6 +209,47 @@ func _test_repeated_species_materials() -> void:
 	for raw_id in selected:
 		unique[String(raw_id)] = true
 	assert(unique.size() == 3, "Repeated material slots must use distinct Digimon UUIDs")
+
+
+func _test_nested_fusion_materials() -> void:
+	var collection: PlayerCollection = CollectionScript.new()
+	for fusion_id: String in ["omnimon", "imperialdramon_fighter_mode", "imperialdramon_paladin_mode"]:
+		collection.set_fusion_data(fusion_id, 100)
+
+	var war := _factory.create_player_by_name("War Greymon", 70, 100)
+	var metal := _factory.create_player_by_name("Metal Garurumon", 70, 100)
+	var ex := _factory.create_player_by_name("ExVeemon", 70, 100)
+	var sting := _factory.create_player_by_name("Stingmon", 70, 100)
+	for entry in [
+		[war, "nested_wargreymon", "War Greymon"],
+		[metal, "nested_metalgarurumon", "Metal Garurumon"],
+		[ex, "nested_exveemon", "ExVeemon"],
+		[sting, "nested_stingmon", "Stingmon"],
+	]:
+		var instance := entry[0] as DigimonInstance
+		collection.add_instance(instance, String(entry[1]), String(entry[2]))
+
+	var omnimon_result := _fusion.fuse(collection, "omnimon")
+	assert(bool(omnimon_result.get("success", false)), "Omnimon fixture Fusion must succeed")
+	var fighter_result := _fusion.fuse(collection, "imperialdramon_fighter_mode")
+	assert(bool(fighter_result.get("success", false)), "Fighter Mode fixture Fusion must succeed")
+
+	var omnimon := collection.get_instance(String(omnimon_result.get("result_instance_id", "")))
+	var fighter := collection.get_instance(String(fighter_result.get("result_instance_id", "")))
+	assert(omnimon != null and fighter != null, "Nested Fusion materials must exist after their source Fusions")
+	omnimon.level = 70
+	fighter.level = 70
+
+	var paladin_preview := _fusion.get_preview(collection, "imperialdramon_paladin_mode", [fighter.id, omnimon.id])
+	assert(bool(paladin_preview.get("can_fuse", false)), "Fusion results must be valid materials for a later Fusion")
+	var paladin_result := _fusion.fuse(collection, "imperialdramon_paladin_mode", [fighter.id, omnimon.id])
+	assert(bool(paladin_result.get("success", false)), "Paladin Mode must support chained Fusion materials")
+	assert(not collection.has_instance(omnimon.id) and not collection.has_instance(fighter.id), "Nested Fusion must consume the immediate Fusion material UUIDs")
+	var paladin := collection.get_instance(String(paladin_result.get("result_instance_id", "")))
+	assert(paladin != null, "Nested Fusion must create Paladin Mode")
+	assert(String(_database.get_by_seed(paladin.species_seed).get("name", "")) == "Imperialdramon (Paladin Mode)", "Nested Fusion result must be Paladin Mode")
+	var material_seeds = paladin.fusion_origin.get("materialSeeds", [])
+	assert(material_seeds is Array and (material_seeds as Array).has(omnimon.species_seed) and (material_seeds as Array).has(fighter.species_seed), "Nested Fusion origin must record its immediate Fusion components")
 
 
 func _test_v2_save_migration() -> void:
