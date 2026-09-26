@@ -8,6 +8,8 @@ const FRAME_COLUMNS := 3
 const FRAME_ROWS := 5
 const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
 const WALK_FRAME_DURATION := 0.10
+const RUN_SPEED_MULTIPLIER := 1.6
+const RUN_FRAME_DURATION := WALK_FRAME_DURATION / RUN_SPEED_MULTIPLIER
 const INPUT_DEADZONE := 0.05
 const FACING_TIE_EPSILON := 0.0001
 const BASE_SPRITE_POSITION := Vector2(0.0, -32.0)
@@ -74,6 +76,7 @@ var _walk_time := 0.0
 var _animation_frame := 0
 var _was_walking := false
 var _touch_direction := Vector2.ZERO
+var _touch_run_enabled := false
 
 
 func configure(texture: Texture2D, player_controlled: bool, world_controller: Node, initial_facing: String) -> void:
@@ -117,6 +120,8 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var direction := _movement_input() if movement_enabled else Vector2.ZERO
+	var run_active := movement_enabled and (_touch_run_enabled or Input.is_action_pressed("player_run"))
+	var active_speed := move_speed * RUN_SPEED_MULTIPLIER if run_active else move_speed
 	var input_strength := clampf(direction.length(), 0.0, 1.0)
 	var has_movement_input := input_strength > INPUT_DEADZONE
 	var facing_changed := false
@@ -126,7 +131,7 @@ func _physics_process(delta: float) -> void:
 		# speed. Keyboard remains at 100%, while a thumb near the joystick center can
 		# now make small controlled adjustments on a portrait phone.
 		var movement_strength := clampf((input_strength - INPUT_DEADZONE) / (1.0 - INPUT_DEADZONE), 0.0, 1.0)
-		velocity = velocity.move_toward(normalized_direction * move_speed * movement_strength, 900.0 * delta)
+		velocity = velocity.move_toward(normalized_direction * active_speed * movement_strength, 900.0 * delta)
 		facing_changed = _face_direction(normalized_direction)
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, 1100.0 * delta)
@@ -135,7 +140,7 @@ func _physics_process(delta: float) -> void:
 	if is_walking:
 		if not _was_walking or facing_changed:
 			_reset_walk_cycle()
-		_advance_walk_animation(delta)
+		_advance_walk_animation(delta, run_active)
 	else:
 		_reset_walk_cycle()
 		_update_frame(false)
@@ -148,6 +153,14 @@ func _physics_process(delta: float) -> void:
 
 func set_touch_direction(direction: Vector2) -> void:
 	_touch_direction = direction.limit_length(1.0)
+
+
+func set_touch_run_enabled(enabled: bool) -> void:
+	_touch_run_enabled = enabled
+
+
+func is_touch_run_enabled() -> bool:
+	return _touch_run_enabled
 
 
 func set_facing(direction_name: String) -> void:
@@ -227,9 +240,10 @@ func _reset_walk_cycle() -> void:
 	_animation_frame = 0
 
 
-func _advance_walk_animation(delta: float) -> void:
+func _advance_walk_animation(delta: float, running: bool = false) -> void:
 	_walk_time += delta
-	var sequence_index := int(floor(_walk_time / WALK_FRAME_DURATION)) % WALK_SEQUENCE.size()
+	var frame_duration := RUN_FRAME_DURATION if running else WALK_FRAME_DURATION
+	var sequence_index := int(floor(_walk_time / frame_duration)) % WALK_SEQUENCE.size()
 	_animation_frame = WALK_SEQUENCE[sequence_index]
 	_update_frame(true)
 
