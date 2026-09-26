@@ -8,7 +8,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATABASE = ROOT / "database" / "base-digimon-list.json"
 BALANCE = ROOT / "database" / "progression-balance.json"
-REQUIRED_STATS = ("hp", "mp", "atk", "def", "speed")
+FUSIONS = ROOT / "database" / "fusions.json"
+REQUIRED_STATS = ("hp", "mp", "atk", "def", "int", "speed")
+CANONICAL_ORDER = (
+    "hp", "mp", "atk", "def", "int", "speed", "bitFarmingRate",
+    "MOV", "movementType", "digiEvolutionSeedList", "degenerateSeedList",
+    "evolutionRequirements",
+)
 SUPPORTED_STATS = {"hp", "mp", "sp", "atk", "attack", "def", "defense", "int", "speed"}
 KNOWN_REQUIREMENTS = {
     "level", "potential", "abi", "stat", "item", "link", "battles_won",
@@ -19,7 +25,7 @@ NUMERIC_REQUIREMENTS = {
     "level", "potential", "abi", "link", "battles_won", "time",
     "hp", "mp", "sp", "atk", "attack", "def", "defense", "int", "speed",
 }
-KNOWN_RANKS = {"Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega", "Ultra", "Armor", "Hybrid"}
+KNOWN_RANKS = {"Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega", "Ultra", "Fusion"}
 
 
 def fail(message: str) -> None:
@@ -28,6 +34,41 @@ def fail(message: str) -> None:
 
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def validate_canonical_species(entry: dict, name: str) -> None:
+    if "checked" in entry:
+        fail(f"{name}: retired checked property must not be present")
+
+    missing = [key for key in CANONICAL_ORDER if key not in entry]
+    if missing:
+        fail(f"{name}: missing canonical fields {missing}")
+
+    keys = list(entry)
+    positions = [keys.index(key) for key in CANONICAL_ORDER]
+    if positions != sorted(positions):
+        fail(
+            f"{name}: canonical property order is invalid; expected "
+            "hp/mp/atk/def/int/speed/bitFarmingRate/MOV/movementType before route lists"
+        )
+
+    try:
+        mov = int(entry["MOV"])
+    except (TypeError, ValueError):
+        fail(f"{name}: MOV must be numeric")
+    if not 1 <= mov <= 8:
+        fail(f"{name}: MOV must be between 1 and 8")
+
+    movement_type = str(entry["movementType"]).strip()
+    if not movement_type:
+        fail(f"{name}: movementType cannot be empty")
+
+    try:
+        bit_rate = int(entry["bitFarmingRate"])
+    except (TypeError, ValueError):
+        fail(f"{name}: bitFarmingRate must be numeric")
+    if bit_rate < 0:
+        fail(f"{name}: bitFarmingRate cannot be negative")
 
 
 def route_targets(entry: dict, forward: bool) -> list[tuple[str, list]]:
@@ -153,6 +194,9 @@ def main() -> int:
             fail(f"duplicate Digimon name: {name}")
         seeds[seed] = name
         names.add(name_key)
+
+        validate_canonical_species(entry, name)
+
         rank = str(entry.get("rank", "")).strip()
         if not rank or rank not in KNOWN_RANKS:
             fail(f"{name}: invalid or missing rank {rank!r}")
@@ -160,11 +204,73 @@ def main() -> int:
             fail(f"{name}: dataRequired must be positive")
         for stat in REQUIRED_STATS:
             try:
-                value = int(entry.get(stat, 0))
+                value = int(entry[stat])
             except (TypeError, ValueError):
                 fail(f"{name}: {stat} must be numeric")
-            if value < 0:
-                fail(f"{name}: {stat} cannot be negative")
+            minimum = 0 if stat == "mp" else 1
+            if value < minimum:
+                fail(f"{name}: {stat} must be >= {minimum}")
+
+    fusion_defs = load(FUSIONS)
+    if not isinstance(fusion_defs, list):
+        fail("fusions.json root must be an array")
+    fusion_ids: set[str] = set()
+    fusion_results: set[str] = set()
+    by_seed = {str(row.get("seed", "")): row for row in data}
+    for definition in fusion_defs:
+        if not isinstance(definition, dict):
+            fail("Fusion definition must be an object")
+        fusion_id = str(definition.get("id", "")).strip().lower()
+        result_seed = str(definition.get("resultSeed", "")).strip()
+        if not fusion_id or fusion_id in fusion_ids:
+            fail(f"invalid or duplicate Fusion id: {fusion_id!r}")
+        fusion_ids.add(fusion_id)
+        if result_seed not in seeds:
+            fail(f"{fusion_id}: unknown resultSeed {result_seed}")
+        if result_seed in fusion_results:
+            fail(f"{fusion_id}: duplicate Fusion result {result_seed}")
+        fusion_results.add(result_seed)
+        result_entry = by_seed[result_seed]
+        if str(result_entry.get("rank", "")) != "Fusion":
+            fail(f"{fusion_id}: result must use Fusion rank")
+        if bool(result_entry.get("reconstructable", True)):
+            fail(f"{fusion_id}: result must set reconstructable=false")
+        digimon_count = 0
+        for material in definition.get("materials", []):
+            if not isinstance(material, dict):
+                fail(f"{fusion_id}: material must be an object")
+            kind = str(material.get("type", "digimon")).strip().lower()
+            amount = int(material.get("amount", 1))
+            if amount < 1:
+                fail(f"{fusion_id}: material amount must be >= 1")
+            if kind == "digimon":
+                material_seed = str(material.get("speciesSeed", "")).strip()
+                if material_seed not in seeds:
+                    fail(f"{fusion_id}: unknown material seed {material_seed}")
+                level = int(material.get("minLevel", 1))
+                if not 1 <= level <= 99:
+                    fail(f"{fusion_id}: minLevel must be 1..99")
+                if material_seed == result_seed:
+                    fail(f"{fusion_id}: Fusion cannot consume itself")
+                digimon_count += amount
+            elif kind == "item":
+                if not str(material.get("itemId", "")).strip():
+                    fail(f"{fusion_id}: item material needs itemId")
+            else:
+                fail(f"{fusion_id}: unsupported material type {kind}")
+        if digimon_count < 2:
+            fail(f"{fusion_id}: requires at least two Digimon")
+    for entry in data:
+        seed = str(entry.get("seed", ""))
+        forward = [target for target, _ in route_targets(entry, True)]
+        if str(entry.get("rank", "")) == "Fusion":
+            if forward:
+                fail(f"{entry.get('name')}: Fusion result cannot have normal evolutions")
+            if route_targets(entry, False):
+                fail(f"{entry.get('name')}: Fusion degeneration must be instance-derived, not canonical")
+        forbidden = [target for target in forward if target in fusion_results]
+        if forbidden:
+            fail(f"{entry.get('name')}: normal evolution cannot target Fusion species {forbidden}")
 
     edges = 0
     for entry in data:

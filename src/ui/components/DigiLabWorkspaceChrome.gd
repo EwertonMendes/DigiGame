@@ -32,6 +32,7 @@ static func page_capacity(viewport: Viewport, desktop: int = 3, compact: int = 3
 static func configure_header(header: DigiModalHeader) -> void:
 	if header == null:
 		return
+	header.set_workspace_full_label_tabs(true)
 	header.set_workspace_mode(true)
 	header.configure("DIGI LAB", "Reconstruction & Progression", OverworldState.get_bits(), true)
 

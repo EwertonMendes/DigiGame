@@ -2,7 +2,7 @@ extends RefCounted
 class_name BattleOperatorEncounterCatalog
 
 const ActionDatabaseScript = preload("res://src/battle/actions/BattleActionDatabase.gd")
-const READY_RANKS: Array[String] = ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]
+const READY_RANKS: Array[String] = ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega", "Fusion"]
 const ENEMY_COUNT := 3
 const MAX_LEVEL := 99
 const BASIC_ENEMIES: Array[Dictionary] = [

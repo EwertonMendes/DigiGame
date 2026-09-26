@@ -16,6 +16,7 @@ from typing import Any
 from urllib.parse import quote
 
 from PIL import Image, ImageSequence
+import numpy as np
 
 from build_early_rank_ds_fields import _components, _group_by_y, load_wtw_archive
 from materialize_ds_direction_registry import crop_component, keyed_source, pose_match_candidates
@@ -57,7 +58,41 @@ def source_member(archive, expected: str) -> bytes:
     return archive.read(expected)
 
 
-def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[dict[str, int]]]:
+def movement_groups(
+    image: Image.Image,
+    profile: dict[str, Any],
+    explicit_groups: Any = None,
+) -> list[list[dict[str, int]]]:
+    kind = str(profile.get("kind", ""))
+    if kind == "explicit_groups":
+        if not isinstance(explicit_groups, list) or len(explicit_groups) != 4:
+            raise RuntimeError("explicit_groups profile requires exactly four direction groups")
+        groups: list[list[dict[str, int]]] = []
+        for group_index, group in enumerate(explicit_groups):
+            if not isinstance(group, list) or len(group) != 3:
+                raise RuntimeError(
+                    f"explicit_groups direction {group_index} must contain exactly three source boxes"
+                )
+            normalized: list[dict[str, int]] = []
+            for frame_index, box in enumerate(group):
+                if not isinstance(box, dict):
+                    raise RuntimeError(
+                        f"explicit_groups direction {group_index} frame {frame_index} must be an object"
+                    )
+                normalized_box = {key: int(box[key]) for key in ("x", "y", "w", "h")}
+                x, y, w, h = (
+                    normalized_box["x"], normalized_box["y"],
+                    normalized_box["w"], normalized_box["h"],
+                )
+                if w <= 0 or h <= 0 or x < 0 or y < 0 or x + w > image.width or y + h > image.height:
+                    raise RuntimeError(
+                        f"explicit_groups box is outside source bounds: {normalized_box} "
+                        f"for {image.width}x{image.height}"
+                    )
+                normalized.append(normalized_box)
+            groups.append(normalized)
+        return groups
+
     _background, components = _components(image)
     min_cx_ratio = float(profile.get("min_cx_ratio", 0.0))
     max_cx_ratio = float(profile.get("max_cx_ratio", 1.0))
@@ -84,8 +119,6 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
         and min_cy <= item["cy"] <= max_cy
     ]
     rows = _group_by_y(candidates, tolerance=8.0)
-    kind = str(profile.get("kind", ""))
-
     if kind == "two_rows_of_six":
         six_rows = [sorted(row, key=lambda item: item["cx"]) for row in rows if len(row) >= 6]
         if len(six_rows) < 2:
@@ -135,6 +168,187 @@ def movement_groups(image: Image.Image, profile: dict[str, Any]) -> list[list[di
     return [[exact_box(item) for item in group] for group in groups]
 
 
+def keyed_source_with_tolerance(
+    image: Image.Image,
+    background_rgb: tuple[int, int, int],
+    tolerance: int,
+) -> Image.Image:
+    if tolerance <= 0:
+        return keyed_source(image, background_rgb)
+    rgba = np.array(image.convert("RGBA"), copy=True)
+    background = np.asarray(background_rgb, dtype=np.int16)
+    delta = np.max(np.abs(rgba[:, :, :3].astype(np.int16) - background), axis=2)
+    rgba[(delta <= tolerance) & (rgba[:, :, 3] > 0), 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
+def keyed_source_preserving_outline(
+    image: Image.Image,
+    background_rgb: tuple[int, int, int],
+    tolerance: int,
+    outline_radius: int,
+) -> Image.Image:
+    """Remove a flat matte while preserving same-color outline pixels near authored art.
+
+    Some legacy WTW sheets use black both for the canvas and for one/two-pixel
+    sprite outlines. A global black color-key destroys the silhouette. Instead,
+    seed the foreground from pixels that differ from the matte and keep matte-
+    colored pixels only when they are within outline_radius pixels of that
+    authored foreground.
+    """
+    rgba = np.array(image.convert("RGBA"), copy=True)
+    background = np.asarray(background_rgb, dtype=np.int16)
+    delta = np.max(np.abs(rgba[:, :, :3].astype(np.int16) - background), axis=2)
+    seed = (delta > tolerance) & (rgba[:, :, 3] > 0)
+    keep = seed.copy()
+    radius = int(outline_radius)
+    if radius < 0 or radius > 4:
+        raise RuntimeError(f"Invalid background_outline_radius {radius}; expected 0..4")
+    if radius:
+        padded = np.pad(seed, radius, mode="constant", constant_values=False)
+        dilated = np.zeros_like(seed)
+        h, w = seed.shape
+        for dy in range(2 * radius + 1):
+            for dx in range(2 * radius + 1):
+                dilated |= padded[dy:dy + h, dx:dx + w]
+        keep |= dilated
+    rgba[(~keep) & (rgba[:, :, 3] > 0), 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
+def crop_frame_border_connected_matte(
+    source: Image.Image,
+    box: dict[str, int],
+    background_rgb: tuple[int, int, int],
+    tolerance: int,
+) -> Image.Image:
+    """Remove only matte pixels connected to the border of one authored frame.
+
+    This preserves same-color pixels enclosed by the Digimon itself while
+    removing legacy opaque WTW/Photobucket canvas colors around the sprite.
+    """
+    x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
+    pad = 2
+    crop = source.crop((
+        max(0, x - pad),
+        max(0, y - pad),
+        min(source.width, x + w + pad),
+        min(source.height, y + h + pad),
+    )).convert("RGBA")
+    rgba = np.array(crop, copy=True)
+    background = np.asarray(background_rgb, dtype=np.int16)
+    delta = np.max(np.abs(rgba[:, :, :3].astype(np.int16) - background), axis=2)
+    matte = (delta <= tolerance) & (rgba[:, :, 3] > 0)
+
+    connected = np.zeros_like(matte)
+    h_px, w_px = matte.shape
+    stack: list[tuple[int, int]] = []
+    for xx in range(w_px):
+        if matte[0, xx]:
+            stack.append((0, xx))
+        if h_px > 1 and matte[h_px - 1, xx]:
+            stack.append((h_px - 1, xx))
+    for yy in range(h_px):
+        if matte[yy, 0]:
+            stack.append((yy, 0))
+        if w_px > 1 and matte[yy, w_px - 1]:
+            stack.append((yy, w_px - 1))
+
+    while stack:
+        yy, xx = stack.pop()
+        if connected[yy, xx] or not matte[yy, xx]:
+            continue
+        connected[yy, xx] = True
+        if yy > 0:
+            stack.append((yy - 1, xx))
+        if yy + 1 < h_px:
+            stack.append((yy + 1, xx))
+        if xx > 0:
+            stack.append((yy, xx - 1))
+        if xx + 1 < w_px:
+            stack.append((yy, xx + 1))
+
+    rgba[connected, 3] = 0
+    frame = Image.fromarray(rgba, "RGBA")
+    bbox = frame.getbbox()
+    if bbox is None:
+        raise RuntimeError(f"Source component became empty after border matte removal: {box}")
+    return frame.crop(bbox)
+
+
+def remove_tiny_alpha_islands(frame: Image.Image, max_pixels: int) -> Image.Image:
+    """Remove tiny disconnected alpha components while preserving connected sprite art."""
+    if max_pixels <= 0:
+        return frame
+    rgba = np.array(frame.convert("RGBA"), copy=True)
+    mask = rgba[:, :, 3] > 0
+    height, width = mask.shape
+    visited = np.zeros_like(mask)
+    for start_y in range(height):
+        for start_x in range(width):
+            if visited[start_y, start_x] or not mask[start_y, start_x]:
+                continue
+            stack = [(start_y, start_x)]
+            component: list[tuple[int, int]] = []
+            visited[start_y, start_x] = True
+            while stack:
+                yy, xx = stack.pop()
+                component.append((yy, xx))
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        if dx == 0 and dy == 0:
+                            continue
+                        ny, nx = yy + dy, xx + dx
+                        if 0 <= ny < height and 0 <= nx < width and mask[ny, nx] and not visited[ny, nx]:
+                            visited[ny, nx] = True
+                            stack.append((ny, nx))
+            if len(component) <= max_pixels:
+                for yy, xx in component:
+                    rgba[yy, xx, 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
+def remove_small_border_islands(frame: Image.Image, max_pixels: int) -> Image.Image:
+    """Remove tiny disconnected alpha islands touching a crop border.
+
+    Legacy sprite sheets can contain a few pixels from a neighbouring cell or
+    watermark at the edge of an otherwise correct explicit frame box. Only
+    small connected components that touch the frame border are removed; the
+    Digimon's main connected artwork is left untouched.
+    """
+    if max_pixels <= 0:
+        return frame
+    rgba = np.array(frame.convert("RGBA"), copy=True)
+    mask = rgba[:, :, 3] > 0
+    height, width = mask.shape
+    visited = np.zeros_like(mask)
+    for start_y in range(height):
+        for start_x in range(width):
+            if visited[start_y, start_x] or not mask[start_y, start_x]:
+                continue
+            stack = [(start_y, start_x)]
+            component: list[tuple[int, int]] = []
+            touches_border = False
+            visited[start_y, start_x] = True
+            while stack:
+                yy, xx = stack.pop()
+                component.append((yy, xx))
+                if yy == 0 or xx == 0 or yy == height - 1 or xx == width - 1:
+                    touches_border = True
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        if dx == 0 and dy == 0:
+                            continue
+                        ny, nx = yy + dy, xx + dx
+                        if 0 <= ny < height and 0 <= nx < width and mask[ny, nx] and not visited[ny, nx]:
+                            visited[ny, nx] = True
+                            stack.append((ny, nx))
+            if touches_border and len(component) <= max_pixels:
+                for yy, xx in component:
+                    rgba[yy, xx, 3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
 def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     profile_name = str(spec["profile"])
     pattern_name = str(spec["pattern"])
@@ -163,7 +377,7 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             )
         horizontal_mirror_from[target_direction] = source_direction
 
-    raw_groups = movement_groups(source, profile)
+    raw_groups = movement_groups(source, profile, spec.get("explicit_groups"))
     raw_frames = {direction: raw_groups[permutation[index]] for index, direction in enumerate(DIRECTIONS)}
     effective_runtime_group_indices = list(permutation)
     for target_direction, source_direction in horizontal_mirror_from.items():
@@ -215,13 +429,72 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             "confidence_margin": int(candidates[1][0] - best_cost),
         }
 
-    keyed = keyed_source(source, background)
+    background_tolerance = int(spec.get("background_tolerance", 0))
+    if not 0 <= background_tolerance <= 255:
+        raise RuntimeError(f"{name}: invalid background_tolerance {background_tolerance}")
+    background_outline_radius = int(spec.get("background_outline_radius", 0))
+
+    frame_background_policy = str(spec.get("frame_background_policy", "global_key"))
+    if frame_background_policy not in {"global_key", "source_alpha", "border_connected_matte"}:
+        raise RuntimeError(f"{name}: unknown frame_background_policy {frame_background_policy}")
+    frame_background_tolerance = int(spec.get("frame_background_tolerance", 0))
+    if not 0 <= frame_background_tolerance <= 255:
+        raise RuntimeError(f"{name}: invalid frame_background_tolerance {frame_background_tolerance}")
+    frame_background_rgb_raw = spec.get("frame_background_rgb")
+    if frame_background_rgb_raw is None:
+        frame_background_rgb = tuple(int(value) for value in background)
+    else:
+        if not isinstance(frame_background_rgb_raw, list) or len(frame_background_rgb_raw) != 3:
+            raise RuntimeError(f"{name}: frame_background_rgb must contain exactly three values")
+        frame_background_rgb = tuple(int(value) for value in frame_background_rgb_raw)
+        if any(value < 0 or value > 255 for value in frame_background_rgb):
+            raise RuntimeError(f"{name}: invalid frame_background_rgb {frame_background_rgb}")
+
+    if frame_background_policy in {"source_alpha", "border_connected_matte"}:
+        keyed = source
+    elif background_outline_radius:
+        keyed = keyed_source_preserving_outline(
+            source,
+            background,
+            background_tolerance,
+            background_outline_radius,
+        )
+    else:
+        keyed = keyed_source_with_tolerance(source, background, background_tolerance)
     vertical_alignment = str(spec.get("vertical_alignment", "frame_bottom"))
     if vertical_alignment not in {"frame_bottom", "source_group_envelope"}:
         raise RuntimeError(f"{name}: unknown vertical alignment policy {vertical_alignment}")
+    vertical_alignment_by_direction_raw = spec.get("vertical_alignment_by_direction", {})
+    if not isinstance(vertical_alignment_by_direction_raw, dict):
+        raise RuntimeError(f"{name}: vertical_alignment_by_direction must be an object")
+    vertical_alignment_by_direction: dict[str, str] = {}
+    for direction, mode in vertical_alignment_by_direction_raw.items():
+        direction = str(direction)
+        mode = str(mode)
+        if direction not in DIRECTIONS:
+            raise RuntimeError(f"{name}: unknown direction override {direction}")
+        if mode not in {"frame_bottom", "source_group_envelope"}:
+            raise RuntimeError(f"{name}: invalid vertical alignment override {direction}={mode}")
+        vertical_alignment_by_direction[direction] = mode
+    preserve_source_box = bool(spec.get("preserve_source_box", False))
+    border_island_cleanup_max_pixels = int(spec.get("border_island_cleanup_max_pixels", 0))
+    alpha_island_cleanup_max_pixels = int(spec.get("alpha_island_cleanup_max_pixels", 0))
+    if border_island_cleanup_max_pixels < 0 or border_island_cleanup_max_pixels > 64:
+        raise RuntimeError(
+            f"{name}: border_island_cleanup_max_pixels must be within 0..64"
+        )
+    if alpha_island_cleanup_max_pixels < 0 or alpha_island_cleanup_max_pixels > 32:
+        raise RuntimeError(
+            f"{name}: alpha_island_cleanup_max_pixels must be within 0..32"
+        )
+    if preserve_source_box and frame_background_policy == "border_connected_matte":
+        raise RuntimeError(
+            f"{name}: preserve_source_box is not supported with border_connected_matte; "
+            "use source_alpha/global_key or add an exact matte implementation first"
+        )
 
     frames: list[Image.Image] = []
-    frame_placements: list[tuple[int, int]] = []
+    frame_placements: list[tuple[str, int, int]] = []
     audited_boxes: dict[str, list[dict[str, int]]] = {}
     source_group_envelopes: dict[str, dict[str, int]] = {}
     for direction in DIRECTIONS:
@@ -236,25 +509,47 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
             "height": envelope_height,
         }
         for box in ordered_boxes:
-            frame = crop_component(keyed, box)
+            if preserve_source_box:
+                x, y, w, h = (int(box[key]) for key in ("x", "y", "w", "h"))
+                frame_source = source if frame_background_policy == "source_alpha" else keyed
+                frame = frame_source.crop((x, y, x + w, y + h))
+                if frame.getbbox() is None:
+                    raise RuntimeError(f"{name}: exact source box became empty: {box}")
+            elif frame_background_policy == "source_alpha":
+                frame = crop_component(source, box)
+            elif frame_background_policy == "border_connected_matte":
+                frame = crop_frame_border_connected_matte(
+                    source,
+                    box,
+                    frame_background_rgb,
+                    frame_background_tolerance,
+                )
+            else:
+                frame = crop_component(keyed, box)
+            if border_island_cleanup_max_pixels:
+                frame = remove_small_border_islands(frame, border_island_cleanup_max_pixels)
+            if alpha_island_cleanup_max_pixels:
+                frame = remove_tiny_alpha_islands(frame, alpha_island_cleanup_max_pixels)
             if direction in horizontal_mirror_from:
                 frame = frame.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             frames.append(frame)
-            if vertical_alignment == "source_group_envelope":
-                frame_placements.append((box["y"] - group_top, envelope_height))
+            direction_alignment = vertical_alignment_by_direction.get(direction, vertical_alignment)
+            if direction_alignment == "source_group_envelope":
+                frame_placements.append((direction_alignment, box["y"] - group_top, envelope_height))
             else:
-                frame_placements.append((0, frame.height))
+                frame_placements.append((direction_alignment, 0, frame.height))
 
     cell_w = max(32, max(frame.width for frame in frames) + 4)
-    if vertical_alignment == "source_group_envelope":
-        cell_h = max(32, max(envelope_height for _, envelope_height in frame_placements) + 4)
-    else:
-        cell_h = max(32, max(frame.height for frame in frames) + 4)
+    placement_heights = [
+        envelope_height if mode == "source_group_envelope" else frames[index].height
+        for index, (mode, _offset_y, envelope_height) in enumerate(frame_placements)
+    ]
+    cell_h = max(32, max(placement_heights) + 4)
 
     strip = Image.new("RGBA", (cell_w * FRAME_COUNT, cell_h), (0, 0, 0, 0))
     for index, frame in enumerate(frames):
-        offset_y, envelope_height = frame_placements[index]
-        if vertical_alignment == "source_group_envelope":
+        alignment_mode, offset_y, envelope_height = frame_placements[index]
+        if alignment_mode == "source_group_envelope":
             y = cell_h - envelope_height - 1 + offset_y
         else:
             y = cell_h - frame.height - 1
@@ -288,6 +583,9 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "source_frame_order": source_frame_order,
         "pose_alignment": pose_alignment,
         "vertical_alignment_policy": vertical_alignment,
+        "preserve_source_box": preserve_source_box,
+        "border_island_cleanup_max_pixels": border_island_cleanup_max_pixels,
+        "alpha_island_cleanup_max_pixels": alpha_island_cleanup_max_pixels,
         "source_group_envelopes": source_group_envelopes,
         "anchor_policy": (
             "source_group_envelope_bottom_center"
@@ -302,6 +600,17 @@ def build_field(name: str, source: Image.Image, source_bytes: bytes, spec: dict[
         "frames_per_direction": 3,
         "field_path": f"res://assets/characters/{key}/field.png",
     }
+    if vertical_alignment_by_direction:
+        metadata["vertical_alignment_by_direction"] = vertical_alignment_by_direction
+    if background_tolerance > 0:
+        metadata["background_tolerance"] = background_tolerance
+    if background_outline_radius > 0:
+        metadata["background_outline_radius"] = background_outline_radius
+    if frame_background_policy != "global_key":
+        metadata["frame_background_policy"] = frame_background_policy
+        if frame_background_policy == "border_connected_matte":
+            metadata["frame_background_rgb"] = list(frame_background_rgb)
+            metadata["frame_background_tolerance"] = frame_background_tolerance
     (directory / "field.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     return metadata
 

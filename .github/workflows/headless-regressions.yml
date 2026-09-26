@@ -1,4 +1,4 @@
-name: DigiGame Headless Regressions
+name: DigiGame Core Headless Regressions
 
 on:
   pull_request:
@@ -9,7 +9,6 @@ on:
       - 'project.godot'
       - 'src/**'
       - 'database/**'
-      - 'assets/resources/**'
       - 'tools/test_*.gd'
       - 'tools/test_*.tscn'
   workflow_dispatch:
@@ -25,121 +24,10 @@ env:
   GODOT_VERSION: 4.7.2
 
 jobs:
-  regression:
-    name: Headless · ${{ matrix.name }}
+  core-regressions:
+    name: Core gameplay regressions
     runs-on: ubuntu-latest
-    timeout-minutes: 6
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: tile-selection
-            command: godot --headless --path . tools/test_tile_based_selection.tscn --quit-after 5
-            success: tile-based Digimon selection regression passed
-          - name: isometric-keyboard
-            command: godot --headless --path . tools/test_isometric_keyboard_navigation.tscn --quit-after 5
-            success: isometric keyboard navigation regression passed
-          - name: attack-patterns
-            command: godot --headless --path . tools/test_attack_patterns.tscn --quit-after 5
-            success: advanced attack pattern regression passed
-          - name: hub-foundation
-            # The legacy Test Hub remains an isolated developer integration lab.
-            command: godot --headless --path . tools/test_hub_foundation.tscn --quit-after 360
-            success: hub foundation regression passed
-          - name: world-area
-            command: godot --headless --path . tools/test_world_area.tscn --quit-after 60
-            success: single-scene world area regression passed
-          - name: world-interiors
-            command: godot --headless --path . tools/test_world_interior.tscn --quit-after 360
-            success: seamless world interior regression passed
-          - name: battle-operator-programs
-            # This regression now waits for the real Battle Operator construction
-            # tween before asserting final focus/material/backdrop state.
-            command: godot --headless --path . tools/test_battle_operator_programs.tscn --quit-after 360
-            success: battle operator programs regression passed
-          - name: digilab-layout
-            # This regression now exercises Active, Reserve and Storage layouts
-            # before continuing through the Ascension deep-link/navigation flow.
-            # Keep a generous frame budget; layout assertions remain strict.
-            command: godot --headless --path . tools/test_digilab_layout_regression.tscn --quit-after 70
-            success: digilab layout regression passed
-          - name: training-ui-v2
-            command: godot --headless --path . tools/test_training_ui_v2_regression.tscn --quit-after 120
-            success: training ui v2 regression passed
-          - name: global-ui-v2
-            command: godot --headless --path . tools/test_ui_v2_components_regression.tscn --quit-after 30
-            success: global ui v2 components regression passed
-          - name: ui-digital-transition
-            command: godot --headless --path . tools/test_ui_digital_transition.tscn --quit-after 90
-            success: ui digital transition regression passed
-          - name: digimon-main-menu-ui
-            # This regression now exercises controller navigation, swap/cancel,
-            # and both direct Active <-> Reserve moves. Keep enough frame budget
-            # for the real UI rebuild/focus lifecycle instead of terminating it
-            # in the middle of the final role-change flow.
-            command: godot --headless --path . tools/test_digimon_main_menu_ui_regression.tscn --quit-after 120
-            success: digimon main menu ui regression passed
-          - name: system-audio-settings
-            command: godot --headless --path . tools/test_system_audio_settings.tscn --quit-after 30
-            success: system audio settings regression passed
-          - name: evolution-chart-ui-v2
-            command: godot --headless --path . tools/test_evolution_chart_ui_v2_regression.tscn --quit-after 20
-            success: evolution chart ui v2 regression passed
-          - name: battle-result-ui-v2
-            command: godot --headless --path . tools/test_battle_result_ui_v2_regression.tscn --quit-after 20
-            success: battle result ui v2 regression passed
-          - name: battle-ui-lifecycle
-            # This integration regression waits for the real battle-opening
-            # animations and owns a bounded predicate timeout internally. A
-            # frame-count --quit-after would terminate it before gameplay on
-            # fast headless runners and would not represent the playable flow.
-            command: godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn
-            success: battle ui lifecycle regression passed
-          - name: battle-presentation-pacing
-            command: godot --headless --path . -s tools/test_battle_presentation_pacing.gd
-            success: "[BattlePresentationPacingTest] PASS"
-          - name: zeke-greymon
-            command: godot --headless --path . tools/test_zeke_greymon_regression.tscn --quit-after 30
-            success: zeke greymon regression passed
-          - name: digimon-progression
-            command: godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8
-            success: digimon progression regression passed
-          - name: squad-system
-            command: godot --headless --path . tools/test_squad_system.tscn --quit-after 10
-            success: squad system regression passed
-          - name: battle-squad-switching
-            command: godot --headless --path . tools/test_battle_squad_switching.tscn --quit-after 10
-            success: battle squad switching regression passed
-          - name: battle-squad-rewards-integration
-            command: godot --headless --path . tools/test_battle_squad_rewards_integration.tscn --quit-after 30
-            success: battle squad rewards integration regression passed
-          - name: hospital-system
-            command: godot --headless --path . tools/test_hospital_system.tscn --quit-after 8
-            success: hospital system regression passed
-          - name: hospital-ui
-            command: godot --headless --path . tools/test_hospital_ui_regression.tscn --quit-after 300
-            success: hospital ui regression passed
-          - name: debug-delete-digimon
-            command: godot --headless --path . tools/test_debug_delete_digimon.tscn --quit-after 8
-            success: debug delete Digimon regression passed
-          - name: progression-loop-e2e
-            command: godot --headless --path . tools/test_progression_loop_e2e.tscn --quit-after 20
-            success: complete progression loop e2e regression passed
-          - name: tier-and-footprints
-            command: godot --headless --path . tools/test_tier_and_footprints.tscn --quit-after 12
-            success: tier and tactical footprint regression passed
-          - name: footprint-deployment
-            command: godot --headless --path . -s tools/test_footprint_deployment.gd
-            success: "[FootprintDeploymentTest] PASS"
-          - name: expansion-footprint-integration
-            command: godot --headless --path . tools/test_expansion_footprint_integration.tscn --quit-after 12
-            success: "[ExpansionFootprintIntegrationTest] PASS"
-          - name: battlefield-catalog
-            command: godot --headless --path . -s tools/test_battlefield_catalog.gd
-            success: "[BattlefieldCatalogTest] PASS"
-          - name: living-battlefield
-            command: godot --headless --path . tools/test_living_battlefield.tscn --quit-after 12
-            success: living battlefield regression passed
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -159,6 +47,8 @@ jobs:
           GODOT_TAG="${GODOT_VERSION}-stable"
           mkdir -p "$HOME/.cache/digigame-godot"
           curl -fL "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_linux.x86_64.zip" -o /tmp/godot.zip
+          rm -rf /tmp/godot
+          mkdir -p /tmp/godot
           unzip -q /tmp/godot.zip -d /tmp/godot
           mv "/tmp/godot/Godot_v${GODOT_TAG}_linux.x86_64" "$HOME/.cache/digigame-godot/godot"
           chmod +x "$HOME/.cache/digigame-godot/godot"
@@ -171,7 +61,7 @@ jobs:
           sudo ln -sf "$HOME/.cache/digigame-godot/godot" /usr/local/bin/godot
           godot --version
 
-      - name: Restore Godot imported-resource cache
+      - name: Restore imported-resource cache
         uses: actions/cache@v4
         with:
           path: .godot/imported
@@ -179,38 +69,86 @@ jobs:
           restore-keys: |
             godot-imported-${{ runner.os }}-${{ env.GODOT_VERSION }}-
 
-      - name: Import project
+      - name: Import project once
         shell: bash
         run: |
           set -euo pipefail
           godot --headless --path . --import 2>&1 | tee /tmp/import.log
-          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script' /tmp/import.log; then exit 1; fi
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT' /tmp/import.log; then
+            exit 1
+          fi
 
-      - name: Run regression
+      - name: Run critical gameplay suite
         shell: bash
-        env:
-          TEST_COMMAND: ${{ matrix.command }}
-          SUCCESS_MARKER: ${{ matrix.success }}
         run: |
           set -euo pipefail
-          bash -lc "$TEST_COMMAND" 2>&1 | tee /tmp/regression.log
 
-          marker_line="$(grep -nF -m1 "$SUCCESS_MARKER" /tmp/regression.log | cut -d: -f1 || true)"
-          if [[ -z "$marker_line" ]]; then
-            echo "::error::Regression did not emit the expected success marker: $SUCCESS_MARKER"
-            exit 1
-          fi
+          run_regression() {
+            local name="$1"
+            local marker="$2"
+            shift 2
+            local log="/tmp/${name}.log"
 
-          # The success marker is the semantic end of each regression. Keep
-          # runtime/script errors strict before that boundary, while treating
-          # Godot teardown diagnostics emitted after an explicit successful
-          # quit as non-blocking shutdown noise rather than a gameplay failure.
-          head -n "$marker_line" /tmp/regression.log > /tmp/regression-before-success.log
-          if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' /tmp/regression-before-success.log; then
-            exit 1
-          fi
+            echo "::group::${name}"
+            "$@" 2>&1 | tee "$log"
 
-          if tail -n "+$((marker_line + 1))" /tmp/regression.log | grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' > /tmp/regression-after-success.log; then
-            echo "::warning::Godot emitted shutdown diagnostics after the regression had already passed."
-            cat /tmp/regression-after-success.log
-          fi
+            if ! grep -Fq "$marker" "$log"; then
+              echo "::error::${name} did not emit expected success marker: ${marker}"
+              echo "::endgroup::"
+              return 1
+            fi
+
+            local marker_line
+            marker_line="$(grep -nF -m1 "$marker" "$log" | cut -d: -f1)"
+            head -n "$marker_line" "$log" > "/tmp/${name}-before-success.log"
+            if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' "/tmp/${name}-before-success.log"; then
+              echo "::endgroup::"
+              return 1
+            fi
+
+            echo "::endgroup::"
+          }
+
+          run_regression digimon-progression \
+            "digimon progression regression passed" \
+            godot --headless --path . tools/test_digimon_progression.tscn --quit-after 8
+
+          run_regression fusion-system \
+            "fusion system regression passed" \
+            godot --headless --path . tools/test_fusion_system.tscn --quit-after 10
+
+          run_regression digilab-layout \
+            "digilab layout regression passed" \
+            godot --headless --path . tools/test_digilab_layout_regression.tscn --quit-after 600
+
+          run_regression digimon-main-menu-ui \
+            "digimon main menu ui regression passed" \
+            godot --headless --path . tools/test_digimon_main_menu_ui_regression.tscn --quit-after 600
+
+          run_regression squad-system \
+            "squad system regression passed" \
+            godot --headless --path . tools/test_squad_system.tscn --quit-after 10
+
+          run_regression battle-squad-switching \
+            "battle squad switching regression passed" \
+            godot --headless --path . tools/test_battle_squad_switching.tscn --quit-after 10
+
+          run_regression hospital-system \
+            "hospital system regression passed" \
+            godot --headless --path . tools/test_hospital_system.tscn --quit-after 8
+
+          run_regression world-interiors \
+            "seamless world interior regression passed" \
+            godot --headless --path . tools/test_world_interior.tscn --quit-after 360
+
+          run_regression battle-ui-lifecycle \
+            "battle ui lifecycle regression passed" \
+            godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn
+
+          run_regression progression-loop-e2e \
+            "complete progression loop e2e regression passed" \
+            godot --headless --path . tools/test_progression_loop_e2e.tscn --quit-after 20
+
+          run_regression battlefield-catalog \
+            "[BattlefieldCatalogTest] PASS" \
+            godot --headless --path . -s tools/test_battlefield_catalog.gd

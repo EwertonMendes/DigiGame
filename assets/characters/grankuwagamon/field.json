@@ -1,0 +1,201 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 365,
+  "source_archive_file": "sprite thread/365_GranKuwagamon.png",
+  "source_url": "https://withthewill.net/threads/the-new-digimon-world-dawn-dusk-lost-evo-sxw-sprite-topic-no-sprite-requests.10654/",
+  "source_sha256": "af4d2eb6459d2ea1d42be72dd4ddcbe70498e1004ea17ddfb2046b096a834069",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "two_rows_of_six",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "horizontal_mirror_from": {},
+  "generated_horizontal_mirrors": [],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      2,
+      1,
+      0
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 282694
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 0,
+      "confidence_margin": 344754
+    }
+  },
+  "vertical_alignment_policy": "frame_bottom",
+  "preserve_source_box": false,
+  "border_island_cleanup_max_pixels": 0,
+  "alpha_island_cleanup_max_pixels": 0,
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 292,
+      "source_bottom": 332,
+      "height": 40
+    },
+    "down_right": {
+      "source_top": 292,
+      "source_bottom": 332,
+      "height": 40
+    },
+    "up_left": {
+      "source_top": 247,
+      "source_bottom": 287,
+      "height": 40
+    },
+    "up_right": {
+      "source_top": 247,
+      "source_bottom": 287,
+      "height": 40
+    }
+  },
+  "anchor_policy": "bottom_center_in_uniform_species_cell",
+  "frame_anchor": [
+    18,
+    42
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 79,
+        "y": 294,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 122,
+        "y": 292,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 164,
+        "y": 293,
+        "w": 32,
+        "h": 37
+      }
+    ],
+    "down_right": [
+      {
+        "x": 289,
+        "y": 294,
+        "w": 32,
+        "h": 38
+      },
+      {
+        "x": 246,
+        "y": 292,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 204,
+        "y": 293,
+        "w": 32,
+        "h": 37
+      }
+    ],
+    "up_left": [
+      {
+        "x": 80,
+        "y": 250,
+        "w": 32,
+        "h": 35
+      },
+      {
+        "x": 122,
+        "y": 247,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 164,
+        "y": 248,
+        "w": 32,
+        "h": 39
+      }
+    ],
+    "up_right": [
+      {
+        "x": 288,
+        "y": 250,
+        "w": 32,
+        "h": 35
+      },
+      {
+        "x": 246,
+        "y": 247,
+        "w": 32,
+        "h": 39
+      },
+      {
+        "x": 204,
+        "y": 248,
+        "w": 32,
+        "h": 39
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 43,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/grankuwagamon/field.png"
+}

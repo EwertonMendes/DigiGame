@@ -34,6 +34,7 @@ var _subtitle_text := "Digital Monsters"
 var _bits := 0
 var _show_bits := true
 var _workspace_mode := false
+var _workspace_full_label_tabs := false
 
 
 func _ready() -> void:
@@ -80,6 +81,18 @@ func set_workspace_mode(enabled: bool) -> void:
 
 func is_workspace_mode() -> bool:
 	return _workspace_mode
+
+
+func set_workspace_full_label_tabs(enabled: bool) -> void:
+	if _workspace_full_label_tabs == enabled:
+		return
+	_workspace_full_label_tabs = enabled
+	if _tabs_root != null and _workspace_mode:
+		_layout()
+
+
+func uses_workspace_full_label_tabs() -> bool:
+	return _workspace_full_label_tabs
 
 
 func set_active_tab(tab_id: String) -> void:
@@ -267,6 +280,9 @@ func _rebuild_tabs() -> void:
 	if _tabs_root == null:
 		return
 	for child in _tabs_root.get_children():
+		# Detach synchronously so queued-for-free tabs cannot participate in the
+		# same HBox minimum-size pass or temporarily intercept pointer input.
+		_tabs_root.remove_child(child)
 		child.queue_free()
 	_tab_buttons.clear()
 
@@ -487,12 +503,20 @@ func _layout_workspace() -> void:
 		_tabs_root.add_theme_constant_override("separation", -int(tab_overlap))
 		var tabs_left := 370.0 if size.x >= 900.0 else 258.0
 		var tabs_right := _bits_badge.position.x if show_bits_now else _close_button.position.x
+		var target_tabs_width := maxf(0.0, tabs_right - tabs_left - 20.0)
 		_tabs_root.position = Vector2(tabs_left, 17.0)
-		_tabs_root.size = Vector2(maxf(0.0, tabs_right - tabs_left - 20.0), 50.0)
 		_tabs_root.clip_contents = true
 
 		var tab_count := maxi(1, _tab_specs.size())
-		var maximum_uniform_width := (_tabs_root.size.x + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count)
+		var maximum_uniform_width := (target_tabs_width + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count)
+		if _workspace_full_label_tabs:
+			_layout_workspace_full_label_tabs(angled_tabs, maximum_uniform_width)
+			_tabs_root.update_minimum_size()
+			_tabs_root.size = Vector2(target_tabs_width, 50.0)
+			_tabs_root.queue_sort()
+			return
+
+		_tabs_root.size = Vector2(target_tabs_width, 50.0)
 		var desired_uniform_width := 172.0 if angled_tabs else 126.0
 		for value in _tab_buttons.values():
 			var button := value as Button
@@ -543,3 +567,77 @@ func _layout_workspace() -> void:
 				icon.custom_minimum_size = Vector2(20.0, 20.0)
 			if row != null:
 				row.add_theme_constant_override("separation", 8)
+
+
+func _layout_workspace_full_label_tabs(angled_tabs: bool, tab_width: float) -> void:
+	# DigiLab opts into this policy because it has four long primary labels.
+	# Shared workspaces keep the original content-driven behavior above.
+	var icon_size := 20.0
+	var separation := 6
+	var safe_margin := 20
+	var font_size := 15
+	var longest_text := 0.0
+
+	while font_size > 9:
+		longest_text = 0.0
+		for value in _tab_buttons.values():
+			var button := value as Button
+			if button == null:
+				continue
+			var label := button.get_meta("tab_label") as Label
+			if label == null:
+				continue
+			var full_label := String(button.get_meta("full_label", ""))
+			longest_text = maxf(longest_text, _measure_tab_label(label, full_label, font_size))
+		var required := longest_text + icon_size + float(separation) + float(safe_margin * 2) + 4.0
+		if required <= tab_width:
+			break
+		font_size -= 1
+
+	# Preserve every authored label. If the smallest readable font still needs
+	# room, reduce only the angled safe inset for this DigiLab header instance.
+	longest_text = 0.0
+	for value in _tab_buttons.values():
+		var button := value as Button
+		if button == null:
+			continue
+		var label := button.get_meta("tab_label") as Label
+		if label == null:
+			continue
+		longest_text = maxf(longest_text, _measure_tab_label(label, String(button.get_meta("full_label", "")), font_size))
+	var remaining_for_margins := tab_width - longest_text - icon_size - float(separation) - 4.0
+	safe_margin = clampi(int(floor(remaining_for_margins * 0.5)), 8, 20) if angled_tabs else 0
+
+	for value in _tab_buttons.values():
+		var button := value as Button
+		if button == null:
+			continue
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_stretch_ratio = 1.0
+		button.custom_minimum_size = Vector2(tab_width, 50.0)
+
+		var label := button.get_meta("tab_label") as Label
+		var icon := button.get_meta("tab_icon") as DigiProceduralIcon
+		var row := button.get_meta("tab_row") as HBoxContainer
+		var content_host := button.get_meta("tab_content_host") as Control
+		if label != null:
+			label.visible = true
+			label.text = String(button.get_meta("full_label", ""))
+			label.add_theme_font_size_override("font_size", font_size)
+			label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			label.clip_text = true
+			label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			_set_tab_label_intrinsic_width(label)
+			label.update_minimum_size()
+		if icon != null:
+			icon.custom_minimum_size = Vector2(icon_size, icon_size)
+			icon.update_minimum_size()
+		if row != null:
+			row.add_theme_constant_override("separation", separation)
+			row.update_minimum_size()
+		if angled_tabs and content_host is MarginContainer:
+			var safe := content_host as MarginContainer
+			safe.add_theme_constant_override("margin_left", safe_margin)
+			safe.add_theme_constant_override("margin_right", safe_margin)
+			safe.update_minimum_size()
+		button.update_minimum_size()

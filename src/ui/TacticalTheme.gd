@@ -516,6 +516,7 @@ static func rank_color(rank: String) -> Color:
 		"ultimate": return PURPLE
 		"mega": return GOLD
 		"ultra": return RED
+		"fusion": return ORANGE
 		"in-training", "training": return Color(0.70, 0.80, 1.0, 1.0)
 		"fresh": return MUTED
 	return MUTED

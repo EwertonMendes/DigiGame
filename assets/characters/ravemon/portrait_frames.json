@@ -1,0 +1,14 @@
+{
+  "source": "Ravemon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ravemon.webp",
+  "frame_width": 134,
+  "frame_height": 116,
+  "frame_count": 4,
+  "durations_ms": [
+    300,
+    300,
+    300,
+    300
+  ],
+  "source_sha256": "838f19594acb41065d525961425ef0a8abe0e978ea59f47b031633bf0693c883"
+}

@@ -48,8 +48,8 @@ jobs:
   browser-smoke:
     name: Browser regression · ${{ matrix.suite }}
     if: >-
-      inputs.source_event == 'pull_request' ||
-      (inputs.source_event == 'push' && inputs.source_head_branch == 'master')
+      inputs.source_event == 'push' &&
+      inputs.source_head_branch == 'master'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
@@ -245,7 +245,7 @@ jobs:
 
           **[Open DigiGame PR #${PR_NUMBER}](${PREVIEW_URL})**
 
-          Build: \`${SHORT_SHA}\` · produced by the fast Web gate. Browser regressions continue independently and remain visible as separate QA jobs.
+          Build: \`${SHORT_SHA}\` · produced from this PR commit and isolated from master.
 
           Other open PR previews are preserved in the same Pages deployment."
 

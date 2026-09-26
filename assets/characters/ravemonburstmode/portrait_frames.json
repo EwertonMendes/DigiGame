@@ -1,0 +1,14 @@
+{
+  "source": "Ravemon (Burst Mode).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Ravemon%20%28Burst%20Mode%29.webp",
+  "frame_width": 180,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "046a8fd023412c2aec72eb50a13452343788bce8dd2bb0833e3fa7c4b9d8bcac"
+}

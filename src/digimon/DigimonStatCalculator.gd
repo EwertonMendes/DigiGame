@@ -44,7 +44,7 @@ func get_all_stats(instance: DigimonInstance, species: Dictionary) -> Dictionary
 func get_mov(instance: DigimonInstance, species: Dictionary) -> int:
 	if instance == null or species.is_empty():
 		return 0
-	var base_mov := int(species.get("MOV", 4))
+	var base_mov := int(species["MOV"])
 	var mobility_training := clampi(int(instance.training.get("mov", 0)), 0, 2)
 	return clampi(base_mov + mobility_training, 1, MAX_FINAL_MOV)
 
@@ -65,15 +65,10 @@ func clamp_resources(instance: DigimonInstance, species: Dictionary) -> void:
 
 func _base_stat(species: Dictionary, stat_key: String) -> int:
 	match stat_key:
-		"hp": return maxi(1, int(species.get("hp", 1)))
-		"mp": return maxi(0, int(species.get("sp", species.get("mp", 0))))
-		"atk": return maxi(1, int(species.get("atk", species.get("attack", 1))))
-		"def": return maxi(1, int(species.get("def", species.get("defense", 1))))
-		"int":
-			if species.has("int"):
-				return maxi(1, int(species.get("int", 1)))
-			var atk := int(species.get("atk", species.get("attack", 1)))
-			var defense := int(species.get("def", species.get("defense", 1)))
-			return maxi(1, int(round((float(atk) + float(defense)) * 0.5)))
-		"speed": return maxi(1, int(species.get("speed", 1)))
+		"hp": return maxi(1, int(species["hp"]))
+		"mp": return maxi(0, int(species["mp"]))
+		"atk": return maxi(1, int(species["atk"]))
+		"def": return maxi(1, int(species["def"]))
+		"int": return maxi(1, int(species["int"]))
+		"speed": return maxi(1, int(species["speed"]))
 	return 0

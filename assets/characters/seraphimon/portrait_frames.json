@@ -1,0 +1,14 @@
+{
+  "source": "Seraphimon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Seraphimon.webp",
+  "frame_width": 150,
+  "frame_height": 150,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "46475358516916e614ed6a3f3abc5143c9f32b4624fc6bad4bd1eaf9c5a21871"
+}

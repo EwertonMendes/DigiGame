@@ -1,0 +1,205 @@
+{
+  "source_kind": "official_ds",
+  "source_variant": "withthewill_additional_audited",
+  "source_id": 204,
+  "source_archive_file": null,
+  "source_url": "https://i874.photobucket.com/albums/ab308/WtWSprites/Perfect/204_Mammon.png",
+  "source_sha256": "294cb933c8cfcc8a7ee4257d763764a1c67f0dd9e4a61d611f7eb5f0b5b14dca",
+  "rebuilt_from_source": true,
+  "existing_runtime_strip_used_as_input": false,
+  "extraction_profile": "explicit_groups",
+  "review_pattern": "rear_rows_first",
+  "runtime_group_indices": [
+    2,
+    3,
+    0,
+    1
+  ],
+  "effective_runtime_group_indices": [
+    2,
+    3,
+    0,
+    0
+  ],
+  "horizontal_mirror_from": {
+    "up_right": "up_left"
+  },
+  "generated_horizontal_mirrors": [
+    "up_right"
+  ],
+  "canonical_runtime_order": [
+    "down_left",
+    "down_right",
+    "up_left",
+    "up_right"
+  ],
+  "canonical_runtime_phases": [
+    "idle",
+    "step_a",
+    "step_b"
+  ],
+  "source_frame_order": {
+    "down_left": [
+      0,
+      1,
+      2
+    ],
+    "up_left": [
+      0,
+      1,
+      2
+    ],
+    "down_right": [
+      2,
+      1,
+      0
+    ],
+    "up_right": [
+      0,
+      1,
+      2
+    ]
+  },
+  "pose_alignment": {
+    "down_right": {
+      "compared_with": "down_left",
+      "policy": "deterministic_mirror_pose_match",
+      "source_phase_order": [
+        2,
+        1,
+        0
+      ],
+      "pixel_error": 83830,
+      "confidence_margin": 145482
+    },
+    "up_right": {
+      "compared_with": "up_left",
+      "policy": "generated_horizontal_mirror",
+      "source_phase_order": [
+        0,
+        1,
+        2
+      ],
+      "pixel_error": 0,
+      "confidence_margin": null
+    }
+  },
+  "vertical_alignment_policy": "source_group_envelope",
+  "preserve_source_box": true,
+  "border_island_cleanup_max_pixels": 12,
+  "alpha_island_cleanup_max_pixels": 0,
+  "source_group_envelopes": {
+    "down_left": {
+      "source_top": 309,
+      "source_bottom": 345,
+      "height": 36
+    },
+    "down_right": {
+      "source_top": 309,
+      "source_bottom": 345,
+      "height": 36
+    },
+    "up_left": {
+      "source_top": 268,
+      "source_bottom": 304,
+      "height": 36
+    },
+    "up_right": {
+      "source_top": 268,
+      "source_bottom": 304,
+      "height": 36
+    }
+  },
+  "anchor_policy": "source_group_envelope_bottom_center",
+  "frame_anchor": [
+    18,
+    39
+  ],
+  "audited_source_frames": {
+    "down_left": [
+      {
+        "x": 99,
+        "y": 309,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 132,
+        "y": 309,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 165,
+        "y": 309,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "down_right": [
+      {
+        "x": 264,
+        "y": 309,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 231,
+        "y": 309,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 198,
+        "y": 309,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "up_left": [
+      {
+        "x": 99,
+        "y": 268,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 132,
+        "y": 268,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 165,
+        "y": 268,
+        "w": 32,
+        "h": 36
+      }
+    ],
+    "up_right": [
+      {
+        "x": 99,
+        "y": 268,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 132,
+        "y": 268,
+        "w": 32,
+        "h": 36
+      },
+      {
+        "x": 165,
+        "y": 268,
+        "w": 32,
+        "h": 36
+      }
+    ]
+  },
+  "cell_width": 36,
+  "cell_height": 40,
+  "frame_count": 12,
+  "frames_per_direction": 3,
+  "field_path": "res://assets/characters/mammothmon/field.png"
+}

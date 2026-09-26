@@ -1,39 +1,37 @@
 {
   "maxLevel": 99,
   "experience": {
-    "base": 18.0,
+    "base": 18,
     "exponent": 1.58,
     "rankRequirementMultiplier": {
       "Fresh": 0.8,
       "In-Training": 0.9,
-      "Rookie": 1.0,
+      "Rookie": 1,
       "Champion": 1.05,
       "Ultimate": 1.1,
       "Mega": 1.15,
       "Ultra": 1.2,
-      "Armor": 1.05,
-      "Hybrid": 1.1
+      "Fusion": 1.25
     },
     "enemyRankRewardMultiplier": {
       "Fresh": 0.55,
       "In-Training": 0.7,
-      "Rookie": 1.0,
+      "Rookie": 1,
       "Champion": 1.45,
       "Ultimate": 2.05,
       "Mega": 2.8,
       "Ultra": 3.5,
-      "Armor": 1.6,
-      "Hybrid": 2.15
+      "Fusion": 4
     },
     "encounterProfileMultiplier": {
-      "wild": 1.0,
+      "wild": 1,
       "trained": 1.15,
       "elite": 1.35,
       "boss": 1.8,
       "story": 1.25,
       "important": 1.25
     },
-    "rewardBase": 14.0,
+    "rewardBase": 14,
     "rewardLevelExponent": 1.12,
     "perLevelAbove": 0.08,
     "maxAboveMultiplier": 1.6,
@@ -52,10 +50,10 @@
     "minActive": 1,
     "maxActive": 3,
     "maxReserve": 3,
-    "squadXpMultiplier": 1.0
+    "squadXpMultiplier": 1
   },
   "rewards": {
-    "bitsLevelMultiplier": 1.0,
+    "bitsLevelMultiplier": 1,
     "digiDataByRank": {
       "Fresh": 20,
       "In-Training": 18,
@@ -64,18 +62,17 @@
       "Ultimate": 7,
       "Mega": 5,
       "Ultra": 4,
-      "Armor": 9,
-      "Hybrid": 7
+      "Fusion": 0
     },
     "digiDataLevelMultiplierPerLevel": 0.005,
     "digiDataMaxLevelMultiplier": 1.25,
     "profileMultiplier": {
-      "wild": 1.0,
+      "wild": 1,
       "trained": 1.05,
       "elite": 1.1,
       "boss": 1.25,
-      "story": 1.0,
-      "important": 1.0
+      "story": 1,
+      "important": 1
     }
   },
   "reconstruction": {
@@ -89,7 +86,12 @@
     "digivolutionBase": 2,
     "degenerationBase": 4,
     "levelDivisor": 10,
-    "repeatTransitionMultipliers": [1.0, 0.7, 0.4, 0.2]
+    "repeatTransitionMultipliers": [
+      1,
+      0.7,
+      0.4,
+      0.2
+    ]
   },
   "training": {
     "baseCapacity": 10,
@@ -104,14 +106,23 @@
   "hospital": {
     "minimumRecoverySeconds": 60,
     "maximumRecoverySeconds": 1200,
-    "baseInstantCost": 500.0,
-    "levelInstantCost": 50.0,
+    "baseInstantCost": 500,
+    "levelInstantCost": 50,
     "minimumInstantCost": 100
   },
   "tiers": {
-    "order": ["E", "D", "C", "B", "A", "S", "SS", "SSS"],
+    "order": [
+      "E",
+      "D",
+      "C",
+      "B",
+      "A",
+      "S",
+      "SS",
+      "SSS"
+    ],
     "primaryStatMultipliers": {
-      "E": 1.0,
+      "E": 1,
       "D": 1.05,
       "C": 1.1,
       "B": 1.16,
@@ -121,7 +132,7 @@
       "SSS": 1.5
     },
     "secondaryStatMultipliers": {
-      "E": 1.0,
+      "E": 1,
       "D": 1.025,
       "C": 1.05,
       "B": 1.08,
@@ -148,7 +159,7 @@
       "SS": "Mega",
       "SSS": "Mega"
     },
-    "fusionRequired": {
+    "donorRequired": {
       "D": false,
       "C": true,
       "B": true,
@@ -167,5 +178,9 @@
     "fragmentItemId": "expansion_fragment",
     "fragmentCraftCost": 5,
     "craftBitsCost": 50000
+  },
+  "fusion": {
+    "unlockDataRequired": 100,
+    "potentialMaxMaterialLevel": 99
   }
 }

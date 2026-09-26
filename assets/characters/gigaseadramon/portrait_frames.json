@@ -1,0 +1,14 @@
+{
+  "source": "GigaSeadramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/GigaSeadramon.webp",
+  "frame_width": 144,
+  "frame_height": 124,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "934539f1fe319f77498fd68fec1254f8f1200ecabeb29399063b0b16d65ca0e2"
+}

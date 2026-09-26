@@ -25,6 +25,13 @@ var _skill_archive_button: Button
 var _skill_mastery: SpinBox
 var _skill_mastery_apply: Button
 
+var _fusion_debug_select: OptionButton
+var _fusion_debug_data: SpinBox
+var _fusion_debug_delta: SpinBox
+var _fusion_debug_level_bonus: SpinBox
+var _fusion_debug_summary: Label
+var _fusion_material_summary: Label
+
 
 func _ready() -> void:
 	super._ready()
@@ -33,12 +40,15 @@ func _ready() -> void:
 	_techniques = TechniqueToolsScript.new() as DebugTechniqueTools
 	_skill_catalog = _techniques.catalog(true)
 	_build_skills_tab(_tabs)
+	_build_fusion_debug_tab(_tabs)
 	_refresh_skill_lab()
+	_refresh_fusion_debug_lab()
 
 
 func _refresh_all() -> void:
 	super._refresh_all()
 	_refresh_skill_lab()
+	_refresh_fusion_debug_lab()
 
 
 func _refresh_selected() -> void:
@@ -142,6 +152,196 @@ func _build_skills_tab(tabs: TabContainer) -> void:
 	_skill_form_learnset = _label("", 9, UI.SUBTLE)
 	_skill_form_learnset.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(_skill_form_learnset)
+
+
+
+
+func _build_fusion_debug_tab(tabs: TabContainer) -> void:
+	var page := _page(tabs, "FUSION")
+	page.add_child(_section_label("FUSION TEST LAB", UI.ORANGE))
+	var intro := _label("Inspect unlock state, verify material discovery across Active / Reserve / Storage, create test materials, and exercise the real Fusion service.", 10, UI.SUBTLE)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(intro)
+
+	_fusion_debug_select = OptionButton.new()
+	_fusion_debug_select.custom_minimum_size = Vector2(320, 42)
+	_fusion_debug_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_field(_fusion_debug_select)
+	for definition: Dictionary in OverworldState.get_fusion_definitions():
+		var fusion_id := String(definition.get("id", ""))
+		var result_species: Dictionary = OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
+		_fusion_debug_select.add_item(String(result_species.get("name", fusion_id)))
+		_fusion_debug_select.set_item_metadata(_fusion_debug_select.item_count - 1, fusion_id)
+	_fusion_debug_select.item_selected.connect(_on_fusion_debug_selected)
+	page.add_child(_fusion_debug_select)
+
+	_fusion_debug_summary = _label("", 11, UI.TEXT, true)
+	_fusion_debug_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(_fusion_debug_summary)
+
+	page.add_child(_section_label("FUSION DATA", UI.GOLD))
+	_fusion_debug_data = _spin(0, 100, 5)
+	page.add_child(_field_row("ABSOLUTE VALUE", _fusion_debug_data, [
+		_action("SET", _apply_fusion_debug_data, UI.ORANGE),
+		_action("LOCK 0%", _lock_debug_fusion, UI.MUTED),
+		_action("UNLOCK 100%", _unlock_debug_fusion, UI.GOLD),
+	]))
+	_fusion_debug_delta = _spin(1, 100, 1)
+	_fusion_debug_delta.value = 10
+	page.add_child(_field_row("ADJUST AMOUNT", _fusion_debug_delta, [
+		_action("+ ADD", _add_debug_fusion_data, UI.GREEN),
+		_action("− REMOVE", _remove_debug_fusion_data, UI.RED),
+	]))
+	page.add_child(_button_row([
+		_action("UNLOCK ALL FUSIONS", _unlock_all_debug_fusions, UI.PURPLE),
+		_action("LOCK ALL FUSIONS", _lock_all_debug_fusions, UI.MUTED),
+	]))
+
+	page.add_child(_section_label("MATERIAL DETECTION", UI.CYAN))
+	_fusion_material_summary = _label("", 10, UI.TEXT)
+	_fusion_material_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(_fusion_material_summary)
+
+	_fusion_debug_level_bonus = _spin(0, 80, 1)
+	_fusion_debug_level_bonus.value = 0
+	page.add_child(_field_row("LEVEL ABOVE MINIMUM", _fusion_debug_level_bonus, [
+		_action("ADD REQUIRED TO STORAGE", _spawn_debug_fusion_materials, UI.CYAN),
+	]))
+	page.add_child(_button_row([
+		_action("REMOVE TEST MATERIALS", _remove_debug_fusion_materials, UI.MUTED),
+		_action("REFRESH DETECTION", _refresh_fusion_debug_lab, UI.CYAN),
+	]))
+
+	page.add_child(_section_label("FORCE TEST", UI.RED))
+	var force_hint := _label("FORCE FUSION creates temporary recipe materials, runs the normal Fusion transaction, then restores the previous Fusion Data value. Existing player materials are never consumed.", 9, UI.SUBTLE)
+	force_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(force_hint)
+	page.add_child(_button_row([
+		_action("FORCE FUSION · NO MATERIALS", _force_debug_fusion, UI.RED, 46),
+	]))
+
+
+func _selected_debug_fusion_id() -> String:
+	if _fusion_debug_select == null or _fusion_debug_select.item_count == 0 or _fusion_debug_select.selected < 0:
+		return ""
+	return String(_fusion_debug_select.get_item_metadata(_fusion_debug_select.selected))
+
+
+func _on_fusion_debug_selected(_index: int) -> void:
+	_refresh_fusion_debug_lab()
+
+
+func _refresh_fusion_debug_lab() -> void:
+	if _fusion_debug_select == null or _fusion_debug_data == null or _fusion_debug_summary == null:
+		return
+	var fusion_id := _selected_debug_fusion_id()
+	if fusion_id.is_empty():
+		_fusion_debug_data.value = 0
+		_fusion_debug_summary.text = "No Fusion recipes configured."
+		if _fusion_material_summary != null:
+			_fusion_material_summary.text = "No material data."
+		return
+	var progress := int(OverworldState.get_fusion_data(fusion_id))
+	_fusion_debug_data.value = progress
+	var definition: Dictionary = {}
+	for candidate: Dictionary in OverworldState.get_fusion_definitions():
+		if String(candidate.get("id", "")) == fusion_id:
+			definition = candidate
+			break
+	var species: Dictionary = OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
+	_fusion_debug_summary.text = "%s · %d / 100 · %s" % [
+		String(species.get("name", fusion_id)).to_upper(),
+		progress,
+		"UNLOCKED" if progress >= 100 else "LOCKED",
+	]
+	if _fusion_material_summary != null:
+		var status := _state.fusion_material_status(fusion_id)
+		var lines: Array[String] = []
+		for raw_row in status.get("rows", []):
+			if not raw_row is Dictionary:
+				continue
+			var row := raw_row as Dictionary
+			lines.append("%s ×%d · Lv.%d+  |  ACTIVE %d · RESERVE %d · STORAGE %d · ELIGIBLE %d%s" % [
+				String(row.get("name", "Digimon")).to_upper(),
+				int(row.get("required", 1)),
+				int(row.get("minLevel", 1)),
+				int(row.get("active", 0)),
+				int(row.get("reserve", 0)),
+				int(row.get("storage", 0)),
+				int(row.get("eligible", 0)),
+				" · BLOCKED %d" % int(row.get("blocked", 0)) if int(row.get("blocked", 0)) > 0 else "",
+			])
+		for raw_item in status.get("items", []):
+			if raw_item is Dictionary:
+				var item := raw_item as Dictionary
+				lines.append("ITEM %s · %d / %d" % [String(item.get("itemId", "")).to_upper(), int(item.get("owned", 0)), int(item.get("required", 0))])
+		_fusion_material_summary.text = "\n".join(lines) if not lines.is_empty() else "This recipe has no material requirements."
+
+
+func _apply_fusion_debug_data() -> void:
+	var fusion_id := _selected_debug_fusion_id()
+	if _state.set_fusion_data(fusion_id, int(_fusion_debug_data.value)):
+		_status.text = "Fusion Data updated: %s." % fusion_id
+	_refresh_fusion_debug_lab()
+
+
+func _lock_debug_fusion() -> void:
+	var fusion_id := _selected_debug_fusion_id()
+	if _state.set_fusion_data(fusion_id, 0):
+		_status.text = "Fusion locked: %s." % fusion_id
+	_refresh_fusion_debug_lab()
+
+
+func _unlock_debug_fusion() -> void:
+	var fusion_id := _selected_debug_fusion_id()
+	if _state.set_fusion_data(fusion_id, 100):
+		_status.text = "Fusion unlocked: %s." % fusion_id
+	_refresh_fusion_debug_lab()
+
+
+func _add_debug_fusion_data() -> void:
+	var amount := int(_fusion_debug_delta.value) if _fusion_debug_delta != null else 1
+	if _state.adjust_fusion_data(_selected_debug_fusion_id(), amount):
+		_status.text = "Fusion Data increased by %d." % amount
+	_refresh_fusion_debug_lab()
+
+
+func _remove_debug_fusion_data() -> void:
+	var amount := int(_fusion_debug_delta.value) if _fusion_debug_delta != null else 1
+	if _state.adjust_fusion_data(_selected_debug_fusion_id(), -amount):
+		_status.text = "Fusion Data reduced by %d." % amount
+	_refresh_fusion_debug_lab()
+
+
+func _unlock_all_debug_fusions() -> void:
+	var count := _state.unlock_all_fusions()
+	_status.text = "%d Fusion recipes unlocked." % count
+	_refresh_fusion_debug_lab()
+
+
+func _lock_all_debug_fusions() -> void:
+	var count := _state.lock_all_fusions()
+	_status.text = "%d Fusion recipes locked." % count
+	_refresh_fusion_debug_lab()
+
+
+func _spawn_debug_fusion_materials() -> void:
+	var bonus := int(_fusion_debug_level_bonus.value) if _fusion_debug_level_bonus != null else 0
+	var result := _state.spawn_fusion_materials(_selected_debug_fusion_id(), bonus)
+	_status.text = "Added %d Digimon and %d item materials to test inventory." % [int(result.get("spawned", 0)), int(result.get("items", 0))]
+	_refresh_fusion_debug_lab()
+
+
+func _remove_debug_fusion_materials() -> void:
+	var removed := _state.remove_debug_fusion_materials(_selected_debug_fusion_id())
+	_status.text = "%d debug Fusion materials removed." % removed
+	_refresh_fusion_debug_lab()
+
+
+func _force_debug_fusion() -> void:
+	var result := _state.force_fusion_without_materials(_selected_debug_fusion_id())
+	_status.text = "Forced Fusion created successfully." if bool(result.get("success", false)) else "Forced Fusion failed: %s" % String(result.get("reason", "unknown"))
+	_refresh_all()
 
 
 func _skill_filter(labels: Array[String]) -> OptionButton:

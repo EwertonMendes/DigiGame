@@ -1,0 +1,14 @@
+{
+  "source": "MirageGaogamon (Burst Mode).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MirageGaogamon%20%28Burst%20Mode%29.webp",
+  "frame_width": 180,
+  "frame_height": 200,
+  "frame_count": 4,
+  "durations_ms": [
+    180,
+    180,
+    180,
+    180
+  ],
+  "source_sha256": "f0815523bdff787cb355b88c96e73f3d3cc10d3cd8dfd8fb5a1aa4f31112e25c"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "Preciomon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Preciomon.webp",
+  "frame_width": 127,
+  "frame_height": 116,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "fe4ac6aa38f3eefc95cbf5b5603a536f81fc5bd2b2b8d40ca62218679bfec025"
+}

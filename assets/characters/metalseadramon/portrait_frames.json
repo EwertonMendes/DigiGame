@@ -1,0 +1,14 @@
+{
+  "source": "MetalSeadramon.webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/MetalSeadramon.webp",
+  "frame_width": 113,
+  "frame_height": 164,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "376c0e7a9869496d88fb280a49b304162c3e9a02a1388274aab672b39dd6266d"
+}

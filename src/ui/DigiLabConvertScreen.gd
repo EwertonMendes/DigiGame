@@ -12,9 +12,9 @@ func open_lab() -> void:
 	_header.configure_tabs(PrimaryTabs.specs(), "convert")
 	_header.set_active_tab("convert")
 	_hint_bar.set_primary_tabs_enabled(true)
-	var ascension_handler := Callable(self, "_on_ascension_tab_selected")
-	if not _header.tab_selected.is_connected(ascension_handler):
-		_header.tab_selected.connect(ascension_handler)
+	var primary_handler := Callable(self, "_on_primary_tab_selected")
+	if not _header.tab_selected.is_connected(primary_handler):
+		_header.tab_selected.connect(primary_handler)
 
 
 func _refresh_detail() -> void:
@@ -33,6 +33,6 @@ func _refresh_detail() -> void:
 	AttributeChip.normalize_text_pill_height(_detail_body, family.to_upper())
 
 
-func _on_ascension_tab_selected(tab_id: String) -> void:
-	if tab_id == "ascension":
-		tab_requested.emit("ascension")
+func _on_primary_tab_selected(tab_id: String) -> void:
+	if tab_id != "convert":
+		tab_requested.emit(tab_id)

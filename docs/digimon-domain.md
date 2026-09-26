@@ -6,12 +6,14 @@ DigiGame separates species metadata, persistent individual progression, and batt
 
 `database/base-digimon-list.json` is the canonical catalogue of Digimon species. `seed` identifies a species and never identifies an individual Digimon.
 
-Every species record includes tactical movement metadata:
+Every species record includes canonical tactical movement metadata:
 
 - `MOV`: natural movement range for that species/form.
 - `movementType`: terrain interaction category (`ground`, `flying`, `aquatic`, `amphibious`, `hover`, etc.).
 
-Species base stats (`hp`, `mp`, `atk`, `def`, `speed`) are growth inputs, not saved individual values.
+Species base stats are `hp`, `mp`, `atk`, `def`, `int` and `speed`. They are growth inputs, not saved individual values. `INT` is the special-technique offense/defense stat and maps to Dawn/Dusk `Spirit` where source data exists.
+
+The catalogue is authoritative for base stats, `MOV` and `movementType`. Runtime code must not synthesize missing values. CI rejects missing canonical fields, the retired `checked` flag, or non-canonical field ordering. Digimon `.tres` resources are visual/runtime resource containers; any legacy serialized stat fields in them are compatibility metadata and are not gameplay stat sources.
 
 ## Digimon instance
 

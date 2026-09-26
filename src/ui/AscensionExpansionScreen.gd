@@ -500,14 +500,14 @@ func _tier_panel(instance: DigimonInstance) -> Control:
 		return panel
 
 	var requirement_copy := "%d BITS · %s+" % [int(initial_preview.get("bits_cost", 0)), String(initial_preview.get("minimum_rank", "Fresh"))]
-	if bool(initial_preview.get("fusion_required", false)):
+	if bool(initial_preview.get("donor_required", false)):
 		requirement_copy += " · SAME-SPECIES DONOR"
 	body.add_child(_info_card("NEXT · TIER %s" % next_tier, requirement_copy, V2.PURPLE))
 	body.add_child(_single_line_label("NEXT BONUS · %s" % _tier_bonus_copy(next_tier), 9, V2.PURPLE.lightened(0.18), true))
 
 	var donor_picker: OptionButton = null
-	if bool(initial_preview.get("fusion_required", false)):
-		body.add_child(_single_line_label("FUSION DONOR", 9, V2.MUTED, true))
+	if bool(initial_preview.get("donor_required", false)):
+		body.add_child(_single_line_label("ASCENSION DONOR", 9, V2.MUTED, true))
 		donor_picker = OptionButton.new()
 		donor_picker.name = "DonorPicker"
 		donor_picker.custom_minimum_size = Vector2(0, 44)
@@ -674,7 +674,7 @@ func _request_promotion(picker: OptionButton = null) -> void:
 		String(preview.get("target_tier", "")),
 		int(preview.get("bits_cost", 0)),
 	]
-	if bool(preview.get("fusion_required", false)):
+	if bool(preview.get("donor_required", false)):
 		var donor: DigimonInstance = OverworldState.get_instance_by_id(donor_id)
 		if donor != null:
 			var donor_species: Dictionary = _database.get_by_seed(donor.species_seed)

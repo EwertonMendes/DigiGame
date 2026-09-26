@@ -2,36 +2,19 @@ extends RefCounted
 class_name DigimonDatabase
 
 const DATABASE_PATH := "res://database/base-digimon-list.json"
-const DEFAULT_MOV := 4
-const MOV_BY_RANK := {
-	"Fresh": 2,
-	"In-Training": 3,
-	"Rookie": 4,
-	"Champion": 4,
-	"Ultimate": 4,
-	"Mega": 5,
-	"Ultra": 5,
-	"Armor": 4,
-	"Hybrid": 5,
-}
-const MOV_OVERRIDES_BY_NAME := {
-	"agumon": 4,
-	"gabumon": 4,
-	"greymon": 4,
-	"koromon": 3,
-	"tanemon": 3,
-	"veemon": 5,
-}
-const MOVEMENT_TYPE_OVERRIDES_BY_NAME := {
-	"birdramon": "flying",
-	"garudamon": "flying",
-	"aeroveedramon": "flying",
-	"megadramon": "flying",
-	"airdramon": "flying",
-	"seadramon": "aquatic",
-	"whamon": "aquatic",
-	"gomamon": "amphibious",
-}
+const REQUIRED_CANONICAL_FIELDS: Array[String] = [
+	"seed",
+	"name",
+	"hp",
+	"mp",
+	"atk",
+	"def",
+	"int",
+	"speed",
+	"bitFarmingRate",
+	"MOV",
+	"movementType",
+]
 const ELEMENT_OVERRIDES_BY_NAME := {
 	"agumon": "fire",
 	"gabumon": "fire",
@@ -60,15 +43,21 @@ func load_default() -> bool:
 
 	for raw_entry in parsed:
 		if not raw_entry is Dictionary:
-			continue
+			push_error("Digimon database contains a non-object species entry")
+			return false
+		var canonical_error := _canonical_species_error(raw_entry)
+		if not canonical_error.is_empty():
+			push_error(canonical_error)
+			return false
 		var species := _normalize_species(raw_entry)
-		var seed := String(species.get("seed", ""))
-		var name_key := String(species.get("name", "")).to_lower()
-		if seed.is_empty() or name_key.is_empty():
-			continue
+		var seed := String(species["seed"])
+		var name_key := String(species["name"]).to_lower()
 		if _species_by_seed.has(seed):
 			push_error("Duplicate Digimon species seed: %s" % seed)
-			continue
+			return false
+		if _species_by_name.has(name_key):
+			push_error("Duplicate Digimon species name: %s" % String(species["name"]))
+			return false
 		_species_by_seed[seed] = species
 		_species_by_name[name_key] = species
 
@@ -119,32 +108,47 @@ func get_degeneration_routes(seed: String) -> Array[Dictionary]:
 func get_base_stat(species: Dictionary, stat_key: String) -> int:
 	var key := "mp" if stat_key.to_lower() == "sp" else stat_key.to_lower()
 	match key:
-		"hp": return maxi(1, int(species.get("hp", 1)))
-		"mp": return maxi(0, int(species.get("sp", species.get("mp", 0))))
-		"atk": return maxi(1, int(species.get("atk", species.get("attack", 1))))
-		"def": return maxi(1, int(species.get("def", species.get("defense", 1))))
-		"int": return maxi(1, int(species.get("int", _derive_int(species))))
-		"speed": return maxi(1, int(species.get("speed", 1)))
+		"hp": return maxi(1, int(species["hp"]))
+		"mp": return maxi(0, int(species["mp"]))
+		"atk": return maxi(1, int(species["atk"]))
+		"def": return maxi(1, int(species["def"]))
+		"int": return maxi(1, int(species["int"]))
+		"speed": return maxi(1, int(species["speed"]))
 	return 0
 
 
 func get_base_mov(species: Dictionary) -> int:
-	return clampi(int(species.get("MOV", DEFAULT_MOV)), 1, 8)
+	return clampi(int(species["MOV"]), 1, 8)
 
 
 func get_movement_type(species: Dictionary) -> String:
-	return String(species.get("movementType", "ground"))
+	return String(species["movementType"])
+
+
+func _canonical_species_error(species: Dictionary) -> String:
+	var display_name := String(species.get("name", "<unnamed>"))
+	for key: String in REQUIRED_CANONICAL_FIELDS:
+		if not species.has(key):
+			return "%s: canonical species field '%s' is missing" % [display_name, key]
+	if String(species["seed"]).strip_edges().is_empty():
+		return "%s: seed cannot be empty" % display_name
+	if String(species["name"]).strip_edges().is_empty():
+		return "Digimon species name cannot be empty"
+	for stat_key: String in ["hp", "atk", "def", "int", "speed"]:
+		if int(species[stat_key]) < 1:
+			return "%s: %s must be positive" % [display_name, stat_key]
+	if int(species["mp"]) < 0:
+		return "%s: mp cannot be negative" % display_name
+	if int(species["MOV"]) < 1 or int(species["MOV"]) > 8:
+		return "%s: MOV must be between 1 and 8" % display_name
+	if String(species["movementType"]).strip_edges().is_empty():
+		return "%s: movementType cannot be empty" % display_name
+	return ""
 
 
 func _normalize_species(raw_entry: Dictionary) -> Dictionary:
 	var species := raw_entry.duplicate(true)
-	var name_key := String(species.get("name", "")).to_lower()
-	if not species.has("MOV"):
-		species["MOV"] = _derive_mov(species)
-	if not species.has("movementType"):
-		species["movementType"] = _derive_movement_type(species)
-	if not species.has("int"):
-		species["int"] = _derive_int(species)
+	var name_key := String(species["name"]).to_lower()
 	if not species.has("family"):
 		species["family"] = String(species.get("species", "Unknown"))
 	if not species.has("type"):
@@ -152,10 +156,8 @@ func _normalize_species(raw_entry: Dictionary) -> Dictionary:
 	if not species.has("element"):
 		species["element"] = String(ELEMENT_OVERRIDES_BY_NAME.get(name_key, "neutral"))
 
-	# The inherited catalogue remains the source of truth. At runtime we normalize
-	# its legacy route lists into target-specific route objects. New/edited species
-	# may define `evolutions` directly, while old records continue to work without
-	# a risky all-at-once rewrite of the 250KB catalogue.
+	# Route objects are runtime normalization only. Canonical base stats and
+	# movement metadata are never synthesized here; they must exist in the JSON.
 	if not species.has("evolutions"):
 		species["evolutions"] = _legacy_routes(
 			species.get("digiEvolutionSeedList", []),
@@ -211,28 +213,3 @@ func _route_array(raw) -> Array[Dictionary]:
 			if route is Dictionary:
 				result.append((route as Dictionary).duplicate(true))
 	return result
-
-
-func _derive_int(species: Dictionary) -> int:
-	var atk := int(species.get("atk", species.get("attack", 1)))
-	var defense := int(species.get("def", species.get("defense", 1)))
-	return maxi(1, int(round((float(atk) + float(defense)) * 0.5)))
-
-
-func _derive_mov(species: Dictionary) -> int:
-	var name_key := String(species.get("name", "")).to_lower()
-	if MOV_OVERRIDES_BY_NAME.has(name_key):
-		return int(MOV_OVERRIDES_BY_NAME[name_key])
-	var rank := String(species.get("rank", ""))
-	var mov := int(MOV_BY_RANK.get(rank, DEFAULT_MOV))
-	var speed := int(species.get("speed", 50))
-	if speed >= 90:
-		mov += 1
-	elif speed <= 20:
-		mov -= 1
-	return clampi(mov, 2, 6)
-
-
-func _derive_movement_type(species: Dictionary) -> String:
-	var name_key := String(species.get("name", "")).to_lower()
-	return String(MOVEMENT_TYPE_OVERRIDES_BY_NAME.get(name_key, "ground"))

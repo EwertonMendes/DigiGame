@@ -59,6 +59,11 @@ func _test_xp_and_stats(database: DigimonDatabase, factory: DigimonFactory, prog
 	for stat_key: String in DigimonInstance.STAT_KEYS:
 		agumon.aptitudes[stat_key] = 0
 		agumon.training[stat_key] = 0
+	assert(int(species.get("int", -1)) == 56, "Agumon canonical INT must come from the species catalogue")
+	assert(calculator.get_stat(agumon, species, "int") == 56, "Level 1 Agumon INT must use the canonical base value")
+	assert(int(database.get_by_name("koromon").get("int", -1)) == 27, "Koromon canonical INT must remain 27")
+	assert(int(database.get_by_name("greymon").get("int", -1)) == 72, "Greymon canonical INT must remain 72")
+	assert(not species.has("checked"), "Retired checked metadata must not survive in the canonical species catalogue")
 	assert(calculator.get_all_stats(agumon, species) == calculator.get_all_stats(agumon, species), "Stat calculation must be deterministic")
 	var required: int = progression.exp_to_next_level(agumon)
 	var level_result: Dictionary = progression.apply_experience(agumon, required)
@@ -265,7 +270,7 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	assert(loaded.get_storage_instances().size() == 1 and loaded.get_storage_instances()[0].id == seventh.id, "Save/load must preserve Storage separation")
 	assert(loaded.get_item_count("expansion_fragment") == 4, "Save/load must preserve generic inventory")
 	var save_data := save_service.load_data(TEST_SAVE_PATH)
-	assert(save_data != null and save_data.save_version == 2 and save_data.save_format == "world-v2", "New saves must use the World v2 contract")
+	assert(save_data != null and save_data.save_version == 3 and save_data.save_format == "fusion-v3", "New saves must use the Fusion v3 contract")
 
 	# Squad v1 is the one supported pre-world migration. Older prototype
 	# contracts remain intentionally invalidated.
@@ -279,7 +284,7 @@ func _test_collection_party_save_and_migration(factory: DigimonFactory, party_se
 	}
 	var normalized := migration.migrate(current_payload)
 	assert(not normalized.is_empty(), "Current Squad v1 saves must migrate")
-	assert(int(normalized.get("save_version", 0)) == 2 and String(normalized.get("save_format", "")) == "world-v2", "Squad v1 migration must produce World v2")
+	assert(int(normalized.get("save_version", 0)) == 3 and String(normalized.get("save_format", "")) == "fusion-v3", "Squad v1 migration must produce Fusion v3")
 	var normalized_world := normalized.get("world", {}) as Dictionary
 	assert(String(normalized_world.get("area", "")) == "central_city", "Squad v1 migration must receive the default world location")
 	var normalized_collection := normalized.get("collection", {}) as Dictionary

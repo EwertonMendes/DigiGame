@@ -13,7 +13,7 @@ const PADDING := 56.0
 const INSPECT_SCALES: Array[float] = [1.0, 1.5, 2.0]
 const RESOURCE_ROOT := "res://assets/resources"
 const DATABASE_PATH := "res://database/base-digimon-list.json"
-const RANK_ORDER: Array[String] = ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega"]
+const RANK_ORDER: Array[String] = ["Fresh", "In-Training", "Rookie", "Champion", "Ultimate", "Mega", "Fusion"]
 const RESOURCE_FALLBACKS: Array[String] = [
 	"agumon.tres",
 	"gabumon.tres",

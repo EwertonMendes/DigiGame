@@ -1,0 +1,14 @@
+{
+  "source": "Shine Greymon (Ruin Mode).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Shine%20Greymon%20%28Ruin%20Mode%29.webp",
+  "frame_width": 160,
+  "frame_height": 160,
+  "frame_count": 4,
+  "durations_ms": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "source_sha256": "fa4fcd14e7ae11bc40aeb0d6695101503f16e81ffde96348a101259f0db38771"
+}

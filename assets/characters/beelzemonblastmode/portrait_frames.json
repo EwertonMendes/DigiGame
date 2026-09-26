@@ -1,0 +1,14 @@
+{
+  "source": "Beelzemon (Blast Mode).webp",
+  "source_url": "https://raw.githubusercontent.com/EwertonMendes/digimon-ng/master/public/assets/digimons/Beelzemon%20%28Blast%20Mode%29.webp",
+  "frame_width": 140,
+  "frame_height": 180,
+  "frame_count": 4,
+  "durations_ms": [
+    250,
+    250,
+    250,
+    250
+  ],
+  "source_sha256": "e8c50de8a55534d12b18219c4b48c1bfe33c760a832858c317dbe622299bec18"
+}
