@@ -78,12 +78,14 @@ residential districts stay unlit until their actual curb/structure geometry exis
 prevents the previous effect of poles covering doors, characters or architecture, and makes
 lighting follow the city's depth and circulation rather than filling empty space.
 
-The approved seating pass is deliberately restrained: two benches occupy dedicated outer
-Central Plaza seating bays and two more line the North Canal promenade. They no longer overlap
-tree islands. Each seat sits on a flush light-paver bay with a cyan street-facing accent so the
-furniture reads as part of the streetscape rather than a pasted sprite. Both orientations come
-from the same `bench.png` sheet through atlas regions, and each keeps a fitted parallelogram
-collision matching the visible ground footprint instead of a wide rectangular blocker.
+The approved seating pass is deliberately restrained to exactly four benches: one is attached
+to the visible front facade of each landscape island in Central Plaza and North Canal. The
+bench center is authored just outside the planter edge, while its compact flush paver bay meets
+that edge so the seat reads as an extension of the shrub/tree canteiro rather than furniture
+floating in open pavement. The approved `bench.png` sheet is rendered at 10% gameplay scale;
+both orientations come from atlas regions in that single source image. Each seat keeps a fitted
+parallelogram collision matching the visible ground footprint instead of a wide rectangular
+blocker.
 
 Future decoration families should be added one at a time only after their final art has
 been visually approved.
