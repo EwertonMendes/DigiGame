@@ -80,8 +80,15 @@ func _ready() -> void:
 	var plaza_decor := plaza_section.get_node_or_null("CityDecor")
 	assert(
 		plaza_decor != null
-		and plaza_section.get_node_or_null("CityDecor/LampBay_01") == null,
-		"City lamps must mount directly into the ground with no visible socket, plate or square underneath"
+		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/PaverPad") != null
+		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/LandscapeBed") != null,
+		"Plaza lamps must keep their approved paver/canteiro integration"
+	)
+	assert(
+		plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingSocket") == null
+		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingCollar") == null
+		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingInset") == null,
+		"Lamp surrounds must never add a dark pedestal, socket or floating square under the sprite"
 	)
 	var first_plaza_lamp: Sprite2D = null
 	for child in plaza_decor.get_children():
