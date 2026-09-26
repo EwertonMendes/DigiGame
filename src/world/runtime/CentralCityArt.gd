@@ -70,7 +70,6 @@ const SURFACE_GRASS_CHECKER := "grass_checker"
 const SURFACE_MINT := "mint"
 const SURFACE_MAIN := "main"
 const SURFACE_STONE_SOFT := "stone_soft"
-const SURFACE_PATH := "path"
 const SURFACE_TECH_TEAL := "tech_teal"
 const SURFACE_TECH_BLUE := "tech_blue"
 const SURFACE_TECH_PURPLE := "tech_purple"
@@ -108,8 +107,6 @@ static func surface_texture(surface: String) -> Texture2D:
 			return GROUND_MINT
 		SURFACE_STONE_SOFT:
 			return GROUND_STONE_SOFT
-		SURFACE_PATH:
-			return GROUND_STONE_SOFT
 		SURFACE_TECH_TEAL:
 			return GROUND_TECH_TEAL
 		SURFACE_TECH_BLUE:
@@ -144,8 +141,6 @@ static func surface_base_color(surface: String) -> Color:
 			return Color(0.47, 0.48, 0.48, 1.0)
 		SURFACE_STONE_SOFT:
 			return Color(0.53, 0.54, 0.54, 1.0)
-		SURFACE_PATH:
-			return Color(0.64, 0.64, 0.61, 1.0)
 		SURFACE_TECH_TEAL:
 			return Color(0.39, 0.46, 0.46, 1.0)
 		SURFACE_TECH_BLUE:
@@ -172,7 +167,6 @@ static func is_procedural_paver_surface(surface: String) -> bool:
 	return surface in [
 		SURFACE_MAIN,
 		SURFACE_STONE_SOFT,
-		SURFACE_PATH,
 		SURFACE_TECH_TEAL,
 		SURFACE_TECH_BLUE,
 		SURFACE_TECH_PURPLE,
