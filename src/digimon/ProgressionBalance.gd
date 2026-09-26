@@ -151,9 +151,13 @@ func tier_minimum_rank(target_tier: String) -> String:
 	return String((raw as Dictionary).get(normalize_tier(target_tier), "Fresh")) if raw is Dictionary else "Fresh"
 
 
-func tier_fusion_required(target_tier: String) -> bool:
-	var raw = section("tiers").get("fusionRequired", {})
+func tier_donor_required(target_tier: String) -> bool:
+	var raw = section("tiers").get("donorRequired", {})
 	return bool((raw as Dictionary).get(normalize_tier(target_tier), false)) if raw is Dictionary else false
+
+
+func fusion_int(key: String, fallback: int) -> int:
+	return int(section("fusion").get(key, fallback))
 
 
 func expansion_number(key: String, fallback: float) -> float:
