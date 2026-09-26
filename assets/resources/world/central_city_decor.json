@@ -1,0 +1,1096 @@
+{
+  "version": 1,
+  "assets": {
+    "bench_ne": {
+      "path": "res://assets/world/tblack/city/props/bench_ne.svg",
+      "foot": [
+        40,
+        52
+      ],
+      "scale": 1,
+      "blocker": [
+        34,
+        10
+      ]
+    },
+    "bench_nw": {
+      "path": "res://assets/world/tblack/city/props/bench_nw.svg",
+      "foot": [
+        40,
+        52
+      ],
+      "scale": 1,
+      "blocker": [
+        34,
+        10
+      ]
+    },
+    "planter_flower": {
+      "path": "res://assets/world/tblack/city/props/planter_flower.svg",
+      "foot": [
+        36,
+        57
+      ],
+      "scale": 1,
+      "blocker": [
+        24,
+        12
+      ]
+    },
+    "planter_shrub": {
+      "path": "res://assets/world/tblack/city/props/planter_shrub.svg",
+      "foot": [
+        36,
+        62
+      ],
+      "scale": 1,
+      "blocker": [
+        24,
+        12
+      ]
+    },
+    "lamp_cyan": {
+      "path": "res://assets/world/tblack/city/props/lamp_cyan.svg",
+      "foot": [
+        24,
+        83
+      ],
+      "scale": 1,
+      "blocker": [
+        10,
+        6
+      ]
+    },
+    "lamp_warm": {
+      "path": "res://assets/world/tblack/city/props/lamp_warm.svg",
+      "foot": [
+        24,
+        83
+      ],
+      "scale": 1,
+      "blocker": [
+        10,
+        6
+      ]
+    },
+    "terminal": {
+      "path": "res://assets/world/tblack/city/props/terminal.svg",
+      "foot": [
+        29,
+        70
+      ],
+      "scale": 1,
+      "blocker": [
+        18,
+        10
+      ]
+    },
+    "holo_sign": {
+      "path": "res://assets/world/tblack/city/props/holo_sign.svg",
+      "foot": [
+        31,
+        78
+      ],
+      "scale": 1,
+      "blocker": [
+        14,
+        8
+      ],
+      "shader": "hologram"
+    },
+    "bin": {
+      "path": "res://assets/world/tblack/city/props/bin.svg",
+      "foot": [
+        22,
+        49
+      ],
+      "scale": 1,
+      "blocker": [
+        14,
+        8
+      ]
+    },
+    "bollard": {
+      "path": "res://assets/world/tblack/city/props/bollard.svg",
+      "foot": [
+        15,
+        41
+      ],
+      "scale": 1,
+      "blocker": [
+        8,
+        6
+      ]
+    },
+    "railing_ne": {
+      "path": "res://assets/world/tblack/city/props/railing_ne.svg",
+      "foot": [
+        39,
+        39
+      ],
+      "scale": 1,
+      "blocker": [
+        30,
+        7
+      ]
+    },
+    "railing_nw": {
+      "path": "res://assets/world/tblack/city/props/railing_nw.svg",
+      "foot": [
+        39,
+        39
+      ],
+      "scale": 1,
+      "blocker": [
+        30,
+        7
+      ]
+    },
+    "street_marker": {
+      "path": "res://assets/world/tblack/city/props/street_marker.svg",
+      "foot": [
+        32,
+        16
+      ],
+      "scale": 1,
+      "blocker": [
+        0,
+        0
+      ],
+      "layer": "ground"
+    }
+  },
+  "profiles": {
+    "plaza": [
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            3.1,
+            3.8
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            10.4,
+            3.5
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            3.2,
+            10
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            10.2,
+            9.7
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            4.3,
+            3.5
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            9.5,
+            10.4
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            3.2,
+            6.2
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            10.7,
+            6.8
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            6.1,
+            3.1
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            7.5,
+            10.7
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            4.1,
+            8.2
+          ],
+          "accent": [
+            0.35,
+            0.95,
+            1,
+            1
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            9.8,
+            5
+          ],
+          "accent": [
+            0.35,
+            0.95,
+            1,
+            1
+          ]
+        },
+        {
+          "asset": "terminal",
+          "cell": [
+            2.4,
+            7.9
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            6.5,
+            12.2
+          ]
+        }
+      ]
+    ],
+    "garden": [
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            1.5,
+            6.4
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            12.2,
+            6.8
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            4.5,
+            6
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            9.5,
+            7.8
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            4,
+            4.1
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            9.8,
+            9.5
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            4.1,
+            9.5
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            9.6,
+            4
+          ]
+        }
+      ],
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            6.5,
+            1.5
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            6.7,
+            12.1
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            6,
+            4.5
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            7.9,
+            9.4
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            3.7,
+            5
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            10,
+            8.9
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            4.5,
+            9.7
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            9.3,
+            3.8
+          ]
+        }
+      ]
+    ],
+    "residential": [
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            1.5,
+            4
+          ]
+        },
+        {
+          "asset": "lamp_warm",
+          "cell": [
+            12.2,
+            9.6
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            4.2,
+            11.4
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            3.2,
+            3.4
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            10.5,
+            5.1
+          ]
+        },
+        {
+          "asset": "bin",
+          "cell": [
+            11.5,
+            11.1
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            6.5,
+            1.3
+          ]
+        }
+      ],
+      [
+        {
+          "asset": "lamp_warm",
+          "cell": [
+            3,
+            1.5
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            10.6,
+            12
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            9.6,
+            2.4
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            3.1,
+            9.3
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            9.9,
+            9.8
+          ]
+        },
+        {
+          "asset": "bin",
+          "cell": [
+            2,
+            5.5
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            12.3,
+            6.5
+          ]
+        }
+      ]
+    ],
+    "canal": [
+      [
+        {
+          "asset": "railing_ne",
+          "cell": [
+            3.7,
+            4.5
+          ]
+        },
+        {
+          "asset": "railing_ne",
+          "cell": [
+            9.3,
+            4.5
+          ]
+        },
+        {
+          "asset": "railing_ne",
+          "cell": [
+            3.7,
+            8.8
+          ]
+        },
+        {
+          "asset": "railing_ne",
+          "cell": [
+            9.3,
+            8.8
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            2.1,
+            4
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            11,
+            9.3
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            2.7,
+            10.4
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            10.6,
+            3.2
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            1.7,
+            7
+          ]
+        }
+      ]
+    ],
+    "market": [
+      [
+        {
+          "asset": "lamp_warm",
+          "cell": [
+            2,
+            2.2
+          ]
+        },
+        {
+          "asset": "lamp_warm",
+          "cell": [
+            11.4,
+            2.2
+          ]
+        },
+        {
+          "asset": "lamp_warm",
+          "cell": [
+            2,
+            11
+          ]
+        },
+        {
+          "asset": "lamp_warm",
+          "cell": [
+            11.3,
+            11.1
+          ]
+        },
+        {
+          "asset": "terminal",
+          "cell": [
+            3.8,
+            4
+          ]
+        },
+        {
+          "asset": "terminal",
+          "cell": [
+            9.9,
+            9.6
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            3,
+            9.6
+          ],
+          "accent": [
+            1,
+            0.75,
+            0.25,
+            1
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            10.5,
+            4.1
+          ],
+          "accent": [
+            1,
+            0.75,
+            0.25,
+            1
+          ]
+        },
+        {
+          "asset": "bin",
+          "cell": [
+            1.7,
+            6.7
+          ]
+        },
+        {
+          "asset": "bin",
+          "cell": [
+            12,
+            6.3
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            4.2,
+            2.7
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            9.7,
+            10.9
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            6.5,
+            1.4
+          ]
+        }
+      ]
+    ],
+    "archive": [
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            2,
+            2.1
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            11.3,
+            11
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            3,
+            10.5
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            10.4,
+            3.1
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            3,
+            4
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            10.5,
+            9.3
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            3,
+            8.7
+          ],
+          "accent": [
+            0.74,
+            0.48,
+            1,
+            1
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            10.5,
+            5
+          ],
+          "accent": [
+            0.74,
+            0.48,
+            1,
+            1
+          ]
+        },
+        {
+          "asset": "terminal",
+          "cell": [
+            1.8,
+            6.5
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            12.2,
+            6.5
+          ]
+        }
+      ]
+    ],
+    "gate": [
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            2,
+            2.3
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            11.5,
+            2.3
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            2,
+            10.9
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            11.5,
+            10.9
+          ]
+        },
+        {
+          "asset": "bollard",
+          "cell": [
+            5.1,
+            5
+          ]
+        },
+        {
+          "asset": "bollard",
+          "cell": [
+            8.9,
+            5
+          ]
+        },
+        {
+          "asset": "bollard",
+          "cell": [
+            5.1,
+            8.9
+          ]
+        },
+        {
+          "asset": "bollard",
+          "cell": [
+            8.9,
+            8.9
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            3,
+            6.6
+          ],
+          "accent": [
+            0.35,
+            0.95,
+            1,
+            1
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            10.7,
+            6.6
+          ],
+          "accent": [
+            0.35,
+            0.95,
+            1,
+            1
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            2.8,
+            8.8
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            10.7,
+            4.2
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            6.5,
+            1.2
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            6.5,
+            12.2
+          ]
+        }
+      ]
+    ],
+    "digilab": [
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            1.6,
+            2.5
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            12,
+            10.8
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            1.8,
+            10.7
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            10.8,
+            1.8
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            2.2,
+            7
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            11.2,
+            6.8
+          ]
+        },
+        {
+          "asset": "holo_sign",
+          "cell": [
+            2,
+            4.2
+          ],
+          "accent": [
+            0.5,
+            1,
+            0.45,
+            1
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            9.8,
+            12.1
+          ]
+        }
+      ]
+    ],
+    "training": [
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            1.8,
+            2.2
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            11.8,
+            2.2
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            2,
+            11.2
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            11.7,
+            11.2
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            2.2,
+            7.2
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            11,
+            6.8
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            2.5,
+            9.6
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            10.7,
+            3.7
+          ]
+        },
+        {
+          "asset": "terminal",
+          "cell": [
+            1.7,
+            5
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            7,
+            12.2
+          ]
+        }
+      ]
+    ],
+    "hospital": [
+      [
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            1.8,
+            2.3
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            11.8,
+            2.3
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            2,
+            11.1
+          ]
+        },
+        {
+          "asset": "lamp_cyan",
+          "cell": [
+            11.8,
+            11
+          ]
+        },
+        {
+          "asset": "bench_ne",
+          "cell": [
+            2.2,
+            7.5
+          ]
+        },
+        {
+          "asset": "bench_nw",
+          "cell": [
+            11,
+            7
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            2.7,
+            9.8
+          ]
+        },
+        {
+          "asset": "planter_shrub",
+          "cell": [
+            10.8,
+            4
+          ]
+        },
+        {
+          "asset": "planter_flower",
+          "cell": [
+            10.4,
+            10.2
+          ]
+        },
+        {
+          "asset": "terminal",
+          "cell": [
+            1.8,
+            5
+          ]
+        },
+        {
+          "asset": "street_marker",
+          "cell": [
+            9,
+            12.1
+          ]
+        }
+      ]
+    ]
+  }
+}
