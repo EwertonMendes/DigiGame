@@ -117,6 +117,14 @@ jobs:
             "fusion system regression passed" \
             godot --headless --path . tools/test_fusion_system.tscn --quit-after 10
 
+          run_regression digilab-layout \
+            "digilab layout regression passed" \
+            godot --headless --path . tools/test_digilab_layout_regression.tscn --quit-after 20
+
+          run_regression digimon-main-menu-ui \
+            "digimon main menu ui regression passed" \
+            godot --headless --path . tools/test_digimon_main_menu_ui_regression.tscn --quit-after 20
+
           run_regression squad-system \
             "squad system regression passed" \
             godot --headless --path . tools/test_squad_system.tscn --quit-after 10
