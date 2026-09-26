@@ -1,125 +1,28 @@
 {
-  "version": 2,
+  "version": 3,
   "assets": {
-    "bench_ne": {
-      "path": "res://assets/world/tblack/city/props_v2/bench_ne.png",
-      "foot": [
-        56,
-        68
-      ],
-      "scale": 1,
-      "blocker": [
-        44,
-        12
-      ]
-    },
-    "bench_nw": {
-      "path": "res://assets/world/tblack/city/props_v2/bench_nw.png",
-      "foot": [
-        56,
-        68
-      ],
-      "scale": 1,
-      "blocker": [
-        44,
-        12
-      ]
-    },
-    "lamp_cyan": {
-      "path": "res://assets/world/tblack/city/props_v2/lamp_cyan.png",
+    "lamp_blue": {
+      "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
       "foot": [
         24,
-        78
+        111
       ],
       "scale": 1,
       "blocker": [
-        10,
+        8,
         6
       ]
     },
-    "lamp_warm": {
-      "path": "res://assets/world/tblack/city/props_v2/lamp_warm.png",
+    "lamp_yellow": {
+      "path": "res://assets/world/tblack/city/props_v2/lamp_yellow.png",
       "foot": [
         24,
-        78
+        111
       ],
       "scale": 1,
       "blocker": [
-        10,
+        8,
         6
-      ]
-    },
-    "planter_long_ne": {
-      "path": "res://assets/world/tblack/city/props_v2/planter_long_ne.png",
-      "foot": [
-        56,
-        65
-      ],
-      "scale": 1,
-      "blocker": [
-        48,
-        10
-      ]
-    },
-    "planter_long_nw": {
-      "path": "res://assets/world/tblack/city/props_v2/planter_long_nw.png",
-      "foot": [
-        56,
-        65
-      ],
-      "scale": 1,
-      "blocker": [
-        48,
-        10
-      ]
-    },
-    "terminal": {
-      "path": "res://assets/world/tblack/city/props_v2/terminal.png",
-      "foot": [
-        29,
-        71
-      ],
-      "scale": 1,
-      "blocker": [
-        16,
-        10
-      ]
-    },
-    "holo_sign": {
-      "path": "res://assets/world/tblack/city/props_v2/holo_sign.png",
-      "foot": [
-        36,
-        93
-      ],
-      "scale": 1,
-      "blocker": [
-        18,
-        10
-      ],
-      "shader": "hologram"
-    },
-    "railing_ne": {
-      "path": "res://assets/world/tblack/city/props_v2/railing_ne.png",
-      "foot": [
-        48,
-        49
-      ],
-      "scale": 1,
-      "blocker": [
-        40,
-        7
-      ]
-    },
-    "railing_nw": {
-      "path": "res://assets/world/tblack/city/props_v2/railing_nw.png",
-      "foot": [
-        48,
-        49
-      ],
-      "scale": 1,
-      "blocker": [
-        40,
-        7
       ]
     }
   },
@@ -127,65 +30,31 @@
     "plaza": [
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
-            3,
-            4.1
+            3.2,
+            4
           ]
         },
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
-            10.2,
-            9.8
+            10.8,
+            4
           ]
         },
         {
-          "asset": "bench_ne",
+          "asset": "lamp_blue",
           "cell": [
-            3,
-            8.7
+            3.2,
+            10
           ]
         },
         {
-          "asset": "bench_nw",
+          "asset": "lamp_blue",
           "cell": [
-            10,
-            4.8
-          ]
-        },
-        {
-          "asset": "planter_long_ne",
-          "cell": [
-            3.4,
-            2.3
-          ]
-        },
-        {
-          "asset": "planter_long_nw",
-          "cell": [
-            10.2,
-            11
-          ]
-        },
-        {
-          "asset": "terminal",
-          "cell": [
-            2,
-            6.6
-          ]
-        },
-        {
-          "asset": "holo_sign",
-          "cell": [
-            11.5,
-            6.1
-          ],
-          "accent": [
-            0.35,
-            0.95,
-            1,
-            1
+            10.8,
+            10
           ]
         }
       ]
@@ -193,61 +62,33 @@
     "garden": [
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
-            1.7,
-            6.4
+            2,
+            6.3
           ]
         },
         {
-          "asset": "bench_ne",
+          "asset": "lamp_blue",
           "cell": [
-            5,
-            10.9
-          ]
-        },
-        {
-          "asset": "planter_long_ne",
-          "cell": [
-            10.6,
-            4
-          ]
-        },
-        {
-          "asset": "terminal",
-          "cell": [
-            11.9,
-            8.4
+            11.8,
+            7.2
           ]
         }
       ],
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
-            11.8,
-            6.8
+            6.1,
+            2
           ]
         },
         {
-          "asset": "bench_nw",
+          "asset": "lamp_blue",
           "cell": [
-            8.9,
-            2.8
-          ]
-        },
-        {
-          "asset": "planter_long_nw",
-          "cell": [
-            3.3,
-            9.9
-          ]
-        },
-        {
-          "asset": "terminal",
-          "cell": [
-            2,
-            5
+            7,
+            11.8
           ]
         }
       ]
@@ -255,61 +96,33 @@
     "residential": [
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_yellow",
           "cell": [
-            1.8,
+            2,
             4
           ]
         },
         {
-          "asset": "bench_ne",
+          "asset": "lamp_blue",
           "cell": [
-            4.2,
-            10.8
-          ]
-        },
-        {
-          "asset": "planter_long_ne",
-          "cell": [
-            10.4,
-            4
-          ]
-        },
-        {
-          "asset": "terminal",
-          "cell": [
-            11.8,
-            8.7
+            11.7,
+            9.8
           ]
         }
       ],
       [
         {
-          "asset": "lamp_warm",
+          "asset": "lamp_blue",
           "cell": [
-            11.7,
-            9.8
+            3,
+            2
           ]
         },
         {
-          "asset": "bench_nw",
+          "asset": "lamp_yellow",
           "cell": [
-            9.5,
-            2.7
-          ]
-        },
-        {
-          "asset": "planter_long_nw",
-          "cell": [
-            3.1,
-            9.6
-          ]
-        },
-        {
-          "asset": "terminal",
-          "cell": [
-            2,
-            5.3
+            10.7,
+            11.7
           ]
         }
       ]
@@ -317,42 +130,28 @@
     "canal": [
       [
         {
-          "asset": "railing_ne",
+          "asset": "lamp_blue",
           "cell": [
-            3.4,
-            4.4
+            4.8,
+            3.7
           ]
         },
         {
-          "asset": "railing_ne",
+          "asset": "lamp_blue",
           "cell": [
-            9.5,
-            4.4
+            8.2,
+            3.7
           ]
         },
         {
-          "asset": "railing_ne",
+          "asset": "lamp_blue",
           "cell": [
-            3.4,
-            9
+            4.8,
+            10
           ]
         },
         {
-          "asset": "railing_ne",
-          "cell": [
-            9.5,
-            9
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
-          "cell": [
-            5.1,
-            3.5
-          ]
-        },
-        {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
             8.2,
             10
@@ -363,51 +162,31 @@
     "market": [
       [
         {
-          "asset": "lamp_warm",
+          "asset": "lamp_yellow",
           "cell": [
             2,
             3
           ]
         },
         {
-          "asset": "lamp_warm",
+          "asset": "lamp_yellow",
           "cell": [
             11.4,
-            10.7
+            3
           ]
         },
         {
-          "asset": "bench_ne",
-          "cell": [
-            3.2,
-            9.6
-          ]
-        },
-        {
-          "asset": "planter_long_ne",
-          "cell": [
-            10.2,
-            3.3
-          ]
-        },
-        {
-          "asset": "terminal",
+          "asset": "lamp_yellow",
           "cell": [
             2,
-            6.5
+            10.8
           ]
         },
         {
-          "asset": "holo_sign",
+          "asset": "lamp_yellow",
           "cell": [
-            11.2,
-            6.3
-          ],
-          "accent": [
-            1,
-            0.72,
-            0.25,
-            1
+            11.4,
+            10.8
           ]
         }
       ]
@@ -415,44 +194,24 @@
     "archive": [
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
             2,
-            3.1
+            3
           ]
         },
         {
-          "asset": "bench_nw",
+          "asset": "lamp_blue",
           "cell": [
-            10.2,
-            3.2
+            11.5,
+            3
           ]
         },
         {
-          "asset": "planter_long_nw",
+          "asset": "lamp_blue",
           "cell": [
-            3.1,
-            9.7
-          ]
-        },
-        {
-          "asset": "terminal",
-          "cell": [
-            11.6,
-            8.5
-          ]
-        },
-        {
-          "asset": "holo_sign",
-          "cell": [
-            2.1,
-            6.4
-          ],
-          "accent": [
-            0.74,
-            0.48,
-            1,
-            1
+            6.8,
+            11.5
           ]
         }
       ]
@@ -460,44 +219,31 @@
     "gate": [
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
             3,
-            2.3
+            2.2
           ]
         },
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
-            10.8,
+            10.7,
+            2.2
+          ]
+        },
+        {
+          "asset": "lamp_blue",
+          "cell": [
+            3,
             11
           ]
         },
         {
-          "asset": "holo_sign",
+          "asset": "lamp_blue",
           "cell": [
-            3,
-            7
-          ],
-          "accent": [
-            0.35,
-            0.95,
-            1,
-            1
-          ]
-        },
-        {
-          "asset": "planter_long_ne",
-          "cell": [
-            10.2,
-            3.8
-          ]
-        },
-        {
-          "asset": "bench_nw",
-          "cell": [
-            4,
-            10.2
+            10.7,
+            11
           ]
         }
       ]
@@ -505,44 +251,31 @@
     "digilab": [
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
             1.8,
-            4.2
+            3.5
           ]
         },
         {
-          "asset": "bench_ne",
+          "asset": "lamp_blue",
           "cell": [
-            2.3,
-            9.7
+            11.8,
+            3.5
           ]
         },
         {
-          "asset": "planter_long_ne",
-          "cell": [
-            10.6,
-            2.6
-          ]
-        },
-        {
-          "asset": "terminal",
+          "asset": "lamp_blue",
           "cell": [
             1.8,
-            6.3
+            10.5
           ]
         },
         {
-          "asset": "holo_sign",
+          "asset": "lamp_blue",
           "cell": [
-            11.5,
-            7.3
-          ],
-          "accent": [
-            0.48,
-            1,
-            0.42,
-            1
+            11.8,
+            10.5
           ]
         }
       ]
@@ -550,44 +283,31 @@
     "training": [
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
-            2,
-            3.4
+            1.8,
+            3.5
           ]
         },
         {
-          "asset": "bench_nw",
+          "asset": "lamp_blue",
           "cell": [
-            11,
-            3.7
+            11.8,
+            3.5
           ]
         },
         {
-          "asset": "planter_long_nw",
+          "asset": "lamp_blue",
           "cell": [
-            2.7,
-            10.4
+            1.8,
+            10.5
           ]
         },
         {
-          "asset": "terminal",
+          "asset": "lamp_blue",
           "cell": [
-            1.9,
-            6.1
-          ]
-        },
-        {
-          "asset": "holo_sign",
-          "cell": [
-            11.3,
-            8.2
-          ],
-          "accent": [
-            0.32,
-            0.82,
-            1,
-            1
+            11.8,
+            10.5
           ]
         }
       ]
@@ -595,44 +315,31 @@
     "hospital": [
       [
         {
-          "asset": "lamp_cyan",
+          "asset": "lamp_blue",
           "cell": [
-            2,
-            3.4
+            1.8,
+            3.5
           ]
         },
         {
-          "asset": "bench_ne",
+          "asset": "lamp_blue",
           "cell": [
-            2.6,
-            9.8
+            11.8,
+            3.5
           ]
         },
         {
-          "asset": "planter_long_ne",
+          "asset": "lamp_blue",
           "cell": [
-            10.7,
-            3.3
+            1.8,
+            10.5
           ]
         },
         {
-          "asset": "terminal",
+          "asset": "lamp_blue",
           "cell": [
-            1.9,
-            6
-          ]
-        },
-        {
-          "asset": "holo_sign",
-          "cell": [
-            11.2,
-            8.1
-          ],
-          "accent": [
-            0.35,
-            0.95,
-            1,
-            1
+            11.8,
+            10.5
           ]
         }
       ]
