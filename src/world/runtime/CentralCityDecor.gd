@@ -71,13 +71,13 @@ static func build_for_section(
 		var asset := asset_value as Dictionary
 		var cell := _vec2(placement.get("cell", [0.0, 0.0]))
 		var clearance := _vec2(asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
-		# Validate the complete lamp surround, not only the tiny collision footprint
-		# of the pedestal. This keeps paving/landscape ornament away from
-		# foundations, entrances, trees and other authored blockers.
+		# Validate the complete authored furniture bay, not only its physical
+		# collision footprint. This keeps lamps and benches away from foundations,
+		# entrances, landscape islands and other authored blockers.
 		if not bool(can_place.call(cell, clearance)):
 			continue
 
-		var texture := _texture_for(asset_id, String(asset.get("path", "")))
+		var texture := _texture_for(asset_id, asset)
 		if texture == null:
 			continue
 		var foot := _vec2(asset.get("foot", [texture.get_width() * 0.5, texture.get_height()]))
@@ -87,12 +87,21 @@ static func build_for_section(
 		var surround_style := String(placement.get("surround", ""))
 		if not surround_style.is_empty():
 			var accent := _color(placement.get("accent", asset.get("accent", [0.24, 0.88, 1.0, 1.0])))
-			var surround := CITY_URBAN.create_lamp_surround(
-				"LampSurround_%02d" % (count + 1),
-				world_foot,
-				accent,
-				surround_style == "landscape"
-			)
+			var surround: Node2D
+			if surround_style.begins_with("seating"):
+				surround = CITY_URBAN.create_bench_surround(
+					"BenchSurround_%02d" % (count + 1),
+					world_foot,
+					accent,
+					surround_style.ends_with("_nw")
+				)
+			else:
+				surround = CITY_URBAN.create_lamp_surround(
+					"LampSurround_%02d" % (count + 1),
+					world_foot,
+					accent,
+					surround_style == "landscape"
+				)
 			surround.z_index = GROUND_DECOR_Z
 			root.add_child(surround)
 
@@ -142,16 +151,33 @@ static func _load_config() -> Dictionary:
 	return _config_cache
 
 
-static func _texture_for(asset_id: String, path: String) -> Texture2D:
+static func _texture_for(asset_id: String, asset: Dictionary) -> Texture2D:
 	if _texture_cache.has(asset_id):
 		return _texture_cache[asset_id] as Texture2D
+
+	var path := String(asset.get("path", ""))
 	if path.is_empty():
 		return null
 	var resource = ResourceLoader.load(path)
 	if not resource is Texture2D:
 		push_warning("CentralCityDecor: could not load prop %s from %s" % [asset_id, path])
 		return null
-	var texture := resource as Texture2D
+
+	var source := resource as Texture2D
+	var texture: Texture2D = source
+	var region_value = asset.get("region", [])
+	if region_value is Array and region_value.size() >= 4:
+		var atlas := AtlasTexture.new()
+		atlas.atlas = source
+		atlas.region = Rect2(
+			float(region_value[0]),
+			float(region_value[1]),
+			float(region_value[2]),
+			float(region_value[3])
+		)
+		atlas.filter_clip = true
+		texture = atlas
+
 	_texture_cache[asset_id] = texture
 	return texture
 
