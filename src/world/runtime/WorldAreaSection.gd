@@ -466,8 +466,8 @@ func _build_city_decorations() -> void:
 	)
 	var root = result.get("root")
 	_decoration_count = int(result.get("count", 0))
-	var asset_ids = result.get("assets", PackedStringArray())
-	_decoration_asset_ids = asset_ids if asset_ids is PackedStringArray else PackedStringArray()
+	var asset_ids: PackedStringArray = result.get("assets", PackedStringArray())
+	_decoration_asset_ids = asset_ids
 	if root is Node2D and _decoration_count > 0:
 		add_child(root as Node2D)
 	elif root is Node:
