@@ -1,8 +1,8 @@
 extends RefCounted
 class_name PlayerProgressSaveData
 
-const CURRENT_VERSION := 2
-const SAVE_FORMAT := "world-v2"
+const CURRENT_VERSION := 3
+const SAVE_FORMAT := "fusion-v3"
 
 var save_version: int = CURRENT_VERSION
 var save_format: String = SAVE_FORMAT
