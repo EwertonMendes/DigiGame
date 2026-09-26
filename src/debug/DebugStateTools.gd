@@ -72,6 +72,42 @@ func set_digi_data(species_name_or_seed: String, value: int) -> bool:
 	log_action("Set Digi Data", "%s = %d" % [String(species.get("name", seed)), target])
 	return true
 
+func set_fusion_data(fusion_id: String, value: int) -> bool:
+	var collection := _collection()
+	var clean_id := fusion_id.to_lower().strip_edges()
+	if collection == null or clean_id.is_empty():
+		return false
+	var known := false
+	for definition: Dictionary in OverworldState.get_fusion_definitions():
+		if String(definition.get("id", "")) == clean_id:
+			known = true
+			break
+	if not known:
+		return false
+	var target := collection.set_fusion_data(clean_id, value)
+	_emit_full_state_changed()
+	OverworldState.fusion_progress_changed.emit(clean_id, {"fusion_id": clean_id, "after": target, "unlocked": target >= 100})
+	log_action("Set Fusion Data", "%s = %d" % [clean_id, target])
+	return true
+
+
+func unlock_all_fusions() -> int:
+	var collection := _collection()
+	if collection == null:
+		return 0
+	var count := 0
+	for definition: Dictionary in OverworldState.get_fusion_definitions():
+		var fusion_id := String(definition.get("id", ""))
+		if fusion_id.is_empty():
+			continue
+		collection.set_fusion_data(fusion_id, 100)
+		OverworldState.fusion_progress_changed.emit(fusion_id, {"fusion_id": fusion_id, "after": 100, "unlocked": true})
+		count += 1
+	_emit_full_state_changed()
+	log_action("Unlock all Fusions", "%d recipes" % count)
+	return count
+
+
 func set_flag(flag_id: String, value: bool) -> bool:
 	var clean := flag_id.strip_edges()
 	var collection := _collection()
