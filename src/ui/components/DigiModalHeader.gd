@@ -500,15 +500,19 @@ func _layout_workspace() -> void:
 		_tabs_root.add_theme_constant_override("separation", -int(tab_overlap))
 		var tabs_left := 370.0 if size.x >= 900.0 else 258.0
 		var tabs_right := _bits_badge.position.x if show_bits_now else _close_button.position.x
+		var target_tabs_width := maxf(0.0, tabs_right - tabs_left - 20.0)
 		_tabs_root.position = Vector2(tabs_left, 17.0)
-		_tabs_root.size = Vector2(maxf(0.0, tabs_right - tabs_left - 20.0), 50.0)
 		_tabs_root.clip_contents = true
 
 		var tab_count := maxi(1, _tab_specs.size())
-		var maximum_uniform_width := (_tabs_root.size.x + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count)
+		var maximum_uniform_width := (target_tabs_width + tab_overlap * float(maxi(0, tab_count - 1))) / float(tab_count)
 		if _workspace_full_label_tabs:
 			_layout_workspace_full_label_tabs(angled_tabs, maximum_uniform_width)
+			_tabs_root.size = Vector2(target_tabs_width, 50.0)
+			_tabs_root.queue_sort()
 			return
+
+		_tabs_root.size = Vector2(target_tabs_width, 50.0)
 		var desired_uniform_width := 172.0 if angled_tabs else 126.0
 		for value in _tab_buttons.values():
 			var button := value as Button
