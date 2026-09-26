@@ -97,7 +97,8 @@ func _force_transition_for_debug(instance: DigimonInstance, target_seed: String,
 	# Debug bypasses requirements, never graph topology. This keeps the tool useful
 	# for testing the real transition pipeline without allowing impossible species jumps.
 	if _find_route(current_species, target_seed, degenerating).is_empty():
-		return false
+		if not (degenerating and _is_fusion_degeneration(instance, target_seed, current_species)):
+			return false
 	return _apply_transition(instance, target_seed, database, calculator, degenerating)
 
 
