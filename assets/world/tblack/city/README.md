@@ -58,14 +58,13 @@ filtering, use a bottom-center ground anchor and preserve the fixed isometric vi
 direction used by Central City.
 
 The blue lamp is the default civic/technology light. The yellow variant is reserved for
-warmer destinations such as Data Market. Lamps are no longer allowed to sit directly on raw
-road paving: every active placement gets a small flush isometric paving socket with district
-accent; selected plaza lamps also get a narrow green landscape inset. The lamp sprite's own
-graphite pedestal is seated into a tight gray mounting collar/inset rather than a second black
-plate, so the pole reads as fixed into the paving instead of hovering above it. The socket
-uses a larger placement-clearance envelope than the physical pole collision itself, so it
-cannot overlap building foundations, door approaches, tree islands or other blocked urban
-geometry.
+warmer destinations such as Data Market. Lamps now mount directly into the existing road/sidewalk ground plane. No extra paving tile,
+socket, collar, plate or square is rendered underneath them. The asset anchor is authored at
+the visual center of the graphite pedestal rather than at the bottom edge of the PNG, lowering
+the sprite by seven pixels so the pedestal straddles the isometric ground contact and reads as
+physically planted into the pavement. Placement still uses a larger clearance envelope than
+the physical pole collision, so a lamp cannot overlap building foundations, door approaches,
+tree islands or other blocked urban geometry.
 
 The current composition is intentionally sparse. Service buildings use at most one verified
 outer-sidewalk lamp, while the Central Plaza uses only outer-edge lamps kept away from the
