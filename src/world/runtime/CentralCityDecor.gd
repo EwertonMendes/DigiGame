@@ -2,7 +2,6 @@ extends RefCounted
 class_name CentralCityDecor
 
 const CONFIG_PATH := "res://assets/resources/world/central_city_decor.json"
-const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const DECOR_BASE_Z := 1000
@@ -84,17 +83,6 @@ static func build_for_section(
 		var scale_value := float(asset.get("scale", 1.0))
 		var world_foot := _grid_to_world(cell)
 
-		var bay_style := String(placement.get("bay", ""))
-		if not bay_style.is_empty():
-			var accent := _color(placement.get("accent", asset.get("accent", [0.24, 0.88, 1.0, 1.0])))
-			var bay := CITY_URBAN.create_lamp_bay(
-				"LampBay_%02d" % (count + 1),
-				world_foot,
-				accent,
-				bay_style == "landscape"
-			)
-			bay.z_index = GROUND_DECOR_Z
-			root.add_child(bay)
 
 		var sprite := Sprite2D.new()
 		sprite.name = "%s_%02d" % [asset_id.capitalize(), count + 1]
@@ -195,9 +183,3 @@ static func _vec2(value) -> Vector2:
 		return Vector2(float(value[0]), float(value[1]))
 	return Vector2.ZERO
 
-
-static func _color(value) -> Color:
-	if value is Array and value.size() >= 3:
-		var alpha := float(value[3]) if value.size() >= 4 else 1.0
-		return Color(float(value[0]), float(value[1]), float(value[2]), alpha)
-	return Color.WHITE
