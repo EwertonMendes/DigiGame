@@ -81,8 +81,6 @@ var _spawn_sp: SpinBox
 
 var _bits: SpinBox
 var _data: SpinBox
-var _fusion_select: OptionButton
-var _fusion_data: SpinBox
 var _inventory_summary: Label
 var _flag_id: LineEdit
 var _flag_value: CheckButton
@@ -485,18 +483,6 @@ func _build_state_tab(tabs: TabContainer) -> void:
 	page.add_child(_field_row("BITS", _bits, [_action("SET", _set_bits, UI.CYAN)]))
 	_data = _spin(0, 9999, 10)
 	page.add_child(_field_row("SELECTED SPECIES DATA", _data, [_action("SET", _set_data, UI.CYAN)]))
-	page.add_child(_section_label("FUSION DEBUG", UI.ORANGE))
-	_fusion_select = OptionButton.new()
-	_style_field(_fusion_select)
-	for definition: Dictionary in OverworldState.get_fusion_definitions():
-		var fusion_id := String(definition.get("id", ""))
-		var result_species := OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
-		_fusion_select.add_item(String(result_species.get("name", fusion_id)))
-		_fusion_select.set_item_metadata(_fusion_select.item_count - 1, fusion_id)
-	_fusion_select.item_selected.connect(func(_index: int) -> void: _refresh_fusion_debug())
-	page.add_child(_field_row("FUSION RECIPE", _fusion_select, [_action("UNLOCK ALL", _unlock_all_fusions, UI.ORANGE)]))
-	_fusion_data = _spin(0, 100, 5)
-	page.add_child(_field_row("FUSION DATA", _fusion_data, [_action("SET", _set_fusion_data, UI.ORANGE), _action("100%", _unlock_selected_fusion, UI.GOLD)]))
 	page.add_child(_section_label("EXPANSION INVENTORY", UI.PURPLE))
 	_inventory_summary = _label("Core 0 · Fragments 0", 10, UI.TEXT, true)
 	page.add_child(_inventory_summary)
@@ -732,7 +718,6 @@ func _refresh_selected() -> void:
 func _refresh_account_inventory() -> void:
 	if _inventory_summary == null:
 		return
-	_refresh_fusion_debug()
 	_inventory_summary.text = "Expansion Core ×%d · Expansion Fragment ×%d · Recipe: 5 Fragments + 50,000 Bits" % [_progression.get_item_count("expansion_core"), _progression.get_item_count("expansion_fragment")]
 
 func _refresh_routes() -> void:
@@ -1062,39 +1047,6 @@ func _set_data() -> void:
 	if value != null:
 		_state.set_digi_data(value.species_seed, int(_data.value))
 	_refresh_all()
-
-
-func _selected_fusion_id() -> String:
-	if _fusion_select == null or _fusion_select.selected < 0 or _fusion_select.item_count == 0:
-		return ""
-	return String(_fusion_select.get_item_metadata(_fusion_select.selected))
-
-
-func _refresh_fusion_debug() -> void:
-	if _fusion_data == null:
-		return
-	var fusion_id := _selected_fusion_id()
-	_fusion_data.value = int(OverworldState.get_fusion_data(fusion_id)) if not fusion_id.is_empty() else 0
-
-
-func _set_fusion_data() -> void:
-	var fusion_id := _selected_fusion_id()
-	if _state.set_fusion_data(fusion_id, int(_fusion_data.value)):
-		_status.text = "Fusion Data updated."
-	_refresh_all()
-
-
-func _unlock_selected_fusion() -> void:
-	if _state.set_fusion_data(_selected_fusion_id(), 100):
-		_status.text = "Fusion recipe unlocked."
-	_refresh_all()
-
-
-func _unlock_all_fusions() -> void:
-	var count := _state.unlock_all_fusions()
-	_status.text = "%d Fusion recipes unlocked." % count
-	_refresh_all()
-
 
 func _grant_expansion_core() -> void:
 	var count := _progression.grant_expansion_core(1)
