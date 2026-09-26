@@ -75,9 +75,9 @@ func _ready() -> void:
 		"DigiLab doorway must remain walkable"
 	)
 	assert(
-		absf(digilab_building.rotation_degrees - (-2.00295)) < 0.01
-		and digilab_building.scale.distance_to(Vector2(0.40, 0.32838876)) < 0.001,
-		"DigiLab source perspective must be corrected to the 64x32 city axes"
+		absf(digilab_building.rotation_degrees - (-2.48231)) < 0.01
+		and digilab_building.scale.distance_to(Vector2(0.40, 0.31635585)) < 0.001,
+		"DigiLab source projection must be corrected to the exact 64x32 city axes"
 	)
 	assert(
 		digilab_building.z_index == 880
