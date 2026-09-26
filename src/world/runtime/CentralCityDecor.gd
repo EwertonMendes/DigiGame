@@ -37,6 +37,7 @@ static func build_for_section(
 	var placements_value = variants[variant_index]
 	if not placements_value is Array:
 		return {"root": root, "count": 0, "assets": PackedStringArray()}
+	var placements := placements_value as Array
 
 	var assets_value = config.get("assets", {})
 	if not assets_value is Dictionary:
@@ -45,7 +46,7 @@ static func build_for_section(
 	var used := {}
 	var count := 0
 
-	for raw_placement in placements_value as Array:
+	for raw_placement in placements:
 		if not raw_placement is Dictionary:
 			continue
 		var placement := raw_placement as Dictionary
