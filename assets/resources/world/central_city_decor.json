@@ -117,16 +117,16 @@
       "path": "res://assets/world/tblack/city/props_v2/bench_ne.png",
       "foot": [
         56,
-        82
+        70
       ],
       "scale": 1,
       "blocker": [
         72,
-        34
+        32
       ],
       "clearance": [
-        96,
-        52
+        72,
+        36
       ],
       "collision": [
         [
@@ -151,16 +151,16 @@
       "path": "res://assets/world/tblack/city/props_v2/bench_nw.png",
       "foot": [
         56,
-        82
+        70
       ],
       "scale": 1,
       "blocker": [
         72,
-        34
+        32
       ],
       "clearance": [
-        96,
-        52
+        72,
+        36
       ],
       "collision": [
         [
@@ -214,10 +214,10 @@
       {
         "asset": "bench_ne",
         "cell": [
-          3.2,
-          10.2
+          2.8,
+          12.8
         ],
-        "role": "plaza_southwest_tree_seating"
+        "role": "plaza_southwest_tree_edge_seating"
       },
       {
         "asset": "bench_nw",
@@ -225,7 +225,7 @@
           11.2,
           4.7
         ],
-        "role": "plaza_northeast_tree_seating"
+        "role": "plaza_northeast_tree_edge_seating"
       }
     ],
     "-1,0": [
