@@ -115,8 +115,10 @@ static func build_for_section(
 			sprite.z_index = DECOR_BASE_Z + int(round(global_origin.y + world_foot.y))
 		root.add_child(sprite)
 
-		if blocker.x > 0.0 and blocker.y > 0.0:
-			register_blocker.call(_blocker_polygon(world_foot, blocker))
+		var collision_polygon := _collision_polygon(world_foot, asset)
+		if collision_polygon.size() >= 3:
+			register_blocker.call(collision_polygon)
+			sprite.set_meta("collision_polygon", collision_polygon)
 		used[asset_id] = true
 		count += 1
 
@@ -153,6 +155,22 @@ static func _texture_for(asset_id: String, path: String) -> Texture2D:
 	var texture := resource as Texture2D
 	_texture_cache[asset_id] = texture
 	return texture
+
+
+static func _collision_polygon(center: Vector2, asset: Dictionary) -> PackedVector2Array:
+	var custom_value = asset.get("collision", [])
+	if custom_value is Array and custom_value.size() >= 3:
+		var custom := PackedVector2Array()
+		for raw_point in custom_value:
+			if raw_point is Array and raw_point.size() >= 2:
+				custom.append(center + Vector2(float(raw_point[0]), float(raw_point[1])))
+		if custom.size() >= 3:
+			return custom
+
+	var blocker := _vec2(asset.get("blocker", [0.0, 0.0]))
+	if blocker.x <= 0.0 or blocker.y <= 0.0:
+		return PackedVector2Array()
+	return _blocker_polygon(center, blocker)
 
 
 static func _blocker_polygon(center: Vector2, size: Vector2) -> PackedVector2Array:
