@@ -56,6 +56,34 @@ func _ready() -> void:
 		area.get_runtime_node_count() < 1000,
 		"Central City runtime node budget must remain below 1000 nodes"
 	)
+	assert(
+		area.get_decoration_count() >= 140,
+		"Central City must ship a meaningful authored landscaping pass instead of sparse one-off props"
+	)
+	var plaza_section := area.get_node_or_null("Section_0_0") as WorldAreaSection
+	assert(plaza_section != null, "Central Plaza section must remain available for decoration regression coverage")
+	assert(
+		plaza_section.get_node_or_null("CityDecor") != null
+		and plaza_section.get_decoration_count() >= 10,
+		"Central Plaza must render a dense reusable urban landscaping kit"
+	)
+	var plaza_assets := plaza_section.get_decoration_asset_ids()
+	assert(
+		plaza_assets.has("bench_ne")
+		and plaza_assets.has("lamp_cyan")
+		and plaza_assets.has("planter_flower")
+		and plaza_assets.has("holo_sign"),
+		"Central Plaza must exercise seating, lighting, planting and holographic wayfinding assets"
+	)
+	for prop_path: String in [
+		"res://assets/world/tblack/city/props/bench_ne.svg",
+		"res://assets/world/tblack/city/props/planter_flower.svg",
+		"res://assets/world/tblack/city/props/lamp_cyan.svg",
+		"res://assets/world/tblack/city/props/holo_sign.svg",
+		"res://assets/world/tblack/city/props/railing_ne.svg",
+		"res://assets/world/tblack/city/props/street_marker.svg",
+	]:
+		assert(ResourceLoader.exists(prop_path), "Central City landscaping asset must be vendored: %s" % prop_path)
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the 64x32 safe plaza lane")
