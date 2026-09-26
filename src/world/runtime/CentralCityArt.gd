@@ -1,10 +1,12 @@
 extends RefCounted
 class_name CentralCityArt
 
-# Central City uses the project-supplied high-resolution Devil's Work.shop
-# collection as source art. Runtime geometry stays on DigiGame's original
-# 64x32 isometric contract; only the authored top face is sampled for interior
-# floor cells. Perimeter cells additionally render the source block sides.
+# Central City keeps DigiGame's original 64x32 isometric gameplay contract, but
+# its exterior hardscape is rendered as a continuous procedural micro-paver
+# surface. The visual paving is deliberately finer than gameplay cells so the
+# overworld reads as a city floor instead of a tactical board. Grass, water,
+# perimeter depth and authored interiors still use their dedicated source art.
+const CITY_PAVER_SHADER = preload("res://shaders/city_paver_floor.gdshader")
 const GROUND_GRASS = preload("res://assets/world/devilsworkshop/city_1024/isometric_0056.png")
 const GROUND_GRASS_CHECKER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0053.png")
 const GROUND_MINT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0058.png")
@@ -25,6 +27,8 @@ const TILE_HEIGHT := 32.0
 const TILE_HALF_WIDTH := TILE_WIDTH * 0.5
 const TILE_HALF_HEIGHT := TILE_HEIGHT * 0.5
 const FLOOR_OVERSCAN := Vector2(0.45, 0.22)
+const PAVERS_PER_GAMEPLAY_CELL := 4.0
+const PAVER_GROUT_WIDTH := 0.055
 
 # Top-face coordinates measured from the 1024x1024 exports.
 const SOURCE_TOP_LEFT := Vector2(92.0, 266.0)
@@ -133,28 +137,43 @@ static func surface_base_color(surface: String) -> Color:
 			return Color(0.37, 0.68, 0.20, 1.0)
 		SURFACE_MINT:
 			return Color(0.20, 0.62, 0.43, 1.0)
+		SURFACE_MAIN:
+			return Color(0.47, 0.48, 0.48, 1.0)
 		SURFACE_STONE_SOFT:
-			return Color(0.43, 0.43, 0.40, 1.0)
+			return Color(0.56, 0.56, 0.54, 1.0)
 		SURFACE_TECH_TEAL:
-			return Color(0.10, 0.37, 0.36, 1.0)
+			return Color(0.39, 0.46, 0.46, 1.0)
 		SURFACE_TECH_BLUE:
-			return Color(0.12, 0.27, 0.50, 1.0)
+			return Color(0.39, 0.43, 0.48, 1.0)
 		SURFACE_TECH_PURPLE:
-			return Color(0.31, 0.14, 0.47, 1.0)
+			return Color(0.44, 0.40, 0.47, 1.0)
 		SURFACE_DARK:
-			return Color(0.16, 0.17, 0.17, 1.0)
+			return Color(0.27, 0.28, 0.29, 1.0)
 		SURFACE_WATER:
 			return Color(0.04, 0.58, 0.72, 1.0)
 		SURFACE_MARKET:
-			return Color(0.10, 0.66, 0.28, 1.0)
+			return Color(0.58, 0.49, 0.30, 1.0)
 		SURFACE_TRAINING:
-			return Color(0.40, 0.68, 0.14, 1.0)
+			return Color(0.48, 0.51, 0.46, 1.0)
 		SURFACE_DIGILAB_FLOOR_1:
 			return Color(0.82, 0.83, 0.82, 1.0)
 		SURFACE_DIGILAB_FLOOR_2:
 			return Color(0.68, 0.70, 0.70, 1.0)
 		_:
-			return Color(0.55, 0.72, 0.24, 1.0)
+			return Color(0.47, 0.48, 0.48, 1.0)
+
+
+static func is_procedural_paver_surface(surface: String) -> bool:
+	return surface in [
+		SURFACE_MAIN,
+		SURFACE_STONE_SOFT,
+		SURFACE_TECH_TEAL,
+		SURFACE_TECH_BLUE,
+		SURFACE_TECH_PURPLE,
+		SURFACE_DARK,
+		SURFACE_MARKET,
+		SURFACE_TRAINING,
+	]
 
 
 static func create_ground_batch(
@@ -210,9 +229,14 @@ static func create_ground_batch(
 		var surface := String(surface_value)
 		var detail := MeshInstance2D.new()
 		detail.name = "Surface_%s" % surface
-		detail.mesh = _build_ground_surface_mesh(grouped[surface] as Array)
-		detail.texture = surface_texture(surface)
-		detail.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		if is_procedural_paver_surface(surface):
+			detail.mesh = _build_ground_paver_mesh(grouped[surface] as Array, surface)
+			detail.material = _create_paver_material()
+			detail.texture = null
+		else:
+			detail.mesh = _build_ground_surface_mesh(grouped[surface] as Array)
+			detail.texture = surface_texture(surface)
+			detail.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		detail.z_index = 2
 		root.add_child(detail)
 	return root
@@ -344,6 +368,73 @@ static func _build_ground_base_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
+
+
+static func _create_paver_material() -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = CITY_PAVER_SHADER
+	material.set_shader_parameter("pavers_per_cell", PAVERS_PER_GAMEPLAY_CELL)
+	material.set_shader_parameter("grout_width", PAVER_GROUT_WIDTH)
+	return material
+
+
+static func _build_ground_paver_mesh(tiles: Array, surface: String) -> ArrayMesh:
+	var vertices := PackedVector2Array()
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+	var diamond := tile_diamond()
+
+	for raw_spec in tiles:
+		if not raw_spec is Dictionary:
+			continue
+		var spec := raw_spec as Dictionary
+		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var vertex_start := vertices.size()
+		for point: Vector2 in diamond:
+			var world_point := center + point
+			vertices.append(world_point)
+			uvs.append(_world_to_grid_coordinates(world_point))
+
+		var base: Color = spec.get("base_color", surface_base_color(surface))
+		var tint: Color = spec.get("detail_tint", Color.WHITE)
+		var alpha := clampf(float(spec.get("detail_alpha", 1.0)), 0.0, 1.0)
+		var color := Color(
+			base.r * tint.r,
+			base.g * tint.g,
+			base.b * tint.b,
+			base.a * alpha
+		)
+		for _index in range(4):
+			colors.append(color)
+		indices.append_array(PackedInt32Array([
+			vertex_start,
+			vertex_start + 1,
+			vertex_start + 2,
+			vertex_start,
+			vertex_start + 2,
+			vertex_start + 3,
+		]))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+static func _world_to_grid_coordinates(world: Vector2) -> Vector2:
+	# This is the exact inverse of the 64x32 isometric transform used by the
+	# overworld. Feeding these continuous coordinates to the shader makes grout
+	# lines pass through authored section/tile seams with no macro-grid reveal.
+	return Vector2(
+		world.x / TILE_WIDTH + world.y / TILE_HEIGHT,
+		-world.x / TILE_WIDTH + world.y / TILE_HEIGHT
+	)
 
 
 static func _build_ground_surface_mesh(tiles: Array) -> ArrayMesh:
