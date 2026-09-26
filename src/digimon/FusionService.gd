@@ -89,9 +89,12 @@ func get_preview(collection: PlayerCollection, fusion_id: String, selected_ids: 
 	for index in range(slots.size()):
 		var req := slots[index]
 		var chosen := String(selected_ids[index]).strip_edges() if index < selected_ids.size() else ""
-		var instance := collection.get_instance(chosen) if not chosen.is_empty() else null
-		if instance == null or used.has(instance.id) or not _instance_matches(collection, instance, req):
-			instance = null
+		var instance: DigimonInstance = null
+		if not chosen.is_empty():
+			var explicit := collection.get_instance(chosen)
+			if explicit != null and not used.has(explicit.id) and _instance_matches(collection, explicit, req):
+				instance = explicit
+		else:
 			for candidate: DigimonInstance in get_eligible_instances(collection, clean_id, index):
 				if used.has(candidate.id):
 					continue
