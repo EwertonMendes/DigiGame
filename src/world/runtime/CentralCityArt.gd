@@ -294,6 +294,41 @@ static func create_surface_panel(
 	return root
 
 
+static func create_paver_polygon(
+	points: PackedVector2Array,
+	color: Color,
+	depth_order: int
+) -> MeshInstance2D:
+	var mesh_instance := MeshInstance2D.new()
+	mesh_instance.mesh = _build_paver_polygon_mesh(points, color)
+	mesh_instance.material = _create_paver_material()
+	mesh_instance.z_index = clampi(depth_order, -4000, 4000)
+	return mesh_instance
+
+
+static func _build_paver_polygon_mesh(
+	points: PackedVector2Array,
+	color: Color
+) -> ArrayMesh:
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	for point: Vector2 in points:
+		colors.append(color)
+		uvs.append(_world_to_grid_coordinates(point))
+
+	arrays[Mesh.ARRAY_VERTEX] = points
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = Geometry2D.triangulate_polygon(points)
+
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
 static func surface_top_face_uvs(surface: String) -> PackedVector2Array:
 	match surface:
 		SURFACE_DIGILAB_FLOOR_1:
