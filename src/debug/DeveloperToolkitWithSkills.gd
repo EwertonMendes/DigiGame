@@ -25,6 +25,10 @@ var _skill_archive_button: Button
 var _skill_mastery: SpinBox
 var _skill_mastery_apply: Button
 
+var _fusion_debug_select: OptionButton
+var _fusion_debug_data: SpinBox
+var _fusion_debug_summary: Label
+
 
 func _ready() -> void:
 	super._ready()
@@ -33,12 +37,15 @@ func _ready() -> void:
 	_techniques = TechniqueToolsScript.new() as DebugTechniqueTools
 	_skill_catalog = _techniques.catalog(true)
 	_build_skills_tab(_tabs)
+	_build_fusion_debug_tab(_tabs)
 	_refresh_skill_lab()
+	_refresh_fusion_debug_lab()
 
 
 func _refresh_all() -> void:
 	super._refresh_all()
 	_refresh_skill_lab()
+	_refresh_fusion_debug_lab()
 
 
 func _refresh_selected() -> void:
@@ -142,6 +149,92 @@ func _build_skills_tab(tabs: TabContainer) -> void:
 	_skill_form_learnset = _label("", 9, UI.SUBTLE)
 	_skill_form_learnset.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(_skill_form_learnset)
+
+
+
+
+func _build_fusion_debug_tab(tabs: TabContainer) -> void:
+	var page := _page(tabs, "FUSION")
+	page.add_child(_section_label("FUSION PROGRESSION", UI.ORANGE))
+	var intro := _label("Test Fusion unlock progression without bypassing the real collection/save path. Recipe creation itself remains in DigiLab so debug exercises the same production service.", 10, UI.SUBTLE)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(intro)
+
+	_fusion_debug_select = OptionButton.new()
+	_fusion_debug_select.custom_minimum_size = Vector2(320, 42)
+	_fusion_debug_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_field(_fusion_debug_select)
+	for definition: Dictionary in OverworldState.get_fusion_definitions():
+		var fusion_id := String(definition.get("id", ""))
+		var result_species := OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
+		_fusion_debug_select.add_item(String(result_species.get("name", fusion_id)))
+		_fusion_debug_select.set_item_metadata(_fusion_debug_select.item_count - 1, fusion_id)
+	_fusion_debug_select.item_selected.connect(_on_fusion_debug_selected)
+	page.add_child(_fusion_debug_select)
+
+	_fusion_debug_summary = _label("", 11, UI.TEXT, true)
+	_fusion_debug_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(_fusion_debug_summary)
+
+	_fusion_debug_data = _spin(0, 100, 5)
+	page.add_child(_field_row("FUSION DATA", _fusion_debug_data, [
+		_action("SET", _apply_fusion_debug_data, UI.ORANGE),
+		_action("UNLOCK 100%", _unlock_debug_fusion, UI.GOLD),
+		_action("UNLOCK ALL", _unlock_all_debug_fusions, UI.PURPLE),
+	]))
+
+
+func _selected_debug_fusion_id() -> String:
+	if _fusion_debug_select == null or _fusion_debug_select.item_count == 0 or _fusion_debug_select.selected < 0:
+		return ""
+	return String(_fusion_debug_select.get_item_metadata(_fusion_debug_select.selected))
+
+
+func _on_fusion_debug_selected(_index: int) -> void:
+	_refresh_fusion_debug_lab()
+
+
+func _refresh_fusion_debug_lab() -> void:
+	if _fusion_debug_select == null or _fusion_debug_data == null or _fusion_debug_summary == null:
+		return
+	var fusion_id := _selected_debug_fusion_id()
+	if fusion_id.is_empty():
+		_fusion_debug_data.value = 0
+		_fusion_debug_summary.text = "No Fusion recipes configured."
+		return
+	var progress := int(OverworldState.get_fusion_data(fusion_id))
+	_fusion_debug_data.value = progress
+	var definition: Dictionary = {}
+	for candidate: Dictionary in OverworldState.get_fusion_definitions():
+		if String(candidate.get("id", "")) == fusion_id:
+			definition = candidate
+			break
+	var species := OverworldState.get_database().get_by_seed(String(definition.get("resultSeed", "")))
+	_fusion_debug_summary.text = "%s · %d / 100 · %s" % [
+		String(species.get("name", fusion_id)).to_upper(),
+		progress,
+		"UNLOCKED" if progress >= 100 else "LOCKED",
+	]
+
+
+func _apply_fusion_debug_data() -> void:
+	var fusion_id := _selected_debug_fusion_id()
+	if _state.set_fusion_data(fusion_id, int(_fusion_debug_data.value)):
+		_status.text = "Fusion Data updated: %s." % fusion_id
+	_refresh_fusion_debug_lab()
+
+
+func _unlock_debug_fusion() -> void:
+	var fusion_id := _selected_debug_fusion_id()
+	if _state.set_fusion_data(fusion_id, 100):
+		_status.text = "Fusion unlocked: %s." % fusion_id
+	_refresh_fusion_debug_lab()
+
+
+func _unlock_all_debug_fusions() -> void:
+	var count := _state.unlock_all_fusions()
+	_status.text = "%d Fusion recipes unlocked." % count
+	_refresh_fusion_debug_lab()
 
 
 func _skill_filter(labels: Array[String]) -> OptionButton:
