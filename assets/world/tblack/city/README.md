@@ -37,9 +37,12 @@ Each asset entry defines:
 - `scale`: authored render scale;
 - `blocker`: small ground-plane walkability footprint.
 
-District profiles contain stable asset IDs and fractional logical-grid positions. Replacing
-a prop never requires editing section code: keep its asset ID and update the catalog path,
-anchor, scale or blocker.
+The catalog supports exact section compositions through a `sections` map, with theme
+profiles only as a fallback. Important infrastructure such as service-building foundations,
+the Central Plaza perimeter, canal bridge heads and city gates therefore receives manually
+authored lamp positions tied to real urban edges instead of generic theme-wide scattering.
+Replacing a prop never requires editing section code: keep its asset ID and update the
+catalog path, anchor, scale or blocker.
 
 ## Current runtime kit
 
@@ -55,9 +58,11 @@ filtering, use a bottom-center ground anchor and preserve the fixed isometric vi
 direction used by Central City.
 
 The blue lamp is the default civic/technology light. The yellow variant is reserved for
-warmer areas such as Data Market and selected residential blocks. Lamp placement is
-deliberately sparse and rhythmic around open circulation areas; foundations and raised
-landscape islands remain the primary elements that define the city's urban structure.
+warmer destinations such as Data Market. Lamp placement is deliberately sparse and tied to
+urban anchors: building-foundation edges, entrance forecourts, the Central Plaza frame,
+bridge heads and gate approaches. Unfinished garden/residential blocks intentionally receive
+no lamps yet, avoiding the previous effect of poles floating in empty pavement. Foundations
+and raised landscape islands remain the primary elements that define the city's structure.
 
 Future decoration families should be added one at a time only after their final art has
 been visually approved.
