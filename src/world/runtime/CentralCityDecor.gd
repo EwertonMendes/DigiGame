@@ -2,6 +2,7 @@ extends RefCounted
 class_name CentralCityDecor
 
 const CONFIG_PATH := "res://assets/resources/world/central_city_decor.json"
+const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const DECOR_BASE_Z := 1000
@@ -70,9 +71,9 @@ static func build_for_section(
 		var asset := asset_value as Dictionary
 		var cell := _vec2(placement.get("cell", [0.0, 0.0]))
 		var clearance := _vec2(asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
-		# Validate the complete urban socket, not only the tiny collision footprint
-		# of the lamp base. This keeps paving ornaments away from foundations,
-		# entrances, trees and other authored blockers.
+		# Validate the complete lamp surround, not only the tiny collision footprint
+		# of the pedestal. This keeps paving/landscape ornament away from
+		# foundations, entrances, trees and other authored blockers.
 		if not bool(can_place.call(cell, clearance)):
 			continue
 
@@ -83,6 +84,17 @@ static func build_for_section(
 		var scale_value := float(asset.get("scale", 1.0))
 		var world_foot := _grid_to_world(cell)
 
+		var surround_style := String(placement.get("surround", ""))
+		if not surround_style.is_empty():
+			var accent := _color(placement.get("accent", asset.get("accent", [0.24, 0.88, 1.0, 1.0])))
+			var surround := CITY_URBAN.create_lamp_surround(
+				"LampSurround_%02d" % (count + 1),
+				world_foot,
+				accent,
+				surround_style == "landscape"
+			)
+			surround.z_index = GROUND_DECOR_Z
+			root.add_child(surround)
 
 		var sprite := Sprite2D.new()
 		sprite.name = "%s_%02d" % [asset_id.capitalize(), count + 1]
@@ -176,6 +188,13 @@ static func _grid_to_world(grid: Vector2) -> Vector2:
 		(grid.x - grid.y) * TILE_WIDTH * 0.5,
 		(grid.x + grid.y) * TILE_HEIGHT * 0.5
 	)
+
+
+static func _color(value) -> Color:
+	if value is Array and value.size() >= 3:
+		var alpha := float(value[3]) if value.size() >= 4 else 1.0
+		return Color(float(value[0]), float(value[1]), float(value[2]), alpha)
+	return Color.WHITE
 
 
 static func _vec2(value) -> Vector2:
