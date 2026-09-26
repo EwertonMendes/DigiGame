@@ -415,6 +415,18 @@ func get_fusion_data(fusion_id: String) -> int:
 	return clampi(int(_fusion_data_by_id.get(fusion_id.to_lower().strip_edges(), 0)), 0, 100)
 
 
+func set_fusion_data(fusion_id: String, value: int) -> int:
+	var clean_id := fusion_id.to_lower().strip_edges()
+	if clean_id.is_empty():
+		return 0
+	var target := clampi(value, 0, 100)
+	if target <= 0:
+		_fusion_data_by_id.erase(clean_id)
+		return 0
+	_fusion_data_by_id[clean_id] = target
+	return target
+
+
 func get_all_fusion_data() -> Dictionary:
 	return _fusion_data_by_id.duplicate(true)
 
