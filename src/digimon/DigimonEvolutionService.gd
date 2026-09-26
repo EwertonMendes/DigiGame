@@ -41,7 +41,8 @@ func build_transition_preview(instance: DigimonInstance, target_seed: String, da
 	var target_species: Dictionary = database.get_by_seed(target_seed)
 	if current_species.is_empty() or target_species.is_empty():
 		return {}
-	if _find_route(current_species, target_seed, degenerating).is_empty():
+	var fusion_degeneration := degenerating and _is_fusion_degeneration(instance, target_seed, current_species)
+	if _find_route(current_species, target_seed, degenerating).is_empty() and not fusion_degeneration:
 		return {}
 
 	var before_stats := calculator.get_all_stats(instance, current_species)
@@ -49,7 +50,7 @@ func build_transition_preview(instance: DigimonInstance, target_seed: String, da
 	preview_instance.species_seed = target_seed
 	preview_instance.level = 1
 	preview_instance.exp = 0
-	var potential_gain := _potential_gain_for_transition(instance, target_seed, degenerating)
+	var potential_gain := 0 if fusion_degeneration else _potential_gain_for_transition(instance, target_seed, degenerating)
 	_progression.add_potential(preview_instance, potential_gain)
 	var after_stats := calculator.get_all_stats(preview_instance, target_species)
 
@@ -107,8 +108,12 @@ func _can_transition(instance: DigimonInstance, target_seed: String, database: D
 	var target_species: Dictionary = database.get_by_seed(target_seed)
 	if current_species.is_empty() or target_species.is_empty():
 		return false
+	if not degenerating and String(current_species.get("rank", "")) == "Fusion":
+		return false
 	var route: Dictionary = _find_route(current_species, target_seed, degenerating)
 	if route.is_empty():
+		if degenerating and _is_fusion_degeneration(instance, target_seed, current_species):
+			return true
 		return false
 	return _requirements.all_met(instance, current_species, route.get("requirements", []), calculator, context)
 
@@ -119,6 +124,8 @@ func _available_routes(instance: DigimonInstance, database: DigimonDatabase, cal
 		return result
 	var species: Dictionary = database.get_by_seed(instance.species_seed)
 	if species.is_empty():
+		return result
+	if not degenerating and String(species.get("rank", "")) == "Fusion":
 		return result
 	var route_key: String = "degenerations" if degenerating else "evolutions"
 	var raw_routes = species.get(route_key, [])
@@ -138,6 +145,27 @@ func _available_routes(instance: DigimonInstance, database: DigimonDatabase, cal
 		route["requirement_results"] = evaluations
 		route["unlocked"] = _all_evaluations_met(evaluations)
 		result.append(route)
+	if degenerating and String(species.get("rank", "")) == "Fusion":
+		for target_seed: String in _fusion_material_seeds(instance):
+			var already_present := false
+			for existing: Dictionary in result:
+				if String(existing.get("targetSeed", "")) == target_seed:
+					already_present = true
+					break
+			if already_present:
+				continue
+			var target := database.get_by_seed(target_seed)
+			if target.is_empty():
+				continue
+			result.append({
+				"targetSeed": target_seed,
+				"targetName": String(target.get("name", "Unknown")),
+				"targetRank": String(target.get("rank", "")),
+				"requirements": [],
+				"requirement_results": [],
+				"unlocked": true,
+				"fusionDegeneration": true,
+			})
 	return result
 
 
@@ -167,9 +195,10 @@ func _apply_transition(instance: DigimonInstance, target_seed: String, database:
 
 	var old_seed: String = instance.species_seed
 	var old_level: int = instance.level
-	var direction: String = "degeneration" if degenerating else "digivolution"
+	var fusion_degeneration := degenerating and _is_fusion_degeneration(instance, target_seed, old_species)
+	var direction: String = "fusion_degeneration" if fusion_degeneration else ("degeneration" if degenerating else "digivolution")
 	var repeat_count: int = _transition_repeat_count(instance, old_seed, target_seed, direction)
-	var potential_gain: int = _potential_gain_for_transition(instance, target_seed, degenerating)
+	var potential_gain: int = 0 if fusion_degeneration else _potential_gain_for_transition(instance, target_seed, degenerating)
 	instance.evolution_history.append({
 		"fromSeed": old_seed,
 		"toSeed": target_seed,
@@ -184,6 +213,8 @@ func _apply_transition(instance: DigimonInstance, target_seed: String, database:
 	instance.species_seed = target_seed
 	instance.level = 1
 	instance.exp = 0
+	if fusion_degeneration:
+		instance.fusion_origin.clear()
 	_progression.add_potential(instance, potential_gain)
 	_sync_form_skills(instance, target_species)
 	# Evolution changes maximum resources but must not act as free treatment.
@@ -235,3 +266,24 @@ func _sync_form_skills(instance: DigimonInstance, species: Dictionary) -> void:
 	var available: Array[Dictionary] = _action_database.get_known_actions(instance.species_seed, instance.level)
 	for action: Dictionary in available:
 		instance.learn_skill(String(action.get("id", "")), true)
+
+
+func _fusion_material_seeds(instance: DigimonInstance) -> Array[String]:
+	var result: Array[String] = []
+	if instance == null or instance.fusion_origin.is_empty():
+		return result
+	var raw = instance.fusion_origin.get("materialSeeds", [])
+	if raw is Array:
+		for value in raw:
+			var seed := String(value).strip_edges()
+			if not seed.is_empty() and not result.has(seed):
+				result.append(seed)
+	return result
+
+
+func _is_fusion_degeneration(instance: DigimonInstance, target_seed: String, species: Dictionary) -> bool:
+	return (
+		instance != null
+		and String(species.get("rank", "")) == "Fusion"
+		and _fusion_material_seeds(instance).has(target_seed)
+	)
