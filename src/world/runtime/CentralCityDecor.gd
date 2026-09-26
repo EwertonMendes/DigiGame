@@ -73,11 +73,10 @@ static func build_for_section(
 		var clearance := _vec2(
 			placement.get("clearance", asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
 		)
-		# Validate the complete authored furniture bay, not only its physical
-		# collision footprint. Exact planter-front seating can deliberately reduce
-		# this envelope at placement level because its rear paving is supposed to
-		# meet the landscape-island facade; the bench center still has to be on an
-		# open walkable point before its fitted blocker is registered.
+		# Validate the authored placement clearance separately from the fitted
+		# physical footprint. Benches beside landscape islands deliberately reduce
+		# this envelope at placement level, while the anchor itself must still be on
+		# open pavement before the fitted blocker is registered.
 		if not bool(can_place.call(cell, clearance)):
 			continue
 
