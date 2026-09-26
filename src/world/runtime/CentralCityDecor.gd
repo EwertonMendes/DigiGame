@@ -2,6 +2,7 @@ extends RefCounted
 class_name CentralCityDecor
 
 const CONFIG_PATH := "res://assets/resources/world/central_city_decor.json"
+const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const DECOR_BASE_Z := 1000
@@ -70,7 +71,11 @@ static func build_for_section(
 		var asset := asset_value as Dictionary
 		var cell := _vec2(placement.get("cell", [0.0, 0.0]))
 		var blocker := _vec2(asset.get("blocker", [0.0, 0.0]))
-		if not bool(can_place.call(cell, blocker)):
+		var clearance := _vec2(asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
+		# Validate the complete urban socket, not only the tiny collision footprint
+		# of the lamp base. This keeps paving ornaments away from foundations,
+		# entrances, trees and other authored blockers.
+		if not bool(can_place.call(cell, clearance)):
 			continue
 
 		var texture := _texture_for(asset_id, String(asset.get("path", "")))
@@ -79,6 +84,18 @@ static func build_for_section(
 		var foot := _vec2(asset.get("foot", [texture.get_width() * 0.5, texture.get_height()]))
 		var scale_value := float(asset.get("scale", 1.0))
 		var world_foot := _grid_to_world(cell)
+
+		var bay_style := String(placement.get("bay", ""))
+		if not bay_style.is_empty():
+			var accent := _color(placement.get("accent", asset.get("accent", [0.24, 0.88, 1.0, 1.0])))
+			var bay := CITY_URBAN.create_lamp_bay(
+				"LampBay_%02d" % (count + 1),
+				world_foot,
+				accent,
+				bay_style == "landscape"
+			)
+			bay.z_index = GROUND_DECOR_Z
+			root.add_child(bay)
 
 		var sprite := Sprite2D.new()
 		sprite.name = "%s_%02d" % [asset_id.capitalize(), count + 1]
@@ -89,6 +106,11 @@ static func build_for_section(
 		sprite.position = world_foot - center_to_foot * scale_value
 		if String(asset.get("layer", "")) == "ground":
 			sprite.z_index = GROUND_DECOR_Z
+		elif String(placement.get("depth", "world")) == "behind_building":
+			# Used only for deliberately rear-side infrastructure. Service exteriors
+			# keep their main body at z=880, so 840 reads behind the architecture
+			# instead of painting the post over the facade.
+			sprite.z_index = 840
 		else:
 			sprite.z_index = DECOR_BASE_Z + int(round(global_origin.y + world_foot.y))
 		root.add_child(sprite)
