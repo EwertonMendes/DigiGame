@@ -165,8 +165,13 @@ func fuse(collection: PlayerCollection, fusion_id: String, selected_ids: Array[S
 		preview["reason"] = "result_creation_failed"
 		return preview
 
+	var committed_material_ids: Array[String] = []
+	var raw_selected = preview.get("selected_ids", [])
+	if raw_selected is Array:
+		for raw_id in raw_selected:
+			committed_material_ids.append(String(raw_id))
 	var material_instances: Array[DigimonInstance] = []
-	for instance_id: String in preview.get("selected_ids", []):
+	for instance_id: String in committed_material_ids:
 		var material := collection.get_instance(instance_id)
 		if material == null:
 			preview["success"] = false
@@ -196,7 +201,7 @@ func fuse(collection: PlayerCollection, fusion_id: String, selected_ids: Array[S
 
 	var destination := preview.get("destination", {}) as Dictionary
 	var committed := collection.commit_fusion(
-		preview.get("selected_ids", []),
+		committed_material_ids,
 		result,
 		preview.get("item_costs", {}),
 		String(destination.get("role", "")),
