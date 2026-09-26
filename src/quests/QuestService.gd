@@ -4,12 +4,17 @@ class_name QuestService
 const FusionProgressScript = preload("res://src/digimon/FusionProgressService.gd")
 const FusionCatalogScript = preload("res://src/digimon/FusionCatalog.gd")
 
+static var _shared_fusion_catalog: FusionCatalog = null
+
 var _fusion_progress = FusionProgressScript.new()
-var _fusion_catalog: FusionCatalog = FusionCatalogScript.new()
+var _fusion_catalog: FusionCatalog = null
 
 
 func _init() -> void:
-	_fusion_catalog.load_default()
+	if _shared_fusion_catalog == null:
+		_shared_fusion_catalog = FusionCatalogScript.new() as FusionCatalog
+		_shared_fusion_catalog.load_default()
+	_fusion_catalog = _shared_fusion_catalog
 
 const STATE_LOCKED := "locked"
 const STATE_AVAILABLE := "available"
