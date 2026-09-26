@@ -246,6 +246,10 @@
         "clearance": [
           0,
           0
+        ],
+        "surround_offset": [
+          -6,
+          -3
         ]
       },
       {
@@ -259,6 +263,10 @@
         "clearance": [
           0,
           0
+        ],
+        "surround_offset": [
+          6,
+          -3
         ]
       }
     ],
@@ -343,6 +351,10 @@
         "clearance": [
           0,
           0
+        ],
+        "surround_offset": [
+          -6,
+          -3
         ]
       },
       {
@@ -356,6 +368,10 @@
         "clearance": [
           0,
           0
+        ],
+        "surround_offset": [
+          6,
+          -3
         ]
       }
     ],
