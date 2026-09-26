@@ -47,11 +47,12 @@ catalog path, anchor, scale or blocker.
 ## Current runtime kit
 
 All previously generated prototype decorations were removed. The runtime kit currently
-contains only the two approved AI-generated street lamps, extracted from the accepted
-two-lamp sheet and normalized as individual transparent PNG sprites:
+contains only visually approved AI-generated props, normalized as individual transparent PNG sprites:
 
 - `lamp_blue.png`: cyan/blue technological city lamp;
-- `lamp_yellow.png`: warm yellow civic/market lamp.
+- `lamp_yellow.png`: warm yellow civic/market lamp;
+- `bench_ne.png`: futuristic civic bench aligned to one isometric street axis;
+- `bench_nw.png`: matching bench aligned to the opposite street axis.
 
 Both assets are stored under `assets/world/tblack/city/props_v2/`, rendered with nearest
 filtering, use an authored pedestal-center ground contact and preserve the fixed isometric
@@ -75,6 +76,11 @@ City Guide and pool. Canal lamps belong to bridge heads; unfinished gate, garden
 residential districts stay unlit until their actual curb/structure geometry exists. This
 prevents the previous effect of poles covering doors, characters or architecture, and makes
 lighting follow the city's depth and circulation rather than filling empty space.
+
+The first approved seating pass is deliberately restrained: two benches compose around the
+Central Plaza landscape islands and two more sit at the canal landscape nodes, using the
+orientation that follows each local isometric edge. Their collision is a fitted parallelogram
+matching the seat footprint rather than a wide rectangular blocker.
 
 Future decoration families should be added one at a time only after their final art has
 been visually approved.
