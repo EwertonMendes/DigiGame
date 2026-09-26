@@ -1,11 +1,11 @@
 {
-  "version": 6,
+  "version": 7,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
       "foot": [
         24,
-        111
+        104
       ],
       "scale": 1,
       "blocker": [
@@ -15,12 +15,6 @@
       "clearance": [
         60,
         30
-      ],
-      "accent": [
-        0.18,
-        0.87,
-        1,
-        1
       ],
       "collision": [
         [
@@ -61,7 +55,7 @@
       "path": "res://assets/world/tblack/city/props_v2/lamp_yellow.png",
       "foot": [
         24,
-        111
+        104
       ],
       "scale": 1,
       "blocker": [
@@ -71,12 +65,6 @@
       "clearance": [
         60,
         30
-      ],
-      "accent": [
-        1,
-        0.76,
-        0.2,
-        1
       ],
       "collision": [
         [
@@ -122,8 +110,7 @@
           2.2,
           5.2
         ],
-        "role": "plaza_northwest_landscape_edge",
-        "bay": "landscape"
+        "role": "plaza_northwest_landscape_edge"
       },
       {
         "asset": "lamp_blue",
@@ -131,8 +118,7 @@
           8.8,
           2.5
         ],
-        "role": "plaza_northeast_landscape_edge",
-        "bay": "landscape"
+        "role": "plaza_northeast_landscape_edge"
       },
       {
         "asset": "lamp_blue",
@@ -140,8 +126,7 @@
           11.5,
           8.5
         ],
-        "role": "plaza_southeast_landscape_edge",
-        "bay": "landscape"
+        "role": "plaza_southeast_landscape_edge"
       }
     ],
     "-1,0": [
@@ -151,8 +136,7 @@
           12.2,
           6.5
         ],
-        "role": "digilab_outer_sidewalk_node",
-        "bay": "civic"
+        "role": "digilab_outer_sidewalk_node"
       }
     ],
     "0,-1": [
@@ -162,8 +146,7 @@
           13,
           6
         ],
-        "role": "training_outer_sidewalk_node",
-        "bay": "civic"
+        "role": "training_outer_sidewalk_node"
       }
     ],
     "1,0": [
@@ -173,8 +156,7 @@
           11.5,
           6
         ],
-        "role": "hospital_outer_sidewalk_node",
-        "bay": "civic"
+        "role": "hospital_outer_sidewalk_node"
       }
     ],
     "0,-2": [
@@ -184,8 +166,7 @@
           5,
           4
         ],
-        "role": "north_bridge_west_head",
-        "bay": "civic"
+        "role": "north_bridge_west_head"
       },
       {
         "asset": "lamp_blue",
@@ -193,8 +174,7 @@
           8,
           4
         ],
-        "role": "north_bridge_east_head",
-        "bay": "civic"
+        "role": "north_bridge_east_head"
       },
       {
         "asset": "lamp_blue",
@@ -202,8 +182,7 @@
           5,
           9
         ],
-        "role": "south_bridge_west_head",
-        "bay": "civic"
+        "role": "south_bridge_west_head"
       },
       {
         "asset": "lamp_blue",
@@ -211,8 +190,7 @@
           8,
           9
         ],
-        "role": "south_bridge_east_head",
-        "bay": "civic"
+        "role": "south_bridge_east_head"
       }
     ],
     "0,1": [
@@ -222,8 +200,7 @@
           4.5,
           8
         ],
-        "role": "market_pad_west_edge",
-        "bay": "civic"
+        "role": "market_pad_west_edge"
       },
       {
         "asset": "lamp_yellow",
@@ -231,8 +208,7 @@
           9.5,
           6
         ],
-        "role": "market_pad_east_edge",
-        "bay": "civic"
+        "role": "market_pad_east_edge"
       }
     ],
     "1,-2": [
@@ -242,8 +218,7 @@
           4.5,
           8
         ],
-        "role": "archive_pad_west_edge",
-        "bay": "civic"
+        "role": "archive_pad_west_edge"
       },
       {
         "asset": "lamp_blue",
@@ -251,8 +226,7 @@
           9.5,
           6
         ],
-        "role": "archive_pad_east_edge",
-        "bay": "civic"
+        "role": "archive_pad_east_edge"
       }
     ]
   },
