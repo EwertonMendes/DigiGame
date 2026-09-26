@@ -35,6 +35,8 @@ Any future sprites added from this pack should be recorded here with their exact
 
 ## Central City high-resolution source surfaces
 
+> **Current exterior paving note:** Central City's paved overworld tops are now generated procedurally by `shaders/city_paver_floor.gdshader` from continuous world-grid coordinates. The source files below remain in the project for grass/water roles, perimeter block depth, compatibility, interiors and authored references; they are no longer rendered as one large hardscape top-face texture per 64×32 gameplay cell.
+
 Central City uses curated copies of the 1024x1024 files as **source art**, while gameplay stays on DigiGame's original **64x32** isometric grid. `CentralCityArt.gd` samples the authored top face onto the exact gameplay diamond, preserving the new pack's detail without making the player or props look undersized.
 
 Only perimeter cells render the original block side faces. Interior city cells remain flat, while the outer island edge exposes the authored Devil's Work.shop depth for a cleaner isometric silhouette.
