@@ -130,11 +130,14 @@ func _ready() -> void:
 	)
 
 	var first_plaza_bench: Sprite2D = null
+	var first_bench_surround: Node2D = null
 	var bench_surround_count := 0
 	for child in plaza_decor.get_children():
-		if child is Sprite2D and String(child.name).begins_with("Bench"):
+		if child is Sprite2D and String(child.name).begins_with("Bench") and first_plaza_bench == null:
 			first_plaza_bench = child as Sprite2D
 		elif child is Node2D and String(child.name).begins_with("BenchSurround"):
+			if first_bench_surround == null:
+				first_bench_surround = child as Node2D
 			bench_surround_count += 1
 	assert(first_plaza_bench != null, "Central Plaza must instantiate the approved bench art")
 	var bench_atlas := first_plaza_bench.texture as AtlasTexture
@@ -148,6 +151,26 @@ func _ready() -> void:
 	assert(
 		bench_surround_count == 2,
 		"Central Plaza benches must sit in compact flush seating bays attached to the front facades of landscape islands"
+	)
+	assert(first_bench_surround != null, "Central Plaza bench must have a matching ground seating bay")
+	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
+	assert(
+		(first_plaza_bench.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center)
+		and (first_bench_surround.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center),
+		"Bench collision and paving must share the visible four-foot ground centroid instead of the depth-sort anchor"
+	)
+	var first_bench_border := first_bench_surround.get_node_or_null("OuterBorder") as Line2D
+	assert(first_bench_border != null, "Bench seating bay must expose its fitted outer border")
+	var border_min := Vector2(INF, INF)
+	var border_max := Vector2(-INF, -INF)
+	for point: Vector2 in first_bench_border.points:
+		border_min.x = minf(border_min.x, point.x)
+		border_min.y = minf(border_min.y, point.y)
+		border_max.x = maxf(border_max.x, point.x)
+		border_max.y = maxf(border_max.y, point.y)
+	assert(
+		(border_max - border_min).is_equal_approx(Vector2(64.0, 32.0)),
+		"Bench paving must fit exactly one compact 64x32 isometric footprint under the four feet"
 	)
 	var southwest_tree_center := plaza_section.grid_to_world(Vector2(2.0, 11.0))
 	var southwest_tree_outer_edge := southwest_tree_center + Vector2(39.2, 19.6)
