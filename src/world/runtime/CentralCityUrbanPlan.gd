@@ -122,19 +122,33 @@ static func create_lamp_bay(
 		green.z_index = 2
 		root.add_child(green)
 
-	# The dark mounting socket visually explains where the pole is fixed and
-	# prevents the base from looking as though it is hovering over pavement.
-	var socket := Polygon2D.new()
-	socket.name = "MountingSocket"
-	socket.polygon = PackedVector2Array([
-		center + Vector2(-9.0, 0.0),
-		center + Vector2(0.0, -4.5),
-		center + Vector2(9.0, 0.0),
-		center + Vector2(0.0, 4.5),
+	# The lamp sprite already contains its graphite pedestal. The ground only
+	# needs a tight recessed collar around that pedestal; a filled black plate
+	# reads as a second base and makes the post appear to float. Keep this collar
+	# close to the authored pedestal and in the same material family as the curb.
+	var collar_outer := Polygon2D.new()
+	collar_outer.name = "MountingCollar"
+	collar_outer.polygon = PackedVector2Array([
+		center + Vector2(-10.0, 0.0),
+		center + Vector2(0.0, -5.0),
+		center + Vector2(10.0, 0.0),
+		center + Vector2(0.0, 5.0),
 	])
-	socket.color = Color(0.12, 0.15, 0.17, 1.0)
-	socket.z_index = 3
-	root.add_child(socket)
+	collar_outer.color = Color(0.31, 0.34, 0.35, 1.0)
+	collar_outer.z_index = 3
+	root.add_child(collar_outer)
+
+	var collar_inner := Polygon2D.new()
+	collar_inner.name = "MountingInset"
+	collar_inner.polygon = PackedVector2Array([
+		center + Vector2(-7.0, 0.0),
+		center + Vector2(0.0, -3.5),
+		center + Vector2(7.0, 0.0),
+		center + Vector2(0.0, 3.5),
+	])
+	collar_inner.color = Color(0.49, 0.51, 0.50, 1.0)
+	collar_inner.z_index = 4
+	root.add_child(collar_inner)
 
 	var accent_line := Line2D.new()
 	accent_line.name = "SocketAccent"
