@@ -51,12 +51,13 @@ contains only visually approved AI-generated props, normalized as individual tra
 
 - `lamp_blue.png`: cyan/blue technological city lamp;
 - `lamp_yellow.png`: warm yellow civic/market lamp;
-- `bench_ne.png`: futuristic civic bench aligned to one isometric street axis;
-- `bench_nw.png`: matching bench aligned to the opposite street axis.
+- `bench.png`: user-approved two-orientation futuristic bench sheet. Runtime uses atlas
+  regions for the two isometric directions instead of maintaining duplicate placeholder PNGs.
 
-Both assets are stored under `assets/world/tblack/city/props_v2/`, rendered with nearest
-filtering, use an authored pedestal-center ground contact and preserve the fixed isometric
-viewing direction used by Central City.
+These assets are stored under `assets/world/tblack/city/props_v2/` and rendered with nearest
+filtering. Lamps use their authored pedestal-center ground contact. Bench variants use the
+actual foot line from the approved `bench.png` sheet, scaled down for gameplay while keeping
+the original isometric perspective.
 
 The blue lamp is the default civic/technology light. The yellow variant is reserved for
 warmer destinations such as Data Market. Lamps keep a small authored urban surround so they
@@ -77,10 +78,12 @@ residential districts stay unlit until their actual curb/structure geometry exis
 prevents the previous effect of poles covering doors, characters or architecture, and makes
 lighting follow the city's depth and circulation rather than filling empty space.
 
-The first approved seating pass is deliberately restrained: two benches compose around the
-Central Plaza landscape islands and two more sit at the canal landscape nodes, using the
-orientation that follows each local isometric edge. Their collision is a fitted parallelogram
-matching the seat footprint rather than a wide rectangular blocker.
+The approved seating pass is deliberately restrained: two benches occupy dedicated outer
+Central Plaza seating bays and two more line the North Canal promenade. They no longer overlap
+tree islands. Each seat sits on a flush light-paver bay with a cyan street-facing accent so the
+furniture reads as part of the streetscape rather than a pasted sprite. Both orientations come
+from the same `bench.png` sheet through atlas regions, and each keeps a fitted parallelogram
+collision matching the visible ground footprint instead of a wide rectangular blocker.
 
 Future decoration families should be added one at a time only after their final art has
 been visually approved.
