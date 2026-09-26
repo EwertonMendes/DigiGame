@@ -2,6 +2,7 @@ extends Node2D
 class_name WorldAreaSection
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
+const CITY_DECOR = preload("res://src/world/runtime/CentralCityDecor.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
@@ -201,6 +202,8 @@ var _digilab_building_sprite: Sprite2D = null
 var _digilab_upper_sprite: Sprite2D = null
 var _digilab_entry_in_progress := false
 var _leaf_particles: Array[CPUParticles2D] = []
+var _decoration_count := 0
+var _decoration_asset_ids := PackedStringArray()
 
 
 func configure(section_definition: Dictionary, player: Node2D, world_controller: Node) -> void:
@@ -212,6 +215,8 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	_blocked_cells.resize(SECTION_SIZE * SECTION_SIZE)
 	_blocked_cells.fill(0)
 	_blocked_polygons.clear()
+	_decoration_count = 0
+	_decoration_asset_ids = PackedStringArray()
 	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
 	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
 	_build_section()
@@ -249,6 +254,7 @@ func _build_section() -> void:
 	_prepare_ground_data()
 	_build_natural_details()
 	_build_theme_content()
+	_build_city_decorations()
 
 
 func _prepare_ground_data() -> void:
@@ -439,6 +445,67 @@ func _build_theme_content() -> void:
 			_build_service_pad(Color(0.42, 1.0, 0.52), "DATA MARKET", "shop", CITY.SURFACE_MARKET)
 		"archive":
 			_build_service_pad(Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive", CITY.SURFACE_TECH_PURPLE)
+
+
+func get_decoration_count() -> int:
+	return _decoration_count
+
+
+func get_decoration_asset_ids() -> PackedStringArray:
+	return _decoration_asset_ids.duplicate()
+
+
+func _build_city_decorations() -> void:
+	var theme := String(definition.get("theme", "residential"))
+	var result := CITY_DECOR.build_for_section(
+		section_coord,
+		theme,
+		global_position,
+		Callable(self, "_can_place_city_decoration"),
+		Callable(self, "_register_city_decoration_blocker")
+	)
+	var root = result.get("root")
+	_decoration_count = int(result.get("count", 0))
+	var asset_ids = result.get("assets", PackedStringArray())
+	_decoration_asset_ids = asset_ids if asset_ids is PackedStringArray else PackedStringArray()
+	if root is Node2D and _decoration_count > 0:
+		add_child(root as Node2D)
+	elif root is Node:
+		(root as Node).free()
+
+
+func _can_place_city_decoration(grid_position: Vector2, blocker_size: Vector2) -> bool:
+	var center := grid_to_world(grid_position)
+	var probes: Array[Vector2] = [center]
+	if blocker_size.x > 0.0 and blocker_size.y > 0.0:
+		var half_w := blocker_size.x * 0.5
+		var half_h := blocker_size.y * 0.5
+		probes.append(center + Vector2(-half_w, 0.0))
+		probes.append(center + Vector2(half_w, 0.0))
+		probes.append(center + Vector2(0.0, -half_h))
+		probes.append(center + Vector2(0.0, half_h))
+	for probe: Vector2 in probes:
+		if not _is_local_world_open_for_decoration(probe):
+			return false
+	return true
+
+
+func _is_local_world_open_for_decoration(local_position: Vector2) -> bool:
+	var local_grid := world_to_grid(local_position)
+	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
+	if cell.x < 0 or cell.y < 0 or cell.x >= SECTION_SIZE or cell.y >= SECTION_SIZE:
+		return false
+	if _blocked_cells[cell.y * SECTION_SIZE + cell.x] != 0:
+		return false
+	for polygon: PackedVector2Array in _blocked_polygons:
+		if Geometry2D.is_point_in_polygon(local_position, polygon):
+			return false
+	return true
+
+
+func _register_city_decoration_blocker(polygon: PackedVector2Array) -> void:
+	if polygon.size() >= 3:
+		_blocked_polygons.append(polygon)
 
 
 func _build_digilab_exterior() -> void:
