@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -112,6 +112,74 @@
         0.2,
         1
       ]
+    },
+    "bench_ne": {
+      "path": "res://assets/world/tblack/city/props_v2/bench_ne.png",
+      "foot": [
+        56,
+        82
+      ],
+      "scale": 1,
+      "blocker": [
+        72,
+        34
+      ],
+      "clearance": [
+        96,
+        52
+      ],
+      "collision": [
+        [
+          -34,
+          -8
+        ],
+        [
+          -22,
+          -20
+        ],
+        [
+          34,
+          8
+        ],
+        [
+          22,
+          20
+        ]
+      ]
+    },
+    "bench_nw": {
+      "path": "res://assets/world/tblack/city/props_v2/bench_nw.png",
+      "foot": [
+        56,
+        82
+      ],
+      "scale": 1,
+      "blocker": [
+        72,
+        34
+      ],
+      "clearance": [
+        96,
+        52
+      ],
+      "collision": [
+        [
+          -34,
+          8
+        ],
+        [
+          -22,
+          20
+        ],
+        [
+          34,
+          -8
+        ],
+        [
+          22,
+          -20
+        ]
+      ]
     }
   },
   "sections": {
@@ -142,6 +210,22 @@
         ],
         "role": "plaza_southeast_landscape_edge",
         "surround": "landscape"
+      },
+      {
+        "asset": "bench_ne",
+        "cell": [
+          3.2,
+          10.2
+        ],
+        "role": "plaza_southwest_tree_seating"
+      },
+      {
+        "asset": "bench_nw",
+        "cell": [
+          11.2,
+          4.7
+        ],
+        "role": "plaza_northeast_tree_seating"
       }
     ],
     "-1,0": [
@@ -213,6 +297,22 @@
         ],
         "role": "south_bridge_east_head",
         "surround": "civic"
+      },
+      {
+        "asset": "bench_ne",
+        "cell": [
+          4,
+          12
+        ],
+        "role": "canal_south_tree_seating"
+      },
+      {
+        "asset": "bench_nw",
+        "cell": [
+          9,
+          1
+        ],
+        "role": "canal_north_tree_seating"
       }
     ],
     "0,1": [
