@@ -54,15 +54,15 @@ func _ready() -> void:
 		"Central City runtime node budget must remain below 1000 nodes"
 	)
 	assert(
-		area.get_decoration_count() >= 8 and area.get_decoration_count() <= 14,
-		"Central City lighting must stay sparse and limited to authored urban anchors"
+		area.get_decoration_count() >= 12 and area.get_decoration_count() <= 18,
+		"Central City furniture must stay sparse and limited to authored urban anchors"
 	)
 	var plaza_section := area.get_node_or_null("Section_0_0") as WorldAreaSection
 	assert(plaza_section != null, "Central Plaza section must remain available for decoration regression coverage")
 	assert(
 		plaza_section.get_node_or_null("CityDecor") != null
-		and plaza_section.get_decoration_count() >= 2,
-		"Central Plaza must keep a sparse civic-lighting composition away from the guide and pool"
+		and plaza_section.get_decoration_count() >= 4,
+		"Central Plaza must keep sparse lighting and seating composed around its urban edges"
 	)
 	assert(
 		plaza_section.get_node_or_null("CivicPoolFrame") != null,
@@ -70,8 +70,10 @@ func _ready() -> void:
 	)
 	var plaza_assets := plaza_section.get_decoration_asset_ids()
 	assert(
-		plaza_assets.has("lamp_blue"),
-		"Central Plaza must use the approved blue generated lamp asset"
+		plaza_assets.has("lamp_blue")
+		and plaza_assets.has("bench_ne")
+		and plaza_assets.has("bench_nw"),
+		"Central Plaza must use the approved lamp and both approved isometric bench orientations"
 	)
 	assert(
 		plaza_section.get_decoration_count() >= 2,
@@ -116,6 +118,17 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(3.2, 10.2))
+	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
+	assert(
+		not plaza_section.is_walkable_world_position(first_plaza_bench_world),
+		"Bench center must block movement through the visible seat footprint"
+	)
+	assert(
+		plaza_section.is_walkable_world_position(first_plaza_bench_world + Vector2(45.0, 0.0)),
+		"Bench collision must follow the isometric seat footprint instead of creating a broad invisible box"
+	)
+
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
 	var hospital_lighting := area.get_node_or_null("Section_1_0") as WorldAreaSection
@@ -134,8 +147,11 @@ func _ready() -> void:
 		"Hospital may use at most one safe outer-sidewalk lamp instead of posts covering its entrance"
 	)
 	assert(
-		canal_lighting != null and canal_lighting.get_decoration_count() >= 2,
-		"North Canal lamps must mark bridge heads instead of open pavement"
+		canal_lighting != null
+		and canal_lighting.get_decoration_count() >= 4
+		and canal_lighting.get_decoration_asset_ids().has("bench_ne")
+		and canal_lighting.get_decoration_asset_ids().has("bench_nw"),
+		"North Canal must keep bridge-head lamps plus deliberate seating near its landscape nodes"
 	)
 	assert(
 		market_lighting != null
@@ -163,11 +179,11 @@ func _ready() -> void:
 	for prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
 		"res://assets/world/tblack/city/props_v2/lamp_yellow.png",
-	]:
-		assert(ResourceLoader.exists(prop_path), "Approved Central City lamp asset must be vendored: %s" % prop_path)
-	for rejected_prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/bench_ne.png",
 		"res://assets/world/tblack/city/props_v2/bench_nw.png",
+	]:
+		assert(ResourceLoader.exists(prop_path), "Approved Central City prop asset must be vendored: %s" % prop_path)
+	for rejected_prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/planter_long_ne.png",
 		"res://assets/world/tblack/city/props_v2/planter_long_nw.png",
 		"res://assets/world/tblack/city/props_v2/terminal.png",
