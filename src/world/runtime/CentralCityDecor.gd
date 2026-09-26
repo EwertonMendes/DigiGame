@@ -70,7 +70,6 @@ static func build_for_section(
 			continue
 		var asset := asset_value as Dictionary
 		var cell := _vec2(placement.get("cell", [0.0, 0.0]))
-		var blocker := _vec2(asset.get("blocker", [0.0, 0.0]))
 		var clearance := _vec2(asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
 		# Validate the complete urban socket, not only the tiny collision footprint
 		# of the lamp base. This keeps paving ornaments away from foundations,
