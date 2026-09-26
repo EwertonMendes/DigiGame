@@ -58,11 +58,19 @@ filtering, use a bottom-center ground anchor and preserve the fixed isometric vi
 direction used by Central City.
 
 The blue lamp is the default civic/technology light. The yellow variant is reserved for
-warmer destinations such as Data Market. Lamp placement is deliberately sparse and tied to
-urban anchors: building-foundation edges, entrance forecourts, the Central Plaza frame,
-bridge heads and gate approaches. Unfinished garden/residential blocks intentionally receive
-no lamps yet, avoiding the previous effect of poles floating in empty pavement. Foundations
-and raised landscape islands remain the primary elements that define the city's structure.
+warmer destinations such as Data Market. Lamps are no longer allowed to sit directly on raw
+road paving: every active placement gets a small flush isometric paving socket with graphite
+mounting plate and district accent; selected plaza lamps also get a narrow green landscape
+inset. The socket uses a larger placement-clearance envelope than the pole collision itself,
+so it cannot overlap building foundations, door approaches, tree islands or other blocked
+urban geometry.
+
+The current composition is intentionally sparse. Service buildings use at most one verified
+outer-sidewalk lamp, while the Central Plaza uses only outer-edge lamps kept away from the
+City Guide and pool. Canal lamps belong to bridge heads; unfinished gate, garden and
+residential districts stay unlit until their actual curb/structure geometry exists. This
+prevents the previous effect of poles covering doors, characters or architecture, and makes
+lighting follow the city's depth and circulation rather than filling empty space.
 
 Future decoration families should be added one at a time only after their final art has
 been visually approved.
