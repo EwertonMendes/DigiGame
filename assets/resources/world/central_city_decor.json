@@ -1,5 +1,5 @@
 {
-  "version": 18,
+  "version": 19,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -57,7 +57,9 @@
         1
       ],
       "shadow": {
-        "height": 86,
+        "style": "projected",
+        "height": 112,
+        "projection_multiplier": 1.4,
         "opacity": 0.2
       },
       "light": {
@@ -131,7 +133,9 @@
         1
       ],
       "shadow": {
-        "height": 86,
+        "style": "projected",
+        "height": 112,
+        "projection_multiplier": 1.4,
         "opacity": 0.2
       },
       "light": {
@@ -193,7 +197,9 @@
         -8
       ],
       "shadow": {
-        "height": 24,
+        "style": "projected",
+        "height": 28,
+        "projection_multiplier": 1,
         "opacity": 0.16
       }
     },
@@ -241,7 +247,9 @@
         -8
       ],
       "shadow": {
-        "height": 24,
+        "style": "projected",
+        "height": 28,
+        "projection_multiplier": 1,
         "opacity": 0.16
       }
     }
