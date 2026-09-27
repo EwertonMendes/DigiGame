@@ -3,6 +3,7 @@ class_name CentralCityDecor
 
 const CONFIG_PATH := "res://assets/resources/world/central_city_decor.json"
 const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
+const AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const DECOR_BASE_Z := 1000
@@ -32,14 +33,15 @@ static func build_for_section(
 	# urban infrastructure, so important districts need exact placements tied
 	# to entrances, foundation edges, plaza borders and bridge heads instead of
 	# being scattered by a generic theme template.
-	var placements: Array = []
-	var sections_value = config.get("sections", {})
-	if sections_value is Dictionary:
-		var sections := sections_value as Dictionary
-		var section_key := "%d,%d" % [section_coord.x, section_coord.y]
-		var authored_value = sections.get(section_key, null)
-		if authored_value is Array:
-			placements = authored_value as Array
+	var placements: Array = AUTHORING.decoration_placements(section_coord)
+	if placements.is_empty():
+		var sections_value = config.get("sections", {})
+		if sections_value is Dictionary:
+			var sections := sections_value as Dictionary
+			var section_key := "%d,%d" % [section_coord.x, section_coord.y]
+			var authored_value = sections.get(section_key, null)
+			if authored_value is Array:
+				placements = authored_value as Array
 
 	if placements.is_empty():
 		var profiles_value = config.get("profiles", {})
