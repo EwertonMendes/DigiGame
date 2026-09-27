@@ -205,6 +205,7 @@ var _digilab_entry_in_progress := false
 var _leaf_particles: Array[CPUParticles2D] = []
 var _decoration_count := 0
 var _decoration_asset_ids := PackedStringArray()
+var _bench_collision_body: StaticBody2D = null
 
 
 func configure(section_definition: Dictionary, player: Node2D, world_controller: Node) -> void:
@@ -218,6 +219,7 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	_blocked_polygons.clear()
 	_decoration_count = 0
 	_decoration_asset_ids = PackedStringArray()
+	_bench_collision_body = null
 	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
 	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
 	_build_section()
@@ -455,9 +457,26 @@ func _is_local_world_open_for_decoration(local_position: Vector2) -> bool:
 	return true
 
 
-func _register_city_decoration_blocker(polygon: PackedVector2Array) -> void:
-	if polygon.size() >= 3:
-		_blocked_polygons.append(polygon)
+func _register_city_decoration_blocker(polygon: PackedVector2Array, asset_id: String = "") -> void:
+	if polygon.size() < 3:
+		return
+	_blocked_polygons.append(polygon)
+	if not asset_id.begins_with("bench_"):
+		return
+
+	# Keep the fitted walkability polygon as the gameplay source of truth, but
+	# mirror bench footprints into physics as well. CharacterBody2D then performs
+	# swept collision against the seat even when a frame moves from one side of
+	# the narrow footprint to the other (running, diagonal input or a frame hitch).
+	if _bench_collision_body == null:
+		_bench_collision_body = StaticBody2D.new()
+		_bench_collision_body.name = "BenchCollisions"
+		add_child(_bench_collision_body)
+
+	var collision := CollisionPolygon2D.new()
+	collision.name = "Bench_%02d_%s" % [_bench_collision_body.get_child_count() + 1, asset_id]
+	collision.polygon = polygon
+	_bench_collision_body.add_child(collision)
 
 
 func _build_digilab_exterior() -> void:

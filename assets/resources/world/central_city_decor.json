@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 17,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -114,15 +114,21 @@
       ]
     },
     "bench_ne": {
-      "path": "res://assets/world/tblack/city/props_v2/bench_ne.png",
-      "foot": [
-        56,
-        70
+      "path": "res://assets/world/tblack/city/props_v2/bench.png",
+      "region": [
+        0,
+        220,
+        724,
+        650
       ],
-      "scale": 1,
+      "foot": [
+        362,
+        580
+      ],
+      "scale": 0.1,
       "blocker": [
-        72,
-        32
+        60,
+        26
       ],
       "clearance": [
         72,
@@ -130,33 +136,43 @@
       ],
       "collision": [
         [
-          -34,
-          -8
+          -29,
+          -7
         ],
         [
-          -22,
-          -20
+          -18,
+          -13
         ],
         [
-          34,
-          8
+          29,
+          7
         ],
         [
-          22,
-          20
+          18,
+          13
         ]
+      ],
+      "ground_offset": [
+        15,
+        -8
       ]
     },
     "bench_nw": {
-      "path": "res://assets/world/tblack/city/props_v2/bench_nw.png",
-      "foot": [
-        56,
-        70
+      "path": "res://assets/world/tblack/city/props_v2/bench.png",
+      "region": [
+        724,
+        220,
+        724,
+        650
       ],
-      "scale": 1,
+      "foot": [
+        362,
+        580
+      ],
+      "scale": 0.1,
       "blocker": [
-        72,
-        32
+        60,
+        26
       ],
       "clearance": [
         72,
@@ -164,21 +180,25 @@
       ],
       "collision": [
         [
-          -34,
-          8
+          -29,
+          7
         ],
         [
-          -22,
-          20
+          -18,
+          13
         ],
         [
-          34,
-          -8
+          29,
+          -7
         ],
         [
-          22,
-          -20
+          18,
+          -13
         ]
+      ],
+      "ground_offset": [
+        -15,
+        -8
       ]
     }
   },
@@ -212,20 +232,28 @@
         "surround": "landscape"
       },
       {
-        "asset": "bench_ne",
-        "cell": [
-          2.8,
-          12.8
-        ],
-        "role": "plaza_southwest_tree_edge_seating"
-      },
-      {
         "asset": "bench_nw",
         "cell": [
-          11.2,
-          4.7
+          4.2,
+          11.6
         ],
-        "role": "plaza_northeast_tree_edge_seating"
+        "role": "plaza_southwest_tree_face_center_seating",
+        "clearance": [
+          0,
+          0
+        ]
+      },
+      {
+        "asset": "bench_ne",
+        "cell": [
+          11.6,
+          4.2
+        ],
+        "role": "plaza_northeast_tree_face_center_seating",
+        "clearance": [
+          0,
+          0
+        ]
       }
     ],
     "-1,0": [
@@ -299,20 +327,28 @@
         "surround": "civic"
       },
       {
-        "asset": "bench_ne",
+        "asset": "bench_nw",
         "cell": [
-          4,
-          12
+          4.2,
+          10.6
         ],
-        "role": "canal_south_tree_seating"
+        "role": "canal_southwest_tree_face_center_seating",
+        "clearance": [
+          0,
+          0
+        ]
       },
       {
         "asset": "bench_nw",
         "cell": [
-          9,
-          1
+          13,
+          3.6
         ],
-        "role": "canal_north_tree_seating"
+        "role": "canal_northeast_tree_face_center_seating",
+        "clearance": [
+          0,
+          0
+        ]
       }
     ],
     "0,1": [

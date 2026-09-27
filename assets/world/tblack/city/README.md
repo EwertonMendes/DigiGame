@@ -51,12 +51,13 @@ contains only visually approved AI-generated props, normalized as individual tra
 
 - `lamp_blue.png`: cyan/blue technological city lamp;
 - `lamp_yellow.png`: warm yellow civic/market lamp;
-- `bench_ne.png`: futuristic civic bench aligned to one isometric street axis;
-- `bench_nw.png`: matching bench aligned to the opposite street axis.
+- `bench.png`: user-approved two-orientation futuristic bench sheet. Runtime uses atlas
+  regions for the two isometric directions instead of maintaining duplicate placeholder PNGs.
 
-Both assets are stored under `assets/world/tblack/city/props_v2/`, rendered with nearest
-filtering, use an authored pedestal-center ground contact and preserve the fixed isometric
-viewing direction used by Central City.
+These assets are stored under `assets/world/tblack/city/props_v2/` and rendered with nearest
+filtering. Lamps use their authored pedestal-center ground contact. Bench variants use the
+actual foot line from the approved `bench.png` sheet, scaled down for gameplay while keeping
+the original isometric perspective.
 
 The blue lamp is the default civic/technology light. The yellow variant is reserved for
 warmer destinations such as Data Market. Lamps keep a small authored urban surround so they
@@ -77,10 +78,14 @@ residential districts stay unlit until their actual curb/structure geometry exis
 prevents the previous effect of poles covering doors, characters or architecture, and makes
 lighting follow the city's depth and circulation rather than filling empty space.
 
-The first approved seating pass is deliberately restrained: two benches compose around the
-Central Plaza landscape islands and two more sit at the canal landscape nodes, using the
-orientation that follows each local isometric edge. Their collision is a fitted parallelogram
-matching the seat footprint rather than a wide rectangular blocker.
+The approved seating pass is deliberately restrained to exactly four benches: one sits directly
+beside the visible front/side facade of each landscape island in Central Plaza and North Canal.
+Benches sit directly on the normal city pavement; they do not create a dedicated paver bay,
+platform or alternate floor underneath. The approved `bench.png` sheet is rendered at 10%
+gameplay scale, with both orientations coming from atlas regions in that single source image.
+Each seat keeps a fitted parallelogram walkability footprint and mirrors that same shape into a
+`StaticBody2D`, so the player cannot tunnel through a narrow bench while running or approaching
+it diagonally without introducing an oversized invisible blocker.
 
 Future decoration families should be added one at a time only after their final art has
 been visually approved.

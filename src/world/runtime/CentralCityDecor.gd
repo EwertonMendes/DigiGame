@@ -70,19 +70,26 @@ static func build_for_section(
 			continue
 		var asset := asset_value as Dictionary
 		var cell := _vec2(placement.get("cell", [0.0, 0.0]))
-		var clearance := _vec2(asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
-		# Validate the complete lamp surround, not only the tiny collision footprint
-		# of the pedestal. This keeps paving/landscape ornament away from
-		# foundations, entrances, trees and other authored blockers.
+		var clearance := _vec2(
+			placement.get("clearance", asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
+		)
+		# Validate the authored placement clearance separately from the fitted
+		# physical footprint. Benches beside landscape islands deliberately reduce
+		# this envelope at placement level, while the anchor itself must still be on
+		# open pavement before the fitted blocker is registered.
 		if not bool(can_place.call(cell, clearance)):
 			continue
 
-		var texture := _texture_for(asset_id, String(asset.get("path", "")))
+		var texture := _texture_for(asset_id, asset)
 		if texture == null:
 			continue
 		var foot := _vec2(asset.get("foot", [texture.get_width() * 0.5, texture.get_height()]))
 		var scale_value := float(asset.get("scale", 1.0))
 		var world_foot := _grid_to_world(cell)
+		# The sprite depth anchor is intentionally the front-most foot. Collision
+		# uses the centroid of the four contact points, which sits slightly behind
+		# that sorting anchor on an isometric bench.
+		var ground_center := world_foot + _vec2(asset.get("ground_offset", [0.0, 0.0]))
 
 		var surround_style := String(placement.get("surround", ""))
 		if not surround_style.is_empty():
@@ -114,10 +121,11 @@ static func build_for_section(
 			sprite.z_index = DECOR_BASE_Z + int(round(global_origin.y + world_foot.y))
 		root.add_child(sprite)
 
-		var collision_polygon := _collision_polygon(world_foot, asset)
+		var collision_polygon := _collision_polygon(ground_center, asset)
 		if collision_polygon.size() >= 3:
-			register_blocker.call(collision_polygon)
+			register_blocker.call(collision_polygon, asset_id)
 			sprite.set_meta("collision_polygon", collision_polygon)
+		sprite.set_meta("ground_center", ground_center)
 		used[asset_id] = true
 		count += 1
 
@@ -142,16 +150,33 @@ static func _load_config() -> Dictionary:
 	return _config_cache
 
 
-static func _texture_for(asset_id: String, path: String) -> Texture2D:
+static func _texture_for(asset_id: String, asset: Dictionary) -> Texture2D:
 	if _texture_cache.has(asset_id):
 		return _texture_cache[asset_id] as Texture2D
+
+	var path := String(asset.get("path", ""))
 	if path.is_empty():
 		return null
 	var resource = ResourceLoader.load(path)
 	if not resource is Texture2D:
 		push_warning("CentralCityDecor: could not load prop %s from %s" % [asset_id, path])
 		return null
-	var texture := resource as Texture2D
+
+	var source := resource as Texture2D
+	var texture: Texture2D = source
+	var region_value = asset.get("region", [])
+	if region_value is Array and region_value.size() >= 4:
+		var atlas := AtlasTexture.new()
+		atlas.atlas = source
+		atlas.region = Rect2(
+			float(region_value[0]),
+			float(region_value[1]),
+			float(region_value[2]),
+			float(region_value[3])
+		)
+		atlas.filter_clip = true
+		texture = atlas
+
 	_texture_cache[asset_id] = texture
 	return texture
 

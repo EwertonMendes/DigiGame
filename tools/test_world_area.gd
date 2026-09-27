@@ -128,16 +128,82 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(2.8, 12.8))
-	var first_plaza_bench_world := plaza_section.global_position + first_plaza_bench_local
+	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 11.6))
+	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
+	var expected_ground_world := plaza_section.global_position + expected_ground_center
 	assert(
-		not plaza_section.is_walkable_world_position(first_plaza_bench_world),
-		"Bench center must block movement through the visible seat footprint"
+		not plaza_section.is_walkable_world_position(expected_ground_world),
+		"Bench ground footprint must block movement through the visible seat contact area"
 	)
 	assert(
-		plaza_section.is_walkable_world_position(first_plaza_bench_world + Vector2(45.0, 0.0)),
-		"Bench collision must follow the isometric seat footprint instead of creating a broad invisible box"
+		plaza_section.is_walkable_world_position(expected_ground_world + Vector2(34.0, 0.0)),
+		"Bench collision must stay fitted to the seat instead of creating a broad invisible wall"
 	)
+
+	var first_plaza_bench: Sprite2D = null
+	var bench_surround_count := 0
+	for child in plaza_decor.get_children():
+		if child is Sprite2D and String(child.name).begins_with("Bench") and first_plaza_bench == null:
+			first_plaza_bench = child as Sprite2D
+		elif child is Node2D and String(child.name).begins_with("BenchSurround"):
+			bench_surround_count += 1
+	assert(first_plaza_bench != null, "Central Plaza must instantiate the approved bench art")
+	var bench_atlas := first_plaza_bench.texture as AtlasTexture
+	assert(
+		bench_atlas != null
+		and bench_atlas.atlas != null
+		and bench_atlas.atlas.resource_path == "res://assets/world/tblack/city/props_v2/bench.png"
+		and first_plaza_bench.scale.is_equal_approx(Vector2(0.10, 0.10)),
+		"Approved bench must render from the user-supplied bench.png sheet at gameplay scale"
+	)
+	assert(
+		bench_surround_count == 0,
+		"Benches must sit directly on the normal city pavement without an exclusive floor or seating bay"
+	)
+	assert(
+		(first_plaza_bench.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center),
+		"Bench collision must stay aligned to the visible four-foot ground centroid"
+	)
+
+	var bench_collision_body := plaza_section.get_node_or_null("BenchCollisions") as StaticBody2D
+	assert(
+		bench_collision_body != null and bench_collision_body.get_child_count() == 2,
+		"Central Plaza benches must expose fitted physics collision in addition to walkability blockers"
+	)
+	for child in bench_collision_body.get_children():
+		assert(
+			child is CollisionPolygon2D and (child as CollisionPolygon2D).polygon.size() >= 4,
+			"Each bench must use its fitted isometric collision polygon for swept CharacterBody2D collision"
+		)
+
+	var southwest_tree_center := plaza_section.grid_to_world(Vector2(2.0, 11.0))
+	assert(
+		(first_plaza_bench_local - southwest_tree_center).is_equal_approx(Vector2(51.2, 44.8)),
+		"Plaza bench anchor must sit at the exact midpoint between the two planter-face corner-biased placements"
+	)
+	assert(
+		(expected_ground_center - southwest_tree_center).is_equal_approx(Vector2(36.2, 36.8)),
+		"Plaza bench collision must remain centered with the visible seat at the planter-face midpoint"
+	)
+
+	# Exercise the same incremental movement contract used by the runtime rather
+	# than teleporting across the prop in one synthetic 90px step. Repeated
+	# frame-sized advances must stop before entering the fitted bench footprint.
+	var original_player_position := player.global_position
+	player.global_position = expected_ground_world + Vector2(0.0, -45.0)
+	player.set("velocity", Vector2.ZERO)
+	for _step in range(24):
+		player.call("_try_move", Vector2(0.0, 4.0))
+	assert(
+		player.global_position.y < expected_ground_world.y - 8.0,
+		"Incremental player movement must stop before entering the bench footprint"
+	)
+	assert(
+		not bool(world.call("can_actor_move_to", expected_ground_world, player)),
+		"Bench ground center must remain forbidden to the player clearance model"
+	)
+	player.global_position = original_player_position
+	player.set("velocity", Vector2.ZERO)
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
@@ -156,12 +222,13 @@ func _ready() -> void:
 		hospital_lighting != null and hospital_lighting.get_decoration_count() <= 1,
 		"Hospital may use at most one safe outer-sidewalk lamp instead of posts covering its entrance"
 	)
+	var canal_assets := canal_lighting.get_decoration_asset_ids() if canal_lighting != null else PackedStringArray()
 	assert(
 		canal_lighting != null
 		and canal_lighting.get_decoration_count() >= 4
-		and canal_lighting.get_decoration_asset_ids().has("bench_ne")
-		and canal_lighting.get_decoration_asset_ids().has("bench_nw"),
-		"North Canal must keep bridge-head lamps plus deliberate seating near its landscape nodes"
+		and canal_assets.has("bench_nw")
+		and not canal_assets.has("bench_ne"),
+		"North Canal benches must use the orientation matching their centered planter faces, including the seat nearest Digital Archive"
 	)
 	assert(
 		market_lighting != null
@@ -189,11 +256,12 @@ func _ready() -> void:
 	for prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
 		"res://assets/world/tblack/city/props_v2/lamp_yellow.png",
-		"res://assets/world/tblack/city/props_v2/bench_ne.png",
-		"res://assets/world/tblack/city/props_v2/bench_nw.png",
+		"res://assets/world/tblack/city/props_v2/bench.png",
 	]:
 		assert(ResourceLoader.exists(prop_path), "Approved Central City prop asset must be vendored: %s" % prop_path)
 	for rejected_prop_path: String in [
+		"res://assets/world/tblack/city/props_v2/bench_ne.png",
+		"res://assets/world/tblack/city/props_v2/bench_nw.png",
 		"res://assets/world/tblack/city/props_v2/planter_long_ne.png",
 		"res://assets/world/tblack/city/props_v2/planter_long_nw.png",
 		"res://assets/world/tblack/city/props_v2/terminal.png",
