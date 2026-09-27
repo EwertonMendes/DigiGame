@@ -36,6 +36,7 @@ var _paint_stroke_active := false
 var _paint_erase := false
 var _paint_old_cells: Dictionary = {}
 var _paint_last_cell := Vector2i(999999, 999999)
+var _road_creation_start := Vector2(INF, INF)
 
 
 func _enter_tree() -> void:
@@ -103,6 +104,17 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 	if _mode_text() == "Ground":
 		return _handle_ground_input(event, root)
 
+	if _mode_text() == "Road" and _road_creation_start.x != INF and event is InputEventMouseButton:
+		var create_button := event as InputEventMouseButton
+		if create_button.button_index == MOUSE_BUTTON_LEFT and create_button.pressed:
+			_complete_new_road(create_button.position, root)
+			return true
+		if create_button.button_index == MOUSE_BUTTON_RIGHT and create_button.pressed:
+			_road_creation_start = Vector2(INF, INF)
+			_status.text = "Road creation cancelled"
+			update_overlays()
+			return true
+
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 		if button.button_index != MOUSE_BUTTON_LEFT:
@@ -137,6 +149,12 @@ func _build_toolbar() -> void:
 	)
 	_toolbar.add_child(_mode)
 
+	var new_road_button := Button.new()
+	new_road_button.text = "+ Road"
+	new_road_button.tooltip_text = "Create a new snapped road with two clicks."
+	new_road_button.pressed.connect(_start_new_road)
+	_toolbar.add_child(new_road_button)
+
 	var snap_label := Label.new()
 	snap_label.text = "Snap"
 	_toolbar.add_child(snap_label)
@@ -148,7 +166,7 @@ func _build_toolbar() -> void:
 	_toolbar.add_child(_snap)
 
 	_surface = OptionButton.new()
-	for item in ["main", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water"]:
+	for item in ["main", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water", "void"]:
 		_surface.add_item(item)
 	_surface.select(0)
 	_surface.tooltip_text = "Surface used by Ground paint."
@@ -251,6 +269,12 @@ func _is_under_authoring_root(node: Node) -> bool:
 
 func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 	var mode := _mode_text()
+	var selected := _selected_node()
+	if selected is Polygon2D and mode in ["Select", "Surface", "Transition"]:
+		var vertex_index := _polygon_vertex_hit(screen, selected as Polygon2D)
+		if vertex_index >= 0:
+			_begin_polygon_vertex_drag(selected as Polygon2D, vertex_index)
+			return true
 	if mode == "Road" or mode == "Select":
 		var road_hit := _road_hit(screen, root)
 		if not road_hit.is_empty():
@@ -413,6 +437,8 @@ func _update_pointer_drag(event: InputEventMouseMotion) -> void:
 			_update_marker_drag(event)
 		"polygon":
 			_update_polygon_drag(event)
+		"polygon_vertex":
+			_update_polygon_vertex_drag(event)
 	update_overlays()
 
 
@@ -561,7 +587,7 @@ func _finish_pointer_action() -> void:
 				_commit_width_undo()
 			"marker":
 				_commit_marker_undo()
-			"polygon":
+			"polygon", "polygon_vertex":
 				_commit_polygon_undo()
 	_drag_kind = ""
 	_drag_node = null
@@ -618,7 +644,8 @@ func _object_hit(screen: Vector2, root: Node, containers: Array[String]) -> Node
 				var elevation := 48.0 if grid.y < 19.5 else 0.0
 				var marker_screen := _visual_world_to_screen(marker.global_position + Vector2(0.0, -elevation))
 				var distance := screen.distance_to(marker_screen)
-				if distance < 24.0 and distance < best_distance:
+				var hit_radius := 210.0 if container_name == "Buildings" else 28.0
+				if distance < hit_radius and distance < best_distance:
 					best = marker
 					best_distance = distance
 			elif child is Polygon2D:
@@ -670,7 +697,11 @@ func _begin_polygon_drag(polygon: Polygon2D, screen: Vector2) -> void:
 	_drag_kind = "polygon"
 	_drag_node = polygon
 	_drag_start_mouse_world = _screen_to_visual_world(screen)
-	_drag_original = [{"node": polygon, "position": polygon.position}]
+	_drag_original = [{
+		"node": polygon,
+		"position": polygon.position,
+		"polygon": polygon.polygon.duplicate(),
+	}]
 	_drag_changed = false
 
 
@@ -689,12 +720,21 @@ func _update_polygon_drag(event: InputEventMouseMotion) -> void:
 func _commit_polygon_undo() -> void:
 	var polygon := _drag_node as Polygon2D
 	var old_position := _drag_original[0].get("position") as Vector2
+	var old_polygon := (
+		(_drag_original[0].get("polygon") as PackedVector2Array).duplicate()
+		if _drag_original[0].has("polygon")
+		else polygon.polygon.duplicate()
+	)
 	var final_position := polygon.position
+	var final_polygon := polygon.polygon.duplicate()
 	polygon.position = old_position
+	polygon.polygon = old_polygon
 	var undo := get_undo_redo()
-	undo.create_action("Move Central City region")
+	undo.create_action("Edit Central City region")
 	undo.add_do_property(polygon, "position", final_position)
 	undo.add_undo_property(polygon, "position", old_position)
+	undo.add_do_property(polygon, "polygon", final_polygon)
+	undo.add_undo_property(polygon, "polygon", old_polygon)
 	undo.commit_action()
 
 
@@ -707,14 +747,117 @@ func _draw_marker_handle(overlay: Control, marker: Marker2D) -> void:
 
 
 func _draw_polygon_outline(overlay: Control, polygon: Polygon2D) -> void:
-	var points := PackedVector2Array()
-	var elevation := float(polygon.get("editor_elevation_px")) if polygon.get("editor_elevation_px") != null else 0.0
-	for point: Vector2 in polygon.polygon:
-		points.append(_visual_world_to_screen(polygon.to_global(point) + Vector2(0.0, -elevation)))
+	var points := _polygon_screen_points(polygon)
 	if points.size() >= 2:
 		var closed := points.duplicate()
 		closed.append(points[0])
 		overlay.draw_polyline(closed, SELECT_COLOR, 2.0, true)
+		for point: Vector2 in points:
+			overlay.draw_circle(point, 6.5, HANDLE_COLOR)
+			overlay.draw_circle(point, 6.5, Color(0.12, 0.12, 0.12, 1.0), false, 1.5)
+
+
+func _polygon_elevation(polygon: Polygon2D) -> float:
+	var explicit = polygon.get("editor_elevation_px")
+	if explicit != null:
+		return float(explicit)
+	var kind_value = polygon.get("kind")
+	if kind_value != null and String(kind_value) == "stairs":
+		return 24.0
+	var level_value = polygon.get("level_id")
+	if level_value != null and String(level_value) == "upper_civic":
+		return 48.0
+	return 0.0
+
+
+func _polygon_screen_points(polygon: Polygon2D) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var elevation := _polygon_elevation(polygon)
+	for point: Vector2 in polygon.polygon:
+		points.append(_visual_world_to_screen(polygon.to_global(point) + Vector2(0.0, -elevation)))
+	return points
+
+
+func _polygon_vertex_hit(screen: Vector2, polygon: Polygon2D) -> int:
+	var points := _polygon_screen_points(polygon)
+	var best := -1
+	var best_distance := HIT_RADIUS
+	for index in range(points.size()):
+		var distance := screen.distance_to(points[index])
+		if distance < best_distance:
+			best_distance = distance
+			best = index
+	return best
+
+
+func _begin_polygon_vertex_drag(polygon: Polygon2D, point_index: int) -> void:
+	_drag_kind = "polygon_vertex"
+	_drag_node = polygon
+	_drag_point_index = point_index
+	_drag_original = [{
+		"node": polygon,
+		"position": polygon.position,
+		"polygon": polygon.polygon.duplicate(),
+	}]
+	_drag_changed = false
+	_status.text = "Region corner · drag to resize · Alt = no snap"
+
+
+func _update_polygon_vertex_drag(event: InputEventMouseMotion) -> void:
+	var polygon := _drag_node as Polygon2D
+	if polygon == null or _drag_point_index < 0:
+		return
+	var elevation := _polygon_elevation(polygon)
+	var visual_world := _screen_to_visual_world(event.position)
+	var logical_global := visual_world + Vector2(0.0, elevation)
+	var candidate_grid := MATH.world_to_grid(logical_global)
+	if not event.alt_pressed:
+		candidate_grid = MATH.snap_grid(candidate_grid, _snap_step())
+
+	var kind_value = polygon.get("kind")
+	if kind_value != null and String(kind_value) in ["stairs", "bridge", "void"]:
+		_resize_transition_rect(polygon, _drag_point_index, candidate_grid)
+	else:
+		var updated := polygon.polygon.duplicate()
+		updated[_drag_point_index] = polygon.to_local(MATH.grid_to_world(candidate_grid))
+		polygon.polygon = updated
+	_drag_changed = true
+
+
+func _resize_transition_rect(polygon: Polygon2D, point_index: int, candidate_grid: Vector2) -> void:
+	var original := _drag_original[0].get("polygon") as PackedVector2Array
+	var grids: Array[Vector2] = []
+	var min_grid := Vector2(INF, INF)
+	var max_grid := Vector2(-INF, -INF)
+	for point: Vector2 in original:
+		var grid := MATH.world_to_grid(polygon.to_global(point))
+		grids.append(grid)
+		min_grid.x = minf(min_grid.x, grid.x)
+		min_grid.y = minf(min_grid.y, grid.y)
+		max_grid.x = maxf(max_grid.x, grid.x)
+		max_grid.y = maxf(max_grid.y, grid.y)
+	var selected_grid := grids[point_index]
+	var move_min_x := absf(selected_grid.x - min_grid.x) <= absf(selected_grid.x - max_grid.x)
+	var move_min_y := absf(selected_grid.y - min_grid.y) <= absf(selected_grid.y - max_grid.y)
+	if move_min_x:
+		min_grid.x = minf(candidate_grid.x, max_grid.x - 0.5)
+	else:
+		max_grid.x = maxf(candidate_grid.x, min_grid.x + 0.5)
+	if move_min_y:
+		min_grid.y = minf(candidate_grid.y, max_grid.y - 0.5)
+	else:
+		max_grid.y = maxf(candidate_grid.y, min_grid.y + 0.5)
+
+	var rebuilt := PackedVector2Array()
+	for original_grid: Vector2 in grids:
+		var use_min_x := absf(original_grid.x - minf(grids[0].x, grids[1].x, grids[2].x, grids[3].x)) <= 0.01
+		var use_min_y := absf(original_grid.y - minf(grids[0].y, grids[1].y, grids[2].y, grids[3].y)) <= 0.01
+		var target := Vector2(
+			min_grid.x if use_min_x else max_grid.x,
+			min_grid.y if use_min_y else max_grid.y
+		)
+		rebuilt.append(polygon.to_local(MATH.grid_to_world(target)))
+	polygon.polygon = rebuilt
 
 
 func _handle_ground_input(event: InputEvent, root: Node) -> bool:
@@ -775,6 +918,62 @@ func _finish_ground_stroke(paint: Node) -> void:
 	undo.add_undo_property(paint, "cells", _paint_old_cells.duplicate(true))
 	undo.commit_action()
 	_status.text = "Ground painted"
+
+
+func _start_new_road() -> void:
+	var root := _authoring_root()
+	if root == null:
+		return
+	_mode.select(1)
+	_road_creation_start = Vector2(INF, INF)
+	_status.text = "New Road · click start point"
+	# A finite Y with INF X marks that creation mode is armed but has no start.
+	_road_creation_start.y = 0.0
+
+
+func _complete_new_road(screen: Vector2, root: Node) -> void:
+	var grid := MATH.visual_world_to_grid(_screen_to_visual_world(screen))
+	grid = MATH.snap_grid(grid, _snap_step())
+	if _road_creation_start.x == INF:
+		_road_creation_start = grid
+		_status.text = "New Road · click end point · right-click cancels"
+		update_overlays()
+		return
+
+	var start := _road_creation_start
+	var delta := grid - start
+	var finish := grid
+	if absf(delta.x) >= absf(delta.y):
+		finish.y = start.y
+	else:
+		finish.x = start.x
+	if finish.distance_to(start) < 0.49:
+		_status.text = "Road is too short"
+		return
+
+	var roads := root.get_node_or_null("Roads")
+	if roads == null:
+		return
+	var road := Line2D.new()
+	road.name = "road_custom_%02d" % roads.get_child_count()
+	road.set_script(ROAD_SCRIPT)
+	road.points = PackedVector2Array([MATH.grid_to_world(start), MATH.grid_to_world(finish)])
+	road.set("road_id", String(road.name))
+	road.set("level_id", "upper_civic" if start.y < 19.5 else "south_terrace")
+	road.set("editor_elevation_px", 48.0 if start.y < 19.5 else 0.0)
+	road.set("width_grid", 3.0)
+	road.set("surface", _surface.get_item_text(_surface.selected))
+
+	var undo := get_undo_redo()
+	undo.create_action("Create Central City road")
+	undo.add_do_method(roads, "add_child", road)
+	undo.add_do_method(road, "set_owner", root)
+	undo.add_do_reference(road)
+	undo.add_undo_method(roads, "remove_child", road)
+	undo.commit_action()
+	_select_node(road)
+	_road_creation_start = Vector2(INF, INF)
+	_status.text = "Road created"
 
 
 func _validate_city() -> void:
