@@ -118,6 +118,7 @@ func _ready() -> void:
 	_followers = FollowersScript.new() as WorldPartyFollowers
 	_followers.name = "PartyFollowers"
 	_followers.configure(self, _player)
+	_followers.add_to_group("debug_capture_clean_hidden")
 	add_child(_followers)
 
 	_lighting = LightingScript.new() as WorldLightingSystem
@@ -368,6 +369,7 @@ func _build_player(parent: Node2D) -> void:
 	_player = ActorScript.new() as OverworldActor
 	_player.name = "Player"
 	_player.configure(PLAYER_TEXTURE, true, self, WorldState.player_facing)
+	_player.add_to_group("debug_capture_clean_hidden")
 	parent.add_child(_player)
 	_player.global_position = WorldState.player_position
 	_player.world_position_changed.connect(_on_player_moved)
