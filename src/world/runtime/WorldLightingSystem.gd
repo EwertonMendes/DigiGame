@@ -13,8 +13,15 @@ const DEFAULT_PREVIEW_HOUR := 12.0
 const SHADOW_COLOR := Color(0.035, 0.055, 0.075, 1.0)
 const SHADOW_RENDER_DISTANCE := 920.0
 const LOCAL_LIGHT_RENDER_DISTANCE := 760.0
+const MOBILE_SHADOW_RENDER_DISTANCE := 620.0
+const MOBILE_LOCAL_LIGHT_RENDER_DISTANCE := 520.0
 const DISCOVERY_INTERVAL := 0.75
+const MOBILE_DISCOVERY_INTERVAL := 1.40
 const LIGHT_CULL_INTERVAL := 0.20
+const MOBILE_LIGHT_CULL_INTERVAL := 0.34
+const MOBILE_DYNAMIC_SHADOW_INTERVAL := 1.0 / 30.0
+const DEFAULT_LIGHT_ENERGY_THRESHOLD := 0.015
+const MOBILE_LIGHT_ENERGY_THRESHOLD := 0.085
 const LIGHT_TEXTURE_SIZE := 64
 const SOFT_SHADOW_TEXTURE_SIZE := 64
 const SHADOW_ROOT_Z := 120
@@ -28,12 +35,15 @@ var _light_texture: Texture2D = null
 var _soft_shadow_texture: Texture2D = null
 var _glow_material: CanvasItemMaterial = null
 var _shadow_entries: Dictionary = {}
+var _dynamic_shadow_entries: Array[Dictionary] = []
 var _light_entries: Dictionary = {}
 var _discovery_elapsed := 0.0
 var _light_cull_elapsed := 0.0
+var _dynamic_shadow_elapsed := 0.0
 var _active_local_lights := 0
 var _exterior_active := true
 var _debug_capture_active := false
+var _mobile_performance_profile := false
 
 var _preview_hour := DEFAULT_PREVIEW_HOUR
 var _time_phase := "DAY"
@@ -47,6 +57,10 @@ var _local_light_strength := 0.02
 
 func _ready() -> void:
 	add_to_group(LIGHTING_GROUP)
+	_mobile_performance_profile = (
+		OS.has_feature("mobile")
+		or (OS.has_feature("web") and DisplayServer.is_touchscreen_available())
+	)
 	_build_environment()
 	_build_runtime_roots()
 	_light_texture = _create_radial_light_texture()
@@ -69,15 +83,23 @@ func _process(delta: float) -> void:
 	if not _exterior_active:
 		return
 
+	var discovery_interval := MOBILE_DISCOVERY_INTERVAL if _mobile_performance_profile else DISCOVERY_INTERVAL
 	_discovery_elapsed += delta
-	if _discovery_elapsed >= DISCOVERY_INTERVAL:
+	if _discovery_elapsed >= discovery_interval:
 		_discovery_elapsed = 0.0
 		_discover_runtime_sources()
 
-	_update_dynamic_shadows()
+	if _mobile_performance_profile:
+		_dynamic_shadow_elapsed += delta
+		if _dynamic_shadow_elapsed >= MOBILE_DYNAMIC_SHADOW_INTERVAL:
+			_dynamic_shadow_elapsed = 0.0
+			_update_dynamic_shadows()
+	else:
+		_update_dynamic_shadows()
 
+	var cull_interval := MOBILE_LIGHT_CULL_INTERVAL if _mobile_performance_profile else LIGHT_CULL_INTERVAL
 	_light_cull_elapsed += delta
-	if _light_cull_elapsed >= LIGHT_CULL_INTERVAL:
+	if _light_cull_elapsed >= cull_interval:
 		_light_cull_elapsed = 0.0
 		_update_shadow_visibility()
 		_update_local_lights()
@@ -125,6 +147,7 @@ func get_time_debug_snapshot() -> Dictionary:
 		"active_local_lights": _active_local_lights,
 		"total_local_lights": _light_entries.size(),
 		"shadow_casters": _shadow_entries.size(),
+		"mobile_performance_profile": _mobile_performance_profile,
 	}
 
 
@@ -165,6 +188,10 @@ func get_local_light_count() -> int:
 
 func get_active_local_light_count() -> int:
 	return _active_local_lights
+
+
+func is_mobile_performance_profile() -> bool:
+	return _mobile_performance_profile
 
 
 func is_debug_capture_active() -> bool:
@@ -442,7 +469,7 @@ func _register_shadow_caster(caster: Node2D) -> void:
 		render_node.add_to_group("debug_capture_clean_hidden")
 
 	var id := caster.get_instance_id()
-	_shadow_entries[id] = {
+	var entry := {
 		"caster": caster,
 		"render_node": render_node,
 		"footprint": footprint,
@@ -450,8 +477,11 @@ func _register_shadow_caster(caster: Node2D) -> void:
 		"base_opacity": opacity,
 		"dynamic": bool(caster.get_meta("world_shadow_dynamic", false)),
 	}
-	_apply_shadow_appearance(_shadow_entries[id] as Dictionary)
-	_update_shadow_geometry(_shadow_entries[id] as Dictionary)
+	_shadow_entries[id] = entry
+	if bool(entry.get("dynamic", false)):
+		_dynamic_shadow_entries.append(entry)
+	_apply_shadow_appearance(entry)
+	_update_shadow_geometry(entry)
 
 
 func _register_local_light(source: Node2D) -> void:
@@ -510,11 +540,16 @@ func _refresh_all_shadows() -> void:
 
 
 func _update_dynamic_shadows() -> void:
-	for entry_value in _shadow_entries.values():
-		if not entry_value is Dictionary:
+	for index in range(_dynamic_shadow_entries.size() - 1, -1, -1):
+		var entry := _dynamic_shadow_entries[index]
+		var caster = entry.get("caster")
+		var render_node := entry.get("render_node") as CanvasItem
+		if not is_instance_valid(caster) or render_node == null or not is_instance_valid(render_node):
+			_dynamic_shadow_entries.remove_at(index)
 			continue
-		var entry := entry_value as Dictionary
-		if not bool(entry.get("dynamic", false)):
+		# Invisible dynamic shadows do not need geometry work. Visibility culling
+		# will refresh them before they become visible again.
+		if not render_node.visible:
 			continue
 		_update_shadow_geometry(entry)
 
@@ -617,7 +652,8 @@ func _shadow_projection(caster: Node2D) -> Vector2:
 
 
 func _update_shadow_visibility() -> void:
-	var max_distance_sq := SHADOW_RENDER_DISTANCE * SHADOW_RENDER_DISTANCE
+	var render_distance := MOBILE_SHADOW_RENDER_DISTANCE if _mobile_performance_profile else SHADOW_RENDER_DISTANCE
+	var max_distance_sq := render_distance * render_distance
 	for entry_value in _shadow_entries.values():
 		if not entry_value is Dictionary:
 			continue
@@ -639,7 +675,9 @@ func _update_shadow_visibility() -> void:
 
 
 func _update_local_lights() -> void:
-	var max_distance_sq := LOCAL_LIGHT_RENDER_DISTANCE * LOCAL_LIGHT_RENDER_DISTANCE
+	var render_distance := MOBILE_LOCAL_LIGHT_RENDER_DISTANCE if _mobile_performance_profile else LOCAL_LIGHT_RENDER_DISTANCE
+	var max_distance_sq := render_distance * render_distance
+	var energy_threshold := MOBILE_LIGHT_ENERGY_THRESHOLD if _mobile_performance_profile else DEFAULT_LIGHT_ENERGY_THRESHOLD
 	_active_local_lights = 0
 
 	for entry_value in _light_entries.values():
@@ -672,7 +710,7 @@ func _update_local_lights() -> void:
 			_exterior_active
 			and source_2d.is_visible_in_tree()
 			and close_enough
-			and light.energy > 0.015
+			and light.energy > energy_threshold
 		)
 
 		if glow != null and is_instance_valid(glow):
@@ -709,6 +747,17 @@ func _update_light_transform(entry: Dictionary) -> void:
 
 
 func _prune_invalid_entries() -> void:
+	for index in range(_dynamic_shadow_entries.size() - 1, -1, -1):
+		var dynamic_entry := _dynamic_shadow_entries[index]
+		var dynamic_caster = dynamic_entry.get("caster")
+		var dynamic_render_node := dynamic_entry.get("render_node") as CanvasItem
+		if (
+			not is_instance_valid(dynamic_caster)
+			or dynamic_render_node == null
+			or not is_instance_valid(dynamic_render_node)
+		):
+			_dynamic_shadow_entries.remove_at(index)
+
 	for id in _shadow_entries.keys():
 		var entry := _shadow_entries[id] as Dictionary
 		var caster = entry.get("caster")
