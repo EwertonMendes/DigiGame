@@ -716,15 +716,8 @@ func _object_hit(screen: Vector2, root: Node, containers: Array[String]) -> Node
 				if container_name == "Props":
 					var prop_polygon := _prop_screen_polygon(marker)
 					if prop_polygon.size() >= 3 and Geometry2D.is_point_in_polygon(screen, prop_polygon):
-						var center := Vector2.ZERO
-						for point: Vector2 in prop_polygon:
-							center += point
-						center /= float(prop_polygon.size())
-						var prop_distance := screen.distance_to(center)
-						if prop_distance < best_distance:
-							best = marker
-							best_distance = prop_distance
-						continue
+						# Exact visible-art hits beat broad building/landscape anchor radii.
+						return marker
 
 				var grid := MATH.world_to_grid(marker.position)
 				var elevation := 48.0 if grid.y < 19.5 else 0.0
