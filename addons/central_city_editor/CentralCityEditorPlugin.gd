@@ -171,7 +171,8 @@ func _build_toolbar() -> void:
 	for item in ["main", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water", "void"]:
 		_surface.add_item(item)
 	_surface.select(0)
-	_surface.tooltip_text = "Surface used by Ground paint."
+	_surface.tooltip_text = "Surface used by Ground paint or applied to the selected road/region."
+	_surface.item_selected.connect(_on_surface_selected)
 	_toolbar.add_child(_surface)
 
 	_overlay_toggle = Button.new()
@@ -184,6 +185,16 @@ func _build_toolbar() -> void:
 	validate_button.text = "Validate"
 	validate_button.pressed.connect(_validate_city)
 	_toolbar.add_child(validate_button)
+
+	var duplicate_button := Button.new()
+	duplicate_button.text = "Duplicate"
+	duplicate_button.pressed.connect(_duplicate_selected)
+	_toolbar.add_child(duplicate_button)
+
+	var delete_button := Button.new()
+	delete_button.text = "Delete"
+	delete_button.pressed.connect(_delete_selected)
+	_toolbar.add_child(delete_button)
 
 	var bake_button := Button.new()
 	bake_button.text = "Bake"
@@ -227,6 +238,60 @@ func _on_overlay_toggled(enabled: bool) -> void:
 	if root != null:
 		root.set("show_edit_overlays", false)
 	update_overlays()
+
+
+func _on_surface_selected(_index: int) -> void:
+	var selected := _selected_node()
+	if selected == null or selected.get("surface") == null:
+		return
+	var next_surface := _surface.get_item_text(_surface.selected)
+	if selected.get_script() == ROAD_SCRIPT and next_surface == "void":
+		_status.text = "Void is only valid for Ground"
+		return
+	var previous := String(selected.get("surface"))
+	if previous == next_surface:
+		return
+	var undo := get_undo_redo()
+	undo.create_action("Change Central City surface")
+	undo.add_do_property(selected, "surface", next_surface)
+	undo.add_undo_property(selected, "surface", previous)
+	undo.commit_action()
+	_status.text = "Surface: %s" % next_surface
+
+
+func _duplicate_selected() -> void:
+	var root := _authoring_root()
+	var selected := _selected_node()
+	if root == null or selected == null or selected == root or selected.get_parent() == null:
+		return
+	var parent := selected.get_parent()
+	var duplicate := selected.duplicate()
+	duplicate.name = "%s_Copy" % selected.name
+	var undo := get_undo_redo()
+	undo.create_action("Duplicate Central City object")
+	undo.add_do_method(parent, "add_child", duplicate)
+	undo.add_do_method(duplicate, "set_owner", root)
+	undo.add_do_reference(duplicate)
+	undo.add_undo_method(parent, "remove_child", duplicate)
+	undo.commit_action()
+	_select_node(duplicate)
+	_status.text = "Duplicated"
+
+
+func _delete_selected() -> void:
+	var root := _authoring_root()
+	var selected := _selected_node()
+	if root == null or selected == null or selected == root or selected.get_parent() == null:
+		return
+	var parent := selected.get_parent()
+	var undo := get_undo_redo()
+	undo.create_action("Delete Central City object")
+	undo.add_do_method(parent, "remove_child", selected)
+	undo.add_undo_method(parent, "add_child", selected)
+	undo.add_undo_method(selected, "set_owner", root)
+	undo.add_undo_reference(selected)
+	undo.commit_action()
+	_status.text = "Deleted"
 
 
 func _mode_text() -> String:
