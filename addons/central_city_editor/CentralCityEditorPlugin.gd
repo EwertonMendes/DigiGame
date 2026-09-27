@@ -91,6 +91,7 @@ func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 		return
 	if _mode_text() == "Road":
 		_draw_all_roads(overlay, root)
+		_draw_new_road_start(overlay)
 	if _mode_text() == "Ground":
 		_draw_ground_hover(overlay)
 	if _mode_text() == "Level":
@@ -572,6 +573,16 @@ func _commit_boundary_undo() -> void:
 	undo.add_do_property(boundary, "lower_threshold_grid_y", final_threshold)
 	undo.add_undo_property(boundary, "lower_threshold_grid_y", old_threshold)
 	undo.commit_action()
+
+
+func _draw_new_road_start(overlay: Control) -> void:
+	if not _creating_road or _road_creation_start.x == INF:
+		return
+	var elevation := 48.0 if _road_creation_start.y < 19.5 else 0.0
+	var world := MATH.grid_to_visual_world(_road_creation_start, elevation)
+	var screen := _visual_world_to_screen(world)
+	overlay.draw_circle(screen, 10.0, WIDTH_COLOR)
+	overlay.draw_circle(screen, 16.0, WIDTH_COLOR, false, 2.0)
 
 
 func _draw_all_roads(overlay: Control, root: Node) -> void:
