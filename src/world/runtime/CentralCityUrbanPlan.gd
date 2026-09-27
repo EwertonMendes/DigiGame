@@ -5,7 +5,7 @@ const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 
 const FOUNDATION_HEIGHT := 8.0
 const LANDSCAPE_HEIGHT := 7.0
-const FOUNDATION_MARGIN := 20.0
+const FOUNDATION_MARGIN := 12.0
 const FOUNDATION_TOP := Color(0.68, 0.69, 0.67, 1.0)
 const FOUNDATION_SIDE_A := Color(0.34, 0.37, 0.38, 1.0)
 const FOUNDATION_SIDE_B := Color(0.25, 0.28, 0.30, 1.0)
@@ -16,11 +16,15 @@ const LANDSCAPE_ACCENT := Color(0.19, 0.78, 0.86, 1.0)
 
 static func create_service_foundation(
 	node_name: String,
-	building_footprint: PackedVector2Array,
-	accent: Color
+	foundation_footprint: PackedVector2Array,
+	accent: Color,
+	margin: float = FOUNDATION_MARGIN
 ) -> Node2D:
-	var hull := _convex_hull_without_duplicate(building_footprint)
-	var expanded := _expand_polygon(hull, FOUNDATION_MARGIN)
+	# Foundation footprint is deliberately independent from movement collision.
+	# Collision follows only true ground-contact walls/guards, while this visual
+	# lot is authored to cover the complete projected building base.
+	var hull := _convex_hull_without_duplicate(foundation_footprint)
+	var expanded := _expand_polygon(hull, maxf(0.0, margin))
 	return _create_raised_platform(
 		node_name,
 		expanded,
