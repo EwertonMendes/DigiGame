@@ -28,6 +28,7 @@ static func apply(
 
 	var leaves := CPUParticles2D.new()
 	leaves.name = "AmbientLeaves"
+	leaves.add_to_group("debug_capture_clean_vfx")
 	leaves.texture = _leaf_particle_texture()
 	leaves.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	leaves.amount = maxi(1, leaf_count)
