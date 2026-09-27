@@ -180,6 +180,9 @@ static func _configure_lighting_metadata(
 		sprite.set_meta("world_light_energy", maxf(0.0, float(light.get("energy", 0.6))))
 		sprite.set_meta("world_light_radius", maxf(24.0, float(light.get("radius", 120.0))))
 		sprite.set_meta("world_light_day_factor", clampf(float(light.get("day_factor", 0.02)), 0.0, 1.0))
+		sprite.set_meta("world_light_glow_radius", maxf(0.0, float(light.get("glow_radius", 0.0))))
+		sprite.set_meta("world_light_glow_energy", maxf(0.0, float(light.get("glow_energy", 0.0))))
+		sprite.set_meta("world_light_glow_day_factor", clampf(float(light.get("glow_day_factor", 0.0)), 0.0, 1.0))
 
 
 static func _load_config() -> Dictionary:
