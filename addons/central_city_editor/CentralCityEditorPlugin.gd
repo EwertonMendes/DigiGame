@@ -1,0 +1,794 @@
+@tool
+extends EditorPlugin
+
+const AUTHORING_ROOT = preload("res://src/world/authoring/CentralCityAuthoringRoot.gd")
+const ROAD_SCRIPT = preload("res://src/world/authoring/CentralCityRoadAuthoring.gd")
+const MATH = preload("res://src/world/authoring/CentralCityEditorMath.gd")
+const VALIDATOR = preload("res://src/world/authoring/CentralCityAuthoringValidator.gd")
+const BAKER = preload("res://src/world/authoring/CentralCityBaker.gd")
+
+const HANDLE_RADIUS := 8.0
+const HIT_RADIUS := 15.0
+const ROAD_SCREEN_WIDTH_PER_GRID := 35.77708764
+const ROAD_COLOR := Color(1.0, 0.62, 0.10, 0.96)
+const HANDLE_COLOR := Color(1.0, 0.92, 0.32, 1.0)
+const WIDTH_COLOR := Color(0.24, 0.92, 1.0, 1.0)
+const SELECT_COLOR := Color(0.35, 1.0, 0.55, 0.95)
+
+var _toolbar: HBoxContainer
+var _mode: OptionButton
+var _snap: OptionButton
+var _surface: OptionButton
+var _overlay_toggle: Button
+var _status: Label
+var _active_root: Node = null
+
+var _drag_kind := ""
+var _drag_node: Node = null
+var _drag_point_index := -1
+var _drag_start_mouse_world := Vector2.ZERO
+var _drag_original: Array[Dictionary] = []
+var _drag_old_width := 0.0
+var _drag_changed := false
+
+var _paint_stroke_active := false
+var _paint_erase := false
+var _paint_old_cells: Dictionary = {}
+var _paint_last_cell := Vector2i(999999, 999999)
+
+
+func _enter_tree() -> void:
+	_build_toolbar()
+	add_control_to_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _toolbar)
+	set_input_event_forwarding_always_enabled()
+	set_force_draw_over_forwarding_enabled()
+	_toolbar.visible = false
+
+
+func _exit_tree() -> void:
+	if _toolbar != null:
+		remove_control_from_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _toolbar)
+		_toolbar.queue_free()
+	_toolbar = null
+
+
+func _handles(object: Object) -> bool:
+	return object != null and (
+		object.get_script() == AUTHORING_ROOT
+		or object.get_script() == ROAD_SCRIPT
+		or (object is Node and _is_under_authoring_root(object as Node))
+	)
+
+
+func _edit(_object: Object) -> void:
+	_sync_active_root()
+
+
+func _make_visible(visible: bool) -> void:
+	if _toolbar != null:
+		_toolbar.visible = visible and _authoring_root() != null
+
+
+func _process(_delta: float) -> void:
+	var root := _authoring_root()
+	if root != _active_root:
+		_active_root = root
+		if _toolbar != null:
+			_toolbar.visible = root != null
+			_sync_overlay_toggle()
+		update_overlays()
+
+
+func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
+	var root := _authoring_root()
+	if root == null:
+		return
+	var selected := _selected_node()
+	if selected != null and selected.get_script() == ROAD_SCRIPT:
+		_draw_selected_road(overlay, selected as Line2D)
+	elif selected is Marker2D and _is_under_authoring_root(selected):
+		_draw_marker_handle(overlay, selected as Marker2D)
+	elif selected is Polygon2D and _is_under_authoring_root(selected):
+		_draw_polygon_outline(overlay, selected as Polygon2D)
+
+
+func _forward_canvas_gui_input(event: InputEvent) -> bool:
+	var root := _authoring_root()
+	if root == null:
+		return false
+
+	if _mode_text() == "Ground":
+		return _handle_ground_input(event, root)
+
+	if event is InputEventMouseButton:
+		var button := event as InputEventMouseButton
+		if button.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		if button.pressed:
+			return _begin_pointer_action(button.position, root)
+		_finish_pointer_action()
+		return _drag_kind != ""
+
+	if event is InputEventMouseMotion and not _drag_kind.is_empty():
+		_update_pointer_drag(event as InputEventMouseMotion)
+		return true
+
+	return false
+
+
+func _build_toolbar() -> void:
+	_toolbar = HBoxContainer.new()
+	_toolbar.name = "CentralCityEditorToolbar"
+
+	var title := Label.new()
+	title.text = "Central City"
+	_toolbar.add_child(title)
+
+	_mode = OptionButton.new()
+	_mode.tooltip_text = "Editing tool. Roads are constrained/snapped automatically."
+	for item in ["Select", "Road", "Ground", "Surface", "Transition", "Building", "Prop", "Landscape"]:
+		_mode.add_item(item)
+	_mode.item_selected.connect(func(_index: int) -> void:
+		_status.text = _mode_text()
+		update_overlays()
+	)
+	_toolbar.add_child(_mode)
+
+	var snap_label := Label.new()
+	snap_label.text = "Snap"
+	_toolbar.add_child(snap_label)
+	_snap = OptionButton.new()
+	for entry in [["1", 1.0], ["1/2", 0.5], ["1/4", 0.25]]:
+		_snap.add_item(entry[0])
+		_snap.set_item_metadata(_snap.item_count - 1, entry[1])
+	_snap.select(1)
+	_toolbar.add_child(_snap)
+
+	_surface = OptionButton.new()
+	for item in ["main", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water"]:
+		_surface.add_item(item)
+	_surface.select(0)
+	_surface.tooltip_text = "Surface used by Ground paint."
+	_toolbar.add_child(_surface)
+
+	_overlay_toggle = Button.new()
+	_overlay_toggle.text = "Handles"
+	_overlay_toggle.toggle_mode = true
+	_overlay_toggle.toggled.connect(_on_overlay_toggled)
+	_toolbar.add_child(_overlay_toggle)
+
+	var validate_button := Button.new()
+	validate_button.text = "Validate"
+	validate_button.pressed.connect(_validate_city)
+	_toolbar.add_child(validate_button)
+
+	var bake_button := Button.new()
+	bake_button.text = "Bake"
+	bake_button.pressed.connect(_bake_city)
+	_toolbar.add_child(bake_button)
+
+	_status = Label.new()
+	_status.text = "Select"
+	_status.custom_minimum_size = Vector2(170.0, 0.0)
+	_toolbar.add_child(_status)
+
+
+func _authoring_root() -> Node:
+	var root := get_editor_interface().get_edited_scene_root()
+	if root != null and root.get_script() == AUTHORING_ROOT:
+		return root
+	return null
+
+
+func _sync_active_root() -> void:
+	_active_root = _authoring_root()
+	if _toolbar != null:
+		_toolbar.visible = _active_root != null
+	_sync_overlay_toggle()
+	update_overlays()
+
+
+func _sync_overlay_toggle() -> void:
+	var root := _authoring_root()
+	if root == null or _overlay_toggle == null:
+		return
+	_overlay_toggle.set_pressed_no_signal(bool(root.get("show_edit_overlays")))
+
+
+func _on_overlay_toggled(enabled: bool) -> void:
+	var root := _authoring_root()
+	if root == null:
+		return
+	root.set("show_edit_overlays", enabled)
+	update_overlays()
+
+
+func _mode_text() -> String:
+	return _mode.get_item_text(_mode.selected) if _mode != null else "Select"
+
+
+func _snap_step() -> float:
+	if _snap == null:
+		return 0.5
+	return float(_snap.get_item_metadata(_snap.selected))
+
+
+func _canvas_transform() -> Transform2D:
+	var viewport := get_editor_interface().get_editor_viewport_2d()
+	return viewport.get_canvas_transform() if viewport != null else Transform2D.IDENTITY
+
+
+func _screen_to_visual_world(screen: Vector2) -> Vector2:
+	return _canvas_transform().affine_inverse() * screen
+
+
+func _visual_world_to_screen(world: Vector2) -> Vector2:
+	return _canvas_transform() * world
+
+
+func _selected_node() -> Node:
+	var selected := get_editor_interface().get_selection().get_selected_nodes()
+	return selected[0] if selected.size() == 1 else null
+
+
+func _select_node(node: Node) -> void:
+	var selection := get_editor_interface().get_selection()
+	selection.clear()
+	selection.add_node(node)
+	update_overlays()
+
+
+func _is_under_authoring_root(node: Node) -> bool:
+	var root := _authoring_root()
+	return root != null and (node == root or root.is_ancestor_of(node))
+
+
+func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
+	var mode := _mode_text()
+	if mode == "Road" or mode == "Select":
+		var road_hit := _road_hit(screen, root)
+		if not road_hit.is_empty():
+			var road := road_hit.get("road") as Line2D
+			_select_node(road)
+			var point_index := int(road_hit.get("point_index", -1))
+			var width_hit := bool(road_hit.get("width", false))
+			if width_hit:
+				_begin_width_drag(road)
+			elif point_index >= 0:
+				_begin_road_point_drag(road, point_index)
+			else:
+				_begin_road_body_drag(road, screen)
+			return true
+
+	var containers: Array[String] = []
+	match mode:
+		"Building":
+			containers = ["Buildings"]
+		"Prop":
+			containers = ["Props"]
+		"Landscape":
+			containers = ["Landscapes"]
+		"Surface":
+			containers = ["Surfaces", "GroundOverrides"]
+		"Transition":
+			containers = ["Transitions"]
+		"Select":
+			containers = ["Buildings", "Props", "Landscapes", "Transitions", "Surfaces", "GroundOverrides"]
+		_:
+			pass
+
+	var object_hit := _object_hit(screen, root, containers)
+	if object_hit != null:
+		_select_node(object_hit)
+		if object_hit is Marker2D:
+			_begin_marker_drag(object_hit as Marker2D, screen)
+		elif object_hit is Polygon2D:
+			_begin_polygon_drag(object_hit as Polygon2D, screen)
+		return true
+	return false
+
+
+func _road_hit(screen: Vector2, root: Node) -> Dictionary:
+	var roads := root.get_node_or_null("Roads")
+	if roads == null:
+		return {}
+	var best: Dictionary = {}
+	var best_distance := INF
+	for child in roads.get_children():
+		if not child is Line2D or child.get_script() != ROAD_SCRIPT:
+			continue
+		var road := child as Line2D
+		var elevated := _road_screen_points(road)
+		for index in range(elevated.size()):
+			var distance := screen.distance_to(elevated[index])
+			if distance <= HIT_RADIUS and distance < best_distance:
+				best_distance = distance
+				best = {"road": road, "point_index": index}
+		var width_handle := _road_width_handle_screen(road)
+		var width_distance := screen.distance_to(width_handle)
+		if width_distance <= HIT_RADIUS and width_distance < best_distance:
+			best_distance = width_distance
+			best = {"road": road, "point_index": -1, "width": true}
+		for index in range(elevated.size() - 1):
+			var distance := MATH.screen_distance_to_segment(screen, elevated[index], elevated[index + 1])
+			if distance <= 12.0 and distance < best_distance:
+				best_distance = distance
+				best = {"road": road, "point_index": -1}
+	return best
+
+
+func _road_screen_points(road: Line2D) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	var elevation := float(road.get("editor_elevation_px"))
+	for point: Vector2 in road.points:
+		var visual := road.to_global(point) + Vector2(0.0, -elevation)
+		result.append(_visual_world_to_screen(visual))
+	return result
+
+
+func _draw_selected_road(overlay: Control, road: Line2D) -> void:
+	var points := _road_screen_points(road)
+	if points.size() >= 2:
+		overlay.draw_polyline(points, ROAD_COLOR, 3.0, true)
+	for point: Vector2 in points:
+		overlay.draw_circle(point, HANDLE_RADIUS, HANDLE_COLOR)
+		overlay.draw_circle(point, HANDLE_RADIUS, Color(0.15, 0.15, 0.15, 1.0), false, 2.0)
+	if points.size() >= 2:
+		var width_handle := _road_width_handle_screen(road)
+		var midpoint := (points[0] + points[points.size() - 1]) * 0.5
+		overlay.draw_line(midpoint, width_handle, WIDTH_COLOR, 2.0)
+		overlay.draw_circle(width_handle, 7.0, WIDTH_COLOR)
+
+
+func _road_width_handle_screen(road: Line2D) -> Vector2:
+	var points := _road_screen_points(road)
+	if points.size() < 2:
+		return Vector2.ZERO
+	var a := points[0]
+	var b := points[points.size() - 1]
+	var direction := (b - a).normalized()
+	if direction.length_squared() <= 0.001:
+		direction = Vector2.RIGHT
+	var normal := direction.orthogonal()
+	var half_width_screen := maxf(22.0, float(road.get("width_grid")) * 8.0)
+	return (a + b) * 0.5 + normal * half_width_screen
+
+
+func _begin_road_point_drag(road: Line2D, point_index: int) -> void:
+	_drag_kind = "road_point"
+	_drag_node = road
+	_drag_point_index = point_index
+	_drag_original = _collect_connected_endpoint_snapshots(road, point_index)
+	_drag_changed = false
+	_status.text = "Road endpoint · drag to resize · Shift = free angle · Alt = no snap"
+
+
+func _begin_road_body_drag(road: Line2D, screen: Vector2) -> void:
+	_drag_kind = "road_body"
+	_drag_node = road
+	_drag_start_mouse_world = _screen_to_visual_world(screen)
+	_drag_original = _collect_road_body_snapshots(road)
+	_drag_changed = false
+	_status.text = "Road · drag to move"
+
+
+func _begin_width_drag(road: Line2D) -> void:
+	_drag_kind = "road_width"
+	_drag_node = road
+	_drag_old_width = float(road.get("width_grid"))
+	_drag_changed = false
+	_status.text = "Road width · drag sideways"
+
+
+func _update_pointer_drag(event: InputEventMouseMotion) -> void:
+	if _drag_node == null or not is_instance_valid(_drag_node):
+		return
+	match _drag_kind:
+		"road_point":
+			_update_road_point_drag(event)
+		"road_body":
+			_update_road_body_drag(event)
+		"road_width":
+			_update_road_width_drag(event)
+		"marker":
+			_update_marker_drag(event)
+		"polygon":
+			_update_polygon_drag(event)
+	update_overlays()
+
+
+func _update_road_point_drag(event: InputEventMouseMotion) -> void:
+	var road := _drag_node as Line2D
+	var elevation := float(road.get("editor_elevation_px"))
+	var visual_world := _screen_to_visual_world(event.position)
+	var logical_world := visual_world + Vector2(0.0, elevation)
+	var local := road.to_local(logical_world)
+	var candidate_grid := MATH.world_to_grid(local)
+	var step := 0.0 if event.alt_pressed else _snap_step()
+	var points := road.points
+	if points.is_empty():
+		return
+	var anchor_index := 1 if _drag_point_index == 0 else points.size() - 2
+	var original_grid := MATH.world_to_grid(points[_drag_point_index])
+	var anchor_grid := MATH.world_to_grid(points[anchor_index])
+	var target_grid := (
+		MATH.snap_grid(candidate_grid, step)
+		if event.shift_pressed or points.size() > 2 and _drag_point_index > 0 and _drag_point_index < points.size() - 1
+		else MATH.constrained_endpoint(anchor_grid, original_grid, candidate_grid, step)
+	)
+	var target_local := MATH.grid_to_world(target_grid)
+	for snapshot in _drag_original:
+		var node := snapshot.get("node") as Line2D
+		var index := int(snapshot.get("index", -1))
+		if node == null or index < 0:
+			continue
+		var updated := node.points
+		var target_global := road.to_global(target_local)
+		updated[index] = node.to_local(target_global)
+		node.points = updated
+	_drag_changed = true
+
+
+func _collect_connected_endpoint_snapshots(road: Line2D, point_index: int) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var target_global := road.to_global(road.points[point_index])
+	var root := _authoring_root()
+	var roads := root.get_node_or_null("Roads") if root != null else null
+	if roads == null:
+		return result
+	for child in roads.get_children():
+		if not child is Line2D:
+			continue
+		var candidate := child as Line2D
+		for index in range(candidate.points.size()):
+			var endpoint := index == 0 or index == candidate.points.size() - 1
+			if endpoint and candidate.to_global(candidate.points[index]).distance_to(target_global) <= 0.25:
+				result.append({
+					"node": candidate,
+					"index": index,
+					"points": candidate.points.duplicate(),
+				})
+	if result.is_empty():
+		result.append({"node": road, "index": point_index, "points": road.points.duplicate()})
+	return result
+
+
+func _collect_road_body_snapshots(road: Line2D) -> Array[Dictionary]:
+	var result: Array[Dictionary] = [{"node": road, "points": road.points.duplicate()}]
+	for endpoint_index in [0, road.points.size() - 1]:
+		var connected := _collect_connected_endpoint_snapshots(road, endpoint_index)
+		for entry in connected:
+			var node = entry.get("node")
+			if node == road:
+				continue
+			var exists := false
+			for current in result:
+				if current.get("node") == node:
+					exists = true
+					break
+			if not exists:
+				result.append(entry)
+	return result
+
+
+func _update_road_body_drag(event: InputEventMouseMotion) -> void:
+	var road := _drag_node as Line2D
+	var elevation := float(road.get("editor_elevation_px"))
+	var current := _screen_to_visual_world(event.position)
+	var start_logical := _drag_start_mouse_world + Vector2(0.0, elevation)
+	var current_logical := current + Vector2(0.0, elevation)
+	var start_grid := MATH.world_to_grid(road.to_local(start_logical))
+	var current_grid := MATH.world_to_grid(road.to_local(current_logical))
+	var delta_grid := current_grid - start_grid
+	if not event.alt_pressed:
+		delta_grid = MATH.snap_grid(delta_grid, _snap_step())
+	var delta_world := MATH.grid_to_world(delta_grid)
+
+	var road_old: PackedVector2Array
+	for entry in _drag_original:
+		if entry.get("node") == road:
+			road_old = entry.get("points") as PackedVector2Array
+			break
+	var road_new := road_old.duplicate()
+	for index in range(road_new.size()):
+		road_new[index] += delta_world
+	road.points = road_new
+
+	for entry in _drag_original:
+		var connected := entry.get("node") as Line2D
+		if connected == null or connected == road:
+			continue
+		var old_points := entry.get("points") as PackedVector2Array
+		var new_points := old_points.duplicate()
+		for endpoint_index in [0, new_points.size() - 1]:
+			var endpoint_global := connected.to_global(old_points[endpoint_index])
+			for moved_endpoint in [road.to_global(road_old[0]), road.to_global(road_old[road_old.size() - 1])]:
+				if endpoint_global.distance_to(moved_endpoint) <= 0.25:
+					new_points[endpoint_index] += delta_world
+		connected.points = new_points
+	_drag_changed = true
+
+
+func _update_road_width_drag(event: InputEventMouseMotion) -> void:
+	var road := _drag_node as Line2D
+	var points := road.points
+	if points.size() < 2:
+		return
+	var elevation := float(road.get("editor_elevation_px"))
+	var a := road.to_global(points[0]) + Vector2(0.0, -elevation)
+	var b := road.to_global(points[points.size() - 1]) + Vector2(0.0, -elevation)
+	var midpoint := (a + b) * 0.5
+	var direction := (b - a).normalized()
+	if direction.length_squared() <= 0.001:
+		return
+	var normal := direction.orthogonal()
+	var mouse_world := _screen_to_visual_world(event.position)
+	var half_width := absf((mouse_world - midpoint).dot(normal))
+	var width_grid := maxf(0.5, half_width * 2.0 / ROAD_SCREEN_WIDTH_PER_GRID)
+	if not event.alt_pressed:
+		width_grid = maxf(0.5, roundf(width_grid * 4.0) / 4.0)
+	road.set("width_grid", width_grid)
+	_drag_changed = true
+
+
+func _finish_pointer_action() -> void:
+	if _drag_kind.is_empty():
+		return
+	if _drag_changed:
+		match _drag_kind:
+			"road_point", "road_body":
+				_commit_road_points_undo()
+			"road_width":
+				_commit_width_undo()
+			"marker":
+				_commit_marker_undo()
+			"polygon":
+				_commit_polygon_undo()
+	_drag_kind = ""
+	_drag_node = null
+	_drag_point_index = -1
+	_drag_original.clear()
+	_drag_changed = false
+	_status.text = _mode_text()
+	update_overlays()
+
+
+func _commit_road_points_undo() -> void:
+	var final_values: Array[Dictionary] = []
+	for entry in _drag_original:
+		var node := entry.get("node") as Line2D
+		if node != null:
+			final_values.append({"node": node, "points": node.points.duplicate()})
+			node.points = (entry.get("points") as PackedVector2Array).duplicate()
+	var undo := get_undo_redo()
+	undo.create_action("Edit Central City road")
+	for final in final_values:
+		var node := final.get("node") as Line2D
+		var old_points := PackedVector2Array()
+		for entry in _drag_original:
+			if entry.get("node") == node:
+				old_points = (entry.get("points") as PackedVector2Array).duplicate()
+				break
+		undo.add_do_property(node, "points", (final.get("points") as PackedVector2Array).duplicate())
+		undo.add_undo_property(node, "points", old_points)
+	undo.commit_action()
+
+
+func _commit_width_undo() -> void:
+	var road := _drag_node
+	var final_width := float(road.get("width_grid"))
+	road.set("width_grid", _drag_old_width)
+	var undo := get_undo_redo()
+	undo.create_action("Resize Central City road")
+	undo.add_do_property(road, "width_grid", final_width)
+	undo.add_undo_property(road, "width_grid", _drag_old_width)
+	undo.commit_action()
+
+
+func _object_hit(screen: Vector2, root: Node, containers: Array[String]) -> Node:
+	var best: Node = null
+	var best_distance := INF
+	for container_name in containers:
+		var container := root.get_node_or_null(container_name)
+		if container == null:
+			continue
+		for child in container.get_children():
+			if child is Marker2D:
+				var marker := child as Marker2D
+				var grid := MATH.world_to_grid(marker.position)
+				var elevation := 48.0 if grid.y < 19.5 else 0.0
+				var marker_screen := _visual_world_to_screen(marker.global_position + Vector2(0.0, -elevation))
+				var distance := screen.distance_to(marker_screen)
+				if distance < 24.0 and distance < best_distance:
+					best = marker
+					best_distance = distance
+			elif child is Polygon2D:
+				var polygon_node := child as Polygon2D
+				var screen_polygon := PackedVector2Array()
+				var elevation := float(child.get("editor_elevation_px")) if child.get("editor_elevation_px") != null else 0.0
+				for point: Vector2 in polygon_node.polygon:
+					screen_polygon.append(_visual_world_to_screen(polygon_node.to_global(point) + Vector2(0.0, -elevation)))
+				if screen_polygon.size() >= 3 and Geometry2D.is_point_in_polygon(screen, screen_polygon):
+					return polygon_node
+	return best
+
+
+func _begin_marker_drag(marker: Marker2D, screen: Vector2) -> void:
+	_drag_kind = "marker"
+	_drag_node = marker
+	_drag_start_mouse_world = _screen_to_visual_world(screen)
+	_drag_original = [{"node": marker, "position": marker.position}]
+	_drag_changed = false
+
+
+func _update_marker_drag(event: InputEventMouseMotion) -> void:
+	var marker := _drag_node as Marker2D
+	var old_position := _drag_original[0].get("position") as Vector2
+	var old_grid := MATH.world_to_grid(old_position)
+	var old_elevation := 48.0 if old_grid.y < 19.5 else 0.0
+	var start_grid := MATH.visual_world_to_grid(_drag_start_mouse_world)
+	var current_grid := MATH.visual_world_to_grid(_screen_to_visual_world(event.position))
+	var delta := current_grid - start_grid
+	if not event.alt_pressed:
+		delta = MATH.snap_grid(delta, _snap_step())
+	marker.position = MATH.grid_to_world(old_grid + delta)
+	_drag_changed = true
+
+
+func _commit_marker_undo() -> void:
+	var marker := _drag_node as Marker2D
+	var old_position := _drag_original[0].get("position") as Vector2
+	var final_position := marker.position
+	marker.position = old_position
+	var undo := get_undo_redo()
+	undo.create_action("Move Central City object")
+	undo.add_do_property(marker, "position", final_position)
+	undo.add_undo_property(marker, "position", old_position)
+	undo.commit_action()
+
+
+func _begin_polygon_drag(polygon: Polygon2D, screen: Vector2) -> void:
+	_drag_kind = "polygon"
+	_drag_node = polygon
+	_drag_start_mouse_world = _screen_to_visual_world(screen)
+	_drag_original = [{"node": polygon, "position": polygon.position}]
+	_drag_changed = false
+
+
+func _update_polygon_drag(event: InputEventMouseMotion) -> void:
+	var polygon := _drag_node as Polygon2D
+	var old_position := _drag_original[0].get("position") as Vector2
+	var start_grid := MATH.visual_world_to_grid(_drag_start_mouse_world)
+	var current_grid := MATH.visual_world_to_grid(_screen_to_visual_world(event.position))
+	var delta := current_grid - start_grid
+	if not event.alt_pressed:
+		delta = MATH.snap_grid(delta, _snap_step())
+	polygon.position = old_position + MATH.grid_to_world(delta)
+	_drag_changed = true
+
+
+func _commit_polygon_undo() -> void:
+	var polygon := _drag_node as Polygon2D
+	var old_position := _drag_original[0].get("position") as Vector2
+	var final_position := polygon.position
+	polygon.position = old_position
+	var undo := get_undo_redo()
+	undo.create_action("Move Central City region")
+	undo.add_do_property(polygon, "position", final_position)
+	undo.add_undo_property(polygon, "position", old_position)
+	undo.commit_action()
+
+
+func _draw_marker_handle(overlay: Control, marker: Marker2D) -> void:
+	var grid := MATH.world_to_grid(marker.position)
+	var elevation := 48.0 if grid.y < 19.5 else 0.0
+	var screen := _visual_world_to_screen(marker.global_position + Vector2(0.0, -elevation))
+	overlay.draw_circle(screen, 8.0, SELECT_COLOR)
+	overlay.draw_circle(screen, 13.0, SELECT_COLOR, false, 2.0)
+
+
+func _draw_polygon_outline(overlay: Control, polygon: Polygon2D) -> void:
+	var points := PackedVector2Array()
+	var elevation := float(polygon.get("editor_elevation_px")) if polygon.get("editor_elevation_px") != null else 0.0
+	for point: Vector2 in polygon.polygon:
+		points.append(_visual_world_to_screen(polygon.to_global(point) + Vector2(0.0, -elevation)))
+	if points.size() >= 2:
+		var closed := points.duplicate()
+		closed.append(points[0])
+		overlay.draw_polyline(closed, SELECT_COLOR, 2.0, true)
+
+
+func _handle_ground_input(event: InputEvent, root: Node) -> bool:
+	var paint := root.get_node_or_null("GroundPaint")
+	if paint == null:
+		_status.text = "GroundPaint node missing"
+		return false
+
+	if event is InputEventMouseButton:
+		var button := event as InputEventMouseButton
+		if button.button_index != MOUSE_BUTTON_LEFT and button.button_index != MOUSE_BUTTON_RIGHT:
+			return false
+		if button.pressed:
+			_paint_stroke_active = true
+			_paint_erase = button.button_index == MOUSE_BUTTON_RIGHT
+			_paint_old_cells = (paint.get("cells") as Dictionary).duplicate(true)
+			_paint_last_cell = Vector2i(999999, 999999)
+			_paint_at(button.position, paint)
+		else:
+			_finish_ground_stroke(paint)
+		return true
+
+	if event is InputEventMouseMotion and _paint_stroke_active:
+		_paint_at((event as InputEventMouseMotion).position, paint)
+		return true
+	return false
+
+
+func _paint_at(screen: Vector2, paint: Node) -> void:
+	var grid := MATH.visual_world_to_grid(_screen_to_visual_world(screen))
+	var step := _snap_step()
+	var snapped := MATH.snap_grid(grid, maxf(0.5, step))
+	var cell := Vector2i(roundi(snapped.x), roundi(snapped.y))
+	if cell == _paint_last_cell:
+		return
+	_paint_last_cell = cell
+	var cells := (paint.get("cells") as Dictionary).duplicate(true)
+	var key := MATH.cell_key(cell)
+	if _paint_erase:
+		cells.erase(key)
+	else:
+		cells[key] = _surface.get_item_text(_surface.selected)
+	paint.set("cells", cells)
+	_status.text = ("Erase " if _paint_erase else "Paint ") + key
+
+
+func _finish_ground_stroke(paint: Node) -> void:
+	if not _paint_stroke_active:
+		return
+	_paint_stroke_active = false
+	var final_cells := (paint.get("cells") as Dictionary).duplicate(true)
+	if final_cells == _paint_old_cells:
+		return
+	paint.set("cells", _paint_old_cells.duplicate(true))
+	var undo := get_undo_redo()
+	undo.create_action("Paint Central City ground")
+	undo.add_do_property(paint, "cells", final_cells)
+	undo.add_undo_property(paint, "cells", _paint_old_cells.duplicate(true))
+	undo.commit_action()
+	_status.text = "Ground painted"
+
+
+func _validate_city() -> void:
+	var root := _authoring_root()
+	if root == null:
+		return
+	var issues := VALIDATOR.validate(root)
+	if issues.is_empty():
+		_status.text = "✓ City valid"
+		print("[CentralCityEditor] validation passed")
+	else:
+		_status.text = "⚠ %d issue(s)" % issues.size()
+		for issue: String in issues:
+			push_warning("[CentralCityEditor] %s" % issue)
+
+
+func _bake_city() -> void:
+	var root := _authoring_root()
+	if root == null:
+		return
+	var issues := VALIDATOR.validate(root)
+	if not issues.is_empty():
+		_status.text = "Fix validation before bake"
+		return
+	var error := BAKER.bake(root)
+	if error == OK:
+		_status.text = "✓ Baked"
+		print("[CentralCityEditor] baked Central City")
+	else:
+		_status.text = "Bake failed: %s" % error_string(error)
+
+
+func _save_external_data() -> void:
+	var root := _authoring_root()
+	if root != null and VALIDATOR.validate(root).is_empty():
+		BAKER.bake(root)
