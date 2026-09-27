@@ -182,8 +182,8 @@ func _update_followers(delta: float) -> void:
 		var trail_target := _trail_target_at_distance(desired_distance)
 		if bool(trail_target.get("valid", false)):
 			var target_position := Vector2(trail_target.get("position", follower.global_position))
-			follower.call("step_toward", target_position, delta, occupied)
-			if follower.has_method("set_world_elevation"):
+			var moved := bool(follower.call("step_toward", target_position, delta, occupied))
+			if moved and follower.has_method("set_world_elevation"):
 				follower.call("set_world_elevation", _world_elevation_at(follower.global_position))
 		else:
 			follower.call("set_idle")
