@@ -1,5 +1,8 @@
 shader_type canvas_item;
-render_mode unshaded;
+
+// This shader only authors the paving albedo. It intentionally remains in the
+// normal CanvasItem lighting pipeline so CanvasModulate, DirectionalLight2D and
+// nearby PointLight2D sources can shade the street at night.
 
 // Central City's overworld paving is deliberately independent from the 64x32
 // gameplay cell size. UV is authored in logical world-grid coordinates by
