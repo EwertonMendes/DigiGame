@@ -14,6 +14,10 @@ const SEGMENT_EPSILON := 0.001
 static var _config_cache: Dictionary = {}
 
 
+static func clear_cache() -> void:
+	_config_cache.clear()
+
+
 static func config() -> Dictionary:
 	if not _config_cache.is_empty():
 		return _config_cache
