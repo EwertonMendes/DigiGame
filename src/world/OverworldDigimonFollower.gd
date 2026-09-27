@@ -160,6 +160,7 @@ func _apply_digimon_visuals() -> void:
 func _configure_world_shadow() -> void:
 	if _sprite == null or _sprite.texture == null or _digimon == null:
 		return
+	add_to_group("debug_capture_clean_hidden")
 	var frame_width := float(_sprite.texture.get_width())
 	if _digimon.sprite_layout == "spaced_9_32":
 		frame_width = float(SPACED_9_CELL_SIZE)
