@@ -1,0 +1,1164 @@
+[gd_scene load_steps=11 format=3]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityAuthoringRoot.gd" id="1_root"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCitySectionAuthoring.gd" id="2_section"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityRoadAuthoring.gd" id="3_road"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCitySurfaceRegion.gd" id="4_surface"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityLevelAuthoring.gd" id="5_level"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityBoundaryAuthoring.gd" id="6_boundary"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityTransitionRegion.gd" id="7_transition"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityBuildingAnchor.gd" id="8_building"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityPropAuthoring.gd" id="9_prop"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityLandscapeAuthoring.gd" id="10_landscape"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityGroundRegionAuthoring.gd" id="11_ground"]
+
+[node name="CentralCityAuthoring" type="Node2D"]
+script = ExtResource("1_root")
+area_id = "central_city"
+region_id = "central_city"
+display_name = "Central City"
+subtitle = "Recovery District · continuous overworld"
+section_size = 14
+
+[node name="Sections" type="Node2D" parent="."]
+
+[node name="Levels" type="Node2D" parent="."]
+
+[node name="Boundaries" type="Node2D" parent="."]
+
+[node name="Roads" type="Node2D" parent="."]
+
+[node name="Surfaces" type="Node2D" parent="."]
+
+[node name="GroundOverrides" type="Node2D" parent="."]
+
+[node name="Transitions" type="Node2D" parent="."]
+
+[node name="Buildings" type="Node2D" parent="."]
+
+[node name="Landscapes" type="Node2D" parent="."]
+
+[node name="Props" type="Node2D" parent="."]
+
+[node name="Section_-2_-2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-2, -2)
+theme = "garden"
+title = "Verdant Terrace"
+subtitle = "A quiet garden district"
+
+[node name="Section_-1_-2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-1, -2)
+theme = "residential"
+title = "Northwest Residences"
+subtitle = "Homes among recovered data"
+
+[node name="Section_0_-2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(0, -2)
+theme = "canal"
+title = "North Canal"
+subtitle = "Waterways through the city"
+
+[node name="Section_1_-2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(1, -2)
+theme = "archive"
+title = "Memory Archive"
+subtitle = "Recovered records and research"
+
+[node name="Section_2_-2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(2, -2)
+theme = "garden"
+title = "Northeast Terrace"
+subtitle = "Green space above the canal"
+
+[node name="Section_-2_-1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-2, -1)
+theme = "residential"
+title = "West Heights"
+subtitle = "Restored homes and side streets"
+
+[node name="Section_-1_-1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-1, -1)
+theme = "garden"
+title = "DigiLab Gardens"
+subtitle = "A calm approach to the laboratory"
+
+[node name="Section_0_-1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(0, -1)
+theme = "training"
+title = "Training Ward"
+subtitle = "Growth and tactical preparation"
+
+[node name="Section_1_-1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(1, -1)
+theme = "garden"
+title = "Hospital Gardens"
+subtitle = "Recovery district green space"
+
+[node name="Section_2_-1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(2, -1)
+theme = "residential"
+title = "East Heights"
+subtitle = "Newly restored housing"
+
+[node name="Section_-2_0" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-2, 0)
+theme = "residential"
+title = "West Commons"
+subtitle = "Residential recovery block"
+
+[node name="Section_-1_0" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-1, 0)
+theme = "digilab"
+title = "DigiLab District"
+subtitle = "Evolution and reconstruction"
+
+[node name="Section_0_0" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(0, 0)
+theme = "plaza"
+title = "Central Plaza"
+subtitle = "Heart of Central City"
+
+[node name="Section_1_0" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(1, 0)
+theme = "hospital"
+title = "Hospital District"
+subtitle = "Recovery services"
+
+[node name="Section_2_0" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(2, 0)
+theme = "gate"
+title = "East Gate"
+subtitle = "Road toward the outer sectors"
+
+[node name="Section_-2_1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-2, 1)
+theme = "garden"
+title = "Southwest Gardens"
+subtitle = "Community green space"
+
+[node name="Section_-1_1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-1, 1)
+theme = "residential"
+title = "Southwest Commons"
+subtitle = "Homes and small plazas"
+
+[node name="Section_0_1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(0, 1)
+theme = "market"
+title = "Data Market"
+subtitle = "Shops and civilian services"
+
+[node name="Section_1_1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(1, 1)
+theme = "residential"
+title = "Southeast Commons"
+subtitle = "Restored neighborhood"
+
+[node name="Section_2_1" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(2, 1)
+theme = "garden"
+title = "East Gardens"
+subtitle = "Trees along the city wall"
+
+[node name="Section_-2_2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-2, 2)
+theme = "garden"
+title = "Lower Garden"
+subtitle = "Quiet edge of the city"
+
+[node name="Section_-1_2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(-1, 2)
+theme = "residential"
+title = "South Residences"
+subtitle = "Homes near the outbound road"
+
+[node name="Section_0_2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(0, 2)
+theme = "gate"
+title = "South Gate"
+subtitle = "Route toward Green Sector"
+
+[node name="Section_1_2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(1, 2)
+theme = "residential"
+title = "Southeast Residences"
+subtitle = "Newly restored housing"
+
+[node name="Section_2_2" type="Node2D" parent="Sections"]
+script = ExtResource("2_section")
+coord = Vector2i(2, 2)
+theme = "garden"
+title = "Lower East Terrace"
+subtitle = "City-edge green space"
+
+[node name="upper_civic" type="Node2D" parent="Levels"]
+script = ExtResource("5_level")
+level_id = "upper_civic"
+elevation_px = 48
+
+[node name="south_terrace" type="Node2D" parent="Levels"]
+script = ExtResource("5_level")
+level_id = "south_terrace"
+elevation_px = 0
+
+[node name="SouthTerraceBreak" type="Line2D" parent="Boundaries"]
+script = ExtResource("6_boundary")
+points = PackedVector2Array(Vector2(-1472, -128), Vector2(704, 960))
+boundary_id = "south_terrace_break"
+upper_level = "upper_civic"
+lower_level = "south_terrace"
+lower_threshold_grid_y = 19.5
+
+[node name="road_00_west_gate_digilab" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-1120, -240), Vector2(-496, 72))
+road_id = "road_00_west_gate_digilab"
+level_id = "upper_civic"
+width_grid = 3.2
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_01_digilab_central" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-496, 72), Vector2(-96, 272))
+road_id = "road_01_digilab_central"
+level_id = "upper_civic"
+width_grid = 3.2
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_02_central_hospital" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-96, 272), Vector2(352, 496))
+road_id = "road_02_central_hospital"
+level_id = "upper_civic"
+width_grid = 3.2
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_03_hospital_east_gate" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(352, 496), Vector2(800, 720))
+road_id = "road_03_hospital_east_gate"
+level_id = "upper_civic"
+width_grid = 3.2
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_04_central_training" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-96, 272), Vector2(320, 64))
+road_id = "road_04_central_training"
+level_id = "upper_civic"
+width_grid = 3
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_05_training_archive_turn" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(320, 64), Vector2(896, -224))
+road_id = "road_05_training_archive_turn"
+level_id = "upper_civic"
+width_grid = 3
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_06_archive_turn_archive" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(896, -224), Vector2(1344, 0))
+road_id = "road_06_archive_turn_archive"
+level_id = "upper_civic"
+width_grid = 2.8
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_07_digilab_west_stair_top" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-496, 72), Vector2(-760, 204))
+road_id = "road_07_digilab_west_stair_top"
+level_id = "upper_civic"
+width_grid = 2.8
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_08_central_central_stair_top" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-96, 272), Vector2(-360, 404))
+road_id = "road_08_central_central_stair_top"
+level_id = "upper_civic"
+width_grid = 3
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 48
+
+[node name="road_09_central_stair_bottom_west_stair_bottom" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-464, 456), Vector2(-864, 256))
+road_id = "road_09_central_stair_bottom_west_stair_bottom"
+level_id = "south_terrace"
+width_grid = 2.6
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_10_central_stair_bottom_east_bridge_north" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-464, 456), Vector2(0, 688))
+road_id = "road_10_central_stair_bottom_east_bridge_north"
+level_id = "south_terrace"
+width_grid = 2.6
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_11_central_stair_bottom_market" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-464, 456), Vector2(-608, 528))
+road_id = "road_11_central_stair_bottom_market"
+level_id = "south_terrace"
+width_grid = 3
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_12_west_bridge_south_lower_west" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-992, 320), Vector2(-1136, 392))
+road_id = "road_12_west_bridge_south_lower_west"
+level_id = "south_terrace"
+width_grid = 2.6
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_13_east_bridge_south_lower_east" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-128, 752), Vector2(-272, 824))
+road_id = "road_13_east_bridge_south_lower_east"
+level_id = "south_terrace"
+width_grid = 2.6
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_14_southwest_lower_west" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-1344, 288), Vector2(-1136, 392))
+road_id = "road_14_southwest_lower_west"
+level_id = "south_terrace"
+width_grid = 2.6
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_15_lower_west_lower_center" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-1136, 392), Vector2(-736, 592))
+road_id = "road_15_lower_west_lower_center"
+level_id = "south_terrace"
+width_grid = 2.6
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_16_lower_center_lower_east" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-736, 592), Vector2(-272, 824))
+road_id = "road_16_lower_center_lower_east"
+level_id = "south_terrace"
+width_grid = 2.6
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_17_lower_east_southeast" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-272, 824), Vector2(-160, 880))
+road_id = "road_17_lower_east_southeast"
+level_id = "south_terrace"
+width_grid = 2.6
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_18_market_lower_center" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-608, 528), Vector2(-736, 592))
+road_id = "road_18_market_lower_center"
+level_id = "south_terrace"
+width_grid = 3
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="road_19_lower_center_south_gate" type="Line2D" parent="Roads"]
+script = ExtResource("3_road")
+points = PackedVector2Array(Vector2(-736, 592), Vector2(-1056, 752))
+road_id = "road_19_lower_center_south_gate"
+level_id = "south_terrace"
+width_grid = 3
+surface = "dark"
+tint = Color(1.48, 1.5, 1.54, 1)
+border_width_grid = 0.12
+border_color = Color(0.31, 0.33, 0.35, 1)
+editor_elevation_px = 0
+
+[node name="plaza_north_apron" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(0, 108.8), Vector2(230.4, 224), Vector2(153.6, 262.4), Vector2(-76.8, 147.2))
+region_id = "plaza_north_apron"
+layer_id = "central_plaza"
+level_id = "upper_civic"
+surface = "stone_soft"
+tint = Color(1.12, 1.13, 1.13, 1)
+border_width = 1.5
+border_color = Color(0.43, 0.47, 0.48, 1)
+editor_elevation_px = 48
+
+[node name="plaza_south_apron" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-172.8, 195.2), Vector2(57.6, 310.4), Vector2(-57.6, 368), Vector2(-288, 252.8))
+region_id = "plaza_south_apron"
+layer_id = "central_plaza"
+level_id = "upper_civic"
+surface = "stone_soft"
+tint = Color(1.12, 1.13, 1.13, 1)
+border_width = 1.5
+border_color = Color(0.43, 0.47, 0.48, 1)
+editor_elevation_px = 48
+
+[node name="plaza_west_apron" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-70.4, 144), Vector2(6.4, 182.4), Vector2(-108.8, 240), Vector2(-185.6, 201.6))
+region_id = "plaza_west_apron"
+layer_id = "central_plaza"
+level_id = "upper_civic"
+surface = "stone_soft"
+tint = Color(1.12, 1.13, 1.13, 1)
+border_width = 1.5
+border_color = Color(0.43, 0.47, 0.48, 1)
+editor_elevation_px = 48
+
+[node name="plaza_east_apron" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(83.2, 220.8), Vector2(160, 259.2), Vector2(44.8, 316.8), Vector2(-32, 278.4))
+region_id = "plaza_east_apron"
+layer_id = "central_plaza"
+level_id = "upper_civic"
+surface = "stone_soft"
+tint = Color(1.12, 1.13, 1.13, 1)
+border_width = 1.5
+border_color = Color(0.43, 0.47, 0.48, 1)
+editor_elevation_px = 48
+
+[node name="digilab_forecourt" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-585.6, -43.2), Vector2(-294.4, 102.4), Vector2(-515.2, 212.8), Vector2(-806.4, 67.2))
+region_id = "digilab_forecourt"
+layer_id = "service_forecourts"
+level_id = "upper_civic"
+surface = "tech_teal"
+tint = Color(1.18, 1.14, 1.08, 1)
+border_width = 1.5
+border_color = Color(0.3, 0.5, 0.43, 1)
+editor_elevation_px = 48
+
+[node name="training_forecourt" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(272, -62.4), Vector2(572.8, 88), Vector2(316.8, 216), Vector2(16, 65.6))
+region_id = "training_forecourt"
+layer_id = "service_forecourts"
+level_id = "upper_civic"
+surface = "training"
+tint = Color(1.08, 1.08, 1.05, 1)
+border_width = 1.5
+border_color = Color(0.39, 0.46, 0.39, 1)
+editor_elevation_px = 48
+
+[node name="hospital_forecourt" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(268.8, 384), Vector2(576, 537.6), Vector2(355.2, 648), Vector2(48, 494.4))
+region_id = "hospital_forecourt"
+layer_id = "service_forecourts"
+level_id = "upper_civic"
+surface = "tech_blue"
+tint = Color(1.18, 1.15, 1.11, 1)
+border_width = 1.5
+border_color = Color(0.31, 0.43, 0.55, 1)
+editor_elevation_px = 48
+
+[node name="market_forecourt" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-684.8, 464), Vector2(-480, 566.4), Vector2(-614.4, 633.6), Vector2(-819.2, 531.2))
+region_id = "market_forecourt"
+layer_id = "service_forecourts"
+level_id = "south_terrace"
+surface = "market"
+tint = Color(0.95, 0.97, 1, 1)
+border_width = 1.5
+border_color = Color(0.52, 0.43, 0.27, 1)
+editor_elevation_px = 0
+
+[node name="archive_forecourt" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(1353.6, -148.8), Vector2(1641.6, -4.8), Vector2(1344, 144), Vector2(1056, 0))
+region_id = "archive_forecourt"
+layer_id = "service_forecourts"
+level_id = "upper_civic"
+surface = "tech_purple"
+tint = Color(1.1, 1.1, 1.1, 1)
+border_width = 1.5
+border_color = Color(0.45, 0.36, 0.52, 1)
+editor_elevation_px = 48
+
+[node name="verdant_terrace_court" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(0, -640), Vector2(128, -576), Vector2(16, -520), Vector2(-112, -584))
+region_id = "verdant_terrace_court"
+layer_id = "district_courts"
+level_id = "upper_civic"
+surface = "stone_soft"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_width = 1
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 48
+
+[node name="northwest_residences_court" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(432, -520), Vector2(592, -440), Vector2(464, -376), Vector2(304, -456))
+region_id = "northwest_residences_court"
+layer_id = "district_courts"
+level_id = "upper_civic"
+surface = "stone_soft"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_width = 1
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 48
+
+[node name="west_heights_court" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-448, -512), Vector2(-304, -440), Vector2(-425.6, -379.2), Vector2(-569.6, -451.2))
+region_id = "west_heights_court"
+layer_id = "district_courts"
+level_id = "upper_civic"
+surface = "stone_soft"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_width = 1
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 48
+
+[node name="hospital_gardens_court" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(880, 152), Vector2(1040, 232), Vector2(912, 296), Vector2(752, 216))
+region_id = "hospital_gardens_court"
+layer_id = "district_courts"
+level_id = "upper_civic"
+surface = "stone_soft"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_width = 1
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 48
+
+[node name="southwest_gardens_court" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-1504, 112), Vector2(-1360, 184), Vector2(-1472, 240), Vector2(-1616, 168))
+region_id = "southwest_gardens_court"
+layer_id = "district_courts"
+level_id = "south_terrace"
+surface = "stone_soft"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_width = 1
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 0
+
+[node name="southeast_commons_court" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-288, 720), Vector2(-144, 792), Vector2(-256, 848), Vector2(-400, 776))
+region_id = "southeast_commons_court"
+layer_id = "district_courts"
+level_id = "south_terrace"
+surface = "stone_soft"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_width = 1
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 0
+
+[node name="south_residences_court" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-1360, 376), Vector2(-1216, 448), Vector2(-1328, 504), Vector2(-1472, 432))
+region_id = "south_residences_court"
+layer_id = "district_courts"
+level_id = "south_terrace"
+surface = "stone_soft"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_width = 1
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 0
+
+[node name="southeast_residences_court" type="Polygon2D" parent="Surfaces"]
+script = ExtResource("4_surface")
+polygon = PackedVector2Array(Vector2(-464, 824), Vector2(-320, 896), Vector2(-432, 952), Vector2(-576, 880))
+region_id = "southeast_residences_court"
+layer_id = "district_courts"
+level_id = "south_terrace"
+surface = "stone_soft"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_width = 1
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 0
+
+[node name="CentralCivicRing" type="Polygon2D" parent="GroundOverrides"]
+script = ExtResource("11_ground")
+polygon = PackedVector2Array(Vector2(0, 144), Vector2(160, 224), Vector2(0, 304), Vector2(-160, 224))
+region_id = "CentralCivicRing"
+surface = "stone_soft"
+render = true
+walkable = true
+base_color = Color(0.625, 0.635, 0.64, 1)
+priority = 10
+
+[node name="CentralPool" type="Polygon2D" parent="GroundOverrides"]
+script = ExtResource("11_ground")
+polygon = PackedVector2Array(Vector2(0, 176), Vector2(96, 224), Vector2(0, 272), Vector2(-96, 224))
+region_id = "CentralPool"
+surface = "water"
+render = true
+walkable = false
+base_color = Color(1, 1, 1, 1)
+priority = 20
+
+[node name="NorthCanal" type="Polygon2D" parent="GroundOverrides"]
+script = ExtResource("11_ground")
+polygon = PackedVector2Array(Vector2(800, -352), Vector2(1120, -192), Vector2(992, -128), Vector2(672, -288))
+region_id = "NorthCanal"
+surface = "water"
+render = true
+walkable = false
+base_color = Color(1, 1, 1, 1)
+priority = 10
+
+[node name="NorthCanalBridge" type="Polygon2D" parent="GroundOverrides"]
+script = ExtResource("11_ground")
+polygon = PackedVector2Array(Vector2(928, -288), Vector2(992, -256), Vector2(864, -192), Vector2(800, -224))
+region_id = "NorthCanalBridge"
+surface = "main"
+render = true
+walkable = true
+base_color = Color(0.575, 0.585, 0.595, 1)
+priority = 20
+
+[node name="west_stairs" type="Polygon2D" parent="Transitions"]
+script = ExtResource("7_transition")
+polygon = PackedVector2Array(Vector2(-808, 180), Vector2(-712, 228), Vector2(-816, 280), Vector2(-912, 232))
+kind = "stairs"
+transition_id = "west_stairs"
+from_level = "upper_civic"
+to_level = "south_terrace"
+steps = 6
+
+[node name="central_stairs" type="Polygon2D" parent="Transitions"]
+script = ExtResource("7_transition")
+polygon = PackedVector2Array(Vector2(-424, 372), Vector2(-296, 436), Vector2(-400, 488), Vector2(-528, 424))
+kind = "stairs"
+transition_id = "central_stairs"
+from_level = "upper_civic"
+to_level = "south_terrace"
+steps = 6
+
+[node name="west_bridge" type="Polygon2D" parent="Transitions"]
+script = ExtResource("7_transition")
+polygon = PackedVector2Array(Vector2(-912, 232), Vector2(-816, 280), Vector2(-944, 344), Vector2(-1040, 296))
+kind = "bridge"
+transition_id = "west_bridge"
+level_id = "south_terrace"
+
+[node name="east_bridge" type="Polygon2D" parent="Transitions"]
+script = ExtResource("7_transition")
+polygon = PackedVector2Array(Vector2(-48, 664), Vector2(48, 712), Vector2(-80, 776), Vector2(-176, 728))
+kind = "bridge"
+transition_id = "east_bridge"
+level_id = "south_terrace"
+
+[node name="west_future_water" type="Polygon2D" parent="Transitions"]
+script = ExtResource("7_transition")
+polygon = PackedVector2Array(Vector2(-1120, 144), Vector2(-736, 336), Vector2(-832, 384), Vector2(-1216, 192))
+kind = "void"
+transition_id = "west_future_water"
+
+[node name="east_future_water" type="Polygon2D" parent="Transitions"]
+script = ExtResource("7_transition")
+polygon = PackedVector2Array(Vector2(-288, 560), Vector2(224, 816), Vector2(128, 864), Vector2(-384, 608))
+kind = "void"
+transition_id = "east_future_water"
+
+[node name="digilab" type="Marker2D" parent="Buildings"]
+script = ExtResource("8_building")
+position = Vector2(-512, 64)
+building_id = "digilab"
+
+[node name="training" type="Marker2D" parent="Buildings"]
+script = ExtResource("8_building")
+position = Vector2(320, 64)
+building_id = "training"
+
+[node name="hospital" type="Marker2D" parent="Buildings"]
+script = ExtResource("8_building")
+position = Vector2(352, 496)
+building_id = "hospital"
+
+[node name="market" type="Marker2D" parent="Buildings"]
+script = ExtResource("8_building")
+position = Vector2(-608, 528)
+building_id = "market"
+
+[node name="archive" type="Marker2D" parent="Buildings"]
+script = ExtResource("8_building")
+position = Vector2(1344, 0)
+building_id = "archive"
+
+[node name="Landscape_00" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(0, -800)
+landscape_id = "landscape_0"
+section_coord = Vector2i(-2, -2)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_01" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(0, -576)
+landscape_id = "landscape_1"
+section_coord = Vector2i(-2, -2)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_02" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-224, -688)
+landscape_id = "landscape_2"
+section_coord = Vector2i(-2, -2)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_03" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(160, -464)
+landscape_id = "landscape_3"
+section_coord = Vector2i(-1, -2)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_04" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(640, -256)
+landscape_id = "landscape_4"
+section_coord = Vector2i(0, -2)
+preferred_local_cell = Vector2(2, 10)
+
+[node name="Landscape_05" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(1152, -224)
+landscape_id = "landscape_5"
+section_coord = Vector2i(0, -2)
+preferred_local_cell = Vector2(11, 3)
+
+[node name="Landscape_06" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(1792, 96)
+landscape_id = "landscape_6"
+section_coord = Vector2i(2, -2)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_07" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(1792, 320)
+landscape_id = "landscape_7"
+section_coord = Vector2i(2, -2)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_08" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(1568, 208)
+landscape_id = "landscape_8"
+section_coord = Vector2i(2, -2)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_09" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-736, -464)
+landscape_id = "landscape_9"
+section_coord = Vector2i(-2, -1)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_10" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(0, -352)
+landscape_id = "landscape_10"
+section_coord = Vector2i(-1, -1)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_11" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(0, -128)
+landscape_id = "landscape_11"
+section_coord = Vector2i(-1, -1)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_12" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-224, -240)
+landscape_id = "landscape_12"
+section_coord = Vector2i(-1, -1)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_13" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(896, 96)
+landscape_id = "landscape_13"
+section_coord = Vector2i(1, -1)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_14" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(896, 320)
+landscape_id = "landscape_14"
+section_coord = Vector2i(1, -1)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_15" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(672, 208)
+landscape_id = "landscape_15"
+section_coord = Vector2i(1, -1)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_16" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(1056, 432)
+landscape_id = "landscape_16"
+section_coord = Vector2i(2, -1)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_17" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-1184, -240)
+landscape_id = "landscape_17"
+section_coord = Vector2i(-2, 0)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_18" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-288, 208)
+landscape_id = "landscape_18"
+section_coord = Vector2i(0, 0)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_19" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(288, 208)
+landscape_id = "landscape_19"
+section_coord = Vector2i(0, 0)
+preferred_local_cell = Vector2(11, 2)
+
+[node name="Landscape_20" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-1120, -16)
+landscape_id = "landscape_20"
+section_coord = Vector2i(-2, 1)
+preferred_local_cell = Vector2(10, 3)
+
+[node name="Landscape_21" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-1568, -16)
+landscape_id = "landscape_21"
+section_coord = Vector2i(-2, 1)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_22" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-1344, 96)
+landscape_id = "landscape_22"
+section_coord = Vector2i(-2, 1)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_23" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-1184, 208)
+landscape_id = "landscape_23"
+section_coord = Vector2i(-1, 1)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_24" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-288, 656)
+landscape_id = "landscape_24"
+section_coord = Vector2i(1, 1)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_25" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(672, 880)
+landscape_id = "landscape_25"
+section_coord = Vector2i(2, 1)
+preferred_local_cell = Vector2(10, 3)
+
+[node name="Landscape_26" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(224, 880)
+landscape_id = "landscape_26"
+section_coord = Vector2i(2, 1)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_27" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(448, 992)
+landscape_id = "landscape_27"
+section_coord = Vector2i(2, 1)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_28" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-1792, 96)
+landscape_id = "landscape_28"
+section_coord = Vector2i(-2, 2)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_29" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-1792, 320)
+landscape_id = "landscape_29"
+section_coord = Vector2i(-2, 2)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_30" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-2016, 208)
+landscape_id = "landscape_30"
+section_coord = Vector2i(-2, 2)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_31" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-1632, 432)
+landscape_id = "landscape_31"
+section_coord = Vector2i(-1, 2)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_32" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-736, 880)
+landscape_id = "landscape_32"
+section_coord = Vector2i(1, 2)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_33" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(0, 992)
+landscape_id = "landscape_33"
+section_coord = Vector2i(2, 2)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_34" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(0, 1216)
+landscape_id = "landscape_34"
+section_coord = Vector2i(2, 2)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_35" type="Marker2D" parent="Landscapes"]
+script = ExtResource("10_landscape")
+position = Vector2(-224, 1104)
+landscape_id = "landscape_35"
+section_coord = Vector2i(2, 2)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Prop_00_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(-96, 118.4)
+asset_id = "lamp_blue"
+role = "plaza_northwest_landscape_edge"
+surround = "landscape"
+
+[node name="Prop_01_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(201.6, 180.8)
+asset_id = "lamp_blue"
+role = "plaza_northeast_landscape_edge"
+surround = "landscape"
+
+[node name="Prop_02_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(96, 320)
+asset_id = "lamp_blue"
+role = "plaza_southeast_landscape_edge"
+surround = "landscape"
+
+[node name="Prop_03_bench_nw" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(-236.8, 252.8)
+asset_id = "bench_nw"
+role = "plaza_southwest_tree_face_center_seating"
+clearance_override = Vector2(0, 0)
+
+[node name="Prop_04_bench_ne" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(236.8, 252.8)
+asset_id = "bench_ne"
+role = "plaza_northeast_tree_face_center_seating"
+clearance_override = Vector2(0, 0)
+
+[node name="Prop_05_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(-265.6, 75.2)
+asset_id = "lamp_blue"
+role = "digilab_outer_sidewalk_node"
+surround = "civic"
+
+[node name="Prop_06_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(672, 80)
+asset_id = "lamp_blue"
+role = "training_outer_sidewalk_node"
+surround = "civic"
+
+[node name="Prop_07_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(624, 504)
+asset_id = "lamp_blue"
+role = "hospital_outer_sidewalk_node"
+surround = "civic"
+
+[node name="Prop_08_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(928, -304)
+asset_id = "lamp_blue"
+role = "north_bridge_west_head"
+surround = "civic"
+
+[node name="Prop_09_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(1024, -256)
+asset_id = "lamp_blue"
+role = "north_bridge_east_head"
+surround = "civic"
+
+[node name="Prop_10_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(768, -224)
+asset_id = "lamp_blue"
+role = "south_bridge_west_head"
+surround = "civic"
+
+[node name="Prop_11_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(864, -176)
+asset_id = "lamp_blue"
+role = "south_bridge_east_head"
+surround = "civic"
+
+[node name="Prop_12_bench_nw" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(691.2, -211.2)
+asset_id = "bench_nw"
+role = "canal_southwest_tree_face_center_seating"
+clearance_override = Vector2(0, 0)
+
+[node name="Prop_13_bench_nw" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(1196.8, -182.4)
+asset_id = "bench_nw"
+role = "canal_northeast_tree_face_center_seating"
+clearance_override = Vector2(0, 0)
+
+[node name="Prop_14_lamp_yellow" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(-672, 480)
+asset_id = "lamp_yellow"
+role = "market_lower_terrace_west_edge"
+surround = "landscape"
+
+[node name="Prop_15_lamp_yellow" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(-496, 552)
+asset_id = "lamp_yellow"
+role = "market_lower_terrace_east_edge"
+surround = "landscape"
+
+[node name="Prop_16_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(1232, -24)
+asset_id = "lamp_blue"
+role = "archive_pad_west_edge"
+surround = "civic"
+
+[node name="Prop_17_lamp_blue" type="Marker2D" parent="Props"]
+script = ExtResource("9_prop")
+position = Vector2(1456, 24)
+asset_id = "lamp_blue"
+role = "archive_pad_east_edge"
+surround = "civic"
