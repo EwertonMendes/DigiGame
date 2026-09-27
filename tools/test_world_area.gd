@@ -5,6 +5,7 @@ const MAP_CAPTURE := preload("res://src/debug/DebugWorldMapCapture.gd")
 const CITY_AUTHORING := preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 const CITY_EDITOR_MATH := preload("res://src/world/authoring/CentralCityEditorMath.gd")
 const CITY_LAYOUT := preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
+const CITY_TOPOLOGY := preload("res://src/world/runtime/CentralCityTopology.gd")
 const CITY_BAKER := preload("res://src/world/authoring/CentralCityBaker.gd")
 const CITY_DECOR := preload("res://src/world/runtime/CentralCityDecor.gd")
 
@@ -35,8 +36,8 @@ func _ready() -> void:
 	assert(
 		CITY_AUTHORING.has_authoring_scene()
 		and CITY_AUTHORING.authored_section_count() == 25
-		and CITY_AUTHORING.authored_road_count() == 20,
-		"Central City runtime must be derived from the visual Godot authoring scene rather than hand-edited layout JSON"
+		and CITY_AUTHORING.authored_road_count() > 0,
+		"Central City runtime must be derived from the visual Godot authoring scene and its painted road cells"
 	)
 
 	# Regression: moving the last visually-authored prop out of a section must
@@ -70,22 +71,17 @@ func _ready() -> void:
 	)
 	if empty_authored_decor_root != null:
 		empty_authored_decor_root.free()
+	var road_network_value = CITY_AUTHORING.topology_config().get("road_network", {})
 	assert(
-		CITY_EDITOR_MATH.constrained_endpoint(
-			Vector2(0.0, 0.0),
-			Vector2(4.0, 0.0),
-			Vector2(6.0, 1.75),
-			0.5
-		).is_equal_approx(Vector2(6.0, 0.0)),
-		"Road endpoint editing must constrain to the original isometric axis instead of producing inverted drag behavior"
+		road_network_value is Dictionary
+		and String((road_network_value as Dictionary).get("mode", "")) == "painted_tiles",
+		"Roads must be authored as independent painted cells instead of linked Line2D graph geometry"
 	)
+	var road_sample := CITY_AUTHORING.ground_override_at(Vector2(7, 10))
 	assert(
-		CITY_LAYOUT._axis_corridor(
-			Vector2(0.0, 0.0),
-			Vector2(3.0, 1.0),
-			3.0
-		).size() == 4,
-		"Road rendering must remain valid while an editor junction is temporarily off-axis"
+		String(road_sample.get("surface", "")) == "road"
+		and CITY_TOPOLOGY.is_route_reserved(Vector2(7, 10)),
+		"Painted road cells must render as road surface and remain reserved from automatic landscaping"
 	)
 	var baked_snapshot := CITY_BAKER.load_snapshot()
 	if not baked_snapshot.is_empty():
@@ -258,18 +254,21 @@ func _ready() -> void:
 	var urban_layout := area.get_node_or_null("CityUrbanLayout") as Node2D
 	assert(
 		urban_layout != null
-		and area.get_urban_layout_layer_count() == 4
-		and area.get_urban_layout_polygon_count() >= 50
+		and area.get_urban_layout_layer_count() == 3
+		and area.get_urban_layout_polygon_count() >= 15
 		and area.is_road_graph_connected(),
-		"Central City must compose one connected route graph plus authored civic areas above the micro-paver base"
+		"Central City must batch authored civic overlays while roads stay in the editable ground-paint layer"
 	)
 	assert(
 		area.get_urban_layout_render_node_count() <= 14,
 		"Urban paths, plazas and district courts must stay batched into a small fixed render-node budget"
 	)
+	assert(
+		urban_layout.get_node_or_null("Edges_road_network") == null
+		and urban_layout.get_node_or_null("Surface_road_network") == null,
+		"Painted roads must not be duplicated by a second procedural road mesh"
+	)
 	for required_urban_node: String in [
-		"Edges_road_network",
-		"Surface_road_network",
 		"Surface_central_plaza",
 		"Surface_service_forecourts",
 		"Surface_district_courts",
