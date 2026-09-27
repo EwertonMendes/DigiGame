@@ -425,6 +425,8 @@ func _register_shadow_caster(caster: Node2D) -> void:
 
 	if render_node == null:
 		return
+	if caster.is_in_group("debug_capture_clean_hidden"):
+		render_node.add_to_group("debug_capture_clean_hidden")
 
 	var id := caster.get_instance_id()
 	_shadow_entries[id] = {
