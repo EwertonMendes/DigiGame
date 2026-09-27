@@ -2,6 +2,7 @@ extends RefCounted
 class_name CentralCityTopology
 
 const CONFIG_PATH := "res://assets/resources/world/central_city_topology.json"
+const AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const TILE_HALF_WIDTH := TILE_WIDTH * 0.5
@@ -16,6 +17,11 @@ static var _config_cache: Dictionary = {}
 static func config() -> Dictionary:
 	if not _config_cache.is_empty():
 		return _config_cache
+	if AUTHORING.has_authoring_scene():
+		var authored := AUTHORING.topology_config()
+		if not authored.is_empty():
+			_config_cache = authored.duplicate(true)
+			return _config_cache
 	if not FileAccess.file_exists(CONFIG_PATH):
 		push_error("CentralCityTopology: missing topology config %s" % CONFIG_PATH)
 		return {}
