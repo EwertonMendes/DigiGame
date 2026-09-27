@@ -16,6 +16,7 @@ const TRAINING_CENTER_TEXTURE = preload("res://assets/world/tblack/training-cent
 const HOSPITAL_TEXTURE = preload("res://assets/world/tblack/hospital/hospital.png")
 
 const SHADOW_GROUP := "world_shadow_caster"
+const LOCAL_LIGHT_GROUP := "world_local_light"
 const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
@@ -501,6 +502,24 @@ func _build_digilab_exterior() -> void:
 	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
 	var footprint := _digilab_footprint(door_world)
 	_configure_shadow_caster(exterior, footprint, 205.0, 0.19)
+	_add_local_light_source(
+		exterior,
+		"DigiLabDoorLight",
+		door_world + Vector2(0.0, -30.0),
+		Color(0.38, 1.0, 0.42, 1.0),
+		0.82,
+		150.0,
+		0.08
+	)
+	_add_local_light_source(
+		exterior,
+		"DigiLabCoreLight",
+		door_world + Vector2(-82.0, -108.0),
+		Color(0.42, 1.0, 0.52, 1.0),
+		0.58,
+		190.0,
+		0.04
+	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"DigiLabFoundation",
 		footprint,
@@ -583,6 +602,24 @@ func _build_training_center_exterior() -> void:
 	var door_world := grid_to_world(Vector2(TRAINING_CENTER_DOOR_CELL))
 	var footprint := _training_center_footprint(door_world)
 	_configure_shadow_caster(exterior, footprint, 180.0, 0.18)
+	_add_local_light_source(
+		exterior,
+		"TrainingDoorLight",
+		door_world + Vector2(0.0, -28.0),
+		Color(0.24, 0.82, 1.0, 1.0),
+		0.76,
+		148.0,
+		0.07
+	)
+	_add_local_light_source(
+		exterior,
+		"TrainingAccentLight",
+		door_world + Vector2(76.0, -92.0),
+		Color(0.26, 0.74, 1.0, 1.0),
+		0.50,
+		172.0,
+		0.04
+	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"TrainingCenterFoundation",
 		footprint,
@@ -646,6 +683,24 @@ func _build_hospital_exterior() -> void:
 	var door_world := grid_to_world(Vector2(HOSPITAL_DOOR_CELL))
 	var footprint := _hospital_footprint(door_world)
 	_configure_shadow_caster(exterior, footprint, 195.0, 0.19)
+	_add_local_light_source(
+		exterior,
+		"HospitalDoorLight",
+		door_world + Vector2(0.0, -28.0),
+		Color(0.30, 0.94, 1.0, 1.0),
+		0.78,
+		150.0,
+		0.08
+	)
+	_add_local_light_source(
+		exterior,
+		"HospitalAccentLight",
+		door_world + Vector2(68.0, -90.0),
+		Color(0.36, 0.92, 1.0, 1.0),
+		0.54,
+		178.0,
+		0.04
+	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"HospitalFoundation",
 		footprint,
@@ -1061,12 +1116,12 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	_configure_shadow_caster(
 		tree,
 		PackedVector2Array(),
-		92.0,
-		0.20,
+		110.0,
+		0.26,
 		false,
 		"projected_soft",
-		1.0,
-		Vector2(74.0, 46.0),
+		1.15,
+		Vector2(94.0, 58.0),
 		local_anchor
 	)
 	parent.add_child(tree)
@@ -1117,6 +1172,28 @@ func _configure_shadow_caster(
 	if soft_size != Vector2.ZERO:
 		caster.set_meta("world_shadow_size", soft_size)
 	caster.set_meta("world_shadow_anchor", anchor)
+
+
+func _add_local_light_source(
+	parent: Node2D,
+	node_name: String,
+	position: Vector2,
+	color: Color,
+	energy: float,
+	radius: float,
+	day_factor: float = 0.04
+) -> Node2D:
+	var source := Node2D.new()
+	source.name = node_name
+	source.position = position
+	source.add_to_group(LOCAL_LIGHT_GROUP)
+	source.set_meta("world_light_offset", Vector2.ZERO)
+	source.set_meta("world_light_color", color)
+	source.set_meta("world_light_energy", maxf(0.0, energy))
+	source.set_meta("world_light_radius", maxf(24.0, radius))
+	source.set_meta("world_light_day_factor", clampf(day_factor, 0.0, 1.0))
+	parent.add_child(source)
+	return source
 
 
 func _mark_blocked(cell: Vector2i) -> void:
