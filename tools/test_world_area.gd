@@ -41,6 +41,12 @@ func _ready() -> void:
 		int(lighting.call("get_local_light_count")) >= 6,
 		"Approved city lamps must register as data-driven local lights"
 	)
+	assert(
+		String(player.get_meta("world_shadow_style", "")) == "contact"
+		and player.get_meta("world_shadow_size", Vector2.ZERO) is Vector2
+		and (player.get_meta("world_shadow_size", Vector2.ZERO) as Vector2).x >= 24.0,
+		"Player shadow must be a fitted soft contact shadow instead of an extruded footprint"
+	)
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
 		area.get_ground_render_node_count() <= 16,
@@ -104,6 +110,22 @@ func _ready() -> void:
 		plaza_section.get_decoration_count() >= 2,
 		"Central Plaza lamps must stay on the outer civic/landscape edge rather than crowding the guide or pool"
 	)
+	var plaza_natural := plaza_section.get_node_or_null("NaturalDetails")
+	var plaza_tree := plaza_section.get_node_or_null("NaturalDetails/Oak_2_11") as Sprite2D
+	var plaza_planter := plaza_section.get_node_or_null("NaturalDetails/LandscapeIsland_0") as Node2D
+	assert(
+		plaza_natural != null
+		and plaza_tree != null
+		and plaza_tree.is_in_group("world_shadow_caster")
+		and String(plaza_tree.get_meta("world_shadow_style", "")) == "projected_soft",
+		"Central City trees must cast a soft projected canopy shadow from their ground anchor"
+	)
+	assert(
+		plaza_planter != null
+		and plaza_planter.is_in_group("world_shadow_caster")
+		and String(plaza_planter.get_meta("world_shadow_style", "")) == "projected",
+		"Raised landscape islands must cast a low structural shadow onto the city pavement"
+	)
 	var plaza_decor := plaza_section.get_node_or_null("CityDecor")
 	assert(
 		plaza_decor != null
@@ -134,6 +156,12 @@ func _ready() -> void:
 		and first_plaza_lamp.has_meta("world_light_color")
 		and first_plaza_lamp.has_meta("world_shadow_height"),
 		"City lamps must expose one shared runtime contract for light and procedural shadow generation"
+	)
+	assert(
+		String(first_plaza_lamp.get_meta("world_shadow_style", "")) == "projected"
+		and float(first_plaza_lamp.get_meta("world_shadow_height", 0.0)) >= 100.0
+		and float(first_plaza_lamp.get_meta("world_shadow_projection_multiplier", 0.0)) > 1.0,
+		"Street lamps must cast a tall narrow shadow proportional to the authored pole height"
 	)
 	var first_plaza_lamp_world := plaza_section.global_position + first_plaza_lamp_local
 	assert(
