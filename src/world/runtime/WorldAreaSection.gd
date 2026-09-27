@@ -25,10 +25,10 @@ const CITY_SHAPE_MANHATTAN_RADIUS := 54
 const CITY_PAVEMENT_LIGHT := Color(0.575, 0.585, 0.595, 1.0)
 const CITY_CIVIC_LIGHT := Color(0.625, 0.635, 0.640, 1.0)
 const SOUTH_TERRACE_EDGE_Y := 19
-const SOUTH_CANAL_Y_MIN := 22
-const SOUTH_CANAL_Y_MAX := 24
-const SOUTH_CANAL_X_MIN := -13
-const SOUTH_CANAL_X_MAX := 29
+const SOUTH_TERRACE_X_MIN := -13
+const SOUTH_TERRACE_X_MAX := 29
+const SOUTH_TRENCH_Y_MIN := 22
+const SOUTH_TRENCH_Y_MAX := 24
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 # The authored PNG is close to isometric, but its two ground axes are not an
@@ -277,7 +277,11 @@ func _prepare_ground_data() -> void:
 			var cell := Vector2i(x, y)
 			var presentation := _ground_presentation(cell, theme)
 			if not bool(presentation.get("render", true)):
-				_mark_blocked(cell)
+				# Authored bridges/stairs deliberately omit the base floor so the
+				# architectural deck can span a true void. Walkability remains an
+				# independent contract instead of being inferred from rendering.
+				if not bool(presentation.get("walkable", false)):
+					_mark_blocked(cell)
 				continue
 			var surface := String(presentation.get("surface", CITY.SURFACE_MAIN))
 			var global_grid := _global_grid(cell)
@@ -348,50 +352,42 @@ func _south_terrace_ground_presentation(global_grid: Vector2i) -> Dictionary:
 	var x := global_grid.x
 	var y := global_grid.y
 
-	# Two narrow feeder channels begin at the terrace lip and visually become
-	# the small waterfalls rendered by CentralCityTerrace. These cells are true
-	# water, so the player naturally routes around them.
-	var feeder_water := (
-		y >= SOUTH_TERRACE_EDGE_Y and y <= SOUTH_CANAL_Y_MAX
-		and (x in [-1, 0, 1] or x in [14, 15, 16])
-	)
-	if feeder_water:
-		return {"surface": CITY.SURFACE_WATER, "walkable": false}
-
-	# The civic upper deck ends on one authored retaining line. Three openings
-	# align exactly with the west, central and east street axes and therefore
-	# act as the only staircase crossings into the lower terrace.
-	if y == SOUTH_TERRACE_EDGE_Y and x >= SOUTH_CANAL_X_MIN and x <= SOUTH_CANAL_X_MAX:
-		if _is_south_terrace_crossing_x(x):
-			return {
-				"surface": CITY.SURFACE_STONE_SOFT,
-				"base_color": CITY_CIVIC_LIGHT,
-				"walkable": true,
-			}
+	# The upper civic deck genuinely stops here. No base paving is rendered on
+	# the break itself: wall segments cover blocked spans and the authored stair
+	# mesh covers the two walkable openings.
+	if (
+		y == SOUTH_TERRACE_EDGE_Y
+		and x >= SOUTH_TERRACE_X_MIN
+		and x <= SOUTH_TERRACE_X_MAX
+	):
 		return {
-			"surface": CITY.SURFACE_STONE_SOFT,
-			"base_color": CITY_CIVIC_LIGHT.darkened(0.10),
-			"walkable": false,
+			"render": false,
+			"walkable": _is_south_terrace_stair_x(x),
 		}
 
-	# A three-cell ornamental canal crosses the lower district. The same three
-	# axes remain walkable here, reading as bridge decks over the water.
-	if (
-		y >= SOUTH_CANAL_Y_MIN and y <= SOUTH_CANAL_Y_MAX
-		and x >= SOUTH_CANAL_X_MIN and x <= SOUTH_CANAL_X_MAX
-	):
-		if _is_south_terrace_crossing_x(x):
-			return {"surface": CITY.SURFACE_DARK, "walkable": true}
-		return {"surface": CITY.SURFACE_WATER, "walkable": false}
+	# Future-water pockets are true holes in the city floor. The world backdrop
+	# remains visible through them until the replacement water system exists.
+	# Bridge cells also omit ground, but stay walkable because the dedicated
+	# bridge slabs in CentralCityTerrace span the void.
+	if y >= SOUTH_TRENCH_Y_MIN and y <= SOUTH_TRENCH_Y_MAX:
+		if x >= -13 and x <= -1:
+			return {
+				"render": false,
+				"walkable": x >= -7 and x <= -4,
+			}
+		if x >= 13 and x <= 29:
+			return {
+				"render": false,
+				"walkable": x >= 20 and x <= 23,
+			}
 
 	return {}
 
 
-func _is_south_terrace_crossing_x(x: int) -> bool:
+func _is_south_terrace_stair_x(x: int) -> bool:
 	return (
-		(x >= -8 and x <= -4)
+		(x >= -7 and x <= -4)
 		or (x >= 5 and x <= 9)
-		or (x >= 20 and x <= 24)
 	)
 
 
