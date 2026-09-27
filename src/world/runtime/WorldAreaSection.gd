@@ -1091,6 +1091,7 @@ func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: S
 	actor.name = title.capitalize().replace(" ", "")
 	actor.configure(NPC_TEXTURE, false, _world_controller, "southwest")
 	actor.position = grid_to_world(Vector2(cell))
+	actor.add_to_group("debug_capture_clean_hidden")
 	add_child(actor)
 
 	var label := Label.new()
