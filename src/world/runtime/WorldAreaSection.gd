@@ -628,9 +628,11 @@ func _build_digilab_exterior() -> void:
 
 	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
 	var footprint := _digilab_footprint(door_world)
-	_configure_shadow_caster(exterior, footprint, 205.0, 0.19)
+	var foundation_footprint := _digilab_foundation_footprint(door_world)
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(DIGILAB_DOOR_CELL))
+	_configure_shadow_caster(visual_root, footprint, 205.0, 0.19)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"DigiLabDoorLight",
 		door_world + Vector2(0.0, -30.0),
 		Color(0.38, 1.0, 0.42, 1.0),
@@ -641,7 +643,7 @@ func _build_digilab_exterior() -> void:
 		0.32
 	)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"DigiLabCoreLight",
 		door_world + Vector2(-82.0, -108.0),
 		Color(0.42, 1.0, 0.52, 1.0),
@@ -653,25 +655,15 @@ func _build_digilab_exterior() -> void:
 	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"DigiLabFoundation",
-		footprint,
+		foundation_footprint,
 		Color(0.42, 0.94, 0.38, 1.0)
 	)
-	exterior.add_child(foundation)
+	visual_root.add_child(foundation)
 
-	var sprite := _create_digilab_sprite(
-		"Building",
-		door_world,
-		Rect2(),
-		DIGILAB_BASE_Z
-	)
+	var sprite := _create_digilab_sprite("Building", door_world, Rect2(), DIGILAB_BASE_Z)
 	_digilab_building_sprite = sprite
-	exterior.add_child(sprite)
+	visual_root.add_child(sprite)
 
-	# One full-image sprite cannot represent a large isometric building correctly
-	# with a single Y-sort threshold: players at the lower-left exterior could be
-	# placed behind the whole PNG even though they were standing in front of the
-	# facade. Keep the full building below actors, then render only the genuinely
-	# upper/back portion as a dedicated occlusion layer.
 	var upper_region := Rect2(
 		Vector2.ZERO,
 		Vector2(float(DIGILAB_TEXTURE.get_width()), DIGILAB_UPPER_OCCLUDER_CUTOFF_Y)
@@ -683,16 +675,13 @@ func _build_digilab_exterior() -> void:
 		DIGILAB_UPPER_OCCLUDER_Z
 	)
 	_digilab_upper_sprite = upper_occluder
-	exterior.add_child(upper_occluder)
+	visual_root.add_child(upper_occluder)
 
 	var door_marker := Marker2D.new()
 	door_marker.name = "DoorAnchor"
 	door_marker.position = door_world
-	exterior.add_child(door_marker)
+	visual_root.add_child(door_marker)
 
-	# Use the same measured source footprint for both world walkability and
-	# physics. This replaces the old rectangular cell approximation, which was
-	# too large behind the lab and too small along the lower-left wall.
 	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
 	_register_blocking_polygon(
 		exterior,
@@ -720,8 +709,6 @@ func _build_digilab_exterior() -> void:
 		14.0
 	)
 	exterior.add_child(entrance)
-
-
 func _build_training_center_exterior() -> void:
 	if not _is_city_land(TRAINING_CENTER_DOOR_CELL):
 		return
@@ -732,9 +719,11 @@ func _build_training_center_exterior() -> void:
 
 	var door_world := grid_to_world(Vector2(TRAINING_CENTER_DOOR_CELL))
 	var footprint := _training_center_footprint(door_world)
-	_configure_shadow_caster(exterior, footprint, 180.0, 0.18)
+	var foundation_footprint := _training_center_foundation_footprint(door_world)
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(TRAINING_CENTER_DOOR_CELL))
+	_configure_shadow_caster(visual_root, footprint, 180.0, 0.18)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"TrainingDoorLight",
 		door_world + Vector2(0.0, -28.0),
 		Color(0.24, 0.82, 1.0, 1.0),
@@ -745,7 +734,7 @@ func _build_training_center_exterior() -> void:
 		0.28
 	)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"TrainingAccentLight",
 		door_world + Vector2(76.0, -92.0),
 		Color(0.26, 0.74, 1.0, 1.0),
@@ -757,10 +746,10 @@ func _build_training_center_exterior() -> void:
 	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"TrainingCenterFoundation",
-		footprint,
+		foundation_footprint,
 		Color(0.25, 0.82, 1.0, 1.0)
 	)
-	exterior.add_child(foundation)
+	visual_root.add_child(foundation)
 
 	var building := _create_training_center_sprite(
 		"Building",
@@ -768,10 +757,8 @@ func _build_training_center_exterior() -> void:
 		Rect2(),
 		TRAINING_CENTER_BASE_Z
 	)
-	exterior.add_child(building)
+	visual_root.add_child(building)
 
-	# Match the DigiLab depth contract: the complete facade stays below actors,
-	# while only the roof/back half can occlude actors walking behind the building.
 	var upper_region := Rect2(
 		Vector2.ZERO,
 		Vector2(float(TRAINING_CENTER_TEXTURE.get_width()), TRAINING_CENTER_UPPER_OCCLUDER_CUTOFF_Y)
@@ -782,18 +769,14 @@ func _build_training_center_exterior() -> void:
 		upper_region,
 		TRAINING_CENTER_UPPER_OCCLUDER_Z
 	)
-	exterior.add_child(upper_occluder)
+	visual_root.add_child(upper_occluder)
 
 	var door_marker := Marker2D.new()
 	door_marker.name = "DoorAnchor"
 	door_marker.position = door_world
-	exterior.add_child(door_marker)
+	visual_root.add_child(door_marker)
 
-	_register_blocking_polygon(
-		exterior,
-		"FootprintCollision",
-		footprint
-	)
+	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
 
 	var entrance := _create_service_threshold(
 		"TrainingCenterEntrance",
@@ -805,8 +788,6 @@ func _build_training_center_exterior() -> void:
 		18.0
 	)
 	exterior.add_child(entrance)
-
-
 func _build_hospital_exterior() -> void:
 	if not _is_city_land(HOSPITAL_DOOR_CELL):
 		return
@@ -817,9 +798,11 @@ func _build_hospital_exterior() -> void:
 
 	var door_world := grid_to_world(Vector2(HOSPITAL_DOOR_CELL))
 	var footprint := _hospital_footprint(door_world)
-	_configure_shadow_caster(exterior, footprint, 195.0, 0.19)
+	var foundation_footprint := _hospital_foundation_footprint(door_world)
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(HOSPITAL_DOOR_CELL))
+	_configure_shadow_caster(visual_root, footprint, 195.0, 0.19)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"HospitalDoorLight",
 		door_world + Vector2(0.0, -28.0),
 		Color(0.30, 0.94, 1.0, 1.0),
@@ -830,7 +813,7 @@ func _build_hospital_exterior() -> void:
 		0.30
 	)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"HospitalAccentLight",
 		door_world + Vector2(68.0, -90.0),
 		Color(0.36, 0.92, 1.0, 1.0),
@@ -842,22 +825,14 @@ func _build_hospital_exterior() -> void:
 	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"HospitalFoundation",
-		footprint,
+		foundation_footprint,
 		Color(0.31, 0.90, 0.96, 1.0)
 	)
-	exterior.add_child(foundation)
+	visual_root.add_child(foundation)
 
-	var building := _create_hospital_sprite(
-		"Building",
-		door_world,
-		Rect2(),
-		HOSPITAL_BASE_Z
-	)
-	exterior.add_child(building)
+	var building := _create_hospital_sprite("Building", door_world, Rect2(), HOSPITAL_BASE_Z)
+	visual_root.add_child(building)
 
-	# Use the same foreground/upper split as the other authored city services:
-	# the facade remains below nearby actors, while the roof and rear medical
-	# tower can occlude actors correctly when they walk behind the hospital.
 	var upper_region := Rect2(
 		Vector2.ZERO,
 		Vector2(float(HOSPITAL_TEXTURE.get_width()), HOSPITAL_UPPER_OCCLUDER_CUTOFF_Y)
@@ -868,18 +843,14 @@ func _build_hospital_exterior() -> void:
 		upper_region,
 		HOSPITAL_UPPER_OCCLUDER_Z
 	)
-	exterior.add_child(upper_occluder)
+	visual_root.add_child(upper_occluder)
 
 	var door_marker := Marker2D.new()
 	door_marker.name = "DoorAnchor"
 	door_marker.position = door_world
-	exterior.add_child(door_marker)
+	visual_root.add_child(door_marker)
 
-	_register_blocking_polygon(
-		exterior,
-		"FootprintCollision",
-		footprint
-	)
+	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
 
 	var entrance := _create_service_threshold(
 		"HospitalEntrance",
@@ -891,8 +862,6 @@ func _build_hospital_exterior() -> void:
 		18.0
 	)
 	exterior.add_child(entrance)
-
-
 func _create_hospital_sprite(
 	node_name: String,
 	door_world: Vector2,
