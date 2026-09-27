@@ -154,6 +154,27 @@ func _apply_digimon_visuals() -> void:
 	else:
 		_sprite.hframes = maxi(1, _digimon.sprite_hframes)
 		_sprite.vframes = maxi(1, _digimon.sprite_vframes)
+	_configure_world_shadow()
+
+
+func _configure_world_shadow() -> void:
+	if _sprite == null or _sprite.texture == null or _digimon == null:
+		return
+	var frame_width := float(_sprite.texture.get_width())
+	if _digimon.sprite_layout == "spaced_9_32":
+		frame_width = float(SPACED_9_CELL_SIZE)
+	else:
+		frame_width /= float(maxi(1, _sprite.hframes))
+	var visual_width := frame_width * absf(_sprite.scale.x)
+	var shadow_width := clampf(visual_width * 0.52, 16.0, 46.0)
+	var shadow_height := clampf(shadow_width * 0.34, 6.0, 14.0)
+	add_to_group("world_shadow_caster")
+	set_meta("world_shadow_style", "contact")
+	set_meta("world_shadow_size", Vector2(shadow_width, shadow_height))
+	set_meta("world_shadow_anchor", Vector2.ZERO)
+	set_meta("world_shadow_offset", Vector2(0.0, -1.0))
+	set_meta("world_shadow_opacity", 0.21)
+	set_meta("world_shadow_dynamic", true)
 
 
 func _face_motion(motion: Vector2) -> void:

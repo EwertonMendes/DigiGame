@@ -1,5 +1,5 @@
 {
-  "version": 17,
+  "version": 20,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -55,7 +55,31 @@
         0.87,
         1,
         1
-      ]
+      ],
+      "shadow": {
+        "style": "projected",
+        "height": 112,
+        "projection_multiplier": 1.4,
+        "opacity": 0.2
+      },
+      "light": {
+        "offset": [
+          0,
+          -42
+        ],
+        "color": [
+          0.18,
+          0.87,
+          1,
+          1
+        ],
+        "energy": 1.28,
+        "radius": 205,
+        "day_factor": 0.015,
+        "glow_radius": 42,
+        "glow_energy": 0.88,
+        "glow_day_factor": 0
+      }
     },
     "lamp_yellow": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_yellow.png",
@@ -111,7 +135,31 @@
         0.76,
         0.2,
         1
-      ]
+      ],
+      "shadow": {
+        "style": "projected",
+        "height": 112,
+        "projection_multiplier": 1.4,
+        "opacity": 0.2
+      },
+      "light": {
+        "offset": [
+          0,
+          -42
+        ],
+        "color": [
+          1,
+          0.76,
+          0.2,
+          1
+        ],
+        "energy": 1.22,
+        "radius": 195,
+        "day_factor": 0.015,
+        "glow_radius": 40,
+        "glow_energy": 0.82,
+        "glow_day_factor": 0
+      }
     },
     "bench_ne": {
       "path": "res://assets/world/tblack/city/props_v2/bench.png",
@@ -155,7 +203,13 @@
       "ground_offset": [
         15,
         -8
-      ]
+      ],
+      "shadow": {
+        "style": "projected",
+        "height": 28,
+        "projection_multiplier": 1,
+        "opacity": 0.16
+      }
     },
     "bench_nw": {
       "path": "res://assets/world/tblack/city/props_v2/bench.png",
@@ -199,7 +253,13 @@
       "ground_offset": [
         -15,
         -8
-      ]
+      ],
+      "shadow": {
+        "style": "projected",
+        "height": 28,
+        "projection_multiplier": 1,
+        "opacity": 0.16
+      }
     }
   },
   "sections": {

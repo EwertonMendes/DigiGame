@@ -95,6 +95,8 @@ var _battlefield_catalog: BattlefieldCatalog
 var _battlefield_select: OptionButton
 var _battlefield_summary: Label
 
+var _lighting_time: SpinBox
+var _lighting_summary: Label
 var _diagnostics: Label
 var _history: Label
 
@@ -262,6 +264,7 @@ func _build_ui() -> void:
 	_build_state_tab(_tabs)
 	_build_scenarios_tab(_tabs)
 	_build_battle_tab(_tabs)
+	_build_lighting_tab(_tabs)
 	_build_diagnostics_tab(_tabs)
 
 	_species_picker = SpeciesPickerScript.new() as DebugSpeciesPicker
@@ -567,6 +570,102 @@ func _build_battle_tab(tabs: TabContainer) -> void:
 	page.add_child(_field_row("DETERMINISTIC RNG SEED", _enemy_seed, []))
 	page.add_child(_button_row([_action("START SELECTED FIELD", _start_debug_battle, UI.GOLD)]))
 
+func _build_lighting_tab(tabs: TabContainer) -> void:
+	var page := _page(tabs, "LIGHTING")
+	page.add_child(_section_label("WORLD LIGHTING PREVIEW", UI.GOLD))
+	var intro := _label(
+		"Preview Central City lighting at a fixed hour. This debug clock never advances automatically and is not written to save data.",
+		10,
+		UI.SUBTLE
+	)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(intro)
+
+	_lighting_time = _spin(0.0, 23.75, 0.25)
+	_lighting_time.value = 12.0
+	_lighting_time.suffix = " h"
+	_lighting_time.value_changed.connect(_on_lighting_time_changed)
+	page.add_child(_field_row("TIME OF DAY", _lighting_time, []))
+
+	page.add_child(_section_label("QUICK PRESETS", UI.CYAN))
+	page.add_child(_button_row([
+		_action("DAWN · 06:00", _set_lighting_preset.bind(6.0), UI.ORANGE),
+		_action("MORNING · 08:00", _set_lighting_preset.bind(8.0), UI.GOLD),
+		_action("DAY · 12:00", _set_lighting_preset.bind(12.0), UI.CYAN),
+		_action("AFTERNOON · 15:30", _set_lighting_preset.bind(15.5), UI.GOLD),
+		_action("SUNSET · 18:00", _set_lighting_preset.bind(18.0), UI.ORANGE),
+		_action("NIGHT · 21:00", _set_lighting_preset.bind(21.0), UI.PURPLE),
+	]))
+
+	page.add_child(_section_label("LIVE LIGHTING STATE", UI.PURPLE))
+	_lighting_summary = _label("Open the campaign overworld to inspect lighting.", 11, UI.TEXT, true)
+	_lighting_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(_lighting_summary)
+
+
+func _active_world_lighting() -> Node:
+	for raw_node in get_tree().get_nodes_in_group("world_lighting_system"):
+		if raw_node is Node and is_instance_valid(raw_node):
+			return raw_node as Node
+	return null
+
+
+func _on_lighting_time_changed(value: float) -> void:
+	var lighting := _active_world_lighting()
+	if lighting == null or not lighting.has_method("set_preview_time_hours"):
+		if _lighting_summary != null:
+			_lighting_summary.text = "World lighting is unavailable in the current scene."
+		return
+	lighting.call("set_preview_time_hours", value)
+	_refresh_lighting_debug()
+
+
+func _set_lighting_preset(hour: float) -> void:
+	if _lighting_time != null:
+		_lighting_time.set_value_no_signal(hour)
+	_on_lighting_time_changed(hour)
+
+
+func _refresh_lighting_debug() -> void:
+	if _lighting_summary == null:
+		return
+	var lighting := _active_world_lighting()
+	if lighting == null or not lighting.has_method("get_time_debug_snapshot"):
+		_lighting_summary.text = "World lighting is unavailable in the current scene."
+		return
+	var snapshot = lighting.call("get_time_debug_snapshot")
+	if not snapshot is Dictionary:
+		_lighting_summary.text = "World lighting did not return a debug snapshot."
+		return
+	var info := snapshot as Dictionary
+	var hour := float(info.get("hour", 12.0))
+	if _lighting_time != null:
+		_lighting_time.set_value_no_signal(hour)
+	var whole_hour := int(floor(hour))
+	var minute := int(round((hour - float(whole_hour)) * 60.0))
+	if minute >= 60:
+		whole_hour = (whole_hour + 1) % 24
+		minute = 0
+	var direction := info.get("shadow_direction", Vector2.ZERO) as Vector2
+	_lighting_summary.text = (
+		"%02d:%02d · %s\n"
+		+ "Sun elevation: %d%% · Shadow length: %.2fx · Direction: (%.2f, %.2f)\n"
+		+ "Local-light strength: %d%% · Active lights: %d / %d · Shadow casters: %d"
+	) % [
+		whole_hour,
+		minute,
+		String(info.get("phase", "DAY")),
+		int(round(float(info.get("sun_elevation", 0.0)) * 100.0)),
+		float(info.get("shadow_length", 1.0)),
+		direction.x,
+		direction.y,
+		int(round(float(info.get("local_light_strength", 0.0)) * 100.0)),
+		int(info.get("active_local_lights", 0)),
+		int(info.get("total_local_lights", 0)),
+		int(info.get("shadow_casters", 0)),
+	]
+
+
 func _build_diagnostics_tab(tabs: TabContainer) -> void:
 	var page := _page(tabs, "DIAGNOSTICS")
 	page.add_child(_section_label("LIVE DIAGNOSTICS", UI.CYAN))
@@ -605,6 +704,7 @@ func _refresh_all() -> void:
 	_refresh_snapshots()
 	_refresh_battle_roster()
 	_refresh_battlefield_summary()
+	_refresh_lighting_debug()
 	_refresh_diagnostics()
 
 func _refresh_collection() -> void:

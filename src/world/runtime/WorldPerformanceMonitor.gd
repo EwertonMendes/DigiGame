@@ -5,13 +5,15 @@ const FIRST_SAMPLE_SECONDS := 1.0
 const REPEAT_SAMPLE_SECONDS := 5.0
 
 var _area: WorldAreaScene = null
+var _lighting: Node = null
 var _elapsed := 0.0
 var _next_sample := FIRST_SAMPLE_SECONDS
 var _last_snapshot: Dictionary = {}
 
 
-func configure(area: WorldAreaScene) -> void:
+func configure(area: WorldAreaScene, lighting: Node = null) -> void:
 	_area = area
+	_lighting = lighting
 
 
 func _process(delta: float) -> void:
@@ -22,7 +24,7 @@ func _process(delta: float) -> void:
 	_next_sample = REPEAT_SAMPLE_SECONDS
 	_last_snapshot = snapshot()
 	print(
-		"[WorldPerf] fps=%d frame_ms=%.2f physics_ms=%.2f nodes=%d area_nodes=%d draw_calls=%d render_objects=%d"
+		"[WorldPerf] fps=%d frame_ms=%.2f physics_ms=%.2f nodes=%d area_nodes=%d draw_calls=%d render_objects=%d shadows=%d local_lights=%d active_lights=%d"
 		% [
 			int(_last_snapshot.get("fps", 0)),
 			float(_last_snapshot.get("frame_ms", 0.0)),
@@ -31,6 +33,9 @@ func _process(delta: float) -> void:
 			int(_last_snapshot.get("area_nodes", 0)),
 			int(_last_snapshot.get("draw_calls", 0)),
 			int(_last_snapshot.get("render_objects", 0)),
+			int(_last_snapshot.get("shadow_casters", 0)),
+			int(_last_snapshot.get("local_lights", 0)),
+			int(_last_snapshot.get("active_local_lights", 0)),
 		]
 	)
 
@@ -45,7 +50,16 @@ func snapshot() -> Dictionary:
 		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"render_objects": int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)),
 		"memory_bytes": int(Performance.get_monitor(Performance.MEMORY_STATIC)),
+		"shadow_casters": _lighting_metric("get_shadow_caster_count"),
+		"local_lights": _lighting_metric("get_local_light_count"),
+		"active_local_lights": _lighting_metric("get_active_local_light_count"),
 	}
+
+
+func _lighting_metric(method_name: String) -> int:
+	if _lighting == null or not is_instance_valid(_lighting) or not _lighting.has_method(method_name):
+		return 0
+	return int(_lighting.call(method_name))
 
 
 func get_last_snapshot() -> Dictionary:

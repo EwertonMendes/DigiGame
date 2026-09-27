@@ -7,6 +7,8 @@ const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const DECOR_BASE_Z := 1000
 const GROUND_DECOR_Z := -1100
+const SHADOW_GROUP := "world_shadow_caster"
+const LOCAL_LIGHT_GROUP := "world_local_light"
 
 static var _config_cache: Dictionary = {}
 static var _texture_cache: Dictionary = {}
@@ -126,6 +128,7 @@ static func build_for_section(
 			register_blocker.call(collision_polygon, asset_id)
 			sprite.set_meta("collision_polygon", collision_polygon)
 		sprite.set_meta("ground_center", ground_center)
+		_configure_lighting_metadata(sprite, asset, collision_polygon)
 		used[asset_id] = true
 		count += 1
 
@@ -134,6 +137,52 @@ static func build_for_section(
 		asset_ids.append(String(asset_id))
 	asset_ids.sort()
 	return {"root": root, "count": count, "assets": asset_ids}
+
+
+static func _configure_lighting_metadata(
+	sprite: Sprite2D,
+	asset: Dictionary,
+	collision_polygon: PackedVector2Array
+) -> void:
+	var shadow_value = asset.get("shadow", {})
+	if shadow_value is Dictionary and not (shadow_value as Dictionary).is_empty():
+		var shadow := shadow_value as Dictionary
+		var style := String(shadow.get("style", "projected"))
+		if style != "projected" or collision_polygon.size() >= 3:
+			sprite.add_to_group(SHADOW_GROUP)
+			sprite.set_meta("world_shadow_style", style)
+			if collision_polygon.size() >= 3:
+				var inverse_transform := sprite.transform.affine_inverse()
+				var local_footprint := PackedVector2Array()
+				for point: Vector2 in collision_polygon:
+					local_footprint.append(inverse_transform * point)
+				sprite.set_meta("world_shadow_footprint", local_footprint)
+			sprite.set_meta("world_shadow_height", maxf(0.0, float(shadow.get("height", 24.0))))
+			sprite.set_meta(
+				"world_shadow_projection_multiplier",
+				maxf(0.0, float(shadow.get("projection_multiplier", 1.0)))
+			)
+			sprite.set_meta("world_shadow_opacity", clampf(float(shadow.get("opacity", 0.18)), 0.0, 0.55))
+			sprite.set_meta("world_shadow_dynamic", false)
+			var size_value = shadow.get("size", [])
+			if size_value is Array and size_value.size() >= 2:
+				sprite.set_meta("world_shadow_size", _vec2(size_value))
+			var anchor_value = shadow.get("anchor", [])
+			if anchor_value is Array and anchor_value.size() >= 2:
+				sprite.set_meta("world_shadow_anchor", _vec2(anchor_value))
+
+	var light_value = asset.get("light", {})
+	if light_value is Dictionary and not (light_value as Dictionary).is_empty():
+		var light := light_value as Dictionary
+		sprite.add_to_group(LOCAL_LIGHT_GROUP)
+		sprite.set_meta("world_light_offset", _vec2(light.get("offset", [0.0, 0.0])))
+		sprite.set_meta("world_light_color", _color(light.get("color", asset.get("accent", [1.0, 1.0, 1.0, 1.0]))))
+		sprite.set_meta("world_light_energy", maxf(0.0, float(light.get("energy", 0.6))))
+		sprite.set_meta("world_light_radius", maxf(24.0, float(light.get("radius", 120.0))))
+		sprite.set_meta("world_light_day_factor", clampf(float(light.get("day_factor", 0.02)), 0.0, 1.0))
+		sprite.set_meta("world_light_glow_radius", maxf(0.0, float(light.get("glow_radius", 0.0))))
+		sprite.set_meta("world_light_glow_energy", maxf(0.0, float(light.get("glow_energy", 0.0))))
+		sprite.set_meta("world_light_glow_day_factor", clampf(float(light.get("glow_day_factor", 0.0)), 0.0, 1.0))
 
 
 static func _load_config() -> Dictionary:

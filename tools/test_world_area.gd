@@ -26,6 +26,67 @@ func _ready() -> void:
 	assert(not bool(player.call("is_touch_run_enabled")), "Touch WALK must restore normal movement")
 	assert(run_button.text == "RUN", "Touch run button must return to RUN after walking is restored")
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
+	var lighting := world.call("get_lighting_system") as Node
+	assert(lighting != null, "Campaign world must own one centralized dynamic lighting runtime")
+	assert(
+		lighting.get_node_or_null("AmbientModulate") is CanvasModulate
+		and lighting.get_node_or_null("SunLight") is DirectionalLight2D,
+		"World lighting must combine ambient modulation with one global sun light"
+	)
+	assert(
+		int(lighting.call("get_shadow_caster_count")) >= 8,
+		"Central City must register its authored geometry and actors as procedural shadow casters"
+	)
+	assert(
+		int(lighting.call("get_local_light_count")) >= 12,
+		"Street lamps and authored service buildings must register as data-driven local lights"
+	)
+	var midday_snapshot = lighting.call("get_time_debug_snapshot")
+	assert(midday_snapshot is Dictionary, "World lighting must expose a deterministic debug time snapshot")
+	assert(
+		String((midday_snapshot as Dictionary).get("phase", "")) == "DAY"
+		and absf(float((midday_snapshot as Dictionary).get("hour", 0.0)) - 12.0) < 0.01,
+		"Campaign lighting preview must default to midday without advancing automatically"
+	)
+	var midday_direction := (midday_snapshot as Dictionary).get("shadow_direction", Vector2.ZERO) as Vector2
+	var midday_length := float((midday_snapshot as Dictionary).get("shadow_length", 0.0))
+	var midday_lights := float((midday_snapshot as Dictionary).get("local_light_strength", 0.0))
+	lighting.call("set_preview_time_hours", 18.0)
+	var sunset_snapshot := lighting.call("get_time_debug_snapshot") as Dictionary
+	assert(
+		String(sunset_snapshot.get("phase", "")) == "SUNSET"
+		and float(sunset_snapshot.get("shadow_length", 0.0)) > midday_length
+		and float(sunset_snapshot.get("local_light_strength", 0.0)) > midday_lights
+		and ((sunset_snapshot.get("shadow_direction", Vector2.ZERO) as Vector2).distance_to(midday_direction) > 0.25),
+		"Sunset preview must rotate and lengthen shadows while bringing local lights up"
+	)
+	lighting.call("set_preview_time_hours", 21.0)
+	var night_snapshot := lighting.call("get_time_debug_snapshot") as Dictionary
+	assert(
+		String(night_snapshot.get("phase", "")) == "NIGHT"
+		and float(night_snapshot.get("local_light_strength", 0.0)) >= 0.95,
+		"Night preview must fully activate authored local illumination"
+	)
+	var local_light_root := lighting.get_node_or_null("LocalLights") as Node2D
+	var max_night_energy := 0.0
+	var visible_emissive_glow := false
+	if local_light_root != null:
+		for child in local_light_root.get_children():
+			if child is PointLight2D:
+				max_night_energy = maxf(max_night_energy, (child as PointLight2D).energy)
+			elif child is Sprite2D and String(child.name).begins_with("Glow_"):
+				visible_emissive_glow = visible_emissive_glow or (child as Sprite2D).visible
+	assert(
+		local_light_root != null and max_night_energy > 1.0 and visible_emissive_glow,
+		"Night lighting must combine strong physical PointLight2D output with visible emissive halos"
+	)
+	lighting.call("set_preview_time_hours", 12.0)
+	assert(
+		String(player.get_meta("world_shadow_style", "")) == "contact"
+		and player.get_meta("world_shadow_size", Vector2.ZERO) is Vector2
+		and (player.get_meta("world_shadow_size", Vector2.ZERO) as Vector2).x >= 24.0,
+		"Player shadow must be a fitted soft contact shadow instead of an extruded footprint"
+	)
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
 		area.get_ground_render_node_count() <= 16,
@@ -49,6 +110,10 @@ func _ready() -> void:
 		and paver_material.shader != null
 		and paver_material.shader.resource_path == "res://shaders/city_paver_floor.gdshader",
 		"Central City hardscape must use the dedicated continuous micro-paver shader"
+	)
+	assert(
+		not paver_material.shader.code.contains("render_mode unshaded"),
+		"Central City paving must stay inside the CanvasItem lighting pipeline so night and local lights affect the ground"
 	)
 	assert(
 		is_equal_approx(float(paver_material.get_shader_parameter("pavers_per_cell")), 4.0),
@@ -89,6 +154,29 @@ func _ready() -> void:
 		plaza_section.get_decoration_count() >= 2,
 		"Central Plaza lamps must stay on the outer civic/landscape edge rather than crowding the guide or pool"
 	)
+	var plaza_natural := plaza_section.get_node_or_null("NaturalDetails")
+	var plaza_tree := plaza_section.get_node_or_null("NaturalDetails/Oak_2_11") as Sprite2D
+	var plaza_planter := plaza_section.get_node_or_null("NaturalDetails/LandscapeIsland_0") as Node2D
+	assert(
+		plaza_natural != null
+		and plaza_tree != null
+		and plaza_tree.is_in_group("world_shadow_caster")
+		and String(plaza_tree.get_meta("world_shadow_style", "")) == "projected_soft"
+		and float(plaza_tree.get_meta("world_shadow_height", 0.0)) >= 100.0
+		and (plaza_tree.get_meta("world_shadow_size", Vector2.ZERO) as Vector2).x >= 90.0,
+		"Central City trees must cast a visible broad projected canopy shadow from their ground anchor"
+	)
+	var shadow_root := lighting.get_node_or_null("SunShadows") as Node2D
+	assert(
+		shadow_root != null and shadow_root.z_index > 40,
+		"World shadows must render above raised landscape tops so tree canopy casts remain visible"
+	)
+	assert(
+		plaza_planter != null
+		and plaza_planter.is_in_group("world_shadow_caster")
+		and String(plaza_planter.get_meta("world_shadow_style", "")) == "projected",
+		"Raised landscape islands must cast a low structural shadow onto the city pavement"
+	)
 	var plaza_decor := plaza_section.get_node_or_null("CityDecor")
 	assert(
 		plaza_decor != null
@@ -112,6 +200,26 @@ func _ready() -> void:
 		first_plaza_lamp != null
 		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 48.0)),
 		"Lamp sprite must be lowered so the center of its visible pedestal sits on the authored ground contact"
+	)
+	assert(
+		first_plaza_lamp.is_in_group("world_shadow_caster")
+		and first_plaza_lamp.is_in_group("world_local_light")
+		and first_plaza_lamp.has_meta("world_light_color")
+		and first_plaza_lamp.has_meta("world_shadow_height"),
+		"City lamps must expose one shared runtime contract for light and procedural shadow generation"
+	)
+	assert(
+		float(first_plaza_lamp.get_meta("world_light_energy", 0.0)) > 1.0
+		and float(first_plaza_lamp.get_meta("world_light_radius", 0.0)) >= 190.0
+		and float(first_plaza_lamp.get_meta("world_light_glow_radius", 0.0)) >= 36.0
+		and float(first_plaza_lamp.get_meta("world_light_glow_energy", 0.0)) >= 0.75,
+		"Street lamps must expose enough physical light and emissive halo energy to read as night-time light sources"
+	)
+	assert(
+		String(first_plaza_lamp.get_meta("world_shadow_style", "")) == "projected"
+		and float(first_plaza_lamp.get_meta("world_shadow_height", 0.0)) >= 100.0
+		and float(first_plaza_lamp.get_meta("world_shadow_projection_multiplier", 0.0)) > 1.0,
+		"Street lamps must cast a tall narrow shadow proportional to the authored pole height"
 	)
 	var first_plaza_lamp_world := plaza_section.global_position + first_plaza_lamp_local
 	assert(
@@ -235,6 +343,20 @@ func _ready() -> void:
 		and market_lighting.get_decoration_asset_ids().has("lamp_yellow"),
 		"Data Market must reserve the approved warm lamp for its service node"
 	)
+	var annotation_labels: Dictionary = {}
+	for raw_annotation in get_tree().get_nodes_in_group("world_annotation_unlit"):
+		if raw_annotation is Label:
+			var annotation := raw_annotation as Label
+			annotation_labels[annotation.text] = annotation
+	for required_text: String in ["CITY GUIDE", "DATA MARKET"]:
+		var annotation := annotation_labels.get(required_text) as Label
+		assert(annotation != null, "World gameplay annotation %s must remain present" % required_text)
+		var annotation_material := annotation.material as CanvasItemMaterial
+		assert(
+			annotation_material != null
+			and annotation_material.light_mode == CanvasItemMaterial.LIGHT_MODE_UNSHADED,
+			"NPC and service labels must remain unlit and readable regardless of time-of-day darkness"
+		)
 
 	var quiet_garden := area.get_node_or_null("Section_-2_-2") as WorldAreaSection
 	var quiet_residential := area.get_node_or_null("Section_-1_-2") as WorldAreaSection
@@ -281,6 +403,15 @@ func _ready() -> void:
 	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
 	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
+	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/DigiLabDoorLight") as Node2D
+	var digilab_core_light := digilab_section.get_node_or_null("DigiLabExterior/DigiLabCoreLight") as Node2D
+	assert(
+		digilab_door_light != null
+		and digilab_core_light != null
+		and digilab_door_light.is_in_group("world_local_light")
+		and digilab_core_light.is_in_group("world_local_light"),
+		"DigiLab exterior must expose authored door and core illumination sources"
+	)
 	var digilab_upper := digilab_section.get_node_or_null("DigiLabExterior/UpperOccluder") as Sprite2D
 	assert(digilab_upper != null, "DigiLab must split upper occlusion from the foreground facade")
 	assert(
@@ -422,6 +553,11 @@ func _ready() -> void:
 	var training_building := training_section.get_node_or_null("TrainingCenterExterior/Building") as Sprite2D
 	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/UpperOccluder") as Sprite2D
 	assert(training_building != null, "Training district must render the authored Training Center exterior")
+	assert(
+		training_section.get_node_or_null("TrainingCenterExterior/TrainingDoorLight") != null
+		and training_section.get_node_or_null("TrainingCenterExterior/TrainingAccentLight") != null,
+		"Training Center exterior must expose two time-of-day local light sources"
+	)
 	assert(training_upper != null, "Training Center must split upper occlusion from its foreground facade")
 	assert(
 		training_building.texture != null
@@ -510,6 +646,11 @@ func _ready() -> void:
 	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/Building") as Sprite2D
 	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/UpperOccluder") as Sprite2D
 	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
+	assert(
+		hospital_section.get_node_or_null("HospitalExterior/HospitalDoorLight") != null
+		and hospital_section.get_node_or_null("HospitalExterior/HospitalAccentLight") != null,
+		"Hospital exterior must expose two time-of-day local light sources"
+	)
 	assert(hospital_upper != null, "Hospital must split upper occlusion from its foreground facade")
 	assert(
 		hospital_building.texture != null
