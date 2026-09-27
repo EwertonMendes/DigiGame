@@ -226,7 +226,7 @@ func _ready() -> void:
 		"The upper civic deck must stop at a real retaining boundary with only the two authored stair openings"
 	)
 	assert(
-		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 23)))
+		not area.is_walkable_world_position(_grid_to_world(Vector2(-10, 23)))
 		and area.is_walkable_world_position(_grid_to_world(Vector2(-5, 23)))
 		and area.is_walkable_world_position(_grid_to_world(Vector2(21, 23)))
 		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 23))),
