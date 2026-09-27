@@ -130,7 +130,7 @@ static func ground_override_at(global_grid: Vector2) -> Dictionary:
 		if not painted_surface.is_empty():
 			return {
 				"surface": painted_surface,
-				"walkable": painted_surface != "water",
+				"walkable": painted_surface not in ["water", "void"],
 				"render": painted_surface != "void",
 			}
 
@@ -173,7 +173,11 @@ static func authored_road_count() -> int:
 	var network_value = topology.get("road_network", {})
 	if not network_value is Dictionary:
 		return 0
-	var paths_value = (network_value as Dictionary).get("paths", [])
+	var network := network_value as Dictionary
+	if String(network.get("mode", "")) == "painted_tiles":
+		var cells_value = network.get("cells", [])
+		return (cells_value as Array).size() if cells_value is Array else 0
+	var paths_value = network.get("paths", [])
 	return (paths_value as Array).size() if paths_value is Array else 0
 
 
@@ -331,80 +335,18 @@ static func _parse_transitions(root: Node) -> Dictionary:
 	return result
 
 
-static func _parse_roads(root: Node, transition_data: Dictionary) -> Dictionary:
-	var container := root.get_node_or_null("Roads")
-	var paths: Array = []
-	var nodes: Array = []
-	var edges: Array = []
-	var node_by_key := {}
-	if container != null:
-		for child in container.get_children():
-			if not child is Line2D:
-				continue
-			var line := child as Line2D
-			if line.points.size() < 2:
-				continue
-			var level_id := String(child.get("level_id"))
-			var grid_points := PackedVector2Array()
-			for point: Vector2 in line.points:
-				grid_points.append(world_to_grid(line.position + point))
-			var encoded_points: Array = []
-			for point: Vector2 in grid_points:
-				encoded_points.append([point.x, point.y])
-			var path_id := String(child.get("road_id"))
-			var width_grid := maxf(0.5, float(child.get("width_grid")))
-			paths.append({
-				"id": path_id,
-				"level": level_id,
-				"width": width_grid,
-				"surface": String(child.get("surface")),
-				"tint": _color_array(child.get("tint") as Color),
-				"border_width_grid": maxf(0.0, float(child.get("border_width_grid"))),
-				"border_color": _color_array(child.get("border_color") as Color),
-				"grid_points": encoded_points,
-			})
-			for index in range(grid_points.size() - 1):
-				var from_id := _graph_node_id(nodes, node_by_key, grid_points[index], level_id)
-				var to_id := _graph_node_id(nodes, node_by_key, grid_points[index + 1], level_id)
-				edges.append({
-					"from": from_id,
-					"to": to_id,
-					"type": "road",
-					"width": width_grid,
-					"path_id": path_id,
-				})
-
-	for kind in ["stairs", "bridges"]:
-		var list_value = transition_data.get(kind, [])
-		if not list_value is Array:
-			continue
-		for raw in list_value as Array:
-			if not raw is Dictionary:
-				continue
-			var item := raw as Dictionary
-			var x_center := (float(item.get("x_min", 0.0)) + float(item.get("x_max", 0.0))) * 0.5
-			var y0 := float(item.get("y_start", item.get("y_min", 0.0)))
-			var y1 := float(item.get("y_end", item.get("y_max", 0.0)))
-			var from_level := String(item.get("from_level", item.get("level", "south_terrace")))
-			var to_level := String(item.get("to_level", item.get("level", "south_terrace")))
-			var from_id := _graph_node_id(nodes, node_by_key, Vector2(x_center, y0), from_level)
-			var to_id := _graph_node_id(nodes, node_by_key, Vector2(x_center, y1), to_level)
-			edges.append({
-				"from": from_id,
-				"to": to_id,
-				"type": "stairs" if kind == "stairs" else "bridge",
-			})
-
-	var defaults := paths[0] as Dictionary if not paths.is_empty() else {}
+static func _parse_roads(root: Node, _transition_data: Dictionary) -> Dictionary:
+	var paint := _parse_ground_paint(root)
+	var road_cells: Array[String] = []
+	for raw_key in paint.keys():
+		var key := String(raw_key)
+		if String(paint.get(raw_key, "")) == "road":
+			road_cells.append(key)
+	road_cells.sort()
 	return {
-		"surface": String(defaults.get("surface", "dark")),
-		"tint": defaults.get("tint", [1.48, 1.50, 1.54, 1.0]),
-		"width": float(defaults.get("width", 3.0)),
-		"border_width_grid": float(defaults.get("border_width_grid", 0.12)),
-		"border_color": defaults.get("border_color", [0.31, 0.33, 0.35, 1.0]),
-		"paths": paths,
-		"nodes": nodes,
-		"edges": edges,
+		"mode": "painted_tiles",
+		"surface": "road",
+		"cells": road_cells,
 	}
 
 
