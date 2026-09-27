@@ -12,5 +12,9 @@ class_name CentralCityAuthoringRoot
 
 func _ready() -> void:
 	if not Engine.is_editor_hint():
+		# Authoring nodes are editor data only. Runtime systems parse this scene
+		# once into compact dictionaries, then the visual authoring subtree is
+		# removed so it costs zero ongoing nodes/draw calls on mobile.
 		visible = false
 		process_mode = Node.PROCESS_MODE_DISABLED
+		queue_free()
