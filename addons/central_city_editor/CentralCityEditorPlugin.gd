@@ -10,6 +10,7 @@ const DECOR_CONFIG_PATH := "res://assets/resources/world/central_city_decor.json
 
 const HANDLE_RADIUS := 8.0
 const HIT_RADIUS := 15.0
+const HANDLE_COLOR := Color(1.0, 0.92, 0.32, 1.0)
 const SELECT_COLOR := Color(0.35, 1.0, 0.55, 0.95)
 
 var _toolbar: HBoxContainer
