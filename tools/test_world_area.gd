@@ -44,7 +44,8 @@ func _ready() -> void:
 	# that has no selectable authoring node.
 	var authoring_scene := load("res://scenes/world/central_city_authoring.tscn") as PackedScene
 	var authoring_root := authoring_scene.instantiate()
-	var prop_snapshot := CITY_AUTHORING.snapshot_from_root(authoring_root)
+	var authoring_snapshot := CITY_AUTHORING.snapshot_from_root(authoring_root)
+	var prop_snapshot := authoring_snapshot.duplicate(true)
 	authoring_root.free()
 	var props_by_section := (prop_snapshot.get("props_by_section", {}) as Dictionary).duplicate(true)
 	props_by_section["-1,0"] = []
@@ -89,16 +90,24 @@ func _ready() -> void:
 	var baked_snapshot := CITY_BAKER.load_snapshot()
 	if not baked_snapshot.is_empty():
 		assert(
-			hash(baked_snapshot) == hash(CITY_AUTHORING.snapshot_from_root(
-				load("res://scenes/world/central_city_authoring.tscn").instantiate()
-			)),
+			baked_snapshot == authoring_snapshot,
 			"Committed Central City baked data must match the editable authoring scene"
 		)
+
+	# Service buildings are intentionally movable in the visual authoring scene.
+	# Regressions should validate presence/identity, not freeze designer-chosen
+	# coordinates that are expected to change in Godot.
+	var service_anchors := {}
+	for service_id: String in ["digilab", "training", "hospital", "market", "archive"]:
+		var anchor := CITY_AUTHORING.building_anchor_grid(service_id, Vector2(INF, INF))
+		assert(
+			is_finite(anchor.x) and is_finite(anchor.y),
+			"Service building %s must keep a valid visual authoring anchor" % service_id
+		)
+		service_anchors[service_id] = anchor
 	assert(
-		CITY_AUTHORING.building_anchor_grid("digilab", Vector2.ZERO).is_equal_approx(Vector2(-6.0, 10.0))
-		and CITY_AUTHORING.building_anchor_grid("training", Vector2.ZERO).is_equal_approx(Vector2(7.0, -3.0))
-		and CITY_AUTHORING.building_anchor_grid("hospital", Vector2.ZERO).is_equal_approx(Vector2(21.0, 10.0)),
-		"Service building editor markers must preserve the approved Central City placement"
+		service_anchors.values().duplicate().size() == 5,
+		"Central City must preserve all five authored service building anchors"
 	)
 	assert(
 		area.get_node_or_null("Authoring") == null,
@@ -554,7 +563,7 @@ func _ready() -> void:
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
-	var hospital_lighting := area.get_node_or_null("Section_1_0") as WorldAreaSection
+	var hospital_lighting := _service_section(area, "hospital")
 	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
 	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
 	var market_pad: Area2D = null
@@ -915,8 +924,9 @@ func _ready() -> void:
 		"Training Center interior exit must return to the paved approach in front of the door"
 	)
 
-	var hospital_section := area.get_node_or_null("Section_1_0") as WorldAreaSection
-	assert(hospital_section != null, "Digi Hospital must remain in the authored east-central section")
+	var hospital_section := _service_section(area, "hospital")
+	var hospital_door_cell := _service_local_cell("hospital")
+	assert(hospital_section != null, "Digi Hospital must render in the section selected by its authoring marker")
 	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/Building") as Sprite2D
 	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
@@ -947,7 +957,7 @@ func _ready() -> void:
 		"HospitalExterior/HospitalEntrance"
 	) as Area2D
 	assert(hospital_entrance != null, "Hospital must expose its authored doorway threshold")
-	var expected_hospital_door := hospital_section.grid_to_world(Vector2(7, 10))
+	var expected_hospital_door := hospital_section.grid_to_world(Vector2(hospital_door_cell))
 	assert(
 		hospital_entrance.position.is_equal_approx(expected_hospital_door),
 		"Hospital threshold must align to the centered straight-down door"
@@ -956,8 +966,9 @@ func _ready() -> void:
 		hospital_section.is_walkable_world_position(hospital_section.global_position + expected_hospital_door),
 		"Hospital stairs and doorway must remain walkable"
 	)
-	var hospital_lot = hospital_section.call("_ground_presentation", Vector2i(5, 4), "hospital")
-	var hospital_approach = hospital_section.call("_ground_presentation", Vector2i(7, 10), "hospital")
+	var hospital_lot_cell := hospital_door_cell + Vector2i(-2, -6)
+	var hospital_lot = hospital_section.call("_ground_presentation", hospital_lot_cell, "hospital")
+	var hospital_approach = hospital_section.call("_ground_presentation", hospital_door_cell, "hospital")
 	assert(
 		hospital_lot is Dictionary
 		and hospital_approach is Dictionary
@@ -987,11 +998,13 @@ func _ready() -> void:
 	)
 	assert(
 		not hospital_section.is_walkable_world_position(
-			hospital_section.global_position + hospital_section.grid_to_world(Vector2(7, 7))
+			hospital_section.global_position + hospital_section.grid_to_world(
+				Vector2(hospital_door_cell + Vector2i(0, -3))
+			)
 		),
 		"Hospital structure footprint must block movement through the building"
 	)
-	var hospital_door_local := hospital_section.grid_to_world(Vector2(7, 10))
+	var hospital_door_local := hospital_section.grid_to_world(Vector2(hospital_door_cell))
 	for source_point: Vector2 in [
 		Vector2(120.0, 820.0),
 		Vector2(350.0, 900.0),
@@ -1010,7 +1023,9 @@ func _ready() -> void:
 	assert(hospital_payload is Dictionary, "Hospital doorway must preserve the service payload")
 	assert(String((hospital_payload as Dictionary).get("service", "")) == "hospital", "Hospital doorway must open the hospital service")
 	var hospital_return = (hospital_payload as Dictionary).get("return_position", [])
-	var expected_hospital_return := hospital_section.global_position + hospital_section.grid_to_world(Vector2(9, 12))
+	var expected_hospital_return := hospital_section.global_position + hospital_section.grid_to_world(
+		Vector2(hospital_door_cell + Vector2i(2, 2))
+	)
 	assert(
 		hospital_return is Array
 		and hospital_return.size() >= 2
@@ -1059,6 +1074,29 @@ func _ready() -> void:
 
 	print("single-scene world area regression passed")
 	get_tree().quit()
+
+
+func _service_section(area: WorldAreaScene, service_id: String) -> WorldAreaSection:
+	var global_grid := CITY_AUTHORING.building_anchor_grid(service_id, Vector2(INF, INF))
+	if not is_finite(global_grid.x) or not is_finite(global_grid.y):
+		return null
+	var section_size := int(CITY_AUTHORING.area_definition().get("section_size", 14))
+	var coord := Vector2i(
+		floori((global_grid.x + 0.5) / float(section_size)),
+		floori((global_grid.y + 0.5) / float(section_size))
+	)
+	return area.get_node_or_null("Section_%d_%d" % [coord.x, coord.y]) as WorldAreaSection
+
+
+func _service_local_cell(service_id: String) -> Vector2i:
+	var global_grid := CITY_AUTHORING.building_anchor_grid(service_id, Vector2(INF, INF))
+	var section_size := int(CITY_AUTHORING.area_definition().get("section_size", 14))
+	var coord := Vector2i(
+		floori((global_grid.x + 0.5) / float(section_size)),
+		floori((global_grid.y + 0.5) / float(section_size))
+	)
+	var local_grid := global_grid - Vector2(coord * section_size)
+	return Vector2i(roundi(local_grid.x), roundi(local_grid.y))
 
 
 func _assert_seam_crossing(
