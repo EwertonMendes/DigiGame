@@ -113,6 +113,7 @@ func _ready() -> void:
 		return
 
 	_recover_invalid_spawn()
+	_sync_player_elevation(_player.global_position)
 	_current_section = _area_scene.world_to_section(_player.global_position)
 
 	_followers = FollowersScript.new() as WorldPartyFollowers
@@ -255,6 +256,18 @@ func get_area_scene() -> WorldAreaScene:
 
 func get_area_id() -> String:
 	return AREA_ID
+
+
+func get_world_elevation_at(world_position: Vector2) -> float:
+	if _area_scene == null:
+		return 0.0
+	return _area_scene.get_elevation_at_world_position(world_position)
+
+
+func get_world_level_at(world_position: Vector2) -> String:
+	if _area_scene == null:
+		return ""
+	return _area_scene.get_level_at_world_position(world_position)
 
 
 func get_interior_manager() -> WorldInteriorManager:
@@ -554,6 +567,7 @@ func _layout_ui() -> void:
 func _on_player_moved(world_position: Vector2) -> void:
 	if not _world_ready:
 		return
+	_sync_player_elevation(world_position)
 	if _interior_manager != null and (_interior_manager.is_active() or _interior_manager.is_transitioning()):
 		return
 	_movement_dirty = true
@@ -626,6 +640,7 @@ func _on_interior_state_changed(active: bool, _title: String) -> void:
 	# reserved for major locations explicitly presented by present_area_banner().
 	if not active:
 		if _area_scene != null and _player != null:
+			_sync_player_elevation(_player.global_position)
 			_current_section = _area_scene.world_to_section(_player.global_position)
 			WorldState.capture_location(
 				REGION_ID,
@@ -777,6 +792,18 @@ func _announce_area() -> void:
 		String(_area_definition.get("subtitle", "Recovery District")),
 		1.7
 	)
+
+
+func _sync_player_elevation(world_position: Vector2) -> void:
+	if _player == null or _area_scene == null:
+		return
+	var elevation := _area_scene.get_elevation_at_world_position(world_position)
+	_player.set_world_elevation(elevation)
+	if _world_camera != null:
+		# Camera remains attached to the logical CharacterBody2D, so offset it by
+		# the same presentation height as the sprite. Existing camera smoothing
+		# turns stair traversal into a continuous vertical reveal instead of a cut.
+		_world_camera.position = Vector2(0.0, -elevation)
 
 
 func _persist_world_location() -> void:
