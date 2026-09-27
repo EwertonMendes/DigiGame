@@ -417,26 +417,30 @@ func _build_natural_details() -> void:
 	props.name = "NaturalDetails"
 	add_child(props)
 	var theme := String(definition.get("theme", "residential"))
-	var tree_cells: Array[Vector2i] = []
+	var preferred_cells: Array[Vector2i] = []
 	match theme:
 		"garden":
 			if posmod(section_coord.x + section_coord.y, 2) == 0:
-				tree_cells = [Vector2i(3, 3), Vector2i(10, 10), Vector2i(3, 10)]
+				preferred_cells = [Vector2i(3, 3), Vector2i(10, 10), Vector2i(3, 10)]
 			else:
-				tree_cells = [Vector2i(10, 3), Vector2i(3, 10), Vector2i(10, 10)]
+				preferred_cells = [Vector2i(10, 3), Vector2i(3, 10), Vector2i(10, 10)]
 		"plaza":
-			tree_cells = [Vector2i(2, 11), Vector2i(11, 2)]
+			preferred_cells = [Vector2i(2, 11), Vector2i(11, 2)]
 		"canal":
-			tree_cells = [Vector2i(2, 10), Vector2i(11, 3)]
+			preferred_cells = [Vector2i(2, 10), Vector2i(11, 3)]
 		"residential":
-			tree_cells = [Vector2i(2, 11)]
+			preferred_cells = [Vector2i(2, 11)]
 		_:
-			tree_cells = []
+			preferred_cells = []
 
-	for index in range(tree_cells.size()):
-		var cell := tree_cells[index]
-		if not _is_city_land(cell):
+	var used_cells := {}
+	for index in range(preferred_cells.size()):
+		var cell := _find_safe_landscape_cell(preferred_cells[index], used_cells)
+		if cell == LANDSCAPE_INVALID_CELL:
 			continue
+		used_cells[cell] = true
+		var elevation_px := _elevation_for_local_grid(Vector2(cell))
+		var visual_offset := Vector2(0.0, -elevation_px)
 		var island_data := CITY_URBAN.create_landscape_island(
 			"LandscapeIsland_%d" % index,
 			grid_to_world(Vector2(cell))
@@ -444,6 +448,8 @@ func _build_natural_details() -> void:
 		var island_root = island_data.get("root")
 		var blocker = island_data.get("blocker")
 		if island_root is Node2D:
+			(island_root as Node2D).position = visual_offset
+			(island_root as Node2D).set_meta("world_elevation_px", elevation_px)
 			props.add_child(island_root as Node2D)
 			if blocker is PackedVector2Array:
 				_configure_shadow_caster(
@@ -460,11 +466,53 @@ func _build_natural_details() -> void:
 		_add_tree(props, cell, index)
 
 
+func _find_safe_landscape_cell(
+	preferred: Vector2i,
+	used_cells: Dictionary
+) -> Vector2i:
+	var offsets: Array[Vector2i] = [
+		Vector2i.ZERO,
+		Vector2i(1, 0),
+		Vector2i(-1, 0),
+		Vector2i(0, 1),
+		Vector2i(0, -1),
+		Vector2i(1, 1),
+		Vector2i(-1, 1),
+		Vector2i(1, -1),
+		Vector2i(-1, -1),
+		Vector2i(2, 0),
+		Vector2i(-2, 0),
+		Vector2i(0, 2),
+		Vector2i(0, -2),
+	]
+	for offset: Vector2i in offsets:
+		var candidate := preferred + offset
+		if (
+			candidate.x < 0
+			or candidate.y < 0
+			or candidate.x >= SECTION_SIZE
+			or candidate.y >= SECTION_SIZE
+			or used_cells.has(candidate)
+			or not _is_city_land(candidate)
+		):
+			continue
+		var global_grid := Vector2(_global_grid(candidate))
+		if not CITY_TOPOLOGY.can_place_landscape(global_grid, 1.22):
+			continue
+		if not _is_local_world_open_for_decoration(grid_to_world(Vector2(candidate))):
+			continue
+		return candidate
+	return LANDSCAPE_INVALID_CELL
+
+
 func _build_theme_content() -> void:
 	var theme := String(definition.get("theme", "residential"))
 	match theme:
 		"plaza":
 			var civic_frame := CITY_URBAN.create_civic_pool_frame(grid_to_world(Vector2(7, 7)))
+			var civic_elevation := _elevation_for_local_grid(Vector2(7, 7))
+			civic_frame.position = Vector2(0.0, -civic_elevation)
+			civic_frame.set_meta("world_elevation_px", civic_elevation)
 			add_child(civic_frame)
 			_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
 		"digilab":
@@ -501,7 +549,8 @@ func _build_city_decorations() -> void:
 		theme,
 		global_position,
 		Callable(self, "_can_place_city_decoration"),
-		Callable(self, "_register_city_decoration_blocker")
+		Callable(self, "_register_city_decoration_blocker"),
+		Callable(self, "_elevation_for_local_grid")
 	)
 	var root = result.get("root")
 	_decoration_count = int(result.get("count", 0))
@@ -511,6 +560,11 @@ func _build_city_decorations() -> void:
 		add_child(root as Node2D)
 	elif root is Node:
 		(root as Node).free()
+
+
+func _elevation_for_local_grid(local_grid: Vector2) -> float:
+	var global_grid := Vector2(section_coord * SECTION_SIZE) + local_grid
+	return CITY_TOPOLOGY.elevation_at_grid(global_grid)
 
 
 func _can_place_city_decoration(grid_position: Vector2, blocker_size: Vector2) -> bool:
