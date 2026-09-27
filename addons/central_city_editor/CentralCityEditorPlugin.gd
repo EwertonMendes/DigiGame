@@ -22,6 +22,8 @@ const WIDTH_COLOR := Color(0.24, 0.92, 1.0, 1.0)
 const SELECT_COLOR := Color(0.35, 1.0, 0.55, 0.95)
 
 var _toolbar: HBoxContainer
+var _toolbar_toggle: Button
+var _toolbar_expanded := true
 var _mode: OptionButton
 var _snap: OptionButton
 var _surface: OptionButton
@@ -76,24 +78,25 @@ func _edit(_object: Object) -> void:
 	_sync_active_root()
 
 
-func _make_visible(visible: bool) -> void:
-	if _toolbar != null:
-		_toolbar.visible = visible and _authoring_root() != null
+func _make_visible(_visible: bool) -> void:
+	# Godot calls this when the selected object changes. Central City tools are
+	# scene-level authoring controls, so selection must never decide whether the
+	# toolbar exists. Its visibility follows the edited scene instead.
+	_sync_toolbar_visibility()
 
 
 func _process(_delta: float) -> void:
 	var root := _authoring_root()
 	if root != _active_root:
 		_active_root = root
-		if _toolbar != null:
-			_toolbar.visible = root != null
-			_sync_overlay_toggle()
+		_sync_overlay_toggle()
 		update_overlays()
+	_sync_toolbar_visibility()
 
 
 func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	var root := _authoring_root()
-	if root == null or not _show_handles:
+	if root == null or not _toolbar_expanded or not _show_handles:
 		return
 	if _mode_text() == "Road":
 		_draw_all_roads(overlay, root)
@@ -115,7 +118,7 @@ func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 
 func _forward_canvas_gui_input(event: InputEvent) -> bool:
 	var root := _authoring_root()
-	if root == null:
+	if root == null or not _toolbar_expanded:
 		return false
 
 	if _mode_text() == "Ground":
@@ -165,9 +168,13 @@ func _build_toolbar() -> void:
 	_toolbar = HBoxContainer.new()
 	_toolbar.name = "CentralCityEditorToolbar"
 
-	var title := Label.new()
-	title.text = "Central City"
-	_toolbar.add_child(title)
+	_toolbar_toggle = Button.new()
+	_toolbar_toggle.text = "Central City ▾"
+	_toolbar_toggle.toggle_mode = true
+	_toolbar_toggle.button_pressed = true
+	_toolbar_toggle.tooltip_text = "Keep Central City authoring tools open. Click to collapse/restore them explicitly."
+	_toolbar_toggle.toggled.connect(_on_toolbar_toggled)
+	_toolbar.add_child(_toolbar_toggle)
 
 	_mode = OptionButton.new()
 	_mode.tooltip_text = "Editing tool. Roads are constrained/snapped automatically."
@@ -245,8 +252,7 @@ func _authoring_root() -> Node2D:
 
 func _sync_active_root() -> void:
 	_active_root = _authoring_root()
-	if _toolbar != null:
-		_toolbar.visible = _active_root != null
+	_sync_toolbar_visibility()
 	_sync_overlay_toggle()
 	update_overlays()
 
@@ -351,6 +357,39 @@ func _unique_authoring_id(base_id: String, parent: Node) -> String:
 		candidate = "%s_%d" % [stem, suffix]
 		suffix += 1
 	return candidate
+
+
+func _on_toolbar_toggled(expanded: bool) -> void:
+	_toolbar_expanded = expanded
+	_apply_toolbar_expanded_state()
+	if not expanded:
+		_finish_pointer_action()
+		_paint_stroke_active = false
+		_creating_road = false
+		_hovered_road = null
+	_status.text = _mode_text() if expanded else "Paused"
+	update_overlays()
+
+
+func _apply_toolbar_expanded_state() -> void:
+	if _toolbar == null or _toolbar_toggle == null:
+		return
+	_toolbar_toggle.text = "Central City ▾" if _toolbar_expanded else "Central City ▸"
+	for child in _toolbar.get_children():
+		if child == _toolbar_toggle:
+			continue
+		if child is CanvasItem:
+			(child as CanvasItem).visible = _toolbar_expanded
+
+
+func _sync_toolbar_visibility() -> void:
+	if _toolbar == null:
+		return
+	var should_show := _authoring_root() != null
+	if _toolbar.visible != should_show:
+		_toolbar.visible = should_show
+	if should_show:
+		_apply_toolbar_expanded_state()
 
 
 func _mode_text() -> String:
@@ -475,6 +514,14 @@ func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 			_begin_marker_drag(object_hit as Marker2D, screen)
 		elif object_hit is Polygon2D:
 			_begin_polygon_drag(object_hit as Polygon2D, screen)
+		return true
+
+	# While a specialist Central City tool is active, clicking empty pavement
+	# means "no target", not "leave the authoring context". Swallow the click so
+	# Godot's stock 2D selection does not clear the current authored object.
+	# Select mode intentionally keeps native empty-click deselection available.
+	if mode != "Select":
+		_status.text = "%s · no target" % mode
 		return true
 	return false
 
