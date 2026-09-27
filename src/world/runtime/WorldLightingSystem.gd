@@ -110,6 +110,8 @@ func _build_environment() -> void:
 	_sun.energy = SUN_ENERGY
 	_sun.rotation_degrees = SUN_ROTATION_DEGREES
 	_sun.shadow_enabled = false
+	_sun.range_z_min = -2000
+	_sun.range_z_max = 4000
 	add_child(_sun)
 
 
