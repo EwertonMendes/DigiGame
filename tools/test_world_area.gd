@@ -617,23 +617,24 @@ func _ready() -> void:
 			"NPC and service labels must remain unlit and readable regardless of time-of-day darkness"
 		)
 
-	var quiet_garden := area.get_node_or_null("Section_-2_-2") as WorldAreaSection
-	var quiet_residential := area.get_node_or_null("Section_-1_-2") as WorldAreaSection
-	var east_gate := area.get_node_or_null("Section_2_0") as WorldAreaSection
-	var south_gate := area.get_node_or_null("Section_0_2") as WorldAreaSection
-	assert(
-		quiet_garden != null and quiet_garden.get_decoration_count() == 0,
-		"Unfinished garden blocks must not receive free-floating lamps before their urban edges exist"
-	)
-	assert(
-		quiet_residential != null and quiet_residential.get_decoration_count() == 0,
-		"Unfinished residential blocks must not receive free-floating lamps before their urban edges exist"
-	)
-	assert(
-		east_gate != null and east_gate.get_decoration_count() == 0
-		and south_gate != null and south_gate.get_decoration_count() == 0,
-		"Unbuilt gate districts must stay unlit until their actual gate/curb geometry exists"
-	)
+	# Empty authoring sections must remain empty, but designer-authored props
+	# are allowed in any district now that the visual scene is the source of truth.
+	for quiet_coord: Vector2i in [
+		Vector2i(-2, -2),
+		Vector2i(-1, -2),
+		Vector2i(2, 0),
+		Vector2i(0, 2),
+	]:
+		var quiet_section := area.get_node_or_null(
+			"Section_%d_%d" % [quiet_coord.x, quiet_coord.y]
+		) as WorldAreaSection
+		assert(quiet_section != null, "Authored city section %s must exist" % str(quiet_coord))
+		var authored_decor := CITY_AUTHORING.decoration_placements(quiet_coord)
+		if authored_decor.is_empty():
+			assert(
+				quiet_section.get_decoration_count() == 0,
+				"Section %s has no authored props and must not receive legacy/profile fallback decor" % str(quiet_coord)
+			)
 	for prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
 		"res://assets/world/tblack/city/props_v2/lamp_yellow.png",
