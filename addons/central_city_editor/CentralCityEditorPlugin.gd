@@ -36,6 +36,7 @@ var _paint_stroke_active := false
 var _paint_erase := false
 var _paint_old_cells: Dictionary = {}
 var _paint_last_cell := Vector2i(999999, 999999)
+var _creating_road := false
 var _road_creation_start := Vector2(INF, INF)
 
 
@@ -104,12 +105,13 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 	if _mode_text() == "Ground":
 		return _handle_ground_input(event, root)
 
-	if _mode_text() == "Road" and _road_creation_start.x != INF and event is InputEventMouseButton:
+	if _mode_text() == "Road" and _creating_road and event is InputEventMouseButton:
 		var create_button := event as InputEventMouseButton
 		if create_button.button_index == MOUSE_BUTTON_LEFT and create_button.pressed:
 			_complete_new_road(create_button.position, root)
 			return true
 		if create_button.button_index == MOUSE_BUTTON_RIGHT and create_button.pressed:
+			_creating_road = false
 			_road_creation_start = Vector2(INF, INF)
 			_status.text = "Road creation cancelled"
 			update_overlays()
@@ -836,9 +838,11 @@ func _resize_transition_rect(polygon: Polygon2D, point_index: int, candidate_gri
 		min_grid.y = minf(min_grid.y, grid.y)
 		max_grid.x = maxf(max_grid.x, grid.x)
 		max_grid.y = maxf(max_grid.y, grid.y)
+	var original_min := min_grid
+	var original_max := max_grid
 	var selected_grid := grids[point_index]
-	var move_min_x := absf(selected_grid.x - min_grid.x) <= absf(selected_grid.x - max_grid.x)
-	var move_min_y := absf(selected_grid.y - min_grid.y) <= absf(selected_grid.y - max_grid.y)
+	var move_min_x := absf(selected_grid.x - original_min.x) <= absf(selected_grid.x - original_max.x)
+	var move_min_y := absf(selected_grid.y - original_min.y) <= absf(selected_grid.y - original_max.y)
 	if move_min_x:
 		min_grid.x = minf(candidate_grid.x, max_grid.x - 0.5)
 	else:
@@ -850,8 +854,8 @@ func _resize_transition_rect(polygon: Polygon2D, point_index: int, candidate_gri
 
 	var rebuilt := PackedVector2Array()
 	for original_grid: Vector2 in grids:
-		var use_min_x := absf(original_grid.x - minf(grids[0].x, grids[1].x, grids[2].x, grids[3].x)) <= 0.01
-		var use_min_y := absf(original_grid.y - minf(grids[0].y, grids[1].y, grids[2].y, grids[3].y)) <= 0.01
+		var use_min_x := absf(original_grid.x - original_min.x) <= 0.01
+		var use_min_y := absf(original_grid.y - original_min.y) <= 0.01
 		var target := Vector2(
 			min_grid.x if use_min_x else max_grid.x,
 			min_grid.y if use_min_y else max_grid.y
@@ -925,10 +929,9 @@ func _start_new_road() -> void:
 	if root == null:
 		return
 	_mode.select(1)
+	_creating_road = true
 	_road_creation_start = Vector2(INF, INF)
 	_status.text = "New Road · click start point"
-	# A finite Y with INF X marks that creation mode is armed but has no start.
-	_road_creation_start.y = 0.0
 
 
 func _complete_new_road(screen: Vector2, root: Node) -> void:
@@ -972,6 +975,7 @@ func _complete_new_road(screen: Vector2, root: Node) -> void:
 	undo.add_undo_method(roads, "remove_child", road)
 	undo.commit_action()
 	_select_node(road)
+	_creating_road = false
 	_road_creation_start = Vector2(INF, INF)
 	_status.text = "Road created"
 
