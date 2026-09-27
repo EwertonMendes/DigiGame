@@ -11,6 +11,7 @@ const InteractionScript = preload("res://src/world/runtime/InteractionSystem.gd"
 const ServiceHostScript = preload("res://src/world/runtime/WorldServiceHost.gd")
 const InteriorManagerScript = preload("res://src/world/runtime/WorldInteriorManager.gd")
 const PerformanceMonitorScript = preload("res://src/world/runtime/WorldPerformanceMonitor.gd")
+const LightingScript = preload("res://src/world/runtime/WorldLightingSystem.gd")
 const PromptScript = preload("res://src/ui/components/DigiInteractionPrompt.gd")
 const AreaTitleScript = preload("res://src/ui/AreaTitleOverlay.gd")
 const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
@@ -42,6 +43,7 @@ var _services: WorldServiceHost = null
 var _interior_manager: WorldInteriorManager = null
 var _world_camera: Camera2D = null
 var _followers: WorldPartyFollowers = null
+var _lighting: WorldLightingSystem = null
 var _performance_monitor: WorldPerformanceMonitor = null
 var _prompt: DigiInteractionPrompt = null
 var _area_title: AreaTitleOverlay = null
@@ -118,6 +120,11 @@ func _ready() -> void:
 	_followers.configure(self, _player)
 	add_child(_followers)
 
+	_lighting = LightingScript.new() as WorldLightingSystem
+	_lighting.name = "WorldLightingSystem"
+	add_child(_lighting)
+	_lighting.configure(_player)
+
 	_interaction = InteractionScript.new() as InteractionSystem
 	_interaction.name = "InteractionSystem"
 	add_child(_interaction)
@@ -141,7 +148,7 @@ func _ready() -> void:
 	_performance_monitor = PerformanceMonitorScript.new() as WorldPerformanceMonitor
 	_performance_monitor.name = "WorldPerformanceMonitor"
 	add_child(_performance_monitor)
-	_performance_monitor.configure(_area_scene)
+	_performance_monitor.configure(_area_scene, _lighting)
 	MusicDirector.play_zone_1()
 	_player.visible = true
 	_player.movement_enabled = true
@@ -247,6 +254,10 @@ func get_area_scene() -> WorldAreaScene:
 
 func get_interior_manager() -> WorldInteriorManager:
 	return _interior_manager
+
+
+func get_lighting_system() -> WorldLightingSystem:
+	return _lighting
 
 
 func request_interior_entry(payload: Dictionary) -> void:
@@ -602,6 +613,8 @@ func _on_interaction_requested(action_id: String, payload: Dictionary) -> void:
 
 func _on_interior_state_changed(active: bool, _title: String) -> void:
 	_movement_dirty = false
+	if _lighting != null:
+		_lighting.set_exterior_active(not active)
 	_save_elapsed = 0.0
 	# Entering a local interior is not an area transition. Area banners are
 	# reserved for major locations explicitly presented by present_area_banner().
