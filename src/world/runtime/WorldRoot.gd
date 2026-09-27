@@ -26,6 +26,7 @@ const TEST_HUB_SCENE := "res://scenes/world/hub.tscn"
 const AUTO_SAVE_SECONDS := 5.0
 const SAFE_CITY_SPAWN := Vector2(-96.0, 272.0)
 const ACTOR_CLEARANCE := 7.0
+const TOPOLOGY_TRAVERSAL_MAX_STEP := 48.0
 const CLEARANCE_SAMPLES: Array[Vector2] = [
 	Vector2.ZERO,
 	Vector2(ACTOR_CLEARANCE, 0.0),
@@ -229,13 +230,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func can_actor_move_to(candidate: Vector2, _actor: Node) -> bool:
+func can_actor_move_to(candidate: Vector2, actor: Node) -> bool:
 	if not _world_ready:
 		return false
 	if _interior_manager != null and _interior_manager.is_active():
 		return _interior_manager.can_move_to(candidate)
 	if _area_scene == null:
 		return true
+
+	# The overworld keeps collision on its canonical logical plane, so a level
+	# boundary needs an explicit traversal contract. Only short actor steps are
+	# checked here; follower spawn probes and other long-distance placement
+	# queries still use the normal walkability contract without pretending the
+	# straight line between two distant points is a movement path.
+	if actor is Node2D:
+		var from_world := (actor as Node2D).global_position
+		if (
+			from_world.distance_to(candidate) <= TOPOLOGY_TRAVERSAL_MAX_STEP
+			and not _area_scene.can_traverse_world_segment(from_world, candidate)
+		):
+			return false
+
 	for sample: Vector2 in CLEARANCE_SAMPLES:
 		if not _area_scene.is_walkable_world_position(candidate + sample):
 			return false
