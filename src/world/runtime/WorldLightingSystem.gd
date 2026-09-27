@@ -4,6 +4,10 @@ class_name WorldLightingSystem
 const SHADOW_GROUP := "world_shadow_caster"
 const LOCAL_LIGHT_GROUP := "world_local_light"
 
+const SHADOW_STYLE_PROJECTED := "projected"
+const SHADOW_STYLE_CONTACT := "contact"
+const SHADOW_STYLE_PROJECTED_SOFT := "projected_soft"
+
 const AMBIENT_COLOR := Color(0.88, 0.91, 0.96, 1.0)
 const SUN_COLOR := Color(1.0, 0.93, 0.80, 1.0)
 const SUN_ENERGY := 0.18
@@ -15,6 +19,7 @@ const LOCAL_LIGHT_RENDER_DISTANCE := 720.0
 const DISCOVERY_INTERVAL := 0.75
 const LIGHT_CULL_INTERVAL := 0.20
 const LIGHT_TEXTURE_SIZE := 64
+const SOFT_SHADOW_TEXTURE_SIZE := 64
 
 var _player: Node2D = null
 var _ambient: CanvasModulate = null
@@ -22,6 +27,7 @@ var _sun: DirectionalLight2D = null
 var _shadow_root: Node2D = null
 var _light_root: Node2D = null
 var _light_texture: Texture2D = null
+var _soft_shadow_texture: Texture2D = null
 var _shadow_entries: Dictionary = {}
 var _light_entries: Dictionary = {}
 var _discovery_elapsed := 0.0
@@ -34,6 +40,7 @@ func _ready() -> void:
 	_build_environment()
 	_build_runtime_roots()
 	_light_texture = _create_radial_light_texture()
+	_soft_shadow_texture = _create_soft_shadow_texture()
 
 
 func configure(player: Node2D) -> void:
@@ -149,24 +156,43 @@ func _discover_runtime_sources() -> void:
 
 
 func _register_shadow_caster(caster: Node2D) -> void:
-	var footprint_value = caster.get_meta("world_shadow_footprint", PackedVector2Array())
-	if not footprint_value is PackedVector2Array:
-		return
-	var footprint := footprint_value as PackedVector2Array
-	if footprint.size() < 3:
-		return
-
-	var polygon := Polygon2D.new()
-	polygon.name = "Shadow_%s" % caster.name
+	var style := String(caster.get_meta("world_shadow_style", SHADOW_STYLE_PROJECTED))
 	var opacity := clampf(float(caster.get_meta("world_shadow_opacity", 0.18)), 0.0, 0.55)
-	polygon.color = Color(SHADOW_COLOR.r, SHADOW_COLOR.g, SHADOW_COLOR.b, opacity)
-	_shadow_root.add_child(polygon)
+	var render_node: CanvasItem = null
+	var footprint := PackedVector2Array()
+
+	if style == SHADOW_STYLE_CONTACT or style == SHADOW_STYLE_PROJECTED_SOFT:
+		if _soft_shadow_texture == null:
+			return
+		var shadow_sprite := Sprite2D.new()
+		shadow_sprite.name = "Shadow_%s" % String(caster.name)
+		shadow_sprite.texture = _soft_shadow_texture
+		shadow_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		shadow_sprite.modulate = Color(SHADOW_COLOR.r, SHADOW_COLOR.g, SHADOW_COLOR.b, opacity)
+		_shadow_root.add_child(shadow_sprite)
+		render_node = shadow_sprite
+	else:
+		var footprint_value = caster.get_meta("world_shadow_footprint", PackedVector2Array())
+		if not footprint_value is PackedVector2Array:
+			return
+		footprint = (footprint_value as PackedVector2Array).duplicate()
+		if footprint.size() < 3:
+			return
+		var polygon := Polygon2D.new()
+		polygon.name = "Shadow_%s" % String(caster.name)
+		polygon.color = Color(SHADOW_COLOR.r, SHADOW_COLOR.g, SHADOW_COLOR.b, opacity)
+		_shadow_root.add_child(polygon)
+		render_node = polygon
+
+	if render_node == null:
+		return
 
 	var id := caster.get_instance_id()
 	_shadow_entries[id] = {
 		"caster": caster,
-		"polygon": polygon,
-		"footprint": footprint.duplicate(),
+		"render_node": render_node,
+		"footprint": footprint,
+		"style": style,
 		"dynamic": bool(caster.get_meta("world_shadow_dynamic", false)),
 	}
 	_update_shadow_geometry(_shadow_entries[id] as Dictionary)
@@ -210,29 +236,80 @@ func _update_dynamic_shadows() -> void:
 
 func _update_shadow_geometry(entry: Dictionary) -> void:
 	var caster = entry.get("caster")
-	var polygon := entry.get("polygon") as Polygon2D
-	var footprint_value = entry.get("footprint", PackedVector2Array())
-	if not is_instance_valid(caster) or polygon == null or not is_instance_valid(polygon):
-		return
-	if not caster is Node2D or not footprint_value is PackedVector2Array:
+	if not is_instance_valid(caster) or not caster is Node2D:
 		return
 
-	var caster_2d := caster as Node2D
+	var style := String(entry.get("style", SHADOW_STYLE_PROJECTED))
+	if style == SHADOW_STYLE_CONTACT or style == SHADOW_STYLE_PROJECTED_SOFT:
+		_update_soft_shadow(entry, caster as Node2D, style)
+	else:
+		_update_projected_polygon(entry, caster as Node2D)
+
+
+func _update_projected_polygon(entry: Dictionary, caster: Node2D) -> void:
+	var polygon := entry.get("render_node") as Polygon2D
+	var footprint_value = entry.get("footprint", PackedVector2Array())
+	if polygon == null or not is_instance_valid(polygon) or not footprint_value is PackedVector2Array:
+		return
+
 	var footprint := footprint_value as PackedVector2Array
 	var projected_points := PackedVector2Array()
-	var projection := SHADOW_PROJECTION_PER_HEIGHT * maxf(
-		0.0,
-		float(caster_2d.get_meta("world_shadow_height", 48.0))
-	)
+	var projection := _shadow_projection(caster)
 
 	for local_point: Vector2 in footprint:
-		var world_point := caster_2d.to_global(local_point)
+		var world_point := caster.to_global(local_point)
 		var shadow_point := _shadow_root.to_local(world_point)
 		projected_points.append(shadow_point)
 		projected_points.append(shadow_point + projection)
 
 	if projected_points.size() >= 3:
 		polygon.polygon = Geometry2D.convex_hull(projected_points)
+
+
+func _update_soft_shadow(entry: Dictionary, caster: Node2D, style: String) -> void:
+	var shadow_sprite := entry.get("render_node") as Sprite2D
+	if shadow_sprite == null or not is_instance_valid(shadow_sprite) or _soft_shadow_texture == null:
+		return
+
+	var anchor := Vector2.ZERO
+	var anchor_value = caster.get_meta("world_shadow_anchor", Vector2.ZERO)
+	if anchor_value is Vector2:
+		anchor = anchor_value as Vector2
+
+	var offset := Vector2.ZERO
+	var offset_value = caster.get_meta("world_shadow_offset", Vector2.ZERO)
+	if offset_value is Vector2:
+		offset = offset_value as Vector2
+
+	var size := Vector2(30.0, 10.0)
+	var size_value = caster.get_meta("world_shadow_size", size)
+	if size_value is Vector2:
+		size = size_value as Vector2
+	size.x = maxf(4.0, size.x)
+	size.y = maxf(3.0, size.y)
+
+	var world_anchor := caster.to_global(anchor)
+	var local_anchor := _shadow_root.to_local(world_anchor)
+	shadow_sprite.rotation = 0.0
+
+	if style == SHADOW_STYLE_PROJECTED_SOFT:
+		var projection := _shadow_projection(caster)
+		shadow_sprite.position = local_anchor + projection * 0.62 + offset
+		if projection.length_squared() > 0.001:
+			shadow_sprite.rotation = projection.angle()
+	else:
+		shadow_sprite.position = local_anchor + offset
+
+	var texture_size := _soft_shadow_texture.get_size()
+	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return
+	shadow_sprite.scale = Vector2(size.x / texture_size.x, size.y / texture_size.y)
+
+
+func _shadow_projection(caster: Node2D) -> Vector2:
+	var height := maxf(0.0, float(caster.get_meta("world_shadow_height", 48.0)))
+	var multiplier := maxf(0.0, float(caster.get_meta("world_shadow_projection_multiplier", 1.0)))
+	return SHADOW_PROJECTION_PER_HEIGHT * height * multiplier
 
 
 func _update_shadow_visibility() -> void:
@@ -242,18 +319,18 @@ func _update_shadow_visibility() -> void:
 			continue
 		var entry := entry_value as Dictionary
 		var caster = entry.get("caster")
-		var polygon := entry.get("polygon") as Polygon2D
-		if not is_instance_valid(caster) or polygon == null or not is_instance_valid(polygon):
+		var render_node := entry.get("render_node") as CanvasItem
+		if not is_instance_valid(caster) or render_node == null or not is_instance_valid(render_node):
 			continue
 		if not caster is Node2D:
-			polygon.visible = false
+			render_node.visible = false
 			continue
 		var caster_2d := caster as Node2D
 		var close_enough := (
 			_player == null
 			or caster_2d.global_position.distance_squared_to(_player.global_position) <= max_distance_sq
 		)
-		polygon.visible = caster_2d.is_visible_in_tree() and close_enough
+		render_node.visible = caster_2d.is_visible_in_tree() and close_enough
 
 
 func _update_local_lights() -> void:
@@ -300,9 +377,9 @@ func _prune_invalid_entries() -> void:
 		var caster = entry.get("caster")
 		if is_instance_valid(caster):
 			continue
-		var polygon := entry.get("polygon") as Polygon2D
-		if polygon != null and is_instance_valid(polygon):
-			polygon.queue_free()
+		var render_node := entry.get("render_node") as CanvasItem
+		if render_node != null and is_instance_valid(render_node):
+			render_node.queue_free()
 		_shadow_entries.erase(id)
 
 	for id in _light_entries.keys():
@@ -332,5 +409,25 @@ func _create_radial_light_texture() -> Texture2D:
 			var strength := clampf(1.0 - normalized_distance, 0.0, 1.0)
 			strength = strength * strength * (3.0 - 2.0 * strength)
 			image.set_pixel(x, y, Color(strength, strength, strength, strength))
+
+	return ImageTexture.create_from_image(image)
+
+
+func _create_soft_shadow_texture() -> Texture2D:
+	var image := Image.create(
+		SOFT_SHADOW_TEXTURE_SIZE,
+		SOFT_SHADOW_TEXTURE_SIZE,
+		false,
+		Image.FORMAT_RGBA8
+	)
+	var center := Vector2.ONE * (float(SOFT_SHADOW_TEXTURE_SIZE - 1) * 0.5)
+	var radius := float(SOFT_SHADOW_TEXTURE_SIZE) * 0.5
+
+	for y in range(SOFT_SHADOW_TEXTURE_SIZE):
+		for x in range(SOFT_SHADOW_TEXTURE_SIZE):
+			var normalized_distance := Vector2(float(x), float(y)).distance_to(center) / radius
+			var strength := clampf((1.0 - normalized_distance) / 0.58, 0.0, 1.0)
+			strength = strength * strength * (3.0 - 2.0 * strength)
+			image.set_pixel(x, y, Color(1.0, 1.0, 1.0, strength))
 
 	return ImageTexture.create_from_image(image)
