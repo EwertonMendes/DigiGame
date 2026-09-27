@@ -53,6 +53,11 @@ static func _build_road_network(root: Node2D) -> Dictionary:
 	var network := TOPOLOGY.road_network()
 	if network.is_empty():
 		return {"polygon_count": 0}
+	if String(network.get("mode", "")) == "painted_tiles":
+		# Painted roads are part of the ground batch. Keeping them out of the
+		# urban overlay removes a second geometry system and makes every road
+		# cell directly editable with the same brush used for other surfaces.
+		return {"polygon_count": 0}
 
 	var paths_value = network.get("paths", [])
 	if paths_value is Array and not paths_value.is_empty():
