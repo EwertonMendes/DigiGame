@@ -96,6 +96,9 @@ static func ground_override_at(global_grid: Vector2) -> Dictionary:
 		best = region.duplicate(true)
 	best.erase("grid_polygon")
 	best.erase("priority")
+	var authored_base = best.get("base_color", null)
+	if authored_base is Color and (authored_base as Color).is_equal_approx(Color.WHITE):
+		best.erase("base_color")
 	return best
 
 
