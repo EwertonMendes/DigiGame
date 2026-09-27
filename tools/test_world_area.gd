@@ -3,6 +3,9 @@ extends Node
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
 const MAP_CAPTURE := preload("res://src/debug/DebugWorldMapCapture.gd")
 const CITY_AUTHORING := preload("res://src/world/authoring/CentralCityAuthoringData.gd")
+const CITY_EDITOR_MATH := preload("res://src/world/authoring/CentralCityEditorMath.gd")
+const CITY_LAYOUT := preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
+const CITY_BAKER := preload("res://src/world/authoring/CentralCityBaker.gd")
 
 
 func _ready() -> void:
@@ -34,6 +37,31 @@ func _ready() -> void:
 		and CITY_AUTHORING.authored_road_count() == 20,
 		"Central City runtime must be derived from the visual Godot authoring scene rather than hand-edited layout JSON"
 	)
+	assert(
+		CITY_EDITOR_MATH.constrained_endpoint(
+			Vector2(0.0, 0.0),
+			Vector2(4.0, 0.0),
+			Vector2(6.0, 1.75),
+			0.5
+		).is_equal_approx(Vector2(6.0, 0.0)),
+		"Road endpoint editing must constrain to the original isometric axis instead of producing inverted drag behavior"
+	)
+	assert(
+		CITY_LAYOUT._axis_corridor(
+			Vector2(0.0, 0.0),
+			Vector2(3.0, 1.0),
+			3.0
+		).size() == 4,
+		"Road rendering must remain valid while an editor junction is temporarily off-axis"
+	)
+	var baked_snapshot := CITY_BAKER.load_snapshot()
+	if not baked_snapshot.is_empty():
+		assert(
+			hash(baked_snapshot) == hash(CITY_AUTHORING.snapshot_from_root(
+				load("res://scenes/world/central_city_authoring.tscn").instantiate()
+			)),
+			"Committed Central City baked data must match the editable authoring scene"
+		)
 	assert(
 		CITY_AUTHORING.building_anchor_grid("digilab", Vector2.ZERO).is_equal_approx(Vector2(-6.0, 10.0))
 		and CITY_AUTHORING.building_anchor_grid("training", Vector2.ZERO).is_equal_approx(Vector2(7.0, -3.0))
