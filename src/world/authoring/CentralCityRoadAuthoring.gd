@@ -14,6 +14,10 @@ class_name CentralCityRoadAuthoring
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
-		width = 4.0
-		default_color = Color(1.0, 0.69, 0.18, 0.92)
+		# The dedicated editor plugin draws the authoring handles at the actual
+		# rendered elevation. Hide the raw Line2D so designers never mistake the
+		# logical plane for the WYSIWYG road position.
+		visible = false
+		width = 1.0
+		default_color = Color.TRANSPARENT
 		antialiased = false
