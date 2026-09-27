@@ -10,6 +10,10 @@ The 2D viewport is WYSIWYG: the visible city is rebuilt by the same runtime buil
 
 Opening the authoring scene enables the **Central City** toolbar in the 2D editor.
 
+The toolbar belongs to the **scene**, not to the currently selected node. Selecting, moving, deleting or deselecting an authored object must not make it disappear. The **Central City ▾ / ▸** button explicitly expands or collapses the authoring controls; collapsing pauses custom handles/input while keeping the compact reopen button available.
+
+While a specialist tool such as Road, Prop, Surface, Transition or Building is active, clicking empty pavement keeps the current authored selection instead of letting Godot's stock 2D editor clear it. Use **Select** mode when native empty-click deselection is desired.
+
 - **Select** — direct selection/movement of authored objects.
 - **Road** — direct road editing.
 - **+ Road** — click a start and end point to create a snapped road.
