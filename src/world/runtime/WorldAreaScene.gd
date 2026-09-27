@@ -253,6 +253,10 @@ func is_void_world_position(world_position: Vector2) -> bool:
 	return CITY_TOPOLOGY.is_void_at_grid(CITY_TOPOLOGY.world_to_grid(world_position))
 
 
+func can_traverse_world_segment(from_world: Vector2, to_world: Vector2) -> bool:
+	return CITY_TOPOLOGY.can_traverse_world_segment(from_world, to_world)
+
+
 func get_decoration_count() -> int:
 	var total := 0
 	for section: WorldAreaSection in _section_list:
