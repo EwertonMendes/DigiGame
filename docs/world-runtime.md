@@ -52,6 +52,14 @@ Urban structure and repeatable decoration are authored separately. `CentralCityU
 
 Static world collision is represented by the authored walkability grid instead of duplicating every blocked cell into PhysicsServer shapes. Player clearance samples preserve collision margins; dynamic bodies and doorway Area2D triggers remain engine-native physics objects.
 
+### Dynamic exterior lighting
+
+Central City owns one `WorldLightingSystem` beside the area runtime rather than embedding ad-hoc light nodes in individual sections. A subtle `CanvasModulate` and global `DirectionalLight2D` establish the exterior daylight grade. Sun shadows are projected procedurally from the same ground-contact footprints already used by buildings, trees, actors and street furniture; no shadow PNGs are required. Static casters build their polygon once, while the player and party followers update only their small dynamic projections as they move.
+
+Street-prop lighting remains data-driven in `central_city_decor.json`. Approved lamps declare their light offset, color, energy and radius plus a logical shadow height. `CentralCityDecor.gd` translates that metadata into the common runtime groups consumed by `WorldLightingSystem`. Local `PointLight2D` nodes use a tiny generated radial texture, keep native shadows disabled for the first mobile/Web-safe pass, and are distance-culled around the player. Entering a service interior disables the exterior ambient grade, projected shadows and lamp lights until the player returns to the city.
+
+`WorldPerformanceMonitor` reports registered shadow casters, total local lights and currently active local lights alongside the existing FPS/draw-call counters so lighting cost remains visible during Web and device testing.
+
 Tree canopy sway is shader-driven. Leaf particles are only emitted in the player's nearby section neighborhood, managed by one area-level cadence rather than per-tree GDScript processing.
 
 World interaction candidates use a registry updated by SceneTree add/remove events and player movement instead of scanning the `world_interactable` group every frame.
