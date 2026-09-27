@@ -5,6 +5,7 @@ const AUTHORING_SCENE_PATH := "res://scenes/world/central_city_authoring.tscn"
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const DEFAULT_SECTION_SIZE := 14
+const BAKED_PATH := "res://assets/resources/world/central_city_baked.tres"
 
 static var _cache: Dictionary = {}
 static var _preview_override: Dictionary = {}
@@ -56,6 +57,7 @@ static func snapshot_from_root(root: Node) -> Dictionary:
 		"props_by_section": _parse_props(root, section_size),
 		"landscapes_by_section": _parse_landscapes(root, section_size),
 		"ground_regions": _parse_ground_regions(root),
+		"ground_paint": _parse_ground_paint(root),
 	}
 
 
@@ -120,6 +122,18 @@ static func landscape_cells(section_coord: Vector2i) -> Array[Vector2]:
 
 static func ground_override_at(global_grid: Vector2) -> Dictionary:
 	_ensure_cache()
+	var paint_value = _cache.get("ground_paint", {})
+	if paint_value is Dictionary:
+		var cell := Vector2i(roundi(global_grid.x), roundi(global_grid.y))
+		var key := "%d,%d" % [cell.x, cell.y]
+		var painted_surface := String((paint_value as Dictionary).get(key, ""))
+		if not painted_surface.is_empty():
+			return {
+				"surface": painted_surface,
+				"walkable": painted_surface != "water",
+				"render": painted_surface != "void",
+			}
+
 	var regions_value = _cache.get("ground_regions", [])
 	if not regions_value is Array:
 		return {}
@@ -169,6 +183,13 @@ static func _ensure_cache() -> void:
 	if not _preview_override.is_empty():
 		_cache = _preview_override.duplicate(true)
 		return
+	if not Engine.is_editor_hint() and ResourceLoader.exists(BAKED_PATH):
+		var baked = ResourceLoader.load(BAKED_PATH)
+		if baked != null:
+			var baked_value = baked.get("snapshot")
+			if baked_value is Dictionary and not (baked_value as Dictionary).is_empty():
+				_cache = (baked_value as Dictionary).duplicate(true)
+				return
 	if not ResourceLoader.exists(AUTHORING_SCENE_PATH):
 		push_error("CentralCityAuthoringData: missing %s" % AUTHORING_SCENE_PATH)
 		_cache = {
@@ -510,6 +531,14 @@ static func _parse_landscapes(root: Node, section_size: int) -> Dictionary:
 			result[key] = []
 		(result[key] as Array).append(local_grid)
 	return result
+
+
+static func _parse_ground_paint(root: Node) -> Dictionary:
+	var node := root.get_node_or_null("GroundPaint")
+	if node == null:
+		return {}
+	var value = node.get("cells")
+	return (value as Dictionary).duplicate(true) if value is Dictionary else {}
 
 
 static func _parse_ground_regions(root: Node) -> Array:
