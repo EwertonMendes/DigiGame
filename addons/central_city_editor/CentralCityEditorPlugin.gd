@@ -1293,7 +1293,7 @@ func _sample_surface_at_screen(screen: Vector2, root: Node) -> String:
 				return String((cells_value as Dictionary)[key])
 
 	var logical_world := MATH.grid_to_world(Vector2(cell))
-	var root_world := root.to_global(logical_world)
+	var root_world: Vector2 = (root as Node2D).to_global(logical_world)
 
 	# GroundOverrides are evaluated by priority at runtime, so sample them the
 	# same way in the editor.
