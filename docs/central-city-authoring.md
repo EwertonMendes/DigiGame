@@ -4,7 +4,9 @@ Central City is authored visually in Godot through:
 
 `res://scenes/world/central_city_authoring.tscn`
 
-This scene is the source of truth for map layout. The runtime still renders the city through the existing batched meshes, so editor convenience does not turn the city into thousands of runtime draw nodes.
+This scene is the source of truth for map layout and now uses a **WYSIWYG runtime preview**. The editor preview is built by the same Central City runtime builders used by the game: the same ground batching, micro-paver shader, roads, civic surfaces, 2.5D elevation, terrace structures, buildings, landscaping and street furniture. Authoring handles are a separate overlay and are hidden by default.
+
+The preview is editor-only. It is never persisted into the scene and is removed from the game runtime, so editor convenience does not turn Central City into thousands of live runtime nodes.
 
 ## Authoring tree
 
@@ -21,18 +23,30 @@ This scene is the source of truth for map layout. The runtime still renders the 
 
 The authoring subtree is removed when the game runs. Runtime systems parse it once and generate the same optimized terrain, roads, collision, lighting and 2.5D structures used before this migration.
 
+## Editor preview controls
+
+Select the **CentralCityAuthoring** root node in the Scene tree.
+
+- **Show Runtime Preview** should normally stay enabled. This is the real game-built city presentation.
+- **Show Edit Overlays** is disabled by default. Enable it only while selecting/moving authoring geometry.
+- **Auto Refresh Preview** rebuilds the runtime preview after you stop dragging/editing for a short moment.
+
+The edit overlay never tries to imitate the final road/building/tree art. It only shows thin handles over the real runtime preview, so visual defects can be judged against the same presentation the game uses.
+
 ## Editing a road
 
 1. Open `central_city_authoring.tscn`.
-2. Expand **Roads**.
-3. Select a road node.
-4. In the 2D viewport, use the normal Godot `Line2D` point handles to move its endpoints.
-5. In the Inspector:
+2. Select **CentralCityAuthoring** and enable **Show Edit Overlays**.
+3. Expand **Roads**.
+4. Select a road node.
+5. In the 2D viewport, use the normal Godot `Line2D` point handles to move its endpoints. The authoring line is intentionally thin; the real road remains visible below it.
+6. In the Inspector:
    - **Width Grid** changes road width.
    - **Surface** changes its paved surface.
    - **Tint** adjusts the selected surface without changing the base city floor.
    - **Level Id** chooses the presentation level.
-6. Save the scene and run the project.
+7. Wait a fraction of a second after the edit. The runtime preview rebuilds from the unsaved editor state, so you can inspect the real result before running the game.
+8. Save the scene and run the project when satisfied.
 
 Connected road endpoints should continue to meet at the same point. The headless regression checks graph connectivity, so accidentally separating a required connection will fail CI instead of silently shipping a broken route.
 
