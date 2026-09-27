@@ -34,7 +34,14 @@ static func build_for_section(
 	# to entrances, foundation edges, plaza borders and bridge heads instead of
 	# being scattered by a generic theme template.
 	var placements: Array = AUTHORING.decoration_placements(section_coord)
-	if placements.is_empty():
+	var visual_authoring_is_authoritative := AUTHORING.has_authoring_scene()
+
+	# An empty section in the visual authoring scene is intentional. Do not
+	# resurrect the old JSON decoration at its previous position after a
+	# designer moves the last prop into another section. The JSON sections /
+	# profiles are legacy compatibility only for builds that genuinely do not
+	# contain the visual authoring scene.
+	if placements.is_empty() and not visual_authoring_is_authoritative:
 		var sections_value = config.get("sections", {})
 		if sections_value is Dictionary:
 			var sections := sections_value as Dictionary
@@ -43,7 +50,7 @@ static func build_for_section(
 			if authored_value is Array:
 				placements = authored_value as Array
 
-	if placements.is_empty():
+	if placements.is_empty() and not visual_authoring_is_authoritative:
 		var profiles_value = config.get("profiles", {})
 		if not profiles_value is Dictionary:
 			return {"root": root, "count": 0, "assets": PackedStringArray()}
