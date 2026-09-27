@@ -76,6 +76,7 @@ const SURFACE_TECH_TEAL := "tech_teal"
 const SURFACE_TECH_BLUE := "tech_blue"
 const SURFACE_TECH_PURPLE := "tech_purple"
 const SURFACE_DARK := "dark"
+const SURFACE_ROAD := "road"
 const SURFACE_WATER := "water"
 const SURFACE_MARKET := "market"
 const SURFACE_TRAINING := "training"
@@ -116,7 +117,7 @@ static func surface_texture(surface: String) -> Texture2D:
 			path = GROUND_TECH_BLUE_PATH
 		SURFACE_TECH_PURPLE:
 			path = GROUND_TECH_PURPLE_PATH
-		SURFACE_DARK:
+		SURFACE_DARK, SURFACE_ROAD:
 			path = GROUND_DARK_PATH
 		SURFACE_WATER:
 			path = GROUND_WATER_PATH
@@ -160,7 +161,7 @@ static func surface_base_color(surface: String) -> Color:
 			return Color(0.39, 0.43, 0.48, 1.0)
 		SURFACE_TECH_PURPLE:
 			return Color(0.44, 0.40, 0.47, 1.0)
-		SURFACE_DARK:
+		SURFACE_DARK, SURFACE_ROAD:
 			return Color(0.27, 0.28, 0.29, 1.0)
 		SURFACE_WATER:
 			return Color(0.04, 0.58, 0.72, 1.0)
@@ -184,6 +185,7 @@ static func is_procedural_paver_surface(surface: String) -> bool:
 		SURFACE_TECH_BLUE,
 		SURFACE_TECH_PURPLE,
 		SURFACE_DARK,
+		SURFACE_ROAD,
 		SURFACE_MARKET,
 		SURFACE_TRAINING,
 	]
