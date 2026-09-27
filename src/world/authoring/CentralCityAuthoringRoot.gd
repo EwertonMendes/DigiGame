@@ -13,7 +13,6 @@ const AUTHORING_CONTAINERS := [
 	"Sections",
 	"Levels",
 	"Boundaries",
-	"Roads",
 	"Surfaces",
 	"GroundOverrides",
 	"Transitions",
@@ -50,7 +49,7 @@ const DEFAULT_REBUILD_DELAY_SECONDS := 0.42
 		if Engine.is_editor_hint() and _preview_lighting != null and is_instance_valid(_preview_lighting):
 			_preview_lighting.call("set_preview_time_hours", preview_hour)
 @export_range(0.15, 2.0, 0.05) var rebuild_delay_seconds := DEFAULT_REBUILD_DELAY_SECONDS
-@export var editor_notes := "The viewport renders the same Central City runtime builders used by the game. Enable Show Edit Overlays only while editing handles."
+@export var editor_notes := "The viewport renders the same runtime builders used by gameplay. Use the World Authoring toolbar for direct selection and tile painting; roads are painted ground cells, not linked geometry."
 
 var _preview_root: Node2D = null
 var _preview_area: Node2D = null
@@ -62,6 +61,21 @@ var _preview_dirty := false
 var _rebuild_in_progress := false
 var _rebuild_again := false
 var _pending_snapshot: Dictionary = {}
+
+
+func get_world_authoring_context() -> Dictionary:
+	return {
+		"title": display_name,
+		"paint_node": "GroundPaint",
+		"selectable_containers": [
+			"Buildings",
+			"Props",
+			"Landscapes",
+			"Transitions",
+			"Surfaces",
+			"GroundOverrides",
+		],
+	}
 
 
 func _ready() -> void:
