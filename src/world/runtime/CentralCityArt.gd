@@ -312,6 +312,52 @@ static func create_paver_polygon_batch(
 	return mesh_instance
 
 
+static func create_color_polygon_batch(
+	polygons: Array[Dictionary],
+	depth_order: int
+) -> MeshInstance2D:
+	var mesh_instance := MeshInstance2D.new()
+	mesh_instance.mesh = _build_color_polygon_batch_mesh(polygons)
+	mesh_instance.texture = null
+	mesh_instance.z_index = clampi(depth_order, -4000, 4000)
+	return mesh_instance
+
+
+static func _build_color_polygon_batch_mesh(polygons: Array[Dictionary]) -> ArrayMesh:
+	var vertices := PackedVector2Array()
+	var colors := PackedColorArray()
+	var indices := PackedInt32Array()
+
+	for spec: Dictionary in polygons:
+		var points_value = spec.get("points", PackedVector2Array())
+		if not points_value is PackedVector2Array:
+			continue
+		var points := points_value as PackedVector2Array
+		if points.size() < 3:
+			continue
+		var triangulated := Geometry2D.triangulate_polygon(points)
+		if triangulated.is_empty():
+			continue
+		var vertex_start := vertices.size()
+		var color: Color = spec.get("color", Color.WHITE)
+		for point: Vector2 in points:
+			vertices.append(point)
+			colors.append(color)
+		for raw_index in triangulated:
+			indices.append(vertex_start + int(raw_index))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_INDEX] = indices
+
+	var mesh := ArrayMesh.new()
+	if not vertices.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
 static func _build_paver_polygon_batch_mesh(polygons: Array[Dictionary]) -> ArrayMesh:
 	var vertices := PackedVector2Array()
 	var colors := PackedColorArray()
