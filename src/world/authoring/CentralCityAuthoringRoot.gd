@@ -6,6 +6,7 @@ const AUTHORING_DATA = preload("res://src/world/authoring/CentralCityAuthoringDa
 const CITY_TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 const CITY_LAYOUT = preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
 const WORLD_AREA_SCRIPT = preload("res://src/world/runtime/WorldAreaScene.gd")
+const LIGHTING_SCRIPT = preload("res://src/world/runtime/WorldLightingSystem.gd")
 
 const AUTHORING_CONTAINERS := [
 	"Sections",
@@ -42,10 +43,17 @@ const DEFAULT_REBUILD_DELAY_SECONDS := 0.42
 		if Engine.is_editor_hint() and is_inside_tree():
 			_apply_overlay_visibility()
 @export var auto_refresh_preview := true
+@export_range(0.0, 23.75, 0.25) var preview_hour := 12.0:
+	set(value):
+		preview_hour = fposmod(value, 24.0)
+		if Engine.is_editor_hint() and _preview_lighting != null and is_instance_valid(_preview_lighting):
+			_preview_lighting.call("set_preview_time_hours", preview_hour)
 @export_range(0.15, 2.0, 0.05) var rebuild_delay_seconds := DEFAULT_REBUILD_DELAY_SECONDS
 @export var editor_notes := "The viewport renders the same Central City runtime builders used by the game. Enable Show Edit Overlays only while editing handles."
 
 var _preview_root: Node2D = null
+var _preview_area: Node2D = null
+var _preview_lighting: Node2D = null
 var _signature_elapsed := 0.0
 var _dirty_elapsed := 0.0
 var _last_signature := 0
@@ -138,11 +146,16 @@ func _rebuild_runtime_preview() -> void:
 	CITY_TOPOLOGY.clear_cache()
 	CITY_LAYOUT.clear_cache()
 
+	var preview_container := Node2D.new()
+	preview_container.name = "__RuntimePreview"
+	preview_container.set_meta("central_city_editor_preview", true)
+	add_child(preview_container, false, Node.INTERNAL_MODE_BACK)
+	_preview_root = preview_container
+
 	var preview = WORLD_AREA_SCRIPT.new()
-	preview.name = "__RuntimePreview"
-	preview.set_meta("central_city_editor_preview", true)
-	add_child(preview, false, Node.INTERNAL_MODE_BACK)
-	_preview_root = preview as Node2D
+	preview.name = "Area"
+	preview_container.add_child(preview)
+	_preview_area = preview as Node2D
 
 	var area_value = snapshot.get("area", {})
 	var area_definition := (
@@ -154,13 +167,26 @@ func _rebuild_runtime_preview() -> void:
 	if not area_definition.is_empty():
 		configured = bool(await preview.configure(area_definition, null, null))
 
+	if configured and is_instance_valid(preview):
+		var lighting = LIGHTING_SCRIPT.new()
+		lighting.name = "Lighting"
+		preview_container.add_child(lighting)
+		_preview_lighting = lighting as Node2D
+		lighting.configure(null)
+		lighting.set_preview_time_hours(preview_hour)
+		# The preview is static until authoring data changes, so there is no
+		# reason to run the lighting discovery/culling loop every editor frame.
+		lighting.process_mode = Node.PROCESS_MODE_DISABLED
+
 	AUTHORING_DATA.clear_preview_snapshot()
 	CITY_TOPOLOGY.clear_cache()
 	CITY_LAYOUT.clear_cache()
 
-	if not configured and is_instance_valid(preview):
-		preview.queue_free()
+	if not configured and is_instance_valid(preview_container):
+		preview_container.queue_free()
 		_preview_root = null
+		_preview_area = null
+		_preview_lighting = null
 	elif configured and is_instance_valid(preview):
 		print("[CentralCityAuthoring] WYSIWYG preview ready sections=%d nodes=%d" % [
 			int(preview.get_section_count()),
@@ -178,6 +204,8 @@ func _clear_runtime_preview() -> void:
 	if _preview_root != null and is_instance_valid(_preview_root):
 		_preview_root.queue_free()
 	_preview_root = null
+	_preview_area = null
+	_preview_lighting = null
 
 
 func _apply_overlay_visibility() -> void:
