@@ -8,6 +8,7 @@ const BOUNDARY_SCRIPT = preload("res://src/world/authoring/CentralCityBoundaryAu
 const MATH = preload("res://src/world/authoring/CentralCityEditorMath.gd")
 const VALIDATOR = preload("res://src/world/authoring/CentralCityAuthoringValidator.gd")
 const BAKER = preload("res://src/world/authoring/CentralCityBaker.gd")
+const DECOR_CONFIG_PATH := "res://assets/resources/world/central_city_decor.json"
 
 const HANDLE_RADIUS := 8.0
 const HIT_RADIUS := 15.0
@@ -46,6 +47,7 @@ var _paint_last_cell := Vector2i(999999, 999999)
 var _ground_hover_cell := Vector2i(999999, 999999)
 var _creating_road := false
 var _road_creation_start := Vector2(INF, INF)
+var _decor_config_cache: Dictionary = {}
 
 
 func _enter_tree() -> void:
@@ -1073,6 +1075,19 @@ func _object_hit(screen: Vector2, root: Node, containers: Array[String]) -> Node
 		for child in container.get_children():
 			if child is Marker2D:
 				var marker := child as Marker2D
+				if container_name == "Props":
+					var prop_polygon := _prop_screen_polygon(marker)
+					if prop_polygon.size() >= 3 and Geometry2D.is_point_in_polygon(screen, prop_polygon):
+						var center := Vector2.ZERO
+						for point: Vector2 in prop_polygon:
+							center += point
+						center /= float(prop_polygon.size())
+						var distance := screen.distance_to(center)
+						if distance < best_distance:
+							best = marker
+							best_distance = distance
+						continue
+
 				var grid := MATH.world_to_grid(marker.position)
 				var elevation := 48.0 if grid.y < 19.5 else 0.0
 				var marker_screen := _visual_world_to_screen(marker.global_position + Vector2(0.0, -elevation))
@@ -1171,11 +1186,86 @@ func _commit_polygon_undo() -> void:
 
 
 func _draw_marker_handle(overlay: Control, marker: Marker2D) -> void:
+	if marker.get_parent() != null and marker.get_parent().name == "Props":
+		var prop_polygon := _prop_screen_polygon(marker)
+		if prop_polygon.size() >= 3:
+			var closed := prop_polygon.duplicate()
+			closed.append(prop_polygon[0])
+			overlay.draw_polyline(closed, SELECT_COLOR, 2.0, true)
+
 	var grid := MATH.world_to_grid(marker.position)
 	var elevation := 48.0 if grid.y < 19.5 else 0.0
 	var screen := _visual_world_to_screen(marker.global_position + Vector2(0.0, -elevation))
 	overlay.draw_circle(screen, 8.0, SELECT_COLOR)
 	overlay.draw_circle(screen, 13.0, SELECT_COLOR, false, 2.0)
+
+
+func _decor_config() -> Dictionary:
+	if not _decor_config_cache.is_empty():
+		return _decor_config_cache
+	if not FileAccess.file_exists(DECOR_CONFIG_PATH):
+		return {}
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(DECOR_CONFIG_PATH))
+	if parsed is Dictionary:
+		_decor_config_cache = (parsed as Dictionary).duplicate(true)
+	return _decor_config_cache
+
+
+func _decor_asset(asset_id: String) -> Dictionary:
+	var config := _decor_config()
+	var assets_value = config.get("assets", {})
+	if not assets_value is Dictionary:
+		return {}
+	var asset_value = (assets_value as Dictionary).get(asset_id, {})
+	return (asset_value as Dictionary).duplicate(true) if asset_value is Dictionary else {}
+
+
+func _array_vec2(value, fallback: Vector2 = Vector2.ZERO) -> Vector2:
+	if value is Vector2:
+		return value as Vector2
+	if value is Array and (value as Array).size() >= 2:
+		return Vector2(float(value[0]), float(value[1]))
+	return fallback
+
+
+func _prop_screen_polygon(marker: Marker2D) -> PackedVector2Array:
+	var asset_id := String(marker.get("asset_id"))
+	var asset := _decor_asset(asset_id)
+	if asset.is_empty():
+		return PackedVector2Array()
+
+	var source_size := Vector2.ZERO
+	var region_value = asset.get("region", [])
+	if region_value is Array and (region_value as Array).size() >= 4:
+		source_size = Vector2(float(region_value[2]), float(region_value[3]))
+	else:
+		var texture_path := String(asset.get("path", ""))
+		if not texture_path.is_empty():
+			var texture = ResourceLoader.load(texture_path)
+			if texture is Texture2D:
+				source_size = Vector2(
+					float((texture as Texture2D).get_width()),
+					float((texture as Texture2D).get_height())
+				)
+	if source_size.x <= 0.0 or source_size.y <= 0.0:
+		return PackedVector2Array()
+
+	var scale_value := maxf(0.001, float(asset.get("scale", 1.0)))
+	var foot := _array_vec2(asset.get("foot", [source_size.x * 0.5, source_size.y]))
+	var grid := MATH.world_to_grid(marker.position)
+	var elevation := 48.0 if grid.y < 19.5 else 0.0
+	var top_left := marker.position - foot * scale_value + Vector2(0.0, -elevation)
+	var size := source_size * scale_value
+	var local_corners := PackedVector2Array([
+		top_left,
+		top_left + Vector2(size.x, 0.0),
+		top_left + size,
+		top_left + Vector2(0.0, size.y),
+	])
+	var screen_corners := PackedVector2Array()
+	for point: Vector2 in local_corners:
+		screen_corners.append(_authoring_local_to_screen(point))
+	return screen_corners
 
 
 func _draw_polygon_outline(overlay: Control, polygon: Polygon2D) -> void:
