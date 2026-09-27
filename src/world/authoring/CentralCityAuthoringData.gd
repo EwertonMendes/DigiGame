@@ -7,10 +7,56 @@ const TILE_HEIGHT := 32.0
 const DEFAULT_SECTION_SIZE := 14
 
 static var _cache: Dictionary = {}
+static var _preview_override: Dictionary = {}
 
 
 static func clear_cache() -> void:
 	_cache.clear()
+
+
+static func set_preview_snapshot(snapshot: Dictionary) -> void:
+	_preview_override = snapshot.duplicate(true)
+	_cache = _preview_override.duplicate(true)
+
+
+static func clear_preview_snapshot() -> void:
+	_preview_override.clear()
+	_cache.clear()
+
+
+static func snapshot_from_root(root: Node) -> Dictionary:
+	if root == null:
+		return {}
+	var section_size := int(root.get("section_size")) if root.get("section_size") != null else DEFAULT_SECTION_SIZE
+	var area := {
+		"id": String(root.get("area_id")),
+		"region": String(root.get("region_id")),
+		"display_name": String(root.get("display_name")),
+		"subtitle": String(root.get("subtitle")),
+		"section_size": section_size,
+		"sections": _parse_sections(root),
+	}
+	var transition_data := _parse_transitions(root)
+	var road_network := _parse_roads(root, transition_data)
+	var topology := {
+		"version": 2,
+		"description": "Generated from the visual Central City authoring scene.",
+		"levels": _parse_levels(root),
+		"level_break": _parse_boundary(root),
+		"stairs": transition_data.get("stairs", []),
+		"voids": transition_data.get("voids", []),
+		"bridges": transition_data.get("bridges", []),
+		"road_network": road_network,
+	}
+	return {
+		"area": area,
+		"topology": topology,
+		"urban_layout": _parse_surface_regions(root),
+		"buildings": _parse_buildings(root),
+		"props_by_section": _parse_props(root, section_size),
+		"landscapes_by_section": _parse_landscapes(root, section_size),
+		"ground_regions": _parse_ground_regions(root),
+	}
 
 
 static func has_authoring_scene() -> bool:
@@ -120,6 +166,9 @@ static func authored_road_count() -> int:
 static func _ensure_cache() -> void:
 	if not _cache.is_empty():
 		return
+	if not _preview_override.is_empty():
+		_cache = _preview_override.duplicate(true)
+		return
 	if not ResourceLoader.exists(AUTHORING_SCENE_PATH):
 		push_error("CentralCityAuthoringData: missing %s" % AUTHORING_SCENE_PATH)
 		_cache = {
@@ -142,37 +191,7 @@ static func _ensure_cache() -> void:
 		push_error("CentralCityAuthoringData: could not instantiate authoring scene")
 		return
 
-	var section_size := int(root.get("section_size")) if root.get("section_size") != null else DEFAULT_SECTION_SIZE
-	var area := {
-		"id": String(root.get("area_id")),
-		"region": String(root.get("region_id")),
-		"display_name": String(root.get("display_name")),
-		"subtitle": String(root.get("subtitle")),
-		"section_size": section_size,
-		"sections": _parse_sections(root),
-	}
-	var transition_data := _parse_transitions(root)
-	var road_network := _parse_roads(root, transition_data)
-	var topology := {
-		"version": 2,
-		"description": "Generated at runtime from the visual Central City authoring scene.",
-		"levels": _parse_levels(root),
-		"level_break": _parse_boundary(root),
-		"stairs": transition_data.get("stairs", []),
-		"voids": transition_data.get("voids", []),
-		"bridges": transition_data.get("bridges", []),
-		"road_network": road_network,
-	}
-
-	_cache = {
-		"area": area,
-		"topology": topology,
-		"urban_layout": _parse_surface_regions(root),
-		"buildings": _parse_buildings(root),
-		"props_by_section": _parse_props(root, section_size),
-		"landscapes_by_section": _parse_landscapes(root, section_size),
-		"ground_regions": _parse_ground_regions(root),
-	}
+	_cache = snapshot_from_root(root)
 	root.free()
 
 
