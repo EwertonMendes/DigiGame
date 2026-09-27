@@ -227,13 +227,14 @@ func _ready() -> void:
 	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
+	var road_paving := area.get_node_or_null("CityGround/Surface_road") as MeshInstance2D
 	var civic_paving := area.get_node_or_null("CityGround/Surface_stone_soft") as MeshInstance2D
 	assert(
-		main_paving != null and civic_paving != null,
-		"Central City must keep one continuous gray circulation field plus civic accent paving"
+		main_paving != null and road_paving != null and civic_paving != null,
+		"Central City must batch base pavement, painted road cells and civic accent paving"
 	)
 	assert(
-		main_paving.texture == null and civic_paving.texture == null,
+		main_paving.texture == null and road_paving.texture == null and civic_paving.texture == null,
 		"Central City hardscape tops must be procedural rather than one texture per gameplay tile"
 	)
 	var paver_material := main_paving.material as ShaderMaterial
