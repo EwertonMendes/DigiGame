@@ -226,7 +226,7 @@ elevation_px = 0
 
 [node name="SouthTerraceBreak" type="Line2D" parent="Boundaries"]
 script = ExtResource("6_boundary")
-points = PackedVector2Array(Vector2(-1472, -128), Vector2(704, 960))
+points = PackedVector2Array(-1472, -128, 704, 960)
 boundary_id = "south_terrace_break"
 upper_level = "upper_civic"
 lower_level = "south_terrace"
@@ -234,7 +234,7 @@ lower_threshold_grid_y = 19.5
 
 [node name="road_00_west_gate_digilab" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-1120, -240), Vector2(-496, 72))
+points = PackedVector2Array(-1120, -240, -496, 72)
 road_id = "road_00_west_gate_digilab"
 level_id = "upper_civic"
 width_grid = 3.2
@@ -246,7 +246,7 @@ editor_elevation_px = 48
 
 [node name="road_01_digilab_central" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-496, 72), Vector2(-96, 272))
+points = PackedVector2Array(-496, 72, -96, 272)
 road_id = "road_01_digilab_central"
 level_id = "upper_civic"
 width_grid = 3.2
@@ -258,7 +258,7 @@ editor_elevation_px = 48
 
 [node name="road_02_central_hospital" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-96, 272), Vector2(352, 496))
+points = PackedVector2Array(-96, 272, 352, 496)
 road_id = "road_02_central_hospital"
 level_id = "upper_civic"
 width_grid = 3.2
@@ -270,7 +270,7 @@ editor_elevation_px = 48
 
 [node name="road_03_hospital_east_gate" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(352, 496), Vector2(800, 720))
+points = PackedVector2Array(352, 496, 800, 720)
 road_id = "road_03_hospital_east_gate"
 level_id = "upper_civic"
 width_grid = 3.2
@@ -282,7 +282,7 @@ editor_elevation_px = 48
 
 [node name="road_04_central_training" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-96, 272), Vector2(320, 64))
+points = PackedVector2Array(-96, 272, 320, 64)
 road_id = "road_04_central_training"
 level_id = "upper_civic"
 width_grid = 3
@@ -294,7 +294,7 @@ editor_elevation_px = 48
 
 [node name="road_05_training_archive_turn" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(320, 64), Vector2(896, -224))
+points = PackedVector2Array(320, 64, 896, -224)
 road_id = "road_05_training_archive_turn"
 level_id = "upper_civic"
 width_grid = 3
@@ -306,7 +306,7 @@ editor_elevation_px = 48
 
 [node name="road_06_archive_turn_archive" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(896, -224), Vector2(1344, 0))
+points = PackedVector2Array(896, -224, 1344, 0)
 road_id = "road_06_archive_turn_archive"
 level_id = "upper_civic"
 width_grid = 2.8
@@ -318,7 +318,7 @@ editor_elevation_px = 48
 
 [node name="road_07_digilab_west_stair_top" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-496, 72), Vector2(-760, 204))
+points = PackedVector2Array(-496, 72, -760, 204)
 road_id = "road_07_digilab_west_stair_top"
 level_id = "upper_civic"
 width_grid = 2.8
@@ -330,7 +330,7 @@ editor_elevation_px = 48
 
 [node name="road_08_central_central_stair_top" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-96, 272), Vector2(-360, 404))
+points = PackedVector2Array(-96, 272, -360, 404)
 road_id = "road_08_central_central_stair_top"
 level_id = "upper_civic"
 width_grid = 3
@@ -342,7 +342,7 @@ editor_elevation_px = 48
 
 [node name="road_09_central_stair_bottom_west_stair_bottom" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-464, 456), Vector2(-864, 256))
+points = PackedVector2Array(-464, 456, -864, 256)
 road_id = "road_09_central_stair_bottom_west_stair_bottom"
 level_id = "south_terrace"
 width_grid = 2.6
@@ -354,7 +354,7 @@ editor_elevation_px = 0
 
 [node name="road_10_central_stair_bottom_east_bridge_north" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-464, 456), Vector2(0, 688))
+points = PackedVector2Array(-464, 456, 0, 688)
 road_id = "road_10_central_stair_bottom_east_bridge_north"
 level_id = "south_terrace"
 width_grid = 2.6
@@ -366,7 +366,7 @@ editor_elevation_px = 0
 
 [node name="road_11_central_stair_bottom_market" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-464, 456), Vector2(-608, 528))
+points = PackedVector2Array(-464, 456, -608, 528)
 road_id = "road_11_central_stair_bottom_market"
 level_id = "south_terrace"
 width_grid = 3
@@ -378,7 +378,7 @@ editor_elevation_px = 0
 
 [node name="road_12_west_bridge_south_lower_west" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-992, 320), Vector2(-1136, 392))
+points = PackedVector2Array(-992, 320, -1136, 392)
 road_id = "road_12_west_bridge_south_lower_west"
 level_id = "south_terrace"
 width_grid = 2.6
@@ -390,7 +390,7 @@ editor_elevation_px = 0
 
 [node name="road_13_east_bridge_south_lower_east" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-128, 752), Vector2(-272, 824))
+points = PackedVector2Array(-128, 752, -272, 824)
 road_id = "road_13_east_bridge_south_lower_east"
 level_id = "south_terrace"
 width_grid = 2.6
@@ -402,7 +402,7 @@ editor_elevation_px = 0
 
 [node name="road_14_southwest_lower_west" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-1344, 288), Vector2(-1136, 392))
+points = PackedVector2Array(-1344, 288, -1136, 392)
 road_id = "road_14_southwest_lower_west"
 level_id = "south_terrace"
 width_grid = 2.6
@@ -414,7 +414,7 @@ editor_elevation_px = 0
 
 [node name="road_15_lower_west_lower_center" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-1136, 392), Vector2(-736, 592))
+points = PackedVector2Array(-1136, 392, -736, 592)
 road_id = "road_15_lower_west_lower_center"
 level_id = "south_terrace"
 width_grid = 2.6
@@ -426,7 +426,7 @@ editor_elevation_px = 0
 
 [node name="road_16_lower_center_lower_east" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-736, 592), Vector2(-272, 824))
+points = PackedVector2Array(-736, 592, -272, 824)
 road_id = "road_16_lower_center_lower_east"
 level_id = "south_terrace"
 width_grid = 2.6
@@ -438,7 +438,7 @@ editor_elevation_px = 0
 
 [node name="road_17_lower_east_southeast" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-272, 824), Vector2(-160, 880))
+points = PackedVector2Array(-272, 824, -160, 880)
 road_id = "road_17_lower_east_southeast"
 level_id = "south_terrace"
 width_grid = 2.6
@@ -450,7 +450,7 @@ editor_elevation_px = 0
 
 [node name="road_18_market_lower_center" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-608, 528), Vector2(-736, 592))
+points = PackedVector2Array(-608, 528, -736, 592)
 road_id = "road_18_market_lower_center"
 level_id = "south_terrace"
 width_grid = 3
@@ -462,7 +462,7 @@ editor_elevation_px = 0
 
 [node name="road_19_lower_center_south_gate" type="Line2D" parent="Roads"]
 script = ExtResource("3_road")
-points = PackedVector2Array(Vector2(-736, 592), Vector2(-1056, 752))
+points = PackedVector2Array(-736, 592, -1056, 752)
 road_id = "road_19_lower_center_south_gate"
 level_id = "south_terrace"
 width_grid = 3
@@ -474,7 +474,7 @@ editor_elevation_px = 0
 
 [node name="plaza_north_apron" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(0, 108.8), Vector2(230.4, 224), Vector2(153.6, 262.4), Vector2(-76.8, 147.2))
+polygon = PackedVector2Array(0, 108.8, 230.4, 224, 153.6, 262.4, -76.8, 147.2)
 region_id = "plaza_north_apron"
 layer_id = "central_plaza"
 level_id = "upper_civic"
@@ -486,7 +486,7 @@ editor_elevation_px = 48
 
 [node name="plaza_south_apron" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-172.8, 195.2), Vector2(57.6, 310.4), Vector2(-57.6, 368), Vector2(-288, 252.8))
+polygon = PackedVector2Array(-172.8, 195.2, 57.6, 310.4, -57.6, 368, -288, 252.8)
 region_id = "plaza_south_apron"
 layer_id = "central_plaza"
 level_id = "upper_civic"
@@ -498,7 +498,7 @@ editor_elevation_px = 48
 
 [node name="plaza_west_apron" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-70.4, 144), Vector2(6.4, 182.4), Vector2(-108.8, 240), Vector2(-185.6, 201.6))
+polygon = PackedVector2Array(-70.4, 144, 6.4, 182.4, -108.8, 240, -185.6, 201.6)
 region_id = "plaza_west_apron"
 layer_id = "central_plaza"
 level_id = "upper_civic"
@@ -510,7 +510,7 @@ editor_elevation_px = 48
 
 [node name="plaza_east_apron" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(83.2, 220.8), Vector2(160, 259.2), Vector2(44.8, 316.8), Vector2(-32, 278.4))
+polygon = PackedVector2Array(83.2, 220.8, 160, 259.2, 44.8, 316.8, -32, 278.4)
 region_id = "plaza_east_apron"
 layer_id = "central_plaza"
 level_id = "upper_civic"
@@ -522,7 +522,7 @@ editor_elevation_px = 48
 
 [node name="digilab_forecourt" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-585.6, -43.2), Vector2(-294.4, 102.4), Vector2(-515.2, 212.8), Vector2(-806.4, 67.2))
+polygon = PackedVector2Array(-585.6, -43.2, -294.4, 102.4, -515.2, 212.8, -806.4, 67.2)
 region_id = "digilab_forecourt"
 layer_id = "service_forecourts"
 level_id = "upper_civic"
@@ -534,7 +534,7 @@ editor_elevation_px = 48
 
 [node name="training_forecourt" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(272, -62.4), Vector2(572.8, 88), Vector2(316.8, 216), Vector2(16, 65.6))
+polygon = PackedVector2Array(272, -62.4, 572.8, 88, 316.8, 216, 16, 65.6)
 region_id = "training_forecourt"
 layer_id = "service_forecourts"
 level_id = "upper_civic"
@@ -546,7 +546,7 @@ editor_elevation_px = 48
 
 [node name="hospital_forecourt" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(268.8, 384), Vector2(576, 537.6), Vector2(355.2, 648), Vector2(48, 494.4))
+polygon = PackedVector2Array(268.8, 384, 576, 537.6, 355.2, 648, 48, 494.4)
 region_id = "hospital_forecourt"
 layer_id = "service_forecourts"
 level_id = "upper_civic"
@@ -558,7 +558,7 @@ editor_elevation_px = 48
 
 [node name="market_forecourt" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-684.8, 464), Vector2(-480, 566.4), Vector2(-614.4, 633.6), Vector2(-819.2, 531.2))
+polygon = PackedVector2Array(-684.8, 464, -480, 566.4, -614.4, 633.6, -819.2, 531.2)
 region_id = "market_forecourt"
 layer_id = "service_forecourts"
 level_id = "south_terrace"
@@ -570,7 +570,7 @@ editor_elevation_px = 0
 
 [node name="archive_forecourt" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(1353.6, -148.8), Vector2(1641.6, -4.8), Vector2(1344, 144), Vector2(1056, 0))
+polygon = PackedVector2Array(1353.6, -148.8, 1641.6, -4.8, 1344, 144, 1056, 0)
 region_id = "archive_forecourt"
 layer_id = "service_forecourts"
 level_id = "upper_civic"
@@ -582,7 +582,7 @@ editor_elevation_px = 48
 
 [node name="verdant_terrace_court" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(0, -640), Vector2(128, -576), Vector2(16, -520), Vector2(-112, -584))
+polygon = PackedVector2Array(0, -640, 128, -576, 16, -520, -112, -584)
 region_id = "verdant_terrace_court"
 layer_id = "district_courts"
 level_id = "upper_civic"
@@ -594,7 +594,7 @@ editor_elevation_px = 48
 
 [node name="northwest_residences_court" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(432, -520), Vector2(592, -440), Vector2(464, -376), Vector2(304, -456))
+polygon = PackedVector2Array(432, -520, 592, -440, 464, -376, 304, -456)
 region_id = "northwest_residences_court"
 layer_id = "district_courts"
 level_id = "upper_civic"
@@ -606,7 +606,7 @@ editor_elevation_px = 48
 
 [node name="west_heights_court" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-448, -512), Vector2(-304, -440), Vector2(-425.6, -379.2), Vector2(-569.6, -451.2))
+polygon = PackedVector2Array(-448, -512, -304, -440, -425.6, -379.2, -569.6, -451.2)
 region_id = "west_heights_court"
 layer_id = "district_courts"
 level_id = "upper_civic"
@@ -618,7 +618,7 @@ editor_elevation_px = 48
 
 [node name="hospital_gardens_court" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(880, 152), Vector2(1040, 232), Vector2(912, 296), Vector2(752, 216))
+polygon = PackedVector2Array(880, 152, 1040, 232, 912, 296, 752, 216)
 region_id = "hospital_gardens_court"
 layer_id = "district_courts"
 level_id = "upper_civic"
@@ -630,7 +630,7 @@ editor_elevation_px = 48
 
 [node name="southwest_gardens_court" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-1504, 112), Vector2(-1360, 184), Vector2(-1472, 240), Vector2(-1616, 168))
+polygon = PackedVector2Array(-1504, 112, -1360, 184, -1472, 240, -1616, 168)
 region_id = "southwest_gardens_court"
 layer_id = "district_courts"
 level_id = "south_terrace"
@@ -642,7 +642,7 @@ editor_elevation_px = 0
 
 [node name="southeast_commons_court" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-288, 720), Vector2(-144, 792), Vector2(-256, 848), Vector2(-400, 776))
+polygon = PackedVector2Array(-288, 720, -144, 792, -256, 848, -400, 776)
 region_id = "southeast_commons_court"
 layer_id = "district_courts"
 level_id = "south_terrace"
@@ -654,7 +654,7 @@ editor_elevation_px = 0
 
 [node name="south_residences_court" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-1360, 376), Vector2(-1216, 448), Vector2(-1328, 504), Vector2(-1472, 432))
+polygon = PackedVector2Array(-1360, 376, -1216, 448, -1328, 504, -1472, 432)
 region_id = "south_residences_court"
 layer_id = "district_courts"
 level_id = "south_terrace"
@@ -666,7 +666,7 @@ editor_elevation_px = 0
 
 [node name="southeast_residences_court" type="Polygon2D" parent="Surfaces"]
 script = ExtResource("4_surface")
-polygon = PackedVector2Array(Vector2(-464, 824), Vector2(-320, 896), Vector2(-432, 952), Vector2(-576, 880))
+polygon = PackedVector2Array(-464, 824, -320, 896, -432, 952, -576, 880)
 region_id = "southeast_residences_court"
 layer_id = "district_courts"
 level_id = "south_terrace"
@@ -678,7 +678,7 @@ editor_elevation_px = 0
 
 [node name="CentralCivicRing" type="Polygon2D" parent="GroundOverrides"]
 script = ExtResource("11_ground")
-polygon = PackedVector2Array(Vector2(0, 144), Vector2(160, 224), Vector2(0, 304), Vector2(-160, 224))
+polygon = PackedVector2Array(0, 144, 160, 224, 0, 304, -160, 224)
 region_id = "CentralCivicRing"
 surface = "stone_soft"
 render = true
@@ -688,7 +688,7 @@ priority = 10
 
 [node name="CentralPool" type="Polygon2D" parent="GroundOverrides"]
 script = ExtResource("11_ground")
-polygon = PackedVector2Array(Vector2(0, 176), Vector2(96, 224), Vector2(0, 272), Vector2(-96, 224))
+polygon = PackedVector2Array(0, 176, 96, 224, 0, 272, -96, 224)
 region_id = "CentralPool"
 surface = "water"
 render = true
@@ -698,7 +698,7 @@ priority = 20
 
 [node name="NorthCanal" type="Polygon2D" parent="GroundOverrides"]
 script = ExtResource("11_ground")
-polygon = PackedVector2Array(Vector2(800, -352), Vector2(1120, -192), Vector2(992, -128), Vector2(672, -288))
+polygon = PackedVector2Array(800, -352, 1120, -192, 992, -128, 672, -288)
 region_id = "NorthCanal"
 surface = "water"
 render = true
@@ -708,7 +708,7 @@ priority = 10
 
 [node name="NorthCanalBridge" type="Polygon2D" parent="GroundOverrides"]
 script = ExtResource("11_ground")
-polygon = PackedVector2Array(Vector2(928, -288), Vector2(992, -256), Vector2(864, -192), Vector2(800, -224))
+polygon = PackedVector2Array(928, -288, 992, -256, 864, -192, 800, -224)
 region_id = "NorthCanalBridge"
 surface = "main"
 render = true
@@ -718,7 +718,7 @@ priority = 20
 
 [node name="west_stairs" type="Polygon2D" parent="Transitions"]
 script = ExtResource("7_transition")
-polygon = PackedVector2Array(Vector2(-808, 180), Vector2(-712, 228), Vector2(-816, 280), Vector2(-912, 232))
+polygon = PackedVector2Array(-808, 180, -712, 228, -816, 280, -912, 232)
 kind = "stairs"
 transition_id = "west_stairs"
 from_level = "upper_civic"
@@ -727,7 +727,7 @@ steps = 6
 
 [node name="central_stairs" type="Polygon2D" parent="Transitions"]
 script = ExtResource("7_transition")
-polygon = PackedVector2Array(Vector2(-424, 372), Vector2(-296, 436), Vector2(-400, 488), Vector2(-528, 424))
+polygon = PackedVector2Array(-424, 372, -296, 436, -400, 488, -528, 424)
 kind = "stairs"
 transition_id = "central_stairs"
 from_level = "upper_civic"
@@ -736,27 +736,27 @@ steps = 6
 
 [node name="west_bridge" type="Polygon2D" parent="Transitions"]
 script = ExtResource("7_transition")
-polygon = PackedVector2Array(Vector2(-912, 232), Vector2(-816, 280), Vector2(-944, 344), Vector2(-1040, 296))
+polygon = PackedVector2Array(-912, 232, -816, 280, -944, 344, -1040, 296)
 kind = "bridge"
 transition_id = "west_bridge"
 level_id = "south_terrace"
 
 [node name="east_bridge" type="Polygon2D" parent="Transitions"]
 script = ExtResource("7_transition")
-polygon = PackedVector2Array(Vector2(-48, 664), Vector2(48, 712), Vector2(-80, 776), Vector2(-176, 728))
+polygon = PackedVector2Array(-48, 664, 48, 712, -80, 776, -176, 728)
 kind = "bridge"
 transition_id = "east_bridge"
 level_id = "south_terrace"
 
 [node name="west_future_water" type="Polygon2D" parent="Transitions"]
 script = ExtResource("7_transition")
-polygon = PackedVector2Array(Vector2(-1120, 144), Vector2(-736, 336), Vector2(-832, 384), Vector2(-1216, 192))
+polygon = PackedVector2Array(-1120, 144, -736, 336, -832, 384, -1216, 192)
 kind = "void"
 transition_id = "west_future_water"
 
 [node name="east_future_water" type="Polygon2D" parent="Transitions"]
 script = ExtResource("7_transition")
-polygon = PackedVector2Array(Vector2(-288, 560), Vector2(224, 816), Vector2(128, 864), Vector2(-384, 608))
+polygon = PackedVector2Array(-288, 560, 224, 816, 128, 864, -384, 608)
 kind = "void"
 transition_id = "east_future_water"
 
