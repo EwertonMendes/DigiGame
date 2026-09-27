@@ -872,9 +872,9 @@ func _ready() -> void:
 	assert(
 		training_forecourt is Dictionary
 		and training_lot is Dictionary
-		and String((training_forecourt as Dictionary).get("surface", "")) == "main"
+		and String((training_forecourt as Dictionary).get("surface", "")) == "road"
 		and String((training_lot as Dictionary).get("surface", "")) == "main",
-		"Training Center must be surrounded by one continuous gray circulation field"
+		"Training Center lot must stay on base paving while its street approach is independently painted as road"
 	)
 	assert(
 		training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingCenterFoundation/Top") != null,
