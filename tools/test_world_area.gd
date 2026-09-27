@@ -26,6 +26,21 @@ func _ready() -> void:
 	assert(not bool(player.call("is_touch_run_enabled")), "Touch WALK must restore normal movement")
 	assert(run_button.text == "RUN", "Touch run button must return to RUN after walking is restored")
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
+	var lighting := world.call("get_lighting_system") as Node
+	assert(lighting != null, "Campaign world must own one centralized dynamic lighting runtime")
+	assert(
+		lighting.get_node_or_null("AmbientModulate") is CanvasModulate
+		and lighting.get_node_or_null("SunLight") is DirectionalLight2D,
+		"World lighting must combine ambient modulation with one global sun light"
+	)
+	assert(
+		int(lighting.call("get_shadow_caster_count")) >= 8,
+		"Central City must register its authored geometry and actors as procedural shadow casters"
+	)
+	assert(
+		int(lighting.call("get_local_light_count")) >= 6,
+		"Approved city lamps must register as data-driven local lights"
+	)
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
 	assert(
 		area.get_ground_render_node_count() <= 16,
@@ -112,6 +127,13 @@ func _ready() -> void:
 		first_plaza_lamp != null
 		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 48.0)),
 		"Lamp sprite must be lowered so the center of its visible pedestal sits on the authored ground contact"
+	)
+	assert(
+		first_plaza_lamp.is_in_group("world_shadow_caster")
+		and first_plaza_lamp.is_in_group("world_local_light")
+		and first_plaza_lamp.has_meta("world_light_color")
+		and first_plaza_lamp.has_meta("world_shadow_height"),
+		"City lamps must expose one shared runtime contract for light and procedural shadow generation"
 	)
 	var first_plaza_lamp_world := plaza_section.global_position + first_plaza_lamp_local
 	assert(
