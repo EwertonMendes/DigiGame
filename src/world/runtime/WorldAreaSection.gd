@@ -300,8 +300,11 @@ func world_to_grid(world: Vector2) -> Vector2:
 
 func _build_section() -> void:
 	_prepare_ground_data()
-	_build_natural_details()
+	# Structural content registers its exact building/blocker footprints first.
+	# Landscaping is resolved afterwards so a tree island can never be authored
+	# over a building, staircase, bridge, route, or future-water void.
 	_build_theme_content()
+	_build_natural_details()
 	_build_city_decorations()
 
 
@@ -324,6 +327,7 @@ func _prepare_ground_data() -> void:
 			_ground_tiles.append({
 				"surface": surface,
 				"position": position + grid_to_world(Vector2(cell)),
+				"elevation_px": CITY_TOPOLOGY.elevation_at_grid(Vector2(global_grid)),
 				"base_color": presentation.get("base_color", CITY.surface_base_color(surface)),
 				"detail_tint": presentation.get("detail_tint", Color.WHITE),
 				"detail_alpha": float(presentation.get("detail_alpha", 1.0)),
@@ -359,9 +363,9 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 			"walkable": true,
 		}
 
-	var terrace_presentation := _south_terrace_ground_presentation(global_grid)
-	if not terrace_presentation.is_empty():
-		return terrace_presentation
+	var topology_rule := CITY_TOPOLOGY.ground_rule_for_cell(global_grid)
+	if not topology_rule.is_empty():
+		return topology_rule
 
 	if theme == "canal":
 		if cell.y >= 5 and cell.y <= 8 and cell.x >= 2 and cell.x <= 11:
@@ -382,49 +386,6 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 		"base_color": CITY_PAVEMENT_LIGHT,
 		"walkable": true,
 	}
-
-
-func _south_terrace_ground_presentation(global_grid: Vector2i) -> Dictionary:
-	var x := global_grid.x
-	var y := global_grid.y
-
-	# The upper civic deck genuinely stops here. No base paving is rendered on
-	# the break itself: wall segments cover blocked spans and the authored stair
-	# mesh covers the two walkable openings.
-	if (
-		y == SOUTH_TERRACE_EDGE_Y
-		and x >= SOUTH_TERRACE_X_MIN
-		and x <= SOUTH_TERRACE_X_MAX
-	):
-		return {
-			"render": false,
-			"walkable": _is_south_terrace_stair_x(x),
-		}
-
-	# Future-water pockets are true holes in the city floor. The world backdrop
-	# remains visible through them until the replacement water system exists.
-	# Bridge cells also omit ground, but stay walkable because the dedicated
-	# bridge slabs in CentralCityTerrace span the void.
-	if y >= SOUTH_TRENCH_Y_MIN and y <= SOUTH_TRENCH_Y_MAX:
-		if x >= -13 and x <= -1:
-			return {
-				"render": false,
-				"walkable": x >= -7 and x <= -4,
-			}
-		if x >= 13 and x <= 29:
-			return {
-				"render": false,
-				"walkable": x >= 20 and x <= 23,
-			}
-
-	return {}
-
-
-func _is_south_terrace_stair_x(x: int) -> bool:
-	return (
-		(x >= -7 and x <= -4)
-		or (x >= 5 and x <= 9)
-	)
 
 
 func _global_grid(cell: Vector2i) -> Vector2i:
