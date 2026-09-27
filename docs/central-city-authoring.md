@@ -4,7 +4,7 @@ The editable source of truth for Central City is:
 
 `res://scenes/world/central_city_authoring.tscn`
 
-The 2D viewport is WYSIWYG: the visible city is rebuilt by the same runtime builders used by gameplay (ground batching, micro-paver shader, road meshes, civic surfaces, 2.5D elevation, retaining walls, stairs, bridges, buildings, props, landscaping, lighting and world backdrop). Editor controls are drawn separately on top and are never exported as gameplay nodes.
+The 2D viewport is WYSIWYG: the visible city is rebuilt by the same runtime builders used by gameplay (ground batching, painted road cells, micro-paver shader, civic surfaces, 2.5D elevation, retaining walls, stairs, bridges, buildings, props, landscaping, lighting and world backdrop). Editor controls are drawn separately on top and are never exported as gameplay nodes.
 
 ## World Authoring toolbar
 
