@@ -1,5 +1,5 @@
 {
-  "version": 19,
+  "version": 20,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -73,8 +73,12 @@
           1,
           1
         ],
-        "energy": 0.72,
-        "radius": 155
+        "energy": 1.28,
+        "radius": 205,
+        "day_factor": 0.015,
+        "glow_radius": 42,
+        "glow_energy": 0.88,
+        "glow_day_factor": 0
       }
     },
     "lamp_yellow": {
@@ -149,8 +153,12 @@
           0.2,
           1
         ],
-        "energy": 0.74,
-        "radius": 150
+        "energy": 1.22,
+        "radius": 195,
+        "day_factor": 0.015,
+        "glow_radius": 40,
+        "glow_energy": 0.82,
+        "glow_day_factor": 0
       }
     },
     "bench_ne": {
