@@ -46,6 +46,12 @@ system is authored. Logical collision remains on the flat gameplay plane, but pl
 followers, terrain, buildings, props, shadows and depth sorting all resolve presentation height
 from the same topology.
 
+The level break spans the complete playable city width. Runtime movement also validates the
+short logical segment between an actor's current position and its next movement step: the
+upper/lower boundary can only be crossed through an authored stair corridor, and stair flights
+reject lateral side entry. This prevents climbing or dropping the terrace at retaining-wall
+edges without introducing 3D physics or changing battle movement.
+
 ## Raised urban structure
 
 `CentralCityUrbanPlan.gd` owns the visual foundation language:
