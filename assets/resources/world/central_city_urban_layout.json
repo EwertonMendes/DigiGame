@@ -1,21 +1,21 @@
 {
-  "version": 2,
-  "description": "Authored Central City circulation and terrace network: bright micro-paver sidewalks, darker recessed routes, service forecourts, and lower South Terrace bridge approaches.",
+  "version": 3,
+  "description": "Simplified Central City circulation: bright civic hardscape, medium-dark intentional routes, compact service forecourts, and fewer neighborhood links. Structural depth belongs to dedicated terrace architecture rather than road overlays.",
   "layers": [
     {
       "id": "civic_primary",
       "surface": "dark",
       "tint": [
-        1.18,
-        1.2,
-        1.24,
+        1.48,
+        1.5,
+        1.54,
         1
       ],
-      "border_width": 2.5,
+      "border_width": 1.6,
       "border_color": [
-        0.14,
-        0.16,
-        0.18,
+        0.29,
+        0.31,
+        0.33,
         1
       ],
       "polygons": [
@@ -23,20 +23,20 @@
           "name": "west_civic_avenue",
           "grid_polygon": [
             [
-              -27,
-              8.5
+              -24,
+              8.8
             ],
             [
               5,
-              8.5
+              8.8
             ],
             [
               5,
-              12
+              11.6
             ],
             [
-              -27,
-              12
+              -24,
+              11.6
             ]
           ]
         },
@@ -45,19 +45,19 @@
           "grid_polygon": [
             [
               9,
-              8.5
+              8.8
             ],
             [
-              41,
-              8.5
+              35,
+              8.8
             ],
             [
-              41,
-              12
+              35,
+              11.6
             ],
             [
               9,
-              12
+              11.6
             ]
           ]
         },
@@ -65,20 +65,20 @@
           "name": "training_spine",
           "grid_polygon": [
             [
-              5,
+              5.2,
               -6
             ],
             [
-              9,
+              8.8,
               -6
             ],
             [
-              9,
-              5
+              8.8,
+              5.2
             ],
             [
-              5,
-              5
+              5.2,
+              5.2
             ]
           ]
         },
@@ -86,236 +86,102 @@
           "name": "south_spine_upper",
           "grid_polygon": [
             [
-              5,
+              5.2,
               9
             ],
             [
-              9,
+              8.8,
               9
             ],
             [
-              9,
-              18.5
+              8.8,
+              18.1
             ],
             [
-              5,
-              18.5
+              5.2,
+              18.1
             ]
           ]
-        },
-        {
-          "name": "south_central_bridge",
-          "grid_polygon": [
-            [
-              5,
-              21.6
-            ],
-            [
-              9,
-              21.6
-            ],
-            [
-              9,
-              25.4
-            ],
-            [
-              5,
-              25.4
-            ]
-          ],
-          "depth_pixels": 2.5
         },
         {
           "name": "south_spine_lower",
           "grid_polygon": [
             [
-              5,
-              25
+              5.2,
+              20.2
             ],
             [
-              9,
-              25
+              8.8,
+              20.2
             ],
             [
-              9,
-              41
+              8.8,
+              40
             ],
             [
-              5,
-              41
+              5.2,
+              40
             ]
           ]
         },
         {
-          "name": "north_canal_south_approach",
+          "name": "archive_approach",
           "grid_polygon": [
             [
-              5,
-              -19.5
+              5.2,
+              -26
             ],
             [
-              9,
-              -19.5
+              8.8,
+              -26
             ],
             [
-              9,
-              -6
+              8.8,
+              -19.4
             ],
             [
-              5,
-              -6
+              5.2,
+              -19.4
             ]
           ]
         },
         {
-          "name": "north_canal_north_approach",
+          "name": "archive_crosswalk",
           "grid_polygon": [
             [
-              5,
-              -27
-            ],
-            [
-              9,
-              -27
-            ],
-            [
-              9,
-              -23.5
-            ],
-            [
-              5,
-              -23.5
-            ]
-          ]
-        },
-        {
-          "name": "archive_cross_avenue",
-          "grid_polygon": [
-            [
-              7.5,
-              -27
-            ],
-            [
-              25,
-              -27
-            ],
-            [
-              25,
-              -23.5
-            ],
-            [
-              7.5,
-              -23.5
-            ]
-          ]
-        },
-        {
-          "name": "east_service_axis",
-          "grid_polygon": [
-            [
-              20,
-              -23.5
+              7.8,
+              -26
             ],
             [
               24,
-              -23.5
+              -26
             ],
             [
               24,
-              8.5
+              -23.4
             ],
             [
-              20,
-              8.5
-            ]
-          ]
-        },
-        {
-          "name": "west_service_axis",
-          "grid_polygon": [
-            [
-              -8,
-              -20
-            ],
-            [
-              -4,
-              -20
-            ],
-            [
-              -4,
-              8.5
-            ],
-            [
-              -8,
-              8.5
-            ]
-          ]
-        },
-        {
-          "name": "southwest_axis",
-          "grid_polygon": [
-            [
-              -8,
-              12
-            ],
-            [
-              -4,
-              12
-            ],
-            [
-              -4,
-              34
-            ],
-            [
-              -8,
-              34
-            ]
-          ]
-        },
-        {
-          "name": "southeast_axis",
-          "grid_polygon": [
-            [
-              20,
-              12
-            ],
-            [
-              24,
-              12
-            ],
-            [
-              24,
-              34
-            ],
-            [
-              20,
-              34
+              7.8,
+              -23.4
             ]
           ]
         }
-      ],
-      "depth_pixels": 5.5,
-      "depth_color": [
-        0.08,
-        0.1,
-        0.12,
-        0.82
       ]
     },
     {
       "id": "central_plaza",
       "surface": "stone_soft",
       "tint": [
-        1.15,
-        1.16,
-        1.16,
+        1.13,
+        1.14,
+        1.14,
         1
       ],
-      "border_width": 2,
+      "border_width": 1.5,
       "border_color": [
-        0.34,
-        0.42,
         0.43,
+        0.47,
+        0.48,
         1
       ],
       "polygons": [
@@ -323,20 +189,20 @@
           "name": "plaza_north_apron",
           "grid_polygon": [
             [
-              3.5,
-              3.5
+              3.6,
+              3.6
             ],
             [
-              10.5,
-              3.5
+              10.4,
+              3.6
             ],
             [
-              10.5,
-              5.8
+              10.4,
+              5.7
             ],
             [
-              3.5,
-              5.8
+              3.6,
+              5.7
             ]
           ]
         },
@@ -344,20 +210,20 @@
           "name": "plaza_south_apron",
           "grid_polygon": [
             [
-              3.5,
-              9.2
+              3.6,
+              9.3
             ],
             [
-              10.5,
-              9.2
+              10.4,
+              9.3
             ],
             [
-              10.5,
-              12.5
+              10.4,
+              12.3
             ],
             [
-              3.5,
-              12.5
+              3.6,
+              12.3
             ]
           ]
         },
@@ -365,20 +231,20 @@
           "name": "plaza_west_apron",
           "grid_polygon": [
             [
-              3.5,
-              5.8
+              3.6,
+              5.7
             ],
             [
-              5.8,
-              5.8
+              5.7,
+              5.7
             ],
             [
-              5.8,
-              9.2
+              5.7,
+              9.3
             ],
             [
-              3.5,
-              9.2
+              3.6,
+              9.3
             ]
           ]
         },
@@ -386,20 +252,20 @@
           "name": "plaza_east_apron",
           "grid_polygon": [
             [
-              8.2,
-              5.8
+              8.3,
+              5.7
             ],
             [
-              10.5,
-              5.8
+              10.4,
+              5.7
             ],
             [
-              10.5,
-              9.2
+              10.4,
+              9.3
             ],
             [
-              8.2,
-              9.2
+              8.3,
+              9.3
             ]
           ]
         }
@@ -409,16 +275,16 @@
       "id": "service_forecourts",
       "surface": "stone_soft",
       "tint": [
-        1,
-        1,
-        1,
+        1.02,
+        1.02,
+        1.02,
         1
       ],
-      "border_width": 2,
+      "border_width": 1.5,
       "border_color": [
-        0.28,
-        0.31,
-        0.32,
+        0.39,
+        0.41,
+        0.42,
         1
       ],
       "polygons": [
@@ -426,33 +292,33 @@
           "name": "digilab_forecourt",
           "surface": "tech_teal",
           "tint": [
-            1.22,
-            1.18,
-            1.12,
+            1.2,
+            1.16,
+            1.1,
             1
           ],
           "border_color": [
-            0.24,
-            0.56,
+            0.3,
+            0.5,
             0.43,
             1
           ],
           "grid_polygon": [
             [
               -10,
-              8.5
+              8.7
             ],
             [
-              -2,
-              8.5
+              -2.2,
+              8.7
             ],
             [
-              -2,
-              14.5
+              -2.2,
+              14.2
             ],
             [
               -10,
-              14.5
+              14.2
             ]
           ]
         },
@@ -460,33 +326,33 @@
           "name": "training_forecourt",
           "surface": "training",
           "tint": [
-            1.12,
-            1.12,
-            1.08,
+            1.1,
+            1.1,
+            1.07,
             1
           ],
           "border_color": [
-            0.34,
-            0.48,
-            0.34,
+            0.39,
+            0.46,
+            0.39,
             1
           ],
           "grid_polygon": [
             [
-              2.5,
-              -6
+              2.8,
+              -5.8
             ],
             [
-              11.5,
-              -6
+              11.2,
+              -5.8
             ],
             [
-              11.5,
-              1.5
+              11.2,
+              1.2
             ],
             [
-              2.5,
-              1.5
+              2.8,
+              1.2
             ]
           ]
         },
@@ -494,33 +360,33 @@
           "name": "hospital_forecourt",
           "surface": "tech_blue",
           "tint": [
-            1.24,
             1.2,
-            1.15,
+            1.17,
+            1.13,
             1
           ],
           "border_color": [
-            0.24,
-            0.45,
-            0.62,
+            0.31,
+            0.43,
+            0.55,
             1
           ],
           "grid_polygon": [
             [
-              16.5,
-              8.5
+              16.8,
+              8.7
             ],
             [
-              25.5,
-              8.5
+              25.2,
+              8.7
             ],
             [
-              25.5,
-              14.5
+              25.2,
+              14.2
             ],
             [
-              16.5,
-              14.5
+              16.8,
+              14.2
             ]
           ]
         },
@@ -528,33 +394,33 @@
           "name": "market_forecourt",
           "surface": "market",
           "tint": [
-            1.08,
-            1.06,
+            0.98,
+            1,
             1.02,
             1
           ],
           "border_color": [
-            0.62,
-            0.47,
-            0.22,
+            0.52,
+            0.43,
+            0.27,
             1
           ],
           "grid_polygon": [
             [
-              2.5,
-              25
+              4,
+              25.2
             ],
             [
-              11.5,
-              25
+              10,
+              25.2
             ],
             [
-              11.5,
-              31
+              10,
+              29.2
             ],
             [
-              2.5,
-              31
+              4,
+              29.2
             ]
           ]
         },
@@ -562,33 +428,33 @@
           "name": "archive_forecourt",
           "surface": "tech_purple",
           "tint": [
-            1.16,
-            1.16,
-            1.15,
+            1.12,
+            1.12,
+            1.12,
             1
           ],
           "border_color": [
-            0.48,
-            0.31,
-            0.59,
+            0.45,
+            0.36,
+            0.52,
             1
           ],
           "grid_polygon": [
             [
-              16.5,
-              -27
+              17,
+              -26.5
             ],
             [
-              25.5,
-              -27
+              25,
+              -26.5
             ],
             [
-              25.5,
-              -16.5
+              25,
+              -17
             ],
             [
-              16.5,
-              -16.5
+              17,
+              -17
             ]
           ]
         }
@@ -596,60 +462,39 @@
     },
     {
       "id": "secondary_walks",
-      "surface": "dark",
+      "surface": "main",
       "tint": [
-        1.32,
-        1.34,
-        1.38,
+        0.82,
+        0.83,
+        0.84,
         1
       ],
-      "border_width": 1.75,
+      "border_width": 1.2,
       "border_color": [
-        0.17,
-        0.19,
-        0.21,
+        0.39,
+        0.4,
+        0.41,
         1
       ],
       "polygons": [
         {
-          "name": "verdant_link",
-          "grid_polygon": [
-            [
-              -20,
-              -19.5
-            ],
-            [
-              -4,
-              -19.5
-            ],
-            [
-              -4,
-              -17
-            ],
-            [
-              -20,
-              -17
-            ]
-          ]
-        },
-        {
           "name": "west_heights_link",
           "grid_polygon": [
             [
-              -23,
-              -8.5
+              -18,
+              -8.2
             ],
             [
-              -4,
-              -8.5
+              -4.2,
+              -8.2
             ],
             [
-              -4,
-              -5.5
+              -4.2,
+              -6.1
             ],
             [
-              -23,
-              -5.5
+              -18,
+              -6.1
             ]
           ]
         },
@@ -657,172 +502,81 @@
           "name": "east_heights_link",
           "grid_polygon": [
             [
-              24,
+              24.2,
               -8
             ],
             [
-              36,
+              33.5,
               -8
             ],
             [
-              36,
-              -5
+              33.5,
+              -5.8
             ],
             [
-              24,
-              -5
+              24.2,
+              -5.8
             ]
           ]
         },
         {
-          "name": "southwest_garden_link",
+          "name": "south_market_link",
           "grid_polygon": [
             [
-              -20,
-              18.5
+              -7.5,
+              29.5
             ],
             [
-              -4,
-              18.5
+              5.2,
+              29.5
             ],
             [
-              -4,
-              21.5
+              5.2,
+              31.7
             ],
             [
-              -20,
-              21.5
+              -7.5,
+              31.7
             ]
           ]
         },
         {
-          "name": "east_garden_link",
+          "name": "south_east_link",
           "grid_polygon": [
             [
-              24,
-              18.5
+              8.8,
+              29.5
             ],
             [
-              36,
-              18.5
+              22.5,
+              29.5
             ],
             [
-              36,
-              21.5
+              22.5,
+              31.7
             ],
             [
-              24,
-              21.5
-            ]
-          ]
-        },
-        {
-          "name": "south_residence_west_link",
-          "grid_polygon": [
-            [
-              -8,
-              32
-            ],
-            [
-              5,
-              32
-            ],
-            [
-              5,
-              35
-            ],
-            [
-              -8,
-              35
-            ]
-          ]
-        },
-        {
-          "name": "south_residence_east_link",
-          "grid_polygon": [
-            [
-              9,
-              32
-            ],
-            [
-              24,
-              32
-            ],
-            [
-              24,
-              35
-            ],
-            [
-              9,
-              35
-            ]
-          ]
-        },
-        {
-          "name": "lower_west_garden_link",
-          "grid_polygon": [
-            [
-              -19,
-              29
-            ],
-            [
-              -4,
-              29
-            ],
-            [
-              -4,
-              31.5
-            ],
-            [
-              -19,
-              31.5
-            ]
-          ]
-        },
-        {
-          "name": "lower_east_garden_link",
-          "grid_polygon": [
-            [
-              24,
-              29
-            ],
-            [
-              33,
-              29
-            ],
-            [
-              33,
-              31.5
-            ],
-            [
-              24,
-              31.5
+              8.8,
+              31.7
             ]
           ]
         }
-      ],
-      "depth_pixels": 4,
-      "depth_color": [
-        0.09,
-        0.11,
-        0.13,
-        0.74
       ]
     },
     {
       "id": "district_courts",
       "surface": "stone_soft",
       "tint": [
-        1.1,
-        1.11,
-        1.11,
+        1.05,
+        1.06,
+        1.06,
         1
       ],
-      "border_width": 1.5,
+      "border_width": 1,
       "border_color": [
-        0.43,
-        0.45,
-        0.46,
+        0.47,
+        0.48,
+        0.49,
         1
       ],
       "polygons": [
@@ -876,37 +630,16 @@
               -9
             ],
             [
-              -18,
+              -18.5,
               -9
             ],
             [
-              -18,
-              -5
+              -18.5,
+              -5.2
             ],
             [
               -23,
-              -5
-            ]
-          ]
-        },
-        {
-          "name": "digilab_gardens_court",
-          "grid_polygon": [
-            [
-              -9.5,
-              -9
-            ],
-            [
-              -4.5,
-              -9
-            ],
-            [
-              -4.5,
-              -5
-            ],
-            [
-              -9.5,
-              -5
+              -5.2
             ]
           ]
         },
@@ -932,86 +665,23 @@
           ]
         },
         {
-          "name": "east_heights_court",
-          "grid_polygon": [
-            [
-              31.5,
-              -8
-            ],
-            [
-              36.5,
-              -8
-            ],
-            [
-              36.5,
-              -4
-            ],
-            [
-              31.5,
-              -4
-            ]
-          ]
-        },
-        {
-          "name": "west_commons_court",
-          "grid_polygon": [
-            [
-              -23,
-              5
-            ],
-            [
-              -18,
-              5
-            ],
-            [
-              -18,
-              9
-            ],
-            [
-              -23,
-              9
-            ]
-          ]
-        },
-        {
           "name": "southwest_gardens_court",
           "grid_polygon": [
             [
-              -21,
-              18
+              -20,
+              27
             ],
             [
-              -16,
-              18
+              -15.5,
+              27
             ],
             [
-              -16,
-              22
+              -15.5,
+              30.5
             ],
             [
-              -21,
-              22
-            ]
-          ]
-        },
-        {
-          "name": "southwest_commons_court",
-          "grid_polygon": [
-            [
-              -10,
-              26
-            ],
-            [
-              -5,
-              26
-            ],
-            [
-              -5,
-              30
-            ],
-            [
-              -10,
-              30
+              -20,
+              30.5
             ]
           ]
         },
@@ -1020,40 +690,19 @@
           "grid_polygon": [
             [
               18,
-              26
+              27
             ],
             [
-              23,
-              26
+              22.5,
+              27
             ],
             [
-              23,
-              30
+              22.5,
+              30.5
             ],
             [
               18,
-              30
-            ]
-          ]
-        },
-        {
-          "name": "east_gardens_court",
-          "grid_polygon": [
-            [
-              31.5,
-              18
-            ],
-            [
-              36.5,
-              18
-            ],
-            [
-              36.5,
-              22
-            ],
-            [
-              31.5,
-              22
+              30.5
             ]
           ]
         },
@@ -1062,19 +711,19 @@
           "grid_polygon": [
             [
               -9.5,
-              32
+              33
             ],
             [
-              -4.5,
-              32
+              -5,
+              33
             ],
             [
-              -4.5,
-              36
+              -5,
+              36.5
             ],
             [
               -9.5,
-              36
+              36.5
             ]
           ]
         },
@@ -1083,61 +732,19 @@
           "grid_polygon": [
             [
               18.5,
-              32
+              33
             ],
             [
-              23.5,
-              32
+              23,
+              33
             ],
             [
-              23.5,
-              36
+              23,
+              36.5
             ],
             [
               18.5,
-              36
-            ]
-          ]
-        },
-        {
-          "name": "lower_garden_court",
-          "grid_polygon": [
-            [
-              -20.5,
-              29.5
-            ],
-            [
-              -15.5,
-              29.5
-            ],
-            [
-              -15.5,
-              33.5
-            ],
-            [
-              -20.5,
-              33.5
-            ]
-          ]
-        },
-        {
-          "name": "lower_east_terrace_court",
-          "grid_polygon": [
-            [
-              28.5,
-              29
-            ],
-            [
-              33.5,
-              29
-            ],
-            [
-              33.5,
-              33
-            ],
-            [
-              28.5,
-              33
+              36.5
             ]
           ]
         }
