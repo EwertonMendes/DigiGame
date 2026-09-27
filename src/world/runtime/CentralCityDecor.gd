@@ -19,7 +19,8 @@ static func build_for_section(
 	theme: String,
 	global_origin: Vector2,
 	can_place: Callable,
-	register_blocker: Callable
+	register_blocker: Callable,
+	elevation_at_grid: Callable
 ) -> Dictionary:
 	var root := Node2D.new()
 	root.name = "CityDecor"
@@ -88,6 +89,10 @@ static func build_for_section(
 		var foot := _vec2(asset.get("foot", [texture.get_width() * 0.5, texture.get_height()]))
 		var scale_value := float(asset.get("scale", 1.0))
 		var world_foot := _grid_to_world(cell)
+		var elevation_px := 0.0
+		if elevation_at_grid.is_valid():
+			elevation_px = maxf(0.0, float(elevation_at_grid.call(cell)))
+		var visual_offset := Vector2(0.0, -elevation_px)
 		# The sprite depth anchor is intentionally the front-most foot. Collision
 		# uses the centroid of the four contact points, which sits slightly behind
 		# that sorting anchor on an isometric bench.
@@ -102,7 +107,9 @@ static func build_for_section(
 				accent,
 				surround_style == "landscape"
 			)
+			surround.position = visual_offset
 			surround.z_index = GROUND_DECOR_Z
+			surround.set_meta("world_elevation_px", elevation_px)
 			root.add_child(surround)
 
 		var sprite := Sprite2D.new()
@@ -111,7 +118,8 @@ static func build_for_section(
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		sprite.scale = Vector2.ONE * scale_value
 		var center_to_foot := foot - Vector2(texture.get_width(), texture.get_height()) * 0.5
-		sprite.position = world_foot - center_to_foot * scale_value
+		sprite.position = world_foot - center_to_foot * scale_value + visual_offset
+		sprite.set_meta("world_elevation_px", elevation_px)
 		if String(asset.get("layer", "")) == "ground":
 			sprite.z_index = GROUND_DECOR_Z
 		elif String(placement.get("depth", "world")) == "behind_building":
@@ -120,7 +128,7 @@ static func build_for_section(
 			# instead of painting the post over the facade.
 			sprite.z_index = 840
 		else:
-			sprite.z_index = DECOR_BASE_Z + int(round(global_origin.y + world_foot.y))
+			sprite.z_index = DECOR_BASE_Z + int(round(global_origin.y + world_foot.y - elevation_px))
 		root.add_child(sprite)
 
 		var collision_polygon := _collision_polygon(ground_center, asset)
@@ -128,7 +136,10 @@ static func build_for_section(
 			register_blocker.call(collision_polygon, asset_id)
 			sprite.set_meta("collision_polygon", collision_polygon)
 		sprite.set_meta("ground_center", ground_center)
-		_configure_lighting_metadata(sprite, asset, collision_polygon)
+		var visual_collision_polygon := PackedVector2Array()
+		for point: Vector2 in collision_polygon:
+			visual_collision_polygon.append(point + visual_offset)
+		_configure_lighting_metadata(sprite, asset, visual_collision_polygon)
 		used[asset_id] = true
 		count += 1
 
