@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/world/runtime/WorldAreaScene.gd" id="1_area"]
+[ext_resource type="PackedScene" path="res://scenes/world/central_city_authoring.tscn" id="2_authoring"]
 
 [node name="CentralCityArea" type="Node2D"]
 script = ExtResource("1_area")
+
+[node name="Authoring" parent="." instance=ExtResource("2_authoring")]
