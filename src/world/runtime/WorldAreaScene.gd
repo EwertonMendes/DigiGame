@@ -8,6 +8,7 @@ signal load_finished
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const CITY_LAYOUT = preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
+const CITY_TERRACE = preload("res://src/world/runtime/CentralCityTerrace.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
@@ -28,6 +29,7 @@ var _last_ambient_section := Vector2i(999999, 999999)
 var _ground_tile_count := 0
 var _urban_layout_polygon_count := 0
 var _urban_layout_layer_count := 0
+var _south_terrace_render_node_count := 0
 
 
 func configure(area_definition: Dictionary, player: Node2D, world_controller: Node) -> bool:
@@ -39,6 +41,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	_ground_tile_count = 0
 	_urban_layout_polygon_count = 0
 	_urban_layout_layer_count = 0
+	_south_terrace_render_node_count = 0
 	_exterior_active = false
 	visible = false
 	process_mode = Node.PROCESS_MODE_DISABLED
@@ -49,7 +52,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		return false
 	var raw_sections := raw_sections_value as Array
 
-	var total: int = raw_sections.size() + 2
+	var total: int = raw_sections.size() + 3
 	var completed: int = 0
 	var ground_tiles: Array[Dictionary] = []
 	load_started.emit(total)
@@ -104,17 +107,25 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	completed += 1
 	load_progress.emit(completed, total)
 
+	var south_terrace := CITY_TERRACE.build()
+	south_terrace.add_to_group("world_urban_layout")
+	add_child(south_terrace)
+	_south_terrace_render_node_count = south_terrace.get_child_count()
+	completed += 1
+	load_progress.emit(completed, total)
+
 	_exterior_active = true
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
 	_update_ambient_vfx(true)
 	load_finished.emit()
-	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d urban_layers=%d urban_polygons=%d decor=%d" % [
+	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d urban_layers=%d urban_polygons=%d terrace_nodes=%d decor=%d" % [
 		_sections.size(),
 		get_runtime_node_count(),
 		get_ground_render_node_count(),
 		_urban_layout_layer_count,
 		_urban_layout_polygon_count,
+		_south_terrace_render_node_count,
 		get_decoration_count(),
 	])
 	return completed == total
@@ -216,6 +227,10 @@ func get_urban_layout_layer_count() -> int:
 func get_urban_layout_render_node_count() -> int:
 	var layout := get_node_or_null("CityUrbanLayout")
 	return 0 if layout == null else layout.get_child_count()
+
+
+func get_south_terrace_render_node_count() -> int:
+	return _south_terrace_render_node_count
 
 
 func get_decoration_count() -> int:
