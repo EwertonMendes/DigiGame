@@ -62,11 +62,5 @@ func _lighting_metric(method_name: String) -> int:
 	return int(_lighting.call(method_name))
 
 
-func _lighting_metric(method_name: String) -> int:
-	if _lighting == null or not is_instance_valid(_lighting) or not _lighting.has_method(method_name):
-		return 0
-	return int(_lighting.call(method_name))
-
-
 func get_last_snapshot() -> Dictionary:
 	return _last_snapshot.duplicate(true)
