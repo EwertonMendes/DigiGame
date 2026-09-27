@@ -7,6 +7,7 @@ const CITY_TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 const CITY_LAYOUT = preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
 const WORLD_AREA_SCRIPT = preload("res://src/world/runtime/WorldAreaScene.gd")
 const LIGHTING_SCRIPT = preload("res://src/world/runtime/WorldLightingSystem.gd")
+const WORLD_BACKDROP = preload("res://src/world/runtime/WorldBackdrop.gd")
 
 const AUTHORING_CONTAINERS := [
 	"Sections",
@@ -151,6 +152,10 @@ func _rebuild_runtime_preview() -> void:
 	preview_container.set_meta("central_city_editor_preview", true)
 	add_child(preview_container, false, Node.INTERNAL_MODE_BACK)
 	_preview_root = preview_container
+
+	# The digital void/background is also shared with WorldRoot so holes and
+	# city-edge silhouettes are judged against the same shader seen in play.
+	preview_container.add_child(WORLD_BACKDROP.create())
 
 	var preview = WORLD_AREA_SCRIPT.new()
 	preview.name = "Area"
