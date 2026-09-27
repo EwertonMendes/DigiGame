@@ -207,9 +207,11 @@ static func create_ground_batch(
 	edges.z_index = 1
 	root.add_child(edges)
 	for spec: Dictionary in edge_specs:
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
 		var edge := create_full_block(
 			String(spec.get("surface", SURFACE_MAIN)),
-			spec.get("position", Vector2.ZERO),
+			logical_center + Vector2(0.0, -elevation_px),
 			0
 		)
 		edges.add_child(edge)
@@ -377,10 +379,14 @@ static func _build_paver_polygon_batch_mesh(polygons: Array[Dictionary]) -> Arra
 			continue
 		var vertex_start := vertices.size()
 		var color: Color = spec.get("color", Color.WHITE)
-		for point: Vector2 in points:
+		var logical_value = spec.get("logical_points", points)
+		var logical_points := logical_value as PackedVector2Array if logical_value is PackedVector2Array else points
+		for point_index in range(points.size()):
+			var point := points[point_index]
+			var logical_point := logical_points[point_index] if point_index < logical_points.size() else point
 			vertices.append(point)
 			colors.append(color)
-			uvs.append(_world_to_grid_coordinates(point))
+			uvs.append(_world_to_grid_coordinates(logical_point))
 		for raw_index in triangulated:
 			indices.append(vertex_start + int(raw_index))
 
@@ -473,10 +479,12 @@ static func _build_ground_base_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
 	var diamond := tile_diamond(FLOOR_OVERSCAN)
 
 	for spec: Dictionary in tiles:
-		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
+		var display_center := logical_center + Vector2(0.0, -elevation_px)
 		var vertex_start := vertices.size()
 		for point: Vector2 in diamond:
-			vertices.append(center + point)
+			vertices.append(display_center + point)
 		var color: Color = spec.get(
 			"base_color",
 			surface_base_color(String(spec.get("surface", SURFACE_MAIN)))
@@ -521,12 +529,15 @@ static func _build_ground_paver_mesh(tiles: Array, surface: String) -> ArrayMesh
 		if not raw_spec is Dictionary:
 			continue
 		var spec := raw_spec as Dictionary
-		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
+		var display_center := logical_center + Vector2(0.0, -elevation_px)
 		var vertex_start := vertices.size()
 		for point: Vector2 in diamond:
-			var world_point := center + point
-			vertices.append(world_point)
-			uvs.append(_world_to_grid_coordinates(world_point))
+			var logical_point := logical_center + point
+			var display_point := display_center + point
+			vertices.append(display_point)
+			uvs.append(_world_to_grid_coordinates(logical_point))
 
 		var base: Color = spec.get("base_color", surface_base_color(surface))
 		var tint: Color = spec.get("detail_tint", Color.WHITE)
@@ -587,10 +598,12 @@ static func _build_ground_surface_mesh(tiles: Array) -> ArrayMesh:
 		if not raw_spec is Dictionary:
 			continue
 		var spec := raw_spec as Dictionary
-		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
+		var display_center := logical_center + Vector2(0.0, -elevation_px)
 		var vertex_start := vertices.size()
 		for point: Vector2 in diamond:
-			vertices.append(center + point)
+			vertices.append(display_center + point)
 		for pixel_uv: Vector2 in source_uvs:
 			uvs.append(Vector2(pixel_uv.x / texture_size.x, pixel_uv.y / texture_size.y))
 		var tint: Color = spec.get("detail_tint", Color.WHITE)
@@ -621,6 +634,8 @@ static func _build_ground_surface_mesh(tiles: Array) -> ArrayMesh:
 static func _ground_spec_before(a: Dictionary, b: Dictionary) -> bool:
 	var a_pos: Vector2 = a.get("position", Vector2.ZERO)
 	var b_pos: Vector2 = b.get("position", Vector2.ZERO)
+	a_pos.y -= maxf(0.0, float(a.get("elevation_px", 0.0)))
+	b_pos.y -= maxf(0.0, float(b.get("elevation_px", 0.0)))
 	if is_equal_approx(a_pos.y, b_pos.y):
 		return a_pos.x < b_pos.x
 	return a_pos.y < b_pos.y
