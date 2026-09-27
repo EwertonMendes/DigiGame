@@ -77,6 +77,7 @@ var _animation_frame := 0
 var _was_walking := false
 var _touch_direction := Vector2.ZERO
 var _touch_run_enabled := false
+var _world_elevation_px := 0.0
 
 
 func configure(texture: Texture2D, player_controlled: bool, world_controller: Node, initial_facing: String) -> void:
@@ -162,6 +163,25 @@ func set_touch_run_enabled(enabled: bool) -> void:
 
 func is_touch_run_enabled() -> bool:
 	return _touch_run_enabled
+
+
+func set_world_elevation(elevation_px: float) -> void:
+	var next_elevation := maxf(0.0, elevation_px)
+	if is_equal_approx(next_elevation, _world_elevation_px):
+		return
+	_world_elevation_px = next_elevation
+	if _sprite != null:
+		if _was_walking:
+			_sprite.position = _visual_sprite_base_position()
+		else:
+			_update_idle_pose()
+	set_meta("world_elevation_px", _world_elevation_px)
+	set_meta("world_shadow_anchor", Vector2(0.0, -_world_elevation_px))
+	_update_depth()
+
+
+func get_world_elevation() -> float:
+	return _world_elevation_px
 
 
 func set_facing(direction_name: String) -> void:
@@ -253,7 +273,7 @@ func _update_idle_pose() -> void:
 	_reset_walk_cycle()
 	_update_frame(false)
 	if _sprite != null:
-		_sprite.position = BASE_SPRITE_POSITION + Vector2(0.0, sin(_idle_time * 2.1) * 0.7)
+		_sprite.position = _visual_sprite_base_position() + Vector2(0.0, sin(_idle_time * 2.1) * 0.7)
 
 
 func _update_frame(walking: bool) -> void:
@@ -263,7 +283,7 @@ func _update_frame(walking: bool) -> void:
 	_sprite.frame = row * FRAME_COLUMNS + _animation_frame
 	_sprite.flip_h = bool(FACING_FLIP_H.get(facing_direction, false))
 	if walking:
-		_sprite.position = BASE_SPRITE_POSITION
+		_sprite.position = _visual_sprite_base_position()
 
 
 func _configure_world_shadow() -> void:
@@ -276,11 +296,15 @@ func _configure_world_shadow() -> void:
 	add_to_group("world_shadow_caster")
 	set_meta("world_shadow_style", "contact")
 	set_meta("world_shadow_size", Vector2(shadow_width, shadow_height))
-	set_meta("world_shadow_anchor", Vector2.ZERO)
+	set_meta("world_shadow_anchor", Vector2(0.0, -_world_elevation_px))
 	set_meta("world_shadow_offset", Vector2(0.0, -1.0))
 	set_meta("world_shadow_opacity", 0.22)
 	set_meta("world_shadow_dynamic", true)
 
 
+func _visual_sprite_base_position() -> Vector2:
+	return BASE_SPRITE_POSITION + Vector2(0.0, -_world_elevation_px)
+
+
 func _update_depth() -> void:
-	z_index = 1000 + int(round(global_position.y))
+	z_index = 1000 + int(round(global_position.y - _world_elevation_px))
