@@ -25,16 +25,18 @@ needed, one restrained edge mesh.
 The current network establishes the west/east civic avenue, Training-to-South-Gate spine,
 North Canal/Archive approach, service axes, Central Plaza aprons, dedicated forecourts for
 DigiLab/Training/Hospital/Data Market/Archive, secondary neighborhood walks and compact
-district courts. The exterior base field is intentionally brighter, while primary and
-secondary routes use darker graphite paving with a shallow batched curb face. This creates
-clear street/sidewalk hierarchy without changing the 64x32 gameplay plane.
+district courts. The exterior base field is intentionally brighter, while the reduced primary route set uses
+a medium graphite paving tone and secondary links stay quieter. Route polygons no longer fake
+depth with long offset faces; all visible height cues now come from deliberate architecture.
 
-The southern city is now a distinct **South Terrace**. `CentralCityTerrace.gd` renders a
-subtle retaining edge, three stair crossings, concrete canal banks and two small waterfall
-faces. Matching ground rules in `WorldAreaSection.gd` make the retaining edge and ornamental
-water genuinely non-walkable while keeping the three authored street axes walkable as stairs
-and bridges. Data Market has moved deeper into this lower terrace, below the canal, so the
-southern half reads as a separate compact district rather than unused flat pavement.
+The southern city is a distinct **South Terrace**. `CentralCityTerrace.gd` builds a real
+retaining wall with broad caps/faces, two staircase openings, two separate recessed trench
+pockets and two proper bridge slabs. The trench floor is intentionally not rendered: the
+world backdrop shows through as a temporary void until the replacement water system is
+authored. Matching ground rules in `WorldAreaSection.gd` keep wall/trench cells blocked while
+stairs and bridge decks remain walkable. Data Market stays deeper in the lower terrace, below
+the level break, so the southern half reads as a separate compact district rather than unused
+flat pavement.
 
 ## Raised urban structure
 
