@@ -8,6 +8,7 @@ on:
       - '.github/workflows/headless-regressions.yml'
       - 'project.godot'
       - 'src/**'
+      - 'scenes/world/central_city_authoring.tscn'
       - 'database/**'
       - 'tools/test_*.gd'
       - 'tools/test_*.tscn'
@@ -144,6 +145,10 @@ jobs:
           run_regression world-area \
             "single-scene world area regression passed" \
             godot --headless --path . tools/test_world_area.tscn --quit-after 360
+
+          run_regression central-city-authoring-preview \
+            "[CentralCityAuthoring] WYSIWYG preview ready" \
+            godot --headless --editor --path . scenes/world/central_city_authoring.tscn --quit-after 240
 
           run_regression battle-ui-lifecycle \
             "battle ui lifecycle regression passed" \
