@@ -2,6 +2,7 @@ extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
 const MAP_CAPTURE := preload("res://src/debug/DebugWorldMapCapture.gd")
+const CITY_AUTHORING := preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 
 
 func _ready() -> void:
@@ -27,6 +28,22 @@ func _ready() -> void:
 	assert(not bool(player.call("is_touch_run_enabled")), "Touch WALK must restore normal movement")
 	assert(run_button.text == "RUN", "Touch run button must return to RUN after walking is restored")
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
+	assert(
+		CITY_AUTHORING.has_authoring_scene()
+		and CITY_AUTHORING.authored_section_count() == 25
+		and CITY_AUTHORING.authored_road_count() == 20,
+		"Central City runtime must be derived from the visual Godot authoring scene rather than hand-edited layout JSON"
+	)
+	assert(
+		CITY_AUTHORING.building_anchor_grid("digilab", Vector2.ZERO).is_equal_approx(Vector2(-6.0, 10.0))
+		and CITY_AUTHORING.building_anchor_grid("training", Vector2.ZERO).is_equal_approx(Vector2(7.0, -3.0))
+		and CITY_AUTHORING.building_anchor_grid("hospital", Vector2.ZERO).is_equal_approx(Vector2(21.0, 10.0)),
+		"Service building editor markers must preserve the approved Central City placement"
+	)
+	assert(
+		area.get_node_or_null("Authoring") == null,
+		"Editor-only Central City authoring nodes must be removed from the runtime scene tree"
+	)
 	var lighting := world.call("get_lighting_system") as Node
 	assert(lighting != null, "Campaign world must own one centralized dynamic lighting runtime")
 	assert(
