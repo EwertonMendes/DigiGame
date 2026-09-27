@@ -315,6 +315,10 @@ static func _append_grid_spec(
 
 
 static func _axis_corridor(a: Vector2, b: Vector2, width: float) -> PackedVector2Array:
+	# Roads are authored visually. Keep axis-aligned paths pixel-identical to
+	# the original implementation, but also support temporarily/off-axis
+	# segments while a designer drags a junction in the editor. This prevents a
+	# road from disappearing just because the mouse moved a fraction off-axis.
 	var half := width * 0.5
 	if absf(a.x - b.x) <= 0.001:
 		var y0 := minf(a.y, b.y) - half
@@ -334,8 +338,34 @@ static func _axis_corridor(a: Vector2, b: Vector2, width: float) -> PackedVector
 			Vector2(x1, a.y + half),
 			Vector2(x0, a.y + half),
 		])
-	push_error("CentralCityUrbanLayout: road segments must follow one isometric grid axis")
-	return PackedVector2Array()
+
+	var world_a := _grid_to_world_point(a)
+	var world_b := _grid_to_world_point(b)
+	var direction := world_b - world_a
+	if direction.length_squared() <= 0.001:
+		return PackedVector2Array()
+	var screen_width := width * sqrt(32.0 * 32.0 + 16.0 * 16.0)
+	var normal := direction.normalized().orthogonal() * screen_width * 0.5
+	return PackedVector2Array([
+		_world_to_grid_point(world_a + normal),
+		_world_to_grid_point(world_b + normal),
+		_world_to_grid_point(world_b - normal),
+		_world_to_grid_point(world_a - normal),
+	])
+
+
+static func _grid_to_world_point(grid: Vector2) -> Vector2:
+	return Vector2(
+		(grid.x - grid.y) * 32.0,
+		(grid.x + grid.y) * 16.0
+	)
+
+
+static func _world_to_grid_point(world: Vector2) -> Vector2:
+	return Vector2(
+		world.x / 64.0 + world.y / 32.0,
+		-world.x / 64.0 + world.y / 32.0
+	)
 
 
 static func _grid_square(center: Vector2, half: float) -> PackedVector2Array:
