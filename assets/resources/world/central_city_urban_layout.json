@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "description": "Authored Central City circulation network rendered above the continuous micro-paver base without changing the canonical 64x32 gameplay grid.",
+  "layers": [
+    {
+      "id": "civic_primary",
+      "surface": "stone_soft",
+      "tint": [0.98, 0.99, 1.0, 1.0],
+      "border_width": 2.5,
+      "border_color": [0.31, 0.33, 0.34, 1.0],
+      "polygons": [
+        {
+          "name": "west_civic_avenue",
+          "grid_polygon": [[-27.0, 8.5], [5.0, 8.5], [5.0, 12.0], [-27.0, 12.0]]
+        },
+        {
+          "name": "east_civic_avenue",
+          "grid_polygon": [[9.0, 8.5], [41.0, 8.5], [41.0, 12.0], [9.0, 12.0]]
+        },
+        {
+          "name": "training_spine",
+          "grid_polygon": [[5.0, -6.0], [9.0, -6.0], [9.0, 5.0], [5.0, 5.0]]
+        },
+        {
+          "name": "south_spine",
+          "grid_polygon": [[5.0, 9.0], [9.0, 9.0], [9.0, 41.0], [5.0, 41.0]]
+        },
+        {
+          "name": "north_canal_south_approach",
+          "grid_polygon": [[5.0, -19.5], [9.0, -19.5], [9.0, -6.0], [5.0, -6.0]]
+        },
+        {
+          "name": "north_canal_north_approach",
+          "grid_polygon": [[5.0, -28.0], [9.0, -28.0], [9.0, -23.5], [5.0, -23.5]]
+        },
+        {
+          "name": "archive_cross_avenue",
+          "grid_polygon": [[7.5, -27.0], [25.0, -27.0], [25.0, -23.5], [7.5, -23.5]]
+        },
+        {
+          "name": "east_service_axis",
+          "grid_polygon": [[20.0, -23.5], [24.0, -23.5], [24.0, 8.5], [20.0, 8.5]]
+        },
+        {
+          "name": "west_service_axis",
+          "grid_polygon": [[-8.0, -20.0], [-4.0, -20.0], [-4.0, 8.5], [-8.0, 8.5]]
+        },
+        {
+          "name": "southwest_axis",
+          "grid_polygon": [[-8.0, 12.0], [-4.0, 12.0], [-4.0, 34.0], [-8.0, 34.0]]
+        },
+        {
+          "name": "southeast_axis",
+          "grid_polygon": [[20.0, 12.0], [24.0, 12.0], [24.0, 34.0], [20.0, 34.0]]
+        }
+      ]
+    },
+    {
+      "id": "central_plaza",
+      "surface": "stone_soft",
+      "tint": [1.06, 1.07, 1.07, 1.0],
+      "border_width": 2.0,
+      "border_color": [0.20, 0.36, 0.39, 1.0],
+      "polygons": [
+        {
+          "name": "plaza_north_apron",
+          "grid_polygon": [[3.5, 3.5], [10.5, 3.5], [10.5, 5.8], [3.5, 5.8]]
+        },
+        {
+          "name": "plaza_south_apron",
+          "grid_polygon": [[3.5, 9.2], [10.5, 9.2], [10.5, 12.5], [3.5, 12.5]]
+        },
+        {
+          "name": "plaza_west_apron",
+          "grid_polygon": [[3.5, 5.8], [5.8, 5.8], [5.8, 9.2], [3.5, 9.2]]
+        },
+        {
+          "name": "plaza_east_apron",
+          "grid_polygon": [[8.2, 5.8], [10.5, 5.8], [10.5, 9.2], [8.2, 9.2]]
+        }
+      ]
+    },
+    {
+      "id": "service_forecourts",
+      "surface": "stone_soft",
+      "tint": [1.0, 1.0, 1.0, 1.0],
+      "border_width": 2.0,
+      "border_color": [0.28, 0.31, 0.32, 1.0],
+      "polygons": [
+        {
+          "name": "digilab_forecourt",
+          "surface": "tech_teal",
+          "tint": [1.22, 1.18, 1.12, 1.0],
+          "border_color": [0.24, 0.56, 0.43, 1.0],
+          "grid_polygon": [[-10.0, 8.5], [-2.0, 8.5], [-2.0, 14.5], [-10.0, 14.5]]
+        },
+        {
+          "name": "training_forecourt",
+          "surface": "training",
+          "tint": [1.12, 1.12, 1.08, 1.0],
+          "border_color": [0.34, 0.48, 0.34, 1.0],
+          "grid_polygon": [[2.5, -6.0], [11.5, -6.0], [11.5, 1.5], [2.5, 1.5]]
+        },
+        {
+          "name": "hospital_forecourt",
+          "surface": "tech_blue",
+          "tint": [1.24, 1.20, 1.15, 1.0],
+          "border_color": [0.24, 0.45, 0.62, 1.0],
+          "grid_polygon": [[16.5, 8.5], [25.5, 8.5], [25.5, 14.5], [16.5, 14.5]]
+        },
+        {
+          "name": "market_forecourt",
+          "surface": "market",
+          "tint": [1.02, 1.03, 1.06, 1.0],
+          "border_color": [0.58, 0.43, 0.20, 1.0],
+          "grid_polygon": [[2.5, 17.5], [11.5, 17.5], [11.5, 25.5], [2.5, 25.5]]
+        },
+        {
+          "name": "archive_forecourt",
+          "surface": "tech_purple",
+          "tint": [1.16, 1.16, 1.15, 1.0],
+          "border_color": [0.48, 0.31, 0.59, 1.0],
+          "grid_polygon": [[16.5, -28.0], [25.5, -28.0], [25.5, -16.5], [16.5, -16.5]]
+        }
+      ]
+    },
+    {
+      "id": "secondary_walks",
+      "surface": "main",
+      "tint": [1.09, 1.09, 1.08, 1.0],
+      "border_width": 1.5,
+      "border_color": [0.34, 0.35, 0.35, 1.0],
+      "polygons": [
+        {
+          "name": "verdant_link",
+          "grid_polygon": [[-20.0, -19.5], [-4.0, -19.5], [-4.0, -17.0], [-20.0, -17.0]]
+        },
+        {
+          "name": "west_heights_link",
+          "grid_polygon": [[-23.0, -8.5], [-4.0, -8.5], [-4.0, -5.5], [-23.0, -5.5]]
+        },
+        {
+          "name": "east_heights_link",
+          "grid_polygon": [[24.0, -8.0], [36.0, -8.0], [36.0, -5.0], [24.0, -5.0]]
+        },
+        {
+          "name": "southwest_garden_link",
+          "grid_polygon": [[-20.0, 18.5], [-4.0, 18.5], [-4.0, 21.5], [-20.0, 21.5]]
+        },
+        {
+          "name": "east_garden_link",
+          "grid_polygon": [[24.0, 18.5], [36.0, 18.5], [36.0, 21.5], [24.0, 21.5]]
+        },
+        {
+          "name": "south_residence_west_link",
+          "grid_polygon": [[-8.0, 32.0], [5.0, 32.0], [5.0, 35.0], [-8.0, 35.0]]
+        },
+        {
+          "name": "south_residence_east_link",
+          "grid_polygon": [[9.0, 32.0], [24.0, 32.0], [24.0, 35.0], [9.0, 35.0]]
+        },
+        {
+          "name": "lower_west_garden_link",
+          "grid_polygon": [[-19.0, 29.0], [-4.0, 29.0], [-4.0, 31.5], [-19.0, 31.5]]
+        },
+        {
+          "name": "lower_east_garden_link",
+          "grid_polygon": [[24.0, 29.0], [33.0, 29.0], [33.0, 31.5], [24.0, 31.5]]
+        }
+      ]
+    },
+    {
+      "id": "district_courts",
+      "surface": "stone_soft",
+      "tint": [0.94, 0.95, 0.95, 1.0],
+      "border_width": 1.25,
+      "border_color": [0.36, 0.37, 0.37, 1.0],
+      "polygons": [
+        {
+          "name": "verdant_terrace_court",
+          "grid_polygon": [[-21.0, -20.0], [-16.0, -20.0], [-16.0, -16.5], [-21.0, -16.5]]
+        },
+        {
+          "name": "northwest_residences_court",
+          "grid_polygon": [[-9.5, -23.0], [-4.5, -23.0], [-4.5, -19.0], [-9.5, -19.0]]
+        },
+        {
+          "name": "west_heights_court",
+          "grid_polygon": [[-23.0, -9.0], [-18.0, -9.0], [-18.0, -5.0], [-23.0, -5.0]]
+        },
+        {
+          "name": "digilab_gardens_court",
+          "grid_polygon": [[-9.5, -9.0], [-4.5, -9.0], [-4.5, -5.0], [-9.5, -5.0]]
+        },
+        {
+          "name": "hospital_gardens_court",
+          "grid_polygon": [[18.5, -9.0], [23.5, -9.0], [23.5, -5.0], [18.5, -5.0]]
+        },
+        {
+          "name": "east_heights_court",
+          "grid_polygon": [[31.5, -8.0], [36.5, -8.0], [36.5, -4.0], [31.5, -4.0]]
+        },
+        {
+          "name": "west_commons_court",
+          "grid_polygon": [[-23.0, 5.0], [-18.0, 5.0], [-18.0, 9.0], [-23.0, 9.0]]
+        },
+        {
+          "name": "southwest_gardens_court",
+          "grid_polygon": [[-21.0, 18.0], [-16.0, 18.0], [-16.0, 22.0], [-21.0, 22.0]]
+        },
+        {
+          "name": "southwest_commons_court",
+          "grid_polygon": [[-9.5, 19.0], [-4.5, 19.0], [-4.5, 23.0], [-9.5, 23.0]]
+        },
+        {
+          "name": "southeast_commons_court",
+          "grid_polygon": [[18.5, 19.0], [23.5, 19.0], [23.5, 23.0], [18.5, 23.0]]
+        },
+        {
+          "name": "east_gardens_court",
+          "grid_polygon": [[31.5, 18.0], [36.5, 18.0], [36.5, 22.0], [31.5, 22.0]]
+        },
+        {
+          "name": "south_residences_court",
+          "grid_polygon": [[-9.5, 32.0], [-4.5, 32.0], [-4.5, 36.0], [-9.5, 36.0]]
+        },
+        {
+          "name": "southeast_residences_court",
+          "grid_polygon": [[18.5, 32.0], [23.5, 32.0], [23.5, 36.0], [18.5, 36.0]]
+        },
+        {
+          "name": "lower_garden_court",
+          "grid_polygon": [[-20.5, 29.5], [-15.5, 29.5], [-15.5, 33.5], [-20.5, 33.5]]
+        },
+        {
+          "name": "lower_east_terrace_court",
+          "grid_polygon": [[28.5, 29.0], [33.5, 29.0], [33.5, 33.0], [28.5, 33.0]]
+        }
+      ]
+    }
+  ]
+}
