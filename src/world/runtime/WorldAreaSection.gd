@@ -22,6 +22,13 @@ const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 const CITY_CENTER_GLOBAL := Vector2i(7, 7)
 const CITY_SHAPE_MANHATTAN_RADIUS := 54
+const CITY_PAVEMENT_LIGHT := Color(0.575, 0.585, 0.595, 1.0)
+const CITY_CIVIC_LIGHT := Color(0.625, 0.635, 0.640, 1.0)
+const SOUTH_TERRACE_EDGE_Y := 19
+const SOUTH_CANAL_Y_MIN := 22
+const SOUTH_CANAL_Y_MAX := 24
+const SOUTH_CANAL_X_MIN := -13
+const SOUTH_CANAL_X_MAX := 29
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 # The authored PNG is close to isometric, but its two ground axes are not an
@@ -300,26 +307,92 @@ func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
 	var ay := absi(delta.y)
 	var city_ring := maxi(ax, ay)
 
-	# Central City's gray hardscape is the circulation layer. Roads and walking
-	# routes are defined by the negative space between raised civic lots,
-	# landscape islands and buildings instead of painting bright tactical bands
-	# over the gameplay grid.
+	# The base city field is deliberately brighter than the authored route
+	# network. Darker roads now read immediately against this neutral sidewalk
+	# field while preserving the same fine micro-paver language everywhere.
 	if ax <= 1 and ay <= 1:
 		return {"surface": CITY.SURFACE_WATER, "walkable": false}
 	if city_ring == 2:
-		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+		return {
+			"surface": CITY.SURFACE_STONE_SOFT,
+			"base_color": CITY_CIVIC_LIGHT,
+			"walkable": true,
+		}
+
+	var terrace_presentation := _south_terrace_ground_presentation(global_grid)
+	if not terrace_presentation.is_empty():
+		return terrace_presentation
 
 	if theme == "canal":
 		if cell.y >= 5 and cell.y <= 8 and cell.x >= 2 and cell.x <= 11:
 			# The two center columns are the authored pedestrian bridge.
 			if cell.x in [6, 7]:
-				return {"surface": CITY.SURFACE_MAIN, "walkable": true}
+				return {
+					"surface": CITY.SURFACE_MAIN,
+					"base_color": CITY_PAVEMENT_LIGHT,
+					"walkable": true,
+				}
 			return {"surface": CITY.SURFACE_WATER, "walkable": false}
 
-	# Buildings, market/archive staging areas, parks and residences all share the
-	# same medium-gray micro-paver field. Their identity now comes from raised
-	# foundations, planted blocks, street furniture and architecture.
-	return {"surface": CITY.SURFACE_MAIN, "walkable": true}
+	# The continuous exterior field is the brighter sidewalk/plaza plane. The
+	# dedicated CentralCityUrbanLayout layer supplies the darker circulation
+	# routes above it without revealing gameplay-sized route tiles.
+	return {
+		"surface": CITY.SURFACE_MAIN,
+		"base_color": CITY_PAVEMENT_LIGHT,
+		"walkable": true,
+	}
+
+
+func _south_terrace_ground_presentation(global_grid: Vector2i) -> Dictionary:
+	var x := global_grid.x
+	var y := global_grid.y
+
+	# Two narrow feeder channels begin at the terrace lip and visually become
+	# the small waterfalls rendered by CentralCityTerrace. These cells are true
+	# water, so the player naturally routes around them.
+	var feeder_water := (
+		y >= SOUTH_TERRACE_EDGE_Y and y <= SOUTH_CANAL_Y_MAX
+		and (x in [-1, 0, 1] or x in [14, 15, 16])
+	)
+	if feeder_water:
+		return {"surface": CITY.SURFACE_WATER, "walkable": false}
+
+	# The civic upper deck ends on one authored retaining line. Three openings
+	# align exactly with the west, central and east street axes and therefore
+	# act as the only staircase crossings into the lower terrace.
+	if y == SOUTH_TERRACE_EDGE_Y and x >= SOUTH_CANAL_X_MIN and x <= SOUTH_CANAL_X_MAX:
+		if _is_south_terrace_crossing_x(x):
+			return {
+				"surface": CITY.SURFACE_STONE_SOFT,
+				"base_color": CITY_CIVIC_LIGHT,
+				"walkable": true,
+			}
+		return {
+			"surface": CITY.SURFACE_STONE_SOFT,
+			"base_color": CITY_CIVIC_LIGHT.darkened(0.10),
+			"walkable": false,
+		}
+
+	# A three-cell ornamental canal crosses the lower district. The same three
+	# axes remain walkable here, reading as bridge decks over the water.
+	if (
+		y >= SOUTH_CANAL_Y_MIN and y <= SOUTH_CANAL_Y_MAX
+		and x >= SOUTH_CANAL_X_MIN and x <= SOUTH_CANAL_X_MAX
+	):
+		if _is_south_terrace_crossing_x(x):
+			return {"surface": CITY.SURFACE_DARK, "walkable": true}
+		return {"surface": CITY.SURFACE_WATER, "walkable": false}
+
+	return {}
+
+
+func _is_south_terrace_crossing_x(x: int) -> bool:
+	return (
+		(x >= -8 and x <= -4)
+		or (x >= 5 and x <= 9)
+		or (x >= 20 and x <= 24)
+	)
 
 
 func _global_grid(cell: Vector2i) -> Vector2i:
@@ -408,7 +481,14 @@ func _build_theme_content() -> void:
 		"training":
 			_build_training_center_exterior()
 		"market":
-			_build_service_pad(Color(0.42, 1.0, 0.52), "DATA MARKET", "shop", CITY.SURFACE_MARKET)
+			_build_service_pad(
+				Color(0.42, 1.0, 0.52),
+				"DATA MARKET",
+				"shop",
+				CITY.SURFACE_MARKET,
+				Vector2i(7, 12),
+				Vector2i(8, 12)
+			)
 		"archive":
 			_build_service_pad(Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive", CITY.SURFACE_TECH_PURPLE)
 
@@ -931,11 +1011,16 @@ func _register_blocking_polygon(
 	body.add_child(collision)
 
 
-func _build_service_pad(accent: Color, title: String, service_id: String, surface: String) -> void:
-	var pad_cell := Vector2i(7, 7)
+func _build_service_pad(
+	accent: Color,
+	title: String,
+	service_id: String,
+	surface: String,
+	pad_cell: Vector2i = Vector2i(7, 7),
+	approach_cell: Vector2i = Vector2i(8, 7)
+) -> void:
 	if not _is_city_land(pad_cell):
 		return
-	var approach_cell := pad_cell + Vector2i(1, 0)
 
 	var entrance := _create_service_threshold(
 		"%sPad" % title.capitalize().replace(" ", ""),
