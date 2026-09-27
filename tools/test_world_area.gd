@@ -67,6 +67,19 @@ func _ready() -> void:
 		and float(night_snapshot.get("local_light_strength", 0.0)) >= 0.95,
 		"Night preview must fully activate authored local illumination"
 	)
+	var local_light_root := lighting.get_node_or_null("LocalLights") as Node2D
+	var max_night_energy := 0.0
+	var visible_emissive_glow := false
+	if local_light_root != null:
+		for child in local_light_root.get_children():
+			if child is PointLight2D:
+				max_night_energy = maxf(max_night_energy, (child as PointLight2D).energy)
+			elif child is Sprite2D and String(child.name).begins_with("Glow_"):
+				visible_emissive_glow = visible_emissive_glow or (child as Sprite2D).visible
+	assert(
+		local_light_root != null and max_night_energy > 1.0 and visible_emissive_glow,
+		"Night lighting must combine strong physical PointLight2D output with visible emissive halos"
+	)
 	lighting.call("set_preview_time_hours", 12.0)
 	assert(
 		String(player.get_meta("world_shadow_style", "")) == "contact"
@@ -97,6 +110,10 @@ func _ready() -> void:
 		and paver_material.shader != null
 		and paver_material.shader.resource_path == "res://shaders/city_paver_floor.gdshader",
 		"Central City hardscape must use the dedicated continuous micro-paver shader"
+	)
+	assert(
+		not paver_material.shader.code.contains("render_mode unshaded"),
+		"Central City paving must stay inside the CanvasItem lighting pipeline so night and local lights affect the ground"
 	)
 	assert(
 		is_equal_approx(float(paver_material.get_shader_parameter("pavers_per_cell")), 4.0),
@@ -190,6 +207,13 @@ func _ready() -> void:
 		and first_plaza_lamp.has_meta("world_light_color")
 		and first_plaza_lamp.has_meta("world_shadow_height"),
 		"City lamps must expose one shared runtime contract for light and procedural shadow generation"
+	)
+	assert(
+		float(first_plaza_lamp.get_meta("world_light_energy", 0.0)) > 1.0
+		and float(first_plaza_lamp.get_meta("world_light_radius", 0.0)) >= 190.0
+		and float(first_plaza_lamp.get_meta("world_light_glow_radius", 0.0)) >= 36.0
+		and float(first_plaza_lamp.get_meta("world_light_glow_energy", 0.0)) >= 0.75,
+		"Street lamps must expose enough physical light and emissive halo energy to read as night-time light sources"
 	)
 	assert(
 		String(first_plaza_lamp.get_meta("world_shadow_style", "")) == "projected"
@@ -319,6 +343,17 @@ func _ready() -> void:
 		and market_lighting.get_decoration_asset_ids().has("lamp_yellow"),
 		"Data Market must reserve the approved warm lamp for its service node"
 	)
+	var guide_label := plaza_section.get_node_or_null("CityGuide/Label") as Label
+	var market_label := market_lighting.get_node_or_null("DataMarketPad/Label") as Label if market_lighting != null else null
+	for annotation: Label in [guide_label, market_label]:
+		assert(annotation != null, "World gameplay annotations must remain present")
+		var annotation_material := annotation.material as CanvasItemMaterial
+		assert(
+			annotation.is_in_group("world_annotation_unlit")
+			and annotation_material != null
+			and annotation_material.light_mode == CanvasItemMaterial.LIGHT_MODE_UNSHADED,
+			"NPC and service labels must remain unlit and readable regardless of time-of-day darkness"
+		)
 
 	var quiet_garden := area.get_node_or_null("Section_-2_-2") as WorldAreaSection
 	var quiet_residential := area.get_node_or_null("Section_-1_-2") as WorldAreaSection
