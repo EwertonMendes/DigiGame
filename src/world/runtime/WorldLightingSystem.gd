@@ -723,10 +723,16 @@ func _update_local_lights() -> void:
 		var time_strength := lerpf(day_factor, 1.0, _local_light_strength)
 		var base_energy := maxf(0.0, float(entry.get("base_energy", 0.0)))
 		light.energy = base_energy * time_strength
+		var mobile_daylight_suppressed := (
+			_mobile_performance_profile
+			and not _debug_capture_active
+			and _local_light_strength < 0.08
+		)
 		light.enabled = (
 			_exterior_active
 			and source_2d.is_visible_in_tree()
 			and close_enough
+			and not mobile_daylight_suppressed
 			and light.energy > energy_threshold
 		)
 
