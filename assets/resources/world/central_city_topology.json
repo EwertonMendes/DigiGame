@@ -1,0 +1,413 @@
+{
+  "version": 1,
+  "description": "Authoritative Central City 2.5D topology. Logical movement stays on the 64x32 plane while presentation elevation, stairs, voids, bridges and the connected circulation graph are resolved from this data.",
+  "levels": {
+    "upper_civic": {
+      "elevation_px": 48
+    },
+    "south_terrace": {
+      "elevation_px": 0
+    }
+  },
+  "level_break": {
+    "grid_y": 19,
+    "lower_threshold_y": 19.5,
+    "x_min": -13,
+    "x_max": 29,
+    "upper_level": "upper_civic",
+    "lower_level": "south_terrace"
+  },
+  "stairs": [
+    {
+      "id": "west_stairs",
+      "x_min": -7,
+      "x_max": -4,
+      "y_start": 18.25,
+      "y_end": 21.5,
+      "steps": 6,
+      "from_level": "upper_civic",
+      "to_level": "south_terrace"
+    },
+    {
+      "id": "central_stairs",
+      "x_min": 5,
+      "x_max": 9,
+      "y_start": 18.25,
+      "y_end": 21.5,
+      "steps": 6,
+      "from_level": "upper_civic",
+      "to_level": "south_terrace"
+    }
+  ],
+  "voids": [
+    {
+      "id": "west_future_water",
+      "x_min": -13,
+      "x_max": -1,
+      "y_min": 22,
+      "y_max": 25
+    },
+    {
+      "id": "east_future_water",
+      "x_min": 13,
+      "x_max": 29,
+      "y_min": 22,
+      "y_max": 25
+    }
+  ],
+  "bridges": [
+    {
+      "id": "west_bridge",
+      "x_min": -7,
+      "x_max": -4,
+      "y_min": 21.5,
+      "y_max": 25.5,
+      "level": "south_terrace"
+    },
+    {
+      "id": "east_bridge",
+      "x_min": 20,
+      "x_max": 23,
+      "y_min": 21.5,
+      "y_max": 25.5,
+      "level": "south_terrace"
+    }
+  ],
+  "road_network": {
+    "surface": "dark",
+    "tint": [
+      1.48,
+      1.5,
+      1.54,
+      1
+    ],
+    "width": 3,
+    "border_width_grid": 0.12,
+    "border_color": [
+      0.31,
+      0.33,
+      0.35,
+      1
+    ],
+    "nodes": [
+      {
+        "id": "west_gate",
+        "grid": [
+          -25,
+          10
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "digilab",
+        "grid": [
+          -5.5,
+          10
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "central",
+        "grid": [
+          7,
+          10
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "hospital",
+        "grid": [
+          21,
+          10
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "east_gate",
+        "grid": [
+          35,
+          10
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "training",
+        "grid": [
+          7,
+          -3
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "archive_turn",
+        "grid": [
+          7,
+          -21
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "archive",
+        "grid": [
+          21,
+          -21
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "west_stair_top",
+        "grid": [
+          -5.5,
+          18.25
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "central_stair_top",
+        "grid": [
+          7,
+          18.25
+        ],
+        "level": "upper_civic"
+      },
+      {
+        "id": "west_stair_bottom",
+        "grid": [
+          -5.5,
+          21.5
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "central_stair_bottom",
+        "grid": [
+          7,
+          21.5
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "east_bridge_north",
+        "grid": [
+          21.5,
+          21.5
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "west_bridge_south",
+        "grid": [
+          -5.5,
+          25.5
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "east_bridge_south",
+        "grid": [
+          21.5,
+          25.5
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "market",
+        "grid": [
+          7,
+          26
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "lower_west",
+        "grid": [
+          -5.5,
+          30
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "lower_center",
+        "grid": [
+          7,
+          30
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "lower_east",
+        "grid": [
+          21.5,
+          30
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "southwest",
+        "grid": [
+          -12,
+          30
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "southeast",
+        "grid": [
+          25,
+          30
+        ],
+        "level": "south_terrace"
+      },
+      {
+        "id": "south_gate",
+        "grid": [
+          7,
+          40
+        ],
+        "level": "south_terrace"
+      }
+    ],
+    "edges": [
+      {
+        "from": "west_gate",
+        "to": "digilab",
+        "type": "road",
+        "width": 3.2
+      },
+      {
+        "from": "digilab",
+        "to": "central",
+        "type": "road",
+        "width": 3.2
+      },
+      {
+        "from": "central",
+        "to": "hospital",
+        "type": "road",
+        "width": 3.2
+      },
+      {
+        "from": "hospital",
+        "to": "east_gate",
+        "type": "road",
+        "width": 3.2
+      },
+      {
+        "from": "central",
+        "to": "training",
+        "type": "road",
+        "width": 3
+      },
+      {
+        "from": "training",
+        "to": "archive_turn",
+        "type": "road",
+        "width": 3
+      },
+      {
+        "from": "archive_turn",
+        "to": "archive",
+        "type": "road",
+        "width": 2.8
+      },
+      {
+        "from": "digilab",
+        "to": "west_stair_top",
+        "type": "road",
+        "width": 2.8
+      },
+      {
+        "from": "central",
+        "to": "central_stair_top",
+        "type": "road",
+        "width": 3
+      },
+      {
+        "from": "west_stair_top",
+        "to": "west_stair_bottom",
+        "type": "stairs"
+      },
+      {
+        "from": "central_stair_top",
+        "to": "central_stair_bottom",
+        "type": "stairs"
+      },
+      {
+        "from": "central_stair_bottom",
+        "to": "west_stair_bottom",
+        "type": "road",
+        "width": 2.6
+      },
+      {
+        "from": "central_stair_bottom",
+        "to": "east_bridge_north",
+        "type": "road",
+        "width": 2.6
+      },
+      {
+        "from": "west_stair_bottom",
+        "to": "west_bridge_south",
+        "type": "bridge"
+      },
+      {
+        "from": "east_bridge_north",
+        "to": "east_bridge_south",
+        "type": "bridge"
+      },
+      {
+        "from": "central_stair_bottom",
+        "to": "market",
+        "type": "road",
+        "width": 3
+      },
+      {
+        "from": "west_bridge_south",
+        "to": "lower_west",
+        "type": "road",
+        "width": 2.6
+      },
+      {
+        "from": "east_bridge_south",
+        "to": "lower_east",
+        "type": "road",
+        "width": 2.6
+      },
+      {
+        "from": "southwest",
+        "to": "lower_west",
+        "type": "road",
+        "width": 2.6
+      },
+      {
+        "from": "lower_west",
+        "to": "lower_center",
+        "type": "road",
+        "width": 2.6
+      },
+      {
+        "from": "lower_center",
+        "to": "lower_east",
+        "type": "road",
+        "width": 2.6
+      },
+      {
+        "from": "lower_east",
+        "to": "southeast",
+        "type": "road",
+        "width": 2.6
+      },
+      {
+        "from": "market",
+        "to": "lower_center",
+        "type": "road",
+        "width": 3
+      },
+      {
+        "from": "lower_center",
+        "to": "south_gate",
+        "type": "road",
+        "width": 3
+      }
+    ]
+  }
+}
