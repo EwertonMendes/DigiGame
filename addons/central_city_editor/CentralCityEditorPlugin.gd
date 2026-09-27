@@ -3,6 +3,7 @@ extends EditorPlugin
 
 const AUTHORING_ROOT = preload("res://src/world/authoring/CentralCityAuthoringRoot.gd")
 const ROAD_SCRIPT = preload("res://src/world/authoring/CentralCityRoadAuthoring.gd")
+const BOUNDARY_SCRIPT = preload("res://src/world/authoring/CentralCityBoundaryAuthoring.gd")
 const MATH = preload("res://src/world/authoring/CentralCityEditorMath.gd")
 const VALIDATOR = preload("res://src/world/authoring/CentralCityAuthoringValidator.gd")
 const BAKER = preload("res://src/world/authoring/CentralCityBaker.gd")
@@ -88,9 +89,13 @@ func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 		return
 	if _mode_text() == "Road":
 		_draw_all_roads(overlay, root)
+	if _mode_text() == "Level":
+		_draw_all_boundaries(overlay, root)
 	var selected := _selected_node()
 	if selected != null and selected.get_script() == ROAD_SCRIPT:
 		_draw_selected_road(overlay, selected as Line2D)
+	elif selected != null and selected.get_script() == BOUNDARY_SCRIPT:
+		_draw_selected_boundary(overlay, selected as Line2D)
 	elif selected is Marker2D and _is_under_authoring_root(selected):
 		_draw_marker_handle(overlay, selected as Marker2D)
 	elif selected is Polygon2D and _is_under_authoring_root(selected):
@@ -143,7 +148,7 @@ func _build_toolbar() -> void:
 
 	_mode = OptionButton.new()
 	_mode.tooltip_text = "Editing tool. Roads are constrained/snapped automatically."
-	for item in ["Select", "Road", "Ground", "Surface", "Transition", "Building", "Prop", "Landscape"]:
+	for item in ["Select", "Road", "Ground", "Surface", "Transition", "Level", "Building", "Prop", "Landscape"]:
 		_mode.add_item(item)
 	_mode.item_selected.connect(func(_index: int) -> void:
 		_status.text = _mode_text()
@@ -337,6 +342,17 @@ func _is_under_authoring_root(node: Node) -> bool:
 func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 	var mode := _mode_text()
 	var selected := _selected_node()
+	if mode == "Level" or mode == "Select":
+		var boundary_hit := _boundary_hit(screen, root)
+		if not boundary_hit.is_empty():
+			var boundary := boundary_hit.get("boundary") as Line2D
+			_select_node(boundary)
+			var boundary_point := int(boundary_hit.get("point_index", -1))
+			if boundary_point >= 0:
+				_begin_boundary_point_drag(boundary, boundary_point)
+			else:
+				_begin_boundary_body_drag(boundary, screen)
+			return true
 	if selected is Polygon2D and mode in ["Select", "Surface", "Transition"]:
 		var vertex_index := _polygon_vertex_hit(screen, selected as Polygon2D)
 		if vertex_index >= 0:
@@ -423,6 +439,133 @@ func _road_screen_points(road: Line2D) -> PackedVector2Array:
 	return result
 
 
+func _boundary_screen_points(boundary: Line2D) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	for point: Vector2 in boundary.points:
+		result.append(_visual_world_to_screen(boundary.to_global(point)))
+	return result
+
+
+func _draw_all_boundaries(overlay: Control, root: Node) -> void:
+	var container := root.get_node_or_null("Boundaries")
+	if container == null:
+		return
+	var selected := _selected_node()
+	for child in container.get_children():
+		if not child is Line2D or child == selected:
+			continue
+		var points := _boundary_screen_points(child as Line2D)
+		if points.size() >= 2:
+			overlay.draw_polyline(points, Color(0.78, 0.40, 1.0, 0.55), 3.0, true)
+
+
+func _draw_selected_boundary(overlay: Control, boundary: Line2D) -> void:
+	var points := _boundary_screen_points(boundary)
+	if points.size() >= 2:
+		overlay.draw_polyline(points, Color(0.83, 0.45, 1.0, 1.0), 4.0, true)
+	for point: Vector2 in points:
+		overlay.draw_circle(point, HANDLE_RADIUS, Color(0.92, 0.70, 1.0, 1.0))
+
+
+func _boundary_hit(screen: Vector2, root: Node) -> Dictionary:
+	var container := root.get_node_or_null("Boundaries")
+	if container == null:
+		return {}
+	var best := {}
+	var best_distance := INF
+	for child in container.get_children():
+		if not child is Line2D:
+			continue
+		var boundary := child as Line2D
+		var points := _boundary_screen_points(boundary)
+		for index in range(points.size()):
+			var distance := screen.distance_to(points[index])
+			if distance <= HIT_RADIUS and distance < best_distance:
+				best_distance = distance
+				best = {"boundary": boundary, "point_index": index}
+		for index in range(points.size() - 1):
+			var distance := MATH.screen_distance_to_segment(screen, points[index], points[index + 1])
+			if distance <= 12.0 and distance < best_distance:
+				best_distance = distance
+				best = {"boundary": boundary, "point_index": -1}
+	return best
+
+
+func _begin_boundary_point_drag(boundary: Line2D, point_index: int) -> void:
+	_drag_kind = "boundary_point"
+	_drag_node = boundary
+	_drag_point_index = point_index
+	_drag_original = [{
+		"node": boundary,
+		"points": boundary.points.duplicate(),
+		"threshold": float(boundary.get("lower_threshold_grid_y")),
+	}]
+	_drag_changed = false
+	_status.text = "Level edge · drag endpoint"
+
+
+func _begin_boundary_body_drag(boundary: Line2D, screen: Vector2) -> void:
+	_drag_kind = "boundary_body"
+	_drag_node = boundary
+	_drag_start_mouse_world = _screen_to_visual_world(screen)
+	_drag_original = [{
+		"node": boundary,
+		"points": boundary.points.duplicate(),
+		"threshold": float(boundary.get("lower_threshold_grid_y")),
+	}]
+	_drag_changed = false
+	_status.text = "Level edge · drag whole boundary"
+
+
+func _update_boundary_point_drag(event: InputEventMouseMotion) -> void:
+	var boundary := _drag_node as Line2D
+	var original := _drag_original[0].get("points") as PackedVector2Array
+	var candidate_grid := MATH.world_to_grid(_screen_to_visual_world(event.position))
+	if not event.alt_pressed:
+		candidate_grid = MATH.snap_grid(candidate_grid, _snap_step())
+	var other_index := 1 if _drag_point_index == 0 else 0
+	var other_grid := MATH.world_to_grid(original[other_index])
+	candidate_grid.y = other_grid.y
+	var updated := original.duplicate()
+	updated[_drag_point_index] = boundary.to_local(MATH.grid_to_world(candidate_grid))
+	boundary.points = updated
+	_drag_changed = true
+
+
+func _update_boundary_body_drag(event: InputEventMouseMotion) -> void:
+	var boundary := _drag_node as Line2D
+	var original := _drag_original[0].get("points") as PackedVector2Array
+	var start_grid := MATH.world_to_grid(_drag_start_mouse_world)
+	var current_grid := MATH.world_to_grid(_screen_to_visual_world(event.position))
+	var delta := current_grid - start_grid
+	if not event.alt_pressed:
+		delta = MATH.snap_grid(delta, _snap_step())
+	var updated := original.duplicate()
+	for index in range(updated.size()):
+		updated[index] += MATH.grid_to_world(delta)
+	boundary.points = updated
+	var old_threshold := float(_drag_original[0].get("threshold"))
+	boundary.set("lower_threshold_grid_y", old_threshold + delta.y)
+	_drag_changed = true
+
+
+func _commit_boundary_undo() -> void:
+	var boundary := _drag_node as Line2D
+	var old_points := (_drag_original[0].get("points") as PackedVector2Array).duplicate()
+	var old_threshold := float(_drag_original[0].get("threshold"))
+	var final_points := boundary.points.duplicate()
+	var final_threshold := float(boundary.get("lower_threshold_grid_y"))
+	boundary.points = old_points
+	boundary.set("lower_threshold_grid_y", old_threshold)
+	var undo := get_undo_redo()
+	undo.create_action("Edit Central City level boundary")
+	undo.add_do_property(boundary, "points", final_points)
+	undo.add_undo_property(boundary, "points", old_points)
+	undo.add_do_property(boundary, "lower_threshold_grid_y", final_threshold)
+	undo.add_undo_property(boundary, "lower_threshold_grid_y", old_threshold)
+	undo.commit_action()
+
+
 func _draw_all_roads(overlay: Control, root: Node) -> void:
 	var roads := root.get_node_or_null("Roads")
 	if roads == null:
@@ -500,6 +643,10 @@ func _update_pointer_drag(event: InputEventMouseMotion) -> void:
 			_update_road_body_drag(event)
 		"road_width":
 			_update_road_width_drag(event)
+		"boundary_point":
+			_update_boundary_point_drag(event)
+		"boundary_body":
+			_update_boundary_body_drag(event)
 		"marker":
 			_update_marker_drag(event)
 		"polygon":
@@ -652,6 +799,8 @@ func _finish_pointer_action() -> void:
 				_commit_road_points_undo()
 			"road_width":
 				_commit_width_undo()
+			"boundary_point", "boundary_body":
+				_commit_boundary_undo()
 			"marker":
 				_commit_marker_undo()
 			"polygon", "polygon_vertex":
