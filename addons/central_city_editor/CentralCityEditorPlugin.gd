@@ -32,6 +32,7 @@ var _drag_start_mouse_world := Vector2.ZERO
 var _drag_original: Array[Dictionary] = []
 var _drag_old_width := 0.0
 var _drag_changed := false
+var _pointer_double_click := false
 
 var _paint_stroke_active := false
 var _paint_erase := false
@@ -130,6 +131,7 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 		if button.button_index != MOUSE_BUTTON_LEFT:
 			return false
 		if button.pressed:
+			_pointer_double_click = button.double_click
 			return _begin_pointer_action(button.position, root)
 		_finish_pointer_action()
 		return _drag_kind != ""
@@ -368,6 +370,9 @@ func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 			_select_node(road)
 			var point_index := int(road_hit.get("point_index", -1))
 			var width_hit := bool(road_hit.get("width", false))
+			if _pointer_double_click and point_index < 0 and not width_hit:
+				_split_road_at_screen(road, screen)
+				return true
 			if width_hit:
 				_begin_width_drag(road)
 			elif point_index >= 0:
@@ -678,6 +683,8 @@ func _update_road_point_drag(event: InputEventMouseMotion) -> void:
 		if event.shift_pressed or points.size() > 2 and _drag_point_index > 0 and _drag_point_index < points.size() - 1
 		else MATH.constrained_endpoint(anchor_grid, original_grid, candidate_grid, step)
 	)
+	if not event.alt_pressed and not event.shift_pressed:
+		target_grid = _magnetize_to_road_endpoint(target_grid, road)
 	var target_local := MATH.grid_to_world(target_grid)
 	for snapshot in _drag_original:
 		var node := snapshot.get("node") as Line2D
@@ -1168,6 +1175,60 @@ func _finish_ground_stroke(paint: Node) -> void:
 	_status.text = "Ground painted"
 
 
+func _magnetize_to_road_endpoint(grid: Vector2, excluded_road: Line2D) -> Vector2:
+	var root := _authoring_root()
+	if root == null:
+		return grid
+	var roads := root.get_node_or_null("Roads")
+	if roads == null:
+		return grid
+	var best := grid
+	var best_distance := 0.76
+	for child in roads.get_children():
+		if not child is Line2D or child == excluded_road:
+			continue
+		var road := child as Line2D
+		for index in [0, road.points.size() - 1]:
+			if index < 0 or index >= road.points.size():
+				continue
+			var endpoint_global := road.to_global(road.points[index])
+			var endpoint_grid := MATH.world_to_grid(endpoint_global)
+			var distance := grid.distance_to(endpoint_grid)
+			if distance < best_distance:
+				best_distance = distance
+				best = endpoint_grid
+	return best
+
+
+func _split_road_at_screen(road: Line2D, screen: Vector2) -> void:
+	if road.points.size() < 2:
+		return
+	var elevation := float(road.get("editor_elevation_px"))
+	var logical_global := _screen_to_visual_world(screen) + Vector2(0.0, elevation)
+	var target_grid := MATH.snap_grid(MATH.world_to_grid(road.to_local(logical_global)), _snap_step())
+	var target_local := MATH.grid_to_world(target_grid)
+	var screen_points := _road_screen_points(road)
+	var segment_index := 0
+	var best_distance := INF
+	for index in range(screen_points.size() - 1):
+		var distance := MATH.screen_distance_to_segment(screen, screen_points[index], screen_points[index + 1])
+		if distance < best_distance:
+			best_distance = distance
+			segment_index = index
+	var old_points := road.points.duplicate()
+	var next := PackedVector2Array()
+	for index in range(old_points.size()):
+		next.append(old_points[index])
+		if index == segment_index:
+			next.append(target_local)
+	var undo := get_undo_redo()
+	undo.create_action("Split Central City road")
+	undo.add_do_property(road, "points", next)
+	undo.add_undo_property(road, "points", old_points)
+	undo.commit_action()
+	_status.text = "Road junction added"
+
+
 func _start_new_road() -> void:
 	var root := _authoring_root()
 	if root == null:
@@ -1181,6 +1242,7 @@ func _start_new_road() -> void:
 func _complete_new_road(screen: Vector2, root: Node) -> void:
 	var grid := MATH.visual_world_to_grid(_screen_to_visual_world(screen))
 	grid = MATH.snap_grid(grid, _snap_step())
+	grid = _magnetize_to_road_endpoint(grid, null)
 	if _road_creation_start.x == INF:
 		_road_creation_start = grid
 		_status.text = "New Road · click end point · right-click cancels"
