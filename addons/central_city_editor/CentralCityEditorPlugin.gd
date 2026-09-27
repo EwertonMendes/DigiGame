@@ -332,6 +332,7 @@ func _unique_authoring_id(base_id: String, parent: Node) -> String:
 			return candidate
 		candidate = "%s_%d" % [stem, suffix]
 		suffix += 1
+	return candidate
 
 
 func _mode_text() -> String:
