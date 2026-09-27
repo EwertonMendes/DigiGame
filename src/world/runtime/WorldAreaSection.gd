@@ -1223,6 +1223,7 @@ func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: S
 	actor.name = title.capitalize().replace(" ", "")
 	actor.configure(NPC_TEXTURE, false, _world_controller, "southwest")
 	actor.position = grid_to_world(Vector2(cell))
+	actor.set_world_elevation(_elevation_for_local_grid(Vector2(cell)))
 	actor.add_to_group("debug_capture_clean_hidden")
 	add_child(actor)
 
@@ -1248,6 +1249,8 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	if not _is_city_land(cell):
 		return
 	var foot := grid_to_world(Vector2(cell))
+	var elevation_px := _elevation_for_local_grid(Vector2(cell))
+	var visual_offset := Vector2(0.0, -elevation_px)
 	var texture := AtlasTexture.new()
 	texture.atlas = OAK_TREE_SOURCE
 	texture.region = LARGE_OAK_REGION
@@ -1256,9 +1259,10 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	tree.texture = texture
 	tree.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var center_to_foot := LARGE_OAK_FOOT - texture.get_size() * 0.5
-	tree.position = foot + Vector2(0.0, 10.0) - center_to_foot
-	tree.z_index = 1000 + int(round(global_position.y + foot.y))
-	var ground_anchor := foot + Vector2(0.0, 10.0)
+	tree.position = foot + Vector2(0.0, 10.0) - center_to_foot + visual_offset
+	tree.z_index = 1000 + int(round(global_position.y + foot.y - elevation_px))
+	tree.set_meta("world_elevation_px", elevation_px)
+	var ground_anchor := foot + Vector2(0.0, 10.0) + visual_offset
 	var local_anchor := ground_anchor - tree.position
 	_configure_shadow_caster(
 		tree,
