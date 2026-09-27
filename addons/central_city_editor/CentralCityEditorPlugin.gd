@@ -3,6 +3,7 @@ extends EditorPlugin
 
 const AUTHORING_ROOT = preload("res://src/world/authoring/CentralCityAuthoringRoot.gd")
 const ROAD_SCRIPT = preload("res://src/world/authoring/CentralCityRoadAuthoring.gd")
+const ROAD_GEOMETRY = preload("res://src/world/runtime/CentralCityRoadGeometry.gd")
 const BOUNDARY_SCRIPT = preload("res://src/world/authoring/CentralCityBoundaryAuthoring.gd")
 const MATH = preload("res://src/world/authoring/CentralCityEditorMath.gd")
 const VALIDATOR = preload("res://src/world/authoring/CentralCityAuthoringValidator.gd")
@@ -10,8 +11,11 @@ const BAKER = preload("res://src/world/authoring/CentralCityBaker.gd")
 
 const HANDLE_RADIUS := 8.0
 const HIT_RADIUS := 15.0
-const ROAD_SCREEN_WIDTH_PER_GRID := 35.77708764
 const ROAD_COLOR := Color(1.0, 0.62, 0.10, 0.96)
+const ROAD_IDLE_COLOR := Color(1.0, 0.62, 0.10, 0.34)
+const ROAD_HOVER_FILL := Color(1.0, 0.62, 0.10, 0.10)
+const ROAD_SELECTED_FILL := Color(1.0, 0.62, 0.10, 0.16)
+const ROAD_SELECTED_BORDER := Color(1.0, 0.78, 0.32, 0.92)
 const HANDLE_COLOR := Color(1.0, 0.92, 0.32, 1.0)
 const WIDTH_COLOR := Color(0.24, 0.92, 1.0, 1.0)
 const SELECT_COLOR := Color(0.35, 1.0, 0.55, 0.95)
@@ -24,6 +28,7 @@ var _overlay_toggle: Button
 var _status: Label
 var _active_root: Node = null
 var _show_handles := true
+var _hovered_road: Line2D = null
 
 var _drag_kind := ""
 var _drag_node: Node = null
@@ -58,12 +63,11 @@ func _exit_tree() -> void:
 	_toolbar = null
 
 
-func _handles(object: Object) -> bool:
-	return object != null and (
-		object.get_script() == AUTHORING_ROOT
-		or object.get_script() == ROAD_SCRIPT
-		or (object is Node and _is_under_authoring_root(object as Node))
-	)
+func _handles(_object: Object) -> bool:
+	# The road tool must remain active even if the stock 2D editor clears the
+	# current selection after an empty click. Scene identity, not selection,
+	# decides whether this plugin owns the Central City authoring workflow.
+	return _authoring_root() != null
 
 
 func _edit(_object: Object) -> void:
@@ -141,6 +145,15 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 		_update_pointer_drag(event as InputEventMouseMotion)
 		return true
 
+	if event is InputEventMouseMotion and _mode_text() == "Road":
+		var motion := event as InputEventMouseMotion
+		var hover_hit := _road_hit(motion.position, root)
+		var next_hover := hover_hit.get("road") as Line2D if not hover_hit.is_empty() else null
+		if next_hover != _hovered_road:
+			_hovered_road = next_hover
+			update_overlays()
+		return false
+
 	return false
 
 
@@ -157,6 +170,7 @@ func _build_toolbar() -> void:
 	for item in ["Select", "Road", "Ground", "Surface", "Transition", "Level", "Building", "Prop", "Landscape"]:
 		_mode.add_item(item)
 	_mode.item_selected.connect(func(_index: int) -> void:
+		_hovered_road = null
 		_status.text = _mode_text()
 		update_overlays()
 	)
@@ -347,7 +361,10 @@ func _snap_step() -> float:
 
 func _canvas_transform() -> Transform2D:
 	var viewport := get_editor_interface().get_editor_viewport_2d()
-	return viewport.get_canvas_transform() if viewport != null else Transform2D.IDENTITY
+	# The 2D editor has no Camera2D. Pan and zoom live in the SubViewport's
+	# global_canvas_transform. Using canvas_transform here makes gizmos drift
+	# with pan/zoom and breaks viewport hit-testing.
+	return viewport.get_global_canvas_transform() if viewport != null else Transform2D.IDENTITY
 
 
 func _screen_to_visual_world(screen: Vector2) -> Vector2:
@@ -356,6 +373,18 @@ func _screen_to_visual_world(screen: Vector2) -> Vector2:
 
 func _visual_world_to_screen(world: Vector2) -> Vector2:
 	return _canvas_transform() * world
+
+
+func _screen_to_authoring_local(screen: Vector2) -> Vector2:
+	var root := _authoring_root()
+	var world := _screen_to_visual_world(screen)
+	return root.to_local(world) if root != null else world
+
+
+func _authoring_local_to_screen(local: Vector2) -> Vector2:
+	var root := _authoring_root()
+	var world := root.to_global(local) if root != null else local
+	return _visual_world_to_screen(world)
 
 
 func _selected_node() -> Node:
@@ -446,42 +475,104 @@ func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 	return false
 
 
-func _road_hit(screen: Vector2, root: Node) -> Dictionary:
-	var roads := root.get_node_or_null("Roads")
-	if roads == null:
-		return {}
-	var best: Dictionary = {}
-	var best_distance := INF
-	for child in roads.get_children():
-		if not child is Line2D or child.get_script() != ROAD_SCRIPT:
-			continue
-		var road := child as Line2D
-		var elevated := _road_screen_points(road)
-		for index in range(elevated.size()):
-			var distance := screen.distance_to(elevated[index])
-			if distance <= HIT_RADIUS and distance < best_distance:
-				best_distance = distance
-				best = {"road": road, "point_index": index}
-		var width_handle := _road_width_handle_screen(road)
-		var width_distance := screen.distance_to(width_handle)
-		if width_distance <= HIT_RADIUS and width_distance < best_distance:
-			best_distance = width_distance
-			best = {"road": road, "point_index": -1, "width": true}
-		for index in range(elevated.size() - 1):
-			var distance := MATH.screen_distance_to_segment(screen, elevated[index], elevated[index + 1])
-			if distance <= 12.0 and distance < best_distance:
-				best_distance = distance
-				best = {"road": road, "point_index": -1}
-	return best
+func _road_grid_points(road: Line2D) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	for point: Vector2 in road.points:
+		# Match CentralCityAuthoringData exactly: road.position + local point.
+		result.append(MATH.world_to_grid(road.position + point))
+	return result
+
+
+func _road_grid_to_screen(grid: Vector2, elevation: float) -> Vector2:
+	return _authoring_local_to_screen(MATH.grid_to_visual_world(grid, elevation))
 
 
 func _road_screen_points(road: Line2D) -> PackedVector2Array:
 	var result := PackedVector2Array()
 	var elevation := float(road.get("editor_elevation_px"))
-	for point: Vector2 in road.points:
-		var visual := road.to_global(point) + Vector2(0.0, -elevation)
-		result.append(_visual_world_to_screen(visual))
+	for grid: Vector2 in _road_grid_points(road):
+		result.append(_road_grid_to_screen(grid, elevation))
 	return result
+
+
+func _road_segment_screen_polygon(
+	road: Line2D,
+	segment_index: int,
+	width_grid: float
+) -> PackedVector2Array:
+	var grids := _road_grid_points(road)
+	if segment_index < 0 or segment_index >= grids.size() - 1:
+		return PackedVector2Array()
+	var grid_polygon := ROAD_GEOMETRY.corridor_grid_polygon(
+		grids[segment_index],
+		grids[segment_index + 1],
+		width_grid
+	)
+	var elevation := float(road.get("editor_elevation_px"))
+	var result := PackedVector2Array()
+	for grid: Vector2 in grid_polygon:
+		result.append(_road_grid_to_screen(grid, elevation))
+	return result
+
+
+func _road_outer_width(road: Line2D) -> float:
+	return maxf(
+		0.5,
+		float(road.get("width_grid")) + maxf(0.0, float(road.get("border_width_grid"))) * 2.0
+	)
+
+
+func _road_hit(screen: Vector2, root: Node) -> Dictionary:
+	var roads := root.get_node_or_null("Roads")
+	if roads == null:
+		return {}
+
+	var selected := _selected_node()
+	var best: Dictionary = {}
+	var best_distance := INF
+
+	for child in roads.get_children():
+		if not child is Line2D or child.get_script() != ROAD_SCRIPT:
+			continue
+		var road := child as Line2D
+		var centerline := _road_screen_points(road)
+		if centerline.size() < 2:
+			continue
+
+		# Endpoints have priority so length editing stays effortless even at a
+		# junction where several visible road corridors overlap.
+		for index in range(centerline.size()):
+			var endpoint_distance := screen.distance_to(centerline[index])
+			if endpoint_distance <= HIT_RADIUS and endpoint_distance < best_distance:
+				best_distance = endpoint_distance
+				best = {"road": road, "point_index": index}
+
+		# Width control only belongs to the selected road, so an invisible
+		# handle on another road can never steal a click.
+		if road == selected:
+			var width_handle := _road_width_handle_screen(road)
+			var width_distance := screen.distance_to(width_handle)
+			if width_distance <= HIT_RADIUS and width_distance < best_distance:
+				best_distance = width_distance
+				best = {"road": road, "point_index": -1, "width": true}
+
+		# Clicking anywhere on the actual rendered road selects it. The hit
+		# polygon uses the exact same corridor math as the runtime mesh.
+		var outer_width := _road_outer_width(road)
+		for segment_index in range(centerline.size() - 1):
+			var corridor := _road_segment_screen_polygon(road, segment_index, outer_width)
+			if corridor.size() < 3 or not Geometry2D.is_point_in_polygon(screen, corridor):
+				continue
+			var center_distance := MATH.screen_distance_to_segment(
+				screen,
+				centerline[segment_index],
+				centerline[segment_index + 1]
+			)
+			if center_distance < best_distance:
+				best_distance = center_distance
+				best = {"road": road, "point_index": -1}
+
+	return best
 
 
 func _boundary_screen_points(boundary: Line2D) -> PackedVector2Array:
@@ -629,37 +720,103 @@ func _draw_all_roads(overlay: Control, root: Node) -> void:
 	for child in roads.get_children():
 		if not child is Line2D or child.get_script() != ROAD_SCRIPT or child == selected:
 			continue
-		var points := _road_screen_points(child as Line2D)
-		if points.size() >= 2:
-			overlay.draw_polyline(points, Color(1.0, 0.62, 0.10, 0.42), 2.0, true)
+		var road := child as Line2D
+		var points := _road_screen_points(road)
+		if points.size() < 2:
+			continue
+		if road == _hovered_road:
+			for segment_index in range(points.size() - 1):
+				var hover_polygon := _road_segment_screen_polygon(
+					road,
+					segment_index,
+					_road_outer_width(road)
+				)
+				if hover_polygon.size() >= 3:
+					overlay.draw_colored_polygon(hover_polygon, ROAD_HOVER_FILL)
+					_draw_closed_polyline(
+						overlay,
+						hover_polygon,
+						Color(1.0, 0.74, 0.28, 0.72),
+						2.0
+					)
+		overlay.draw_polyline(
+			points,
+			ROAD_COLOR if road == _hovered_road else ROAD_IDLE_COLOR,
+			2.0 if road == _hovered_road else 1.25,
+			true
+		)
+
+
+func _draw_closed_polyline(
+	overlay: Control,
+	polygon: PackedVector2Array,
+	color: Color,
+	width: float
+) -> void:
+	if polygon.size() < 2:
+		return
+	var closed := polygon.duplicate()
+	closed.append(polygon[0])
+	overlay.draw_polyline(closed, color, width, true)
 
 
 func _draw_selected_road(overlay: Control, road: Line2D) -> void:
 	var points := _road_screen_points(road)
-	if points.size() >= 2:
-		overlay.draw_polyline(points, ROAD_COLOR, 3.0, true)
+	if points.size() < 2:
+		return
+
+	# Show the real corridor footprint instead of an abstract line. The inner
+	# fill is Width Grid; the bright outline includes the authored road border.
+	for segment_index in range(points.size() - 1):
+		var outer_polygon := _road_segment_screen_polygon(
+			road,
+			segment_index,
+			_road_outer_width(road)
+		)
+		if outer_polygon.size() >= 3:
+			overlay.draw_colored_polygon(
+				outer_polygon,
+				Color(ROAD_SELECTED_FILL.r, ROAD_SELECTED_FILL.g, ROAD_SELECTED_FILL.b, 0.08)
+			)
+			_draw_closed_polyline(overlay, outer_polygon, ROAD_SELECTED_BORDER, 2.0)
+
+		var inner_polygon := _road_segment_screen_polygon(
+			road,
+			segment_index,
+			maxf(0.5, float(road.get("width_grid")))
+		)
+		if inner_polygon.size() >= 3:
+			overlay.draw_colored_polygon(inner_polygon, ROAD_SELECTED_FILL)
+
+	overlay.draw_polyline(points, ROAD_COLOR, 2.5, true)
+
 	for point: Vector2 in points:
 		overlay.draw_circle(point, HANDLE_RADIUS, HANDLE_COLOR)
-		overlay.draw_circle(point, HANDLE_RADIUS, Color(0.15, 0.15, 0.15, 1.0), false, 2.0)
-	if points.size() >= 2:
-		var width_handle := _road_width_handle_screen(road)
-		var midpoint := (points[0] + points[points.size() - 1]) * 0.5
-		overlay.draw_line(midpoint, width_handle, WIDTH_COLOR, 2.0)
-		overlay.draw_circle(width_handle, 7.0, WIDTH_COLOR)
+		overlay.draw_circle(
+			point,
+			HANDLE_RADIUS,
+			Color(0.15, 0.15, 0.15, 1.0),
+			false,
+			2.0
+		)
+
+	var width_handle := _road_width_handle_screen(road)
+	var first_midpoint := (points[0] + points[1]) * 0.5
+	overlay.draw_line(first_midpoint, width_handle, WIDTH_COLOR, 2.0)
+	overlay.draw_circle(width_handle, 8.0, WIDTH_COLOR)
+	overlay.draw_circle(width_handle, 12.0, WIDTH_COLOR, false, 1.5)
 
 
 func _road_width_handle_screen(road: Line2D) -> Vector2:
-	if road.points.size() < 2:
+	var grids := _road_grid_points(road)
+	if grids.size() < 2:
 		return Vector2.ZERO
-	var elevation := float(road.get("editor_elevation_px"))
-	var a := road.to_global(road.points[0]) + Vector2(0.0, -elevation)
-	var b := road.to_global(road.points[road.points.size() - 1]) + Vector2(0.0, -elevation)
-	var direction := (b - a).normalized()
-	if direction.length_squared() <= 0.001:
-		direction = Vector2.RIGHT
-	var normal := direction.orthogonal()
-	var half_width_world := float(road.get("width_grid")) * ROAD_SCREEN_WIDTH_PER_GRID * 0.5
-	return _visual_world_to_screen((a + b) * 0.5 + normal * half_width_world)
+	var handle_grid := ROAD_GEOMETRY.width_handle_grid(
+		grids[0],
+		grids[1],
+		maxf(0.5, float(road.get("width_grid")))
+	)
+	return _road_grid_to_screen(handle_grid, float(road.get("editor_elevation_px")))
 
 
 func _begin_road_point_drag(road: Line2D, point_index: int) -> void:
@@ -674,7 +831,7 @@ func _begin_road_point_drag(road: Line2D, point_index: int) -> void:
 func _begin_road_body_drag(road: Line2D, screen: Vector2) -> void:
 	_drag_kind = "road_body"
 	_drag_node = road
-	_drag_start_mouse_world = _screen_to_visual_world(screen)
+	_drag_start_mouse_world = _screen_to_authoring_local(screen)
 	_drag_original = _collect_road_body_snapshots(road)
 	_drag_changed = false
 	_status.text = "Road · drag to move"
@@ -714,40 +871,39 @@ func _update_pointer_drag(event: InputEventMouseMotion) -> void:
 func _update_road_point_drag(event: InputEventMouseMotion) -> void:
 	var road := _drag_node as Line2D
 	var elevation := float(road.get("editor_elevation_px"))
-	var visual_world := _screen_to_visual_world(event.position)
-	var logical_world := visual_world + Vector2(0.0, elevation)
-	var local := road.to_local(logical_world)
-	var candidate_grid := MATH.world_to_grid(local)
+	var visual_local := _screen_to_authoring_local(event.position)
+	var candidate_grid := MATH.world_to_grid(visual_local + Vector2(0.0, elevation))
 	var step := 0.0 if event.alt_pressed else _snap_step()
-	var points := road.points
-	if points.is_empty():
+	var grids := _road_grid_points(road)
+	if grids.is_empty():
 		return
-	var anchor_index := 1 if _drag_point_index == 0 else points.size() - 2
-	var original_grid := MATH.world_to_grid(points[_drag_point_index])
-	var anchor_grid := MATH.world_to_grid(points[anchor_index])
+
+	var anchor_index := 1 if _drag_point_index == 0 else grids.size() - 2
+	var original_grid := grids[_drag_point_index]
+	var anchor_grid := grids[anchor_index]
 	var target_grid := (
 		MATH.snap_grid(candidate_grid, step)
-		if event.shift_pressed or points.size() > 2 and _drag_point_index > 0 and _drag_point_index < points.size() - 1
+		if event.shift_pressed or grids.size() > 2 and _drag_point_index > 0 and _drag_point_index < grids.size() - 1
 		else MATH.constrained_endpoint(anchor_grid, original_grid, candidate_grid, step)
 	)
 	if not event.alt_pressed and not event.shift_pressed:
 		target_grid = _magnetize_to_road_endpoint(target_grid, road)
-	var target_local := MATH.grid_to_world(target_grid)
+
+	var target_authoring_world := MATH.grid_to_world(target_grid)
 	for snapshot in _drag_original:
 		var node := snapshot.get("node") as Line2D
 		var index := int(snapshot.get("index", -1))
 		if node == null or index < 0:
 			continue
 		var updated := node.points
-		var target_global := road.to_global(target_local)
-		updated[index] = node.to_local(target_global)
+		updated[index] = target_authoring_world - node.position
 		node.points = updated
 	_drag_changed = true
 
 
 func _collect_connected_endpoint_snapshots(road: Line2D, point_index: int) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	var target_global := road.to_global(road.points[point_index])
+	var target_authoring_world := road.position + road.points[point_index]
 	var root := _authoring_root()
 	var roads := root.get_node_or_null("Roads") if root != null else null
 	if roads == null:
@@ -758,7 +914,8 @@ func _collect_connected_endpoint_snapshots(road: Line2D, point_index: int) -> Ar
 		var candidate := child as Line2D
 		for index in range(candidate.points.size()):
 			var endpoint := index == 0 or index == candidate.points.size() - 1
-			if endpoint and candidate.to_global(candidate.points[index]).distance_to(target_global) <= 0.25:
+			var candidate_world := candidate.position + candidate.points[index]
+			if endpoint and candidate_world.distance_to(target_authoring_world) <= 0.25:
 				result.append({
 					"node": candidate,
 					"index": index,
@@ -790,21 +947,22 @@ func _collect_road_body_snapshots(road: Line2D) -> Array[Dictionary]:
 func _update_road_body_drag(event: InputEventMouseMotion) -> void:
 	var road := _drag_node as Line2D
 	var elevation := float(road.get("editor_elevation_px"))
-	var current := _screen_to_visual_world(event.position)
-	var start_logical := _drag_start_mouse_world + Vector2(0.0, elevation)
-	var current_logical := current + Vector2(0.0, elevation)
-	var start_grid := MATH.world_to_grid(road.to_local(start_logical))
-	var current_grid := MATH.world_to_grid(road.to_local(current_logical))
+	var current_visual := _screen_to_authoring_local(event.position)
+	var start_grid := MATH.world_to_grid(_drag_start_mouse_world + Vector2(0.0, elevation))
+	var current_grid := MATH.world_to_grid(current_visual + Vector2(0.0, elevation))
 	var delta_grid := current_grid - start_grid
 	if not event.alt_pressed:
 		delta_grid = MATH.snap_grid(delta_grid, _snap_step())
 	var delta_world := MATH.grid_to_world(delta_grid)
 
-	var road_old: PackedVector2Array
+	var road_old := PackedVector2Array()
 	for entry in _drag_original:
 		if entry.get("node") == road:
-			road_old = entry.get("points") as PackedVector2Array
+			road_old = (entry.get("points") as PackedVector2Array).duplicate()
 			break
+	if road_old.is_empty():
+		return
+
 	var road_new := road_old.duplicate()
 	for index in range(road_new.size()):
 		road_new[index] += delta_world
@@ -817,9 +975,12 @@ func _update_road_body_drag(event: InputEventMouseMotion) -> void:
 		var old_points := entry.get("points") as PackedVector2Array
 		var new_points := old_points.duplicate()
 		for endpoint_index in [0, new_points.size() - 1]:
-			var endpoint_global := connected.to_global(old_points[endpoint_index])
-			for moved_endpoint in [road.to_global(road_old[0]), road.to_global(road_old[road_old.size() - 1])]:
-				if endpoint_global.distance_to(moved_endpoint) <= 0.25:
+			var endpoint_world := connected.position + old_points[endpoint_index]
+			for moved_endpoint in [
+				road.position + road_old[0],
+				road.position + road_old[road_old.size() - 1],
+			]:
+				if endpoint_world.distance_to(moved_endpoint) <= 0.25:
 					new_points[endpoint_index] += delta_world
 		connected.points = new_points
 	_drag_changed = true
@@ -827,20 +988,17 @@ func _update_road_body_drag(event: InputEventMouseMotion) -> void:
 
 func _update_road_width_drag(event: InputEventMouseMotion) -> void:
 	var road := _drag_node as Line2D
-	var points := road.points
-	if points.size() < 2:
+	var grids := _road_grid_points(road)
+	if grids.size() < 2:
 		return
+
 	var elevation := float(road.get("editor_elevation_px"))
-	var a := road.to_global(points[0]) + Vector2(0.0, -elevation)
-	var b := road.to_global(points[points.size() - 1]) + Vector2(0.0, -elevation)
-	var midpoint := (a + b) * 0.5
-	var direction := (b - a).normalized()
-	if direction.length_squared() <= 0.001:
-		return
-	var normal := direction.orthogonal()
-	var mouse_world := _screen_to_visual_world(event.position)
-	var half_width := absf((mouse_world - midpoint).dot(normal))
-	var width_grid := maxf(0.5, half_width * 2.0 / ROAD_SCREEN_WIDTH_PER_GRID)
+	var visual_local := _screen_to_authoring_local(event.position)
+	var mouse_grid := MATH.world_to_grid(visual_local + Vector2(0.0, elevation))
+	var width_grid := maxf(
+		0.5,
+		ROAD_GEOMETRY.width_from_grid_point(grids[0], grids[1], mouse_grid)
+	)
 	if not event.alt_pressed:
 		width_grid = maxf(0.5, roundf(width_grid * 4.0) / 4.0)
 	road.set("width_grid", width_grid)
@@ -1238,8 +1396,8 @@ func _magnetize_to_road_endpoint(grid: Vector2, excluded_road: Line2D) -> Vector
 		for index in [0, road.points.size() - 1]:
 			if index < 0 or index >= road.points.size():
 				continue
-			var endpoint_global := road.to_global(road.points[index])
-			var endpoint_grid := MATH.world_to_grid(endpoint_global)
+			var endpoint_world := road.position + road.points[index]
+			var endpoint_grid := MATH.world_to_grid(endpoint_world)
 			var distance := grid.distance_to(endpoint_grid)
 			if distance < best_distance:
 				best_distance = distance
@@ -1251,23 +1409,32 @@ func _split_road_at_screen(road: Line2D, screen: Vector2) -> void:
 	if road.points.size() < 2:
 		return
 	var elevation := float(road.get("editor_elevation_px"))
-	var logical_global := _screen_to_visual_world(screen) + Vector2(0.0, elevation)
-	var target_grid := MATH.snap_grid(MATH.world_to_grid(road.to_local(logical_global)), _snap_step())
-	var target_local := MATH.grid_to_world(target_grid)
+	var visual_local := _screen_to_authoring_local(screen)
+	var target_grid := MATH.snap_grid(
+		MATH.world_to_grid(visual_local + Vector2(0.0, elevation)),
+		_snap_step()
+	)
+	var target_local := MATH.grid_to_world(target_grid) - road.position
 	var screen_points := _road_screen_points(road)
 	var segment_index := 0
 	var best_distance := INF
 	for index in range(screen_points.size() - 1):
-		var distance := MATH.screen_distance_to_segment(screen, screen_points[index], screen_points[index + 1])
+		var distance := MATH.screen_distance_to_segment(
+			screen,
+			screen_points[index],
+			screen_points[index + 1]
+		)
 		if distance < best_distance:
 			best_distance = distance
 			segment_index = index
+
 	var old_points := road.points.duplicate()
 	var next := PackedVector2Array()
 	for index in range(old_points.size()):
 		next.append(old_points[index])
 		if index == segment_index:
 			next.append(target_local)
+
 	var undo := get_undo_redo()
 	undo.create_action("Split Central City road")
 	undo.add_do_property(road, "points", next)
@@ -1287,7 +1454,7 @@ func _start_new_road() -> void:
 
 
 func _complete_new_road(screen: Vector2, root: Node) -> void:
-	var grid := MATH.visual_world_to_grid(_screen_to_visual_world(screen))
+	var grid := MATH.visual_world_to_grid(_screen_to_authoring_local(screen))
 	grid = MATH.snap_grid(grid, _snap_step())
 	grid = _magnetize_to_road_endpoint(grid, null)
 	if _road_creation_start.x == INF:
