@@ -38,9 +38,36 @@ func _ready() -> void:
 		"Central City must register its authored geometry and actors as procedural shadow casters"
 	)
 	assert(
-		int(lighting.call("get_local_light_count")) >= 6,
-		"Approved city lamps must register as data-driven local lights"
+		int(lighting.call("get_local_light_count")) >= 12,
+		"Street lamps and authored service buildings must register as data-driven local lights"
 	)
+	var midday_snapshot = lighting.call("get_time_debug_snapshot")
+	assert(midday_snapshot is Dictionary, "World lighting must expose a deterministic debug time snapshot")
+	assert(
+		String((midday_snapshot as Dictionary).get("phase", "")) == "DAY"
+		and absf(float((midday_snapshot as Dictionary).get("hour", 0.0)) - 12.0) < 0.01,
+		"Campaign lighting preview must default to midday without advancing automatically"
+	)
+	var midday_direction := (midday_snapshot as Dictionary).get("shadow_direction", Vector2.ZERO) as Vector2
+	var midday_length := float((midday_snapshot as Dictionary).get("shadow_length", 0.0))
+	var midday_lights := float((midday_snapshot as Dictionary).get("local_light_strength", 0.0))
+	lighting.call("set_preview_time_hours", 18.0)
+	var sunset_snapshot := lighting.call("get_time_debug_snapshot") as Dictionary
+	assert(
+		String(sunset_snapshot.get("phase", "")) == "SUNSET"
+		and float(sunset_snapshot.get("shadow_length", 0.0)) > midday_length
+		and float(sunset_snapshot.get("local_light_strength", 0.0)) > midday_lights
+		and ((sunset_snapshot.get("shadow_direction", Vector2.ZERO) as Vector2).distance_to(midday_direction) > 0.25),
+		"Sunset preview must rotate and lengthen shadows while bringing local lights up"
+	)
+	lighting.call("set_preview_time_hours", 21.0)
+	var night_snapshot := lighting.call("get_time_debug_snapshot") as Dictionary
+	assert(
+		String(night_snapshot.get("phase", "")) == "NIGHT"
+		and float(night_snapshot.get("local_light_strength", 0.0)) >= 0.95,
+		"Night preview must fully activate authored local illumination"
+	)
+	lighting.call("set_preview_time_hours", 12.0)
 	assert(
 		String(player.get_meta("world_shadow_style", "")) == "contact"
 		and player.get_meta("world_shadow_size", Vector2.ZERO) is Vector2
@@ -117,8 +144,15 @@ func _ready() -> void:
 		plaza_natural != null
 		and plaza_tree != null
 		and plaza_tree.is_in_group("world_shadow_caster")
-		and String(plaza_tree.get_meta("world_shadow_style", "")) == "projected_soft",
-		"Central City trees must cast a soft projected canopy shadow from their ground anchor"
+		and String(plaza_tree.get_meta("world_shadow_style", "")) == "projected_soft"
+		and float(plaza_tree.get_meta("world_shadow_height", 0.0)) >= 100.0
+		and (plaza_tree.get_meta("world_shadow_size", Vector2.ZERO) as Vector2).x >= 90.0,
+		"Central City trees must cast a visible broad projected canopy shadow from their ground anchor"
+	)
+	var shadow_root := lighting.get_node_or_null("SunShadows") as Node2D
+	assert(
+		shadow_root != null and shadow_root.z_index > 40,
+		"World shadows must render above raised landscape tops so tree canopy casts remain visible"
 	)
 	assert(
 		plaza_planter != null
@@ -331,6 +365,15 @@ func _ready() -> void:
 	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
 	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
+	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/DigiLabDoorLight") as Node2D
+	var digilab_core_light := digilab_section.get_node_or_null("DigiLabExterior/DigiLabCoreLight") as Node2D
+	assert(
+		digilab_door_light != null
+		and digilab_core_light != null
+		and digilab_door_light.is_in_group("world_local_light")
+		and digilab_core_light.is_in_group("world_local_light"),
+		"DigiLab exterior must expose authored door and core illumination sources"
+	)
 	var digilab_upper := digilab_section.get_node_or_null("DigiLabExterior/UpperOccluder") as Sprite2D
 	assert(digilab_upper != null, "DigiLab must split upper occlusion from the foreground facade")
 	assert(
@@ -472,6 +515,11 @@ func _ready() -> void:
 	var training_building := training_section.get_node_or_null("TrainingCenterExterior/Building") as Sprite2D
 	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/UpperOccluder") as Sprite2D
 	assert(training_building != null, "Training district must render the authored Training Center exterior")
+	assert(
+		training_section.get_node_or_null("TrainingCenterExterior/TrainingDoorLight") != null
+		and training_section.get_node_or_null("TrainingCenterExterior/TrainingAccentLight") != null,
+		"Training Center exterior must expose two time-of-day local light sources"
+	)
 	assert(training_upper != null, "Training Center must split upper occlusion from its foreground facade")
 	assert(
 		training_building.texture != null
@@ -560,6 +608,11 @@ func _ready() -> void:
 	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/Building") as Sprite2D
 	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/UpperOccluder") as Sprite2D
 	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
+	assert(
+		hospital_section.get_node_or_null("HospitalExterior/HospitalDoorLight") != null
+		and hospital_section.get_node_or_null("HospitalExterior/HospitalAccentLight") != null,
+		"Hospital exterior must expose two time-of-day local light sources"
+	)
 	assert(hospital_upper != null, "Hospital must split upper occlusion from its foreground facade")
 	assert(
 		hospital_building.texture != null
