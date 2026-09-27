@@ -302,7 +302,9 @@ async function runMobileSuite() {
   await settleFrames(page, 2);
 
   const touchMenu = waitForConsole(page, '[World] TOUCH_MENU', 10000);
-  await page.touchscreen.tap(307, 697);
+  // Portrait touch HUD now has three stacked actions: MENU, RUN/WALK,
+  // INTERACT. Keep this tap on the center of MENU instead of the middle row.
+  await page.touchscreen.tap(307, 644);
   await touchMenu;
   await settleFrames(page, 3);
   await page.screenshot({ path: 'build/digimon-technique-library-mobile.png', fullPage: true });
@@ -336,7 +338,8 @@ async function runMobileSuite() {
   await page.screenshot({ path: 'build/world-touch-1280x720.png', fullPage: true });
 
   const nativeLogicalMenu = waitForConsole(page, '[World] TOUCH_MENU', 10000);
-  await page.touchscreen.tap(1206, 597);
+  // Same three-action stack at the native 1280x720 logical viewport.
+  await page.touchscreen.tap(1206, 547);
   await nativeLogicalMenu;
   await settleFrames(page, 2);
   await page.screenshot({ path: 'build/world-touch-menu-1280x720.png', fullPage: true });
