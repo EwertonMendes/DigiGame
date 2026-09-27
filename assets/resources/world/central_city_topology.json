@@ -12,8 +12,8 @@
   "level_break": {
     "grid_y": 19,
     "lower_threshold_y": 19.5,
-    "x_min": -13,
-    "x_max": 29,
+    "x_min": -27,
+    "x_max": 41,
     "upper_level": "upper_civic",
     "lower_level": "south_terrace"
   },
