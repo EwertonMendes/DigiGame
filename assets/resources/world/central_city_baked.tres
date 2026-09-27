@@ -1,0 +1,962 @@
+[gd_resource type="Resource" script_class="CentralCityBakedData" format=3 uid="uid://bumn8stari00v"]
+
+[ext_resource type="Script" uid="uid://bgmc2wkrpb4kq" path="res://src/world/authoring/CentralCityBakedData.gd" id="1_he7jd"]
+
+[resource]
+script = ExtResource("1_he7jd")
+snapshot = {
+"area": {
+"display_name": "Central City",
+"id": "central_city",
+"region": "central_city",
+"section_size": 14,
+"sections": [{
+"coord": [-2, -2],
+"subtitle": "A quiet garden district",
+"theme": "garden",
+"title": "Verdant Terrace"
+}, {
+"coord": [-1, -2],
+"subtitle": "Homes among recovered data",
+"theme": "residential",
+"title": "Northwest Residences"
+}, {
+"coord": [0, -2],
+"subtitle": "Waterways through the city",
+"theme": "canal",
+"title": "North Canal"
+}, {
+"coord": [1, -2],
+"subtitle": "Recovered records and research",
+"theme": "archive",
+"title": "Memory Archive"
+}, {
+"coord": [2, -2],
+"subtitle": "Green space above the canal",
+"theme": "garden",
+"title": "Northeast Terrace"
+}, {
+"coord": [-2, -1],
+"subtitle": "Restored homes and side streets",
+"theme": "residential",
+"title": "West Heights"
+}, {
+"coord": [-1, -1],
+"subtitle": "A calm approach to the laboratory",
+"theme": "garden",
+"title": "DigiLab Gardens"
+}, {
+"coord": [0, -1],
+"subtitle": "Growth and tactical preparation",
+"theme": "training",
+"title": "Training Ward"
+}, {
+"coord": [1, -1],
+"subtitle": "Recovery district green space",
+"theme": "garden",
+"title": "Hospital Gardens"
+}, {
+"coord": [2, -1],
+"subtitle": "Newly restored housing",
+"theme": "residential",
+"title": "East Heights"
+}, {
+"coord": [-2, 0],
+"subtitle": "Residential recovery block",
+"theme": "residential",
+"title": "West Commons"
+}, {
+"coord": [-1, 0],
+"subtitle": "Evolution and reconstruction",
+"theme": "digilab",
+"title": "DigiLab District"
+}, {
+"coord": [0, 0],
+"subtitle": "Heart of Central City",
+"theme": "plaza",
+"title": "Central Plaza"
+}, {
+"coord": [1, 0],
+"subtitle": "Recovery services",
+"theme": "hospital",
+"title": "Hospital District"
+}, {
+"coord": [2, 0],
+"subtitle": "Road toward the outer sectors",
+"theme": "gate",
+"title": "East Gate"
+}, {
+"coord": [-2, 1],
+"subtitle": "Community green space",
+"theme": "garden",
+"title": "Southwest Gardens"
+}, {
+"coord": [-1, 1],
+"subtitle": "Homes and small plazas",
+"theme": "residential",
+"title": "Southwest Commons"
+}, {
+"coord": [0, 1],
+"subtitle": "Shops and civilian services",
+"theme": "market",
+"title": "Data Market"
+}, {
+"coord": [1, 1],
+"subtitle": "Restored neighborhood",
+"theme": "residential",
+"title": "Southeast Commons"
+}, {
+"coord": [2, 1],
+"subtitle": "Trees along the city wall",
+"theme": "garden",
+"title": "East Gardens"
+}, {
+"coord": [-2, 2],
+"subtitle": "Quiet edge of the city",
+"theme": "garden",
+"title": "Lower Garden"
+}, {
+"coord": [-1, 2],
+"subtitle": "Homes near the outbound road",
+"theme": "residential",
+"title": "South Residences"
+}, {
+"coord": [0, 2],
+"subtitle": "Route toward Green Sector",
+"theme": "gate",
+"title": "South Gate"
+}, {
+"coord": [1, 2],
+"subtitle": "Newly restored housing",
+"theme": "residential",
+"title": "Southeast Residences"
+}, {
+"coord": [2, 2],
+"subtitle": "City-edge green space",
+"theme": "garden",
+"title": "Lower East Terrace"
+}],
+"subtitle": "Recovery District · continuous overworld"
+},
+"buildings": {
+"archive": Vector2(21, -21),
+"digilab": Vector2(-6, 10),
+"hospital": Vector2(-4.5, -1.5),
+"market": Vector2(7, 26),
+"training": Vector2(7, -3)
+},
+"ground_paint": {},
+"ground_regions": [{
+"base_color": Color(0.625, 0.635, 0.64, 1),
+"grid_polygon": PackedVector2Array(4.5, 4.5, 9.5, 4.5, 9.5, 9.5, 4.5, 9.5),
+"id": "CentralCivicRing",
+"priority": 10,
+"render": true,
+"surface": "stone_soft",
+"walkable": true
+}, {
+"base_color": Color(1, 1, 1, 1),
+"grid_polygon": PackedVector2Array(1.5, -23.5, 11.5, -23.5, 11.5, -19.5, 1.5, -19.5),
+"id": "NorthCanal",
+"priority": 10,
+"render": true,
+"surface": "water",
+"walkable": false
+}, {
+"base_color": Color(1, 1, 1, 1),
+"grid_polygon": PackedVector2Array(5.5, 5.5, 8.5, 5.5, 8.5, 8.5, 5.5, 8.5),
+"id": "CentralPool",
+"priority": 20,
+"render": true,
+"surface": "water",
+"walkable": false
+}, {
+"base_color": Color(0.575, 0.585, 0.595, 1),
+"grid_polygon": PackedVector2Array(5.5, -23.5, 7.5, -23.5, 7.5, -19.5, 5.5, -19.5),
+"id": "NorthCanalBridge",
+"priority": 20,
+"render": true,
+"surface": "main",
+"walkable": true
+}],
+"landscapes_by_section": {
+"-1,-2": [Vector2(2, 11)],
+"-1,1": [Vector2(2, 11)],
+"-1,2": [Vector2(2, 11)],
+"-2,-1": [Vector2(2, 11), Vector2(5.5, 3.5), Vector2(9.5, 9)],
+"-2,-2": [Vector2(3, 3), Vector2(10, 10), Vector2(3, 10)],
+"-2,0": [Vector2(2, 11)],
+"-2,1": [Vector2(10, 3), Vector2(3, 10), Vector2(10, 10)],
+"-2,2": [Vector2(3, 3), Vector2(10, 10), Vector2(3, 10)],
+"0,-2": [Vector2(2, 10), Vector2(11, 3)],
+"0,0": [Vector2(2, 11), Vector2(11, 2)],
+"1,-1": [Vector2(3, 3), Vector2(10, 10), Vector2(3, 10)],
+"1,1": [Vector2(2, 11)],
+"1,2": [Vector2(2, 11)],
+"2,-1": [Vector2(2, 11)],
+"2,-2": [Vector2(3, 3), Vector2(10, 10), Vector2(3, 10)],
+"2,1": [Vector2(10, 3), Vector2(3, 10), Vector2(10, 10)],
+"2,2": [Vector2(3, 3), Vector2(10, 10), Vector2(3, 10)]
+},
+"props_by_section": {
+"-1,0": [{
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [12.2, 6.5],
+"role": "digilab_outer_sidewalk_node",
+"surround": "civic"
+}],
+"0,-1": [{
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [13.0, 6.0],
+"role": "training_outer_sidewalk_node",
+"surround": "civic"
+}],
+"0,-2": [{
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [5.0, 4.0],
+"role": "north_bridge_west_head",
+"surround": "civic"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [8.0, 4.0],
+"role": "north_bridge_east_head",
+"surround": "civic"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [5.0, 9.0],
+"role": "south_bridge_west_head",
+"surround": "civic"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [8.0, 9.0],
+"role": "south_bridge_east_head",
+"surround": "civic"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "bench_nw",
+"cell": [4.2000003, 10.6],
+"clearance": [0.0, 0.0],
+"role": "canal_southwest_tree_face_center_seating"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "bench_nw",
+"cell": [13.000001, 3.5999985],
+"clearance": [0.0, 0.0],
+"role": "canal_northeast_tree_face_center_seating"
+}],
+"0,0": [{
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [2.2, 5.2],
+"role": "plaza_northwest_landscape_edge",
+"surround": "landscape"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [8.8, 2.5],
+"role": "plaza_northeast_landscape_edge",
+"surround": "landscape"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [11.5, 8.5],
+"role": "plaza_southeast_landscape_edge",
+"surround": "landscape"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "bench_nw",
+"cell": [4.2, 11.6],
+"clearance": [0.0, 0.0],
+"role": "plaza_southwest_tree_face_center_seating"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "bench_ne",
+"cell": [11.6, 4.2],
+"clearance": [0.0, 0.0],
+"role": "plaza_northeast_tree_face_center_seating"
+}],
+"0,1": [{
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_yellow",
+"cell": [4.5, 11.5],
+"role": "market_lower_terrace_west_edge",
+"surround": "landscape"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_yellow",
+"cell": [9.5, 11.0],
+"role": "market_lower_terrace_east_edge",
+"surround": "landscape"
+}],
+"1,-2": [{
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [4.5, 8.0],
+"role": "archive_pad_west_edge",
+"surround": "civic"
+}, {
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [9.5, 6.0],
+"role": "archive_pad_east_edge",
+"surround": "civic"
+}],
+"2,0": [{
+"accent": [0.24, 0.88, 1.0, 1.0],
+"asset": "lamp_blue",
+"cell": [0.5, 3.5],
+"role": "hospital_outer_sidewalk_node",
+"surround": "civic"
+}]
+},
+"topology": {
+"bridges": [{
+"id": "west_bridge",
+"level": "south_terrace",
+"x_max": -4.0,
+"x_min": -7.0,
+"y_max": 25.5,
+"y_min": 21.5
+}, {
+"id": "east_bridge",
+"level": "south_terrace",
+"x_max": 23.0,
+"x_min": 20.0,
+"y_max": 25.5,
+"y_min": 21.5
+}],
+"description": "Generated from the visual Central City authoring scene.",
+"level_break": {
+"grid_y": 19.0,
+"id": "south_terrace_break",
+"lower_level": "south_terrace",
+"lower_threshold_y": 19.5,
+"upper_level": "upper_civic",
+"x_max": 41.0,
+"x_min": -27.0
+},
+"levels": {
+"south_terrace": {
+"elevation_px": 0.0
+},
+"upper_civic": {
+"elevation_px": 48.0
+}
+},
+"road_network": {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"edges": [{
+"from": "n_000",
+"path_id": "road_00_west_gate_digilab",
+"to": "n_001",
+"type": "road",
+"width": 3.2
+}, {
+"from": "n_001",
+"path_id": "road_01_digilab_central",
+"to": "n_002",
+"type": "road",
+"width": 3.2
+}, {
+"from": "n_002",
+"path_id": "road_02_central_hospital",
+"to": "n_003",
+"type": "road",
+"width": 3.2
+}, {
+"from": "n_003",
+"path_id": "road_03_hospital_east_gate",
+"to": "n_004",
+"type": "road",
+"width": 3.2
+}, {
+"from": "n_002",
+"path_id": "road_04_central_training",
+"to": "n_005",
+"type": "road",
+"width": 3.0
+}, {
+"from": "n_005",
+"path_id": "road_05_training_archive_turn",
+"to": "n_006",
+"type": "road",
+"width": 3.0
+}, {
+"from": "n_006",
+"path_id": "road_06_archive_turn_archive",
+"to": "n_007",
+"type": "road",
+"width": 2.8
+}, {
+"from": "n_001",
+"path_id": "road_07_digilab_west_stair_top",
+"to": "n_008",
+"type": "road",
+"width": 2.8
+}, {
+"from": "n_002",
+"path_id": "road_08_central_central_stair_top",
+"to": "n_009",
+"type": "road",
+"width": 3.0
+}, {
+"from": "n_010",
+"path_id": "road_09_central_stair_bottom_west_stair_bottom",
+"to": "n_011",
+"type": "road",
+"width": 2.6
+}, {
+"from": "n_010",
+"path_id": "road_10_central_stair_bottom_east_bridge_north",
+"to": "n_012",
+"type": "road",
+"width": 2.6
+}, {
+"from": "n_010",
+"path_id": "road_11_central_stair_bottom_market",
+"to": "n_013",
+"type": "road",
+"width": 3.0
+}, {
+"from": "n_014",
+"path_id": "road_12_west_bridge_south_lower_west",
+"to": "n_015",
+"type": "road",
+"width": 2.6
+}, {
+"from": "n_016",
+"path_id": "road_13_east_bridge_south_lower_east",
+"to": "n_017",
+"type": "road",
+"width": 2.6
+}, {
+"from": "n_018",
+"path_id": "road_14_southwest_lower_west",
+"to": "n_015",
+"type": "road",
+"width": 2.6
+}, {
+"from": "n_015",
+"path_id": "road_15_lower_west_lower_center",
+"to": "n_019",
+"type": "road",
+"width": 2.6
+}, {
+"from": "n_019",
+"path_id": "road_16_lower_center_lower_east",
+"to": "n_017",
+"type": "road",
+"width": 2.6
+}, {
+"from": "n_017",
+"path_id": "road_17_lower_east_southeast",
+"to": "n_020",
+"type": "road",
+"width": 2.6
+}, {
+"from": "n_013",
+"path_id": "road_18_market_lower_center",
+"to": "n_019",
+"type": "road",
+"width": 3.0
+}, {
+"from": "n_019",
+"path_id": "road_19_lower_center_south_gate",
+"to": "n_021",
+"type": "road",
+"width": 3.0
+}, {
+"from": "n_008",
+"to": "n_011",
+"type": "stairs"
+}, {
+"from": "n_009",
+"to": "n_010",
+"type": "stairs"
+}, {
+"from": "n_011",
+"to": "n_014",
+"type": "bridge"
+}, {
+"from": "n_012",
+"to": "n_016",
+"type": "bridge"
+}],
+"nodes": [{
+"grid": [-25.0, 10.0],
+"id": "n_000",
+"level": "upper_civic"
+}, {
+"grid": [-5.5, 10.0],
+"id": "n_001",
+"level": "upper_civic"
+}, {
+"grid": [7.0, 10.0],
+"id": "n_002",
+"level": "upper_civic"
+}, {
+"grid": [21.0, 10.0],
+"id": "n_003",
+"level": "upper_civic"
+}, {
+"grid": [35.0, 10.0],
+"id": "n_004",
+"level": "upper_civic"
+}, {
+"grid": [7.0, -3.0],
+"id": "n_005",
+"level": "upper_civic"
+}, {
+"grid": [7.0, -21.0],
+"id": "n_006",
+"level": "upper_civic"
+}, {
+"grid": [21.0, -21.0],
+"id": "n_007",
+"level": "upper_civic"
+}, {
+"grid": [-5.5, 18.25],
+"id": "n_008",
+"level": "upper_civic"
+}, {
+"grid": [7.0, 18.25],
+"id": "n_009",
+"level": "upper_civic"
+}, {
+"grid": [7.0, 21.5],
+"id": "n_010",
+"level": "south_terrace"
+}, {
+"grid": [-5.5, 21.5],
+"id": "n_011",
+"level": "south_terrace"
+}, {
+"grid": [21.5, 21.5],
+"id": "n_012",
+"level": "south_terrace"
+}, {
+"grid": [7.0, 26.0],
+"id": "n_013",
+"level": "south_terrace"
+}, {
+"grid": [-5.5, 25.5],
+"id": "n_014",
+"level": "south_terrace"
+}, {
+"grid": [-5.5, 30.0],
+"id": "n_015",
+"level": "south_terrace"
+}, {
+"grid": [21.5, 25.5],
+"id": "n_016",
+"level": "south_terrace"
+}, {
+"grid": [21.5, 30.0],
+"id": "n_017",
+"level": "south_terrace"
+}, {
+"grid": [-12.0, 30.0],
+"id": "n_018",
+"level": "south_terrace"
+}, {
+"grid": [7.0, 30.0],
+"id": "n_019",
+"level": "south_terrace"
+}, {
+"grid": [25.0, 30.0],
+"id": "n_020",
+"level": "south_terrace"
+}, {
+"grid": [7.0, 40.0],
+"id": "n_021",
+"level": "south_terrace"
+}],
+"paths": [{
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[-25.0, 10.0], [-5.5, 10.0]],
+"id": "road_00_west_gate_digilab",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.2
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[-5.5, 10.0], [7.0, 10.0]],
+"id": "road_01_digilab_central",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.2
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 10.0], [21.0, 10.0]],
+"id": "road_02_central_hospital",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.2
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[21.0, 10.0], [35.0, 10.0]],
+"id": "road_03_hospital_east_gate",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.2
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 10.0], [7.0, -3.0]],
+"id": "road_04_central_training",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.0
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, -3.0], [7.0, -21.0]],
+"id": "road_05_training_archive_turn",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.0
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, -21.0], [21.0, -21.0]],
+"id": "road_06_archive_turn_archive",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.8
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[-5.5, 10.0], [-5.5, 18.25]],
+"id": "road_07_digilab_west_stair_top",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.8
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 10.0], [7.0, 18.25]],
+"id": "road_08_central_central_stair_top",
+"level": "upper_civic",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.0
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 21.5], [-5.5, 21.5]],
+"id": "road_09_central_stair_bottom_west_stair_bottom",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.6
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 21.5], [21.5, 21.5]],
+"id": "road_10_central_stair_bottom_east_bridge_north",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.6
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 21.5], [7.0, 26.0]],
+"id": "road_11_central_stair_bottom_market",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.0
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[-5.5, 25.5], [-5.5, 30.0]],
+"id": "road_12_west_bridge_south_lower_west",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.6
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[21.5, 25.5], [21.5, 30.0]],
+"id": "road_13_east_bridge_south_lower_east",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.6
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[-12.0, 30.0], [-5.5, 30.0]],
+"id": "road_14_southwest_lower_west",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.6
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[-5.5, 30.0], [7.0, 30.0]],
+"id": "road_15_lower_west_lower_center",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.6
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 30.0], [21.5, 30.0]],
+"id": "road_16_lower_center_lower_east",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.6
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[21.5, 30.0], [25.0, 30.0]],
+"id": "road_17_lower_east_southeast",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 2.6
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 26.0], [7.0, 30.0]],
+"id": "road_18_market_lower_center",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.0
+}, {
+"border_color": [0.31, 0.33, 0.35, 1.0],
+"border_width_grid": 0.12,
+"grid_points": [[7.0, 30.0], [7.0, 40.0]],
+"id": "road_19_lower_center_south_gate",
+"level": "south_terrace",
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.0
+}],
+"surface": "dark",
+"tint": [1.48, 1.5, 1.54, 1.0],
+"width": 3.2
+},
+"stairs": [{
+"from_level": "upper_civic",
+"id": "west_stairs",
+"steps": 6,
+"to_level": "south_terrace",
+"x_max": -4.0,
+"x_min": -7.0,
+"y_end": 21.5,
+"y_start": 18.25
+}, {
+"from_level": "upper_civic",
+"id": "central_stairs",
+"steps": 6,
+"to_level": "south_terrace",
+"x_max": 9.0,
+"x_min": 5.0,
+"y_end": 21.5,
+"y_start": 18.25
+}],
+"version": 2,
+"voids": [{
+"id": "west_future_water",
+"x_max": -1.0,
+"x_min": -13.0,
+"y_max": 25.0,
+"y_min": 22.0
+}, {
+"id": "east_future_water",
+"x_max": 29.0,
+"x_min": 13.0,
+"y_max": 25.0,
+"y_min": 22.0
+}]
+},
+"urban_layout": {
+"description": "Generated at runtime from visual Polygon2D authoring regions.",
+"layers": [{
+"border_color": [0.43, 0.47, 0.48, 1.0],
+"border_width": 1.5,
+"id": "central_plaza",
+"polygons": [{
+"border_color": [0.43, 0.47, 0.48, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[3.4, 3.4], [10.6, 3.4], [10.6, 5.7999997], [3.3999999, 5.8]],
+"level": "upper_civic",
+"name": "plaza_north_apron",
+"surface": "stone_soft",
+"tint": [1.12, 1.13, 1.13, 1.0]
+}, {
+"border_color": [0.43, 0.47, 0.48, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[3.3999999, 8.8], [10.599999, 8.8], [10.6, 12.4], [3.4, 12.4]],
+"level": "upper_civic",
+"name": "plaza_south_apron",
+"surface": "stone_soft",
+"tint": [1.12, 1.13, 1.13, 1.0]
+}, {
+"border_color": [0.43, 0.47, 0.48, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[3.4, 5.6], [5.7999997, 5.6], [5.8, 9.2], [3.4, 9.200001]],
+"level": "upper_civic",
+"name": "plaza_west_apron",
+"surface": "stone_soft",
+"tint": [1.12, 1.13, 1.13, 1.0]
+}, {
+"border_color": [0.43, 0.47, 0.48, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[8.2, 5.6000004], [10.6, 5.6000004], [10.599999, 9.2], [8.2, 9.2]],
+"level": "upper_civic",
+"name": "plaza_east_apron",
+"surface": "stone_soft",
+"tint": [1.12, 1.13, 1.13, 1.0]
+}],
+"surface": "stone_soft",
+"tint": [1.12, 1.13, 1.13, 1.0]
+}, {
+"border_color": [0.3, 0.5, 0.43, 1.0],
+"border_width": 1.5,
+"id": "service_forecourts",
+"polygons": [{
+"border_color": [0.3, 0.5, 0.43, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[-10.5, 7.7999997], [-1.3999999, 7.8], [-1.4000001, 14.700001], [-10.5, 14.700001]],
+"level": "upper_civic",
+"name": "digilab_forecourt",
+"surface": "tech_teal",
+"tint": [1.18, 1.14, 1.08, 1.0]
+}, {
+"border_color": [0.39, 0.46, 0.39, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[2.3, -6.2], [11.7, -6.2], [11.7, 1.8000002], [2.3, 1.8]],
+"level": "upper_civic",
+"name": "training_forecourt",
+"surface": "training",
+"tint": [1.08, 1.08, 1.05, 1.0]
+}, {
+"border_color": [0.31, 0.43, 0.55, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[16.2, 7.8], [25.8, 7.799999], [25.8, 14.7], [16.2, 14.7]],
+"level": "upper_civic",
+"name": "hospital_forecourt",
+"surface": "tech_blue",
+"tint": [1.18, 1.15, 1.11, 1.0]
+}, {
+"border_color": [0.52, 0.43, 0.27, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[3.8000002, 25.2], [10.200001, 25.2], [10.199999, 29.4], [3.8000002, 29.400002]],
+"level": "south_terrace",
+"name": "market_forecourt",
+"surface": "market",
+"tint": [0.95, 0.97, 1.0, 1.0]
+}, {
+"border_color": [0.45, 0.36, 0.52, 1.0],
+"border_width": 1.5,
+"grid_polygon": [[16.5, -25.8], [25.5, -25.8], [25.5, -16.5], [16.5, -16.5]],
+"level": "upper_civic",
+"name": "archive_forecourt",
+"surface": "tech_purple",
+"tint": [1.1, 1.1, 1.1, 1.0]
+}],
+"surface": "tech_teal",
+"tint": [1.18, 1.14, 1.08, 1.0]
+}, {
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"id": "district_courts",
+"polygons": [{
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"grid_polygon": [[-20.0, -20.0], [-16.0, -20.0], [-16.0, -16.5], [-20.0, -16.5]],
+"level": "upper_civic",
+"name": "verdant_terrace_court",
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}, {
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"grid_polygon": [[-9.5, -23.0], [-4.5, -23.0], [-4.5, -19.0], [-9.5, -19.0]],
+"level": "upper_civic",
+"name": "northwest_residences_court",
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}, {
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"grid_polygon": [[-23.0, -9.0], [-18.5, -9.0], [-18.5, -5.2000003], [-23.0, -5.200001]],
+"level": "upper_civic",
+"name": "west_heights_court",
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}, {
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"grid_polygon": [[18.5, -9.0], [23.5, -9.0], [23.5, -5.0], [18.5, -5.0]],
+"level": "upper_civic",
+"name": "hospital_gardens_court",
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}, {
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"grid_polygon": [[-20.0, 27.0], [-15.5, 27.0], [-15.5, 30.5], [-20.0, 30.5]],
+"level": "south_terrace",
+"name": "southwest_gardens_court",
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}, {
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"grid_polygon": [[18.0, 27.0], [22.5, 27.0], [22.5, 30.5], [18.0, 30.5]],
+"level": "south_terrace",
+"name": "southeast_commons_court",
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}, {
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"grid_polygon": [[-9.5, 33.0], [-5.0, 33.0], [-5.0, 36.5], [-9.5, 36.5]],
+"level": "south_terrace",
+"name": "south_residences_court",
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}, {
+"border_color": [0.47, 0.48, 0.49, 1.0],
+"border_width": 1.0,
+"grid_polygon": [[18.5, 33.0], [23.0, 33.0], [23.0, 36.5], [18.5, 36.5]],
+"level": "south_terrace",
+"name": "southeast_residences_court",
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}],
+"surface": "stone_soft",
+"tint": [1.04, 1.05, 1.05, 1.0]
+}],
+"version": 5
+}
+}
