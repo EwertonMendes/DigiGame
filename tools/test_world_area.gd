@@ -171,25 +171,61 @@ func _ready() -> void:
 		"Central City must compose the authored civic network above the unchanged micro-paver base"
 	)
 	assert(
-		area.get_urban_layout_render_node_count() <= 10,
+		area.get_urban_layout_render_node_count() <= 14,
 		"Urban paths, plazas and district courts must stay batched into a small fixed render-node budget"
 	)
 	for required_urban_node: String in [
 		"Edges_civic_primary",
 		"Surface_civic_primary",
+		"Depth_civic_primary",
 		"Surface_central_plaza",
 		"Surface_service_forecourts",
 		"Surface_secondary_walks",
+		"Depth_secondary_walks",
 		"Surface_district_courts",
 	]:
 		var urban_surface := urban_layout.get_node_or_null(required_urban_node) as MeshInstance2D
-		assert(
-			urban_surface != null
-			and urban_surface.texture == null
-			and urban_surface.material is ShaderMaterial
-			and (urban_surface.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
-			"Urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
-		)
+		if required_urban_node.begins_with("Depth_"):
+			assert(
+				urban_surface != null
+				and urban_surface.texture == null
+				and urban_surface.material == null,
+				"Urban depth node %s must stay a lightweight solid curb-face batch" % required_urban_node
+			)
+		else:
+			assert(
+				urban_surface != null
+				and urban_surface.texture == null
+				and urban_surface.material is ShaderMaterial
+				and (urban_surface.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
+				"Urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
+			)
+	var south_terrace := area.get_node_or_null("SouthTerraceStructure") as Node2D
+	assert(
+		south_terrace != null
+		and area.get_south_terrace_render_node_count() == 5
+		and south_terrace.get_node_or_null("RetainingFaces") is MeshInstance2D
+		and south_terrace.get_node_or_null("TerraceStairs") is MeshInstance2D
+		and south_terrace.get_node_or_null("WaterfallFaces") is MeshInstance2D,
+		"South Terrace must expose one batched structural layer with retaining walls, stairs and waterfall faces"
+	)
+	assert(
+		int(south_terrace.get_meta("visual_level_count", 0)) == 2
+		and int(south_terrace.get_meta("stair_count", 0)) == 3
+		and int(south_terrace.get_meta("waterfall_count", 0)) == 2,
+		"South Terrace must keep two readable visual levels, three crossings and two waterfall accents"
+	)
+	assert(
+		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 19))),
+		"The upper civic deck must be separated by a real retaining boundary with walkable staircase openings"
+	)
+	assert(
+		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 23)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 23))),
+		"The lower ornamental canal must block water cells while preserving the central bridge deck"
+	)
+
 	var edge_blocks := area.get_node_or_null("CityGround/EdgeBlocks")
 	assert(
 		edge_blocks != null and edge_blocks.get_child_count() > 0,
@@ -389,6 +425,12 @@ func _ready() -> void:
 	var hospital_lighting := area.get_node_or_null("Section_1_0") as WorldAreaSection
 	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
 	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
+	var market_pad := market_lighting.get_node_or_null("DataMarketPad") as Area2D if market_lighting != null else null
+	assert(
+		market_pad != null
+		and market_pad.position.is_equal_approx(market_lighting.grid_to_world(Vector2(7, 12))),
+		"Data Market must move onto the lower South Terrace instead of remaining on the upper flat"
+	)
 	assert(
 		digilab_lighting != null and digilab_lighting.get_decoration_count() <= 1,
 		"DigiLab may use at most one safe outer-sidewalk lamp until more surrounding streets exist"
