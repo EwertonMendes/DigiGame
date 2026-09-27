@@ -237,7 +237,7 @@ static func is_route_reserved(grid: Vector2, extra_margin: float = 0.0) -> bool:
 		var b: Vector2 = nodes[to_id]
 		var width := maxf(0.5, float(edge.get("width", default_width)))
 		if type in ["stairs", "bridge"]:
-			width = maxf(width, absf(b.x - a.x), 3.0)
+			width = maxf(maxf(width, absf(b.x - a.x)), 3.0)
 		if _distance_to_axis_segment(grid, a, b) <= width * 0.5 + extra_margin:
 			return true
 	return false
@@ -303,8 +303,9 @@ static func road_graph_is_connected() -> bool:
 	var queue: Array[String] = [start]
 	var visited := {start: true}
 	while not queue.is_empty():
-		var current := queue.pop_front()
-		for raw_neighbor in adjacency[current]:
+		var current: String = String(queue.pop_front())
+		var neighbors: Array = adjacency[current] as Array
+		for raw_neighbor in neighbors:
 			var neighbor := String(raw_neighbor)
 			if visited.has(neighbor):
 				continue
