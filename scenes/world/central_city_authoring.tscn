@@ -228,8 +228,6 @@ width = 5.0
 default_color = Color(1, 0.65, 0.16, 0.75)
 script = ExtResource("6_boundary")
 
-[node name="Roads" type="Node2D" parent="." unique_id=567326905]
-visible = false
 
 [node name="Surfaces" type="Node2D" parent="." unique_id=1445949062]
 visible = false
