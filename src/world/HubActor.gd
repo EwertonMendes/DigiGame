@@ -267,15 +267,18 @@ func _update_frame(walking: bool) -> void:
 
 
 func _configure_world_shadow() -> void:
+	if _sprite == null or _sprite.texture == null:
+		return
+	var frame_width := float(_sprite.texture.get_width()) / float(FRAME_COLUMNS)
+	var visual_width := frame_width * absf(_sprite.scale.x)
+	var shadow_width := clampf(visual_width * 0.48, 24.0, 38.0)
+	var shadow_height := clampf(shadow_width * 0.32, 7.0, 12.0)
 	add_to_group("world_shadow_caster")
-	set_meta("world_shadow_footprint", PackedVector2Array([
-		Vector2(-9.0, 0.0),
-		Vector2(0.0, -5.0),
-		Vector2(9.0, 0.0),
-		Vector2(0.0, 5.0),
-	]))
-	set_meta("world_shadow_height", 52.0)
-	set_meta("world_shadow_opacity", 0.17)
+	set_meta("world_shadow_style", "contact")
+	set_meta("world_shadow_size", Vector2(shadow_width, shadow_height))
+	set_meta("world_shadow_anchor", Vector2.ZERO)
+	set_meta("world_shadow_offset", Vector2(0.0, -1.0))
+	set_meta("world_shadow_opacity", 0.22)
 	set_meta("world_shadow_dynamic", true)
 
 
