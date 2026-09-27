@@ -161,6 +161,11 @@ func _rebuild_runtime_preview() -> void:
 	if not configured and is_instance_valid(preview):
 		preview.queue_free()
 		_preview_root = null
+	elif configured and is_instance_valid(preview):
+		print("[CentralCityAuthoring] WYSIWYG preview ready sections=%d nodes=%d" % [
+			int(preview.get_section_count()),
+			int(preview.get_runtime_node_count()),
+		])
 
 	_apply_overlay_visibility()
 	_rebuild_in_progress = false
