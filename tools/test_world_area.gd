@@ -722,8 +722,8 @@ func _ready() -> void:
 		digilab_floor is Dictionary
 		and digilab_approach is Dictionary
 		and String((digilab_floor as Dictionary).get("surface", "")) == "main"
-		and String((digilab_approach as Dictionary).get("surface", "")) == "main",
-		"DigiLab circulation must come from the continuous gray city field, not painted path cells"
+		and String((digilab_approach as Dictionary).get("surface", "")) == "road",
+		"DigiLab lot must stay on base paving while its street approach is independently painted as road"
 	)
 	assert(
 		digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabFoundation/Top") != null,
