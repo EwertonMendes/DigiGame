@@ -69,6 +69,15 @@ func capture(world_root: Node, mode: int, scale_factor: int = 1) -> Dictionary:
 	_capturing = true
 	var paused_before := get_tree().paused
 	var hidden_state: Array[Dictionary] = []
+	var lighting: Node = null
+	var lighting_capture_before := false
+	if world_root.has_method("get_lighting_system"):
+		lighting = world_root.call("get_lighting_system") as Node
+		if lighting != null and is_instance_valid(lighting):
+			if lighting.has_method("is_debug_capture_active"):
+				lighting_capture_before = bool(lighting.call("is_debug_capture_active"))
+			if lighting.has_method("set_debug_capture_active"):
+				lighting.call("set_debug_capture_active", true)
 	get_tree().paused = true
 
 	if mode == CaptureMode.CLEAN_MAP:
@@ -109,6 +118,8 @@ func capture(world_root: Node, mode: int, scale_factor: int = 1) -> Dictionary:
 
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_restore_hidden_state(hidden_state)
+	if lighting != null and is_instance_valid(lighting) and lighting.has_method("set_debug_capture_active"):
+		lighting.call("set_debug_capture_active", lighting_capture_before)
 	get_tree().paused = paused_before
 	_capturing = false
 
@@ -267,14 +278,10 @@ func _deliver_png(image: Image, filename: String) -> Dictionary:
 
 func _build_filename(world_root: Node, mode_name: String, scale: int) -> String:
 	var area_id := "world"
-	if world_root.has_method("get_area_scene"):
-		var area = world_root.call("get_area_scene")
-		if area != null and is_instance_valid(area):
-			var definition = area.get("_definitions")
-			# The current area runtime does not expose an ID yet. Keep the filename
-			# deterministic to the campaign area until more major regions exist.
-			if definition is Dictionary:
-				area_id = "central_city"
+	if world_root.has_method("get_area_id"):
+		area_id = String(world_root.call("get_area_id")).strip_edges().to_lower().replace(" ", "_")
+	if area_id.is_empty():
+		area_id = "world"
 
 	var timestamp := Time.get_datetime_string_from_system()
 	timestamp = timestamp.replace(":", "-").replace("T", "_")
