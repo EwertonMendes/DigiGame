@@ -46,6 +46,7 @@ var _walk_sequence_index := 0
 var _walking := false
 var _stationary_time := 0.0
 var _expanded_visual := false
+var _world_elevation_px := 0.0
 
 
 func configure(digimon: Digimon, key: String, party_slot: int, expanded_visual: bool = false) -> void:
@@ -63,7 +64,7 @@ func configure(digimon: Digimon, key: String, party_slot: int, expanded_visual: 
 func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.name = "Sprite2D"
-	_sprite.position = SPRITE_POSITION
+	_sprite.position = _visual_sprite_position()
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(_sprite)
 	_apply_digimon_visuals()
@@ -114,6 +115,22 @@ func step_toward(target_position: Vector2, delta: float, separation_points: Arra
 
 	_settle_from_motion(delta)
 	return false
+
+
+func set_world_elevation(elevation_px: float) -> void:
+	var next_elevation := maxf(0.0, elevation_px)
+	if is_equal_approx(next_elevation, _world_elevation_px):
+		return
+	_world_elevation_px = next_elevation
+	if _sprite != null:
+		_sprite.position = _visual_sprite_position()
+	set_meta("world_elevation_px", _world_elevation_px)
+	set_meta("world_shadow_anchor", Vector2(0.0, -_world_elevation_px))
+	_update_depth()
+
+
+func get_world_elevation() -> float:
+	return _world_elevation_px
 
 
 func set_idle() -> void:
@@ -172,7 +189,7 @@ func _configure_world_shadow() -> void:
 	add_to_group("world_shadow_caster")
 	set_meta("world_shadow_style", "contact")
 	set_meta("world_shadow_size", Vector2(shadow_width, shadow_height))
-	set_meta("world_shadow_anchor", Vector2.ZERO)
+	set_meta("world_shadow_anchor", Vector2(0.0, -_world_elevation_px))
 	set_meta("world_shadow_offset", Vector2(0.0, -1.0))
 	set_meta("world_shadow_opacity", 0.21)
 	set_meta("world_shadow_dynamic", true)
@@ -282,6 +299,10 @@ func _has_safe_separation(candidate: Vector2, separation_points: Array[Vector2])
 	return true
 
 
+func _visual_sprite_position() -> Vector2:
+	return SPRITE_POSITION + Vector2(0.0, -_world_elevation_px)
+
+
 func _update_depth() -> void:
-	z_index = 1000 + int(round(global_position.y))
+	z_index = 1000 + int(round(global_position.y - _world_elevation_px))
 
