@@ -466,7 +466,8 @@ func _is_under_authoring_root(node: Node) -> bool:
 func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 	var mode := _mode_text()
 	var selected := _selected_node()
-	if mode == "Level" or mode == "Select":
+
+	if mode == "Level":
 		var boundary_hit := _boundary_hit(screen, root)
 		if not boundary_hit.is_empty():
 			var boundary := boundary_hit.get("boundary") as Line2D
@@ -477,46 +478,21 @@ func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 			else:
 				_begin_boundary_body_drag(boundary, screen)
 			return true
-	if selected is Polygon2D and mode in ["Select", "Surface", "Transition"]:
+
+	if selected is Polygon2D:
 		var vertex_index := _polygon_vertex_hit(screen, selected as Polygon2D)
 		if vertex_index >= 0:
 			_begin_polygon_vertex_drag(selected as Polygon2D, vertex_index)
 			return true
-	if mode == "Road" or mode == "Select":
-		var road_hit := _road_hit(screen, root)
-		if not road_hit.is_empty():
-			var road := road_hit.get("road") as Line2D
-			_select_node(road)
-			var point_index := int(road_hit.get("point_index", -1))
-			var width_hit := bool(road_hit.get("width", false))
-			if _pointer_double_click and point_index < 0 and not width_hit:
-				_split_road_at_screen(road, screen)
-				return true
-			if width_hit:
-				_begin_width_drag(road)
-			elif point_index >= 0:
-				_begin_road_point_drag(road, point_index)
-			else:
-				_begin_road_body_drag(road, screen)
-			return true
 
-	var containers: Array[String] = []
-	match mode:
-		"Building":
-			containers = ["Buildings"]
-		"Prop":
-			containers = ["Props"]
-		"Landscape":
-			containers = ["Landscapes"]
-		"Surface":
-			containers = ["Surfaces", "GroundOverrides"]
-		"Transition":
-			containers = ["Transitions"]
-		"Select":
-			containers = ["Buildings", "Props", "Landscapes", "Transitions", "Surfaces", "GroundOverrides"]
-		_:
-			pass
-
+	var containers: Array[String] = [
+		"Props",
+		"Landscapes",
+		"Buildings",
+		"Transitions",
+		"Surfaces",
+		"GroundOverrides",
+	]
 	var object_hit := _object_hit(screen, root, containers)
 	if object_hit != null:
 		_select_node(object_hit)
@@ -526,13 +502,6 @@ func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 			_begin_polygon_drag(object_hit as Polygon2D, screen)
 		return true
 
-	# While a specialist Central City tool is active, clicking empty pavement
-	# means "no target", not "leave the authoring context". Swallow the click so
-	# Godot's stock 2D selection does not clear the current authored object.
-	# Select mode intentionally keeps native empty-click deselection available.
-	if mode != "Select":
-		_status.text = "%s · no target" % mode
-		return true
 	return false
 
 
@@ -1139,17 +1108,24 @@ func _object_hit(screen: Vector2, root: Node, containers: Array[String]) -> Node
 						for point: Vector2 in prop_polygon:
 							center += point
 						center /= float(prop_polygon.size())
-						var distance := screen.distance_to(center)
-						if distance < best_distance:
+						var prop_distance := screen.distance_to(center)
+						if prop_distance < best_distance:
 							best = marker
-							best_distance = distance
+							best_distance = prop_distance
 						continue
 
 				var grid := MATH.world_to_grid(marker.position)
 				var elevation := 48.0 if grid.y < 19.5 else 0.0
 				var marker_screen := _visual_world_to_screen(marker.global_position + Vector2(0.0, -elevation))
 				var distance := screen.distance_to(marker_screen)
-				var hit_radius := 210.0 if container_name == "Buildings" else 28.0
+				var hit_radius := 48.0
+				match container_name:
+					"Buildings":
+						hit_radius = 260.0
+					"Landscapes":
+						hit_radius = 82.0
+					"Props":
+						hit_radius = 52.0
 				if distance < hit_radius and distance < best_distance:
 					best = marker
 					best_distance = distance
@@ -1479,38 +1455,52 @@ func _handle_ground_input(event: InputEvent, root: Node) -> bool:
 func _draw_ground_hover(overlay: Control) -> void:
 	if _ground_hover_cell.x == 999999:
 		return
-	var grid := Vector2(_ground_hover_cell)
-	var elevation := 48.0 if grid.y < 19.5 else 0.0
-	var center := MATH.grid_to_visual_world(grid, elevation)
-	var corners := PackedVector2Array([
-		center + Vector2(-32.0, 0.0),
-		center + Vector2(0.0, -16.0),
-		center + Vector2(32.0, 0.0),
-		center + Vector2(0.0, 16.0),
-		center + Vector2(-32.0, 0.0),
-	])
-	var screen_points := PackedVector2Array()
-	for point: Vector2 in corners:
-		screen_points.append(_visual_world_to_screen(point))
-	overlay.draw_polyline(screen_points, Color(0.30, 0.95, 1.0, 1.0), 2.5, true)
+	var brush_size := _brush_size()
+	var radius := brush_size / 2
+	for offset_x in range(-radius, radius + 1):
+		for offset_y in range(-radius, radius + 1):
+			var grid := Vector2(_ground_hover_cell + Vector2i(offset_x, offset_y))
+			var elevation := 48.0 if grid.y < 19.5 else 0.0
+			var center := MATH.grid_to_visual_world(grid, elevation)
+			var corners := PackedVector2Array([
+				center + Vector2(-32.0, 0.0),
+				center + Vector2(0.0, -16.0),
+				center + Vector2(32.0, 0.0),
+				center + Vector2(0.0, 16.0),
+				center + Vector2(-32.0, 0.0),
+			])
+			var screen_points := PackedVector2Array()
+			for point: Vector2 in corners:
+				screen_points.append(_visual_world_to_screen(point))
+			overlay.draw_polyline(screen_points, Color(0.30, 0.95, 1.0, 0.95), 2.0, true)
 
 
 func _paint_at(screen: Vector2, paint: Node) -> void:
 	var grid := MATH.visual_world_to_grid(_screen_to_visual_world(screen))
-	var step := _snap_step()
-	var snapped := MATH.snap_grid(grid, maxf(0.5, step))
-	var cell := Vector2i(roundi(snapped.x), roundi(snapped.y))
+	var cell := Vector2i(roundi(grid.x), roundi(grid.y))
 	if cell == _paint_last_cell:
 		return
 	_paint_last_cell = cell
+
 	var cells := (paint.get("cells") as Dictionary).duplicate(true)
-	var key := MATH.cell_key(cell)
-	if _paint_erase:
-		cells.erase(key)
-	else:
-		cells[key] = _surface.get_item_text(_surface.selected)
+	var brush_size := _brush_size()
+	var radius := brush_size / 2
+	var surface := _surface.get_item_text(_surface.selected)
+	for offset_x in range(-radius, radius + 1):
+		for offset_y in range(-radius, radius + 1):
+			var target := cell + Vector2i(offset_x, offset_y)
+			var key := MATH.cell_key(target)
+			if _paint_erase:
+				cells.erase(key)
+			else:
+				cells[key] = surface
 	paint.set("cells", cells)
-	_status.text = ("Erase " if _paint_erase else "Paint ") + key
+	_status.text = "%s %dx%d @ %s" % [
+		"Erase" if _paint_erase else "Paint %s" % surface,
+		brush_size,
+		brush_size,
+		MATH.cell_key(cell),
+	]
 
 
 func _finish_ground_stroke(paint: Node) -> void:
@@ -1522,11 +1512,11 @@ func _finish_ground_stroke(paint: Node) -> void:
 		return
 	paint.set("cells", _paint_old_cells.duplicate(true))
 	var undo := get_undo_redo()
-	undo.create_action("Paint Central City ground")
+	undo.create_action("Paint world tiles")
 	undo.add_do_property(paint, "cells", final_cells)
 	undo.add_undo_property(paint, "cells", _paint_old_cells.duplicate(true))
 	undo.commit_action()
-	_status.text = "Ground painted"
+	_status.text = "Tiles painted"
 
 
 func _magnetize_to_road_endpoint(grid: Vector2, excluded_road: Line2D) -> Vector2:
