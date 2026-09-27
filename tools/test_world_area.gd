@@ -136,7 +136,10 @@ func _ready() -> void:
 		area.get_ground_render_node_count() <= 16,
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
-	assert(area.get_ground_tile_count() == 4341, "Central City octagonal island must omit only the authored corner void")
+	assert(
+		area.get_ground_tile_count() == 4208,
+		"Central City ground batch must omit the South Terrace wall break and both future-water void pockets"
+	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
 	var civic_paving := area.get_node_or_null("CityGround/Surface_stone_soft") as MeshInstance2D
@@ -167,7 +170,7 @@ func _ready() -> void:
 	assert(
 		urban_layout != null
 		and area.get_urban_layout_layer_count() == 5
-		and area.get_urban_layout_polygon_count() >= 40,
+		and area.get_urban_layout_polygon_count() >= 25,
 		"Central City must compose the authored civic network above the unchanged micro-paver base"
 	)
 	assert(
@@ -177,54 +180,59 @@ func _ready() -> void:
 	for required_urban_node: String in [
 		"Edges_civic_primary",
 		"Surface_civic_primary",
-		"Depth_civic_primary",
 		"Surface_central_plaza",
 		"Surface_service_forecourts",
 		"Surface_secondary_walks",
-		"Depth_secondary_walks",
 		"Surface_district_courts",
 	]:
 		var urban_surface := urban_layout.get_node_or_null(required_urban_node) as MeshInstance2D
-		if required_urban_node.begins_with("Depth_"):
-			assert(
-				urban_surface != null
-				and urban_surface.texture == null
-				and urban_surface.material == null,
-				"Urban depth node %s must stay a lightweight solid curb-face batch" % required_urban_node
-			)
-		else:
-			assert(
-				urban_surface != null
-				and urban_surface.texture == null
-				and urban_surface.material is ShaderMaterial
-				and (urban_surface.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
-				"Urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
-			)
+		assert(
+			urban_surface != null
+			and urban_surface.texture == null
+			and urban_surface.material is ShaderMaterial
+			and (urban_surface.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
+			"Urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
+		)
 	var south_terrace := area.get_node_or_null("SouthTerraceStructure") as Node2D
 	assert(
 		south_terrace != null
-		and area.get_south_terrace_render_node_count() == 5
-		and south_terrace.get_node_or_null("RetainingFaces") is MeshInstance2D
-		and south_terrace.get_node_or_null("TerraceStairs") is MeshInstance2D
-		and south_terrace.get_node_or_null("WaterfallFaces") is MeshInstance2D,
-		"South Terrace must expose one batched structural layer with retaining walls, stairs and waterfall faces"
+		and area.get_south_terrace_render_node_count() == 8
+		and south_terrace.get_node_or_null("RetainingWallCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("RetainingWallFaces") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
+		and south_terrace.get_node_or_null("TrenchBankCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("TrenchInnerWalls") is MeshInstance2D
+		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
+		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D,
+		"South Terrace must use explicit architectural walls, stairs, trench banks, and bridge slabs"
 	)
 	assert(
 		int(south_terrace.get_meta("visual_level_count", 0)) == 2
-		and int(south_terrace.get_meta("stair_count", 0)) == 3
-		and int(south_terrace.get_meta("waterfall_count", 0)) == 2,
-		"South Terrace must keep two readable visual levels, three crossings and two waterfall accents"
+		and int(south_terrace.get_meta("stair_count", 0)) == 2
+		and int(south_terrace.get_meta("trench_count", 0)) == 2
+		and int(south_terrace.get_meta("bridge_count", 0)) == 2,
+		"South Terrace must keep one upper/lower break, two stairways, two void pockets, and two bridges"
+	)
+	assert(
+		south_terrace.get_node_or_null("WaterfallFaces") == null
+		and south_terrace.get_node_or_null("WaterfallHighlights") == null,
+		"The temporary water/waterfall presentation must stay removed until the replacement water system is authored"
 	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))
-		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 19))),
-		"The upper civic deck must be separated by a real retaining boundary with walkable staircase openings"
+		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 19)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(-5, 19))),
+		"The upper civic deck must stop at a real retaining boundary with only the two authored stair openings"
 	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 23)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(-5, 23)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(21, 23)))
 		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 23))),
-		"The lower ornamental canal must block water cells while preserving the central bridge deck"
+		"South Terrace voids must block movement while bridge decks and the central solid corridor remain walkable"
 	)
+
 
 	var edge_blocks := area.get_node_or_null("CityGround/EdgeBlocks")
 	assert(
