@@ -55,9 +55,8 @@ func _exit_tree() -> void:
 
 
 func _handles(_object: Object) -> bool:
-	# The road tool must remain active even if the stock 2D editor clears the
-	# current selection after an empty click. Scene identity, not selection,
-	# decides whether this plugin owns the Central City authoring workflow.
+	# World authoring is scene-level. Selection changes must never disable the
+	# viewport tools while an authoring scene is open.
 	return _authoring_root() != null
 
 
@@ -220,6 +219,44 @@ func _authoring_root() -> Node2D:
 	return null
 
 
+func _authoring_context(root: Node = null) -> Dictionary:
+	var target := root if root != null else _authoring_root()
+	if target != null and target.has_method("get_world_authoring_context"):
+		var value = target.call("get_world_authoring_context")
+		if value is Dictionary:
+			return (value as Dictionary).duplicate(true)
+	return {
+		"title": "World",
+		"paint_node": "GroundPaint",
+		"selectable_containers": [
+			"Props",
+			"Landscapes",
+			"Buildings",
+			"Transitions",
+			"Surfaces",
+			"GroundOverrides",
+		],
+	}
+
+
+func _paint_node(root: Node) -> Node:
+	var context := _authoring_context(root)
+	var node_path := String(context.get("paint_node", "GroundPaint"))
+	return root.get_node_or_null(node_path)
+
+
+func _selectable_containers(root: Node) -> Array[String]:
+	var context := _authoring_context(root)
+	var result: Array[String] = []
+	var value = context.get("selectable_containers", [])
+	if value is Array:
+		for item in value as Array:
+			result.append(String(item))
+	if result.is_empty():
+		result = ["Props", "Landscapes", "Buildings", "Transitions", "Surfaces", "GroundOverrides"]
+	return result
+
+
 func _sync_active_root() -> void:
 	_active_root = _authoring_root()
 	_sync_toolbar_visibility()
@@ -233,14 +270,15 @@ func _sync_overlay_toggle() -> void:
 		return
 	# Raw authoring nodes stay hidden: the plugin draws only precise handles on
 	# top of the real WYSIWYG runtime preview.
-	root.set("show_edit_overlays", false)
+	if _has_property(root, "show_edit_overlays"):
+		root.set("show_edit_overlays", false)
 	_overlay_toggle.set_pressed_no_signal(_show_handles)
 
 
 func _on_overlay_toggled(enabled: bool) -> void:
 	_show_handles = enabled
 	var root := _authoring_root()
-	if root != null:
+	if root != null and _has_property(root, "show_edit_overlays"):
 		root.set("show_edit_overlays", false)
 	update_overlays()
 
@@ -466,14 +504,7 @@ func _begin_pointer_action(screen: Vector2, root: Node) -> bool:
 			_begin_polygon_vertex_drag(selected as Polygon2D, vertex_index)
 			return true
 
-	var containers: Array[String] = [
-		"Props",
-		"Landscapes",
-		"Buildings",
-		"Transitions",
-		"Surfaces",
-		"GroundOverrides",
-	]
+	var containers := _selectable_containers(root)
 	var object_hit := _object_hit(screen, root, containers)
 	if object_hit != null:
 		_select_node(object_hit)
@@ -1002,7 +1033,7 @@ func _resize_transition_rect(polygon: Polygon2D, point_index: int, candidate_gri
 
 
 func _handle_ground_input(event: InputEvent, root: Node) -> bool:
-	var paint := root.get_node_or_null("GroundPaint")
+	var paint := _paint_node(root)
 	if paint == null:
 		_status.text = "GroundPaint node missing"
 		return false
@@ -1036,7 +1067,7 @@ func _draw_ground_hover(overlay: Control) -> void:
 	if _ground_hover_cell.x == 999999:
 		return
 	var brush_size := _brush_size()
-	var radius := brush_size / 2
+	var radius := int(brush_size / 2)
 	for offset_x in range(-radius, radius + 1):
 		for offset_y in range(-radius, radius + 1):
 			var grid := Vector2(_ground_hover_cell + Vector2i(offset_x, offset_y))
