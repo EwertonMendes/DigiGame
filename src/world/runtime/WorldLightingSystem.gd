@@ -476,6 +476,8 @@ func _register_shadow_caster(caster: Node2D) -> void:
 		"style": style,
 		"base_opacity": opacity,
 		"dynamic": bool(caster.get_meta("world_shadow_dynamic", false)),
+		"last_dynamic_position": Vector2(INF, INF),
+		"last_dynamic_anchor": Vector2(INF, INF),
 	}
 	_shadow_entries[id] = entry
 	if bool(entry.get("dynamic", false)):
@@ -548,10 +550,25 @@ func _update_dynamic_shadows() -> void:
 			_dynamic_shadow_entries.remove_at(index)
 			continue
 		# Invisible dynamic shadows do not need geometry work. Visibility culling
-		# will refresh them before they become visible again.
-		if not render_node.visible:
+		# refreshes them before they become visible again.
+		if not render_node.visible or not caster is Node2D:
 			continue
+
+		var caster_2d := caster as Node2D
+		var current_position := caster_2d.global_position
+		var current_anchor := caster_2d.get_meta("world_shadow_anchor", Vector2.ZERO) as Vector2
+		var previous_position := entry.get("last_dynamic_position", Vector2(INF, INF)) as Vector2
+		var previous_anchor := entry.get("last_dynamic_anchor", Vector2(INF, INF)) as Vector2
+		if (
+			current_position.distance_squared_to(previous_position) <= 0.01
+			and current_anchor.distance_squared_to(previous_anchor) <= 0.01
+		):
+			continue
+
 		_update_shadow_geometry(entry)
+		entry["last_dynamic_position"] = current_position
+		entry["last_dynamic_anchor"] = current_anchor
+		_dynamic_shadow_entries[index] = entry
 
 
 func _apply_shadow_appearance(entry: Dictionary) -> void:
