@@ -4,6 +4,7 @@ class_name CentralCityUrbanLayout
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 const CONFIG_PATH := "res://assets/resources/world/central_city_urban_layout.json"
+const AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 const LAYOUT_Z := -1170
 
 static var _config_cache: Dictionary = {}
@@ -47,6 +48,10 @@ static func _build_road_network(root: Node2D) -> Dictionary:
 	var network := TOPOLOGY.road_network()
 	if network.is_empty():
 		return {"polygon_count": 0}
+
+	var paths_value = network.get("paths", [])
+	if paths_value is Array and not paths_value.is_empty():
+		return _build_authored_road_paths(root, paths_value as Array, network)
 
 	var nodes_value = network.get("nodes", [])
 	var edges_value = network.get("edges", [])
@@ -123,6 +128,104 @@ static func _build_road_network(root: Node2D) -> Dictionary:
 		edges.name = "Edges_road_network"
 		edges.z_index = 0
 		root.add_child(edges)
+	if not fills.is_empty():
+		var surface_mesh := CITY.create_paver_polygon_batch(fills, 1)
+		surface_mesh.name = "Surface_road_network"
+		surface_mesh.z_index = 1
+		root.add_child(surface_mesh)
+	return {"polygon_count": polygon_count}
+
+
+static func _build_authored_road_paths(
+	root: Node2D,
+	paths: Array,
+	network: Dictionary
+) -> Dictionary:
+	var fills: Array[Dictionary] = []
+	var underlays: Array[Dictionary] = []
+	var polygon_count := 0
+	var junctions := {}
+
+	for raw_path in paths:
+		if not raw_path is Dictionary:
+			continue
+		var path := raw_path as Dictionary
+		var points_value = path.get("grid_points", [])
+		if not points_value is Array or points_value.size() < 2:
+			continue
+		var grid_points: Array[Vector2] = []
+		for raw_point in points_value as Array:
+			if raw_point is Array and raw_point.size() >= 2:
+				grid_points.append(Vector2(float(raw_point[0]), float(raw_point[1])))
+		if grid_points.size() < 2:
+			continue
+
+		var level := String(path.get("level", "upper_civic"))
+		var width := maxf(0.75, float(path.get("width", network.get("width", 3.0))))
+		var surface := String(path.get("surface", network.get("surface", CITY.SURFACE_DARK)))
+		var tint := _color(path.get("tint", network.get("tint", [1.0, 1.0, 1.0, 1.0])))
+		var fill_color := _tinted_surface_color(surface, tint)
+		var border_grid := maxf(
+			0.0,
+			float(path.get("border_width_grid", network.get("border_width_grid", 0.12)))
+		)
+		var border_color := _color(
+			path.get("border_color", network.get("border_color", [0.31, 0.33, 0.35, 1.0]))
+		)
+
+		for index in range(grid_points.size() - 1):
+			var corridor := _axis_corridor(grid_points[index], grid_points[index + 1], width)
+			if corridor.size() < 3:
+				continue
+			_append_grid_spec(fills, corridor, level, fill_color)
+			_append_grid_spec(
+				underlays,
+				_axis_corridor(grid_points[index], grid_points[index + 1], width + border_grid * 2.0),
+				level,
+				border_color
+			)
+			polygon_count += 1
+
+		for point: Vector2 in grid_points:
+			var key := "%s:%.3f:%.3f" % [level, point.x, point.y]
+			var current = junctions.get(key, {})
+			if not current is Dictionary or current.is_empty() or width > float((current as Dictionary).get("width", 0.0)):
+				junctions[key] = {
+					"grid": point,
+					"level": level,
+					"width": width,
+					"border_grid": border_grid,
+					"fill_color": fill_color,
+					"border_color": border_color,
+				}
+
+	for raw_junction in junctions.values():
+		if not raw_junction is Dictionary:
+			continue
+		var junction := raw_junction as Dictionary
+		var point: Vector2 = junction.get("grid", Vector2.ZERO)
+		var level := String(junction.get("level", "upper_civic"))
+		var width := float(junction.get("width", 3.0))
+		var border_grid := float(junction.get("border_grid", 0.12))
+		_append_grid_spec(
+			fills,
+			_grid_square(point, width * 0.5),
+			level,
+			junction.get("fill_color", Color.WHITE) as Color
+		)
+		_append_grid_spec(
+			underlays,
+			_grid_square(point, width * 0.5 + border_grid),
+			level,
+			junction.get("border_color", Color(0.31, 0.33, 0.35, 1.0)) as Color
+		)
+		polygon_count += 1
+
+	if not underlays.is_empty():
+		var edge_mesh := CITY.create_paver_polygon_batch(underlays, 0)
+		edge_mesh.name = "Edges_road_network"
+		edge_mesh.z_index = 0
+		root.add_child(edge_mesh)
 	if not fills.is_empty():
 		var surface_mesh := CITY.create_paver_polygon_batch(fills, 1)
 		surface_mesh.name = "Surface_road_network"
@@ -268,6 +371,11 @@ static func _logical_to_display(points: PackedVector2Array, level: String) -> Pa
 static func _load_config() -> Dictionary:
 	if not _config_cache.is_empty():
 		return _config_cache
+	if AUTHORING.has_authoring_scene():
+		var authored := AUTHORING.urban_layout_config()
+		if not authored.is_empty():
+			_config_cache = authored.duplicate(true)
+			return _config_cache
 	if not FileAccess.file_exists(CONFIG_PATH):
 		push_error("CentralCityUrbanLayout: missing layout config %s" % CONFIG_PATH)
 		return {}
