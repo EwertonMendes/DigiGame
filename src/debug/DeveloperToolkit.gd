@@ -11,6 +11,7 @@ const WalkPreviewScript = preload("res://src/ui/DigimonWalkPreview.gd")
 const SpriteTestLabScript = preload("res://src/ui/DigimonSpriteTestLab.gd")
 const BattlefieldCatalogScript = preload("res://src/world/BattlefieldCatalog.gd")
 const FootprintScript = preload("res://src/combat/BattleFootprint.gd")
+const MapCaptureScript = preload("res://src/debug/DebugWorldMapCapture.gd")
 
 const BATTLE_SCENE := "res://scenes/main.tscn"
 const TEST_HUB_SCENE := "res://scenes/world/hub.tscn"
@@ -97,6 +98,9 @@ var _battlefield_summary: Label
 
 var _lighting_time: SpinBox
 var _lighting_summary: Label
+var _map_capture: DebugWorldMapCapture
+var _map_capture_scale: OptionButton
+var _map_capture_summary: Label
 var _diagnostics: Label
 var _history: Label
 
@@ -113,6 +117,11 @@ func _ready() -> void:
 	_state = StateToolsScript.new() as DebugStateTools
 	_roster = RosterToolsScript.new() as DebugRosterTools
 	_battlefield_catalog = BattlefieldCatalogScript.new() as BattlefieldCatalog
+	_map_capture = MapCaptureScript.new() as DebugWorldMapCapture
+	_map_capture.name = "DebugWorldMapCapture"
+	_map_capture.capture_started.connect(_on_map_capture_started)
+	_map_capture.capture_progress.connect(_on_map_capture_progress)
+	add_child(_map_capture)
 	if not _battlefield_catalog.load_default():
 		for error in _battlefield_catalog.validation_errors():
 			push_error("Developer Toolkit battlefield catalog: %s" % error)
@@ -265,6 +274,7 @@ func _build_ui() -> void:
 	_build_scenarios_tab(_tabs)
 	_build_battle_tab(_tabs)
 	_build_lighting_tab(_tabs)
+	_build_map_capture_tab(_tabs)
 	_build_diagnostics_tab(_tabs)
 
 	_species_picker = SpeciesPickerScript.new() as DebugSpeciesPicker
@@ -666,6 +676,149 @@ func _refresh_lighting_debug() -> void:
 	]
 
 
+func _build_map_capture_tab(tabs: TabContainer) -> void:
+	var page := _page(tabs, "MAP CAPTURE")
+	page.add_child(_section_label("FULL AREA CAPTURE", UI.CYAN))
+	var intro := _label(
+		"Render the complete loaded exterior through a dedicated tiled SubViewport, then stitch the tiles into one PNG. Capture size is independent of the game window and never allocates one giant GPU viewport.",
+		10,
+		UI.SUBTLE
+	)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(intro)
+
+	_map_capture_scale = OptionButton.new()
+	_map_capture_scale.add_item("1× · native world resolution")
+	_map_capture_scale.set_item_metadata(0, 1)
+	_map_capture_scale.add_item("2× · high-resolution")
+	_map_capture_scale.set_item_metadata(1, 2)
+	_map_capture_scale.select(0)
+	_map_capture_scale.item_selected.connect(func(_index: int) -> void: _refresh_map_capture_debug())
+	_style_field(_map_capture_scale)
+	page.add_child(_field_row("OUTPUT SCALE", _map_capture_scale, []))
+
+	page.add_child(_section_label("CAPTURE MODE", UI.GOLD))
+	page.add_child(_button_row([
+		_action("WORLD SNAPSHOT", _capture_full_map.bind(DebugWorldMapCapture.CaptureMode.WORLD_SNAPSHOT), UI.CYAN, 46),
+		_action("CLEAN MAP", _capture_full_map.bind(DebugWorldMapCapture.CaptureMode.CLEAN_MAP), UI.GREEN, 46),
+	]))
+
+	var mode_help := _label(
+		"WORLD SNAPSHOT keeps the current player, followers, NPCs, labels, shadows and lighting. CLEAN MAP removes dynamic actors, navigation labels and ambient particles while preserving the authored environment and current lighting/time-of-day.",
+		10,
+		UI.SUBTLE
+	)
+	mode_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(mode_help)
+
+	page.add_child(_section_label("CAPTURE STATUS", UI.PURPLE))
+	_map_capture_summary = _label("Open the campaign overworld to calculate capture bounds.", 11, UI.TEXT, true)
+	_map_capture_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(_map_capture_summary)
+
+	var output_help := _label(
+		"Desktop/APK builds save to user://captures. Web builds start a PNG download through the browser.",
+		9,
+		UI.MUTED
+	)
+	output_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(output_help)
+
+
+func _active_world_root() -> Node:
+	var scene := get_tree().current_scene
+	if scene != null and scene.has_method("is_world_ready") and scene.has_method("get_area_scene"):
+		return scene
+	return null
+
+
+func _selected_map_capture_scale() -> int:
+	if _map_capture_scale == null or _map_capture_scale.item_count <= 0 or _map_capture_scale.selected < 0:
+		return 1
+	return clampi(int(_map_capture_scale.get_item_metadata(_map_capture_scale.selected)), 1, 2)
+
+
+func _capture_full_map(mode: int) -> void:
+	if _map_capture == null:
+		_status.text = "Map capture service is unavailable."
+		return
+	if _map_capture.is_capturing():
+		_status.text = "A full-map capture is already running."
+		return
+	var world := _active_world_root()
+	if world == null:
+		_status.text = "Full-map capture is only available in the campaign overworld."
+		_refresh_map_capture_debug()
+		return
+
+	var mode_label := "CLEAN MAP" if mode == DebugWorldMapCapture.CaptureMode.CLEAN_MAP else "WORLD SNAPSHOT"
+	if _map_capture_summary != null:
+		_map_capture_summary.text = "%s · preparing capture…" % mode_label
+	var result: Dictionary = await _map_capture.capture(world, mode, _selected_map_capture_scale())
+	var message := String(result.get("message", "Capture finished."))
+	if bool(result.get("ok", false)):
+		var size := result.get("size", Vector2i.ZERO) as Vector2i
+		var tiles := int(result.get("tiles", 0))
+		_map_capture_summary.text = "%s\n%d×%d · %d tiles" % [message, size.x, size.y, tiles]
+		_status.text = "Full-map PNG ready."
+		_state.log_action("Map capture", "%s · %dx%d" % [String(result.get("mode", "snapshot")), size.x, size.y])
+	else:
+		_map_capture_summary.text = message
+		_status.text = message
+
+
+func _on_map_capture_started(total_tiles: int, output_size: Vector2i) -> void:
+	if _map_capture_summary != null:
+		_map_capture_summary.text = "Rendering 0 / %d tiles · %d×%d PNG…" % [
+			total_tiles,
+			output_size.x,
+			output_size.y,
+		]
+
+
+func _on_map_capture_progress(completed_tiles: int, total_tiles: int) -> void:
+	if _map_capture_summary != null:
+		_map_capture_summary.text = "Rendering %d / %d tiles…" % [completed_tiles, total_tiles]
+
+
+func _refresh_map_capture_debug() -> void:
+	if _map_capture_summary == null:
+		return
+	if _map_capture != null and _map_capture.is_capturing():
+		return
+	var world := _active_world_root()
+	if world == null or not world.has_method("get_area_scene"):
+		_map_capture_summary.text = "Open the campaign overworld to calculate capture bounds."
+		return
+	var area = world.call("get_area_scene")
+	if area == null or not is_instance_valid(area) or not area.has_method("get_debug_capture_bounds"):
+		_map_capture_summary.text = "The current area does not expose full-map capture bounds."
+		return
+	var bounds := area.call("get_debug_capture_bounds") as Rect2
+	var scale := _selected_map_capture_scale()
+	var output_size := Vector2i(
+		ceili(bounds.size.x * float(scale)),
+		ceili(bounds.size.y * float(scale))
+	)
+	var plan := DebugWorldMapCapture.build_capture_plan(bounds, scale)
+	var megapixels := float(output_size.x * output_size.y) / 1000000.0
+	_map_capture_summary.text = (
+		"Ready · %.0f× world scale\n"
+		+ "Output: %d×%d · %.1f MP · %d render tiles\n"
+		+ "Bounds: (%.0f, %.0f) → (%.0f, %.0f)"
+	) % [
+		float(scale),
+		output_size.x,
+		output_size.y,
+		megapixels,
+		plan.size(),
+		bounds.position.x,
+		bounds.position.y,
+		bounds.end.x,
+		bounds.end.y,
+	]
+
+
 func _build_diagnostics_tab(tabs: TabContainer) -> void:
 	var page := _page(tabs, "DIAGNOSTICS")
 	page.add_child(_section_label("LIVE DIAGNOSTICS", UI.CYAN))
@@ -705,6 +858,7 @@ func _refresh_all() -> void:
 	_refresh_battle_roster()
 	_refresh_battlefield_summary()
 	_refresh_lighting_debug()
+	_refresh_map_capture_debug()
 	_refresh_diagnostics()
 
 func _refresh_collection() -> void:
