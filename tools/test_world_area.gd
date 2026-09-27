@@ -976,9 +976,9 @@ func _ready() -> void:
 	assert(
 		hospital_lot is Dictionary
 		and hospital_approach is Dictionary
-		and String((hospital_lot as Dictionary).get("surface", "")) == "main"
-		and String((hospital_approach as Dictionary).get("surface", "")) == "main",
-		"Hospital circulation must be defined by the gray street field around its raised lot"
+		and bool((hospital_lot as Dictionary).get("walkable", true))
+		and bool((hospital_approach as Dictionary).get("walkable", true)),
+		"Hospital placement and road paint must stay independent while its lot and approach remain walkable"
 	)
 	assert(
 		hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalFoundation/Top") != null,
