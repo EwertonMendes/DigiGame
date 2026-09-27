@@ -343,14 +343,17 @@ func _ready() -> void:
 		and market_lighting.get_decoration_asset_ids().has("lamp_yellow"),
 		"Data Market must reserve the approved warm lamp for its service node"
 	)
-	var guide_label := plaza_section.get_node_or_null("CityGuide/Label") as Label
-	var market_label := market_lighting.get_node_or_null("DataMarketPad/Label") as Label if market_lighting != null else null
-	for annotation: Label in [guide_label, market_label]:
-		assert(annotation != null, "World gameplay annotations must remain present")
+	var annotation_labels: Dictionary = {}
+	for raw_annotation in get_tree().get_nodes_in_group("world_annotation_unlit"):
+		if raw_annotation is Label:
+			var annotation := raw_annotation as Label
+			annotation_labels[annotation.text] = annotation
+	for required_text: String in ["CITY GUIDE", "DATA MARKET"]:
+		var annotation := annotation_labels.get(required_text) as Label
+		assert(annotation != null, "World gameplay annotation %s must remain present" % required_text)
 		var annotation_material := annotation.material as CanvasItemMaterial
 		assert(
-			annotation.is_in_group("world_annotation_unlit")
-			and annotation_material != null
+			annotation_material != null
 			and annotation_material.light_mode == CanvasItemMaterial.LIGHT_MODE_UNSHADED,
 			"NPC and service labels must remain unlit and readable regardless of time-of-day darkness"
 		)
