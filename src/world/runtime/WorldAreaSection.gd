@@ -375,9 +375,19 @@ func _build_natural_details() -> void:
 			grid_to_world(Vector2(cell))
 		)
 		var island_root = island_data.get("root")
+		var blocker = island_data.get("blocker")
 		if island_root is Node2D:
 			props.add_child(island_root as Node2D)
-		var blocker = island_data.get("blocker")
+			if blocker is PackedVector2Array:
+				_configure_shadow_caster(
+					island_root as Node2D,
+					blocker as PackedVector2Array,
+					10.0,
+					0.11,
+					false,
+					"projected",
+					1.2
+				)
 		if blocker is PackedVector2Array:
 			_blocked_polygons.append(blocker as PackedVector2Array)
 		_add_tree(props, cell, index)
@@ -1048,13 +1058,17 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	tree.z_index = 1000 + int(round(global_position.y + foot.y))
 	var ground_anchor := foot + Vector2(0.0, 10.0)
 	var local_anchor := ground_anchor - tree.position
-	var shadow_footprint := PackedVector2Array([
-		local_anchor + Vector2(-14.0, 0.0),
-		local_anchor + Vector2(0.0, -7.0),
-		local_anchor + Vector2(14.0, 0.0),
-		local_anchor + Vector2(0.0, 7.0),
-	])
-	_configure_shadow_caster(tree, shadow_footprint, 76.0, 0.18)
+	_configure_shadow_caster(
+		tree,
+		PackedVector2Array(),
+		92.0,
+		0.20,
+		false,
+		"projected_soft",
+		1.0,
+		Vector2(74.0, 46.0),
+		local_anchor
+	)
 	parent.add_child(tree)
 	TreeAmbientFXScript.apply(
 		tree,
@@ -1082,15 +1096,27 @@ func _configure_shadow_caster(
 	footprint: PackedVector2Array,
 	height: float,
 	opacity: float,
-	dynamic: bool = false
+	dynamic: bool = false,
+	style: String = "projected",
+	projection_multiplier: float = 1.0,
+	soft_size: Vector2 = Vector2.ZERO,
+	anchor: Vector2 = Vector2.ZERO
 ) -> void:
-	if caster == null or footprint.size() < 3:
+	if caster == null:
+		return
+	if style == "projected" and footprint.size() < 3:
 		return
 	caster.add_to_group(SHADOW_GROUP)
-	caster.set_meta("world_shadow_footprint", footprint.duplicate())
+	caster.set_meta("world_shadow_style", style)
+	if footprint.size() >= 3:
+		caster.set_meta("world_shadow_footprint", footprint.duplicate())
 	caster.set_meta("world_shadow_height", maxf(0.0, height))
+	caster.set_meta("world_shadow_projection_multiplier", maxf(0.0, projection_multiplier))
 	caster.set_meta("world_shadow_opacity", clampf(opacity, 0.0, 0.55))
 	caster.set_meta("world_shadow_dynamic", dynamic)
+	if soft_size != Vector2.ZERO:
+		caster.set_meta("world_shadow_size", soft_size)
+	caster.set_meta("world_shadow_anchor", anchor)
 
 
 func _mark_blocked(cell: Vector2i) -> void:
