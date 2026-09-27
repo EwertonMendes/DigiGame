@@ -887,7 +887,6 @@ func _update_marker_drag(event: InputEventMouseMotion) -> void:
 	var marker := _drag_node as Marker2D
 	var old_position := _drag_original[0].get("position") as Vector2
 	var old_grid := MATH.world_to_grid(old_position)
-	var old_elevation := 48.0 if old_grid.y < 19.5 else 0.0
 	var start_grid := MATH.visual_world_to_grid(_drag_start_mouse_world)
 	var current_grid := MATH.visual_world_to_grid(_screen_to_visual_world(event.position))
 	var delta := current_grid - start_grid
