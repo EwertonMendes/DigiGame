@@ -18,7 +18,7 @@ const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const DebugAccessScript = preload("res://src/debug/DebugToolkitAccess.gd")
 const PLAYER_TEXTURE = preload("res://assets/characters/world/player_blond.png")
-const BACKGROUND_SHADER = preload("res://shaders/hub_background.gdshader")
+const WorldBackdropScript = preload("res://src/world/runtime/WorldBackdrop.gd")
 
 const REGION_ID := "central_city"
 const AREA_ID := "central_city"
@@ -385,17 +385,7 @@ func _finish_area_loading_overlay() -> void:
 
 
 func _build_background() -> void:
-	var layer := CanvasLayer.new()
-	layer.name = "WorldBackdrop"
-	layer.layer = -50
-	add_child(layer)
-	var backdrop := ColorRect.new()
-	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var material := ShaderMaterial.new()
-	material.shader = BACKGROUND_SHADER
-	backdrop.material = material
-	backdrop.color = Color(0.06, 0.12, 0.13, 1.0)
-	layer.add_child(backdrop)
+	add_child(WorldBackdropScript.create())
 
 
 func _build_player(parent: Node2D) -> void:
