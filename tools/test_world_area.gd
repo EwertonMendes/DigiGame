@@ -425,7 +425,9 @@ func _ready() -> void:
 	var hospital_lighting := area.get_node_or_null("Section_1_0") as WorldAreaSection
 	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
 	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
-	var market_pad := market_lighting.get_node_or_null("DataMarketPad") as Area2D if market_lighting != null else null
+	var market_pad: Area2D = null
+	if market_lighting != null:
+		market_pad = market_lighting.get_node_or_null("DataMarketPad") as Area2D
 	assert(
 		market_pad != null
 		and market_pad.position.is_equal_approx(market_lighting.grid_to_world(Vector2(7, 12))),
