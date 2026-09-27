@@ -4,6 +4,7 @@ class_name WorldAreaSection
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
 const CITY_DECOR = preload("res://src/world/runtime/CentralCityDecor.gd")
+const CITY_TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
@@ -24,11 +25,7 @@ const CITY_CENTER_GLOBAL := Vector2i(7, 7)
 const CITY_SHAPE_MANHATTAN_RADIUS := 54
 const CITY_PAVEMENT_LIGHT := Color(0.575, 0.585, 0.595, 1.0)
 const CITY_CIVIC_LIGHT := Color(0.625, 0.635, 0.640, 1.0)
-const SOUTH_TERRACE_EDGE_Y := 19
-const SOUTH_TERRACE_X_MIN := -13
-const SOUTH_TERRACE_X_MAX := 29
-const SOUTH_TRENCH_Y_MIN := 22
-const SOUTH_TRENCH_Y_MAX := 24
+const LANDSCAPE_INVALID_CELL := Vector2i(999999, 999999)
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 # The authored PNG is close to isometric, but its two ground axes are not an
@@ -198,6 +195,45 @@ const HOSPITAL_FOOTPRINT_SOURCE := [
 	Vector2(275.0, 1020.0),
 	Vector2(155.0, 940.0),
 	Vector2(55.0, 865.0),
+]
+
+# Visual foundations intentionally cover the complete projected base of each
+# authored building. They are not movement collision: doorway notches and side
+# guards stay governed by the measured collision footprints below.
+const DIGILAB_FOUNDATION_FOOTPRINT_SOURCE := [
+	Vector2(24.0, 720.0),
+	Vector2(310.0, 610.0),
+	Vector2(635.0, 455.0),
+	Vector2(1010.0, 585.0),
+	Vector2(1240.0, 770.0),
+	Vector2(1240.0, 990.0),
+	Vector2(1000.0, 1150.0),
+	Vector2(650.0, 1250.0),
+	Vector2(300.0, 1115.0),
+	Vector2(24.0, 890.0),
+]
+const TRAINING_CENTER_FOUNDATION_FOOTPRINT_SOURCE := [
+	Vector2(24.0, 735.0),
+	Vector2(330.0, 590.0),
+	Vector2(730.0, 535.0),
+	Vector2(1230.0, 565.0),
+	Vector2(1238.0, 900.0),
+	Vector2(790.0, 1198.0),
+	Vector2(560.0, 1210.0),
+	Vector2(210.0, 1040.0),
+	Vector2(24.0, 900.0),
+]
+const HOSPITAL_FOUNDATION_FOOTPRINT_SOURCE := [
+	Vector2(35.0, 715.0),
+	Vector2(360.0, 555.0),
+	Vector2(627.0, 525.0),
+	Vector2(895.0, 555.0),
+	Vector2(1218.0, 715.0),
+	Vector2(1218.0, 910.0),
+	Vector2(920.0, 1075.0),
+	Vector2(627.0, 1160.0),
+	Vector2(335.0, 1075.0),
+	Vector2(35.0, 910.0),
 ]
 
 var definition: Dictionary = {}
