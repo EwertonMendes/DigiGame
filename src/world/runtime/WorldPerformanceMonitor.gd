@@ -5,13 +5,15 @@ const FIRST_SAMPLE_SECONDS := 1.0
 const REPEAT_SAMPLE_SECONDS := 5.0
 
 var _area: WorldAreaScene = null
+var _lighting: Node = null
 var _elapsed := 0.0
 var _next_sample := FIRST_SAMPLE_SECONDS
 var _last_snapshot: Dictionary = {}
 
 
-func configure(area: WorldAreaScene) -> void:
+func configure(area: WorldAreaScene, lighting: Node = null) -> void:
 	_area = area
+	_lighting = lighting
 
 
 func _process(delta: float) -> void:
@@ -45,6 +47,9 @@ func snapshot() -> Dictionary:
 		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"render_objects": int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)),
 		"memory_bytes": int(Performance.get_monitor(Performance.MEMORY_STATIC)),
+		"shadow_casters": _lighting_metric("get_shadow_caster_count"),
+		"local_lights": _lighting_metric("get_local_light_count"),
+		"active_local_lights": _lighting_metric("get_active_local_light_count"),
 	}
 
 
