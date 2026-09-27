@@ -457,7 +457,7 @@ static func _parse_props(root: Node, section_size: int) -> Dictionary:
 			"role": String(child.get("role")),
 		}
 		var surround := String(child.get("surround"))
-		if not surround.is_empty():
+		if surround != "none" and not surround.is_empty():
 			placement["surround"] = surround
 		var depth := String(child.get("depth"))
 		if depth != "world":
