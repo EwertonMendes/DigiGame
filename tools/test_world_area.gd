@@ -6,6 +6,7 @@ const CITY_AUTHORING := preload("res://src/world/authoring/CentralCityAuthoringD
 const CITY_EDITOR_MATH := preload("res://src/world/authoring/CentralCityEditorMath.gd")
 const CITY_LAYOUT := preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
 const CITY_BAKER := preload("res://src/world/authoring/CentralCityBaker.gd")
+const CITY_DECOR := preload("res://src/world/runtime/CentralCityDecor.gd")
 
 
 func _ready() -> void:
@@ -37,6 +38,37 @@ func _ready() -> void:
 		and CITY_AUTHORING.authored_road_count() == 20,
 		"Central City runtime must be derived from the visual Godot authoring scene rather than hand-edited layout JSON"
 	)
+
+	# Regression: moving the last visually-authored prop out of a section must
+	# leave that section empty. Legacy JSON must never resurrect a ghost lamp
+	# that has no selectable authoring node.
+	var authoring_scene := load("res://scenes/world/central_city_authoring.tscn") as PackedScene
+	var authoring_root := authoring_scene.instantiate()
+	var prop_snapshot := CITY_AUTHORING.snapshot_from_root(authoring_root)
+	authoring_root.free()
+	var props_by_section := (prop_snapshot.get("props_by_section", {}) as Dictionary).duplicate(true)
+	props_by_section["-1,0"] = []
+	prop_snapshot["props_by_section"] = props_by_section
+	CITY_AUTHORING.set_preview_snapshot(prop_snapshot)
+	var empty_authored_decor := CITY_DECOR.build_for_section(
+		Vector2i(-1, 0),
+		"service",
+		Vector2.ZERO,
+		func(_cell: Vector2, _clearance: Vector2) -> bool:
+			return true,
+		func(_polygon: PackedVector2Array, _asset_id: String) -> void:
+			pass,
+		func(_cell: Vector2) -> float:
+			return 48.0
+	)
+	CITY_AUTHORING.clear_preview_snapshot()
+	var empty_authored_decor_root := empty_authored_decor.get("root") as Node
+	assert(
+		int(empty_authored_decor.get("count", -1)) == 0,
+		"An empty visually-authored section must stay empty instead of reviving a legacy JSON prop"
+	)
+	if empty_authored_decor_root != null:
+		empty_authored_decor_root.free()
 	assert(
 		CITY_EDITOR_MATH.constrained_endpoint(
 			Vector2(0.0, 0.0),
