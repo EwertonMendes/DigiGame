@@ -15,6 +15,8 @@ const SELECT_COLOR := Color(0.35, 1.0, 0.55, 0.95)
 
 var _toolbar: HBoxContainer
 var _toolbar_toggle: Button
+var _toolbar_scroll: ScrollContainer
+var _toolbar_tools: HBoxContainer
 var _toolbar_expanded := true
 var _mode: OptionButton
 var _snap: OptionButton
@@ -43,18 +45,23 @@ var _stamp_template: Node = null
 var _stamp_parent_name := ""
 var _stamp_label := ""
 var _decor_config_cache: Dictionary = {}
+var _scene_undo: UndoRedo
+var _last_action_index := -1
+var _undo_feedback_seconds := 0.0
 
 
 func _enter_tree() -> void:
 	_build_toolbar()
 	add_control_to_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _toolbar)
-	set_input_event_forwarding_always_enabled()
+	get_undo_redo().history_changed.connect(_on_scene_history_changed)
 	set_force_draw_over_forwarding_enabled()
 	_toolbar.visible = false
 
 
 func _exit_tree() -> void:
 	_clear_stamp_template()
+	_disconnect_scene_undo()
+	get_undo_redo().history_changed.disconnect(_on_scene_history_changed)
 	if _toolbar != null:
 		remove_control_from_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _toolbar)
 		_toolbar.queue_free()
@@ -78,10 +85,11 @@ func _make_visible(_visible: bool) -> void:
 	pass
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var root := _authoring_root()
 	if root != _active_root:
 		_active_root = root
+		_sync_scene_undo(root)
 		_sync_overlay_toggle()
 		update_overlays()
 	_sync_toolbar_visibility()
@@ -96,6 +104,68 @@ func _process(_delta: float) -> void:
 		and not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 	):
 		_finish_active_paint_stroke(root)
+	if root != null and not _drag_kind.is_empty() and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_finish_pointer_action()
+	if _undo_feedback_seconds > 0.0:
+		_undo_feedback_seconds -= delta
+		if _undo_feedback_seconds <= 0.0 and _status.text in ["Undone", "Redone"]:
+			_status.text = _mode_text()
+
+
+func _disconnect_scene_undo() -> void:
+	if _scene_undo != null:
+		_scene_undo.version_changed.disconnect(_on_scene_undo_version_changed)
+	_scene_undo = null
+	_last_action_index = -1
+
+
+func _sync_scene_undo(root: Node) -> void:
+	_disconnect_scene_undo()
+	if root == null:
+		return
+	var manager := get_undo_redo()
+	_scene_undo = manager.get_history_undo_redo(manager.get_object_history_id(root))
+	if _scene_undo != null:
+		_last_action_index = _scene_undo.get_current_action()
+		_scene_undo.version_changed.connect(_on_scene_undo_version_changed)
+
+
+func _on_scene_undo_version_changed() -> void:
+	if _scene_undo == null or _status == null or _authoring_root() == null:
+		return
+	var current := _scene_undo.get_current_action()
+	if current < _last_action_index:
+		_status.text = "Undone"
+		_undo_feedback_seconds = 1.5
+	elif current > _last_action_index:
+		_status.text = "Redone"
+		_undo_feedback_seconds = 1.5
+	_last_action_index = current
+
+
+func _on_scene_history_changed() -> void:
+	if _scene_undo != null:
+		_last_action_index = _scene_undo.get_current_action()
+
+
+func _input(event: InputEvent) -> void:
+	# 2D forwarding follows the selected editor object. Route pointer events from
+	# the editor's actual scene viewport so clearing/selecting nodes cannot stop
+	# the world tools. Leave unhandled events to Godot's normal 2D controls.
+	if not event is InputEventMouse or _authoring_root() == null or not _toolbar_expanded:
+		return
+	var scene_viewport := get_editor_interface().get_editor_viewport_2d()
+	if scene_viewport == null:
+		return
+	var canvas_control := scene_viewport.get_parent() as Control
+	if canvas_control == null or not canvas_control.is_visible_in_tree():
+		return
+	var pointer := event as InputEventMouse
+	if not canvas_control.get_global_rect().has_point(pointer.position):
+		return
+	var local_event := event.xformed_by(canvas_control.get_global_transform_with_canvas().affine_inverse())
+	if _handle_canvas_input(local_event):
+		get_viewport().set_input_as_handled()
 
 
 func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
@@ -116,6 +186,12 @@ func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 
 
 func _forward_canvas_gui_input(event: InputEvent) -> bool:
+	if event is InputEventMouse:
+		return false
+	return _handle_canvas_input(event)
+
+
+func _handle_canvas_input(event: InputEvent) -> bool:
 	var root := _authoring_root()
 	if root == null or not _toolbar_expanded:
 		return false
@@ -155,12 +231,21 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 func _build_toolbar() -> void:
 	_toolbar = HBoxContainer.new()
 	_toolbar.name = "WorldAuthoringToolbar"
+	_toolbar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	_toolbar_toggle = Button.new()
 	_toolbar_toggle.text = "Hide Tools"
 	_toolbar_toggle.tooltip_text = "Explicitly hide/show the world-authoring controls. Selection changes never affect this state."
 	_toolbar_toggle.pressed.connect(_on_toolbar_toggle_pressed)
 	_toolbar.add_child(_toolbar_toggle)
+	_toolbar_scroll = ScrollContainer.new()
+	_toolbar_scroll.name = "ToolsScroll"
+	_toolbar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_toolbar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_toolbar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_toolbar.add_child(_toolbar_scroll)
+	_toolbar_tools = HBoxContainer.new()
+	_toolbar_scroll.add_child(_toolbar_tools)
 
 	_mode = OptionButton.new()
 	_mode.tooltip_text = "Select objects directly or paint world tiles."
@@ -175,40 +260,40 @@ func _build_toolbar() -> void:
 		_status.text = _mode_text()
 		update_overlays()
 	)
-	_toolbar.add_child(_mode)
+	_toolbar_tools.add_child(_mode)
 
 	var road_button := Button.new()
 	road_button.text = "Road Brush"
 	road_button.tooltip_text = "Paint simple road tiles. No graph, no linked endpoints."
 	road_button.pressed.connect(_activate_road_brush)
-	_toolbar.add_child(road_button)
+	_toolbar_tools.add_child(road_button)
 
 	_picker_button = Button.new()
 	_picker_button.text = "Pick"
 	_picker_button.toggle_mode = true
 	_picker_button.tooltip_text = "Eyedropper: click a painted tile or authored element. Tiles switch the brush material; props/regions become a repeatable stamp."
 	_picker_button.toggled.connect(_on_picker_toggled)
-	_toolbar.add_child(_picker_button)
+	_toolbar_tools.add_child(_picker_button)
 
 	var snap_label := Label.new()
 	snap_label.text = "Snap"
-	_toolbar.add_child(snap_label)
+	_toolbar_tools.add_child(snap_label)
 	_snap = OptionButton.new()
 	for entry in [["1", 1.0], ["1/2", 0.5], ["1/4", 0.25]]:
 		_snap.add_item(entry[0])
 		_snap.set_item_metadata(_snap.item_count - 1, entry[1])
 	_snap.select(1)
-	_toolbar.add_child(_snap)
+	_toolbar_tools.add_child(_snap)
 
 	var brush_label := Label.new()
 	brush_label.text = "Brush"
-	_toolbar.add_child(brush_label)
+	_toolbar_tools.add_child(brush_label)
 	_brush = OptionButton.new()
 	for size in [1, 3, 5]:
 		_brush.add_item("%dx%d" % [size, size])
 		_brush.set_item_metadata(_brush.item_count - 1, size)
 	_brush.select(0)
-	_toolbar.add_child(_brush)
+	_toolbar_tools.add_child(_brush)
 
 	_surface = OptionButton.new()
 	for item in ["main", "road", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water", "void"]:
@@ -216,37 +301,38 @@ func _build_toolbar() -> void:
 	_surface.select(0)
 	_surface.tooltip_text = "Paint material. Road is the normal street brush; RMB erases painted cells."
 	_surface.item_selected.connect(_on_surface_selected)
-	_toolbar.add_child(_surface)
+	_toolbar_tools.add_child(_surface)
 
 	_overlay_toggle = Button.new()
 	_overlay_toggle.text = "Handles"
 	_overlay_toggle.toggle_mode = true
 	_overlay_toggle.toggled.connect(_on_overlay_toggled)
-	_toolbar.add_child(_overlay_toggle)
+	_toolbar_tools.add_child(_overlay_toggle)
 
 	var validate_button := Button.new()
 	validate_button.text = "Validate"
 	validate_button.pressed.connect(_validate_city)
-	_toolbar.add_child(validate_button)
+	_toolbar_tools.add_child(validate_button)
 
 	var duplicate_button := Button.new()
 	duplicate_button.text = "Duplicate"
 	duplicate_button.pressed.connect(_duplicate_selected)
-	_toolbar.add_child(duplicate_button)
+	_toolbar_tools.add_child(duplicate_button)
 
 	var delete_button := Button.new()
 	delete_button.text = "Delete"
 	delete_button.pressed.connect(_delete_selected)
-	_toolbar.add_child(delete_button)
+	_toolbar_tools.add_child(delete_button)
 
 	var bake_button := Button.new()
 	bake_button.text = "Bake"
 	bake_button.pressed.connect(_bake_city)
-	_toolbar.add_child(bake_button)
+	_toolbar_tools.add_child(bake_button)
 
 	_status = Label.new()
 	_status.text = "Select"
-	_status.custom_minimum_size = Vector2(210.0, 0.0)
+	_status.custom_minimum_size = Vector2(90.0, 0.0)
+	_status.clip_text = true
 	_toolbar.add_child(_status)
 
 
@@ -430,11 +516,8 @@ func _apply_toolbar_expanded_state() -> void:
 	if _toolbar == null or _toolbar_toggle == null:
 		return
 	_toolbar_toggle.text = "Hide Tools" if _toolbar_expanded else "Show World Tools"
-	for child in _toolbar.get_children():
-		if child == _toolbar_toggle:
-			continue
-		if child is CanvasItem:
-			(child as CanvasItem).visible = _toolbar_expanded
+	_toolbar_scroll.visible = _toolbar_expanded
+	_status.visible = _toolbar_expanded
 
 
 func _sync_toolbar_visibility() -> void:
@@ -1458,7 +1541,7 @@ func _finish_ground_stroke(paint: Node) -> void:
 	undo.add_do_property(paint, "cells", final_cells)
 	undo.add_undo_property(paint, "cells", _paint_old_cells.duplicate(true))
 	undo.commit_action()
-	_status.text = "Tiles painted · Ctrl+Z undo · Ctrl+Shift+Z/Ctrl+Y redo"
+	_status.text = "Painted"
 
 
 
