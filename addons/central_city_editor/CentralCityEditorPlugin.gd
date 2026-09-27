@@ -148,7 +148,9 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 	if event is InputEventMouseMotion and _mode_text() == "Road":
 		var motion := event as InputEventMouseMotion
 		var hover_hit := _road_hit(motion.position, root)
-		var next_hover := hover_hit.get("road") as Line2D if not hover_hit.is_empty() else null
+		var next_hover: Line2D = null
+		if not hover_hit.is_empty():
+			next_hover = hover_hit.get("road") as Line2D
 		if next_hover != _hovered_road:
 			_hovered_road = next_hover
 			update_overlays()
