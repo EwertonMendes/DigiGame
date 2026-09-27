@@ -2,38 +2,25 @@ extends RefCounted
 class_name CentralCityTerrace
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
+const TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 
 const ROOT_Z := -1164
-const TERRACE_EDGE_Y := 19.0
-const TERRACE_FACE_DEPTH := 12.0
-const TRENCH_NORTH_Y := 22.0
-const TRENCH_SOUTH_Y := 25.0
-const TRENCH_FACE_DEPTH := 10.0
+const WALL_CAP_GRID := 0.34
+const TRENCH_CAP_GRID := 0.28
+const TRENCH_DEPTH_PX := 14.0
+const BRIDGE_BODY_DEPTH_PX := 8.0
+const BRIDGE_RAIL_GRID := 0.16
 
-# The terrace is architectural, not a fake height system. The upper deck ends
-# on one deliberate retaining wall. Two stair openings connect to the lower
-# district, while two separate trenches cut pockets into the south instead of
-# drawing one giant water stripe across the complete map.
-const STAIR_GAPS := [
-	Vector2(-7.0, -4.0),
-	Vector2(5.0, 9.0),
-]
-
-const WALL_SEGMENTS := [
-	Vector2(-13.0, -7.0),
-	Vector2(-4.0, 5.0),
-	Vector2(9.0, 29.0),
-]
-
-const TRENCH_SEGMENTS := [
-	Vector2(-13.0, -1.0),
-	Vector2(13.0, 29.0),
-]
-
-const BRIDGES := [
-	{"x": Vector2(-7.0, -4.0), "trench": 0},
-	{"x": Vector2(20.0, 23.0), "trench": 1},
-]
+const WALL_TOP := Color(0.60, 0.61, 0.61, 1.0)
+const WALL_FACE := Color(0.22, 0.25, 0.27, 1.0)
+const STAIR_TOP := Color(0.60, 0.61, 0.61, 1.0)
+const STAIR_RISER := Color(0.27, 0.30, 0.32, 1.0)
+const STAIR_SIDE := Color(0.20, 0.23, 0.25, 1.0)
+const TRENCH_CAP := Color(0.55, 0.57, 0.58, 1.0)
+const TRENCH_FACE := Color(0.12, 0.15, 0.17, 1.0)
+const BRIDGE_TOP := Color(0.51, 0.53, 0.54, 1.0)
+const BRIDGE_BODY := Color(0.18, 0.21, 0.23, 1.0)
+const BRIDGE_RAIL := Color(0.12, 0.18, 0.21, 1.0)
 
 
 static func build() -> Node2D:
@@ -43,202 +30,373 @@ static func build() -> Node2D:
 
 	var wall_caps: Array[Dictionary] = []
 	var wall_faces: Array[Dictionary] = []
-	for segment: Vector2 in WALL_SEGMENTS:
-		_append_retaining_wall(wall_caps, wall_faces, segment.x, segment.y)
+	_build_retaining_wall(wall_caps, wall_faces)
+	_add_paver_batch(root, "RetainingWallCaps", wall_caps, 0)
+	_add_color_batch(root, "RetainingWallFaces", wall_faces, 1)
 
-	var cap_mesh := CITY.create_paver_polygon_batch(wall_caps, 0)
-	cap_mesh.name = "RetainingWallCaps"
-	root.add_child(cap_mesh)
-
-	var face_mesh := CITY.create_color_polygon_batch(wall_faces, 1)
-	face_mesh.name = "RetainingWallFaces"
-	root.add_child(face_mesh)
-
+	var stair_landings: Array[Dictionary] = []
 	var stair_treads: Array[Dictionary] = []
 	var stair_risers: Array[Dictionary] = []
-	for gap: Vector2 in STAIR_GAPS:
-		_append_staircase(stair_treads, stair_risers, gap.x, gap.y)
-
-	var tread_mesh := CITY.create_paver_polygon_batch(stair_treads, 2)
-	tread_mesh.name = "StairTreads"
-	root.add_child(tread_mesh)
-
-	var riser_mesh := CITY.create_color_polygon_batch(stair_risers, 3)
-	riser_mesh.name = "StairRisers"
-	root.add_child(riser_mesh)
+	var stair_side_caps: Array[Dictionary] = []
+	for raw_stair in TOPOLOGY.stairs():
+		if raw_stair is Dictionary:
+			_append_staircase(
+				raw_stair as Dictionary,
+				stair_landings,
+				stair_treads,
+				stair_risers,
+				stair_side_caps
+			)
+	_add_paver_batch(root, "StairLandings", stair_landings, 2)
+	_add_paver_batch(root, "StairTreads", stair_treads, 3)
+	_add_color_batch(root, "StairRisers", stair_risers, 4)
+	_add_paver_batch(root, "StairSideCaps", stair_side_caps, 5)
 
 	var trench_caps: Array[Dictionary] = []
 	var trench_faces: Array[Dictionary] = []
-	for segment: Vector2 in TRENCH_SEGMENTS:
-		_append_trench_banks(trench_caps, trench_faces, segment.x, segment.y)
+	for raw_void in TOPOLOGY.voids():
+		if raw_void is Dictionary:
+			_append_void_frame(raw_void as Dictionary, trench_caps, trench_faces)
+	_add_paver_batch(root, "TrenchBankCaps", trench_caps, 6)
+	_add_color_batch(root, "TrenchInnerWalls", trench_faces, 7)
 
-	var trench_cap_mesh := CITY.create_paver_polygon_batch(trench_caps, 4)
-	trench_cap_mesh.name = "TrenchBankCaps"
-	root.add_child(trench_cap_mesh)
-
-	var trench_face_mesh := CITY.create_color_polygon_batch(trench_faces, 5)
-	trench_face_mesh.name = "TrenchInnerWalls"
-	root.add_child(trench_face_mesh)
-
-	var bridge_decks: Array[Dictionary] = []
 	var bridge_bodies: Array[Dictionary] = []
-	for raw_bridge in BRIDGES:
-		var bridge := raw_bridge as Dictionary
-		var span: Vector2 = bridge.get("x", Vector2.ZERO)
-		_append_bridge(bridge_decks, bridge_bodies, span.x, span.y)
+	var bridge_decks: Array[Dictionary] = []
+	var bridge_rails: Array[Dictionary] = []
+	for raw_bridge in TOPOLOGY.bridges():
+		if raw_bridge is Dictionary:
+			_append_bridge(raw_bridge as Dictionary, bridge_bodies, bridge_decks, bridge_rails)
+	_add_color_batch(root, "BridgeBodies", bridge_bodies, 8)
+	_add_paver_batch(root, "BridgeDecks", bridge_decks, 9)
+	_add_color_batch(root, "BridgeRails", bridge_rails, 10)
 
-	var bridge_body_mesh := CITY.create_color_polygon_batch(bridge_bodies, 6)
-	bridge_body_mesh.name = "BridgeBodies"
-	root.add_child(bridge_body_mesh)
-
-	var bridge_deck_mesh := CITY.create_paver_polygon_batch(bridge_decks, 7)
-	bridge_deck_mesh.name = "BridgeDecks"
-	root.add_child(bridge_deck_mesh)
-
-	root.set_meta("visual_level_count", 2)
-	root.set_meta("stair_count", STAIR_GAPS.size())
-	root.set_meta("trench_count", TRENCH_SEGMENTS.size())
-	root.set_meta("bridge_count", BRIDGES.size())
+	root.set_meta("visual_level_count", TOPOLOGY.levels().size())
+	root.set_meta("stair_count", TOPOLOGY.stairs().size())
+	root.set_meta("trench_count", TOPOLOGY.voids().size())
+	root.set_meta("bridge_count", TOPOLOGY.bridges().size())
+	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
+	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
 
 
-static func _append_retaining_wall(
+static func _build_retaining_wall(
+	caps: Array[Dictionary],
+	faces: Array[Dictionary]
+) -> void:
+	var break_data := TOPOLOGY.level_break()
+	if break_data.is_empty():
+		return
+	var y := float(break_data.get("grid_y", 19.0))
+	var x_min := float(break_data.get("x_min", -13.0))
+	var x_max := float(break_data.get("x_max", 29.0))
+	var upper_level := String(break_data.get("upper_level", "upper_civic"))
+	var upper_elevation := TOPOLOGY.elevation_for_level(upper_level)
+
+	var gaps: Array[Vector2] = []
+	for raw_stair in TOPOLOGY.stairs():
+		if not raw_stair is Dictionary:
+			continue
+		var stair := raw_stair as Dictionary
+		gaps.append(Vector2(
+			float(stair.get("x_min", 0.0)),
+			float(stair.get("x_max", 0.0))
+		))
+	gaps.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
+
+	var cursor := x_min
+	for gap: Vector2 in gaps:
+		if gap.x > cursor:
+			_append_wall_segment(caps, faces, cursor, gap.x, y, upper_level, upper_elevation)
+		cursor = maxf(cursor, gap.y)
+	if cursor < x_max:
+		_append_wall_segment(caps, faces, cursor, x_max, y, upper_level, upper_elevation)
+
+
+static func _append_wall_segment(
 	caps: Array[Dictionary],
 	faces: Array[Dictionary],
 	x0: float,
-	x1: float
+	x1: float,
+	y: float,
+	level: String,
+	elevation: float
 ) -> void:
-	# A real cap has measurable width on the upper deck; it is not a one-pixel
-	# line. The face drops only toward the lower terrace and is confined to the
-	# wall segment, so nothing extends across unrelated roads.
-	caps.append({
-		"points": _grid_quad(x0, x1, TERRACE_EDGE_Y - 0.34, TERRACE_EDGE_Y),
-		"color": Color(0.60, 0.61, 0.61, 1.0),
-	})
-	var a := _grid_to_world(Vector2(x0, TERRACE_EDGE_Y))
-	var b := _grid_to_world(Vector2(x1, TERRACE_EDGE_Y))
-	var drop := Vector2(0.0, TERRACE_FACE_DEPTH)
+	var cap_grid := PackedVector2Array([
+		Vector2(x0, y - WALL_CAP_GRID),
+		Vector2(x1, y - WALL_CAP_GRID),
+		Vector2(x1, y),
+		Vector2(x0, y),
+	])
+	_append_paver_spec(caps, cap_grid, level, WALL_TOP)
+
+	var logical_a := TOPOLOGY.grid_to_world(Vector2(x0, y))
+	var logical_b := TOPOLOGY.grid_to_world(Vector2(x1, y))
+	var top_a := logical_a + Vector2(0.0, -elevation)
+	var top_b := logical_b + Vector2(0.0, -elevation)
+	var bottom_drop := Vector2(0.0, elevation)
 	faces.append({
-		"points": PackedVector2Array([a, b, b + drop, a + drop]),
-		"color": Color(0.24, 0.27, 0.29, 1.0),
+		"points": PackedVector2Array([top_a, top_b, top_b + bottom_drop, top_a + bottom_drop]),
+		"color": WALL_FACE,
 	})
 
 
 static func _append_staircase(
+	stair: Dictionary,
+	landings: Array[Dictionary],
 	treads: Array[Dictionary],
 	risers: Array[Dictionary],
-	x0: float,
-	x1: float
+	side_caps: Array[Dictionary]
 ) -> void:
-	const STEP_COUNT := 5
-	const STEP_GRID_DEPTH := 0.38
-	var start_y := TERRACE_EDGE_Y - 0.18
-	for step in range(STEP_COUNT):
-		var y0 := start_y + float(step) * STEP_GRID_DEPTH
-		var y1 := y0 + STEP_GRID_DEPTH
-		var brightness := 0.61 - float(step) * 0.025
+	var x_min := float(stair.get("x_min", 0.0))
+	var x_max := float(stair.get("x_max", 0.0))
+	var y_start := float(stair.get("y_start", 0.0))
+	var y_end := float(stair.get("y_end", y_start + 1.0))
+	var step_count := maxi(2, int(stair.get("steps", 6)))
+	var from_level := String(stair.get("from_level", "upper_civic"))
+	var to_level := String(stair.get("to_level", "south_terrace"))
+	var from_elevation := TOPOLOGY.elevation_for_level(from_level)
+	var to_elevation := TOPOLOGY.elevation_for_level(to_level)
+	var span := y_end - y_start
+	var step_depth := span / float(step_count)
+	var elevation_step := (from_elevation - to_elevation) / float(step_count)
+	var side_width := minf(0.24, maxf(0.12, (x_max - x_min) * 0.06))
+
+	# Explicit landings overlap the connected road graph by half a tile so there
+	# is never a black seam between a route and the first/last stair tread.
+	_append_paver_spec(
+		landings,
+		PackedVector2Array([
+			Vector2(x_min, y_start - 0.55),
+			Vector2(x_max, y_start - 0.55),
+			Vector2(x_max, y_start + 0.10),
+			Vector2(x_min, y_start + 0.10),
+		]),
+		from_level,
+		STAIR_TOP
+	)
+	_append_paver_spec(
+		landings,
+		PackedVector2Array([
+			Vector2(x_min, y_end - 0.10),
+			Vector2(x_max, y_end - 0.10),
+			Vector2(x_max, y_end + 0.55),
+			Vector2(x_min, y_end + 0.55),
+		]),
+		to_level,
+		STAIR_TOP
+	)
+
+	for step in range(step_count):
+		var y0 := y_start + float(step) * step_depth
+		var y1 := y0 + step_depth
+		var tread_elevation := from_elevation - float(step) * elevation_step
+		var next_elevation := from_elevation - float(step + 1) * elevation_step
+		var tread_grid := PackedVector2Array([
+			Vector2(x_min, y0),
+			Vector2(x_max, y0),
+			Vector2(x_max, y1),
+			Vector2(x_min, y1),
+		])
+		var logical_tread := _grid_to_logical(tread_grid)
 		treads.append({
-			"points": _grid_quad(x0, x1, y0, y1),
-			"color": Color(brightness, brightness + 0.01, brightness + 0.01, 1.0),
+			"points": _logical_at_elevation(logical_tread, tread_elevation),
+			"logical_points": logical_tread,
+			"color": STAIR_TOP.darkened(float(step) * 0.012),
 		})
 
-		var front_a := _grid_to_world(Vector2(x0, y1))
-		var front_b := _grid_to_world(Vector2(x1, y1))
-		var riser_drop := Vector2(0.0, 2.8)
+		var front_left_logical := TOPOLOGY.grid_to_world(Vector2(x_min, y1))
+		var front_right_logical := TOPOLOGY.grid_to_world(Vector2(x_max, y1))
+		var top_left := front_left_logical + Vector2(0.0, -tread_elevation)
+		var top_right := front_right_logical + Vector2(0.0, -tread_elevation)
+		var bottom_left := front_left_logical + Vector2(0.0, -next_elevation)
+		var bottom_right := front_right_logical + Vector2(0.0, -next_elevation)
 		risers.append({
-			"points": PackedVector2Array([
-				front_a,
-				front_b,
-				front_b + riser_drop,
-				front_a + riser_drop,
-			]),
-			"color": Color(0.28, 0.31, 0.33, 1.0),
+			"points": PackedVector2Array([top_left, top_right, bottom_right, bottom_left]),
+			"color": STAIR_RISER,
 		})
 
+		for side in [0, 1]:
+			var sx0 := x_min if side == 0 else x_max - side_width
+			var sx1 := x_min + side_width if side == 0 else x_max
+			var cap_grid := PackedVector2Array([
+				Vector2(sx0, y0),
+				Vector2(sx1, y0),
+				Vector2(sx1, y1),
+				Vector2(sx0, y1),
+			])
+			var logical_cap := _grid_to_logical(cap_grid)
+			side_caps.append({
+				"points": _logical_at_elevation(logical_cap, tread_elevation - 1.5),
+				"logical_points": logical_cap,
+				"color": STAIR_SIDE,
+			})
 
-static func _append_trench_banks(
+
+static func _append_void_frame(
+	void_region: Dictionary,
 	caps: Array[Dictionary],
-	faces: Array[Dictionary],
-	x0: float,
-	x1: float
+	faces: Array[Dictionary]
 ) -> void:
-	# The future-water channel is intentionally empty today. These broad bank
-	# caps and short inner walls sell the depth while the missing ground lets the
-	# world background show through the trench itself.
-	caps.append({
-		"points": _grid_quad(x0, x1, TRENCH_NORTH_Y - 0.30, TRENCH_NORTH_Y),
-		"color": Color(0.57, 0.58, 0.59, 1.0),
-	})
-	caps.append({
-		"points": _grid_quad(x0, x1, TRENCH_SOUTH_Y, TRENCH_SOUTH_Y + 0.30),
-		"color": Color(0.55, 0.56, 0.57, 1.0),
-	})
+	var x0 := float(void_region.get("x_min", 0.0))
+	var x1 := float(void_region.get("x_max", 0.0))
+	var y0 := float(void_region.get("y_min", 0.0))
+	var y1 := float(void_region.get("y_max", 0.0))
+	var level := TOPOLOGY.level_at_grid(Vector2((x0 + x1) * 0.5, y0 - 0.5))
+	var elevation := TOPOLOGY.elevation_for_level(level)
 
-	var north_a := _grid_to_world(Vector2(x0, TRENCH_NORTH_Y))
-	var north_b := _grid_to_world(Vector2(x1, TRENCH_NORTH_Y))
-	var north_drop := Vector2(0.0, TRENCH_FACE_DEPTH)
-	faces.append({
-		"points": PackedVector2Array([
-			north_a,
-			north_b,
-			north_b + north_drop,
-			north_a + north_drop,
-		]),
-		"color": Color(0.18, 0.21, 0.23, 1.0),
-	})
+	var cap_strips := [
+		PackedVector2Array([Vector2(x0, y0 - TRENCH_CAP_GRID), Vector2(x1, y0 - TRENCH_CAP_GRID), Vector2(x1, y0), Vector2(x0, y0)]),
+		PackedVector2Array([Vector2(x0, y1), Vector2(x1, y1), Vector2(x1, y1 + TRENCH_CAP_GRID), Vector2(x0, y1 + TRENCH_CAP_GRID)]),
+		PackedVector2Array([Vector2(x0 - TRENCH_CAP_GRID, y0), Vector2(x0, y0), Vector2(x0, y1), Vector2(x0 - TRENCH_CAP_GRID, y1)]),
+		PackedVector2Array([Vector2(x1, y0), Vector2(x1 + TRENCH_CAP_GRID, y0), Vector2(x1 + TRENCH_CAP_GRID, y1), Vector2(x1, y1)]),
+	]
+	for strip: PackedVector2Array in cap_strips:
+		_append_paver_spec(caps, strip, level, TRENCH_CAP)
 
-	var south_a := _grid_to_world(Vector2(x0, TRENCH_SOUTH_Y))
-	var south_b := _grid_to_world(Vector2(x1, TRENCH_SOUTH_Y))
-	var south_lift := Vector2(0.0, -TRENCH_FACE_DEPTH)
-	faces.append({
-		"points": PackedVector2Array([
-			south_a + south_lift,
-			south_b + south_lift,
-			south_b,
-			south_a,
-		]),
-		"color": Color(0.13, 0.16, 0.18, 1.0),
-	})
+	var edges := [
+		[Vector2(x0, y0), Vector2(x1, y0)],
+		[Vector2(x1, y0), Vector2(x1, y1)],
+		[Vector2(x1, y1), Vector2(x0, y1)],
+		[Vector2(x0, y1), Vector2(x0, y0)],
+	]
+	for edge in edges:
+		var a_logical := TOPOLOGY.grid_to_world(edge[0] as Vector2)
+		var b_logical := TOPOLOGY.grid_to_world(edge[1] as Vector2)
+		var a := a_logical + Vector2(0.0, -elevation)
+		var b := b_logical + Vector2(0.0, -elevation)
+		var drop := Vector2(0.0, TRENCH_DEPTH_PX)
+		faces.append({
+			"points": PackedVector2Array([a, b, b + drop, a + drop]),
+			"color": TRENCH_FACE,
+		})
 
 
 static func _append_bridge(
-	decks: Array[Dictionary],
+	bridge: Dictionary,
 	bodies: Array[Dictionary],
-	x0: float,
-	x1: float
+	decks: Array[Dictionary],
+	rails: Array[Dictionary]
 ) -> void:
-	var deck_points := _grid_quad(
-		x0,
-		x1,
-		TRENCH_NORTH_Y - 0.25,
-		TRENCH_SOUTH_Y + 0.25
-	)
-	# A compact slab under the deck makes the crossing read as a bridge rather
-	# than the normal road continuing across an empty hole.
-	var shadow_points := PackedVector2Array()
-	for point: Vector2 in deck_points:
-		shadow_points.append(point + Vector2(0.0, 6.0))
-	bodies.append({
-		"points": shadow_points,
-		"color": Color(0.17, 0.20, 0.22, 1.0),
-	})
-	decks.append({
-		"points": deck_points,
-		"color": Color(0.49, 0.50, 0.51, 1.0),
-	})
+	var x0 := float(bridge.get("x_min", 0.0))
+	var x1 := float(bridge.get("x_max", 0.0))
+	var y0 := float(bridge.get("y_min", 0.0))
+	var y1 := float(bridge.get("y_max", 0.0))
+	var level := String(bridge.get("level", "south_terrace"))
+	var elevation := TOPOLOGY.elevation_for_level(level)
 
-
-static func _grid_quad(x0: float, x1: float, y0: float, y1: float) -> PackedVector2Array:
-	return PackedVector2Array([
-		_grid_to_world(Vector2(x0, y0)),
-		_grid_to_world(Vector2(x1, y0)),
-		_grid_to_world(Vector2(x1, y1)),
-		_grid_to_world(Vector2(x0, y1)),
+	var deck_grid := PackedVector2Array([
+		Vector2(x0, y0 - 0.18),
+		Vector2(x1, y0 - 0.18),
+		Vector2(x1, y1 + 0.18),
+		Vector2(x0, y1 + 0.18),
 	])
+	var logical_deck := _grid_to_logical(deck_grid)
+	var display_deck := _logical_at_elevation(logical_deck, elevation)
+	decks.append({
+		"points": display_deck,
+		"logical_points": logical_deck,
+		"color": BRIDGE_TOP,
+	})
+
+	# Give the crossing a real slab thickness. Only the two long side faces are
+	# exposed, so the result reads like a bridge over a void rather than a road
+	# polygon painted over missing ground.
+	var left_top_a := TOPOLOGY.grid_to_display(Vector2(x0, y0 - 0.18), level)
+	var left_top_b := TOPOLOGY.grid_to_display(Vector2(x0, y1 + 0.18), level)
+	var right_top_a := TOPOLOGY.grid_to_display(Vector2(x1, y0 - 0.18), level)
+	var right_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y1 + 0.18), level)
+	var drop := Vector2(0.0, BRIDGE_BODY_DEPTH_PX)
+	bodies.append({
+		"points": PackedVector2Array([left_top_a, left_top_b, left_top_b + drop, left_top_a + drop]),
+		"color": BRIDGE_BODY,
+	})
+	bodies.append({
+		"points": PackedVector2Array([right_top_a, right_top_b, right_top_b + drop, right_top_a + drop]),
+		"color": BRIDGE_BODY,
+	})
+
+	var left_rail := PackedVector2Array([
+		Vector2(x0, y0),
+		Vector2(x0 + BRIDGE_RAIL_GRID, y0),
+		Vector2(x0 + BRIDGE_RAIL_GRID, y1),
+		Vector2(x0, y1),
+	])
+	var right_rail := PackedVector2Array([
+		Vector2(x1 - BRIDGE_RAIL_GRID, y0),
+		Vector2(x1, y0),
+		Vector2(x1, y1),
+		Vector2(x1 - BRIDGE_RAIL_GRID, y1),
+	])
+	for rail_grid: PackedVector2Array in [left_rail, right_rail]:
+		var logical_rail := _grid_to_logical(rail_grid)
+		var rail_points := _logical_at_elevation(logical_rail, elevation + 3.0)
+		rails.append({"points": rail_points, "color": BRIDGE_RAIL})
+
+	# Wider heads visually anchor the bridge into the pavement at both ends.
+	for landing_y in [y0 - 0.55, y1 + 0.10]:
+		var landing_grid := PackedVector2Array([
+			Vector2(x0 - 0.22, landing_y),
+			Vector2(x1 + 0.22, landing_y),
+			Vector2(x1 + 0.22, landing_y + 0.45),
+			Vector2(x0 - 0.22, landing_y + 0.45),
+		])
+		_append_paver_spec(decks, landing_grid, level, BRIDGE_TOP)
 
 
-static func _grid_to_world(grid: Vector2) -> Vector2:
-	return Vector2(
-		(grid.x - grid.y) * CITY.TILE_HALF_WIDTH,
-		(grid.x + grid.y) * CITY.TILE_HALF_HEIGHT
-	)
+static func _append_paver_spec(
+	target: Array[Dictionary],
+	grid_points: PackedVector2Array,
+	level: String,
+	color: Color
+) -> void:
+	var logical := _grid_to_logical(grid_points)
+	target.append({
+		"points": _logical_at_elevation(logical, TOPOLOGY.elevation_for_level(level)),
+		"logical_points": logical,
+		"color": color,
+	})
+
+
+static func _grid_to_logical(grid_points: PackedVector2Array) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	for grid: Vector2 in grid_points:
+		result.append(TOPOLOGY.grid_to_world(grid))
+	return result
+
+
+static func _logical_at_elevation(
+	logical_points: PackedVector2Array,
+	elevation: float
+) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	for point: Vector2 in logical_points:
+		result.append(point + Vector2(0.0, -elevation))
+	return result
+
+
+static func _add_paver_batch(
+	root: Node2D,
+	node_name: String,
+	specs: Array[Dictionary],
+	z: int
+) -> void:
+	if specs.is_empty():
+		return
+	var mesh := CITY.create_paver_polygon_batch(specs, z)
+	mesh.name = node_name
+	mesh.z_index = z
+	root.add_child(mesh)
+
+
+static func _add_color_batch(
+	root: Node2D,
+	node_name: String,
+	specs: Array[Dictionary],
+	z: int
+) -> void:
+	if specs.is_empty():
+		return
+	var mesh := CITY.create_color_polygon_batch(specs, z)
+	mesh.name = node_name
+	mesh.z_index = z
+	root.add_child(mesh)
