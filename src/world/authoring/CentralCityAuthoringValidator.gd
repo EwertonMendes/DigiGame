@@ -74,7 +74,8 @@ static func _validate_road_graph(root: Node, issues: Array[String]) -> void:
 			(adjacency[b] as Array).append(a)
 
 	var start := String(adjacency.keys()[0])
-	var visited := {start: true}
+	var visited := {}
+	visited[start] = true
 	var queue: Array[String] = [start]
 	while not queue.is_empty():
 		var current: String = queue.pop_front()
