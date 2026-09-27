@@ -26,6 +26,7 @@ var _shadow_root: Node2D = null
 var _light_root: Node2D = null
 var _light_texture: Texture2D = null
 var _soft_shadow_texture: Texture2D = null
+var _glow_material: CanvasItemMaterial = null
 var _shadow_entries: Dictionary = {}
 var _light_entries: Dictionary = {}
 var _discovery_elapsed := 0.0
@@ -49,6 +50,9 @@ func _ready() -> void:
 	_build_runtime_roots()
 	_light_texture = _create_radial_light_texture()
 	_soft_shadow_texture = _create_soft_shadow_texture()
+	_glow_material = CanvasItemMaterial.new()
+	_glow_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_glow_material.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
 	_apply_time_of_day()
 
 
@@ -315,7 +319,7 @@ func _afternoon_profile() -> Dictionary:
 func _sunset_profile() -> Dictionary:
 	return {
 		"phase": "SUNSET",
-		"ambient": Color(0.66, 0.56, 0.56, 1.0),
+		"ambient": Color(0.70, 0.61, 0.62, 1.0),
 		"sun_color": Color(1.0, 0.46, 0.22, 1.0),
 		"sun_energy": 0.13,
 		"sun_elevation": 0.14,
@@ -330,7 +334,7 @@ func _sunset_profile() -> Dictionary:
 func _night_profile() -> Dictionary:
 	return {
 		"phase": "NIGHT",
-		"ambient": Color(0.22, 0.28, 0.42, 1.0),
+		"ambient": Color(0.31, 0.35, 0.47, 1.0),
 		"sun_color": Color(0.54, 0.66, 1.0, 1.0),
 		"sun_energy": 0.02,
 		"sun_elevation": 0.0,
@@ -441,24 +445,42 @@ func _register_local_light(source: Node2D) -> void:
 
 	var radius := maxf(24.0, float(source.get_meta("world_light_radius", 120.0)))
 	var base_energy := maxf(0.0, float(source.get_meta("world_light_energy", 0.6)))
+	var light_color := source.get_meta("world_light_color", Color.WHITE) as Color
 	var light := PointLight2D.new()
 	light.name = "Light_%s" % source.name
 	light.texture = _light_texture
 	light.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	light.texture_scale = (radius * 2.0) / float(LIGHT_TEXTURE_SIZE)
-	light.color = source.get_meta("world_light_color", Color.WHITE) as Color
+	light.color = light_color
 	light.shadow_enabled = false
 	light.range_z_min = -2000
 	light.range_z_max = 4000
 	_light_root.add_child(light)
 
+	var glow: Sprite2D = null
+	var glow_radius := maxf(0.0, float(source.get_meta("world_light_glow_radius", radius * 0.24)))
+	var glow_energy := maxf(0.0, float(source.get_meta("world_light_glow_energy", 0.22)))
+	if glow_radius > 0.0 and glow_energy > 0.0 and _glow_material != null:
+		glow = Sprite2D.new()
+		glow.name = "Glow_%s" % source.name
+		glow.texture = _light_texture
+		glow.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		glow.scale = Vector2.ONE * ((glow_radius * 2.0) / float(LIGHT_TEXTURE_SIZE))
+		glow.material = _glow_material
+		glow.modulate = Color(light_color.r, light_color.g, light_color.b, 0.0)
+		_light_root.add_child(glow)
+
 	var id := source.get_instance_id()
 	_light_entries[id] = {
 		"source": source,
 		"light": light,
+		"glow": glow,
 		"offset": source.get_meta("world_light_offset", Vector2.ZERO) as Vector2,
 		"base_energy": base_energy,
 		"day_factor": clampf(float(source.get_meta("world_light_day_factor", 0.03)), 0.0, 1.0),
+		"glow_energy": glow_energy,
+		"glow_day_factor": clampf(float(source.get_meta("world_light_glow_day_factor", 0.0)), 0.0, 1.0),
+		"color": light_color,
 	}
 	_update_light_transform(_light_entries[id] as Dictionary)
 
@@ -610,10 +632,13 @@ func _update_local_lights() -> void:
 		var entry := entry_value as Dictionary
 		var source = entry.get("source")
 		var light := entry.get("light") as PointLight2D
+		var glow := entry.get("glow") as Sprite2D
 		if not is_instance_valid(source) or light == null or not is_instance_valid(light):
 			continue
 		if not source is Node2D:
 			light.enabled = false
+			if glow != null and is_instance_valid(glow):
+				glow.visible = false
 			continue
 
 		_update_light_transform(entry)
@@ -632,6 +657,21 @@ func _update_local_lights() -> void:
 			and close_enough
 			and light.energy > 0.015
 		)
+
+		if glow != null and is_instance_valid(glow):
+			var glow_day_factor := clampf(float(entry.get("glow_day_factor", 0.0)), 0.0, 1.0)
+			var glow_strength := lerpf(glow_day_factor, 1.0, _local_light_strength)
+			var glow_energy := maxf(0.0, float(entry.get("glow_energy", 0.0)))
+			var glow_color := entry.get("color", Color.WHITE) as Color
+			var glow_alpha := clampf(glow_energy * glow_strength, 0.0, 1.35)
+			glow.modulate = Color(glow_color.r, glow_color.g, glow_color.b, glow_alpha)
+			glow.visible = (
+				_exterior_active
+				and source_2d.is_visible_in_tree()
+				and close_enough
+				and glow_alpha > 0.015
+			)
+
 		if light.enabled:
 			_active_local_lights += 1
 
@@ -639,12 +679,16 @@ func _update_local_lights() -> void:
 func _update_light_transform(entry: Dictionary) -> void:
 	var source = entry.get("source")
 	var light := entry.get("light") as PointLight2D
+	var glow := entry.get("glow") as Sprite2D
 	var offset := entry.get("offset", Vector2.ZERO) as Vector2
 	if not is_instance_valid(source) or light == null or not is_instance_valid(light):
 		return
 	if not source is Node2D:
 		return
-	light.global_position = (source as Node2D).to_global(offset)
+	var world_position := (source as Node2D).to_global(offset)
+	light.global_position = world_position
+	if glow != null and is_instance_valid(glow):
+		glow.global_position = world_position
 
 
 func _prune_invalid_entries() -> void:
@@ -666,6 +710,9 @@ func _prune_invalid_entries() -> void:
 		var light := entry.get("light") as PointLight2D
 		if light != null and is_instance_valid(light):
 			light.queue_free()
+		var glow := entry.get("glow") as Sprite2D
+		if glow != null and is_instance_valid(glow):
+			glow.queue_free()
 		_light_entries.erase(id)
 
 
