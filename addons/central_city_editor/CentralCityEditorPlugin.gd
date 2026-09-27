@@ -594,17 +594,17 @@ func _draw_selected_road(overlay: Control, road: Line2D) -> void:
 
 
 func _road_width_handle_screen(road: Line2D) -> Vector2:
-	var points := _road_screen_points(road)
-	if points.size() < 2:
+	if road.points.size() < 2:
 		return Vector2.ZERO
-	var a := points[0]
-	var b := points[points.size() - 1]
+	var elevation := float(road.get("editor_elevation_px"))
+	var a := road.to_global(road.points[0]) + Vector2(0.0, -elevation)
+	var b := road.to_global(road.points[road.points.size() - 1]) + Vector2(0.0, -elevation)
 	var direction := (b - a).normalized()
 	if direction.length_squared() <= 0.001:
 		direction = Vector2.RIGHT
 	var normal := direction.orthogonal()
-	var half_width_screen := maxf(22.0, float(road.get("width_grid")) * 8.0)
-	return (a + b) * 0.5 + normal * half_width_screen
+	var half_width_world := float(road.get("width_grid")) * ROAD_SCREEN_WIDTH_PER_GRID * 0.5
+	return _visual_world_to_screen((a + b) * 0.5 + normal * half_width_world)
 
 
 func _begin_road_point_drag(road: Line2D, point_index: int) -> void:
