@@ -9,6 +9,7 @@ const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const CITY_LAYOUT = preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
 const CITY_TERRACE = preload("res://src/world/runtime/CentralCityTerrace.gd")
+const CITY_TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
@@ -30,6 +31,7 @@ var _ground_tile_count := 0
 var _urban_layout_polygon_count := 0
 var _urban_layout_layer_count := 0
 var _south_terrace_render_node_count := 0
+var _road_graph_connected := false
 
 
 func configure(area_definition: Dictionary, player: Node2D, world_controller: Node) -> bool:
@@ -42,6 +44,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	_urban_layout_polygon_count = 0
 	_urban_layout_layer_count = 0
 	_south_terrace_render_node_count = 0
+	_road_graph_connected = false
 	_exterior_active = false
 	visible = false
 	process_mode = Node.PROCESS_MODE_DISABLED
@@ -104,6 +107,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		add_child(urban_root as Node2D)
 	_urban_layout_polygon_count = int(urban_result.get("polygon_count", 0))
 	_urban_layout_layer_count = int(urban_result.get("layer_count", 0))
+	_road_graph_connected = bool(urban_result.get("road_graph_connected", false))
 	completed += 1
 	load_progress.emit(completed, total)
 
@@ -231,6 +235,22 @@ func get_urban_layout_render_node_count() -> int:
 
 func get_south_terrace_render_node_count() -> int:
 	return _south_terrace_render_node_count
+
+
+func is_road_graph_connected() -> bool:
+	return _road_graph_connected
+
+
+func get_elevation_at_world_position(world_position: Vector2) -> float:
+	return CITY_TOPOLOGY.elevation_at_grid(CITY_TOPOLOGY.world_to_grid(world_position))
+
+
+func get_level_at_world_position(world_position: Vector2) -> String:
+	return CITY_TOPOLOGY.level_at_grid(CITY_TOPOLOGY.world_to_grid(world_position))
+
+
+func is_void_world_position(world_position: Vector2) -> bool:
+	return CITY_TOPOLOGY.is_void_at_grid(CITY_TOPOLOGY.world_to_grid(world_position))
 
 
 func get_decoration_count() -> int:
