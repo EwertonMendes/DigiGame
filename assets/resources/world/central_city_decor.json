@@ -1,5 +1,5 @@
 {
-  "version": 17,
+  "version": 18,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -55,7 +55,25 @@
         0.87,
         1,
         1
-      ]
+      ],
+      "shadow": {
+        "height": 86,
+        "opacity": 0.2
+      },
+      "light": {
+        "offset": [
+          0,
+          -42
+        ],
+        "color": [
+          0.18,
+          0.87,
+          1,
+          1
+        ],
+        "energy": 0.72,
+        "radius": 155
+      }
     },
     "lamp_yellow": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_yellow.png",
@@ -111,7 +129,25 @@
         0.76,
         0.2,
         1
-      ]
+      ],
+      "shadow": {
+        "height": 86,
+        "opacity": 0.2
+      },
+      "light": {
+        "offset": [
+          0,
+          -42
+        ],
+        "color": [
+          1,
+          0.76,
+          0.2,
+          1
+        ],
+        "energy": 0.74,
+        "radius": 150
+      }
     },
     "bench_ne": {
       "path": "res://assets/world/tblack/city/props_v2/bench.png",
@@ -155,7 +191,11 @@
       "ground_offset": [
         15,
         -8
-      ]
+      ],
+      "shadow": {
+        "height": 24,
+        "opacity": 0.16
+      }
     },
     "bench_nw": {
       "path": "res://assets/world/tblack/city/props_v2/bench.png",
@@ -199,7 +239,11 @@
       "ground_offset": [
         -15,
         -8
-      ]
+      ],
+      "shadow": {
+        "height": 24,
+        "opacity": 0.16
+      }
     }
   },
   "sections": {
