@@ -37,6 +37,7 @@ var _paint_stroke_active := false
 var _paint_erase := false
 var _paint_old_cells: Dictionary = {}
 var _paint_last_cell := Vector2i(999999, 999999)
+var _ground_hover_cell := Vector2i(999999, 999999)
 var _creating_road := false
 var _road_creation_start := Vector2(INF, INF)
 
@@ -89,6 +90,8 @@ func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 		return
 	if _mode_text() == "Road":
 		_draw_all_roads(overlay, root)
+	if _mode_text() == "Ground":
+		_draw_ground_hover(overlay)
 	if _mode_text() == "Level":
 		_draw_all_boundaries(overlay, root)
 	var selected := _selected_node()
@@ -1101,10 +1104,34 @@ func _handle_ground_input(event: InputEvent, root: Node) -> bool:
 			_finish_ground_stroke(paint)
 		return true
 
-	if event is InputEventMouseMotion and _paint_stroke_active:
-		_paint_at((event as InputEventMouseMotion).position, paint)
-		return true
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		var grid := MATH.visual_world_to_grid(_screen_to_visual_world(motion.position))
+		_ground_hover_cell = Vector2i(roundi(grid.x), roundi(grid.y))
+		update_overlays()
+		if _paint_stroke_active:
+			_paint_at(motion.position, paint)
+			return true
 	return false
+
+
+func _draw_ground_hover(overlay: Control) -> void:
+	if _ground_hover_cell.x == 999999:
+		return
+	var grid := Vector2(_ground_hover_cell)
+	var elevation := 48.0 if grid.y < 19.5 else 0.0
+	var center := MATH.grid_to_visual_world(grid, elevation)
+	var corners := PackedVector2Array([
+		center + Vector2(-32.0, 0.0),
+		center + Vector2(0.0, -16.0),
+		center + Vector2(32.0, 0.0),
+		center + Vector2(0.0, 16.0),
+		center + Vector2(-32.0, 0.0),
+	])
+	var screen_points := PackedVector2Array()
+	for point: Vector2 in corners:
+		screen_points.append(_visual_world_to_screen(point))
+	overlay.draw_polyline(screen_points, Color(0.30, 0.95, 1.0, 1.0), 2.5, true)
 
 
 func _paint_at(screen: Vector2, paint: Node) -> void:
