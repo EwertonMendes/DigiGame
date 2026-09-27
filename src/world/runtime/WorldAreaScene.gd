@@ -11,6 +11,10 @@ const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
 const AMBIENT_VFX_SECTION_RADIUS := 1
+# Full-map debug captures use the authored section envelope plus deliberate
+# visual headroom for tall service buildings, tree canopies and long sunset
+# shadows. This remains a world-space contract rather than a screen-size guess.
+const DEBUG_CAPTURE_VISUAL_MARGIN := Vector4(420.0, 520.0, 420.0, 360.0)
 
 var _player: Node2D = null
 var _world_controller: Node = null
@@ -130,6 +134,41 @@ func has_section(coord: Vector2i) -> bool:
 
 func get_section_count() -> int:
 	return _section_list.size()
+
+
+func get_debug_capture_bounds() -> Rect2:
+	if _sections.is_empty():
+		return Rect2()
+
+	var min_point := Vector2(INF, INF)
+	var max_point := Vector2(-INF, -INF)
+	for raw_coord in _sections.keys():
+		if not raw_coord is Vector2i:
+			continue
+		var coord := raw_coord as Vector2i
+		var grid_min := Vector2(coord * SECTION_SIZE) - Vector2(0.5, 0.5)
+		var grid_max := Vector2(coord * SECTION_SIZE + Vector2i(SECTION_SIZE - 1, SECTION_SIZE - 1)) + Vector2(0.5, 0.5)
+		for grid_corner: Vector2 in [
+			Vector2(grid_min.x, grid_min.y),
+			Vector2(grid_max.x, grid_min.y),
+			Vector2(grid_min.x, grid_max.y),
+			Vector2(grid_max.x, grid_max.y),
+		]:
+			var world_corner := Vector2(
+				(grid_corner.x - grid_corner.y) * CITY.TILE_WIDTH * 0.5,
+				(grid_corner.x + grid_corner.y) * CITY.TILE_HEIGHT * 0.5
+			)
+			min_point.x = minf(min_point.x, world_corner.x)
+			min_point.y = minf(min_point.y, world_corner.y)
+			max_point.x = maxf(max_point.x, world_corner.x)
+			max_point.y = maxf(max_point.y, world_corner.y)
+
+	if not is_finite(min_point.x) or not is_finite(min_point.y):
+		return Rect2()
+
+	min_point -= Vector2(DEBUG_CAPTURE_VISUAL_MARGIN.x, DEBUG_CAPTURE_VISUAL_MARGIN.y)
+	max_point += Vector2(DEBUG_CAPTURE_VISUAL_MARGIN.z, DEBUG_CAPTURE_VISUAL_MARGIN.w)
+	return Rect2(min_point, max_point - min_point)
 
 
 func get_runtime_node_count() -> int:

@@ -1,6 +1,7 @@
 extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
+const MAP_CAPTURE := preload("res://src/debug/DebugWorldMapCapture.gd")
 
 
 func _ready() -> void:
@@ -88,6 +89,49 @@ func _ready() -> void:
 		"Player shadow must be a fitted soft contact shadow instead of an extruded footprint"
 	)
 	assert(area.get_section_count() == 25, "Central City must be fully built before gameplay starts")
+	var capture_bounds := area.get_debug_capture_bounds()
+	assert(
+		capture_bounds.size.x >= 5000.0 and capture_bounds.size.y >= 3000.0,
+		"Full-map capture bounds must include the complete 5x5 city plus tall-asset/shadow headroom"
+	)
+	var capture_plan_1x := MAP_CAPTURE.build_capture_plan(capture_bounds, 1)
+	var capture_plan_2x := MAP_CAPTURE.build_capture_plan(capture_bounds, 2)
+	assert(
+		capture_plan_1x.size() > 1 and capture_plan_2x.size() > capture_plan_1x.size(),
+		"Full-map capture must tile the area instead of allocating one giant GPU viewport"
+	)
+	for tile_value in capture_plan_2x:
+		var tile := tile_value as Dictionary
+		var pixel_size := tile.get("pixel_size", Vector2i.ZERO) as Vector2i
+		assert(
+			pixel_size.x > 0 and pixel_size.y > 0
+			and pixel_size.x <= MAP_CAPTURE.DEFAULT_TILE_SIZE.x
+			and pixel_size.y <= MAP_CAPTURE.DEFAULT_TILE_SIZE.y,
+			"Every map-capture render tile must stay inside the fixed GPU-safe viewport size"
+		)
+	var output_2x := Vector2i(
+		ceili(capture_bounds.size.x * 2.0),
+		ceili(capture_bounds.size.y * 2.0)
+	)
+	var last_capture_tile := capture_plan_2x.back() as Dictionary
+	assert(
+		(last_capture_tile.get("destination", Vector2i.ZERO) as Vector2i)
+		+ (last_capture_tile.get("pixel_size", Vector2i.ZERO) as Vector2i)
+		== output_2x,
+		"Capture plan must cover the final image exactly without gaps or oversized edge tiles"
+	)
+	assert(player.is_in_group("debug_capture_clean_hidden"), "Clean-map captures must exclude the player through an explicit runtime contract")
+	assert(
+		get_tree().get_nodes_in_group("debug_capture_clean_vfx").size() > 0,
+		"Ambient world particles must expose a clean-map visibility contract"
+	)
+	assert(not bool(lighting.call("is_debug_capture_active")), "Lighting capture override must be disabled during normal play")
+	lighting.call("set_debug_capture_active", true)
+	assert(
+		int(lighting.call("get_active_local_light_count")) == int(lighting.call("get_local_light_count")),
+		"Full-map capture must temporarily render authored lights outside the player's normal culling radius"
+	)
+	lighting.call("set_debug_capture_active", false)
 	assert(
 		area.get_ground_render_node_count() <= 16,
 		"Central City ground must stay globally batched by its curated surface palette"

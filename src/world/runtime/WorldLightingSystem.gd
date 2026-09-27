@@ -33,6 +33,7 @@ var _discovery_elapsed := 0.0
 var _light_cull_elapsed := 0.0
 var _active_local_lights := 0
 var _exterior_active := true
+var _debug_capture_active := false
 
 var _preview_hour := DEFAULT_PREVIEW_HOUR
 var _time_phase := "DAY"
@@ -164,6 +165,18 @@ func get_local_light_count() -> int:
 
 func get_active_local_light_count() -> int:
 	return _active_local_lights
+
+
+func is_debug_capture_active() -> bool:
+	return _debug_capture_active
+
+
+func set_debug_capture_active(active: bool) -> void:
+	_debug_capture_active = active
+	if not _exterior_active:
+		return
+	_update_shadow_visibility()
+	_update_local_lights()
 
 
 func _build_environment() -> void:
@@ -425,6 +438,8 @@ func _register_shadow_caster(caster: Node2D) -> void:
 
 	if render_node == null:
 		return
+	if caster.is_in_group("debug_capture_clean_hidden"):
+		render_node.add_to_group("debug_capture_clean_hidden")
 
 	var id := caster.get_instance_id()
 	_shadow_entries[id] = {
@@ -616,7 +631,8 @@ func _update_shadow_visibility() -> void:
 			continue
 		var caster_2d := caster as Node2D
 		var close_enough := (
-			_player == null
+			_debug_capture_active
+			or _player == null
 			or caster_2d.global_position.distance_squared_to(_player.global_position) <= max_distance_sq
 		)
 		render_node.visible = caster_2d.is_visible_in_tree() and close_enough
@@ -644,7 +660,8 @@ func _update_local_lights() -> void:
 		_update_light_transform(entry)
 		var source_2d := source as Node2D
 		var close_enough := (
-			_player == null
+			_debug_capture_active
+			or _player == null
 			or source_2d.global_position.distance_squared_to(_player.global_position) <= max_distance_sq
 		)
 		var day_factor := clampf(float(entry.get("day_factor", 0.03)), 0.0, 1.0)
