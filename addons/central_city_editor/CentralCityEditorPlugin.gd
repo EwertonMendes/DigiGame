@@ -1095,7 +1095,7 @@ func _paint_at(screen: Vector2, paint: Node) -> void:
 
 	var cells := (paint.get("cells") as Dictionary).duplicate(true)
 	var brush_size := _brush_size()
-	var radius := brush_size / 2
+	var radius := int(brush_size / 2)
 	var surface := _surface.get_item_text(_surface.selected)
 	for offset_x in range(-radius, radius + 1):
 		for offset_y in range(-radius, radius + 1):
