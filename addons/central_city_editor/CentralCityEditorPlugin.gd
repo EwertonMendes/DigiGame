@@ -337,6 +337,12 @@ func _select_node(node: Node) -> void:
 	var selection := get_editor_interface().get_selection()
 	selection.clear()
 	selection.add_node(node)
+	if _surface != null and _has_property(node, "surface"):
+		var current_surface := String(node.get("surface"))
+		for index in range(_surface.item_count):
+			if _surface.get_item_text(index) == current_surface:
+				_surface.select(index)
+				break
 	update_overlays()
 
 
