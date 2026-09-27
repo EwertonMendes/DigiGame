@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 [ext_resource type="Script" path="res://src/world/authoring/CentralCityAuthoringRoot.gd" id="1_root"]
 [ext_resource type="Script" path="res://src/world/authoring/CentralCitySectionAuthoring.gd" id="2_section"]
 [ext_resource type="Script" path="res://src/world/authoring/CentralCityRoadAuthoring.gd" id="3_road"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://src/world/authoring/CentralCityPropAuthoring.gd" id="9_prop"]
 [ext_resource type="Script" path="res://src/world/authoring/CentralCityLandscapeAuthoring.gd" id="10_landscape"]
 [ext_resource type="Script" path="res://src/world/authoring/CentralCityGroundRegionAuthoring.gd" id="11_ground"]
+[ext_resource type="Script" path="res://src/world/authoring/CentralCityGroundPaintAuthoring.gd" id="12_ground_paint"]
 
 [node name="CentralCityAuthoring" type="Node2D"]
 script = ExtResource("1_root")
@@ -30,6 +31,9 @@ section_size = 14
 [node name="Surfaces" type="Node2D" parent="."]
 
 [node name="GroundOverrides" type="Node2D" parent="."]
+
+[node name="GroundPaint" type="Node2D" parent="."]
+script = ExtResource("12_ground_paint")
 
 [node name="Transitions" type="Node2D" parent="."]
 
