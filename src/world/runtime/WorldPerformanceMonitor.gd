@@ -24,7 +24,7 @@ func _process(delta: float) -> void:
 	_next_sample = REPEAT_SAMPLE_SECONDS
 	_last_snapshot = snapshot()
 	print(
-		"[WorldPerf] fps=%d frame_ms=%.2f physics_ms=%.2f nodes=%d area_nodes=%d draw_calls=%d render_objects=%d"
+		"[WorldPerf] fps=%d frame_ms=%.2f physics_ms=%.2f nodes=%d area_nodes=%d draw_calls=%d render_objects=%d shadows=%d local_lights=%d active_lights=%d"
 		% [
 			int(_last_snapshot.get("fps", 0)),
 			float(_last_snapshot.get("frame_ms", 0.0)),
@@ -33,6 +33,9 @@ func _process(delta: float) -> void:
 			int(_last_snapshot.get("area_nodes", 0)),
 			int(_last_snapshot.get("draw_calls", 0)),
 			int(_last_snapshot.get("render_objects", 0)),
+			int(_last_snapshot.get("shadow_casters", 0)),
+			int(_last_snapshot.get("local_lights", 0)),
+			int(_last_snapshot.get("active_local_lights", 0)),
 		]
 	)
 
@@ -51,6 +54,12 @@ func snapshot() -> Dictionary:
 		"local_lights": _lighting_metric("get_local_light_count"),
 		"active_local_lights": _lighting_metric("get_active_local_light_count"),
 	}
+
+
+func _lighting_metric(method_name: String) -> int:
+	if _lighting == null or not is_instance_valid(_lighting) or not _lighting.has_method(method_name):
+		return 0
+	return int(_lighting.call(method_name))
 
 
 func get_last_snapshot() -> Dictionary:
