@@ -137,8 +137,8 @@ func _ready() -> void:
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(
-		area.get_ground_tile_count() == 4208,
-		"Central City ground batch must omit the South Terrace wall break and both future-water void pockets"
+		area.get_ground_tile_count() == 4160,
+		"Central City ground batch must omit the elevated terrace break, stair transition cells, and both future-water void pockets"
 	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
@@ -169,20 +169,20 @@ func _ready() -> void:
 	var urban_layout := area.get_node_or_null("CityUrbanLayout") as Node2D
 	assert(
 		urban_layout != null
-		and area.get_urban_layout_layer_count() == 5
-		and area.get_urban_layout_polygon_count() >= 25,
-		"Central City must compose the authored civic network above the unchanged micro-paver base"
+		and area.get_urban_layout_layer_count() == 4
+		and area.get_urban_layout_polygon_count() >= 50
+		and area.is_road_graph_connected(),
+		"Central City must compose one connected route graph plus authored civic areas above the micro-paver base"
 	)
 	assert(
 		area.get_urban_layout_render_node_count() <= 14,
 		"Urban paths, plazas and district courts must stay batched into a small fixed render-node budget"
 	)
 	for required_urban_node: String in [
-		"Edges_civic_primary",
-		"Surface_civic_primary",
+		"Edges_road_network",
+		"Surface_road_network",
 		"Surface_central_plaza",
 		"Surface_service_forecourts",
-		"Surface_secondary_walks",
 		"Surface_district_courts",
 	]:
 		var urban_surface := urban_layout.get_node_or_null(required_urban_node) as MeshInstance2D
@@ -196,23 +196,28 @@ func _ready() -> void:
 	var south_terrace := area.get_node_or_null("SouthTerraceStructure") as Node2D
 	assert(
 		south_terrace != null
-		and area.get_south_terrace_render_node_count() == 8
+		and area.get_south_terrace_render_node_count() == 11
 		and south_terrace.get_node_or_null("RetainingWallCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("RetainingWallFaces") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairLandings") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairSideCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchBankCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchInnerWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
-		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D,
-		"South Terrace must use explicit architectural walls, stairs, trench banks, and bridge slabs"
+		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D
+		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D,
+		"South Terrace must use explicit architectural walls, stepped stairs, recessed voids, and structural bridges"
 	)
 	assert(
 		int(south_terrace.get_meta("visual_level_count", 0)) == 2
 		and int(south_terrace.get_meta("stair_count", 0)) == 2
 		and int(south_terrace.get_meta("trench_count", 0)) == 2
-		and int(south_terrace.get_meta("bridge_count", 0)) == 2,
-		"South Terrace must keep one upper/lower break, two stairways, two void pockets, and two bridges"
+		and int(south_terrace.get_meta("bridge_count", 0)) == 2
+		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
+		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
+		"South Terrace must keep two actual presentation levels separated by 48px, two stairways, two void pockets, and two bridges"
 	)
 	assert(
 		south_terrace.get_node_or_null("WaterfallFaces") == null
@@ -231,6 +236,18 @@ func _ready() -> void:
 		and area.is_walkable_world_position(_grid_to_world(Vector2(21, 23)))
 		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 23))),
 		"South Terrace voids must block movement while bridge decks and the central solid corridor remain walkable"
+	)
+
+
+	assert(
+		is_equal_approx(area.get_elevation_at_world_position(_grid_to_world(Vector2(7, 10))), 48.0)
+		and is_zero_approx(area.get_elevation_at_world_position(_grid_to_world(Vector2(7, 26)))),
+		"Upper Civic and South Terrace must resolve to distinct 48px and 0px presentation elevations"
+	)
+	var stair_mid_elevation := area.get_elevation_at_world_position(_grid_to_world(Vector2(7, 19.875)))
+	assert(
+		stair_mid_elevation > 1.0 and stair_mid_elevation < 47.0,
+		"Stair traversal must interpolate elevation continuously instead of teleporting between levels"
 	)
 
 
@@ -270,8 +287,14 @@ func _ready() -> void:
 		"Central Plaza lamps must stay on the outer civic/landscape edge rather than crowding the guide or pool"
 	)
 	var plaza_natural := plaza_section.get_node_or_null("NaturalDetails")
-	var plaza_tree := plaza_section.get_node_or_null("NaturalDetails/Oak_2_11") as Sprite2D
-	var plaza_planter := plaza_section.get_node_or_null("NaturalDetails/LandscapeIsland_0") as Node2D
+	var plaza_tree: Sprite2D = null
+	var plaza_planter: Node2D = null
+	if plaza_natural != null:
+		for child in plaza_natural.get_children():
+			if child is Sprite2D and String(child.name).begins_with("Oak_") and plaza_tree == null:
+				plaza_tree = child as Sprite2D
+			elif child is Node2D and String(child.name).begins_with("LandscapeIsland_") and plaza_planter == null:
+				plaza_planter = child as Node2D
 	assert(
 		plaza_natural != null
 		and plaza_tree != null
@@ -313,8 +336,9 @@ func _ready() -> void:
 	var first_plaza_lamp_local := plaza_section.grid_to_world(Vector2(2.2, 5.2))
 	assert(
 		first_plaza_lamp != null
-		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 48.0)),
-		"Lamp sprite must be lowered so the center of its visible pedestal sits on the authored ground contact"
+		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 96.0))
+		and is_equal_approx(float(first_plaza_lamp.get_meta("world_elevation_px", 0.0)), 48.0),
+		"Lamp sprite must preserve its authored foot offset while following the 48px upper-city elevation"
 	)
 	assert(
 		first_plaza_lamp.is_in_group("world_shadow_caster")
@@ -521,13 +545,22 @@ func _ready() -> void:
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the 64x32 safe plaza lane")
+	assert(
+		is_equal_approx(float(player.call("get_world_elevation")), 48.0),
+		"Fresh Central City spawn must render on the elevated Upper Civic deck"
+	)
+	var world_camera := player.get_node_or_null("WorldCamera") as Camera2D
+	assert(
+		world_camera != null and world_camera.position.is_equal_approx(Vector2(0.0, -48.0)),
+		"World camera must follow the player's presentation elevation"
+	)
 
 	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
-	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
+	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
-	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/DigiLabDoorLight") as Node2D
-	var digilab_core_light := digilab_section.get_node_or_null("DigiLabExterior/DigiLabCoreLight") as Node2D
+	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabDoorLight") as Node2D
+	var digilab_core_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabCoreLight") as Node2D
 	assert(
 		digilab_door_light != null
 		and digilab_core_light != null
@@ -535,7 +568,7 @@ func _ready() -> void:
 		and digilab_core_light.is_in_group("world_local_light"),
 		"DigiLab exterior must expose authored door and core illumination sources"
 	)
-	var digilab_upper := digilab_section.get_node_or_null("DigiLabExterior/UpperOccluder") as Sprite2D
+	var digilab_upper := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(digilab_upper != null, "DigiLab must split upper occlusion from the foreground facade")
 	assert(
 		digilab_building.texture != null
@@ -580,8 +613,17 @@ func _ready() -> void:
 		"DigiLab circulation must come from the continuous gray city field, not painted path cells"
 	)
 	assert(
-		digilab_section.get_node_or_null("DigiLabExterior/DigiLabFoundation/Top") != null,
+		digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabFoundation/Top") != null,
 		"DigiLab must sit on an authored raised foundation derived from its measured footprint"
+	)
+	var digilab_visual_root := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot") as Node2D
+	var digilab_foundation_shape = digilab_section.call("_digilab_foundation_footprint", expected_door)
+	assert(
+		digilab_visual_root != null
+		and digilab_visual_root.position.is_equal_approx(Vector2(0.0, -48.0))
+		and digilab_foundation_shape is PackedVector2Array
+		and (digilab_foundation_shape as PackedVector2Array).size() == 10,
+		"DigiLab visual lot must use its own full-building footprint on the elevated deck"
 	)
 	var digilab_collision := digilab_section.get_node_or_null(
 		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
@@ -673,12 +715,12 @@ func _ready() -> void:
 
 	var training_section := area.get_node_or_null("Section_0_-1") as WorldAreaSection
 	assert(training_section != null, "Training Center must remain in the authored north-central section")
-	var training_building := training_section.get_node_or_null("TrainingCenterExterior/Building") as Sprite2D
-	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/UpperOccluder") as Sprite2D
+	var training_building := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/Building") as Sprite2D
+	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(training_building != null, "Training district must render the authored Training Center exterior")
 	assert(
-		training_section.get_node_or_null("TrainingCenterExterior/TrainingDoorLight") != null
-		and training_section.get_node_or_null("TrainingCenterExterior/TrainingAccentLight") != null,
+		training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingDoorLight") != null
+		and training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingAccentLight") != null,
 		"Training Center exterior must expose two time-of-day local light sources"
 	)
 	assert(training_upper != null, "Training Center must split upper occlusion from its foreground facade")
@@ -722,8 +764,17 @@ func _ready() -> void:
 		"Training Center must be surrounded by one continuous gray circulation field"
 	)
 	assert(
-		training_section.get_node_or_null("TrainingCenterExterior/TrainingCenterFoundation/Top") != null,
+		training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingCenterFoundation/Top") != null,
 		"Training Center must sit on a raised foundation instead of blending into the street"
+	)
+	var training_visual_root := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot") as Node2D
+	var training_foundation_shape = training_section.call("_training_center_foundation_footprint", expected_training_door)
+	assert(
+		training_visual_root != null
+		and training_visual_root.position.is_equal_approx(Vector2(0.0, -48.0))
+		and training_foundation_shape is PackedVector2Array
+		and (training_foundation_shape as PackedVector2Array).size() == 9,
+		"Training Center visual lot must cover the complete building projection independently from collision"
 	)
 	var training_collision := training_section.get_node_or_null(
 		"TrainingCenterExterior/FootprintCollision/CollisionPolygon2D"
@@ -766,12 +817,12 @@ func _ready() -> void:
 
 	var hospital_section := area.get_node_or_null("Section_1_0") as WorldAreaSection
 	assert(hospital_section != null, "Digi Hospital must remain in the authored east-central section")
-	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/Building") as Sprite2D
-	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/UpperOccluder") as Sprite2D
+	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/Building") as Sprite2D
+	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
 	assert(
-		hospital_section.get_node_or_null("HospitalExterior/HospitalDoorLight") != null
-		and hospital_section.get_node_or_null("HospitalExterior/HospitalAccentLight") != null,
+		hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalDoorLight") != null
+		and hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalAccentLight") != null,
 		"Hospital exterior must expose two time-of-day local light sources"
 	)
 	assert(hospital_upper != null, "Hospital must split upper occlusion from its foreground facade")
@@ -815,8 +866,17 @@ func _ready() -> void:
 		"Hospital circulation must be defined by the gray street field around its raised lot"
 	)
 	assert(
-		hospital_section.get_node_or_null("HospitalExterior/HospitalFoundation/Top") != null,
+		hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalFoundation/Top") != null,
 		"Hospital must sit on a raised foundation instead of blending into the street"
+	)
+	var hospital_visual_root := hospital_section.get_node_or_null("HospitalExterior/VisualRoot") as Node2D
+	var hospital_foundation_shape = hospital_section.call("_hospital_foundation_footprint", expected_hospital_door)
+	assert(
+		hospital_visual_root != null
+		and hospital_visual_root.position.is_equal_approx(Vector2(0.0, -48.0))
+		and hospital_foundation_shape is PackedVector2Array
+		and (hospital_foundation_shape as PackedVector2Array).size() == 10,
+		"Hospital visual lot must cover the complete building projection independently from collision"
 	)
 	var hospital_collision := hospital_section.get_node_or_null(
 		"HospitalExterior/FootprintCollision/CollisionPolygon2D"
