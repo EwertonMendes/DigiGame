@@ -567,6 +567,16 @@ func _elevation_for_local_grid(local_grid: Vector2) -> float:
 	return CITY_TOPOLOGY.elevation_at_grid(global_grid)
 
 
+func _create_elevated_visual_root(parent: Node2D, local_grid: Vector2) -> Node2D:
+	var visual_root := Node2D.new()
+	visual_root.name = "VisualRoot"
+	var elevation_px := _elevation_for_local_grid(local_grid)
+	visual_root.position = Vector2(0.0, -elevation_px)
+	visual_root.set_meta("world_elevation_px", elevation_px)
+	parent.add_child(visual_root)
+	return visual_root
+
+
 func _can_place_city_decoration(grid_position: Vector2, blocker_size: Vector2) -> bool:
 	var center := grid_to_world(grid_position)
 	var probes: Array[Vector2] = [center]
@@ -902,6 +912,13 @@ func _hospital_footprint(door_world: Vector2) -> PackedVector2Array:
 	return polygon
 
 
+func _hospital_foundation_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in HOSPITAL_FOUNDATION_FOOTPRINT_SOURCE:
+		polygon.append(_hospital_source_to_local(source_point, door_world))
+	return polygon
+
+
 func _hospital_source_to_local(source_pixel: Vector2, door_world: Vector2) -> Vector2:
 	var scaled := (source_pixel - HOSPITAL_DOOR_PIXEL) * HOSPITAL_SCALE
 	return door_world + scaled.rotated(deg_to_rad(HOSPITAL_ROTATION_DEGREES))
@@ -947,6 +964,13 @@ func _training_center_footprint(door_world: Vector2) -> PackedVector2Array:
 	return polygon
 
 
+func _training_center_foundation_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in TRAINING_CENTER_FOUNDATION_FOOTPRINT_SOURCE:
+		polygon.append(_training_center_source_to_local(source_point, door_world))
+	return polygon
+
+
 func _training_center_source_to_local(source_pixel: Vector2, door_world: Vector2) -> Vector2:
 	var scaled := (source_pixel - TRAINING_CENTER_DOOR_PIXEL) * TRAINING_CENTER_SCALE
 	return door_world + scaled.rotated(deg_to_rad(TRAINING_CENTER_ROTATION_DEGREES))
@@ -988,6 +1012,13 @@ func _create_digilab_sprite(
 func _digilab_footprint(door_world: Vector2) -> PackedVector2Array:
 	var polygon := PackedVector2Array()
 	for source_point: Vector2 in DIGILAB_FOOTPRINT_SOURCE:
+		polygon.append(_digilab_source_to_local(source_point, door_world))
+	return polygon
+
+
+func _digilab_foundation_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in DIGILAB_FOUNDATION_FOOTPRINT_SOURCE:
 		polygon.append(_digilab_source_to_local(source_point, door_world))
 	return polygon
 
@@ -1049,9 +1080,16 @@ func _build_service_pad(
 	)
 	add_child(entrance)
 
+	var visual_root := Node2D.new()
+	visual_root.name = "VisualRoot"
+	var elevation_px := _elevation_for_local_grid(Vector2(pad_cell))
+	visual_root.position = Vector2(0.0, -elevation_px)
+	visual_root.set_meta("world_elevation_px", elevation_px)
+	entrance.add_child(visual_root)
+
 	var pad := CITY.create_surface_tile(surface, Vector2.ZERO, 0, 1.0)
 	pad.name = "ServicePadSurface"
-	entrance.add_child(pad)
+	visual_root.add_child(pad)
 
 	var label := Label.new()
 	label.text = title
@@ -1064,7 +1102,7 @@ func _build_service_pad(
 	label.add_theme_constant_override("outline_size", 4)
 	label.z_index = 4
 	_configure_world_annotation(label)
-	entrance.add_child(label)
+	visual_root.add_child(label)
 
 
 func _create_service_threshold(
