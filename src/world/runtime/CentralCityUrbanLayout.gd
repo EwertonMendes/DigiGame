@@ -43,13 +43,10 @@ static func build() -> Dictionary:
 
 		var fills: Array[Dictionary] = []
 		var borders: Array[Dictionary] = []
-		var depth_faces: Array[Dictionary] = []
 		var layer_surface := String(layer.get("surface", CITY.SURFACE_MAIN))
 		var layer_tint := _color(layer.get("tint", [1.0, 1.0, 1.0, 1.0]))
 		var border_width := maxf(0.0, float(layer.get("border_width", 0.0)))
-		var border_color := _color(layer.get("border_color", [0.25, 0.27, 0.28, 1.0]))
-		var layer_depth := maxf(0.0, float(layer.get("depth_pixels", 0.0)))
-		var layer_depth_color := _color(layer.get("depth_color", [0.14, 0.16, 0.18, 0.72]))
+		var border_color := _color(layer.get("border_color", [0.35, 0.36, 0.37, 1.0]))
 
 		for raw_polygon in polygons_value:
 			if not raw_polygon is Dictionary:
@@ -66,21 +63,10 @@ static func build() -> Dictionary:
 				layer_tint.b,
 				layer_tint.a,
 			]))
-			var fill_color := _tinted_surface_color(surface, tint)
 			fills.append({
 				"points": points,
-				"color": fill_color,
+				"color": _tinted_surface_color(surface, tint),
 			})
-
-			var polygon_depth := maxf(0.0, float(polygon.get("depth_pixels", layer_depth)))
-			if polygon_depth > 0.0:
-				var polygon_depth_color := _color(polygon.get("depth_color", [
-					layer_depth_color.r,
-					layer_depth_color.g,
-					layer_depth_color.b,
-					layer_depth_color.a,
-				]))
-				_append_recess_faces(depth_faces, points, polygon_depth, polygon_depth_color)
 
 			var polygon_border_width := maxf(
 				0.0,
@@ -113,12 +99,6 @@ static func build() -> Dictionary:
 		surface_mesh.name = "Surface_%s" % token
 		surface_mesh.z_index = 1
 		root.add_child(surface_mesh)
-
-		if not depth_faces.is_empty():
-			var depth_mesh := CITY.create_color_polygon_batch(depth_faces, 2)
-			depth_mesh.name = "Depth_%s" % token
-			depth_mesh.z_index = 2
-			root.add_child(depth_mesh)
 		layer_count += 1
 
 	root.set_meta("polygon_count", polygon_count)
@@ -170,36 +150,6 @@ static func _tinted_surface_color(surface: String, tint: Color) -> Color:
 		clampf(base.b * tint.b, 0.0, 1.0),
 		clampf(base.a * tint.a, 0.0, 1.0)
 	)
-
-
-static func _append_recess_faces(
-	target: Array[Dictionary],
-	points: PackedVector2Array,
-	depth_pixels: float,
-	color: Color
-) -> void:
-	if points.size() < 3 or depth_pixels <= 0.0:
-		return
-	var center := Vector2.ZERO
-	for point: Vector2 in points:
-		center += point
-	center /= float(points.size())
-
-	# Only draw the upper/back-facing curb faces. Offsetting those edges toward
-	# screen-bottom places the face inside the darker route, which reads as a
-	# shallow drop from the brighter sidewalk without changing actor elevation.
-	for index in range(points.size()):
-		var next := (index + 1) % points.size()
-		var a := points[index]
-		var b := points[next]
-		var midpoint := (a + b) * 0.5
-		if midpoint.y >= center.y - 0.5:
-			continue
-		var drop := Vector2(0.0, depth_pixels)
-		target.append({
-			"points": PackedVector2Array([a, b, b + drop, a + drop]),
-			"color": color,
-		})
 
 
 static func _expand_polygon(points: PackedVector2Array, margin: float) -> PackedVector2Array:
