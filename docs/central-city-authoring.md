@@ -15,6 +15,7 @@ The toolbar belongs to the **edited authoring scene**, not to the selected node.
 - **Select** — click authored content directly in the viewport and drag it. You do not need to select `CentralCityAuthoring` first.
 - **Paint** — paint logical world cells by holding/dragging the left mouse button.
 - **Road Brush** — switches to Paint, selects the dedicated `road` surface, and chooses a 3×3 brush. Roads are ordinary painted cells: no endpoints, graph, linked segments, or propagated geometry.
+- **Pick** — eyedropper/stamp workflow. Click a painted tile to load its material into the brush, or click a prop/landscape/region/transition to turn it into a repeatable placement stamp. Right click or Esc cancels the picker/stamp.
 - **Brush** — 1×1, 3×3 or 5×5 paint footprint.
 - **Surface** — material to paint. Right-drag erases authored paint.
 - **Transition** — keeps transition/boundary editing available for stairs, bridges and voids.
@@ -25,13 +26,25 @@ The toolbar belongs to the **edited authoring scene**, not to the selected node.
 - **Duplicate / Delete** — scene-safe actions with Godot undo history.
 - **Bake** — writes `assets/resources/world/central_city_baked.tres`.
 
-Normal Godot **Ctrl+Z / Ctrl+Shift+Z** works for paint, object movement and region edits.
+All authoring actions are registered in the **edited scene's Godot Undo/Redo history**. **Ctrl+Z** undoes and **Ctrl+Shift+Z / Ctrl+Y** redoes paint strokes, erasing, object movement, region edits, duplication/deletion and eyedropper stamp placement. A complete click-drag paint gesture is one undo step, even if the mouse button is released over another editor panel.
 
 ### Direct viewport selection
 
 Selection is handled by the authoring scene itself rather than by whether the root is currently selected in the Scene dock. Visible buildings, props, landscapes and polygon regions can be clicked directly in the WYSIWYG preview. Empty clicks may clear the selected object, but they do not disable or hide the toolbar.
 
 The authoring plugin reads a small `get_world_authoring_context()` contract from the scene root. New world-authoring scenes can expose the same contract and reuse the same toolbar instead of receiving a one-off editor plugin.
+
+### Eyedropper and repeatable stamps
+
+Click **Pick**, then click what you want to reuse:
+
+- A painted floor/road cell loads that exact surface into **Paint** immediately.
+- A prop, landscape marker, surface region or transition becomes a repeatable stamp. Left-click anywhere to add copies; the chosen Snap setting controls placement. Keep clicking to place more.
+- Right-click or press **Esc** to leave stamp mode.
+- Stamped structural regions receive fresh stable ids automatically, so copies do not collide with their source.
+- Service buildings such as Hospital, DigiLab and Training remain unique gameplay anchors. Picking one selects the real building for repositioning instead of creating an invalid duplicate service id.
+
+The picker operates on the same authoring nodes that feed the runtime preview, so it is intended to be reusable in future world-authoring scenes that expose the same authoring context.
 
 ## Painted roads and ground
 
