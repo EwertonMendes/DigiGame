@@ -7,20 +7,22 @@ class_name CentralCityArt
 # overworld reads as a city floor instead of a tactical board. Grass, water,
 # perimeter depth and authored interiors still use their dedicated source art.
 const CITY_PAVER_SHADER = preload("res://shaders/city_paver_floor.gdshader")
-const GROUND_GRASS = preload("res://assets/world/devilsworkshop/city_1024/isometric_0056.png")
-const GROUND_GRASS_CHECKER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0053.png")
-const GROUND_MINT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0058.png")
-const GROUND_MAIN = preload("res://assets/world/devilsworkshop/city_1024/isometric_0072.png")
-const GROUND_STONE_SOFT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0054.png")
-const GROUND_TECH_TEAL = preload("res://assets/world/devilsworkshop/city_1024/isometric_0048.png")
-const GROUND_TECH_BLUE = preload("res://assets/world/devilsworkshop/city_1024/isometric_0049.png")
-const GROUND_TECH_PURPLE = preload("res://assets/world/devilsworkshop/city_1024/isometric_0050.png")
-const GROUND_DARK = preload("res://assets/world/devilsworkshop/city_1024/isometric_0063.png")
-const GROUND_WATER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0064.png")
-const GROUND_MARKET = preload("res://assets/world/devilsworkshop/city_1024/isometric_0009.png")
-const GROUND_TRAINING = preload("res://assets/world/devilsworkshop/city_1024/isometric_0007.png")
-const GROUND_DIGILAB_FLOOR_1 = preload("res://assets/world/tblack/digilab/floor/floor-1.png")
-const GROUND_DIGILAB_FLOOR_2 = preload("res://assets/world/tblack/digilab/floor/floor-2.png")
+const GROUND_GRASS_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0056.png"
+const GROUND_GRASS_CHECKER_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0053.png"
+const GROUND_MINT_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0058.png"
+const GROUND_MAIN_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0072.png"
+const GROUND_STONE_SOFT_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0054.png"
+const GROUND_TECH_TEAL_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0048.png"
+const GROUND_TECH_BLUE_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0049.png"
+const GROUND_TECH_PURPLE_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0050.png"
+const GROUND_DARK_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0063.png"
+const GROUND_WATER_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0064.png"
+const GROUND_MARKET_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0009.png"
+const GROUND_TRAINING_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0007.png"
+const GROUND_DIGILAB_FLOOR_1_PATH := "res://assets/world/tblack/digilab/floor/floor-1.png"
+const GROUND_DIGILAB_FLOOR_2_PATH := "res://assets/world/tblack/digilab/floor/floor-2.png"
+
+static var _texture_cache: Dictionary = {}
 
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
@@ -98,35 +100,46 @@ static func panel_diamond(cell_span: int, overscan := Vector2.ZERO) -> PackedVec
 
 
 static func surface_texture(surface: String) -> Texture2D:
+	var path := GROUND_MAIN_PATH
 	match surface:
 		SURFACE_GRASS:
-			return GROUND_GRASS
+			path = GROUND_GRASS_PATH
 		SURFACE_GRASS_CHECKER:
-			return GROUND_GRASS_CHECKER
+			path = GROUND_GRASS_CHECKER_PATH
 		SURFACE_MINT:
-			return GROUND_MINT
+			path = GROUND_MINT_PATH
 		SURFACE_STONE_SOFT:
-			return GROUND_STONE_SOFT
+			path = GROUND_STONE_SOFT_PATH
 		SURFACE_TECH_TEAL:
-			return GROUND_TECH_TEAL
+			path = GROUND_TECH_TEAL_PATH
 		SURFACE_TECH_BLUE:
-			return GROUND_TECH_BLUE
+			path = GROUND_TECH_BLUE_PATH
 		SURFACE_TECH_PURPLE:
-			return GROUND_TECH_PURPLE
+			path = GROUND_TECH_PURPLE_PATH
 		SURFACE_DARK:
-			return GROUND_DARK
+			path = GROUND_DARK_PATH
 		SURFACE_WATER:
-			return GROUND_WATER
+			path = GROUND_WATER_PATH
 		SURFACE_MARKET:
-			return GROUND_MARKET
+			path = GROUND_MARKET_PATH
 		SURFACE_TRAINING:
-			return GROUND_TRAINING
+			path = GROUND_TRAINING_PATH
 		SURFACE_DIGILAB_FLOOR_1:
-			return GROUND_DIGILAB_FLOOR_1
+			path = GROUND_DIGILAB_FLOOR_1_PATH
 		SURFACE_DIGILAB_FLOOR_2:
-			return GROUND_DIGILAB_FLOOR_2
-		_:
-			return GROUND_MAIN
+			path = GROUND_DIGILAB_FLOOR_2_PATH
+	return _load_texture(path)
+
+
+static func _load_texture(path: String) -> Texture2D:
+	var cached = _texture_cache.get(path)
+	if cached is Texture2D:
+		return cached as Texture2D
+	var resource = ResourceLoader.load(path)
+	if resource is Texture2D:
+		_texture_cache[path] = resource
+		return resource as Texture2D
+	return null
 
 
 static func surface_base_color(surface: String) -> Color:
