@@ -61,6 +61,7 @@ var _dialog_body: Label = null
 var _movement_dirty := false
 var _save_elapsed := 0.0
 var _world_ready := false
+var _last_player_elevation_px := -INF
 var _area_load_layer: CanvasLayer = null
 var _area_load_progress: ProgressBar = null
 var _area_load_status: Label = null
@@ -813,6 +814,9 @@ func _sync_player_elevation(world_position: Vector2) -> void:
 	if _player == null or _area_scene == null:
 		return
 	var elevation := _area_scene.get_elevation_at_world_position(world_position)
+	if is_equal_approx(elevation, _last_player_elevation_px):
+		return
+	_last_player_elevation_px = elevation
 	_player.set_world_elevation(elevation)
 	if _world_camera != null:
 		# Camera remains attached to the logical CharacterBody2D, so offset it by
