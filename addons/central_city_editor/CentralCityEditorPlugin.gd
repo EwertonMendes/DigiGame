@@ -276,6 +276,9 @@ func _duplicate_selected() -> void:
 	if root == null or selected == null or selected == root or selected.get_parent() == null:
 		return
 	var parent := selected.get_parent()
+	if parent.name == "Buildings":
+		_status.text = "Service buildings are unique; move the existing building"
+		return
 	var duplicate := selected.duplicate()
 	duplicate.name = "%s_Copy" % selected.name
 	if _has_property(duplicate, "road_id"):
