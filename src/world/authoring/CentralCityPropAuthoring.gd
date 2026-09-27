@@ -4,7 +4,7 @@ class_name CentralCityPropAuthoring
 
 @export var asset_id := "lamp_blue"
 @export var role := ""
-@export_enum("", "civic", "landscape") var surround := ""
+@export_enum("none", "civic", "landscape") var surround := "none"
 @export_enum("world", "behind_building") var depth := "world"
 @export var clearance_override := Vector2(-1.0, -1.0)
 @export var accent := Color(0.24, 0.88, 1.0, 1.0)
