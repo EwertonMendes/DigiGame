@@ -65,7 +65,7 @@ static func elevation_for_level(level_id: String) -> float:
 
 
 static func level_at_grid(grid: Vector2) -> String:
-	var transition := stair_at_grid(grid)
+	var transition := _stair_at_grid_ref(grid)
 	if not transition.is_empty():
 		var y_start := float(transition.get("y_start", 0.0))
 		var y_end := float(transition.get("y_end", y_start + 1.0))
@@ -85,7 +85,7 @@ static func level_at_grid(grid: Vector2) -> String:
 
 
 static func elevation_at_grid(grid: Vector2) -> float:
-	var transition := stair_at_grid(grid)
+	var transition := _stair_at_grid_ref(grid)
 	if not transition.is_empty():
 		var y_start := float(transition.get("y_start", grid.y))
 		var y_end := float(transition.get("y_end", y_start + 1.0))
@@ -128,7 +128,15 @@ static func grid_to_display(grid: Vector2, forced_level: String = "") -> Vector2
 
 
 static func stair_at_grid(grid: Vector2) -> Dictionary:
-	for raw in stairs():
+	var stair := _stair_at_grid_ref(grid)
+	return stair.duplicate(true) if not stair.is_empty() else {}
+
+
+static func _stair_at_grid_ref(grid: Vector2) -> Dictionary:
+	var value = config().get("stairs", [])
+	if not value is Array:
+		return {}
+	for raw in value as Array:
 		if not raw is Dictionary:
 			continue
 		var stair := raw as Dictionary
@@ -139,7 +147,7 @@ static func stair_at_grid(grid: Vector2) -> Dictionary:
 			float(stair.get("y_start", 0.0)),
 			float(stair.get("y_end", 0.0))
 		):
-			return stair.duplicate(true)
+			return stair
 	return {}
 
 
@@ -183,8 +191,8 @@ static func can_traverse_grid_segment(from_grid: Vector2, to_grid: Vector2) -> b
 	if from_grid.distance_squared_to(to_grid) <= SEGMENT_EPSILON * SEGMENT_EPSILON:
 		return true
 
-	var from_stair := stair_at_grid(from_grid)
-	var to_stair := stair_at_grid(to_grid)
+	var from_stair := _stair_at_grid_ref(from_grid)
+	var to_stair := _stair_at_grid_ref(to_grid)
 	if not from_stair.is_empty() or not to_stair.is_empty():
 		if not from_stair.is_empty() and not to_stair.is_empty():
 			if String(from_stair.get("id", "")) != String(to_stair.get("id", "")):
@@ -207,7 +215,7 @@ static func can_traverse_grid_segment(from_grid: Vector2, to_grid: Vector2) -> b
 	if crossing_x < minf(x_min, x_max) or crossing_x > maxf(x_min, x_max):
 		return true
 
-	var stair := stair_at_grid(Vector2(crossing_x, threshold))
+	var stair := _stair_at_grid_ref(Vector2(crossing_x, threshold))
 	if stair.is_empty():
 		return false
 	return _stair_x_is_inside_walkway(crossing_x, stair)
@@ -219,7 +227,7 @@ static func can_traverse_world_segment(from_world: Vector2, to_world: Vector2) -
 
 static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 	var point := Vector2(global_grid)
-	var stair := stair_at_grid(point)
+	var stair := _stair_at_grid_ref(point)
 	if not stair.is_empty():
 		var y_start := float(stair.get("y_start", 0.0))
 		var y_end := float(stair.get("y_end", 0.0))
@@ -296,7 +304,7 @@ static func can_place_landscape(grid: Vector2, radius_grid: float = 1.20) -> boo
 	var break_x_min := float(break_data.get("x_min", -INF))
 	var break_x_max := float(break_data.get("x_max", INF))
 	for probe: Vector2 in probes:
-		if not stair_at_grid(probe).is_empty():
+		if not _stair_at_grid_ref(probe).is_empty():
 			return false
 		if not bridge_at_grid(probe).is_empty():
 			return false
