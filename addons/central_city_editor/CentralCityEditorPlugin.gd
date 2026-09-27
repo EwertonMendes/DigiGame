@@ -247,7 +247,7 @@ func _on_overlay_toggled(enabled: bool) -> void:
 
 func _on_surface_selected(_index: int) -> void:
 	var selected := _selected_node()
-	if selected == null or selected.get("surface") == null:
+	if selected == null or not _has_property(selected, "surface"):
 		return
 	var next_surface := _surface.get_item_text(_surface.selected)
 	if selected.get_script() == ROAD_SCRIPT and next_surface == "void":
@@ -867,7 +867,7 @@ func _object_hit(screen: Vector2, root: Node, containers: Array[String]) -> Node
 			elif child is Polygon2D:
 				var polygon_node := child as Polygon2D
 				var screen_polygon := PackedVector2Array()
-				var elevation := float(child.get("editor_elevation_px")) if child.get("editor_elevation_px") != null else 0.0
+				var elevation := _polygon_elevation(polygon_node)
 				for point: Vector2 in polygon_node.polygon:
 					screen_polygon.append(_visual_world_to_screen(polygon_node.to_global(point) + Vector2(0.0, -elevation)))
 				if screen_polygon.size() >= 3 and Geometry2D.is_point_in_polygon(screen, screen_polygon):
@@ -973,16 +973,20 @@ func _draw_polygon_outline(overlay: Control, polygon: Polygon2D) -> void:
 
 
 func _polygon_elevation(polygon: Polygon2D) -> float:
-	var explicit = polygon.get("editor_elevation_px")
-	if explicit != null:
-		return float(explicit)
-	var kind_value = polygon.get("kind")
-	if kind_value != null and String(kind_value) == "stairs":
+	if _has_property(polygon, "editor_elevation_px"):
+		return float(polygon.get("editor_elevation_px"))
+	if _has_property(polygon, "kind") and String(polygon.get("kind")) == "stairs":
 		return 24.0
-	var level_value = polygon.get("level_id")
-	if level_value != null and String(level_value) == "upper_civic":
+	if _has_property(polygon, "level_id") and String(polygon.get("level_id")) == "upper_civic":
 		return 48.0
 	return 0.0
+
+
+func _has_property(object: Object, property_name: String) -> bool:
+	for info in object.get_property_list():
+		if String(info.get("name", "")) == property_name:
+			return true
+	return false
 
 
 func _polygon_screen_points(polygon: Polygon2D) -> PackedVector2Array:
