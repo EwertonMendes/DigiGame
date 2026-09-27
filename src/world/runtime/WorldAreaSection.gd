@@ -15,6 +15,7 @@ const DIGILAB_DOOR_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/dig
 const TRAINING_CENTER_TEXTURE = preload("res://assets/world/tblack/training-center/training-center.png")
 const HOSPITAL_TEXTURE = preload("res://assets/world/tblack/hospital/hospital.png")
 
+const SHADOW_GROUP := "world_shadow_caster"
 const SECTION_SIZE := 14
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
@@ -489,6 +490,7 @@ func _build_digilab_exterior() -> void:
 
 	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
 	var footprint := _digilab_footprint(door_world)
+	_configure_shadow_caster(exterior, footprint, 205.0, 0.19)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"DigiLabFoundation",
 		footprint,
@@ -570,6 +572,7 @@ func _build_training_center_exterior() -> void:
 
 	var door_world := grid_to_world(Vector2(TRAINING_CENTER_DOOR_CELL))
 	var footprint := _training_center_footprint(door_world)
+	_configure_shadow_caster(exterior, footprint, 180.0, 0.18)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"TrainingCenterFoundation",
 		footprint,
@@ -632,6 +635,7 @@ func _build_hospital_exterior() -> void:
 
 	var door_world := grid_to_world(Vector2(HOSPITAL_DOOR_CELL))
 	var footprint := _hospital_footprint(door_world)
+	_configure_shadow_caster(exterior, footprint, 195.0, 0.19)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"HospitalFoundation",
 		footprint,
@@ -1042,6 +1046,15 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	var center_to_foot := LARGE_OAK_FOOT - texture.get_size() * 0.5
 	tree.position = foot + Vector2(0.0, 10.0) - center_to_foot
 	tree.z_index = 1000 + int(round(global_position.y + foot.y))
+	var ground_anchor := foot + Vector2(0.0, 10.0)
+	var local_anchor := ground_anchor - tree.position
+	var shadow_footprint := PackedVector2Array([
+		local_anchor + Vector2(-14.0, 0.0),
+		local_anchor + Vector2(0.0, -7.0),
+		local_anchor + Vector2(14.0, 0.0),
+		local_anchor + Vector2(0.0, 7.0),
+	])
+	_configure_shadow_caster(tree, shadow_footprint, 76.0, 0.18)
 	parent.add_child(tree)
 	TreeAmbientFXScript.apply(
 		tree,
@@ -1062,6 +1075,22 @@ func set_ambient_vfx_active(active: bool) -> void:
 			continue
 		leaves.visible = active
 		leaves.emitting = active
+
+
+func _configure_shadow_caster(
+	caster: Node2D,
+	footprint: PackedVector2Array,
+	height: float,
+	opacity: float,
+	dynamic: bool = false
+) -> void:
+	if caster == null or footprint.size() < 3:
+		return
+	caster.add_to_group(SHADOW_GROUP)
+	caster.set_meta("world_shadow_footprint", footprint.duplicate())
+	caster.set_meta("world_shadow_height", maxf(0.0, height))
+	caster.set_meta("world_shadow_opacity", clampf(opacity, 0.0, 0.55))
+	caster.set_meta("world_shadow_dynamic", dynamic)
 
 
 func _mark_blocked(cell: Vector2i) -> void:
