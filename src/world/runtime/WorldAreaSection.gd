@@ -10,13 +10,15 @@ const CITY_AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringDa
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
-const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
-const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
-const DIGILAB_TEXTURE = preload("res://assets/world/tblack/digilab/digilab.png")
-const DIGILAB_DOOR_SEMI_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-semi-open.png")
-const DIGILAB_DOOR_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-open.png")
-const TRAINING_CENTER_TEXTURE = preload("res://assets/world/tblack/training-center/training-center.png")
-const HOSPITAL_TEXTURE = preload("res://assets/world/tblack/hospital/hospital.png")
+const OAK_TREE_SOURCE_PATH := "res://assets/terrain/Oak_Tree.png"
+const NPC_TEXTURE_PATH := "res://assets/characters/world/battle_operator_purple.png"
+const DIGILAB_TEXTURE_PATH := "res://assets/world/tblack/digilab/digilab.png"
+const DIGILAB_DOOR_SEMI_OPEN_TEXTURE_PATH := "res://assets/world/tblack/digilab/digilab-door-semi-open.png"
+const DIGILAB_DOOR_OPEN_TEXTURE_PATH := "res://assets/world/tblack/digilab/digilab-door-open.png"
+const TRAINING_CENTER_TEXTURE_PATH := "res://assets/world/tblack/training-center/training-center.png"
+const HOSPITAL_TEXTURE_PATH := "res://assets/world/tblack/hospital/hospital.png"
+
+static var _editor_safe_texture_cache: Dictionary = {}
 
 const SHADOW_GROUP := "world_shadow_caster"
 const LOCAL_LIGHT_GROUP := "world_local_light"
@@ -270,6 +272,17 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	position = grid_to_world(Vector2(section_coord.x * SECTION_SIZE, section_coord.y * SECTION_SIZE))
 	name = "Section_%d_%d" % [section_coord.x, section_coord.y]
 	_build_section()
+
+
+static func _texture(path: String) -> Texture2D:
+	var cached = _editor_safe_texture_cache.get(path)
+	if cached is Texture2D:
+		return cached as Texture2D
+	var resource = ResourceLoader.load(path)
+	if resource is Texture2D:
+		_editor_safe_texture_cache[path] = resource
+		return resource as Texture2D
+	return null
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
@@ -680,7 +693,7 @@ func _build_digilab_exterior() -> void:
 
 	var upper_region := Rect2(
 		Vector2.ZERO,
-		Vector2(float(DIGILAB_TEXTURE.get_width()), DIGILAB_UPPER_OCCLUDER_CUTOFF_Y)
+		Vector2(float(_texture(DIGILAB_TEXTURE_PATH).get_width()), DIGILAB_UPPER_OCCLUDER_CUTOFF_Y)
 	)
 	var upper_occluder := _create_digilab_sprite(
 		"UpperOccluder",
@@ -777,7 +790,7 @@ func _build_training_center_exterior() -> void:
 
 	var upper_region := Rect2(
 		Vector2.ZERO,
-		Vector2(float(TRAINING_CENTER_TEXTURE.get_width()), TRAINING_CENTER_UPPER_OCCLUDER_CUTOFF_Y)
+		Vector2(float(_texture(TRAINING_CENTER_TEXTURE_PATH).get_width()), TRAINING_CENTER_UPPER_OCCLUDER_CUTOFF_Y)
 	)
 	var upper_occluder := _create_training_center_sprite(
 		"UpperOccluder",
@@ -853,7 +866,7 @@ func _build_hospital_exterior() -> void:
 
 	var upper_region := Rect2(
 		Vector2.ZERO,
-		Vector2(float(HOSPITAL_TEXTURE.get_width()), HOSPITAL_UPPER_OCCLUDER_CUTOFF_Y)
+		Vector2(float(_texture(HOSPITAL_TEXTURE_PATH).get_width()), HOSPITAL_UPPER_OCCLUDER_CUTOFF_Y)
 	)
 	var upper_occluder := _create_hospital_sprite(
 		"UpperOccluder",
@@ -888,13 +901,13 @@ func _create_hospital_sprite(
 ) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.name = node_name
-	sprite.texture = HOSPITAL_TEXTURE
+	sprite.texture = _texture(HOSPITAL_TEXTURE_PATH)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.scale = HOSPITAL_SCALE
 	sprite.rotation_degrees = HOSPITAL_ROTATION_DEGREES
 	sprite.z_index = depth
 
-	var texture_center := HOSPITAL_TEXTURE.get_size() * 0.5
+	var texture_center := _texture(HOSPITAL_TEXTURE_PATH).get_size() * 0.5
 	var authored_door_offset := (
 		(HOSPITAL_DOOR_PIXEL - texture_center) * HOSPITAL_SCALE
 	).rotated(sprite.rotation)
@@ -940,13 +953,13 @@ func _create_training_center_sprite(
 ) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.name = node_name
-	sprite.texture = TRAINING_CENTER_TEXTURE
+	sprite.texture = _texture(TRAINING_CENTER_TEXTURE_PATH)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.scale = TRAINING_CENTER_SCALE
 	sprite.rotation_degrees = TRAINING_CENTER_ROTATION_DEGREES
 	sprite.z_index = depth
 
-	var texture_center := TRAINING_CENTER_TEXTURE.get_size() * 0.5
+	var texture_center := _texture(TRAINING_CENTER_TEXTURE_PATH).get_size() * 0.5
 	var authored_door_offset := (
 		(TRAINING_CENTER_DOOR_PIXEL - texture_center) * TRAINING_CENTER_SCALE
 	).rotated(sprite.rotation)
@@ -992,13 +1005,13 @@ func _create_digilab_sprite(
 ) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.name = node_name
-	sprite.texture = DIGILAB_TEXTURE
+	sprite.texture = _texture(DIGILAB_TEXTURE_PATH)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.scale = DIGILAB_SCALE
 	sprite.rotation_degrees = DIGILAB_ROTATION_DEGREES
 	sprite.z_index = depth
 
-	var texture_center := DIGILAB_TEXTURE.get_size() * 0.5
+	var texture_center := _texture(DIGILAB_TEXTURE_PATH).get_size() * 0.5
 	var authored_door_offset := (
 		(DIGILAB_DOOR_PIXEL - texture_center) * DIGILAB_SCALE
 	).rotated(sprite.rotation)
@@ -1179,11 +1192,11 @@ func _animate_digilab_entry(entrance: Area2D, payload: Dictionary) -> void:
 
 	# Closed is the idle frame. Crossing the authored doorway advances through
 	# the two supplied frames before the seamless interior handoff.
-	_set_digilab_door_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE_PATH))
 	await get_tree().create_timer(DIGILAB_DOOR_FRAME_SECONDS).timeout
 	if not is_inside_tree():
 		return
-	_set_digilab_door_texture(DIGILAB_DOOR_OPEN_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_DOOR_OPEN_TEXTURE_PATH))
 	await get_tree().create_timer(DIGILAB_DOOR_OPEN_HOLD_SECONDS).timeout
 	if not is_inside_tree():
 		return
@@ -1213,15 +1226,15 @@ func play_service_return_animation(service_id: String) -> void:
 	# The exterior stayed on the open frame while the interior was active.
 	# Once the city has been revealed again, close the same authored doorway in
 	# reverse order so entering and leaving read as one continuous interaction.
-	_set_digilab_door_texture(DIGILAB_DOOR_OPEN_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_DOOR_OPEN_TEXTURE_PATH))
 	await get_tree().create_timer(DIGILAB_DOOR_OPEN_HOLD_SECONDS).timeout
 	if not is_inside_tree():
 		return
-	_set_digilab_door_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE_PATH))
 	await get_tree().create_timer(DIGILAB_DOOR_FRAME_SECONDS).timeout
 	if not is_inside_tree():
 		return
-	_set_digilab_door_texture(DIGILAB_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_TEXTURE_PATH))
 
 
 func _set_digilab_door_texture(texture: Texture2D) -> void:
@@ -1236,7 +1249,7 @@ func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: S
 		return
 	var actor := ActorScript.new() as HubActor
 	actor.name = title.capitalize().replace(" ", "")
-	actor.configure(NPC_TEXTURE, false, _world_controller, "southwest")
+	actor.configure(_texture(NPC_TEXTURE_PATH), false, _world_controller, "southwest")
 	actor.position = grid_to_world(Vector2(cell))
 	actor.set_world_elevation(_elevation_for_local_grid(Vector2(cell)))
 	actor.add_to_group("debug_capture_clean_hidden")
@@ -1267,7 +1280,7 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	var elevation_px := _elevation_for_local_grid(Vector2(cell))
 	var visual_offset := Vector2(0.0, -elevation_px)
 	var texture := AtlasTexture.new()
-	texture.atlas = OAK_TREE_SOURCE
+	texture.atlas = _texture(OAK_TREE_SOURCE_PATH)
 	texture.region = LARGE_OAK_REGION
 	var tree := Sprite2D.new()
 	tree.name = "Oak_%d_%d" % [cell.x, cell.y]
