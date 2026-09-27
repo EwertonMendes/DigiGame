@@ -48,7 +48,7 @@ The old prototype Hub is not the normal application entry point. Development bui
 
 ## Performance contract
 
-Central City treats authoring sections as data boundaries, never rendering boundaries. The octagonal island contains 4,341 canonical land cells before authored topology cuts. The current elevated terrace break, stair transition spans and future-water voids intentionally omit 181 base-floor cells, leaving 4,160 batched ground cells; clipped outer corners remain true non-walkable digital void. Ground draw calls are bounded by the small curated surface palette instead of section count, and the area regression keeps the runtime node budget below its existing limit.
+Central City treats authoring sections as data boundaries, never rendering boundaries. The octagonal island contains 4,341 canonical land cells before authored topology cuts. The full-width terrace break, stair transition spans and future-water voids intentionally omit 207 base-floor cells, leaving 4,134 batched ground cells; clipped outer corners remain true non-walkable digital void. Ground draw calls are bounded by the small curated surface palette instead of section count, and the area regression keeps the runtime node budget below its existing limit.
 
 ### Central City landscaping
 
@@ -69,6 +69,8 @@ Street-prop lighting remains data-driven in `central_city_decor.json`. Approved 
 Central City's procedural paver shader now authors **albedo only** and intentionally stays in the normal CanvasItem lighting pipeline. This means the street darkens with `CanvasModulate` and receives colored pools from nearby blue/yellow lamps instead of remaining day-bright underneath a dark world. Gameplay text is treated separately: NPC names and service labels such as CITY GUIDE, DATA MARKET and DIGITAL ARCHIVE use an unshaded world-annotation material, so time-of-day can darken the physical scene without reducing navigation/readability. Entering a service interior disables the complete exterior lighting layer until the player returns to the city.
 
 `WorldPerformanceMonitor` reports registered shadow casters, total local lights and currently active local lights alongside the existing FPS/draw-call counters so lighting cost remains visible during Web and device testing.
+
+Mobile and touch-Web runtimes use a dedicated lighting budget rather than degrading the authored scene globally. Shadow and local-light culling radii are tighter, discovery/culling cadence is lower, dynamic actor shadows are capped at 30 Hz and skip geometry updates while the caster is stationary, and near-invisible midday `PointLight2D` sources are disabled until their energy is visually meaningful. Sunset/night lighting remains fully authored inside the active player neighborhood. Full-map debug capture still bypasses runtime distance culling so exported captures include all authored lights and shadows.
 
 
 ### Full-map debug capture
