@@ -89,6 +89,9 @@ func _ready() -> void:
 	)
 	var baked_snapshot := CITY_BAKER.load_snapshot()
 	if not baked_snapshot.is_empty():
+		if baked_snapshot != authoring_snapshot:
+			for difference: String in _snapshot_diff_paths(baked_snapshot, authoring_snapshot):
+				push_error("Central City bake mismatch: %s" % difference)
 		assert(
 			baked_snapshot == authoring_snapshot,
 			"Committed Central City baked data must match the editable authoring scene"
@@ -1074,6 +1077,57 @@ func _ready() -> void:
 
 	print("single-scene world area regression passed")
 	get_tree().quit()
+
+
+func _snapshot_diff_paths(left, right, path: String = "snapshot", limit: int = 12) -> Array[String]:
+	var result: Array[String] = []
+	if typeof(left) != typeof(right):
+		result.append("%s type %s != %s" % [path, type_string(typeof(left)), type_string(typeof(right))])
+		return result
+	if left is Dictionary:
+		var left_dict := left as Dictionary
+		var right_dict := right as Dictionary
+		for key in left_dict.keys():
+			if result.size() >= limit:
+				break
+			if not right_dict.has(key):
+				result.append("%s missing right key %s" % [path, str(key)])
+				continue
+			result.append_array(
+				_snapshot_diff_paths(
+					left_dict[key],
+					right_dict[key],
+					"%s.%s" % [path, str(key)],
+					limit - result.size()
+				)
+			)
+		for key in right_dict.keys():
+			if result.size() >= limit:
+				break
+			if not left_dict.has(key):
+				result.append("%s missing left key %s" % [path, str(key)])
+		return result
+	if left is Array:
+		var left_array := left as Array
+		var right_array := right as Array
+		if left_array.size() != right_array.size():
+			result.append("%s size %d != %d" % [path, left_array.size(), right_array.size()])
+			return result
+		for index in range(left_array.size()):
+			if result.size() >= limit:
+				break
+			result.append_array(
+				_snapshot_diff_paths(
+					left_array[index],
+					right_array[index],
+					"%s[%d]" % [path, index],
+					limit - result.size()
+				)
+			)
+		return result
+	if left != right:
+		result.append("%s %s != %s" % [path, str(left), str(right)])
+	return result
 
 
 func _service_section(area: WorldAreaScene, service_id: String) -> WorldAreaSection:
