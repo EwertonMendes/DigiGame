@@ -109,6 +109,7 @@ func _ready() -> void:
 	collision.position = Vector2(0.0, -11.0)
 	add_child(collision)
 
+	_configure_world_shadow()
 	_update_frame(false)
 	_update_depth()
 
@@ -263,6 +264,19 @@ func _update_frame(walking: bool) -> void:
 	_sprite.flip_h = bool(FACING_FLIP_H.get(facing_direction, false))
 	if walking:
 		_sprite.position = BASE_SPRITE_POSITION
+
+
+func _configure_world_shadow() -> void:
+	add_to_group("world_shadow_caster")
+	set_meta("world_shadow_footprint", PackedVector2Array([
+		Vector2(-9.0, 0.0),
+		Vector2(0.0, -5.0),
+		Vector2(9.0, 0.0),
+		Vector2(0.0, 5.0),
+	]))
+	set_meta("world_shadow_height", 52.0)
+	set_meta("world_shadow_opacity", 0.17)
+	set_meta("world_shadow_dynamic", true)
 
 
 func _update_depth() -> void:
