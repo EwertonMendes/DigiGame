@@ -26,6 +26,7 @@ var _toolbar_toggle: Button
 var _toolbar_expanded := true
 var _mode: OptionButton
 var _snap: OptionButton
+var _brush: OptionButton
 var _surface: OptionButton
 var _overlay_toggle: Button
 var _status: Label
@@ -79,10 +80,10 @@ func _edit(_object: Object) -> void:
 
 
 func _make_visible(_visible: bool) -> void:
-	# Godot calls this when the selected object changes. Central City tools are
-	# scene-level authoring controls, so selection must never decide whether the
-	# toolbar exists. Its visibility follows the edited scene instead.
-	_sync_toolbar_visibility()
+	# Intentionally selection-independent. Godot calls this whenever another
+	# object becomes active; hiding scene tools here makes direct viewport
+	# authoring impossible. _process() owns scene-level visibility instead.
+	pass
 
 
 func _process(_delta: float) -> void:
@@ -98,10 +99,7 @@ func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	var root := _authoring_root()
 	if root == null or not _toolbar_expanded or not _show_handles:
 		return
-	if _mode_text() == "Road":
-		_draw_all_roads(overlay, root)
-		_draw_new_road_start(overlay)
-	if _mode_text() == "Ground":
+	if _mode_text() == "Paint":
 		_draw_ground_hover(overlay)
 	if _mode_text() == "Level":
 		_draw_all_boundaries(overlay, root)
@@ -121,20 +119,8 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 	if root == null or not _toolbar_expanded:
 		return false
 
-	if _mode_text() == "Ground":
+	if _mode_text() == "Paint":
 		return _handle_ground_input(event, root)
-
-	if _mode_text() == "Road" and _creating_road and event is InputEventMouseButton:
-		var create_button := event as InputEventMouseButton
-		if create_button.button_index == MOUSE_BUTTON_LEFT and create_button.pressed:
-			_complete_new_road(create_button.position, root)
-			return true
-		if create_button.button_index == MOUSE_BUTTON_RIGHT and create_button.pressed:
-			_creating_road = false
-			_road_creation_start = Vector2(INF, INF)
-			_status.text = "Road creation cancelled"
-			update_overlays()
-			return true
 
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
@@ -143,55 +129,42 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 		if button.pressed:
 			_pointer_double_click = button.double_click
 			return _begin_pointer_action(button.position, root)
+		var had_drag := not _drag_kind.is_empty()
 		_finish_pointer_action()
-		return _drag_kind != ""
+		return had_drag
 
 	if event is InputEventMouseMotion and not _drag_kind.is_empty():
 		_update_pointer_drag(event as InputEventMouseMotion)
 		return true
-
-	if event is InputEventMouseMotion and _mode_text() == "Road":
-		var motion := event as InputEventMouseMotion
-		var hover_hit := _road_hit(motion.position, root)
-		var next_hover: Line2D = null
-		if not hover_hit.is_empty():
-			next_hover = hover_hit.get("road") as Line2D
-		if next_hover != _hovered_road:
-			_hovered_road = next_hover
-			update_overlays()
-		return false
 
 	return false
 
 
 func _build_toolbar() -> void:
 	_toolbar = HBoxContainer.new()
-	_toolbar.name = "CentralCityEditorToolbar"
+	_toolbar.name = "WorldAuthoringToolbar"
 
 	_toolbar_toggle = Button.new()
-	_toolbar_toggle.text = "Central City ▾"
-	_toolbar_toggle.toggle_mode = true
-	_toolbar_toggle.button_pressed = true
-	_toolbar_toggle.tooltip_text = "Keep Central City authoring tools open. Click to collapse/restore them explicitly."
-	_toolbar_toggle.toggled.connect(_on_toolbar_toggled)
+	_toolbar_toggle.text = "Hide Tools"
+	_toolbar_toggle.tooltip_text = "Explicitly hide/show the world-authoring controls. Selection changes never affect this state."
+	_toolbar_toggle.pressed.connect(_on_toolbar_toggle_pressed)
 	_toolbar.add_child(_toolbar_toggle)
 
 	_mode = OptionButton.new()
-	_mode.tooltip_text = "Editing tool. Roads are constrained/snapped automatically."
-	for item in ["Select", "Road", "Ground", "Surface", "Transition", "Level", "Building", "Prop", "Landscape"]:
+	_mode.tooltip_text = "Select objects directly or paint world tiles."
+	for item in ["Select", "Paint", "Transition", "Level"]:
 		_mode.add_item(item)
 	_mode.item_selected.connect(func(_index: int) -> void:
-		_hovered_road = null
 		_status.text = _mode_text()
 		update_overlays()
 	)
 	_toolbar.add_child(_mode)
 
-	var new_road_button := Button.new()
-	new_road_button.text = "+ Road"
-	new_road_button.tooltip_text = "Create a new snapped road with two clicks."
-	new_road_button.pressed.connect(_start_new_road)
-	_toolbar.add_child(new_road_button)
+	var road_button := Button.new()
+	road_button.text = "Road Brush"
+	road_button.tooltip_text = "Paint simple road tiles. No graph, no linked endpoints."
+	road_button.pressed.connect(_activate_road_brush)
+	_toolbar.add_child(road_button)
 
 	var snap_label := Label.new()
 	snap_label.text = "Snap"
@@ -203,11 +176,21 @@ func _build_toolbar() -> void:
 	_snap.select(1)
 	_toolbar.add_child(_snap)
 
+	var brush_label := Label.new()
+	brush_label.text = "Brush"
+	_toolbar.add_child(brush_label)
+	_brush = OptionButton.new()
+	for size in [1, 3, 5]:
+		_brush.add_item("%dx%d" % [size, size])
+		_brush.set_item_metadata(_brush.item_count - 1, size)
+	_brush.select(0)
+	_toolbar.add_child(_brush)
+
 	_surface = OptionButton.new()
-	for item in ["main", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water", "void"]:
+	for item in ["main", "road", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water", "void"]:
 		_surface.add_item(item)
 	_surface.select(0)
-	_surface.tooltip_text = "Surface used by Ground paint or applied to the selected road/region."
+	_surface.tooltip_text = "Paint material. Road is the normal street brush; RMB erases painted cells."
 	_surface.item_selected.connect(_on_surface_selected)
 	_toolbar.add_child(_surface)
 
@@ -239,13 +222,17 @@ func _build_toolbar() -> void:
 
 	_status = Label.new()
 	_status.text = "Select"
-	_status.custom_minimum_size = Vector2(170.0, 0.0)
+	_status.custom_minimum_size = Vector2(210.0, 0.0)
 	_toolbar.add_child(_status)
 
 
 func _authoring_root() -> Node2D:
 	var root := get_editor_interface().get_edited_scene_root()
-	if root is Node2D and root.get_script() == AUTHORING_ROOT:
+	if not root is Node2D:
+		return null
+	if root.has_method("get_world_authoring_context"):
+		return root as Node2D
+	if root.get_script() == AUTHORING_ROOT:
 		return root as Node2D
 	return null
 
@@ -276,18 +263,19 @@ func _on_overlay_toggled(enabled: bool) -> void:
 
 
 func _on_surface_selected(_index: int) -> void:
+	var next_surface := _surface.get_item_text(_surface.selected)
+	if _mode_text() == "Paint":
+		_status.text = "Paint %s · LMB paint · RMB erase" % next_surface
+		update_overlays()
+		return
 	var selected := _selected_node()
 	if selected == null or not _has_property(selected, "surface"):
-		return
-	var next_surface := _surface.get_item_text(_surface.selected)
-	if selected.get_script() == ROAD_SCRIPT and next_surface == "void":
-		_status.text = "Void is only valid for Ground"
 		return
 	var previous := String(selected.get("surface"))
 	if previous == next_surface:
 		return
 	var undo := get_undo_redo()
-	undo.create_action("Change Central City surface")
+	undo.create_action("Change authored surface")
 	undo.add_do_property(selected, "surface", next_surface)
 	undo.add_undo_property(selected, "surface", previous)
 	undo.commit_action()
@@ -359,22 +347,20 @@ func _unique_authoring_id(base_id: String, parent: Node) -> String:
 	return candidate
 
 
-func _on_toolbar_toggled(expanded: bool) -> void:
-	_toolbar_expanded = expanded
+func _on_toolbar_toggle_pressed() -> void:
+	_toolbar_expanded = not _toolbar_expanded
 	_apply_toolbar_expanded_state()
-	if not expanded:
+	if not _toolbar_expanded:
 		_finish_pointer_action()
 		_paint_stroke_active = false
-		_creating_road = false
-		_hovered_road = null
-	_status.text = _mode_text() if expanded else "Paused"
+	_status.text = _mode_text() if _toolbar_expanded else "Tools hidden"
 	update_overlays()
 
 
 func _apply_toolbar_expanded_state() -> void:
 	if _toolbar == null or _toolbar_toggle == null:
 		return
-	_toolbar_toggle.text = "Central City ▾" if _toolbar_expanded else "Central City ▸"
+	_toolbar_toggle.text = "Hide Tools" if _toolbar_expanded else "Show World Tools"
 	for child in _toolbar.get_children():
 		if child == _toolbar_toggle:
 			continue
@@ -390,6 +376,30 @@ func _sync_toolbar_visibility() -> void:
 		_toolbar.visible = should_show
 	if should_show:
 		_apply_toolbar_expanded_state()
+
+
+func _activate_road_brush() -> void:
+	for index in range(_mode.item_count):
+		if _mode.get_item_text(index) == "Paint":
+			_mode.select(index)
+			break
+	for index in range(_surface.item_count):
+		if _surface.get_item_text(index) == "road":
+			_surface.select(index)
+			break
+	if _brush != null:
+		for index in range(_brush.item_count):
+			if int(_brush.get_item_metadata(index)) == 3:
+				_brush.select(index)
+				break
+	_status.text = "Road brush 3x3 · LMB paint · RMB erase"
+	update_overlays()
+
+
+func _brush_size() -> int:
+	if _brush == null:
+		return 1
+	return maxi(1, int(_brush.get_item_metadata(_brush.selected)))
 
 
 func _mode_text() -> String:
