@@ -136,7 +136,8 @@ static func _stair_at_grid_ref(grid: Vector2) -> Dictionary:
 	var value = config().get("stairs", [])
 	if not value is Array:
 		return {}
-	for raw in value as Array:
+	var stair_list := value as Array
+	for raw in stair_list:
 		if not raw is Dictionary:
 			continue
 		var stair := raw as Dictionary
