@@ -253,6 +253,10 @@ func get_area_scene() -> WorldAreaScene:
 	return _area_scene
 
 
+func get_area_id() -> String:
+	return AREA_ID
+
+
 func get_interior_manager() -> WorldInteriorManager:
 	return _interior_manager
 
