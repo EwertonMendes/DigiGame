@@ -20,6 +20,7 @@ var _mode: OptionButton
 var _snap: OptionButton
 var _brush: OptionButton
 var _surface: OptionButton
+var _picker_button: Button
 var _overlay_toggle: Button
 var _status: Label
 var _active_root: Node = null
@@ -37,6 +38,10 @@ var _paint_erase := false
 var _paint_old_cells: Dictionary = {}
 var _paint_last_cell := Vector2i(999999, 999999)
 var _ground_hover_cell := Vector2i(999999, 999999)
+var _picker_active := false
+var _stamp_template: Node = null
+var _stamp_parent_name := ""
+var _stamp_label := ""
 var _decor_config_cache: Dictionary = {}
 
 
@@ -49,6 +54,7 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
+	_clear_stamp_template()
 	if _toolbar != null:
 		remove_control_from_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _toolbar)
 		_toolbar.queue_free()
@@ -80,6 +86,17 @@ func _process(_delta: float) -> void:
 		update_overlays()
 	_sync_toolbar_visibility()
 
+	# A release can happen over another editor panel, which means the canvas
+	# does not receive the MouseButton-up event. Finalize the stroke here so
+	# every paint operation becomes one complete Undo/Redo transaction.
+	if (
+		root != null
+		and _paint_stroke_active
+		and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		and not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	):
+		_finish_active_paint_stroke(root)
+
 
 func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	var root := _authoring_root()
@@ -102,6 +119,18 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 	var root := _authoring_root()
 	if root == null or not _toolbar_expanded:
 		return false
+
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.pressed and key.keycode == KEY_ESCAPE and (_picker_active or _stamp_template != null):
+			_cancel_picker_and_stamp()
+			return true
+
+	if _picker_active:
+		return _handle_picker_input(event, root)
+
+	if _stamp_template != null:
+		return _handle_stamp_input(event, root)
 
 	if _mode_text() == "Paint":
 		return _handle_ground_input(event, root)
@@ -138,6 +167,11 @@ func _build_toolbar() -> void:
 	for item in ["Select", "Paint", "Transition", "Level"]:
 		_mode.add_item(item)
 	_mode.item_selected.connect(func(_index: int) -> void:
+		var root := _authoring_root()
+		if root != null:
+			_finish_active_paint_stroke(root)
+		if _picker_active or _stamp_template != null:
+			_cancel_picker_and_stamp()
 		_status.text = _mode_text()
 		update_overlays()
 	)
@@ -148,6 +182,13 @@ func _build_toolbar() -> void:
 	road_button.tooltip_text = "Paint simple road tiles. No graph, no linked endpoints."
 	road_button.pressed.connect(_activate_road_brush)
 	_toolbar.add_child(road_button)
+
+	_picker_button = Button.new()
+	_picker_button.text = "Pick"
+	_picker_button.toggle_mode = true
+	_picker_button.tooltip_text = "Eyedropper: click a painted tile or authored element. Tiles switch the brush material; props/regions become a repeatable stamp."
+	_picker_button.toggled.connect(_on_picker_toggled)
+	_toolbar.add_child(_picker_button)
 
 	var snap_label := Label.new()
 	snap_label.text = "Snap"
@@ -296,8 +337,11 @@ func _on_surface_selected(_index: int) -> void:
 	var previous := String(selected.get("surface"))
 	if previous == next_surface:
 		return
+	var root := _authoring_root()
+	if root == null:
+		return
 	var undo := get_undo_redo()
-	undo.create_action("Change authored surface")
+	undo.create_action("Change authored surface", UndoRedo.MERGE_DISABLE, root)
 	undo.add_do_property(selected, "surface", next_surface)
 	undo.add_undo_property(selected, "surface", previous)
 	undo.commit_action()
@@ -319,8 +363,10 @@ func _duplicate_selected() -> void:
 		duplicate.set("transition_id", _unique_authoring_id(String(selected.get("transition_id")), selected.get_parent()))
 	if _has_property(duplicate, "landscape_id"):
 		duplicate.set("landscape_id", _unique_authoring_id(String(selected.get("landscape_id")), selected.get_parent()))
+	if _has_property(duplicate, "region_id"):
+		duplicate.set("region_id", _unique_authoring_id(String(selected.get("region_id")), selected.get_parent()))
 	var undo := get_undo_redo()
-	undo.create_action("Duplicate Central City object")
+	undo.create_action("Duplicate Central City object", UndoRedo.MERGE_DISABLE, root)
 	undo.add_do_method(parent, "add_child", duplicate)
 	undo.add_do_method(duplicate, "set_owner", root)
 	undo.add_do_reference(duplicate)
@@ -338,7 +384,7 @@ func _delete_selected() -> void:
 	var parent := selected.get_parent()
 	get_editor_interface().get_selection().clear()
 	var undo := get_undo_redo()
-	undo.create_action("Delete Central City object")
+	undo.create_action("Delete Central City object", UndoRedo.MERGE_DISABLE, root)
 	undo.add_do_method(parent, "remove_child", selected)
 	undo.add_undo_method(parent, "add_child", selected)
 	undo.add_undo_method(selected, "set_owner", root)
@@ -354,7 +400,7 @@ func _unique_authoring_id(base_id: String, parent: Node) -> String:
 	while true:
 		var used := false
 		for child in parent.get_children():
-			for property_name in ["transition_id", "landscape_id"]:
+			for property_name in ["transition_id", "landscape_id", "region_id"]:
 				if _has_property(child, property_name) and String(child.get(property_name)) == candidate:
 					used = true
 					break
@@ -368,11 +414,14 @@ func _unique_authoring_id(base_id: String, parent: Node) -> String:
 
 
 func _on_toolbar_toggle_pressed() -> void:
+	var root := _authoring_root()
+	if root != null:
+		_finish_active_paint_stroke(root)
 	_toolbar_expanded = not _toolbar_expanded
 	_apply_toolbar_expanded_state()
 	if not _toolbar_expanded:
 		_finish_pointer_action()
-		_paint_stroke_active = false
+		_cancel_picker_and_stamp()
 	_status.text = _mode_text() if _toolbar_expanded else "Tools hidden"
 	update_overlays()
 
@@ -642,8 +691,11 @@ func _commit_boundary_undo() -> void:
 	var final_threshold := float(boundary.get("lower_threshold_grid_y"))
 	boundary.points = old_points
 	boundary.set("lower_threshold_grid_y", old_threshold)
+	var root := _authoring_root()
+	if root == null:
+		return
 	var undo := get_undo_redo()
-	undo.create_action("Edit Central City level boundary")
+	undo.create_action("Edit Central City level boundary", UndoRedo.MERGE_DISABLE, root)
 	undo.add_do_property(boundary, "points", final_points)
 	undo.add_undo_property(boundary, "points", old_points)
 	undo.add_do_property(boundary, "lower_threshold_grid_y", final_threshold)
@@ -771,8 +823,11 @@ func _commit_marker_undo() -> void:
 	var old_position := _drag_original[0].get("position") as Vector2
 	var final_position := marker.position
 	marker.position = old_position
+	var root := _authoring_root()
+	if root == null:
+		return
 	var undo := get_undo_redo()
-	undo.create_action("Move Central City object")
+	undo.create_action("Move Central City object", UndoRedo.MERGE_DISABLE, root)
 	undo.add_do_property(marker, "position", final_position)
 	undo.add_undo_property(marker, "position", old_position)
 	undo.commit_action()
@@ -814,8 +869,11 @@ func _commit_polygon_undo() -> void:
 	var final_polygon := polygon.polygon.duplicate()
 	polygon.position = old_position
 	polygon.polygon = old_polygon
+	var root := _authoring_root()
+	if root == null:
+		return
 	var undo := get_undo_redo()
-	undo.create_action("Edit Central City region")
+	undo.create_action("Edit Central City region", UndoRedo.MERGE_DISABLE, root)
 	undo.add_do_property(polygon, "position", final_position)
 	undo.add_undo_property(polygon, "position", old_position)
 	undo.add_do_property(polygon, "polygon", final_polygon)
@@ -1026,6 +1084,268 @@ func _resize_transition_rect(polygon: Polygon2D, point_index: int, candidate_gri
 	polygon.polygon = rebuilt
 
 
+func _on_picker_toggled(enabled: bool) -> void:
+	var root := _authoring_root()
+	if root != null:
+		_finish_active_paint_stroke(root)
+	if not enabled:
+		_cancel_picker_and_stamp()
+		return
+	_clear_stamp_template()
+	_picker_active = true
+	_picker_button.text = "Pick…"
+	_status.text = "Eyedropper · click any tile or authored element · RMB/Esc cancel"
+
+
+func _cancel_picker_and_stamp() -> void:
+	_picker_active = false
+	_clear_stamp_template()
+	if _picker_button != null:
+		_picker_button.set_pressed_no_signal(false)
+		_picker_button.text = "Pick"
+	if _status != null and _toolbar_expanded:
+		_status.text = _mode_text()
+	update_overlays()
+
+
+func _clear_stamp_template() -> void:
+	if _stamp_template != null and is_instance_valid(_stamp_template):
+		_stamp_template.free()
+	_stamp_template = null
+	_stamp_parent_name = ""
+	_stamp_label = ""
+
+
+func _handle_picker_input(event: InputEvent, root: Node) -> bool:
+	if not event is InputEventMouseButton:
+		return false
+	var button := event as InputEventMouseButton
+	if button.button_index == MOUSE_BUTTON_RIGHT:
+		if button.pressed:
+			_cancel_picker_and_stamp()
+		return true
+	if button.button_index != MOUSE_BUTTON_LEFT:
+		return false
+	if not button.pressed:
+		return true
+
+	var hit := _object_hit(button.position, root, _selectable_containers(root))
+	if hit != null:
+		_pick_authored_object(hit, root)
+	else:
+		_pick_surface(button.position, root)
+	return true
+
+
+func _pick_surface(screen: Vector2, root: Node) -> void:
+	var surface := _sample_surface_at_screen(screen, root)
+	_select_surface(surface)
+	_select_mode("Paint")
+	_picker_active = false
+	if _picker_button != null:
+		_picker_button.set_pressed_no_signal(false)
+		_picker_button.text = "Pick"
+	_status.text = "Picked %s · LMB paint · RMB erase" % surface
+	update_overlays()
+
+
+func _pick_authored_object(node: Node, root: Node) -> void:
+	_select_node(node)
+	var parent := node.get_parent()
+	if parent == null:
+		_cancel_picker_and_stamp()
+		return
+
+	if parent.name == "Buildings":
+		# Service buildings have stable identities used by gameplay. Sampling a
+		# Hospital/DigiLab therefore selects the real unique authored building
+		# instead of creating a broken duplicate with the same gameplay id.
+		_picker_active = false
+		if _picker_button != null:
+			_picker_button.set_pressed_no_signal(false)
+			_picker_button.text = "Pick"
+		_status.text = "Picked unique building %s · drag it to reposition" % node.name
+		return
+
+	_clear_stamp_template()
+	_stamp_template = node.duplicate()
+	_stamp_parent_name = String(parent.name)
+	_stamp_label = String(node.name)
+	_picker_active = false
+	if _picker_button != null:
+		_picker_button.set_pressed_no_signal(true)
+		_picker_button.text = "Stamp: %s" % _stamp_label
+	if _has_property(node, "surface"):
+		_select_surface(String(node.get("surface")))
+	_status.text = "Picked %s · LMB stamp repeatedly · RMB/Esc cancel" % _stamp_label
+	update_overlays()
+
+
+func _handle_stamp_input(event: InputEvent, root: Node) -> bool:
+	if not event is InputEventMouseButton:
+		return false
+	var button := event as InputEventMouseButton
+	if button.button_index == MOUSE_BUTTON_RIGHT:
+		if button.pressed:
+			_cancel_picker_and_stamp()
+		return true
+	if button.button_index != MOUSE_BUTTON_LEFT:
+		return false
+	if button.pressed:
+		_place_stamp(button.position, root)
+	return true
+
+
+func _place_stamp(screen: Vector2, root: Node) -> void:
+	if _stamp_template == null or not is_instance_valid(_stamp_template):
+		_cancel_picker_and_stamp()
+		return
+	var parent := root.get_node_or_null(_stamp_parent_name)
+	if parent == null:
+		_status.text = "Stamp target container is missing"
+		return
+
+	var placed := _stamp_template.duplicate()
+	placed.name = _unique_node_name(String(_stamp_template.name), parent)
+
+	for property_name in ["transition_id", "landscape_id", "region_id"]:
+		if _has_property(placed, property_name):
+			placed.set(
+				property_name,
+				_unique_property_id(
+					property_name,
+					String(placed.get(property_name)),
+					parent
+				)
+			)
+
+	if placed is Node2D:
+		var node_2d := placed as Node2D
+		var visual_local := _screen_to_authoring_local(screen)
+		var target_grid := MATH.snap_grid(
+			MATH.visual_world_to_grid(visual_local),
+			maxf(0.25, _snap_step())
+		)
+		var target_world := MATH.grid_to_world(target_grid)
+		if placed is Polygon2D:
+			var polygon := placed as Polygon2D
+			var center := polygon.position + _polygon_centroid(polygon.polygon)
+			polygon.position += target_world - center
+		else:
+			node_2d.position = target_world
+
+	var undo := get_undo_redo()
+	undo.create_action("Stamp %s" % _stamp_label, UndoRedo.MERGE_DISABLE, root)
+	undo.add_do_method(parent, "add_child", placed)
+	undo.add_do_method(placed, "set_owner", root)
+	undo.add_do_reference(placed)
+	undo.add_undo_method(parent, "remove_child", placed)
+	undo.commit_action()
+	_select_node(placed)
+	_status.text = "Stamped %s · click again to place another · Ctrl+Z undo" % _stamp_label
+
+
+func _unique_node_name(base_name: String, parent: Node) -> String:
+	var stem := "%s_Copy" % (base_name if not base_name.is_empty() else "Item")
+	var candidate := stem
+	var suffix := 2
+	while parent.has_node(NodePath(candidate)):
+		candidate = "%s_%d" % [stem, suffix]
+		suffix += 1
+	return candidate
+
+
+func _unique_property_id(property_name: String, base_id: String, parent: Node) -> String:
+	var stem := "%s_copy" % (base_id if not base_id.is_empty() else property_name)
+	var candidate := stem
+	var suffix := 2
+	while true:
+		var used := false
+		for child in parent.get_children():
+			if _has_property(child, property_name) and String(child.get(property_name)) == candidate:
+				used = true
+				break
+		if not used:
+			return candidate
+		candidate = "%s_%d" % [stem, suffix]
+		suffix += 1
+	return candidate
+
+
+func _polygon_centroid(points: PackedVector2Array) -> Vector2:
+	if points.is_empty():
+		return Vector2.ZERO
+	var center := Vector2.ZERO
+	for point: Vector2 in points:
+		center += point
+	return center / float(points.size())
+
+
+func _sample_surface_at_screen(screen: Vector2, root: Node) -> String:
+	var grid := MATH.visual_world_to_grid(_screen_to_authoring_local(screen))
+	var cell := Vector2i(roundi(grid.x), roundi(grid.y))
+	var paint := _paint_node(root)
+	if paint != null:
+		var cells_value = paint.get("cells")
+		if cells_value is Dictionary:
+			var key := MATH.cell_key(cell)
+			if (cells_value as Dictionary).has(key):
+				return String((cells_value as Dictionary)[key])
+
+	var logical_world := MATH.grid_to_world(Vector2(cell))
+	var root_world := root.to_global(logical_world)
+
+	# GroundOverrides are evaluated by priority at runtime, so sample them the
+	# same way in the editor.
+	var overrides := root.get_node_or_null("GroundOverrides")
+	var best_priority := -2147483648
+	var best_surface := ""
+	if overrides != null:
+		for child in overrides.get_children():
+			if not child is Polygon2D:
+				continue
+			var polygon := child as Polygon2D
+			var local_point := polygon.to_local(root_world)
+			if not Geometry2D.is_point_in_polygon(local_point, polygon.polygon):
+				continue
+			var priority := int(child.get("priority")) if _has_property(child, "priority") else 0
+			if priority >= best_priority:
+				best_priority = priority
+				best_surface = String(child.get("surface")) if _has_property(child, "surface") else "main"
+	if not best_surface.is_empty():
+		return best_surface
+
+	var surfaces := root.get_node_or_null("Surfaces")
+	if surfaces != null:
+		for index in range(surfaces.get_child_count() - 1, -1, -1):
+			var child := surfaces.get_child(index)
+			if not child is Polygon2D:
+				continue
+			var polygon := child as Polygon2D
+			var local_point := polygon.to_local(root_world)
+			if Geometry2D.is_point_in_polygon(local_point, polygon.polygon):
+				return String(child.get("surface")) if _has_property(child, "surface") else "main"
+	return "main"
+
+
+func _select_surface(surface: String) -> void:
+	if _surface == null:
+		return
+	for index in range(_surface.item_count):
+		if _surface.get_item_text(index) == surface:
+			_surface.select(index)
+			return
+
+
+func _select_mode(mode_name: String) -> void:
+	if _mode == null:
+		return
+	for index in range(_mode.item_count):
+		if _mode.get_item_text(index) == mode_name:
+			_mode.select(index)
+			return
+
+
 func _handle_ground_input(event: InputEvent, root: Node) -> bool:
 	var paint := _paint_node(root)
 	if paint == null:
@@ -1108,6 +1428,16 @@ func _paint_at(screen: Vector2, paint: Node) -> void:
 	]
 
 
+func _finish_active_paint_stroke(root: Node) -> void:
+	if not _paint_stroke_active:
+		return
+	var paint := _paint_node(root)
+	if paint != null:
+		_finish_ground_stroke(paint)
+	else:
+		_paint_stroke_active = false
+
+
 func _finish_ground_stroke(paint: Node) -> void:
 	if not _paint_stroke_active:
 		return
@@ -1115,13 +1445,20 @@ func _finish_ground_stroke(paint: Node) -> void:
 	var final_cells := (paint.get("cells") as Dictionary).duplicate(true)
 	if final_cells == _paint_old_cells:
 		return
+	var root := _authoring_root()
+	if root == null:
+		return
+
+	# Restore the before-state before committing. EditorUndoRedoManager then
+	# applies the do-state into the edited scene's own history, so Godot's
+	# native Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y shortcuts work as expected.
 	paint.set("cells", _paint_old_cells.duplicate(true))
 	var undo := get_undo_redo()
-	undo.create_action("Paint world tiles")
+	undo.create_action("Paint world tiles", UndoRedo.MERGE_DISABLE, root)
 	undo.add_do_property(paint, "cells", final_cells)
 	undo.add_undo_property(paint, "cells", _paint_old_cells.duplicate(true))
 	undo.commit_action()
-	_status.text = "Tiles painted"
+	_status.text = "Tiles painted · Ctrl+Z undo · Ctrl+Shift+Z/Ctrl+Y redo"
 
 
 
