@@ -1236,7 +1236,7 @@ func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: S
 
 	var label := Label.new()
 	label.text = title
-	label.position = Vector2(-78.0, -84.0)
+	label.position = Vector2(-78.0, -84.0 - actor.get_world_elevation())
 	label.size = Vector2(156.0, 24.0)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 10)
