@@ -416,7 +416,7 @@ func _build_natural_details() -> void:
 
 	var used_cells := {}
 	for index in range(preferred_cells.size()):
-		var cell := _find_safe_landscape_cell(preferred_cells[index], used_cells)
+		var cell := _find_safe_landscape_cell(preferred_cells[index], used_cells, false)
 		if cell == LANDSCAPE_INVALID_CELL:
 			continue
 		used_cells[cell] = true
@@ -449,7 +449,8 @@ func _build_natural_details() -> void:
 
 func _find_safe_landscape_cell(
 	preferred: Vector2i,
-	used_cells: Dictionary
+	used_cells: Dictionary,
+	allow_fallback: bool = true
 ) -> Vector2i:
 	var offsets: Array[Vector2i] = [
 		Vector2i.ZERO,
@@ -466,6 +467,8 @@ func _find_safe_landscape_cell(
 		Vector2i(0, 2),
 		Vector2i(0, -2),
 	]
+	if not allow_fallback:
+		offsets = [Vector2i.ZERO]
 	for offset: Vector2i in offsets:
 		var candidate := preferred + offset
 		if (
