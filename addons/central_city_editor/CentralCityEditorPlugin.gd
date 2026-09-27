@@ -278,6 +278,12 @@ func _duplicate_selected() -> void:
 	var parent := selected.get_parent()
 	var duplicate := selected.duplicate()
 	duplicate.name = "%s_Copy" % selected.name
+	if _has_property(duplicate, "road_id"):
+		duplicate.set("road_id", _unique_authoring_id(String(selected.get("road_id")), selected.get_parent()))
+	if _has_property(duplicate, "transition_id"):
+		duplicate.set("transition_id", _unique_authoring_id(String(selected.get("transition_id")), selected.get_parent()))
+	if _has_property(duplicate, "landscape_id"):
+		duplicate.set("landscape_id", _unique_authoring_id(String(selected.get("landscape_id")), selected.get_parent()))
 	var undo := get_undo_redo()
 	undo.create_action("Duplicate Central City object")
 	undo.add_do_method(parent, "add_child", duplicate)
@@ -295,6 +301,7 @@ func _delete_selected() -> void:
 	if root == null or selected == null or selected == root or selected.get_parent() == null:
 		return
 	var parent := selected.get_parent()
+	get_editor_interface().get_selection().clear()
 	var undo := get_undo_redo()
 	undo.create_action("Delete Central City object")
 	undo.add_do_method(parent, "remove_child", selected)
@@ -303,6 +310,25 @@ func _delete_selected() -> void:
 	undo.add_undo_reference(selected)
 	undo.commit_action()
 	_status.text = "Deleted"
+
+
+func _unique_authoring_id(base_id: String, parent: Node) -> String:
+	var stem := "%s_copy" % (base_id if not base_id.is_empty() else "item")
+	var candidate := stem
+	var suffix := 2
+	while true:
+		var used := false
+		for child in parent.get_children():
+			for property_name in ["road_id", "transition_id", "landscape_id"]:
+				if _has_property(child, property_name) and String(child.get(property_name)) == candidate:
+					used = true
+					break
+			if used:
+				break
+		if not used:
+			return candidate
+		candidate = "%s_%d" % [stem, suffix]
+		suffix += 1
 
 
 func _mode_text() -> String:
