@@ -3,7 +3,7 @@ extends Polygon2D
 class_name CentralCityGroundRegionAuthoring
 
 @export var region_id := ""
-@export var surface := "main"
+@export_enum("main", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water") var surface := "main"
 @export var render := true
 @export var walkable := true
 @export var base_color := Color.WHITE
