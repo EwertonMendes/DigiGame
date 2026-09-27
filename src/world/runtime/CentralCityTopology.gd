@@ -7,6 +7,8 @@ const TILE_HEIGHT := 32.0
 const TILE_HALF_WIDTH := TILE_WIDTH * 0.5
 const TILE_HALF_HEIGHT := TILE_HEIGHT * 0.5
 const INVALID_LEVEL := ""
+const STAIR_ENTRY_MARGIN_GRID := 0.20
+const SEGMENT_EPSILON := 0.001
 
 static var _config_cache: Dictionary = {}
 
@@ -177,6 +179,44 @@ static func is_void_at_grid(grid: Vector2) -> bool:
 	return not void_at_grid(grid).is_empty() and bridge_at_grid(grid).is_empty()
 
 
+static func can_traverse_grid_segment(from_grid: Vector2, to_grid: Vector2) -> bool:
+	if from_grid.distance_squared_to(to_grid) <= SEGMENT_EPSILON * SEGMENT_EPSILON:
+		return true
+
+	var from_stair := stair_at_grid(from_grid)
+	var to_stair := stair_at_grid(to_grid)
+	if not from_stair.is_empty() or not to_stair.is_empty():
+		if not from_stair.is_empty() and not to_stair.is_empty():
+			if String(from_stair.get("id", "")) != String(to_stair.get("id", "")):
+				return false
+		elif from_stair.is_empty():
+			if not _crosses_stair_landing(from_grid, to_grid, to_stair):
+				return false
+		else:
+			if not _crosses_stair_landing(to_grid, from_grid, from_stair):
+				return false
+
+	var break_data := level_break()
+	var threshold := float(break_data.get("lower_threshold_y", 19.5))
+	if not _segment_crosses_y(from_grid, to_grid, threshold):
+		return true
+
+	var crossing_x := _segment_x_at_y(from_grid, to_grid, threshold)
+	var x_min := float(break_data.get("x_min", -INF))
+	var x_max := float(break_data.get("x_max", INF))
+	if crossing_x < minf(x_min, x_max) or crossing_x > maxf(x_min, x_max):
+		return true
+
+	var stair := stair_at_grid(Vector2(crossing_x, threshold))
+	if stair.is_empty():
+		return false
+	return _stair_x_is_inside_walkway(crossing_x, stair)
+
+
+static func can_traverse_world_segment(from_world: Vector2, to_world: Vector2) -> bool:
+	return can_traverse_grid_segment(world_to_grid(from_world), world_to_grid(to_world))
+
+
 static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 	var point := Vector2(global_grid)
 	var stair := stair_at_grid(point)
@@ -312,6 +352,53 @@ static func road_graph_is_connected() -> bool:
 			visited[neighbor] = true
 			queue.append(neighbor)
 	return visited.size() == adjacency.size()
+
+
+static func _crosses_stair_landing(
+	outside: Vector2,
+	inside: Vector2,
+	stair: Dictionary
+) -> bool:
+	var y_start := minf(
+		float(stair.get("y_start", 0.0)),
+		float(stair.get("y_end", 0.0))
+	)
+	var y_end := maxf(
+		float(stair.get("y_start", 0.0)),
+		float(stair.get("y_end", 0.0))
+	)
+
+	if outside.y < y_start - SEGMENT_EPSILON and inside.y >= y_start - SEGMENT_EPSILON:
+		var crossing_x := _segment_x_at_y(outside, inside, y_start)
+		return _stair_x_is_inside_walkway(crossing_x, stair)
+	if outside.y > y_end + SEGMENT_EPSILON and inside.y <= y_end + SEGMENT_EPSILON:
+		var crossing_x := _segment_x_at_y(outside, inside, y_end)
+		return _stair_x_is_inside_walkway(crossing_x, stair)
+	return false
+
+
+static func _stair_x_is_inside_walkway(x: float, stair: Dictionary) -> bool:
+	var x_min := minf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+	var x_max := maxf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+	var margin := minf(STAIR_ENTRY_MARGIN_GRID, maxf(0.0, (x_max - x_min) * 0.15))
+	return x >= x_min + margin and x <= x_max - margin
+
+
+static func _segment_crosses_y(a: Vector2, b: Vector2, y: float) -> bool:
+	if absf(a.y - b.y) <= SEGMENT_EPSILON:
+		return false
+	return (
+		(a.y < y - SEGMENT_EPSILON and b.y >= y - SEGMENT_EPSILON)
+		or (b.y < y - SEGMENT_EPSILON and a.y >= y - SEGMENT_EPSILON)
+	)
+
+
+static func _segment_x_at_y(a: Vector2, b: Vector2, y: float) -> float:
+	var delta_y := b.y - a.y
+	if absf(delta_y) <= SEGMENT_EPSILON:
+		return (a.x + b.x) * 0.5
+	var t := clampf((y - a.y) / delta_y, 0.0, 1.0)
+	return lerpf(a.x, b.x, t)
 
 
 static func _point_in_rect(
