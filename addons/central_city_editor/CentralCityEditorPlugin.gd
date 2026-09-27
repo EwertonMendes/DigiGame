@@ -22,6 +22,7 @@ var _surface: OptionButton
 var _overlay_toggle: Button
 var _status: Label
 var _active_root: Node = null
+var _show_handles := true
 
 var _drag_kind := ""
 var _drag_node: Node = null
@@ -81,8 +82,10 @@ func _process(_delta: float) -> void:
 
 func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	var root := _authoring_root()
-	if root == null:
+	if root == null or not _show_handles:
 		return
+	if _mode_text() == "Road":
+		_draw_all_roads(overlay, root)
 	var selected := _selected_node()
 	if selected != null and selected.get_script() == ROAD_SCRIPT:
 		_draw_selected_road(overlay, selected as Line2D)
@@ -192,14 +195,17 @@ func _sync_overlay_toggle() -> void:
 	var root := _authoring_root()
 	if root == null or _overlay_toggle == null:
 		return
-	_overlay_toggle.set_pressed_no_signal(bool(root.get("show_edit_overlays")))
+	# Raw authoring nodes stay hidden: the plugin draws only precise handles on
+	# top of the real WYSIWYG runtime preview.
+	root.set("show_edit_overlays", false)
+	_overlay_toggle.set_pressed_no_signal(_show_handles)
 
 
 func _on_overlay_toggled(enabled: bool) -> void:
+	_show_handles = enabled
 	var root := _authoring_root()
-	if root == null:
-		return
-	root.set("show_edit_overlays", enabled)
+	if root != null:
+		root.set("show_edit_overlays", false)
 	update_overlays()
 
 
@@ -324,6 +330,19 @@ func _road_screen_points(road: Line2D) -> PackedVector2Array:
 		var visual := road.to_global(point) + Vector2(0.0, -elevation)
 		result.append(_visual_world_to_screen(visual))
 	return result
+
+
+func _draw_all_roads(overlay: Control, root: Node) -> void:
+	var roads := root.get_node_or_null("Roads")
+	if roads == null:
+		return
+	var selected := _selected_node()
+	for child in roads.get_children():
+		if not child is Line2D or child.get_script() != ROAD_SCRIPT or child == selected:
+			continue
+		var points := _road_screen_points(child as Line2D)
+		if points.size() >= 2:
+			overlay.draw_polyline(points, Color(1.0, 0.62, 0.10, 0.42), 2.0, true)
 
 
 func _draw_selected_road(overlay: Control, road: Line2D) -> void:
