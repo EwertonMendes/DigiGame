@@ -1,99 +1,112 @@
 # Central City visual authoring
 
-Central City is authored visually in Godot through:
+The editable source of truth for Central City is:
 
 `res://scenes/world/central_city_authoring.tscn`
 
-This scene is the source of truth for map layout and now uses a **WYSIWYG runtime preview**. The editor preview is built by the same Central City runtime builders used by the game: the same ground batching, micro-paver shader, roads, civic surfaces, 2.5D elevation, terrace structures, buildings, landscaping and street furniture. Authoring handles are a separate overlay and are hidden by default.
+The 2D viewport is WYSIWYG: the visible city is rebuilt by the same runtime builders used by gameplay (ground batching, micro-paver shader, road meshes, civic surfaces, 2.5D elevation, retaining walls, stairs, bridges, buildings, props, landscaping, lighting and world backdrop). Editor controls are drawn separately on top and are never exported as gameplay nodes.
 
-The preview is editor-only. It is never persisted into the scene and is removed from the game runtime, so editor convenience does not turn Central City into thousands of live runtime nodes.
+## Central City toolbar
 
-## Authoring tree
+Opening the authoring scene enables the **Central City** toolbar in the 2D editor.
 
-- **Sections** — the 5×5 logical districts and their themes/titles.
-- **Levels** — named 2.5D presentation levels and their visual elevation.
-- **Boundaries** — editable level-break lines.
-- **Roads** — editable `Line2D` road paths. Drag their points in the 2D editor.
-- **Surfaces** — editable `Polygon2D` plaza/forecourt/court regions.
-- **GroundOverrides** — editable `Polygon2D` regions for painted base-floor surfaces such as the civic pool and North Canal.
-- **Transitions** — editable `Polygon2D` stair, bridge and void footprints.
-- **Buildings** — editor markers for DigiLab, Training Center, Hospital, Data Market and Digital Archive. The three large service buildings show their real sprites in the editor.
-- **Landscapes** — editor markers for the existing tree/canteiro composition.
-- **Props** — editor markers for lamps and benches; their real sprites are previewed in the editor.
+- **Select** — direct selection/movement of authored objects.
+- **Road** — direct road editing.
+- **+ Road** — click a start and end point to create a snapped road.
+- **Ground** — paint base-floor material with the mouse; right-click erases paint.
+- **Surface** — select/move/resize plaza, court and forecourt polygons.
+- **Transition** — select/move/resize stair, bridge and void footprints.
+- **Level** — edit the terrace/level boundary.
+- **Building / Prop / Landscape** — click the corresponding world content and drag it.
+- **Snap** — 1, 1/2 or 1/4 logical tile. Hold **Alt** while dragging to temporarily bypass snap.
+- **Surface palette** — applies to Ground paint and, when appropriate, the selected road/region.
+- **Handles** — shows/hides the clean editing handles without replacing the runtime art.
+- **Validate** — checks structural authoring errors, including road graph connectivity.
+- **Duplicate / Delete** — scene-safe object actions with editor undo history.
+- **Bake** — writes `assets/resources/world/central_city_baked.tres` from the current scene.
 
-The authoring subtree is removed when the game runs. Runtime systems parse it once and generate the same optimized terrain, roads, collision, lighting and 2.5D structures used before this migration.
+Normal Godot **Ctrl+Z / Ctrl+Shift+Z** works for plugin road, ground, object and region operations.
 
-## Editor preview controls
+## Roads
 
-Select the **CentralCityAuthoring** root node in the Scene tree.
+Do not edit the raw `Line2D` handles from Godot's generic line tool. The raw Line2D is intentionally hidden because it exists on the logical collision plane while Upper Civic renders 48 px higher.
 
-- **Show Runtime Preview** should normally stay enabled. This is the real game-built city presentation.
-- **Show Edit Overlays** is disabled by default. Enable it only while selecting/moving authoring geometry.
-- **Auto Refresh Preview** rebuilds the runtime preview after you stop dragging/editing for a short moment.
-- **Preview Hour** uses the same `WorldLightingSystem` as gameplay. Leave it at 12:00 for the normal daytime layout check, or set values such as 18:00/21:00 to inspect sunset/night lighting and lamp coverage without running the game.
+Choose **Road** in the Central City toolbar. Roads appear as thin orange controls exactly on top of the rendered roads.
 
-The edit overlay never tries to imitate the final road/building/tree art. It only shows thin handles over the real runtime preview, so visual defects can be judged against the same presentation the game uses.
+- Drag a yellow endpoint to lengthen/shorten the road.
+- The endpoint is constrained to the original isometric axis automatically.
+- **Shift** while dragging allows a free-angle point when deliberately needed.
+- Connected endpoints move together, so an intersection does not open a seam.
+- The renderer also accepts temporary off-axis connected segments, so a road can no longer disappear merely because a junction is being edited.
+- Drag the road body to move the complete segment.
+- Drag the cyan width handle to resize the road visually.
+- Change the toolbar **Surface** (or Inspector Surface) to change road paving.
+- **+ Road** creates a new snapped, axis-correct road with two clicks.
 
-## Editing a road
+The plugin works in logical grid coordinates but presents all handles at the real rendered elevation, so pulling a handle outward always means visually extending the same end of the road.
 
-1. Open `central_city_authoring.tscn`.
-2. Select **CentralCityAuthoring** and enable **Show Edit Overlays**.
-3. Expand **Roads**.
-4. Select a road node.
-5. In the 2D viewport, use the normal Godot `Line2D` point handles to move its endpoints. The authoring line is intentionally thin; the real road remains visible below it.
-6. In the Inspector:
-   - **Width Grid** changes road width.
-   - **Surface** changes its paved surface.
-   - **Tint** adjusts the selected surface without changing the base city floor.
-   - **Level Id** chooses the presentation level.
-7. Wait a fraction of a second after the edit. The runtime preview rebuilds from the unsaved editor state, so you can inspect the real result before running the game.
-8. Save the scene and run the project when satisfied.
+## Ground paint
 
-Connected road endpoints should continue to meet at the same point. The headless regression checks graph connectivity, so accidentally separating a required connection will fail CI instead of silently shipping a broken route.
+Choose **Ground**, select a material in the Surface palette, and left-drag over the city. Painting is stored in the `GroundPaint` authoring node and overrides the normal base floor for those logical cells.
 
-## Changing road material without moving it
+Right-drag erases authored paint. `void` removes rendered ground and walking for that painted cell. Ground paint is baked back into the same runtime ground batching system; it does not add one runtime Sprite/Node per painted cell.
 
-To test a visibly different road floor, select a road and change **Surface** from `dark` to `stone_soft` in the Inspector. The editor line preview updates immediately; after running the game the runtime baker uses that surface in the same batched micro-paver renderer.
+## Surfaces
 
-## Editing paved regions
+Choose **Surface**, then click a plaza/forecourt/court region. The selected region gets green outline + corner handles.
 
-Select a child of **Surfaces** or **GroundOverrides**. Godot exposes normal `Polygon2D` vertex handles in the 2D editor. Move vertices or change the **Surface** dropdown in the Inspector.
+- Drag inside it to move the complete region.
+- Drag a corner to edit the polygon.
+- Change the Surface palette to change material.
+- Snap is applied in logical isometric grid space.
 
-`GroundOverrides` affect the base field. `Surfaces` are authored overlays such as service forecourts and district courts.
+## Stairs, bridges and voids
 
-## Moving a building
+Choose **Transition** and click the relevant structure. Transition regions use rectangular authoring bounds because the runtime structure is generated from those bounds.
 
-Select the corresponding Marker2D under **Buildings** and drag it. Service buildings use their marker as their logical door/pad anchor. Collision, foundation, light and interior threshold are rebuilt around that anchor at runtime.
+- Drag the body to move the structure.
+- Drag a corner to resize it.
+- Rectangular integrity is preserved automatically.
+- The runtime preview immediately rebuilds the real stair/bridge/void from the changed footprint.
 
-The building may cross a section boundary; runtime ownership is resolved from the marker position rather than from the old JSON district assumption.
+This means the user edits one architectural entity instead of independently repairing wall cuts, walkability and visual geometry.
 
-## Moving props and trees
+## Level boundary
 
-Drag a marker under **Props** or **Landscapes**. Props can cross section boundaries. Landscape markers are snapped to the logical gameplay cell when the runtime city is built, then validated against roads, buildings, stairs, bridges and voids.
+Choose **Level**. The boundary appears in purple.
 
-## Editing stairs, bridges and future-water voids
+- Drag an endpoint to extend/retract the retaining boundary.
+- Drag the line body to move the boundary and its lower-level threshold together.
+- Snap keeps it aligned to the city grid.
 
-The children under **Transitions** are standard `Polygon2D` nodes:
+Level elevation itself remains an explicit property under **Levels** (for example Upper Civic = 48 px), while the boundary tool controls where the level changes.
 
-- `kind = stairs` — polygon bounds define stair width and travel span.
-- `kind = bridge` — polygon bounds define the bridge deck footprint.
-- `kind = void` — polygon bounds remove the base ground and block normal walking.
+## Buildings, props and landscaping
 
-The runtime still derives the final batched architectural presentation from these authored footprints.
+Choose the matching toolbar mode and click/drag.
 
-## Compatibility data
+Building anchors drive the actual runtime service: foundation, collision, entrance/door threshold, shadow and lighting follow the authored anchor. Props and landscape markers are likewise re-resolved through the normal runtime placement/topology rules.
 
-The legacy JSON files remain in the repository as compatibility/reference data for older tooling. Central City runtime layout prefers the Godot authoring scene. Do not manually edit the JSON to change map layout.
+Use **Duplicate** for another authored object and **Delete** to remove the selected authored node.
 
-Asset catalogs such as lamp/bench texture metadata may remain data-driven because they describe reusable asset properties rather than map placement.
+## Runtime preview and lighting
 
-## Performance contract
+The `CentralCityAuthoring` root still exposes:
 
-The authoring scene is editor-only presentation data:
+- **Show Runtime Preview** — normally on.
+- **Auto Refresh Preview** — normally on.
+- **Preview Hour** — uses the real gameplay lighting system; 12 for day, around 18 for sunset, 21 for night.
 
-1. runtime loads/parses it once;
-2. the existing batched `ArrayMesh` ground/road renderer is generated;
-3. the authoring subtree is removed from the live scene tree;
-4. mobile lighting/performance budgets remain unchanged.
+The plugin keeps the old raw authoring overlay disabled. Only purpose-built handles are drawn over the exact runtime preview.
 
-This preserves the optimized runtime while allowing normal Godot scene editing.
+## Bake/runtime contract
+
+The editable scene remains the level-design source. A bake produces `central_city_baked.tres` containing the normalized snapshot used by the runtime systems. Runtime can use a valid baked snapshot directly; when no bake exists it falls back to parsing the authoring scene once.
+
+The live game still uses the optimized batched ArrayMesh ground/road presentation. Editor gizmos, plugin controls and authoring nodes are not retained as gameplay content.
+
+The Core Headless regression checks that a committed bake, when present, matches the authoring scene, and that roads remain renderable while editor junctions are temporarily off-axis.
+
+## Legacy JSON
+
+The old Central City layout/topology JSON files remain compatibility/reference data for old tooling. They are no longer the intended hand-editing workflow. Map composition should be changed in the Godot authoring scene.
