@@ -10,6 +10,10 @@ const LAYOUT_Z := -1170
 static var _config_cache: Dictionary = {}
 
 
+static func clear_cache() -> void:
+	_config_cache.clear()
+
+
 static func build() -> Dictionary:
 	var root := Node2D.new()
 	root.name = "CityUrbanLayout"
