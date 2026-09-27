@@ -234,10 +234,10 @@ func _build_toolbar() -> void:
 	_toolbar.add_child(_status)
 
 
-func _authoring_root() -> Node:
+func _authoring_root() -> Node2D:
 	var root := get_editor_interface().get_edited_scene_root()
-	if root != null and root.get_script() == AUTHORING_ROOT:
-		return root
+	if root is Node2D and root.get_script() == AUTHORING_ROOT:
+		return root as Node2D
 	return null
 
 
