@@ -137,8 +137,8 @@ func _ready() -> void:
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(
-		area.get_ground_tile_count() == 4160,
-		"Central City ground batch must omit the elevated terrace break, stair transition cells, and both future-water void pockets"
+		area.get_ground_tile_count() == 4134,
+		"Central City ground batch must omit the full-width terrace break, stair transition cells, and both future-water void pockets"
 	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
@@ -229,6 +229,29 @@ func _ready() -> void:
 		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 19)))
 		and area.is_walkable_world_position(_grid_to_world(Vector2(-5, 19))),
 		"The upper civic deck must stop at a real retaining boundary with only the two authored stair openings"
+	)
+	assert(
+		not area.is_walkable_world_position(_grid_to_world(Vector2(-24, 19)))
+		and not area.is_walkable_world_position(_grid_to_world(Vector2(38, 19))),
+		"The retaining boundary must span the complete playable width instead of leaving flank shortcuts between levels"
+	)
+	assert(
+		not area.can_traverse_world_segment(
+			_grid_to_world(Vector2(-20.0, 19.35)),
+			_grid_to_world(Vector2(-20.0, 19.65))
+		)
+		and area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 19.35)),
+			_grid_to_world(Vector2(7.0, 19.65))
+		),
+		"Cross-level movement must be rejected outside a staircase and accepted through an authored stair corridor"
+	)
+	assert(
+		not area.can_traverse_world_segment(
+			_grid_to_world(Vector2(4.75, 20.0)),
+			_grid_to_world(Vector2(5.15, 20.0))
+		),
+		"A staircase must reject lateral entry through its side wall instead of allowing a mid-flight level shortcut"
 	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(-10, 23)))
