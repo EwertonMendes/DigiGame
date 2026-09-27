@@ -30,6 +30,7 @@ Select the **CentralCityAuthoring** root node in the Scene tree.
 - **Show Runtime Preview** should normally stay enabled. This is the real game-built city presentation.
 - **Show Edit Overlays** is disabled by default. Enable it only while selecting/moving authoring geometry.
 - **Auto Refresh Preview** rebuilds the runtime preview after you stop dragging/editing for a short moment.
+- **Preview Hour** uses the same `WorldLightingSystem` as gameplay. Leave it at 12:00 for the normal daytime layout check, or set values such as 18:00/21:00 to inspect sunset/night lighting and lamp coverage without running the game.
 
 The edit overlay never tries to imitate the final road/building/tree art. It only shows thin handles over the real runtime preview, so visual defects can be judged against the same presentation the game uses.
 
