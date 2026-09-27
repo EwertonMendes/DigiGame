@@ -5,6 +5,7 @@ const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
 const CITY_DECOR = preload("res://src/world/runtime/CentralCityDecor.gd")
 const CITY_TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
+const CITY_AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
@@ -341,46 +342,24 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 	target.append_array(_ground_tiles)
 
 
-func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
+func _ground_presentation(cell: Vector2i, _theme: String) -> Dictionary:
 	var global_grid := _global_grid(cell)
 	if not _is_global_city_land(global_grid):
 		return {"render": false, "walkable": false}
 
-	var delta := global_grid - CITY_CENTER_GLOBAL
-	var ax := absi(delta.x)
-	var ay := absi(delta.y)
-	var city_ring := maxi(ax, ay)
-
-	# The base city field is deliberately brighter than the authored route
-	# network. Darker roads now read immediately against this neutral sidewalk
-	# field while preserving the same fine micro-paver language everywhere.
-	if ax <= 1 and ay <= 1:
-		return {"surface": CITY.SURFACE_WATER, "walkable": false}
-	if city_ring == 2:
-		return {
-			"surface": CITY.SURFACE_STONE_SOFT,
-			"base_color": CITY_CIVIC_LIGHT,
-			"walkable": true,
-		}
-
+	# Topology has first authority because stairs, the terrace break and future
+	# water voids can intentionally remove the base floor entirely.
 	var topology_rule := CITY_TOPOLOGY.ground_rule_for_cell(global_grid)
 	if not topology_rule.is_empty():
 		return topology_rule
 
-	if theme == "canal":
-		if cell.y >= 5 and cell.y <= 8 and cell.x >= 2 and cell.x <= 11:
-			# The two center columns are the authored pedestrian bridge.
-			if cell.x in [6, 7]:
-				return {
-					"surface": CITY.SURFACE_MAIN,
-					"base_color": CITY_PAVEMENT_LIGHT,
-					"walkable": true,
-				}
-			return {"surface": CITY.SURFACE_WATER, "walkable": false}
+	# Surface painting now comes from editable Polygon2D regions in
+	# central_city_authoring.tscn. The default remains the approved light
+	# micro-paver field, so an empty area needs no authoring node at all.
+	var authored := CITY_AUTHORING.ground_override_at(Vector2(global_grid))
+	if not authored.is_empty():
+		return authored
 
-	# The continuous exterior field is the brighter sidewalk/plaza plane. The
-	# dedicated CentralCityUrbanLayout layer supplies the darker circulation
-	# routes above it without revealing gameplay-sized route tiles.
 	return {
 		"surface": CITY.SURFACE_MAIN,
 		"base_color": CITY_PAVEMENT_LIGHT,
@@ -416,22 +395,10 @@ func _build_natural_details() -> void:
 	var props := Node2D.new()
 	props.name = "NaturalDetails"
 	add_child(props)
-	var theme := String(definition.get("theme", "residential"))
 	var preferred_cells: Array[Vector2i] = []
-	match theme:
-		"garden":
-			if posmod(section_coord.x + section_coord.y, 2) == 0:
-				preferred_cells = [Vector2i(3, 3), Vector2i(10, 10), Vector2i(3, 10)]
-			else:
-				preferred_cells = [Vector2i(10, 3), Vector2i(3, 10), Vector2i(10, 10)]
-		"plaza":
-			preferred_cells = [Vector2i(2, 11), Vector2i(11, 2)]
-		"canal":
-			preferred_cells = [Vector2i(2, 10), Vector2i(11, 3)]
-		"residential":
-			preferred_cells = [Vector2i(2, 11)]
-		_:
-			preferred_cells = []
+	var authored_landscapes := CITY_AUTHORING.landscape_cells(section_coord)
+	for authored_cell: Vector2 in authored_landscapes:
+		preferred_cells.append(Vector2i(roundi(authored_cell.x), roundi(authored_cell.y)))
 
 	var used_cells := {}
 	for index in range(preferred_cells.size()):
@@ -507,31 +474,43 @@ func _find_safe_landscape_cell(
 
 func _build_theme_content() -> void:
 	var theme := String(definition.get("theme", "residential"))
-	match theme:
-		"plaza":
-			var civic_frame := CITY_URBAN.create_civic_pool_frame(grid_to_world(Vector2(7, 7)))
-			var civic_elevation := _elevation_for_local_grid(Vector2(7, 7))
-			civic_frame.position = Vector2(0.0, -civic_elevation)
-			civic_frame.set_meta("world_elevation_px", civic_elevation)
-			add_child(civic_frame)
-			_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
-		"digilab":
-			_build_digilab_exterior()
-		"hospital":
-			_build_hospital_exterior()
-		"training":
-			_build_training_center_exterior()
-		"market":
-			_build_service_pad(
-				Color(0.42, 1.0, 0.52),
-				"DATA MARKET",
-				"shop",
-				CITY.SURFACE_MARKET,
-				Vector2i(7, 12),
-				Vector2i(8, 12)
-			)
-		"archive":
-			_build_service_pad(Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive", CITY.SURFACE_TECH_PURPLE)
+	if theme == "plaza":
+		var civic_frame := CITY_URBAN.create_civic_pool_frame(grid_to_world(Vector2(7, 7)))
+		var civic_elevation := _elevation_for_local_grid(Vector2(7, 7))
+		civic_frame.position = Vector2(0.0, -civic_elevation)
+		civic_frame.set_meta("world_elevation_px", civic_elevation)
+		add_child(civic_frame)
+		_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
+
+	# Service placement is no longer implied by the section theme. Building
+	# anchors are real editor Marker2D nodes, so dragging one to another section
+	# moves the runtime service with it without editing code or JSON.
+	if _building_anchor_is_in_section("digilab"):
+		_build_digilab_exterior()
+	if _building_anchor_is_in_section("training"):
+		_build_training_center_exterior()
+	if _building_anchor_is_in_section("hospital"):
+		_build_hospital_exterior()
+	if _building_anchor_is_in_section("market"):
+		var market_cell := _authored_local_cell("market", Vector2i(7, 12))
+		_build_service_pad(
+			Color(0.42, 1.0, 0.52),
+			"DATA MARKET",
+			"shop",
+			CITY.SURFACE_MARKET,
+			market_cell,
+			market_cell + Vector2i(1, 0)
+		)
+	if _building_anchor_is_in_section("archive"):
+		var archive_cell := _authored_local_cell("archive", Vector2i(7, 7))
+		_build_service_pad(
+			Color(0.72, 0.52, 1.0),
+			"DIGITAL ARCHIVE",
+			"archive",
+			CITY.SURFACE_TECH_PURPLE,
+			archive_cell,
+			archive_cell + Vector2i(1, 0)
+		)
 
 
 func get_decoration_count() -> int:
@@ -560,6 +539,28 @@ func _build_city_decorations() -> void:
 		add_child(root as Node2D)
 	elif root is Node:
 		(root as Node).free()
+
+
+func _authored_global_grid(building_id: String, fallback_local: Vector2i) -> Vector2:
+	var fallback_global := Vector2(section_coord * SECTION_SIZE + fallback_local)
+	return CITY_AUTHORING.building_anchor_grid(building_id, fallback_global)
+
+
+func _authored_local_cell(building_id: String, fallback_local: Vector2i) -> Vector2i:
+	var global_grid := _authored_global_grid(building_id, fallback_local)
+	var local_grid := global_grid - Vector2(section_coord * SECTION_SIZE)
+	return Vector2i(roundi(local_grid.x), roundi(local_grid.y))
+
+
+func _building_anchor_is_in_section(building_id: String) -> bool:
+	var global_grid := CITY_AUTHORING.building_anchor_grid(building_id, Vector2(INF, INF))
+	if not is_finite(global_grid.x) or not is_finite(global_grid.y):
+		return false
+	var coord := Vector2i(
+		floori((global_grid.x + 0.5) / float(SECTION_SIZE)),
+		floori((global_grid.y + 0.5) / float(SECTION_SIZE))
+	)
+	return coord == section_coord
 
 
 func _elevation_for_local_grid(local_grid: Vector2) -> float:
@@ -629,17 +630,19 @@ func _register_city_decoration_blocker(polygon: PackedVector2Array, asset_id: St
 
 
 func _build_digilab_exterior() -> void:
-	if not _is_city_land(DIGILAB_DOOR_CELL):
+	var door_cell := _authored_local_cell("digilab", DIGILAB_DOOR_CELL)
+	var return_cell := door_cell + (DIGILAB_RETURN_CELL - DIGILAB_DOOR_CELL)
+	if not _is_city_land(door_cell):
 		return
 
 	var exterior := Node2D.new()
 	exterior.name = "DigiLabExterior"
 	add_child(exterior)
 
-	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
+	var door_world := grid_to_world(Vector2(door_cell))
 	var footprint := _digilab_footprint(door_world)
 	var foundation_footprint := _digilab_foundation_footprint(door_world)
-	var visual_root := _create_elevated_visual_root(exterior, Vector2(DIGILAB_DOOR_CELL))
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(door_cell))
 	_configure_shadow_caster(visual_root, footprint, 205.0, 0.19)
 	_add_local_light_source(
 		visual_root,
@@ -714,23 +717,25 @@ func _build_digilab_exterior() -> void:
 		"digilab",
 		"DIGILAB",
 		Color(0.28, 0.88, 1.0),
-		DIGILAB_DOOR_CELL,
-		DIGILAB_RETURN_CELL,
+		door_cell,
+		return_cell,
 		14.0
 	)
 	exterior.add_child(entrance)
 func _build_training_center_exterior() -> void:
-	if not _is_city_land(TRAINING_CENTER_DOOR_CELL):
+	var door_cell := _authored_local_cell("training", TRAINING_CENTER_DOOR_CELL)
+	var return_cell := door_cell + (TRAINING_CENTER_RETURN_CELL - TRAINING_CENTER_DOOR_CELL)
+	if not _is_city_land(door_cell):
 		return
 
 	var exterior := Node2D.new()
 	exterior.name = "TrainingCenterExterior"
 	add_child(exterior)
 
-	var door_world := grid_to_world(Vector2(TRAINING_CENTER_DOOR_CELL))
+	var door_world := grid_to_world(Vector2(door_cell))
 	var footprint := _training_center_footprint(door_world)
 	var foundation_footprint := _training_center_foundation_footprint(door_world)
-	var visual_root := _create_elevated_visual_root(exterior, Vector2(TRAINING_CENTER_DOOR_CELL))
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(door_cell))
 	_configure_shadow_caster(visual_root, footprint, 180.0, 0.18)
 	_add_local_light_source(
 		visual_root,
@@ -793,23 +798,25 @@ func _build_training_center_exterior() -> void:
 		"training",
 		"TRAINING CENTER",
 		Color(0.27, 0.84, 1.0),
-		TRAINING_CENTER_DOOR_CELL,
-		TRAINING_CENTER_RETURN_CELL,
+		door_cell,
+		return_cell,
 		18.0
 	)
 	exterior.add_child(entrance)
 func _build_hospital_exterior() -> void:
-	if not _is_city_land(HOSPITAL_DOOR_CELL):
+	var door_cell := _authored_local_cell("hospital", HOSPITAL_DOOR_CELL)
+	var return_cell := door_cell + (HOSPITAL_RETURN_CELL - HOSPITAL_DOOR_CELL)
+	if not _is_city_land(door_cell):
 		return
 
 	var exterior := Node2D.new()
 	exterior.name = "HospitalExterior"
 	add_child(exterior)
 
-	var door_world := grid_to_world(Vector2(HOSPITAL_DOOR_CELL))
+	var door_world := grid_to_world(Vector2(door_cell))
 	var footprint := _hospital_footprint(door_world)
 	var foundation_footprint := _hospital_foundation_footprint(door_world)
-	var visual_root := _create_elevated_visual_root(exterior, Vector2(HOSPITAL_DOOR_CELL))
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(door_cell))
 	_configure_shadow_caster(visual_root, footprint, 195.0, 0.19)
 	_add_local_light_source(
 		visual_root,
@@ -867,8 +874,8 @@ func _build_hospital_exterior() -> void:
 		"hospital",
 		"DIGI HOSPITAL",
 		Color(0.28, 0.92, 0.96),
-		HOSPITAL_DOOR_CELL,
-		HOSPITAL_RETURN_CELL,
+		door_cell,
+		return_cell,
 		18.0
 	)
 	exterior.add_child(entrance)
