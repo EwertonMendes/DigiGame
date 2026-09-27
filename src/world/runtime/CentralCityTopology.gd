@@ -264,6 +264,20 @@ static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 
 static func is_route_reserved(grid: Vector2, extra_margin: float = 0.0) -> bool:
 	var network := road_network()
+	if String(network.get("mode", "")) == "painted_tiles":
+		var cells_value = network.get("cells", [])
+		if not cells_value is Array:
+			return false
+		var radius := 0.75 + maxf(0.0, extra_margin)
+		for raw_key in cells_value as Array:
+			var parts := String(raw_key).split(",", false)
+			if parts.size() != 2:
+				continue
+			var road_cell := Vector2(float(parts[0]), float(parts[1]))
+			if grid.distance_to(road_cell) <= radius:
+				return true
+		return false
+
 	var nodes_value = network.get("nodes", [])
 	var edges_value = network.get("edges", [])
 	if not nodes_value is Array or not edges_value is Array:
@@ -334,6 +348,10 @@ static func can_place_landscape(grid: Vector2, radius_grid: float = 1.20) -> boo
 
 static func road_graph_is_connected() -> bool:
 	var network := road_network()
+	if String(network.get("mode", "")) == "painted_tiles":
+		var cells_value = network.get("cells", [])
+		return cells_value is Array and not (cells_value as Array).is_empty()
+
 	var nodes_value = network.get("nodes", [])
 	var edges_value = network.get("edges", [])
 	if not nodes_value is Array or not edges_value is Array or nodes_value.is_empty():
