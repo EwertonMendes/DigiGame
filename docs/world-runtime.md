@@ -64,6 +64,17 @@ Central City's procedural paver shader now authors **albedo only** and intention
 
 `WorldPerformanceMonitor` reports registered shadow casters, total local lights and currently active local lights alongside the existing FPS/draw-call counters so lighting cost remains visible during Web and device testing.
 
+
+### Full-map debug capture
+
+Development builds expose a **MAP CAPTURE** tab in the F2 Developer Toolkit. It renders the complete loaded exterior at a deterministic world-space resolution instead of taking a screenshot of the current window. `WorldAreaScene.get_debug_capture_bounds()` derives the capture envelope from every authored section and adds explicit visual headroom for tall architecture, tree canopies and long projected shadows.
+
+`DebugWorldMapCapture` shares the active `World2D` with a dedicated `SubViewport` and capture-only `Camera2D`. The service moves that camera over fixed **1024×768** render tiles, reads each completed tile after RenderingServer has drawn it, and stitches the CPU-side images into one final PNG. The GPU therefore never receives a map-sized viewport or texture, and 1×/2× output is independent of the player's window resolution. A pixel-budget guard rejects pathological captures before allocating the final image.
+
+**WORLD SNAPSHOT** preserves the current player, followers, NPCs, labels, lighting and debug-selected time-of-day. **CLEAN MAP** temporarily hides nodes registered as capture transients, unlit navigation annotations and ambient foliage particles, then restores every node's previous visibility after the capture. Actor shadow proxies participate in the same transient contract so clean exports cannot leave detached shadows behind. During either mode, `WorldLightingSystem` temporarily disables its player-distance culling so distant authored shadows and local lights render consistently across the whole stitched map; normal culling is restored immediately afterwards.
+
+Desktop/APK builds save under `user://captures` with timestamped area/mode/scale filenames. Web builds encode the same PNG in memory and hand it to `JavaScriptBridge.download_buffer()`, producing a normal browser download without filesystem-specific workarounds. The capture service pauses world simulation for the operation and restores the exact previous pause/visibility/lighting state when it finishes.
+
 Tree canopy sway is shader-driven. Leaf particles are only emitted in the player's nearby section neighborhood, managed by one area-level cadence rather than per-tree GDScript processing.
 
 World interaction candidates use a registry updated by SceneTree add/remove events and player movement instead of scanning the `world_interactable` group every frame.
