@@ -163,6 +163,33 @@ func _ready() -> void:
 		is_equal_approx(float(paver_material.get_shader_parameter("pavers_per_cell")), 4.0),
 		"One 64x32 gameplay cell must visually contain four paving subdivisions per ground axis"
 	)
+	var urban_layout := area.get_node_or_null("CityUrbanLayout") as Node2D
+	assert(
+		urban_layout != null
+		and area.get_urban_layout_layer_count() == 5
+		and area.get_urban_layout_polygon_count() >= 40,
+		"Central City must compose the authored civic network above the unchanged micro-paver base"
+	)
+	assert(
+		area.get_urban_layout_render_node_count() <= 10,
+		"Urban paths, plazas and district courts must stay batched into a small fixed render-node budget"
+	)
+	for required_urban_node: String in [
+		"Edges_civic_primary",
+		"Surface_civic_primary",
+		"Surface_central_plaza",
+		"Surface_service_forecourts",
+		"Surface_secondary_walks",
+		"Surface_district_courts",
+	]:
+		var urban_surface := urban_layout.get_node_or_null(required_urban_node) as MeshInstance2D
+		assert(
+			urban_surface != null
+			and urban_surface.texture == null
+			and urban_surface.material is ShaderMaterial
+			and (urban_surface.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
+			"Urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
+		)
 	var edge_blocks := area.get_node_or_null("CityGround/EdgeBlocks")
 	assert(
 		edge_blocks != null and edge_blocks.get_child_count() > 0,
