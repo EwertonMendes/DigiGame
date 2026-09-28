@@ -3,6 +3,7 @@ class_name WorldInterior
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const DIGILAB_ART = preload("res://src/world/runtime/DigiLabInteriorArt.gd")
+const WORLD_DEPTH = preload("res://src/world/runtime/WorldDepth.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
@@ -12,6 +13,39 @@ const TILE_HALF_HEIGHT := 16.0
 const ROOM_SIZE := Vector2i(18, 14)
 const SPAWN_CELL := Vector2i(9, 11)
 const EXIT_CELL := Vector2i(9, 12)
+
+# The visible back/side shell occupies the complete first authored grid strip.
+# Treat the inner edge of that strip as the true collision plane. The 10 px
+# actor footprint below is applied after this boundary, so player and followers
+# stop before their feet/sprite can climb onto wall tops or corner pillars.
+# The front/bottom edge stays authored by individual blocked cells so the exit
+# opening remains reachable.
+const GENERIC_TALL_WALL_INNER_EDGE_GRID := 1.0
+const DIGILAB_TALL_WALL_INNER_EDGE_GRID := 0.5
+# DigiLab's back connector pillars are wider than the straight vector wall
+# edges. They need a local diagonal blocker rather than pushing the whole wall
+# plane farther into the room. The threshold is measured from the corner anchor
+# in canonical grid space; actor-foot samples add the character radius on top.
+const DIGILAB_BACK_PILLAR_INNER_SUM_GRID := 1.35
+
+# Interior navigation is evaluated at the actor's feet, not only at its origin.
+# The player capsule uses a 10 px radius; matching that radius here gives every
+# interior wall/counter/corner the same deterministic footprint contract and
+# prevents the actor from visually climbing onto a wall top or squeezing
+# through a connector pillar.
+const ACTOR_NAV_RADIUS := 10.0
+const ACTOR_NAV_DIAGONAL := ACTOR_NAV_RADIUS * 0.70710678
+const ACTOR_NAV_SAMPLES: Array[Vector2] = [
+	Vector2.ZERO,
+	Vector2(ACTOR_NAV_RADIUS, 0.0),
+	Vector2(-ACTOR_NAV_RADIUS, 0.0),
+	Vector2(0.0, ACTOR_NAV_RADIUS),
+	Vector2(0.0, -ACTOR_NAV_RADIUS),
+	Vector2(ACTOR_NAV_DIAGONAL, ACTOR_NAV_DIAGONAL),
+	Vector2(ACTOR_NAV_DIAGONAL, -ACTOR_NAV_DIAGONAL),
+	Vector2(-ACTOR_NAV_DIAGONAL, ACTOR_NAV_DIAGONAL),
+	Vector2(-ACTOR_NAV_DIAGONAL, -ACTOR_NAV_DIAGONAL),
+]
 
 var definition: Dictionary = {}
 
@@ -38,11 +72,63 @@ func get_spawn_world_position() -> Vector2:
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
-	var local_grid := world_to_grid(to_local(world_position))
+	var local_position := to_local(world_position)
+	for sample: Vector2 in ACTOR_NAV_SAMPLES:
+		if not _is_walkable_local_point(local_position + sample):
+			return false
+	return true
+
+
+func _is_walkable_local_point(local_position: Vector2) -> bool:
+	var local_grid := world_to_grid(local_position)
+
+	# Generic service rooms use full two-level city blocks for their shell, so
+	# their visible top face reaches one full grid unit into the room. DigiLab is
+	# different: its authored vector wall is anchored on the grid edge itself.
+	# Sharing the generic 1.0 inset with DigiLab creates a visibly empty gap.
+	# Resolve the contact plane from the actual renderer contract instead.
+	var inner_edge := _tall_wall_inner_edge_grid()
+	var max_tall_wall_x := float(ROOM_SIZE.x - 1) - inner_edge
+	if (
+		local_grid.x < inner_edge
+		or local_grid.x > max_tall_wall_x
+		or local_grid.y < inner_edge
+	):
+		return false
+
+	# DigiLab connector pillars occupy more floor area than the straight SVG wall
+	# edges. Model only those two back corners with a diagonal footprint. This
+	# keeps the straight walls touchable while preventing the actor from slipping
+	# behind the pillar at the upper diagonal.
+	if _service_id == "digilab" and _is_inside_digilab_back_pillar(local_grid):
+		return false
+
+	# The lower/front edge is intentionally different: it contains an authored
+	# doorway. Keep only the room envelope here and let the actual front-wall
+	# cells decide what is solid.
+	if local_grid.y > float(ROOM_SIZE.y) - 0.5:
+		return false
+
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
-	if cell.x < 1 or cell.y < 1 or cell.x >= ROOM_SIZE.x - 1 or cell.y >= ROOM_SIZE.y - 1:
+	if cell.x < 0 or cell.y < 0 or cell.x >= ROOM_SIZE.x or cell.y >= ROOM_SIZE.y:
 		return false
 	return not _blocked_cells.has(_cell_key(cell))
+
+
+func _tall_wall_inner_edge_grid() -> float:
+	if _service_id == "digilab":
+		return DIGILAB_TALL_WALL_INNER_EDGE_GRID
+	return GENERIC_TALL_WALL_INNER_EDGE_GRID
+
+
+func _is_inside_digilab_back_pillar(local_grid: Vector2) -> bool:
+	var left_corner_inward := local_grid.x + local_grid.y
+	if left_corner_inward < DIGILAB_BACK_PILLAR_INNER_SUM_GRID:
+		return true
+
+	var right_inward_x := float(ROOM_SIZE.x - 1) - local_grid.x
+	var right_corner_inward := right_inward_x + local_grid.y
+	return right_corner_inward < DIGILAB_BACK_PILLAR_INNER_SUM_GRID
 
 
 func grid_to_world(grid: Vector2) -> Vector2:
@@ -62,6 +148,9 @@ func world_to_grid(world: Vector2) -> Vector2:
 func _build() -> void:
 	_physics_root = StaticBody2D.new()
 	_physics_root.name = "InteriorCollision"
+	_physics_root.collision_layer = 0
+	_physics_root.collision_mask = 0
+	_physics_root.set_meta("collision_backend", "authored-navigation-footprint")
 	add_child(_physics_root)
 	_build_floor()
 	_build_walls()
@@ -175,19 +264,21 @@ func _build_walls() -> void:
 		wall_cells.append(Vector2i(ROOM_SIZE.x - 1, y))
 
 	for cell in wall_cells:
+		var wall_anchor := grid_to_world(Vector2(cell))
 		for level in range(2):
 			var surface := CITY.SURFACE_DARK
 			if level == 1 and (cell.x + cell.y) % 4 == 0:
 				surface = _accent_surface()
 			var block := CITY.create_full_block(
 				surface,
-				grid_to_world(Vector2(cell)),
-				820 + int(round(grid_to_world(Vector2(cell)).y)),
+				wall_anchor,
+				_depth_for_local_ground(wall_anchor),
 				level
 			)
+			block.set_meta("depth_contract", "world-ground-y")
+			block.set_meta("depth_ground_anchor", wall_anchor)
 			walls.add_child(block)
 		_mark_blocked(cell)
-		_add_circle_collision(cell, 22.0)
 
 	for x in range(0, 5):
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
@@ -199,15 +290,15 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	var authored := Node2D.new()
 	authored.name = "AuthoredWalls"
 	authored.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
-	authored.set_meta("layout_contract", "grid-native-vector-batched")
+	authored.set_meta("layout_contract", "grid-native-depth-sorted")
 	walls.add_child(authored)
 
 	var last_x := float(ROOM_SIZE.x - 1)
 	var front_y := float(ROOM_SIZE.y - 1)
 
-	# Repeated straight modules are submitted in three GPU batches. They still
-	# occupy one exact grid edge each, but no longer add dozens of Sprite2D
-	# nodes/draw submissions to this mobile-sensitive interior.
+	# The back run never crosses the player depth plane, so it remains one GPU
+	# batch. Side/front runs are depth-sensitive and are authored separately
+	# below so their occlusion can follow the same ground-Y contract as actors.
 	var back_grid: Array[Vector2] = []
 	for x in range(ROOM_SIZE.x - 1):
 		back_grid.append(Vector2(float(x), 0.0))
@@ -218,28 +309,31 @@ func _build_digilab_walls(walls: Node2D) -> void:
 		820
 	)
 
+	# Side/front modules cross the actor's depth plane, so they cannot share one
+	# MultiMesh z-index. Keep the back wall batched (it is always background), but
+	# depth-sort the shell portions that can legitimately pass in front of actors.
 	var side_grid: Array[Vector2] = []
 	for y in range(ROOM_SIZE.y - 1):
 		side_grid.append(Vector2(0.0, float(y)))
 		side_grid.append(Vector2(last_x, float(y)))
-	_add_digilab_wall_batch(
-		authored,
-		DIGILAB_ART.KIND_STRAIGHT_LEFT,
-		side_grid,
-		820
-	)
+	for grid_anchor in side_grid:
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_STRAIGHT_LEFT,
+			grid_anchor
+		)
 
 	var front_grid: Array[Vector2] = []
 	for x in range(0, 7):
 		front_grid.append(Vector2(float(x), front_y))
 	for x in range(11, ROOM_SIZE.x - 1):
 		front_grid.append(Vector2(float(x), front_y))
-	_add_digilab_wall_batch(
-		authored,
-		DIGILAB_ART.KIND_LOW_DIVIDER,
-		front_grid,
-		830
-	)
+	for grid_anchor in front_grid:
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_LOW_DIVIDER,
+			grid_anchor
+		)
 
 	# Corners are orientation-specific connector sleeves. Each one overlaps a
 	# half edge of both adjacent runs, so there is no floating post or visible
@@ -277,7 +371,7 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	# is_walkable_world_position(), so duplicating the same wall boundary with
 	# dozens of PhysicsServer shapes only costs CPU. Keep the authoritative
 	# blocked-cell map and do not build redundant DigiLab wall colliders.
-	_physics_root.set_meta("digilab_wall_collision_backend", "blocked-cells-only")
+	_physics_root.set_meta("digilab_wall_collision_backend", "authored-navigation-footprint")
 	for x in range(ROOM_SIZE.x):
 		_mark_blocked(Vector2i(x, 0))
 	for y in range(1, ROOM_SIZE.y - 1):
@@ -313,24 +407,31 @@ func _add_digilab_wall_piece(
 	grid_anchor: Vector2
 ) -> void:
 	var world_anchor := grid_to_world(grid_anchor)
+	var depth_grid_anchor := DIGILAB_ART.depth_anchor_grid(kind, grid_anchor)
+	var depth_ground_anchor := grid_to_world(depth_grid_anchor)
 	var piece := DIGILAB_ART.create_piece(
 		kind,
 		world_anchor,
 		grid_anchor,
-		850 + int(round(world_anchor.y))
+		_depth_for_local_ground(depth_ground_anchor)
 	)
+	piece.set_meta("depth_contract", "world-ground-y")
+	piece.set_meta("depth_anchor_cell", depth_grid_anchor)
+	piece.set_meta("depth_ground_anchor", depth_ground_anchor)
 	parent.add_child(piece)
 
 
 func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
+	var wall_anchor := grid_to_world(Vector2(cell))
 	var block := CITY.create_full_block(
 		CITY.SURFACE_DARK,
-		grid_to_world(Vector2(cell)),
-		820 + int(round(grid_to_world(Vector2(cell)).y))
+		wall_anchor,
+		_depth_for_local_ground(wall_anchor)
 	)
+	block.set_meta("depth_contract", "world-ground-y")
+	block.set_meta("depth_ground_anchor", wall_anchor)
 	parent.add_child(block)
 	_mark_blocked(cell)
-	_add_circle_collision(cell, 22.0)
 
 
 func _build_counter() -> void:
@@ -340,14 +441,16 @@ func _build_counter() -> void:
 	for x in range(6, 12):
 		var cell := Vector2i(x, 4)
 		var surface := _accent_surface() if x in [7, 10] else CITY.SURFACE_DARK
+		var counter_anchor := grid_to_world(Vector2(cell))
 		var block := CITY.create_full_block(
 			surface,
-			grid_to_world(Vector2(cell)),
-			1000 + int(round(grid_to_world(Vector2(cell)).y))
+			counter_anchor,
+			_depth_for_local_ground(counter_anchor)
 		)
+		block.set_meta("depth_contract", "world-ground-y")
+		block.set_meta("depth_ground_anchor", counter_anchor)
 		counter.add_child(block)
 		_mark_blocked(cell)
-		_add_circle_collision(cell, 20.0)
 
 
 func _build_service_zones() -> void:
@@ -487,13 +590,9 @@ func _accent_surface() -> String:
 			return CITY.SURFACE_TECH_TEAL
 
 
-func _add_circle_collision(cell: Vector2i, radius: float) -> void:
-	var shape_node := CollisionShape2D.new()
-	var shape := CircleShape2D.new()
-	shape.radius = radius
-	shape_node.shape = shape
-	shape_node.position = grid_to_world(Vector2(cell)) + Vector2(0.0, -10.0)
-	_physics_root.add_child(shape_node)
+func _depth_for_local_ground(local_ground_anchor: Vector2, priority: int = 0) -> int:
+	var global_ground_y := to_global(local_ground_anchor).y
+	return WORLD_DEPTH.z_for_ground_y(global_ground_y) + priority
 
 
 func _mark_blocked(cell: Vector2i) -> void:

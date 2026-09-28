@@ -189,6 +189,15 @@ static func connector_deltas(kind: String) -> Array[Vector2]:
 	return [span]
 
 
+static func depth_anchor_grid(kind: String, grid_anchor: Vector2) -> Vector2:
+	# Linear wall modules occupy an edge rather than a point. Sort them from the
+	# center of that authored edge so front/back ordering follows the same ground
+	# contact that the visual geometry actually spans.
+	var spec := _spec(kind)
+	var span := spec["span"] as Vector2
+	return grid_anchor + span * 0.5
+
+
 static func piece_texture(kind: String) -> Texture2D:
 	return _spec(kind)["texture"] as Texture2D
 
@@ -211,6 +220,7 @@ static func _apply_common_metadata(
 	sprite.set_meta("grid_anchor_cell", grid_anchor)
 	sprite.set_meta("grid_span", spec["span"])
 	sprite.set_meta("asset_anchor_px", spec["anchor_px"])
+	sprite.set_meta("depth_priority", int(spec.get("priority", 0)))
 	sprite.set_meta("visual_height", float(spec.get("visual_height", WALL_HEIGHT)))
 	sprite.set_meta("normalization_contract", "grid-native-vector")
 	sprite.set_meta("source_kind", "runtime_svg")
