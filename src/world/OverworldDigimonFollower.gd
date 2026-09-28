@@ -8,6 +8,7 @@ const WALK_FRAME_DURATION := 0.10
 const WALK_STOP_GRACE := 0.14
 const FOLLOW_SPEED := 215.0
 const ARRIVAL_DISTANCE := 2.0
+const NAVIGATION_SUBSTEP := 4.0
 const MIN_SEPARATION := 40.0
 const FACING_DEADZONE := 0.08
 const SPRITE_SCALE := 1.5
@@ -92,19 +93,42 @@ func teleport_to(world_position: Vector2, initial_facing: String = "up_right") -
 	_update_depth()
 
 
-func step_toward(target_position: Vector2, delta: float, separation_points: Array[Vector2]) -> bool:
+func step_toward(
+	target_position: Vector2,
+	delta: float,
+	separation_points: Array[Vector2],
+	movement_validator: Callable = Callable()
+) -> bool:
 	var offset := target_position - global_position
 	if offset.length() <= ARRIVAL_DISTANCE:
 		_settle_from_motion(delta)
 		return false
 
-	var candidate := global_position.move_toward(target_position, FOLLOW_SPEED * delta)
-	if not _has_safe_separation(candidate, separation_points):
-		_settle_from_motion(delta)
-		return false
-
+	# Followers chase points on the player's recorded trail, but a straight chord
+	# between two valid trail points can still cut through a corner, pillar or
+	# wall. Resolve locomotion in small validated substeps so a low frame rate
+	# cannot tunnel through authored navigation either.
+	var travel_budget := minf(FOLLOW_SPEED * delta, offset.length())
 	var previous_position := global_position
-	global_position = candidate
+	var remaining := travel_budget
+
+	while remaining > 0.001:
+		var to_target := target_position - global_position
+		if to_target.length() <= ARRIVAL_DISTANCE:
+			break
+		var step_distance := minf(NAVIGATION_SUBSTEP, remaining)
+		var desired_step := to_target.normalized() * step_distance
+		var resolved := _resolve_navigation_step(
+			desired_step,
+			target_position,
+			separation_points,
+			movement_validator
+		)
+		if resolved.is_equal_approx(global_position):
+			break
+		global_position = resolved
+		remaining -= step_distance
+
 	var movement := global_position - previous_position
 	if movement.length_squared() > 0.0001:
 		_stationary_time = 0.0
@@ -115,6 +139,42 @@ func step_toward(target_position: Vector2, delta: float, separation_points: Arra
 
 	_settle_from_motion(delta)
 	return false
+
+
+func _resolve_navigation_step(
+	desired_step: Vector2,
+	target_position: Vector2,
+	separation_points: Array[Vector2],
+	movement_validator: Callable
+) -> Vector2:
+	var candidates: Array[Vector2] = [global_position + desired_step]
+	if absf(desired_step.x) > 0.001:
+		candidates.append(global_position + Vector2(desired_step.x, 0.0))
+	if absf(desired_step.y) > 0.001:
+		candidates.append(global_position + Vector2(0.0, desired_step.y))
+
+	var best := global_position
+	var best_distance := global_position.distance_to(target_position)
+	for candidate: Vector2 in candidates:
+		if not _candidate_is_navigable(candidate, separation_points, movement_validator):
+			continue
+		var distance := candidate.distance_to(target_position)
+		if distance < best_distance - 0.001:
+			best = candidate
+			best_distance = distance
+	return best
+
+
+func _candidate_is_navigable(
+	candidate: Vector2,
+	separation_points: Array[Vector2],
+	movement_validator: Callable
+) -> bool:
+	if not _has_safe_separation(candidate, separation_points):
+		return false
+	if movement_validator.is_valid() and not bool(movement_validator.call(candidate)):
+		return false
+	return true
 
 
 func set_world_elevation(elevation_px: float) -> void:
