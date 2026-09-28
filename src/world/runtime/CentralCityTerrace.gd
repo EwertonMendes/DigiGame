@@ -3,6 +3,7 @@ class_name CentralCityTerrace
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
+const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 
 const ROOT_Z := -1164
 const WALL_CAP_GRID := 0.34
@@ -64,10 +65,42 @@ static func build() -> Node2D:
 		if raw_void is Dictionary:
 			_append_void_frame(raw_void as Dictionary, trench_caps, trench_faces, water_surfaces, water_edges)
 	if not water_surfaces.is_empty():
-		var water := CITY.create_world_uv_polygon_batch(water_surfaces, CITY.create_water_material(), 6)
+		var water_profile := {
+			"deep_color": Color(0.012, 0.105, 0.17, 1.0),
+			"body_color": Color(0.018, 0.30, 0.39, 1.0),
+			"shallow_color": Color(0.055, 0.50, 0.54, 1.0),
+			"highlight_color": Color(0.63, 0.95, 0.92, 1.0),
+			"flow_direction": Vector2(0.92, 0.38),
+			"flow_speed": 0.30,
+			"wave_scale": 0.46,
+			"detail_scale": 1.18,
+			"wave_strength": 0.88,
+			"highlight_strength": 0.66,
+			"sparkle_strength": 0.16,
+			"depth_bias": 0.48,
+			"opacity": 0.98,
+		}
+		var water := CITY.create_world_uv_polygon_batch(
+			water_surfaces,
+			CITY.create_water_material(water_profile),
+			6
+		)
 		water.name = "CanalWater"
 		root.add_child(water)
-	_add_color_batch(root, "WaterEdgeHighlights", water_edges, 7)
+	if not water_edges.is_empty():
+		var shoreline := WORLD_WATER.create_shoreline_batch(
+			water_edges,
+			7,
+			"CanalShoreline",
+			{
+				"foam_color": Color(0.72, 0.98, 0.95, 0.92),
+				"secondary_color": Color(0.24, 0.72, 0.74, 0.52),
+				"shore_speed": 0.72,
+				"shore_strength": 0.90,
+				"secondary_strength": 0.34,
+			}
+		)
+		root.add_child(shoreline)
 	_add_paver_batch(root, "TrenchBankCaps", trench_caps, 8)
 	_add_color_batch(root, "TrenchInnerWalls", trench_faces, 9)
 
@@ -282,9 +315,25 @@ static func _append_void_frame(
 			var a := footprint[index]
 			var b := footprint[(index + 1) % footprint.size()]
 			var edge := b - a
+			if edge.is_zero_approx():
+				continue
 			var inward := -Vector2(edge.y, -edge.x).normalized() * sign_value
-			var strip := PackedVector2Array([a + inward * 0.08, b + inward * 0.08, b + inward * 0.19, a + inward * 0.19])
-			water_edges.append({"points": _logical_at_elevation(_grid_to_logical(strip), elevation - WATER_INSET_PX), "color": Color(0.27, 0.68, 0.70, 0.20)})
+			var strip_grid := PackedVector2Array([
+				a + inward * 0.04,
+				b + inward * 0.04,
+				b + inward * 0.36,
+				a + inward * 0.36,
+			])
+			var strip_world := _logical_at_elevation(
+				_grid_to_logical(strip_grid),
+				elevation - WATER_INSET_PX
+			)
+			water_edges.append({
+				"outer_a": strip_world[0],
+				"outer_b": strip_world[1],
+				"inner_b": strip_world[2],
+				"inner_a": strip_world[3],
+			})
 	var cap_strips := [
 		PackedVector2Array([Vector2(x0, y0 - TRENCH_CAP_GRID), Vector2(x1, y0 - TRENCH_CAP_GRID), Vector2(x1, y0), Vector2(x0, y0)]),
 		PackedVector2Array([Vector2(x0, y1), Vector2(x1, y1), Vector2(x1, y1 + TRENCH_CAP_GRID), Vector2(x0, y1 + TRENCH_CAP_GRID)]),
