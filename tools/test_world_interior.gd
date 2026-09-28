@@ -1,6 +1,7 @@
 extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
+const WORLD_DEPTH = preload("res://src/world/runtime/WorldDepth.gd")
 const DIGILAB_FLOOR_1_PATH := "res://assets/world/tblack/digilab/floor/floor-1.png"
 const DIGILAB_WALL_PATHS := {
 	"straight_left": "res://assets/world/tblack/digilab/wall/runtime/wall-straight-left.svg",
@@ -250,6 +251,14 @@ func _assert_service_interior_presentation_isolated(
 		"%s entry transition must finish before presentation validation" % label
 	)
 	_assert_active_interior_presentation_is_flat(world, player, label)
+	var interiors_root := world.get_node_or_null("Interiors") as Node2D
+	assert(
+		interiors_root != null and interiors_root.get_child_count() == 1,
+		"%s must expose exactly one active streamed interior" % label
+	)
+	var active_interior := interiors_root.get_child(0) as WorldInterior
+	assert(active_interior != null, "%s must use WorldInterior" % label)
+	_assert_generic_shell_clearance(active_interior, label)
 
 	var exited: bool = await manager.exit_interior()
 	assert(exited and not manager.is_active(), "%s must exit through the shared interior manager" % label)
@@ -261,6 +270,35 @@ func _assert_service_interior_presentation_isolated(
 	assert(
 		is_equal_approx(float(player.call("get_world_elevation")), expected_exterior_elevation),
 		"%s exit must restore the exterior presentation elevation" % label
+	)
+
+
+func _assert_generic_shell_clearance(interior: WorldInterior, label: String) -> void:
+	var back_overlap := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.60)))
+	var back_clear := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.82)))
+	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(0.60, 8.0)))
+	var side_clear := interior.to_global(interior.grid_to_world(Vector2(0.82, 8.0)))
+	var front_doorway := interior.to_global(interior.grid_to_world(Vector2(9.0, 12.42)))
+
+	assert(
+		not interior.is_walkable_world_position(back_overlap),
+		"%s must keep visible feet off the tall back-wall top face" % label
+	)
+	assert(
+		interior.is_walkable_world_position(back_clear),
+		"%s must preserve usable floor immediately after the authored back-wall clearance" % label
+	)
+	assert(
+		not interior.is_walkable_world_position(side_overlap),
+		"%s must use the same authored clearance against tall side walls" % label
+	)
+	assert(
+		interior.is_walkable_world_position(side_clear),
+		"%s must preserve usable floor after the side-wall clearance" % label
+	)
+	assert(
+		interior.is_walkable_world_position(front_doorway),
+		"%s front doorway must keep its original lower-boundary reachability" % label
 	)
 
 
@@ -300,8 +338,8 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 	var authored := walls.get_node_or_null("AuthoredWalls")
 	assert(authored != null, "DigiLab must compose walls under one authored wall root")
 	assert(
-		authored.get_child_count() == 8,
-		"DigiLab wall renderer must stay at eight visual nodes: three batches, four corners and one doorway"
+		authored.get_child_count() == 45,
+		"DigiLab wall renderer must keep one back-wall batch, thirty-nine depth-sorted repeated modules, four corners and one doorway"
 	)
 	assert(
 		(authored.get_meta("grid_size", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(64.0, 32.0)),
@@ -321,7 +359,7 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 			var batch := child as MultiMeshInstance2D
 			assert(batch.multimesh != null and batch.texture != null, "Every wall batch must own a MultiMesh and texture")
 			var kind := String(batch.get_meta("digilab_wall_batch", ""))
-			assert(kind in ["straight_right", "straight_left", "low_divider"], "Only repeated straight/divider modules may be batched")
+			assert(kind == "straight_right", "Only the always-background DigiLab back wall may remain batched")
 			assert(
 				String(batch.get_meta("normalization_contract", "")) == "grid-native-vector-batch",
 				"Wall batches must use the deterministic grid-native batch contract"
@@ -343,12 +381,7 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 			assert(grid_anchors.size() == batch_count, "Wall batch must retain every logical grid anchor")
 			anchors_by_kind[kind] = grid_anchors
 			var span := batch.get_meta("grid_span", Vector2.ZERO) as Vector2
-			if kind == "straight_right":
-				assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Back wall modules must own one X-grid edge")
-			elif kind == "straight_left":
-				assert(span.is_equal_approx(Vector2(0.0, 1.0)), "Side wall modules must own one Y-grid edge")
-			else:
-				assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Front dividers must own one X-grid edge")
+			assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Back wall modules must own one X-grid edge")
 			continue
 
 		var sprite := child as Sprite2D
@@ -362,8 +395,16 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 		)
 		var kind := String(sprite.get_meta("digilab_wall_piece", ""))
 		assert(
-			kind in ["corner_back_left", "corner_back_right", "corner_front_left", "corner_front_right", "door_frame"],
-			"Only orientation-specific corners and the doorway may remain individual sprites"
+			kind in [
+				"straight_left",
+				"low_divider",
+				"corner_back_left",
+				"corner_back_right",
+				"corner_front_left",
+				"corner_front_right",
+				"door_frame",
+			],
+			"Only depth-sensitive side/front modules and authored connectors may remain individual sprites"
 		)
 		assert(DIGILAB_WALL_PATHS.has(kind), "Connector sprite must declare a known role")
 		assert(
@@ -377,13 +418,47 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 			and is_equal_approx(anchor.y, round(anchor.y)),
 			"Connector anchors must sit on exact integer grid vertices"
 		)
-		anchors_by_kind[kind] = [anchor]
+		if not anchors_by_kind.has(kind):
+			anchors_by_kind[kind] = []
+		var kind_anchors: Array = anchors_by_kind[kind]
+		kind_anchors.append(anchor)
+		anchors_by_kind[kind] = kind_anchors
 
-	assert(batch_kinds.size() == 3, "DigiLab must use exactly three repeated-geometry wall batches")
+		assert(
+			String(sprite.get_meta("depth_contract", "")) == "world-ground-y",
+			"Depth-sensitive DigiLab wall pieces must use the shared world-ground depth contract"
+		)
+		var depth_anchor := sprite.get_meta("depth_anchor_cell", anchor) as Vector2
+		var depth_ground := interior.grid_to_world(depth_anchor)
+		var priority := int(sprite.get_meta("depth_priority", 0))
+		var expected_depth := WORLD_DEPTH.z_for_ground_y(interior.to_global(depth_ground).y) + priority
+		assert(
+			sprite.z_index == expected_depth,
+			"DigiLab wall depth must be derived from its authored ground-contact span"
+		)
+
+	assert(batch_kinds.size() == 1, "DigiLab must batch only the always-background back wall")
 	assert(int(logical_counts.get("straight_right", 0)) == 17, "Back wall must keep seventeen one-edge modules")
 	assert(int(logical_counts.get("straight_left", 0)) == 26, "Side walls must keep twenty-six one-edge modules")
 	assert(int(logical_counts.get("low_divider", 0)) == 13, "Front boundary must keep thirteen one-edge low dividers")
 	assert(int(logical_counts.get("door_frame", 0)) == 1, "Front boundary must keep exactly one four-edge doorway")
+
+	var front_divider := _find_digilab_piece(authored, "low_divider", Vector2(3.0, 13.0))
+	assert(front_divider != null, "DigiLab front divider probe must exist")
+	var actor_depth_behind_front := WORLD_DEPTH.z_for_ground_y(
+		interior.to_global(interior.grid_to_world(Vector2(3.0, 12.0))).y
+	)
+	assert(
+		front_divider.z_index > actor_depth_behind_front,
+		"DigiLab lower wall must render in front of an actor standing one grid cell behind it"
+	)
+
+	var doorway := _find_digilab_piece(authored, "door_frame", Vector2(7.0, 13.0))
+	assert(doorway != null, "DigiLab doorway probe must exist")
+	assert(
+		(doorway.get_meta("depth_anchor_cell", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(9.0, 13.0)),
+		"DigiLab doorway depth must sort from the center of its authored four-edge span"
+	)
 	for corner_kind in ["corner_back_left", "corner_back_right", "corner_front_left", "corner_front_right"]:
 		assert(int(logical_counts.get(corner_kind, 0)) == 1, "Each orientation-specific corner must appear exactly once: %s" % corner_kind)
 
@@ -401,6 +476,23 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 	)
 
 	assert(ResourceLoader.exists(DIGILAB_WALL_PATHS["wall_end_cap"]), "Canonical DigiLab end-cap SVG must remain available")
+
+
+func _find_digilab_piece(
+	parent: Node,
+	kind: String,
+	grid_anchor: Vector2
+) -> Sprite2D:
+	for child in parent.get_children():
+		var sprite := child as Sprite2D
+		if sprite == null:
+			continue
+		if String(sprite.get_meta("digilab_wall_piece", "")) != kind:
+			continue
+		var anchor := sprite.get_meta("grid_anchor_cell", Vector2(-1000.0, -1000.0)) as Vector2
+		if anchor.is_equal_approx(grid_anchor):
+			return sprite
+	return null
 
 
 func _assert_anchor_present(anchors_by_kind: Dictionary, kind: String, expected: Vector2) -> void:
