@@ -4,6 +4,7 @@ class_name WorldInterior
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const DIGILAB_ART = preload("res://src/world/runtime/DigiLabInteriorArt.gd")
 const NavigationScript = preload("res://src/world/runtime/WorldInteriorNavigation.gd")
+const WorldDepthScript = preload("res://src/world/runtime/WorldDepth.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
@@ -14,7 +15,7 @@ const ROOM_SIZE := Vector2i(18, 14)
 const EXIT_CELL := Vector2i(9, 12)
 const SPAWN_OFFSET_FROM_EXIT := Vector2i(0, -1)
 const SPAWN_CELL := EXIT_CELL + SPAWN_OFFSET_FROM_EXIT
-const DEFAULT_ACTOR_CLEARANCE := 10.0
+const DEFAULT_ACTOR_CLEARANCE := 8.0
 const CLEARANCE_DIRECTIONS: Array[Vector2] = [
 	Vector2.ZERO,
 	Vector2.RIGHT,
@@ -237,7 +238,7 @@ func _build_walls() -> void:
 			var block := CITY.create_full_block(
 				surface,
 				layout_anchor,
-				820 + int(round(layout_anchor.y)),
+				_depth_for_local_ground_y(layout_anchor.y),
 				level
 			)
 			walls.add_child(block)
@@ -254,47 +255,39 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	var authored := Node2D.new()
 	authored.name = "AuthoredWalls"
 	authored.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
-	authored.set_meta("layout_contract", "grid-native-vector-batched")
+	authored.set_meta("layout_contract", "grid-native-vector-depth-sorted")
 	walls.add_child(authored)
 
 	var last_x := float(ROOM_SIZE.x - 1)
 	var front_y := float(ROOM_SIZE.y - 1)
 
-	# Repeated straight modules are submitted in three GPU batches. They still
-	# occupy one exact grid edge each, but no longer add dozens of Sprite2D
-	# nodes/draw submissions to this mobile-sensitive interior.
+	# Wall pieces need per-anchor depth because actors now use WorldDepth's
+	# canonical presentation plane. A MultiMesh has only one z_index for every
+	# instance, so batching an entire wall run makes some segments render in
+	# front/behind the player at the wrong time. The floor remains batched; the
+	# small wall kit is intentionally depth-sorted piece by piece.
 	var back_grid: Array[Vector2] = []
 	for x in range(ROOM_SIZE.x - 1):
-		back_grid.append(Vector2(float(x), 0.0))
-	_add_digilab_wall_batch(
-		authored,
-		DIGILAB_ART.KIND_STRAIGHT_RIGHT,
-		back_grid,
-		820
-	)
+		var anchor := Vector2(float(x), 0.0)
+		back_grid.append(anchor)
+		_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_STRAIGHT_RIGHT, anchor)
 
 	var side_grid: Array[Vector2] = []
 	for y in range(ROOM_SIZE.y - 1):
-		side_grid.append(Vector2(0.0, float(y)))
-		side_grid.append(Vector2(last_x, float(y)))
-	_add_digilab_wall_batch(
-		authored,
-		DIGILAB_ART.KIND_STRAIGHT_LEFT,
-		side_grid,
-		820
-	)
+		for x in [0.0, last_x]:
+			var anchor := Vector2(float(x), float(y))
+			side_grid.append(anchor)
+			_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_STRAIGHT_LEFT, anchor)
 
 	var front_grid: Array[Vector2] = []
 	for x in range(0, 7):
-		front_grid.append(Vector2(float(x), front_y))
+		var anchor := Vector2(float(x), front_y)
+		front_grid.append(anchor)
+		_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_LOW_DIVIDER, anchor)
 	for x in range(11, ROOM_SIZE.x - 1):
-		front_grid.append(Vector2(float(x), front_y))
-	_add_digilab_wall_batch(
-		authored,
-		DIGILAB_ART.KIND_LOW_DIVIDER,
-		front_grid,
-		830
-	)
+		var anchor := Vector2(float(x), front_y)
+		front_grid.append(anchor)
+		_add_digilab_wall_piece(authored, DIGILAB_ART.KIND_LOW_DIVIDER, anchor)
 
 	# Corners are orientation-specific connector sleeves. Each one overlaps a
 	# half edge of both adjacent runs, so there is no floating post or visible
@@ -347,35 +340,20 @@ func _build_digilab_walls(walls: Node2D) -> void:
 		)
 
 
-func _add_digilab_wall_batch(
-	parent: Node2D,
-	kind: String,
-	grid_anchors: Array[Vector2],
-	depth_order: int
-) -> void:
-	var world_anchors: Array[Vector2] = []
-	for grid_anchor in grid_anchors:
-		world_anchors.append(grid_to_world(grid_anchor))
-	var batch := DIGILAB_ART.create_batch(
-		kind,
-		world_anchors,
-		grid_anchors,
-		depth_order
-	)
-	parent.add_child(batch)
-
-
 func _add_digilab_wall_piece(
 	parent: Node2D,
 	kind: String,
 	grid_anchor: Vector2
 ) -> void:
 	var world_anchor := grid_to_world(grid_anchor)
+	var depth_y := world_anchor.y
+	for delta: Vector2 in DIGILAB_ART.connector_deltas(kind):
+		depth_y = maxf(depth_y, grid_to_world(grid_anchor + delta).y)
 	var piece := DIGILAB_ART.create_piece(
 		kind,
 		world_anchor,
 		grid_anchor,
-		850 + int(round(world_anchor.y))
+		_depth_for_local_ground_y(depth_y)
 	)
 	parent.add_child(piece)
 
@@ -385,7 +363,7 @@ func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
 	var block := CITY.create_full_block(
 		CITY.SURFACE_DARK,
 		layout_anchor,
-		820 + int(round(layout_anchor.y))
+		_depth_for_local_ground_y(layout_anchor.y)
 	)
 	parent.add_child(block)
 	_register_blocking_visual(block, layout_anchor, "front_wall")
@@ -402,7 +380,7 @@ func _build_counter() -> void:
 		var block := CITY.create_full_block(
 			surface,
 			layout_anchor,
-			1000 + int(round(layout_anchor.y))
+			_depth_for_local_ground_y(layout_anchor.y) + 2
 		)
 		counter.add_child(block)
 		_register_blocking_visual(block, layout_anchor, "service_counter")
@@ -442,7 +420,7 @@ func _build_service_point() -> void:
 	var service := Node2D.new()
 	service.name = "ServicePoint"
 	service.position = grid_to_world(Vector2(9, 5))
-	service.z_index = 1200 + int(round(service.position.y))
+	service.z_index = _depth_for_local_ground_y(service.position.y) + 2
 	add_child(service)
 
 	if _service_id != "digilab":
@@ -543,6 +521,10 @@ func _accent_surface() -> String:
 			return CITY.SURFACE_TECH_PURPLE
 		_:
 			return CITY.SURFACE_TECH_TEAL
+
+
+func _depth_for_local_ground_y(local_y: float) -> int:
+	return WorldDepthScript.z_for_ground_y(global_position.y + local_y, 0.0)
 
 
 func _register_blocking_visual(
