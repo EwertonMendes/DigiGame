@@ -73,6 +73,12 @@ func enter_interior(payload: Dictionary) -> bool:
 	await _cover_transition()
 	if _area_scene != null:
 		_area_scene.set_exterior_active(false)
+
+	# Change presentation plane while the transition fully covers the screen.
+	# Previously the exterior elevation survived the teleport for a frame and
+	# was reset only by WorldRoot's state-change callback, producing the visible
+	# "bounce" when entering an interior from a raised foundation.
+	_player.set_world_elevation(0.0)
 	_player.global_position = interior.get_spawn_world_position()
 	_player.velocity = Vector2.ZERO
 	_camera.position = Vector2.ZERO
@@ -96,6 +102,10 @@ func exit_interior() -> bool:
 	var old_interior := _active_interior
 	var service_id := String(_active_payload.get("service", ""))
 	_active_interior = null
+	var return_elevation := 0.0
+	if _world_root != null and _world_root.has_method("get_world_elevation_at"):
+		return_elevation = float(_world_root.call("get_world_elevation_at", _return_position))
+	_player.set_world_elevation(return_elevation)
 	_player.global_position = _return_position
 	_player.velocity = Vector2.ZERO
 	_camera.position = Vector2.ZERO
