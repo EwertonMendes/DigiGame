@@ -11,7 +11,7 @@ const CANAL_MODULE_TARGET_PX := 82.0
 const CANAL_PILLAR_WIDTH_PX := 7.0
 const FLOOR_FACE_PAVERS_PER_CELL := 4.0
 const FLOOR_FACE_JOINT_PX := 1.0
-const NEAR_GROUND_OVERLAP_FACTOR := 1.55
+const NEAR_GROUND_OVERLAP_FACTOR := 1.80
 const BASIN_DEPTH_PX := 24.0
 const WATER_SURFACE_DROP_PX := 12.0
 const WATER_EDGE_INSET_GRID := 0.10
@@ -232,6 +232,7 @@ static func build() -> Node2D:
 	root.set_meta("canal_detail_system", "modular_civic_waterfront_v3_floor_cut")
 	root.set_meta("canal_cutaway_mode", "far_cube_faces_near_floor_occlusion")
 	root.set_meta("near_side_border", "none")
+	root.set_meta("near_shoreline_mode", "far_edges_only")
 	root.set_meta("near_ground_overlap_factor", NEAR_GROUND_OVERLAP_FACTOR)
 	root.set_meta("preserves_ground_underlay", true)
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
@@ -547,8 +548,18 @@ static func _append_void_frame(
 	# flow, so the edge behaves like lapping water rather than a moving border.
 	var signed_area := _polygon_signed_area(water_grid)
 	var sign_value := 1.0 if signed_area >= 0.0 else -1.0
+	var water_center_y := opening_center.y + WATER_SURFACE_DROP_PX
 	for index in range(water_grid.size()):
 		var next := (index + 1) % water_grid.size()
+
+		# Near/right+bottom edges are foreground occlusion edges, not visible
+		# shorelines. Do not render any foam/highlight strip there: leaving even
+		# a thin strip recreated the unwanted "pool outline" the floor is meant
+		# to eliminate.
+		var water_edge_midpoint := (water_display[index] + water_display[next]) * 0.5
+		if water_edge_midpoint.y >= water_center_y:
+			continue
+
 		var a := water_grid[index]
 		var b := water_grid[next]
 		var edge := b - a
