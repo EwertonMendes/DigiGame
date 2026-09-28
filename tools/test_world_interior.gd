@@ -346,8 +346,8 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 		"Runtime DigiLab walls must remain bound to the 64x32 world grid"
 	)
 	assert(
-		String(authored.get_meta("layout_contract", "")) == "grid-native-vector-batched",
-		"DigiLab wall placement must use the batched grid-native vector contract"
+		String(authored.get_meta("layout_contract", "")) == "grid-native-depth-sorted",
+		"DigiLab walls must keep the hybrid contract: batched background, depth-sorted side/front shell"
 	)
 
 	var logical_counts: Dictionary = {}
