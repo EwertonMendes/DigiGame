@@ -138,13 +138,17 @@ jobs:
             "hospital system regression passed" \
             godot --headless --path . tools/test_hospital_system.tscn --quit-after 8
 
+          # These two suites stage the complete 5x5 Central City before their
+          # assertions. The frame cap is only a runaway-process guard; keep it
+          # comfortably above a valid staged load so it never preempts the
+          # suite's own success marker and get_tree().quit().
           run_regression world-interiors \
             "seamless world interior regression passed" \
-            godot --headless --path . tools/test_world_interior.tscn --quit-after 360
+            godot --headless --path . tools/test_world_interior.tscn --quit-after 900
 
           run_regression world-area \
             "single-scene world area regression passed" \
-            godot --headless --path . tools/test_world_area.tscn --quit-after 360
+            godot --headless --path . tools/test_world_area.tscn --quit-after 900
 
           run_regression central-city-authoring-preview \
             "[CentralCityAuthoring] WYSIWYG preview ready" \
