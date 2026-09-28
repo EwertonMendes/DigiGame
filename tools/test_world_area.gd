@@ -922,8 +922,16 @@ func _ready() -> void:
 	)
 	# Regression points are expressed in source-image coordinates so they track
 	# the exact visible corners reviewed in-game instead of relying on coarse
-	# grid cells.
+	# grid cells. Test the building polygons directly: the DigiLab can be authored
+	# beside a section boundary, where section-local walkability legitimately
+	# returns false before consulting the building collision.
 	var digilab_door_local := expected_door
+	var digilab_blockers: Array[PackedVector2Array] = [
+		digilab_collision.polygon,
+		digilab_left_guard.polygon,
+		digilab_right_guard.polygon,
+		digilab_upper_right_guard.polygon,
+	]
 	for source_point: Vector2 in [
 		Vector2(80.0, 820.0),   # far-left rear/side corner
 		Vector2(250.0, 860.0),  # left lower wing: player must not visually enter facade
@@ -940,10 +948,8 @@ func _ready() -> void:
 		var local_corner = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
 		assert(
 			local_corner is Vector2
-			and not digilab_section.is_walkable_world_position(
-				digilab_section.global_position + (local_corner as Vector2)
-			),
-			"DigiLab visible corner %s must be covered by the measured footprint" % str(source_point)
+			and _point_in_any_polygon(local_corner as Vector2, digilab_blockers),
+			"DigiLab visible corner %s must be covered by the measured building collision" % str(source_point)
 		)
 	for source_point: Vector2 in [
 		Vector2(15.0, 875.0),    # pavement just outside expanded left guard
@@ -952,10 +958,8 @@ func _ready() -> void:
 		var local_clear = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
 		assert(
 			local_clear is Vector2
-			and digilab_section.is_walkable_world_position(
-				digilab_section.global_position + (local_clear as Vector2)
-			),
-			"DigiLab pavement just outside %s must stay walkable" % str(source_point)
+			and not _point_in_any_polygon(local_clear as Vector2, digilab_blockers),
+			"DigiLab pavement just outside %s must stay free of DigiLab collision" % str(source_point)
 		)
 	var digilab_payload = digilab_entrance.get_meta("interior_payload", {})
 	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
@@ -1338,6 +1342,16 @@ func _snapshot_diff_paths(left, right, path: String = "snapshot", limit: int = 1
 	if left != right:
 		result.append("%s %s != %s" % [path, str(left), str(right)])
 	return result
+
+
+func _point_in_any_polygon(
+	point: Vector2,
+	polygons: Array[PackedVector2Array]
+) -> bool:
+	for polygon: PackedVector2Array in polygons:
+		if Geometry2D.is_point_in_polygon(point, polygon):
+			return true
+	return false
 
 
 func _vec2_from_array(value) -> Vector2:
