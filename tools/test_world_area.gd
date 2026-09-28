@@ -322,7 +322,9 @@ func _ready() -> void:
 		and int(south_terrace.get_meta("bridge_count", 0)) == 2
 		and is_equal_approx(float(south_terrace.get_meta("water_surface_drop_px", 0.0)), 8.0)
 		and is_equal_approx(float(south_terrace.get_meta("basin_depth_px", 0.0)), 22.0)
-		and is_equal_approx(float(south_terrace.get_meta("canal_coping_width_grid", 0.0)), 0.10)
+		and is_equal_approx(float(south_terrace.get_meta("canal_coping_width_grid", 0.0)), 0.07)
+		and is_equal_approx(float(south_terrace.get_meta("canal_module_target_px", 0.0)), 82.0)
+		and String(south_terrace.get_meta("canal_detail_system", "")) == "modular_civic_waterfront_v1"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
