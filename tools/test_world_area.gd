@@ -729,10 +729,11 @@ func _ready() -> void:
 		and not canal_assets.has("bench_ne"),
 		"North Canal runtime decor must match current authoring, keeping bridge-head lamps without resurrecting removed water-overlapping benches"
 	)
+	var market_lamp_section := _section_with_authored_decor_role(area, "market_")
 	assert(
-		market_lighting != null
-		and market_lighting.get_decoration_asset_ids().has("lamp_yellow"),
-		"Data Market must reserve the approved warm lamp for its service node"
+		market_lamp_section != null
+		and market_lamp_section.get_decoration_asset_ids().has("lamp_yellow"),
+		"Data Market streetscape must retain its authored warm lamp independently from the movable service-building anchor"
 	)
 	var annotation_labels: Dictionary = {}
 	for raw_annotation in get_tree().get_nodes_in_group("world_annotation_unlit"):
@@ -1343,6 +1344,32 @@ func _vec2_from_array(value) -> Vector2:
 	if value is Array and value.size() >= 2:
 		return Vector2(float(value[0]), float(value[1]))
 	return Vector2.INF
+
+
+func _section_with_authored_decor_role(
+	area: WorldAreaScene,
+	role_prefix: String
+) -> WorldAreaSection:
+	var area_definition := CITY_AUTHORING.area_definition()
+	var sections_value = area_definition.get("sections", [])
+	if not sections_value is Array:
+		return null
+	for raw_section in sections_value as Array:
+		if not raw_section is Dictionary:
+			continue
+		var coord_value = (raw_section as Dictionary).get("coord", [])
+		if not coord_value is Array or coord_value.size() < 2:
+			continue
+		var coord := Vector2i(int(coord_value[0]), int(coord_value[1]))
+		for raw_placement in CITY_AUTHORING.decoration_placements(coord):
+			if (
+				raw_placement is Dictionary
+				and String((raw_placement as Dictionary).get("role", "")).begins_with(role_prefix)
+			):
+				return area.get_node_or_null(
+					"Section_%d_%d" % [coord.x, coord.y]
+				) as WorldAreaSection
+	return null
 
 
 func _service_section(area: WorldAreaScene, service_id: String) -> WorldAreaSection:
