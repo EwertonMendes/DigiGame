@@ -329,7 +329,7 @@ func _assert_all_service_navigation_contracts() -> void:
 		# reaches into the back-wall row. Zero-clearance point navigation would
 		# incorrectly accept it; actor-aware clearance must reject it.
 		var near_back_wall := interior.to_global(
-			interior.grid_to_world(Vector2(9.0, 0.8))
+			interior.grid_to_world(Vector2(9.0, 0.70))
 		)
 		assert(
 			interior.is_walkable_world_position(near_back_wall, 0.0),
