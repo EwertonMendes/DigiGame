@@ -657,18 +657,19 @@ func _ready() -> void:
 	player.global_position = original_player_position
 	player.set("velocity", Vector2.ZERO)
 
-	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
-	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
+	var digilab_lighting := _service_section(area, "digilab")
+	var training_lighting := _service_section(area, "training")
 	var hospital_lighting := _service_section(area, "hospital")
 	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
-	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
+	var market_lighting := _service_section(area, "market")
+	var market_cell := _service_local_cell("market")
 	var market_pad: Area2D = null
 	if market_lighting != null:
 		market_pad = market_lighting.get_node_or_null("DataMarketPad") as Area2D
 	assert(
 		market_pad != null
-		and market_pad.position.is_equal_approx(market_lighting.grid_to_world(Vector2(7, 12))),
-		"Data Market must move onto the lower South Terrace instead of remaining on the upper flat"
+		and market_pad.position.is_equal_approx(market_lighting.grid_to_world(Vector2(market_cell))),
+		"Data Market service pad must follow its current authoring marker on the South Terrace"
 	)
 	assert(
 		digilab_lighting != null and digilab_lighting.get_decoration_count() <= 1,
