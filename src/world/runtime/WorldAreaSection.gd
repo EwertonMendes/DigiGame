@@ -7,7 +7,7 @@ const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
 const CITY_DECOR = preload("res://src/world/runtime/CentralCityDecor.gd")
 const CITY_TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 const CITY_AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
-const WorldDepth = preload("res://src/world/runtime/WorldDepth.gd")
+const WorldDepthScript = preload("res://src/world/runtime/WorldDepth.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
@@ -606,7 +606,7 @@ func _service_depth_span(
 	footprint: PackedVector2Array,
 	elevation_px: float
 ) -> Vector2i:
-	return WorldDepth.span_for_local_polygon(
+	return WorldDepthScript.span_for_local_polygon(
 		global_position.y,
 		footprint,
 		elevation_px,
