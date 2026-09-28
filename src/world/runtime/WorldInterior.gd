@@ -258,7 +258,7 @@ func _build_walls() -> void:
 			var block := CITY.create_full_block(
 				surface,
 				layout_anchor,
-				_depth_for_local_ground_y(layout_anchor.y + TILE_HALF_HEIGHT),
+				_depth_for_local_ground_y(layout_anchor.y),
 				level
 			)
 			walls.add_child(block)
@@ -367,8 +367,14 @@ func _add_digilab_wall_piece(
 ) -> void:
 	var world_anchor := grid_to_world(grid_anchor)
 	var depth_y := world_anchor.y
-	for delta: Vector2 in DIGILAB_ART.connector_deltas(kind):
-		depth_y = maxf(depth_y, grid_to_world(grid_anchor + delta).y)
+	var connector_deltas := DIGILAB_ART.connector_deltas(kind)
+	if not connector_deltas.is_empty():
+		var depth_total := world_anchor.y
+		var depth_count := 1.0
+		for delta: Vector2 in connector_deltas:
+			depth_total += grid_to_world(grid_anchor + delta).y
+			depth_count += 1.0
+		depth_y = depth_total / depth_count
 	var piece := DIGILAB_ART.create_piece(
 		kind,
 		world_anchor,
@@ -383,7 +389,7 @@ func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
 	var block := CITY.create_full_block(
 		CITY.SURFACE_DARK,
 		layout_anchor,
-		_depth_for_local_ground_y(layout_anchor.y + TILE_HALF_HEIGHT)
+		_depth_for_local_ground_y(layout_anchor.y)
 	)
 	parent.add_child(block)
 	_register_blocking_visual(block, layout_anchor, "front_wall")
@@ -400,7 +406,7 @@ func _build_counter() -> void:
 		var block := CITY.create_full_block(
 			surface,
 			layout_anchor,
-			_depth_for_local_ground_y(layout_anchor.y + TILE_HALF_HEIGHT) + 2
+			_depth_for_local_ground_y(layout_anchor.y) + 2
 		)
 		counter.add_child(block)
 		_register_blocking_visual(block, layout_anchor, "service_counter")
