@@ -1,6 +1,7 @@
 extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
+const INTERIOR_SCENE := preload("res://scenes/world/world_interior.tscn")
 const DIGILAB_FLOOR_1_PATH := "res://assets/world/tblack/digilab/floor/floor-1.png"
 const DIGILAB_WALL_PATHS := {
 	"straight_left": "res://assets/world/tblack/digilab/wall/runtime/wall-straight-left.svg",
@@ -67,6 +68,10 @@ func _ready() -> void:
 	assert(raw_return is Array and raw_return.size() >= 2, "Interior threshold must define an exterior return point")
 	var expected_return := Vector2(float(raw_return[0]), float(raw_return[1]))
 
+	# Reproduce entry from a raised exterior foundation. The transition must
+	# switch to the flat interior presentation plane while fully covered, never
+	# exposing one frame with stale exterior elevation.
+	player.call("set_world_elevation", 48.0)
 	player.global_position = entry.global_position
 	assert(
 		await _wait_for_texture_path(
@@ -112,6 +117,15 @@ func _ready() -> void:
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Interior spawn must be walkable")
+	assert(
+		is_zero_approx(float(player.call("get_world_elevation"))),
+		"Interior entry must reset exterior elevation before the reveal transition"
+	)
+	assert(
+		active_interior.has_safe_spawn_to_exit_path(),
+		"DigiLab spawn must remain connected to its exit after layout changes"
+	)
+	_assert_all_service_navigation_contracts()
 	assert(
 		int(world.call("get_area_banner_presentation_count")) == initial_banner_count,
 		"Entering a local interior must not display an area-title banner"
@@ -302,11 +316,85 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 	var physics_root := interior.get_node_or_null("InteriorCollision")
 	assert(physics_root != null, "DigiLab interior must expose its collision root")
 	assert(
-		String(physics_root.get_meta("digilab_wall_collision_backend", "")) == "blocked-cells-only",
-		"DigiLab walls must not duplicate blocked-cell movement rules with per-tile PhysicsServer colliders"
+		String(physics_root.get_meta("digilab_wall_collision_backend", "")) == "layout-clearance",
+		"DigiLab walls must use the shared clearance-aware layout navigation backend"
+	)
+	assert(
+		String(physics_root.get_meta("movement_backend", "")) == "layout-clearance",
+		"Interior collision root must expose the single logical movement backend"
+	)
+	assert(
+		physics_root.get_child_count() == 0,
+		"Interior walls/counters must not create redundant PhysicsServer shapes that can push the player"
 	)
 
 	assert(ResourceLoader.exists(DIGILAB_WALL_PATHS["wall_end_cap"]), "Canonical DigiLab end-cap SVG must remain available")
+
+
+func _assert_all_service_navigation_contracts() -> void:
+	for service_id: String in ["digilab", "hospital", "training"]:
+		var interior := INTERIOR_SCENE.instantiate() as WorldInterior
+		assert(interior != null, "%s test interior must instantiate" % service_id)
+		interior.configure({
+			"interior_id": "navigation_test_%s" % service_id,
+			"service": service_id,
+			"title": service_id.to_upper(),
+			"accent": [0.35, 0.88, 1.0, 1.0],
+		}, null)
+
+		assert(
+			interior.get_navigation_backend() == "layout-clearance",
+			"%s must use the shared interior navigation backend" % service_id
+		)
+		assert(
+			interior.has_safe_spawn_to_exit_path(),
+			"%s spawn must always have a connected path to the exit" % service_id
+		)
+		assert(
+			interior.is_grid_cell_walkable(interior.get_spawn_cell())
+			and interior.is_grid_cell_walkable(interior.get_exit_cell()),
+			"%s spawn and exit cells must remain walkable after layout edits" % service_id
+		)
+
+		var collision_root := interior.get_node_or_null("InteriorCollision")
+		assert(collision_root != null, "%s must expose its navigation debug root" % service_id)
+		assert(
+			collision_root.get_child_count() == 0,
+			"%s must not mix logical navigation with physical wall/counter colliders" % service_id
+		)
+
+		# The center is still in logical row 1 here, but the player's footprint
+		# reaches into the back-wall row. Zero-clearance point navigation would
+		# incorrectly accept it; actor-aware clearance must reject it.
+		var near_back_wall := interior.to_global(
+			interior.grid_to_world(Vector2(9.0, 0.8))
+		)
+		assert(
+			interior.is_walkable_world_position(near_back_wall, 0.0),
+			"%s near-wall probe must demonstrate why point-only collision is insufficient" % service_id
+		)
+		assert(
+			not interior.is_walkable_world_position(near_back_wall),
+			"%s player footprint must stop before entering the upper/back wall" % service_id
+		)
+
+		var exit_world := interior.to_global(
+			interior.grid_to_world(Vector2(interior.get_exit_cell()))
+		)
+		assert(
+			interior.is_walkable_world_position(exit_world),
+			"%s player must be able to reach the lower exit lane" % service_id
+		)
+
+		var counter_world := interior.to_global(
+			interior.grid_to_world(Vector2(9, 4))
+		)
+		assert(
+			not interior.is_walkable_world_position(counter_world, 0.0),
+			"%s service counter visual must register its own blocked layout cell" % service_id
+		)
+
+		interior.free()
 
 
 func _assert_anchor_present(anchors_by_kind: Dictionary, kind: String, expected: Vector2) -> void:
