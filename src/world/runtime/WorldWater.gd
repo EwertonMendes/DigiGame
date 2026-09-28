@@ -13,7 +13,7 @@ const DEFAULT_SURFACE_PROFILE := {
 	"shallow_color": Color(0.055, 0.735, 0.855, 1.0),
 	"line_color": Color(0.220, 0.900, 0.980, 1.0),
 	"crest_color": Color(0.660, 0.985, 1.000, 1.0),
-	"flow_direction": Vector2(1.0, 1.0).normalized(),
+	"flow_direction": Vector2(0.70710678, 0.70710678),
 	"flow_speed": 0.24,
 	"pattern_scale": 2.35,
 	"line_width": 0.045,
