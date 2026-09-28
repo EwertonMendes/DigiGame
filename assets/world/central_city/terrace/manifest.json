@@ -1,0 +1,371 @@
+{
+  "version": 1,
+  "source": "Original DigiGame artwork generated with built-in ImageGen",
+  "assets": {
+    "stair_sw": {
+      "path": "res://assets/world/central_city/terrace/stair_sw.png",
+      "image_size": [
+        1448,
+        1086
+      ],
+      "bounds": [
+        153,
+        127,
+        1142,
+        932
+      ],
+      "anchors": [
+        [
+          780,
+          131
+        ],
+        [
+          1290,
+          390
+        ],
+        [
+          625,
+          1055
+        ],
+        [
+          157,
+          805
+        ]
+      ],
+      "cross_grid": [
+        1,
+        0
+      ]
+    },
+    "stair_se": {
+      "path": "res://assets/world/central_city/terrace/stair_se.png",
+      "image_size": [
+        1448,
+        1086
+      ],
+      "bounds": [
+        189,
+        126,
+        1123,
+        881
+      ],
+      "anchors": [
+        [
+          720,
+          130
+        ],
+        [
+          193,
+          403
+        ],
+        [
+          772,
+          1003
+        ],
+        [
+          1308,
+          739
+        ]
+      ],
+      "cross_grid": [
+        0,
+        1
+      ]
+    },
+    "stair_ne": {
+      "path": "res://assets/world/central_city/terrace/stair_ne.png",
+      "image_size": [
+        1448,
+        1086
+      ],
+      "bounds": [
+        123,
+        286,
+        1198,
+        704
+      ],
+      "anchors": [
+        [
+          127,
+          381
+        ],
+        [
+          651,
+          642
+        ],
+        [
+          1317,
+          738
+        ],
+        [
+          793,
+          477
+        ]
+      ],
+      "cross_grid": [
+        1,
+        0
+      ]
+    },
+    "stair_nw": {
+      "path": "res://assets/world/central_city/terrace/stair_nw.png",
+      "image_size": [
+        1448,
+        1086
+      ],
+      "bounds": [
+        171,
+        369,
+        1171,
+        662
+      ],
+      "anchors": [
+        [
+          1338,
+          435
+        ],
+        [
+          1044,
+          584
+        ],
+        [
+          715,
+          1027
+        ],
+        [
+          175,
+          760
+        ]
+      ],
+      "cross_grid": [
+        0,
+        1
+      ]
+    },
+    "bridge_x": {
+      "path": "res://assets/world/central_city/terrace/bridge_x.png",
+      "image_size": [
+        1448,
+        1086
+      ],
+      "bounds": [
+        160,
+        254,
+        1136,
+        700
+      ],
+      "anchors": [
+        [
+          438,
+          258
+        ],
+        [
+          164,
+          396
+        ],
+        [
+          1005,
+          884
+        ],
+        [
+          1292,
+          741
+        ]
+      ],
+      "cross_grid": [
+        0,
+        1
+      ]
+    },
+    "bridge_y": {
+      "path": "res://assets/world/central_city/terrace/bridge_y.png",
+      "image_size": [
+        1448,
+        1086
+      ],
+      "bounds": [
+        148,
+        249,
+        1163,
+        717
+      ],
+      "anchors": [
+        [
+          936,
+          253
+        ],
+        [
+          1307,
+          447
+        ],
+        [
+          527,
+          847
+        ],
+        [
+          152,
+          662
+        ]
+      ],
+      "cross_grid": [
+        1,
+        0
+      ]
+    },
+    "rail_x": {
+      "path": "res://assets/world/central_city/terrace/rail_x.png",
+      "image_size": [
+        1774,
+        887
+      ],
+      "bounds": [
+        524,
+        114,
+        728,
+        674
+      ],
+      "anchors": [
+        [
+          598,
+          480
+        ],
+        [
+          1176,
+          776
+        ],
+        [
+          1176,
+          441
+        ],
+        [
+          598,
+          145
+        ]
+      ]
+    },
+    "rail_y": {
+      "path": "res://assets/world/central_city/terrace/rail_y.png",
+      "image_size": [
+        1448,
+        1086
+      ],
+      "bounds": [
+        207,
+        170,
+        1034,
+        794
+      ],
+      "anchors": [
+        [
+          281,
+          934
+        ],
+        [
+          1166,
+          521
+        ],
+        [
+          1166,
+          191
+        ],
+        [
+          281,
+          604
+        ]
+      ]
+    },
+    "parapet_x": {
+      "path": "res://assets/world/central_city/terrace/parapet_x.png",
+      "image_size": [
+        1448,
+        1086
+      ],
+      "bounds": [
+        220,
+        212,
+        1000,
+        752
+      ],
+      "anchors": [
+        [
+          265,
+          504
+        ],
+        [
+          1150,
+          960
+        ],
+        [
+          1150,
+          700
+        ],
+        [
+          265,
+          244
+        ]
+      ]
+    },
+    "parapet_y": {
+      "path": "res://assets/world/central_city/terrace/parapet_y.png",
+      "image_size": [
+        1774,
+        887
+      ],
+      "bounds": [
+        220,
+        78,
+        1371,
+        791
+      ],
+      "anchors": [
+        [
+          341,
+          850
+        ],
+        [
+          1470,
+          485
+        ],
+        [
+          1470,
+          265
+        ],
+        [
+          341,
+          630
+        ]
+      ]
+    },
+    "post": {
+      "path": "res://assets/world/central_city/terrace/post.png",
+      "image_size": [
+        1261,
+        1247
+      ],
+      "bounds": [
+        422,
+        231,
+        409,
+        795
+      ],
+      "anchors": [
+        [
+          431,
+          1020
+        ],
+        [
+          817,
+          1020
+        ],
+        [
+          817,
+          235
+        ],
+        [
+          431,
+          235
+        ]
+      ]
+    }
+  }
+}

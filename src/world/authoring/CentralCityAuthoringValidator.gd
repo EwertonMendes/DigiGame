@@ -38,8 +38,18 @@ static func _validate_polygons(container: Node, label: String, issues: Array[Str
 	if container == null:
 		return
 	for child in container.get_children():
-		if child is Polygon2D and (child as Polygon2D).polygon.size() < 3:
+		if not child is Polygon2D:
+			continue
+		var polygon := (child as Polygon2D).polygon
+		if polygon.size() < 3:
 			issues.append("%s %s needs at least three vertices." % [label.capitalize(), child.name])
+			continue
+		if Geometry2D.triangulate_polygon(polygon).is_empty():
+			issues.append("%s %s has an invalid polygon." % [label.capitalize(), child.name])
+		if label == "transition":
+			var kind := String(child.get("kind"))
+			if kind in ["stairs", "bridge"] and polygon.size() != 4:
+				issues.append("%s must have four ordered corners." % child.name)
 
 
 static func _validate_ids(root: Node, issues: Array[String]) -> void:

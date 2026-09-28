@@ -7,6 +7,7 @@ class_name CentralCityArt
 # overworld reads as a city floor instead of a tactical board. Grass, water,
 # perimeter depth and authored interiors still use their dedicated source art.
 const CITY_PAVER_SHADER = preload("res://shaders/city_paver_floor.gdshader")
+const CITY_WATER_SHADER = preload("res://shaders/city_canal_water.gdshader")
 const GROUND_GRASS_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0056.png"
 const GROUND_GRASS_CHECKER_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0053.png"
 const GROUND_MINT_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0058.png"
@@ -162,7 +163,7 @@ static func surface_base_color(surface: String) -> Color:
 		SURFACE_TECH_PURPLE:
 			return Color(0.44, 0.40, 0.47, 1.0)
 		SURFACE_DARK, SURFACE_ROAD:
-			return Color(0.27, 0.28, 0.29, 1.0)
+			return Color(0.25, 0.275, 0.29, 1.0)
 		SURFACE_WATER:
 			return Color(0.04, 0.58, 0.72, 1.0)
 		SURFACE_MARKET:
@@ -214,7 +215,7 @@ static func create_ground_batch(
 	# side faces requested for border tiles.
 	var edge_specs: Array[Dictionary] = []
 	for spec: Dictionary in tiles:
-		if bool(spec.get("edge", false)):
+		if bool(spec.get("edge", false)) and String(spec.get("surface", "")) != SURFACE_WATER:
 			edge_specs.append(spec)
 	edge_specs.sort_custom(_ground_spec_before)
 	var edges := Node2D.new()
@@ -248,7 +249,11 @@ static func create_ground_batch(
 		detail.name = "Surface_%s" % surface
 		if is_procedural_paver_surface(surface):
 			detail.mesh = _build_ground_paver_mesh(grouped[surface] as Array, surface)
-			detail.material = _create_paver_material()
+			detail.material = _create_paver_material(surface)
+			detail.texture = null
+		elif surface == SURFACE_WATER:
+			detail.mesh = _build_ground_paver_mesh(grouped[surface] as Array, surface)
+			detail.material = create_water_material()
 			detail.texture = null
 		else:
 			detail.mesh = _build_ground_surface_mesh(grouped[surface] as Array)
@@ -319,14 +324,36 @@ static func create_paver_polygon(
 
 static func create_paver_polygon_batch(
 	polygons: Array[Dictionary],
+	depth_order: int,
+	paint_mask: Texture2D = null,
+	paint_mask_origin: Vector2i = Vector2i.ZERO
+) -> MeshInstance2D:
+	var material := _create_paver_material()
+	if paint_mask != null:
+		material.set_shader_parameter("use_paint_mask", true)
+		material.set_shader_parameter("paint_mask", paint_mask)
+		material.set_shader_parameter("paint_mask_origin", Vector2(paint_mask_origin))
+		material.set_shader_parameter("paint_mask_size", Vector2(paint_mask.get_size()))
+	return create_world_uv_polygon_batch(polygons, material, depth_order)
+
+
+static func create_world_uv_polygon_batch(
+	polygons: Array[Dictionary],
+	material: Material,
 	depth_order: int
 ) -> MeshInstance2D:
 	var mesh_instance := MeshInstance2D.new()
 	mesh_instance.mesh = _build_paver_polygon_batch_mesh(polygons)
-	mesh_instance.material = _create_paver_material()
+	mesh_instance.material = material
 	mesh_instance.texture = null
 	mesh_instance.z_index = clampi(depth_order, -4000, 4000)
 	return mesh_instance
+
+
+static func create_water_material() -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = CITY_WATER_SHADER
+	return material
 
 
 static func create_color_polygon_batch(
@@ -525,11 +552,15 @@ static func _build_ground_base_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
 	return mesh
 
 
-static func _create_paver_material() -> ShaderMaterial:
+static func _create_paver_material(surface: String = "") -> ShaderMaterial:
 	var material := ShaderMaterial.new()
 	material.shader = CITY_PAVER_SHADER
 	material.set_shader_parameter("pavers_per_cell", PAVERS_PER_GAMEPLAY_CELL)
 	material.set_shader_parameter("grout_width", PAVER_GROUT_WIDTH)
+	if surface in [SURFACE_DARK, SURFACE_ROAD]:
+		material.set_shader_parameter("stone_variation", 0.04)
+		material.set_shader_parameter("grout_darkening", 0.24)
+		material.set_shader_parameter("edge_highlight", 0.02)
 	return material
 
 

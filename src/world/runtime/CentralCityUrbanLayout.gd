@@ -28,12 +28,13 @@ static func build() -> Dictionary:
 		layer_count += 1
 
 	var config := _load_config()
+	var paint_mask := _build_paint_mask(AUTHORING.painted_cells())
 	var layers_value = config.get("layers", [])
 	if layers_value is Array:
 		for raw_layer in layers_value:
 			if not raw_layer is Dictionary:
 				continue
-			var result := _build_area_layer(root, raw_layer as Dictionary)
+			var result := _build_area_layer(root, raw_layer as Dictionary, paint_mask)
 			polygon_count += int(result.get("polygon_count", 0))
 			if int(result.get("polygon_count", 0)) > 0:
 				layer_count += 1
@@ -57,7 +58,8 @@ static func _build_road_network(root: Node2D) -> Dictionary:
 		# Painted roads are part of the ground batch. Keeping them out of the
 		# urban overlay removes a second geometry system and makes every road
 		# cell directly editable with the same brush used for other surfaces.
-		return {"polygon_count": 0}
+		# Only their exposed edges need a batched finish; no path graph is built.
+		return _build_painted_road_edges(root, network)
 
 	var paths_value = network.get("paths", [])
 	if paths_value is Array and not paths_value.is_empty():
@@ -144,6 +146,53 @@ static func _build_road_network(root: Node2D) -> Dictionary:
 		surface_mesh.z_index = 1
 		root.add_child(surface_mesh)
 	return {"polygon_count": polygon_count}
+
+
+static func _build_painted_road_edges(root: Node2D, network: Dictionary) -> Dictionary:
+	var cells_value = network.get("cells", [])
+	if not cells_value is Array:
+		return {"polygon_count": 0}
+	var cells := {}
+	for raw_key in cells_value as Array:
+		var parts := String(raw_key).split(",", false)
+		if parts.size() != 2:
+			continue
+		var cell := Vector2i(int(parts[0]), int(parts[1]))
+		cells[cell] = true
+
+	var edge_specs: Array[Dictionary] = []
+	var directions: Array[Vector2i] = [Vector2i.LEFT, Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN]
+	var corners := CITY.tile_diamond()
+	for cell_value in cells.keys():
+		var cell := cell_value as Vector2i
+		if not bool(TOPOLOGY.ground_rule_for_cell(cell).get("render", true)):
+			continue
+		var center := TOPOLOGY.grid_to_display(Vector2(cell))
+		for side in range(4):
+			var neighbor := cell + directions[side]
+			if cells.has(neighbor):
+				continue
+			var transition := TOPOLOGY.ground_rule_for_cell(neighbor)
+			if not bool(transition.get("render", true)) and bool(transition.get("walkable", false)):
+				continue
+			var a := center + corners[side]
+			var b := center + corners[(side + 1) % 4]
+			var inward := (center - (a + b) * 0.5).normalized()
+			edge_specs.append({
+				"points": PackedVector2Array([
+					a + inward * 1.0,
+					b + inward * 1.0,
+					b + inward * 2.7,
+					a + inward * 2.7,
+				]),
+				"color": Color(0.49, 0.53, 0.54, 0.75),
+			})
+	if edge_specs.is_empty():
+		return {"polygon_count": 0}
+	var edging := CITY.create_color_polygon_batch(edge_specs, 1)
+	edging.name = "PaintedRoadEdging"
+	root.add_child(edging)
+	return {"polygon_count": edge_specs.size()}
 
 
 static func _build_authored_road_paths(
@@ -244,7 +293,34 @@ static func _build_authored_road_paths(
 	return {"polygon_count": polygon_count}
 
 
-static func _build_area_layer(root: Node2D, layer: Dictionary) -> Dictionary:
+static func _build_paint_mask(cells: Dictionary) -> Dictionary:
+	if cells.is_empty():
+		return {}
+	var painted: Array[Vector2i] = []
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for raw_key in cells:
+		var parts := String(raw_key).split(",", false)
+		if parts.size() != 2:
+			continue
+		var cell := Vector2i(int(parts[0]), int(parts[1]))
+		painted.append(cell)
+		minimum = Vector2i(mini(minimum.x, cell.x), mini(minimum.y, cell.y))
+		maximum = Vector2i(maxi(maximum.x, cell.x), maxi(maximum.y, cell.y))
+	if painted.is_empty():
+		return {}
+	# One tiny occupancy texture is shared by all surface regions. Geometry and
+	# draw calls stay batched; no per-cell nodes or per-frame CPU work is added.
+	var size := maximum - minimum + Vector2i.ONE
+	var image := Image.create(size.x, size.y, false, Image.FORMAT_R8)
+	image.fill(Color.BLACK)
+	for cell: Vector2i in painted:
+		var pixel := cell - minimum
+		image.set_pixel(pixel.x, pixel.y, Color.WHITE)
+	return {"texture": ImageTexture.create_from_image(image), "origin": minimum}
+
+
+static func _build_area_layer(root: Node2D, layer: Dictionary, paint_mask: Dictionary = {}) -> Dictionary:
 	var layer_id := String(layer.get("id", "area"))
 	var polygons_value = layer.get("polygons", [])
 	if not polygons_value is Array or polygons_value.is_empty():
@@ -294,12 +370,14 @@ static func _build_area_layer(root: Node2D, layer: Dictionary) -> Dictionary:
 	if fills.is_empty():
 		return {"polygon_count": 0}
 	var token := _node_token(layer_id)
+	var mask_texture := paint_mask.get("texture") as Texture2D
+	var mask_origin: Vector2i = paint_mask.get("origin", Vector2i.ZERO)
 	if not borders.is_empty():
-		var edge_mesh := CITY.create_paver_polygon_batch(borders, 0)
+		var edge_mesh := CITY.create_paver_polygon_batch(borders, 0, mask_texture, mask_origin)
 		edge_mesh.name = "Edges_%s" % token
 		edge_mesh.z_index = 0
 		root.add_child(edge_mesh)
-	var surface_mesh := CITY.create_paver_polygon_batch(fills, 1)
+	var surface_mesh := CITY.create_paver_polygon_batch(fills, 1, mask_texture, mask_origin)
 	surface_mesh.name = "Surface_%s" % token
 	surface_mesh.z_index = 1
 	root.add_child(surface_mesh)

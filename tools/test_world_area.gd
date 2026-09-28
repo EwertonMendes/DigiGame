@@ -255,19 +255,20 @@ func _ready() -> void:
 	var urban_layout := area.get_node_or_null("CityUrbanLayout") as Node2D
 	assert(
 		urban_layout != null
-		and area.get_urban_layout_layer_count() == 3
+		and area.get_urban_layout_layer_count() >= 3
 		and area.get_urban_layout_polygon_count() >= 15
 		and area.is_road_graph_connected(),
 		"Central City must batch authored civic overlays while roads stay in the editable ground-paint layer"
 	)
 	assert(
-		area.get_urban_layout_render_node_count() <= 14,
+		area.get_urban_layout_render_node_count() <= 15,
 		"Urban paths, plazas and district courts must stay batched into a small fixed render-node budget"
 	)
 	assert(
 		urban_layout.get_node_or_null("Edges_road_network") == null
-		and urban_layout.get_node_or_null("Surface_road_network") == null,
-		"Painted roads must not be duplicated by a second procedural road mesh"
+		and urban_layout.get_node_or_null("Surface_road_network") == null
+		and urban_layout.get_node_or_null("PaintedRoadEdging") is MeshInstance2D,
+		"Painted roads need one batched edge finish without duplicating their ground surface"
 	)
 	for required_urban_node: String in [
 		"Surface_central_plaza",
@@ -285,19 +286,23 @@ func _ready() -> void:
 	var south_terrace := area.get_node_or_null("SouthTerraceStructure") as Node2D
 	assert(
 		south_terrace != null
-		and area.get_south_terrace_render_node_count() == 11
+		and area.get_south_terrace_render_node_count() <= 16
 		and south_terrace.get_node_or_null("RetainingWallCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("RetainingWallFaces") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairLandings") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairSideCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairNosingAndParapets") is MeshInstance2D
+		and south_terrace.get_node_or_null("CanalWater") is MeshInstance2D
+		and south_terrace.get_node_or_null("WaterEdgeHighlights") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchBankCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchInnerWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D
-		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D,
-		"South Terrace must use explicit architectural walls, stepped stairs, recessed voids, and structural bridges"
+		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D
+		and south_terrace.get_node_or_null("ParapetPosts") is Node2D,
+		"South Terrace must batch its architectural stairs, canal banks, water, and bridges"
 	)
 	assert(
 		int(south_terrace.get_meta("visual_level_count", 0)) == 2
@@ -308,10 +313,12 @@ func _ready() -> void:
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
 		"South Terrace must keep two actual presentation levels separated by 48px, two stairways, two void pockets, and two bridges"
 	)
+	var canal_water := south_terrace.get_node_or_null("CanalWater") as MeshInstance2D
 	assert(
-		south_terrace.get_node_or_null("WaterfallFaces") == null
-		and south_terrace.get_node_or_null("WaterfallHighlights") == null,
-		"The temporary water/waterfall presentation must stay removed until the replacement water system is authored"
+		canal_water != null
+		and canal_water.material is ShaderMaterial
+		and (canal_water.material as ShaderMaterial).shader.resource_path == "res://shaders/city_canal_water.gdshader",
+		"The authored canal must use the shared animated water shader instead of water block sprites"
 	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))

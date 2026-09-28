@@ -120,6 +120,12 @@ static func landscape_cells(section_coord: Vector2i) -> Array[Vector2]:
 	return result
 
 
+static func painted_cells() -> Dictionary:
+	_ensure_cache()
+	var value = _cache.get("ground_paint", {})
+	return (value as Dictionary).duplicate(true) if value is Dictionary else {}
+
+
 static func ground_override_at(global_grid: Vector2) -> Dictionary:
 	_ensure_cache()
 	var paint_value = _cache.get("ground_paint", {})
@@ -307,6 +313,7 @@ static func _parse_transitions(root: Node) -> Dictionary:
 			"stairs":
 				(result["stairs"] as Array).append({
 					"id": transition_id,
+					"grid_polygon": grid_polygon,
 					"x_min": bounds.position.x,
 					"x_max": bounds.end.x,
 					"y_start": bounds.position.y,
@@ -318,6 +325,7 @@ static func _parse_transitions(root: Node) -> Dictionary:
 			"bridge":
 				(result["bridges"] as Array).append({
 					"id": transition_id,
+					"grid_polygon": grid_polygon,
 					"x_min": bounds.position.x,
 					"x_max": bounds.end.x,
 					"y_min": bounds.position.y,
@@ -327,6 +335,8 @@ static func _parse_transitions(root: Node) -> Dictionary:
 			"void":
 				(result["voids"] as Array).append({
 					"id": transition_id,
+					"grid_polygon": grid_polygon,
+					"fill": String(child.get("void_fill")),
 					"x_min": bounds.position.x,
 					"x_max": bounds.end.x,
 					"y_min": bounds.position.y,
@@ -511,7 +521,7 @@ static func _parse_ground_regions(root: Node) -> Array:
 static func _polygon_to_grid(node: Polygon2D) -> PackedVector2Array:
 	var result := PackedVector2Array()
 	for point: Vector2 in node.polygon:
-		result.append(world_to_grid(node.position + point))
+		result.append(world_to_grid(node.transform * point))
 	return result
 
 

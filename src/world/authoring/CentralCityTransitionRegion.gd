@@ -8,6 +8,7 @@ class_name CentralCityTransitionRegion
 @export var to_level := ""
 @export var level_id := ""
 @export_range(2, 16, 1) var steps := 6
+@export_enum("water", "none") var void_fill := "water"
 
 
 func _ready() -> void:

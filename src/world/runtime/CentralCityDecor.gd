@@ -85,11 +85,11 @@ static func build_for_section(
 		var clearance := _vec2(
 			placement.get("clearance", asset.get("clearance", asset.get("blocker", [0.0, 0.0])))
 		)
-		# Validate the authored placement clearance separately from the fitted
-		# physical footprint. Benches beside landscape islands deliberately reduce
-		# this envelope at placement level, while the anchor itself must still be on
-		# open pavement before the fitted blocker is registered.
-		if not bool(can_place.call(cell, clearance)):
+		# Authored positions are deliberate level-design choices. The editor must
+		# show the prop at its marker even when its clearance overlaps existing
+		# geometry; silently skipping it leaves an invisible selected handle.
+		# Keep clearance filtering for generated legacy profile placements.
+		if not visual_authoring_is_authoritative and not bool(can_place.call(cell, clearance)):
 			continue
 
 		var texture := _texture_for(asset_id, asset)

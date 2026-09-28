@@ -15,8 +15,7 @@ const SELECT_COLOR := Color(0.35, 1.0, 0.55, 0.95)
 
 var _toolbar: HBoxContainer
 var _toolbar_toggle: Button
-var _toolbar_scroll: ScrollContainer
-var _toolbar_tools: HBoxContainer
+var _toolbar_tools: HFlowContainer
 var _toolbar_expanded := true
 var _mode: OptionButton
 var _snap: OptionButton
@@ -53,15 +52,21 @@ var _undo_feedback_seconds := 0.0
 func _enter_tree() -> void:
 	_build_toolbar()
 	add_control_to_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _toolbar)
+	add_control_to_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_BOTTOM, _toolbar_tools)
 	get_undo_redo().history_changed.connect(_on_scene_history_changed)
 	set_force_draw_over_forwarding_enabled()
 	_toolbar.visible = false
+	_toolbar_tools.visible = false
 
 
 func _exit_tree() -> void:
 	_clear_stamp_template()
 	_disconnect_scene_undo()
 	get_undo_redo().history_changed.disconnect(_on_scene_history_changed)
+	if _toolbar_tools != null:
+		remove_control_from_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_BOTTOM, _toolbar_tools)
+		_toolbar_tools.queue_free()
+	_toolbar_tools = null
 	if _toolbar != null:
 		remove_control_from_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _toolbar)
 		_toolbar.queue_free()
@@ -231,21 +236,16 @@ func _handle_canvas_input(event: InputEvent) -> bool:
 func _build_toolbar() -> void:
 	_toolbar = HBoxContainer.new()
 	_toolbar.name = "WorldAuthoringToolbar"
-	_toolbar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_toolbar_tools = HFlowContainer.new()
+	_toolbar_tools.name = "WorldAuthoringTools"
+	_toolbar_tools.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_toolbar_tools.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 	_toolbar_toggle = Button.new()
 	_toolbar_toggle.text = "Hide Tools"
 	_toolbar_toggle.tooltip_text = "Explicitly hide/show the world-authoring controls. Selection changes never affect this state."
 	_toolbar_toggle.pressed.connect(_on_toolbar_toggle_pressed)
 	_toolbar.add_child(_toolbar_toggle)
-	_toolbar_scroll = ScrollContainer.new()
-	_toolbar_scroll.name = "ToolsScroll"
-	_toolbar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_toolbar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	_toolbar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_toolbar.add_child(_toolbar_scroll)
-	_toolbar_tools = HBoxContainer.new()
-	_toolbar_scroll.add_child(_toolbar_tools)
 
 	_mode = OptionButton.new()
 	_mode.tooltip_text = "Select objects directly or paint world tiles."
@@ -275,25 +275,29 @@ func _build_toolbar() -> void:
 	_picker_button.toggled.connect(_on_picker_toggled)
 	_toolbar_tools.add_child(_picker_button)
 
+	var snap_group := HBoxContainer.new()
 	var snap_label := Label.new()
 	snap_label.text = "Snap"
-	_toolbar_tools.add_child(snap_label)
+	snap_group.add_child(snap_label)
 	_snap = OptionButton.new()
 	for entry in [["1", 1.0], ["1/2", 0.5], ["1/4", 0.25]]:
 		_snap.add_item(entry[0])
 		_snap.set_item_metadata(_snap.item_count - 1, entry[1])
 	_snap.select(1)
-	_toolbar_tools.add_child(_snap)
+	snap_group.add_child(_snap)
+	_toolbar_tools.add_child(snap_group)
 
+	var brush_group := HBoxContainer.new()
 	var brush_label := Label.new()
 	brush_label.text = "Brush"
-	_toolbar_tools.add_child(brush_label)
+	brush_group.add_child(brush_label)
 	_brush = OptionButton.new()
 	for size in [1, 3, 5]:
 		_brush.add_item("%dx%d" % [size, size])
 		_brush.set_item_metadata(_brush.item_count - 1, size)
 	_brush.select(0)
-	_toolbar_tools.add_child(_brush)
+	brush_group.add_child(_brush)
+	_toolbar_tools.add_child(brush_group)
 
 	_surface = OptionButton.new()
 	for item in ["main", "road", "dark", "stone_soft", "tech_teal", "tech_blue", "tech_purple", "market", "training", "grass", "water", "void"]:
@@ -516,8 +520,8 @@ func _apply_toolbar_expanded_state() -> void:
 	if _toolbar == null or _toolbar_toggle == null:
 		return
 	_toolbar_toggle.text = "Hide Tools" if _toolbar_expanded else "Show World Tools"
-	_toolbar_scroll.visible = _toolbar_expanded
 	_status.visible = _toolbar_expanded
+	_toolbar_tools.visible = _toolbar_expanded and _authoring_root() != null
 
 
 func _sync_toolbar_visibility() -> void:
@@ -528,9 +532,16 @@ func _sync_toolbar_visibility() -> void:
 		_toolbar.visible = should_show
 	if should_show:
 		_apply_toolbar_expanded_state()
+	else:
+		_toolbar_tools.visible = false
 
 
 func _activate_road_brush() -> void:
+	var root := _authoring_root()
+	if root != null:
+		_finish_active_paint_stroke(root)
+	_finish_pointer_action()
+	_cancel_picker_and_stamp()
 	for index in range(_mode.item_count):
 		if _mode.get_item_text(index) == "Paint":
 			_mode.select(index)
@@ -1451,7 +1462,7 @@ func _handle_ground_input(event: InputEvent, root: Node) -> bool:
 
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
-		var grid := MATH.visual_world_to_grid(_screen_to_visual_world(motion.position))
+		var grid := MATH.visual_world_to_grid(_screen_to_authoring_local(motion.position))
 		_ground_hover_cell = Vector2i(roundi(grid.x), roundi(grid.y))
 		update_overlays()
 		if _paint_stroke_active:
@@ -1484,7 +1495,7 @@ func _draw_ground_hover(overlay: Control) -> void:
 
 
 func _paint_at(screen: Vector2, paint: Node) -> void:
-	var grid := MATH.visual_world_to_grid(_screen_to_visual_world(screen))
+	var grid := MATH.visual_world_to_grid(_screen_to_authoring_local(screen))
 	var cell := Vector2i(roundi(grid.x), roundi(grid.y))
 	if cell == _paint_last_cell:
 		return

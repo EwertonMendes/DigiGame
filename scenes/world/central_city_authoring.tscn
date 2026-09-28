@@ -231,80 +231,8 @@ script = ExtResource("6_boundary")
 [node name="Surfaces" type="Node2D" parent="." unique_id=1445949062]
 visible = false
 
-[node name="plaza_north_apron" type="Polygon2D" parent="Surfaces" unique_id=1981281269]
-color = Color(1.12, 1.13, 1.13, 0.2)
-polygon = PackedVector2Array(0, 108.8, 230.4, 224, 153.6, 262.4, -76.8, 147.2)
-script = ExtResource("4_surface")
-region_id = "plaza_north_apron"
-layer_id = "central_plaza"
-tint = Color(1.12, 1.13, 1.13, 1)
-border_width = 1.5
-border_color = Color(0.43, 0.47, 0.48, 1)
-
-[node name="plaza_south_apron" type="Polygon2D" parent="Surfaces" unique_id=1892240084]
-color = Color(1.12, 1.13, 1.13, 0.2)
-polygon = PackedVector2Array(-172.8, 195.2, 57.6, 310.4, -57.6, 368, -288, 252.8)
-script = ExtResource("4_surface")
-region_id = "plaza_south_apron"
-layer_id = "central_plaza"
-tint = Color(1.12, 1.13, 1.13, 1)
-border_width = 1.5
-border_color = Color(0.43, 0.47, 0.48, 1)
-
-[node name="plaza_west_apron" type="Polygon2D" parent="Surfaces" unique_id=2030846259]
-color = Color(1.12, 1.13, 1.13, 0.2)
-polygon = PackedVector2Array(-70.4, 144, 6.4, 182.4, -108.8, 240, -185.6, 201.6)
-script = ExtResource("4_surface")
-region_id = "plaza_west_apron"
-layer_id = "central_plaza"
-tint = Color(1.12, 1.13, 1.13, 1)
-border_width = 1.5
-border_color = Color(0.43, 0.47, 0.48, 1)
-
-[node name="plaza_east_apron" type="Polygon2D" parent="Surfaces" unique_id=863197618]
-color = Color(1.12, 1.13, 1.13, 0.2)
-polygon = PackedVector2Array(83.2, 220.8, 160, 259.2, 44.8, 316.8, -32, 278.4)
-script = ExtResource("4_surface")
-region_id = "plaza_east_apron"
-layer_id = "central_plaza"
-tint = Color(1.12, 1.13, 1.13, 1)
-border_width = 1.5
-border_color = Color(0.43, 0.47, 0.48, 1)
-
-[node name="digilab_forecourt" type="Polygon2D" parent="Surfaces" unique_id=1115082818]
-color = Color(1.18, 1.14, 1.08, 0.2)
-polygon = PackedVector2Array(-585.6, -43.2, -294.4, 102.4, -515.2, 212.8, -806.4, 67.2)
-script = ExtResource("4_surface")
-region_id = "digilab_forecourt"
-layer_id = "service_forecourts"
-surface = "tech_teal"
-tint = Color(1.18, 1.14, 1.08, 1)
-border_width = 1.5
-border_color = Color(0.3, 0.5, 0.43, 1)
-
-[node name="training_forecourt" type="Polygon2D" parent="Surfaces" unique_id=502034771]
-color = Color(1.08, 1.08, 1.05, 0.2)
-polygon = PackedVector2Array(272, -62.4, 572.8, 88, 316.8, 216, 16, 65.6)
-script = ExtResource("4_surface")
-region_id = "training_forecourt"
-layer_id = "service_forecourts"
-surface = "training"
-tint = Color(1.08, 1.08, 1.05, 1)
-border_width = 1.5
-border_color = Color(0.39, 0.46, 0.39, 1)
-
-[node name="hospital_forecourt" type="Polygon2D" parent="Surfaces" unique_id=1634887371]
-color = Color(1.18, 1.15, 1.11, 0.2)
-polygon = PackedVector2Array(268.8, 384, 576, 537.6, 355.2, 648, 48, 494.4)
-script = ExtResource("4_surface")
-region_id = "hospital_forecourt"
-layer_id = "service_forecourts"
-surface = "tech_blue"
-tint = Color(1.18, 1.15, 1.11, 1)
-border_width = 1.5
-border_color = Color(0.31, 0.43, 0.55, 1)
-
 [node name="market_forecourt" type="Polygon2D" parent="Surfaces" unique_id=532389063]
+position = Vector2(-528, 8)
 color = Color(0.95, 0.97, 1, 0.2)
 polygon = PackedVector2Array(-684.8, 464, -480, 566.4, -614.4, 633.6, -819.2, 531.2)
 script = ExtResource("4_surface")
@@ -403,33 +331,6 @@ editor_elevation_px = 0.0
 [node name="GroundOverrides" type="Node2D" parent="." unique_id=253502487]
 visible = false
 
-[node name="CentralCivicRing" type="Polygon2D" parent="GroundOverrides" unique_id=1837964521]
-color = Color(0.625, 0.635, 0.64, 0.18)
-polygon = PackedVector2Array(0, 144, 160, 224, 0, 304, -160, 224)
-script = ExtResource("11_ground")
-region_id = "CentralCivicRing"
-surface = "stone_soft"
-base_color = Color(0.625, 0.635, 0.64, 1)
-priority = 10
-
-[node name="CentralPool" type="Polygon2D" parent="GroundOverrides" unique_id=139222124]
-color = Color(1, 1, 1, 0.18)
-polygon = PackedVector2Array(0, 176, 96, 224, 0, 272, -96, 224)
-script = ExtResource("11_ground")
-region_id = "CentralPool"
-surface = "water"
-walkable = false
-priority = 20
-
-[node name="NorthCanal" type="Polygon2D" parent="GroundOverrides" unique_id=1198582708]
-color = Color(1, 1, 1, 0.18)
-polygon = PackedVector2Array(800, -352, 1120, -192, 992, -128, 672, -288)
-script = ExtResource("11_ground")
-region_id = "NorthCanal"
-surface = "water"
-walkable = false
-priority = 10
-
 [node name="NorthCanalBridge" type="Polygon2D" parent="GroundOverrides" unique_id=1836995928]
 color = Color(0.575, 0.585, 0.595, 0.18)
 polygon = PackedVector2Array(928, -288, 992, -256, 864, -192, 800, -224)
@@ -442,8 +343,9 @@ priority = 20
 script = ExtResource("12_ground_paint")
 cells = {
 "-1,1": "road",
-"-1,10": "road",
-"-1,11": "road",
+"-1,10": "stone_soft",
+"-1,11": "stone_soft",
+"-1,12": "stone_soft",
 "-1,2": "road",
 "-1,20": "road",
 "-1,21": "road",
@@ -453,30 +355,45 @@ cells = {
 "-1,3": "road",
 "-1,30": "road",
 "-1,31": "road",
+"-1,7": "road",
+"-1,8": "road",
 "-1,9": "road",
-"-10,10": "road",
-"-10,11": "road",
+"-10,10": "stone_soft",
+"-10,11": "stone_soft",
+"-10,12": "stone_soft",
+"-10,13": "stone_soft",
 "-10,29": "road",
 "-10,30": "road",
 "-10,31": "road",
+"-10,7": "road",
+"-10,8": "road",
 "-10,9": "road",
-"-11,10": "road",
-"-11,11": "road",
+"-11,10": "stone_soft",
+"-11,11": "stone_soft",
+"-11,12": "stone_soft",
 "-11,29": "road",
 "-11,30": "road",
 "-11,31": "road",
+"-11,7": "road",
+"-11,8": "road",
 "-11,9": "road",
-"-12,10": "road",
-"-12,11": "road",
+"-12,10": "stone_soft",
+"-12,11": "stone_soft",
+"-12,12": "stone_soft",
 "-12,29": "road",
 "-12,30": "road",
 "-12,31": "road",
+"-12,7": "road",
+"-12,8": "road",
 "-12,9": "road",
-"-13,10": "road",
-"-13,11": "road",
+"-13,10": "stone_soft",
+"-13,11": "stone_soft",
+"-13,12": "stone_soft",
 "-13,29": "road",
 "-13,30": "road",
 "-13,31": "road",
+"-13,7": "road",
+"-13,8": "road",
 "-13,9": "road",
 "-14,10": "stone_soft",
 "-14,11": "stone_soft",
@@ -498,8 +415,9 @@ cells = {
 "-19,11": "stone_soft",
 "-19,12": "stone_soft",
 "-19,9": "stone_soft",
-"-2,10": "road",
-"-2,11": "road",
+"-2,10": "stone_soft",
+"-2,11": "stone_soft",
+"-2,12": "stone_soft",
 "-2,2": "road",
 "-2,20": "road",
 "-2,21": "road",
@@ -508,6 +426,8 @@ cells = {
 "-2,29": "road",
 "-2,30": "road",
 "-2,31": "road",
+"-2,7": "road",
+"-2,8": "road",
 "-2,9": "road",
 "-20,10": "stone_soft",
 "-20,11": "stone_soft",
@@ -539,8 +459,9 @@ cells = {
 "-26,11": "stone_soft",
 "-26,12": "stone_soft",
 "-26,9": "stone_soft",
-"-3,10": "road",
-"-3,11": "road",
+"-3,10": "stone_soft",
+"-3,11": "stone_soft",
+"-3,12": "stone_soft",
 "-3,20": "road",
 "-3,21": "road",
 "-3,22": "road",
@@ -548,6 +469,8 @@ cells = {
 "-3,29": "road",
 "-3,30": "road",
 "-3,31": "road",
+"-3,7": "road",
+"-3,8": "road",
 "-3,9": "road",
 "-4,10": "road",
 "-4,11": "road",
@@ -568,6 +491,8 @@ cells = {
 "-4,29": "road",
 "-4,30": "road",
 "-4,31": "road",
+"-4,7": "road",
+"-4,8": "road",
 "-4,9": "road",
 "-5,10": "road",
 "-5,11": "road",
@@ -590,6 +515,8 @@ cells = {
 "-5,29": "road",
 "-5,30": "road",
 "-5,31": "road",
+"-5,7": "road",
+"-5,8": "road",
 "-5,9": "road",
 "-6,10": "road",
 "-6,11": "road",
@@ -610,6 +537,8 @@ cells = {
 "-6,29": "road",
 "-6,30": "road",
 "-6,31": "road",
+"-6,7": "road",
+"-6,8": "road",
 "-6,9": "road",
 "-7,10": "road",
 "-7,11": "road",
@@ -626,21 +555,32 @@ cells = {
 "-7,29": "road",
 "-7,30": "road",
 "-7,31": "road",
+"-7,7": "road",
+"-7,8": "road",
 "-7,9": "road",
-"-8,10": "road",
-"-8,11": "road",
+"-8,10": "stone_soft",
+"-8,11": "stone_soft",
+"-8,12": "stone_soft",
+"-8,13": "stone_soft",
 "-8,29": "road",
 "-8,30": "road",
 "-8,31": "road",
+"-8,7": "road",
+"-8,8": "road",
 "-8,9": "road",
-"-9,10": "road",
-"-9,11": "road",
+"-9,10": "stone_soft",
+"-9,11": "stone_soft",
+"-9,12": "stone_soft",
+"-9,13": "stone_soft",
 "-9,29": "road",
 "-9,30": "road",
 "-9,31": "road",
+"-9,7": "road",
+"-9,8": "road",
 "-9,9": "road",
-"0,10": "road",
-"0,11": "road",
+"0,10": "stone_soft",
+"0,11": "stone_soft",
+"0,12": "stone_soft",
 "0,2": "road",
 "0,20": "road",
 "0,21": "road",
@@ -651,9 +591,12 @@ cells = {
 "0,30": "road",
 "0,31": "road",
 "0,4": "road",
+"0,7": "road",
+"0,8": "road",
 "0,9": "road",
-"1,10": "road",
-"1,11": "road",
+"1,10": "stone_soft",
+"1,11": "stone_soft",
+"1,12": "stone_soft",
 "1,20": "road",
 "1,21": "road",
 "1,22": "road",
@@ -671,8 +614,9 @@ cells = {
 "10,-20": "road",
 "10,-21": "road",
 "10,-22": "road",
-"10,10": "road",
-"10,11": "road",
+"10,10": "stone_soft",
+"10,11": "stone_soft",
+"10,12": "stone_soft",
 "10,20": "road",
 "10,21": "road",
 "10,22": "road",
@@ -680,12 +624,16 @@ cells = {
 "10,29": "road",
 "10,30": "road",
 "10,31": "road",
+"10,6": "road",
+"10,7": "road",
+"10,8": "road",
 "10,9": "road",
 "11,-20": "road",
 "11,-21": "road",
 "11,-22": "road",
-"11,10": "road",
-"11,11": "road",
+"11,10": "stone_soft",
+"11,11": "stone_soft",
+"11,12": "stone_soft",
 "11,20": "road",
 "11,21": "road",
 "11,22": "road",
@@ -693,12 +641,16 @@ cells = {
 "11,29": "road",
 "11,30": "road",
 "11,31": "road",
+"11,6": "road",
+"11,7": "road",
+"11,8": "road",
 "11,9": "road",
 "12,-20": "road",
 "12,-21": "road",
 "12,-22": "road",
-"12,10": "road",
-"12,11": "road",
+"12,10": "stone_soft",
+"12,11": "stone_soft",
+"12,12": "stone_soft",
 "12,20": "road",
 "12,21": "road",
 "12,22": "road",
@@ -706,12 +658,16 @@ cells = {
 "12,29": "road",
 "12,30": "road",
 "12,31": "road",
+"12,6": "road",
+"12,7": "road",
+"12,8": "road",
 "12,9": "road",
 "13,-20": "road",
 "13,-21": "road",
 "13,-22": "road",
-"13,10": "road",
-"13,11": "road",
+"13,10": "stone_soft",
+"13,11": "stone_soft",
+"13,12": "stone_soft",
 "13,20": "road",
 "13,21": "road",
 "13,22": "road",
@@ -719,12 +675,16 @@ cells = {
 "13,29": "road",
 "13,30": "road",
 "13,31": "road",
+"13,6": "road",
+"13,7": "road",
+"13,8": "road",
 "13,9": "road",
 "14,-20": "road",
 "14,-21": "road",
 "14,-22": "road",
-"14,10": "road",
-"14,11": "road",
+"14,10": "stone_soft",
+"14,11": "stone_soft",
+"14,12": "stone_soft",
 "14,20": "road",
 "14,21": "road",
 "14,22": "road",
@@ -732,12 +692,16 @@ cells = {
 "14,29": "road",
 "14,30": "road",
 "14,31": "road",
+"14,6": "road",
+"14,7": "road",
+"14,8": "road",
 "14,9": "road",
 "15,-20": "road",
 "15,-21": "road",
 "15,-22": "road",
-"15,10": "road",
-"15,11": "road",
+"15,10": "stone_soft",
+"15,11": "stone_soft",
+"15,12": "stone_soft",
 "15,20": "road",
 "15,21": "road",
 "15,22": "road",
@@ -745,12 +709,16 @@ cells = {
 "15,29": "road",
 "15,30": "road",
 "15,31": "road",
+"15,6": "road",
+"15,7": "road",
+"15,8": "road",
 "15,9": "road",
 "16,-20": "road",
 "16,-21": "road",
 "16,-22": "road",
-"16,10": "road",
-"16,11": "road",
+"16,10": "stone_soft",
+"16,11": "stone_soft",
+"16,12": "stone_soft",
 "16,20": "road",
 "16,21": "road",
 "16,22": "road",
@@ -758,12 +726,16 @@ cells = {
 "16,29": "road",
 "16,30": "road",
 "16,31": "road",
+"16,6": "road",
+"16,7": "road",
+"16,8": "road",
 "16,9": "road",
 "17,-20": "road",
 "17,-21": "road",
 "17,-22": "road",
-"17,10": "road",
-"17,11": "road",
+"17,10": "stone_soft",
+"17,11": "stone_soft",
+"17,12": "stone_soft",
 "17,20": "road",
 "17,21": "road",
 "17,22": "road",
@@ -771,12 +743,16 @@ cells = {
 "17,29": "road",
 "17,30": "road",
 "17,31": "road",
+"17,6": "road",
+"17,7": "road",
+"17,8": "road",
 "17,9": "road",
 "18,-20": "road",
 "18,-21": "road",
 "18,-22": "road",
-"18,10": "road",
-"18,11": "road",
+"18,10": "stone_soft",
+"18,11": "stone_soft",
+"18,12": "stone_soft",
 "18,20": "road",
 "18,21": "road",
 "18,22": "road",
@@ -784,12 +760,16 @@ cells = {
 "18,29": "road",
 "18,30": "road",
 "18,31": "road",
+"18,6": "road",
+"18,7": "road",
+"18,8": "road",
 "18,9": "road",
 "19,-20": "road",
 "19,-21": "road",
 "19,-22": "road",
-"19,10": "road",
-"19,11": "road",
+"19,10": "stone_soft",
+"19,11": "stone_soft",
+"19,12": "stone_soft",
 "19,20": "road",
 "19,21": "road",
 "19,22": "road",
@@ -797,9 +777,13 @@ cells = {
 "19,29": "road",
 "19,30": "road",
 "19,31": "road",
+"19,6": "road",
+"19,7": "road",
+"19,8": "road",
 "19,9": "road",
-"2,10": "road",
-"2,11": "road",
+"2,10": "stone_soft",
+"2,11": "stone_soft",
+"2,12": "stone_soft",
 "2,20": "road",
 "2,21": "road",
 "2,22": "road",
@@ -816,8 +800,9 @@ cells = {
 "20,-20": "road",
 "20,-21": "road",
 "20,-22": "road",
-"20,10": "road",
-"20,11": "road",
+"20,10": "stone_soft",
+"20,11": "stone_soft",
+"20,12": "stone_soft",
 "20,20": "road",
 "20,21": "road",
 "20,22": "road",
@@ -828,12 +813,16 @@ cells = {
 "20,29": "road",
 "20,30": "road",
 "20,31": "road",
+"20,6": "road",
+"20,7": "road",
+"20,8": "road",
 "20,9": "road",
 "21,-20": "road",
 "21,-21": "road",
 "21,-22": "road",
-"21,10": "road",
-"21,11": "road",
+"21,10": "stone_soft",
+"21,11": "stone_soft",
+"21,12": "stone_soft",
 "21,20": "road",
 "21,21": "road",
 "21,22": "road",
@@ -845,12 +834,16 @@ cells = {
 "21,29": "road",
 "21,30": "road",
 "21,31": "road",
+"21,6": "road",
+"21,7": "road",
+"21,8": "road",
 "21,9": "road",
 "22,-20": "road",
 "22,-21": "road",
 "22,-22": "road",
-"22,10": "road",
-"22,11": "road",
+"22,10": "stone_soft",
+"22,11": "stone_soft",
+"22,12": "stone_soft",
 "22,21": "road",
 "22,22": "road",
 "22,25": "road",
@@ -860,45 +853,77 @@ cells = {
 "22,29": "road",
 "22,30": "road",
 "22,31": "road",
+"22,6": "road",
+"22,7": "road",
+"22,8": "road",
 "22,9": "road",
-"23,10": "road",
-"23,11": "road",
+"23,10": "stone_soft",
+"23,11": "stone_soft",
+"23,12": "stone_soft",
 "23,26": "road",
 "23,27": "road",
 "23,28": "road",
 "23,29": "road",
 "23,30": "road",
 "23,31": "road",
+"23,6": "road",
+"23,7": "road",
+"23,8": "road",
 "23,9": "road",
-"24,10": "road",
-"24,11": "road",
+"24,10": "stone_soft",
+"24,11": "stone_soft",
+"24,12": "stone_soft",
 "24,29": "road",
 "24,30": "road",
 "24,31": "road",
+"24,6": "road",
+"24,7": "road",
+"24,8": "road",
 "24,9": "road",
-"25,10": "road",
-"25,11": "road",
+"25,10": "stone_soft",
+"25,11": "stone_soft",
+"25,12": "stone_soft",
 "25,29": "road",
 "25,30": "road",
 "25,31": "road",
+"25,6": "road",
+"25,7": "road",
+"25,8": "road",
 "25,9": "road",
-"26,10": "road",
-"26,11": "road",
+"26,10": "stone_soft",
+"26,11": "stone_soft",
+"26,12": "stone_soft",
 "26,29": "road",
 "26,30": "road",
 "26,31": "road",
+"26,6": "road",
+"26,7": "road",
+"26,8": "road",
 "26,9": "road",
-"27,10": "road",
-"27,11": "road",
+"27,10": "stone_soft",
+"27,11": "stone_soft",
+"27,12": "stone_soft",
+"27,6": "road",
+"27,7": "road",
+"27,8": "road",
 "27,9": "road",
-"28,10": "road",
-"28,11": "road",
+"28,10": "stone_soft",
+"28,11": "stone_soft",
+"28,12": "stone_soft",
+"28,6": "road",
+"28,7": "road",
+"28,8": "road",
 "28,9": "road",
-"29,10": "road",
-"29,11": "road",
+"29,10": "stone_soft",
+"29,11": "stone_soft",
+"29,12": "stone_soft",
+"29,6": "road",
+"29,7": "road",
+"29,8": "road",
 "29,9": "road",
-"3,10": "road",
-"3,11": "road",
+"3,10": "stone_soft",
+"3,11": "stone_soft",
+"3,12": "stone_soft",
 "3,20": "road",
 "3,21": "road",
 "3,22": "road",
@@ -911,29 +936,58 @@ cells = {
 "3,7": "road",
 "3,8": "road",
 "3,9": "road",
-"30,10": "road",
-"30,11": "road",
+"30,10": "stone_soft",
+"30,11": "stone_soft",
+"30,12": "stone_soft",
+"30,6": "road",
+"30,7": "road",
+"30,8": "road",
 "30,9": "road",
-"31,10": "road",
-"31,11": "road",
+"31,10": "stone_soft",
+"31,11": "stone_soft",
+"31,12": "stone_soft",
+"31,6": "road",
+"31,7": "road",
+"31,8": "road",
 "31,9": "road",
-"32,10": "road",
-"32,11": "road",
+"32,10": "stone_soft",
+"32,11": "stone_soft",
+"32,12": "stone_soft",
+"32,6": "road",
+"32,7": "road",
+"32,8": "road",
 "32,9": "road",
-"33,10": "road",
-"33,11": "road",
+"33,10": "stone_soft",
+"33,11": "stone_soft",
+"33,12": "stone_soft",
+"33,6": "road",
+"33,7": "road",
+"33,8": "road",
 "33,9": "road",
-"34,10": "road",
-"34,11": "road",
+"34,10": "stone_soft",
+"34,11": "stone_soft",
+"34,12": "stone_soft",
+"34,6": "road",
+"34,7": "road",
+"34,8": "road",
 "34,9": "road",
-"35,10": "road",
-"35,11": "road",
+"35,10": "stone_soft",
+"35,11": "stone_soft",
+"35,12": "stone_soft",
+"35,6": "road",
+"35,7": "road",
+"35,8": "road",
 "35,9": "road",
-"36,10": "road",
-"36,11": "road",
+"36,10": "stone_soft",
+"36,11": "stone_soft",
+"36,12": "stone_soft",
+"36,6": "road",
+"36,7": "road",
+"36,8": "road",
 "36,9": "road",
-"4,10": "road",
-"4,11": "road",
+"4,10": "stone_soft",
+"4,11": "stone_soft",
+"4,12": "stone_soft",
 "4,20": "road",
 "4,21": "road",
 "4,22": "road",
@@ -941,11 +995,14 @@ cells = {
 "4,29": "road",
 "4,30": "road",
 "4,31": "road",
+"4,5": "road",
 "4,6": "road",
 "4,7": "road",
+"4,8": "road",
 "4,9": "road",
-"5,10": "road",
-"5,11": "road",
+"5,10": "stone_soft",
+"5,11": "stone_soft",
+"5,12": "stone_soft",
 "5,20": "road",
 "5,21": "road",
 "5,22": "road",
@@ -953,6 +1010,10 @@ cells = {
 "5,29": "road",
 "5,30": "road",
 "5,31": "road",
+"5,5": "road",
+"5,6": "road",
+"5,7": "road",
+"5,8": "road",
 "5,9": "road",
 "6,-1": "road",
 "6,-10": "road",
@@ -1149,8 +1210,9 @@ cells = {
 "9,-20": "road",
 "9,-21": "road",
 "9,-22": "road",
-"9,10": "road",
-"9,11": "road",
+"9,10": "stone_soft",
+"9,11": "stone_soft",
+"9,12": "stone_soft",
 "9,20": "road",
 "9,21": "road",
 "9,22": "road",
@@ -1158,6 +1220,9 @@ cells = {
 "9,29": "road",
 "9,30": "road",
 "9,31": "road",
+"9,6": "road",
+"9,7": "road",
+"9,8": "road",
 "9,9": "road"
 }
 
@@ -1214,21 +1279,21 @@ transition_id = "east_future_water"
 visible = false
 
 [node name="digilab" type="Marker2D" parent="Buildings" unique_id=1555595466]
-position = Vector2(-512, 64)
+position = Vector2(-784, -136)
 script = ExtResource("8_building")
 
 [node name="training" type="Marker2D" parent="Buildings" unique_id=2093751040]
-position = Vector2(320, 64)
+position = Vector2(624, 408)
 script = ExtResource("8_building")
 building_id = "training"
 
 [node name="hospital" type="Marker2D" parent="Buildings" unique_id=455207408]
-position = Vector2(-96, -96)
+position = Vector2(-96, -80)
 script = ExtResource("8_building")
 building_id = "hospital"
 
 [node name="market" type="Marker2D" parent="Buildings" unique_id=2142985050]
-position = Vector2(-608, 528)
+position = Vector2(-1184, 544)
 script = ExtResource("8_building")
 building_id = "market"
 
@@ -1330,20 +1395,6 @@ script = ExtResource("10_landscape")
 landscape_id = "landscape_13"
 section_coord = Vector2i(1, -1)
 preferred_local_cell = Vector2(3, 3)
-
-[node name="Landscape_14" type="Marker2D" parent="Landscapes" unique_id=469674139]
-position = Vector2(896, 320)
-script = ExtResource("10_landscape")
-landscape_id = "landscape_14"
-section_coord = Vector2i(1, -1)
-preferred_local_cell = Vector2(10, 10)
-
-[node name="Landscape_15" type="Marker2D" parent="Landscapes" unique_id=1569574973]
-position = Vector2(672, 208)
-script = ExtResource("10_landscape")
-landscape_id = "landscape_15"
-section_coord = Vector2i(1, -1)
-preferred_local_cell = Vector2(3, 10)
 
 [node name="Landscape_16" type="Marker2D" parent="Landscapes" unique_id=2026855507]
 position = Vector2(1056, 432)
@@ -1487,7 +1538,7 @@ preferred_local_cell = Vector2(3, 10)
 visible = false
 
 [node name="Prop_00_lamp_blue" type="Marker2D" parent="Props" unique_id=1445899737]
-position = Vector2(-96, 118.4)
+position = Vector2(96, 118.399994)
 script = ExtResource("9_prop")
 role = "plaza_northwest_landscape_edge"
 surround = "landscape"
@@ -1499,13 +1550,13 @@ role = "plaza_northeast_landscape_edge"
 surround = "landscape"
 
 [node name="Prop_02_lamp_blue" type="Marker2D" parent="Props" unique_id=921648348]
-position = Vector2(96, 320)
+position = Vector2(-192, 384)
 script = ExtResource("9_prop")
 role = "plaza_southeast_landscape_edge"
 surround = "landscape"
 
 [node name="Prop_03_bench_nw" type="Marker2D" parent="Props" unique_id=1558839375]
-position = Vector2(-236.8, 252.8)
+position = Vector2(-316.80002, 292.8)
 script = ExtResource("9_prop")
 asset_id = "bench_nw"
 role = "plaza_southwest_tree_face_center_seating"
@@ -1519,31 +1570,31 @@ role = "plaza_northeast_tree_face_center_seating"
 clearance_override = Vector2(0, 0)
 
 [node name="Prop_05_lamp_blue" type="Marker2D" parent="Props" unique_id=1082122522]
-position = Vector2(-265.6, 75.2)
+position = Vector2(-153.6, 243.2)
 script = ExtResource("9_prop")
 role = "digilab_outer_sidewalk_node"
 surround = "civic"
 
 [node name="Prop_06_lamp_blue" type="Marker2D" parent="Props" unique_id=715081020]
-position = Vector2(672, 80)
+position = Vector2(592, -8)
 script = ExtResource("9_prop")
 role = "training_outer_sidewalk_node"
 surround = "civic"
 
 [node name="Prop_07_lamp_blue" type="Marker2D" parent="Props" unique_id=433908470]
-position = Vector2(800, 512)
+position = Vector2(400, 360)
 script = ExtResource("9_prop")
 role = "hospital_outer_sidewalk_node"
 surround = "civic"
 
 [node name="Prop_08_lamp_blue" type="Marker2D" parent="Props" unique_id=592576458]
-position = Vector2(928, -304)
+position = Vector2(-384, 352)
 script = ExtResource("9_prop")
 role = "north_bridge_west_head"
 surround = "civic"
 
 [node name="Prop_09_lamp_blue" type="Marker2D" parent="Props" unique_id=1746075952]
-position = Vector2(1024, -256)
+position = Vector2(1120, -48)
 script = ExtResource("9_prop")
 role = "north_bridge_east_head"
 surround = "civic"
@@ -1555,7 +1606,7 @@ role = "south_bridge_west_head"
 surround = "civic"
 
 [node name="Prop_11_lamp_blue" type="Marker2D" parent="Props" unique_id=1799585666]
-position = Vector2(864, -176)
+position = Vector2(896, -160)
 script = ExtResource("9_prop")
 role = "south_bridge_east_head"
 surround = "civic"
@@ -1575,27 +1626,27 @@ role = "canal_northeast_tree_face_center_seating"
 clearance_override = Vector2(0, 0)
 
 [node name="Prop_14_lamp_yellow" type="Marker2D" parent="Props" unique_id=196462052]
-position = Vector2(-672, 480)
+position = Vector2(-656, 488)
 script = ExtResource("9_prop")
 asset_id = "lamp_yellow"
 role = "market_lower_terrace_west_edge"
 surround = "landscape"
 
 [node name="Prop_15_lamp_yellow" type="Marker2D" parent="Props" unique_id=1295355363]
-position = Vector2(-496, 552)
+position = Vector2(-528, 552)
 script = ExtResource("9_prop")
 asset_id = "lamp_yellow"
 role = "market_lower_terrace_east_edge"
 surround = "landscape"
 
 [node name="Prop_16_lamp_blue" type="Marker2D" parent="Props" unique_id=818375593]
-position = Vector2(1232, -24)
+position = Vector2(1248, -112)
 script = ExtResource("9_prop")
 role = "archive_pad_west_edge"
 surround = "civic"
 
 [node name="Prop_17_lamp_blue" type="Marker2D" parent="Props" unique_id=1227975784]
-position = Vector2(1456, 24)
+position = Vector2(464, -72)
 script = ExtResource("9_prop")
 role = "archive_pad_east_edge"
 surround = "civic"

@@ -1,32 +1,10 @@
-extends RefCounted
-class_name CentralCityTerrace
-
-const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
-const TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
-const KIT = preload("res://src/world/runtime/CentralCityTerraceKit.gd")
-
-const ROOT_Z := -1164
-const WALL_CAP_GRID := 0.34
-const TRENCH_DEPTH_PX := 14.0
-const WATER_INSET_PX := 10.0
-
-const WALL_TOP := Color(0.60, 0.61, 0.61, 1.0)
-const WALL_FACE := Color(0.22, 0.25, 0.27, 1.0)
-const LANDING_TOP := Color(0.43, 0.47, 0.49, 1.0)
-
-
-static func build() -> Node2D:
-	var root := Node2D.new()
-	root.name = "SouthTerraceStructure"
-	root.z_index = ROOT_Z
-
-	var wall_caps: Array[Dictionary] = []
-	var wall_faces: Array[Dictionary] = []
-	_build_retaining_wall(wall_caps, wall_faces)
-	_add_paver_batch(root, "RetainingWallCaps", wall_caps, 0)
-	_add_color_batch(root, "RetainingWallFaces", wall_faces, 1)
-
-	var landings: Array[Dictionary] = []
+from pathlib import Path
+p=Path('src/world/runtime/CentralCityTerrace.gd')
+s=p.read_text(encoding='utf-8')
+s=s.replace('const TERRACE_POST = preload("res://assets/world/central_city/terrace_post.svg")','const KIT = preload("res://src/world/runtime/CentralCityTerraceKit.gd")')
+start=s.index('\tvar stair_landings: Array[Dictionary]')
+end=s.index('\n\troot.set_meta("visual_level_count"',start)
+s=s[:start]+'''	var landings: Array[Dictionary] = []
 	var stair_art: Array[Dictionary] = []
 	var bridge_art: Array[Dictionary] = []
 	var rail_art: Array[Dictionary] = []
@@ -56,78 +34,10 @@ static func build() -> Node2D:
 	root.add_child(KIT.build(bridge_art, "BridgeAssets", 11))
 	root.add_child(KIT.build(rail_art, "HandrailAssets", 12))
 	root.add_child(KIT.build(post_art, "CornerPostAssets", 13))
-
-	root.set_meta("visual_level_count", TOPOLOGY.levels().size())
-	root.set_meta("stair_count", TOPOLOGY.stairs().size())
-	root.set_meta("trench_count", TOPOLOGY.voids().size())
-	root.set_meta("bridge_count", TOPOLOGY.bridges().size())
-	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
-	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
-	return root
-
-
-static func _build_retaining_wall(
-	caps: Array[Dictionary],
-	faces: Array[Dictionary]
-) -> void:
-	var break_data := TOPOLOGY.level_break()
-	if break_data.is_empty():
-		return
-	var y := float(break_data.get("grid_y", 19.0))
-	var x_min := float(break_data.get("x_min", -13.0))
-	var x_max := float(break_data.get("x_max", 29.0))
-	var upper_level := String(break_data.get("upper_level", "upper_civic"))
-	var upper_elevation := TOPOLOGY.elevation_for_level(upper_level)
-
-	var gaps: Array[Vector2] = []
-	for raw_stair in TOPOLOGY.stairs():
-		if not raw_stair is Dictionary:
-			continue
-		var stair := raw_stair as Dictionary
-		gaps.append(Vector2(
-			float(stair.get("x_min", 0.0)),
-			float(stair.get("x_max", 0.0))
-		))
-	gaps.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
-
-	var cursor := x_min
-	for gap: Vector2 in gaps:
-		if gap.x > cursor:
-			_append_wall_segment(caps, faces, cursor, gap.x, y, upper_level, upper_elevation)
-		cursor = maxf(cursor, gap.y)
-	if cursor < x_max:
-		_append_wall_segment(caps, faces, cursor, x_max, y, upper_level, upper_elevation)
-
-
-static func _append_wall_segment(
-	caps: Array[Dictionary],
-	faces: Array[Dictionary],
-	x0: float,
-	x1: float,
-	y: float,
-	level: String,
-	elevation: float
-) -> void:
-	var cap_grid := PackedVector2Array([
-		Vector2(x0, y - WALL_CAP_GRID),
-		Vector2(x1, y - WALL_CAP_GRID),
-		Vector2(x1, y),
-		Vector2(x0, y),
-	])
-	_append_paver_spec(caps, cap_grid, level, WALL_TOP)
-
-	var logical_a := TOPOLOGY.grid_to_world(Vector2(x0, y))
-	var logical_b := TOPOLOGY.grid_to_world(Vector2(x1, y))
-	var top_a := logical_a + Vector2(0.0, -elevation)
-	var top_b := logical_b + Vector2(0.0, -elevation)
-	var bottom_drop := Vector2(0.0, elevation)
-	faces.append({
-		"points": PackedVector2Array([top_a, top_b, top_b + bottom_drop, top_a + bottom_drop]),
-		"color": WALL_FACE,
-	})
-
-
-static func _append_staircase(
+''' + s[end:]
+start=s.index('static func _append_staircase(')
+end=s.index('static func _grid_quad(',start)
+s=s[:start]+'''static func _append_staircase(
 	stair: Dictionary,
 	landings: Array[Dictionary],
 	art: Array[Dictionary],
@@ -222,75 +132,11 @@ static func _append_bridge(
 		KIT.append_post(posts, end)
 
 
-static func _grid_quad(
-	region: Dictionary,
-	x0: float,
-	x1: float,
-	y0: float,
-	y1: float
-) -> PackedVector2Array:
-	var polygon_value = region.get("grid_polygon")
-	if polygon_value is PackedVector2Array and (polygon_value as PackedVector2Array).size() == 4:
-		return polygon_value as PackedVector2Array
-	return PackedVector2Array([
-		Vector2(x0, y0), Vector2(x1, y0), Vector2(x1, y1), Vector2(x0, y1),
-	])
-
-
-static func _append_paver_spec(
-	target: Array[Dictionary],
-	grid_points: PackedVector2Array,
-	level: String,
-	color: Color
-) -> void:
-	var logical := _grid_to_logical(grid_points)
-	target.append({
-		"points": _logical_at_elevation(logical, TOPOLOGY.elevation_for_level(level)),
-		"logical_points": logical,
-		"color": color,
-	})
-
-
-static func _grid_to_logical(grid_points: PackedVector2Array) -> PackedVector2Array:
-	var result := PackedVector2Array()
-	for grid: Vector2 in grid_points:
-		result.append(TOPOLOGY.grid_to_world(grid))
-	return result
-
-
-static func _logical_at_elevation(
-	logical_points: PackedVector2Array,
-	elevation: float
-) -> PackedVector2Array:
-	var result := PackedVector2Array()
-	for point: Vector2 in logical_points:
-		result.append(point + Vector2(0.0, -elevation))
-	return result
-
-
-static func _add_paver_batch(
-	root: Node2D,
-	node_name: String,
-	specs: Array[Dictionary],
-	z: int
-) -> void:
-	if specs.is_empty():
-		return
-	var mesh := CITY.create_paver_polygon_batch(specs, z)
-	mesh.name = node_name
-	mesh.z_index = z
-	root.add_child(mesh)
-
-
-static func _add_color_batch(
-	root: Node2D,
-	node_name: String,
-	specs: Array[Dictionary],
-	z: int
-) -> void:
-	if specs.is_empty():
-		return
-	var mesh := CITY.create_color_polygon_batch(specs, z)
-	mesh.name = node_name
-	mesh.z_index = z
-	root.add_child(mesh)
+''' + s[end:]
+start=s.index('static func _append_parapet(')
+end=s.index('static func _append_paver_spec(',start)
+s=s[:start]+s[end:]
+for line in list(s.splitlines()):
+    if line.startswith(('const STAIR_','const PARAPET_','const TRENCH_CAP','const TRENCH_FACE','const BRIDGE_')):
+        s=s.replace(line+'\n','')
+p.write_text(s,encoding='utf-8')

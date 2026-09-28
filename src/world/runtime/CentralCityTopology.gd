@@ -151,8 +151,9 @@ static func _stair_at_grid_ref(grid: Vector2) -> Dictionary:
 		if not raw is Dictionary:
 			continue
 		var stair := raw as Dictionary
-		if _point_in_rect(
+		if _point_in_transition(
 			grid,
+			stair,
 			float(stair.get("x_min", 0.0)),
 			float(stair.get("x_max", 0.0)),
 			float(stair.get("y_start", 0.0)),
@@ -167,8 +168,9 @@ static func bridge_at_grid(grid: Vector2) -> Dictionary:
 		if not raw is Dictionary:
 			continue
 		var bridge := raw as Dictionary
-		if _point_in_rect(
+		if _point_in_transition(
 			grid,
+			bridge,
 			float(bridge.get("x_min", 0.0)),
 			float(bridge.get("x_max", 0.0)),
 			float(bridge.get("y_min", 0.0)),
@@ -183,8 +185,9 @@ static func void_at_grid(grid: Vector2) -> Dictionary:
 		if not raw is Dictionary:
 			continue
 		var void_region := raw as Dictionary
-		if _point_in_rect(
+		if _point_in_transition(
 			grid,
+			void_region,
 			float(void_region.get("x_min", 0.0)),
 			float(void_region.get("x_max", 0.0)),
 			float(void_region.get("y_min", 0.0)),
@@ -436,6 +439,31 @@ static func _segment_x_at_y(a: Vector2, b: Vector2, y: float) -> float:
 		return (a.x + b.x) * 0.5
 	var t := clampf((y - a.y) / delta_y, 0.0, 1.0)
 	return lerpf(a.x, b.x, t)
+
+
+static func _point_in_transition(
+	point: Vector2,
+	transition: Dictionary,
+	x_min: float,
+	x_max: float,
+	y_min: float,
+	y_max: float
+) -> bool:
+	if not _point_in_rect(point, x_min, x_max, y_min, y_max):
+		return false
+	var polygon_value = transition.get("grid_polygon")
+	if polygon_value is PackedVector2Array:
+		var polygon := polygon_value as PackedVector2Array
+		if polygon.size() >= 3:
+			if Geometry2D.is_point_in_polygon(point, polygon):
+				return true
+			for index in range(polygon.size()):
+				if _distance_to_axis_segment(
+					point, polygon[index], polygon[(index + 1) % polygon.size()]
+				) <= SEGMENT_EPSILON:
+					return true
+			return false
+	return _point_in_rect(point, x_min, x_max, y_min, y_max)
 
 
 static func _point_in_rect(

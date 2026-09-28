@@ -153,7 +153,9 @@ func _rebuild_runtime_preview() -> void:
 		if not _pending_snapshot.is_empty()
 		else AUTHORING_DATA.snapshot_from_root(self)
 	)
-	_clear_runtime_preview()
+	# Keep the current map visible while the shared runtime builder yields across
+	# multiple editor frames. Replace it only after the new area is complete.
+	var previous_preview := _preview_root
 
 	# Feed the exact current, unsaved editor state into the same runtime builders.
 	# The override exists only for this build and is cleared immediately after it.
@@ -164,8 +166,8 @@ func _rebuild_runtime_preview() -> void:
 	var preview_container := Node2D.new()
 	preview_container.name = "__RuntimePreview"
 	preview_container.set_meta("central_city_editor_preview", true)
+	preview_container.visible = false
 	add_child(preview_container, false, Node.INTERNAL_MODE_BACK)
-	_preview_root = preview_container
 
 	# The digital void/background is also shared with WorldRoot so holes and
 	# city-edge silhouettes are judged against the same shader seen in play.
@@ -174,7 +176,6 @@ func _rebuild_runtime_preview() -> void:
 	var preview = WORLD_AREA_SCRIPT.new()
 	preview.name = "Area"
 	preview_container.add_child(preview)
-	_preview_area = preview as Node2D
 
 	var area_value = snapshot.get("area", {})
 	var area_definition := (
@@ -190,7 +191,6 @@ func _rebuild_runtime_preview() -> void:
 		var lighting = LIGHTING_SCRIPT.new()
 		lighting.name = "Lighting"
 		preview_container.add_child(lighting)
-		_preview_lighting = lighting as Node2D
 		lighting.configure(null)
 		lighting.set_preview_time_hours(preview_hour)
 		# The preview is static until authoring data changes, so there is no
@@ -201,12 +201,15 @@ func _rebuild_runtime_preview() -> void:
 	CITY_TOPOLOGY.clear_cache()
 	CITY_LAYOUT.clear_cache()
 
-	if not configured and is_instance_valid(preview_container):
+	if not configured or not show_runtime_preview:
 		preview_container.queue_free()
-		_preview_root = null
-		_preview_area = null
-		_preview_lighting = null
-	elif configured and is_instance_valid(preview):
+	else:
+		if previous_preview != null and is_instance_valid(previous_preview):
+			previous_preview.queue_free()
+		_preview_root = preview_container
+		_preview_area = preview as Node2D
+		_preview_lighting = preview_container.get_node_or_null("Lighting") as Node2D
+		preview_container.visible = true
 		print("[CentralCityAuthoring] WYSIWYG preview ready sections=%d nodes=%d" % [
 			int(preview.get_section_count()),
 			int(preview.get_runtime_node_count()),
