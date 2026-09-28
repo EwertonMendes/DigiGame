@@ -412,7 +412,10 @@ func _assert_follower_navigation_guard(world: Node, interior: WorldInterior) -> 
 	var probe := OverworldDigimonFollower.new()
 	probe.name = "FollowerNavigationProbe"
 	interior.add_child(probe)
-	probe.global_position = interior.to_global(interior.grid_to_world(Vector2(16.0, 3.0)))
+	# Start from unquestionably valid floor. The stricter authored wall footprint
+	# now rejects x=16 before any movement, so beginning there would only test an
+	# invalid fixture rather than follower locomotion into the wall.
+	probe.global_position = interior.to_global(interior.grid_to_world(Vector2(15.0, 3.0)))
 	var start := probe.global_position
 	var target := interior.to_global(interior.grid_to_world(Vector2(17.6, 3.0)))
 	var validator := Callable(world, "can_actor_move_to").bind(probe)
