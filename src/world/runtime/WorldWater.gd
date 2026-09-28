@@ -25,13 +25,13 @@ const DEFAULT_SURFACE_PROFILE := {
 }
 
 const DEFAULT_SHORE_PROFILE := {
-	"foam_color": Color(0.72, 0.98, 0.95, 0.90),
-	"secondary_color": Color(0.22, 0.70, 0.73, 0.50),
-	"shore_speed": 0.68,
-	"shore_strength": 0.88,
-	"secondary_strength": 0.32,
-	"world_scale": 0.018,
-	"crest_width": 0.075,
+	"foam_color": Color(0.320, 0.930, 1.000, 0.88),
+	"secondary_color": Color(0.080, 0.690, 0.860, 0.50),
+	"shore_speed": 0.42,
+	"shore_strength": 0.72,
+	"secondary_strength": 0.22,
+	"world_scale": 0.020,
+	"crest_width": 0.055,
 }
 
 static func create_surface_material(profile: Dictionary = {}) -> ShaderMaterial:
