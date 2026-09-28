@@ -301,6 +301,15 @@ func get_lighting_system() -> WorldLightingSystem:
 func request_interior_entry(payload: Dictionary) -> void:
 	if _interior_manager == null or _interior_manager.is_active() or _interior_manager.is_transitioning():
 		return
+
+	# A mobile player usually enters a doorway while still holding the joystick.
+	# Clearing only HubActor._touch_direction is not enough because the
+	# TouchJoystick still owns that finger and can re-emit the held vector as
+	# soon as movement unlocks, which looked like a one-frame "jump" after the
+	# interior reveal. Release the input source itself before starting handoff.
+	if _touch_joystick != null:
+		_touch_joystick.force_release()
+
 	_persist_world_location()
 	OverworldState.save_progress()
 	_interior_manager.enter_interior(payload.duplicate(true))
@@ -652,6 +661,8 @@ func _on_interior_state_changed(active: bool, _title: String) -> void:
 		# InteriorManager owns the presentation-plane switch while its cover is
 		# opaque. Mirror that state here without moving the player a second time.
 		_last_player_elevation_px = 0.0
+		if _touch_joystick != null:
+			_touch_joystick.force_release()
 	elif _area_scene != null and _player != null:
 		# InteriorManager restores the exterior elevation before reveal. Refresh
 		# the cache from the canonical area topology for persistence/camera state.
