@@ -330,7 +330,8 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("canal_detail_system", "")) == "modular_civic_waterfront_v3_floor_cut"
 		and String(south_terrace.get_meta("canal_cutaway_mode", "")) == "far_cube_faces_near_floor_occlusion"
 		and String(south_terrace.get_meta("near_side_border", "")) == "none"
-		and is_equal_approx(float(south_terrace.get_meta("near_ground_overlap_factor", 0.0)), 1.55)
+		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "far_edges_only"
+		and is_equal_approx(float(south_terrace.get_meta("near_ground_overlap_factor", 0.0)), 1.80)
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
