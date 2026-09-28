@@ -222,8 +222,18 @@ func _ready() -> void:
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(
-		area.get_ground_tile_count() == 4134,
-		"Central City ground batch must omit the full-width terrace break, stair transition cells, and both future-water void pockets"
+		area.get_ground_tile_count() == 4254,
+		"Central City ground batch must omit only true architectural breaks/stair transitions while preserving pavement beneath precise water-basin geometry"
+	)
+	var west_basin_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-10, 23))
+	var west_bridge_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-5, 23))
+	assert(
+		bool(west_basin_ground_rule.get("render", false))
+		and not bool(west_basin_ground_rule.get("walkable", true))
+		and bool(west_basin_ground_rule.get("basin_underlay", false))
+		and bool(west_bridge_ground_rule.get("render", false))
+		and bool(west_bridge_ground_rule.get("walkable", false)),
+		"Water topology must preserve base-ground rendering as a precise basin underlay without making the canal walkable outside authored bridges"
 	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
@@ -312,6 +322,8 @@ func _ready() -> void:
 		and int(south_terrace.get_meta("bridge_count", 0)) == 2
 		and is_equal_approx(float(south_terrace.get_meta("water_surface_drop_px", 0.0)), 8.0)
 		and is_equal_approx(float(south_terrace.get_meta("basin_depth_px", 0.0)), 22.0)
+		and is_equal_approx(float(south_terrace.get_meta("canal_coping_width_grid", 0.0)), 0.10)
+		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
 		"South Terrace must keep two presentation levels and a physically recessed 22px canal basin with the water surface 8px below pavement"
@@ -322,6 +334,7 @@ func _ready() -> void:
 	var canal_shoreline := south_terrace.get_node_or_null("CanalShoreline") as MeshInstance2D
 	var front_walls := south_terrace.get_node_or_null("TrenchFrontWalls") as MeshInstance2D
 	var bank_caps := south_terrace.get_node_or_null("TrenchBankCaps") as MeshInstance2D
+	var bridge_bodies := south_terrace.get_node_or_null("BridgeBodies") as MeshInstance2D
 	assert(
 		canal_water != null
 		and canal_water.texture == null
@@ -354,11 +367,28 @@ func _ready() -> void:
 		and submerged_walls != null
 		and front_walls != null
 		and bank_caps != null
+		and bridge_bodies != null
 		and basin_floor.z_index < canal_water.z_index
 		and submerged_walls.z_index < canal_water.z_index
 		and canal_water.z_index < front_walls.z_index
 		and front_walls.z_index < bank_caps.z_index,
 		"Canal basin draw order must place real submerged geometry behind water and the near wall/rim in front so the water reads below pavement"
+	)
+	for structural_mesh: MeshInstance2D in [
+		basin_floor,
+		submerged_walls,
+		front_walls,
+		bridge_bodies,
+	]:
+		assert(
+			structural_mesh.material is ShaderMaterial
+			and (structural_mesh.material as ShaderMaterial).shader.resource_path == "res://shaders/city_canal_structure.gdshader",
+			"Canal walls/floor/bridge bodies must use the depth-aware concrete material instead of flat vertex-color slabs"
+		)
+	assert(
+		bank_caps.material is ShaderMaterial
+		and (bank_caps.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
+		"Canal coping must stay integrated with the city's continuous micro-paver language instead of becoming a flat gray frame"
 	)
 	assert(
 		canal_shoreline != null
