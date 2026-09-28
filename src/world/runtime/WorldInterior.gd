@@ -14,6 +14,13 @@ const ROOM_SIZE := Vector2i(18, 14)
 const SPAWN_CELL := Vector2i(9, 11)
 const EXIT_CELL := Vector2i(9, 12)
 
+# The perimeter art has a visible ground-contact plane one authored grid unit
+# inside its outer anchor. Treat that plane as the actual inner edge of the
+# tall back/side walls. The actor-footprint samples below then add the physical
+# capsule clearance on top of this visual boundary. Front low walls deliberately
+# do not use this inset so the authored exit remains reachable.
+const TALL_WALL_INNER_EDGE_GRID := 1.0
+
 # Interior navigation is evaluated at the actor's feet, not only at its origin.
 # The player capsule uses a 10 px radius; matching that radius here gives every
 # interior wall/counter/corner the same deterministic footprint contract and
@@ -68,15 +75,24 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 func _is_walkable_local_point(local_position: Vector2) -> bool:
 	var local_grid := world_to_grid(local_position)
 
-	# Keep the continuous room envelope separate from authored occupancy. Border
-	# cells are valid floor coordinates when they are intentionally open (the
-	# front doorway), while actual wall/corner cells remain blocked explicitly.
+	# Tall perimeter walls are not zero-thickness tile labels. Their rendered
+	# face/pillar occupies the first interior grid strip. Checking only the
+	# rounded wall cell lets an actor's feet enter that visible face even though
+	# its center has already rounded into the next floor cell. Model the authored
+	# inner wall edge continuously in grid-space before consulting discrete
+	# blockers. This is the contract the screenshots expose.
+	var max_tall_wall_x := float(ROOM_SIZE.x - 1) - TALL_WALL_INNER_EDGE_GRID
 	if (
-		local_grid.x < -0.5
-		or local_grid.y < -0.5
-		or local_grid.x > float(ROOM_SIZE.x) - 0.5
-		or local_grid.y > float(ROOM_SIZE.y) - 0.5
+		local_grid.x < TALL_WALL_INNER_EDGE_GRID
+		or local_grid.x > max_tall_wall_x
+		or local_grid.y < TALL_WALL_INNER_EDGE_GRID
 	):
+		return false
+
+	# Keep the front envelope separate from authored occupancy. Border cells can
+	# still be valid at the doorway; actual low-wall/counter cells are blocked by
+	# the same layout map used to build their visuals.
+	if local_grid.y > float(ROOM_SIZE.y) - 0.5:
 		return false
 
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
@@ -102,6 +118,9 @@ func world_to_grid(world: Vector2) -> Vector2:
 func _build() -> void:
 	_physics_root = StaticBody2D.new()
 	_physics_root.name = "InteriorCollision"
+	_physics_root.collision_layer = 0
+	_physics_root.collision_mask = 0
+	_physics_root.set_meta("collision_backend", "authored-navigation-footprint")
 	add_child(_physics_root)
 	_build_floor()
 	_build_walls()
@@ -230,7 +249,6 @@ func _build_walls() -> void:
 			block.set_meta("depth_ground_anchor", wall_anchor)
 			walls.add_child(block)
 		_mark_blocked(cell)
-		_add_circle_collision(cell, 22.0)
 
 	for x in range(0, 5):
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
@@ -323,7 +341,7 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	# is_walkable_world_position(), so duplicating the same wall boundary with
 	# dozens of PhysicsServer shapes only costs CPU. Keep the authoritative
 	# blocked-cell map and do not build redundant DigiLab wall colliders.
-	_physics_root.set_meta("digilab_wall_collision_backend", "blocked-cells-only")
+	_physics_root.set_meta("digilab_wall_collision_backend", "authored-navigation-footprint")
 	for x in range(ROOM_SIZE.x):
 		_mark_blocked(Vector2i(x, 0))
 	for y in range(1, ROOM_SIZE.y - 1):
@@ -384,7 +402,6 @@ func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
 	block.set_meta("depth_ground_anchor", wall_anchor)
 	parent.add_child(block)
 	_mark_blocked(cell)
-	_add_circle_collision(cell, 22.0)
 
 
 func _build_counter() -> void:
@@ -404,7 +421,6 @@ func _build_counter() -> void:
 		block.set_meta("depth_ground_anchor", counter_anchor)
 		counter.add_child(block)
 		_mark_blocked(cell)
-		_add_circle_collision(cell, 20.0)
 
 
 func _build_service_zones() -> void:
@@ -547,15 +563,6 @@ func _accent_surface() -> String:
 func _depth_for_local_ground(local_ground_anchor: Vector2, priority: int = 0) -> int:
 	var global_ground_y := to_global(local_ground_anchor).y
 	return WORLD_DEPTH.z_for_ground_y(global_ground_y) + priority
-
-
-func _add_circle_collision(cell: Vector2i, radius: float) -> void:
-	var shape_node := CollisionShape2D.new()
-	var shape := CircleShape2D.new()
-	shape.radius = radius
-	shape_node.shape = shape
-	shape_node.position = grid_to_world(Vector2(cell)) + Vector2(0.0, -10.0)
-	_physics_root.add_child(shape_node)
 
 
 func _mark_blocked(cell: Vector2i) -> void:
