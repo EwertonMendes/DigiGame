@@ -24,7 +24,7 @@ var _world_controller: Node = null
 var _definitions: Dictionary = {}
 var _sections: Dictionary = {}
 var _section_list: Array[WorldAreaSection] = []
-var _world_blocking_polygons: Array[PackedVector2Array] = []
+var _world_blocking_polygons_by_section: Dictionary = {}
 var _exterior_active := true
 var _ambient_elapsed := 0.0
 var _last_ambient_section := Vector2i(999999, 999999)
@@ -41,7 +41,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	_definitions.clear()
 	_sections.clear()
 	_section_list.clear()
-	_world_blocking_polygons.clear()
+	_world_blocking_polygons_by_section.clear()
 	_ground_tile_count = 0
 	_urban_layout_polygon_count = 0
 	_urban_layout_layer_count = 0
@@ -86,7 +86,10 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		_sections[coord] = instance
 		_section_list.append(instance)
 		instance.append_ground_tiles(ground_tiles)
-		instance.append_world_blocking_polygons(_world_blocking_polygons)
+		var section_blockers: Array[PackedVector2Array] = []
+		instance.append_world_blocking_polygons(section_blockers)
+		for polygon: PackedVector2Array in section_blockers:
+			_index_world_blocking_polygon(polygon)
 		completed += 1
 		load_progress.emit(completed, total)
 		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
@@ -157,24 +160,58 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 		return false
 
 	# Structural blockers are authored by their owning section but may extend
-	# across a section boundary after a designer moves a large building. Check
-	# them in area/world space so collision ownership never depends on which
-	# section currently contains the player's feet.
-	for polygon: PackedVector2Array in _world_blocking_polygons:
-		if Geometry2D.is_point_in_polygon(world_position, polygon):
-			return false
+	# across a section boundary after a designer moves a large building. The
+	# area indexes each polygon into every section it overlaps, so the query is
+	# both correct at section seams and bounded to nearby geometry.
+	var indexed_value = _world_blocking_polygons_by_section.get(coord, [])
+	if indexed_value is Array:
+		for raw_polygon in indexed_value as Array:
+			if raw_polygon is PackedVector2Array:
+				var polygon := raw_polygon as PackedVector2Array
+				if Geometry2D.is_point_in_polygon(world_position, polygon):
+					return false
 	return true
 
 
-func world_to_section(world_position: Vector2) -> Vector2i:
-	var grid := Vector2(
+func _index_world_blocking_polygon(polygon: PackedVector2Array) -> void:
+	if polygon.size() < 3:
+		return
+
+	var min_grid := Vector2(INF, INF)
+	var max_grid := Vector2(-INF, -INF)
+	for point: Vector2 in polygon:
+		var grid := world_to_grid(point)
+		min_grid.x = minf(min_grid.x, grid.x)
+		min_grid.y = minf(min_grid.y, grid.y)
+		max_grid.x = maxf(max_grid.x, grid.x)
+		max_grid.y = maxf(max_grid.y, grid.y)
+
+	var min_section := _grid_to_section(min_grid)
+	var max_section := _grid_to_section(max_grid)
+	for section_x in range(min_section.x, max_section.x + 1):
+		for section_y in range(min_section.y, max_section.y + 1):
+			var coord := Vector2i(section_x, section_y)
+			if not _world_blocking_polygons_by_section.has(coord):
+				_world_blocking_polygons_by_section[coord] = []
+			(_world_blocking_polygons_by_section[coord] as Array).append(polygon)
+
+
+func world_to_grid(world_position: Vector2) -> Vector2:
+	return Vector2(
 		world_position.x / CITY.TILE_WIDTH + world_position.y / CITY.TILE_HEIGHT,
 		-world_position.x / CITY.TILE_WIDTH + world_position.y / CITY.TILE_HEIGHT
 	)
+
+
+func _grid_to_section(grid: Vector2) -> Vector2i:
 	return Vector2i(
 		floori((grid.x + 0.5) / float(SECTION_SIZE)),
 		floori((grid.y + 0.5) / float(SECTION_SIZE))
 	)
+
+
+func world_to_section(world_position: Vector2) -> Vector2i:
+	return _grid_to_section(world_to_grid(world_position))
 
 
 func has_section(coord: Vector2i) -> bool:
