@@ -20,7 +20,8 @@ const EXIT_CELL := Vector2i(9, 12)
 # stop before their feet/sprite can climb onto wall tops or corner pillars.
 # The front/bottom edge stays authored by individual blocked cells so the exit
 # opening remains reachable.
-const TALL_WALL_INNER_EDGE_GRID := 1.0
+const GENERIC_TALL_WALL_INNER_EDGE_GRID := 1.0
+const DIGILAB_TALL_WALL_INNER_EDGE_GRID := 0.5
 
 # Interior navigation is evaluated at the actor's feet, not only at its origin.
 # The player capsule uses a 10 px radius; matching that radius here gives every
@@ -76,16 +77,17 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 func _is_walkable_local_point(local_position: Vector2) -> bool:
 	var local_grid := world_to_grid(local_position)
 
-	# The screenshots make the important distinction explicit: the visible
-	# back/side walls are volumetric shell pieces, not zero-thickness labels on a
-	# blocked cell. Their inner contact plane is one full authored grid unit from
-	# the outer anchor. Enforce that continuous plane first; then the actor-foot
-	# samples add the real capsule clearance on top of it.
-	var max_tall_wall_x := float(ROOM_SIZE.x - 1) - TALL_WALL_INNER_EDGE_GRID
+	# Generic service rooms use full two-level city blocks for their shell, so
+	# their visible top face reaches one full grid unit into the room. DigiLab is
+	# different: its authored vector wall is anchored on the grid edge itself.
+	# Sharing the generic 1.0 inset with DigiLab creates a visibly empty gap.
+	# Resolve the contact plane from the actual renderer contract instead.
+	var inner_edge := _tall_wall_inner_edge_grid()
+	var max_tall_wall_x := float(ROOM_SIZE.x - 1) - inner_edge
 	if (
-		local_grid.x < TALL_WALL_INNER_EDGE_GRID
+		local_grid.x < inner_edge
 		or local_grid.x > max_tall_wall_x
-		or local_grid.y < TALL_WALL_INNER_EDGE_GRID
+		or local_grid.y < inner_edge
 	):
 		return false
 
@@ -99,6 +101,12 @@ func _is_walkable_local_point(local_position: Vector2) -> bool:
 	if cell.x < 0 or cell.y < 0 or cell.x >= ROOM_SIZE.x or cell.y >= ROOM_SIZE.y:
 		return false
 	return not _blocked_cells.has(_cell_key(cell))
+
+
+func _tall_wall_inner_edge_grid() -> float:
+	if _service_id == "digilab":
+		return DIGILAB_TALL_WALL_INNER_EDGE_GRID
+	return GENERIC_TALL_WALL_INNER_EDGE_GRID
 
 
 func grid_to_world(grid: Vector2) -> Vector2:
