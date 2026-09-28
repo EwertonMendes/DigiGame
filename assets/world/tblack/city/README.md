@@ -38,11 +38,17 @@ a medium graphite paving tone and secondary links stay quieter. Route polygons n
 depth with long offset faces; all visible height cues now come from deliberate architecture.
 
 The southern city is a distinct **South Terrace** at elevation 0 while the Upper Civic deck is
-rendered 48 px higher. `CentralCityTerrace.gd` now builds retaining faces that physically span
+rendered 48 px higher. `CentralCityTerrace.gd` builds retaining faces that physically span
 that full visual difference, six-step stair flights with per-step tread/riser elevation,
-recessed future-water voids and bridges with visible slab bodies and rails. The trench floor is
-intentionally not rendered: the world backdrop shows through until the replacement water
-system is authored. Logical collision remains on the flat gameplay plane, but player, camera,
+recessed water basins and bridges with visible slab bodies and rails. Water uses the shared
+`WorldWater` renderer, while the surrounding canal architecture is a separate procedural
+**modular civic waterfront** kit: a very narrow micro-paver coping, repeated structural piers,
+upper ledges, recessed wall panels, waterline shadow bands, restrained cyan service indicators,
+maintenance/intake treatment on short end faces, and framed bridge abutments. These modules are
+generated from each authored canal face itself, so their isometric alignment cannot drift or
+skew like a freehand placeholder sprite. The procedural modules are deliberately provisional:
+future final art can replace a module family without changing water geometry, topology or
+navigation. Logical collision remains on the flat gameplay plane, but player, camera,
 followers, terrain, buildings, props, shadows and depth sorting all resolve presentation height
 from the same topology.
 
