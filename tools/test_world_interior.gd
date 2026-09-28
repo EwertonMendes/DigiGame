@@ -126,6 +126,7 @@ func _ready() -> void:
 	_assert_digilab_floor_assets(active_interior)
 	_assert_digilab_wall_assets(active_interior)
 	_assert_digilab_navigation_footprint(active_interior)
+	_assert_player_wall_runtime_guard(player, active_interior, "DigiLab")
 	_assert_follower_navigation_guard(world, active_interior)
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
@@ -275,6 +276,7 @@ func _assert_service_interior_presentation_isolated(
 	var active_interior := interiors_root.get_child(0) as WorldInterior
 	assert(active_interior != null, "%s must use WorldInterior" % label)
 	_assert_generic_shell_clearance(active_interior, label)
+	_assert_player_wall_runtime_guard(player, active_interior, label)
 
 	var exited: bool = await manager.exit_interior()
 	assert(exited and not manager.is_active(), "%s must exit through the shared interior manager" % label)
@@ -290,11 +292,12 @@ func _assert_service_interior_presentation_isolated(
 
 
 func _assert_generic_shell_clearance(interior: WorldInterior, label: String) -> void:
-	var back_overlap := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.76)))
-	var back_clear := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.90)))
-	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(0.76, 8.0)))
-	var side_clear := interior.to_global(interior.grid_to_world(Vector2(0.90, 8.0)))
-	var corner_overlap := interior.to_global(interior.grid_to_world(Vector2(0.80, 0.80)))
+	var back_overlap := interior.to_global(interior.grid_to_world(Vector2(9.0, 1.25)))
+	var back_clear := interior.to_global(interior.grid_to_world(Vector2(9.0, 1.40)))
+	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(1.25, 8.0)))
+	var side_clear := interior.to_global(interior.grid_to_world(Vector2(1.40, 8.0)))
+	var corner_overlap := interior.to_global(interior.grid_to_world(Vector2(1.25, 1.25)))
+	var corner_clear := interior.to_global(interior.grid_to_world(Vector2(1.40, 1.40)))
 	var front_doorway := interior.to_global(interior.grid_to_world(Vector2(9.0, 12.42)))
 
 	assert(
@@ -315,7 +318,11 @@ func _assert_generic_shell_clearance(interior: WorldInterior, label: String) -> 
 	)
 	assert(
 		not interior.is_walkable_world_position(corner_overlap),
-		"%s must not allow the actor footprint onto the tall back/side corner blocks" % label
+		"%s must not allow the actor footprint into the tall back/side corner face" % label
+	)
+	assert(
+		interior.is_walkable_world_position(corner_clear),
+		"%s must recover walkable floor immediately after the tall corner footprint" % label
 	)
 	assert(
 		interior.is_walkable_world_position(front_doorway),
@@ -324,9 +331,10 @@ func _assert_generic_shell_clearance(interior: WorldInterior, label: String) -> 
 
 
 func _assert_digilab_navigation_footprint(interior: WorldInterior) -> void:
-	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(16.25, 4.0)))
-	var side_clear := interior.to_global(interior.grid_to_world(Vector2(16.05, 4.0)))
-	var pillar_overlap := interior.to_global(interior.grid_to_world(Vector2(16.22, 0.78)))
+	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(15.75, 4.0)))
+	var side_clear := interior.to_global(interior.grid_to_world(Vector2(15.55, 4.0)))
+	var pillar_overlap := interior.to_global(interior.grid_to_world(Vector2(15.75, 1.25)))
+	var pillar_clear := interior.to_global(interior.grid_to_world(Vector2(15.55, 1.40)))
 	var doorway := interior.to_global(interior.grid_to_world(Vector2(9.0, 12.42)))
 
 	assert(
@@ -339,12 +347,65 @@ func _assert_digilab_navigation_footprint(interior: WorldInterior) -> void:
 	)
 	assert(
 		not interior.is_walkable_world_position(pillar_overlap),
-		"DigiLab back corner pillar must be solid to the full actor footprint"
+		"DigiLab back corner pillar must be solid through its visible floor-contact face"
+	)
+	assert(
+		interior.is_walkable_world_position(pillar_clear),
+		"DigiLab must preserve usable floor immediately after the corner-pillar footprint"
 	)
 	assert(
 		interior.is_walkable_world_position(doorway),
 		"DigiLab doorway must remain reachable after footprint-aware wall collision"
 	)
+
+
+func _assert_player_wall_runtime_guard(
+	player: Node2D,
+	interior: WorldInterior,
+	label: String
+) -> void:
+	var original_position := player.global_position
+	var origin := interior.grid_to_world(Vector2.ZERO)
+	var probes: Array[Dictionary] = [
+		{
+			"name": "left wall",
+			"start": Vector2(2.0, 6.0),
+			"grid_step": Vector2(-0.12, 0.0),
+		},
+		{
+			"name": "back wall",
+			"start": Vector2(8.0, 2.0),
+			"grid_step": Vector2(0.0, -0.12),
+		},
+		{
+			"name": "back/left corner",
+			"start": Vector2(2.0, 2.0),
+			"grid_step": Vector2(-0.10, -0.10),
+		},
+	]
+
+	for probe: Dictionary in probes:
+		var start_grid := probe["start"] as Vector2
+		var grid_step := probe["grid_step"] as Vector2
+		var world_step := interior.grid_to_world(grid_step) - origin
+		player.global_position = interior.to_global(interior.grid_to_world(start_grid))
+		player.set("velocity", Vector2.ZERO)
+
+		for _index in range(30):
+			player.call("_try_move", world_step)
+			assert(
+				interior.is_walkable_world_position(player.global_position),
+				"%s player runtime must never leave authored navigation while pushing into the %s" % [label, probe["name"]]
+			)
+
+		var stopped_grid := interior.world_to_grid(interior.to_local(player.global_position))
+		assert(
+			stopped_grid.x >= 1.30 and stopped_grid.x <= 15.70 and stopped_grid.y >= 1.30,
+			"%s player must stop before the visible tall-wall/pillar footprint at the %s; got grid=%s" % [label, probe["name"], stopped_grid]
+		)
+
+	player.global_position = original_position
+	player.set("velocity", Vector2.ZERO)
 
 
 func _assert_follower_navigation_guard(world: Node, interior: WorldInterior) -> void:
@@ -544,8 +605,16 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 	var physics_root := interior.get_node_or_null("InteriorCollision")
 	assert(physics_root != null, "DigiLab interior must expose its collision root")
 	assert(
-		String(physics_root.get_meta("digilab_wall_collision_backend", "")) == "blocked-cells-only",
-		"DigiLab walls must not duplicate blocked-cell movement rules with per-tile PhysicsServer colliders"
+		String(physics_root.get_meta("collision_backend", "")) == "authored-navigation-footprint",
+		"Interior collision root must declare the authored navigation footprint as the single source of truth"
+	)
+	assert(
+		String(physics_root.get_meta("digilab_wall_collision_backend", "")) == "authored-navigation-footprint",
+		"DigiLab walls must use the same continuous footprint contract as the other service interiors"
+	)
+	assert(
+		physics_root.get_child_count() == 0,
+		"Interior shell/counter collision must not duplicate authored navigation with PhysicsServer shapes"
 	)
 
 	assert(ResourceLoader.exists(DIGILAB_WALL_PATHS["wall_end_cap"]), "Canonical DigiLab end-cap SVG must remain available")
