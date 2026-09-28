@@ -332,14 +332,16 @@ func _assert_generic_shell_clearance(interior: WorldInterior, label: String) -> 
 
 func _assert_digilab_navigation_footprint(interior: WorldInterior) -> void:
 	# DigiLab's vector wall sits on the authored grid edge, unlike the two-level
-	# city blocks used by Hospital/Training. The actor must be able to approach
-	# much closer while still keeping its 10 px footprint outside the wall.
+	# city blocks used by Hospital/Training. Straight wall contact stays close,
+	# while the wider connector pillars receive a localized diagonal blocker.
 	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(16.25, 4.0)))
 	var side_clear := interior.to_global(interior.grid_to_world(Vector2(16.05, 4.0)))
 	var back_overlap := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.76)))
 	var back_clear := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.90)))
-	var pillar_overlap := interior.to_global(interior.grid_to_world(Vector2(16.22, 0.78)))
-	var pillar_clear := interior.to_global(interior.grid_to_world(Vector2(16.02, 0.96)))
+	var left_pillar_overlap := interior.to_global(interior.grid_to_world(Vector2(0.82, 0.82)))
+	var left_pillar_clear := interior.to_global(interior.grid_to_world(Vector2(0.96, 0.96)))
+	var right_pillar_overlap := interior.to_global(interior.grid_to_world(Vector2(16.18, 0.82)))
+	var right_pillar_clear := interior.to_global(interior.grid_to_world(Vector2(16.04, 0.96)))
 	var doorway := interior.to_global(interior.grid_to_world(Vector2(9.0, 12.42)))
 
 	assert(
@@ -359,12 +361,20 @@ func _assert_digilab_navigation_footprint(interior: WorldInterior) -> void:
 		"DigiLab player must be able to visually reach the vector back wall without using the generic block inset"
 	)
 	assert(
-		not interior.is_walkable_world_position(pillar_overlap),
-		"DigiLab back corner pillar must be solid through its visible floor-contact face"
+		not interior.is_walkable_world_position(left_pillar_overlap),
+		"DigiLab upper-left connector pillar must block the diagonal area behind its visible base"
 	)
 	assert(
-		interior.is_walkable_world_position(pillar_clear),
-		"DigiLab must preserve usable floor immediately after the corner-pillar footprint"
+		interior.is_walkable_world_position(left_pillar_clear),
+		"DigiLab upper-left pillar blocker must remain local and preserve adjacent floor"
+	)
+	assert(
+		not interior.is_walkable_world_position(right_pillar_overlap),
+		"DigiLab upper-right connector pillar must use the same localized collision contract"
+	)
+	assert(
+		interior.is_walkable_world_position(right_pillar_clear),
+		"DigiLab upper-right pillar blocker must remain local and preserve adjacent floor"
 	)
 	assert(
 		interior.is_walkable_world_position(doorway),
@@ -417,6 +427,11 @@ func _assert_player_wall_runtime_guard(
 				stopped_grid.x >= 0.70 and stopped_grid.x <= 16.30 and stopped_grid.y >= 0.70,
 				"%s player must reach the authored vector-wall contact plane without entering it at the %s; got grid=%s" % [label, probe["name"], stopped_grid]
 			)
+			if String(probe["name"]) == "back/left corner":
+				assert(
+					stopped_grid.x + stopped_grid.y >= 1.75,
+					"DigiLab player must stop in front of the localized back-pillar base instead of slipping behind it; got grid=%s" % stopped_grid
+				)
 		else:
 			assert(
 				stopped_grid.x >= 1.30 and stopped_grid.x <= 15.70 and stopped_grid.y >= 1.30,
