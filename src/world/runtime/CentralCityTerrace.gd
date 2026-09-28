@@ -16,11 +16,32 @@ const SHORE_BAND_GRID := 0.42
 const BRIDGE_BODY_DEPTH_PX := 8.0
 const BRIDGE_RAIL_GRID := 0.16
 
-const WALL_TOP := Color(0.60, 0.61, 0.61, 1.0)
-const WALL_FACE := Color(0.22, 0.25, 0.27, 1.0)
-const STAIR_TOP := Color(0.60, 0.61, 0.61, 1.0)
-const STAIR_RISER := Color(0.27, 0.30, 0.32, 1.0)
-const STAIR_SIDE := Color(0.20, 0.23, 0.25, 1.0)
+const WALL_MODULE_GRID := 2.15
+const WALL_PILASTER_PX := 3.0
+const WALL_TOP_FASCIA_PX := 8.0
+const WALL_BASE_BAND_PX := 7.0
+const WALL_PANEL_TOP_PX := 12.0
+const WALL_PANEL_BOTTOM_PX := 9.0
+
+const WALL_TOP := Color(0.66, 0.68, 0.67, 1.0)
+const WALL_FACE := Color(0.35, 0.385, 0.40, 1.0)
+const WALL_PANEL_A := Color(0.285, 0.315, 0.33, 1.0)
+const WALL_PANEL_B := Color(0.305, 0.335, 0.35, 1.0)
+const WALL_PILASTER := Color(0.47, 0.50, 0.50, 1.0)
+const WALL_FASCIA := Color(0.50, 0.525, 0.525, 1.0)
+const WALL_BASE := Color(0.235, 0.265, 0.28, 1.0)
+const WALL_ACCENT := Color(0.16, 0.78, 0.88, 1.0)
+
+const STAIR_TOP := Color(0.64, 0.655, 0.65, 1.0)
+const STAIR_RISER := Color(0.37, 0.40, 0.41, 1.0)
+const STAIR_SIDE := Color(0.31, 0.34, 0.35, 1.0)
+const STAIR_CHEEK := Color(0.285, 0.315, 0.33, 1.0)
+const STAIR_NOSING := Color(0.72, 0.735, 0.72, 1.0)
+const GUARD_PLINTH := Color(0.30, 0.34, 0.35, 1.0)
+const GUARD_POST := Color(0.39, 0.46, 0.48, 1.0)
+const GUARD_TOP := Color(0.56, 0.61, 0.61, 1.0)
+const GUARD_ACCENT := Color(0.18, 0.72, 0.82, 1.0)
+
 # Canal architecture stays neutral; cyan belongs to the water/light language,
 # not to the concrete itself. Water refraction provides the submerged blue cast.
 const FLOOR_FACE_X := Color(0.34, 0.37, 0.38, 1.0)
@@ -43,14 +64,30 @@ static func build() -> Node2D:
 
 	var wall_caps: Array[Dictionary] = []
 	var wall_faces: Array[Dictionary] = []
-	_build_retaining_wall(wall_caps, wall_faces)
+	var wall_panels: Array[Dictionary] = []
+	var wall_pilasters: Array[Dictionary] = []
+	var wall_bands: Array[Dictionary] = []
+	var wall_accents: Array[Dictionary] = []
+	_build_retaining_wall(
+		wall_caps,
+		wall_faces,
+		wall_panels,
+		wall_pilasters,
+		wall_bands,
+		wall_accents
+	)
 	_add_paver_batch(root, "RetainingWallCaps", wall_caps, 0)
 	_add_color_batch(root, "RetainingWallFaces", wall_faces, 1)
+	_add_color_batch(root, "RetainingWallPanels", wall_panels, 2)
+	_add_color_batch(root, "RetainingWallPilasters", wall_pilasters, 3)
+	_add_color_batch(root, "RetainingWallBands", wall_bands, 4)
+	_add_color_batch(root, "RetainingWallAccents", wall_accents, 5)
 
 	var stair_landings: Array[Dictionary] = []
 	var stair_treads: Array[Dictionary] = []
 	var stair_risers: Array[Dictionary] = []
 	var stair_side_caps: Array[Dictionary] = []
+	var stair_cheek_faces: Array[Dictionary] = []
 	var stair_rails: Array[Dictionary] = []
 	for raw_stair in TOPOLOGY.stairs():
 		if raw_stair is Dictionary:
@@ -60,13 +97,15 @@ static func build() -> Node2D:
 				stair_treads,
 				stair_risers,
 				stair_side_caps,
+				stair_cheek_faces,
 				stair_rails
 			)
-	_add_paver_batch(root, "StairLandings", stair_landings, 2)
-	_add_paver_batch(root, "StairTreads", stair_treads, 3)
-	_add_color_batch(root, "StairRisers", stair_risers, 4)
-	_add_paver_batch(root, "StairSideCaps", stair_side_caps, 5)
-	_add_color_batch(root, "StairNosingAndParapets", stair_rails, 6)
+	_add_paver_batch(root, "StairLandings", stair_landings, 6)
+	_add_paver_batch(root, "StairTreads", stair_treads, 7)
+	_add_color_batch(root, "StairRisers", stair_risers, 8)
+	_add_paver_batch(root, "StairSideCaps", stair_side_caps, 9)
+	_add_color_batch(root, "StairCheekFaces", stair_cheek_faces, 10)
+	_add_color_batch(root, "StairNosingAndParapets", stair_rails, 11)
 
 	var far_floor_faces: Array[Dictionary] = []
 	var basin_floor: Array[Dictionary] = []
@@ -92,7 +131,7 @@ static func build() -> Node2D:
 		root,
 		"WaterBasinFloor",
 		basin_floor,
-		6,
+		12,
 		{
 			"aggregate_strength": 0.020,
 			"vertical_darkening": 0.02,
@@ -105,7 +144,7 @@ static func build() -> Node2D:
 		root,
 		"TrenchSubmergedWalls",
 		basin_back_faces,
-		7,
+		13,
 		{
 			"aggregate_strength": 0.026,
 			"vertical_darkening": 0.12,
@@ -139,7 +178,7 @@ static func build() -> Node2D:
 		}
 		var water := WORLD_WATER.create_surface_batch(
 			water_surfaces,
-			8,
+			14,
 			"CanalWater",
 			water_profile
 		)
@@ -148,7 +187,7 @@ static func build() -> Node2D:
 	if not water_edges.is_empty():
 		var shoreline := WORLD_WATER.create_shoreline_batch(
 			water_edges,
-			9,
+			15,
 			"CanalShoreline",
 			{
 				"foam_color": Color(0.72, 0.99, 1.00, 0.86),
@@ -169,7 +208,7 @@ static func build() -> Node2D:
 		root,
 		"TrenchFarFloorFaces",
 		far_floor_faces,
-		10,
+		16,
 		{
 			"aggregate_strength": 0.012,
 			"vertical_darkening": 0.08,
@@ -192,7 +231,7 @@ static func build() -> Node2D:
 		root,
 		"BridgeBodies",
 		bridge_bodies,
-		12,
+		18,
 		{
 			"aggregate_strength": 0.024,
 			"vertical_darkening": 0.17,
@@ -201,8 +240,8 @@ static func build() -> Node2D:
 			"cool_depth_tint": 0.025,
 		}
 	)
-	_add_paver_batch(root, "BridgeDecks", bridge_decks, 13)
-	_add_color_batch(root, "BridgeRails", bridge_rails, 14)
+	_add_paver_batch(root, "BridgeDecks", bridge_decks, 19)
+	_add_color_batch(root, "BridgeRails", bridge_rails, 20)
 
 	root.set_meta("visual_level_count", TOPOLOGY.levels().size())
 	root.set_meta("stair_count", TOPOLOGY.stairs().size())
@@ -218,6 +257,8 @@ static func build() -> Node2D:
 	root.set_meta("near_side_overlay", "none")
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v1")
+	root.set_meta("stair_guard_system", "procedural_civic_guard_v1")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
@@ -225,7 +266,11 @@ static func build() -> Node2D:
 
 static func _build_retaining_wall(
 	caps: Array[Dictionary],
-	faces: Array[Dictionary]
+	faces: Array[Dictionary],
+	panels: Array[Dictionary],
+	pilasters: Array[Dictionary],
+	bands: Array[Dictionary],
+	accents: Array[Dictionary]
 ) -> void:
 	var break_data := TOPOLOGY.level_break()
 	if break_data.is_empty():
@@ -250,21 +295,34 @@ static func _build_retaining_wall(
 	var cursor := x_min
 	for gap: Vector2 in gaps:
 		if gap.x > cursor:
-			_append_wall_segment(caps, faces, cursor, gap.x, y, upper_level, upper_elevation)
+			_append_wall_segment(
+				caps, faces, panels, pilasters, bands, accents,
+				cursor, gap.x, y, upper_level, upper_elevation
+			)
 		cursor = maxf(cursor, gap.y)
 	if cursor < x_max:
-		_append_wall_segment(caps, faces, cursor, x_max, y, upper_level, upper_elevation)
+		_append_wall_segment(
+			caps, faces, panels, pilasters, bands, accents,
+			cursor, x_max, y, upper_level, upper_elevation
+		)
 
 
 static func _append_wall_segment(
 	caps: Array[Dictionary],
 	faces: Array[Dictionary],
+	panels: Array[Dictionary],
+	pilasters: Array[Dictionary],
+	bands: Array[Dictionary],
+	accents: Array[Dictionary],
 	x0: float,
 	x1: float,
 	y: float,
 	level: String,
 	elevation: float
 ) -> void:
+	if x1 <= x0 or elevation <= 0.0:
+		return
+
 	var cap_grid := PackedVector2Array([
 		Vector2(x0, y - WALL_CAP_GRID),
 		Vector2(x1, y - WALL_CAP_GRID),
@@ -283,6 +341,80 @@ static func _append_wall_segment(
 		"color": WALL_FACE,
 	})
 
+	# A calculated architectural facade replaces the former single dark slab.
+	# All modules are interpolated from the authored level-break endpoints, so
+	# they can never drift from the isometric floor or become stretched sprites.
+	bands.append({
+		"points": PackedVector2Array([
+			top_a,
+			top_b,
+			top_b + Vector2(0.0, minf(elevation, WALL_TOP_FASCIA_PX)),
+			top_a + Vector2(0.0, minf(elevation, WALL_TOP_FASCIA_PX)),
+		]),
+		"color": WALL_FASCIA,
+	})
+	bands.append({
+		"points": PackedVector2Array([
+			top_a + Vector2(0.0, maxf(0.0, elevation - WALL_BASE_BAND_PX)),
+			top_b + Vector2(0.0, maxf(0.0, elevation - WALL_BASE_BAND_PX)),
+			top_b + bottom_drop,
+			top_a + bottom_drop,
+		]),
+		"color": WALL_BASE,
+	})
+
+	var module_count := maxi(1, int(ceil((x1 - x0) / WALL_MODULE_GRID)))
+	var tangent := (top_b - top_a).normalized()
+	for module_index in range(module_count):
+		var t0 := float(module_index) / float(module_count)
+		var t1 := float(module_index + 1) / float(module_count)
+		var panel_t0 := lerpf(t0, t1, 0.10)
+		var panel_t1 := lerpf(t0, t1, 0.90)
+		var panel_a := top_a.lerp(top_b, panel_t0)
+		var panel_b := top_a.lerp(top_b, panel_t1)
+		var panel_top := minf(WALL_PANEL_TOP_PX, elevation * 0.36)
+		var panel_bottom := maxf(panel_top + 4.0, elevation - WALL_PANEL_BOTTOM_PX)
+		panels.append({
+			"points": PackedVector2Array([
+				panel_a + Vector2(0.0, panel_top),
+				panel_b + Vector2(0.0, panel_top),
+				panel_b + Vector2(0.0, panel_bottom),
+				panel_a + Vector2(0.0, panel_bottom),
+			]),
+			"color": WALL_PANEL_A if module_index % 2 == 0 else WALL_PANEL_B,
+		})
+
+		# Restrained cyan service-light strip. It is geometry, not a texture, and
+		# deliberately occupies only alternating modules so the facade does not
+		# turn into a neon wall.
+		if module_index % 2 == 0:
+			var accent_a := top_a.lerp(top_b, lerpf(t0, t1, 0.28))
+			var accent_b := top_a.lerp(top_b, lerpf(t0, t1, 0.72))
+			var accent_y := minf(elevation - 12.0, maxf(14.0, elevation * 0.45))
+			accents.append({
+				"points": PackedVector2Array([
+					accent_a + Vector2(0.0, accent_y),
+					accent_b + Vector2(0.0, accent_y),
+					accent_b + Vector2(0.0, accent_y + 2.0),
+					accent_a + Vector2(0.0, accent_y + 2.0),
+				]),
+				"color": WALL_ACCENT,
+			})
+
+	for boundary_index in range(module_count + 1):
+		var t := float(boundary_index) / float(module_count)
+		var center := top_a.lerp(top_b, t)
+		var half_width := tangent * WALL_PILASTER_PX
+		pilasters.append({
+			"points": PackedVector2Array([
+				center - half_width,
+				center + half_width,
+				center + half_width + bottom_drop,
+				center - half_width + bottom_drop,
+			]),
+			"color": WALL_PILASTER,
+		})
+
 
 static func _append_staircase(
 	stair: Dictionary,
@@ -290,6 +422,7 @@ static func _append_staircase(
 	treads: Array[Dictionary],
 	risers: Array[Dictionary],
 	side_caps: Array[Dictionary],
+	cheek_faces: Array[Dictionary],
 	rails: Array[Dictionary]
 ) -> void:
 	var x_min := float(stair.get("x_min", 0.0))
@@ -304,17 +437,17 @@ static func _append_staircase(
 	var span := y_end - y_start
 	var step_depth := span / float(step_count)
 	var elevation_step := (from_elevation - to_elevation) / float(step_count)
-	var side_width := minf(0.24, maxf(0.12, (x_max - x_min) * 0.06))
+	var side_width := minf(0.28, maxf(0.16, (x_max - x_min) * 0.07))
 
-	# Explicit landings overlap the connected road graph by half a tile so there
-	# is never a black seam between a route and the first/last stair tread.
+	# Landings overlap the painted circulation by half a tile. The same paver
+	# material therefore flows from road to stair without a pasted-on asset seam.
 	_append_paver_spec(
 		landings,
 		PackedVector2Array([
-			Vector2(x_min, y_start - 0.55),
-			Vector2(x_max, y_start - 0.55),
-			Vector2(x_max, y_start + 0.10),
-			Vector2(x_min, y_start + 0.10),
+			Vector2(x_min - 0.08, y_start - 0.55),
+			Vector2(x_max + 0.08, y_start - 0.55),
+			Vector2(x_max + 0.08, y_start + 0.10),
+			Vector2(x_min - 0.08, y_start + 0.10),
 		]),
 		from_level,
 		STAIR_TOP
@@ -322,10 +455,10 @@ static func _append_staircase(
 	_append_paver_spec(
 		landings,
 		PackedVector2Array([
-			Vector2(x_min, y_end - 0.10),
-			Vector2(x_max, y_end - 0.10),
-			Vector2(x_max, y_end + 0.55),
-			Vector2(x_min, y_end + 0.55),
+			Vector2(x_min - 0.08, y_end - 0.10),
+			Vector2(x_max + 0.08, y_end - 0.10),
+			Vector2(x_max + 0.08, y_end + 0.55),
+			Vector2(x_min - 0.08, y_end + 0.55),
 		]),
 		to_level,
 		STAIR_TOP
@@ -346,7 +479,7 @@ static func _append_staircase(
 		treads.append({
 			"points": _logical_at_elevation(logical_tread, tread_elevation),
 			"logical_points": logical_tread,
-			"color": STAIR_TOP.darkened(float(step) * 0.012),
+			"color": STAIR_TOP.darkened(float(step) * 0.009),
 		})
 
 		var front_left_logical := TOPOLOGY.grid_to_world(Vector2(x_min, y1))
@@ -358,6 +491,17 @@ static func _append_staircase(
 		risers.append({
 			"points": PackedVector2Array([top_left, top_right, bottom_right, bottom_left]),
 			"color": STAIR_RISER,
+		})
+		# A 2 px light nosing makes each step readable at gameplay zoom without
+		# needing a texture or anti-aliased vector asset.
+		rails.append({
+			"points": PackedVector2Array([
+				top_left,
+				top_right,
+				top_right + Vector2(0.0, 2.0),
+				top_left + Vector2(0.0, 2.0),
+			]),
+			"color": STAIR_NOSING,
 		})
 
 		for side in [0, 1]:
@@ -376,8 +520,30 @@ static func _append_staircase(
 				"color": STAIR_SIDE,
 			})
 
+			# Close the visible outer thickness of every tread. The old staircase
+			# exposed background wedges along its diagonal sides, which is what made
+			# the level break read as a black void.
+			var side_x := x_min if side == 0 else x_max
+			var side_start := TOPOLOGY.grid_to_world(Vector2(side_x, y0)) + Vector2(0.0, -tread_elevation)
+			var side_end := TOPOLOGY.grid_to_world(Vector2(side_x, y1)) + Vector2(0.0, -tread_elevation)
+			var cheek_drop := Vector2(0.0, maxf(5.0, elevation_step + 3.0))
+			cheek_faces.append({
+				"points": PackedVector2Array([
+					side_start,
+					side_end,
+					side_end + cheek_drop,
+					side_start + cheek_drop,
+				]),
+				"color": STAIR_CHEEK.darkened(0.025) if side == 0 else STAIR_CHEEK,
+			})
+
 	for x in [x_min, x_max]:
-		_append_handrail(rails, TOPOLOGY.grid_to_display(Vector2(x, y_start), from_level), TOPOLOGY.grid_to_display(Vector2(x, y_end), to_level))
+		_append_civic_guardrail(
+			rails,
+			TOPOLOGY.grid_to_display(Vector2(x, y_start), from_level),
+			TOPOLOGY.grid_to_display(Vector2(x, y_end), to_level),
+			true
+		)
 
 
 static func _append_void_frame(
@@ -720,8 +886,8 @@ static func _append_bridge(
 		var rail_points := _logical_at_elevation(logical_rail, elevation + 3.0)
 		rails.append({"points": rail_points, "color": BRIDGE_RAIL})
 
-	_append_handrail(rails, left_top_a, left_top_b)
-	_append_handrail(rails, right_top_a, right_top_b)
+	_append_civic_guardrail(rails, left_top_a, left_top_b)
+	_append_civic_guardrail(rails, right_top_a, right_top_b)
 
 	# Wider heads visually anchor the bridge into the pavement at both ends.
 	for landing_y in [y0 - 0.55, y1 + 0.10]:
@@ -734,21 +900,77 @@ static func _append_bridge(
 		_append_paver_spec(decks, landing_grid, level, BRIDGE_TOP)
 
 
-static func _append_handrail(specs: Array[Dictionary], start: Vector2, end: Vector2) -> void:
-	var count := maxi(1, int(ceil(start.distance_to(end) / 64.0)))
+static func _append_civic_guardrail(
+	specs: Array[Dictionary],
+	start: Vector2,
+	end: Vector2,
+	solid_plinth: bool = false
+) -> void:
+	var span := start.distance_to(end)
+	if span < 1.0:
+		return
+
+	# The guard is built entirely from screen-aligned polygons calculated from
+	# the structural edge. No raster or SVG needs to be scaled to fit a stair or
+	# bridge, so the geometry stays perfectly attached when the authoring region
+	# changes size.
+	if solid_plinth:
+		specs.append({
+			"points": PackedVector2Array([
+				start,
+				end,
+				end + Vector2(0.0, -7.0),
+				start + Vector2(0.0, -7.0),
+			]),
+			"color": GUARD_PLINTH,
+		})
+
+	var count := maxi(1, int(ceil(span / 56.0)))
 	for index in range(count + 1):
 		var foot := start.lerp(end, float(index) / float(count))
 		specs.append({
-			"points": PackedVector2Array([foot + Vector2(-2, 0), foot + Vector2(2, 0), foot + Vector2(2, -18), foot + Vector2(-2, -18)]),
-			"color": BRIDGE_RAIL,
+			"points": PackedVector2Array([
+				foot + Vector2(-2.5, 0.0),
+				foot + Vector2(2.5, 0.0),
+				foot + Vector2(2.5, -18.0),
+				foot + Vector2(-2.5, -18.0),
+			]),
+			"color": GUARD_POST,
 		})
-	for height in [10.0, 18.0]:
-		var a := start + Vector2(0, -height)
-		var b := end + Vector2(0, -height)
+		# Small integrated cyan marker gives the civic rail the same technological
+		# language as the city lamps without making the entire edge glow.
 		specs.append({
-			"points": PackedVector2Array([a, b, b + Vector2(0, 2), a + Vector2(0, 2)]),
-			"color": Color(0.22, 0.50, 0.55) if height == 10.0 else Color(0.49, 0.57, 0.59),
+			"points": PackedVector2Array([
+				foot + Vector2(-1.5, -14.0),
+				foot + Vector2(1.5, -14.0),
+				foot + Vector2(1.5, -10.0),
+				foot + Vector2(-1.5, -10.0),
+			]),
+			"color": GUARD_ACCENT,
 		})
+
+	var top_a := start + Vector2(0.0, -18.0)
+	var top_b := end + Vector2(0.0, -18.0)
+	specs.append({
+		"points": PackedVector2Array([
+			top_a,
+			top_b,
+			top_b + Vector2(0.0, 3.0),
+			top_a + Vector2(0.0, 3.0),
+		]),
+		"color": GUARD_TOP,
+	})
+	var accent_a := start + Vector2(0.0, -10.0)
+	var accent_b := end + Vector2(0.0, -10.0)
+	specs.append({
+		"points": PackedVector2Array([
+			accent_a,
+			accent_b,
+			accent_b + Vector2(0.0, 2.0),
+			accent_a + Vector2(0.0, 2.0),
+		]),
+		"color": GUARD_ACCENT.darkened(0.16),
+	})
 
 
 static func _append_paver_spec(
