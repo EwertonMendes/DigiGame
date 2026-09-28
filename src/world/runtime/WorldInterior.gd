@@ -229,19 +229,20 @@ func _build_walls() -> void:
 		wall_cells.append(Vector2i(ROOM_SIZE.x - 1, y))
 
 	for cell in wall_cells:
+		var layout_anchor := grid_to_world(Vector2(cell))
 		for level in range(2):
 			var surface := CITY.SURFACE_DARK
 			if level == 1 and (cell.x + cell.y) % 4 == 0:
 				surface = _accent_surface()
 			var block := CITY.create_full_block(
 				surface,
-				grid_to_world(Vector2(cell)),
-				820 + int(round(grid_to_world(Vector2(cell)).y)),
+				layout_anchor,
+				820 + int(round(layout_anchor.y)),
 				level
 			)
 			walls.add_child(block)
 			if level == 0:
-				_register_blocking_visual(block, "wall")
+				_register_blocking_visual(block, layout_anchor, "wall")
 
 	for x in range(0, 5):
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
@@ -380,13 +381,14 @@ func _add_digilab_wall_piece(
 
 
 func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
+	var layout_anchor := grid_to_world(Vector2(cell))
 	var block := CITY.create_full_block(
 		CITY.SURFACE_DARK,
-		grid_to_world(Vector2(cell)),
-		820 + int(round(grid_to_world(Vector2(cell)).y))
+		layout_anchor,
+		820 + int(round(layout_anchor.y))
 	)
 	parent.add_child(block)
-	_register_blocking_visual(block, "front_wall")
+	_register_blocking_visual(block, layout_anchor, "front_wall")
 
 
 func _build_counter() -> void:
@@ -395,14 +397,15 @@ func _build_counter() -> void:
 	add_child(counter)
 	for x in range(6, 12):
 		var cell := Vector2i(x, 4)
+		var layout_anchor := grid_to_world(Vector2(cell))
 		var surface := _accent_surface() if x in [7, 10] else CITY.SURFACE_DARK
 		var block := CITY.create_full_block(
 			surface,
-			grid_to_world(Vector2(cell)),
-			1000 + int(round(grid_to_world(Vector2(cell)).y))
+			layout_anchor,
+			1000 + int(round(layout_anchor.y))
 		)
 		counter.add_child(block)
-		_register_blocking_visual(block, "service_counter")
+		_register_blocking_visual(block, layout_anchor, "service_counter")
 
 
 func _build_service_zones() -> void:
@@ -542,13 +545,19 @@ func _accent_surface() -> String:
 			return CITY.SURFACE_TECH_TEAL
 
 
-func _register_blocking_visual(node: Node2D, source: String) -> void:
-	# Derive occupancy from the rendered node's actual layout position rather
-	# than repeating a coordinate in collision code. If a fixture/wall is moved
-	# in its builder, navigation follows that same transform automatically.
-	var grid := world_to_grid(node.position)
+func _register_blocking_visual(
+	node: Node2D,
+	layout_anchor: Vector2,
+	source: String
+) -> void:
+	# The placement anchor is shared by rendering and navigation at the call
+	# site. Full-block art intentionally offsets its Sprite2D center below the
+	# isometric top face, so reading node.position back as gameplay geometry
+	# would couple collision to a render-only implementation detail.
+	var grid := world_to_grid(layout_anchor)
 	var cell := Vector2i(roundi(grid.x), roundi(grid.y))
 	node.set_meta("navigation_blocker", true)
+	node.set_meta("navigation_anchor", layout_anchor)
 	node.set_meta("navigation_cell", cell)
 	node.set_meta("navigation_source", source)
 	_mark_blocked(cell, source)
