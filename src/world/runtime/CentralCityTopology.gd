@@ -77,12 +77,9 @@ static func elevation_for_level(level_id: String) -> float:
 static func level_at_grid(grid: Vector2) -> String:
 	var transition := _stair_at_grid_ref(grid)
 	if not transition.is_empty():
-		var y_start := float(transition.get("y_start", 0.0))
-		var y_end := float(transition.get("y_end", y_start + 1.0))
-		var midpoint := (y_start + y_end) * 0.5
 		return String(
 			transition.get(
-				"from_level" if grid.y <= midpoint else "to_level",
+				"from_level" if stair_progress(grid, transition) <= 0.5 else "to_level",
 				INVALID_LEVEL
 			)
 		)
@@ -97,17 +94,27 @@ static func level_at_grid(grid: Vector2) -> String:
 static func elevation_at_grid(grid: Vector2) -> float:
 	var transition := _stair_at_grid_ref(grid)
 	if not transition.is_empty():
-		var y_start := float(transition.get("y_start", grid.y))
-		var y_end := float(transition.get("y_end", y_start + 1.0))
 		var from_level := String(transition.get("from_level", "upper_civic"))
 		var to_level := String(transition.get("to_level", "south_terrace"))
 		var from_elevation := elevation_for_level(from_level)
 		var to_elevation := elevation_for_level(to_level)
-		if is_equal_approx(y_start, y_end):
-			return to_elevation
-		var t := clampf((grid.y - y_start) / (y_end - y_start), 0.0, 1.0)
+		var t := stair_progress(grid, transition)
 		return lerpf(from_elevation, to_elevation, t)
 	return elevation_for_level(level_at_grid(grid))
+
+
+static func stair_progress(grid: Vector2, stair: Dictionary) -> float:
+	var polygon_value = stair.get("grid_polygon")
+	if polygon_value is PackedVector2Array and (polygon_value as PackedVector2Array).size() == 4:
+		var quad := polygon_value as PackedVector2Array
+		var start := (quad[0] + quad[1]) * 0.5
+		var end := (quad[3] + quad[2]) * 0.5
+		var travel := end - start
+		if travel.length_squared() > 0.0001:
+			return clampf((grid - start).dot(travel) / travel.length_squared(), 0.0, 1.0)
+	var y_start := float(stair.get("y_start", grid.y))
+	var y_end := float(stair.get("y_end", y_start + 1.0))
+	return 1.0 if is_equal_approx(y_start, y_end) else clampf((grid.y - y_start) / (y_end - y_start), 0.0, 1.0)
 
 
 static func visual_offset_at_grid(grid: Vector2) -> Vector2:
@@ -243,9 +250,8 @@ static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 	var point := Vector2(global_grid)
 	var stair := _stair_at_grid_ref(point)
 	if not stair.is_empty():
-		var y_start := float(stair.get("y_start", 0.0))
-		var y_end := float(stair.get("y_end", 0.0))
-		if point.y > floorf(y_start) and point.y < ceilf(y_end):
+		var progress := stair_progress(point, stair)
+		if progress > 0.0 and progress < 1.0:
 			return {"render": false, "walkable": true}
 
 	var break_data := level_break()

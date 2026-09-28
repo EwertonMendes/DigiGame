@@ -2,6 +2,8 @@
 extends Node2D
 class_name CentralCityGroundPaintAuthoring
 
+const PAINT_DATA = preload("res://src/world/runtime/GroundPaintData.gd")
+
 @export var cells: Dictionary = {}
 
 
@@ -16,4 +18,4 @@ func erase_cell(cell: Vector2i) -> void:
 
 
 func get_surface(cell: Vector2i) -> String:
-	return String(cells.get("%d,%d" % [cell.x, cell.y], ""))
+	return PAINT_DATA.surface(cells.get("%d,%d" % [cell.x, cell.y], ""))

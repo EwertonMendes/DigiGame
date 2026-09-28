@@ -97,6 +97,14 @@ static func build_for_section(
 			continue
 		var foot := _vec2(asset.get("foot", [texture.get_width() * 0.5, texture.get_height()]))
 		var scale_value := float(asset.get("scale", 1.0))
+		var source_size_value = asset.get("source_size", [])
+		if source_size_value is Array and (source_size_value as Array).size() == 2:
+			# Imported raster art may be downscaled for mobile. Placement metadata
+			# stays in source-image pixels so anchors survive import-size changes.
+			var source_size := _vec2(source_size_value)
+			var import_ratio := Vector2(texture.get_size()) / source_size
+			foot *= import_ratio
+			scale_value /= import_ratio.x
 		var world_foot := _grid_to_world(cell)
 		var elevation_px := 0.0
 		if elevation_at_grid.is_valid():

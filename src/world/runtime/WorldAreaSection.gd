@@ -27,7 +27,6 @@ const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 const CITY_CENTER_GLOBAL := Vector2i(7, 7)
 const CITY_SHAPE_MANHATTAN_RADIUS := 54
-const CITY_PAVEMENT_LIGHT := Color(0.555, 0.575, 0.585, 1.0)
 const CITY_CIVIC_LIGHT := Color(0.625, 0.635, 0.640, 1.0)
 const LANDSCAPE_INVALID_CELL := Vector2i(999999, 999999)
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
@@ -376,7 +375,7 @@ func _ground_presentation(cell: Vector2i, _theme: String) -> Dictionary:
 
 	return {
 		"surface": CITY.SURFACE_MAIN,
-		"base_color": CITY_PAVEMENT_LIGHT,
+		"base_color": CITY.surface_base_color(CITY.SURFACE_MAIN),
 		"walkable": true,
 	}
 

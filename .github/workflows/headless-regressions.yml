@@ -150,6 +150,14 @@ jobs:
             "[CentralCityAuthoring] WYSIWYG preview ready" \
             godot --headless --editor --path . scenes/world/central_city_authoring.tscn --quit-after 240
 
+          run_regression ground-paint-colors \
+            "[GroundPaintColor] default gray, custom color persistence, road metadata, batching, and undo/redo passed" \
+            godot --headless --path . -s tools/test_ground_paint_color.gd --quit-after 10
+
+          run_regression city-paint-visibility \
+            "[CityPaintVisibility] painted materials override region fills and borders" \
+            godot --headless --path . -s tools/test_city_paint_visibility.gd --quit-after 10
+
           run_regression battle-ui-lifecycle \
             "battle ui lifecycle regression passed" \
             godot --headless --path . tools/test_battle_ui_lifecycle_regression.tscn

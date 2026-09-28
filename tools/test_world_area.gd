@@ -300,8 +300,7 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("TrenchInnerWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D
-		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D
-		and south_terrace.get_node_or_null("ParapetPosts") is Node2D,
+		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D,
 		"South Terrace must batch its architectural stairs, canal banks, water, and bridges"
 	)
 	assert(

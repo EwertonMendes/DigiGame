@@ -1,11 +1,7 @@
-# Central City terrace kit
+# Central City terrace presentation
 
-This is original DigiGame artwork for the 64×32 isometric world grid.
-The visible paving stays at four small stones per gameplay cell; the world
-grid is only the placement coordinate system and remains paintable in Godot.
+Stair treads, risers, landings, bridge slabs, handrails, and canal banks are constructed from authored transition data using batched meshes. There are no generated PNG sprites in the terrace renderer.
 
-- `terrace_post.svg` is a reusable 20×30 pixel bridge and stair parapet post. Its bottom-center pixel is the placement foot.
-- Stair treads, risers, landings, bridge slabs, parapet beams, canal banks, and road edging are assembled from the authored transition and paint shapes in batched meshes. Their dimensions follow the scene geometry instead of fixed map coordinates.
-- Canal water is batched across the authored regions using `shaders/city_canal_water.gdshader`; it does not use repeated water block sprites.
+The small paintable paving pattern remains independent of the 64 by 32 placement grid. The main material matches the city's light gray pavement; the editor brush supports an optional custom base color.
 
-Keep new kit pieces aligned to the same isometric grid and dark steel/cyan material palette. Add distinct orientation artwork only when a piece cannot be built from the shared geometry without distortion.
+Canal water uses `shaders/city_canal_water.gdshader` across authored water regions. The authoring scene remains the source of truth for transition positions and sizes.

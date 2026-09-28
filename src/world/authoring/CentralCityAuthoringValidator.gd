@@ -62,8 +62,8 @@ static func _validate_ids(root: Node, issues: Array[String]) -> void:
 			var id_value = child.get("transition_id")
 			var id := String(id_value)
 			if id.is_empty():
-				issues.append("%s has no stable authoring id." % child.name)
-			elif seen.has(id):
+				id = String(child.name)
+			if seen.has(id):
 				issues.append("Duplicate authoring id: %s" % id)
 			else:
 				seen[id] = true

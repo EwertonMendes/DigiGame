@@ -153,7 +153,7 @@ static func surface_base_color(surface: String) -> Color:
 		SURFACE_MINT:
 			return Color(0.20, 0.62, 0.43, 1.0)
 		SURFACE_MAIN:
-			return Color(0.47, 0.48, 0.48, 1.0)
+			return Color(0.555, 0.575, 0.585, 1.0)
 		SURFACE_STONE_SOFT:
 			return Color(0.53, 0.54, 0.54, 1.0)
 		SURFACE_TECH_TEAL:

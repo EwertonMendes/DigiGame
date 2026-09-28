@@ -1,6 +1,8 @@
 extends RefCounted
 class_name CentralCityAuthoringData
 
+const PAINT_DATA = preload("res://src/world/runtime/GroundPaintData.gd")
+
 const AUTHORING_SCENE_PATH := "res://scenes/world/central_city_authoring.tscn"
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
@@ -132,13 +134,17 @@ static func ground_override_at(global_grid: Vector2) -> Dictionary:
 	if paint_value is Dictionary:
 		var cell := Vector2i(roundi(global_grid.x), roundi(global_grid.y))
 		var key := "%d,%d" % [cell.x, cell.y]
-		var painted_surface := String((paint_value as Dictionary).get(key, ""))
+		var entry: Variant = (paint_value as Dictionary).get(key, "")
+		var painted_surface := PAINT_DATA.surface(entry)
 		if not painted_surface.is_empty():
-			return {
+			var result := {
 				"surface": painted_surface,
 				"walkable": painted_surface not in ["water", "void"],
 				"render": painted_surface != "void",
 			}
+			if PAINT_DATA.has_color(entry):
+				result["base_color"] = PAINT_DATA.color(entry)
+			return result
 
 	var regions_value = _cache.get("ground_regions", [])
 	if not regions_value is Array:
@@ -309,6 +315,8 @@ static func _parse_transitions(root: Node) -> Dictionary:
 		var bounds := _grid_bounds(grid_polygon)
 		var kind := String(child.get("kind"))
 		var transition_id := String(child.get("transition_id"))
+		if transition_id.is_empty():
+			transition_id = String(child.name)
 		match kind:
 			"stairs":
 				(result["stairs"] as Array).append({
@@ -350,7 +358,7 @@ static func _parse_roads(root: Node, _transition_data: Dictionary) -> Dictionary
 	var road_cells: Array[String] = []
 	for raw_key in paint.keys():
 		var key := String(raw_key)
-		if String(paint.get(raw_key, "")) == "road":
+		if PAINT_DATA.surface(paint.get(raw_key, "")) == "road":
 			road_cells.append(key)
 	road_cells.sort()
 	return {

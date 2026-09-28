@@ -7,6 +7,8 @@ const MATH = preload("res://src/world/authoring/CentralCityEditorMath.gd")
 const VALIDATOR = preload("res://src/world/authoring/CentralCityAuthoringValidator.gd")
 const BAKER = preload("res://src/world/authoring/CentralCityBaker.gd")
 const DECOR_CONFIG_PATH := "res://assets/resources/world/central_city_decor.json"
+const PAINT_DATA = preload("res://src/world/runtime/GroundPaintData.gd")
+const CITY_ART = preload("res://src/world/runtime/CentralCityArt.gd")
 
 const HANDLE_RADIUS := 8.0
 const HIT_RADIUS := 15.0
@@ -21,6 +23,8 @@ var _mode: OptionButton
 var _snap: OptionButton
 var _brush: OptionButton
 var _surface: OptionButton
+var _custom_color: CheckButton
+var _paint_color: ColorPickerButton
 var _picker_button: Button
 var _overlay_toggle: Button
 var _status: Label
@@ -306,6 +310,20 @@ func _build_toolbar() -> void:
 	_surface.tooltip_text = "Paint material. Road is the normal street brush; RMB erases painted cells."
 	_surface.item_selected.connect(_on_surface_selected)
 	_toolbar_tools.add_child(_surface)
+	var color_group := HBoxContainer.new()
+	_custom_color = CheckButton.new()
+	_custom_color.text = "Custom color"
+	_custom_color.tooltip_text = "Override the brush base color while keeping the paving pattern and world lighting."
+	_custom_color.toggled.connect(_on_custom_color_toggled)
+	color_group.add_child(_custom_color)
+	_paint_color = ColorPickerButton.new()
+	_paint_color.custom_minimum_size = Vector2(40, 0)
+	_paint_color.color = CITY_ART.surface_base_color("main")
+	_paint_color.edit_alpha = false
+	_paint_color.tooltip_text = "Choose a ground brush color. Selecting a material restores its default color."
+	_paint_color.color_changed.connect(_on_paint_color_changed)
+	color_group.add_child(_paint_color)
+	_toolbar_tools.add_child(color_group)
 
 	_overlay_toggle = Button.new()
 	_overlay_toggle.text = "Handles"
@@ -415,8 +433,33 @@ func _on_overlay_toggled(enabled: bool) -> void:
 	update_overlays()
 
 
+func _reset_brush_color(surface: String) -> void:
+	if _custom_color == null:
+		return
+	_custom_color.set_pressed_no_signal(false)
+	_paint_color.color = CITY_ART.surface_base_color(surface)
+
+
+func _on_custom_color_toggled(enabled: bool) -> void:
+	_finish_active_paint_stroke(_authoring_root())
+	if enabled and not CITY_ART.is_procedural_paver_surface(_surface.get_item_text(_surface.selected)):
+		_select_surface("main")
+		_custom_color.set_pressed_no_signal(true)
+	_cancel_picker_and_stamp()
+	_select_mode("Paint")
+	update_overlays()
+
+
+func _on_paint_color_changed(color: Color) -> void:
+	_on_custom_color_toggled(true)
+	_paint_color.color = Color(color.r, color.g, color.b, 1.0)
+	_custom_color.set_pressed_no_signal(true)
+
+
 func _on_surface_selected(_index: int) -> void:
+	_finish_active_paint_stroke(_authoring_root())
 	var next_surface := _surface.get_item_text(_surface.selected)
+	_reset_brush_color(next_surface)
 	if _mode_text() == "Paint":
 		_status.text = "Paint %s · LMB paint · RMB erase" % next_surface
 		update_overlays()
@@ -549,6 +592,7 @@ func _activate_road_brush() -> void:
 	for index in range(_surface.item_count):
 		if _surface.get_item_text(index) == "road":
 			_surface.select(index)
+			_reset_brush_color("road")
 			break
 	if _brush != null:
 		for index in range(_brush.item_count):
@@ -1026,7 +1070,10 @@ func _prop_screen_polygon(marker: Marker2D) -> PackedVector2Array:
 
 	var source_size := Vector2.ZERO
 	var region_value = asset.get("region", [])
-	if region_value is Array and (region_value as Array).size() >= 4:
+	var authored_size = asset.get("source_size", [])
+	if authored_size is Array and (authored_size as Array).size() == 2:
+		source_size = _array_vec2(authored_size)
+	elif region_value is Array and (region_value as Array).size() >= 4:
 		source_size = Vector2(float(region_value[2]), float(region_value[3]))
 	else:
 		var texture_path := String(asset.get("path", ""))
@@ -1232,8 +1279,12 @@ func _handle_picker_input(event: InputEvent, root: Node) -> bool:
 
 
 func _pick_surface(screen: Vector2, root: Node) -> void:
-	var surface := _sample_surface_at_screen(screen, root)
+	var entry: Variant = _sample_surface_at_screen(screen, root)
+	var surface := PAINT_DATA.surface(entry)
 	_select_surface(surface)
+	if PAINT_DATA.has_color(entry):
+		_paint_color.color = PAINT_DATA.color(entry)
+		_custom_color.set_pressed_no_signal(true)
 	_select_mode("Paint")
 	_picker_active = false
 	if _picker_button != null:
@@ -1375,7 +1426,7 @@ func _polygon_centroid(points: PackedVector2Array) -> Vector2:
 	return center / float(points.size())
 
 
-func _sample_surface_at_screen(screen: Vector2, root: Node) -> String:
+func _sample_surface_at_screen(screen: Vector2, root: Node) -> Variant:
 	var grid := MATH.visual_world_to_grid(_screen_to_authoring_local(screen))
 	var cell := Vector2i(roundi(grid.x), roundi(grid.y))
 	var paint := _paint_node(root)
@@ -1384,7 +1435,7 @@ func _sample_surface_at_screen(screen: Vector2, root: Node) -> String:
 		if cells_value is Dictionary:
 			var key := MATH.cell_key(cell)
 			if (cells_value as Dictionary).has(key):
-				return String((cells_value as Dictionary)[key])
+				return (cells_value as Dictionary)[key]
 
 	var logical_world := MATH.grid_to_world(Vector2(cell))
 	var root_world: Vector2 = (root as Node2D).to_global(logical_world)
@@ -1428,6 +1479,7 @@ func _select_surface(surface: String) -> void:
 	for index in range(_surface.item_count):
 		if _surface.get_item_text(index) == surface:
 			_surface.select(index)
+			_reset_brush_color(surface)
 			return
 
 
@@ -1512,7 +1564,7 @@ func _paint_at(screen: Vector2, paint: Node) -> void:
 			if _paint_erase:
 				cells.erase(key)
 			else:
-				cells[key] = surface
+				cells[key] = PAINT_DATA.entry(surface, _paint_color.color) if _custom_color.button_pressed else surface
 	paint.set("cells", cells)
 	_status.text = "%s %dx%d @ %s" % [
 		"Erase" if _paint_erase else "Paint %s" % surface,
