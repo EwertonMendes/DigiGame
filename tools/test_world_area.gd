@@ -307,11 +307,11 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("WaterBasinFloor") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchSubmergedWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("CanalWater") is MeshInstance2D
-		and south_terrace.get_node_or_null("CanalShoreline") is MeshInstance2D
+		and south_terrace.get_node_or_null("CanalShoreline") == null
 		and south_terrace.get_node_or_null("TrenchFrontWalls") == null
 		and south_terrace.get_node_or_null("TrenchBankCaps") == null
 		and south_terrace.get_node_or_null("TrenchFarFloorFaces") is MeshInstance2D
-		and south_terrace.get_node_or_null("CanalForegroundFloor") is MeshInstance2D
+		and south_terrace.get_node_or_null("CanalForegroundFloor") == null
 		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D,
@@ -326,23 +326,20 @@ func _ready() -> void:
 		and is_equal_approx(float(south_terrace.get_meta("basin_depth_px", 0.0)), 24.0)
 		and is_equal_approx(float(south_terrace.get_meta("far_floor_face_depth_px", 0.0)), 12.0)
 		and is_equal_approx(float(south_terrace.get_meta("far_floor_face_pavers_per_cell", 0.0)), 4.0)
-		and is_equal_approx(float(south_terrace.get_meta("canal_module_target_px", 0.0)), 82.0)
-		and String(south_terrace.get_meta("canal_detail_system", "")) == "modular_civic_waterfront_v3_floor_cut"
-		and String(south_terrace.get_meta("canal_cutaway_mode", "")) == "far_cube_faces_near_floor_occlusion"
+		and String(south_terrace.get_meta("canal_detail_system", "")) == "recessed_water_v4_open_near_edge"
+		and String(south_terrace.get_meta("canal_cutaway_mode", "")) == "far_cube_faces_near_open_water"
 		and String(south_terrace.get_meta("near_side_border", "")) == "none"
-		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "far_edges_only"
-		and is_equal_approx(float(south_terrace.get_meta("near_ground_overlap_factor", 0.0)), 1.80)
+		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
+		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
-		"South Terrace must expose 12px paver cube faces only on the far/top-left cut and keep the near/right-bottom side borderless foreground floor"
+		"South Terrace must expose 12px paver cube faces only on the far/top-left cut and keep near camera edges completely free of border overlays"
 	)
 	var basin_floor := south_terrace.get_node_or_null("WaterBasinFloor") as MeshInstance2D
 	var submerged_walls := south_terrace.get_node_or_null("TrenchSubmergedWalls") as MeshInstance2D
 	var canal_water := south_terrace.get_node_or_null("CanalWater") as MeshInstance2D
-	var canal_shoreline := south_terrace.get_node_or_null("CanalShoreline") as MeshInstance2D
 	var far_floor_faces := south_terrace.get_node_or_null("TrenchFarFloorFaces") as MeshInstance2D
-	var foreground_floor := south_terrace.get_node_or_null("CanalForegroundFloor") as MeshInstance2D
 	var bridge_bodies := south_terrace.get_node_or_null("BridgeBodies") as MeshInstance2D
 	assert(
 		canal_water != null
@@ -375,13 +372,11 @@ func _ready() -> void:
 		basin_floor != null
 		and submerged_walls != null
 		and far_floor_faces != null
-		and foreground_floor != null
 		and bridge_bodies != null
 		and basin_floor.z_index < canal_water.z_index
 		and submerged_walls.z_index < canal_water.z_index
-		and canal_water.z_index < far_floor_faces.z_index
-		and far_floor_faces.z_index < foreground_floor.z_index,
-		"Canal draw order must keep water below explicit far paver cube faces and below the borderless near foreground floor"
+		and canal_water.z_index < far_floor_faces.z_index,
+		"Canal draw order must keep water below the explicit far paver cube faces without adding any near-side overlay"
 	)
 	for structural_mesh: MeshInstance2D in [
 		basin_floor,
@@ -395,20 +390,10 @@ func _ready() -> void:
 			"Canal walls/floor/bridge bodies must use the depth-aware concrete material instead of flat vertex-color slabs"
 		)
 	assert(
-		foreground_floor.material is ShaderMaterial
-		and (foreground_floor.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
-		"Near/right-bottom canal edge must be the same continuous micro-paver floor, never a separate gray border material"
-	)
-	assert(
-		south_terrace.get_node_or_null("TrenchBankCaps") == null,
-		"The old four-sided gray canal border must never return"
-	)
-	assert(
-		canal_shoreline != null
-		and canal_shoreline.texture == null
-		and canal_shoreline.material is ShaderMaterial
-		and (canal_shoreline.material as ShaderMaterial).shader.resource_path == "res://shaders/world_water_shore.gdshader",
-		"The authored canal must render its animated shoreline from reusable procedural geometry"
+		south_terrace.get_node_or_null("TrenchBankCaps") == null
+		and south_terrace.get_node_or_null("CanalForegroundFloor") == null
+		and south_terrace.get_node_or_null("CanalShoreline") == null,
+		"Canal near edge must contain no gray border, no foreground strip, and no shoreline outline"
 	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))
