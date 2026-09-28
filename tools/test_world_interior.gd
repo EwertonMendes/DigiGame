@@ -339,9 +339,13 @@ func _assert_digilab_navigation_footprint(interior: WorldInterior) -> void:
 	var back_overlap := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.76)))
 	var back_clear := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.90)))
 	var left_pillar_overlap := interior.to_global(interior.grid_to_world(Vector2(0.82, 0.82)))
-	var left_pillar_clear := interior.to_global(interior.grid_to_world(Vector2(0.96, 0.96)))
+	# The center must leave enough room for the actor's 10 px downward sample as
+	# well as the local pillar plane. 1.05 is still visually adjacent to the
+	# connector, but is outside the complete actor footprint rather than only the
+	# origin point.
+	var left_pillar_clear := interior.to_global(interior.grid_to_world(Vector2(1.05, 1.05)))
 	var right_pillar_overlap := interior.to_global(interior.grid_to_world(Vector2(16.18, 0.82)))
-	var right_pillar_clear := interior.to_global(interior.grid_to_world(Vector2(16.04, 0.96)))
+	var right_pillar_clear := interior.to_global(interior.grid_to_world(Vector2(15.95, 1.05)))
 	var doorway := interior.to_global(interior.grid_to_world(Vector2(9.0, 12.42)))
 
 	assert(
