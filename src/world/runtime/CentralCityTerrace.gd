@@ -78,10 +78,14 @@ static func build() -> Node2D:
 	)
 	_add_paver_batch(root, "RetainingWallCaps", wall_caps, 0)
 	_add_color_batch(root, "RetainingWallFaces", wall_faces, 1)
-	_add_color_batch(root, "RetainingWallPanels", wall_panels, 2)
-	_add_color_batch(root, "RetainingWallPilasters", wall_pilasters, 3)
-	_add_color_batch(root, "RetainingWallBands", wall_bands, 4)
-	_add_color_batch(root, "RetainingWallAccents", wall_accents, 5)
+	# Decorative facade layers share one color mesh so the richer wall does not
+	# regress the city batching/render-node budget.
+	var wall_details: Array[Dictionary] = []
+	wall_details.append_array(wall_panels)
+	wall_details.append_array(wall_pilasters)
+	wall_details.append_array(wall_bands)
+	wall_details.append_array(wall_accents)
+	_add_color_batch(root, "RetainingWallDetails", wall_details, 2)
 
 	var stair_landings: Array[Dictionary] = []
 	var stair_treads: Array[Dictionary] = []
@@ -102,10 +106,10 @@ static func build() -> Node2D:
 			)
 	_add_paver_batch(root, "StairLandings", stair_landings, 6)
 	_add_paver_batch(root, "StairTreads", stair_treads, 7)
+	stair_risers.append_array(stair_cheek_faces)
 	_add_color_batch(root, "StairRisers", stair_risers, 8)
 	_add_paver_batch(root, "StairSideCaps", stair_side_caps, 9)
-	_add_color_batch(root, "StairCheekFaces", stair_cheek_faces, 10)
-	_add_color_batch(root, "StairNosingAndParapets", stair_rails, 11)
+	_add_color_batch(root, "StairNosingAndParapets", stair_rails, 10)
 
 	var far_floor_faces: Array[Dictionary] = []
 	var basin_floor: Array[Dictionary] = []
