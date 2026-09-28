@@ -278,11 +278,11 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 	var physics_root := interior.get_node_or_null("InteriorCollision")
 	assert(physics_root != null, "DigiLab interior must expose its collision root")
 	assert(
-		String(physics_root.get_meta("digilab_wall_collision_backend", "")) == "layout-clearance",
+		String(physics_root.get_meta("digilab_wall_collision_backend", "")) == "ground-footprint-grid",
 		"DigiLab walls must use the shared clearance-aware layout navigation backend"
 	)
 	assert(
-		String(physics_root.get_meta("movement_backend", "")) == "layout-clearance",
+		String(physics_root.get_meta("movement_backend", "")) == "ground-footprint-grid",
 		"Interior collision root must expose the single logical movement backend"
 	)
 	assert(
@@ -305,7 +305,7 @@ func _assert_all_service_navigation_contracts() -> void:
 		}, null)
 
 		assert(
-			interior.get_navigation_backend() == "layout-clearance",
+			interior.get_navigation_backend() == "ground-footprint-grid",
 			"%s must use the shared interior navigation backend" % service_id
 		)
 		assert(
@@ -325,19 +325,56 @@ func _assert_all_service_navigation_contracts() -> void:
 			"%s must not mix logical navigation with physical wall/counter colliders" % service_id
 		)
 
-		# The center is still in logical row 1 here, but the player's footprint
-		# reaches into the back-wall row. Zero-clearance point navigation would
-		# incorrectly accept it; actor-aware clearance must reject it.
-		var near_back_wall := interior.to_global(
-			interior.grid_to_world(Vector2(9.0, 0.70))
+		# The runtime footprint is a tiny square in canonical grid space
+		# (half-extents 0.08). These probes sit only 0.001 grid units on either
+		# side of the exact contact point. This is the regression for the mobile
+		# screenshots: top and bottom must stop at the SAME geometric margin,
+		# not one half-cell apart.
+		var upper_touching := interior.to_global(
+			interior.grid_to_world(Vector2(9.0, 0.581))
+		)
+		var upper_penetrating := interior.to_global(
+			interior.grid_to_world(Vector2(9.0, 0.579))
 		)
 		assert(
-			interior.is_walkable_world_position(near_back_wall, 0.0),
-			"%s near-wall probe must demonstrate why point-only collision is insufficient" % service_id
+			interior.is_walkable_world_position(upper_touching),
+			"%s feet must reach the upper wall face within the 0.08-grid footprint" % service_id
 		)
 		assert(
-			not interior.is_walkable_world_position(near_back_wall),
-			"%s player footprint must stop before entering the upper/back wall" % service_id
+			not interior.is_walkable_world_position(upper_penetrating),
+			"%s feet must not penetrate the upper wall top face" % service_id
+		)
+
+		var lower_touching := interior.to_global(
+			interior.grid_to_world(Vector2(2.0, 12.419))
+		)
+		var lower_penetrating := interior.to_global(
+			interior.grid_to_world(Vector2(2.0, 12.421))
+		)
+		assert(
+			interior.is_walkable_world_position(lower_touching),
+			"%s feet must reach the lower wall face with the same 0.08-grid margin" % service_id
+		)
+		assert(
+			not interior.is_walkable_world_position(lower_penetrating),
+			"%s feet must not penetrate the lower wall top face" % service_id
+		)
+
+		# Point queries verify the wall geometry itself: the shared edge is 0.5
+		# around the blocked cell center. These are independent of actor size.
+		var upper_floor_point := interior.to_global(
+			interior.grid_to_world(Vector2(9.0, 0.501))
+		)
+		var upper_wall_point := interior.to_global(
+			interior.grid_to_world(Vector2(9.0, 0.499))
+		)
+		assert(
+			interior.is_walkable_world_position(upper_floor_point, 0.0),
+			"%s upper floor geometry must end exactly at the wall diamond edge" % service_id
+		)
+		assert(
+			not interior.is_walkable_world_position(upper_wall_point, 0.0),
+			"%s upper wall geometry must begin exactly at the same edge" % service_id
 		)
 
 		var exit_world := interior.to_global(
@@ -349,15 +386,13 @@ func _assert_all_service_navigation_contracts() -> void:
 		)
 
 		# The lower/front row is not globally forbidden. Its authored wall cells
-		# are blocked, while the doorway cells stay physically reachable. The old
-		# room-bounds shortcut rejected this whole row and created the large gap
-		# reported at the bottom of every interior.
+		# are blocked, while the doorway cells stay physically reachable.
 		var doorway_world := interior.to_global(
 			interior.grid_to_world(Vector2(9.0, 13.0))
 		)
 		assert(
 			interior.is_walkable_world_position(doorway_world),
-			"%s front doorway row must remain reachable instead of being rejected by room bounds" % service_id
+			"%s front doorway row must remain physically reachable" % service_id
 		)
 		var front_wall_world := interior.to_global(
 			interior.grid_to_world(Vector2(2.0, 13.0))
@@ -365,23 +400,6 @@ func _assert_all_service_navigation_contracts() -> void:
 		assert(
 			not interior.is_walkable_world_position(front_wall_world, 0.0),
 			"%s authored lower wall cell must still block movement" % service_id
-		)
-
-		# Continuous boundary around the upper wall: immediately inside the
-		# shared edge is floor, immediately beyond it is the actual wall cell.
-		var upper_inside := interior.to_global(
-			interior.grid_to_world(Vector2(9.0, 0.51))
-		)
-		var upper_wall := interior.to_global(
-			interior.grid_to_world(Vector2(9.0, 0.49))
-		)
-		assert(
-			interior.is_walkable_world_position(upper_inside, 0.0),
-			"%s upper floor must stay reachable right up to the wall edge" % service_id
-		)
-		assert(
-			not interior.is_walkable_world_position(upper_wall, 0.0),
-			"%s player origin must never cross onto the upper wall top face" % service_id
 		)
 
 		var counter_world := interior.to_global(
