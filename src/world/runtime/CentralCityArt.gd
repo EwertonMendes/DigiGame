@@ -7,7 +7,7 @@ class_name CentralCityArt
 # overworld reads as a city floor instead of a tactical board. Grass, water,
 # perimeter depth and authored interiors still use their dedicated source art.
 const CITY_PAVER_SHADER = preload("res://shaders/city_paver_floor.gdshader")
-const CITY_WATER_SHADER = preload("res://shaders/city_canal_water.gdshader")
+const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 const GROUND_GRASS_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0056.png"
 const GROUND_GRASS_CHECKER_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0053.png"
 const GROUND_MINT_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0058.png"
@@ -350,10 +350,8 @@ static func create_world_uv_polygon_batch(
 	return mesh_instance
 
 
-static func create_water_material() -> ShaderMaterial:
-	var material := ShaderMaterial.new()
-	material.shader = CITY_WATER_SHADER
-	return material
+static func create_water_material(profile: Dictionary = {}) -> ShaderMaterial:
+	return WORLD_WATER.create_surface_material(profile)
 
 
 static func create_color_polygon_batch(
