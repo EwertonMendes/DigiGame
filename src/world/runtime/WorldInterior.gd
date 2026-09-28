@@ -15,18 +15,12 @@ const ROOM_SIZE := Vector2i(18, 14)
 const EXIT_CELL := Vector2i(9, 12)
 const SPAWN_OFFSET_FROM_EXIT := Vector2i(0, -1)
 const SPAWN_CELL := EXIT_CELL + SPAWN_OFFSET_FROM_EXIT
-const DEFAULT_ACTOR_CLEARANCE := 8.0
-const CLEARANCE_DIRECTIONS: Array[Vector2] = [
-	Vector2.ZERO,
-	Vector2.RIGHT,
-	Vector2.LEFT,
-	Vector2.UP,
-	Vector2.DOWN,
-	Vector2(0.70710678, 0.70710678),
-	Vector2(-0.70710678, 0.70710678),
-	Vector2(0.70710678, -0.70710678),
-	Vector2(-0.70710678, -0.70710678),
-]
+# World actors are grounded at their feet. Interior collision therefore uses a
+# small footprint in isometric GRID space instead of a screen-space circle
+# centered on the character body. 0.08 grid units maps to a ~10x5 px diamond
+# on the canonical 64x32 ground plane: enough to prevent corner clipping while
+# still letting the feet visually meet the wall.
+const DEFAULT_GROUND_FOOTPRINT_HALF_EXTENTS := Vector2(0.08, 0.08)
 
 var definition: Dictionary = {}
 
@@ -71,23 +65,49 @@ func is_grid_cell_walkable(cell: Vector2i) -> bool:
 
 
 func get_navigation_backend() -> String:
-	return "layout-clearance"
+	return "ground-footprint-grid"
+
+
+func is_actor_walkable_world_position(
+	world_position: Vector2,
+	actor: Node = null
+) -> bool:
+	if _navigation == null:
+		return false
+	var half_extents := DEFAULT_GROUND_FOOTPRINT_HALF_EXTENTS
+	if actor != null and actor.has_method("get_world_grid_footprint_half_extents"):
+		var actor_value = actor.call("get_world_grid_footprint_half_extents")
+		if actor_value is Vector2:
+			half_extents = actor_value as Vector2
+	var local_grid := world_to_grid(to_local(world_position))
+	return _navigation.is_grid_footprint_walkable(local_grid, half_extents)
 
 
 func is_walkable_world_position(
 	world_position: Vector2,
-	clearance_radius: float = DEFAULT_ACTOR_CLEARANCE
+	clearance_radius: float = -1.0
 ) -> bool:
+	# Compatibility/query helper used by tooling. Runtime actor movement goes
+	# through is_actor_walkable_world_position() so it always uses the foot
+	# contract rather than an arbitrary radial sample.
 	if _navigation == null:
 		return false
+	var local_grid := world_to_grid(to_local(world_position))
+	if clearance_radius < 0.0:
+		return _navigation.is_grid_footprint_walkable(
+			local_grid,
+			DEFAULT_GROUND_FOOTPRINT_HALF_EXTENTS
+		)
+	if is_zero_approx(clearance_radius):
+		return _navigation.is_grid_position_walkable(local_grid)
 
-	var local_position := to_local(world_position)
-	var radius := maxf(0.0, clearance_radius)
-	for direction: Vector2 in CLEARANCE_DIRECTIONS:
-		var sample := local_position + direction * radius
-		if not _navigation.is_grid_position_walkable(world_to_grid(sample)):
-			return false
-	return true
+	# Legacy positive-radius probes are converted to a conservative grid-space
+	# half extent. No runtime movement path depends on this branch.
+	var extent := clearance_radius * sqrt(
+		1.0 / (CITY.TILE_WIDTH * CITY.TILE_WIDTH)
+		+ 1.0 / (CITY.TILE_HEIGHT * CITY.TILE_HEIGHT)
+	)
+	return _navigation.is_grid_footprint_walkable(local_grid, Vector2.ONE * extent)
 
 
 func grid_to_world(grid: Vector2) -> Vector2:
@@ -113,7 +133,7 @@ func _build() -> void:
 	# bounce or slide into a different position than the navigation contract.
 	_collision_root = Node2D.new()
 	_collision_root.name = "InteriorCollision"
-	_collision_root.set_meta("movement_backend", "layout-clearance")
+	_collision_root.set_meta("movement_backend", "ground-footprint-grid")
 	add_child(_collision_root)
 
 	_build_floor()
@@ -238,7 +258,7 @@ func _build_walls() -> void:
 			var block := CITY.create_full_block(
 				surface,
 				layout_anchor,
-				_depth_for_local_ground_y(layout_anchor.y),
+				_depth_for_local_ground_y(layout_anchor.y + TILE_HALF_HEIGHT),
 				level
 			)
 			walls.add_child(block)
@@ -324,7 +344,7 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	# Register occupancy from the exact same anchor arrays used to render the
 	# wall kit. Repositioning or resizing a wall run therefore changes visuals
 	# and navigation together instead of requiring a second hand-maintained map.
-	_collision_root.set_meta("digilab_wall_collision_backend", "layout-clearance")
+	_collision_root.set_meta("digilab_wall_collision_backend", "ground-footprint-grid")
 	_mark_grid_anchors_blocked(back_grid, "digilab_back_wall")
 	_mark_grid_anchors_blocked(side_grid, "digilab_side_wall")
 	_mark_grid_anchors_blocked(front_grid, "digilab_front_wall")
@@ -363,7 +383,7 @@ func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
 	var block := CITY.create_full_block(
 		CITY.SURFACE_DARK,
 		layout_anchor,
-		_depth_for_local_ground_y(layout_anchor.y)
+		_depth_for_local_ground_y(layout_anchor.y + TILE_HALF_HEIGHT)
 	)
 	parent.add_child(block)
 	_register_blocking_visual(block, layout_anchor, "front_wall")
@@ -380,7 +400,7 @@ func _build_counter() -> void:
 		var block := CITY.create_full_block(
 			surface,
 			layout_anchor,
-			_depth_for_local_ground_y(layout_anchor.y) + 2
+			_depth_for_local_ground_y(layout_anchor.y + TILE_HALF_HEIGHT) + 2
 		)
 		counter.add_child(block)
 		_register_blocking_visual(block, layout_anchor, "service_counter")
