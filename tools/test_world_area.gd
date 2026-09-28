@@ -756,6 +756,10 @@ func _ready() -> void:
 		digilab_section != null,
 		"DigiLab must render in the section selected by its current authoring marker"
 	)
+	assert(
+		digilab_section.handles_service("digilab"),
+		"DigiLab service callbacks must follow the authored building anchor across section boundaries"
+	)
 	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
 	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabDoorLight") as Node2D
@@ -921,6 +925,10 @@ func _ready() -> void:
 		training_section != null,
 		"Training Center must render in the section selected by its current authoring marker"
 	)
+	assert(
+		training_section.handles_service("training"),
+		"Training service ownership must follow its authored building anchor"
+	)
 	var training_building := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/Building") as Sprite2D
 	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(training_building != null, "Training district must render the authored Training Center exterior")
@@ -1021,6 +1029,10 @@ func _ready() -> void:
 	var hospital_section := _service_section(area, "hospital")
 	var hospital_door_cell := _service_local_cell("hospital")
 	assert(hospital_section != null, "Digi Hospital must render in the section selected by its authoring marker")
+	assert(
+		hospital_section.handles_service("hospital"),
+		"Hospital service ownership must follow its authored building anchor"
+	)
 	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/Building") as Sprite2D
 	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
