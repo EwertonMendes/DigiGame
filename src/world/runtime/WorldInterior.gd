@@ -14,13 +14,6 @@ const ROOM_SIZE := Vector2i(18, 14)
 const SPAWN_CELL := Vector2i(9, 11)
 const EXIT_CELL := Vector2i(9, 12)
 
-# The perimeter art has a visible ground-contact plane one authored grid unit
-# inside its outer anchor. Treat that plane as the actual inner edge of the
-# tall back/side walls. The actor-footprint samples below then add the physical
-# capsule clearance on top of this visual boundary. Front low walls deliberately
-# do not use this inset so the authored exit remains reachable.
-const TALL_WALL_INNER_EDGE_GRID := 1.0
-
 # Interior navigation is evaluated at the actor's feet, not only at its origin.
 # The player capsule uses a 10 px radius; matching that radius here gives every
 # interior wall/counter/corner the same deterministic footprint contract and
@@ -75,24 +68,17 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 func _is_walkable_local_point(local_position: Vector2) -> bool:
 	var local_grid := world_to_grid(local_position)
 
-	# Tall perimeter walls are not zero-thickness tile labels. Their rendered
-	# face/pillar occupies the first interior grid strip. Checking only the
-	# rounded wall cell lets an actor's feet enter that visible face even though
-	# its center has already rounded into the next floor cell. Model the authored
-	# inner wall edge continuously in grid-space before consulting discrete
-	# blockers. This is the contract the screenshots expose.
-	var max_tall_wall_x := float(ROOM_SIZE.x - 1) - TALL_WALL_INNER_EDGE_GRID
+	# The authored blocked cell is the solid floor footprint of a wall/block.
+	# Keep the room envelope continuous, then let the 10 px actor-foot samples
+	# provide clearance around that footprint. This matches both the generic
+	# isometric blocks and the DigiLab grid anchors without inventing an extra
+	# invisible strip of collision in front of the art.
 	if (
-		local_grid.x < TALL_WALL_INNER_EDGE_GRID
-		or local_grid.x > max_tall_wall_x
-		or local_grid.y < TALL_WALL_INNER_EDGE_GRID
+		local_grid.x < -0.5
+		or local_grid.y < -0.5
+		or local_grid.x > float(ROOM_SIZE.x) - 0.5
+		or local_grid.y > float(ROOM_SIZE.y) - 0.5
 	):
-		return false
-
-	# Keep the front envelope separate from authored occupancy. Border cells can
-	# still be valid at the doorway; actual low-wall/counter cells are blocked by
-	# the same layout map used to build their visuals.
-	if local_grid.y > float(ROOM_SIZE.y) - 0.5:
 		return false
 
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
