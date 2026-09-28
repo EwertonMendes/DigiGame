@@ -1474,7 +1474,10 @@ func _assert_cross_section_building_collision(
 	centroid /= float(polygon.size())
 
 	var verified := false
-	for blend in [0.08, 0.18, 0.32]:
+	# Start very close to the edge: a large building can cross a section seam
+	# by only a few world pixels, which is exactly the placement that used to
+	# lose collision after moving the authoring marker.
+	for blend in [0.01, 0.02, 0.08, 0.18, 0.32]:
 		for vertex: Vector2 in polygon:
 			var local_sample := vertex.lerp(centroid, float(blend))
 			var world_sample := owner.global_position + local_sample
