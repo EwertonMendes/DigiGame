@@ -4,7 +4,7 @@ class_name HubActor
 signal world_position_changed(world_position: Vector2)
 
 const GameInputBootstrapScript = preload("res://src/input/GameInputBootstrap.gd")
-const WorldDepth = preload("res://src/world/runtime/WorldDepth.gd")
+const WorldDepthScript = preload("res://src/world/runtime/WorldDepth.gd")
 const FRAME_COLUMNS := 3
 const FRAME_ROWS := 5
 const WALK_SEQUENCE: Array[int] = [0, 1, 0, 2]
@@ -308,4 +308,4 @@ func _visual_sprite_base_position() -> Vector2:
 
 
 func _update_depth() -> void:
-	z_index = WorldDepth.z_for_ground_y(global_position.y, _world_elevation_px)
+	z_index = WorldDepthScript.z_for_ground_y(global_position.y, _world_elevation_px)
