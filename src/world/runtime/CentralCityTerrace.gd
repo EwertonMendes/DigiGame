@@ -152,6 +152,8 @@ static func build() -> Node2D:
 	root.set_meta("stair_count", TOPOLOGY.stairs().size())
 	root.set_meta("trench_count", TOPOLOGY.voids().size())
 	root.set_meta("bridge_count", TOPOLOGY.bridges().size())
+	root.set_meta("water_surface_drop_px", WATER_SURFACE_DROP_PX)
+	root.set_meta("basin_depth_px", BASIN_DEPTH_PX)
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
