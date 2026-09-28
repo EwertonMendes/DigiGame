@@ -7,13 +7,13 @@ const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 
 const ROOT_Z := -1164
 const WALL_CAP_GRID := 0.34
-const TRENCH_CAP_GRID := 0.07
 const CANAL_MODULE_TARGET_PX := 82.0
 const CANAL_PILLAR_WIDTH_PX := 7.0
-const CANAL_COPING_JOINT_GRID := 0.055
-const NEAR_GROUND_OVERLAP_FACTOR := 1.65
-const BASIN_DEPTH_PX := 22.0
-const WATER_SURFACE_DROP_PX := 8.0
+const FLOOR_FACE_PAVERS_PER_CELL := 4.0
+const FLOOR_FACE_JOINT_PX := 1.0
+const NEAR_GROUND_OVERLAP_FACTOR := 1.55
+const BASIN_DEPTH_PX := 24.0
+const WATER_SURFACE_DROP_PX := 12.0
 const WATER_EDGE_INSET_GRID := 0.10
 const BASIN_FLOOR_INSET_GRID := 0.18
 const SHORE_BAND_GRID := 0.42
@@ -27,10 +27,9 @@ const STAIR_RISER := Color(0.27, 0.30, 0.32, 1.0)
 const STAIR_SIDE := Color(0.20, 0.23, 0.25, 1.0)
 # Canal architecture stays neutral; cyan belongs to the water/light language,
 # not to the concrete itself. Water refraction provides the submerged blue cast.
-# The top lip deliberately uses the same neutral family as the continuous
-# city floor. It must read as pavement thickness, never as a pool surround.
-const TRENCH_CAP := Color(0.555, 0.575, 0.585, 1.0)
-const TRENCH_CAP_JOINT := Color(0.300, 0.322, 0.332, 1.0)
+const FLOOR_FACE_X := Color(0.34, 0.37, 0.38, 1.0)
+const FLOOR_FACE_Y := Color(0.25, 0.28, 0.30, 1.0)
+const FLOOR_FACE_JOINT := Color(0.16, 0.19, 0.20, 1.0)
 const BASIN_WALL_BACK := Color(0.435, 0.455, 0.465, 1.0)
 const BASIN_WALL_FRONT := Color(0.355, 0.385, 0.398, 1.0)
 const BASIN_WALL_SUBMERGED := Color(0.285, 0.335, 0.350, 1.0)
@@ -80,7 +79,8 @@ static func build() -> Node2D:
 	_add_paver_batch(root, "StairSideCaps", stair_side_caps, 5)
 	_add_color_batch(root, "StairNosingAndParapets", stair_rails, 6)
 
-	var trench_caps: Array[Dictionary] = []
+	var foreground_floor: Array[Dictionary] = []
+	var far_floor_faces: Array[Dictionary] = []
 	var basin_floor: Array[Dictionary] = []
 	var basin_back_faces: Array[Dictionary] = []
 	var water_surfaces: Array[Dictionary] = []
@@ -89,7 +89,8 @@ static func build() -> Node2D:
 		if raw_void is Dictionary:
 			_append_void_frame(
 				raw_void as Dictionary,
-				trench_caps,
+				foreground_floor,
+				far_floor_faces,
 				basin_floor,
 				basin_back_faces,
 				water_surfaces,
@@ -174,10 +175,28 @@ static func build() -> Node2D:
 		)
 		root.add_child(shoreline)
 
-	# The near/right+bottom sides are intentionally NOT vertical wall faces.
-	# Their pavement lip renders after water and occludes the near shoreline,
-	# while the far/top+left sides expose the actual floor thickness behind it.
-	_add_paver_batch(root, "TrenchBankCaps", trench_caps, 11)
+	# Far/top+left edges are actual visible thickness of the city floor. This
+	# dedicated layer renders after water so the 12px cube face cannot disappear
+	# behind the refractive surface.
+	_add_structure_batch(
+		root,
+		"TrenchFarFloorFaces",
+		far_floor_faces,
+		10,
+		{
+			"aggregate_strength": 0.012,
+			"vertical_darkening": 0.08,
+			"top_bevel_strength": 0.08,
+			"top_bevel_width": 0.10,
+			"bottom_ao_strength": 0.05,
+			"cool_depth_tint": 0.0,
+		}
+	)
+
+	# Near/right+bottom edges are not borders at all. They are the SAME main
+	# pavement, rendered in foreground and extended slightly over water. Because
+	# UVs are continuous, there is no separate gray strip or pool outline.
+	_add_paver_batch(root, "CanalForegroundFloor", foreground_floor, 11)
 
 	var bridge_bodies: Array[Dictionary] = []
 	var bridge_decks: Array[Dictionary] = []
@@ -207,10 +226,12 @@ static func build() -> Node2D:
 	root.set_meta("bridge_count", TOPOLOGY.bridges().size())
 	root.set_meta("water_surface_drop_px", WATER_SURFACE_DROP_PX)
 	root.set_meta("basin_depth_px", BASIN_DEPTH_PX)
-	root.set_meta("canal_coping_width_grid", TRENCH_CAP_GRID)
+	root.set_meta("far_floor_face_depth_px", WATER_SURFACE_DROP_PX)
+	root.set_meta("far_floor_face_pavers_per_cell", FLOOR_FACE_PAVERS_PER_CELL)
 	root.set_meta("canal_module_target_px", CANAL_MODULE_TARGET_PX)
-	root.set_meta("canal_detail_system", "modular_civic_waterfront_v2_cutaway")
-	root.set_meta("canal_cutaway_mode", "far_faces_near_ground_occlusion")
+	root.set_meta("canal_detail_system", "modular_civic_waterfront_v3_floor_cut")
+	root.set_meta("canal_cutaway_mode", "far_cube_faces_near_floor_occlusion")
+	root.set_meta("near_side_border", "none")
 	root.set_meta("near_ground_overlap_factor", NEAR_GROUND_OVERLAP_FACTOR)
 	root.set_meta("preserves_ground_underlay", true)
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
@@ -377,7 +398,8 @@ static func _append_staircase(
 
 static func _append_void_frame(
 	void_region: Dictionary,
-	caps: Array[Dictionary],
+	foreground_floor: Array[Dictionary],
+	far_floor_faces: Array[Dictionary],
 	basin_floor: Array[Dictionary],
 	basin_back_faces: Array[Dictionary],
 	water_surfaces: Array[Dictionary],
@@ -438,26 +460,20 @@ static func _append_void_frame(
 	})
 
 	# Isometric cutaway rule:
-	# - far/top+left edges expose the vertical floor thickness down to the water;
-	# - near/right+bottom edges are foreground pavement and must cover the water.
-	# A four-sided raised frame is physically wrong for this camera and is what
-	# made the previous versions read as a swimming pool.
+	#
+	# FAR (top + left in camera view):
+	#   expose the thickness of the SAME paved floor as true cube faces.
+	#
+	# NEAR (right + bottom):
+	#   DO NOT draw a wall, curb, outline or dark border. The same main-floor
+	#   pavers extend into the opening and occlude the water in foreground.
+	#
+	# This is the inverse of a raised platform and is the visual contract for
+	# every recessed canal in this camera projection.
 	var opening_center := Vector2.ZERO
 	for point: Vector2 in top_display:
 		opening_center += point
 	opening_center /= float(maxi(top_display.size(), 1))
-
-	var outer_grid := _offset_grid_polygon(footprint, TRENCH_CAP_GRID)
-	outer_grid = _align_polygon_vertices(footprint, outer_grid)
-	if outer_grid.size() != footprint.size():
-		outer_grid = footprint.duplicate()
-
-	var max_edge_grid_length := 0.0
-	for index in range(footprint.size()):
-		max_edge_grid_length = maxf(
-			max_edge_grid_length,
-			footprint[index].distance_to(footprint[(index + 1) % footprint.size()])
-		)
 
 	for index in range(footprint.size()):
 		var next := (index + 1) % footprint.size()
@@ -470,47 +486,34 @@ static func _append_void_frame(
 		var edge_midpoint := (top_a + top_b) * 0.5
 		var is_far_edge := edge_midpoint.y < opening_center.y
 
-		# Submerged retaining geometry remains behind the water on every side.
-		# It can be seen only through the approved refractive water material.
+		# Submerged geometry stays behind the approved water shader.
 		basin_back_faces.append({
 			"points": PackedVector2Array([water_a, water_b, bottom_b, bottom_a]),
 			"color": BASIN_WALL_SUBMERGED,
 			"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 		})
 
-		var outer_a := outer_grid[index]
-		var outer_b := outer_grid[next]
 		var floor_a := footprint[index]
 		var floor_b := footprint[next]
 		var edge_grid := floor_b - floor_a
 		var edge_grid_length := edge_grid.length()
-		var is_endpoint := (
-			max_edge_grid_length > 0.001
-			and edge_grid_length <= max_edge_grid_length * 0.68
-		)
 
 		if is_far_edge:
-			# The visible wall is a true vertical "cube face": its lower edge
-			# is directly below the pavement edge, exactly WATER_SURFACE_DROP_PX
-			# lower. The water itself remains inset behind this face.
 			var face_bottom_a := top_a + Vector2(0.0, WATER_SURFACE_DROP_PX)
 			var face_bottom_b := top_b + Vector2(0.0, WATER_SURFACE_DROP_PX)
-			var is_x_axis_edge := absf(edge_grid.x) >= absf(edge_grid.y)
-			var floor_color := CITY.surface_base_color(CITY.SURFACE_MAIN)
-			var face_color := floor_color.darkened(0.27 if is_x_axis_edge else 0.34)
+			_append_far_floor_cube_face(
+				far_floor_faces,
+				top_a,
+				top_b,
+				face_bottom_a,
+				face_bottom_b,
+				edge_grid_length,
+				absf(edge_grid.x) >= absf(edge_grid.y)
+			)
 
-			basin_back_faces.append({
-				"points": PackedVector2Array([
-					top_a,
-					top_b,
-					face_bottom_b,
-					face_bottom_a,
-				]),
-				"color": face_color,
-				"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
-			})
-			# Small inner shelf at water level bridges the vertical cube face to
-			# the inset water polygon, preventing a floating gap at the corner.
+			# Only the FAR side gets a tiny horizontal shelf at water level. It
+			# joins the vertical floor thickness to the inset water and remains
+			# behind the dedicated cube face.
 			basin_back_faces.append({
 				"points": PackedVector2Array([
 					face_bottom_a,
@@ -518,63 +521,25 @@ static func _append_void_frame(
 					water_b,
 					water_a,
 				]),
-				"color": CANAL_LEDGE.darkened(0.12),
-				"depths": PackedFloat32Array([0.72, 0.72, 0.88, 0.88]),
+				"color": CANAL_LEDGE.darkened(0.16),
+				"depths": PackedFloat32Array([0.75, 0.75, 0.90, 0.90]),
 			})
-			_append_canal_wall_architecture(
-				basin_back_faces,
-				top_a,
-				top_b,
-				face_bottom_a,
-				face_bottom_b,
-				is_endpoint
-			)
-
-			# Top surface is merely a continuation of the city floor, not a
-			# contrasting gray ring.
-			_append_paver_spec(
-				caps,
-				PackedVector2Array([
-					outer_a,
-					outer_b,
-					floor_b,
-					floor_a,
-				]),
-				level,
-				TRENCH_CAP
-			)
-			_append_coping_joints_for_edge(
-				caps,
-				outer_a,
-				outer_b,
-				floor_a,
-				floor_b,
-				level
-			)
 		else:
-			# Foreground pavement deliberately extends beyond the mathematical
-			# opening and OVER the water. This is the key near-side occlusion:
-			# the player sees pavement first, so the water reads below floor.
+			# Foreground occluder uses the exact main-floor colour and world UV.
+			# There is NO outer strip and NO alternate gray material: the polygon
+			# begins at the existing pavement edge and continues inward over water.
 			var cover_a := floor_a.lerp(water_grid[index], NEAR_GROUND_OVERLAP_FACTOR)
 			var cover_b := floor_b.lerp(water_grid[next], NEAR_GROUND_OVERLAP_FACTOR)
 			_append_paver_spec(
-				caps,
+				foreground_floor,
 				PackedVector2Array([
-					outer_a,
-					outer_b,
+					floor_a,
+					floor_b,
 					cover_b,
 					cover_a,
 				]),
 				level,
-				TRENCH_CAP
-			)
-			_append_near_edge_inlays(
-				caps,
-				outer_a,
-				outer_b,
-				cover_a,
-				cover_b,
-				level
+				CITY.surface_base_color(CITY.SURFACE_MAIN)
 			)
 
 	# Shoreline strips live on the lowered water plane and pulse inward from
@@ -822,95 +787,62 @@ static func _append_face_rect(
 	})
 
 
-static func _append_coping_joints_for_edge(
+static func _append_far_floor_cube_face(
 	target: Array[Dictionary],
-	outer_a: Vector2,
-	outer_b: Vector2,
-	inner_a: Vector2,
-	inner_b: Vector2,
-	level: String
+	top_a: Vector2,
+	top_b: Vector2,
+	bottom_a: Vector2,
+	bottom_b: Vector2,
+	edge_grid_length: float,
+	is_x_axis_edge: bool
 ) -> void:
-	var edge_length := inner_a.distance_to(inner_b)
-	if edge_length < 0.5:
-		return
-	var joint_count := maxi(1, int(round(edge_length / 2.0)))
-	var half_t := minf(
-		0.045,
-		(CANAL_COPING_JOINT_GRID * 0.5) / edge_length
+	var segment_count := maxi(
+		1,
+		int(round(edge_grid_length * FLOOR_FACE_PAVERS_PER_CELL))
 	)
-	for joint_index in range(1, joint_count):
-		var center_t := float(joint_index) / float(joint_count)
-		var t0 := clampf(center_t - half_t, 0.0, 1.0)
-		var t1 := clampf(center_t + half_t, 0.0, 1.0)
-		_append_paver_spec(
-			target,
-			PackedVector2Array([
-				outer_a.lerp(outer_b, t0),
-				outer_a.lerp(outer_b, t1),
-				inner_a.lerp(inner_b, t1),
-				inner_a.lerp(inner_b, t0),
+	var base_color := FLOOR_FACE_X if is_x_axis_edge else FLOOR_FACE_Y
+
+	# Every visible micro-paver gets its own vertical face. This mirrors the
+	# "full block" language used at the city perimeter: top squares have real
+	# thickness instead of ending in one continuous pool wall.
+	for segment_index in range(segment_count):
+		var t0 := float(segment_index) / float(segment_count)
+		var t1 := float(segment_index + 1) / float(segment_count)
+		var seg_top_a := top_a.lerp(top_b, t0)
+		var seg_top_b := top_a.lerp(top_b, t1)
+		var seg_bottom_a := bottom_a.lerp(bottom_b, t0)
+		var seg_bottom_b := bottom_a.lerp(bottom_b, t1)
+		var variation := 0.018 if segment_index % 2 == 0 else -0.010
+		target.append({
+			"points": PackedVector2Array([
+				seg_top_a,
+				seg_top_b,
+				seg_bottom_b,
+				seg_bottom_a,
 			]),
-			level,
-			TRENCH_CAP_JOINT
-		)
+			"color": base_color.lightened(variation) if variation >= 0.0 else base_color.darkened(-variation),
+			"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
+		})
 
-
-static func _append_near_edge_inlays(
-	target: Array[Dictionary],
-	outer_a: Vector2,
-	outer_b: Vector2,
-	inner_a: Vector2,
-	inner_b: Vector2,
-	level: String
-) -> void:
-	var edge_length := outer_a.distance_to(outer_b)
-	if edge_length < 0.5:
-		return
-
-	# The near-side ornament lives ON the foreground pavement. It therefore
-	# participates in the same occlusion as the floor instead of becoming a
-	# visible vertical "pool border".
-	var module_count := maxi(2, int(round(edge_length / 2.4)))
-	for module_index in range(module_count):
-		if module_index % 2 == 0:
-			continue
-		var center_t := (float(module_index) + 0.5) / float(module_count)
-		var half_t := minf(0.040, 0.16 / edge_length)
-		var t0 := clampf(center_t - half_t, 0.0, 1.0)
-		var t1 := clampf(center_t + half_t, 0.0, 1.0)
-
-		var outer_l := outer_a.lerp(outer_b, t0)
-		var outer_r := outer_a.lerp(outer_b, t1)
-		var inner_l := inner_a.lerp(inner_b, t0)
-		var inner_r := inner_a.lerp(inner_b, t1)
-		var dark_l0 := outer_l.lerp(inner_l, 0.22)
-		var dark_r0 := outer_r.lerp(inner_r, 0.22)
-		var dark_l1 := outer_l.lerp(inner_l, 0.68)
-		var dark_r1 := outer_r.lerp(inner_r, 0.68)
-		_append_paver_spec(
-			target,
-			PackedVector2Array([dark_l0, dark_r0, dark_r1, dark_l1]),
-			level,
-			TRENCH_CAP_JOINT
-		)
-
-		# Very small cyan service indicator; the water stays the dominant cyan.
-		if module_index % 4 == 1:
-			var accent_l0 := outer_l.lerp(inner_l, 0.34)
-			var accent_r0 := outer_r.lerp(inner_r, 0.34)
-			var accent_l1 := outer_l.lerp(inner_l, 0.46)
-			var accent_r1 := outer_r.lerp(inner_r, 0.46)
-			_append_paver_spec(
-				target,
-				PackedVector2Array([
-					accent_l0,
-					accent_r0,
-					accent_r1,
-					accent_l1,
+		# One-pixel vertical grout joint aligned to the top-floor paver cadence.
+		# Joints stop at the face bottom and never continue around the near side.
+		if segment_index > 0:
+			var joint_top := seg_top_a
+			var joint_bottom := seg_bottom_a
+			var tangent := (top_b - top_a).normalized()
+			var half_joint := tangent * (FLOOR_FACE_JOINT_PX * 0.5)
+			target.append({
+				"points": PackedVector2Array([
+					joint_top - half_joint,
+					joint_top + half_joint,
+					joint_bottom + half_joint,
+					joint_bottom - half_joint,
 				]),
-				level,
-				CANAL_TECH_ACCENT
-			)
+				"color": FLOOR_FACE_JOINT,
+				"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
+			})
+
+
 
 
 static func _offset_grid_polygon(
