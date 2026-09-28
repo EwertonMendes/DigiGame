@@ -240,7 +240,8 @@ func _build_walls() -> void:
 				level
 			)
 			walls.add_child(block)
-		_mark_blocked(cell, "wall")
+			if level == 0:
+				_register_blocking_visual(block, "wall")
 
 	for x in range(0, 5):
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
@@ -385,7 +386,7 @@ func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
 		820 + int(round(grid_to_world(Vector2(cell)).y))
 	)
 	parent.add_child(block)
-	_mark_blocked(cell, "front_wall")
+	_register_blocking_visual(block, "front_wall")
 
 
 func _build_counter() -> void:
@@ -401,7 +402,7 @@ func _build_counter() -> void:
 			1000 + int(round(grid_to_world(Vector2(cell)).y))
 		)
 		counter.add_child(block)
-		_mark_blocked(cell, "service_counter")
+		_register_blocking_visual(block, "service_counter")
 
 
 func _build_service_zones() -> void:
@@ -539,6 +540,18 @@ func _accent_surface() -> String:
 			return CITY.SURFACE_TECH_PURPLE
 		_:
 			return CITY.SURFACE_TECH_TEAL
+
+
+func _register_blocking_visual(node: Node2D, source: String) -> void:
+	# Derive occupancy from the rendered node's actual layout position rather
+	# than repeating a coordinate in collision code. If a fixture/wall is moved
+	# in its builder, navigation follows that same transform automatically.
+	var grid := world_to_grid(node.position)
+	var cell := Vector2i(roundi(grid.x), roundi(grid.y))
+	node.set_meta("navigation_blocker", true)
+	node.set_meta("navigation_cell", cell)
+	node.set_meta("navigation_source", source)
+	_mark_blocked(cell, source)
 
 
 func _mark_grid_anchors_blocked(grid_anchors: Array[Vector2], source: String) -> void:
