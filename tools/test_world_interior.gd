@@ -355,9 +355,10 @@ func _assert_follower_navigation_guard(world: Node, interior: WorldInterior) -> 
 	var start := probe.global_position
 	var target := interior.to_global(interior.grid_to_world(Vector2(17.6, 3.0)))
 	var validator := Callable(world, "can_actor_move_to").bind(probe)
+	var separation_points: Array[Vector2] = []
 
 	for _index in range(12):
-		probe.call("step_toward", target, 0.10, [] as Array[Vector2], validator)
+		probe.call("step_toward", target, 0.10, separation_points, validator)
 		assert(
 			interior.is_walkable_world_position(probe.global_position),
 			"Follower navigation must never tunnel into or through the DigiLab side wall"
