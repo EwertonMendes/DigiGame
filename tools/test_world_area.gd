@@ -294,10 +294,12 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairSideCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairNosingAndParapets") is MeshInstance2D
+		and south_terrace.get_node_or_null("WaterBasinFloor") is MeshInstance2D
+		and south_terrace.get_node_or_null("TrenchSubmergedWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("CanalWater") is MeshInstance2D
 		and south_terrace.get_node_or_null("CanalShoreline") is MeshInstance2D
+		and south_terrace.get_node_or_null("TrenchFrontWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchBankCaps") is MeshInstance2D
-		and south_terrace.get_node_or_null("TrenchInnerWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D,
@@ -308,12 +310,18 @@ func _ready() -> void:
 		and int(south_terrace.get_meta("stair_count", 0)) == 2
 		and int(south_terrace.get_meta("trench_count", 0)) == 2
 		and int(south_terrace.get_meta("bridge_count", 0)) == 2
+		and is_equal_approx(float(south_terrace.get_meta("water_surface_drop_px", 0.0)), 8.0)
+		and is_equal_approx(float(south_terrace.get_meta("basin_depth_px", 0.0)), 22.0)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
-		"South Terrace must keep two actual presentation levels separated by 48px, two stairways, two void pockets, and two bridges"
+		"South Terrace must keep two presentation levels and a physically recessed 22px canal basin with the water surface 8px below pavement"
 	)
+	var basin_floor := south_terrace.get_node_or_null("WaterBasinFloor") as MeshInstance2D
+	var submerged_walls := south_terrace.get_node_or_null("TrenchSubmergedWalls") as MeshInstance2D
 	var canal_water := south_terrace.get_node_or_null("CanalWater") as MeshInstance2D
 	var canal_shoreline := south_terrace.get_node_or_null("CanalShoreline") as MeshInstance2D
+	var front_walls := south_terrace.get_node_or_null("TrenchFrontWalls") as MeshInstance2D
+	var bank_caps := south_terrace.get_node_or_null("TrenchBankCaps") as MeshInstance2D
 	assert(
 		canal_water != null
 		and canal_water.texture == null
@@ -324,6 +332,9 @@ func _ready() -> void:
 	var canal_water_material := canal_water.material as ShaderMaterial
 	var canal_flow: Vector2 = canal_water_material.get_shader_parameter("flow_direction")
 	var canal_body_color: Color = canal_water_material.get_shader_parameter("body_color")
+	var basin_depth_enabled: bool = canal_water_material.get_shader_parameter("use_basin_depth")
+	var caustic_strength := float(canal_water_material.get_shader_parameter("caustic_strength"))
+	var refraction_visibility := float(canal_water_material.get_shader_parameter("refraction_visibility"))
 	assert(
 		canal_flow.is_equal_approx(Vector2(1.0, 1.0).normalized()),
 		"Central City canal flow must travel visually downward along the isometric +X/+Y axis"
@@ -331,6 +342,23 @@ func _ready() -> void:
 	assert(
 		canal_body_color.g >= 0.60 and canal_body_color.b >= 0.75,
 		"Central City canal must keep the bright cyan-blue prototype palette instead of regressing to dark navy water"
+	)
+	assert(
+		basin_depth_enabled
+		and caustic_strength > 0.20
+		and refraction_visibility > 0.10,
+		"Central City water must combine geometry-driven depth, organic caustics, and subtle screen refraction instead of a flat scrolling pattern"
+	)
+	assert(
+		basin_floor != null
+		and submerged_walls != null
+		and front_walls != null
+		and bank_caps != null
+		and basin_floor.z_index < canal_water.z_index
+		and submerged_walls.z_index < canal_water.z_index
+		and canal_water.z_index < front_walls.z_index
+		and front_walls.z_index < bank_caps.z_index,
+		"Canal basin draw order must place real submerged geometry behind water and the near wall/rim in front so the water reads below pavement"
 	)
 	assert(
 		canal_shoreline != null
