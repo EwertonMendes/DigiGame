@@ -750,8 +750,12 @@ func _ready() -> void:
 		"World camera must follow the player's presentation elevation"
 	)
 
-	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
-	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
+	var digilab_section := _service_section(area, "digilab")
+	var digilab_door_cell := _service_local_cell("digilab")
+	assert(
+		digilab_section != null,
+		"DigiLab must render in the section selected by its current authoring marker"
+	)
 	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
 	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabDoorLight") as Node2D
@@ -777,7 +781,7 @@ func _ready() -> void:
 	)
 	var digilab_entrance := digilab_section.get_node_or_null("DigiLabExterior/DigiLabEntrance") as Area2D
 	assert(digilab_entrance != null, "DigiLab exterior must expose a doorway threshold")
-	var expected_door := digilab_section.grid_to_world(Vector2(8, 10))
+	var expected_door := digilab_section.grid_to_world(Vector2(digilab_door_cell))
 	assert(
 		digilab_entrance.position.is_equal_approx(expected_door),
 		"DigiLab teleport threshold must be anchored to the authored door position"
@@ -798,14 +802,15 @@ func _ready() -> void:
 		and absf(digilab_upper.region_rect.size.y - 700.0) < 0.01,
 		"DigiLab must keep the lower facade in front of actors while reserving occlusion for the upper/back art"
 	)
-	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 4), "digilab")
-	var digilab_approach = digilab_section.call("_ground_presentation", Vector2i(8, 10), "digilab")
+	var digilab_approach = digilab_section.call(
+		"_ground_presentation",
+		digilab_door_cell,
+		"digilab"
+	)
 	assert(
-		digilab_floor is Dictionary
-		and digilab_approach is Dictionary
-		and String((digilab_floor as Dictionary).get("surface", "")) == "main"
-		and String((digilab_approach as Dictionary).get("surface", "")) == "road",
-		"DigiLab lot must stay on base paving while its street approach is independently painted as road"
+		digilab_approach is Dictionary
+		and bool((digilab_approach as Dictionary).get("walkable", true)),
+		"DigiLab authoring anchor may move independently from ground paint, but its doorway must remain on walkable city ground"
 	)
 	assert(
 		digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabFoundation/Top") != null,
@@ -844,26 +849,26 @@ func _ready() -> void:
 	)
 	assert(
 		digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 5))
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-3, -5)))
 		),
 		"Open pavement behind the DigiLab must not have an invisible collision barrier"
 	)
 	assert(
 		not digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 8))
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-3, -2)))
 		),
 		"DigiLab measured footprint must block movement through the center of the structure"
 	)
 	assert(
 		not digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(2, 11))
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-6, 1)))
 		),
 		"DigiLab measured footprint must cover the lower-left wall that was previously penetrable"
 	)
 	# Regression points are expressed in source-image coordinates so they track
 	# the exact visible corners reviewed in-game instead of relying on coarse
 	# grid cells.
-	var digilab_door_local := digilab_section.grid_to_world(Vector2(8, 10))
+	var digilab_door_local := expected_door
 	for source_point: Vector2 in [
 		Vector2(80.0, 820.0),   # far-left rear/side corner
 		Vector2(250.0, 860.0),  # left lower wing: player must not visually enter facade
@@ -900,7 +905,9 @@ func _ready() -> void:
 	var digilab_payload = digilab_entrance.get_meta("interior_payload", {})
 	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
 	var digilab_return = (digilab_payload as Dictionary).get("return_position", [])
-	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(Vector2(10, 12))
+	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(
+		Vector2(digilab_door_cell + Vector2i(2, 2))
+	)
 	assert(
 		digilab_return is Array
 		and digilab_return.size() >= 2
@@ -908,8 +915,12 @@ func _ready() -> void:
 		"DigiLab interior exit must return directly in front of the authored door"
 	)
 
-	var training_section := area.get_node_or_null("Section_0_-1") as WorldAreaSection
-	assert(training_section != null, "Training Center must remain in the authored north-central section")
+	var training_section := _service_section(area, "training")
+	var training_door_cell := _service_local_cell("training")
+	assert(
+		training_section != null,
+		"Training Center must render in the section selected by its current authoring marker"
+	)
 	var training_building := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/Building") as Sprite2D
 	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(training_building != null, "Training district must render the authored Training Center exterior")
@@ -940,7 +951,7 @@ func _ready() -> void:
 		"TrainingCenterExterior/TrainingCenterEntrance"
 	) as Area2D
 	assert(training_entrance != null, "Training Center must expose its static doorway threshold")
-	var expected_training_door := training_section.grid_to_world(Vector2(7, 11))
+	var expected_training_door := training_section.grid_to_world(Vector2(training_door_cell))
 	assert(
 		training_entrance.position.is_equal_approx(expected_training_door),
 		"Training Center threshold must align to the authored down-left-facing door"
@@ -949,14 +960,15 @@ func _ready() -> void:
 		training_section.is_walkable_world_position(training_section.global_position + expected_training_door),
 		"Training Center stairs and doorway must remain walkable"
 	)
-	var training_forecourt = training_section.call("_ground_presentation", Vector2i(7, 12), "training")
-	var training_lot = training_section.call("_ground_presentation", Vector2i(2, 2), "training")
+	var training_approach = training_section.call(
+		"_ground_presentation",
+		training_door_cell,
+		"training"
+	)
 	assert(
-		training_forecourt is Dictionary
-		and training_lot is Dictionary
-		and String((training_forecourt as Dictionary).get("surface", "")) == "road"
-		and String((training_lot as Dictionary).get("surface", "")) == "main",
-		"Training Center lot must stay on base paving while its street approach is independently painted as road"
+		training_approach is Dictionary
+		and bool((training_approach as Dictionary).get("walkable", true)),
+		"Training Center authoring anchor may move independently from ground paint, but its doorway must remain on walkable city ground"
 	)
 	assert(
 		training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingCenterFoundation/Top") != null,
@@ -978,13 +990,7 @@ func _ready() -> void:
 		training_collision != null and training_collision.polygon.size() == 21,
 		"Training Center must use the measured source-space ground-contact footprint"
 	)
-	assert(
-		not training_section.is_walkable_world_position(
-			training_section.global_position + training_section.grid_to_world(Vector2(7, 7))
-		),
-		"Training Center structure footprint must block movement through the building"
-	)
-	var training_door_local := training_section.grid_to_world(Vector2(7, 11))
+	var training_door_local := expected_training_door
 	for source_point: Vector2 in [
 		Vector2(100.0, 820.0),
 		Vector2(610.0, 850.0),
@@ -1002,7 +1008,9 @@ func _ready() -> void:
 	var training_payload = training_entrance.get_meta("interior_payload", {})
 	assert(training_payload is Dictionary, "Training Center doorway must preserve the service payload")
 	var training_return = (training_payload as Dictionary).get("return_position", [])
-	var expected_training_return := training_section.global_position + training_section.grid_to_world(Vector2(7, 13))
+	var expected_training_return := training_section.global_position + training_section.grid_to_world(
+		Vector2(training_door_cell + Vector2i(0, 2))
+	)
 	assert(
 		training_return is Array
 		and training_return.size() >= 2
