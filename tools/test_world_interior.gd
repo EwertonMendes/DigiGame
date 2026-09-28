@@ -125,6 +125,8 @@ func _ready() -> void:
 	assert(active_interior != null, "Streamed DigiLab interior must use WorldInterior")
 	_assert_digilab_floor_assets(active_interior)
 	_assert_digilab_wall_assets(active_interior)
+	_assert_digilab_navigation_footprint(active_interior)
+	_assert_follower_navigation_guard(world, active_interior)
 	assert(get_tree().current_scene == self, "Interior entry must not change the active scene")
 	assert(player.global_position.distance_to(expected_return) > 1000.0, "Interior must live in its own streamed world space")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Interior spawn must be walkable")
@@ -206,23 +208,37 @@ func _assert_active_interior_presentation_is_flat(
 	player: Node2D,
 	label: String
 ) -> void:
-	var projected_exterior_elevation := float(world.call("get_world_elevation_at", player.global_position))
+	var area := world.call("get_area_scene") as WorldAreaScene
+	assert(area != null, "%s must expose Central City topology for the isolation regression" % label)
+	var projected_exterior_elevation := float(
+		area.get_elevation_at_world_position(player.global_position)
+	)
 	assert(
 		projected_exterior_elevation > 0.0,
 		"%s regression setup must prove the remote interior stage would be misclassified by Central City topology" % label
+	)
+	assert(
+		is_zero_approx(float(world.call("get_world_elevation_at", player.global_position))),
+		"%s public elevation queries must resolve to the flat interior plane for followers and other presentation clients" % label
 	)
 	assert(
 		is_zero_approx(float(player.call("get_world_elevation"))),
 		"%s must enter on the flat interior presentation plane" % label
 	)
 
-	# Exercise the exact historical failure path. The exterior topology helper is
-	# intentionally called with the remote stage coordinate while an interior is
-	# active; WorldRoot must ignore it rather than move the actor sprite/depth.
+	# Exercise the exact historical failure path. The raw exterior topology is
+	# non-zero here, but both direct player sync and public elevation consumers
+	# must remain isolated while the interior is active.
 	world.call("_sync_player_elevation", player.global_position)
 	assert(
 		is_zero_approx(float(player.call("get_world_elevation"))),
 		"%s must reject exterior elevation while its local interior is active" % label
+	)
+	var party_followers := world.get_node_or_null("PartyFollowers")
+	assert(party_followers != null, "%s must keep the shared follower controller alive" % label)
+	assert(
+		is_zero_approx(float(party_followers.call("_world_elevation_at", player.global_position))),
+		"%s followers must use the same flat interior presentation plane as the player" % label
 	)
 
 	var before_move := player.global_position
@@ -274,10 +290,11 @@ func _assert_service_interior_presentation_isolated(
 
 
 func _assert_generic_shell_clearance(interior: WorldInterior, label: String) -> void:
-	var back_overlap := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.60)))
-	var back_clear := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.82)))
-	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(0.60, 8.0)))
-	var side_clear := interior.to_global(interior.grid_to_world(Vector2(0.82, 8.0)))
+	var back_overlap := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.76)))
+	var back_clear := interior.to_global(interior.grid_to_world(Vector2(9.0, 0.90)))
+	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(0.76, 8.0)))
+	var side_clear := interior.to_global(interior.grid_to_world(Vector2(0.90, 8.0)))
+	var corner_overlap := interior.to_global(interior.grid_to_world(Vector2(0.80, 0.80)))
 	var front_doorway := interior.to_global(interior.grid_to_world(Vector2(9.0, 12.42)))
 
 	assert(
@@ -297,9 +314,64 @@ func _assert_generic_shell_clearance(interior: WorldInterior, label: String) -> 
 		"%s must preserve usable floor after the side-wall clearance" % label
 	)
 	assert(
-		interior.is_walkable_world_position(front_doorway),
-		"%s front doorway must keep its original lower-boundary reachability" % label
+		not interior.is_walkable_world_position(corner_overlap),
+		"%s must not allow the actor footprint onto the tall back/side corner blocks" % label
 	)
+	assert(
+		interior.is_walkable_world_position(front_doorway),
+		"%s front doorway must keep its authored lower-boundary reachability" % label
+	)
+
+
+func _assert_digilab_navigation_footprint(interior: WorldInterior) -> void:
+	var side_overlap := interior.to_global(interior.grid_to_world(Vector2(16.25, 4.0)))
+	var side_clear := interior.to_global(interior.grid_to_world(Vector2(16.05, 4.0)))
+	var pillar_overlap := interior.to_global(interior.grid_to_world(Vector2(16.22, 0.78)))
+	var doorway := interior.to_global(interior.grid_to_world(Vector2(9.0, 12.42)))
+
+	assert(
+		not interior.is_walkable_world_position(side_overlap),
+		"DigiLab actor footprint must stop before entering the authored side-wall/pillar strip"
+	)
+	assert(
+		interior.is_walkable_world_position(side_clear),
+		"DigiLab must preserve usable floor immediately inside the side-wall clearance"
+	)
+	assert(
+		not interior.is_walkable_world_position(pillar_overlap),
+		"DigiLab back corner pillar must be solid to the full actor footprint"
+	)
+	assert(
+		interior.is_walkable_world_position(doorway),
+		"DigiLab doorway must remain reachable after footprint-aware wall collision"
+	)
+
+
+func _assert_follower_navigation_guard(world: Node, interior: WorldInterior) -> void:
+	var probe := OverworldDigimonFollower.new()
+	probe.name = "FollowerNavigationProbe"
+	interior.add_child(probe)
+	probe.global_position = interior.to_global(interior.grid_to_world(Vector2(16.0, 3.0)))
+	var start := probe.global_position
+	var target := interior.to_global(interior.grid_to_world(Vector2(17.6, 3.0)))
+	var validator := Callable(world, "can_actor_move_to").bind(probe)
+
+	for _index in range(12):
+		probe.call("step_toward", target, 0.10, [] as Array[Vector2], validator)
+		assert(
+			interior.is_walkable_world_position(probe.global_position),
+			"Follower navigation must never tunnel into or through the DigiLab side wall"
+		)
+
+	assert(
+		probe.global_position.distance_to(target) > 20.0,
+		"Follower must stop at authored interior navigation instead of cutting through the wall"
+	)
+	assert(
+		probe.global_position.distance_to(start) > 0.5,
+		"Follower regression probe must exercise real locomotion before reaching the wall"
+	)
+	probe.queue_free()
 
 
 func _assert_digilab_floor_assets(interior: WorldInterior) -> void:
