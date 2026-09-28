@@ -24,6 +24,7 @@ var _world_controller: Node = null
 var _definitions: Dictionary = {}
 var _sections: Dictionary = {}
 var _section_list: Array[WorldAreaSection] = []
+var _world_blocking_polygons_by_section: Dictionary = {}
 var _exterior_active := true
 var _ambient_elapsed := 0.0
 var _last_ambient_section := Vector2i(999999, 999999)
@@ -40,6 +41,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	_definitions.clear()
 	_sections.clear()
 	_section_list.clear()
+	_world_blocking_polygons_by_section.clear()
 	_ground_tile_count = 0
 	_urban_layout_polygon_count = 0
 	_urban_layout_layer_count = 0
@@ -84,6 +86,10 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		_sections[coord] = instance
 		_section_list.append(instance)
 		instance.append_ground_tiles(ground_tiles)
+		var section_blockers: Array[PackedVector2Array] = []
+		instance.append_blocking_polygons(section_blockers)
+		for polygon: PackedVector2Array in section_blockers:
+			_index_section_blocking_polygon(instance, polygon)
 		completed += 1
 		load_progress.emit(completed, total)
 		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
@@ -150,18 +156,82 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 	var section = _sections.get(coord)
 	if section == null or not is_instance_valid(section):
 		return false
-	return bool((section as WorldAreaSection).is_walkable_world_position(world_position))
+	if not bool((section as WorldAreaSection).is_walkable_world_position(world_position)):
+		return false
+
+	# Structural blockers are authored by their owning section but may extend
+	# across a section boundary after a designer moves a large building. The
+	# area indexes each polygon into every section it overlaps, so the query is
+	# both correct at section seams and bounded to nearby geometry.
+	var indexed_value = _world_blocking_polygons_by_section.get(coord, [])
+	if indexed_value is Array:
+		for raw_entry in indexed_value as Array:
+			if not raw_entry is Dictionary:
+				continue
+			var entry := raw_entry as Dictionary
+			var owner := entry.get("owner") as WorldAreaSection
+			var polygon_value = entry.get("polygon", PackedVector2Array())
+			if owner == null or not is_instance_valid(owner) or not polygon_value is PackedVector2Array:
+				continue
+			var local_position := world_position - owner.global_position
+			if Geometry2D.is_point_in_polygon(
+				local_position,
+				polygon_value as PackedVector2Array
+			):
+				return false
+	return true
 
 
-func world_to_section(world_position: Vector2) -> Vector2i:
-	var grid := Vector2(
+func _index_section_blocking_polygon(
+	owner: WorldAreaSection,
+	polygon: PackedVector2Array
+) -> void:
+	if owner == null or polygon.size() < 3:
+		return
+
+	# Convert the polygon from its owner's local world coordinates into the
+	# canonical global authoring grid. This is independent of Node2D parenting
+	# and therefore remains stable while the area is being assembled.
+	var min_grid := Vector2(INF, INF)
+	var max_grid := Vector2(-INF, -INF)
+	var owner_grid_origin := Vector2(owner.section_coord * SECTION_SIZE)
+	for point: Vector2 in polygon:
+		var grid := owner_grid_origin + owner.world_to_grid(point)
+		min_grid.x = minf(min_grid.x, grid.x)
+		min_grid.y = minf(min_grid.y, grid.y)
+		max_grid.x = maxf(max_grid.x, grid.x)
+		max_grid.y = maxf(max_grid.y, grid.y)
+
+	var entry := {
+		"owner": owner,
+		"polygon": polygon,
+	}
+	var min_section := _grid_to_section(min_grid)
+	var max_section := _grid_to_section(max_grid)
+	for section_x in range(min_section.x, max_section.x + 1):
+		for section_y in range(min_section.y, max_section.y + 1):
+			var coord := Vector2i(section_x, section_y)
+			if not _world_blocking_polygons_by_section.has(coord):
+				_world_blocking_polygons_by_section[coord] = []
+			(_world_blocking_polygons_by_section[coord] as Array).append(entry)
+
+
+func world_to_grid(world_position: Vector2) -> Vector2:
+	return Vector2(
 		world_position.x / CITY.TILE_WIDTH + world_position.y / CITY.TILE_HEIGHT,
 		-world_position.x / CITY.TILE_WIDTH + world_position.y / CITY.TILE_HEIGHT
 	)
+
+
+func _grid_to_section(grid: Vector2) -> Vector2i:
 	return Vector2i(
 		floori((grid.x + 0.5) / float(SECTION_SIZE)),
 		floori((grid.y + 0.5) / float(SECTION_SIZE))
 	)
+
+
+func world_to_section(world_position: Vector2) -> Vector2i:
+	return _grid_to_section(world_to_grid(world_position))
 
 
 func has_section(coord: Vector2i) -> bool:
