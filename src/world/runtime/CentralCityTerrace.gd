@@ -7,7 +7,10 @@ const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 
 const ROOT_Z := -1164
 const WALL_CAP_GRID := 0.34
-const TRENCH_CAP_GRID := 0.10
+const TRENCH_CAP_GRID := 0.07
+const CANAL_MODULE_TARGET_PX := 82.0
+const CANAL_PILLAR_WIDTH_PX := 7.0
+const CANAL_COPING_JOINT_GRID := 0.055
 const BASIN_DEPTH_PX := 22.0
 const WATER_SURFACE_DROP_PX := 8.0
 const WATER_EDGE_INSET_GRID := 0.10
@@ -23,11 +26,20 @@ const STAIR_RISER := Color(0.27, 0.30, 0.32, 1.0)
 const STAIR_SIDE := Color(0.20, 0.23, 0.25, 1.0)
 # Canal architecture stays neutral; cyan belongs to the water/light language,
 # not to the concrete itself. Water refraction provides the submerged blue cast.
-const TRENCH_CAP := Color(0.575, 0.590, 0.598, 1.0)
+const TRENCH_CAP := Color(0.545, 0.555, 0.562, 1.0)
+const TRENCH_CAP_JOINT := Color(0.285, 0.305, 0.315, 1.0)
 const BASIN_WALL_BACK := Color(0.435, 0.455, 0.465, 1.0)
 const BASIN_WALL_FRONT := Color(0.355, 0.385, 0.398, 1.0)
 const BASIN_WALL_SUBMERGED := Color(0.285, 0.335, 0.350, 1.0)
 const BASIN_FLOOR := Color(0.225, 0.305, 0.325, 1.0)
+const CANAL_LEDGE := Color(0.515, 0.535, 0.545, 1.0)
+const CANAL_PILLAR := Color(0.405, 0.435, 0.447, 1.0)
+const CANAL_PILLAR_CAP := Color(0.505, 0.525, 0.535, 1.0)
+const CANAL_PANEL := Color(0.255, 0.292, 0.305, 1.0)
+const CANAL_PANEL_INSET := Color(0.185, 0.225, 0.238, 1.0)
+const CANAL_WATERLINE_SHADOW := Color(0.155, 0.205, 0.220, 1.0)
+const CANAL_TECH_ACCENT := Color(0.070, 0.565, 0.700, 1.0)
+const CANAL_GATE_SLAT := Color(0.315, 0.350, 0.360, 1.0)
 const BRIDGE_TOP := Color(0.555, 0.570, 0.580, 1.0)
 const BRIDGE_BODY := Color(0.335, 0.370, 0.382, 1.0)
 const BRIDGE_RAIL := Color(0.13, 0.22, 0.25, 1.0)
@@ -210,6 +222,8 @@ static func build() -> Node2D:
 	root.set_meta("water_surface_drop_px", WATER_SURFACE_DROP_PX)
 	root.set_meta("basin_depth_px", BASIN_DEPTH_PX)
 	root.set_meta("canal_coping_width_grid", TRENCH_CAP_GRID)
+	root.set_meta("canal_module_target_px", CANAL_MODULE_TARGET_PX)
+	root.set_meta("canal_detail_system", "modular_civic_waterfront_v1")
 	root.set_meta("preserves_ground_underlay", true)
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
@@ -454,6 +468,7 @@ static func _append_void_frame(
 				level,
 				TRENCH_CAP
 			)
+		_append_coping_joints(caps, outer_grid, footprint, level)
 
 	# Split the basin wall around the waterline. Everything below the surface
 	# renders behind the water and is refracted through it. Only the near/front
@@ -463,6 +478,13 @@ static func _append_void_frame(
 	for point: Vector2 in top_display:
 		opening_center += point
 	opening_center /= float(maxi(top_display.size(), 1))
+
+	var max_edge_grid_length := 0.0
+	for index in range(footprint.size()):
+		max_edge_grid_length = maxf(
+			max_edge_grid_length,
+			footprint[index].distance_to(footprint[(index + 1) % footprint.size()])
+		)
 
 	for index in range(footprint.size()):
 		var next := (index + 1) % footprint.size()
@@ -485,11 +507,25 @@ static func _append_void_frame(
 			"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 		}
 		var edge_midpoint := (top_a + top_b) * 0.5
+		var target_faces := basin_back_faces
 		if edge_midpoint.y > opening_center.y:
 			upper_face["color"] = BASIN_WALL_FRONT
-			basin_front_faces.append(upper_face)
-		else:
-			basin_back_faces.append(upper_face)
+			target_faces = basin_front_faces
+		target_faces.append(upper_face)
+
+		var edge_grid_length := footprint[index].distance_to(footprint[next])
+		var is_endpoint := (
+			max_edge_grid_length > 0.001
+			and edge_grid_length <= max_edge_grid_length * 0.68
+		)
+		_append_canal_wall_architecture(
+			target_faces,
+			top_a,
+			top_b,
+			water_a,
+			water_b,
+			is_endpoint
+		)
 
 	# Shoreline strips live on the lowered water plane and pulse inward from
 	# the physical basin wall. Their animation is independent of downstream
@@ -520,6 +556,259 @@ static func _append_void_frame(
 			"inner_b": strip_world[2],
 			"inner_a": strip_world[3],
 		})
+
+
+static func _append_canal_wall_architecture(
+	target: Array[Dictionary],
+	top_a: Vector2,
+	top_b: Vector2,
+	water_a: Vector2,
+	water_b: Vector2,
+	is_endpoint: bool
+) -> void:
+	var edge_length := top_a.distance_to(top_b)
+	if edge_length < 20.0:
+		return
+
+	# Continuous horizontal hierarchy: a narrow ledge under the pavement and
+	# a dark waterline recess frame every module without relying on one flat
+	# monolithic wall colour.
+	_append_face_rect(
+		target,
+		top_a,
+		top_b,
+		water_a,
+		water_b,
+		0.0,
+		1.0,
+		0.055,
+		0.175,
+		CANAL_LEDGE
+	)
+	_append_face_rect(
+		target,
+		top_a,
+		top_b,
+		water_a,
+		water_b,
+		0.0,
+		1.0,
+		0.835,
+		0.985,
+		CANAL_WATERLINE_SHADOW
+	)
+
+	var module_count := maxi(1, int(round(edge_length / CANAL_MODULE_TARGET_PX)))
+	var pillar_half_t := minf(
+		0.055,
+		(CANAL_PILLAR_WIDTH_PX * 0.5) / maxf(edge_length, 1.0)
+	)
+	var module_step := 1.0 / float(module_count)
+
+	# Structural piers sit exactly on module boundaries, giving the wall a
+	# civic-infrastructure rhythm instead of a swimming-pool perimeter.
+	for boundary_index in range(module_count + 1):
+		var center_t := float(boundary_index) / float(module_count)
+		var pillar_start := clampf(center_t - pillar_half_t, 0.0, 1.0)
+		var pillar_end := clampf(center_t + pillar_half_t, 0.0, 1.0)
+		_append_face_rect(
+			target,
+			top_a,
+			top_b,
+			water_a,
+			water_b,
+			pillar_start,
+			pillar_end,
+			0.115,
+			0.955,
+			CANAL_PILLAR
+		)
+		var cap_extra := pillar_half_t * 0.75
+		_append_face_rect(
+			target,
+			top_a,
+			top_b,
+			water_a,
+			water_b,
+			clampf(pillar_start - cap_extra, 0.0, 1.0),
+			clampf(pillar_end + cap_extra, 0.0, 1.0),
+			0.025,
+			0.205,
+			CANAL_PILLAR_CAP
+		)
+
+	# Recessed panels make each bay read as assembled architecture. A restrained
+	# cyan status strip appears only on alternating bays: technology is an
+	# accent, while the water remains the main cyan surface.
+	for module_index in range(module_count):
+		var module_start := float(module_index) * module_step
+		var module_end := float(module_index + 1) * module_step
+		var inset_t := minf(module_step * 0.13, 0.035)
+		var panel_start := module_start + inset_t
+		var panel_end := module_end - inset_t
+		if panel_end <= panel_start:
+			continue
+		_append_face_rect(
+			target,
+			top_a,
+			top_b,
+			water_a,
+			water_b,
+			panel_start,
+			panel_end,
+			0.315,
+			0.790,
+			CANAL_PANEL
+		)
+		_append_face_rect(
+			target,
+			top_a,
+			top_b,
+			water_a,
+			water_b,
+			panel_start + inset_t * 0.45,
+			panel_end - inset_t * 0.45,
+			0.385,
+			0.705,
+			CANAL_PANEL_INSET
+		)
+		if module_index % 2 == 1:
+			var accent_start := lerpf(panel_start, panel_end, 0.28)
+			var accent_end := lerpf(panel_start, panel_end, 0.72)
+			_append_face_rect(
+				target,
+				top_a,
+				top_b,
+				water_a,
+				water_b,
+				accent_start,
+				accent_end,
+				0.245,
+				0.305,
+				CANAL_TECH_ACCENT
+			)
+
+	# Short edges are treated as maintenance/intake heads, not as generic pool
+	# end walls. The dark recessed gate + slats gives the water a visual reason
+	# to terminate here and can later be replaced by a dedicated art asset.
+	if is_endpoint:
+		_append_face_rect(
+			target,
+			top_a,
+			top_b,
+			water_a,
+			water_b,
+			0.16,
+			0.84,
+			0.265,
+			0.875,
+			CANAL_PANEL_INSET.darkened(0.08)
+		)
+		for slat_index in range(5):
+			var center_t := lerpf(0.24, 0.76, float(slat_index) / 4.0)
+			var slat_half := minf(0.018, 2.0 / maxf(edge_length, 1.0))
+			_append_face_rect(
+				target,
+				top_a,
+				top_b,
+				water_a,
+				water_b,
+				center_t - slat_half,
+				center_t + slat_half,
+				0.33,
+				0.82,
+				CANAL_GATE_SLAT
+			)
+		_append_face_rect(
+			target,
+			top_a,
+			top_b,
+			water_a,
+			water_b,
+			0.31,
+			0.69,
+			0.205,
+			0.275,
+			CANAL_TECH_ACCENT
+		)
+
+
+static func _append_face_rect(
+	target: Array[Dictionary],
+	top_a: Vector2,
+	top_b: Vector2,
+	bottom_a: Vector2,
+	bottom_b: Vector2,
+	t0: float,
+	t1: float,
+	d0: float,
+	d1: float,
+	color: Color
+) -> void:
+	t0 = clampf(t0, 0.0, 1.0)
+	t1 = clampf(t1, 0.0, 1.0)
+	d0 = clampf(d0, 0.0, 1.0)
+	d1 = clampf(d1, 0.0, 1.0)
+	if t1 - t0 <= 0.0001 or d1 - d0 <= 0.0001:
+		return
+
+	var top_left := top_a.lerp(top_b, t0)
+	var top_right := top_a.lerp(top_b, t1)
+	var bottom_left := bottom_a.lerp(bottom_b, t0)
+	var bottom_right := bottom_a.lerp(bottom_b, t1)
+	var upper_left := top_left.lerp(bottom_left, d0)
+	var upper_right := top_right.lerp(bottom_right, d0)
+	var lower_right := top_right.lerp(bottom_right, d1)
+	var lower_left := top_left.lerp(bottom_left, d1)
+	target.append({
+		"points": PackedVector2Array([
+			upper_left,
+			upper_right,
+			lower_right,
+			lower_left,
+		]),
+		"color": color,
+		"depths": PackedFloat32Array([d0, d0, d1, d1]),
+	})
+
+
+static func _append_coping_joints(
+	target: Array[Dictionary],
+	outer_grid: PackedVector2Array,
+	inner_grid: PackedVector2Array,
+	level: String
+) -> void:
+	if outer_grid.size() != inner_grid.size() or outer_grid.size() < 3:
+		return
+	for edge_index in range(inner_grid.size()):
+		var next := (edge_index + 1) % inner_grid.size()
+		var inner_a := inner_grid[edge_index]
+		var inner_b := inner_grid[next]
+		var outer_a := outer_grid[edge_index]
+		var outer_b := outer_grid[next]
+		var edge_length := inner_a.distance_to(inner_b)
+		if edge_length < 0.5:
+			continue
+		var joint_count := maxi(1, int(round(edge_length / 2.0)))
+		var half_t := minf(
+			0.045,
+			(CANAL_COPING_JOINT_GRID * 0.5) / edge_length
+		)
+		for joint_index in range(1, joint_count):
+			var center_t := float(joint_index) / float(joint_count)
+			var t0 := clampf(center_t - half_t, 0.0, 1.0)
+			var t1 := clampf(center_t + half_t, 0.0, 1.0)
+			_append_paver_spec(
+				target,
+				PackedVector2Array([
+					outer_a.lerp(outer_b, t0),
+					outer_a.lerp(outer_b, t1),
+					inner_a.lerp(inner_b, t1),
+					inner_a.lerp(inner_b, t0),
+				]),
+				level,
+				TRENCH_CAP_JOINT
+			)
 
 
 static func _offset_grid_polygon(
@@ -629,26 +918,44 @@ static func _append_bridge(
 	var near_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y0 - 0.18), level)
 	var far_top_a := TOPOLOGY.grid_to_display(Vector2(x0, y1 + 0.18), level)
 	var far_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y1 + 0.18), level)
+	var near_bottom_a := near_top_a + drop
+	var near_bottom_b := near_top_b + drop
+	var far_bottom_a := far_top_a + drop
+	var far_bottom_b := far_top_b + drop
 	bodies.append({
 		"points": PackedVector2Array([
 			near_top_a,
 			near_top_b,
-			near_top_b + drop,
-			near_top_a + drop,
+			near_bottom_b,
+			near_bottom_a,
 		]),
 		"color": BRIDGE_BODY.lightened(0.025),
 		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 	})
+	_append_bridge_abutment_detail(
+		bodies,
+		near_top_a,
+		near_top_b,
+		near_bottom_a,
+		near_bottom_b
+	)
 	bodies.append({
 		"points": PackedVector2Array([
 			far_top_a,
 			far_top_b,
-			far_top_b + drop,
-			far_top_a + drop,
+			far_bottom_b,
+			far_bottom_a,
 		]),
 		"color": BRIDGE_BODY.darkened(0.035),
 		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 	})
+	_append_bridge_abutment_detail(
+		bodies,
+		far_top_a,
+		far_top_b,
+		far_bottom_a,
+		far_bottom_b
+	)
 
 	var left_rail := PackedVector2Array([
 		Vector2(x0, y0),
@@ -679,6 +986,65 @@ static func _append_bridge(
 			Vector2(x0 - 0.22, landing_y + 0.45),
 		])
 		_append_paver_spec(decks, landing_grid, level, BRIDGE_TOP)
+
+
+static func _append_bridge_abutment_detail(
+	target: Array[Dictionary],
+	top_a: Vector2,
+	top_b: Vector2,
+	bottom_a: Vector2,
+	bottom_b: Vector2
+) -> void:
+	# Bridge heads get their own framed service module so the deck visibly
+	# plugs into canal infrastructure instead of floating over an unrelated box.
+	_append_face_rect(
+		target,
+		top_a,
+		top_b,
+		bottom_a,
+		bottom_b,
+		0.06,
+		0.94,
+		0.18,
+		0.92,
+		CANAL_PANEL
+	)
+	_append_face_rect(
+		target,
+		top_a,
+		top_b,
+		bottom_a,
+		bottom_b,
+		0.10,
+		0.18,
+		0.06,
+		0.98,
+		CANAL_PILLAR
+	)
+	_append_face_rect(
+		target,
+		top_a,
+		top_b,
+		bottom_a,
+		bottom_b,
+		0.82,
+		0.90,
+		0.06,
+		0.98,
+		CANAL_PILLAR
+	)
+	_append_face_rect(
+		target,
+		top_a,
+		top_b,
+		bottom_a,
+		bottom_b,
+		0.34,
+		0.66,
+		0.30,
+		0.46,
+		CANAL_TECH_ACCENT
+	)
 
 
 static func _append_handrail(specs: Array[Dictionary], start: Vector2, end: Vector2) -> void:
