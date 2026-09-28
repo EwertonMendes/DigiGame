@@ -14,6 +14,14 @@ const ROOM_SIZE := Vector2i(18, 14)
 const SPAWN_CELL := Vector2i(9, 11)
 const EXIT_CELL := Vector2i(9, 12)
 
+# The visible back/side shell occupies the complete first authored grid strip.
+# Treat the inner edge of that strip as the true collision plane. The 10 px
+# actor footprint below is applied after this boundary, so player and followers
+# stop before their feet/sprite can climb onto wall tops or corner pillars.
+# The front/bottom edge stays authored by individual blocked cells so the exit
+# opening remains reachable.
+const TALL_WALL_INNER_EDGE_GRID := 1.0
+
 # Interior navigation is evaluated at the actor's feet, not only at its origin.
 # The player capsule uses a 10 px radius; matching that radius here gives every
 # interior wall/counter/corner the same deterministic footprint contract and
@@ -68,17 +76,23 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 func _is_walkable_local_point(local_position: Vector2) -> bool:
 	var local_grid := world_to_grid(local_position)
 
-	# The authored blocked cell is the solid floor footprint of a wall/block.
-	# Keep the room envelope continuous, then let the 10 px actor-foot samples
-	# provide clearance around that footprint. This matches both the generic
-	# isometric blocks and the DigiLab grid anchors without inventing an extra
-	# invisible strip of collision in front of the art.
+	# The screenshots make the important distinction explicit: the visible
+	# back/side walls are volumetric shell pieces, not zero-thickness labels on a
+	# blocked cell. Their inner contact plane is one full authored grid unit from
+	# the outer anchor. Enforce that continuous plane first; then the actor-foot
+	# samples add the real capsule clearance on top of it.
+	var max_tall_wall_x := float(ROOM_SIZE.x - 1) - TALL_WALL_INNER_EDGE_GRID
 	if (
-		local_grid.x < -0.5
-		or local_grid.y < -0.5
-		or local_grid.x > float(ROOM_SIZE.x) - 0.5
-		or local_grid.y > float(ROOM_SIZE.y) - 0.5
+		local_grid.x < TALL_WALL_INNER_EDGE_GRID
+		or local_grid.x > max_tall_wall_x
+		or local_grid.y < TALL_WALL_INNER_EDGE_GRID
 	):
+		return false
+
+	# The lower/front edge is intentionally different: it contains an authored
+	# doorway. Keep only the room envelope here and let the actual front-wall
+	# cells decide what is solid.
+	if local_grid.y > float(ROOM_SIZE.y) - 0.5:
 		return false
 
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
