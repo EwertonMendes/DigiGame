@@ -24,6 +24,7 @@ var _world_controller: Node = null
 var _definitions: Dictionary = {}
 var _sections: Dictionary = {}
 var _section_list: Array[WorldAreaSection] = []
+var _world_blocking_polygons: Array[PackedVector2Array] = []
 var _exterior_active := true
 var _ambient_elapsed := 0.0
 var _last_ambient_section := Vector2i(999999, 999999)
@@ -40,6 +41,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	_definitions.clear()
 	_sections.clear()
 	_section_list.clear()
+	_world_blocking_polygons.clear()
 	_ground_tile_count = 0
 	_urban_layout_polygon_count = 0
 	_urban_layout_layer_count = 0
@@ -84,6 +86,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		_sections[coord] = instance
 		_section_list.append(instance)
 		instance.append_ground_tiles(ground_tiles)
+		instance.append_world_blocking_polygons(_world_blocking_polygons)
 		completed += 1
 		load_progress.emit(completed, total)
 		if completed < total and completed % BUILD_SECTIONS_PER_FRAME == 0:
@@ -150,7 +153,17 @@ func is_walkable_world_position(world_position: Vector2) -> bool:
 	var section = _sections.get(coord)
 	if section == null or not is_instance_valid(section):
 		return false
-	return bool((section as WorldAreaSection).is_walkable_world_position(world_position))
+	if not bool((section as WorldAreaSection).is_walkable_world_position(world_position)):
+		return false
+
+	# Structural blockers are authored by their owning section but may extend
+	# across a section boundary after a designer moves a large building. Check
+	# them in area/world space so collision ownership never depends on which
+	# section currently contains the player's feet.
+	for polygon: PackedVector2Array in _world_blocking_polygons:
+		if Geometry2D.is_point_in_polygon(world_position, polygon):
+			return false
+	return true
 
 
 func world_to_section(world_position: Vector2) -> Vector2i:
