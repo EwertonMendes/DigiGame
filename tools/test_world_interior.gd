@@ -126,6 +126,46 @@ func _ready() -> void:
 		"DigiLab spawn must remain connected to its exit after layout changes"
 	)
 	_assert_all_service_navigation_contracts()
+
+	# Reproduce a low-FPS/mobile-sized movement step into both opposite walls.
+	# The actor must advance to within a tiny ground-footprint margin instead of
+	# stopping one frame early, and it must never tunnel into the wall.
+	var upper_start_grid := Vector2(9.0, 1.20)
+	player.global_position = active_interior.to_global(
+		active_interior.grid_to_world(upper_start_grid)
+	)
+	var upper_step := (
+		active_interior.grid_to_world(Vector2(9.0, -0.20))
+		- active_interior.grid_to_world(upper_start_grid)
+	)
+	player.call("_try_move", upper_step)
+	var upper_stopped_grid := active_interior.world_to_grid(
+		active_interior.to_local(player.global_position)
+	)
+	assert(
+		upper_stopped_grid.y >= 0.579
+		and upper_stopped_grid.y <= 0.66,
+		"Large mobile step must stop DigiLab feet at the upper wall face, not on top of it"
+	)
+
+	var lower_start_grid := Vector2(2.0, 11.80)
+	player.global_position = active_interior.to_global(
+		active_interior.grid_to_world(lower_start_grid)
+	)
+	var lower_step := (
+		active_interior.grid_to_world(Vector2(2.0, 13.60))
+		- active_interior.grid_to_world(lower_start_grid)
+	)
+	player.call("_try_move", lower_step)
+	var lower_stopped_grid := active_interior.world_to_grid(
+		active_interior.to_local(player.global_position)
+	)
+	assert(
+		lower_stopped_grid.y >= 12.34
+		and lower_stopped_grid.y <= 12.421,
+		"Large mobile step must reach the lower wall face instead of stopping a full frame/cell early"
+	)
+
 	assert(
 		int(world.call("get_area_banner_presentation_count")) == initial_banner_count,
 		"Entering a local interior must not display an area-title banner"
