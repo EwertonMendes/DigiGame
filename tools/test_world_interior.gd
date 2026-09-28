@@ -28,22 +28,36 @@ func _ready() -> void:
 
 	var player := world.call("get_player") as Node2D
 	var area = world.call("get_area_scene") as WorldAreaScene
-	var manager = world.call("get_interior_manager")
+	var manager := world.call("get_interior_manager") as WorldInteriorManager
 	assert(player != null and area != null and manager != null, "World must expose player, area and interior manager")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Player must spawn on walkable Central City ground")
+	assert(
+		float(player.call("get_world_elevation")) > 0.0,
+		"Regression setup must start on Central City's raised exterior so the interior handoff proves elevation isolation"
+	)
 
 	var entry_thresholds := get_tree().get_nodes_in_group("world_interior_threshold")
 	assert(not entry_thresholds.is_empty(), "Loaded area service entrances must expose physical entry thresholds")
 	var entry: Area2D = null
+	var service_payloads: Dictionary = {}
 	for candidate in entry_thresholds:
 		var candidate_area := candidate as Area2D
 		if candidate_area == null:
 			continue
 		var candidate_payload = candidate_area.get_meta("interior_payload", {})
-		if candidate_payload is Dictionary and String((candidate_payload as Dictionary).get("service", "")) == "digilab":
+		if not candidate_payload is Dictionary:
+			continue
+		var service_id := String((candidate_payload as Dictionary).get("service", ""))
+		if service_id.is_empty():
+			continue
+		service_payloads[service_id] = (candidate_payload as Dictionary).duplicate(true)
+		if service_id == "digilab":
 			entry = candidate_area
-			break
 	assert(entry != null, "DigiLab exterior must expose its authored doorway threshold")
+	assert(
+		service_payloads.has("hospital") and service_payloads.has("training"),
+		"Hospital and Training Center must expose payloads for the shared interior presentation regression"
+	)
 	var payload = entry.get_meta("interior_payload", {})
 	assert(payload is Dictionary, "Interior threshold must carry its destination payload")
 	var digilab_exterior := entry.get_parent() as Node2D
@@ -103,6 +117,7 @@ func _ready() -> void:
 		await _wait_for_transition_state(manager, false, 1800),
 		"DigiLab entry transition must finish before testing interior exit"
 	)
+	_assert_active_interior_presentation_is_flat(world, player, "DigiLab")
 	var interiors_root := world.get_node_or_null("Interiors") as Node2D
 	assert(interiors_root != null and interiors_root.get_child_count() == 1, "DigiLab must create exactly one streamed interior")
 	var active_interior := interiors_root.get_child(0) as WorldInterior
@@ -166,8 +181,87 @@ func _ready() -> void:
 		"Returning from a local interior must not display an area-title banner"
 	)
 
+	await _assert_service_interior_presentation_isolated(
+		world,
+		player,
+		manager,
+		service_payloads["hospital"] as Dictionary,
+		"Hospital"
+	)
+	await _assert_service_interior_presentation_isolated(
+		world,
+		player,
+		manager,
+		service_payloads["training"] as Dictionary,
+		"Training Center"
+	)
+
 	print("seamless world interior regression passed")
 	get_tree().quit()
+
+
+func _assert_active_interior_presentation_is_flat(
+	world: Node,
+	player: Node2D,
+	label: String
+) -> void:
+	var projected_exterior_elevation := float(world.call("get_world_elevation_at", player.global_position))
+	assert(
+		projected_exterior_elevation > 0.0,
+		"%s regression setup must prove the remote interior stage would be misclassified by Central City topology" % label
+	)
+	assert(
+		is_zero_approx(float(player.call("get_world_elevation"))),
+		"%s must enter on the flat interior presentation plane" % label
+	)
+
+	# Exercise the exact historical failure path. The exterior topology helper is
+	# intentionally called with the remote stage coordinate while an interior is
+	# active; WorldRoot must ignore it rather than move the actor sprite/depth.
+	world.call("_sync_player_elevation", player.global_position)
+	assert(
+		is_zero_approx(float(player.call("get_world_elevation"))),
+		"%s must reject exterior elevation while its local interior is active" % label
+	)
+
+	var before_move := player.global_position
+	player.call("_try_move", Vector2(8.0, 0.0))
+	assert(
+		player.global_position.distance_to(before_move) > 1.0,
+		"%s regression must actually move the actor inside the interior" % label
+	)
+	assert(
+		is_zero_approx(float(player.call("get_world_elevation"))),
+		"%s movement must not reapply Central City elevation to the interior stage" % label
+	)
+
+
+func _assert_service_interior_presentation_isolated(
+	world: Node,
+	player: Node2D,
+	manager: WorldInteriorManager,
+	payload: Dictionary,
+	label: String
+) -> void:
+	var entered: bool = await manager.enter_interior(payload.duplicate(true))
+	assert(entered and manager.is_active(), "%s must enter through the shared interior manager" % label)
+	assert(
+		await _wait_for_transition_state(manager, false, 1800),
+		"%s entry transition must finish before presentation validation" % label
+	)
+	_assert_active_interior_presentation_is_flat(world, player, label)
+
+	var exited: bool = await manager.exit_interior()
+	assert(exited and not manager.is_active(), "%s must exit through the shared interior manager" % label)
+	assert(
+		await _wait_for_transition_state(manager, false, 1800),
+		"%s exit transition must restore the exterior before validation" % label
+	)
+	var expected_exterior_elevation := float(world.call("get_world_elevation_at", player.global_position))
+	assert(
+		is_equal_approx(float(player.call("get_world_elevation")), expected_exterior_elevation),
+		"%s exit must restore the exterior presentation elevation" % label
+	)
 
 
 func _assert_digilab_floor_assets(interior: WorldInterior) -> void:
