@@ -220,86 +220,48 @@ func _assert_digilab_wall_assets(interior: WorldInterior) -> void:
 	var authored := walls.get_node_or_null("AuthoredWalls")
 	assert(authored != null, "DigiLab must compose walls under one authored wall root")
 	assert(
-		authored.get_child_count() == 8,
-		"DigiLab wall renderer must stay at eight visual nodes: three batches, four corners and one doorway"
+		authored.get_child_count() == 61,
+		"DigiLab wall renderer must keep 61 individually depth-sorted authored wall pieces"
 	)
 	assert(
 		(authored.get_meta("grid_size", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(64.0, 32.0)),
 		"Runtime DigiLab walls must remain bound to the 64x32 world grid"
 	)
 	assert(
-		String(authored.get_meta("layout_contract", "")) == "grid-native-vector-batched",
-		"DigiLab wall placement must use the batched grid-native vector contract"
+		String(authored.get_meta("layout_contract", "")) == "grid-native-vector-depth-sorted",
+		"DigiLab walls must use per-anchor depth sorting instead of one z-index per MultiMesh run"
 	)
 
 	var logical_counts: Dictionary = {}
 	var anchors_by_kind: Dictionary = {}
-	var batch_kinds: Dictionary = {}
-
 	for child in authored.get_children():
-		if child is MultiMeshInstance2D:
-			var batch := child as MultiMeshInstance2D
-			assert(batch.multimesh != null and batch.texture != null, "Every wall batch must own a MultiMesh and texture")
-			var kind := String(batch.get_meta("digilab_wall_batch", ""))
-			assert(kind in ["straight_right", "straight_left", "low_divider"], "Only repeated straight/divider modules may be batched")
-			assert(
-				String(batch.get_meta("normalization_contract", "")) == "grid-native-vector-batch",
-				"Wall batches must use the deterministic grid-native batch contract"
-			)
-			assert(
-				String(batch.get_meta("source_kind", "")) == "runtime_svg",
-				"Wall batches must render prebuilt runtime SVGs"
-			)
-			assert(DIGILAB_WALL_PATHS.has(kind), "Wall batch must declare a known wall role")
-			assert(
-				batch.texture.resource_path == String(DIGILAB_WALL_PATHS[kind]),
-				"Wall batch must use the exact grid-native SVG for its role"
-			)
-			var batch_count := int(batch.get_meta("batch_count", 0))
-			assert(batch_count > 0 and batch.multimesh.instance_count == batch_count, "Wall batch metadata must match MultiMesh instance count")
-			logical_counts[kind] = batch_count
-			batch_kinds[kind] = true
-			var grid_anchors := batch.get_meta("grid_anchors", []) as Array
-			assert(grid_anchors.size() == batch_count, "Wall batch must retain every logical grid anchor")
-			anchors_by_kind[kind] = grid_anchors
-			var span := batch.get_meta("grid_span", Vector2.ZERO) as Vector2
-			if kind == "straight_right":
-				assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Back wall modules must own one X-grid edge")
-			elif kind == "straight_left":
-				assert(span.is_equal_approx(Vector2(0.0, 1.0)), "Side wall modules must own one Y-grid edge")
-			else:
-				assert(span.is_equal_approx(Vector2(1.0, 0.0)), "Front dividers must own one X-grid edge")
-			continue
-
 		var sprite := child as Sprite2D
-		assert(sprite != null and sprite.texture != null, "Non-batched wall nodes must be connector/door Sprite2D assets")
-		assert(sprite.scale.is_equal_approx(Vector2.ONE), "Grid-native connector assets must render at scale 1")
-		assert(is_zero_approx(sprite.rotation), "Grid-native connector assets must never rotate at runtime")
-		assert(not sprite.flip_h and not sprite.flip_v, "Grid-native connector assets must never mirror at runtime")
+		assert(sprite != null and sprite.texture != null, "Every DigiLab wall module must be an authored Sprite2D")
+		assert(sprite.scale.is_equal_approx(Vector2.ONE), "Grid-native wall assets must render at scale 1")
+		assert(is_zero_approx(sprite.rotation), "Grid-native wall assets must never rotate at runtime")
+		assert(not sprite.flip_h and not sprite.flip_v, "Grid-native wall assets must never mirror at runtime")
 		assert(
 			String(sprite.get_meta("normalization_contract", "")) == "grid-native-vector",
-			"Connector assets must use the deterministic grid-native vector contract"
+			"Every DigiLab wall piece must use the deterministic grid-native vector contract"
 		)
+
 		var kind := String(sprite.get_meta("digilab_wall_piece", ""))
-		assert(
-			kind in ["corner_back_left", "corner_back_right", "corner_front_left", "corner_front_right", "door_frame"],
-			"Only orientation-specific corners and the doorway may remain individual sprites"
-		)
-		assert(DIGILAB_WALL_PATHS.has(kind), "Connector sprite must declare a known role")
+		assert(DIGILAB_WALL_PATHS.has(kind), "Wall piece must declare a known authored role")
 		assert(
 			sprite.texture.resource_path == String(DIGILAB_WALL_PATHS[kind]),
-			"Connector sprite must use its exact orientation-specific SVG"
+			"Wall piece must use the exact grid-native SVG for its role"
 		)
 		logical_counts[kind] = int(logical_counts.get(kind, 0)) + 1
 		var anchor := sprite.get_meta("grid_anchor_cell", Vector2(-1000.0, -1000.0)) as Vector2
 		assert(
 			is_equal_approx(anchor.x, round(anchor.x))
 			and is_equal_approx(anchor.y, round(anchor.y)),
-			"Connector anchors must sit on exact integer grid vertices"
+			"Wall anchors must sit on exact integer grid vertices"
 		)
-		anchors_by_kind[kind] = [anchor]
+		if not anchors_by_kind.has(kind):
+			anchors_by_kind[kind] = []
+		(anchors_by_kind[kind] as Array).append(anchor)
 
-	assert(batch_kinds.size() == 3, "DigiLab must use exactly three repeated-geometry wall batches")
 	assert(int(logical_counts.get("straight_right", 0)) == 17, "Back wall must keep seventeen one-edge modules")
 	assert(int(logical_counts.get("straight_left", 0)) == 26, "Side walls must keep twenty-six one-edge modules")
 	assert(int(logical_counts.get("low_divider", 0)) == 13, "Front boundary must keep thirteen one-edge low dividers")
@@ -384,6 +346,42 @@ func _assert_all_service_navigation_contracts() -> void:
 		assert(
 			interior.is_walkable_world_position(exit_world),
 			"%s player must be able to reach the lower exit lane" % service_id
+		)
+
+		# The lower/front row is not globally forbidden. Its authored wall cells
+		# are blocked, while the doorway cells stay physically reachable. The old
+		# room-bounds shortcut rejected this whole row and created the large gap
+		# reported at the bottom of every interior.
+		var doorway_world := interior.to_global(
+			interior.grid_to_world(Vector2(9.0, 13.0))
+		)
+		assert(
+			interior.is_walkable_world_position(doorway_world),
+			"%s front doorway row must remain reachable instead of being rejected by room bounds" % service_id
+		)
+		var front_wall_world := interior.to_global(
+			interior.grid_to_world(Vector2(2.0, 13.0))
+		)
+		assert(
+			not interior.is_walkable_world_position(front_wall_world, 0.0),
+			"%s authored lower wall cell must still block movement" % service_id
+		)
+
+		# Continuous boundary around the upper wall: immediately inside the
+		# shared edge is floor, immediately beyond it is the actual wall cell.
+		var upper_inside := interior.to_global(
+			interior.grid_to_world(Vector2(9.0, 0.51))
+		)
+		var upper_wall := interior.to_global(
+			interior.grid_to_world(Vector2(9.0, 0.49))
+		)
+		assert(
+			interior.is_walkable_world_position(upper_inside, 0.0),
+			"%s upper floor must stay reachable right up to the wall edge" % service_id
+		)
+		assert(
+			not interior.is_walkable_world_position(upper_wall, 0.0),
+			"%s player origin must never cross onto the upper wall top face" % service_id
 		)
 
 		var counter_world := interior.to_global(
