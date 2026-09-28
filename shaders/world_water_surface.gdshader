@@ -116,11 +116,11 @@ void fragment() {
 	vec2 distortion = vec2(
 		primary_noise - 0.5,
 		secondary_noise - 0.5
-	);
+	) * wave_strength;
 	float turbulence = (
 		(primary_noise - 0.5) * 0.62
 		+ (secondary_noise - 0.5) * 0.38
-	);
+	) * wave_strength;
 
 	// Basin depth comes from geometry, not from a repeating shader pattern.
 	// The centre is optically deeper, the edge shallower, and tiny turbulence
