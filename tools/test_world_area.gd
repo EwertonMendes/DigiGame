@@ -802,6 +802,7 @@ func _ready() -> void:
 	)
 
 	var digilab_section := _service_section(area, "digilab")
+	var digilab_door_grid := _service_local_grid("digilab")
 	var digilab_door_cell := _service_local_cell("digilab")
 	assert(
 		digilab_section != null,
@@ -811,8 +812,14 @@ func _ready() -> void:
 		digilab_section.handles_service("digilab"),
 		"DigiLab service callbacks must follow the authored building anchor across section boundaries"
 	)
+	var digilab_exterior := digilab_section.get_node_or_null("DigiLabExterior") as Node2D
 	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/Building") as Sprite2D
-	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
+	assert(
+		digilab_exterior != null
+		and digilab_building != null
+		and (digilab_exterior.get_meta("authored_anchor_grid", Vector2.INF) as Vector2).is_equal_approx(digilab_door_grid),
+		"DigiLab exterior, collision and doorway must share the exact authored building anchor"
+	)
 	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabDoorLight") as Node2D
 	var digilab_core_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabCoreLight") as Node2D
 	assert(
@@ -836,7 +843,7 @@ func _ready() -> void:
 	)
 	var digilab_entrance := digilab_section.get_node_or_null("DigiLabExterior/DigiLabEntrance") as Area2D
 	assert(digilab_entrance != null, "DigiLab exterior must expose a doorway threshold")
-	var expected_door := digilab_section.grid_to_world(Vector2(digilab_door_cell))
+	var expected_door := digilab_section.grid_to_world(digilab_door_grid)
 	assert(
 		digilab_entrance.position.is_equal_approx(expected_door),
 		"DigiLab teleport threshold must be anchored to the authored door position"
@@ -850,12 +857,15 @@ func _ready() -> void:
 		and digilab_building.scale.distance_to(Vector2(0.40, 0.31635585)) < 0.001,
 		"DigiLab source projection must be corrected to the exact 64x32 city axes"
 	)
+	var digilab_depth_span = digilab_exterior.get_meta("depth_span", Vector2i.ZERO)
 	assert(
-		digilab_building.z_index == 880
-		and digilab_upper.z_index == 1800
+		digilab_depth_span is Vector2i
+		and digilab_building.z_index == (digilab_depth_span as Vector2i).x
+		and digilab_upper.z_index == (digilab_depth_span as Vector2i).y
+		and digilab_building.z_index < digilab_upper.z_index
 		and digilab_upper.region_enabled
 		and absf(digilab_upper.region_rect.size.y - 700.0) < 0.01,
-		"DigiLab must keep the lower facade in front of actors while reserving occlusion for the upper/back art"
+		"DigiLab front/back layers must derive their depth span from the building's current authored position"
 	)
 	var digilab_approach = digilab_section.call(
 		"_ground_presentation",
@@ -902,21 +912,27 @@ func _ready() -> void:
 		and digilab_upper_right_guard != null and digilab_upper_right_guard.polygon.size() == 7,
 		"DigiLab side and upper-right utilities must expose dedicated player-clearance guards"
 	)
+	_assert_cross_section_building_collision(
+		area,
+		digilab_section,
+		digilab_collision.polygon,
+		"DigiLab"
+	)
 	assert(
 		digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-3, -5)))
+			digilab_section.global_position + digilab_section.grid_to_world(digilab_door_grid + Vector2(-3, -5))
 		),
 		"Open pavement behind the DigiLab must not have an invisible collision barrier"
 	)
 	assert(
 		not digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-3, -2)))
+			digilab_section.global_position + digilab_section.grid_to_world(digilab_door_grid + Vector2(-3, -2))
 		),
 		"DigiLab measured footprint must block movement through the center of the structure"
 	)
 	assert(
 		not digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-6, 1)))
+			digilab_section.global_position + digilab_section.grid_to_world(digilab_door_grid + Vector2(-6, 1))
 		),
 		"DigiLab measured footprint must cover the lower-left wall that was previously penetrable"
 	)
@@ -965,7 +981,7 @@ func _ready() -> void:
 	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
 	var digilab_return = (digilab_payload as Dictionary).get("return_position", [])
 	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(
-		Vector2(digilab_door_cell + Vector2i(2, 2))
+		digilab_door_grid + Vector2(2, 2)
 	)
 	assert(
 		digilab_return is Array
@@ -975,6 +991,7 @@ func _ready() -> void:
 	)
 
 	var training_section := _service_section(area, "training")
+	var training_door_grid := _service_local_grid("training")
 	var training_door_cell := _service_local_cell("training")
 	assert(
 		training_section != null,
@@ -984,9 +1001,15 @@ func _ready() -> void:
 		training_section.handles_service("training"),
 		"Training service ownership must follow its authored building anchor"
 	)
+	var training_exterior := training_section.get_node_or_null("TrainingCenterExterior") as Node2D
 	var training_building := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/Building") as Sprite2D
 	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/UpperOccluder") as Sprite2D
-	assert(training_building != null, "Training district must render the authored Training Center exterior")
+	assert(
+		training_exterior != null
+		and training_building != null
+		and (training_exterior.get_meta("authored_anchor_grid", Vector2.INF) as Vector2).is_equal_approx(training_door_grid),
+		"Training Center exterior, collision and doorway must share the exact authored building anchor"
+	)
 	assert(
 		training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingDoorLight") != null
 		and training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingAccentLight") != null,
@@ -1003,18 +1026,21 @@ func _ready() -> void:
 		and absf(training_building.rotation_degrees - (-2.20613)) < 0.01,
 		"Training Center source projection must be corrected to the 64x32 city axes"
 	)
+	var training_depth_span = training_exterior.get_meta("depth_span", Vector2i.ZERO)
 	assert(
-		training_building.z_index == 880
-		and training_upper.z_index == 1800
+		training_depth_span is Vector2i
+		and training_building.z_index == (training_depth_span as Vector2i).x
+		and training_upper.z_index == (training_depth_span as Vector2i).y
+		and training_building.z_index < training_upper.z_index
 		and training_upper.region_enabled
 		and absf(training_upper.region_rect.size.y - 720.0) < 0.01,
-		"Training Center depth split must keep the facade readable while allowing rear occlusion"
+		"Training Center front/back layers must follow its current authored position"
 	)
 	var training_entrance := training_section.get_node_or_null(
 		"TrainingCenterExterior/TrainingCenterEntrance"
 	) as Area2D
 	assert(training_entrance != null, "Training Center must expose its static doorway threshold")
-	var expected_training_door := training_section.grid_to_world(Vector2(training_door_cell))
+	var expected_training_door := training_section.grid_to_world(training_door_grid)
 	assert(
 		training_entrance.position.is_equal_approx(expected_training_door),
 		"Training Center threshold must align to the authored down-left-facing door"
@@ -1053,6 +1079,12 @@ func _ready() -> void:
 		training_collision != null and training_collision.polygon.size() == 21,
 		"Training Center must use the measured source-space ground-contact footprint"
 	)
+	_assert_cross_section_building_collision(
+		area,
+		training_section,
+		training_collision.polygon,
+		"Training Center"
+	)
 	var training_door_local := expected_training_door
 	for source_point: Vector2 in [
 		Vector2(100.0, 820.0),
@@ -1072,7 +1104,7 @@ func _ready() -> void:
 	assert(training_payload is Dictionary, "Training Center doorway must preserve the service payload")
 	var training_return = (training_payload as Dictionary).get("return_position", [])
 	var expected_training_return := training_section.global_position + training_section.grid_to_world(
-		Vector2(training_door_cell + Vector2i(0, 2))
+		training_door_grid + Vector2(0, 2)
 	)
 	assert(
 		training_return is Array
@@ -1082,15 +1114,22 @@ func _ready() -> void:
 	)
 
 	var hospital_section := _service_section(area, "hospital")
+	var hospital_door_grid := _service_local_grid("hospital")
 	var hospital_door_cell := _service_local_cell("hospital")
 	assert(hospital_section != null, "Digi Hospital must render in the section selected by its authoring marker")
 	assert(
 		hospital_section.handles_service("hospital"),
 		"Hospital service ownership must follow its authored building anchor"
 	)
+	var hospital_exterior := hospital_section.get_node_or_null("HospitalExterior") as Node2D
 	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/Building") as Sprite2D
 	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/UpperOccluder") as Sprite2D
-	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
+	assert(
+		hospital_exterior != null
+		and hospital_building != null
+		and (hospital_exterior.get_meta("authored_anchor_grid", Vector2.INF) as Vector2).is_equal_approx(hospital_door_grid),
+		"Hospital exterior, collision and doorway must share the exact authored building anchor"
+	)
 	assert(
 		hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalDoorLight") != null
 		and hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalAccentLight") != null,
@@ -1107,18 +1146,21 @@ func _ready() -> void:
 		and absf(hospital_building.rotation_degrees - (-0.87567)) < 0.01,
 		"Hospital must preserve its authored aspect ratio while correcting only its grid heading"
 	)
+	var hospital_depth_span = hospital_exterior.get_meta("depth_span", Vector2i.ZERO)
 	assert(
-		hospital_building.z_index == 880
-		and hospital_upper.z_index == 1800
+		hospital_depth_span is Vector2i
+		and hospital_building.z_index == (hospital_depth_span as Vector2i).x
+		and hospital_upper.z_index == (hospital_depth_span as Vector2i).y
+		and hospital_building.z_index < hospital_upper.z_index
 		and hospital_upper.region_enabled
 		and absf(hospital_upper.region_rect.size.y - 650.0) < 0.01,
-		"Hospital depth split must keep the front facade readable while allowing rear occlusion"
+		"Hospital front/back layers must follow its current authored position"
 	)
 	var hospital_entrance := hospital_section.get_node_or_null(
 		"HospitalExterior/HospitalEntrance"
 	) as Area2D
 	assert(hospital_entrance != null, "Hospital must expose its authored doorway threshold")
-	var expected_hospital_door := hospital_section.grid_to_world(Vector2(hospital_door_cell))
+	var expected_hospital_door := hospital_section.grid_to_world(hospital_door_grid)
 	assert(
 		hospital_entrance.position.is_equal_approx(expected_hospital_door),
 		"Hospital threshold must align to the centered straight-down door"
@@ -1157,6 +1199,12 @@ func _ready() -> void:
 		hospital_collision != null and hospital_collision.polygon.size() == 25,
 		"Hospital must use the measured source-space ground-contact footprint"
 	)
+	_assert_cross_section_building_collision(
+		area,
+		hospital_section,
+		hospital_collision.polygon,
+		"Hospital"
+	)
 	assert(
 		not hospital_section.is_walkable_world_position(
 			hospital_section.global_position + hospital_section.grid_to_world(
@@ -1165,7 +1213,7 @@ func _ready() -> void:
 		),
 		"Hospital structure footprint must block movement through the building"
 	)
-	var hospital_door_local := hospital_section.grid_to_world(Vector2(hospital_door_cell))
+	var hospital_door_local := expected_hospital_door
 	for source_point: Vector2 in [
 		Vector2(120.0, 820.0),
 		Vector2(350.0, 900.0),
@@ -1185,7 +1233,7 @@ func _ready() -> void:
 	assert(String((hospital_payload as Dictionary).get("service", "")) == "hospital", "Hospital doorway must open the hospital service")
 	var hospital_return = (hospital_payload as Dictionary).get("return_position", [])
 	var expected_hospital_return := hospital_section.global_position + hospital_section.grid_to_world(
-		Vector2(hospital_door_cell + Vector2i(2, 2))
+		hospital_door_grid + Vector2(2, 2)
 	)
 	assert(
 		hospital_return is Array
@@ -1398,15 +1446,65 @@ func _service_section(area: WorldAreaScene, service_id: String) -> WorldAreaSect
 	return area.get_node_or_null("Section_%d_%d" % [coord.x, coord.y]) as WorldAreaSection
 
 
-func _service_local_cell(service_id: String) -> Vector2i:
+func _service_local_grid(service_id: String) -> Vector2:
 	var global_grid := CITY_AUTHORING.building_anchor_grid(service_id, Vector2(INF, INF))
 	var section_size := int(CITY_AUTHORING.area_definition().get("section_size", 14))
 	var coord := Vector2i(
 		floori((global_grid.x + 0.5) / float(section_size)),
 		floori((global_grid.y + 0.5) / float(section_size))
 	)
-	var local_grid := global_grid - Vector2(coord * section_size)
+	return global_grid - Vector2(coord * section_size)
+
+
+func _service_local_cell(service_id: String) -> Vector2i:
+	var local_grid := _service_local_grid(service_id)
 	return Vector2i(roundi(local_grid.x), roundi(local_grid.y))
+
+
+func _assert_cross_section_building_collision(
+	area: WorldAreaScene,
+	owner: WorldAreaSection,
+	polygon: PackedVector2Array,
+	label: String
+) -> void:
+	assert(polygon.size() >= 3, "%s collision polygon must be valid" % label)
+	var centroid := Vector2.ZERO
+	for point: Vector2 in polygon:
+		centroid += point
+	centroid /= float(polygon.size())
+
+	var verified := false
+	for blend in [0.08, 0.18, 0.32]:
+		for vertex: Vector2 in polygon:
+			var local_sample := vertex.lerp(centroid, float(blend))
+			var world_sample := owner.global_position + local_sample
+			var target_coord := area.world_to_section(world_sample)
+			if target_coord == owner.section_coord:
+				continue
+			var neighbor := area.get_node_or_null(
+				"Section_%d_%d" % [target_coord.x, target_coord.y]
+			) as WorldAreaSection
+			if neighbor == null:
+				continue
+			# This is the regression that mattered after moving a building:
+			# the neighboring section sees ordinary walkable ground, while the
+			# area-wide spatial index still sees the structure extending into it.
+			if not neighbor.is_walkable_world_position(world_sample):
+				continue
+			assert(
+				not area.is_walkable_world_position(world_sample),
+				"%s collision must remain active when its footprint crosses into section %s"
+				% [label, str(target_coord)]
+			)
+			verified = true
+			break
+		if verified:
+			break
+	assert(
+		verified,
+		"%s regression must exercise at least one collision point beyond its owning section"
+		% label
+	)
 
 
 func _assert_seam_crossing(
