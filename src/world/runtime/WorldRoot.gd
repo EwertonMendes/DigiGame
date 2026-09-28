@@ -290,6 +290,10 @@ func get_interior_manager() -> WorldInteriorManager:
 	return _interior_manager
 
 
+func is_precise_interior_navigation_active() -> bool:
+	return _interior_manager != null and _interior_manager.is_active()
+
+
 func get_lighting_system() -> WorldLightingSystem:
 	return _lighting
 
