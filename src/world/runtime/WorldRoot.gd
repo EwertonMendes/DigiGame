@@ -645,13 +645,12 @@ func _on_interior_state_changed(active: bool, _title: String) -> void:
 	# Entering a local interior is not an area transition. Area banners are
 	# reserved for major locations explicitly presented by present_area_banner().
 	if active:
-		# Interior geometry lives on its own flat presentation plane.
-		_last_player_elevation_px = -INF
-		if _player != null:
-			_player.set_world_elevation(0.0)
+		# InteriorManager owns the presentation-plane switch while its cover is
+		# opaque. Mirror that state here without moving the player a second time.
+		_last_player_elevation_px = 0.0
 	elif _area_scene != null and _player != null:
-		# InteriorManager resets the camera to zero before revealing the exterior,
-		# so force one presentation refresh even when returning to the same level.
+		# InteriorManager restores the exterior elevation before reveal. Refresh
+		# the cache from the canonical area topology for persistence/camera state.
 		_last_player_elevation_px = -INF
 		_sync_player_elevation(_player.global_position)
 		_current_section = _area_scene.world_to_section(_player.global_position)
