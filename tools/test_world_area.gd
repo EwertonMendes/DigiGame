@@ -280,18 +280,29 @@ func _ready() -> void:
 		and urban_layout.get_node_or_null("PaintedRoadEdging") is MeshInstance2D,
 		"Painted roads need one batched edge finish without duplicating their ground surface"
 	)
-	for required_urban_node: String in [
-		"Surface_central_plaza",
-		"Surface_service_forecourts",
-		"Surface_district_courts",
-	]:
+	var authored_urban := CITY_AUTHORING.urban_layout_config()
+	var authored_layers_value = authored_urban.get("layers", [])
+	assert(
+		authored_layers_value is Array and not (authored_layers_value as Array).is_empty(),
+		"Central City authoring must expose at least one urban overlay layer"
+	)
+	for raw_layer in authored_layers_value as Array:
+		if not raw_layer is Dictionary:
+			continue
+		var layer := raw_layer as Dictionary
+		var polygons_value = layer.get("polygons", [])
+		if not polygons_value is Array or (polygons_value as Array).is_empty():
+			continue
+		var layer_id := String(layer.get("id", "")).strip_edges().to_lower().replace(" ", "_").replace("-", "_")
+		var required_urban_node := "Surface_%s" % layer_id
 		var urban_surface := urban_layout.get_node_or_null(required_urban_node) as MeshInstance2D
 		assert(
 			urban_surface != null
 			and urban_surface.texture == null
 			and urban_surface.material is ShaderMaterial
+			and (urban_surface.material as ShaderMaterial).shader != null
 			and (urban_surface.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
-			"Urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
+			"Authored urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
 		)
 	var south_terrace := area.get_node_or_null("SouthTerraceStructure") as Node2D
 	assert(
