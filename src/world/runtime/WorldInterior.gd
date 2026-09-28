@@ -13,10 +13,25 @@ const TILE_HALF_HEIGHT := 16.0
 const ROOM_SIZE := Vector2i(18, 14)
 const SPAWN_CELL := Vector2i(9, 11)
 const EXIT_CELL := Vector2i(9, 12)
-# Tall shell walls use a small authored floor inset so the player's visible feet
-# never project onto the top face of the two-level generic wall blocks. Front
-# low walls keep their original doorway/contact contract.
-const TALL_SHELL_CLEARANCE_GRID := 0.24
+
+# Interior navigation is evaluated at the actor's feet, not only at its origin.
+# The player capsule uses a 10 px radius; matching that radius here gives every
+# interior wall/counter/corner the same deterministic footprint contract and
+# prevents the actor from visually climbing onto a wall top or squeezing
+# through a connector pillar.
+const ACTOR_NAV_RADIUS := 10.0
+const ACTOR_NAV_DIAGONAL := ACTOR_NAV_RADIUS * 0.70710678
+const ACTOR_NAV_SAMPLES: Array[Vector2] = [
+	Vector2.ZERO,
+	Vector2(ACTOR_NAV_RADIUS, 0.0),
+	Vector2(-ACTOR_NAV_RADIUS, 0.0),
+	Vector2(0.0, ACTOR_NAV_RADIUS),
+	Vector2(0.0, -ACTOR_NAV_RADIUS),
+	Vector2(ACTOR_NAV_DIAGONAL, ACTOR_NAV_DIAGONAL),
+	Vector2(ACTOR_NAV_DIAGONAL, -ACTOR_NAV_DIAGONAL),
+	Vector2(-ACTOR_NAV_DIAGONAL, ACTOR_NAV_DIAGONAL),
+	Vector2(-ACTOR_NAV_DIAGONAL, -ACTOR_NAV_DIAGONAL),
+]
 
 var definition: Dictionary = {}
 
@@ -43,11 +58,29 @@ func get_spawn_world_position() -> Vector2:
 
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
-	var local_grid := world_to_grid(to_local(world_position))
-	if not _is_inside_tall_shell_clearance(local_grid):
+	var local_position := to_local(world_position)
+	for sample: Vector2 in ACTOR_NAV_SAMPLES:
+		if not _is_walkable_local_point(local_position + sample):
+			return false
+	return true
+
+
+func _is_walkable_local_point(local_position: Vector2) -> bool:
+	var local_grid := world_to_grid(local_position)
+
+	# Keep the continuous room envelope separate from authored occupancy. Border
+	# cells are valid floor coordinates when they are intentionally open (the
+	# front doorway), while actual wall/corner cells remain blocked explicitly.
+	if (
+		local_grid.x < -0.5
+		or local_grid.y < -0.5
+		or local_grid.x > float(ROOM_SIZE.x) - 0.5
+		or local_grid.y > float(ROOM_SIZE.y) - 0.5
+	):
 		return false
+
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
-	if cell.x < 1 or cell.y < 1 or cell.x >= ROOM_SIZE.x - 1 or cell.y >= ROOM_SIZE.y - 1:
+	if cell.x < 0 or cell.y < 0 or cell.x >= ROOM_SIZE.x or cell.y >= ROOM_SIZE.y:
 		return false
 	return not _blocked_cells.has(_cell_key(cell))
 
@@ -509,21 +542,6 @@ func _accent_surface() -> String:
 			return CITY.SURFACE_TECH_PURPLE
 		_:
 			return CITY.SURFACE_TECH_TEAL
-
-
-func _is_inside_tall_shell_clearance(local_grid: Vector2) -> bool:
-	if _service_id == "digilab":
-		return true
-	var inset := 0.5 + TALL_SHELL_CLEARANCE_GRID
-	var max_x := float(ROOM_SIZE.x) - 1.5 - TALL_SHELL_CLEARANCE_GRID
-	# Generic interiors have a two-level wall on the back and both sides. The
-	# front is intentionally a low partial wall with a doorway, so it must not
-	# inherit this inset.
-	return (
-		local_grid.x >= inset
-		and local_grid.x <= max_x
-		and local_grid.y >= inset
-	)
 
 
 func _depth_for_local_ground(local_ground_anchor: Vector2, priority: int = 0) -> int:
