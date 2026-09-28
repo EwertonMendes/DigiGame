@@ -185,6 +185,14 @@ func get_world_elevation() -> float:
 	return _world_elevation_px
 
 
+func get_world_grid_footprint_half_extents() -> Vector2:
+	# CharacterBody2D's capsule represents the upright body for PhysicsServer
+	# contacts. Isometric wall navigation is different: the gameplay contact
+	# point is the pair of feet at the actor origin. A tiny diamond footprint
+	# keeps corners from clipping without treating the torso as floor area.
+	return Vector2(0.08, 0.08)
+
+
 func set_facing(direction_name: String) -> void:
 	var canonical_facing := _canonical_facing(direction_name)
 	if canonical_facing.is_empty():
