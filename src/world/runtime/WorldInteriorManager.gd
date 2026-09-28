@@ -44,10 +44,10 @@ func is_transitioning() -> bool:
 	return _transitioning
 
 
-func can_move_to(world_position: Vector2) -> bool:
+func can_move_to(world_position: Vector2, actor: Node = null) -> bool:
 	if not is_active():
 		return false
-	return _active_interior.is_walkable_world_position(world_position)
+	return _active_interior.is_actor_walkable_world_position(world_position, actor)
 
 
 func enter_interior(payload: Dictionary) -> bool:
