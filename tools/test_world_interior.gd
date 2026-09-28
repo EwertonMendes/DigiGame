@@ -30,7 +30,11 @@ func _ready() -> void:
 	var player := world.call("get_player") as Node2D
 	var area = world.call("get_area_scene") as WorldAreaScene
 	var manager = world.call("get_interior_manager")
+	var touch_joystick := world.get_node_or_null(
+		"WorldUI/Root/MobileControls/MovementJoystick"
+	)
 	assert(player != null and area != null and manager != null, "World must expose player, area and interior manager")
+	assert(touch_joystick != null, "World must expose the reusable mobile joystick")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Player must spawn on walkable Central City ground")
 
 	var entry_thresholds := get_tree().get_nodes_in_group("world_interior_threshold")
@@ -72,6 +76,14 @@ func _ready() -> void:
 	# switch to the flat interior presentation plane while fully covered, never
 	# exposing one frame with stale exterior elevation.
 	player.call("set_world_elevation", 48.0)
+	# Simulate the exact mobile case: the doorway is crossed while the thumb is
+	# still holding an upward movement vector. Interior handoff must release the
+	# joystick source itself, not only clear the actor's cached direction.
+	touch_joystick.call("_set_direction", Vector2(0.0, -1.0))
+	assert(
+		(touch_joystick.call("get_direction") as Vector2).length() > 0.9,
+		"Mobile joystick regression must begin with a held movement vector"
+	)
 	player.global_position = entry.global_position
 	assert(
 		await _wait_for_texture_path(
@@ -107,6 +119,10 @@ func _ready() -> void:
 	assert(
 		await _wait_for_transition_state(manager, false, 1800),
 		"DigiLab entry transition must finish before testing interior exit"
+	)
+	assert(
+		(touch_joystick.call("get_direction") as Vector2).is_zero_approx(),
+		"Interior entry must release held mobile movement so the player cannot jump after reveal"
 	)
 	var interiors_root := world.get_node_or_null("Interiors") as Node2D
 	assert(interiors_root != null and interiors_root.get_child_count() == 1, "DigiLab must create exactly one streamed interior")
