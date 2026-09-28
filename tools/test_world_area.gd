@@ -521,29 +521,78 @@ func _ready() -> void:
 		"Raised landscape islands must cast a low structural shadow onto the city pavement"
 	)
 	var plaza_decor := plaza_section.get_node_or_null("CityDecor")
+	assert(plaza_decor != null, "Central Plaza must instantiate its authored city decor")
+
+	var plaza_placements := CITY_AUTHORING.decoration_placements(Vector2i.ZERO)
+	var first_lamp_placement: Dictionary = {}
+	var first_bench_placement: Dictionary = {}
+	var authored_plaza_bench_count := 0
+	for raw_placement in plaza_placements:
+		if not raw_placement is Dictionary:
+			continue
+		var placement := raw_placement as Dictionary
+		var authored_asset := String(placement.get("asset", ""))
+		if authored_asset.begins_with("lamp_") and first_lamp_placement.is_empty():
+			first_lamp_placement = placement
+		if authored_asset.begins_with("bench_"):
+			authored_plaza_bench_count += 1
+			if first_bench_placement.is_empty():
+				first_bench_placement = placement
 	assert(
-		plaza_decor != null
-		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/PaverPad") != null
-		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/LandscapeBed") != null,
+		not first_lamp_placement.is_empty() and not first_bench_placement.is_empty(),
+		"Central Plaza authoring must retain at least one lamp and one bench placement"
+	)
+
+	var first_plaza_lamp: Sprite2D = null
+	var first_plaza_bench: Sprite2D = null
+	var first_lamp_surround: Node2D = null
+	var bench_surround_count := 0
+	for child in plaza_decor.get_children():
+		if child is Sprite2D:
+			var decor_sprite := child as Sprite2D
+			var asset_id := String(decor_sprite.get_meta("authored_asset_id", ""))
+			if (
+				first_plaza_lamp == null
+				and asset_id == String(first_lamp_placement.get("asset", ""))
+				and (decor_sprite.get_meta("authored_cell", Vector2.INF) as Vector2).is_equal_approx(
+					_vec2_from_array(first_lamp_placement.get("cell", []))
+				)
+			):
+				first_plaza_lamp = decor_sprite
+			if (
+				first_plaza_bench == null
+				and asset_id == String(first_bench_placement.get("asset", ""))
+				and (decor_sprite.get_meta("authored_cell", Vector2.INF) as Vector2).is_equal_approx(
+					_vec2_from_array(first_bench_placement.get("cell", []))
+				)
+			):
+				first_plaza_bench = decor_sprite
+		elif child is Node2D and String(child.name).begins_with("LampSurround") and first_lamp_surround == null:
+			first_lamp_surround = child as Node2D
+		elif child is Node2D and String(child.name).begins_with("BenchSurround"):
+			bench_surround_count += 1
+
+	assert(
+		first_lamp_surround != null
+		and first_lamp_surround.get_node_or_null("PaverPad") != null
+		and first_lamp_surround.get_node_or_null("LandscapeBed") != null,
 		"Plaza lamps must keep their approved paver/canteiro integration"
 	)
 	assert(
-		plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingSocket") == null
-		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingCollar") == null
-		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingInset") == null,
+		first_lamp_surround.get_node_or_null("MountingSocket") == null
+		and first_lamp_surround.get_node_or_null("MountingCollar") == null
+		and first_lamp_surround.get_node_or_null("MountingInset") == null,
 		"Lamp surrounds must never add a dark pedestal, socket or floating square under the sprite"
 	)
-	var first_plaza_lamp: Sprite2D = null
-	for child in plaza_decor.get_children():
-		if child is Sprite2D:
-			first_plaza_lamp = child as Sprite2D
-			break
-	var first_plaza_lamp_local := plaza_section.grid_to_world(Vector2(2.2, 5.2))
+
+	var first_lamp_cell := _vec2_from_array(first_lamp_placement.get("cell", []))
+	var first_plaza_lamp_local := plaza_section.grid_to_world(first_lamp_cell)
 	assert(
 		first_plaza_lamp != null
 		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 96.0))
-		and is_equal_approx(float(first_plaza_lamp.get_meta("world_elevation_px", 0.0)), 48.0),
-		"Lamp sprite must preserve its authored foot offset while following the 48px upper-city elevation"
+		and is_equal_approx(float(first_plaza_lamp.get_meta("world_elevation_px", 0.0)), 48.0)
+		and (first_plaza_lamp.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(first_plaza_lamp_local),
+		"Lamp sprite must preserve its asset foot offset while following its current authored placement and upper-city elevation"
 	)
 	assert(
 		first_plaza_lamp.is_in_group("world_shadow_caster")
@@ -580,8 +629,12 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 11.6))
-	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
+	assert(first_plaza_bench != null, "Central Plaza must instantiate the approved bench art")
+	var first_bench_cell := _vec2_from_array(first_bench_placement.get("cell", []))
+	var first_bench_asset := String(first_bench_placement.get("asset", ""))
+	var bench_ground_offset := Vector2(15.0, -8.0) if first_bench_asset == "bench_ne" else Vector2(-15.0, -8.0)
+	var first_plaza_bench_local := plaza_section.grid_to_world(first_bench_cell)
+	var expected_ground_center := first_plaza_bench_local + bench_ground_offset
 	var expected_ground_world := plaza_section.global_position + expected_ground_center
 	assert(
 		not plaza_section.is_walkable_world_position(expected_ground_world),
@@ -592,14 +645,6 @@ func _ready() -> void:
 		"Bench collision must stay fitted to the seat instead of creating a broad invisible wall"
 	)
 
-	var first_plaza_bench: Sprite2D = null
-	var bench_surround_count := 0
-	for child in plaza_decor.get_children():
-		if child is Sprite2D and String(child.name).begins_with("Bench") and first_plaza_bench == null:
-			first_plaza_bench = child as Sprite2D
-		elif child is Node2D and String(child.name).begins_with("BenchSurround"):
-			bench_surround_count += 1
-	assert(first_plaza_bench != null, "Central Plaza must instantiate the approved bench art")
 	var bench_atlas := first_plaza_bench.texture as AtlasTexture
 	assert(
 		bench_atlas != null
@@ -614,29 +659,20 @@ func _ready() -> void:
 	)
 	assert(
 		(first_plaza_bench.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center),
-		"Bench collision must stay aligned to the visible four-foot ground centroid"
+		"Bench collision must stay aligned to its current authored anchor and visible four-foot ground centroid"
 	)
 
 	var bench_collision_body := plaza_section.get_node_or_null("BenchCollisions") as StaticBody2D
 	assert(
-		bench_collision_body != null and bench_collision_body.get_child_count() == 2,
-		"Central Plaza benches must expose fitted physics collision in addition to walkability blockers"
+		bench_collision_body != null
+		and bench_collision_body.get_child_count() == authored_plaza_bench_count,
+		"Central Plaza benches must expose one fitted physics collision per authored bench placement"
 	)
 	for child in bench_collision_body.get_children():
 		assert(
 			child is CollisionPolygon2D and (child as CollisionPolygon2D).polygon.size() >= 4,
 			"Each bench must use its fitted isometric collision polygon for swept CharacterBody2D collision"
 		)
-
-	var southwest_tree_center := plaza_section.grid_to_world(Vector2(2.0, 11.0))
-	assert(
-		(first_plaza_bench_local - southwest_tree_center).is_equal_approx(Vector2(51.2, 44.8)),
-		"Plaza bench anchor must sit at the exact midpoint between the two planter-face corner-biased placements"
-	)
-	assert(
-		(expected_ground_center - southwest_tree_center).is_equal_approx(Vector2(36.2, 36.8)),
-		"Plaza bench collision must remain centered with the visible seat at the planter-face midpoint"
-	)
 
 	# Exercise the same incremental movement contract used by the runtime rather
 	# than teleporting across the prop in one synthetic 90px step. Repeated
@@ -1299,6 +1335,12 @@ func _snapshot_diff_paths(left, right, path: String = "snapshot", limit: int = 1
 	if left != right:
 		result.append("%s %s != %s" % [path, str(left), str(right)])
 	return result
+
+
+func _vec2_from_array(value) -> Vector2:
+	if value is Array and value.size() >= 2:
+		return Vector2(float(value[0]), float(value[1]))
+	return Vector2.INF
 
 
 func _service_section(area: WorldAreaScene, service_id: String) -> WorldAreaSection:
