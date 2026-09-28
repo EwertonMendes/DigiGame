@@ -350,12 +350,13 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 	target.append_array(_ground_tiles)
 
 
-func append_world_blocking_polygons(target: Array[PackedVector2Array]) -> void:
+func append_blocking_polygons(target: Array[PackedVector2Array]) -> void:
 	for polygon: PackedVector2Array in _blocked_polygons:
-		var world_polygon := PackedVector2Array()
-		for point: Vector2 in polygon:
-			world_polygon.append(global_position + point)
-		target.append(world_polygon)
+		# Keep collision geometry in the owning section's canonical local space.
+		# WorldAreaScene indexes it by the owner's authored section/grid identity,
+		# so no runtime parent/global transform can detach collision from the
+		# building that owns it.
+		target.append(polygon.duplicate())
 
 
 func _ground_presentation(cell: Vector2i, _theme: String) -> Dictionary:
