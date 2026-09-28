@@ -11,15 +11,11 @@ config_version=5
 [application]
 
 config/name="Digi Game"
-config/icon="res://assets/ui/icons/favicon.png"
-boot_splash/bg_color=Color(0.00392157, 0.00784314, 0.0235294, 1)
-boot_splash/image="res://assets/ui/branding/boot_splash.png"
-boot_splash/minimum_display_time=0
-boot_splash/show_image=true
-boot_splash/stretch_mode=1
-boot_splash/use_filter=true
 run/main_scene="res://scenes/world/world_root.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.00392157, 0.00784314, 0.0235294, 1)
+boot_splash/image="res://assets/ui/branding/boot_splash.png"
+config/icon="res://assets/ui/icons/favicon.png"
 
 [autoload]
 
@@ -41,6 +37,10 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/central_city_editor/plugin.cfg")
 
 [input]
 
@@ -67,6 +67,6 @@ right_click={
 
 [rendering]
 
-textures/vram_compression/import_etc2_astc=true
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

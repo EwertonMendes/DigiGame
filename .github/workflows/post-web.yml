@@ -48,8 +48,8 @@ jobs:
   browser-smoke:
     name: Browser regression · ${{ matrix.suite }}
     if: >-
-      inputs.source_event == 'push' &&
-      inputs.source_head_branch == 'master'
+      inputs.source_event == 'pull_request' ||
+      (inputs.source_event == 'push' && inputs.source_head_branch == 'master')
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
@@ -128,7 +128,7 @@ jobs:
           retention-days: 7
 
       - name: Upload ${{ matrix.suite }} failure diagnostics
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-${{ matrix.suite }}-${{ inputs.source_run_id }}
@@ -138,6 +138,8 @@ jobs:
 
   deploy-pr-preview:
     name: Deploy PR preview
+    needs:
+      - browser-smoke
     if: >-
       inputs.source_event == 'pull_request' &&
       inputs.source_head_repo == github.repository &&
@@ -234,7 +236,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
-          PREVIEW_URL: ${{ steps.pages.outputs.base_url }}/pr-${{ steps.pr.outputs.number }}/
+          PREVIEW_URL: ${{ steps.pages.outputs.base_url }}/pr-${{ steps.pr.outputs.number }}/?debug=1
           HEAD_SHA: ${{ inputs.source_head_sha }}
         run: |
           set -euo pipefail

@@ -18,7 +18,7 @@ const TouchJoystickScript = preload("res://src/ui/TouchJoystick.gd")
 const UI = preload("res://src/ui/TacticalTheme.gd")
 const DebugAccessScript = preload("res://src/debug/DebugToolkitAccess.gd")
 const PLAYER_TEXTURE = preload("res://assets/characters/world/player_blond.png")
-const BACKGROUND_SHADER = preload("res://shaders/hub_background.gdshader")
+const WorldBackdropScript = preload("res://src/world/runtime/WorldBackdrop.gd")
 
 const REGION_ID := "central_city"
 const AREA_ID := "central_city"
@@ -26,6 +26,7 @@ const TEST_HUB_SCENE := "res://scenes/world/hub.tscn"
 const AUTO_SAVE_SECONDS := 5.0
 const SAFE_CITY_SPAWN := Vector2(-96.0, 272.0)
 const ACTOR_CLEARANCE := 7.0
+const TOPOLOGY_TRAVERSAL_MAX_STEP := 48.0
 const CLEARANCE_SAMPLES: Array[Vector2] = [
 	Vector2.ZERO,
 	Vector2(ACTOR_CLEARANCE, 0.0),
@@ -60,6 +61,7 @@ var _dialog_body: Label = null
 var _movement_dirty := false
 var _save_elapsed := 0.0
 var _world_ready := false
+var _last_player_elevation_px := -INF
 var _area_load_layer: CanvasLayer = null
 var _area_load_progress: ProgressBar = null
 var _area_load_status: Label = null
@@ -113,6 +115,7 @@ func _ready() -> void:
 		return
 
 	_recover_invalid_spawn()
+	_sync_player_elevation(_player.global_position)
 	_current_section = _area_scene.world_to_section(_player.global_position)
 
 	_followers = FollowersScript.new() as WorldPartyFollowers
@@ -228,13 +231,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func can_actor_move_to(candidate: Vector2, _actor: Node) -> bool:
+func can_actor_move_to(candidate: Vector2, actor: Node) -> bool:
 	if not _world_ready:
 		return false
 	if _interior_manager != null and _interior_manager.is_active():
 		return _interior_manager.can_move_to(candidate)
 	if _area_scene == null:
 		return true
+
+	# The overworld keeps collision on its canonical logical plane, so a level
+	# boundary needs an explicit traversal contract. Only short actor steps are
+	# checked here; follower spawn probes and other long-distance placement
+	# queries still use the normal walkability contract without pretending the
+	# straight line between two distant points is a movement path.
+	if actor is Node2D:
+		var from_world := (actor as Node2D).global_position
+		if (
+			from_world.distance_to(candidate) <= TOPOLOGY_TRAVERSAL_MAX_STEP
+			and not _area_scene.can_traverse_world_segment(from_world, candidate)
+		):
+			return false
+
 	for sample: Vector2 in CLEARANCE_SAMPLES:
 		if not _area_scene.is_walkable_world_position(candidate + sample):
 			return false
@@ -255,6 +272,18 @@ func get_area_scene() -> WorldAreaScene:
 
 func get_area_id() -> String:
 	return AREA_ID
+
+
+func get_world_elevation_at(world_position: Vector2) -> float:
+	if _area_scene == null:
+		return 0.0
+	return _area_scene.get_elevation_at_world_position(world_position)
+
+
+func get_world_level_at(world_position: Vector2) -> String:
+	if _area_scene == null:
+		return ""
+	return _area_scene.get_level_at_world_position(world_position)
 
 
 func get_interior_manager() -> WorldInteriorManager:
@@ -356,17 +385,7 @@ func _finish_area_loading_overlay() -> void:
 
 
 func _build_background() -> void:
-	var layer := CanvasLayer.new()
-	layer.name = "WorldBackdrop"
-	layer.layer = -50
-	add_child(layer)
-	var backdrop := ColorRect.new()
-	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var material := ShaderMaterial.new()
-	material.shader = BACKGROUND_SHADER
-	backdrop.material = material
-	backdrop.color = Color(0.06, 0.12, 0.13, 1.0)
-	layer.add_child(backdrop)
+	add_child(WorldBackdropScript.create())
 
 
 func _build_player(parent: Node2D) -> void:
@@ -554,6 +573,7 @@ func _layout_ui() -> void:
 func _on_player_moved(world_position: Vector2) -> void:
 	if not _world_ready:
 		return
+	_sync_player_elevation(world_position)
 	if _interior_manager != null and (_interior_manager.is_active() or _interior_manager.is_transitioning()):
 		return
 	_movement_dirty = true
@@ -624,16 +644,24 @@ func _on_interior_state_changed(active: bool, _title: String) -> void:
 	_save_elapsed = 0.0
 	# Entering a local interior is not an area transition. Area banners are
 	# reserved for major locations explicitly presented by present_area_banner().
-	if not active:
-		if _area_scene != null and _player != null:
-			_current_section = _area_scene.world_to_section(_player.global_position)
-			WorldState.capture_location(
-				REGION_ID,
-				AREA_ID,
-				_current_section,
-				_player.global_position,
-				_player.facing_direction
-			)
+	if active:
+		# Interior geometry lives on its own flat presentation plane.
+		_last_player_elevation_px = -INF
+		if _player != null:
+			_player.set_world_elevation(0.0)
+	elif _area_scene != null and _player != null:
+		# InteriorManager resets the camera to zero before revealing the exterior,
+		# so force one presentation refresh even when returning to the same level.
+		_last_player_elevation_px = -INF
+		_sync_player_elevation(_player.global_position)
+		_current_section = _area_scene.world_to_section(_player.global_position)
+		WorldState.capture_location(
+			REGION_ID,
+			AREA_ID,
+			_current_section,
+			_player.global_position,
+			_player.facing_direction
+		)
 		OverworldState.save_progress()
 	_layout_ui()
 
@@ -777,6 +805,21 @@ func _announce_area() -> void:
 		String(_area_definition.get("subtitle", "Recovery District")),
 		1.7
 	)
+
+
+func _sync_player_elevation(world_position: Vector2) -> void:
+	if _player == null or _area_scene == null:
+		return
+	var elevation := _area_scene.get_elevation_at_world_position(world_position)
+	if is_equal_approx(elevation, _last_player_elevation_px):
+		return
+	_last_player_elevation_px = elevation
+	_player.set_world_elevation(elevation)
+	if _world_camera != null:
+		# Camera remains attached to the logical CharacterBody2D, so offset it by
+		# the same presentation height as the sprite. Existing camera smoothing
+		# turns stair traversal into a continuous vertical reveal instead of a cut.
+		_world_camera.position = Vector2(0.0, -elevation)
 
 
 func _persist_world_location() -> void:

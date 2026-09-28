@@ -7,20 +7,23 @@ class_name CentralCityArt
 # overworld reads as a city floor instead of a tactical board. Grass, water,
 # perimeter depth and authored interiors still use their dedicated source art.
 const CITY_PAVER_SHADER = preload("res://shaders/city_paver_floor.gdshader")
-const GROUND_GRASS = preload("res://assets/world/devilsworkshop/city_1024/isometric_0056.png")
-const GROUND_GRASS_CHECKER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0053.png")
-const GROUND_MINT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0058.png")
-const GROUND_MAIN = preload("res://assets/world/devilsworkshop/city_1024/isometric_0072.png")
-const GROUND_STONE_SOFT = preload("res://assets/world/devilsworkshop/city_1024/isometric_0054.png")
-const GROUND_TECH_TEAL = preload("res://assets/world/devilsworkshop/city_1024/isometric_0048.png")
-const GROUND_TECH_BLUE = preload("res://assets/world/devilsworkshop/city_1024/isometric_0049.png")
-const GROUND_TECH_PURPLE = preload("res://assets/world/devilsworkshop/city_1024/isometric_0050.png")
-const GROUND_DARK = preload("res://assets/world/devilsworkshop/city_1024/isometric_0063.png")
-const GROUND_WATER = preload("res://assets/world/devilsworkshop/city_1024/isometric_0064.png")
-const GROUND_MARKET = preload("res://assets/world/devilsworkshop/city_1024/isometric_0009.png")
-const GROUND_TRAINING = preload("res://assets/world/devilsworkshop/city_1024/isometric_0007.png")
-const GROUND_DIGILAB_FLOOR_1 = preload("res://assets/world/tblack/digilab/floor/floor-1.png")
-const GROUND_DIGILAB_FLOOR_2 = preload("res://assets/world/tblack/digilab/floor/floor-2.png")
+const CITY_WATER_SHADER = preload("res://shaders/city_canal_water.gdshader")
+const GROUND_GRASS_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0056.png"
+const GROUND_GRASS_CHECKER_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0053.png"
+const GROUND_MINT_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0058.png"
+const GROUND_MAIN_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0072.png"
+const GROUND_STONE_SOFT_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0054.png"
+const GROUND_TECH_TEAL_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0048.png"
+const GROUND_TECH_BLUE_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0049.png"
+const GROUND_TECH_PURPLE_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0050.png"
+const GROUND_DARK_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0063.png"
+const GROUND_WATER_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0064.png"
+const GROUND_MARKET_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0009.png"
+const GROUND_TRAINING_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0007.png"
+const GROUND_DIGILAB_FLOOR_1_PATH := "res://assets/world/tblack/digilab/floor/floor-1.png"
+const GROUND_DIGILAB_FLOOR_2_PATH := "res://assets/world/tblack/digilab/floor/floor-2.png"
+
+static var _texture_cache: Dictionary = {}
 
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
@@ -74,6 +77,7 @@ const SURFACE_TECH_TEAL := "tech_teal"
 const SURFACE_TECH_BLUE := "tech_blue"
 const SURFACE_TECH_PURPLE := "tech_purple"
 const SURFACE_DARK := "dark"
+const SURFACE_ROAD := "road"
 const SURFACE_WATER := "water"
 const SURFACE_MARKET := "market"
 const SURFACE_TRAINING := "training"
@@ -98,35 +102,46 @@ static func panel_diamond(cell_span: int, overscan := Vector2.ZERO) -> PackedVec
 
 
 static func surface_texture(surface: String) -> Texture2D:
+	var path := GROUND_MAIN_PATH
 	match surface:
 		SURFACE_GRASS:
-			return GROUND_GRASS
+			path = GROUND_GRASS_PATH
 		SURFACE_GRASS_CHECKER:
-			return GROUND_GRASS_CHECKER
+			path = GROUND_GRASS_CHECKER_PATH
 		SURFACE_MINT:
-			return GROUND_MINT
+			path = GROUND_MINT_PATH
 		SURFACE_STONE_SOFT:
-			return GROUND_STONE_SOFT
+			path = GROUND_STONE_SOFT_PATH
 		SURFACE_TECH_TEAL:
-			return GROUND_TECH_TEAL
+			path = GROUND_TECH_TEAL_PATH
 		SURFACE_TECH_BLUE:
-			return GROUND_TECH_BLUE
+			path = GROUND_TECH_BLUE_PATH
 		SURFACE_TECH_PURPLE:
-			return GROUND_TECH_PURPLE
-		SURFACE_DARK:
-			return GROUND_DARK
+			path = GROUND_TECH_PURPLE_PATH
+		SURFACE_DARK, SURFACE_ROAD:
+			path = GROUND_DARK_PATH
 		SURFACE_WATER:
-			return GROUND_WATER
+			path = GROUND_WATER_PATH
 		SURFACE_MARKET:
-			return GROUND_MARKET
+			path = GROUND_MARKET_PATH
 		SURFACE_TRAINING:
-			return GROUND_TRAINING
+			path = GROUND_TRAINING_PATH
 		SURFACE_DIGILAB_FLOOR_1:
-			return GROUND_DIGILAB_FLOOR_1
+			path = GROUND_DIGILAB_FLOOR_1_PATH
 		SURFACE_DIGILAB_FLOOR_2:
-			return GROUND_DIGILAB_FLOOR_2
-		_:
-			return GROUND_MAIN
+			path = GROUND_DIGILAB_FLOOR_2_PATH
+	return _load_texture(path)
+
+
+static func _load_texture(path: String) -> Texture2D:
+	var cached = _texture_cache.get(path)
+	if cached is Texture2D:
+		return cached as Texture2D
+	var resource = ResourceLoader.load(path)
+	if resource is Texture2D:
+		_texture_cache[path] = resource
+		return resource as Texture2D
+	return null
 
 
 static func surface_base_color(surface: String) -> Color:
@@ -138,7 +153,7 @@ static func surface_base_color(surface: String) -> Color:
 		SURFACE_MINT:
 			return Color(0.20, 0.62, 0.43, 1.0)
 		SURFACE_MAIN:
-			return Color(0.47, 0.48, 0.48, 1.0)
+			return Color(0.555, 0.575, 0.585, 1.0)
 		SURFACE_STONE_SOFT:
 			return Color(0.53, 0.54, 0.54, 1.0)
 		SURFACE_TECH_TEAL:
@@ -147,8 +162,8 @@ static func surface_base_color(surface: String) -> Color:
 			return Color(0.39, 0.43, 0.48, 1.0)
 		SURFACE_TECH_PURPLE:
 			return Color(0.44, 0.40, 0.47, 1.0)
-		SURFACE_DARK:
-			return Color(0.27, 0.28, 0.29, 1.0)
+		SURFACE_DARK, SURFACE_ROAD:
+			return Color(0.25, 0.275, 0.29, 1.0)
 		SURFACE_WATER:
 			return Color(0.04, 0.58, 0.72, 1.0)
 		SURFACE_MARKET:
@@ -171,6 +186,7 @@ static func is_procedural_paver_surface(surface: String) -> bool:
 		SURFACE_TECH_BLUE,
 		SURFACE_TECH_PURPLE,
 		SURFACE_DARK,
+		SURFACE_ROAD,
 		SURFACE_MARKET,
 		SURFACE_TRAINING,
 	]
@@ -199,7 +215,7 @@ static func create_ground_batch(
 	# side faces requested for border tiles.
 	var edge_specs: Array[Dictionary] = []
 	for spec: Dictionary in tiles:
-		if bool(spec.get("edge", false)):
+		if bool(spec.get("edge", false)) and String(spec.get("surface", "")) != SURFACE_WATER:
 			edge_specs.append(spec)
 	edge_specs.sort_custom(_ground_spec_before)
 	var edges := Node2D.new()
@@ -207,9 +223,11 @@ static func create_ground_batch(
 	edges.z_index = 1
 	root.add_child(edges)
 	for spec: Dictionary in edge_specs:
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
 		var edge := create_full_block(
 			String(spec.get("surface", SURFACE_MAIN)),
-			spec.get("position", Vector2.ZERO),
+			logical_center + Vector2(0.0, -elevation_px),
 			0
 		)
 		edges.add_child(edge)
@@ -231,7 +249,11 @@ static func create_ground_batch(
 		detail.name = "Surface_%s" % surface
 		if is_procedural_paver_surface(surface):
 			detail.mesh = _build_ground_paver_mesh(grouped[surface] as Array, surface)
-			detail.material = _create_paver_material()
+			detail.material = _create_paver_material(surface)
+			detail.texture = null
+		elif surface == SURFACE_WATER:
+			detail.mesh = _build_ground_paver_mesh(grouped[surface] as Array, surface)
+			detail.material = create_water_material()
 			detail.texture = null
 		else:
 			detail.mesh = _build_ground_surface_mesh(grouped[surface] as Array)
@@ -298,6 +320,129 @@ static func create_paver_polygon(
 	mesh_instance.material = _create_paver_material()
 	mesh_instance.z_index = clampi(depth_order, -4000, 4000)
 	return mesh_instance
+
+
+static func create_paver_polygon_batch(
+	polygons: Array[Dictionary],
+	depth_order: int,
+	paint_mask: Texture2D = null,
+	paint_mask_origin: Vector2i = Vector2i.ZERO
+) -> MeshInstance2D:
+	var material := _create_paver_material()
+	if paint_mask != null:
+		material.set_shader_parameter("use_paint_mask", true)
+		material.set_shader_parameter("paint_mask", paint_mask)
+		material.set_shader_parameter("paint_mask_origin", Vector2(paint_mask_origin))
+		material.set_shader_parameter("paint_mask_size", Vector2(paint_mask.get_size()))
+	return create_world_uv_polygon_batch(polygons, material, depth_order)
+
+
+static func create_world_uv_polygon_batch(
+	polygons: Array[Dictionary],
+	material: Material,
+	depth_order: int
+) -> MeshInstance2D:
+	var mesh_instance := MeshInstance2D.new()
+	mesh_instance.mesh = _build_paver_polygon_batch_mesh(polygons)
+	mesh_instance.material = material
+	mesh_instance.texture = null
+	mesh_instance.z_index = clampi(depth_order, -4000, 4000)
+	return mesh_instance
+
+
+static func create_water_material() -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = CITY_WATER_SHADER
+	return material
+
+
+static func create_color_polygon_batch(
+	polygons: Array[Dictionary],
+	depth_order: int
+) -> MeshInstance2D:
+	var mesh_instance := MeshInstance2D.new()
+	mesh_instance.mesh = _build_color_polygon_batch_mesh(polygons)
+	mesh_instance.texture = null
+	mesh_instance.z_index = clampi(depth_order, -4000, 4000)
+	return mesh_instance
+
+
+static func _build_color_polygon_batch_mesh(polygons: Array[Dictionary]) -> ArrayMesh:
+	var vertices := PackedVector2Array()
+	var colors := PackedColorArray()
+	var indices := PackedInt32Array()
+
+	for spec: Dictionary in polygons:
+		var points_value = spec.get("points", PackedVector2Array())
+		if not points_value is PackedVector2Array:
+			continue
+		var points := points_value as PackedVector2Array
+		if points.size() < 3:
+			continue
+		var triangulated := Geometry2D.triangulate_polygon(points)
+		if triangulated.is_empty():
+			continue
+		var vertex_start := vertices.size()
+		var color: Color = spec.get("color", Color.WHITE)
+		for point: Vector2 in points:
+			vertices.append(point)
+			colors.append(color)
+		for raw_index in triangulated:
+			indices.append(vertex_start + int(raw_index))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_INDEX] = indices
+
+	var mesh := ArrayMesh.new()
+	if not vertices.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+static func _build_paver_polygon_batch_mesh(polygons: Array[Dictionary]) -> ArrayMesh:
+	var vertices := PackedVector2Array()
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+
+	for spec: Dictionary in polygons:
+		var points_value = spec.get("points", PackedVector2Array())
+		if not points_value is PackedVector2Array:
+			continue
+		var points := points_value as PackedVector2Array
+		if points.size() < 3:
+			continue
+
+		var triangulated := Geometry2D.triangulate_polygon(points)
+		if triangulated.is_empty():
+			continue
+		var vertex_start := vertices.size()
+		var color: Color = spec.get("color", Color.WHITE)
+		var logical_value = spec.get("logical_points", points)
+		var logical_points := logical_value as PackedVector2Array if logical_value is PackedVector2Array else points
+		for point_index in range(points.size()):
+			var point := points[point_index]
+			var logical_point := logical_points[point_index] if point_index < logical_points.size() else point
+			vertices.append(point)
+			colors.append(color)
+			uvs.append(_world_to_grid_coordinates(logical_point))
+		for raw_index in triangulated:
+			indices.append(vertex_start + int(raw_index))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+
+	var mesh := ArrayMesh.new()
+	if not vertices.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 static func _build_paver_polygon_mesh(
@@ -376,10 +521,12 @@ static func _build_ground_base_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
 	var diamond := tile_diamond(FLOOR_OVERSCAN)
 
 	for spec: Dictionary in tiles:
-		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
+		var display_center := logical_center + Vector2(0.0, -elevation_px)
 		var vertex_start := vertices.size()
 		for point: Vector2 in diamond:
-			vertices.append(center + point)
+			vertices.append(display_center + point)
 		var color: Color = spec.get(
 			"base_color",
 			surface_base_color(String(spec.get("surface", SURFACE_MAIN)))
@@ -405,11 +552,15 @@ static func _build_ground_base_mesh(tiles: Array[Dictionary]) -> ArrayMesh:
 	return mesh
 
 
-static func _create_paver_material() -> ShaderMaterial:
+static func _create_paver_material(surface: String = "") -> ShaderMaterial:
 	var material := ShaderMaterial.new()
 	material.shader = CITY_PAVER_SHADER
 	material.set_shader_parameter("pavers_per_cell", PAVERS_PER_GAMEPLAY_CELL)
 	material.set_shader_parameter("grout_width", PAVER_GROUT_WIDTH)
+	if surface in [SURFACE_DARK, SURFACE_ROAD]:
+		material.set_shader_parameter("stone_variation", 0.04)
+		material.set_shader_parameter("grout_darkening", 0.24)
+		material.set_shader_parameter("edge_highlight", 0.02)
 	return material
 
 
@@ -424,12 +575,15 @@ static func _build_ground_paver_mesh(tiles: Array, surface: String) -> ArrayMesh
 		if not raw_spec is Dictionary:
 			continue
 		var spec := raw_spec as Dictionary
-		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
+		var display_center := logical_center + Vector2(0.0, -elevation_px)
 		var vertex_start := vertices.size()
 		for point: Vector2 in diamond:
-			var world_point := center + point
-			vertices.append(world_point)
-			uvs.append(_world_to_grid_coordinates(world_point))
+			var logical_point := logical_center + point
+			var display_point := display_center + point
+			vertices.append(display_point)
+			uvs.append(_world_to_grid_coordinates(logical_point))
 
 		var base: Color = spec.get("base_color", surface_base_color(surface))
 		var tint: Color = spec.get("detail_tint", Color.WHITE)
@@ -490,10 +644,12 @@ static func _build_ground_surface_mesh(tiles: Array) -> ArrayMesh:
 		if not raw_spec is Dictionary:
 			continue
 		var spec := raw_spec as Dictionary
-		var center: Vector2 = spec.get("position", Vector2.ZERO)
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
+		var display_center := logical_center + Vector2(0.0, -elevation_px)
 		var vertex_start := vertices.size()
 		for point: Vector2 in diamond:
-			vertices.append(center + point)
+			vertices.append(display_center + point)
 		for pixel_uv: Vector2 in source_uvs:
 			uvs.append(Vector2(pixel_uv.x / texture_size.x, pixel_uv.y / texture_size.y))
 		var tint: Color = spec.get("detail_tint", Color.WHITE)
@@ -524,6 +680,8 @@ static func _build_ground_surface_mesh(tiles: Array) -> ArrayMesh:
 static func _ground_spec_before(a: Dictionary, b: Dictionary) -> bool:
 	var a_pos: Vector2 = a.get("position", Vector2.ZERO)
 	var b_pos: Vector2 = b.get("position", Vector2.ZERO)
+	a_pos.y -= maxf(0.0, float(a.get("elevation_px", 0.0)))
+	b_pos.y -= maxf(0.0, float(b.get("elevation_px", 0.0)))
 	if is_equal_approx(a_pos.y, b_pos.y):
 		return a_pos.x < b_pos.x
 	return a_pos.y < b_pos.y

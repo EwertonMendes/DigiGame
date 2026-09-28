@@ -1,0 +1,2316 @@
+[gd_scene format=3 uid="uid://dw4wik03wo1o6"]
+
+[ext_resource type="Script" uid="uid://cj4upsctihedy" path="res://src/world/authoring/CentralCityAuthoringRoot.gd" id="1_root"]
+[ext_resource type="Script" uid="uid://sacayclpp6fp" path="res://src/world/authoring/CentralCitySectionAuthoring.gd" id="2_section"]
+[ext_resource type="Script" uid="uid://clb2cbfvq4od3" path="res://src/world/authoring/CentralCitySurfaceRegion.gd" id="4_surface"]
+[ext_resource type="Script" uid="uid://c222s2vi66kjk" path="res://src/world/authoring/CentralCityLevelAuthoring.gd" id="5_level"]
+[ext_resource type="Script" uid="uid://b5unb6ts80xyg" path="res://src/world/authoring/CentralCityBoundaryAuthoring.gd" id="6_boundary"]
+[ext_resource type="Script" uid="uid://banuu2grfeg3" path="res://src/world/authoring/CentralCityTransitionRegion.gd" id="7_transition"]
+[ext_resource type="Script" uid="uid://bnefgq1gxo6a0" path="res://src/world/authoring/CentralCityBuildingAnchor.gd" id="8_building"]
+[ext_resource type="Script" uid="uid://dgcanvexf1sr3" path="res://src/world/authoring/CentralCityPropAuthoring.gd" id="9_prop"]
+[ext_resource type="Script" uid="uid://rq2a7r5yhrry" path="res://src/world/authoring/CentralCityLandscapeAuthoring.gd" id="10_landscape"]
+[ext_resource type="Script" uid="uid://dl3wtgwuuw1bx" path="res://src/world/authoring/CentralCityGroundRegionAuthoring.gd" id="11_ground"]
+[ext_resource type="Script" uid="uid://cuvav7g174xij" path="res://src/world/authoring/CentralCityGroundPaintAuthoring.gd" id="12_ground_paint"]
+
+[node name="CentralCityAuthoring" type="Node2D" unique_id=553562148]
+script = ExtResource("1_root")
+
+[node name="Sections" type="Node2D" parent="." unique_id=772366723]
+visible = false
+
+[node name="Section_-2_-2" type="Node2D" parent="Sections" unique_id=1010127881]
+position = Vector2(0, -896)
+script = ExtResource("2_section")
+coord = Vector2i(-2, -2)
+theme = "garden"
+title = "Verdant Terrace"
+subtitle = "A quiet garden district"
+
+[node name="Section_-1_-2" type="Node2D" parent="Sections" unique_id=241540543]
+position = Vector2(448, -672)
+script = ExtResource("2_section")
+coord = Vector2i(-1, -2)
+title = "Northwest Residences"
+subtitle = "Homes among recovered data"
+
+[node name="Section_0_-2" type="Node2D" parent="Sections" unique_id=2017219730]
+position = Vector2(896, -448)
+script = ExtResource("2_section")
+coord = Vector2i(0, -2)
+theme = "canal"
+title = "North Canal"
+subtitle = "Waterways through the city"
+
+[node name="Section_1_-2" type="Node2D" parent="Sections" unique_id=1621829309]
+position = Vector2(1344, -224)
+script = ExtResource("2_section")
+coord = Vector2i(1, -2)
+theme = "archive"
+title = "Memory Archive"
+subtitle = "Recovered records and research"
+
+[node name="Section_2_-2" type="Node2D" parent="Sections" unique_id=221383460]
+position = Vector2(1792, 0)
+script = ExtResource("2_section")
+coord = Vector2i(2, -2)
+theme = "garden"
+title = "Northeast Terrace"
+subtitle = "Green space above the canal"
+
+[node name="Section_-2_-1" type="Node2D" parent="Sections" unique_id=129512322]
+position = Vector2(-448, -672)
+script = ExtResource("2_section")
+coord = Vector2i(-2, -1)
+title = "West Heights"
+subtitle = "Restored homes and side streets"
+
+[node name="Section_-1_-1" type="Node2D" parent="Sections" unique_id=1994832873]
+position = Vector2(0, -448)
+script = ExtResource("2_section")
+coord = Vector2i(-1, -1)
+theme = "garden"
+title = "DigiLab Gardens"
+subtitle = "A calm approach to the laboratory"
+
+[node name="Section_0_-1" type="Node2D" parent="Sections" unique_id=1438995457]
+position = Vector2(448, -224)
+script = ExtResource("2_section")
+coord = Vector2i(0, -1)
+theme = "training"
+title = "Training Ward"
+subtitle = "Growth and tactical preparation"
+
+[node name="Section_1_-1" type="Node2D" parent="Sections" unique_id=1415133732]
+position = Vector2(896, 0)
+script = ExtResource("2_section")
+coord = Vector2i(1, -1)
+theme = "garden"
+title = "Hospital Gardens"
+subtitle = "Recovery district green space"
+
+[node name="Section_2_-1" type="Node2D" parent="Sections" unique_id=757067243]
+position = Vector2(1344, 224)
+script = ExtResource("2_section")
+coord = Vector2i(2, -1)
+title = "East Heights"
+subtitle = "Newly restored housing"
+
+[node name="Section_-2_0" type="Node2D" parent="Sections" unique_id=1164787720]
+position = Vector2(-896, -448)
+script = ExtResource("2_section")
+coord = Vector2i(-2, 0)
+title = "West Commons"
+subtitle = "Residential recovery block"
+
+[node name="Section_-1_0" type="Node2D" parent="Sections" unique_id=1154775265]
+position = Vector2(-448, -224)
+script = ExtResource("2_section")
+coord = Vector2i(-1, 0)
+theme = "digilab"
+title = "DigiLab District"
+subtitle = "Evolution and reconstruction"
+
+[node name="Section_0_0" type="Node2D" parent="Sections" unique_id=772948385]
+script = ExtResource("2_section")
+theme = "plaza"
+title = "Central Plaza"
+subtitle = "Heart of Central City"
+
+[node name="Section_1_0" type="Node2D" parent="Sections" unique_id=1897403211]
+position = Vector2(448, 224)
+script = ExtResource("2_section")
+coord = Vector2i(1, 0)
+theme = "hospital"
+title = "Hospital District"
+subtitle = "Recovery services"
+
+[node name="Section_2_0" type="Node2D" parent="Sections" unique_id=1209838821]
+position = Vector2(896, 448)
+script = ExtResource("2_section")
+coord = Vector2i(2, 0)
+theme = "gate"
+title = "East Gate"
+subtitle = "Road toward the outer sectors"
+
+[node name="Section_-2_1" type="Node2D" parent="Sections" unique_id=2005928040]
+position = Vector2(-1344, -224)
+script = ExtResource("2_section")
+coord = Vector2i(-2, 1)
+theme = "garden"
+title = "Southwest Gardens"
+subtitle = "Community green space"
+
+[node name="Section_-1_1" type="Node2D" parent="Sections" unique_id=128716158]
+position = Vector2(-896, 0)
+script = ExtResource("2_section")
+coord = Vector2i(-1, 1)
+title = "Southwest Commons"
+subtitle = "Homes and small plazas"
+
+[node name="Section_0_1" type="Node2D" parent="Sections" unique_id=465111628]
+position = Vector2(-448, 224)
+script = ExtResource("2_section")
+coord = Vector2i(0, 1)
+theme = "market"
+title = "Data Market"
+subtitle = "Shops and civilian services"
+
+[node name="Section_1_1" type="Node2D" parent="Sections" unique_id=21145413]
+position = Vector2(0, 448)
+script = ExtResource("2_section")
+coord = Vector2i(1, 1)
+title = "Southeast Commons"
+subtitle = "Restored neighborhood"
+
+[node name="Section_2_1" type="Node2D" parent="Sections" unique_id=1813078578]
+position = Vector2(448, 672)
+script = ExtResource("2_section")
+coord = Vector2i(2, 1)
+theme = "garden"
+title = "East Gardens"
+subtitle = "Trees along the city wall"
+
+[node name="Section_-2_2" type="Node2D" parent="Sections" unique_id=1280821581]
+position = Vector2(-1792, 0)
+script = ExtResource("2_section")
+coord = Vector2i(-2, 2)
+theme = "garden"
+title = "Lower Garden"
+subtitle = "Quiet edge of the city"
+
+[node name="Section_-1_2" type="Node2D" parent="Sections" unique_id=1968349941]
+position = Vector2(-1344, 224)
+script = ExtResource("2_section")
+coord = Vector2i(-1, 2)
+title = "South Residences"
+subtitle = "Homes near the outbound road"
+
+[node name="Section_0_2" type="Node2D" parent="Sections" unique_id=1519757509]
+position = Vector2(-896, 448)
+script = ExtResource("2_section")
+coord = Vector2i(0, 2)
+theme = "gate"
+title = "South Gate"
+subtitle = "Route toward Green Sector"
+
+[node name="Section_1_2" type="Node2D" parent="Sections" unique_id=597462580]
+position = Vector2(-448, 672)
+script = ExtResource("2_section")
+coord = Vector2i(1, 2)
+title = "Southeast Residences"
+subtitle = "Newly restored housing"
+
+[node name="Section_2_2" type="Node2D" parent="Sections" unique_id=21631041]
+position = Vector2(0, 896)
+script = ExtResource("2_section")
+coord = Vector2i(2, 2)
+theme = "garden"
+title = "Lower East Terrace"
+subtitle = "City-edge green space"
+
+[node name="Levels" type="Node2D" parent="." unique_id=1831014946]
+visible = false
+
+[node name="upper_civic" type="Node2D" parent="Levels" unique_id=853813968]
+script = ExtResource("5_level")
+elevation_px = 48.0
+
+[node name="south_terrace" type="Node2D" parent="Levels" unique_id=1332898423]
+script = ExtResource("5_level")
+level_id = "south_terrace"
+
+[node name="Boundaries" type="Node2D" parent="." unique_id=1667765013]
+visible = false
+
+[node name="SouthTerraceBreak" type="Line2D" parent="Boundaries" unique_id=2013429274]
+points = PackedVector2Array(-1472, -128, 704, 960)
+width = 5.0
+default_color = Color(1, 0.65, 0.16, 0.75)
+script = ExtResource("6_boundary")
+
+[node name="Surfaces" type="Node2D" parent="." unique_id=1445949062]
+visible = false
+
+[node name="market_forecourt" type="Polygon2D" parent="Surfaces" unique_id=532389063]
+position = Vector2(-528, 8)
+color = Color(0.95, 0.97, 1, 0.2)
+polygon = PackedVector2Array(-684.8, 464, -480, 566.4, -614.4, 633.6, -819.2, 531.2)
+script = ExtResource("4_surface")
+region_id = "market_forecourt"
+layer_id = "service_forecourts"
+level_id = "south_terrace"
+surface = "market"
+tint = Color(0.95, 0.97, 1, 1)
+border_width = 1.5
+border_color = Color(0.52, 0.43, 0.27, 1)
+editor_elevation_px = 0.0
+
+[node name="archive_forecourt" type="Polygon2D" parent="Surfaces" unique_id=1879434786]
+color = Color(1.1, 1.1, 1.1, 0.2)
+polygon = PackedVector2Array(1353.6, -148.8, 1641.6, -4.8, 1344, 144, 1056, 0)
+script = ExtResource("4_surface")
+region_id = "archive_forecourt"
+layer_id = "service_forecourts"
+surface = "tech_purple"
+tint = Color(1.1, 1.1, 1.1, 1)
+border_width = 1.5
+border_color = Color(0.45, 0.36, 0.52, 1)
+
+[node name="verdant_terrace_court" type="Polygon2D" parent="Surfaces" unique_id=1886425153]
+color = Color(1.04, 1.05, 1.05, 0.2)
+polygon = PackedVector2Array(0, -640, 128, -576, 16, -520, -112, -584)
+script = ExtResource("4_surface")
+region_id = "verdant_terrace_court"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_color = Color(0.47, 0.48, 0.49, 1)
+
+[node name="northwest_residences_court" type="Polygon2D" parent="Surfaces" unique_id=649152117]
+color = Color(1.04, 1.05, 1.05, 0.2)
+polygon = PackedVector2Array(432, -520, 592, -440, 464, -376, 304, -456)
+script = ExtResource("4_surface")
+region_id = "northwest_residences_court"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_color = Color(0.47, 0.48, 0.49, 1)
+
+[node name="west_heights_court" type="Polygon2D" parent="Surfaces" unique_id=715963301]
+color = Color(1.04, 1.05, 1.05, 0.2)
+polygon = PackedVector2Array(-448, -512, -304, -440, -425.6, -379.2, -569.6, -451.2)
+script = ExtResource("4_surface")
+region_id = "west_heights_court"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_color = Color(0.47, 0.48, 0.49, 1)
+
+[node name="hospital_gardens_court" type="Polygon2D" parent="Surfaces" unique_id=1377554491]
+color = Color(1.04, 1.05, 1.05, 0.2)
+polygon = PackedVector2Array(880, 152, 1040, 232, 912, 296, 752, 216)
+script = ExtResource("4_surface")
+region_id = "hospital_gardens_court"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_color = Color(0.47, 0.48, 0.49, 1)
+
+[node name="southwest_gardens_court" type="Polygon2D" parent="Surfaces" unique_id=1956513747]
+color = Color(1.04, 1.05, 1.05, 0.2)
+polygon = PackedVector2Array(-1504, 112, -1360, 184, -1472, 240, -1616, 168)
+script = ExtResource("4_surface")
+region_id = "southwest_gardens_court"
+level_id = "south_terrace"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 0.0
+
+[node name="southeast_commons_court" type="Polygon2D" parent="Surfaces" unique_id=58871009]
+color = Color(1.04, 1.05, 1.05, 0.2)
+polygon = PackedVector2Array(-288, 720, -144, 792, -256, 848, -400, 776)
+script = ExtResource("4_surface")
+region_id = "southeast_commons_court"
+level_id = "south_terrace"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 0.0
+
+[node name="south_residences_court" type="Polygon2D" parent="Surfaces" unique_id=438572393]
+color = Color(1.04, 1.05, 1.05, 0.2)
+polygon = PackedVector2Array(-1360, 376, -1216, 448, -1328, 504, -1472, 432)
+script = ExtResource("4_surface")
+region_id = "south_residences_court"
+level_id = "south_terrace"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 0.0
+
+[node name="southeast_residences_court" type="Polygon2D" parent="Surfaces" unique_id=1630222925]
+color = Color(1.04, 1.05, 1.05, 0.2)
+polygon = PackedVector2Array(-464, 824, -320, 896, -432, 952, -576, 880)
+script = ExtResource("4_surface")
+region_id = "southeast_residences_court"
+level_id = "south_terrace"
+tint = Color(1.04, 1.05, 1.05, 1)
+border_color = Color(0.47, 0.48, 0.49, 1)
+editor_elevation_px = 0.0
+
+[node name="GroundOverrides" type="Node2D" parent="." unique_id=253502487]
+visible = false
+
+[node name="NorthCanalBridge" type="Polygon2D" parent="GroundOverrides" unique_id=1836995928]
+color = Color(0.575, 0.585, 0.595, 0.18)
+polygon = PackedVector2Array(928, -288, 992, -256, 864, -192, 800, -224)
+script = ExtResource("11_ground")
+region_id = "NorthCanalBridge"
+base_color = Color(0.575, 0.585, 0.595, 1)
+priority = 20
+
+[node name="GroundPaint" type="Node2D" parent="." unique_id=2142204241]
+script = ExtResource("12_ground_paint")
+cells = {
+"-1,-10": "main",
+"-1,-11": "main",
+"-1,-12": "main",
+"-1,-13": "main",
+"-1,-14": "main",
+"-1,-25": "main",
+"-1,-26": "main",
+"-1,-27": "main",
+"-1,-9": "main",
+"-1,1": "road",
+"-1,10": "main",
+"-1,11": "main",
+"-1,12": "main",
+"-1,19": "main",
+"-1,2": "road",
+"-1,20": "main",
+"-1,21": "main",
+"-1,22": "road",
+"-1,23": "road",
+"-1,29": "road",
+"-1,3": "road",
+"-1,30": "road",
+"-1,31": "road",
+"-1,7": "road",
+"-1,8": "road",
+"-1,9": "road",
+"-10,-18": "main",
+"-10,-19": "main",
+"-10,-20": "main",
+"-10,-21": "main",
+"-10,-22": "main",
+"-10,-23": "main",
+"-10,-24": "main",
+"-10,-25": "main",
+"-10,10": "main",
+"-10,11": "main",
+"-10,12": "main",
+"-10,13": "main",
+"-10,14": "main",
+"-10,29": "road",
+"-10,30": "road",
+"-10,31": "road",
+"-10,33": "main",
+"-10,34": "main",
+"-10,35": "main",
+"-10,36": "main",
+"-10,37": "main",
+"-10,7": "road",
+"-10,8": "road",
+"-10,9": "road",
+"-11,-21": "main",
+"-11,-22": "main",
+"-11,-23": "main",
+"-11,-24": "main",
+"-11,10": "main",
+"-11,11": "main",
+"-11,12": "main",
+"-11,13": "main",
+"-11,14": "main",
+"-11,29": "road",
+"-11,30": "road",
+"-11,31": "road",
+"-11,33": "main",
+"-11,34": "main",
+"-11,35": "main",
+"-11,36": "main",
+"-11,7": "road",
+"-11,8": "road",
+"-11,9": "road",
+"-12,-21": "main",
+"-12,-22": "main",
+"-12,-23": "main",
+"-12,-24": "main",
+"-12,10": "main",
+"-12,11": "main",
+"-12,12": "main",
+"-12,13": "main",
+"-12,14": "main",
+"-12,29": "road",
+"-12,30": "road",
+"-12,31": "road",
+"-12,33": "main",
+"-12,34": "main",
+"-12,35": "main",
+"-12,7": "road",
+"-12,8": "road",
+"-12,9": "road",
+"-13,-21": "main",
+"-13,-22": "main",
+"-13,-23": "main",
+"-13,-24": "main",
+"-13,10": "main",
+"-13,11": "main",
+"-13,12": "main",
+"-13,13": "main",
+"-13,14": "main",
+"-13,29": "road",
+"-13,30": "road",
+"-13,31": "road",
+"-13,33": "main",
+"-13,34": "main",
+"-13,35": "main",
+"-13,7": "road",
+"-13,8": "road",
+"-13,9": "road",
+"-14,-21": "main",
+"-14,-22": "main",
+"-14,-23": "main",
+"-14,-24": "main",
+"-14,10": "stone_soft",
+"-14,11": "main",
+"-14,12": "main",
+"-14,13": "main",
+"-14,14": "main",
+"-14,15": "main",
+"-14,9": "stone_soft",
+"-15,10": "stone_soft",
+"-15,11": "stone_soft",
+"-15,12": "main",
+"-15,13": "main",
+"-15,14": "main",
+"-15,15": "main",
+"-15,9": "stone_soft",
+"-16,10": "main",
+"-16,11": "main",
+"-16,12": "main",
+"-16,13": "main",
+"-16,14": "main",
+"-16,15": "main",
+"-16,2": "main",
+"-16,27": "main",
+"-16,28": "main",
+"-16,29": "main",
+"-16,3": "main",
+"-16,30": "main",
+"-16,31": "main",
+"-16,32": "main",
+"-16,33": "main",
+"-16,34": "main",
+"-16,4": "main",
+"-16,5": "main",
+"-16,6": "main",
+"-16,7": "main",
+"-16,8": "main",
+"-16,9": "main",
+"-17,-6": "main",
+"-17,-7": "main",
+"-17,-8": "main",
+"-17,10": "main",
+"-17,11": "main",
+"-17,12": "main",
+"-17,13": "main",
+"-17,14": "main",
+"-17,15": "main",
+"-17,2": "main",
+"-17,27": "main",
+"-17,28": "main",
+"-17,29": "main",
+"-17,3": "main",
+"-17,30": "main",
+"-17,31": "main",
+"-17,32": "main",
+"-17,33": "main",
+"-17,34": "main",
+"-17,4": "main",
+"-17,5": "main",
+"-17,6": "main",
+"-17,7": "main",
+"-17,8": "main",
+"-17,9": "main",
+"-18,-5": "main",
+"-18,-6": "main",
+"-18,-7": "main",
+"-18,-8": "main",
+"-18,-9": "main",
+"-18,10": "main",
+"-18,11": "main",
+"-18,12": "main",
+"-18,13": "main",
+"-18,14": "main",
+"-18,15": "main",
+"-18,2": "main",
+"-18,27": "main",
+"-18,28": "main",
+"-18,29": "main",
+"-18,3": "main",
+"-18,30": "main",
+"-18,31": "main",
+"-18,32": "main",
+"-18,33": "main",
+"-18,34": "main",
+"-18,4": "main",
+"-18,5": "main",
+"-18,6": "main",
+"-18,7": "main",
+"-18,8": "main",
+"-18,9": "main",
+"-19,-10": "main",
+"-19,-11": "main",
+"-19,-12": "main",
+"-19,-5": "main",
+"-19,-6": "main",
+"-19,-7": "main",
+"-19,-8": "main",
+"-19,-9": "main",
+"-19,10": "main",
+"-19,11": "main",
+"-19,12": "main",
+"-19,13": "main",
+"-19,14": "main",
+"-19,27": "main",
+"-19,28": "main",
+"-19,29": "main",
+"-19,3": "main",
+"-19,30": "main",
+"-19,31": "main",
+"-19,32": "main",
+"-19,33": "main",
+"-19,4": "main",
+"-19,5": "main",
+"-19,6": "main",
+"-19,7": "main",
+"-19,8": "main",
+"-19,9": "main",
+"-2,-10": "main",
+"-2,-11": "main",
+"-2,-12": "main",
+"-2,-13": "main",
+"-2,-14": "main",
+"-2,-15": "main",
+"-2,-25": "main",
+"-2,-26": "main",
+"-2,-27": "main",
+"-2,-8": "main",
+"-2,-9": "main",
+"-2,10": "main",
+"-2,11": "main",
+"-2,12": "main",
+"-2,19": "main",
+"-2,2": "road",
+"-2,20": "main",
+"-2,21": "main",
+"-2,22": "road",
+"-2,23": "road",
+"-2,29": "road",
+"-2,30": "road",
+"-2,31": "road",
+"-2,7": "road",
+"-2,8": "road",
+"-2,9": "road",
+"-20,-10": "main",
+"-20,-11": "main",
+"-20,-12": "main",
+"-20,-2": "main",
+"-20,-3": "main",
+"-20,-4": "main",
+"-20,-5": "main",
+"-20,-6": "main",
+"-20,-7": "main",
+"-20,-8": "main",
+"-20,-9": "main",
+"-20,10": "main",
+"-20,11": "main",
+"-20,12": "main",
+"-20,13": "main",
+"-20,14": "main",
+"-20,27": "main",
+"-20,28": "main",
+"-20,29": "main",
+"-20,30": "main",
+"-20,31": "main",
+"-20,32": "main",
+"-20,4": "main",
+"-20,5": "main",
+"-20,6": "main",
+"-20,7": "main",
+"-20,8": "main",
+"-20,9": "main",
+"-21,-1": "main",
+"-21,-10": "main",
+"-21,-11": "main",
+"-21,-12": "main",
+"-21,-13": "main",
+"-21,-2": "main",
+"-21,-3": "main",
+"-21,-4": "main",
+"-21,-5": "main",
+"-21,-6": "main",
+"-21,-7": "main",
+"-21,-8": "main",
+"-21,-9": "main",
+"-21,0": "main",
+"-21,1": "main",
+"-21,10": "main",
+"-21,11": "main",
+"-21,12": "main",
+"-21,13": "main",
+"-21,14": "main",
+"-21,15": "main",
+"-21,16": "main",
+"-21,2": "main",
+"-21,27": "main",
+"-21,28": "main",
+"-21,29": "main",
+"-21,3": "main",
+"-21,30": "main",
+"-21,31": "main",
+"-21,5": "main",
+"-21,6": "main",
+"-21,7": "main",
+"-21,8": "main",
+"-21,9": "main",
+"-22,-1": "main",
+"-22,-10": "main",
+"-22,-11": "main",
+"-22,-12": "main",
+"-22,-13": "main",
+"-22,-2": "main",
+"-22,-3": "main",
+"-22,-4": "main",
+"-22,-5": "main",
+"-22,-6": "main",
+"-22,-7": "main",
+"-22,-8": "main",
+"-22,-9": "main",
+"-22,0": "main",
+"-22,1": "main",
+"-22,10": "main",
+"-22,11": "main",
+"-22,12": "main",
+"-22,13": "main",
+"-22,14": "main",
+"-22,15": "main",
+"-22,16": "main",
+"-22,17": "main",
+"-22,2": "main",
+"-22,27": "main",
+"-22,28": "main",
+"-22,29": "main",
+"-22,3": "main",
+"-22,30": "main",
+"-22,4": "main",
+"-22,5": "main",
+"-22,6": "main",
+"-22,7": "main",
+"-22,8": "main",
+"-22,9": "main",
+"-23,-1": "main",
+"-23,-10": "main",
+"-23,-11": "main",
+"-23,-12": "main",
+"-23,-13": "main",
+"-23,-5": "main",
+"-23,-6": "main",
+"-23,-7": "main",
+"-23,-8": "main",
+"-23,-9": "main",
+"-23,0": "main",
+"-23,1": "main",
+"-23,10": "main",
+"-23,11": "main",
+"-23,12": "main",
+"-23,13": "main",
+"-23,14": "main",
+"-23,15": "main",
+"-23,16": "main",
+"-23,17": "main",
+"-23,2": "main",
+"-23,3": "main",
+"-23,4": "main",
+"-23,5": "main",
+"-23,6": "main",
+"-23,7": "main",
+"-23,8": "main",
+"-23,9": "main",
+"-24,-1": "main",
+"-24,-10": "main",
+"-24,-11": "main",
+"-24,-12": "main",
+"-24,-13": "main",
+"-24,-6": "main",
+"-24,-7": "main",
+"-24,-8": "main",
+"-24,-9": "main",
+"-24,0": "main",
+"-24,1": "main",
+"-24,10": "main",
+"-24,11": "main",
+"-24,12": "main",
+"-24,13": "main",
+"-24,14": "main",
+"-24,15": "main",
+"-24,16": "main",
+"-24,17": "main",
+"-24,2": "main",
+"-24,3": "main",
+"-24,4": "main",
+"-24,5": "main",
+"-24,6": "main",
+"-24,7": "main",
+"-24,8": "main",
+"-24,9": "main",
+"-25,-1": "main",
+"-25,-10": "main",
+"-25,-11": "main",
+"-25,-12": "main",
+"-25,-13": "main",
+"-25,-7": "main",
+"-25,-8": "main",
+"-25,-9": "main",
+"-25,0": "main",
+"-25,1": "main",
+"-25,10": "main",
+"-25,11": "main",
+"-25,12": "main",
+"-25,13": "main",
+"-25,14": "main",
+"-25,15": "main",
+"-25,16": "main",
+"-25,2": "main",
+"-25,3": "main",
+"-25,4": "main",
+"-25,5": "main",
+"-25,6": "main",
+"-25,7": "main",
+"-25,8": "main",
+"-25,9": "main",
+"-26,-1": "main",
+"-26,-10": "main",
+"-26,-11": "main",
+"-26,-12": "main",
+"-26,-13": "main",
+"-26,-8": "main",
+"-26,-9": "main",
+"-26,0": "main",
+"-26,1": "main",
+"-26,10": "main",
+"-26,11": "stone_soft",
+"-26,12": "stone_soft",
+"-26,2": "main",
+"-26,3": "main",
+"-26,4": "main",
+"-26,7": "main",
+"-26,8": "main",
+"-26,9": "main",
+"-27,-10": "main",
+"-27,-11": "main",
+"-27,-12": "main",
+"-27,0": "main",
+"-27,1": "main",
+"-27,2": "main",
+"-27,3": "main",
+"-3,-10": "main",
+"-3,-11": "main",
+"-3,-12": "main",
+"-3,-13": "main",
+"-3,-14": "main",
+"-3,-15": "main",
+"-3,-16": "main",
+"-3,-20": "main",
+"-3,-21": "main",
+"-3,-22": "main",
+"-3,-8": "main",
+"-3,-9": "main",
+"-3,10": "main",
+"-3,11": "main",
+"-3,12": "main",
+"-3,19": "main",
+"-3,20": "main",
+"-3,21": "main",
+"-3,22": "road",
+"-3,23": "road",
+"-3,29": "road",
+"-3,30": "road",
+"-3,31": "road",
+"-3,7": "road",
+"-3,8": "road",
+"-3,9": "road",
+"-4,-10": "main",
+"-4,-11": "main",
+"-4,-12": "main",
+"-4,-13": "main",
+"-4,-14": "main",
+"-4,-15": "main",
+"-4,-16": "main",
+"-4,-17": "main",
+"-4,-20": "main",
+"-4,-21": "main",
+"-4,-22": "main",
+"-4,-23": "main",
+"-4,-8": "main",
+"-4,-9": "main",
+"-4,10": "road",
+"-4,11": "road",
+"-4,12": "road",
+"-4,13": "road",
+"-4,14": "road",
+"-4,15": "road",
+"-4,16": "road",
+"-4,17": "road",
+"-4,18": "road",
+"-4,20": "road",
+"-4,21": "road",
+"-4,22": "road",
+"-4,23": "road",
+"-4,26": "road",
+"-4,27": "road",
+"-4,28": "road",
+"-4,29": "road",
+"-4,30": "road",
+"-4,31": "road",
+"-4,7": "road",
+"-4,8": "road",
+"-4,9": "road",
+"-5,-10": "main",
+"-5,-11": "main",
+"-5,-12": "main",
+"-5,-13": "main",
+"-5,-14": "main",
+"-5,-15": "main",
+"-5,-16": "main",
+"-5,-17": "main",
+"-5,-18": "main",
+"-5,-19": "main",
+"-5,-20": "main",
+"-5,-21": "main",
+"-5,-22": "main",
+"-5,-23": "main",
+"-5,-24": "main",
+"-5,-25": "main",
+"-5,-9": "main",
+"-5,10": "road",
+"-5,11": "road",
+"-5,12": "road",
+"-5,13": "road",
+"-5,14": "road",
+"-5,15": "road",
+"-5,16": "road",
+"-5,17": "road",
+"-5,18": "road",
+"-5,19": "road",
+"-5,20": "road",
+"-5,21": "road",
+"-5,22": "road",
+"-5,23": "road",
+"-5,25": "road",
+"-5,26": "road",
+"-5,27": "road",
+"-5,28": "road",
+"-5,29": "road",
+"-5,30": "road",
+"-5,31": "road",
+"-5,36": "main",
+"-5,37": "main",
+"-5,38": "main",
+"-5,7": "road",
+"-5,8": "road",
+"-5,9": "road",
+"-6,-10": "main",
+"-6,-11": "main",
+"-6,-12": "main",
+"-6,-13": "main",
+"-6,-14": "main",
+"-6,-15": "main",
+"-6,-16": "main",
+"-6,-17": "main",
+"-6,-18": "main",
+"-6,-19": "main",
+"-6,-20": "main",
+"-6,-21": "main",
+"-6,-22": "main",
+"-6,-23": "main",
+"-6,-24": "main",
+"-6,-25": "main",
+"-6,-9": "main",
+"-6,10": "road",
+"-6,11": "road",
+"-6,12": "road",
+"-6,13": "road",
+"-6,14": "road",
+"-6,15": "road",
+"-6,16": "road",
+"-6,17": "road",
+"-6,18": "road",
+"-6,19": "road",
+"-6,21": "road",
+"-6,22": "road",
+"-6,25": "road",
+"-6,26": "road",
+"-6,27": "road",
+"-6,28": "road",
+"-6,29": "road",
+"-6,30": "road",
+"-6,31": "road",
+"-6,35": "main",
+"-6,36": "main",
+"-6,37": "main",
+"-6,38": "main",
+"-6,7": "road",
+"-6,8": "road",
+"-6,9": "road",
+"-7,-11": "main",
+"-7,-12": "main",
+"-7,-13": "main",
+"-7,-14": "main",
+"-7,-15": "main",
+"-7,-16": "main",
+"-7,-17": "main",
+"-7,-18": "main",
+"-7,-19": "main",
+"-7,-20": "main",
+"-7,-21": "main",
+"-7,-22": "main",
+"-7,-23": "main",
+"-7,-24": "main",
+"-7,-25": "main",
+"-7,10": "road",
+"-7,11": "road",
+"-7,12": "road",
+"-7,13": "road",
+"-7,14": "road",
+"-7,15": "road",
+"-7,16": "road",
+"-7,17": "road",
+"-7,18": "road",
+"-7,26": "road",
+"-7,27": "road",
+"-7,28": "road",
+"-7,29": "road",
+"-7,30": "road",
+"-7,31": "road",
+"-7,35": "main",
+"-7,36": "main",
+"-7,37": "main",
+"-7,38": "main",
+"-7,7": "road",
+"-7,8": "road",
+"-7,9": "road",
+"-8,-14": "main",
+"-8,-15": "main",
+"-8,-16": "main",
+"-8,-17": "main",
+"-8,-18": "main",
+"-8,-19": "main",
+"-8,-20": "main",
+"-8,-21": "main",
+"-8,-22": "main",
+"-8,-23": "main",
+"-8,-24": "main",
+"-8,-25": "main",
+"-8,10": "main",
+"-8,11": "main",
+"-8,12": "main",
+"-8,13": "main",
+"-8,14": "main",
+"-8,29": "road",
+"-8,30": "road",
+"-8,31": "road",
+"-8,34": "main",
+"-8,35": "main",
+"-8,36": "main",
+"-8,37": "main",
+"-8,38": "main",
+"-8,7": "road",
+"-8,8": "road",
+"-8,9": "road",
+"-9,-17": "main",
+"-9,-18": "main",
+"-9,-19": "main",
+"-9,-20": "main",
+"-9,-21": "main",
+"-9,-22": "main",
+"-9,-23": "main",
+"-9,-24": "main",
+"-9,-25": "main",
+"-9,10": "main",
+"-9,11": "main",
+"-9,12": "main",
+"-9,13": "main",
+"-9,14": "main",
+"-9,29": "road",
+"-9,30": "road",
+"-9,31": "road",
+"-9,33": "main",
+"-9,34": "main",
+"-9,35": "main",
+"-9,36": "main",
+"-9,37": "main",
+"-9,7": "road",
+"-9,8": "road",
+"-9,9": "road",
+"0,-25": "main",
+"0,-26": "main",
+"0,-27": "main",
+"0,10": "main",
+"0,11": "main",
+"0,12": "main",
+"0,19": "main",
+"0,2": "road",
+"0,20": "main",
+"0,21": "main",
+"0,22": "road",
+"0,23": "road",
+"0,29": "road",
+"0,3": "road",
+"0,30": "road",
+"0,31": "road",
+"0,4": "road",
+"0,7": "road",
+"0,8": "road",
+"0,9": "road",
+"1,-25": "main",
+"1,-26": "main",
+"1,-27": "main",
+"1,-28": "main",
+"1,10": "main",
+"1,11": "main",
+"1,12": "main",
+"1,19": "main",
+"1,20": "main",
+"1,21": "main",
+"1,22": "road",
+"1,23": "road",
+"1,29": "road",
+"1,3": "road",
+"1,30": "road",
+"1,31": "road",
+"1,4": "road",
+"1,5": "road",
+"1,6": "road",
+"1,7": "road",
+"1,8": "road",
+"1,9": "road",
+"10,-14": "main",
+"10,-15": "main",
+"10,-16": "main",
+"10,-17": "main",
+"10,-18": "main",
+"10,-20": "road",
+"10,-21": "road",
+"10,-22": "road",
+"10,-26": "main",
+"10,-27": "main",
+"10,-28": "main",
+"10,10": "main",
+"10,11": "main",
+"10,12": "main",
+"10,19": "main",
+"10,20": "main",
+"10,21": "main",
+"10,22": "road",
+"10,23": "road",
+"10,29": "road",
+"10,30": "road",
+"10,31": "road",
+"10,6": "road",
+"10,7": "road",
+"10,8": "road",
+"10,9": "road",
+"11,-14": "main",
+"11,-15": "main",
+"11,-16": "main",
+"11,-17": "main",
+"11,-18": "main",
+"11,-20": "road",
+"11,-21": "road",
+"11,-22": "road",
+"11,-26": "main",
+"11,-27": "main",
+"11,-28": "main",
+"11,10": "main",
+"11,11": "main",
+"11,12": "main",
+"11,19": "main",
+"11,20": "main",
+"11,21": "main",
+"11,22": "road",
+"11,23": "road",
+"11,29": "road",
+"11,30": "road",
+"11,31": "road",
+"11,6": "road",
+"11,7": "road",
+"11,8": "road",
+"11,9": "road",
+"12,-14": "main",
+"12,-15": "main",
+"12,-16": "main",
+"12,-17": "main",
+"12,-18": "main",
+"12,-20": "road",
+"12,-21": "road",
+"12,-22": "road",
+"12,-26": "main",
+"12,-27": "main",
+"12,-28": "main",
+"12,10": "main",
+"12,11": "main",
+"12,12": "main",
+"12,13": "main",
+"12,14": "main",
+"12,19": "main",
+"12,20": "main",
+"12,21": "main",
+"12,22": "road",
+"12,23": "road",
+"12,29": "road",
+"12,30": "road",
+"12,31": "road",
+"12,6": "road",
+"12,7": "road",
+"12,8": "road",
+"12,9": "road",
+"13,-15": "main",
+"13,-16": "main",
+"13,-17": "main",
+"13,-18": "main",
+"13,-20": "road",
+"13,-21": "road",
+"13,-22": "road",
+"13,-26": "main",
+"13,-27": "main",
+"13,-28": "main",
+"13,10": "main",
+"13,11": "main",
+"13,12": "main",
+"13,13": "main",
+"13,14": "main",
+"13,19": "main",
+"13,20": "main",
+"13,21": "main",
+"13,22": "road",
+"13,23": "road",
+"13,29": "road",
+"13,30": "road",
+"13,31": "road",
+"13,6": "road",
+"13,7": "road",
+"13,8": "road",
+"13,9": "road",
+"14,-15": "main",
+"14,-16": "main",
+"14,-17": "main",
+"14,-18": "main",
+"14,-20": "road",
+"14,-21": "road",
+"14,-22": "road",
+"14,-26": "main",
+"14,-27": "main",
+"14,-28": "main",
+"14,10": "main",
+"14,11": "main",
+"14,12": "main",
+"14,13": "main",
+"14,14": "main",
+"14,15": "main",
+"14,19": "main",
+"14,20": "main",
+"14,21": "main",
+"14,22": "road",
+"14,23": "road",
+"14,29": "road",
+"14,30": "road",
+"14,31": "road",
+"14,6": "road",
+"14,7": "road",
+"14,8": "road",
+"14,9": "road",
+"15,-20": "road",
+"15,-21": "road",
+"15,-22": "road",
+"15,10": "main",
+"15,11": "main",
+"15,12": "main",
+"15,13": "main",
+"15,14": "main",
+"15,15": "main",
+"15,19": "main",
+"15,20": "main",
+"15,21": "main",
+"15,22": "main",
+"15,23": "road",
+"15,29": "road",
+"15,30": "road",
+"15,31": "road",
+"15,6": "road",
+"15,7": "road",
+"15,8": "road",
+"15,9": "road",
+"16,-20": "road",
+"16,-21": "road",
+"16,-22": "road",
+"16,10": "main",
+"16,11": "main",
+"16,12": "main",
+"16,13": "main",
+"16,14": "main",
+"16,15": "main",
+"16,19": "main",
+"16,20": "main",
+"16,21": "main",
+"16,22": "main",
+"16,23": "road",
+"16,29": "road",
+"16,30": "road",
+"16,31": "road",
+"16,33": "main",
+"16,34": "main",
+"16,35": "main",
+"16,6": "road",
+"16,7": "road",
+"16,8": "road",
+"16,9": "road",
+"17,-20": "road",
+"17,-21": "road",
+"17,-22": "road",
+"17,10": "main",
+"17,11": "main",
+"17,12": "main",
+"17,13": "main",
+"17,14": "main",
+"17,15": "main",
+"17,19": "main",
+"17,20": "main",
+"17,21": "main",
+"17,22": "main",
+"17,23": "road",
+"17,29": "road",
+"17,30": "road",
+"17,31": "road",
+"17,33": "main",
+"17,34": "main",
+"17,35": "main",
+"17,36": "main",
+"17,6": "road",
+"17,7": "road",
+"17,8": "road",
+"17,9": "road",
+"18,-20": "road",
+"18,-21": "road",
+"18,-22": "road",
+"18,10": "main",
+"18,11": "main",
+"18,12": "main",
+"18,13": "main",
+"18,14": "main",
+"18,15": "main",
+"18,19": "main",
+"18,20": "main",
+"18,21": "main",
+"18,22": "road",
+"18,23": "road",
+"18,29": "road",
+"18,30": "road",
+"18,31": "road",
+"18,33": "main",
+"18,34": "main",
+"18,35": "main",
+"18,36": "main",
+"18,6": "road",
+"18,7": "road",
+"18,8": "road",
+"18,9": "road",
+"19,-20": "road",
+"19,-21": "road",
+"19,-22": "road",
+"19,10": "main",
+"19,11": "main",
+"19,12": "main",
+"19,13": "main",
+"19,14": "main",
+"19,15": "main",
+"19,19": "main",
+"19,20": "main",
+"19,21": "main",
+"19,22": "road",
+"19,23": "road",
+"19,29": "road",
+"19,30": "road",
+"19,31": "road",
+"19,33": "main",
+"19,34": "main",
+"19,35": "main",
+"19,36": "main",
+"19,37": "main",
+"19,6": "road",
+"19,7": "road",
+"19,8": "road",
+"19,9": "road",
+"2,-25": "main",
+"2,-26": "main",
+"2,-27": "main",
+"2,-28": "main",
+"2,10": "main",
+"2,11": "main",
+"2,12": "main",
+"2,18": "main",
+"2,19": "main",
+"2,20": "main",
+"2,21": "main",
+"2,22": "road",
+"2,23": "road",
+"2,29": "road",
+"2,30": "road",
+"2,31": "road",
+"2,4": "road",
+"2,5": "road",
+"2,6": "road",
+"2,7": "road",
+"2,8": "road",
+"2,9": "road",
+"20,-20": "road",
+"20,-21": "road",
+"20,-22": "road",
+"20,10": "main",
+"20,11": "main",
+"20,12": "main",
+"20,13": "main",
+"20,14": "main",
+"20,15": "main",
+"20,19": "main",
+"20,20": "main",
+"20,21": "main",
+"20,22": "road",
+"20,23": "road",
+"20,26": "road",
+"20,27": "road",
+"20,28": "road",
+"20,29": "road",
+"20,30": "road",
+"20,31": "road",
+"20,33": "main",
+"20,34": "main",
+"20,35": "main",
+"20,36": "main",
+"20,37": "main",
+"20,6": "road",
+"20,7": "road",
+"20,8": "road",
+"20,9": "road",
+"21,-20": "road",
+"21,-21": "road",
+"21,-22": "road",
+"21,10": "main",
+"21,11": "main",
+"21,12": "main",
+"21,13": "main",
+"21,14": "main",
+"21,15": "main",
+"21,19": "main",
+"21,20": "main",
+"21,21": "main",
+"21,22": "road",
+"21,23": "road",
+"21,25": "road",
+"21,26": "road",
+"21,27": "road",
+"21,28": "road",
+"21,29": "road",
+"21,30": "road",
+"21,31": "road",
+"21,33": "main",
+"21,34": "main",
+"21,35": "main",
+"21,36": "main",
+"21,37": "main",
+"21,6": "road",
+"21,7": "road",
+"21,8": "road",
+"21,9": "road",
+"22,-20": "road",
+"22,-21": "road",
+"22,-22": "road",
+"22,10": "main",
+"22,11": "main",
+"22,12": "main",
+"22,13": "main",
+"22,19": "main",
+"22,20": "main",
+"22,21": "main",
+"22,22": "road",
+"22,25": "road",
+"22,26": "road",
+"22,27": "road",
+"22,28": "road",
+"22,29": "road",
+"22,30": "road",
+"22,31": "road",
+"22,33": "main",
+"22,34": "main",
+"22,35": "main",
+"22,36": "main",
+"22,37": "main",
+"22,6": "road",
+"22,7": "road",
+"22,8": "road",
+"22,9": "road",
+"23,10": "main",
+"23,11": "main",
+"23,12": "main",
+"23,26": "road",
+"23,27": "road",
+"23,28": "road",
+"23,29": "road",
+"23,30": "road",
+"23,31": "road",
+"23,33": "main",
+"23,34": "main",
+"23,35": "main",
+"23,36": "main",
+"23,6": "road",
+"23,7": "road",
+"23,8": "road",
+"23,9": "road",
+"24,10": "main",
+"24,11": "main",
+"24,12": "main",
+"24,29": "road",
+"24,30": "road",
+"24,31": "road",
+"24,33": "main",
+"24,34": "main",
+"24,35": "main",
+"24,36": "main",
+"24,6": "road",
+"24,7": "road",
+"24,8": "road",
+"24,9": "road",
+"25,-11": "main",
+"25,-12": "main",
+"25,-13": "main",
+"25,-14": "main",
+"25,10": "main",
+"25,11": "main",
+"25,12": "main",
+"25,13": "main",
+"25,29": "road",
+"25,30": "road",
+"25,31": "road",
+"25,34": "main",
+"25,35": "main",
+"25,36": "main",
+"25,6": "road",
+"25,7": "road",
+"25,8": "road",
+"25,9": "road",
+"26,-10": "main",
+"26,-11": "main",
+"26,-12": "main",
+"26,-13": "main",
+"26,-14": "main",
+"26,10": "main",
+"26,11": "main",
+"26,12": "main",
+"26,13": "main",
+"26,29": "road",
+"26,30": "road",
+"26,31": "road",
+"26,6": "road",
+"26,7": "road",
+"26,8": "road",
+"26,9": "road",
+"27,-10": "main",
+"27,-11": "main",
+"27,-12": "main",
+"27,-13": "main",
+"27,-14": "main",
+"27,10": "main",
+"27,11": "main",
+"27,12": "main",
+"27,13": "main",
+"27,6": "road",
+"27,7": "road",
+"27,8": "road",
+"27,9": "road",
+"28,-10": "main",
+"28,-11": "main",
+"28,-12": "main",
+"28,-13": "main",
+"28,10": "main",
+"28,11": "main",
+"28,12": "main",
+"28,13": "main",
+"28,6": "road",
+"28,7": "road",
+"28,8": "road",
+"28,9": "road",
+"29,-10": "main",
+"29,-11": "main",
+"29,-12": "main",
+"29,-9": "main",
+"29,10": "main",
+"29,11": "main",
+"29,12": "main",
+"29,13": "main",
+"29,6": "road",
+"29,7": "road",
+"29,8": "road",
+"29,9": "road",
+"3,-25": "main",
+"3,-26": "main",
+"3,-27": "main",
+"3,-28": "main",
+"3,10": "main",
+"3,11": "main",
+"3,12": "main",
+"3,18": "main",
+"3,19": "main",
+"3,20": "main",
+"3,21": "main",
+"3,22": "road",
+"3,23": "road",
+"3,29": "road",
+"3,30": "road",
+"3,31": "road",
+"3,5": "road",
+"3,6": "road",
+"3,7": "road",
+"3,8": "road",
+"3,9": "road",
+"30,-10": "main",
+"30,-11": "main",
+"30,-12": "main",
+"30,-8": "main",
+"30,-9": "main",
+"30,10": "main",
+"30,11": "main",
+"30,12": "main",
+"30,6": "road",
+"30,7": "road",
+"30,8": "road",
+"30,9": "road",
+"31,-10": "main",
+"31,-11": "main",
+"31,-12": "main",
+"31,-8": "main",
+"31,-9": "main",
+"31,10": "main",
+"31,11": "main",
+"31,12": "main",
+"31,6": "road",
+"31,7": "road",
+"31,8": "road",
+"31,9": "road",
+"32,-10": "main",
+"32,-11": "main",
+"32,-8": "main",
+"32,-9": "main",
+"32,10": "main",
+"32,11": "main",
+"32,12": "main",
+"32,6": "road",
+"32,7": "road",
+"32,8": "road",
+"32,9": "road",
+"33,-10": "main",
+"33,-8": "main",
+"33,-9": "main",
+"33,10": "main",
+"33,11": "main",
+"33,12": "main",
+"33,6": "road",
+"33,7": "road",
+"33,8": "road",
+"33,9": "road",
+"34,10": "main",
+"34,11": "main",
+"34,12": "main",
+"34,6": "road",
+"34,7": "road",
+"34,8": "road",
+"34,9": "road",
+"35,10": "main",
+"35,11": "main",
+"35,12": "main",
+"35,6": "road",
+"35,7": "road",
+"35,8": "road",
+"35,9": "road",
+"36,10": "main",
+"36,11": "main",
+"36,12": "main",
+"36,6": "road",
+"36,7": "road",
+"36,8": "road",
+"36,9": "road",
+"4,-26": "main",
+"4,-27": "main",
+"4,-28": "main",
+"4,10": "main",
+"4,11": "main",
+"4,12": "main",
+"4,18": "main",
+"4,19": "main",
+"4,20": "main",
+"4,21": "main",
+"4,22": "road",
+"4,23": "road",
+"4,29": "road",
+"4,30": "road",
+"4,31": "road",
+"4,5": "road",
+"4,6": "road",
+"4,7": "road",
+"4,8": "road",
+"4,9": "road",
+"5,-26": "main",
+"5,-27": "main",
+"5,-28": "main",
+"5,10": "main",
+"5,11": "main",
+"5,12": "main",
+"5,20": "road",
+"5,21": "road",
+"5,22": "road",
+"5,23": "road",
+"5,29": "road",
+"5,30": "road",
+"5,31": "road",
+"5,5": "road",
+"5,6": "road",
+"5,7": "road",
+"5,8": "road",
+"5,9": "road",
+"6,-1": "road",
+"6,-10": "road",
+"6,-11": "road",
+"6,-12": "road",
+"6,-13": "road",
+"6,-14": "road",
+"6,-15": "road",
+"6,-16": "road",
+"6,-17": "road",
+"6,-18": "road",
+"6,-19": "road",
+"6,-2": "road",
+"6,-20": "road",
+"6,-21": "road",
+"6,-22": "road",
+"6,-26": "main",
+"6,-27": "main",
+"6,-28": "main",
+"6,-3": "road",
+"6,-4": "road",
+"6,-5": "road",
+"6,-6": "road",
+"6,-7": "road",
+"6,-8": "road",
+"6,-9": "road",
+"6,0": "road",
+"6,1": "road",
+"6,10": "road",
+"6,11": "road",
+"6,12": "road",
+"6,13": "road",
+"6,14": "road",
+"6,15": "road",
+"6,16": "road",
+"6,17": "road",
+"6,18": "road",
+"6,19": "road",
+"6,2": "road",
+"6,20": "road",
+"6,21": "road",
+"6,22": "road",
+"6,23": "road",
+"6,24": "road",
+"6,25": "road",
+"6,26": "road",
+"6,27": "road",
+"6,28": "road",
+"6,29": "road",
+"6,3": "road",
+"6,30": "road",
+"6,31": "road",
+"6,32": "road",
+"6,33": "road",
+"6,34": "road",
+"6,35": "road",
+"6,36": "road",
+"6,37": "road",
+"6,38": "road",
+"6,39": "road",
+"6,4": "road",
+"6,40": "road",
+"6,41": "road",
+"6,5": "road",
+"6,6": "road",
+"6,7": "road",
+"6,8": "road",
+"6,9": "road",
+"7,-1": "road",
+"7,-10": "road",
+"7,-11": "road",
+"7,-12": "road",
+"7,-13": "road",
+"7,-14": "road",
+"7,-15": "road",
+"7,-16": "road",
+"7,-17": "road",
+"7,-18": "road",
+"7,-19": "road",
+"7,-2": "road",
+"7,-20": "road",
+"7,-21": "road",
+"7,-22": "road",
+"7,-26": "main",
+"7,-27": "main",
+"7,-28": "main",
+"7,-3": "road",
+"7,-4": "road",
+"7,-5": "road",
+"7,-6": "road",
+"7,-7": "road",
+"7,-8": "road",
+"7,-9": "road",
+"7,0": "road",
+"7,1": "road",
+"7,10": "road",
+"7,11": "road",
+"7,12": "road",
+"7,13": "road",
+"7,14": "road",
+"7,15": "road",
+"7,16": "road",
+"7,17": "road",
+"7,18": "road",
+"7,19": "road",
+"7,2": "road",
+"7,20": "road",
+"7,21": "road",
+"7,22": "road",
+"7,23": "road",
+"7,24": "road",
+"7,25": "road",
+"7,26": "road",
+"7,27": "road",
+"7,28": "road",
+"7,29": "road",
+"7,3": "road",
+"7,30": "road",
+"7,31": "road",
+"7,32": "road",
+"7,33": "road",
+"7,34": "road",
+"7,35": "road",
+"7,36": "road",
+"7,37": "road",
+"7,38": "road",
+"7,39": "road",
+"7,4": "road",
+"7,40": "road",
+"7,41": "road",
+"7,5": "road",
+"7,6": "road",
+"7,7": "road",
+"7,8": "road",
+"7,9": "road",
+"8,-1": "road",
+"8,-10": "road",
+"8,-11": "road",
+"8,-12": "road",
+"8,-13": "road",
+"8,-14": "road",
+"8,-15": "road",
+"8,-16": "road",
+"8,-17": "road",
+"8,-18": "road",
+"8,-19": "road",
+"8,-2": "road",
+"8,-20": "road",
+"8,-21": "road",
+"8,-22": "road",
+"8,-26": "main",
+"8,-27": "main",
+"8,-28": "main",
+"8,-3": "road",
+"8,-4": "road",
+"8,-5": "road",
+"8,-6": "road",
+"8,-7": "road",
+"8,-8": "road",
+"8,-9": "road",
+"8,0": "road",
+"8,1": "road",
+"8,10": "road",
+"8,11": "road",
+"8,12": "road",
+"8,13": "road",
+"8,14": "road",
+"8,15": "road",
+"8,16": "road",
+"8,17": "road",
+"8,18": "road",
+"8,19": "road",
+"8,2": "road",
+"8,20": "road",
+"8,21": "road",
+"8,22": "road",
+"8,23": "road",
+"8,24": "road",
+"8,25": "road",
+"8,26": "road",
+"8,27": "road",
+"8,28": "road",
+"8,29": "road",
+"8,3": "road",
+"8,30": "road",
+"8,31": "road",
+"8,32": "road",
+"8,33": "road",
+"8,34": "road",
+"8,35": "road",
+"8,36": "road",
+"8,37": "road",
+"8,38": "road",
+"8,39": "road",
+"8,4": "road",
+"8,40": "road",
+"8,41": "road",
+"8,5": "road",
+"8,6": "road",
+"8,7": "road",
+"8,8": "road",
+"8,9": "road",
+"9,-20": "road",
+"9,-21": "road",
+"9,-22": "road",
+"9,-26": "main",
+"9,-27": "main",
+"9,-28": "main",
+"9,10": "main",
+"9,11": "main",
+"9,12": "main",
+"9,19": "main",
+"9,20": "main",
+"9,21": "main",
+"9,22": "road",
+"9,23": "road",
+"9,29": "road",
+"9,30": "road",
+"9,31": "road",
+"9,6": "road",
+"9,7": "road",
+"9,8": "road",
+"9,9": "road"
+}
+
+[node name="Transitions" type="Node2D" parent="." unique_id=1276367557]
+visible = false
+
+[node name="west_stairs" type="Polygon2D" parent="Transitions" unique_id=2061316556]
+color = Color(0.95, 0.65, 0.18, 0.26)
+polygon = PackedVector2Array(-808, 180, -712, 228, -816, 280, -912, 232)
+script = ExtResource("7_transition")
+kind = "stairs"
+transition_id = "west_stairs"
+from_level = "upper_civic"
+to_level = "south_terrace"
+
+[node name="central_stairs" type="Polygon2D" parent="Transitions" unique_id=1015727276]
+color = Color(0.95, 0.65, 0.18, 0.26)
+polygon = PackedVector2Array(-424, 372, -296, 436, -400, 488, -528, 424)
+script = ExtResource("7_transition")
+kind = "stairs"
+transition_id = "central_stairs"
+from_level = "upper_civic"
+to_level = "south_terrace"
+
+[node name="west_bridge" type="Polygon2D" parent="Transitions" unique_id=1097450307]
+color = Color(0.2, 0.85, 0.95, 0.22)
+polygon = PackedVector2Array(-912, 232, -816, 280, -944, 344, -1040, 296)
+script = ExtResource("7_transition")
+kind = "bridge"
+transition_id = "west_bridge"
+level_id = "south_terrace"
+
+[node name="east_bridge" type="Polygon2D" parent="Transitions" unique_id=1388662441]
+color = Color(0.2, 0.85, 0.95, 0.22)
+polygon = PackedVector2Array(-48, 664, 48, 712, -80, 776, -176, 728)
+script = ExtResource("7_transition")
+kind = "bridge"
+transition_id = "east_bridge"
+level_id = "south_terrace"
+
+[node name="west_future_water" type="Polygon2D" parent="Transitions" unique_id=1305971522]
+color = Color(0.02, 0.08, 0.11, 0.42)
+polygon = PackedVector2Array(-1120, 144, -736, 336, -832, 384, -1216, 192)
+script = ExtResource("7_transition")
+transition_id = "west_future_water"
+
+[node name="east_future_water" type="Polygon2D" parent="Transitions" unique_id=368171959]
+color = Color(0.02, 0.08, 0.11, 0.42)
+polygon = PackedVector2Array(-288, 560, 224, 816, 128, 864, -384, 608)
+script = ExtResource("7_transition")
+transition_id = "east_future_water"
+
+[node name="Buildings" type="Node2D" parent="." unique_id=761870243]
+visible = false
+
+[node name="digilab" type="Marker2D" parent="Buildings" unique_id=1555595466]
+position = Vector2(-784, -136)
+script = ExtResource("8_building")
+
+[node name="training" type="Marker2D" parent="Buildings" unique_id=2093751040]
+position = Vector2(624, 408)
+script = ExtResource("8_building")
+building_id = "training"
+
+[node name="hospital" type="Marker2D" parent="Buildings" unique_id=455207408]
+position = Vector2(-96, -80)
+script = ExtResource("8_building")
+building_id = "hospital"
+
+[node name="market" type="Marker2D" parent="Buildings" unique_id=2142985050]
+position = Vector2(-1184, 544)
+script = ExtResource("8_building")
+building_id = "market"
+
+[node name="archive" type="Marker2D" parent="Buildings" unique_id=195344883]
+position = Vector2(1344, 0)
+script = ExtResource("8_building")
+building_id = "archive"
+
+[node name="Landscapes" type="Node2D" parent="." unique_id=1575250515]
+visible = false
+
+[node name="Landscape_00" type="Marker2D" parent="Landscapes" unique_id=652827878]
+position = Vector2(0, -800)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_0"
+section_coord = Vector2i(-2, -2)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_01" type="Marker2D" parent="Landscapes" unique_id=154906074]
+position = Vector2(0, -576)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_1"
+section_coord = Vector2i(-2, -2)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_02" type="Marker2D" parent="Landscapes" unique_id=1619844563]
+position = Vector2(-224, -688)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_2"
+section_coord = Vector2i(-2, -2)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_03" type="Marker2D" parent="Landscapes" unique_id=1180469191]
+position = Vector2(160, -464)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_3"
+section_coord = Vector2i(-1, -2)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_04" type="Marker2D" parent="Landscapes" unique_id=1709221299]
+position = Vector2(640, -256)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_4"
+section_coord = Vector2i(0, -2)
+preferred_local_cell = Vector2(2, 10)
+
+[node name="Landscape_05" type="Marker2D" parent="Landscapes" unique_id=1821440161]
+position = Vector2(1152, -224)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_5"
+section_coord = Vector2i(0, -2)
+preferred_local_cell = Vector2(11, 3)
+
+[node name="Landscape_06" type="Marker2D" parent="Landscapes" unique_id=2062743919]
+position = Vector2(1792, 96)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_6"
+section_coord = Vector2i(2, -2)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_07" type="Marker2D" parent="Landscapes" unique_id=1750732675]
+position = Vector2(1792, 320)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_7"
+section_coord = Vector2i(2, -2)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_08" type="Marker2D" parent="Landscapes" unique_id=1364204178]
+position = Vector2(1568, 208)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_8"
+section_coord = Vector2i(2, -2)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_09" type="Marker2D" parent="Landscapes" unique_id=952437229]
+position = Vector2(-736, -464)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_9"
+section_coord = Vector2i(-2, -1)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_10" type="Marker2D" parent="Landscapes" unique_id=1391178629]
+position = Vector2(-384, -528)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_10"
+section_coord = Vector2i(-1, -1)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_11" type="Marker2D" parent="Landscapes" unique_id=78380202]
+position = Vector2(-432, -376)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_11"
+section_coord = Vector2i(-1, -1)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_13" type="Marker2D" parent="Landscapes" unique_id=46152985]
+position = Vector2(896, 96)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_13"
+section_coord = Vector2i(1, -1)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_16" type="Marker2D" parent="Landscapes" unique_id=2026855507]
+position = Vector2(1056, 432)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_16"
+section_coord = Vector2i(2, -1)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_17" type="Marker2D" parent="Landscapes" unique_id=1924975076]
+position = Vector2(-1184, -240)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_17"
+section_coord = Vector2i(-2, 0)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_18" type="Marker2D" parent="Landscapes" unique_id=1354613757]
+position = Vector2(-288, 208)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_18"
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_19" type="Marker2D" parent="Landscapes" unique_id=82443392]
+position = Vector2(288, 208)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_19"
+preferred_local_cell = Vector2(11, 2)
+
+[node name="Landscape_20" type="Marker2D" parent="Landscapes" unique_id=1779623050]
+position = Vector2(-1120, -16)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_20"
+section_coord = Vector2i(-2, 1)
+preferred_local_cell = Vector2(10, 3)
+
+[node name="Landscape_21" type="Marker2D" parent="Landscapes" unique_id=503738146]
+position = Vector2(-1568, -16)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_21"
+section_coord = Vector2i(-2, 1)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_22" type="Marker2D" parent="Landscapes" unique_id=552981548]
+position = Vector2(-1344, 96)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_22"
+section_coord = Vector2i(-2, 1)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_23" type="Marker2D" parent="Landscapes" unique_id=566439235]
+position = Vector2(-1184, 208)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_23"
+section_coord = Vector2i(-1, 1)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_24" type="Marker2D" parent="Landscapes" unique_id=626401327]
+position = Vector2(-288, 656)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_24"
+section_coord = Vector2i(1, 1)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_25" type="Marker2D" parent="Landscapes" unique_id=877225059]
+position = Vector2(672, 880)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_25"
+section_coord = Vector2i(2, 1)
+preferred_local_cell = Vector2(10, 3)
+
+[node name="Landscape_26" type="Marker2D" parent="Landscapes" unique_id=868180338]
+position = Vector2(224, 880)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_26"
+section_coord = Vector2i(2, 1)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_27" type="Marker2D" parent="Landscapes" unique_id=1884769753]
+position = Vector2(448, 992)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_27"
+section_coord = Vector2i(2, 1)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_28" type="Marker2D" parent="Landscapes" unique_id=1883473403]
+position = Vector2(-1792, 96)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_28"
+section_coord = Vector2i(-2, 2)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_29" type="Marker2D" parent="Landscapes" unique_id=1239343596]
+position = Vector2(-1792, 320)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_29"
+section_coord = Vector2i(-2, 2)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_30" type="Marker2D" parent="Landscapes" unique_id=2119327270]
+position = Vector2(-2016, 208)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_30"
+section_coord = Vector2i(-2, 2)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Landscape_31" type="Marker2D" parent="Landscapes" unique_id=1984307685]
+position = Vector2(-1632, 432)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_31"
+section_coord = Vector2i(-1, 2)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_32" type="Marker2D" parent="Landscapes" unique_id=1299998555]
+position = Vector2(-736, 880)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_32"
+section_coord = Vector2i(1, 2)
+preferred_local_cell = Vector2(2, 11)
+
+[node name="Landscape_33" type="Marker2D" parent="Landscapes" unique_id=1555931450]
+position = Vector2(0, 992)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_33"
+section_coord = Vector2i(2, 2)
+preferred_local_cell = Vector2(3, 3)
+
+[node name="Landscape_34" type="Marker2D" parent="Landscapes" unique_id=1498681007]
+position = Vector2(0, 1216)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_34"
+section_coord = Vector2i(2, 2)
+preferred_local_cell = Vector2(10, 10)
+
+[node name="Landscape_35" type="Marker2D" parent="Landscapes" unique_id=266055064]
+position = Vector2(-224, 1104)
+script = ExtResource("10_landscape")
+landscape_id = "landscape_35"
+section_coord = Vector2i(2, 2)
+preferred_local_cell = Vector2(3, 10)
+
+[node name="Props" type="Node2D" parent="." unique_id=263192903]
+visible = false
+
+[node name="Prop_00_lamp_blue" type="Marker2D" parent="Props" unique_id=1445899737]
+position = Vector2(96, 118.399994)
+script = ExtResource("9_prop")
+role = "plaza_northwest_landscape_edge"
+surround = "landscape"
+
+[node name="Prop_01_lamp_blue" type="Marker2D" parent="Props" unique_id=606051431]
+position = Vector2(201.6, 180.8)
+script = ExtResource("9_prop")
+role = "plaza_northeast_landscape_edge"
+surround = "landscape"
+
+[node name="Prop_02_lamp_blue" type="Marker2D" parent="Props" unique_id=921648348]
+position = Vector2(-192, 384)
+script = ExtResource("9_prop")
+role = "plaza_southeast_landscape_edge"
+surround = "landscape"
+
+[node name="Prop_03_bench_nw" type="Marker2D" parent="Props" unique_id=1558839375]
+position = Vector2(339.19995, 252.79999)
+script = ExtResource("9_prop")
+asset_id = "bench_nw"
+role = "plaza_southwest_tree_face_center_seating"
+clearance_override = Vector2(0, 0)
+
+[node name="Prop_04_bench_ne" type="Marker2D" parent="Props" unique_id=626157270]
+position = Vector2(236.8, 252.8)
+script = ExtResource("9_prop")
+asset_id = "bench_ne"
+role = "plaza_northeast_tree_face_center_seating"
+clearance_override = Vector2(0, 0)
+
+[node name="Prop_05_lamp_blue" type="Marker2D" parent="Props" unique_id=1082122522]
+position = Vector2(-153.6, 243.2)
+script = ExtResource("9_prop")
+role = "digilab_outer_sidewalk_node"
+surround = "civic"
+
+[node name="Prop_06_lamp_blue" type="Marker2D" parent="Props" unique_id=715081020]
+position = Vector2(592, -8)
+script = ExtResource("9_prop")
+role = "training_outer_sidewalk_node"
+surround = "civic"
+
+[node name="Prop_07_lamp_blue" type="Marker2D" parent="Props" unique_id=433908470]
+position = Vector2(400, 360)
+script = ExtResource("9_prop")
+role = "hospital_outer_sidewalk_node"
+surround = "civic"
+
+[node name="Prop_08_lamp_blue" type="Marker2D" parent="Props" unique_id=592576458]
+position = Vector2(-384, 352)
+script = ExtResource("9_prop")
+role = "north_bridge_west_head"
+surround = "civic"
+
+[node name="Prop_09_lamp_blue" type="Marker2D" parent="Props" unique_id=1746075952]
+position = Vector2(1120, -48)
+script = ExtResource("9_prop")
+role = "north_bridge_east_head"
+surround = "civic"
+
+[node name="Prop_10_lamp_blue" type="Marker2D" parent="Props" unique_id=69087902]
+position = Vector2(768, -224)
+script = ExtResource("9_prop")
+role = "south_bridge_west_head"
+surround = "civic"
+
+[node name="Prop_11_lamp_blue" type="Marker2D" parent="Props" unique_id=1799585666]
+position = Vector2(896, -160)
+script = ExtResource("9_prop")
+role = "south_bridge_east_head"
+surround = "civic"
+
+[node name="Prop_12_bench_nw" type="Marker2D" parent="Props" unique_id=361978617]
+position = Vector2(691.2, -211.2)
+script = ExtResource("9_prop")
+asset_id = "bench_nw"
+role = "canal_southwest_tree_face_center_seating"
+clearance_override = Vector2(0, 0)
+
+[node name="Prop_13_bench_nw" type="Marker2D" parent="Props" unique_id=1578303287]
+position = Vector2(1196.8, -182.4)
+script = ExtResource("9_prop")
+asset_id = "bench_nw"
+role = "canal_northeast_tree_face_center_seating"
+clearance_override = Vector2(0, 0)
+
+[node name="Prop_14_lamp_yellow" type="Marker2D" parent="Props" unique_id=196462052]
+position = Vector2(-656, 488)
+script = ExtResource("9_prop")
+asset_id = "lamp_yellow"
+role = "market_lower_terrace_west_edge"
+surround = "landscape"
+
+[node name="Prop_15_lamp_yellow" type="Marker2D" parent="Props" unique_id=1295355363]
+position = Vector2(-528, 552)
+script = ExtResource("9_prop")
+asset_id = "lamp_yellow"
+role = "market_lower_terrace_east_edge"
+surround = "landscape"
+
+[node name="Prop_16_lamp_blue" type="Marker2D" parent="Props" unique_id=818375593]
+position = Vector2(1248, -112)
+script = ExtResource("9_prop")
+role = "archive_pad_west_edge"
+surround = "civic"
+
+[node name="Prop_17_lamp_blue" type="Marker2D" parent="Props" unique_id=1227975784]
+position = Vector2(464, -72)
+script = ExtResource("9_prop")
+role = "archive_pad_east_edge"
+surround = "civic"

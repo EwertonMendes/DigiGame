@@ -1,5 +1,5 @@
 {
-  "version": 20,
+  "version": 21,
   "assets": {
     "lamp_blue": {
       "path": "res://assets/world/tblack/city/props_v2/lamp_blue.png",
@@ -416,18 +416,18 @@
         "asset": "lamp_yellow",
         "cell": [
           4.5,
-          8
+          11.5
         ],
-        "role": "market_pad_west_edge",
+        "role": "market_lower_terrace_west_edge",
         "surround": "landscape"
       },
       {
         "asset": "lamp_yellow",
         "cell": [
           9.5,
-          6
+          11
         ],
-        "role": "market_pad_east_edge",
+        "role": "market_lower_terrace_east_edge",
         "surround": "landscape"
       }
     ],

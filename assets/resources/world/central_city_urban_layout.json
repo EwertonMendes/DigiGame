@@ -1,0 +1,499 @@
+{
+  "version": 4,
+  "description": "Central City civic areas rendered around the connected circulation graph from central_city_topology.json. Roads are no longer authored as disconnected rectangles.",
+  "layers": [
+    {
+      "id": "central_plaza",
+      "level": "upper_civic",
+      "surface": "stone_soft",
+      "tint": [
+        1.12,
+        1.13,
+        1.13,
+        1
+      ],
+      "border_width": 1.5,
+      "border_color": [
+        0.43,
+        0.47,
+        0.48,
+        1
+      ],
+      "polygons": [
+        {
+          "name": "plaza_north_apron",
+          "grid_polygon": [
+            [
+              3.4,
+              3.4
+            ],
+            [
+              10.6,
+              3.4
+            ],
+            [
+              10.6,
+              5.8
+            ],
+            [
+              3.4,
+              5.8
+            ]
+          ]
+        },
+        {
+          "name": "plaza_south_apron",
+          "grid_polygon": [
+            [
+              3.4,
+              8.8
+            ],
+            [
+              10.6,
+              8.8
+            ],
+            [
+              10.6,
+              12.4
+            ],
+            [
+              3.4,
+              12.4
+            ]
+          ]
+        },
+        {
+          "name": "plaza_west_apron",
+          "grid_polygon": [
+            [
+              3.4,
+              5.6
+            ],
+            [
+              5.8,
+              5.6
+            ],
+            [
+              5.8,
+              9.2
+            ],
+            [
+              3.4,
+              9.2
+            ]
+          ]
+        },
+        {
+          "name": "plaza_east_apron",
+          "grid_polygon": [
+            [
+              8.2,
+              5.6
+            ],
+            [
+              10.6,
+              5.6
+            ],
+            [
+              10.6,
+              9.2
+            ],
+            [
+              8.2,
+              9.2
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "service_forecourts",
+      "surface": "stone_soft",
+      "tint": [
+        1.02,
+        1.02,
+        1.02,
+        1
+      ],
+      "border_width": 1.5,
+      "border_color": [
+        0.39,
+        0.41,
+        0.42,
+        1
+      ],
+      "polygons": [
+        {
+          "name": "digilab_forecourt",
+          "level": "upper_civic",
+          "surface": "tech_teal",
+          "tint": [
+            1.18,
+            1.14,
+            1.08,
+            1
+          ],
+          "border_color": [
+            0.3,
+            0.5,
+            0.43,
+            1
+          ],
+          "grid_polygon": [
+            [
+              -10.5,
+              7.8
+            ],
+            [
+              -1.4,
+              7.8
+            ],
+            [
+              -1.4,
+              14.7
+            ],
+            [
+              -10.5,
+              14.7
+            ]
+          ]
+        },
+        {
+          "name": "training_forecourt",
+          "level": "upper_civic",
+          "surface": "training",
+          "tint": [
+            1.08,
+            1.08,
+            1.05,
+            1
+          ],
+          "border_color": [
+            0.39,
+            0.46,
+            0.39,
+            1
+          ],
+          "grid_polygon": [
+            [
+              2.3,
+              -6.2
+            ],
+            [
+              11.7,
+              -6.2
+            ],
+            [
+              11.7,
+              1.8
+            ],
+            [
+              2.3,
+              1.8
+            ]
+          ]
+        },
+        {
+          "name": "hospital_forecourt",
+          "level": "upper_civic",
+          "surface": "tech_blue",
+          "tint": [
+            1.18,
+            1.15,
+            1.11,
+            1
+          ],
+          "border_color": [
+            0.31,
+            0.43,
+            0.55,
+            1
+          ],
+          "grid_polygon": [
+            [
+              16.2,
+              7.8
+            ],
+            [
+              25.8,
+              7.8
+            ],
+            [
+              25.8,
+              14.7
+            ],
+            [
+              16.2,
+              14.7
+            ]
+          ]
+        },
+        {
+          "name": "market_forecourt",
+          "level": "south_terrace",
+          "surface": "market",
+          "tint": [
+            0.95,
+            0.97,
+            1,
+            1
+          ],
+          "border_color": [
+            0.52,
+            0.43,
+            0.27,
+            1
+          ],
+          "grid_polygon": [
+            [
+              3.8,
+              25.2
+            ],
+            [
+              10.2,
+              25.2
+            ],
+            [
+              10.2,
+              29.4
+            ],
+            [
+              3.8,
+              29.4
+            ]
+          ]
+        },
+        {
+          "name": "archive_forecourt",
+          "level": "upper_civic",
+          "surface": "tech_purple",
+          "tint": [
+            1.1,
+            1.1,
+            1.1,
+            1
+          ],
+          "border_color": [
+            0.45,
+            0.36,
+            0.52,
+            1
+          ],
+          "grid_polygon": [
+            [
+              16.5,
+              -25.8
+            ],
+            [
+              25.5,
+              -25.8
+            ],
+            [
+              25.5,
+              -16.5
+            ],
+            [
+              16.5,
+              -16.5
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "district_courts",
+      "surface": "stone_soft",
+      "tint": [
+        1.04,
+        1.05,
+        1.05,
+        1
+      ],
+      "border_width": 1,
+      "border_color": [
+        0.47,
+        0.48,
+        0.49,
+        1
+      ],
+      "polygons": [
+        {
+          "name": "verdant_terrace_court",
+          "level": "upper_civic",
+          "grid_polygon": [
+            [
+              -20,
+              -20
+            ],
+            [
+              -16,
+              -20
+            ],
+            [
+              -16,
+              -16.5
+            ],
+            [
+              -20,
+              -16.5
+            ]
+          ]
+        },
+        {
+          "name": "northwest_residences_court",
+          "level": "upper_civic",
+          "grid_polygon": [
+            [
+              -9.5,
+              -23
+            ],
+            [
+              -4.5,
+              -23
+            ],
+            [
+              -4.5,
+              -19
+            ],
+            [
+              -9.5,
+              -19
+            ]
+          ]
+        },
+        {
+          "name": "west_heights_court",
+          "level": "upper_civic",
+          "grid_polygon": [
+            [
+              -23,
+              -9
+            ],
+            [
+              -18.5,
+              -9
+            ],
+            [
+              -18.5,
+              -5.2
+            ],
+            [
+              -23,
+              -5.2
+            ]
+          ]
+        },
+        {
+          "name": "hospital_gardens_court",
+          "level": "upper_civic",
+          "grid_polygon": [
+            [
+              18.5,
+              -9
+            ],
+            [
+              23.5,
+              -9
+            ],
+            [
+              23.5,
+              -5
+            ],
+            [
+              18.5,
+              -5
+            ]
+          ]
+        },
+        {
+          "name": "southwest_gardens_court",
+          "level": "south_terrace",
+          "grid_polygon": [
+            [
+              -20,
+              27
+            ],
+            [
+              -15.5,
+              27
+            ],
+            [
+              -15.5,
+              30.5
+            ],
+            [
+              -20,
+              30.5
+            ]
+          ]
+        },
+        {
+          "name": "southeast_commons_court",
+          "level": "south_terrace",
+          "grid_polygon": [
+            [
+              18,
+              27
+            ],
+            [
+              22.5,
+              27
+            ],
+            [
+              22.5,
+              30.5
+            ],
+            [
+              18,
+              30.5
+            ]
+          ]
+        },
+        {
+          "name": "south_residences_court",
+          "level": "south_terrace",
+          "grid_polygon": [
+            [
+              -9.5,
+              33
+            ],
+            [
+              -5,
+              33
+            ],
+            [
+              -5,
+              36.5
+            ],
+            [
+              -9.5,
+              36.5
+            ]
+          ]
+        },
+        {
+          "name": "southeast_residences_court",
+          "level": "south_terrace",
+          "grid_polygon": [
+            [
+              18.5,
+              33
+            ],
+            [
+              23,
+              33
+            ],
+            [
+              23,
+              36.5
+            ],
+            [
+              18.5,
+              36.5
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

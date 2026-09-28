@@ -1,21 +1,27 @@
 extends RefCounted
 class_name WorldAreaCatalog
 
+const CITY_AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
+
 const AREA_FILES := {
 	"central_city": "res://assets/resources/world/central_city.json",
 }
 
 
 func load_area(area_id: String) -> Dictionary:
-	var path := String(AREA_FILES.get(area_id, ""))
-	if path.is_empty() or not FileAccess.file_exists(path):
-		push_error("World area definition is missing: %s" % area_id)
-		return {}
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if not parsed is Dictionary:
-		push_error("World area definition must be an object: %s" % path)
-		return {}
-	var definition := (parsed as Dictionary).duplicate(true)
+	var definition: Dictionary = {}
+	if area_id == "central_city" and CITY_AUTHORING.has_authoring_scene():
+		definition = CITY_AUTHORING.area_definition()
+	else:
+		var path := String(AREA_FILES.get(area_id, ""))
+		if path.is_empty() or not FileAccess.file_exists(path):
+			push_error("World area definition is missing: %s" % area_id)
+			return {}
+		var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if not parsed is Dictionary:
+			push_error("World area definition must be an object: %s" % path)
+			return {}
+		definition = (parsed as Dictionary).duplicate(true)
 	if not _validate(definition):
 		return {}
 	return definition

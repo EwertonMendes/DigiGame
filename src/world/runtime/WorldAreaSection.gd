@@ -1,19 +1,24 @@
+@tool
 extends Node2D
 class_name WorldAreaSection
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const CITY_URBAN = preload("res://src/world/runtime/CentralCityUrbanPlan.gd")
 const CITY_DECOR = preload("res://src/world/runtime/CentralCityDecor.gd")
+const CITY_TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
+const CITY_AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 const TreeAmbientFXScript = preload("res://src/vfx/TreeAmbientFX.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
-const OAK_TREE_SOURCE = preload("res://assets/terrain/Oak_Tree.png")
-const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
-const DIGILAB_TEXTURE = preload("res://assets/world/tblack/digilab/digilab.png")
-const DIGILAB_DOOR_SEMI_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-semi-open.png")
-const DIGILAB_DOOR_OPEN_TEXTURE = preload("res://assets/world/tblack/digilab/digilab-door-open.png")
-const TRAINING_CENTER_TEXTURE = preload("res://assets/world/tblack/training-center/training-center.png")
-const HOSPITAL_TEXTURE = preload("res://assets/world/tblack/hospital/hospital.png")
+const OAK_TREE_SOURCE_PATH := "res://assets/terrain/Oak_Tree.png"
+const NPC_TEXTURE_PATH := "res://assets/characters/world/battle_operator_purple.png"
+const DIGILAB_TEXTURE_PATH := "res://assets/world/tblack/digilab/digilab.png"
+const DIGILAB_DOOR_SEMI_OPEN_TEXTURE_PATH := "res://assets/world/tblack/digilab/digilab-door-semi-open.png"
+const DIGILAB_DOOR_OPEN_TEXTURE_PATH := "res://assets/world/tblack/digilab/digilab-door-open.png"
+const TRAINING_CENTER_TEXTURE_PATH := "res://assets/world/tblack/training-center/training-center.png"
+const HOSPITAL_TEXTURE_PATH := "res://assets/world/tblack/hospital/hospital.png"
+
+static var _editor_safe_texture_cache: Dictionary = {}
 
 const SHADOW_GROUP := "world_shadow_caster"
 const LOCAL_LIGHT_GROUP := "world_local_light"
@@ -22,6 +27,8 @@ const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 const CITY_CENTER_GLOBAL := Vector2i(7, 7)
 const CITY_SHAPE_MANHATTAN_RADIUS := 54
+const CITY_CIVIC_LIGHT := Color(0.625, 0.635, 0.640, 1.0)
+const LANDSCAPE_INVALID_CELL := Vector2i(999999, 999999)
 const LARGE_OAK_REGION := Rect2(11.0, 9.0, 41.0, 63.0)
 const LARGE_OAK_FOOT := Vector2(20.5, 62.0)
 # The authored PNG is close to isometric, but its two ground axes are not an
@@ -193,6 +200,45 @@ const HOSPITAL_FOOTPRINT_SOURCE := [
 	Vector2(55.0, 865.0),
 ]
 
+# Visual foundations intentionally cover the complete projected base of each
+# authored building. They are not movement collision: doorway notches and side
+# guards stay governed by the measured collision footprints below.
+const DIGILAB_FOUNDATION_FOOTPRINT_SOURCE := [
+	Vector2(24.0, 720.0),
+	Vector2(310.0, 610.0),
+	Vector2(635.0, 455.0),
+	Vector2(1010.0, 585.0),
+	Vector2(1240.0, 770.0),
+	Vector2(1240.0, 990.0),
+	Vector2(1000.0, 1150.0),
+	Vector2(650.0, 1250.0),
+	Vector2(300.0, 1115.0),
+	Vector2(24.0, 890.0),
+]
+const TRAINING_CENTER_FOUNDATION_FOOTPRINT_SOURCE := [
+	Vector2(24.0, 735.0),
+	Vector2(330.0, 590.0),
+	Vector2(730.0, 535.0),
+	Vector2(1230.0, 565.0),
+	Vector2(1238.0, 900.0),
+	Vector2(790.0, 1198.0),
+	Vector2(560.0, 1210.0),
+	Vector2(210.0, 1040.0),
+	Vector2(24.0, 900.0),
+]
+const HOSPITAL_FOUNDATION_FOOTPRINT_SOURCE := [
+	Vector2(35.0, 715.0),
+	Vector2(360.0, 555.0),
+	Vector2(627.0, 525.0),
+	Vector2(895.0, 555.0),
+	Vector2(1218.0, 715.0),
+	Vector2(1218.0, 910.0),
+	Vector2(920.0, 1075.0),
+	Vector2(627.0, 1160.0),
+	Vector2(335.0, 1075.0),
+	Vector2(35.0, 910.0),
+]
+
 var definition: Dictionary = {}
 var section_coord := Vector2i.ZERO
 
@@ -227,6 +273,17 @@ func configure(section_definition: Dictionary, player: Node2D, world_controller:
 	_build_section()
 
 
+static func _texture(path: String) -> Texture2D:
+	var cached = _editor_safe_texture_cache.get(path)
+	if cached is Texture2D:
+		return cached as Texture2D
+	var resource = ResourceLoader.load(path)
+	if resource is Texture2D:
+		_editor_safe_texture_cache[path] = resource
+		return resource as Texture2D
+	return null
+
+
 func is_walkable_world_position(world_position: Vector2) -> bool:
 	var local_position := world_position - global_position
 	var local_grid := world_to_grid(local_position)
@@ -257,8 +314,11 @@ func world_to_grid(world: Vector2) -> Vector2:
 
 func _build_section() -> void:
 	_prepare_ground_data()
-	_build_natural_details()
+	# Structural content registers its exact building/blocker footprints first.
+	# Landscaping is resolved afterwards so a tree island can never be authored
+	# over a building, staircase, bridge, route, or future-water void.
 	_build_theme_content()
+	_build_natural_details()
 	_build_city_decorations()
 
 
@@ -270,13 +330,18 @@ func _prepare_ground_data() -> void:
 			var cell := Vector2i(x, y)
 			var presentation := _ground_presentation(cell, theme)
 			if not bool(presentation.get("render", true)):
-				_mark_blocked(cell)
+				# Authored bridges/stairs deliberately omit the base floor so the
+				# architectural deck can span a true void. Walkability remains an
+				# independent contract instead of being inferred from rendering.
+				if not bool(presentation.get("walkable", false)):
+					_mark_blocked(cell)
 				continue
 			var surface := String(presentation.get("surface", CITY.SURFACE_MAIN))
 			var global_grid := _global_grid(cell)
 			_ground_tiles.append({
 				"surface": surface,
 				"position": position + grid_to_world(Vector2(cell)),
+				"elevation_px": CITY_TOPOLOGY.elevation_at_grid(Vector2(global_grid)),
 				"base_color": presentation.get("base_color", CITY.surface_base_color(surface)),
 				"detail_tint": presentation.get("detail_tint", Color.WHITE),
 				"detail_alpha": float(presentation.get("detail_alpha", 1.0)),
@@ -290,36 +355,29 @@ func append_ground_tiles(target: Array[Dictionary]) -> void:
 	target.append_array(_ground_tiles)
 
 
-func _ground_presentation(cell: Vector2i, theme: String) -> Dictionary:
+func _ground_presentation(cell: Vector2i, _theme: String) -> Dictionary:
 	var global_grid := _global_grid(cell)
 	if not _is_global_city_land(global_grid):
 		return {"render": false, "walkable": false}
 
-	var delta := global_grid - CITY_CENTER_GLOBAL
-	var ax := absi(delta.x)
-	var ay := absi(delta.y)
-	var city_ring := maxi(ax, ay)
+	# Topology has first authority because stairs, the terrace break and future
+	# water voids can intentionally remove the base floor entirely.
+	var topology_rule := CITY_TOPOLOGY.ground_rule_for_cell(global_grid)
+	if not topology_rule.is_empty():
+		return topology_rule
 
-	# Central City's gray hardscape is the circulation layer. Roads and walking
-	# routes are defined by the negative space between raised civic lots,
-	# landscape islands and buildings instead of painting bright tactical bands
-	# over the gameplay grid.
-	if ax <= 1 and ay <= 1:
-		return {"surface": CITY.SURFACE_WATER, "walkable": false}
-	if city_ring == 2:
-		return {"surface": CITY.SURFACE_STONE_SOFT, "walkable": true}
+	# Surface painting now comes from editable Polygon2D regions in
+	# central_city_authoring.tscn. The default remains the approved light
+	# micro-paver field, so an empty area needs no authoring node at all.
+	var authored := CITY_AUTHORING.ground_override_at(Vector2(global_grid))
+	if not authored.is_empty():
+		return authored
 
-	if theme == "canal":
-		if cell.y >= 5 and cell.y <= 8 and cell.x >= 2 and cell.x <= 11:
-			# The two center columns are the authored pedestrian bridge.
-			if cell.x in [6, 7]:
-				return {"surface": CITY.SURFACE_MAIN, "walkable": true}
-			return {"surface": CITY.SURFACE_WATER, "walkable": false}
-
-	# Buildings, market/archive staging areas, parks and residences all share the
-	# same medium-gray micro-paver field. Their identity now comes from raised
-	# foundations, planted blocks, street furniture and architecture.
-	return {"surface": CITY.SURFACE_MAIN, "walkable": true}
+	return {
+		"surface": CITY.SURFACE_MAIN,
+		"base_color": CITY.surface_base_color(CITY.SURFACE_MAIN),
+		"walkable": true,
+	}
 
 
 func _global_grid(cell: Vector2i) -> Vector2i:
@@ -350,27 +408,19 @@ func _build_natural_details() -> void:
 	var props := Node2D.new()
 	props.name = "NaturalDetails"
 	add_child(props)
-	var theme := String(definition.get("theme", "residential"))
-	var tree_cells: Array[Vector2i] = []
-	match theme:
-		"garden":
-			if posmod(section_coord.x + section_coord.y, 2) == 0:
-				tree_cells = [Vector2i(3, 3), Vector2i(10, 10), Vector2i(3, 10)]
-			else:
-				tree_cells = [Vector2i(10, 3), Vector2i(3, 10), Vector2i(10, 10)]
-		"plaza":
-			tree_cells = [Vector2i(2, 11), Vector2i(11, 2)]
-		"canal":
-			tree_cells = [Vector2i(2, 10), Vector2i(11, 3)]
-		"residential":
-			tree_cells = [Vector2i(2, 11)]
-		_:
-			tree_cells = []
+	var preferred_cells: Array[Vector2i] = []
+	var authored_landscapes := CITY_AUTHORING.landscape_cells(section_coord)
+	for authored_cell: Vector2 in authored_landscapes:
+		preferred_cells.append(Vector2i(roundi(authored_cell.x), roundi(authored_cell.y)))
 
-	for index in range(tree_cells.size()):
-		var cell := tree_cells[index]
-		if not _is_city_land(cell):
+	var used_cells := {}
+	for index in range(preferred_cells.size()):
+		var cell := _find_safe_landscape_cell(preferred_cells[index], used_cells, false)
+		if cell == LANDSCAPE_INVALID_CELL:
 			continue
+		used_cells[cell] = true
+		var elevation_px := _elevation_for_local_grid(Vector2(cell))
+		var visual_offset := Vector2(0.0, -elevation_px)
 		var island_data := CITY_URBAN.create_landscape_island(
 			"LandscapeIsland_%d" % index,
 			grid_to_world(Vector2(cell))
@@ -378,6 +428,8 @@ func _build_natural_details() -> void:
 		var island_root = island_data.get("root")
 		var blocker = island_data.get("blocker")
 		if island_root is Node2D:
+			(island_root as Node2D).position = visual_offset
+			(island_root as Node2D).set_meta("world_elevation_px", elevation_px)
 			props.add_child(island_root as Node2D)
 			if blocker is PackedVector2Array:
 				_configure_shadow_caster(
@@ -394,23 +446,87 @@ func _build_natural_details() -> void:
 		_add_tree(props, cell, index)
 
 
+func _find_safe_landscape_cell(
+	preferred: Vector2i,
+	used_cells: Dictionary,
+	allow_fallback: bool = true
+) -> Vector2i:
+	var offsets: Array[Vector2i] = [
+		Vector2i.ZERO,
+		Vector2i(1, 0),
+		Vector2i(-1, 0),
+		Vector2i(0, 1),
+		Vector2i(0, -1),
+		Vector2i(1, 1),
+		Vector2i(-1, 1),
+		Vector2i(1, -1),
+		Vector2i(-1, -1),
+		Vector2i(2, 0),
+		Vector2i(-2, 0),
+		Vector2i(0, 2),
+		Vector2i(0, -2),
+	]
+	if not allow_fallback:
+		offsets = [Vector2i.ZERO]
+	for offset: Vector2i in offsets:
+		var candidate := preferred + offset
+		if (
+			candidate.x < 0
+			or candidate.y < 0
+			or candidate.x >= SECTION_SIZE
+			or candidate.y >= SECTION_SIZE
+			or used_cells.has(candidate)
+			or not _is_city_land(candidate)
+		):
+			continue
+		var global_grid := Vector2(_global_grid(candidate))
+		if not CITY_TOPOLOGY.can_place_landscape(global_grid, 1.22):
+			continue
+		if not _is_local_world_open_for_decoration(grid_to_world(Vector2(candidate))):
+			continue
+		return candidate
+	return LANDSCAPE_INVALID_CELL
+
+
 func _build_theme_content() -> void:
 	var theme := String(definition.get("theme", "residential"))
-	match theme:
-		"plaza":
-			var civic_frame := CITY_URBAN.create_civic_pool_frame(grid_to_world(Vector2(7, 7)))
-			add_child(civic_frame)
-			_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
-		"digilab":
-			_build_digilab_exterior()
-		"hospital":
-			_build_hospital_exterior()
-		"training":
-			_build_training_center_exterior()
-		"market":
-			_build_service_pad(Color(0.42, 1.0, 0.52), "DATA MARKET", "shop", CITY.SURFACE_MARKET)
-		"archive":
-			_build_service_pad(Color(0.72, 0.52, 1.0), "DIGITAL ARCHIVE", "archive", CITY.SURFACE_TECH_PURPLE)
+	if theme == "plaza":
+		var civic_frame := CITY_URBAN.create_civic_pool_frame(grid_to_world(Vector2(7, 7)))
+		var civic_elevation := _elevation_for_local_grid(Vector2(7, 7))
+		civic_frame.position = Vector2(0.0, -civic_elevation)
+		civic_frame.set_meta("world_elevation_px", civic_elevation)
+		add_child(civic_frame)
+		_spawn_npc(Vector2i(5, 9), "CITY GUIDE", "guide", "TALK", 20)
+
+	# Service placement is no longer implied by the section theme. Building
+	# anchors are real editor Marker2D nodes, so dragging one to another section
+	# moves the runtime service with it without editing code or JSON.
+	if _building_anchor_is_in_section("digilab"):
+		_build_digilab_exterior()
+	if _building_anchor_is_in_section("training"):
+		_build_training_center_exterior()
+	if _building_anchor_is_in_section("hospital"):
+		_build_hospital_exterior()
+	if _building_anchor_is_in_section("market"):
+		var market_cell := _authored_local_cell("market", Vector2i(7, 12))
+		_build_service_pad(
+			Color(0.42, 1.0, 0.52),
+			"DATA MARKET",
+			"shop",
+			CITY.SURFACE_MARKET,
+			market_cell,
+			market_cell + Vector2i(1, 0)
+		)
+	if _building_anchor_is_in_section("archive"):
+		var archive_cell := _authored_local_cell("archive", Vector2i(7, 7))
+		_build_service_pad(
+			Color(0.72, 0.52, 1.0),
+			"DIGITAL ARCHIVE",
+			"archive",
+			CITY.SURFACE_TECH_PURPLE,
+			archive_cell,
+			archive_cell + Vector2i(1, 0)
+		)
 
 
 func get_decoration_count() -> int:
@@ -428,7 +544,8 @@ func _build_city_decorations() -> void:
 		theme,
 		global_position,
 		Callable(self, "_can_place_city_decoration"),
-		Callable(self, "_register_city_decoration_blocker")
+		Callable(self, "_register_city_decoration_blocker"),
+		Callable(self, "_elevation_for_local_grid")
 	)
 	var root = result.get("root")
 	_decoration_count = int(result.get("count", 0))
@@ -438,6 +555,43 @@ func _build_city_decorations() -> void:
 		add_child(root as Node2D)
 	elif root is Node:
 		(root as Node).free()
+
+
+func _authored_global_grid(building_id: String, fallback_local: Vector2i) -> Vector2:
+	var fallback_global := Vector2(section_coord * SECTION_SIZE + fallback_local)
+	return CITY_AUTHORING.building_anchor_grid(building_id, fallback_global)
+
+
+func _authored_local_cell(building_id: String, fallback_local: Vector2i) -> Vector2i:
+	var global_grid := _authored_global_grid(building_id, fallback_local)
+	var local_grid := global_grid - Vector2(section_coord * SECTION_SIZE)
+	return Vector2i(roundi(local_grid.x), roundi(local_grid.y))
+
+
+func _building_anchor_is_in_section(building_id: String) -> bool:
+	var global_grid := CITY_AUTHORING.building_anchor_grid(building_id, Vector2(INF, INF))
+	if not is_finite(global_grid.x) or not is_finite(global_grid.y):
+		return false
+	var coord := Vector2i(
+		floori((global_grid.x + 0.5) / float(SECTION_SIZE)),
+		floori((global_grid.y + 0.5) / float(SECTION_SIZE))
+	)
+	return coord == section_coord
+
+
+func _elevation_for_local_grid(local_grid: Vector2) -> float:
+	var global_grid := Vector2(section_coord * SECTION_SIZE) + local_grid
+	return CITY_TOPOLOGY.elevation_at_grid(global_grid)
+
+
+func _create_elevated_visual_root(parent: Node2D, local_grid: Vector2) -> Node2D:
+	var visual_root := Node2D.new()
+	visual_root.name = "VisualRoot"
+	var elevation_px := _elevation_for_local_grid(local_grid)
+	visual_root.position = Vector2(0.0, -elevation_px)
+	visual_root.set_meta("world_elevation_px", elevation_px)
+	parent.add_child(visual_root)
+	return visual_root
 
 
 func _can_place_city_decoration(grid_position: Vector2, blocker_size: Vector2) -> bool:
@@ -492,18 +646,22 @@ func _register_city_decoration_blocker(polygon: PackedVector2Array, asset_id: St
 
 
 func _build_digilab_exterior() -> void:
-	if not _is_city_land(DIGILAB_DOOR_CELL):
+	var door_cell := _authored_local_cell("digilab", DIGILAB_DOOR_CELL)
+	var return_cell := door_cell + (DIGILAB_RETURN_CELL - DIGILAB_DOOR_CELL)
+	if not _is_city_land(door_cell):
 		return
 
 	var exterior := Node2D.new()
 	exterior.name = "DigiLabExterior"
 	add_child(exterior)
 
-	var door_world := grid_to_world(Vector2(DIGILAB_DOOR_CELL))
+	var door_world := grid_to_world(Vector2(door_cell))
 	var footprint := _digilab_footprint(door_world)
-	_configure_shadow_caster(exterior, footprint, 205.0, 0.19)
+	var foundation_footprint := _digilab_foundation_footprint(door_world)
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(door_cell))
+	_configure_shadow_caster(visual_root, footprint, 205.0, 0.19)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"DigiLabDoorLight",
 		door_world + Vector2(0.0, -30.0),
 		Color(0.38, 1.0, 0.42, 1.0),
@@ -514,7 +672,7 @@ func _build_digilab_exterior() -> void:
 		0.32
 	)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"DigiLabCoreLight",
 		door_world + Vector2(-82.0, -108.0),
 		Color(0.42, 1.0, 0.52, 1.0),
@@ -526,28 +684,18 @@ func _build_digilab_exterior() -> void:
 	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"DigiLabFoundation",
-		footprint,
+		foundation_footprint,
 		Color(0.42, 0.94, 0.38, 1.0)
 	)
-	exterior.add_child(foundation)
+	visual_root.add_child(foundation)
 
-	var sprite := _create_digilab_sprite(
-		"Building",
-		door_world,
-		Rect2(),
-		DIGILAB_BASE_Z
-	)
+	var sprite := _create_digilab_sprite("Building", door_world, Rect2(), DIGILAB_BASE_Z)
 	_digilab_building_sprite = sprite
-	exterior.add_child(sprite)
+	visual_root.add_child(sprite)
 
-	# One full-image sprite cannot represent a large isometric building correctly
-	# with a single Y-sort threshold: players at the lower-left exterior could be
-	# placed behind the whole PNG even though they were standing in front of the
-	# facade. Keep the full building below actors, then render only the genuinely
-	# upper/back portion as a dedicated occlusion layer.
 	var upper_region := Rect2(
 		Vector2.ZERO,
-		Vector2(float(DIGILAB_TEXTURE.get_width()), DIGILAB_UPPER_OCCLUDER_CUTOFF_Y)
+		Vector2(float(_texture(DIGILAB_TEXTURE_PATH).get_width()), DIGILAB_UPPER_OCCLUDER_CUTOFF_Y)
 	)
 	var upper_occluder := _create_digilab_sprite(
 		"UpperOccluder",
@@ -556,16 +704,13 @@ func _build_digilab_exterior() -> void:
 		DIGILAB_UPPER_OCCLUDER_Z
 	)
 	_digilab_upper_sprite = upper_occluder
-	exterior.add_child(upper_occluder)
+	visual_root.add_child(upper_occluder)
 
 	var door_marker := Marker2D.new()
 	door_marker.name = "DoorAnchor"
 	door_marker.position = door_world
-	exterior.add_child(door_marker)
+	visual_root.add_child(door_marker)
 
-	# Use the same measured source footprint for both world walkability and
-	# physics. This replaces the old rectangular cell approximation, which was
-	# too large behind the lab and too small along the lower-left wall.
 	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
 	_register_blocking_polygon(
 		exterior,
@@ -588,26 +733,28 @@ func _build_digilab_exterior() -> void:
 		"digilab",
 		"DIGILAB",
 		Color(0.28, 0.88, 1.0),
-		DIGILAB_DOOR_CELL,
-		DIGILAB_RETURN_CELL,
+		door_cell,
+		return_cell,
 		14.0
 	)
 	exterior.add_child(entrance)
-
-
 func _build_training_center_exterior() -> void:
-	if not _is_city_land(TRAINING_CENTER_DOOR_CELL):
+	var door_cell := _authored_local_cell("training", TRAINING_CENTER_DOOR_CELL)
+	var return_cell := door_cell + (TRAINING_CENTER_RETURN_CELL - TRAINING_CENTER_DOOR_CELL)
+	if not _is_city_land(door_cell):
 		return
 
 	var exterior := Node2D.new()
 	exterior.name = "TrainingCenterExterior"
 	add_child(exterior)
 
-	var door_world := grid_to_world(Vector2(TRAINING_CENTER_DOOR_CELL))
+	var door_world := grid_to_world(Vector2(door_cell))
 	var footprint := _training_center_footprint(door_world)
-	_configure_shadow_caster(exterior, footprint, 180.0, 0.18)
+	var foundation_footprint := _training_center_foundation_footprint(door_world)
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(door_cell))
+	_configure_shadow_caster(visual_root, footprint, 180.0, 0.18)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"TrainingDoorLight",
 		door_world + Vector2(0.0, -28.0),
 		Color(0.24, 0.82, 1.0, 1.0),
@@ -618,7 +765,7 @@ func _build_training_center_exterior() -> void:
 		0.28
 	)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"TrainingAccentLight",
 		door_world + Vector2(76.0, -92.0),
 		Color(0.26, 0.74, 1.0, 1.0),
@@ -630,10 +777,10 @@ func _build_training_center_exterior() -> void:
 	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"TrainingCenterFoundation",
-		footprint,
+		foundation_footprint,
 		Color(0.25, 0.82, 1.0, 1.0)
 	)
-	exterior.add_child(foundation)
+	visual_root.add_child(foundation)
 
 	var building := _create_training_center_sprite(
 		"Building",
@@ -641,13 +788,11 @@ func _build_training_center_exterior() -> void:
 		Rect2(),
 		TRAINING_CENTER_BASE_Z
 	)
-	exterior.add_child(building)
+	visual_root.add_child(building)
 
-	# Match the DigiLab depth contract: the complete facade stays below actors,
-	# while only the roof/back half can occlude actors walking behind the building.
 	var upper_region := Rect2(
 		Vector2.ZERO,
-		Vector2(float(TRAINING_CENTER_TEXTURE.get_width()), TRAINING_CENTER_UPPER_OCCLUDER_CUTOFF_Y)
+		Vector2(float(_texture(TRAINING_CENTER_TEXTURE_PATH).get_width()), TRAINING_CENTER_UPPER_OCCLUDER_CUTOFF_Y)
 	)
 	var upper_occluder := _create_training_center_sprite(
 		"UpperOccluder",
@@ -655,44 +800,42 @@ func _build_training_center_exterior() -> void:
 		upper_region,
 		TRAINING_CENTER_UPPER_OCCLUDER_Z
 	)
-	exterior.add_child(upper_occluder)
+	visual_root.add_child(upper_occluder)
 
 	var door_marker := Marker2D.new()
 	door_marker.name = "DoorAnchor"
 	door_marker.position = door_world
-	exterior.add_child(door_marker)
+	visual_root.add_child(door_marker)
 
-	_register_blocking_polygon(
-		exterior,
-		"FootprintCollision",
-		footprint
-	)
+	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
 
 	var entrance := _create_service_threshold(
 		"TrainingCenterEntrance",
 		"training",
 		"TRAINING CENTER",
 		Color(0.27, 0.84, 1.0),
-		TRAINING_CENTER_DOOR_CELL,
-		TRAINING_CENTER_RETURN_CELL,
+		door_cell,
+		return_cell,
 		18.0
 	)
 	exterior.add_child(entrance)
-
-
 func _build_hospital_exterior() -> void:
-	if not _is_city_land(HOSPITAL_DOOR_CELL):
+	var door_cell := _authored_local_cell("hospital", HOSPITAL_DOOR_CELL)
+	var return_cell := door_cell + (HOSPITAL_RETURN_CELL - HOSPITAL_DOOR_CELL)
+	if not _is_city_land(door_cell):
 		return
 
 	var exterior := Node2D.new()
 	exterior.name = "HospitalExterior"
 	add_child(exterior)
 
-	var door_world := grid_to_world(Vector2(HOSPITAL_DOOR_CELL))
+	var door_world := grid_to_world(Vector2(door_cell))
 	var footprint := _hospital_footprint(door_world)
-	_configure_shadow_caster(exterior, footprint, 195.0, 0.19)
+	var foundation_footprint := _hospital_foundation_footprint(door_world)
+	var visual_root := _create_elevated_visual_root(exterior, Vector2(door_cell))
+	_configure_shadow_caster(visual_root, footprint, 195.0, 0.19)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"HospitalDoorLight",
 		door_world + Vector2(0.0, -28.0),
 		Color(0.30, 0.94, 1.0, 1.0),
@@ -703,7 +846,7 @@ func _build_hospital_exterior() -> void:
 		0.30
 	)
 	_add_local_light_source(
-		exterior,
+		visual_root,
 		"HospitalAccentLight",
 		door_world + Vector2(68.0, -90.0),
 		Color(0.36, 0.92, 1.0, 1.0),
@@ -715,25 +858,17 @@ func _build_hospital_exterior() -> void:
 	)
 	var foundation := CITY_URBAN.create_service_foundation(
 		"HospitalFoundation",
-		footprint,
+		foundation_footprint,
 		Color(0.31, 0.90, 0.96, 1.0)
 	)
-	exterior.add_child(foundation)
+	visual_root.add_child(foundation)
 
-	var building := _create_hospital_sprite(
-		"Building",
-		door_world,
-		Rect2(),
-		HOSPITAL_BASE_Z
-	)
-	exterior.add_child(building)
+	var building := _create_hospital_sprite("Building", door_world, Rect2(), HOSPITAL_BASE_Z)
+	visual_root.add_child(building)
 
-	# Use the same foreground/upper split as the other authored city services:
-	# the facade remains below nearby actors, while the roof and rear medical
-	# tower can occlude actors correctly when they walk behind the hospital.
 	var upper_region := Rect2(
 		Vector2.ZERO,
-		Vector2(float(HOSPITAL_TEXTURE.get_width()), HOSPITAL_UPPER_OCCLUDER_CUTOFF_Y)
+		Vector2(float(_texture(HOSPITAL_TEXTURE_PATH).get_width()), HOSPITAL_UPPER_OCCLUDER_CUTOFF_Y)
 	)
 	var upper_occluder := _create_hospital_sprite(
 		"UpperOccluder",
@@ -741,31 +876,25 @@ func _build_hospital_exterior() -> void:
 		upper_region,
 		HOSPITAL_UPPER_OCCLUDER_Z
 	)
-	exterior.add_child(upper_occluder)
+	visual_root.add_child(upper_occluder)
 
 	var door_marker := Marker2D.new()
 	door_marker.name = "DoorAnchor"
 	door_marker.position = door_world
-	exterior.add_child(door_marker)
+	visual_root.add_child(door_marker)
 
-	_register_blocking_polygon(
-		exterior,
-		"FootprintCollision",
-		footprint
-	)
+	_register_blocking_polygon(exterior, "FootprintCollision", footprint)
 
 	var entrance := _create_service_threshold(
 		"HospitalEntrance",
 		"hospital",
 		"DIGI HOSPITAL",
 		Color(0.28, 0.92, 0.96),
-		HOSPITAL_DOOR_CELL,
-		HOSPITAL_RETURN_CELL,
+		door_cell,
+		return_cell,
 		18.0
 	)
 	exterior.add_child(entrance)
-
-
 func _create_hospital_sprite(
 	node_name: String,
 	door_world: Vector2,
@@ -774,13 +903,13 @@ func _create_hospital_sprite(
 ) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.name = node_name
-	sprite.texture = HOSPITAL_TEXTURE
+	sprite.texture = _texture(HOSPITAL_TEXTURE_PATH)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.scale = HOSPITAL_SCALE
 	sprite.rotation_degrees = HOSPITAL_ROTATION_DEGREES
 	sprite.z_index = depth
 
-	var texture_center := HOSPITAL_TEXTURE.get_size() * 0.5
+	var texture_center := _texture(HOSPITAL_TEXTURE_PATH).get_size() * 0.5
 	var authored_door_offset := (
 		(HOSPITAL_DOOR_PIXEL - texture_center) * HOSPITAL_SCALE
 	).rotated(sprite.rotation)
@@ -806,6 +935,13 @@ func _hospital_footprint(door_world: Vector2) -> PackedVector2Array:
 	return polygon
 
 
+func _hospital_foundation_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in HOSPITAL_FOUNDATION_FOOTPRINT_SOURCE:
+		polygon.append(_hospital_source_to_local(source_point, door_world))
+	return polygon
+
+
 func _hospital_source_to_local(source_pixel: Vector2, door_world: Vector2) -> Vector2:
 	var scaled := (source_pixel - HOSPITAL_DOOR_PIXEL) * HOSPITAL_SCALE
 	return door_world + scaled.rotated(deg_to_rad(HOSPITAL_ROTATION_DEGREES))
@@ -819,13 +955,13 @@ func _create_training_center_sprite(
 ) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.name = node_name
-	sprite.texture = TRAINING_CENTER_TEXTURE
+	sprite.texture = _texture(TRAINING_CENTER_TEXTURE_PATH)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.scale = TRAINING_CENTER_SCALE
 	sprite.rotation_degrees = TRAINING_CENTER_ROTATION_DEGREES
 	sprite.z_index = depth
 
-	var texture_center := TRAINING_CENTER_TEXTURE.get_size() * 0.5
+	var texture_center := _texture(TRAINING_CENTER_TEXTURE_PATH).get_size() * 0.5
 	var authored_door_offset := (
 		(TRAINING_CENTER_DOOR_PIXEL - texture_center) * TRAINING_CENTER_SCALE
 	).rotated(sprite.rotation)
@@ -851,6 +987,13 @@ func _training_center_footprint(door_world: Vector2) -> PackedVector2Array:
 	return polygon
 
 
+func _training_center_foundation_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in TRAINING_CENTER_FOUNDATION_FOOTPRINT_SOURCE:
+		polygon.append(_training_center_source_to_local(source_point, door_world))
+	return polygon
+
+
 func _training_center_source_to_local(source_pixel: Vector2, door_world: Vector2) -> Vector2:
 	var scaled := (source_pixel - TRAINING_CENTER_DOOR_PIXEL) * TRAINING_CENTER_SCALE
 	return door_world + scaled.rotated(deg_to_rad(TRAINING_CENTER_ROTATION_DEGREES))
@@ -864,13 +1007,13 @@ func _create_digilab_sprite(
 ) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.name = node_name
-	sprite.texture = DIGILAB_TEXTURE
+	sprite.texture = _texture(DIGILAB_TEXTURE_PATH)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.scale = DIGILAB_SCALE
 	sprite.rotation_degrees = DIGILAB_ROTATION_DEGREES
 	sprite.z_index = depth
 
-	var texture_center := DIGILAB_TEXTURE.get_size() * 0.5
+	var texture_center := _texture(DIGILAB_TEXTURE_PATH).get_size() * 0.5
 	var authored_door_offset := (
 		(DIGILAB_DOOR_PIXEL - texture_center) * DIGILAB_SCALE
 	).rotated(sprite.rotation)
@@ -892,6 +1035,13 @@ func _create_digilab_sprite(
 func _digilab_footprint(door_world: Vector2) -> PackedVector2Array:
 	var polygon := PackedVector2Array()
 	for source_point: Vector2 in DIGILAB_FOOTPRINT_SOURCE:
+		polygon.append(_digilab_source_to_local(source_point, door_world))
+	return polygon
+
+
+func _digilab_foundation_footprint(door_world: Vector2) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for source_point: Vector2 in DIGILAB_FOUNDATION_FOOTPRINT_SOURCE:
 		polygon.append(_digilab_source_to_local(source_point, door_world))
 	return polygon
 
@@ -931,11 +1081,16 @@ func _register_blocking_polygon(
 	body.add_child(collision)
 
 
-func _build_service_pad(accent: Color, title: String, service_id: String, surface: String) -> void:
-	var pad_cell := Vector2i(7, 7)
+func _build_service_pad(
+	accent: Color,
+	title: String,
+	service_id: String,
+	surface: String,
+	pad_cell: Vector2i = Vector2i(7, 7),
+	approach_cell: Vector2i = Vector2i(8, 7)
+) -> void:
 	if not _is_city_land(pad_cell):
 		return
-	var approach_cell := pad_cell + Vector2i(1, 0)
 
 	var entrance := _create_service_threshold(
 		"%sPad" % title.capitalize().replace(" ", ""),
@@ -948,9 +1103,16 @@ func _build_service_pad(accent: Color, title: String, service_id: String, surfac
 	)
 	add_child(entrance)
 
+	var visual_root := Node2D.new()
+	visual_root.name = "VisualRoot"
+	var elevation_px := _elevation_for_local_grid(Vector2(pad_cell))
+	visual_root.position = Vector2(0.0, -elevation_px)
+	visual_root.set_meta("world_elevation_px", elevation_px)
+	entrance.add_child(visual_root)
+
 	var pad := CITY.create_surface_tile(surface, Vector2.ZERO, 0, 1.0)
 	pad.name = "ServicePadSurface"
-	entrance.add_child(pad)
+	visual_root.add_child(pad)
 
 	var label := Label.new()
 	label.text = title
@@ -963,7 +1125,7 @@ func _build_service_pad(accent: Color, title: String, service_id: String, surfac
 	label.add_theme_constant_override("outline_size", 4)
 	label.z_index = 4
 	_configure_world_annotation(label)
-	entrance.add_child(label)
+	visual_root.add_child(label)
 
 
 func _create_service_threshold(
@@ -1032,11 +1194,11 @@ func _animate_digilab_entry(entrance: Area2D, payload: Dictionary) -> void:
 
 	# Closed is the idle frame. Crossing the authored doorway advances through
 	# the two supplied frames before the seamless interior handoff.
-	_set_digilab_door_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE_PATH))
 	await get_tree().create_timer(DIGILAB_DOOR_FRAME_SECONDS).timeout
 	if not is_inside_tree():
 		return
-	_set_digilab_door_texture(DIGILAB_DOOR_OPEN_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_DOOR_OPEN_TEXTURE_PATH))
 	await get_tree().create_timer(DIGILAB_DOOR_OPEN_HOLD_SECONDS).timeout
 	if not is_inside_tree():
 		return
@@ -1066,15 +1228,15 @@ func play_service_return_animation(service_id: String) -> void:
 	# The exterior stayed on the open frame while the interior was active.
 	# Once the city has been revealed again, close the same authored doorway in
 	# reverse order so entering and leaving read as one continuous interaction.
-	_set_digilab_door_texture(DIGILAB_DOOR_OPEN_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_DOOR_OPEN_TEXTURE_PATH))
 	await get_tree().create_timer(DIGILAB_DOOR_OPEN_HOLD_SECONDS).timeout
 	if not is_inside_tree():
 		return
-	_set_digilab_door_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_DOOR_SEMI_OPEN_TEXTURE_PATH))
 	await get_tree().create_timer(DIGILAB_DOOR_FRAME_SECONDS).timeout
 	if not is_inside_tree():
 		return
-	_set_digilab_door_texture(DIGILAB_TEXTURE)
+	_set_digilab_door_texture(_texture(DIGILAB_TEXTURE_PATH))
 
 
 func _set_digilab_door_texture(texture: Texture2D) -> void:
@@ -1089,14 +1251,15 @@ func _spawn_npc(cell: Vector2i, title: String, action_id: String, prompt_text: S
 		return
 	var actor := ActorScript.new() as HubActor
 	actor.name = title.capitalize().replace(" ", "")
-	actor.configure(NPC_TEXTURE, false, _world_controller, "southwest")
+	actor.configure(_texture(NPC_TEXTURE_PATH), false, _world_controller, "southwest")
 	actor.position = grid_to_world(Vector2(cell))
+	actor.set_world_elevation(_elevation_for_local_grid(Vector2(cell)))
 	actor.add_to_group("debug_capture_clean_hidden")
 	add_child(actor)
 
 	var label := Label.new()
 	label.text = title
-	label.position = Vector2(-78.0, -84.0)
+	label.position = Vector2(-78.0, -84.0 - actor.get_world_elevation())
 	label.size = Vector2(156.0, 24.0)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 10)
@@ -1116,17 +1279,20 @@ func _add_tree(parent: Node2D, cell: Vector2i, index: int) -> void:
 	if not _is_city_land(cell):
 		return
 	var foot := grid_to_world(Vector2(cell))
+	var elevation_px := _elevation_for_local_grid(Vector2(cell))
+	var visual_offset := Vector2(0.0, -elevation_px)
 	var texture := AtlasTexture.new()
-	texture.atlas = OAK_TREE_SOURCE
+	texture.atlas = _texture(OAK_TREE_SOURCE_PATH)
 	texture.region = LARGE_OAK_REGION
 	var tree := Sprite2D.new()
 	tree.name = "Oak_%d_%d" % [cell.x, cell.y]
 	tree.texture = texture
 	tree.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var center_to_foot := LARGE_OAK_FOOT - texture.get_size() * 0.5
-	tree.position = foot + Vector2(0.0, 10.0) - center_to_foot
-	tree.z_index = 1000 + int(round(global_position.y + foot.y))
-	var ground_anchor := foot + Vector2(0.0, 10.0)
+	tree.position = foot + Vector2(0.0, 10.0) - center_to_foot + visual_offset
+	tree.z_index = 1000 + int(round(global_position.y + foot.y - elevation_px))
+	tree.set_meta("world_elevation_px", elevation_px)
+	var ground_anchor := foot + Vector2(0.0, 10.0) + visual_offset
 	var local_anchor := ground_anchor - tree.position
 	_configure_shadow_caster(
 		tree,

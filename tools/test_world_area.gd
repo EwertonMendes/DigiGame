@@ -2,6 +2,12 @@ extends Node
 
 const WORLD_SCENE := preload("res://scenes/world/world_root.tscn")
 const MAP_CAPTURE := preload("res://src/debug/DebugWorldMapCapture.gd")
+const CITY_AUTHORING := preload("res://src/world/authoring/CentralCityAuthoringData.gd")
+const CITY_EDITOR_MATH := preload("res://src/world/authoring/CentralCityEditorMath.gd")
+const CITY_LAYOUT := preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
+const CITY_TOPOLOGY := preload("res://src/world/runtime/CentralCityTopology.gd")
+const CITY_BAKER := preload("res://src/world/authoring/CentralCityBaker.gd")
+const CITY_DECOR := preload("res://src/world/runtime/CentralCityDecor.gd")
 
 
 func _ready() -> void:
@@ -27,6 +33,85 @@ func _ready() -> void:
 	assert(not bool(player.call("is_touch_run_enabled")), "Touch WALK must restore normal movement")
 	assert(run_button.text == "RUN", "Touch run button must return to RUN after walking is restored")
 	assert(player != null and area != null, "Campaign world must expose its player and loaded area scene")
+	assert(
+		CITY_AUTHORING.has_authoring_scene()
+		and CITY_AUTHORING.authored_section_count() == 25
+		and CITY_AUTHORING.authored_road_count() > 0,
+		"Central City runtime must be derived from the visual Godot authoring scene and its painted road cells"
+	)
+
+	# Regression: moving the last visually-authored prop out of a section must
+	# leave that section empty. Legacy JSON must never resurrect a ghost lamp
+	# that has no selectable authoring node.
+	var authoring_scene := load("res://scenes/world/central_city_authoring.tscn") as PackedScene
+	var authoring_root := authoring_scene.instantiate()
+	var authoring_snapshot := CITY_AUTHORING.snapshot_from_root(authoring_root)
+	var prop_snapshot := authoring_snapshot.duplicate(true)
+	authoring_root.free()
+	var props_by_section := (prop_snapshot.get("props_by_section", {}) as Dictionary).duplicate(true)
+	props_by_section["-1,0"] = []
+	prop_snapshot["props_by_section"] = props_by_section
+	CITY_AUTHORING.set_preview_snapshot(prop_snapshot)
+	var empty_authored_decor := CITY_DECOR.build_for_section(
+		Vector2i(-1, 0),
+		"service",
+		Vector2.ZERO,
+		func(_cell: Vector2, _clearance: Vector2) -> bool:
+			return true,
+		func(_polygon: PackedVector2Array, _asset_id: String) -> void:
+			pass,
+		func(_cell: Vector2) -> float:
+			return 48.0
+	)
+	CITY_AUTHORING.clear_preview_snapshot()
+	var empty_authored_decor_root := empty_authored_decor.get("root") as Node
+	assert(
+		int(empty_authored_decor.get("count", -1)) == 0,
+		"An empty visually-authored section must stay empty instead of reviving a legacy JSON prop"
+	)
+	if empty_authored_decor_root != null:
+		empty_authored_decor_root.free()
+	var road_network_value = CITY_AUTHORING.topology_config().get("road_network", {})
+	assert(
+		road_network_value is Dictionary
+		and String((road_network_value as Dictionary).get("mode", "")) == "painted_tiles",
+		"Roads must be authored as independent painted cells instead of linked Line2D graph geometry"
+	)
+	var road_sample := CITY_AUTHORING.ground_override_at(Vector2(7, 10))
+	assert(
+		String(road_sample.get("surface", "")) == "road"
+		and CITY_TOPOLOGY.is_route_reserved(Vector2(7, 10)),
+		"Painted road cells must render as road surface and remain reserved from automatic landscaping"
+	)
+	var baked_snapshot := CITY_BAKER.load_snapshot()
+	if not baked_snapshot.is_empty():
+		if not _snapshots_equivalent(baked_snapshot, authoring_snapshot):
+			for difference: String in _snapshot_diff_paths(baked_snapshot, authoring_snapshot):
+				push_error("Central City bake mismatch: %s" % difference)
+		assert(
+			_snapshots_equivalent(baked_snapshot, authoring_snapshot),
+			"Committed Central City baked data must match the editable authoring scene"
+		)
+
+	# Service buildings are intentionally movable in the visual authoring scene.
+	# Regressions should validate presence/identity, not freeze designer-chosen
+	# coordinates that are expected to change in Godot.
+	var service_anchors := {}
+	for service_id: String in ["digilab", "training", "hospital", "market", "archive"]:
+		var anchor := CITY_AUTHORING.building_anchor_grid(service_id, Vector2(INF, INF))
+		assert(
+			is_finite(anchor.x) and is_finite(anchor.y),
+			"Service building %s must keep a valid visual authoring anchor" % service_id
+		)
+		service_anchors[service_id] = anchor
+	assert(
+		service_anchors.values().duplicate().size() == 5,
+		"Central City must preserve all five authored service building anchors"
+	)
+	assert(
+		area.get_node_or_null("Authoring") == null,
+		"Editor-only Central City authoring nodes must be removed from the runtime scene tree"
+	)
 	var lighting := world.call("get_lighting_system") as Node
 	assert(lighting != null, "Campaign world must own one centralized dynamic lighting runtime")
 	assert(
@@ -136,16 +221,20 @@ func _ready() -> void:
 		area.get_ground_render_node_count() <= 16,
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
-	assert(area.get_ground_tile_count() == 4341, "Central City octagonal island must omit only the authored corner void")
+	assert(
+		area.get_ground_tile_count() == 4134,
+		"Central City ground batch must omit the full-width terrace break, stair transition cells, and both future-water void pockets"
+	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
+	var road_paving := area.get_node_or_null("CityGround/Surface_road") as MeshInstance2D
 	var civic_paving := area.get_node_or_null("CityGround/Surface_stone_soft") as MeshInstance2D
 	assert(
-		main_paving != null and civic_paving != null,
-		"Central City must keep one continuous gray circulation field plus civic accent paving"
+		main_paving != null and road_paving != null and civic_paving != null,
+		"Central City must batch base pavement, painted road cells and civic accent paving"
 	)
 	assert(
-		main_paving.texture == null and civic_paving.texture == null,
+		main_paving.texture == null and road_paving.texture == null and civic_paving.texture == null,
 		"Central City hardscape tops must be procedural rather than one texture per gameplay tile"
 	)
 	var paver_material := main_paving.material as ShaderMaterial
@@ -163,6 +252,123 @@ func _ready() -> void:
 		is_equal_approx(float(paver_material.get_shader_parameter("pavers_per_cell")), 4.0),
 		"One 64x32 gameplay cell must visually contain four paving subdivisions per ground axis"
 	)
+	var urban_layout := area.get_node_or_null("CityUrbanLayout") as Node2D
+	assert(
+		urban_layout != null
+		and area.get_urban_layout_layer_count() >= 3
+		and area.get_urban_layout_polygon_count() >= 15
+		and area.is_road_graph_connected(),
+		"Central City must batch authored civic overlays while roads stay in the editable ground-paint layer"
+	)
+	assert(
+		area.get_urban_layout_render_node_count() <= 15,
+		"Urban paths, plazas and district courts must stay batched into a small fixed render-node budget"
+	)
+	assert(
+		urban_layout.get_node_or_null("Edges_road_network") == null
+		and urban_layout.get_node_or_null("Surface_road_network") == null
+		and urban_layout.get_node_or_null("PaintedRoadEdging") is MeshInstance2D,
+		"Painted roads need one batched edge finish without duplicating their ground surface"
+	)
+	for required_urban_node: String in [
+		"Surface_central_plaza",
+		"Surface_service_forecourts",
+		"Surface_district_courts",
+	]:
+		var urban_surface := urban_layout.get_node_or_null(required_urban_node) as MeshInstance2D
+		assert(
+			urban_surface != null
+			and urban_surface.texture == null
+			and urban_surface.material is ShaderMaterial
+			and (urban_surface.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
+			"Urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
+		)
+	var south_terrace := area.get_node_or_null("SouthTerraceStructure") as Node2D
+	assert(
+		south_terrace != null
+		and area.get_south_terrace_render_node_count() <= 16
+		and south_terrace.get_node_or_null("RetainingWallCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("RetainingWallFaces") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairLandings") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairSideCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairNosingAndParapets") is MeshInstance2D
+		and south_terrace.get_node_or_null("CanalWater") is MeshInstance2D
+		and south_terrace.get_node_or_null("WaterEdgeHighlights") is MeshInstance2D
+		and south_terrace.get_node_or_null("TrenchBankCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("TrenchInnerWalls") is MeshInstance2D
+		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
+		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D
+		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D,
+		"South Terrace must batch its architectural stairs, canal banks, water, and bridges"
+	)
+	assert(
+		int(south_terrace.get_meta("visual_level_count", 0)) == 2
+		and int(south_terrace.get_meta("stair_count", 0)) == 2
+		and int(south_terrace.get_meta("trench_count", 0)) == 2
+		and int(south_terrace.get_meta("bridge_count", 0)) == 2
+		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
+		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
+		"South Terrace must keep two actual presentation levels separated by 48px, two stairways, two void pockets, and two bridges"
+	)
+	var canal_water := south_terrace.get_node_or_null("CanalWater") as MeshInstance2D
+	assert(
+		canal_water != null
+		and canal_water.material is ShaderMaterial
+		and (canal_water.material as ShaderMaterial).shader.resource_path == "res://shaders/city_canal_water.gdshader",
+		"The authored canal must use the shared animated water shader instead of water block sprites"
+	)
+	assert(
+		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 19)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(-5, 19))),
+		"The upper civic deck must stop at a real retaining boundary with only the two authored stair openings"
+	)
+	assert(
+		not area.is_walkable_world_position(_grid_to_world(Vector2(-24, 19)))
+		and not area.is_walkable_world_position(_grid_to_world(Vector2(38, 19))),
+		"The retaining boundary must span the complete playable width instead of leaving flank shortcuts between levels"
+	)
+	assert(
+		not area.can_traverse_world_segment(
+			_grid_to_world(Vector2(-20.0, 19.35)),
+			_grid_to_world(Vector2(-20.0, 19.65))
+		)
+		and area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 19.35)),
+			_grid_to_world(Vector2(7.0, 19.65))
+		),
+		"Cross-level movement must be rejected outside a staircase and accepted through an authored stair corridor"
+	)
+	assert(
+		not area.can_traverse_world_segment(
+			_grid_to_world(Vector2(4.75, 20.0)),
+			_grid_to_world(Vector2(5.15, 20.0))
+		),
+		"A staircase must reject lateral entry through its side wall instead of allowing a mid-flight level shortcut"
+	)
+	assert(
+		not area.is_walkable_world_position(_grid_to_world(Vector2(-10, 23)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(-5, 23)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(21, 23)))
+		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 23))),
+		"South Terrace voids must block movement while bridge decks and the central solid corridor remain walkable"
+	)
+
+
+	assert(
+		is_equal_approx(area.get_elevation_at_world_position(_grid_to_world(Vector2(7, 10))), 48.0)
+		and is_zero_approx(area.get_elevation_at_world_position(_grid_to_world(Vector2(7, 26)))),
+		"Upper Civic and South Terrace must resolve to distinct 48px and 0px presentation elevations"
+	)
+	var stair_mid_elevation := area.get_elevation_at_world_position(_grid_to_world(Vector2(7, 19.875)))
+	assert(
+		stair_mid_elevation > 1.0 and stair_mid_elevation < 47.0,
+		"Stair traversal must interpolate elevation continuously instead of teleporting between levels"
+	)
+
+
 	var edge_blocks := area.get_node_or_null("CityGround/EdgeBlocks")
 	assert(
 		edge_blocks != null and edge_blocks.get_child_count() > 0,
@@ -199,8 +405,14 @@ func _ready() -> void:
 		"Central Plaza lamps must stay on the outer civic/landscape edge rather than crowding the guide or pool"
 	)
 	var plaza_natural := plaza_section.get_node_or_null("NaturalDetails")
-	var plaza_tree := plaza_section.get_node_or_null("NaturalDetails/Oak_2_11") as Sprite2D
-	var plaza_planter := plaza_section.get_node_or_null("NaturalDetails/LandscapeIsland_0") as Node2D
+	var plaza_tree: Sprite2D = null
+	var plaza_planter: Node2D = null
+	if plaza_natural != null:
+		for child in plaza_natural.get_children():
+			if child is Sprite2D and String(child.name).begins_with("Oak_") and plaza_tree == null:
+				plaza_tree = child as Sprite2D
+			elif child is Node2D and String(child.name).begins_with("LandscapeIsland_") and plaza_planter == null:
+				plaza_planter = child as Node2D
 	assert(
 		plaza_natural != null
 		and plaza_tree != null
@@ -242,8 +454,9 @@ func _ready() -> void:
 	var first_plaza_lamp_local := plaza_section.grid_to_world(Vector2(2.2, 5.2))
 	assert(
 		first_plaza_lamp != null
-		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 48.0)),
-		"Lamp sprite must be lowered so the center of its visible pedestal sits on the authored ground contact"
+		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 96.0))
+		and is_equal_approx(float(first_plaza_lamp.get_meta("world_elevation_px", 0.0)), 48.0),
+		"Lamp sprite must preserve its authored foot offset while following the 48px upper-city elevation"
 	)
 	assert(
 		first_plaza_lamp.is_in_group("world_shadow_caster")
@@ -359,9 +572,17 @@ func _ready() -> void:
 
 	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
-	var hospital_lighting := area.get_node_or_null("Section_1_0") as WorldAreaSection
+	var hospital_lighting := _service_section(area, "hospital")
 	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
 	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
+	var market_pad: Area2D = null
+	if market_lighting != null:
+		market_pad = market_lighting.get_node_or_null("DataMarketPad") as Area2D
+	assert(
+		market_pad != null
+		and market_pad.position.is_equal_approx(market_lighting.grid_to_world(Vector2(7, 12))),
+		"Data Market must move onto the lower South Terrace instead of remaining on the upper flat"
+	)
 	assert(
 		digilab_lighting != null and digilab_lighting.get_decoration_count() <= 1,
 		"DigiLab may use at most one safe outer-sidewalk lamp until more surrounding streets exist"
@@ -402,23 +623,24 @@ func _ready() -> void:
 			"NPC and service labels must remain unlit and readable regardless of time-of-day darkness"
 		)
 
-	var quiet_garden := area.get_node_or_null("Section_-2_-2") as WorldAreaSection
-	var quiet_residential := area.get_node_or_null("Section_-1_-2") as WorldAreaSection
-	var east_gate := area.get_node_or_null("Section_2_0") as WorldAreaSection
-	var south_gate := area.get_node_or_null("Section_0_2") as WorldAreaSection
-	assert(
-		quiet_garden != null and quiet_garden.get_decoration_count() == 0,
-		"Unfinished garden blocks must not receive free-floating lamps before their urban edges exist"
-	)
-	assert(
-		quiet_residential != null and quiet_residential.get_decoration_count() == 0,
-		"Unfinished residential blocks must not receive free-floating lamps before their urban edges exist"
-	)
-	assert(
-		east_gate != null and east_gate.get_decoration_count() == 0
-		and south_gate != null and south_gate.get_decoration_count() == 0,
-		"Unbuilt gate districts must stay unlit until their actual gate/curb geometry exists"
-	)
+	# Empty authoring sections must remain empty, but designer-authored props
+	# are allowed in any district now that the visual scene is the source of truth.
+	for quiet_coord: Vector2i in [
+		Vector2i(-2, -2),
+		Vector2i(-1, -2),
+		Vector2i(2, 0),
+		Vector2i(0, 2),
+	]:
+		var quiet_section := area.get_node_or_null(
+			"Section_%d_%d" % [quiet_coord.x, quiet_coord.y]
+		) as WorldAreaSection
+		assert(quiet_section != null, "Authored city section %s must exist" % str(quiet_coord))
+		var authored_decor := CITY_AUTHORING.decoration_placements(quiet_coord)
+		if authored_decor.is_empty():
+			assert(
+				quiet_section.get_decoration_count() == 0,
+				"Section %s has no authored props and must not receive legacy/profile fallback decor" % str(quiet_coord)
+			)
 	for prop_path: String in [
 		"res://assets/world/tblack/city/props_v2/lamp_blue.png",
 		"res://assets/world/tblack/city/props_v2/lamp_yellow.png",
@@ -442,13 +664,22 @@ func _ready() -> void:
 	assert(area.is_exterior_active(), "Central City exterior must start active")
 	assert(bool(world.call("can_actor_move_to", player.global_position, player)), "Fresh campaign spawn must be walkable")
 	assert(player.global_position.is_equal_approx(Vector2(-96.0, 272.0)), "Fresh campaign spawn must use the 64x32 safe plaza lane")
+	assert(
+		is_equal_approx(float(player.call("get_world_elevation")), 48.0),
+		"Fresh Central City spawn must render on the elevated Upper Civic deck"
+	)
+	var world_camera := player.get_node_or_null("WorldCamera") as Camera2D
+	assert(
+		world_camera != null and world_camera.position.is_equal_approx(Vector2(0.0, -48.0)),
+		"World camera must follow the player's presentation elevation"
+	)
 
 	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
-	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
+	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
-	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/DigiLabDoorLight") as Node2D
-	var digilab_core_light := digilab_section.get_node_or_null("DigiLabExterior/DigiLabCoreLight") as Node2D
+	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabDoorLight") as Node2D
+	var digilab_core_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabCoreLight") as Node2D
 	assert(
 		digilab_door_light != null
 		and digilab_core_light != null
@@ -456,7 +687,7 @@ func _ready() -> void:
 		and digilab_core_light.is_in_group("world_local_light"),
 		"DigiLab exterior must expose authored door and core illumination sources"
 	)
-	var digilab_upper := digilab_section.get_node_or_null("DigiLabExterior/UpperOccluder") as Sprite2D
+	var digilab_upper := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(digilab_upper != null, "DigiLab must split upper occlusion from the foreground facade")
 	assert(
 		digilab_building.texture != null
@@ -497,12 +728,21 @@ func _ready() -> void:
 		digilab_floor is Dictionary
 		and digilab_approach is Dictionary
 		and String((digilab_floor as Dictionary).get("surface", "")) == "main"
-		and String((digilab_approach as Dictionary).get("surface", "")) == "main",
-		"DigiLab circulation must come from the continuous gray city field, not painted path cells"
+		and String((digilab_approach as Dictionary).get("surface", "")) == "road",
+		"DigiLab lot must stay on base paving while its street approach is independently painted as road"
 	)
 	assert(
-		digilab_section.get_node_or_null("DigiLabExterior/DigiLabFoundation/Top") != null,
+		digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabFoundation/Top") != null,
 		"DigiLab must sit on an authored raised foundation derived from its measured footprint"
+	)
+	var digilab_visual_root := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot") as Node2D
+	var digilab_foundation_shape = digilab_section.call("_digilab_foundation_footprint", expected_door)
+	assert(
+		digilab_visual_root != null
+		and digilab_visual_root.position.is_equal_approx(Vector2(0.0, -48.0))
+		and digilab_foundation_shape is PackedVector2Array
+		and (digilab_foundation_shape as PackedVector2Array).size() == 10,
+		"DigiLab visual lot must use its own full-building footprint on the elevated deck"
 	)
 	var digilab_collision := digilab_section.get_node_or_null(
 		"DigiLabExterior/FootprintCollision/CollisionPolygon2D"
@@ -594,12 +834,12 @@ func _ready() -> void:
 
 	var training_section := area.get_node_or_null("Section_0_-1") as WorldAreaSection
 	assert(training_section != null, "Training Center must remain in the authored north-central section")
-	var training_building := training_section.get_node_or_null("TrainingCenterExterior/Building") as Sprite2D
-	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/UpperOccluder") as Sprite2D
+	var training_building := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/Building") as Sprite2D
+	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(training_building != null, "Training district must render the authored Training Center exterior")
 	assert(
-		training_section.get_node_or_null("TrainingCenterExterior/TrainingDoorLight") != null
-		and training_section.get_node_or_null("TrainingCenterExterior/TrainingAccentLight") != null,
+		training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingDoorLight") != null
+		and training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingAccentLight") != null,
 		"Training Center exterior must expose two time-of-day local light sources"
 	)
 	assert(training_upper != null, "Training Center must split upper occlusion from its foreground facade")
@@ -638,13 +878,22 @@ func _ready() -> void:
 	assert(
 		training_forecourt is Dictionary
 		and training_lot is Dictionary
-		and String((training_forecourt as Dictionary).get("surface", "")) == "main"
+		and String((training_forecourt as Dictionary).get("surface", "")) == "road"
 		and String((training_lot as Dictionary).get("surface", "")) == "main",
-		"Training Center must be surrounded by one continuous gray circulation field"
+		"Training Center lot must stay on base paving while its street approach is independently painted as road"
 	)
 	assert(
-		training_section.get_node_or_null("TrainingCenterExterior/TrainingCenterFoundation/Top") != null,
+		training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingCenterFoundation/Top") != null,
 		"Training Center must sit on a raised foundation instead of blending into the street"
+	)
+	var training_visual_root := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot") as Node2D
+	var training_foundation_shape = training_section.call("_training_center_foundation_footprint", expected_training_door)
+	assert(
+		training_visual_root != null
+		and training_visual_root.position.is_equal_approx(Vector2(0.0, -48.0))
+		and training_foundation_shape is PackedVector2Array
+		and (training_foundation_shape as PackedVector2Array).size() == 9,
+		"Training Center visual lot must cover the complete building projection independently from collision"
 	)
 	var training_collision := training_section.get_node_or_null(
 		"TrainingCenterExterior/FootprintCollision/CollisionPolygon2D"
@@ -685,14 +934,15 @@ func _ready() -> void:
 		"Training Center interior exit must return to the paved approach in front of the door"
 	)
 
-	var hospital_section := area.get_node_or_null("Section_1_0") as WorldAreaSection
-	assert(hospital_section != null, "Digi Hospital must remain in the authored east-central section")
-	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/Building") as Sprite2D
-	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/UpperOccluder") as Sprite2D
+	var hospital_section := _service_section(area, "hospital")
+	var hospital_door_cell := _service_local_cell("hospital")
+	assert(hospital_section != null, "Digi Hospital must render in the section selected by its authoring marker")
+	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/Building") as Sprite2D
+	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
 	assert(
-		hospital_section.get_node_or_null("HospitalExterior/HospitalDoorLight") != null
-		and hospital_section.get_node_or_null("HospitalExterior/HospitalAccentLight") != null,
+		hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalDoorLight") != null
+		and hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalAccentLight") != null,
 		"Hospital exterior must expose two time-of-day local light sources"
 	)
 	assert(hospital_upper != null, "Hospital must split upper occlusion from its foreground facade")
@@ -717,7 +967,7 @@ func _ready() -> void:
 		"HospitalExterior/HospitalEntrance"
 	) as Area2D
 	assert(hospital_entrance != null, "Hospital must expose its authored doorway threshold")
-	var expected_hospital_door := hospital_section.grid_to_world(Vector2(7, 10))
+	var expected_hospital_door := hospital_section.grid_to_world(Vector2(hospital_door_cell))
 	assert(
 		hospital_entrance.position.is_equal_approx(expected_hospital_door),
 		"Hospital threshold must align to the centered straight-down door"
@@ -726,18 +976,28 @@ func _ready() -> void:
 		hospital_section.is_walkable_world_position(hospital_section.global_position + expected_hospital_door),
 		"Hospital stairs and doorway must remain walkable"
 	)
-	var hospital_lot = hospital_section.call("_ground_presentation", Vector2i(5, 4), "hospital")
-	var hospital_approach = hospital_section.call("_ground_presentation", Vector2i(7, 10), "hospital")
+	var hospital_lot_cell := hospital_door_cell + Vector2i(-2, -6)
+	var hospital_lot = hospital_section.call("_ground_presentation", hospital_lot_cell, "hospital")
+	var hospital_approach = hospital_section.call("_ground_presentation", hospital_door_cell, "hospital")
 	assert(
 		hospital_lot is Dictionary
 		and hospital_approach is Dictionary
-		and String((hospital_lot as Dictionary).get("surface", "")) == "main"
-		and String((hospital_approach as Dictionary).get("surface", "")) == "main",
-		"Hospital circulation must be defined by the gray street field around its raised lot"
+		and bool((hospital_lot as Dictionary).get("walkable", true))
+		and bool((hospital_approach as Dictionary).get("walkable", true)),
+		"Hospital placement and road paint must stay independent while its lot and approach remain walkable"
 	)
 	assert(
-		hospital_section.get_node_or_null("HospitalExterior/HospitalFoundation/Top") != null,
+		hospital_section.get_node_or_null("HospitalExterior/VisualRoot/HospitalFoundation/Top") != null,
 		"Hospital must sit on a raised foundation instead of blending into the street"
+	)
+	var hospital_visual_root := hospital_section.get_node_or_null("HospitalExterior/VisualRoot") as Node2D
+	var hospital_foundation_shape = hospital_section.call("_hospital_foundation_footprint", expected_hospital_door)
+	assert(
+		hospital_visual_root != null
+		and hospital_visual_root.position.is_equal_approx(Vector2(0.0, -48.0))
+		and hospital_foundation_shape is PackedVector2Array
+		and (hospital_foundation_shape as PackedVector2Array).size() == 10,
+		"Hospital visual lot must cover the complete building projection independently from collision"
 	)
 	var hospital_collision := hospital_section.get_node_or_null(
 		"HospitalExterior/FootprintCollision/CollisionPolygon2D"
@@ -748,11 +1008,13 @@ func _ready() -> void:
 	)
 	assert(
 		not hospital_section.is_walkable_world_position(
-			hospital_section.global_position + hospital_section.grid_to_world(Vector2(7, 7))
+			hospital_section.global_position + hospital_section.grid_to_world(
+				Vector2(hospital_door_cell + Vector2i(0, -3))
+			)
 		),
 		"Hospital structure footprint must block movement through the building"
 	)
-	var hospital_door_local := hospital_section.grid_to_world(Vector2(7, 10))
+	var hospital_door_local := hospital_section.grid_to_world(Vector2(hospital_door_cell))
 	for source_point: Vector2 in [
 		Vector2(120.0, 820.0),
 		Vector2(350.0, 900.0),
@@ -771,7 +1033,9 @@ func _ready() -> void:
 	assert(hospital_payload is Dictionary, "Hospital doorway must preserve the service payload")
 	assert(String((hospital_payload as Dictionary).get("service", "")) == "hospital", "Hospital doorway must open the hospital service")
 	var hospital_return = (hospital_payload as Dictionary).get("return_position", [])
-	var expected_hospital_return := hospital_section.global_position + hospital_section.grid_to_world(Vector2(9, 12))
+	var expected_hospital_return := hospital_section.global_position + hospital_section.grid_to_world(
+		Vector2(hospital_door_cell + Vector2i(2, 2))
+	)
 	assert(
 		hospital_return is Array
 		and hospital_return.size() >= 2
@@ -820,6 +1084,136 @@ func _ready() -> void:
 
 	print("single-scene world area regression passed")
 	get_tree().quit()
+
+
+func _snapshots_equivalent(left, right, epsilon: float = 0.00001) -> bool:
+	var left_type := typeof(left)
+	var right_type := typeof(right)
+	var left_numeric := left_type == TYPE_INT or left_type == TYPE_FLOAT
+	var right_numeric := right_type == TYPE_INT or right_type == TYPE_FLOAT
+	if left_numeric and right_numeric:
+		return absf(float(left) - float(right)) <= epsilon
+	if left_type != right_type:
+		return false
+	if left is Vector2:
+		return (left as Vector2).is_equal_approx(right as Vector2)
+	if left is Vector2i:
+		return left == right
+	if left is Color:
+		return (left as Color).is_equal_approx(right as Color)
+	if left is PackedVector2Array:
+		var left_packed := left as PackedVector2Array
+		var right_packed := right as PackedVector2Array
+		if left_packed.size() != right_packed.size():
+			return false
+		for index in range(left_packed.size()):
+			if not left_packed[index].is_equal_approx(right_packed[index]):
+				return false
+		return true
+	if left is Dictionary:
+		var left_dict := left as Dictionary
+		var right_dict := right as Dictionary
+		if left_dict.size() != right_dict.size():
+			return false
+		for key in left_dict.keys():
+			if not right_dict.has(key):
+				return false
+			if not _snapshots_equivalent(left_dict[key], right_dict[key], epsilon):
+				return false
+		return true
+	if left is Array:
+		var left_array := left as Array
+		var right_array := right as Array
+		if left_array.size() != right_array.size():
+			return false
+		for index in range(left_array.size()):
+			if not _snapshots_equivalent(left_array[index], right_array[index], epsilon):
+				return false
+		return true
+	return left == right
+
+
+func _snapshot_diff_paths(left, right, path: String = "snapshot", limit: int = 12) -> Array[String]:
+	var result: Array[String] = []
+	if _snapshots_equivalent(left, right):
+		return result
+	var left_type := typeof(left)
+	var right_type := typeof(right)
+	var left_numeric := left_type == TYPE_INT or left_type == TYPE_FLOAT
+	var right_numeric := right_type == TYPE_INT or right_type == TYPE_FLOAT
+	if left_numeric and right_numeric:
+		result.append("%s %s != %s" % [path, str(left), str(right)])
+		return result
+	if left_type != right_type:
+		result.append("%s type %s != %s" % [path, type_string(typeof(left)), type_string(typeof(right))])
+		return result
+	if left is Dictionary:
+		var left_dict := left as Dictionary
+		var right_dict := right as Dictionary
+		for key in left_dict.keys():
+			if result.size() >= limit:
+				break
+			if not right_dict.has(key):
+				result.append("%s missing right key %s" % [path, str(key)])
+				continue
+			result.append_array(
+				_snapshot_diff_paths(
+					left_dict[key],
+					right_dict[key],
+					"%s.%s" % [path, str(key)],
+					limit - result.size()
+				)
+			)
+		for key in right_dict.keys():
+			if result.size() >= limit:
+				break
+			if not left_dict.has(key):
+				result.append("%s missing left key %s" % [path, str(key)])
+		return result
+	if left is Array:
+		var left_array := left as Array
+		var right_array := right as Array
+		if left_array.size() != right_array.size():
+			result.append("%s size %d != %d" % [path, left_array.size(), right_array.size()])
+			return result
+		for index in range(left_array.size()):
+			if result.size() >= limit:
+				break
+			result.append_array(
+				_snapshot_diff_paths(
+					left_array[index],
+					right_array[index],
+					"%s[%d]" % [path, index],
+					limit - result.size()
+				)
+			)
+		return result
+	if left != right:
+		result.append("%s %s != %s" % [path, str(left), str(right)])
+	return result
+
+
+func _service_section(area: WorldAreaScene, service_id: String) -> WorldAreaSection:
+	var global_grid := CITY_AUTHORING.building_anchor_grid(service_id, Vector2(INF, INF))
+	if not is_finite(global_grid.x) or not is_finite(global_grid.y):
+		return null
+	var section_size := int(CITY_AUTHORING.area_definition().get("section_size", 14))
+	var coord := Vector2i(
+		floori((global_grid.x + 0.5) / float(section_size)),
+		floori((global_grid.y + 0.5) / float(section_size))
+	)
+	return area.get_node_or_null("Section_%d_%d" % [coord.x, coord.y]) as WorldAreaSection
+
+
+func _service_local_cell(service_id: String) -> Vector2i:
+	var global_grid := CITY_AUTHORING.building_anchor_grid(service_id, Vector2(INF, INF))
+	var section_size := int(CITY_AUTHORING.area_definition().get("section_size", 14))
+	var coord := Vector2i(
+		floori((global_grid.x + 0.5) / float(section_size)),
+		floori((global_grid.y + 0.5) / float(section_size))
+	)
+	var local_grid := global_grid - Vector2(coord * section_size)
+	return Vector2i(roundi(local_grid.x), roundi(local_grid.y))
 
 
 func _assert_seam_crossing(

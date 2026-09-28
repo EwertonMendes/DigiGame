@@ -48,7 +48,7 @@ func _ready() -> void:
 	assert(payload is Dictionary, "Interior threshold must carry its destination payload")
 	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
 	assert(digilab_section != null, "DigiLab section must be loaded for interior regression")
-	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/Building") as Sprite2D
+	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab exterior building must be present before entry")
 	assert(
 		digilab_building.texture != null

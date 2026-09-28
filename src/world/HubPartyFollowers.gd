@@ -166,6 +166,8 @@ func _sync_party() -> void:
 		follower.call("configure", digimon, visual_key, visual_slot, instance.is_expanded())
 		_followers_root.add_child(follower)
 		follower.call("teleport_to", spawn_position, _initial_digimon_facing())
+		if follower.has_method("set_world_elevation"):
+			follower.call("set_world_elevation", _world_elevation_at(spawn_position))
 		_followers.append(follower)
 		_active_party_keys.append(key)
 		occupied.append(spawn_position)
@@ -180,7 +182,9 @@ func _update_followers(delta: float) -> void:
 		var trail_target := _trail_target_at_distance(desired_distance)
 		if bool(trail_target.get("valid", false)):
 			var target_position := Vector2(trail_target.get("position", follower.global_position))
-			follower.call("step_toward", target_position, delta, occupied)
+			var moved := bool(follower.call("step_toward", target_position, delta, occupied))
+			if moved and follower.has_method("set_world_elevation"):
+				follower.call("set_world_elevation", _world_elevation_at(follower.global_position))
 		else:
 			follower.call("set_idle")
 		occupied.append(follower.global_position)
@@ -257,6 +261,8 @@ func _reposition_followers_around_player() -> void:
 		var spawn_position := Vector2(placement.get("position", _player.global_position))
 		follower.visible = true
 		follower.call("teleport_to", spawn_position, _initial_digimon_facing())
+		if follower.has_method("set_world_elevation"):
+			follower.call("set_world_elevation", _world_elevation_at(spawn_position))
 		occupied.append(spawn_position)
 
 
@@ -277,6 +283,12 @@ func _find_safe_spawn_position(party_slot: int, occupied: Array[Vector2]) -> Dic
 				return {"found": true, "position": candidate}
 
 	return {"found": false}
+
+
+func _world_elevation_at(world_position: Vector2) -> float:
+	if _hub != null and _hub.has_method("get_world_elevation_at"):
+		return maxf(0.0, float(_hub.call("get_world_elevation_at", world_position)))
+	return 0.0
 
 
 func _is_walkable(candidate: Vector2) -> bool:

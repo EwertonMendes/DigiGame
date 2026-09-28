@@ -7,6 +7,9 @@ signal load_finished
 
 const SECTION_SCENE := preload("res://scenes/world/world_area_section.tscn")
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
+const CITY_LAYOUT = preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
+const CITY_TERRACE = preload("res://src/world/runtime/CentralCityTerrace.gd")
+const CITY_TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 const SECTION_SIZE := 14
 const BUILD_SECTIONS_PER_FRAME := 5
 const AMBIENT_VFX_UPDATE_SECONDS := 0.35
@@ -25,6 +28,10 @@ var _exterior_active := true
 var _ambient_elapsed := 0.0
 var _last_ambient_section := Vector2i(999999, 999999)
 var _ground_tile_count := 0
+var _urban_layout_polygon_count := 0
+var _urban_layout_layer_count := 0
+var _south_terrace_render_node_count := 0
+var _road_graph_connected := false
 
 
 func configure(area_definition: Dictionary, player: Node2D, world_controller: Node) -> bool:
@@ -34,6 +41,10 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	_sections.clear()
 	_section_list.clear()
 	_ground_tile_count = 0
+	_urban_layout_polygon_count = 0
+	_urban_layout_layer_count = 0
+	_south_terrace_render_node_count = 0
+	_road_graph_connected = false
 	_exterior_active = false
 	visible = false
 	process_mode = Node.PROCESS_MODE_DISABLED
@@ -44,7 +55,7 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 		return false
 	var raw_sections := raw_sections_value as Array
 
-	var total: int = raw_sections.size() + 1
+	var total: int = raw_sections.size() + 3
 	var completed: int = 0
 	var ground_tiles: Array[Dictionary] = []
 	load_started.emit(total)
@@ -85,15 +96,40 @@ func configure(area_definition: Dictionary, player: Node2D, world_controller: No
 	completed += 1
 	load_progress.emit(completed, total)
 
+	# The authored urban network is a separate presentation layer above the
+	# continuous micro-paver field. It does not replace gameplay cells or mutate
+	# section walkability: broad avenues, plazas, forecourts and district courts
+	# are batched as a handful of lit paver meshes across the complete city.
+	var urban_result := CITY_LAYOUT.build()
+	var urban_root = urban_result.get("root")
+	if urban_root is Node2D:
+		(urban_root as Node2D).add_to_group("world_urban_layout")
+		add_child(urban_root as Node2D)
+	_urban_layout_polygon_count = int(urban_result.get("polygon_count", 0))
+	_urban_layout_layer_count = int(urban_result.get("layer_count", 0))
+	_road_graph_connected = bool(urban_result.get("road_graph_connected", false))
+	completed += 1
+	load_progress.emit(completed, total)
+
+	var south_terrace := CITY_TERRACE.build()
+	south_terrace.add_to_group("world_urban_layout")
+	add_child(south_terrace)
+	_south_terrace_render_node_count = south_terrace.get_child_count()
+	completed += 1
+	load_progress.emit(completed, total)
+
 	_exterior_active = true
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
 	_update_ambient_vfx(true)
 	load_finished.emit()
-	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d decor=%d" % [
+	print("[WorldArea] READY sections=%d nodes=%d ground_render_nodes=%d urban_layers=%d urban_polygons=%d terrace_nodes=%d decor=%d" % [
 		_sections.size(),
 		get_runtime_node_count(),
 		get_ground_render_node_count(),
+		_urban_layout_layer_count,
+		_urban_layout_polygon_count,
+		_south_terrace_render_node_count,
 		get_decoration_count(),
 	])
 	return completed == total
@@ -182,6 +218,43 @@ func get_ground_render_node_count() -> int:
 
 func get_ground_tile_count() -> int:
 	return _ground_tile_count
+
+
+func get_urban_layout_polygon_count() -> int:
+	return _urban_layout_polygon_count
+
+
+func get_urban_layout_layer_count() -> int:
+	return _urban_layout_layer_count
+
+
+func get_urban_layout_render_node_count() -> int:
+	var layout := get_node_or_null("CityUrbanLayout")
+	return 0 if layout == null else layout.get_child_count()
+
+
+func get_south_terrace_render_node_count() -> int:
+	return _south_terrace_render_node_count
+
+
+func is_road_graph_connected() -> bool:
+	return _road_graph_connected
+
+
+func get_elevation_at_world_position(world_position: Vector2) -> float:
+	return CITY_TOPOLOGY.elevation_at_grid(CITY_TOPOLOGY.world_to_grid(world_position))
+
+
+func get_level_at_world_position(world_position: Vector2) -> String:
+	return CITY_TOPOLOGY.level_at_grid(CITY_TOPOLOGY.world_to_grid(world_position))
+
+
+func is_void_world_position(world_position: Vector2) -> bool:
+	return CITY_TOPOLOGY.is_void_at_grid(CITY_TOPOLOGY.world_to_grid(world_position))
+
+
+func can_traverse_world_segment(from_world: Vector2, to_world: Vector2) -> bool:
+	return CITY_TOPOLOGY.can_traverse_world_segment(from_world, to_world)
 
 
 func get_decoration_count() -> int:
