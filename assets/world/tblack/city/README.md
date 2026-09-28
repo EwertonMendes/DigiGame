@@ -126,10 +126,11 @@ Canal lamps belong to bridge heads. Additional lighting for gates, gardens and r
 districts should be authored as a later furniture pass against the new streets rather than
 scattered into open space.
 
-The approved seating pass is deliberately restrained to exactly four benches: one sits directly
-beside the visible front/side facade of each landscape island in Central Plaza and North Canal.
-Benches sit directly on the normal city pavement; they do not create a dedicated paver bay,
-platform or alternate floor underneath. The approved `bench.png` sheet is rendered at 10%
+The approved seating pass is currently restrained to the two Central Plaza benches. The former
+North Canal bench placements were removed after the recessed-water redesign because they no
+longer had a valid pavement/landscape anchor and visually floated over the canal. Benches sit
+directly on normal city pavement; they never create a dedicated paver bay, platform or alternate
+floor underneath. The approved `bench.png` sheet is rendered at 10%
 gameplay scale, with both orientations coming from atlas regions in that single source image.
 Each seat keeps a fitted parallelogram walkability footprint and mirrors that same shape into a
 `StaticBody2D`, so the player cannot tunnel through a narrow bench while running or approaching
