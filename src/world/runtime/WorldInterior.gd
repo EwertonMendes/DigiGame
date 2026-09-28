@@ -3,6 +3,7 @@ class_name WorldInterior
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const DIGILAB_ART = preload("res://src/world/runtime/DigiLabInteriorArt.gd")
+const NavigationScript = preload("res://src/world/runtime/WorldInteriorNavigation.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
@@ -10,14 +11,27 @@ const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purpl
 const TILE_HALF_WIDTH := 32.0
 const TILE_HALF_HEIGHT := 16.0
 const ROOM_SIZE := Vector2i(18, 14)
-const SPAWN_CELL := Vector2i(9, 11)
 const EXIT_CELL := Vector2i(9, 12)
+const SPAWN_OFFSET_FROM_EXIT := Vector2i(0, -1)
+const SPAWN_CELL := EXIT_CELL + SPAWN_OFFSET_FROM_EXIT
+const DEFAULT_ACTOR_CLEARANCE := 10.0
+const CLEARANCE_DIRECTIONS: Array[Vector2] = [
+	Vector2.ZERO,
+	Vector2.RIGHT,
+	Vector2.LEFT,
+	Vector2.UP,
+	Vector2.DOWN,
+	Vector2(0.70710678, 0.70710678),
+	Vector2(-0.70710678, 0.70710678),
+	Vector2(0.70710678, -0.70710678),
+	Vector2(-0.70710678, -0.70710678),
+]
 
 var definition: Dictionary = {}
 
 var _world_controller: Node = null
-var _physics_root: StaticBody2D = null
-var _blocked_cells: Dictionary = {}
+var _collision_root: Node2D = null
+var _navigation: WorldInteriorNavigation = null
 var _accent := Color(0.35, 0.88, 1.0, 1.0)
 var _service_id := ""
 var _title := "INTERIOR"
@@ -34,15 +48,45 @@ func configure(interior_definition: Dictionary, world_controller: Node) -> void:
 
 
 func get_spawn_world_position() -> Vector2:
-	return to_global(grid_to_world(Vector2(SPAWN_CELL)))
+	if _navigation == null:
+		return to_global(grid_to_world(Vector2(SPAWN_CELL)))
+	return to_global(grid_to_world(Vector2(_navigation.resolved_spawn_cell())))
 
 
-func is_walkable_world_position(world_position: Vector2) -> bool:
-	var local_grid := world_to_grid(to_local(world_position))
-	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
-	if cell.x < 1 or cell.y < 1 or cell.x >= ROOM_SIZE.x - 1 or cell.y >= ROOM_SIZE.y - 1:
+func get_spawn_cell() -> Vector2i:
+	return _navigation.resolved_spawn_cell() if _navigation != null else SPAWN_CELL
+
+
+func get_exit_cell() -> Vector2i:
+	return EXIT_CELL
+
+
+func has_safe_spawn_to_exit_path() -> bool:
+	return _navigation != null and _navigation.has_spawn_to_exit_path()
+
+
+func is_grid_cell_walkable(cell: Vector2i) -> bool:
+	return _navigation != null and _navigation.is_cell_walkable(cell)
+
+
+func get_navigation_backend() -> String:
+	return "layout-clearance"
+
+
+func is_walkable_world_position(
+	world_position: Vector2,
+	clearance_radius: float = DEFAULT_ACTOR_CLEARANCE
+) -> bool:
+	if _navigation == null:
 		return false
-	return not _blocked_cells.has(_cell_key(cell))
+
+	var local_position := to_local(world_position)
+	var radius := maxf(0.0, clearance_radius)
+	for direction: Vector2 in CLEARANCE_DIRECTIONS:
+		var sample := local_position + direction * radius
+		if not _navigation.is_grid_position_walkable(world_to_grid(sample)):
+			return false
+	return true
 
 
 func grid_to_world(grid: Vector2) -> Vector2:
@@ -60,12 +104,22 @@ func world_to_grid(world: Vector2) -> Vector2:
 
 
 func _build() -> void:
-	_physics_root = StaticBody2D.new()
-	_physics_root.name = "InteriorCollision"
-	add_child(_physics_root)
+	_navigation = NavigationScript.new(ROOM_SIZE, SPAWN_CELL, EXIT_CELL) as WorldInteriorNavigation
+
+	# Interior movement has exactly one source of truth. Keep a non-physics
+	# debug root for tooling/metadata, but never create StaticBody2D wall shapes:
+	# those used to disagree with logical walkability and make CharacterBody2D
+	# bounce or slide into a different position than the navigation contract.
+	_collision_root = Node2D.new()
+	_collision_root.name = "InteriorCollision"
+	_collision_root.set_meta("movement_backend", "layout-clearance")
+	add_child(_collision_root)
+
 	_build_floor()
 	_build_walls()
 	_build_counter()
+	if not _navigation.finalize():
+		push_error("Invalid %s interior navigation layout" % _service_id)
 	_build_service_zones()
 	_build_service_point()
 	_build_exit()
@@ -186,8 +240,7 @@ func _build_walls() -> void:
 				level
 			)
 			walls.add_child(block)
-		_mark_blocked(cell)
-		_add_circle_collision(cell, 22.0)
+		_mark_blocked(cell, "wall")
 
 	for x in range(0, 5):
 		_add_low_front_wall(walls, Vector2i(x, ROOM_SIZE.y - 1))
@@ -273,20 +326,23 @@ func _build_digilab_walls(walls: Node2D) -> void:
 		Vector2(7.0, front_y)
 	)
 
-	# Movement in interiors is resolved by WorldInteriorManager ->
-	# is_walkable_world_position(), so duplicating the same wall boundary with
-	# dozens of PhysicsServer shapes only costs CPU. Keep the authoritative
-	# blocked-cell map and do not build redundant DigiLab wall colliders.
-	_physics_root.set_meta("digilab_wall_collision_backend", "blocked-cells-only")
-	for x in range(ROOM_SIZE.x):
-		_mark_blocked(Vector2i(x, 0))
-	for y in range(1, ROOM_SIZE.y - 1):
-		_mark_blocked(Vector2i(0, y))
-		_mark_blocked(Vector2i(ROOM_SIZE.x - 1, y))
-	for x in range(0, 7):
-		_mark_blocked(Vector2i(x, ROOM_SIZE.y - 1))
-	for x in range(11, ROOM_SIZE.x):
-		_mark_blocked(Vector2i(x, ROOM_SIZE.y - 1))
+	# Register occupancy from the exact same anchor arrays used to render the
+	# wall kit. Repositioning or resizing a wall run therefore changes visuals
+	# and navigation together instead of requiring a second hand-maintained map.
+	_collision_root.set_meta("digilab_wall_collision_backend", "layout-clearance")
+	_mark_grid_anchors_blocked(back_grid, "digilab_back_wall")
+	_mark_grid_anchors_blocked(side_grid, "digilab_side_wall")
+	_mark_grid_anchors_blocked(front_grid, "digilab_front_wall")
+	for corner: Vector2 in [
+		Vector2(0.0, 0.0),
+		Vector2(last_x, 0.0),
+		Vector2(0.0, front_y),
+		Vector2(last_x, front_y),
+	]:
+		_mark_blocked(
+			Vector2i(roundi(corner.x), roundi(corner.y)),
+			"digilab_corner"
+		)
 
 
 func _add_digilab_wall_batch(
@@ -329,8 +385,7 @@ func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
 		820 + int(round(grid_to_world(Vector2(cell)).y))
 	)
 	parent.add_child(block)
-	_mark_blocked(cell)
-	_add_circle_collision(cell, 22.0)
+	_mark_blocked(cell, "front_wall")
 
 
 func _build_counter() -> void:
@@ -346,8 +401,7 @@ func _build_counter() -> void:
 			1000 + int(round(grid_to_world(Vector2(cell)).y))
 		)
 		counter.add_child(block)
-		_mark_blocked(cell)
-		_add_circle_collision(cell, 20.0)
+		_mark_blocked(cell, "service_counter")
 
 
 func _build_service_zones() -> void:
@@ -413,7 +467,7 @@ func _build_exit() -> void:
 	var exit_root := Area2D.new()
 	exit_root.name = "ExitThreshold"
 	exit_root.add_to_group("world_interior_exit_threshold")
-	exit_root.position = grid_to_world(Vector2(EXIT_CELL))
+	exit_root.position = grid_to_world(Vector2(get_exit_cell()))
 	exit_root.collision_layer = 0
 	exit_root.collision_mask = 1
 	exit_root.monitoring = true
@@ -487,21 +541,18 @@ func _accent_surface() -> String:
 			return CITY.SURFACE_TECH_TEAL
 
 
-func _add_circle_collision(cell: Vector2i, radius: float) -> void:
-	var shape_node := CollisionShape2D.new()
-	var shape := CircleShape2D.new()
-	shape.radius = radius
-	shape_node.shape = shape
-	shape_node.position = grid_to_world(Vector2(cell)) + Vector2(0.0, -10.0)
-	_physics_root.add_child(shape_node)
+func _mark_grid_anchors_blocked(grid_anchors: Array[Vector2], source: String) -> void:
+	for anchor: Vector2 in grid_anchors:
+		_mark_blocked(
+			Vector2i(roundi(anchor.x), roundi(anchor.y)),
+			source
+		)
 
 
-func _mark_blocked(cell: Vector2i) -> void:
-	_blocked_cells[_cell_key(cell)] = true
-
-
-func _cell_key(cell: Vector2i) -> String:
-	return "%d:%d" % [cell.x, cell.y]
+func _mark_blocked(cell: Vector2i, source: String = "") -> void:
+	if _navigation == null:
+		return
+	_navigation.block_cell(cell, source)
 
 
 func _staff_title() -> String:
