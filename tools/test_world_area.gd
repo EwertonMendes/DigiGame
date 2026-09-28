@@ -675,9 +675,9 @@ func _ready() -> void:
 	assert(
 		canal_lighting != null
 		and canal_lighting.get_decoration_count() >= 4
-		and canal_assets.has("bench_nw")
+		and not canal_assets.has("bench_nw")
 		and not canal_assets.has("bench_ne"),
-		"North Canal benches must use the orientation matching their centered planter faces, including the seat nearest Digital Archive"
+		"North Canal must keep its bridge-head lamps but no longer place benches over the recessed water"
 	)
 	assert(
 		market_lighting != null
