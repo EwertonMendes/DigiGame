@@ -264,9 +264,16 @@ static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 	var void_region := void_at_grid(point)
 	if not void_region.is_empty():
 		var bridge := bridge_at_grid(point)
+		# Water basins are continuous authored geometry, while the base city
+		# ground is rendered in whole 64x32 gameplay cells. Removing complete
+		# ground cells produced oversized black gaps around the precise canal
+		# polygon. Preserve the base floor as an underlay and let the opaque
+		# basin geometry cover the exact opening. Navigation remains independent:
+		# only an authored bridge makes a water cell traversable.
 		return {
-			"render": false,
+			"render": true,
 			"walkable": not bridge.is_empty(),
+			"basin_underlay": true,
 		}
 	return {}
 
