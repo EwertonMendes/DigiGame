@@ -235,7 +235,7 @@ func can_actor_move_to(candidate: Vector2, actor: Node) -> bool:
 	if not _world_ready:
 		return false
 	if _interior_manager != null and _interior_manager.is_active():
-		return _interior_manager.can_move_to(candidate)
+		return _interior_manager.can_move_to(candidate, actor)
 	if _area_scene == null:
 		return true
 
