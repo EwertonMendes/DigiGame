@@ -45,22 +45,58 @@ func is_cell_walkable(cell: Vector2i) -> bool:
 
 
 func is_grid_position_walkable(grid_position: Vector2) -> bool:
-	# Continuous floor envelope. Do not reject the whole outer row: doing that
-	# used to make the lower doorway unreachable while still allowing half of a
-	# blocked upper cell through rounding. The authored wall cells below are
-	# the only authority for perimeter obstruction.
-	if grid_position.x < -0.5 or grid_position.y < -0.5:
+	return is_grid_footprint_walkable(grid_position, Vector2.ZERO)
+
+
+func is_grid_footprint_walkable(
+	center: Vector2,
+	half_extents: Vector2
+) -> bool:
+	# Collision is resolved in canonical isometric ground space, not by
+	# rounding the actor center to one tile. Each blocked layout cell occupies
+	# the exact square [cell-0.5, cell+0.5] in grid space; on screen that is the
+	# same 64x32 diamond rendered for the floor/wall top face.
+	#
+	# The actor footprint is also expressed in grid space, so the upper and
+	# lower room edges are mathematically symmetric. This removes the old
+	# center-sampling error where the player could enter the back wall but was
+	# stopped too early at the front wall.
+	var half := Vector2(maxf(0.0, half_extents.x), maxf(0.0, half_extents.y))
+	var footprint_min := center - half
+	var footprint_max := center + half
+	const EPSILON := 0.0001
+
+	var room_min := Vector2(-0.5, -0.5)
+	var room_max := Vector2(float(room_size.x) - 0.5, float(room_size.y) - 0.5)
+	if footprint_min.x < room_min.x - EPSILON or footprint_min.y < room_min.y - EPSILON:
 		return false
-	if grid_position.x > float(room_size.x) - 0.5:
-		return false
-	if grid_position.y > float(room_size.y) - 0.5:
+	if footprint_max.x > room_max.x + EPSILON or footprint_max.y > room_max.y + EPSILON:
 		return false
 
-	var cell := Vector2i(
-		floori(grid_position.x + 0.5),
-		floori(grid_position.y + 0.5)
-	)
-	return is_cell_walkable(cell)
+	# Only cells touched by the tiny ground footprint need inspection.
+	var min_x := maxi(0, floori(footprint_min.x + 0.5))
+	var min_y := maxi(0, floori(footprint_min.y + 0.5))
+	var max_x := mini(room_size.x - 1, floori(footprint_max.x + 0.5))
+	var max_y := mini(room_size.y - 1, floori(footprint_max.y + 0.5))
+
+	for x in range(min_x, max_x + 1):
+		for y in range(min_y, max_y + 1):
+			var cell := Vector2i(x, y)
+			if not _blocked_cells.has(_cell_key(cell)):
+				continue
+			var cell_min := Vector2(float(x) - 0.5, float(y) - 0.5)
+			var cell_max := Vector2(float(x) + 0.5, float(y) + 0.5)
+			var overlaps_x := (
+				footprint_max.x > cell_min.x + EPSILON
+				and footprint_min.x < cell_max.x - EPSILON
+			)
+			var overlaps_y := (
+				footprint_max.y > cell_min.y + EPSILON
+				and footprint_min.y < cell_max.y - EPSILON
+			)
+			if overlaps_x and overlaps_y:
+				return false
+	return true
 
 
 func finalize() -> bool:
