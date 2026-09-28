@@ -275,6 +275,11 @@ func get_area_id() -> String:
 
 
 func get_world_elevation_at(world_position: Vector2) -> float:
+	# Followers and any future presentation clients must observe the same
+	# isolation contract as the player. Interior coordinates live in a remote
+	# staging area that has no relationship with Central City's exterior levels.
+	if _interior_manager != null and _interior_manager.is_active():
+		return 0.0
 	if _area_scene == null:
 		return 0.0
 	return _area_scene.get_elevation_at_world_position(world_position)
