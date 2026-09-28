@@ -8,18 +8,19 @@ const SURFACE_SHADER = preload("res://shaders/world_water_surface.gdshader")
 const SHORE_SHADER = preload("res://shaders/world_water_shore.gdshader")
 
 const DEFAULT_SURFACE_PROFILE := {
-	"deep_color": Color(0.010, 0.090, 0.155, 1.0),
-	"body_color": Color(0.020, 0.285, 0.385, 1.0),
-	"shallow_color": Color(0.060, 0.500, 0.555, 1.0),
-	"highlight_color": Color(0.620, 0.940, 0.920, 1.0),
-	"flow_direction": Vector2(0.88, 0.42),
-	"flow_speed": 0.28,
-	"wave_scale": 0.48,
-	"detail_scale": 1.16,
-	"wave_strength": 0.86,
-	"highlight_strength": 0.62,
-	"sparkle_strength": 0.14,
-	"depth_bias": 0.50,
+	"deep_color": Color(0.015, 0.300, 0.500, 1.0),
+	"body_color": Color(0.015, 0.565, 0.755, 1.0),
+	"shallow_color": Color(0.055, 0.735, 0.855, 1.0),
+	"line_color": Color(0.220, 0.900, 0.980, 1.0),
+	"crest_color": Color(0.660, 0.985, 1.000, 1.0),
+	"flow_direction": Vector2(1.0, 1.0).normalized(),
+	"flow_speed": 0.24,
+	"pattern_scale": 2.35,
+	"line_width": 0.045,
+	"line_strength": 0.42,
+	"ripple_scale": 1.15,
+	"ripple_strength": 0.26,
+	"depth_strength": 0.30,
 	"opacity": 0.98,
 }
 
