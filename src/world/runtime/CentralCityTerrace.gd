@@ -66,18 +66,23 @@ static func build() -> Node2D:
 			_append_void_frame(raw_void as Dictionary, trench_caps, trench_faces, water_surfaces, water_edges)
 	if not water_surfaces.is_empty():
 		var water_profile := {
-			"deep_color": Color(0.012, 0.105, 0.17, 1.0),
-			"body_color": Color(0.018, 0.30, 0.39, 1.0),
-			"shallow_color": Color(0.055, 0.50, 0.54, 1.0),
-			"highlight_color": Color(0.63, 0.95, 0.92, 1.0),
-			"flow_direction": Vector2(0.92, 0.38),
-			"flow_speed": 0.30,
-			"wave_scale": 0.46,
-			"detail_scale": 1.18,
-			"wave_strength": 0.88,
-			"highlight_strength": 0.66,
-			"sparkle_strength": 0.16,
-			"depth_bias": 0.48,
+			# Central City uses a bright digital-canal palette: saturated cyan
+			# body, darker blue depth, and small crisp facets instead of broad
+			# white reflections. In grid UV space +X/+Y together means visually
+			# down the isometric screen.
+			"deep_color": Color(0.010, 0.340, 0.530, 1.0),
+			"body_color": Color(0.020, 0.640, 0.800, 1.0),
+			"shallow_color": Color(0.100, 0.800, 0.900, 1.0),
+			"line_color": Color(0.280, 0.940, 1.000, 1.0),
+			"crest_color": Color(0.720, 1.000, 1.000, 1.0),
+			"flow_direction": Vector2(1.0, 1.0).normalized(),
+			"flow_speed": 0.20,
+			"pattern_scale": 2.65,
+			"line_width": 0.040,
+			"line_strength": 0.48,
+			"ripple_scale": 1.05,
+			"ripple_strength": 0.22,
+			"depth_strength": 0.24,
 			"opacity": 0.98,
 		}
 		var water := CITY.create_world_uv_polygon_batch(
@@ -93,11 +98,13 @@ static func build() -> Node2D:
 			7,
 			"CanalShoreline",
 			{
-				"foam_color": Color(0.72, 0.98, 0.95, 0.92),
-				"secondary_color": Color(0.24, 0.72, 0.74, 0.52),
-				"shore_speed": 0.72,
-				"shore_strength": 0.90,
-				"secondary_strength": 0.34,
+				"foam_color": Color(0.340, 0.950, 1.000, 0.90),
+				"secondary_color": Color(0.080, 0.720, 0.900, 0.48),
+				"shore_speed": 0.36,
+				"shore_strength": 0.68,
+				"secondary_strength": 0.18,
+				"world_scale": 0.020,
+				"crest_width": 0.050,
 			}
 		)
 		root.add_child(shoreline)
