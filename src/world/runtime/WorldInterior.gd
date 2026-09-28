@@ -22,6 +22,11 @@ const EXIT_CELL := Vector2i(9, 12)
 # opening remains reachable.
 const GENERIC_TALL_WALL_INNER_EDGE_GRID := 1.0
 const DIGILAB_TALL_WALL_INNER_EDGE_GRID := 0.5
+# DigiLab's back connector pillars are wider than the straight vector wall
+# edges. They need a local diagonal blocker rather than pushing the whole wall
+# plane farther into the room. The threshold is measured from the corner anchor
+# in canonical grid space; actor-foot samples add the character radius on top.
+const DIGILAB_BACK_PILLAR_INNER_SUM_GRID := 1.35
 
 # Interior navigation is evaluated at the actor's feet, not only at its origin.
 # The player capsule uses a 10 px radius; matching that radius here gives every
@@ -91,6 +96,13 @@ func _is_walkable_local_point(local_position: Vector2) -> bool:
 	):
 		return false
 
+	# DigiLab connector pillars occupy more floor area than the straight SVG wall
+	# edges. Model only those two back corners with a diagonal footprint. This
+	# keeps the straight walls touchable while preventing the actor from slipping
+	# behind the pillar at the upper diagonal.
+	if _service_id == "digilab" and _is_inside_digilab_back_pillar(local_grid):
+		return false
+
 	# The lower/front edge is intentionally different: it contains an authored
 	# doorway. Keep only the room envelope here and let the actual front-wall
 	# cells decide what is solid.
@@ -107,6 +119,16 @@ func _tall_wall_inner_edge_grid() -> float:
 	if _service_id == "digilab":
 		return DIGILAB_TALL_WALL_INNER_EDGE_GRID
 	return GENERIC_TALL_WALL_INNER_EDGE_GRID
+
+
+func _is_inside_digilab_back_pillar(local_grid: Vector2) -> bool:
+	var left_corner_inward := local_grid.x + local_grid.y
+	if left_corner_inward < DIGILAB_BACK_PILLAR_INNER_SUM_GRID:
+		return true
+
+	var right_inward_x := float(ROOM_SIZE.x - 1) - local_grid.x
+	var right_corner_inward := right_inward_x + local_grid.y
+	return right_corner_inward < DIGILAB_BACK_PILLAR_INNER_SUM_GRID
 
 
 func grid_to_world(grid: Vector2) -> Vector2:
