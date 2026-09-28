@@ -321,6 +321,17 @@ func _ready() -> void:
 		and (canal_water.material as ShaderMaterial).shader.resource_path == "res://shaders/world_water_surface.gdshader",
 		"The authored canal must use reusable procedural water without water texture assets"
 	)
+	var canal_water_material := canal_water.material as ShaderMaterial
+	var canal_flow: Vector2 = canal_water_material.get_shader_parameter("flow_direction")
+	var canal_body_color: Color = canal_water_material.get_shader_parameter("body_color")
+	assert(
+		canal_flow.is_equal_approx(Vector2(1.0, 1.0).normalized()),
+		"Central City canal flow must travel visually downward along the isometric +X/+Y axis"
+	)
+	assert(
+		canal_body_color.g >= 0.60 and canal_body_color.b >= 0.75,
+		"Central City canal must keep the bright cyan-blue prototype palette instead of regressing to dark navy water"
+	)
 	assert(
 		canal_shoreline != null
 		and canal_shoreline.texture == null
