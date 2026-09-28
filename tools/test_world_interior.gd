@@ -46,9 +46,17 @@ func _ready() -> void:
 	assert(entry != null, "DigiLab exterior must expose its authored doorway threshold")
 	var payload = entry.get_meta("interior_payload", {})
 	assert(payload is Dictionary, "Interior threshold must carry its destination payload")
-	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
-	assert(digilab_section != null, "DigiLab section must be loaded for interior regression")
-	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/Building") as Sprite2D
+	var digilab_exterior := entry.get_parent() as Node2D
+	assert(
+		digilab_exterior != null and digilab_exterior.name == "DigiLabExterior",
+		"DigiLab threshold must belong to its authored exterior"
+	)
+	var digilab_section := digilab_exterior.get_parent() as WorldAreaSection
+	assert(
+		digilab_section != null,
+		"DigiLab exterior must live in the section selected by its current authoring anchor"
+	)
+	var digilab_building := digilab_exterior.get_node_or_null("VisualRoot/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab exterior building must be present before entry")
 	assert(
 		digilab_building.texture != null

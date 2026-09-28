@@ -1216,6 +1216,12 @@ func _animate_digilab_entry(entrance: Area2D, payload: Dictionary) -> void:
 
 
 func handles_service(service_id: String) -> bool:
+	# Service ownership follows the same authoring anchor used to build the
+	# exterior. Section themes describe districts, not runtime ownership: once a
+	# designer moves a unique service building across a section boundary, return
+	# animations and other service callbacks must follow the building with it.
+	if service_id in ["digilab", "training", "hospital", "market", "archive"]:
+		return _building_anchor_is_in_section(service_id)
 	return String(definition.get("theme", "")) == service_id
 
 

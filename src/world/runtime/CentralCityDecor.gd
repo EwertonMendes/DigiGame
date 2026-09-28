@@ -137,6 +137,9 @@ static func build_for_section(
 		var center_to_foot := foot - Vector2(texture.get_width(), texture.get_height()) * 0.5
 		sprite.position = world_foot - center_to_foot * scale_value + visual_offset
 		sprite.set_meta("world_elevation_px", elevation_px)
+		sprite.set_meta("authored_asset_id", asset_id)
+		sprite.set_meta("authored_role", String(placement.get("role", "")))
+		sprite.set_meta("authored_cell", cell)
 		if String(asset.get("layer", "")) == "ground":
 			sprite.z_index = GROUND_DECOR_Z
 		elif String(placement.get("depth", "world")) == "behind_building":

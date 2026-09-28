@@ -385,30 +385,6 @@
         ],
         "role": "south_bridge_east_head",
         "surround": "civic"
-      },
-      {
-        "asset": "bench_nw",
-        "cell": [
-          4.2,
-          10.6
-        ],
-        "role": "canal_southwest_tree_face_center_seating",
-        "clearance": [
-          0,
-          0
-        ]
-      },
-      {
-        "asset": "bench_nw",
-        "cell": [
-          13,
-          3.6
-        ],
-        "role": "canal_northeast_tree_face_center_seating",
-        "clearance": [
-          0,
-          0
-        ]
       }
     ],
     "0,1": [

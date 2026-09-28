@@ -7,7 +7,8 @@ class_name CentralCityArt
 # overworld reads as a city floor instead of a tactical board. Grass, water,
 # perimeter depth and authored interiors still use their dedicated source art.
 const CITY_PAVER_SHADER = preload("res://shaders/city_paver_floor.gdshader")
-const CITY_WATER_SHADER = preload("res://shaders/city_canal_water.gdshader")
+const CITY_CANAL_STRUCTURE_SHADER = preload("res://shaders/city_canal_structure.gdshader")
+const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 const GROUND_GRASS_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0056.png"
 const GROUND_GRASS_CHECKER_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0053.png"
 const GROUND_MINT_PATH := "res://assets/world/devilsworkshop/city_1024/isometric_0058.png"
@@ -350,10 +351,29 @@ static func create_world_uv_polygon_batch(
 	return mesh_instance
 
 
-static func create_water_material() -> ShaderMaterial:
+static func create_water_material(profile: Dictionary = {}) -> ShaderMaterial:
+	return WORLD_WATER.create_surface_material(profile)
+
+
+static func create_canal_structure_batch(
+	polygons: Array[Dictionary],
+	depth_order: int,
+	profile: Dictionary = {}
+) -> MeshInstance2D:
 	var material := ShaderMaterial.new()
-	material.shader = CITY_WATER_SHADER
-	return material
+	material.shader = CITY_CANAL_STRUCTURE_SHADER
+	for raw_key in profile:
+		material.set_shader_parameter(
+			StringName(String(raw_key)),
+			profile[raw_key]
+		)
+
+	var mesh_instance := MeshInstance2D.new()
+	mesh_instance.mesh = _build_canal_structure_batch_mesh(polygons)
+	mesh_instance.material = material
+	mesh_instance.texture = null
+	mesh_instance.z_index = clampi(depth_order, -4000, 4000)
+	return mesh_instance
 
 
 static func create_color_polygon_batch(
@@ -365,6 +385,69 @@ static func create_color_polygon_batch(
 	mesh_instance.texture = null
 	mesh_instance.z_index = clampi(depth_order, -4000, 4000)
 	return mesh_instance
+
+
+static func _build_canal_structure_batch_mesh(
+	polygons: Array[Dictionary]
+) -> ArrayMesh:
+	var vertices := PackedVector2Array()
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+
+	for spec: Dictionary in polygons:
+		var points_value = spec.get("points", PackedVector2Array())
+		if not points_value is PackedVector2Array:
+			continue
+		var points := points_value as PackedVector2Array
+		if points.size() < 3:
+			continue
+
+		var triangulated := Geometry2D.triangulate_polygon(points)
+		if triangulated.is_empty():
+			continue
+
+		var base_color: Color = spec.get("color", Color(0.42, 0.44, 0.45, 1.0))
+		var depths_value = spec.get("depths", PackedFloat32Array())
+		var depths := (
+			depths_value as PackedFloat32Array
+			if depths_value is PackedFloat32Array
+			else PackedFloat32Array()
+		)
+		var vertex_start := vertices.size()
+		for point_index in range(points.size()):
+			var point := points[point_index]
+			var depth := (
+				clampf(depths[point_index], 0.0, 1.0)
+				if point_index < depths.size()
+				else 0.5
+			)
+			vertices.append(point)
+			# RGB keeps the authored neutral concrete family; alpha is a data
+			# channel carrying normalized top-to-bottom face depth.
+			colors.append(Color(
+				base_color.r,
+				base_color.g,
+				base_color.b,
+				depth
+			))
+			# Display/world position keeps subtle aggregate variation continuous
+			# across independently-authored faces without texture assets.
+			uvs.append(point)
+		for raw_index in triangulated:
+			indices.append(vertex_start + int(raw_index))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+
+	var mesh := ArrayMesh.new()
+	if not vertices.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 static func _build_color_polygon_batch_mesh(polygons: Array[Dictionary]) -> ArrayMesh:

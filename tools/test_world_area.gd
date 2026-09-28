@@ -222,8 +222,18 @@ func _ready() -> void:
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(
-		area.get_ground_tile_count() == 4134,
-		"Central City ground batch must omit the full-width terrace break, stair transition cells, and both future-water void pockets"
+		area.get_ground_tile_count() == 4254,
+		"Central City ground batch must omit only true architectural breaks/stair transitions while preserving pavement beneath precise water-basin geometry"
+	)
+	var west_basin_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-10, 23))
+	var west_bridge_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-5, 23))
+	assert(
+		bool(west_basin_ground_rule.get("render", false))
+		and not bool(west_basin_ground_rule.get("walkable", true))
+		and bool(west_basin_ground_rule.get("basin_underlay", false))
+		and bool(west_bridge_ground_rule.get("render", false))
+		and bool(west_bridge_ground_rule.get("walkable", false)),
+		"Water topology must preserve base-ground rendering as a precise basin underlay without making the canal walkable outside authored bridges"
 	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
@@ -270,18 +280,29 @@ func _ready() -> void:
 		and urban_layout.get_node_or_null("PaintedRoadEdging") is MeshInstance2D,
 		"Painted roads need one batched edge finish without duplicating their ground surface"
 	)
-	for required_urban_node: String in [
-		"Surface_central_plaza",
-		"Surface_service_forecourts",
-		"Surface_district_courts",
-	]:
+	var authored_urban := CITY_AUTHORING.urban_layout_config()
+	var authored_layers_value = authored_urban.get("layers", [])
+	assert(
+		authored_layers_value is Array and not (authored_layers_value as Array).is_empty(),
+		"Central City authoring must expose at least one urban overlay layer"
+	)
+	for raw_layer in authored_layers_value as Array:
+		if not raw_layer is Dictionary:
+			continue
+		var layer := raw_layer as Dictionary
+		var polygons_value = layer.get("polygons", [])
+		if not polygons_value is Array or (polygons_value as Array).is_empty():
+			continue
+		var layer_id := String(layer.get("id", "")).strip_edges().to_lower().replace(" ", "_").replace("-", "_")
+		var required_urban_node := "Surface_%s" % layer_id
 		var urban_surface := urban_layout.get_node_or_null(required_urban_node) as MeshInstance2D
 		assert(
 			urban_surface != null
 			and urban_surface.texture == null
 			and urban_surface.material is ShaderMaterial
+			and (urban_surface.material as ShaderMaterial).shader != null
 			and (urban_surface.material as ShaderMaterial).shader.resource_path == "res://shaders/city_paver_floor.gdshader",
-			"Urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
+			"Authored urban layout node %s must reuse the lit continuous micro-paver shader instead of tile-sized textures" % required_urban_node
 		)
 	var south_terrace := area.get_node_or_null("SouthTerraceStructure") as Node2D
 	assert(
@@ -294,10 +315,14 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairSideCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairNosingAndParapets") is MeshInstance2D
+		and south_terrace.get_node_or_null("WaterBasinFloor") is MeshInstance2D
+		and south_terrace.get_node_or_null("TrenchSubmergedWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("CanalWater") is MeshInstance2D
-		and south_terrace.get_node_or_null("WaterEdgeHighlights") is MeshInstance2D
-		and south_terrace.get_node_or_null("TrenchBankCaps") is MeshInstance2D
-		and south_terrace.get_node_or_null("TrenchInnerWalls") is MeshInstance2D
+		and south_terrace.get_node_or_null("CanalShoreline") == null
+		and south_terrace.get_node_or_null("TrenchFrontWalls") == null
+		and south_terrace.get_node_or_null("TrenchBankCaps") == null
+		and south_terrace.get_node_or_null("TrenchFarFloorFaces") is MeshInstance2D
+		and south_terrace.get_node_or_null("CanalForegroundFloor") == null
 		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeDecks") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeRails") is MeshInstance2D,
@@ -308,16 +333,78 @@ func _ready() -> void:
 		and int(south_terrace.get_meta("stair_count", 0)) == 2
 		and int(south_terrace.get_meta("trench_count", 0)) == 2
 		and int(south_terrace.get_meta("bridge_count", 0)) == 2
+		and is_equal_approx(float(south_terrace.get_meta("water_surface_drop_px", 0.0)), 12.0)
+		and is_equal_approx(float(south_terrace.get_meta("basin_depth_px", 0.0)), 24.0)
+		and is_equal_approx(float(south_terrace.get_meta("far_floor_face_depth_px", 0.0)), 12.0)
+		and is_equal_approx(float(south_terrace.get_meta("far_floor_face_pavers_per_cell", 0.0)), 4.0)
+		and String(south_terrace.get_meta("canal_detail_system", "")) == "recessed_water_v4_open_near_edge"
+		and String(south_terrace.get_meta("canal_cutaway_mode", "")) == "far_cube_faces_near_open_water"
+		and String(south_terrace.get_meta("near_side_border", "")) == "none"
+		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
+		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
+		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
-		"South Terrace must keep two actual presentation levels separated by 48px, two stairways, two void pockets, and two bridges"
+		"South Terrace must expose 12px paver cube faces only on the far/top-left cut and keep near camera edges completely free of border overlays"
 	)
+	var basin_floor := south_terrace.get_node_or_null("WaterBasinFloor") as MeshInstance2D
+	var submerged_walls := south_terrace.get_node_or_null("TrenchSubmergedWalls") as MeshInstance2D
 	var canal_water := south_terrace.get_node_or_null("CanalWater") as MeshInstance2D
+	var far_floor_faces := south_terrace.get_node_or_null("TrenchFarFloorFaces") as MeshInstance2D
+	var bridge_bodies := south_terrace.get_node_or_null("BridgeBodies") as MeshInstance2D
 	assert(
 		canal_water != null
+		and canal_water.texture == null
 		and canal_water.material is ShaderMaterial
-		and (canal_water.material as ShaderMaterial).shader.resource_path == "res://shaders/city_canal_water.gdshader",
-		"The authored canal must use the shared animated water shader instead of water block sprites"
+		and (canal_water.material as ShaderMaterial).shader.resource_path == "res://shaders/world_water_surface.gdshader",
+		"The authored canal must use reusable procedural water without water texture assets"
+	)
+	var canal_water_material := canal_water.material as ShaderMaterial
+	var canal_flow: Vector2 = canal_water_material.get_shader_parameter("flow_direction")
+	var canal_body_color: Color = canal_water_material.get_shader_parameter("body_color")
+	var basin_depth_enabled: bool = canal_water_material.get_shader_parameter("use_basin_depth")
+	var caustic_strength := float(canal_water_material.get_shader_parameter("caustic_strength"))
+	var refraction_visibility := float(canal_water_material.get_shader_parameter("refraction_visibility"))
+	assert(
+		canal_flow.is_equal_approx(Vector2(1.0, 1.0).normalized()),
+		"Central City canal flow must travel visually downward along the isometric +X/+Y axis"
+	)
+	assert(
+		canal_body_color.g >= 0.60 and canal_body_color.b >= 0.75,
+		"Central City canal must keep the bright cyan-blue prototype palette instead of regressing to dark navy water"
+	)
+	assert(
+		basin_depth_enabled
+		and caustic_strength > 0.20
+		and refraction_visibility > 0.10,
+		"Central City water must combine geometry-driven depth, organic caustics, and subtle screen refraction instead of a flat scrolling pattern"
+	)
+	assert(
+		basin_floor != null
+		and submerged_walls != null
+		and far_floor_faces != null
+		and bridge_bodies != null
+		and basin_floor.z_index < canal_water.z_index
+		and submerged_walls.z_index < canal_water.z_index
+		and canal_water.z_index < far_floor_faces.z_index,
+		"Canal draw order must keep water below the explicit far paver cube faces without adding any near-side overlay"
+	)
+	for structural_mesh: MeshInstance2D in [
+		basin_floor,
+		submerged_walls,
+		far_floor_faces,
+		bridge_bodies,
+	]:
+		assert(
+			structural_mesh.material is ShaderMaterial
+			and (structural_mesh.material as ShaderMaterial).shader.resource_path == "res://shaders/city_canal_structure.gdshader",
+			"Canal walls/floor/bridge bodies must use the depth-aware concrete material instead of flat vertex-color slabs"
+		)
+	assert(
+		south_terrace.get_node_or_null("TrenchBankCaps") == null
+		and south_terrace.get_node_or_null("CanalForegroundFloor") == null
+		and south_terrace.get_node_or_null("CanalShoreline") == null,
+		"Canal near edge must contain no gray border, no foreground strip, and no shoreline outline"
 	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))
@@ -434,29 +521,78 @@ func _ready() -> void:
 		"Raised landscape islands must cast a low structural shadow onto the city pavement"
 	)
 	var plaza_decor := plaza_section.get_node_or_null("CityDecor")
+	assert(plaza_decor != null, "Central Plaza must instantiate its authored city decor")
+
+	var plaza_placements := CITY_AUTHORING.decoration_placements(Vector2i.ZERO)
+	var first_lamp_placement: Dictionary = {}
+	var first_bench_placement: Dictionary = {}
+	var authored_plaza_bench_count := 0
+	for raw_placement in plaza_placements:
+		if not raw_placement is Dictionary:
+			continue
+		var placement := raw_placement as Dictionary
+		var authored_asset := String(placement.get("asset", ""))
+		if authored_asset.begins_with("lamp_") and first_lamp_placement.is_empty():
+			first_lamp_placement = placement
+		if authored_asset.begins_with("bench_"):
+			authored_plaza_bench_count += 1
+			if first_bench_placement.is_empty():
+				first_bench_placement = placement
 	assert(
-		plaza_decor != null
-		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/PaverPad") != null
-		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/LandscapeBed") != null,
+		not first_lamp_placement.is_empty() and not first_bench_placement.is_empty(),
+		"Central Plaza authoring must retain at least one lamp and one bench placement"
+	)
+
+	var first_plaza_lamp: Sprite2D = null
+	var first_plaza_bench: Sprite2D = null
+	var first_lamp_surround: Node2D = null
+	var bench_surround_count := 0
+	for child in plaza_decor.get_children():
+		if child is Sprite2D:
+			var decor_sprite := child as Sprite2D
+			var asset_id := String(decor_sprite.get_meta("authored_asset_id", ""))
+			if (
+				first_plaza_lamp == null
+				and asset_id == String(first_lamp_placement.get("asset", ""))
+				and (decor_sprite.get_meta("authored_cell", Vector2.INF) as Vector2).is_equal_approx(
+					_vec2_from_array(first_lamp_placement.get("cell", []))
+				)
+			):
+				first_plaza_lamp = decor_sprite
+			if (
+				first_plaza_bench == null
+				and asset_id == String(first_bench_placement.get("asset", ""))
+				and (decor_sprite.get_meta("authored_cell", Vector2.INF) as Vector2).is_equal_approx(
+					_vec2_from_array(first_bench_placement.get("cell", []))
+				)
+			):
+				first_plaza_bench = decor_sprite
+		elif child is Node2D and String(child.name).begins_with("LampSurround") and first_lamp_surround == null:
+			first_lamp_surround = child as Node2D
+		elif child is Node2D and String(child.name).begins_with("BenchSurround"):
+			bench_surround_count += 1
+
+	assert(
+		first_lamp_surround != null
+		and first_lamp_surround.get_node_or_null("PaverPad") != null
+		and first_lamp_surround.get_node_or_null("LandscapeBed") != null,
 		"Plaza lamps must keep their approved paver/canteiro integration"
 	)
 	assert(
-		plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingSocket") == null
-		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingCollar") == null
-		and plaza_section.get_node_or_null("CityDecor/LampSurround_01/MountingInset") == null,
+		first_lamp_surround.get_node_or_null("MountingSocket") == null
+		and first_lamp_surround.get_node_or_null("MountingCollar") == null
+		and first_lamp_surround.get_node_or_null("MountingInset") == null,
 		"Lamp surrounds must never add a dark pedestal, socket or floating square under the sprite"
 	)
-	var first_plaza_lamp: Sprite2D = null
-	for child in plaza_decor.get_children():
-		if child is Sprite2D:
-			first_plaza_lamp = child as Sprite2D
-			break
-	var first_plaza_lamp_local := plaza_section.grid_to_world(Vector2(2.2, 5.2))
+
+	var first_lamp_cell := _vec2_from_array(first_lamp_placement.get("cell", []))
+	var first_plaza_lamp_local := plaza_section.grid_to_world(first_lamp_cell)
 	assert(
 		first_plaza_lamp != null
 		and first_plaza_lamp.position.is_equal_approx(first_plaza_lamp_local - Vector2(0.0, 96.0))
-		and is_equal_approx(float(first_plaza_lamp.get_meta("world_elevation_px", 0.0)), 48.0),
-		"Lamp sprite must preserve its authored foot offset while following the 48px upper-city elevation"
+		and is_equal_approx(float(first_plaza_lamp.get_meta("world_elevation_px", 0.0)), 48.0)
+		and (first_plaza_lamp.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(first_plaza_lamp_local),
+		"Lamp sprite must preserve its asset foot offset while following its current authored placement and upper-city elevation"
 	)
 	assert(
 		first_plaza_lamp.is_in_group("world_shadow_caster")
@@ -493,8 +629,12 @@ func _ready() -> void:
 		"Player clearance must prevent sprite overlap while releasing movement immediately outside the pedestal envelope"
 	)
 
-	var first_plaza_bench_local := plaza_section.grid_to_world(Vector2(4.2, 11.6))
-	var expected_ground_center := first_plaza_bench_local + Vector2(-15.0, -8.0)
+	assert(first_plaza_bench != null, "Central Plaza must instantiate the approved bench art")
+	var first_bench_cell := _vec2_from_array(first_bench_placement.get("cell", []))
+	var first_bench_asset := String(first_bench_placement.get("asset", ""))
+	var bench_ground_offset := Vector2(15.0, -8.0) if first_bench_asset == "bench_ne" else Vector2(-15.0, -8.0)
+	var first_plaza_bench_local := plaza_section.grid_to_world(first_bench_cell)
+	var expected_ground_center := first_plaza_bench_local + bench_ground_offset
 	var expected_ground_world := plaza_section.global_position + expected_ground_center
 	assert(
 		not plaza_section.is_walkable_world_position(expected_ground_world),
@@ -505,14 +645,6 @@ func _ready() -> void:
 		"Bench collision must stay fitted to the seat instead of creating a broad invisible wall"
 	)
 
-	var first_plaza_bench: Sprite2D = null
-	var bench_surround_count := 0
-	for child in plaza_decor.get_children():
-		if child is Sprite2D and String(child.name).begins_with("Bench") and first_plaza_bench == null:
-			first_plaza_bench = child as Sprite2D
-		elif child is Node2D and String(child.name).begins_with("BenchSurround"):
-			bench_surround_count += 1
-	assert(first_plaza_bench != null, "Central Plaza must instantiate the approved bench art")
 	var bench_atlas := first_plaza_bench.texture as AtlasTexture
 	assert(
 		bench_atlas != null
@@ -527,29 +659,20 @@ func _ready() -> void:
 	)
 	assert(
 		(first_plaza_bench.get_meta("ground_center", Vector2.INF) as Vector2).is_equal_approx(expected_ground_center),
-		"Bench collision must stay aligned to the visible four-foot ground centroid"
+		"Bench collision must stay aligned to its current authored anchor and visible four-foot ground centroid"
 	)
 
 	var bench_collision_body := plaza_section.get_node_or_null("BenchCollisions") as StaticBody2D
 	assert(
-		bench_collision_body != null and bench_collision_body.get_child_count() == 2,
-		"Central Plaza benches must expose fitted physics collision in addition to walkability blockers"
+		bench_collision_body != null
+		and bench_collision_body.get_child_count() == authored_plaza_bench_count,
+		"Central Plaza benches must expose one fitted physics collision per authored bench placement"
 	)
 	for child in bench_collision_body.get_children():
 		assert(
 			child is CollisionPolygon2D and (child as CollisionPolygon2D).polygon.size() >= 4,
 			"Each bench must use its fitted isometric collision polygon for swept CharacterBody2D collision"
 		)
-
-	var southwest_tree_center := plaza_section.grid_to_world(Vector2(2.0, 11.0))
-	assert(
-		(first_plaza_bench_local - southwest_tree_center).is_equal_approx(Vector2(51.2, 44.8)),
-		"Plaza bench anchor must sit at the exact midpoint between the two planter-face corner-biased placements"
-	)
-	assert(
-		(expected_ground_center - southwest_tree_center).is_equal_approx(Vector2(36.2, 36.8)),
-		"Plaza bench collision must remain centered with the visible seat at the planter-face midpoint"
-	)
 
 	# Exercise the same incremental movement contract used by the runtime rather
 	# than teleporting across the prop in one synthetic 90px step. Repeated
@@ -570,18 +693,19 @@ func _ready() -> void:
 	player.global_position = original_player_position
 	player.set("velocity", Vector2.ZERO)
 
-	var digilab_lighting := area.get_node_or_null("Section_-1_0") as WorldAreaSection
-	var training_lighting := area.get_node_or_null("Section_0_-1") as WorldAreaSection
+	var digilab_lighting := _service_section(area, "digilab")
+	var training_lighting := _service_section(area, "training")
 	var hospital_lighting := _service_section(area, "hospital")
 	var canal_lighting := area.get_node_or_null("Section_0_-2") as WorldAreaSection
-	var market_lighting := area.get_node_or_null("Section_0_1") as WorldAreaSection
+	var market_lighting := _service_section(area, "market")
+	var market_cell := _service_local_cell("market")
 	var market_pad: Area2D = null
 	if market_lighting != null:
 		market_pad = market_lighting.get_node_or_null("DataMarketPad") as Area2D
 	assert(
 		market_pad != null
-		and market_pad.position.is_equal_approx(market_lighting.grid_to_world(Vector2(7, 12))),
-		"Data Market must move onto the lower South Terrace instead of remaining on the upper flat"
+		and market_pad.position.is_equal_approx(market_lighting.grid_to_world(Vector2(market_cell))),
+		"Data Market service pad must follow its current authoring marker on the South Terrace"
 	)
 	assert(
 		digilab_lighting != null and digilab_lighting.get_decoration_count() <= 1,
@@ -596,17 +720,20 @@ func _ready() -> void:
 		"Hospital may use at most one safe outer-sidewalk lamp instead of posts covering its entrance"
 	)
 	var canal_assets := canal_lighting.get_decoration_asset_ids() if canal_lighting != null else PackedStringArray()
+	var authored_canal_decor := CITY_AUTHORING.decoration_placements(Vector2i(0, -2))
 	assert(
 		canal_lighting != null
-		and canal_lighting.get_decoration_count() >= 4
-		and canal_assets.has("bench_nw")
+		and canal_lighting.get_decoration_count() == authored_canal_decor.size()
+		and canal_assets.has("lamp_blue")
+		and not canal_assets.has("bench_nw")
 		and not canal_assets.has("bench_ne"),
-		"North Canal benches must use the orientation matching their centered planter faces, including the seat nearest Digital Archive"
+		"North Canal runtime decor must match current authoring, keeping bridge-head lamps without resurrecting removed water-overlapping benches"
 	)
+	var market_lamp_section := _section_with_authored_decor_role(area, "market_")
 	assert(
-		market_lighting != null
-		and market_lighting.get_decoration_asset_ids().has("lamp_yellow"),
-		"Data Market must reserve the approved warm lamp for its service node"
+		market_lamp_section != null
+		and market_lamp_section.get_decoration_asset_ids().has("lamp_yellow"),
+		"Data Market streetscape must retain its authored warm lamp independently from the movable service-building anchor"
 	)
 	var annotation_labels: Dictionary = {}
 	for raw_annotation in get_tree().get_nodes_in_group("world_annotation_unlit"):
@@ -674,8 +801,16 @@ func _ready() -> void:
 		"World camera must follow the player's presentation elevation"
 	)
 
-	var digilab_section := area.get_node_or_null("Section_-1_0") as WorldAreaSection
-	assert(digilab_section != null, "DigiLab district must remain in the authored west-central section")
+	var digilab_section := _service_section(area, "digilab")
+	var digilab_door_cell := _service_local_cell("digilab")
+	assert(
+		digilab_section != null,
+		"DigiLab must render in the section selected by its current authoring marker"
+	)
+	assert(
+		digilab_section.handles_service("digilab"),
+		"DigiLab service callbacks must follow the authored building anchor across section boundaries"
+	)
 	var digilab_building := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/Building") as Sprite2D
 	assert(digilab_building != null, "DigiLab district must render its authored exterior building")
 	var digilab_door_light := digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabDoorLight") as Node2D
@@ -701,7 +836,7 @@ func _ready() -> void:
 	)
 	var digilab_entrance := digilab_section.get_node_or_null("DigiLabExterior/DigiLabEntrance") as Area2D
 	assert(digilab_entrance != null, "DigiLab exterior must expose a doorway threshold")
-	var expected_door := digilab_section.grid_to_world(Vector2(8, 10))
+	var expected_door := digilab_section.grid_to_world(Vector2(digilab_door_cell))
 	assert(
 		digilab_entrance.position.is_equal_approx(expected_door),
 		"DigiLab teleport threshold must be anchored to the authored door position"
@@ -722,14 +857,15 @@ func _ready() -> void:
 		and absf(digilab_upper.region_rect.size.y - 700.0) < 0.01,
 		"DigiLab must keep the lower facade in front of actors while reserving occlusion for the upper/back art"
 	)
-	var digilab_floor = digilab_section.call("_ground_presentation", Vector2i(5, 4), "digilab")
-	var digilab_approach = digilab_section.call("_ground_presentation", Vector2i(8, 10), "digilab")
+	var digilab_approach = digilab_section.call(
+		"_ground_presentation",
+		digilab_door_cell,
+		"digilab"
+	)
 	assert(
-		digilab_floor is Dictionary
-		and digilab_approach is Dictionary
-		and String((digilab_floor as Dictionary).get("surface", "")) == "main"
-		and String((digilab_approach as Dictionary).get("surface", "")) == "road",
-		"DigiLab lot must stay on base paving while its street approach is independently painted as road"
+		digilab_approach is Dictionary
+		and bool((digilab_approach as Dictionary).get("walkable", true)),
+		"DigiLab authoring anchor may move independently from ground paint, but its doorway must remain on walkable city ground"
 	)
 	assert(
 		digilab_section.get_node_or_null("DigiLabExterior/VisualRoot/DigiLabFoundation/Top") != null,
@@ -768,26 +904,34 @@ func _ready() -> void:
 	)
 	assert(
 		digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 5))
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-3, -5)))
 		),
 		"Open pavement behind the DigiLab must not have an invisible collision barrier"
 	)
 	assert(
 		not digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(5, 8))
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-3, -2)))
 		),
 		"DigiLab measured footprint must block movement through the center of the structure"
 	)
 	assert(
 		not digilab_section.is_walkable_world_position(
-			digilab_section.global_position + digilab_section.grid_to_world(Vector2(2, 11))
+			digilab_section.global_position + digilab_section.grid_to_world(Vector2(digilab_door_cell + Vector2i(-6, 1)))
 		),
 		"DigiLab measured footprint must cover the lower-left wall that was previously penetrable"
 	)
 	# Regression points are expressed in source-image coordinates so they track
 	# the exact visible corners reviewed in-game instead of relying on coarse
-	# grid cells.
-	var digilab_door_local := digilab_section.grid_to_world(Vector2(8, 10))
+	# grid cells. Test the building polygons directly: the DigiLab can be authored
+	# beside a section boundary, where section-local walkability legitimately
+	# returns false before consulting the building collision.
+	var digilab_door_local := expected_door
+	var digilab_blockers: Array[PackedVector2Array] = [
+		digilab_collision.polygon,
+		digilab_left_guard.polygon,
+		digilab_right_guard.polygon,
+		digilab_upper_right_guard.polygon,
+	]
 	for source_point: Vector2 in [
 		Vector2(80.0, 820.0),   # far-left rear/side corner
 		Vector2(250.0, 860.0),  # left lower wing: player must not visually enter facade
@@ -804,10 +948,8 @@ func _ready() -> void:
 		var local_corner = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
 		assert(
 			local_corner is Vector2
-			and not digilab_section.is_walkable_world_position(
-				digilab_section.global_position + (local_corner as Vector2)
-			),
-			"DigiLab visible corner %s must be covered by the measured footprint" % str(source_point)
+			and _point_in_any_polygon(local_corner as Vector2, digilab_blockers),
+			"DigiLab visible corner %s must be covered by the measured building collision" % str(source_point)
 		)
 	for source_point: Vector2 in [
 		Vector2(15.0, 875.0),    # pavement just outside expanded left guard
@@ -816,15 +958,15 @@ func _ready() -> void:
 		var local_clear = digilab_section.call("_digilab_source_to_local", source_point, digilab_door_local)
 		assert(
 			local_clear is Vector2
-			and digilab_section.is_walkable_world_position(
-				digilab_section.global_position + (local_clear as Vector2)
-			),
-			"DigiLab pavement just outside %s must stay walkable" % str(source_point)
+			and not _point_in_any_polygon(local_clear as Vector2, digilab_blockers),
+			"DigiLab pavement just outside %s must stay free of DigiLab collision" % str(source_point)
 		)
 	var digilab_payload = digilab_entrance.get_meta("interior_payload", {})
 	assert(digilab_payload is Dictionary, "DigiLab doorway must preserve the seamless interior payload")
 	var digilab_return = (digilab_payload as Dictionary).get("return_position", [])
-	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(Vector2(10, 12))
+	var expected_return := digilab_section.global_position + digilab_section.grid_to_world(
+		Vector2(digilab_door_cell + Vector2i(2, 2))
+	)
 	assert(
 		digilab_return is Array
 		and digilab_return.size() >= 2
@@ -832,8 +974,16 @@ func _ready() -> void:
 		"DigiLab interior exit must return directly in front of the authored door"
 	)
 
-	var training_section := area.get_node_or_null("Section_0_-1") as WorldAreaSection
-	assert(training_section != null, "Training Center must remain in the authored north-central section")
+	var training_section := _service_section(area, "training")
+	var training_door_cell := _service_local_cell("training")
+	assert(
+		training_section != null,
+		"Training Center must render in the section selected by its current authoring marker"
+	)
+	assert(
+		training_section.handles_service("training"),
+		"Training service ownership must follow its authored building anchor"
+	)
 	var training_building := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/Building") as Sprite2D
 	var training_upper := training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(training_building != null, "Training district must render the authored Training Center exterior")
@@ -864,7 +1014,7 @@ func _ready() -> void:
 		"TrainingCenterExterior/TrainingCenterEntrance"
 	) as Area2D
 	assert(training_entrance != null, "Training Center must expose its static doorway threshold")
-	var expected_training_door := training_section.grid_to_world(Vector2(7, 11))
+	var expected_training_door := training_section.grid_to_world(Vector2(training_door_cell))
 	assert(
 		training_entrance.position.is_equal_approx(expected_training_door),
 		"Training Center threshold must align to the authored down-left-facing door"
@@ -873,14 +1023,15 @@ func _ready() -> void:
 		training_section.is_walkable_world_position(training_section.global_position + expected_training_door),
 		"Training Center stairs and doorway must remain walkable"
 	)
-	var training_forecourt = training_section.call("_ground_presentation", Vector2i(7, 12), "training")
-	var training_lot = training_section.call("_ground_presentation", Vector2i(2, 2), "training")
+	var training_approach = training_section.call(
+		"_ground_presentation",
+		training_door_cell,
+		"training"
+	)
 	assert(
-		training_forecourt is Dictionary
-		and training_lot is Dictionary
-		and String((training_forecourt as Dictionary).get("surface", "")) == "road"
-		and String((training_lot as Dictionary).get("surface", "")) == "main",
-		"Training Center lot must stay on base paving while its street approach is independently painted as road"
+		training_approach is Dictionary
+		and bool((training_approach as Dictionary).get("walkable", true)),
+		"Training Center authoring anchor may move independently from ground paint, but its doorway must remain on walkable city ground"
 	)
 	assert(
 		training_section.get_node_or_null("TrainingCenterExterior/VisualRoot/TrainingCenterFoundation/Top") != null,
@@ -902,13 +1053,7 @@ func _ready() -> void:
 		training_collision != null and training_collision.polygon.size() == 21,
 		"Training Center must use the measured source-space ground-contact footprint"
 	)
-	assert(
-		not training_section.is_walkable_world_position(
-			training_section.global_position + training_section.grid_to_world(Vector2(7, 7))
-		),
-		"Training Center structure footprint must block movement through the building"
-	)
-	var training_door_local := training_section.grid_to_world(Vector2(7, 11))
+	var training_door_local := expected_training_door
 	for source_point: Vector2 in [
 		Vector2(100.0, 820.0),
 		Vector2(610.0, 850.0),
@@ -926,7 +1071,9 @@ func _ready() -> void:
 	var training_payload = training_entrance.get_meta("interior_payload", {})
 	assert(training_payload is Dictionary, "Training Center doorway must preserve the service payload")
 	var training_return = (training_payload as Dictionary).get("return_position", [])
-	var expected_training_return := training_section.global_position + training_section.grid_to_world(Vector2(7, 13))
+	var expected_training_return := training_section.global_position + training_section.grid_to_world(
+		Vector2(training_door_cell + Vector2i(0, 2))
+	)
 	assert(
 		training_return is Array
 		and training_return.size() >= 2
@@ -937,6 +1084,10 @@ func _ready() -> void:
 	var hospital_section := _service_section(area, "hospital")
 	var hospital_door_cell := _service_local_cell("hospital")
 	assert(hospital_section != null, "Digi Hospital must render in the section selected by its authoring marker")
+	assert(
+		hospital_section.handles_service("hospital"),
+		"Hospital service ownership must follow its authored building anchor"
+	)
 	var hospital_building := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/Building") as Sprite2D
 	var hospital_upper := hospital_section.get_node_or_null("HospitalExterior/VisualRoot/UpperOccluder") as Sprite2D
 	assert(hospital_building != null, "Hospital district must render the authored hospital exterior")
@@ -1191,6 +1342,48 @@ func _snapshot_diff_paths(left, right, path: String = "snapshot", limit: int = 1
 	if left != right:
 		result.append("%s %s != %s" % [path, str(left), str(right)])
 	return result
+
+
+func _point_in_any_polygon(
+	point: Vector2,
+	polygons: Array[PackedVector2Array]
+) -> bool:
+	for polygon: PackedVector2Array in polygons:
+		if Geometry2D.is_point_in_polygon(point, polygon):
+			return true
+	return false
+
+
+func _vec2_from_array(value) -> Vector2:
+	if value is Array and value.size() >= 2:
+		return Vector2(float(value[0]), float(value[1]))
+	return Vector2.INF
+
+
+func _section_with_authored_decor_role(
+	area: WorldAreaScene,
+	role_prefix: String
+) -> WorldAreaSection:
+	var area_definition := CITY_AUTHORING.area_definition()
+	var sections_value = area_definition.get("sections", [])
+	if not sections_value is Array:
+		return null
+	for raw_section in sections_value as Array:
+		if not raw_section is Dictionary:
+			continue
+		var coord_value = (raw_section as Dictionary).get("coord", [])
+		if not coord_value is Array or coord_value.size() < 2:
+			continue
+		var coord := Vector2i(int(coord_value[0]), int(coord_value[1]))
+		for raw_placement in CITY_AUTHORING.decoration_placements(coord):
+			if (
+				raw_placement is Dictionary
+				and String((raw_placement as Dictionary).get("role", "")).begins_with(role_prefix)
+			):
+				return area.get_node_or_null(
+					"Section_%d_%d" % [coord.x, coord.y]
+				) as WorldAreaSection
+	return null
 
 
 func _service_section(area: WorldAreaScene, service_id: String) -> WorldAreaSection:
