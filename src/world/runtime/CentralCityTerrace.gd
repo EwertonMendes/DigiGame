@@ -7,22 +7,28 @@ const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 
 const ROOT_Z := -1164
 const WALL_CAP_GRID := 0.34
-const TRENCH_CAP_GRID := 0.28
-const TRENCH_DEPTH_PX := 14.0
+const TRENCH_CAP_GRID := 0.22
+const BASIN_DEPTH_PX := 22.0
+const WATER_SURFACE_DROP_PX := 8.0
+const WATER_EDGE_INSET_GRID := 0.10
+const BASIN_FLOOR_INSET_GRID := 0.18
+const SHORE_BAND_GRID := 0.42
 const BRIDGE_BODY_DEPTH_PX := 8.0
 const BRIDGE_RAIL_GRID := 0.16
-const WATER_INSET_PX := 10.0
 
 const WALL_TOP := Color(0.60, 0.61, 0.61, 1.0)
 const WALL_FACE := Color(0.22, 0.25, 0.27, 1.0)
 const STAIR_TOP := Color(0.60, 0.61, 0.61, 1.0)
 const STAIR_RISER := Color(0.27, 0.30, 0.32, 1.0)
 const STAIR_SIDE := Color(0.20, 0.23, 0.25, 1.0)
-const TRENCH_CAP := Color(0.55, 0.57, 0.58, 1.0)
-const TRENCH_FACE := Color(0.12, 0.15, 0.17, 1.0)
-const BRIDGE_TOP := Color(0.51, 0.53, 0.54, 1.0)
-const BRIDGE_BODY := Color(0.18, 0.21, 0.23, 1.0)
-const BRIDGE_RAIL := Color(0.12, 0.18, 0.21, 1.0)
+const TRENCH_CAP := Color(0.62, 0.64, 0.65, 1.0)
+const BASIN_WALL_BACK := Color(0.34, 0.43, 0.46, 1.0)
+const BASIN_WALL_FRONT := Color(0.24, 0.33, 0.36, 1.0)
+const BASIN_WALL_SUBMERGED := Color(0.10, 0.30, 0.36, 1.0)
+const BASIN_FLOOR := Color(0.055, 0.235, 0.29, 1.0)
+const BRIDGE_TOP := Color(0.54, 0.56, 0.57, 1.0)
+const BRIDGE_BODY := Color(0.28, 0.34, 0.36, 1.0)
+const BRIDGE_RAIL := Color(0.13, 0.22, 0.25, 1.0)
 
 
 static func build() -> Node2D:
@@ -58,58 +64,79 @@ static func build() -> Node2D:
 	_add_color_batch(root, "StairNosingAndParapets", stair_rails, 6)
 
 	var trench_caps: Array[Dictionary] = []
-	var trench_faces: Array[Dictionary] = []
+	var basin_floor: Array[Dictionary] = []
+	var basin_back_faces: Array[Dictionary] = []
+	var basin_front_faces: Array[Dictionary] = []
 	var water_surfaces: Array[Dictionary] = []
 	var water_edges: Array[Dictionary] = []
 	for raw_void in TOPOLOGY.voids():
 		if raw_void is Dictionary:
-			_append_void_frame(raw_void as Dictionary, trench_caps, trench_faces, water_surfaces, water_edges)
+			_append_void_frame(
+				raw_void as Dictionary,
+				trench_caps,
+				basin_floor,
+				basin_back_faces,
+				basin_front_faces,
+				water_surfaces,
+				water_edges
+			)
+
+	# The basin is real 2.5D geometry now: floor and submerged/back faces are
+	# rendered before the water so the refraction shader has actual scenery to
+	# bend. Front faces and the stone rim render after the water, making the
+	# surface visibly sit below pavement level instead of looking painted on.
+	_add_color_batch(root, "WaterBasinFloor", basin_floor, 6)
+	_add_color_batch(root, "TrenchSubmergedWalls", basin_back_faces, 7)
+
 	if not water_surfaces.is_empty():
 		var water_profile := {
-			# Central City uses a bright digital-canal palette: saturated cyan
-			# body, darker blue depth, and small crisp facets instead of broad
-			# white reflections. In grid UV space +X/+Y together means visually
-			# down the isometric screen.
-			"deep_color": Color(0.010, 0.340, 0.530, 1.0),
-			"body_color": Color(0.020, 0.640, 0.800, 1.0),
-			"shallow_color": Color(0.100, 0.800, 0.900, 1.0),
-			"line_color": Color(0.280, 0.940, 1.000, 1.0),
-			"crest_color": Color(0.720, 1.000, 1.000, 1.0),
+			"deep_color": Color(0.010, 0.340, 0.565, 1.0),
+			"body_color": Color(0.015, 0.670, 0.830, 1.0),
+			"shallow_color": Color(0.100, 0.830, 0.920, 1.0),
+			"caustic_color": Color(0.460, 0.970, 1.000, 1.0),
+			"crest_color": Color(0.840, 1.000, 1.000, 1.0),
+			"underwater_tint": Color(0.44, 0.84, 0.90, 1.0),
 			"flow_direction": Vector2(1.0, 1.0).normalized(),
-			"flow_speed": 0.20,
-			"pattern_scale": 2.65,
-			"line_width": 0.040,
-			"line_strength": 0.48,
-			"ripple_scale": 1.05,
-			"ripple_strength": 0.22,
-			"depth_strength": 0.24,
-			"opacity": 0.98,
+			"flow_speed": 0.16,
+			"cross_flow_speed": 0.065,
+			"wave_scale": 1.10,
+			"wave_strength": 0.34,
+			"caustic_scale": 1.48,
+			"caustic_strength": 0.32,
+			"caustic_speed": 0.44,
+			"crest_strength": 0.18,
+			"depth_strength": 0.54,
+			"refraction_pixels": 1.15,
+			"refraction_visibility": 0.21,
+			"opacity": 0.97,
 		}
-		var water := CITY.create_world_uv_polygon_batch(
+		var water := WORLD_WATER.create_surface_batch(
 			water_surfaces,
-			CITY.create_water_material(water_profile),
-			6
+			8,
+			"CanalWater",
+			water_profile
 		)
-		water.name = "CanalWater"
 		root.add_child(water)
+
 	if not water_edges.is_empty():
 		var shoreline := WORLD_WATER.create_shoreline_batch(
 			water_edges,
-			7,
+			9,
 			"CanalShoreline",
 			{
-				"foam_color": Color(0.340, 0.950, 1.000, 0.90),
-				"secondary_color": Color(0.080, 0.720, 0.900, 0.48),
-				"shore_speed": 0.36,
-				"shore_strength": 0.68,
-				"secondary_strength": 0.18,
-				"world_scale": 0.020,
-				"crest_width": 0.050,
+				"foam_color": Color(0.72, 0.99, 1.00, 0.86),
+				"secondary_color": Color(0.12, 0.76, 0.91, 0.52),
+				"shore_speed": 0.30,
+				"shore_strength": 0.66,
+				"secondary_strength": 0.28,
+				"world_scale": 0.022,
+				"crest_width": 0.048,
 			}
 		)
 		root.add_child(shoreline)
-	_add_paver_batch(root, "TrenchBankCaps", trench_caps, 8)
-	_add_color_batch(root, "TrenchInnerWalls", trench_faces, 9)
+
+	_add_color_batch(root, "TrenchFrontWalls", basin_front_faces, 10)
+	_add_paver_batch(root, "TrenchBankCaps", trench_caps, 11)
 
 	var bridge_bodies: Array[Dictionary] = []
 	var bridge_decks: Array[Dictionary] = []
@@ -117,9 +144,9 @@ static func build() -> Node2D:
 	for raw_bridge in TOPOLOGY.bridges():
 		if raw_bridge is Dictionary:
 			_append_bridge(raw_bridge as Dictionary, bridge_bodies, bridge_decks, bridge_rails)
-	_add_color_batch(root, "BridgeBodies", bridge_bodies, 10)
-	_add_paver_batch(root, "BridgeDecks", bridge_decks, 11)
-	_add_color_batch(root, "BridgeRails", bridge_rails, 12)
+	_add_color_batch(root, "BridgeBodies", bridge_bodies, 12)
+	_add_paver_batch(root, "BridgeDecks", bridge_decks, 13)
+	_add_color_batch(root, "BridgeRails", bridge_rails, 14)
 
 	root.set_meta("visual_level_count", TOPOLOGY.levels().size())
 	root.set_meta("stair_count", TOPOLOGY.stairs().size())
@@ -290,7 +317,9 @@ static func _append_staircase(
 static func _append_void_frame(
 	void_region: Dictionary,
 	caps: Array[Dictionary],
-	faces: Array[Dictionary],
+	basin_floor: Array[Dictionary],
+	basin_back_faces: Array[Dictionary],
+	basin_front_faces: Array[Dictionary],
 	water_surfaces: Array[Dictionary],
 	water_edges: Array[Dictionary]
 ) -> void:
@@ -301,71 +330,186 @@ static func _append_void_frame(
 	var level := TOPOLOGY.level_at_grid(Vector2((x0 + x1) * 0.5, y0 - 0.5))
 	var elevation := TOPOLOGY.elevation_for_level(level)
 
-	var footprint := PackedVector2Array([Vector2(x0, y0), Vector2(x1, y0), Vector2(x1, y1), Vector2(x0, y1)])
+	var footprint := PackedVector2Array([
+		Vector2(x0, y0),
+		Vector2(x1, y0),
+		Vector2(x1, y1),
+		Vector2(x0, y1),
+	])
 	var polygon_value = void_region.get("grid_polygon")
 	if polygon_value is PackedVector2Array and (polygon_value as PackedVector2Array).size() >= 3:
 		footprint = polygon_value as PackedVector2Array
-	var has_water := String(void_region.get("fill", "water")) == "water"
-	if has_water:
-		var logical := _grid_to_logical(footprint)
-		water_surfaces.append({
-			"points": _logical_at_elevation(logical, elevation - WATER_INSET_PX),
-			"logical_points": logical,
-			"color": Color.WHITE,
-		})
-	if has_water:
-		var signed_area := 0.0
-		for index in range(footprint.size()):
-			signed_area += footprint[index].cross(footprint[(index + 1) % footprint.size()])
-		var sign_value := 1.0 if signed_area >= 0.0 else -1.0
-		for index in range(footprint.size()):
-			var a := footprint[index]
-			var b := footprint[(index + 1) % footprint.size()]
-			var edge := b - a
-			if edge.is_zero_approx():
-				continue
-			var inward := -Vector2(edge.y, -edge.x).normalized() * sign_value
-			var strip_grid := PackedVector2Array([
-				a + inward * 0.04,
-				b + inward * 0.04,
-				b + inward * 0.36,
-				a + inward * 0.36,
-			])
-			var strip_world := _logical_at_elevation(
-				_grid_to_logical(strip_grid),
-				elevation - WATER_INSET_PX
-			)
-			water_edges.append({
-				"outer_a": strip_world[0],
-				"outer_b": strip_world[1],
-				"inner_b": strip_world[2],
-				"inner_a": strip_world[3],
-			})
-	var cap_strips := [
-		PackedVector2Array([Vector2(x0, y0 - TRENCH_CAP_GRID), Vector2(x1, y0 - TRENCH_CAP_GRID), Vector2(x1, y0), Vector2(x0, y0)]),
-		PackedVector2Array([Vector2(x0, y1), Vector2(x1, y1), Vector2(x1, y1 + TRENCH_CAP_GRID), Vector2(x0, y1 + TRENCH_CAP_GRID)]),
-		PackedVector2Array([Vector2(x0 - TRENCH_CAP_GRID, y0), Vector2(x0, y0), Vector2(x0, y1), Vector2(x0 - TRENCH_CAP_GRID, y1)]),
-		PackedVector2Array([Vector2(x1, y0), Vector2(x1 + TRENCH_CAP_GRID, y0), Vector2(x1 + TRENCH_CAP_GRID, y1), Vector2(x1, y1)]),
-	]
-	for strip: PackedVector2Array in cap_strips:
-		_append_paver_spec(caps, strip, level, TRENCH_CAP)
 
-	var edges := [
-		[Vector2(x0, y0), Vector2(x1, y0)],
-		[Vector2(x1, y0), Vector2(x1, y1)],
-		[Vector2(x1, y1), Vector2(x0, y1)],
-		[Vector2(x0, y1), Vector2(x0, y0)],
-	]
-	for edge in edges:
-		var a_logical := TOPOLOGY.grid_to_world(edge[0] as Vector2)
-		var b_logical := TOPOLOGY.grid_to_world(edge[1] as Vector2)
-		var a := a_logical + Vector2(0.0, -elevation)
-		var b := b_logical + Vector2(0.0, -elevation)
-		var drop := Vector2(0.0, TRENCH_DEPTH_PX)
-		faces.append({
-			"points": PackedVector2Array([a, b, b + drop, a + drop]),
-			"color": TRENCH_FACE,
+	var has_water := String(void_region.get("fill", "water")) == "water"
+	if not has_water:
+		return
+
+	var water_grid := _offset_grid_polygon(footprint, -WATER_EDGE_INSET_GRID)
+	var floor_grid := _offset_grid_polygon(footprint, -BASIN_FLOOR_INSET_GRID)
+	water_grid = _align_polygon_vertices(footprint, water_grid)
+	floor_grid = _align_polygon_vertices(footprint, floor_grid)
+
+	# If an extreme authored shape cannot be offset safely, fall back to the
+	# original outline rather than producing missing or self-intersecting water.
+	if water_grid.size() != footprint.size():
+		water_grid = footprint.duplicate()
+	if floor_grid.size() != footprint.size():
+		floor_grid = water_grid.duplicate()
+
+	var top_logical := _grid_to_logical(footprint)
+	var water_logical := _grid_to_logical(water_grid)
+	var floor_logical := _grid_to_logical(floor_grid)
+	var top_display := _logical_at_elevation(top_logical, elevation)
+	var water_elevation := elevation - WATER_SURFACE_DROP_PX
+	var floor_elevation := elevation - BASIN_DEPTH_PX
+	var water_display := _logical_at_elevation(water_logical, water_elevation)
+	var floor_display := _logical_at_elevation(floor_logical, floor_elevation)
+
+	basin_floor.append({
+		"points": floor_display,
+		"color": BASIN_FLOOR,
+	})
+	water_surfaces.append({
+		"points": water_display,
+		"grid_points": water_grid,
+	})
+
+	# The rim is an actual ring around the authored opening. This closes the
+	# corners cleanly and removes the old black rectangular gap.
+	var outer_grid := _offset_grid_polygon(footprint, TRENCH_CAP_GRID)
+	outer_grid = _align_polygon_vertices(footprint, outer_grid)
+	if outer_grid.size() == footprint.size():
+		for index in range(footprint.size()):
+			var next := (index + 1) % footprint.size()
+			_append_paver_spec(
+				caps,
+				PackedVector2Array([
+					outer_grid[index],
+					outer_grid[next],
+					footprint[next],
+					footprint[index],
+				]),
+				level,
+				TRENCH_CAP
+			)
+
+	# Split the basin wall around the waterline. Everything below the surface
+	# renders behind the water and is refracted through it. Only the near/front
+	# dry lip renders in front of the surface, which is what creates the sense
+	# that the canal actually contains a volume of water.
+	var opening_center := Vector2.ZERO
+	for point: Vector2 in top_display:
+		opening_center += point
+	opening_center /= float(maxi(top_display.size(), 1))
+
+	for index in range(footprint.size()):
+		var next := (index + 1) % footprint.size()
+		var top_a := top_display[index]
+		var top_b := top_display[next]
+		var water_a := water_display[index]
+		var water_b := water_display[next]
+		var bottom_a := floor_display[index]
+		var bottom_b := floor_display[next]
+
+		basin_back_faces.append({
+			"points": PackedVector2Array([water_a, water_b, bottom_b, bottom_a]),
+			"color": BASIN_WALL_SUBMERGED,
 		})
+
+		var upper_face := {
+			"points": PackedVector2Array([top_a, top_b, water_b, water_a]),
+			"color": BASIN_WALL_BACK,
+		}
+		var edge_midpoint := (top_a + top_b) * 0.5
+		if edge_midpoint.y > opening_center.y:
+			upper_face["color"] = BASIN_WALL_FRONT
+			basin_front_faces.append(upper_face)
+		else:
+			basin_back_faces.append(upper_face)
+
+	# Shoreline strips live on the lowered water plane and pulse inward from
+	# the physical basin wall. Their animation is independent of downstream
+	# flow, so the edge behaves like lapping water rather than a moving border.
+	var signed_area := _polygon_signed_area(water_grid)
+	var sign_value := 1.0 if signed_area >= 0.0 else -1.0
+	for index in range(water_grid.size()):
+		var next := (index + 1) % water_grid.size()
+		var a := water_grid[index]
+		var b := water_grid[next]
+		var edge := b - a
+		if edge.is_zero_approx():
+			continue
+		var inward := -Vector2(edge.y, -edge.x).normalized() * sign_value
+		var strip_grid := PackedVector2Array([
+			a + inward * 0.015,
+			b + inward * 0.015,
+			b + inward * SHORE_BAND_GRID,
+			a + inward * SHORE_BAND_GRID,
+		])
+		var strip_world := _logical_at_elevation(
+			_grid_to_logical(strip_grid),
+			water_elevation
+		)
+		water_edges.append({
+			"outer_a": strip_world[0],
+			"outer_b": strip_world[1],
+			"inner_b": strip_world[2],
+			"inner_a": strip_world[3],
+		})
+
+
+static func _offset_grid_polygon(
+	points: PackedVector2Array,
+	delta: float
+) -> PackedVector2Array:
+	var candidates := Geometry2D.offset_polygon(points, delta)
+	if candidates.is_empty():
+		return points.duplicate()
+
+	var best := PackedVector2Array()
+	var best_area := -1.0
+	for candidate_value in candidates:
+		if not candidate_value is PackedVector2Array:
+			continue
+		var candidate := candidate_value as PackedVector2Array
+		var area := absf(_polygon_signed_area(candidate))
+		if area > best_area:
+			best = candidate
+			best_area = area
+	return best if not best.is_empty() else points.duplicate()
+
+
+static func _align_polygon_vertices(
+	reference: PackedVector2Array,
+	candidate: PackedVector2Array
+) -> PackedVector2Array:
+	if reference.size() < 3 or candidate.size() != reference.size():
+		return candidate
+
+	var count := reference.size()
+	var best := candidate.duplicate()
+	var best_error := INF
+	for reverse_order in [false, true]:
+		for offset in range(count):
+			var aligned := PackedVector2Array()
+			var error := 0.0
+			for index in range(count):
+				var source_index := offset + (-index if reverse_order else index)
+				source_index = ((source_index % count) + count) % count
+				var point := candidate[source_index]
+				aligned.append(point)
+				error += point.distance_squared_to(reference[index])
+			if error < best_error:
+				best_error = error
+				best = aligned
+	return best
+
+
+static func _polygon_signed_area(points: PackedVector2Array) -> float:
+	var twice_area := 0.0
+	for index in range(points.size()):
+		twice_area += points[index].cross(points[(index + 1) % points.size()])
+	return twice_area * 0.5
 
 
 static func _append_bridge(
