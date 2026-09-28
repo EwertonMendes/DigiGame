@@ -38,6 +38,23 @@ def require(text: str, value: str, source: str) -> None:
         fail(f"{source} is missing {value!r}.")
 
 
+def require_project_default(text: str, key: str, expected: str) -> None:
+    """Godot omits settings equal to their engine default when saving projects."""
+    section = ""
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if line.startswith("["):
+            section = line
+        if section != "[application]" or "=" not in line:
+            continue
+        setting, value = line.split("=", 1)
+        if setting.strip() == key:
+            if value.strip() != expected:
+                fail(f"project.godot requires {key}={expected}, got {value.strip()!r}.")
+            return
+    # The required value is the Godot 4.7 default, so absence is equivalent.
+
+
 def main() -> None:
     if not ICON.is_file():
         fail("assets/ui/icons/favicon.png does not exist.")
@@ -72,10 +89,10 @@ def main() -> None:
 
     require(project, f'config/icon="{RESOURCE_ICON}"', "project.godot")
     require(project, f'boot_splash/image="{RESOURCE_SPLASH}"', "project.godot")
-    require(project, "boot_splash/show_image=true", "project.godot")
-    require(project, "boot_splash/minimum_display_time=0", "project.godot")
-    require(project, "boot_splash/stretch_mode=1", "project.godot")
-    require(project, "boot_splash/use_filter=true", "project.godot")
+    require_project_default(project, "boot_splash/show_image", "true")
+    require_project_default(project, "boot_splash/minimum_display_time", "0")
+    require_project_default(project, "boot_splash/stretch_mode", "1")
+    require_project_default(project, "boot_splash/use_filter", "true")
     require(
         project,
         "boot_splash/bg_color=Color(0.00392157, 0.00784314, 0.0235294, 1)",
