@@ -34,14 +34,28 @@ func block_cells(cells: Array[Vector2i], source: String = "") -> void:
 
 
 func is_cell_walkable(cell: Vector2i) -> bool:
-	if cell.x < 1 or cell.y < 1:
+	# The room envelope is the complete authored floor (0..size-1). Perimeter
+	# walls decide what is blocked. This distinction is essential at the front
+	# doorway: row 13 contains both wall cells and the actual open passage.
+	if cell.x < 0 or cell.y < 0:
 		return false
-	if cell.x >= room_size.x - 1 or cell.y >= room_size.y - 1:
+	if cell.x >= room_size.x or cell.y >= room_size.y:
 		return false
 	return not _blocked_cells.has(_cell_key(cell))
 
 
 func is_grid_position_walkable(grid_position: Vector2) -> bool:
+	# Continuous floor envelope. Do not reject the whole outer row: doing that
+	# used to make the lower doorway unreachable while still allowing half of a
+	# blocked upper cell through rounding. The authored wall cells below are
+	# the only authority for perimeter obstruction.
+	if grid_position.x < -0.5 or grid_position.y < -0.5:
+		return false
+	if grid_position.x > float(room_size.x) - 0.5:
+		return false
+	if grid_position.y > float(room_size.y) - 0.5:
+		return false
+
 	var cell := Vector2i(
 		floori(grid_position.x + 0.5),
 		floori(grid_position.y + 0.5)
@@ -98,8 +112,8 @@ func blocker_source(cell: Vector2i) -> String:
 func _nearest_reachable_cell(origin: Vector2i, target: Vector2i) -> Vector2i:
 	var best := Vector2i(-999999, -999999)
 	var best_distance := INF
-	for x in range(1, room_size.x - 1):
-		for y in range(1, room_size.y - 1):
+	for x in range(room_size.x):
+		for y in range(room_size.y):
 			var cell := Vector2i(x, y)
 			if not is_cell_walkable(cell) or not _has_path(cell, target):
 				continue
