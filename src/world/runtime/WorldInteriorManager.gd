@@ -84,6 +84,10 @@ func enter_interior(payload: Dictionary) -> bool:
 	_camera.position = Vector2.ZERO
 	_camera.reset_smoothing()
 	interior_state_changed.emit(true, String(payload.get("title", "INTERIOR")))
+	# Give the camera and actor one complete frame on the new presentation
+	# plane while the overlay is fully opaque. This prevents the mobile camera
+	# from revealing a one-frame vertical snap/zoom after a long teleport.
+	await get_tree().process_frame
 	await _reveal_transition(INTERIOR_ZOOM)
 
 	_transitioning = false
@@ -115,6 +119,7 @@ func exit_interior() -> bool:
 	if _area_scene != null:
 		_area_scene.set_exterior_active(true)
 	interior_state_changed.emit(false, "")
+	await get_tree().process_frame
 	await _reveal_transition(EXTERIOR_ZOOM)
 
 	# The exterior is now visible with the DigiLab still on its fully-open frame.
@@ -155,7 +160,7 @@ func _cover_transition() -> void:
 	tween.set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD)
 	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(_overlay, "modulate:a", 0.48, 0.24)
+	tween.tween_property(_overlay, "modulate:a", 1.0, 0.24)
 	tween.tween_property(_camera, "zoom", Vector2.ONE * TRANSITION_ZOOM, 0.24)
 	await tween.finished
 
