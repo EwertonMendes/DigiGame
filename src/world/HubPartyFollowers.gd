@@ -182,7 +182,16 @@ func _update_followers(delta: float) -> void:
 		var trail_target := _trail_target_at_distance(desired_distance)
 		if bool(trail_target.get("valid", false)):
 			var target_position := Vector2(trail_target.get("position", follower.global_position))
-			var moved := bool(follower.call("step_toward", target_position, delta, occupied))
+			var movement_validator := Callable(self, "_can_follower_move_to").bind(follower)
+			var moved := bool(
+				follower.call(
+					"step_toward",
+					target_position,
+					delta,
+					occupied,
+					movement_validator
+				)
+			)
 			if moved and follower.has_method("set_world_elevation"):
 				follower.call("set_world_elevation", _world_elevation_at(follower.global_position))
 		else:
@@ -295,6 +304,13 @@ func _is_walkable(candidate: Vector2) -> bool:
 	if _hub == null or _player == null or not _hub.has_method("can_actor_move_to"):
 		return true
 	return bool(_hub.call("can_actor_move_to", candidate, _player))
+
+
+func _can_follower_move_to(candidate: Vector2, follower: Node2D) -> bool:
+	if _hub == null or not _hub.has_method("can_actor_move_to"):
+		return true
+	return bool(_hub.call("can_actor_move_to", candidate, follower))
+
 
 func _has_clearance(candidate: Vector2, occupied: Array[Vector2]) -> bool:
 	for point in occupied:
