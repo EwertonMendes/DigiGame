@@ -209,15 +209,15 @@ func _build_digilab_walls(walls: Node2D) -> void:
 	var authored := Node2D.new()
 	authored.name = "AuthoredWalls"
 	authored.set_meta("grid_size", Vector2(CITY.TILE_WIDTH, CITY.TILE_HEIGHT))
-	authored.set_meta("layout_contract", "grid-native-vector-batched")
+	authored.set_meta("layout_contract", "grid-native-depth-sorted")
 	walls.add_child(authored)
 
 	var last_x := float(ROOM_SIZE.x - 1)
 	var front_y := float(ROOM_SIZE.y - 1)
 
-	# Repeated straight modules are submitted in three GPU batches. They still
-	# occupy one exact grid edge each, but no longer add dozens of Sprite2D
-	# nodes/draw submissions to this mobile-sensitive interior.
+	# The back run never crosses the player depth plane, so it remains one GPU
+	# batch. Side/front runs are depth-sensitive and are authored separately
+	# below so their occlusion can follow the same ground-Y contract as actors.
 	var back_grid: Array[Vector2] = []
 	for x in range(ROOM_SIZE.x - 1):
 		back_grid.append(Vector2(float(x), 0.0))
