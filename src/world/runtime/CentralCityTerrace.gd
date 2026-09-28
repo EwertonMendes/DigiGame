@@ -7,7 +7,7 @@ const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 
 const ROOT_Z := -1164
 const WALL_CAP_GRID := 0.34
-const TRENCH_CAP_GRID := 0.22
+const TRENCH_CAP_GRID := 0.10
 const BASIN_DEPTH_PX := 22.0
 const WATER_SURFACE_DROP_PX := 8.0
 const WATER_EDGE_INSET_GRID := 0.10
@@ -21,13 +21,15 @@ const WALL_FACE := Color(0.22, 0.25, 0.27, 1.0)
 const STAIR_TOP := Color(0.60, 0.61, 0.61, 1.0)
 const STAIR_RISER := Color(0.27, 0.30, 0.32, 1.0)
 const STAIR_SIDE := Color(0.20, 0.23, 0.25, 1.0)
-const TRENCH_CAP := Color(0.62, 0.64, 0.65, 1.0)
-const BASIN_WALL_BACK := Color(0.34, 0.43, 0.46, 1.0)
-const BASIN_WALL_FRONT := Color(0.24, 0.33, 0.36, 1.0)
-const BASIN_WALL_SUBMERGED := Color(0.10, 0.30, 0.36, 1.0)
-const BASIN_FLOOR := Color(0.055, 0.235, 0.29, 1.0)
-const BRIDGE_TOP := Color(0.54, 0.56, 0.57, 1.0)
-const BRIDGE_BODY := Color(0.28, 0.34, 0.36, 1.0)
+# Canal architecture stays neutral; cyan belongs to the water/light language,
+# not to the concrete itself. Water refraction provides the submerged blue cast.
+const TRENCH_CAP := Color(0.575, 0.590, 0.598, 1.0)
+const BASIN_WALL_BACK := Color(0.435, 0.455, 0.465, 1.0)
+const BASIN_WALL_FRONT := Color(0.355, 0.385, 0.398, 1.0)
+const BASIN_WALL_SUBMERGED := Color(0.285, 0.335, 0.350, 1.0)
+const BASIN_FLOOR := Color(0.225, 0.305, 0.325, 1.0)
+const BRIDGE_TOP := Color(0.555, 0.570, 0.580, 1.0)
+const BRIDGE_BODY := Color(0.335, 0.370, 0.382, 1.0)
 const BRIDGE_RAIL := Color(0.13, 0.22, 0.25, 1.0)
 
 
@@ -85,8 +87,32 @@ static func build() -> Node2D:
 	# rendered before the water so the refraction shader has actual scenery to
 	# bend. Front faces and the stone rim render after the water, making the
 	# surface visibly sit below pavement level instead of looking painted on.
-	_add_color_batch(root, "WaterBasinFloor", basin_floor, 6)
-	_add_color_batch(root, "TrenchSubmergedWalls", basin_back_faces, 7)
+	_add_structure_batch(
+		root,
+		"WaterBasinFloor",
+		basin_floor,
+		6,
+		{
+			"aggregate_strength": 0.020,
+			"vertical_darkening": 0.02,
+			"top_bevel_strength": 0.0,
+			"bottom_ao_strength": 0.02,
+			"cool_depth_tint": 0.025,
+		}
+	)
+	_add_structure_batch(
+		root,
+		"TrenchSubmergedWalls",
+		basin_back_faces,
+		7,
+		{
+			"aggregate_strength": 0.026,
+			"vertical_darkening": 0.12,
+			"top_bevel_strength": 0.045,
+			"bottom_ao_strength": 0.10,
+			"cool_depth_tint": 0.075,
+		}
+	)
 
 	if not water_surfaces.is_empty():
 		var water_profile := {
@@ -135,7 +161,24 @@ static func build() -> Node2D:
 		)
 		root.add_child(shoreline)
 
-	_add_color_batch(root, "TrenchFrontWalls", basin_front_faces, 10)
+	_add_structure_batch(
+		root,
+		"TrenchFrontWalls",
+		basin_front_faces,
+		10,
+		{
+			"aggregate_strength": 0.025,
+			"vertical_darkening": 0.18,
+			"top_bevel_strength": 0.11,
+			"top_bevel_width": 0.16,
+			"bottom_ao_strength": 0.15,
+			"bottom_ao_width": 0.28,
+			"cool_depth_tint": 0.035,
+		}
+	)
+	# A narrow continuous micro-paver coping replaces the previous broad gray
+	# frame. It reuses the city's paving language so the basin grows naturally
+	# out of the plaza instead of reading as a separate swimming-pool border.
 	_add_paver_batch(root, "TrenchBankCaps", trench_caps, 11)
 
 	var bridge_bodies: Array[Dictionary] = []
@@ -144,7 +187,19 @@ static func build() -> Node2D:
 	for raw_bridge in TOPOLOGY.bridges():
 		if raw_bridge is Dictionary:
 			_append_bridge(raw_bridge as Dictionary, bridge_bodies, bridge_decks, bridge_rails)
-	_add_color_batch(root, "BridgeBodies", bridge_bodies, 12)
+	_add_structure_batch(
+		root,
+		"BridgeBodies",
+		bridge_bodies,
+		12,
+		{
+			"aggregate_strength": 0.024,
+			"vertical_darkening": 0.17,
+			"top_bevel_strength": 0.08,
+			"bottom_ao_strength": 0.13,
+			"cool_depth_tint": 0.025,
+		}
+	)
 	_add_paver_batch(root, "BridgeDecks", bridge_decks, 13)
 	_add_color_batch(root, "BridgeRails", bridge_rails, 14)
 
@@ -154,6 +209,8 @@ static func build() -> Node2D:
 	root.set_meta("bridge_count", TOPOLOGY.bridges().size())
 	root.set_meta("water_surface_drop_px", WATER_SURFACE_DROP_PX)
 	root.set_meta("basin_depth_px", BASIN_DEPTH_PX)
+	root.set_meta("canal_coping_width_grid", TRENCH_CAP_GRID)
+	root.set_meta("preserves_ground_underlay", true)
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
@@ -370,6 +427,9 @@ static func _append_void_frame(
 	basin_floor.append({
 		"points": floor_display,
 		"color": BASIN_FLOOR,
+		"depths": PackedFloat32Array([
+			0.55, 0.55, 0.55, 0.55,
+		]),
 	})
 	water_surfaces.append({
 		"points": water_display,
@@ -416,11 +476,13 @@ static func _append_void_frame(
 		basin_back_faces.append({
 			"points": PackedVector2Array([water_a, water_b, bottom_b, bottom_a]),
 			"color": BASIN_WALL_SUBMERGED,
+			"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 		})
 
 		var upper_face := {
 			"points": PackedVector2Array([top_a, top_b, water_b, water_a]),
 			"color": BASIN_WALL_BACK,
+			"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 		}
 		var edge_midpoint := (top_a + top_b) * 0.5
 		if edge_midpoint.y > opening_center.y:
@@ -552,10 +614,40 @@ static func _append_bridge(
 	bodies.append({
 		"points": PackedVector2Array([left_top_a, left_top_b, left_top_b + drop, left_top_a + drop]),
 		"color": BRIDGE_BODY,
+		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 	})
 	bodies.append({
 		"points": PackedVector2Array([right_top_a, right_top_b, right_top_b + drop, right_top_a + drop]),
 		"color": BRIDGE_BODY,
+		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
+	})
+
+	# Close both bridge ends with real abutment faces. These occupy the same
+	# batched structural material as the slab sides and remove the floating
+	# bridge / open-void read at the canal heads.
+	var near_top_a := TOPOLOGY.grid_to_display(Vector2(x0, y0 - 0.18), level)
+	var near_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y0 - 0.18), level)
+	var far_top_a := TOPOLOGY.grid_to_display(Vector2(x0, y1 + 0.18), level)
+	var far_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y1 + 0.18), level)
+	bodies.append({
+		"points": PackedVector2Array([
+			near_top_a,
+			near_top_b,
+			near_top_b + drop,
+			near_top_a + drop,
+		]),
+		"color": BRIDGE_BODY.lightened(0.025),
+		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
+	})
+	bodies.append({
+		"points": PackedVector2Array([
+			far_top_a,
+			far_top_b,
+			far_top_b + drop,
+			far_top_a + drop,
+		]),
+		"color": BRIDGE_BODY.darkened(0.035),
+		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 	})
 
 	var left_rail := PackedVector2Array([
@@ -646,6 +738,21 @@ static func _add_paver_batch(
 	if specs.is_empty():
 		return
 	var mesh := CITY.create_paver_polygon_batch(specs, z)
+	mesh.name = node_name
+	mesh.z_index = z
+	root.add_child(mesh)
+
+
+static func _add_structure_batch(
+	root: Node2D,
+	node_name: String,
+	specs: Array[Dictionary],
+	z: int,
+	profile: Dictionary = {}
+) -> void:
+	if specs.is_empty():
+		return
+	var mesh := CITY.create_canal_structure_batch(specs, z, profile)
 	mesh.name = node_name
 	mesh.z_index = z
 	root.add_child(mesh)
