@@ -3,6 +3,7 @@ class_name WorldInterior
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const DIGILAB_ART = preload("res://src/world/runtime/DigiLabInteriorArt.gd")
+const WORLD_DEPTH = preload("res://src/world/runtime/WorldDepth.gd")
 const InteractableScript = preload("res://src/world/runtime/WorldInteractable.gd")
 const ActorScript = preload("res://src/world/HubActor.gd")
 const NPC_TEXTURE = preload("res://assets/characters/world/battle_operator_purple.png")
@@ -12,6 +13,10 @@ const TILE_HALF_HEIGHT := 16.0
 const ROOM_SIZE := Vector2i(18, 14)
 const SPAWN_CELL := Vector2i(9, 11)
 const EXIT_CELL := Vector2i(9, 12)
+# Tall shell walls use a small authored floor inset so the player's visible feet
+# never project onto the top face of the two-level generic wall blocks. Front
+# low walls keep their original doorway/contact contract.
+const TALL_SHELL_CLEARANCE_GRID := 0.24
 
 var definition: Dictionary = {}
 
@@ -39,6 +44,8 @@ func get_spawn_world_position() -> Vector2:
 
 func is_walkable_world_position(world_position: Vector2) -> bool:
 	var local_grid := world_to_grid(to_local(world_position))
+	if not _is_inside_tall_shell_clearance(local_grid):
+		return false
 	var cell := Vector2i(floori(local_grid.x + 0.5), floori(local_grid.y + 0.5))
 	if cell.x < 1 or cell.y < 1 or cell.x >= ROOM_SIZE.x - 1 or cell.y >= ROOM_SIZE.y - 1:
 		return false
@@ -175,16 +182,19 @@ func _build_walls() -> void:
 		wall_cells.append(Vector2i(ROOM_SIZE.x - 1, y))
 
 	for cell in wall_cells:
+		var wall_anchor := grid_to_world(Vector2(cell))
 		for level in range(2):
 			var surface := CITY.SURFACE_DARK
 			if level == 1 and (cell.x + cell.y) % 4 == 0:
 				surface = _accent_surface()
 			var block := CITY.create_full_block(
 				surface,
-				grid_to_world(Vector2(cell)),
-				820 + int(round(grid_to_world(Vector2(cell)).y)),
+				wall_anchor,
+				_depth_for_local_ground(wall_anchor),
 				level
 			)
+			block.set_meta("depth_contract", "world-ground-y")
+			block.set_meta("depth_ground_anchor", wall_anchor)
 			walls.add_child(block)
 		_mark_blocked(cell)
 		_add_circle_collision(cell, 22.0)
@@ -218,28 +228,31 @@ func _build_digilab_walls(walls: Node2D) -> void:
 		820
 	)
 
+	# Side/front modules cross the actor's depth plane, so they cannot share one
+	# MultiMesh z-index. Keep the back wall batched (it is always background), but
+	# depth-sort the shell portions that can legitimately pass in front of actors.
 	var side_grid: Array[Vector2] = []
 	for y in range(ROOM_SIZE.y - 1):
 		side_grid.append(Vector2(0.0, float(y)))
 		side_grid.append(Vector2(last_x, float(y)))
-	_add_digilab_wall_batch(
-		authored,
-		DIGILAB_ART.KIND_STRAIGHT_LEFT,
-		side_grid,
-		820
-	)
+	for grid_anchor in side_grid:
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_STRAIGHT_LEFT,
+			grid_anchor
+		)
 
 	var front_grid: Array[Vector2] = []
 	for x in range(0, 7):
 		front_grid.append(Vector2(float(x), front_y))
 	for x in range(11, ROOM_SIZE.x - 1):
 		front_grid.append(Vector2(float(x), front_y))
-	_add_digilab_wall_batch(
-		authored,
-		DIGILAB_ART.KIND_LOW_DIVIDER,
-		front_grid,
-		830
-	)
+	for grid_anchor in front_grid:
+		_add_digilab_wall_piece(
+			authored,
+			DIGILAB_ART.KIND_LOW_DIVIDER,
+			grid_anchor
+		)
 
 	# Corners are orientation-specific connector sleeves. Each one overlaps a
 	# half edge of both adjacent runs, so there is no floating post or visible
@@ -313,21 +326,29 @@ func _add_digilab_wall_piece(
 	grid_anchor: Vector2
 ) -> void:
 	var world_anchor := grid_to_world(grid_anchor)
+	var depth_grid_anchor := DIGILAB_ART.depth_anchor_grid(kind, grid_anchor)
+	var depth_ground_anchor := grid_to_world(depth_grid_anchor)
 	var piece := DIGILAB_ART.create_piece(
 		kind,
 		world_anchor,
 		grid_anchor,
-		850 + int(round(world_anchor.y))
+		_depth_for_local_ground(depth_ground_anchor)
 	)
+	piece.set_meta("depth_contract", "world-ground-y")
+	piece.set_meta("depth_anchor_cell", depth_grid_anchor)
+	piece.set_meta("depth_ground_anchor", depth_ground_anchor)
 	parent.add_child(piece)
 
 
 func _add_low_front_wall(parent: Node2D, cell: Vector2i) -> void:
+	var wall_anchor := grid_to_world(Vector2(cell))
 	var block := CITY.create_full_block(
 		CITY.SURFACE_DARK,
-		grid_to_world(Vector2(cell)),
-		820 + int(round(grid_to_world(Vector2(cell)).y))
+		wall_anchor,
+		_depth_for_local_ground(wall_anchor)
 	)
+	block.set_meta("depth_contract", "world-ground-y")
+	block.set_meta("depth_ground_anchor", wall_anchor)
 	parent.add_child(block)
 	_mark_blocked(cell)
 	_add_circle_collision(cell, 22.0)
@@ -340,11 +361,14 @@ func _build_counter() -> void:
 	for x in range(6, 12):
 		var cell := Vector2i(x, 4)
 		var surface := _accent_surface() if x in [7, 10] else CITY.SURFACE_DARK
+		var counter_anchor := grid_to_world(Vector2(cell))
 		var block := CITY.create_full_block(
 			surface,
-			grid_to_world(Vector2(cell)),
-			1000 + int(round(grid_to_world(Vector2(cell)).y))
+			counter_anchor,
+			_depth_for_local_ground(counter_anchor)
 		)
+		block.set_meta("depth_contract", "world-ground-y")
+		block.set_meta("depth_ground_anchor", counter_anchor)
 		counter.add_child(block)
 		_mark_blocked(cell)
 		_add_circle_collision(cell, 20.0)
@@ -485,6 +509,26 @@ func _accent_surface() -> String:
 			return CITY.SURFACE_TECH_PURPLE
 		_:
 			return CITY.SURFACE_TECH_TEAL
+
+
+func _is_inside_tall_shell_clearance(local_grid: Vector2) -> bool:
+	if _service_id == "digilab":
+		return true
+	var inset := 0.5 + TALL_SHELL_CLEARANCE_GRID
+	var max_x := float(ROOM_SIZE.x) - 1.5 - TALL_SHELL_CLEARANCE_GRID
+	# Generic interiors have a two-level wall on the back and both sides. The
+	# front is intentionally a low partial wall with a doorway, so it must not
+	# inherit this inset.
+	return (
+		local_grid.x >= inset
+		and local_grid.x <= max_x
+		and local_grid.y >= inset
+	)
+
+
+func _depth_for_local_ground(local_ground_anchor: Vector2, priority: int = 0) -> int:
+	var global_ground_y := to_global(local_ground_anchor).y
+	return WORLD_DEPTH.z_for_ground_y(global_ground_y) + priority
 
 
 func _add_circle_collision(cell: Vector2i, radius: float) -> void:
