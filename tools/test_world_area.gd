@@ -720,12 +720,14 @@ func _ready() -> void:
 		"Hospital may use at most one safe outer-sidewalk lamp instead of posts covering its entrance"
 	)
 	var canal_assets := canal_lighting.get_decoration_asset_ids() if canal_lighting != null else PackedStringArray()
+	var authored_canal_decor := CITY_AUTHORING.decoration_placements(Vector2i(0, -2))
 	assert(
 		canal_lighting != null
-		and canal_lighting.get_decoration_count() >= 4
+		and canal_lighting.get_decoration_count() == authored_canal_decor.size()
+		and canal_assets.has("lamp_blue")
 		and not canal_assets.has("bench_nw")
 		and not canal_assets.has("bench_ne"),
-		"North Canal must keep its bridge-head lamps but no longer place benches over the recessed water"
+		"North Canal runtime decor must match current authoring, keeping bridge-head lamps without resurrecting removed water-overlapping benches"
 	)
 	assert(
 		market_lighting != null
