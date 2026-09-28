@@ -2275,19 +2275,6 @@ script = ExtResource("9_prop")
 role = "south_bridge_east_head"
 surround = "civic"
 
-[node name="Prop_12_bench_nw" type="Marker2D" parent="Props" unique_id=361978617]
-position = Vector2(691.2, -211.2)
-script = ExtResource("9_prop")
-asset_id = "bench_nw"
-role = "canal_southwest_tree_face_center_seating"
-clearance_override = Vector2(0, 0)
-
-[node name="Prop_13_bench_nw" type="Marker2D" parent="Props" unique_id=1578303287]
-position = Vector2(1196.8, -182.4)
-script = ExtResource("9_prop")
-asset_id = "bench_nw"
-role = "canal_northeast_tree_face_center_seating"
-clearance_override = Vector2(0, 0)
 
 [node name="Prop_14_lamp_yellow" type="Marker2D" parent="Props" unique_id=196462052]
 position = Vector2(-656, 488)
