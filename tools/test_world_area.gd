@@ -295,7 +295,7 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("StairSideCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairNosingAndParapets") is MeshInstance2D
 		and south_terrace.get_node_or_null("CanalWater") is MeshInstance2D
-		and south_terrace.get_node_or_null("WaterEdgeHighlights") is MeshInstance2D
+		and south_terrace.get_node_or_null("CanalShoreline") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchBankCaps") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchInnerWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("BridgeBodies") is MeshInstance2D
@@ -313,11 +313,20 @@ func _ready() -> void:
 		"South Terrace must keep two actual presentation levels separated by 48px, two stairways, two void pockets, and two bridges"
 	)
 	var canal_water := south_terrace.get_node_or_null("CanalWater") as MeshInstance2D
+	var canal_shoreline := south_terrace.get_node_or_null("CanalShoreline") as MeshInstance2D
 	assert(
 		canal_water != null
+		and canal_water.texture == null
 		and canal_water.material is ShaderMaterial
-		and (canal_water.material as ShaderMaterial).shader.resource_path == "res://shaders/city_canal_water.gdshader",
-		"The authored canal must use the shared animated water shader instead of water block sprites"
+		and (canal_water.material as ShaderMaterial).shader.resource_path == "res://shaders/world_water_surface.gdshader",
+		"The authored canal must use reusable procedural water without water texture assets"
+	)
+	assert(
+		canal_shoreline != null
+		and canal_shoreline.texture == null
+		and canal_shoreline.material is ShaderMaterial
+		and (canal_shoreline.material as ShaderMaterial).shader.resource_path == "res://shaders/world_water_shore.gdshader",
+		"The authored canal must render its animated shoreline from reusable procedural geometry"
 	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))
