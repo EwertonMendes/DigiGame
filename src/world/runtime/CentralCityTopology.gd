@@ -252,7 +252,16 @@ static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 	if not stair.is_empty():
 		var progress := stair_progress(point, stair)
 		if progress > 0.0 and progress < 1.0:
-			return {"render": false, "walkable": true}
+			# Keep the authored ground treatment as a hidden structural underlay.
+			# The modular staircase renders above it, but preserving the local road/
+			# plaza surface guarantees that no backdrop can leak through tiny joins
+			# between stair, landing and retaining-wall geometry.
+			return {
+				"render": true,
+				"walkable": true,
+				"inherit_surface": true,
+				"stair_underlay": true,
+			}
 
 	var break_data := level_break()
 	var break_y := int(floor(float(break_data.get("lower_threshold_y", 19.5))))
@@ -269,6 +278,7 @@ static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 		return {
 			"render": true,
 			"walkable": not stair.is_empty(),
+			"inherit_surface": true,
 			"terrace_boundary_surface": true,
 		}
 
