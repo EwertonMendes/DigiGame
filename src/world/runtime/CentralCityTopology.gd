@@ -255,11 +255,22 @@ static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 			return {"render": false, "walkable": true}
 
 	var break_data := level_break()
-	var break_y := int(round(float(break_data.get("grid_y", 19.0))))
+	var break_y := int(floor(float(break_data.get("lower_threshold_y", 19.5))))
 	var x_min := float(break_data.get("x_min", -INF))
 	var x_max := float(break_data.get("x_max", INF))
 	if global_grid.y == break_y and point.x >= x_min and point.x <= x_max:
-		return {"render": false, "walkable": not stair.is_empty()}
+		# Keep the final upper-deck ground row rendered. Its diamond ends exactly
+		# at lower_threshold_y, where the retaining facade begins. The previous
+		# implementation removed this whole row to create the gameplay boundary,
+		# which exposed the world backdrop as a black trench between two pieces of
+		# otherwise continuous pavement. Rendering and traversal are independent:
+		# the cell stays blocked outside authored stair openings while its top face
+		# remains a seamless continuation of the Upper Civic floor.
+		return {
+			"render": true,
+			"walkable": not stair.is_empty(),
+			"terrace_boundary_surface": true,
+		}
 
 	var void_region := void_at_grid(point)
 	if not void_region.is_empty():
