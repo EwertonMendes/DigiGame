@@ -241,13 +241,14 @@ static func build() -> Node2D:
 	root.set_meta("near_side_overlay", "none")
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v2_seamless")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v3_sealed")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
 	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v1")
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
+	root.set_meta("stair_understructure_mode", "closed_side_supports")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
@@ -477,6 +478,32 @@ static func _append_staircase(
 				]),
 				"color": STAIR_CHEEK.darkened(0.025) if side == 0 else STAIR_CHEEK,
 			})
+
+	# Close the volume beneath the staircase itself. The treads descend from the
+	# raised civic deck to the lower terrace, so without these two side support
+	# triangles the world backdrop remains visible as black wedges beside/under
+	# the stairs even when the retaining wall is continuous behind them.
+	for side_x in [x_min, x_max]:
+		var upper_top := (
+			TOPOLOGY.grid_to_world(Vector2(side_x, y_start))
+			+ Vector2(0.0, -from_elevation)
+		)
+		var lower_top := (
+			TOPOLOGY.grid_to_world(Vector2(side_x, y_end))
+			+ Vector2(0.0, -to_elevation)
+		)
+		var upper_base := (
+			TOPOLOGY.grid_to_world(Vector2(side_x, y_start))
+			+ Vector2(0.0, -to_elevation)
+		)
+		cheek_faces.append({
+			"points": PackedVector2Array([
+				upper_top,
+				lower_top,
+				upper_base,
+			]),
+			"color": CITY.CIVIC_WALL_FACE.darkened(0.025),
+		})
 
 	for x in [x_min, x_max]:
 		_append_civic_guardrail(
