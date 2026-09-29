@@ -489,15 +489,14 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("CanalShoreline") == null,
 		"Canal near edge must contain no gray border, no foreground strip, and no shoreline outline"
 	)
-	var stair_underlay_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(7, 20))
+	var stair_transition_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(7, 20))
 	var stair_authored_surface := CITY_AUTHORING.ground_override_at(Vector2(7, 20))
 	assert(
-		bool(stair_underlay_rule.get("render", false))
-		and bool(stair_underlay_rule.get("walkable", false))
-		and bool(stair_underlay_rule.get("inherit_surface", false))
-		and bool(stair_underlay_rule.get("stair_underlay", false))
+		not bool(stair_transition_rule.get("render", true))
+		and bool(stair_transition_rule.get("walkable", false))
+		and bool(stair_transition_rule.get("stair_transition", false))
 		and String(stair_authored_surface.get("surface", "")) == "road",
-		"Stair openings must preserve the authored local road/paving beneath the modular stair instead of exposing backdrop or forcing a gray surface"
+		"Stair cells must be owned exclusively by the procedural transition while preserving authored road paint as the material source"
 	)
 	var boundary_surface_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(0, 19))
 	assert(
