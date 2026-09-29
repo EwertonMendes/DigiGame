@@ -395,7 +395,7 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
 		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "closed_step_profile_side_shells_with_backplate"
 		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_upper_and_lower_terrain_mouths"
-		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_fitted_painted_lane"
+		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_matching_mouth_or_local_terrain"
 		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_bounds"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
