@@ -240,7 +240,7 @@ static func build() -> Node2D:
 	root.set_meta("near_side_overlay", "none")
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v5_fitted_modules")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v6_seamless_modules")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
@@ -406,7 +406,7 @@ static func _append_staircase(
 	var upper_color := _landing_surface_color(x_min, x_max, y_start - 0.40)
 	var lower_color := _landing_surface_color(x_min, x_max, y_end + 0.40)
 	var module_color := upper_color.lerp(lower_color, 0.5)
-	var module_overlap := 0.12
+	var module_overlap := 0.18
 	# Continuous projected backing plate: individual ground cells inside the
 	# transition live at different presentation elevations, so relying on them as
 	# an underlay can expose diagonal wedges between diamonds. This single module
@@ -423,7 +423,7 @@ static func _append_staircase(
 			TOPOLOGY.grid_to_world(Vector2(x_min - module_overlap, y_end + 0.10))
 				+ Vector2(0.0, -to_elevation),
 		]),
-		"color": module_color.darkened(0.08),
+		"color": module_color,
 	})
 	_append_paver_spec(
 		landings,
