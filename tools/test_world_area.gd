@@ -423,7 +423,7 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
 		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "stepped_wall_modules_with_below_ground_backplate"
 		and String(south_terrace.get_meta("stair_material_mode", "")) == "exclusive_terrain_owned_treads"
-		and String(south_terrace.get_meta("bridge_material_mode", "")) == "painted_cells_or_main"
+		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_exact_mouth_context"
 		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_half_grid_cell_bounds"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
