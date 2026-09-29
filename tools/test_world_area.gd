@@ -137,6 +137,35 @@ func _ready() -> void:
 		"Connected west stair and bridge must share the exact same corridor width and the exact same mouth edge"
 	)
 
+	var west_bridge_data: Dictionary = {}
+	var east_bridge_data: Dictionary = {}
+	for raw_bridge in CITY_TOPOLOGY.bridges():
+		if not raw_bridge is Dictionary:
+			continue
+		var bridge := raw_bridge as Dictionary
+		match String(bridge.get("id", "")):
+			"west_bridge":
+				west_bridge_data = bridge
+			"east_bridge":
+				east_bridge_data = bridge
+	var west_support := CITY_TOPOLOGY.bridge_support_rect(west_bridge_data)
+	var east_support := CITY_TOPOLOGY.bridge_support_rect(east_bridge_data)
+	var west_connected_stair := CITY_TOPOLOGY.connected_stair_for_bridge(west_bridge_data)
+	assert(
+		is_equal_approx(float(west_support.get("x_min", 0.0)), -7.5)
+		and is_equal_approx(float(west_support.get("x_max", 0.0)), -3.5)
+		and is_equal_approx(float(west_support.get("y_min", 0.0)), 22.0)
+		and is_equal_approx(float(west_support.get("y_max", 0.0)), 25.0)
+		and is_equal_approx(float(east_support.get("y_min", 0.0)), 22.0)
+		and is_equal_approx(float(east_support.get("y_max", 0.0)), 25.0),
+		"Bridge structural bodies must be clipped to the actual authored water span instead of extending across the solid-terrain mouths"
+	)
+	assert(
+		String(west_connected_stair.get("id", "")) == "west_stairs"
+		and CITY_TOPOLOGY.connected_stair_for_bridge(east_bridge_data).is_empty(),
+		"Only physically adjacent stair/bridge corridors may share a structural rail joint"
+	)
+
 	var road_paver_material := CITY._create_paver_material(CITY.SURFACE_ROAD)
 	var transition_paver_material := CITY._create_paver_material()
 	assert(
@@ -437,20 +466,22 @@ func _ready() -> void:
 		and is_equal_approx(float(south_terrace.get_meta("basin_depth_px", 0.0)), 24.0)
 		and is_equal_approx(float(south_terrace.get_meta("far_floor_face_depth_px", 0.0)), 12.0)
 		and is_equal_approx(float(south_terrace.get_meta("far_floor_face_pavers_per_cell", 0.0)), 4.0)
-		and String(south_terrace.get_meta("canal_detail_system", "")) == "recessed_water_v4_open_near_edge"
+		and String(south_terrace.get_meta("canal_detail_system", "")) == "recessed_water_v5_bridge_openings"
 		and String(south_terrace.get_meta("canal_cutaway_mode", "")) == "far_cube_faces_near_open_water"
 		and String(south_terrace.get_meta("near_side_border", "")) == "none"
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and String(south_terrace.get_meta("transition_surface_ownership", "")) == "exclusive_half_grid_cells"
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v12_flush_path_modules"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v13_unified_transition_corridor"
 		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v4_exact_mouth_edges"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
 		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "terrain_cut_side_modules_behind_treads"
 		and String(south_terrace.get_meta("stair_material_mode", "")) == "exclusive_terrain_owned_treads"
 		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_exact_mouth_context"
-		and String(south_terrace.get_meta("bridge_mouth_geometry", "")) == "open_flush_no_end_lips"
+		and String(south_terrace.get_meta("bridge_mouth_geometry", "")) == "flush_deck_support_clipped_to_void"
+		and String(south_terrace.get_meta("bridge_void_composition", "")) == "subtract_support_corridor_from_void_edges"
+		and String(south_terrace.get_meta("bridge_guard_joint", "")) == "single_post_shared_with_connected_stair"
 		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_half_grid_cell_bounds"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
