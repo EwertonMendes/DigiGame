@@ -247,7 +247,7 @@ static func build() -> Node2D:
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
 	root.set_meta("stair_understructure_mode", "stepped_wall_modules_with_below_ground_backplate")
 	root.set_meta("stair_material_mode", "exclusive_terrain_owned_treads")
-	root.set_meta("bridge_material_mode", "painted_cells_or_main")
+	root.set_meta("bridge_material_mode", "inherit_exact_mouth_context")
 	root.set_meta("transition_fit_mode", "painted_lane_half_grid_cell_bounds")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
@@ -578,39 +578,22 @@ static func bridge_surface_for_transition(bridge: Dictionary) -> Dictionary:
 	var x_max := float(rect.get("x_max", 0.0))
 	var y_min := float(rect.get("y_min", 0.0))
 	var y_max := float(rect.get("y_max", 0.0))
-	var counts := {}
-	var representative := {}
+	var near_surface := _transition_mouth_surface(x_min, x_max, y_min - 0.50)
+	var far_surface := _transition_mouth_surface(x_min, x_max, y_max + 0.50)
+	var near_id := String(near_surface.get("surface", CITY.SURFACE_MAIN))
+	var far_id := String(far_surface.get("surface", CITY.SURFACE_MAIN))
 
-	# Painting the cells occupied by a bridge is the source of truth for its top
-	# material, exactly like painting normal terrain. Unpainted bridge cells are
-	# normal civic paving; a road touching only one mouth does not recolor it.
-	for gx in range(ceili(x_min), floori(x_max) + 1):
-		for gy in range(ceili(y_min), floori(y_max) + 1):
-			var authored := AUTHORING.ground_override_at(Vector2(float(gx), float(gy)))
-			var surface := String(authored.get("surface", CITY.SURFACE_MAIN))
-			if surface in [CITY.SURFACE_WATER, "void"]:
-				continue
-			counts[surface] = int(counts.get(surface, 0)) + 1
-			if not representative.has(surface):
-				representative[surface] = authored.duplicate(true)
-
-	var winner := CITY.SURFACE_MAIN
-	var winner_count := -1
-	for raw_surface in counts.keys():
-		var surface := String(raw_surface)
-		var count := int(counts[surface])
-		if count > winner_count:
-			winner = surface
-			winner_count = count
-
-	var authored_value = representative.get(winner, {})
-	var authored := authored_value as Dictionary if authored_value is Dictionary else {}
-	if authored.is_empty():
-		authored = {"surface": winner}
-	return {
-		"surface": winner,
-		"color": _surface_color_from_override(authored),
-	}
+	# A bridge is part of the terrain corridor that enters and leaves it. When
+	# both mouths are the same material, inherit it directly. If a road only
+	# touches one end, that is an intersection beside the bridge, not permission
+	# to repaint the crossing itself; prefer the non-road terrain in that case.
+	if near_id == far_id:
+		return near_surface
+	if near_id == CITY.SURFACE_ROAD and far_id != CITY.SURFACE_ROAD:
+		return far_surface
+	if far_id == CITY.SURFACE_ROAD and near_id != CITY.SURFACE_ROAD:
+		return near_surface
+	return near_surface
 
 
 static func _surface_color_from_override(authored: Dictionary) -> Color:
