@@ -6,7 +6,6 @@ const TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
 const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 
 const ROOT_Z := -1164
-const WALL_CAP_GRID := 0.34
 const FLOOR_FACE_PAVERS_PER_CELL := 4.0
 const FLOOR_FACE_JOINT_PX := 1.0
 const BASIN_DEPTH_PX := 24.0
@@ -23,7 +22,6 @@ const WALL_BASE_BAND_PX := 7.0
 const WALL_PANEL_TOP_PX := 12.0
 const WALL_PANEL_BOTTOM_PX := 9.0
 
-const WALL_TOP := Color(0.66, 0.68, 0.67, 1.0)
 const WALL_FACE := Color(0.35, 0.385, 0.40, 1.0)
 const WALL_PANEL_A := Color(0.285, 0.315, 0.33, 1.0)
 const WALL_PANEL_B := Color(0.305, 0.335, 0.35, 1.0)
@@ -62,21 +60,18 @@ static func build() -> Node2D:
 	root.name = "SouthTerraceStructure"
 	root.z_index = ROOT_Z
 
-	var wall_caps: Array[Dictionary] = []
 	var wall_faces: Array[Dictionary] = []
 	var wall_panels: Array[Dictionary] = []
 	var wall_pilasters: Array[Dictionary] = []
 	var wall_bands: Array[Dictionary] = []
 	var wall_accents: Array[Dictionary] = []
 	_build_retaining_wall(
-		wall_caps,
 		wall_faces,
 		wall_panels,
 		wall_pilasters,
 		wall_bands,
 		wall_accents
 	)
-	_add_paver_batch(root, "RetainingWallCaps", wall_caps, 0)
 	_add_color_batch(root, "RetainingWallFaces", wall_faces, 1)
 	# Decorative facade layers share one color mesh so the richer wall does not
 	# regress the city batching/render-node budget.
@@ -262,6 +257,10 @@ static func build() -> Node2D:
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
 	root.set_meta("terrace_facade_system", "procedural_modular_civic_v1")
+	root.set_meta(
+		"terrace_boundary_grid_y",
+		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
+	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v1")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
@@ -269,7 +268,6 @@ static func build() -> Node2D:
 
 
 static func _build_retaining_wall(
-	caps: Array[Dictionary],
 	faces: Array[Dictionary],
 	panels: Array[Dictionary],
 	pilasters: Array[Dictionary],
@@ -279,7 +277,11 @@ static func _build_retaining_wall(
 	var break_data := TOPOLOGY.level_break()
 	if break_data.is_empty():
 		return
-	var y := float(break_data.get("grid_y", 19.0))
+	# The visible facade must sit on the exact level threshold shared by the
+	# final Upper Civic diamond row and the first South Terrace row. Using the
+	# old integer authoring guide (grid_y) placed the wall half a cell away from
+	# both floor edges and exposed the backdrop as a black slot.
+	var y := float(break_data.get("lower_threshold_y", break_data.get("grid_y", 19.0)))
 	var x_min := float(break_data.get("x_min", -13.0))
 	var x_max := float(break_data.get("x_max", 29.0))
 	var upper_level := String(break_data.get("upper_level", "upper_civic"))
@@ -300,19 +302,18 @@ static func _build_retaining_wall(
 	for gap: Vector2 in gaps:
 		if gap.x > cursor:
 			_append_wall_segment(
-				caps, faces, panels, pilasters, bands, accents,
+				faces, panels, pilasters, bands, accents,
 				cursor, gap.x, y, upper_level, upper_elevation
 			)
 		cursor = maxf(cursor, gap.y)
 	if cursor < x_max:
 		_append_wall_segment(
-			caps, faces, panels, pilasters, bands, accents,
+			faces, panels, pilasters, bands, accents,
 			cursor, x_max, y, upper_level, upper_elevation
 		)
 
 
 static func _append_wall_segment(
-	caps: Array[Dictionary],
 	faces: Array[Dictionary],
 	panels: Array[Dictionary],
 	pilasters: Array[Dictionary],
@@ -327,13 +328,6 @@ static func _append_wall_segment(
 	if x1 <= x0 or elevation <= 0.0:
 		return
 
-	var cap_grid := PackedVector2Array([
-		Vector2(x0, y - WALL_CAP_GRID),
-		Vector2(x1, y - WALL_CAP_GRID),
-		Vector2(x1, y),
-		Vector2(x0, y),
-	])
-	_append_paver_spec(caps, cap_grid, level, WALL_TOP)
 
 	var logical_a := TOPOLOGY.grid_to_world(Vector2(x0, y))
 	var logical_b := TOPOLOGY.grid_to_world(Vector2(x1, y))
