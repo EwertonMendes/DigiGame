@@ -222,8 +222,8 @@ func _ready() -> void:
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(
-		area.get_ground_tile_count() == 4314,
-		"Central City ground batch must omit only true architectural breaks/stair transitions while preserving pavement beneath precise water-basin geometry"
+		area.get_ground_tile_count() == 4341,
+		"Central City ground batch must preserve authored paving beneath modular stair/water structures while keeping the runtime globally batched"
 	)
 	var west_basin_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-10, 23))
 	var west_bridge_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-5, 23))
@@ -344,9 +344,10 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v3_sealed"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v4_modular_stairs"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
-		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "closed_side_supports"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "closed_step_profile_shells"
+		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_authored_surface"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
@@ -411,6 +412,16 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("CanalShoreline") == null,
 		"Canal near edge must contain no gray border, no foreground strip, and no shoreline outline"
 	)
+	var stair_underlay_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(7, 20))
+	var stair_authored_surface := CITY_AUTHORING.ground_override_at(Vector2(7, 20))
+	assert(
+		bool(stair_underlay_rule.get("render", false))
+		and bool(stair_underlay_rule.get("walkable", false))
+		and bool(stair_underlay_rule.get("inherit_surface", false))
+		and bool(stair_underlay_rule.get("stair_underlay", false))
+		and String(stair_authored_surface.get("surface", "")) == CITY.SURFACE_ROAD,
+		"Stair openings must preserve the authored local road/paving beneath the modular stair instead of exposing backdrop or forcing a gray surface"
+	)
 	var boundary_surface_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(0, 19))
 	assert(
 		bool(boundary_surface_rule.get("render", false))
@@ -472,15 +483,15 @@ func _ready() -> void:
 	var civic_edge_faces := area.get_node_or_null("CityGround/CivicEdgeFaces") as MeshInstance2D
 	var civic_edge_details := area.get_node_or_null("CityGround/CivicEdgeDetails") as MeshInstance2D
 	assert(
-		edge_blocks != null and edge_blocks.get_child_count() > 0,
-		"Flat South Terrace perimeter may keep authored block side faces"
+		edge_blocks != null and edge_blocks.get_child_count() == 0,
+		"No Central City perimeter may fall back to the legacy tan block side art"
 	)
 	assert(
 		civic_edge_faces != null
 		and civic_edge_details != null
 		and civic_edge_faces.mesh != null
 		and civic_edge_details.mesh != null,
-		"Elevated Upper Civic perimeter must replace tan block sides with the same procedural civic facade used by the retaining wall"
+		"Upper Civic and South Terrace outer edges must use the same sealed procedural civic facade as the retaining wall"
 	)
 	assert(
 		area.get_runtime_node_count() < 1000,
