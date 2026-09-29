@@ -15,9 +15,9 @@ const BASIN_FLOOR_INSET_GRID := 0.18
 const SHORE_BAND_GRID := 0.42
 const BRIDGE_BODY_DEPTH_PX := 8.0
 const BRIDGE_RAIL_GRID := 0.16
-const STAIR_LANDING_OVERLAP_GRID := 0.56
-const STAIR_RAIL_LANDING_RUN_GRID := 0.46
-const STAIR_UNDERSIDE_SEAM_PX := 2.0
+const STAIR_LANDING_OVERLAP_GRID := 0.18
+const STAIR_RAIL_LANDING_RUN_GRID := 0.10
+const STAIR_SIDE_SEAM_PX := 1.5
 
 const GUARD_PLINTH := Color(0.30, 0.34, 0.35, 1.0)
 const GUARD_POST := Color(0.39, 0.46, 0.48, 1.0)
@@ -243,14 +243,14 @@ static func build() -> Node2D:
 	root.set_meta("near_side_overlay", "none")
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v8_watertight_transitions")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v9_flush_stair_mouths")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
 	)
-	root.set_meta("stair_guard_system", "procedural_civic_guard_v2_landing_continuous")
+	root.set_meta("stair_guard_system", "procedural_civic_guard_v3_shared_path")
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
-	root.set_meta("stair_understructure_mode", "closed_step_profile_side_shells_with_backplate")
+	root.set_meta("stair_understructure_mode", "modular_step_cheeks_with_hidden_backplate")
 	root.set_meta("stair_material_mode", "inherit_upper_and_lower_terrain_mouths")
 	root.set_meta("bridge_material_mode", "inherit_matching_mouth_or_local_terrain")
 	root.set_meta("transition_fit_mode", "painted_lane_bounds")
@@ -524,23 +524,27 @@ static func _append_staircase(
 				"color": step_color.darkened(0.08),
 			})
 
-	# A staircase is a solid stepped prism. The old per-step cheek quads only
-	# covered one riser-depth at a time and left the large triangular underside
-	# open to the world backdrop, which is the black wedge visible beside/under
-	# the stairs. These two continuous side shells follow every tread/riser and
-	# close all the way to the lower floor plane.
-	for side_x in [x_min, x_max]:
-		_append_stair_side_shell(
-			cheek_faces,
-			side_x,
-			y_start,
-			y_end,
-			step_count,
-			from_elevation,
-			to_elevation,
-			upper_color,
-			lower_color
-		)
+	# Side closure is modular per step. Do NOT close the whole stair profile to
+	# the lower plane: that produces a huge triangular cheek that reads like a
+	# pasted ramp. Each tread/riser gets its own small overlapping side face,
+	# while the hidden backplate seals the interior against the world backdrop.
+	for step in range(step_count):
+		var y0 := y_start + float(step) * step_depth
+		var y1 := y0 + step_depth
+		var tread_elevation := from_elevation - float(step) * elevation_step
+		var next_elevation := from_elevation - float(step + 1) * elevation_step
+		var step_t := (float(step) + 0.5) / float(step_count)
+		var step_color := upper_color.lerp(lower_color, step_t)
+		for side_x in [x_min, x_max]:
+			_append_stair_step_cheek(
+				cheek_faces,
+				side_x,
+				y0,
+				y1,
+				tread_elevation,
+				next_elevation,
+				step_color
+			)
 
 	# Rails have three physically connected pieces: upper landing, stair run and
 	# lower landing. This lets the handrail actually reach the adjacent roads
@@ -557,48 +561,42 @@ static func _append_staircase(
 		)
 
 
-static func _append_stair_side_shell(
+static func _append_stair_step_cheek(
 	target: Array[Dictionary],
 	side_x: float,
-	y_start: float,
-	y_end: float,
-	step_count: int,
-	from_elevation: float,
-	to_elevation: float,
-	upper_color: Color,
-	lower_color: Color
+	y0: float,
+	y1: float,
+	tread_elevation: float,
+	next_elevation: float,
+	color: Color
 ) -> void:
-	var step_depth := (y_end - y_start) / float(step_count)
-	var elevation_step := (from_elevation - to_elevation) / float(step_count)
-	var profile := PackedVector2Array()
-	profile.append(
-		TOPOLOGY.grid_to_world(Vector2(side_x, y_start))
-		+ Vector2(0.0, -from_elevation)
+	var top_start := (
+		TOPOLOGY.grid_to_world(Vector2(side_x, y0))
+		+ Vector2(0.0, -tread_elevation - STAIR_SIDE_SEAM_PX)
 	)
-	for step in range(step_count):
-		var y1 := y_start + float(step + 1) * step_depth
-		var tread_elevation := from_elevation - float(step) * elevation_step
-		var next_elevation := from_elevation - float(step + 1) * elevation_step
-		profile.append(
-			TOPOLOGY.grid_to_world(Vector2(side_x, y1))
-			+ Vector2(0.0, -tread_elevation)
-		)
-		profile.append(
-			TOPOLOGY.grid_to_world(Vector2(side_x, y1))
-			+ Vector2(0.0, -next_elevation)
-		)
-
-	# Close the stepped profile against the lower structural plane. A two-pixel
-	# downward tuck is hidden by the lower floor but guarantees there is no
-	# anti-aliased backdrop pixel along the underside baseline.
-	profile.append(
-		TOPOLOGY.grid_to_world(Vector2(side_x, y_start))
-		+ Vector2(0.0, -to_elevation + STAIR_UNDERSIDE_SEAM_PX)
+	var top_end := (
+		TOPOLOGY.grid_to_world(Vector2(side_x, y1))
+		+ Vector2(0.0, -tread_elevation - STAIR_SIDE_SEAM_PX)
+	)
+	var bottom_end := (
+		TOPOLOGY.grid_to_world(Vector2(side_x, y1))
+		+ Vector2(0.0, -next_elevation + STAIR_SIDE_SEAM_PX)
+	)
+	var bottom_start := (
+		TOPOLOGY.grid_to_world(Vector2(side_x, y0))
+		+ Vector2(0.0, -next_elevation + STAIR_SIDE_SEAM_PX)
 	)
 	target.append({
-		"points": profile,
-		"color": upper_color.lerp(lower_color, 0.5).darkened(0.19),
+		"points": PackedVector2Array([
+			top_start,
+			top_end,
+			bottom_end,
+			bottom_start,
+		]),
+		"color": color.darkened(0.19),
 	})
+
+
 
 
 static func _append_stair_guardrail(
@@ -619,9 +617,84 @@ static func _append_stair_guardrail(
 		Vector2(side_x, y_end + STAIR_RAIL_LANDING_RUN_GRID),
 		to_level
 	)
-	_append_civic_guardrail(target, top_outer, top_inner, false)
-	_append_civic_guardrail(target, top_inner, bottom_inner, true)
-	_append_civic_guardrail(target, bottom_inner, bottom_outer, false)
+	_append_civic_guardrail_path(
+		target,
+		PackedVector2Array([top_outer, top_inner, bottom_inner, bottom_outer]),
+		true
+	)
+
+
+static func _append_civic_guardrail_path(
+	specs: Array[Dictionary],
+	feet: PackedVector2Array,
+	solid_center_plinth: bool = false
+) -> void:
+	if feet.size() < 2:
+		return
+
+	# One shared post per path vertex prevents the doubled/floating posts that
+	# appeared when upper landing, slope and lower landing were emitted as three
+	# unrelated guardrails.
+	for foot in feet:
+		specs.append({
+			"points": PackedVector2Array([
+				foot + Vector2(-2.5, 0.0),
+				foot + Vector2(2.5, 0.0),
+				foot + Vector2(2.5, -18.0),
+				foot + Vector2(-2.5, -18.0),
+			]),
+			"color": GUARD_POST,
+		})
+		specs.append({
+			"points": PackedVector2Array([
+				foot + Vector2(-1.5, -14.0),
+				foot + Vector2(1.5, -14.0),
+				foot + Vector2(1.5, -10.0),
+				foot + Vector2(-1.5, -10.0),
+			]),
+			"color": GUARD_ACCENT,
+		})
+
+	for index in range(feet.size() - 1):
+		var a := feet[index]
+		var b := feet[index + 1]
+		if a.distance_squared_to(b) <= 0.25:
+			continue
+		var top_a := a + Vector2(0.0, -18.0)
+		var top_b := b + Vector2(0.0, -18.0)
+		specs.append({
+			"points": PackedVector2Array([
+				top_a,
+				top_b,
+				top_b + Vector2(0.0, 3.0),
+				top_a + Vector2(0.0, 3.0),
+			]),
+			"color": GUARD_TOP,
+		})
+		var accent_a := a + Vector2(0.0, -10.0)
+		var accent_b := b + Vector2(0.0, -10.0)
+		specs.append({
+			"points": PackedVector2Array([
+				accent_a,
+				accent_b,
+				accent_b + Vector2(0.0, 2.0),
+				accent_a + Vector2(0.0, 2.0),
+			]),
+			"color": GUARD_ACCENT.darkened(0.16),
+		})
+
+		if solid_center_plinth and index == 1:
+			specs.append({
+				"points": PackedVector2Array([
+					a,
+					b,
+					b + Vector2(0.0, -7.0),
+					a + Vector2(0.0, -7.0),
+				]),
+				"color": GUARD_PLINTH,
+		})
+
+
 
 
 static func _transition_mouth_surface(
