@@ -671,14 +671,15 @@ static func _crosses_stair_landing(
 	inside: Vector2,
 	stair: Dictionary
 ) -> bool:
-	var y_start := minf(
-		float(stair.get("y_start", 0.0)),
-		float(stair.get("y_end", 0.0))
-	)
-	var y_end := maxf(
-		float(stair.get("y_start", 0.0)),
-		float(stair.get("y_end", 0.0))
-	)
+	# Traversal and rendering must use the SAME fitted half-grid mouths. The
+	# stair geometry was snapped to those bounds, but this check still used the
+	# old authored y_start/y_end values, creating an invisible wall exactly where
+	# the visible stair began.
+	var rect := fitted_transition_rect(stair)
+	if rect.is_empty():
+		return false
+	var y_start := float(rect.get("y_min", stair.get("y_start", 0.0)))
+	var y_end := float(rect.get("y_max", stair.get("y_end", y_start)))
 
 	if outside.y < y_start - SEGMENT_EPSILON and inside.y >= y_start - SEGMENT_EPSILON:
 		var crossing_x := _segment_x_at_y(outside, inside, y_start)
