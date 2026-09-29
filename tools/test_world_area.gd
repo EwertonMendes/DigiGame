@@ -308,8 +308,9 @@ func _ready() -> void:
 	assert(
 		south_terrace != null
 		and area.get_south_terrace_render_node_count() <= 16
-		and south_terrace.get_node_or_null("RetainingWallCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("RetainingWallCaps") == null
 		and south_terrace.get_node_or_null("RetainingWallFaces") is MeshInstance2D
+		and south_terrace.get_node_or_null("RetainingWallDetails") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairLandings") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
@@ -343,6 +344,7 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
+		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
 		"South Terrace must expose 12px paver cube faces only on the far/top-left cut and keep near camera edges completely free of border overlays"
@@ -405,6 +407,13 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("CanalForegroundFloor") == null
 		and south_terrace.get_node_or_null("CanalShoreline") == null,
 		"Canal near edge must contain no gray border, no foreground strip, and no shoreline outline"
+	)
+	var boundary_surface_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(0, 19))
+	assert(
+		bool(boundary_surface_rule.get("render", false))
+		and not bool(boundary_surface_rule.get("walkable", true))
+		and bool(boundary_surface_rule.get("terrace_boundary_surface", false)),
+		"The final Upper Civic floor row must remain rendered continuously up to the 19.5 retaining threshold while traversal stays blocked"
 	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))
