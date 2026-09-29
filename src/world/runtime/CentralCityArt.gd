@@ -34,6 +34,24 @@ const FLOOR_OVERSCAN := Vector2(0.45, 0.22)
 const PAVERS_PER_GAMEPLAY_CELL := 4.0
 const PAVER_GROUT_WIDTH := 0.055
 
+# Shared procedural civic-wall language. Retaining walls and elevated map-edge
+# faces both use this geometry so the city reads as one constructed structure
+# instead of mixing a bespoke facade with legacy tan block sides.
+const CIVIC_WALL_MODULE_PX := 76.0
+const CIVIC_WALL_PILASTER_HALF_PX := 3.0
+const CIVIC_WALL_TOP_FASCIA_PX := 8.0
+const CIVIC_WALL_BASE_BAND_PX := 7.0
+const CIVIC_WALL_PANEL_TOP_PX := 11.0
+const CIVIC_WALL_PANEL_BOTTOM_PX := 9.0
+const CIVIC_WALL_SEAM_OVERLAP_PX := 2.0
+const CIVIC_WALL_FACE := Color(0.35, 0.385, 0.40, 1.0)
+const CIVIC_WALL_PANEL_A := Color(0.285, 0.315, 0.33, 1.0)
+const CIVIC_WALL_PANEL_B := Color(0.305, 0.335, 0.35, 1.0)
+const CIVIC_WALL_PILASTER := Color(0.47, 0.50, 0.50, 1.0)
+const CIVIC_WALL_FASCIA := Color(0.50, 0.525, 0.525, 1.0)
+const CIVIC_WALL_BASE := Color(0.235, 0.265, 0.28, 1.0)
+const CIVIC_WALL_ACCENT := Color(0.16, 0.78, 0.88, 1.0)
+
 # Top-face coordinates measured from the 1024x1024 exports.
 const SOURCE_TOP_LEFT := Vector2(92.0, 266.0)
 const SOURCE_TOP_TOP := Vector2(512.0, 31.0)
@@ -193,6 +211,112 @@ static func is_procedural_paver_surface(surface: String) -> bool:
 	]
 
 
+static func _grid_cell_key(cell: Vector2i) -> String:
+	return "%d,%d" % [cell.x, cell.y]
+
+
+static func append_civic_wall_segment(
+	faces: Array[Dictionary],
+	panels: Array[Dictionary],
+	pilasters: Array[Dictionary],
+	bands: Array[Dictionary],
+	accents: Array[Dictionary],
+	top_a: Vector2,
+	top_b: Vector2,
+	depth_px: float,
+	accent_seed: int = 0,
+	include_face: bool = true
+) -> void:
+	if depth_px <= 0.5 or top_a.distance_squared_to(top_b) <= 0.25:
+		return
+
+	# A small vertical overlap is deliberate. It hides sub-pixel/raster seams
+	# under both adjoining floor meshes, so the backdrop can never leak through
+	# as a black slot between a deck and its wall.
+	var overlap := CIVIC_WALL_SEAM_OVERLAP_PX
+	var face_top_a := top_a + Vector2(0.0, -overlap)
+	var face_top_b := top_b + Vector2(0.0, -overlap)
+	var face_bottom_a := top_a + Vector2(0.0, depth_px + overlap)
+	var face_bottom_b := top_b + Vector2(0.0, depth_px + overlap)
+	if include_face:
+		faces.append({
+			"points": PackedVector2Array([
+				face_top_a,
+				face_top_b,
+				face_bottom_b,
+				face_bottom_a,
+			]),
+			"color": CIVIC_WALL_FACE,
+		})
+
+	var span := top_a.distance_to(top_b)
+	var module_count := maxi(1, int(ceil(span / CIVIC_WALL_MODULE_PX)))
+	var tangent := (top_b - top_a).normalized()
+
+	bands.append({
+		"points": PackedVector2Array([
+			face_top_a,
+			face_top_b,
+			face_top_b + Vector2(0.0, minf(depth_px, CIVIC_WALL_TOP_FASCIA_PX)),
+			face_top_a + Vector2(0.0, minf(depth_px, CIVIC_WALL_TOP_FASCIA_PX)),
+		]),
+		"color": CIVIC_WALL_FASCIA,
+	})
+	bands.append({
+		"points": PackedVector2Array([
+			top_a + Vector2(0.0, maxf(0.0, depth_px - CIVIC_WALL_BASE_BAND_PX)),
+			top_b + Vector2(0.0, maxf(0.0, depth_px - CIVIC_WALL_BASE_BAND_PX)),
+			face_bottom_b,
+			face_bottom_a,
+		]),
+		"color": CIVIC_WALL_BASE,
+	})
+
+	for module_index in range(module_count):
+		var t0 := float(module_index) / float(module_count)
+		var t1 := float(module_index + 1) / float(module_count)
+		var panel_a := top_a.lerp(top_b, lerpf(t0, t1, 0.10))
+		var panel_b := top_a.lerp(top_b, lerpf(t0, t1, 0.90))
+		var panel_top := minf(CIVIC_WALL_PANEL_TOP_PX, depth_px * 0.34)
+		var panel_bottom := maxf(panel_top + 4.0, depth_px - CIVIC_WALL_PANEL_BOTTOM_PX)
+		panels.append({
+			"points": PackedVector2Array([
+				panel_a + Vector2(0.0, panel_top),
+				panel_b + Vector2(0.0, panel_top),
+				panel_b + Vector2(0.0, panel_bottom),
+				panel_a + Vector2(0.0, panel_bottom),
+			]),
+			"color": CIVIC_WALL_PANEL_A if (module_index + accent_seed) % 2 == 0 else CIVIC_WALL_PANEL_B,
+		})
+		if (module_index + accent_seed) % 2 == 0 and depth_px >= 20.0:
+			var accent_a := top_a.lerp(top_b, lerpf(t0, t1, 0.30))
+			var accent_b := top_a.lerp(top_b, lerpf(t0, t1, 0.70))
+			var accent_y := minf(depth_px - 10.0, maxf(13.0, depth_px * 0.44))
+			accents.append({
+				"points": PackedVector2Array([
+					accent_a + Vector2(0.0, accent_y),
+					accent_b + Vector2(0.0, accent_y),
+					accent_b + Vector2(0.0, accent_y + 2.0),
+					accent_a + Vector2(0.0, accent_y + 2.0),
+				]),
+				"color": CIVIC_WALL_ACCENT,
+			})
+
+	for boundary_index in range(module_count + 1):
+		var t := float(boundary_index) / float(module_count)
+		var center := top_a.lerp(top_b, t)
+		var half_width := tangent * CIVIC_WALL_PILASTER_HALF_PX
+		pilasters.append({
+			"points": PackedVector2Array([
+				center - half_width + Vector2(0.0, -overlap),
+				center + half_width + Vector2(0.0, -overlap),
+				center + half_width + Vector2(0.0, depth_px + overlap),
+				center - half_width + Vector2(0.0, depth_px + overlap),
+			]),
+			"color": CIVIC_WALL_PILASTER,
+		})
+
+
 static func create_ground_batch(
 	tiles: Array[Dictionary],
 	depth_order: int,
@@ -211,27 +335,91 @@ static func create_ground_batch(
 	base.z_index = 0
 	root.add_child(base)
 
-	# Only edge cells render the original block depth. The city interior remains
-	# a perfectly flat 64x32 floor, while the island silhouette gets the authored
-	# side faces requested for border tiles.
+	# Flat city edges can keep the legacy authored block depth. Elevated civic
+	# edges must not: those tan brick faces visually contradict the retaining
+	# facade. Build every visible +X/+Y elevated perimeter face from the exact
+	# same procedural wall language used by the level break.
 	var edge_specs: Array[Dictionary] = []
+	var occupied_cells := {}
 	for spec: Dictionary in tiles:
+		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
+		var grid := _world_to_grid_coordinates(logical_center)
+		var cell := Vector2i(roundi(grid.x), roundi(grid.y))
+		occupied_cells[_grid_cell_key(cell)] = true
 		if bool(spec.get("edge", false)) and String(spec.get("surface", "")) != SURFACE_WATER:
 			edge_specs.append(spec)
 	edge_specs.sort_custom(_ground_spec_before)
+
 	var edges := Node2D.new()
 	edges.name = "EdgeBlocks"
 	edges.z_index = 1
 	root.add_child(edges)
+
+	var civic_edge_faces: Array[Dictionary] = []
+	var civic_edge_panels: Array[Dictionary] = []
+	var civic_edge_pilasters: Array[Dictionary] = []
+	var civic_edge_bands: Array[Dictionary] = []
+	var civic_edge_accents: Array[Dictionary] = []
 	for spec: Dictionary in edge_specs:
 		var logical_center: Vector2 = spec.get("position", Vector2.ZERO)
 		var elevation_px := maxf(0.0, float(spec.get("elevation_px", 0.0)))
-		var edge := create_full_block(
-			String(spec.get("surface", SURFACE_MAIN)),
-			logical_center + Vector2(0.0, -elevation_px),
-			0
-		)
-		edges.add_child(edge)
+		if elevation_px <= 0.5:
+			var edge := create_full_block(
+				String(spec.get("surface", SURFACE_MAIN)),
+				logical_center,
+				0
+			)
+			edges.add_child(edge)
+			continue
+
+		var grid := _world_to_grid_coordinates(logical_center)
+		var cell := Vector2i(roundi(grid.x), roundi(grid.y))
+		var accent_seed := absi(cell.x + cell.y)
+		var display_offset := Vector2(0.0, -elevation_px)
+
+		# +X is the right-to-bottom diamond edge. +Y is left-to-bottom.
+		# These are the two camera-facing exterior sides of an isometric tile.
+		if not occupied_cells.has(_grid_cell_key(cell + Vector2i.RIGHT)):
+			append_civic_wall_segment(
+				civic_edge_faces,
+				civic_edge_panels,
+				civic_edge_pilasters,
+				civic_edge_bands,
+				civic_edge_accents,
+				logical_center + Vector2(TILE_HALF_WIDTH, 0.0) + display_offset,
+				logical_center + Vector2(0.0, TILE_HALF_HEIGHT) + display_offset,
+				elevation_px,
+				accent_seed,
+				true
+			)
+		if not occupied_cells.has(_grid_cell_key(cell + Vector2i.DOWN)):
+			append_civic_wall_segment(
+				civic_edge_faces,
+				civic_edge_panels,
+				civic_edge_pilasters,
+				civic_edge_bands,
+				civic_edge_accents,
+				logical_center + Vector2(-TILE_HALF_WIDTH, 0.0) + display_offset,
+				logical_center + Vector2(0.0, TILE_HALF_HEIGHT) + display_offset,
+				elevation_px,
+				accent_seed,
+				true
+			)
+
+	if not civic_edge_faces.is_empty():
+		var civic_faces := create_color_polygon_batch(civic_edge_faces, 1)
+		civic_faces.name = "CivicEdgeFaces"
+		civic_faces.z_index = 1
+		root.add_child(civic_faces)
+		var civic_details_specs: Array[Dictionary] = []
+		civic_details_specs.append_array(civic_edge_panels)
+		civic_details_specs.append_array(civic_edge_pilasters)
+		civic_details_specs.append_array(civic_edge_bands)
+		civic_details_specs.append_array(civic_edge_accents)
+		var civic_details := create_color_polygon_batch(civic_details_specs, 2)
+		civic_details.name = "CivicEdgeDetails"
+		civic_details.z_index = 2
+		root.add_child(civic_details)
 
 	var grouped: Dictionary = {}
 	for spec: Dictionary in tiles:
