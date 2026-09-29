@@ -82,8 +82,10 @@ static func build() -> Node2D:
 	# anti-aliased cracks inside the stair footprint, but it can never paint over
 	# the road/floor at either mouth.
 	_add_color_batch(root, "StairBackplates", stair_backplates, STAIR_BACKPLATE_LOCAL_Z)
+	# Side closure stays behind the walkable top faces. It may fill the visible
+	# terrain cut beside a stair, but it must never paint over the tread pavers.
+	_add_color_batch(root, "StairSideWalls", stair_side_walls, 5)
 	_add_paver_batch(root, "StairTreads", stair_treads, 6)
-	stair_risers.append_array(stair_side_walls)
 	_add_color_batch(root, "StairRisers", stair_risers, 7)
 	_add_color_batch(root, "StairNosingAndParapets", stair_rails, 8)
 
@@ -238,16 +240,17 @@ static func build() -> Node2D:
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
 	root.set_meta("transition_surface_ownership", "exclusive_half_grid_cells")
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v11_terrain_cut_stairs")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v12_flush_path_modules")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
 	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v4_exact_mouth_edges")
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
-	root.set_meta("stair_understructure_mode", "terrain_cut_side_modules_with_below_ground_backplate")
+	root.set_meta("stair_understructure_mode", "terrain_cut_side_modules_behind_treads")
 	root.set_meta("stair_material_mode", "exclusive_terrain_owned_treads")
 	root.set_meta("bridge_material_mode", "inherit_exact_mouth_context")
+	root.set_meta("bridge_mouth_geometry", "open_flush_no_end_lips")
 	root.set_meta("transition_fit_mode", "painted_lane_half_grid_cell_bounds")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
@@ -941,11 +944,12 @@ static func _append_bridge(
 	var right_top_a := TOPOLOGY.grid_to_display(Vector2(x1, y0), level)
 	var right_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y1), level)
 	var drop := Vector2(0.0, BRIDGE_BODY_DEPTH_PX)
+	# Only the long water-facing sides have visible thickness. End faces at y0/y1
+	# were a literal vertical lip across each bridge mouth, making a flush deck
+	# look raised above the road/stair even though the top coordinates matched.
 	for face in [
 		PackedVector2Array([left_top_a, left_top_b, left_top_b + drop, left_top_a + drop]),
 		PackedVector2Array([right_top_a, right_top_b, right_top_b + drop, right_top_a + drop]),
-		PackedVector2Array([left_top_a, right_top_a, right_top_a + drop, left_top_a + drop]),
-		PackedVector2Array([left_top_b, right_top_b, right_top_b + drop, left_top_b + drop]),
 	]:
 		bodies.append({
 			"points": face,
