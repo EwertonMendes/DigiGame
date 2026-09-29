@@ -843,7 +843,12 @@ static func _create_paver_material(surface: String = "") -> ShaderMaterial:
 	material.shader = CITY_PAVER_SHADER
 	material.set_shader_parameter("pavers_per_cell", PAVERS_PER_GAMEPLAY_CELL)
 	material.set_shader_parameter("grout_width", PAVER_GROUT_WIDTH)
-	if surface in [SURFACE_DARK, SURFACE_ROAD]:
+	# Roads intentionally use the SAME paver profile as procedural stairs and
+	# bridge decks. They already share the same authored road base color, so a
+	# second road-only shader profile made the flat road read lighter and exposed
+	# every transition boundary. Keeping only SURFACE_DARK specialized makes the
+	# complete road -> stair -> bridge path one continuous material language.
+	if surface == SURFACE_DARK:
 		material.set_shader_parameter("stone_variation", 0.04)
 		material.set_shader_parameter("grout_darkening", 0.24)
 		material.set_shader_parameter("edge_highlight", 0.02)
