@@ -6,6 +6,7 @@ const CITY_AUTHORING := preload("res://src/world/authoring/CentralCityAuthoringD
 const CITY_EDITOR_MATH := preload("res://src/world/authoring/CentralCityEditorMath.gd")
 const CITY_LAYOUT := preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
 const CITY_TOPOLOGY := preload("res://src/world/runtime/CentralCityTopology.gd")
+const CITY_TERRACE := preload("res://src/world/runtime/CentralCityTerrace.gd")
 const CITY_BAKER := preload("res://src/world/authoring/CentralCityBaker.gd")
 const CITY_DECOR := preload("res://src/world/runtime/CentralCityDecor.gd")
 
@@ -105,6 +106,21 @@ func _ready() -> void:
 		and is_equal_approx(float(east_bridge_lane.get("x_max", 0.0)), 23.5)
 		and String(east_bridge_lane.get("surface", "")) == "road",
 		"Stairs and bridges must fit the contiguous painted road lane at their insertion mouths instead of keeping stale authored widths"
+	)
+
+	var bridge_surface_ids := {}
+	for raw_bridge in CITY_TOPOLOGY.bridges():
+		if not raw_bridge is Dictionary:
+			continue
+		var bridge := raw_bridge as Dictionary
+		var resolved_surface := CITY_TERRACE.bridge_surface_for_transition(bridge)
+		bridge_surface_ids[String(bridge.get("id", ""))] = String(
+			resolved_surface.get("surface", "")
+		)
+	assert(
+		String(bridge_surface_ids.get("west_bridge", "")) == "road"
+		and String(bridge_surface_ids.get("east_bridge", "")) == "main",
+		"Bridge material must follow the terrain on both mouths: the west road crossing stays road, while a one-sided road must not repaint the southeast civic-floor bridge"
 	)
 	var road_sample := CITY_AUTHORING.ground_override_at(Vector2(7, 10))
 	assert(
@@ -374,10 +390,11 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v7_paint_fitted_transitions"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v8_watertight_transitions"
+		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v2_landing_continuous"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
-		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "paint_fitted_per_step_modules_with_backplate"
-		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_fitted_painted_lane"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "closed_step_profile_side_shells_with_backplate"
+		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_upper_and_lower_terrain_mouths"
 		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_fitted_painted_lane"
 		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_bounds"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
