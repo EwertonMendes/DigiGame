@@ -93,8 +93,10 @@ static func fitted_transition_lane(transition: Dictionary) -> Dictionary:
 	# Its visible width is intentionally resolved from the painted floor at the
 	# two insertion mouths. This makes the module follow the road/plaza actually
 	# painted by the level author instead of preserving a stale hard-coded span.
-	var upper := _painted_lane_at_row(x_min, x_max, int(floor(y_min - 0.001)))
-	var lower := _painted_lane_at_row(x_min, x_max, int(ceil(y_max + 0.001)))
+	var upper_row := int(floor(y_min - 0.001))
+	var lower_row := int(ceil(y_max + 0.001))
+	var upper := _painted_lane_at_row(x_min, x_max, upper_row)
+	var lower := _painted_lane_at_row(x_min, x_max, lower_row)
 	var resolved: Dictionary = {}
 	if upper.is_empty():
 		resolved = lower
@@ -104,15 +106,20 @@ static func fitted_transition_lane(transition: Dictionary) -> Dictionary:
 		var authored_width := maxf(0.001, x_max - x_min)
 		var upper_width := float(upper.get("x_max", x_max)) - float(upper.get("x_min", x_min))
 		var lower_width := float(lower.get("x_max", x_max)) - float(lower.get("x_min", x_min))
-		var upper_delta := absf(upper_width - authored_width)
-		var lower_delta := absf(lower_width - authored_width)
-		if is_equal_approx(upper_delta, lower_delta):
-			# At a junction one side can become a long horizontal road. Prefer the
-			# narrower valid mouth so the structural module tracks the corridor
-			# rather than ballooning to the whole intersection.
-			resolved = upper if upper_width <= lower_width else lower
+		var upper_persistence := _lane_persistence(upper, upper_row, -1)
+		var lower_persistence := _lane_persistence(lower, lower_row, 1)
+		if not is_equal_approx(upper_persistence, lower_persistence):
+			# A real corridor keeps roughly the same painted width for several
+			# rows away from the transition. Intersections and diagonal joins do
+			# not, so persistence is a stronger signal than the stale polygon size.
+			resolved = upper if upper_persistence > lower_persistence else lower
 		else:
-			resolved = upper if upper_delta < lower_delta else lower
+			var upper_delta := absf(upper_width - authored_width)
+			var lower_delta := absf(lower_width - authored_width)
+			if not is_equal_approx(upper_delta, lower_delta):
+				resolved = upper if upper_delta < lower_delta else lower
+			else:
+				resolved = upper if upper_width <= lower_width else lower
 
 	if not resolved.is_empty():
 		_transition_lane_cache[cache_key] = resolved.duplicate(true)
@@ -189,7 +196,32 @@ static func _painted_lane_at_row(
 				"sample_grid": Vector2(float(first_x), float(row_y)),
 			}
 
+	if best_overlap <= 0.0:
+		return {}
 	return best
+
+
+static func _lane_persistence(lane: Dictionary, row_y: int, direction: int) -> float:
+	if lane.is_empty():
+		return 0.0
+	var surface := String(lane.get("surface", ""))
+	var lane_min := float(lane.get("x_min", 0.0))
+	var lane_max := float(lane.get("x_max", 0.0))
+	var lane_width := maxf(0.001, lane_max - lane_min)
+	var score := 0.0
+	for offset in [1, 2]:
+		var neighbor := _painted_lane_at_row(
+			lane_min,
+			lane_max,
+			row_y + direction * offset
+		)
+		if neighbor.is_empty() or String(neighbor.get("surface", "")) != surface:
+			continue
+		var neighbor_min := float(neighbor.get("x_min", lane_min))
+		var neighbor_max := float(neighbor.get("x_max", lane_max))
+		var overlap := maxf(0.0, minf(lane_max, neighbor_max) - maxf(lane_min, neighbor_min))
+		score += overlap / lane_width
+	return score
 
 
 static func elevation_for_level(level_id: String) -> float:
