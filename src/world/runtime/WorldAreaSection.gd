@@ -368,6 +368,20 @@ func _ground_presentation(cell: Vector2i, _theme: String) -> Dictionary:
 	# water voids can intentionally remove the base floor entirely.
 	var topology_rule := CITY_TOPOLOGY.ground_rule_for_cell(global_grid)
 	if not topology_rule.is_empty():
+		if bool(topology_rule.get("inherit_surface", false)) and bool(topology_rule.get("render", true)):
+			# Structural rules own render/walkability, but they must not erase the
+			# user's authored paint. This is especially important at stairs and the
+			# terrace seam, where a hardcoded fallback gray used to make the module
+			# look pasted on top of a dark road.
+			var inherited := CITY_AUTHORING.ground_override_at(Vector2(global_grid))
+			var merged := inherited.duplicate(true)
+			for key in topology_rule.keys():
+				merged[key] = topology_rule[key]
+			var surface := String(merged.get("surface", CITY.SURFACE_MAIN))
+			merged["surface"] = surface
+			if not merged.has("base_color"):
+				merged["base_color"] = CITY.surface_base_color(surface)
+			return merged
 		return topology_rule
 
 	# Surface painting now comes from editable Polygon2D regions in

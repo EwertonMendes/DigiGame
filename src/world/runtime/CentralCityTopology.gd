@@ -3,6 +3,7 @@ class_name CentralCityTopology
 
 const CONFIG_PATH := "res://assets/resources/world/central_city_topology.json"
 const AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
+const PAINT_DATA = preload("res://src/world/runtime/GroundPaintData.gd")
 const TILE_WIDTH := 64.0
 const TILE_HEIGHT := 32.0
 const TILE_HALF_WIDTH := TILE_WIDTH * 0.5
@@ -12,10 +13,12 @@ const STAIR_ENTRY_MARGIN_GRID := 0.20
 const SEGMENT_EPSILON := 0.001
 
 static var _config_cache: Dictionary = {}
+static var _transition_lane_cache: Dictionary = {}
 
 
 static func clear_cache() -> void:
 	_config_cache.clear()
+	_transition_lane_cache.clear()
 
 
 static func config() -> Dictionary:
@@ -67,6 +70,348 @@ static func road_network() -> Dictionary:
 	return (value as Dictionary).duplicate(true) if value is Dictionary else {}
 
 
+static func fitted_transition_lane(transition: Dictionary) -> Dictionary:
+	if transition.is_empty():
+		return {}
+
+	var id := String(transition.get("id", ""))
+	var x_min := minf(float(transition.get("x_min", 0.0)), float(transition.get("x_max", 0.0)))
+	var x_max := maxf(float(transition.get("x_min", 0.0)), float(transition.get("x_max", 0.0)))
+	var y_min := minf(
+		float(transition.get("y_start", transition.get("y_min", 0.0))),
+		float(transition.get("y_end", transition.get("y_max", 0.0)))
+	)
+	var y_max := maxf(
+		float(transition.get("y_start", transition.get("y_min", 0.0))),
+		float(transition.get("y_end", transition.get("y_max", 0.0)))
+	)
+	var cache_key := "%s:%.3f:%.3f:%.3f:%.3f" % [id, x_min, x_max, y_min, y_max]
+	if _transition_lane_cache.has(cache_key):
+		return (_transition_lane_cache[cache_key] as Dictionary).duplicate(true)
+
+	# Transition authoring defines where a stair/bridge belongs structurally.
+	# Its visible width is intentionally resolved from the painted floor at the
+	# two insertion mouths. This makes the module follow the road/plaza actually
+	# painted by the level author instead of preserving a stale hard-coded span.
+	var upper_row := int(floor(y_min - 0.001))
+	var lower_row := int(ceil(y_max + 0.001))
+	var upper := _painted_lane_at_row(x_min, x_max, upper_row)
+	var lower := _painted_lane_at_row(x_min, x_max, lower_row)
+	var resolved: Dictionary = {}
+	if upper.is_empty():
+		resolved = lower
+	elif lower.is_empty():
+		resolved = upper
+	else:
+		var authored_width := maxf(0.001, x_max - x_min)
+		var upper_width := float(upper.get("x_max", x_max)) - float(upper.get("x_min", x_min))
+		var lower_width := float(lower.get("x_max", x_max)) - float(lower.get("x_min", x_min))
+		var upper_persistence := _lane_persistence(upper, upper_row, -1)
+		var lower_persistence := _lane_persistence(lower, lower_row, 1)
+		if not is_equal_approx(upper_persistence, lower_persistence):
+			# A real corridor keeps roughly the same painted width for several
+			# rows away from the transition. Intersections and diagonal joins do
+			# not, so persistence is a stronger signal than the stale polygon size.
+			resolved = upper if upper_persistence > lower_persistence else lower
+		else:
+			var upper_delta := absf(upper_width - authored_width)
+			var lower_delta := absf(lower_width - authored_width)
+			if not is_equal_approx(upper_delta, lower_delta):
+				resolved = upper if upper_delta < lower_delta else lower
+			else:
+				resolved = upper if upper_width <= lower_width else lower
+
+	# A bridge that physically starts/ends at a stair mouth must inherit that
+	# stair's fitted lane exactly. Resolving both modules independently from paint
+	# can be numerically valid yet still leave them one cell/half-cell apart after
+	# authoring changes. Structural adjacency has stronger authority here: one
+	# corridor means one x interval from stair through bridge.
+	if transition.has("y_min") and transition.has("y_max"):
+		var connected_lane := _connected_stair_lane_for_bridge(transition)
+		if not connected_lane.is_empty():
+			resolved = connected_lane
+
+	if not resolved.is_empty():
+		_transition_lane_cache[cache_key] = resolved.duplicate(true)
+	return resolved.duplicate(true)
+
+
+static func _connected_stair_lane_for_bridge(bridge: Dictionary) -> Dictionary:
+	var bridge_x_min := minf(float(bridge.get("x_min", 0.0)), float(bridge.get("x_max", 0.0)))
+	var bridge_x_max := maxf(float(bridge.get("x_min", 0.0)), float(bridge.get("x_max", 0.0)))
+	var bridge_y_min := minf(float(bridge.get("y_min", 0.0)), float(bridge.get("y_max", 0.0)))
+	var bridge_y_max := maxf(float(bridge.get("y_min", 0.0)), float(bridge.get("y_max", 0.0)))
+	var best_lane: Dictionary = {}
+	var best_overlap := 0.0
+
+	var value = config().get("stairs", [])
+	if not value is Array:
+		return {}
+	for raw_stair in value as Array:
+		if not raw_stair is Dictionary:
+			continue
+		var stair := raw_stair as Dictionary
+		var stair_y_min := minf(float(stair.get("y_start", 0.0)), float(stair.get("y_end", 0.0)))
+		var stair_y_max := maxf(float(stair.get("y_start", 0.0)), float(stair.get("y_end", 0.0)))
+		var touches_mouth := (
+			absf(stair_y_max - bridge_y_min) <= 0.01
+			or absf(stair_y_min - bridge_y_max) <= 0.01
+		)
+		if not touches_mouth:
+			continue
+		var stair_x_min := minf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+		var stair_x_max := maxf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+		var authored_overlap := maxf(
+			0.0,
+			minf(bridge_x_max, stair_x_max) - maxf(bridge_x_min, stair_x_min)
+		)
+		if authored_overlap <= best_overlap:
+			continue
+		var stair_lane := fitted_transition_lane(stair)
+		if stair_lane.is_empty():
+			continue
+		best_overlap = authored_overlap
+		best_lane = stair_lane.duplicate(true)
+
+	return best_lane
+
+
+static func fitted_transition_rect(transition: Dictionary) -> Dictionary:
+	if transition.is_empty():
+		return {}
+
+	var lane := fitted_transition_lane(transition)
+	var authored_x_min := minf(
+		float(transition.get("x_min", 0.0)),
+		float(transition.get("x_max", 0.0))
+	)
+	var authored_x_max := maxf(
+		float(transition.get("x_min", 0.0)),
+		float(transition.get("x_max", 0.0))
+	)
+	var raw_y_min := minf(
+		float(transition.get("y_start", transition.get("y_min", 0.0))),
+		float(transition.get("y_end", transition.get("y_max", 0.0)))
+	)
+	var raw_y_max := maxf(
+		float(transition.get("y_start", transition.get("y_min", 0.0))),
+		float(transition.get("y_end", transition.get("y_max", 0.0)))
+	)
+
+	# Structural transition mouths live on cell boundaries. Snapping to the
+	# half-grid lattice means a stair/bridge owns a whole-cell rectangle and the
+	# normal ground owns the immediately adjacent rectangle. They therefore
+	# share one mathematical edge instead of overlapping two independently
+	# rendered surfaces and hiding the seam with overscan.
+	var rect := {
+		"x_min": float(lane.get("x_min", authored_x_min)),
+		"x_max": float(lane.get("x_max", authored_x_max)),
+		"y_min": _snap_half_grid(raw_y_min),
+		"y_max": _snap_half_grid(raw_y_max),
+	}
+	if not lane.is_empty():
+		rect["surface"] = lane.get("surface", "")
+		rect["sample_grid"] = lane.get("sample_grid", Vector2.ZERO)
+	return rect
+
+
+static func _snap_half_grid(value: float) -> float:
+	return floor(value * 2.0 + 0.5) * 0.5
+
+
+static func bridge_support_rect(bridge: Dictionary) -> Dictionary:
+	var deck := fitted_transition_rect(bridge)
+	if deck.is_empty():
+		return {}
+
+	var deck_x_min := float(deck.get("x_min", 0.0))
+	var deck_x_max := float(deck.get("x_max", 0.0))
+	var deck_y_min := float(deck.get("y_min", 0.0))
+	var deck_y_max := float(deck.get("y_max", 0.0))
+	var best: Dictionary = {}
+	var best_area := 0.0
+
+	# The walkable deck is cell-aligned, but the structural bridge body must only
+	# exist where the corridor is actually suspended over a void. This prevents
+	# the half-cell mouths from becoming a raised slab on top of solid terrain.
+	for raw_void in voids():
+		if not raw_void is Dictionary:
+			continue
+		var void_region := raw_void as Dictionary
+		var void_x_min := minf(
+			float(void_region.get("x_min", 0.0)),
+			float(void_region.get("x_max", 0.0))
+		)
+		var void_x_max := maxf(
+			float(void_region.get("x_min", 0.0)),
+			float(void_region.get("x_max", 0.0))
+		)
+		var void_y_min := minf(
+			float(void_region.get("y_min", 0.0)),
+			float(void_region.get("y_max", 0.0))
+		)
+		var void_y_max := maxf(
+			float(void_region.get("y_min", 0.0)),
+			float(void_region.get("y_max", 0.0))
+		)
+		var x_min := maxf(deck_x_min, void_x_min)
+		var x_max := minf(deck_x_max, void_x_max)
+		var y_min := maxf(deck_y_min, void_y_min)
+		var y_max := minf(deck_y_max, void_y_max)
+		if x_max <= x_min + SEGMENT_EPSILON or y_max <= y_min + SEGMENT_EPSILON:
+			continue
+		var area := (x_max - x_min) * (y_max - y_min)
+		if area <= best_area:
+			continue
+		best_area = area
+		best = {
+			"x_min": x_min,
+			"x_max": x_max,
+			"y_min": y_min,
+			"y_max": y_max,
+			"void_id": String(void_region.get("id", "")),
+		}
+	return best
+
+
+static func connected_stair_for_bridge(bridge: Dictionary) -> Dictionary:
+	var bridge_rect := fitted_transition_rect(bridge)
+	if bridge_rect.is_empty():
+		return {}
+
+	var bridge_x_min := float(bridge_rect.get("x_min", 0.0))
+	var bridge_x_max := float(bridge_rect.get("x_max", 0.0))
+	var bridge_y_min := float(bridge_rect.get("y_min", 0.0))
+	var bridge_y_max := float(bridge_rect.get("y_max", 0.0))
+	var best: Dictionary = {}
+	var best_overlap := 0.0
+
+	for raw_stair in stairs():
+		if not raw_stair is Dictionary:
+			continue
+		var stair := raw_stair as Dictionary
+		var stair_rect := fitted_transition_rect(stair)
+		if stair_rect.is_empty():
+			continue
+		var stair_x_min := float(stair_rect.get("x_min", 0.0))
+		var stair_x_max := float(stair_rect.get("x_max", 0.0))
+		var stair_y_min := float(stair_rect.get("y_min", 0.0))
+		var stair_y_max := float(stair_rect.get("y_max", 0.0))
+		var touches := (
+			absf(stair_y_max - bridge_y_min) <= SEGMENT_EPSILON
+			or absf(stair_y_min - bridge_y_max) <= SEGMENT_EPSILON
+		)
+		if not touches:
+			continue
+		var overlap := maxf(
+			0.0,
+			minf(bridge_x_max, stair_x_max) - maxf(bridge_x_min, stair_x_min)
+		)
+		if overlap <= best_overlap + SEGMENT_EPSILON:
+			continue
+		best_overlap = overlap
+		best = stair.duplicate(true)
+	return best
+
+
+static func _painted_lane_at_row(
+	authored_x_min: float,
+	authored_x_max: float,
+	row_y: int
+) -> Dictionary:
+	var painted := AUTHORING.painted_cells()
+	if painted.is_empty():
+		return {}
+
+	var center_x := (authored_x_min + authored_x_max) * 0.5
+	var scan_min := floori(authored_x_min) - 8
+	var scan_max := ceili(authored_x_max) + 8
+	var runs: Array[Dictionary] = []
+	var current: Dictionary = {}
+
+	for x in range(scan_min, scan_max + 1):
+		var key := "%d,%d" % [x, row_y]
+		var surface := ""
+		if painted.has(key):
+			surface = PAINT_DATA.surface(painted.get(key, ""))
+		if surface in ["", "water", "void"]:
+			if not current.is_empty():
+				runs.append(current)
+				current = {}
+			continue
+
+		if (
+			current.is_empty()
+			or String(current.get("surface", "")) != surface
+			or x != int(current.get("last_x", x - 1)) + 1
+		):
+			if not current.is_empty():
+				runs.append(current)
+			current = {
+				"surface": surface,
+				"first_x": x,
+				"last_x": x,
+			}
+		else:
+			current["last_x"] = x
+	if not current.is_empty():
+		runs.append(current)
+
+	var best: Dictionary = {}
+	var best_overlap := -1.0
+	var best_distance := INF
+	for run in runs:
+		var first_x := int(run.get("first_x", 0))
+		var last_x := int(run.get("last_x", first_x))
+		var run_min := float(first_x) - 0.5
+		var run_max := float(last_x) + 0.5
+		var overlap := maxf(
+			0.0,
+			minf(run_max, authored_x_max) - maxf(run_min, authored_x_min)
+		)
+		var run_center := (run_min + run_max) * 0.5
+		var distance := absf(run_center - center_x)
+		if overlap > best_overlap + 0.001 or (
+			is_equal_approx(overlap, best_overlap) and distance < best_distance
+		):
+			best_overlap = overlap
+			best_distance = distance
+			best = {
+				"x_min": run_min,
+				"x_max": run_max,
+				"surface": String(run.get("surface", "")),
+				"row_y": row_y,
+				"sample_grid": Vector2(float(first_x), float(row_y)),
+			}
+
+	if best_overlap <= 0.0:
+		return {}
+	return best
+
+
+static func _lane_persistence(lane: Dictionary, row_y: int, direction: int) -> float:
+	if lane.is_empty():
+		return 0.0
+	var surface := String(lane.get("surface", ""))
+	var lane_min := float(lane.get("x_min", 0.0))
+	var lane_max := float(lane.get("x_max", 0.0))
+	var lane_width := maxf(0.001, lane_max - lane_min)
+	var score := 0.0
+	for offset in [1, 2]:
+		var neighbor := _painted_lane_at_row(
+			lane_min,
+			lane_max,
+			row_y + direction * offset
+		)
+		if neighbor.is_empty() or String(neighbor.get("surface", "")) != surface:
+			continue
+		var neighbor_min := float(neighbor.get("x_min", lane_min))
+		var neighbor_max := float(neighbor.get("x_max", lane_max))
+		var overlap := maxf(0.0, minf(lane_max, neighbor_max) - maxf(lane_min, neighbor_min))
+		score += overlap / lane_width
+	return score
+
+
 static func elevation_for_level(level_id: String) -> float:
 	var level_value = levels().get(level_id, {})
 	if not level_value is Dictionary:
@@ -104,17 +449,14 @@ static func elevation_at_grid(grid: Vector2) -> float:
 
 
 static func stair_progress(grid: Vector2, stair: Dictionary) -> float:
-	var polygon_value = stair.get("grid_polygon")
-	if polygon_value is PackedVector2Array and (polygon_value as PackedVector2Array).size() == 4:
-		var quad := polygon_value as PackedVector2Array
-		var start := (quad[0] + quad[1]) * 0.5
-		var end := (quad[3] + quad[2]) * 0.5
-		var travel := end - start
-		if travel.length_squared() > 0.0001:
-			return clampf((grid - start).dot(travel) / travel.length_squared(), 0.0, 1.0)
-	var y_start := float(stair.get("y_start", grid.y))
-	var y_end := float(stair.get("y_end", y_start + 1.0))
-	return 1.0 if is_equal_approx(y_start, y_end) else clampf((grid.y - y_start) / (y_end - y_start), 0.0, 1.0)
+	var rect := fitted_transition_rect(stair)
+	var y_start := float(rect.get("y_min", stair.get("y_start", grid.y)))
+	var y_end := float(rect.get("y_max", stair.get("y_end", y_start + 1.0)))
+	return (
+		1.0
+		if is_equal_approx(y_start, y_end)
+		else clampf((grid.y - y_start) / (y_end - y_start), 0.0, 1.0)
+	)
 
 
 static func visual_offset_at_grid(grid: Vector2) -> Vector2:
@@ -153,18 +495,19 @@ static func _stair_at_grid_ref(grid: Vector2) -> Dictionary:
 	var value = config().get("stairs", [])
 	if not value is Array:
 		return {}
-	var stair_list := value as Array
-	for raw in stair_list:
+	for raw in value as Array:
 		if not raw is Dictionary:
 			continue
 		var stair := raw as Dictionary
-		if _point_in_transition(
+		var rect := fitted_transition_rect(stair)
+		if rect.is_empty():
+			continue
+		if _point_in_rect(
 			grid,
-			stair,
-			float(stair.get("x_min", 0.0)),
-			float(stair.get("x_max", 0.0)),
-			float(stair.get("y_start", 0.0)),
-			float(stair.get("y_end", 0.0))
+			float(rect.get("x_min", 0.0)),
+			float(rect.get("x_max", 0.0)),
+			float(rect.get("y_min", 0.0)),
+			float(rect.get("y_max", 0.0))
 		):
 			return stair
 	return {}
@@ -175,13 +518,15 @@ static func bridge_at_grid(grid: Vector2) -> Dictionary:
 		if not raw is Dictionary:
 			continue
 		var bridge := raw as Dictionary
-		if _point_in_transition(
+		var rect := fitted_transition_rect(bridge)
+		if rect.is_empty():
+			continue
+		if _point_in_rect(
 			grid,
-			bridge,
-			float(bridge.get("x_min", 0.0)),
-			float(bridge.get("x_max", 0.0)),
-			float(bridge.get("y_min", 0.0)),
-			float(bridge.get("y_max", 0.0))
+			float(rect.get("x_min", 0.0)),
+			float(rect.get("x_max", 0.0)),
+			float(rect.get("y_min", 0.0)),
+			float(rect.get("y_max", 0.0))
 		):
 			return bridge.duplicate(true)
 	return {}
@@ -211,6 +556,17 @@ static func is_void_at_grid(grid: Vector2) -> bool:
 static func can_traverse_grid_segment(from_grid: Vector2, to_grid: Vector2) -> bool:
 	if from_grid.distance_squared_to(to_grid) <= SEGMENT_EPSILON * SEGMENT_EPSILON:
 		return true
+
+	# When the painted lane is narrower than the structural transition polygon,
+	# the leftover strip becomes retaining-wall infill. It stays rendered as
+	# floor underlay but is never traversable, so shrinking a stair to match a
+	# painted road cannot accidentally create a lateral shortcut beside it.
+	if (
+		_is_stair_side_infill(from_grid)
+		or _is_stair_side_infill(to_grid)
+		or _is_stair_side_infill((from_grid + to_grid) * 0.5)
+	):
+		return false
 
 	var from_stair := _stair_at_grid_ref(from_grid)
 	var to_stair := _stair_at_grid_ref(to_grid)
@@ -248,31 +604,55 @@ static func can_traverse_world_segment(from_world: Vector2, to_world: Vector2) -
 
 static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 	var point := Vector2(global_grid)
+	if _is_stair_side_infill(point):
+		return {
+			"render": true,
+			"walkable": false,
+			"inherit_surface": true,
+			"stair_side_infill": true,
+		}
+
 	var stair := _stair_at_grid_ref(point)
 	if not stair.is_empty():
-		var progress := stair_progress(point, stair)
-		if progress > 0.0 and progress < 1.0:
-			return {"render": false, "walkable": true}
+		# The stair owns this exact half-grid-aligned cell rectangle. Do not keep a
+		# second copy of the road/floor below it: coplanar overlap is what made the
+		# mouths look blurred and "pasted on". The transition mesh supplies the
+		# visible surface while movement remains independently walkable.
+		return {
+			"render": false,
+			"walkable": true,
+			"stair_transition": true,
+		}
 
 	var break_data := level_break()
-	var break_y := int(round(float(break_data.get("grid_y", 19.0))))
+	var break_y := int(floor(float(break_data.get("lower_threshold_y", 19.5))))
 	var x_min := float(break_data.get("x_min", -INF))
 	var x_max := float(break_data.get("x_max", INF))
 	if global_grid.y == break_y and point.x >= x_min and point.x <= x_max:
-		return {"render": false, "walkable": not stair.is_empty()}
+		return {
+			"render": true,
+			"walkable": false,
+			"inherit_surface": true,
+			"terrace_boundary_surface": true,
+		}
 
 	var void_region := void_at_grid(point)
 	if not void_region.is_empty():
 		var bridge := bridge_at_grid(point)
-		# Water basins are continuous authored geometry, while the base city
-		# ground is rendered in whole 64x32 gameplay cells. Removing complete
-		# ground cells produced oversized black gaps around the precise canal
-		# polygon. Preserve the base floor as an underlay and let the opaque
-		# basin geometry cover the exact opening. Navigation remains independent:
-		# only an authored bridge makes a water cell traversable.
+		if not bridge.is_empty():
+			# Bridges follow the same ownership rule as stairs: the deck replaces
+			# the base floor in a whole-cell rectangle and meets the adjacent terrain
+			# on a shared edge, so there is no hidden road slab underneath it.
+			return {
+				"render": false,
+				"walkable": true,
+				"bridge_transition": true,
+			}
+		# Water basins still keep the base city floor as a hidden underlay because
+		# the authored basin polygon is not restricted to whole gameplay cells.
 		return {
 			"render": true,
-			"walkable": not bridge.is_empty(),
+			"walkable": false,
 			"basin_underlay": true,
 		}
 	return {}
@@ -407,19 +787,44 @@ static func road_graph_is_connected() -> bool:
 	return visited.size() == adjacency.size()
 
 
+static func _is_stair_side_infill(point: Vector2) -> bool:
+	var value = config().get("stairs", [])
+	if not value is Array:
+		return false
+	for raw in value as Array:
+		if not raw is Dictionary:
+			continue
+		var stair := raw as Dictionary
+		var authored_x_min := minf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+		var authored_x_max := maxf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+		var rect := fitted_transition_rect(stair)
+		if rect.is_empty():
+			continue
+		var y_min := float(rect.get("y_min", 0.0))
+		var y_max := float(rect.get("y_max", 0.0))
+		if not _point_in_rect(point, authored_x_min, authored_x_max, y_min, y_max):
+			continue
+		var lane_min := float(rect.get("x_min", authored_x_min))
+		var lane_max := float(rect.get("x_max", authored_x_max))
+		if point.x < lane_min - SEGMENT_EPSILON or point.x > lane_max + SEGMENT_EPSILON:
+			return true
+	return false
+
+
 static func _crosses_stair_landing(
 	outside: Vector2,
 	inside: Vector2,
 	stair: Dictionary
 ) -> bool:
-	var y_start := minf(
-		float(stair.get("y_start", 0.0)),
-		float(stair.get("y_end", 0.0))
-	)
-	var y_end := maxf(
-		float(stair.get("y_start", 0.0)),
-		float(stair.get("y_end", 0.0))
-	)
+	# Traversal and rendering must use the SAME fitted half-grid mouths. The
+	# stair geometry was snapped to those bounds, but this check still used the
+	# old authored y_start/y_end values, creating an invisible wall exactly where
+	# the visible stair began.
+	var rect := fitted_transition_rect(stair)
+	if rect.is_empty():
+		return false
+	var y_start := float(rect.get("y_min", stair.get("y_start", 0.0)))
+	var y_end := float(rect.get("y_max", stair.get("y_end", y_start)))
 
 	if outside.y < y_start - SEGMENT_EPSILON and inside.y >= y_start - SEGMENT_EPSILON:
 		var crossing_x := _segment_x_at_y(outside, inside, y_start)
@@ -431,8 +836,15 @@ static func _crosses_stair_landing(
 
 
 static func _stair_x_is_inside_walkway(x: float, stair: Dictionary) -> bool:
-	var x_min := minf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
-	var x_max := maxf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+	var lane := fitted_transition_lane(stair)
+	var x_min := minf(
+		float(lane.get("x_min", stair.get("x_min", 0.0))),
+		float(lane.get("x_max", stair.get("x_max", 0.0)))
+	)
+	var x_max := maxf(
+		float(lane.get("x_min", stair.get("x_min", 0.0))),
+		float(lane.get("x_max", stair.get("x_max", 0.0)))
+	)
 	var margin := minf(STAIR_ENTRY_MARGIN_GRID, maxf(0.0, (x_max - x_min) * 0.15))
 	return x >= x_min + margin and x <= x_max - margin
 

@@ -5,7 +5,9 @@ const MAP_CAPTURE := preload("res://src/debug/DebugWorldMapCapture.gd")
 const CITY_AUTHORING := preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 const CITY_EDITOR_MATH := preload("res://src/world/authoring/CentralCityEditorMath.gd")
 const CITY_LAYOUT := preload("res://src/world/runtime/CentralCityUrbanLayout.gd")
+const CITY := preload("res://src/world/runtime/CentralCityArt.gd")
 const CITY_TOPOLOGY := preload("res://src/world/runtime/CentralCityTopology.gd")
+const CITY_TERRACE := preload("res://src/world/runtime/CentralCityTerrace.gd")
 const CITY_BAKER := preload("res://src/world/authoring/CentralCityBaker.gd")
 const CITY_DECOR := preload("res://src/world/runtime/CentralCityDecor.gd")
 
@@ -76,6 +78,125 @@ func _ready() -> void:
 		road_network_value is Dictionary
 		and String((road_network_value as Dictionary).get("mode", "")) == "painted_tiles",
 		"Roads must be authored as independent painted cells instead of linked Line2D graph geometry"
+	)
+
+	var transition_lanes := {}
+	for raw_transition in CITY_TOPOLOGY.stairs():
+		if raw_transition is Dictionary:
+			var transition := raw_transition as Dictionary
+			transition_lanes[String(transition.get("id", ""))] = CITY_TOPOLOGY.fitted_transition_lane(transition)
+	for raw_transition in CITY_TOPOLOGY.bridges():
+		if raw_transition is Dictionary:
+			var transition := raw_transition as Dictionary
+			transition_lanes[String(transition.get("id", ""))] = CITY_TOPOLOGY.fitted_transition_lane(transition)
+	var west_stair_lane := transition_lanes.get("west_stairs", {}) as Dictionary
+	var central_stair_lane := transition_lanes.get("central_stairs", {}) as Dictionary
+	var west_bridge_lane := transition_lanes.get("west_bridge", {}) as Dictionary
+	var east_bridge_lane := transition_lanes.get("east_bridge", {}) as Dictionary
+	assert(
+		is_equal_approx(float(west_stair_lane.get("x_min", 0.0)), -7.5)
+		and is_equal_approx(float(west_stair_lane.get("x_max", 0.0)), -3.5)
+		and String(west_stair_lane.get("surface", "")) == "road"
+		and is_equal_approx(float(central_stair_lane.get("x_min", 0.0)), 5.5)
+		and is_equal_approx(float(central_stair_lane.get("x_max", 0.0)), 8.5)
+		and String(central_stair_lane.get("surface", "")) == "road"
+		and is_equal_approx(float(west_bridge_lane.get("x_min", 0.0)), -7.5)
+		and is_equal_approx(float(west_bridge_lane.get("x_max", 0.0)), -3.5)
+		and String(west_bridge_lane.get("surface", "")) == "road"
+		and is_equal_approx(float(east_bridge_lane.get("x_min", 0.0)), 19.5)
+		and is_equal_approx(float(east_bridge_lane.get("x_max", 0.0)), 23.5)
+		and String(east_bridge_lane.get("surface", "")) == "road",
+		"Stairs and bridges must fit the contiguous painted road lane at their insertion mouths instead of keeping stale authored widths"
+	)
+
+	var transition_rects := {}
+	for raw_transition in CITY_TOPOLOGY.stairs():
+		if raw_transition is Dictionary:
+			var transition := raw_transition as Dictionary
+			transition_rects[String(transition.get("id", ""))] = CITY_TOPOLOGY.fitted_transition_rect(transition)
+	for raw_transition in CITY_TOPOLOGY.bridges():
+		if raw_transition is Dictionary:
+			var transition := raw_transition as Dictionary
+			transition_rects[String(transition.get("id", ""))] = CITY_TOPOLOGY.fitted_transition_rect(transition)
+	var west_stair_rect := transition_rects.get("west_stairs", {}) as Dictionary
+	var central_stair_rect := transition_rects.get("central_stairs", {}) as Dictionary
+	var west_bridge_rect := transition_rects.get("west_bridge", {}) as Dictionary
+	assert(
+		is_equal_approx(float(west_stair_rect.get("y_min", 0.0)), 18.5)
+		and is_equal_approx(float(west_stair_rect.get("y_max", 0.0)), 21.5)
+		and is_equal_approx(float(central_stair_rect.get("y_min", 0.0)), 18.5)
+		and is_equal_approx(float(central_stair_rect.get("y_max", 0.0)), 21.5)
+		and is_equal_approx(float(west_bridge_rect.get("y_min", 0.0)), 21.5)
+		and is_equal_approx(float(west_bridge_rect.get("y_max", 0.0)), 25.5),
+		"Transition geometry must snap to half-grid cell boundaries so terrain and architectural modules share one exact edge instead of overlapping"
+	)
+	assert(
+		is_equal_approx(float(west_stair_rect.get("x_min", 0.0)), float(west_bridge_rect.get("x_min", 1.0)))
+		and is_equal_approx(float(west_stair_rect.get("x_max", 0.0)), float(west_bridge_rect.get("x_max", 1.0)))
+		and is_equal_approx(float(west_stair_rect.get("y_max", 0.0)), float(west_bridge_rect.get("y_min", 1.0))),
+		"Connected west stair and bridge must share the exact same corridor width and the exact same mouth edge"
+	)
+
+	var west_bridge_data: Dictionary = {}
+	var east_bridge_data: Dictionary = {}
+	for raw_bridge in CITY_TOPOLOGY.bridges():
+		if not raw_bridge is Dictionary:
+			continue
+		var bridge := raw_bridge as Dictionary
+		match String(bridge.get("id", "")):
+			"west_bridge":
+				west_bridge_data = bridge
+			"east_bridge":
+				east_bridge_data = bridge
+	var west_support := CITY_TOPOLOGY.bridge_support_rect(west_bridge_data)
+	var east_support := CITY_TOPOLOGY.bridge_support_rect(east_bridge_data)
+	var west_connected_stair := CITY_TOPOLOGY.connected_stair_for_bridge(west_bridge_data)
+	assert(
+		is_equal_approx(float(west_support.get("x_min", 0.0)), -7.5)
+		and is_equal_approx(float(west_support.get("x_max", 0.0)), -3.5)
+		and is_equal_approx(float(west_support.get("y_min", 0.0)), 22.0)
+		and is_equal_approx(float(west_support.get("y_max", 0.0)), 25.0)
+		and is_equal_approx(float(east_support.get("y_min", 0.0)), 22.0)
+		and is_equal_approx(float(east_support.get("y_max", 0.0)), 25.0),
+		"Bridge structural bodies must be clipped to the actual authored water span instead of extending across the solid-terrain mouths"
+	)
+	assert(
+		String(west_connected_stair.get("id", "")) == "west_stairs"
+		and CITY_TOPOLOGY.connected_stair_for_bridge(east_bridge_data).is_empty(),
+		"Only physically adjacent stair/bridge corridors may share a structural rail joint"
+	)
+
+	var road_paver_material := CITY._create_paver_material(CITY.SURFACE_ROAD)
+	var transition_paver_material := CITY._create_paver_material()
+	assert(
+		is_equal_approx(
+			float(road_paver_material.get_shader_parameter("stone_variation")),
+			float(transition_paver_material.get_shader_parameter("stone_variation"))
+		)
+		and is_equal_approx(
+			float(road_paver_material.get_shader_parameter("grout_darkening")),
+			float(transition_paver_material.get_shader_parameter("grout_darkening"))
+		)
+		and is_equal_approx(
+			float(road_paver_material.get_shader_parameter("edge_highlight")),
+			float(transition_paver_material.get_shader_parameter("edge_highlight"))
+		),
+		"Road pavement must use the exact same procedural paver profile as stair treads and bridge decks"
+	)
+
+	var bridge_surface_ids := {}
+	for raw_bridge in CITY_TOPOLOGY.bridges():
+		if not raw_bridge is Dictionary:
+			continue
+		var bridge := raw_bridge as Dictionary
+		var resolved_surface := CITY_TERRACE.bridge_surface_for_transition(bridge)
+		bridge_surface_ids[String(bridge.get("id", ""))] = String(
+			resolved_surface.get("surface", "")
+		)
+	assert(
+		String(bridge_surface_ids.get("west_bridge", "")) == "road"
+		and String(bridge_surface_ids.get("east_bridge", "")) == "main",
+		"Bridge material must follow the terrain on both mouths: the west road crossing stays road, while a one-sided road must not repaint the southeast civic-floor bridge"
 	)
 	var road_sample := CITY_AUTHORING.ground_override_at(Vector2(7, 10))
 	assert(
@@ -222,18 +343,23 @@ func _ready() -> void:
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(
-		area.get_ground_tile_count() == 4254,
-		"Central City ground batch must omit only true architectural breaks/stair transitions while preserving pavement beneath precise water-basin geometry"
+		area.get_ground_tile_count() == 4288,
+		"Central City ground batch must omit cells exclusively owned by stairs/bridges while preserving basin underlay cells and global batching"
 	)
 	var west_basin_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-10, 23))
 	var west_bridge_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-5, 23))
+	var west_stair_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-5, 20))
 	assert(
 		bool(west_basin_ground_rule.get("render", false))
 		and not bool(west_basin_ground_rule.get("walkable", true))
 		and bool(west_basin_ground_rule.get("basin_underlay", false))
-		and bool(west_bridge_ground_rule.get("render", false))
-		and bool(west_bridge_ground_rule.get("walkable", false)),
-		"Water topology must preserve base-ground rendering as a precise basin underlay without making the canal walkable outside authored bridges"
+		and not bool(west_bridge_ground_rule.get("render", true))
+		and bool(west_bridge_ground_rule.get("walkable", false))
+		and bool(west_bridge_ground_rule.get("bridge_transition", false))
+		and not bool(west_stair_ground_rule.get("render", true))
+		and bool(west_stair_ground_rule.get("walkable", false))
+		and bool(west_stair_ground_rule.get("stair_transition", false)),
+		"Stairs and bridges must exclusively own their half-grid terrain cells while water basins alone preserve the hidden base-ground underlay"
 	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
@@ -308,12 +434,15 @@ func _ready() -> void:
 	assert(
 		south_terrace != null
 		and area.get_south_terrace_render_node_count() <= 16
-		and south_terrace.get_node_or_null("RetainingWallCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("RetainingWallCaps") == null
 		and south_terrace.get_node_or_null("RetainingWallFaces") is MeshInstance2D
-		and south_terrace.get_node_or_null("StairLandings") is MeshInstance2D
+		and south_terrace.get_node_or_null("RetainingWallDetails") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairBackplates") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairLandings") == null
+		and south_terrace.get_node_or_null("StairSideWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
-		and south_terrace.get_node_or_null("StairSideCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairSideCaps") == null
 		and south_terrace.get_node_or_null("StairNosingAndParapets") is MeshInstance2D
 		and south_terrace.get_node_or_null("WaterBasinFloor") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchSubmergedWalls") is MeshInstance2D
@@ -337,12 +466,24 @@ func _ready() -> void:
 		and is_equal_approx(float(south_terrace.get_meta("basin_depth_px", 0.0)), 24.0)
 		and is_equal_approx(float(south_terrace.get_meta("far_floor_face_depth_px", 0.0)), 12.0)
 		and is_equal_approx(float(south_terrace.get_meta("far_floor_face_pavers_per_cell", 0.0)), 4.0)
-		and String(south_terrace.get_meta("canal_detail_system", "")) == "recessed_water_v4_open_near_edge"
+		and String(south_terrace.get_meta("canal_detail_system", "")) == "recessed_water_v5_bridge_openings"
 		and String(south_terrace.get_meta("canal_cutaway_mode", "")) == "far_cube_faces_near_open_water"
 		and String(south_terrace.get_meta("near_side_border", "")) == "none"
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
+		and String(south_terrace.get_meta("transition_surface_ownership", "")) == "exclusive_half_grid_cells"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v13_unified_transition_corridor"
+		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v4_exact_mouth_edges"
+		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "terrain_cut_side_modules_behind_treads"
+		and String(south_terrace.get_meta("stair_material_mode", "")) == "exclusive_terrain_owned_treads"
+		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_exact_mouth_context"
+		and String(south_terrace.get_meta("bridge_mouth_geometry", "")) == "flush_deck_support_clipped_to_void"
+		and String(south_terrace.get_meta("bridge_void_composition", "")) == "subtract_support_corridor_from_void_edges"
+		and String(south_terrace.get_meta("bridge_guard_joint", "")) == "single_post_shared_with_connected_stair"
+		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_half_grid_cell_bounds"
+		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
 		"South Terrace must expose 12px paver cube faces only on the far/top-left cut and keep near camera edges completely free of border overlays"
@@ -406,6 +547,22 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("CanalShoreline") == null,
 		"Canal near edge must contain no gray border, no foreground strip, and no shoreline outline"
 	)
+	var stair_transition_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(7, 20))
+	var stair_authored_surface := CITY_AUTHORING.ground_override_at(Vector2(7, 20))
+	assert(
+		not bool(stair_transition_rule.get("render", true))
+		and bool(stair_transition_rule.get("walkable", false))
+		and bool(stair_transition_rule.get("stair_transition", false))
+		and String(stair_authored_surface.get("surface", "")) == "road",
+		"Stair cells must be owned exclusively by the procedural transition while preserving authored road paint as the material source"
+	)
+	var boundary_surface_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(0, 19))
+	assert(
+		bool(boundary_surface_rule.get("render", false))
+		and not bool(boundary_surface_rule.get("walkable", true))
+		and bool(boundary_surface_rule.get("terrace_boundary_surface", false)),
+		"The final Upper Civic floor row must remain rendered continuously up to the 19.5 retaining threshold while traversal stays blocked"
+	)
 	assert(
 		not area.is_walkable_world_position(_grid_to_world(Vector2(0, 19)))
 		and area.is_walkable_world_position(_grid_to_world(Vector2(7, 19)))
@@ -428,6 +585,48 @@ func _ready() -> void:
 		),
 		"Cross-level movement must be rejected outside a staircase and accepted through an authored stair corridor"
 	)
+	# Regression for the real actor wall reported at the visible stair mouths.
+	# Rendering uses fitted half-grid bounds (18.5/21.5), so traversal must enter
+	# and leave through those same exact bounds in both directions.
+	assert(
+		area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 18.40)),
+			_grid_to_world(Vector2(7.0, 18.60))
+		)
+		and area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 18.60)),
+			_grid_to_world(Vector2(7.0, 18.40))
+		)
+		and area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 21.60)),
+			_grid_to_world(Vector2(7.0, 21.40))
+		)
+		and area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 21.40)),
+			_grid_to_world(Vector2(7.0, 21.60))
+		),
+		"Fitted stair mouths must be traversable from upper and lower terrain in both directions"
+	)
+	var saved_stair_test_player_position := player.global_position
+	player.global_position = _grid_to_world(Vector2(7.0, 18.40))
+	assert(
+		bool(world.call(
+			"can_actor_move_to",
+			_grid_to_world(Vector2(7.0, 18.60)),
+			player
+		)),
+		"Player clearance and topology checks must allow entering the central stair from the upper road"
+	)
+	player.global_position = _grid_to_world(Vector2(7.0, 21.60))
+	assert(
+		bool(world.call(
+			"can_actor_move_to",
+			_grid_to_world(Vector2(7.0, 21.40)),
+			player
+		)),
+		"Player clearance and topology checks must allow entering the central stair from the lower road"
+	)
+	player.global_position = saved_stair_test_player_position
 	assert(
 		not area.can_traverse_world_segment(
 			_grid_to_world(Vector2(4.75, 20.0)),
@@ -457,9 +656,18 @@ func _ready() -> void:
 
 
 	var edge_blocks := area.get_node_or_null("CityGround/EdgeBlocks")
+	var civic_edge_faces := area.get_node_or_null("CityGround/CivicEdgeFaces") as MeshInstance2D
+	var civic_edge_details := area.get_node_or_null("CityGround/CivicEdgeDetails") as MeshInstance2D
 	assert(
-		edge_blocks != null and edge_blocks.get_child_count() > 0,
-		"Central City perimeter must expose authored Devil block side faces"
+		edge_blocks != null and edge_blocks.get_child_count() == 0,
+		"No Central City perimeter may fall back to the legacy tan block side art"
+	)
+	assert(
+		civic_edge_faces != null
+		and civic_edge_details != null
+		and civic_edge_faces.mesh != null
+		and civic_edge_details.mesh != null,
+		"Upper Civic and South Terrace outer edges must use the same sealed procedural civic facade as the retaining wall"
 	)
 	assert(
 		area.get_runtime_node_count() < 1000,
