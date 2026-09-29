@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://tools/test_world_area.gd" id="1_test"]
+[ext_resource type="Script" path="res://tools/test_overworld_collision_sliding.gd" id="2_motion"]
 
 [node name="WorldAreaRegression" type="Node"]
 script = ExtResource("1_test")
+
+[node name="OverworldCollisionSlidingRegression" type="Node" parent="."]
+script = ExtResource("2_motion")
