@@ -15,21 +15,6 @@ const SHORE_BAND_GRID := 0.42
 const BRIDGE_BODY_DEPTH_PX := 8.0
 const BRIDGE_RAIL_GRID := 0.16
 
-const WALL_MODULE_GRID := 2.15
-const WALL_PILASTER_PX := 3.0
-const WALL_TOP_FASCIA_PX := 8.0
-const WALL_BASE_BAND_PX := 7.0
-const WALL_PANEL_TOP_PX := 12.0
-const WALL_PANEL_BOTTOM_PX := 9.0
-
-const WALL_FACE := Color(0.35, 0.385, 0.40, 1.0)
-const WALL_PANEL_A := Color(0.285, 0.315, 0.33, 1.0)
-const WALL_PANEL_B := Color(0.305, 0.335, 0.35, 1.0)
-const WALL_PILASTER := Color(0.47, 0.50, 0.50, 1.0)
-const WALL_FASCIA := Color(0.50, 0.525, 0.525, 1.0)
-const WALL_BASE := Color(0.235, 0.265, 0.28, 1.0)
-const WALL_ACCENT := Color(0.16, 0.78, 0.88, 1.0)
-
 const STAIR_TOP := Color(0.64, 0.655, 0.65, 1.0)
 const STAIR_RISER := Color(0.37, 0.40, 0.41, 1.0)
 const STAIR_SIDE := Color(0.31, 0.34, 0.35, 1.0)
@@ -256,12 +241,13 @@ static func build() -> Node2D:
 	root.set_meta("near_side_overlay", "none")
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v1")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v2_seamless")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
 	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v1")
+	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
@@ -286,6 +272,26 @@ static func _build_retaining_wall(
 	var x_max := float(break_data.get("x_max", 29.0))
 	var upper_level := String(break_data.get("upper_level", "upper_civic"))
 	var upper_elevation := TOPOLOGY.elevation_for_level(upper_level)
+
+	# One continuous structural backfill spans the whole break, including behind
+	# both stair openings. This is intentionally independent of the decorative
+	# facade modules: the backdrop can never leak through as a black trench even
+	# between stair cheek geometry, and a tiny overlap tucks under both floor
+	# meshes to eliminate raster seams.
+	var logical_a := TOPOLOGY.grid_to_world(Vector2(x_min, y))
+	var logical_b := TOPOLOGY.grid_to_world(Vector2(x_max, y))
+	var top_a := logical_a + Vector2(0.0, -upper_elevation)
+	var top_b := logical_b + Vector2(0.0, -upper_elevation)
+	var overlap := CITY.CIVIC_WALL_SEAM_OVERLAP_PX
+	faces.append({
+		"points": PackedVector2Array([
+			top_a + Vector2(0.0, -overlap),
+			top_b + Vector2(0.0, -overlap),
+			logical_b + Vector2(0.0, overlap),
+			logical_a + Vector2(0.0, overlap),
+		]),
+		"color": CITY.CIVIC_WALL_FACE,
+	})
 
 	var gaps: Array[Vector2] = []
 	for raw_stair in TOPOLOGY.stairs():
@@ -322,96 +328,33 @@ static func _append_wall_segment(
 	x0: float,
 	x1: float,
 	y: float,
-	level: String,
+	_level: String,
 	elevation: float
 ) -> void:
 	if x1 <= x0 or elevation <= 0.0:
 		return
 
-
 	var logical_a := TOPOLOGY.grid_to_world(Vector2(x0, y))
 	var logical_b := TOPOLOGY.grid_to_world(Vector2(x1, y))
 	var top_a := logical_a + Vector2(0.0, -elevation)
 	var top_b := logical_b + Vector2(0.0, -elevation)
-	var bottom_drop := Vector2(0.0, elevation)
-	faces.append({
-		"points": PackedVector2Array([top_a, top_b, top_b + bottom_drop, top_a + bottom_drop]),
-		"color": WALL_FACE,
-	})
 
-	# A calculated architectural facade replaces the former single dark slab.
-	# All modules are interpolated from the authored level-break endpoints, so
-	# they can never drift from the isometric floor or become stretched sprites.
-	bands.append({
-		"points": PackedVector2Array([
-			top_a,
-			top_b,
-			top_b + Vector2(0.0, minf(elevation, WALL_TOP_FASCIA_PX)),
-			top_a + Vector2(0.0, minf(elevation, WALL_TOP_FASCIA_PX)),
-		]),
-		"color": WALL_FASCIA,
-	})
-	bands.append({
-		"points": PackedVector2Array([
-			top_a + Vector2(0.0, maxf(0.0, elevation - WALL_BASE_BAND_PX)),
-			top_b + Vector2(0.0, maxf(0.0, elevation - WALL_BASE_BAND_PX)),
-			top_b + bottom_drop,
-			top_a + bottom_drop,
-		]),
-		"color": WALL_BASE,
-	})
-
-	var module_count := maxi(1, int(ceil((x1 - x0) / WALL_MODULE_GRID)))
-	var tangent := (top_b - top_a).normalized()
-	for module_index in range(module_count):
-		var t0 := float(module_index) / float(module_count)
-		var t1 := float(module_index + 1) / float(module_count)
-		var panel_t0 := lerpf(t0, t1, 0.10)
-		var panel_t1 := lerpf(t0, t1, 0.90)
-		var panel_a := top_a.lerp(top_b, panel_t0)
-		var panel_b := top_a.lerp(top_b, panel_t1)
-		var panel_top := minf(WALL_PANEL_TOP_PX, elevation * 0.36)
-		var panel_bottom := maxf(panel_top + 4.0, elevation - WALL_PANEL_BOTTOM_PX)
-		panels.append({
-			"points": PackedVector2Array([
-				panel_a + Vector2(0.0, panel_top),
-				panel_b + Vector2(0.0, panel_top),
-				panel_b + Vector2(0.0, panel_bottom),
-				panel_a + Vector2(0.0, panel_bottom),
-			]),
-			"color": WALL_PANEL_A if module_index % 2 == 0 else WALL_PANEL_B,
-		})
-
-		# Restrained cyan service-light strip. It is geometry, not a texture, and
-		# deliberately occupies only alternating modules so the facade does not
-		# turn into a neon wall.
-		if module_index % 2 == 0:
-			var accent_a := top_a.lerp(top_b, lerpf(t0, t1, 0.28))
-			var accent_b := top_a.lerp(top_b, lerpf(t0, t1, 0.72))
-			var accent_y := minf(elevation - 12.0, maxf(14.0, elevation * 0.45))
-			accents.append({
-				"points": PackedVector2Array([
-					accent_a + Vector2(0.0, accent_y),
-					accent_b + Vector2(0.0, accent_y),
-					accent_b + Vector2(0.0, accent_y + 2.0),
-					accent_a + Vector2(0.0, accent_y + 2.0),
-				]),
-				"color": WALL_ACCENT,
-			})
-
-	for boundary_index in range(module_count + 1):
-		var t := float(boundary_index) / float(module_count)
-		var center := top_a.lerp(top_b, t)
-		var half_width := tangent * WALL_PILASTER_PX
-		pilasters.append({
-			"points": PackedVector2Array([
-				center - half_width,
-				center + half_width,
-				center + half_width + bottom_drop,
-				center - half_width + bottom_drop,
-			]),
-			"color": WALL_PILASTER,
-		})
+	# The base face is already continuous behind the stairs. Append only the
+	# shared modular civic treatment on solid wall spans so the front retaining
+	# wall and the lateral elevated perimeter are literally generated by the
+	# same geometry/palette instead of merely looking similar.
+	CITY.append_civic_wall_segment(
+		faces,
+		panels,
+		pilasters,
+		bands,
+		accents,
+		top_a,
+		top_b,
+		elevation,
+		absi(roundi(x0 * 2.0)),
+		false
+	)
 
 
 static func _append_staircase(
