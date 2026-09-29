@@ -3,6 +3,7 @@ class_name OverworldActor
 
 const NAVIGATION_SUBSTEP := 4.0
 const NAVIGATION_MIN_MOTION := 0.05
+const NAVIGATION_CONTACT_BACKOFF := 0.01
 const NAVIGATION_CONTACT_SEARCH_ITERATIONS := 7
 const NAVIGATION_SLIDE_ANGLES := [
 	PI / 12.0, # 15 degrees
@@ -150,8 +151,15 @@ func _largest_safe_motion(step: Vector2) -> Vector2:
 		else:
 			high = middle
 
-	var safe_motion := step * low
-	return safe_motion if safe_motion.length() >= NAVIGATION_MIN_MOTION else Vector2.ZERO
+	var safe_distance := step.length() * low
+	# A binary search can land mathematically on the exact blocker boundary.
+	# Keep the final point a hundredth of a pixel inside the valid side so float
+	# rounding or PhysicsServer2D recovery cannot flip the same contact from
+	# valid to invalid and roll the whole substep back.
+	safe_distance = maxf(0.0, safe_distance - NAVIGATION_CONTACT_BACKOFF)
+	if safe_distance < NAVIGATION_MIN_MOTION:
+		return Vector2.ZERO
+	return step.normalized() * safe_distance
 
 
 func _navigation_motion_is_valid(motion: Vector2) -> bool:
