@@ -311,6 +311,7 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("RetainingWallCaps") == null
 		and south_terrace.get_node_or_null("RetainingWallFaces") is MeshInstance2D
 		and south_terrace.get_node_or_null("RetainingWallDetails") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairBackplates") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairLandings") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
@@ -346,7 +347,7 @@ func _ready() -> void:
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v4_modular_stairs"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
-		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "closed_step_profile_shells"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "closed_step_profile_shells_with_backplate"
 		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_authored_surface"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
