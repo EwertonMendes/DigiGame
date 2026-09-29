@@ -385,6 +385,7 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("RetainingWallDetails") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairBackplates") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairLandings") == null
+		and south_terrace.get_node_or_null("StairSideWalls") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairSideCaps") == null
@@ -418,12 +419,13 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and String(south_terrace.get_meta("transition_surface_ownership", "")) == "exclusive_half_grid_cells"
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v11_terrain_cut_stairs"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v12_flush_path_modules"
 		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v4_exact_mouth_edges"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
-		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "terrain_cut_side_modules_with_below_ground_backplate"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "terrain_cut_side_modules_behind_treads"
 		and String(south_terrace.get_meta("stair_material_mode", "")) == "exclusive_terrain_owned_treads"
 		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_exact_mouth_context"
+		and String(south_terrace.get_meta("bridge_mouth_geometry", "")) == "open_flush_no_end_lips"
 		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_half_grid_cell_bounds"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
@@ -527,6 +529,48 @@ func _ready() -> void:
 		),
 		"Cross-level movement must be rejected outside a staircase and accepted through an authored stair corridor"
 	)
+	# Regression for the real actor wall reported at the visible stair mouths.
+	# Rendering uses fitted half-grid bounds (18.5/21.5), so traversal must enter
+	# and leave through those same exact bounds in both directions.
+	assert(
+		area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 18.40)),
+			_grid_to_world(Vector2(7.0, 18.60))
+		)
+		and area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 18.60)),
+			_grid_to_world(Vector2(7.0, 18.40))
+		)
+		and area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 21.60)),
+			_grid_to_world(Vector2(7.0, 21.40))
+		)
+		and area.can_traverse_world_segment(
+			_grid_to_world(Vector2(7.0, 21.40)),
+			_grid_to_world(Vector2(7.0, 21.60))
+		),
+		"Fitted stair mouths must be traversable from upper and lower terrain in both directions"
+	)
+	var saved_stair_test_player_position := player.global_position
+	player.global_position = _grid_to_world(Vector2(7.0, 18.40))
+	assert(
+		bool(world.call(
+			"can_actor_move_to",
+			_grid_to_world(Vector2(7.0, 18.60)),
+			player
+		)),
+		"Player clearance and topology checks must allow entering the central stair from the upper road"
+	)
+	player.global_position = _grid_to_world(Vector2(7.0, 21.60))
+	assert(
+		bool(world.call(
+			"can_actor_move_to",
+			_grid_to_world(Vector2(7.0, 21.40)),
+			player
+		)),
+		"Player clearance and topology checks must allow entering the central stair from the lower road"
+	)
+	player.global_position = saved_stair_test_player_position
 	assert(
 		not area.can_traverse_world_segment(
 			_grid_to_world(Vector2(4.75, 20.0)),
