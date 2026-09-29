@@ -222,7 +222,7 @@ func _ready() -> void:
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(
-		area.get_ground_tile_count() == 4254,
+		area.get_ground_tile_count() == 4314,
 		"Central City ground batch must omit only true architectural breaks/stair transitions while preserving pavement beneath precise water-basin geometry"
 	)
 	var west_basin_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-10, 23))
@@ -344,6 +344,8 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v2_seamless"
+		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
@@ -466,9 +468,18 @@ func _ready() -> void:
 
 
 	var edge_blocks := area.get_node_or_null("CityGround/EdgeBlocks")
+	var civic_edge_faces := area.get_node_or_null("CityGround/CivicEdgeFaces") as MeshInstance2D
+	var civic_edge_details := area.get_node_or_null("CityGround/CivicEdgeDetails") as MeshInstance2D
 	assert(
 		edge_blocks != null and edge_blocks.get_child_count() > 0,
-		"Central City perimeter must expose authored Devil block side faces"
+		"Flat South Terrace perimeter may keep authored block side faces"
+	)
+	assert(
+		civic_edge_faces != null
+		and civic_edge_details != null
+		and civic_edge_faces.mesh != null
+		and civic_edge_details.mesh != null,
+		"Elevated Upper Civic perimeter must replace tan block sides with the same procedural civic facade used by the retaining wall"
 	)
 	assert(
 		area.get_runtime_node_count() < 1000,
