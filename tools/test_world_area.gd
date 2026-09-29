@@ -129,6 +129,30 @@ func _ready() -> void:
 		and is_equal_approx(float(west_bridge_rect.get("y_max", 0.0)), 25.5),
 		"Transition geometry must snap to half-grid cell boundaries so terrain and architectural modules share one exact edge instead of overlapping"
 	)
+	assert(
+		is_equal_approx(float(west_stair_rect.get("x_min", 0.0)), float(west_bridge_rect.get("x_min", 1.0)))
+		and is_equal_approx(float(west_stair_rect.get("x_max", 0.0)), float(west_bridge_rect.get("x_max", 1.0)))
+		and is_equal_approx(float(west_stair_rect.get("y_max", 0.0)), float(west_bridge_rect.get("y_min", 1.0))),
+		"Connected west stair and bridge must share the exact same corridor width and the exact same mouth edge"
+	)
+
+	var road_paver_material := CITY._create_paver_material(CITY.SURFACE_ROAD)
+	var transition_paver_material := CITY._create_paver_material()
+	assert(
+		is_equal_approx(
+			float(road_paver_material.get_shader_parameter("stone_variation")),
+			float(transition_paver_material.get_shader_parameter("stone_variation"))
+		)
+		and is_equal_approx(
+			float(road_paver_material.get_shader_parameter("grout_darkening")),
+			float(transition_paver_material.get_shader_parameter("grout_darkening"))
+		)
+		and is_equal_approx(
+			float(road_paver_material.get_shader_parameter("edge_highlight")),
+			float(transition_paver_material.get_shader_parameter("edge_highlight"))
+		),
+		"Road pavement must use the exact same procedural paver profile as stair treads and bridge decks"
+	)
 
 	var bridge_surface_ids := {}
 	for raw_bridge in CITY_TOPOLOGY.bridges():
