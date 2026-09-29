@@ -418,10 +418,10 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
 		and String(south_terrace.get_meta("transition_surface_ownership", "")) == "exclusive_half_grid_cells"
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v10_cell_owned_transitions"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v11_terrain_cut_stairs"
 		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v4_exact_mouth_edges"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
-		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "stepped_wall_modules_with_below_ground_backplate"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "terrain_cut_side_modules_with_below_ground_backplate"
 		and String(south_terrace.get_meta("stair_material_mode", "")) == "exclusive_terrain_owned_treads"
 		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_exact_mouth_context"
 		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_half_grid_cell_bounds"
