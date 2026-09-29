@@ -77,6 +77,35 @@ func _ready() -> void:
 		and String((road_network_value as Dictionary).get("mode", "")) == "painted_tiles",
 		"Roads must be authored as independent painted cells instead of linked Line2D graph geometry"
 	)
+
+	var transition_lanes := {}
+	for raw_transition in CITY_TOPOLOGY.stairs():
+		if raw_transition is Dictionary:
+			var transition := raw_transition as Dictionary
+			transition_lanes[String(transition.get("id", ""))] = CITY_TOPOLOGY.fitted_transition_lane(transition)
+	for raw_transition in CITY_TOPOLOGY.bridges():
+		if raw_transition is Dictionary:
+			var transition := raw_transition as Dictionary
+			transition_lanes[String(transition.get("id", ""))] = CITY_TOPOLOGY.fitted_transition_lane(transition)
+	var west_stair_lane := transition_lanes.get("west_stairs", {}) as Dictionary
+	var central_stair_lane := transition_lanes.get("central_stairs", {}) as Dictionary
+	var west_bridge_lane := transition_lanes.get("west_bridge", {}) as Dictionary
+	var east_bridge_lane := transition_lanes.get("east_bridge", {}) as Dictionary
+	assert(
+		is_equal_approx(float(west_stair_lane.get("x_min", 0.0)), -7.5)
+		and is_equal_approx(float(west_stair_lane.get("x_max", 0.0)), -3.5)
+		and String(west_stair_lane.get("surface", "")) == "road"
+		and is_equal_approx(float(central_stair_lane.get("x_min", 0.0)), 5.5)
+		and is_equal_approx(float(central_stair_lane.get("x_max", 0.0)), 8.5)
+		and String(central_stair_lane.get("surface", "")) == "road"
+		and is_equal_approx(float(west_bridge_lane.get("x_min", 0.0)), -7.5)
+		and is_equal_approx(float(west_bridge_lane.get("x_max", 0.0)), -3.5)
+		and String(west_bridge_lane.get("surface", "")) == "road"
+		and is_equal_approx(float(east_bridge_lane.get("x_min", 0.0)), 19.5)
+		and is_equal_approx(float(east_bridge_lane.get("x_max", 0.0)), 23.5)
+		and String(east_bridge_lane.get("surface", "")) == "road",
+		"Stairs and bridges must fit the contiguous painted road lane at their insertion mouths instead of keeping stale authored widths"
+	)
 	var road_sample := CITY_AUTHORING.ground_override_at(Vector2(7, 10))
 	assert(
 		String(road_sample.get("surface", "")) == "road"
@@ -345,10 +374,12 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v6_seamless_modules"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v7_paint_fitted_transitions"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
-		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "per_step_side_modules_with_backplate"
-		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_insertion_surface"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "paint_fitted_per_step_modules_with_backplate"
+		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_fitted_painted_lane"
+		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_fitted_painted_lane"
+		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_bounds"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
