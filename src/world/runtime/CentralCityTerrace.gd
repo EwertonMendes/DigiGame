@@ -240,15 +240,17 @@ static func build() -> Node2D:
 	root.set_meta("near_side_overlay", "none")
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v6_seamless_modules")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v7_paint_fitted_transitions")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
 	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v1")
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
-	root.set_meta("stair_understructure_mode", "per_step_side_modules_with_backplate")
-	root.set_meta("stair_material_mode", "inherit_insertion_surface")
+	root.set_meta("stair_understructure_mode", "paint_fitted_per_step_modules_with_backplate")
+	root.set_meta("stair_material_mode", "inherit_fitted_painted_lane")
+	root.set_meta("bridge_material_mode", "inherit_fitted_painted_lane")
+	root.set_meta("transition_fit_mode", "painted_lane_bounds")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
@@ -299,9 +301,10 @@ static func _build_retaining_wall(
 		if not raw_stair is Dictionary:
 			continue
 		var stair := raw_stair as Dictionary
+		var lane := TOPOLOGY.fitted_transition_lane(stair)
 		gaps.append(Vector2(
-			float(stair.get("x_min", 0.0)),
-			float(stair.get("x_max", 0.0))
+			float(lane.get("x_min", stair.get("x_min", 0.0))),
+			float(lane.get("x_max", stair.get("x_max", 0.0)))
 		))
 	gaps.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
 
@@ -384,8 +387,11 @@ static func _append_staircase(
 	cheek_faces: Array[Dictionary],
 	rails: Array[Dictionary]
 ) -> void:
-	var x_min := float(stair.get("x_min", 0.0))
-	var x_max := float(stair.get("x_max", 0.0))
+	var authored_x_min := float(stair.get("x_min", 0.0))
+	var authored_x_max := float(stair.get("x_max", 0.0))
+	var lane := TOPOLOGY.fitted_transition_lane(stair)
+	var x_min := float(lane.get("x_min", authored_x_min))
+	var x_max := float(lane.get("x_max", authored_x_max))
 	var y_start := float(stair.get("y_start", 0.0))
 	var y_end := float(stair.get("y_end", y_start + 1.0))
 	var step_count := maxi(2, int(stair.get("steps", 6)))
@@ -398,54 +404,50 @@ static func _append_staircase(
 	var elevation_step := (from_elevation - to_elevation) / float(step_count)
 	var side_width := minf(0.26, maxf(0.14, (x_max - x_min) * 0.065))
 	var center_x := (x_min + x_max) * 0.5
+	var sample_grid_value = lane.get("sample_grid", Vector2(center_x, y_start - 0.5))
+	var sample_grid := sample_grid_value as Vector2 if sample_grid_value is Vector2 else Vector2(center_x, y_start - 0.5)
+	var module_color := _surface_color_at_grid(sample_grid)
 
-	# A staircase is a self-contained transition module. Its top material is
-	# sampled from the authored ground paint at the insertion point instead of
-	# imposing a fixed gray palette, so a stair cut into a road remains a road
-	# and a stair cut into plaza paving remains plaza paving.
-	var upper_color := _landing_surface_color(x_min, x_max, y_start - 0.40)
-	var lower_color := _landing_surface_color(x_min, x_max, y_end + 0.40)
-	var module_color := upper_color.lerp(lower_color, 0.5)
-	var module_overlap := 0.18
-	# Continuous projected backing plate: individual ground cells inside the
-	# transition live at different presentation elevations, so relying on them as
-	# an underlay can expose diagonal wedges between diamonds. This single module
-	# polygon overlaps the wall opening and both landings, making the staircase
-	# watertight before treads/risers/side shells are layered on top.
+	# The transition is a fitted module, not a free-standing prop. Its visible
+	# footprint is exactly the painted lane width; only a tiny hidden overlap is
+	# added under the adjacent floor/wall to eliminate raster seams.
+	var seam_x := 0.04
+	var landing_overlap_y := 0.55
 	backplates.append({
 		"points": PackedVector2Array([
-			TOPOLOGY.grid_to_world(Vector2(x_min - module_overlap, y_start - 0.10))
+			TOPOLOGY.grid_to_world(Vector2(x_min - seam_x, y_start - landing_overlap_y))
 				+ Vector2(0.0, -from_elevation),
-			TOPOLOGY.grid_to_world(Vector2(x_max + module_overlap, y_start - 0.10))
+			TOPOLOGY.grid_to_world(Vector2(x_max + seam_x, y_start - landing_overlap_y))
 				+ Vector2(0.0, -from_elevation),
-			TOPOLOGY.grid_to_world(Vector2(x_max + module_overlap, y_end + 0.10))
+			TOPOLOGY.grid_to_world(Vector2(x_max + seam_x, y_end + landing_overlap_y))
 				+ Vector2(0.0, -to_elevation),
-			TOPOLOGY.grid_to_world(Vector2(x_min - module_overlap, y_end + 0.10))
+			TOPOLOGY.grid_to_world(Vector2(x_min - seam_x, y_end + landing_overlap_y))
 				+ Vector2(0.0, -to_elevation),
 		]),
 		"color": module_color,
 	})
+
 	_append_paver_spec(
 		landings,
 		PackedVector2Array([
-			Vector2(x_min - 0.16, y_start - 0.72),
-			Vector2(x_max + 0.16, y_start - 0.72),
-			Vector2(x_max + 0.16, y_start + 0.12),
-			Vector2(x_min - 0.16, y_start + 0.12),
+			Vector2(x_min, y_start - landing_overlap_y),
+			Vector2(x_max, y_start - landing_overlap_y),
+			Vector2(x_max, y_start + 0.08),
+			Vector2(x_min, y_start + 0.08),
 		]),
 		from_level,
-		upper_color
+		module_color
 	)
 	_append_paver_spec(
 		landings,
 		PackedVector2Array([
-			Vector2(x_min - 0.16, y_end - 0.12),
-			Vector2(x_max + 0.16, y_end - 0.12),
-			Vector2(x_max + 0.16, y_end + 0.72),
-			Vector2(x_min - 0.16, y_end + 0.72),
+			Vector2(x_min, y_end - 0.08),
+			Vector2(x_max, y_end - 0.08),
+			Vector2(x_max, y_end + landing_overlap_y),
+			Vector2(x_min, y_end + landing_overlap_y),
 		]),
 		to_level,
-		lower_color
+		module_color
 	)
 
 	for step in range(step_count):
@@ -453,8 +455,6 @@ static func _append_staircase(
 		var y1 := y0 + step_depth
 		var tread_elevation := from_elevation - float(step) * elevation_step
 		var next_elevation := from_elevation - float(step + 1) * elevation_step
-		var step_t := (float(step) + 0.5) / float(step_count)
-		var step_color := upper_color.lerp(lower_color, step_t)
 		var tread_grid := PackedVector2Array([
 			Vector2(x_min, y0),
 			Vector2(x_max, y0),
@@ -465,7 +465,7 @@ static func _append_staircase(
 		treads.append({
 			"points": _logical_at_elevation(logical_tread, tread_elevation),
 			"logical_points": logical_tread,
-			"color": step_color,
+			"color": module_color,
 		})
 
 		var front_left_logical := TOPOLOGY.grid_to_world(Vector2(x_min, y1))
@@ -476,10 +476,8 @@ static func _append_staircase(
 		var bottom_right := front_right_logical + Vector2(0.0, -next_elevation)
 		risers.append({
 			"points": PackedVector2Array([top_left, top_right, bottom_right, bottom_left]),
-			"color": step_color.darkened(0.24),
+			"color": module_color.darkened(0.24),
 		})
-		# The nosing derives from the same local material instead of using a fixed
-		# white strip, preserving readable steps on both light paving and roads.
 		rails.append({
 			"points": PackedVector2Array([
 				top_left,
@@ -487,7 +485,7 @@ static func _append_staircase(
 				top_right + Vector2(0.0, 2.0),
 				top_left + Vector2(0.0, 2.0),
 			]),
-			"color": step_color.lightened(0.16),
+			"color": module_color.lightened(0.16),
 		})
 
 		for side in [0, 1]:
@@ -503,7 +501,7 @@ static func _append_staircase(
 			side_caps.append({
 				"points": _logical_at_elevation(logical_cap, tread_elevation - 1.5),
 				"logical_points": logical_cap,
-				"color": step_color.darkened(0.08),
+				"color": module_color.darkened(0.08),
 			})
 
 			var side_x := x_min if side == 0 else x_max
@@ -530,12 +528,11 @@ static func _append_staircase(
 					side_bottom_end,
 					side_bottom_start,
 				]),
-				"color": step_color.darkened(0.20),
+				"color": module_color.darkened(0.20),
 			})
 
-	# The structural backing plate closes the volume behind these per-step side
-	# modules, while the visible sides stay compact and follow the stair rhythm.
-
+	# Rails use the same fitted x bounds as the treads and landing. There is no
+	# independently-sized stair shell left that can drift outside the road.
 	for x in [x_min, x_max]:
 		_append_civic_guardrail(
 			rails,
@@ -850,75 +847,81 @@ static func _append_bridge(
 	decks: Array[Dictionary],
 	rails: Array[Dictionary]
 ) -> void:
-	var x0 := float(bridge.get("x_min", 0.0))
-	var x1 := float(bridge.get("x_max", 0.0))
+	var authored_x0 := float(bridge.get("x_min", 0.0))
+	var authored_x1 := float(bridge.get("x_max", 0.0))
+	var lane := TOPOLOGY.fitted_transition_lane(bridge)
+	var x0 := float(lane.get("x_min", authored_x0))
+	var x1 := float(lane.get("x_max", authored_x1))
 	var y0 := float(bridge.get("y_min", 0.0))
 	var y1 := float(bridge.get("y_max", 0.0))
 	var level := String(bridge.get("level", "south_terrace"))
 	var elevation := TOPOLOGY.elevation_for_level(level)
+	var center_x := (x0 + x1) * 0.5
+	var sample_grid_value = lane.get("sample_grid", Vector2(center_x, y1 + 0.5))
+	var sample_grid := sample_grid_value as Vector2 if sample_grid_value is Vector2 else Vector2(center_x, y1 + 0.5)
+	var deck_color := _surface_color_at_grid(sample_grid)
+	var landing_overlap_y := 0.50
 
+	# Bridges obey the same transition contract as stairs: their deck width is
+	# resolved from the painted lane and their top material is inherited from it.
+	# Extending only along travel direction merges the module into the road
+	# without creating wider gray "heads" around the crossing.
 	var deck_grid := PackedVector2Array([
-		Vector2(x0, y0 - 0.18),
-		Vector2(x1, y0 - 0.18),
-		Vector2(x1, y1 + 0.18),
-		Vector2(x0, y1 + 0.18),
+		Vector2(x0, y0 - landing_overlap_y),
+		Vector2(x1, y0 - landing_overlap_y),
+		Vector2(x1, y1 + landing_overlap_y),
+		Vector2(x0, y1 + landing_overlap_y),
 	])
 	var logical_deck := _grid_to_logical(deck_grid)
 	var display_deck := _logical_at_elevation(logical_deck, elevation)
 	decks.append({
 		"points": display_deck,
 		"logical_points": logical_deck,
-		"color": BRIDGE_TOP,
+		"color": deck_color,
 	})
 
-	# Give the crossing a real slab thickness. Only the two long side faces are
-	# exposed, so the result reads like a bridge over a void rather than a road
-	# polygon painted over missing ground.
-	var left_top_a := TOPOLOGY.grid_to_display(Vector2(x0, y0 - 0.18), level)
-	var left_top_b := TOPOLOGY.grid_to_display(Vector2(x0, y1 + 0.18), level)
-	var right_top_a := TOPOLOGY.grid_to_display(Vector2(x1, y0 - 0.18), level)
-	var right_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y1 + 0.18), level)
+	var structural_y0 := y0 - 0.08
+	var structural_y1 := y1 + 0.08
+	var left_top_a := TOPOLOGY.grid_to_display(Vector2(x0, structural_y0), level)
+	var left_top_b := TOPOLOGY.grid_to_display(Vector2(x0, structural_y1), level)
+	var right_top_a := TOPOLOGY.grid_to_display(Vector2(x1, structural_y0), level)
+	var right_top_b := TOPOLOGY.grid_to_display(Vector2(x1, structural_y1), level)
 	var drop := Vector2(0.0, BRIDGE_BODY_DEPTH_PX)
 	bodies.append({
 		"points": PackedVector2Array([left_top_a, left_top_b, left_top_b + drop, left_top_a + drop]),
-		"color": BRIDGE_BODY,
+		"color": deck_color.darkened(0.26),
 		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 	})
 	bodies.append({
 		"points": PackedVector2Array([right_top_a, right_top_b, right_top_b + drop, right_top_a + drop]),
-		"color": BRIDGE_BODY,
+		"color": deck_color.darkened(0.31),
 		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 	})
 
-	# Close both bridge ends with real abutment faces. These occupy the same
-	# batched structural material as the slab sides and remove the floating
-	# bridge / open-void read at the canal heads.
-	var near_top_a := TOPOLOGY.grid_to_display(Vector2(x0, y0 - 0.18), level)
-	var near_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y0 - 0.18), level)
-	var far_top_a := TOPOLOGY.grid_to_display(Vector2(x0, y1 + 0.18), level)
-	var far_top_b := TOPOLOGY.grid_to_display(Vector2(x1, y1 + 0.18), level)
-	var near_bottom_a := near_top_a + drop
-	var near_bottom_b := near_top_b + drop
-	var far_bottom_a := far_top_a + drop
-	var far_bottom_b := far_top_b + drop
+	# Closed end faces sit under the inherited deck and prevent the canal or
+	# backdrop from appearing as black wedges at either bridge mouth.
+	var near_top_a := TOPOLOGY.grid_to_display(Vector2(x0, structural_y0), level)
+	var near_top_b := TOPOLOGY.grid_to_display(Vector2(x1, structural_y0), level)
+	var far_top_a := TOPOLOGY.grid_to_display(Vector2(x0, structural_y1), level)
+	var far_top_b := TOPOLOGY.grid_to_display(Vector2(x1, structural_y1), level)
 	bodies.append({
 		"points": PackedVector2Array([
 			near_top_a,
 			near_top_b,
-			near_bottom_b,
-			near_bottom_a,
+			near_top_b + drop,
+			near_top_a + drop,
 		]),
-		"color": BRIDGE_BODY.lightened(0.025),
+		"color": deck_color.darkened(0.22),
 		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 	})
 	bodies.append({
 		"points": PackedVector2Array([
 			far_top_a,
 			far_top_b,
-			far_bottom_b,
-			far_bottom_a,
+			far_top_b + drop,
+			far_top_a + drop,
 		]),
-		"color": BRIDGE_BODY.darkened(0.035),
+		"color": deck_color.darkened(0.28),
 		"depths": PackedFloat32Array([0.0, 0.0, 1.0, 1.0]),
 	})
 
@@ -939,18 +942,16 @@ static func _append_bridge(
 		var rail_points := _logical_at_elevation(logical_rail, elevation + 3.0)
 		rails.append({"points": rail_points, "color": BRIDGE_RAIL})
 
-	_append_civic_guardrail(rails, left_top_a, left_top_b)
-	_append_civic_guardrail(rails, right_top_a, right_top_b)
-
-	# Wider heads visually anchor the bridge into the pavement at both ends.
-	for landing_y in [y0 - 0.55, y1 + 0.10]:
-		var landing_grid := PackedVector2Array([
-			Vector2(x0 - 0.22, landing_y),
-			Vector2(x1 + 0.22, landing_y),
-			Vector2(x1 + 0.22, landing_y + 0.45),
-			Vector2(x0 - 0.22, landing_y + 0.45),
-		])
-		_append_paver_spec(decks, landing_grid, level, BRIDGE_TOP)
+	_append_civic_guardrail(
+		rails,
+		TOPOLOGY.grid_to_display(Vector2(x0, y0), level),
+		TOPOLOGY.grid_to_display(Vector2(x0, y1), level)
+	)
+	_append_civic_guardrail(
+		rails,
+		TOPOLOGY.grid_to_display(Vector2(x1, y0), level),
+		TOPOLOGY.grid_to_display(Vector2(x1, y1), level)
+	)
 
 
 static func _append_civic_guardrail(
