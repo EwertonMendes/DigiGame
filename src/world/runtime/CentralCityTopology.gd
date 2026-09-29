@@ -389,6 +389,17 @@ static func can_traverse_grid_segment(from_grid: Vector2, to_grid: Vector2) -> b
 	if from_grid.distance_squared_to(to_grid) <= SEGMENT_EPSILON * SEGMENT_EPSILON:
 		return true
 
+	# When the painted lane is narrower than the structural transition polygon,
+	# the leftover strip becomes retaining-wall infill. It stays rendered as
+	# floor underlay but is never traversable, so shrinking a stair to match a
+	# painted road cannot accidentally create a lateral shortcut beside it.
+	if (
+		_is_stair_side_infill(from_grid)
+		or _is_stair_side_infill(to_grid)
+		or _is_stair_side_infill((from_grid + to_grid) * 0.5)
+	):
+		return false
+
 	var from_stair := _stair_at_grid_ref(from_grid)
 	var to_stair := _stair_at_grid_ref(to_grid)
 	if not from_stair.is_empty() or not to_stair.is_empty():
@@ -425,6 +436,13 @@ static func can_traverse_world_segment(from_world: Vector2, to_world: Vector2) -
 
 static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 	var point := Vector2(global_grid)
+	if _is_stair_side_infill(point):
+		return {
+			"render": true,
+			"walkable": false,
+			"inherit_surface": true,
+			"stair_side_infill": true,
+		}
 	var stair := _stair_at_grid_ref(point)
 	if not stair.is_empty():
 		var progress := stair_progress(point, stair)
@@ -603,6 +621,30 @@ static func road_graph_is_connected() -> bool:
 			visited[neighbor] = true
 			queue.append(neighbor)
 	return visited.size() == adjacency.size()
+
+
+static func _is_stair_side_infill(point: Vector2) -> bool:
+	var value = config().get("stairs", [])
+	if not value is Array:
+		return false
+	for raw in value as Array:
+		if not raw is Dictionary:
+			continue
+		var stair := raw as Dictionary
+		var authored_x_min := minf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+		var authored_x_max := maxf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+		var y_min := minf(float(stair.get("y_start", 0.0)), float(stair.get("y_end", 0.0)))
+		var y_max := maxf(float(stair.get("y_start", 0.0)), float(stair.get("y_end", 0.0)))
+		if not _point_in_rect(point, authored_x_min, authored_x_max, y_min, y_max):
+			continue
+		var lane := fitted_transition_lane(stair)
+		if lane.is_empty():
+			continue
+		var lane_min := float(lane.get("x_min", authored_x_min))
+		var lane_max := float(lane.get("x_max", authored_x_max))
+		if point.x < lane_min - SEGMENT_EPSILON or point.x > lane_max + SEGMENT_EPSILON:
+			return true
+	return false
 
 
 static func _crosses_stair_landing(
