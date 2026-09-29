@@ -126,6 +126,49 @@ static func fitted_transition_lane(transition: Dictionary) -> Dictionary:
 	return resolved.duplicate(true)
 
 
+static func fitted_transition_rect(transition: Dictionary) -> Dictionary:
+	if transition.is_empty():
+		return {}
+
+	var lane := fitted_transition_lane(transition)
+	var authored_x_min := minf(
+		float(transition.get("x_min", 0.0)),
+		float(transition.get("x_max", 0.0))
+	)
+	var authored_x_max := maxf(
+		float(transition.get("x_min", 0.0)),
+		float(transition.get("x_max", 0.0))
+	)
+	var raw_y_min := minf(
+		float(transition.get("y_start", transition.get("y_min", 0.0))),
+		float(transition.get("y_end", transition.get("y_max", 0.0)))
+	)
+	var raw_y_max := maxf(
+		float(transition.get("y_start", transition.get("y_min", 0.0))),
+		float(transition.get("y_end", transition.get("y_max", 0.0)))
+	)
+
+	# Structural transition mouths live on cell boundaries. Snapping to the
+	# half-grid lattice means a stair/bridge owns a whole-cell rectangle and the
+	# normal ground owns the immediately adjacent rectangle. They therefore
+	# share one mathematical edge instead of overlapping two independently
+	# rendered surfaces and hiding the seam with overscan.
+	var rect := {
+		"x_min": float(lane.get("x_min", authored_x_min)),
+		"x_max": float(lane.get("x_max", authored_x_max)),
+		"y_min": _snap_half_grid(raw_y_min),
+		"y_max": _snap_half_grid(raw_y_max),
+	}
+	if not lane.is_empty():
+		rect["surface"] = lane.get("surface", "")
+		rect["sample_grid"] = lane.get("sample_grid", Vector2.ZERO)
+	return rect
+
+
+static func _snap_half_grid(value: float) -> float:
+	return floor(value * 2.0 + 0.5) * 0.5
+
+
 static func _painted_lane_at_row(
 	authored_x_min: float,
 	authored_x_max: float,
@@ -261,17 +304,14 @@ static func elevation_at_grid(grid: Vector2) -> float:
 
 
 static func stair_progress(grid: Vector2, stair: Dictionary) -> float:
-	var polygon_value = stair.get("grid_polygon")
-	if polygon_value is PackedVector2Array and (polygon_value as PackedVector2Array).size() == 4:
-		var quad := polygon_value as PackedVector2Array
-		var start := (quad[0] + quad[1]) * 0.5
-		var end := (quad[3] + quad[2]) * 0.5
-		var travel := end - start
-		if travel.length_squared() > 0.0001:
-			return clampf((grid - start).dot(travel) / travel.length_squared(), 0.0, 1.0)
-	var y_start := float(stair.get("y_start", grid.y))
-	var y_end := float(stair.get("y_end", y_start + 1.0))
-	return 1.0 if is_equal_approx(y_start, y_end) else clampf((grid.y - y_start) / (y_end - y_start), 0.0, 1.0)
+	var rect := fitted_transition_rect(stair)
+	var y_start := float(rect.get("y_min", stair.get("y_start", grid.y)))
+	var y_end := float(rect.get("y_max", stair.get("y_end", y_start + 1.0)))
+	return (
+		1.0
+		if is_equal_approx(y_start, y_end)
+		else clampf((grid.y - y_start) / (y_end - y_start), 0.0, 1.0)
+	)
 
 
 static func visual_offset_at_grid(grid: Vector2) -> Vector2:
@@ -310,28 +350,19 @@ static func _stair_at_grid_ref(grid: Vector2) -> Dictionary:
 	var value = config().get("stairs", [])
 	if not value is Array:
 		return {}
-	var stair_list := value as Array
-	for raw in stair_list:
+	for raw in value as Array:
 		if not raw is Dictionary:
 			continue
 		var stair := raw as Dictionary
-		var lane := fitted_transition_lane(stair)
-		if not lane.is_empty():
-			if _point_in_rect(
-				grid,
-				float(lane.get("x_min", stair.get("x_min", 0.0))),
-				float(lane.get("x_max", stair.get("x_max", 0.0))),
-				float(stair.get("y_start", 0.0)),
-				float(stair.get("y_end", 0.0))
-			):
-				return stair
-		elif _point_in_transition(
+		var rect := fitted_transition_rect(stair)
+		if rect.is_empty():
+			continue
+		if _point_in_rect(
 			grid,
-			stair,
-			float(stair.get("x_min", 0.0)),
-			float(stair.get("x_max", 0.0)),
-			float(stair.get("y_start", 0.0)),
-			float(stair.get("y_end", 0.0))
+			float(rect.get("x_min", 0.0)),
+			float(rect.get("x_max", 0.0)),
+			float(rect.get("y_min", 0.0)),
+			float(rect.get("y_max", 0.0))
 		):
 			return stair
 	return {}
@@ -342,23 +373,15 @@ static func bridge_at_grid(grid: Vector2) -> Dictionary:
 		if not raw is Dictionary:
 			continue
 		var bridge := raw as Dictionary
-		var lane := fitted_transition_lane(bridge)
-		if not lane.is_empty():
-			if _point_in_rect(
-				grid,
-				float(lane.get("x_min", bridge.get("x_min", 0.0))),
-				float(lane.get("x_max", bridge.get("x_max", 0.0))),
-				float(bridge.get("y_min", 0.0)),
-				float(bridge.get("y_max", 0.0))
-			):
-				return bridge.duplicate(true)
-		elif _point_in_transition(
+		var rect := fitted_transition_rect(bridge)
+		if rect.is_empty():
+			continue
+		if _point_in_rect(
 			grid,
-			bridge,
-			float(bridge.get("x_min", 0.0)),
-			float(bridge.get("x_max", 0.0)),
-			float(bridge.get("y_min", 0.0)),
-			float(bridge.get("y_max", 0.0))
+			float(rect.get("x_min", 0.0)),
+			float(rect.get("x_max", 0.0)),
+			float(rect.get("y_min", 0.0)),
+			float(rect.get("y_max", 0.0))
 		):
 			return bridge.duplicate(true)
 	return {}
@@ -443,36 +466,27 @@ static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 			"inherit_surface": true,
 			"stair_side_infill": true,
 		}
+
 	var stair := _stair_at_grid_ref(point)
 	if not stair.is_empty():
-		var progress := stair_progress(point, stair)
-		if progress > 0.0 and progress < 1.0:
-			# Keep the authored ground treatment as a hidden structural underlay.
-			# The modular staircase renders above it, but preserving the local road/
-			# plaza surface guarantees that no backdrop can leak through tiny joins
-			# between stair, landing and retaining-wall geometry.
-			return {
-				"render": true,
-				"walkable": true,
-				"inherit_surface": true,
-				"stair_underlay": true,
-			}
+		# The stair owns this exact half-grid-aligned cell rectangle. Do not keep a
+		# second copy of the road/floor below it: coplanar overlap is what made the
+		# mouths look blurred and "pasted on". The transition mesh supplies the
+		# visible surface while movement remains independently walkable.
+		return {
+			"render": false,
+			"walkable": true,
+			"stair_transition": true,
+		}
 
 	var break_data := level_break()
 	var break_y := int(floor(float(break_data.get("lower_threshold_y", 19.5))))
 	var x_min := float(break_data.get("x_min", -INF))
 	var x_max := float(break_data.get("x_max", INF))
 	if global_grid.y == break_y and point.x >= x_min and point.x <= x_max:
-		# Keep the final upper-deck ground row rendered. Its diamond ends exactly
-		# at lower_threshold_y, where the retaining facade begins. The previous
-		# implementation removed this whole row to create the gameplay boundary,
-		# which exposed the world backdrop as a black trench between two pieces of
-		# otherwise continuous pavement. Rendering and traversal are independent:
-		# the cell stays blocked outside authored stair openings while its top face
-		# remains a seamless continuation of the Upper Civic floor.
 		return {
 			"render": true,
-			"walkable": not stair.is_empty(),
+			"walkable": false,
 			"inherit_surface": true,
 			"terrace_boundary_surface": true,
 		}
@@ -480,15 +494,20 @@ static func ground_rule_for_cell(global_grid: Vector2i) -> Dictionary:
 	var void_region := void_at_grid(point)
 	if not void_region.is_empty():
 		var bridge := bridge_at_grid(point)
-		# Water basins are continuous authored geometry, while the base city
-		# ground is rendered in whole 64x32 gameplay cells. Removing complete
-		# ground cells produced oversized black gaps around the precise canal
-		# polygon. Preserve the base floor as an underlay and let the opaque
-		# basin geometry cover the exact opening. Navigation remains independent:
-		# only an authored bridge makes a water cell traversable.
+		if not bridge.is_empty():
+			# Bridges follow the same ownership rule as stairs: the deck replaces
+			# the base floor in a whole-cell rectangle and meets the adjacent terrain
+			# on a shared edge, so there is no hidden road slab underneath it.
+			return {
+				"render": false,
+				"walkable": true,
+				"bridge_transition": true,
+			}
+		# Water basins still keep the base city floor as a hidden underlay because
+		# the authored basin polygon is not restricted to whole gameplay cells.
 		return {
 			"render": true,
-			"walkable": not bridge.is_empty(),
+			"walkable": false,
 			"basin_underlay": true,
 		}
 	return {}
@@ -633,15 +652,15 @@ static func _is_stair_side_infill(point: Vector2) -> bool:
 		var stair := raw as Dictionary
 		var authored_x_min := minf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
 		var authored_x_max := maxf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
-		var y_min := minf(float(stair.get("y_start", 0.0)), float(stair.get("y_end", 0.0)))
-		var y_max := maxf(float(stair.get("y_start", 0.0)), float(stair.get("y_end", 0.0)))
+		var rect := fitted_transition_rect(stair)
+		if rect.is_empty():
+			continue
+		var y_min := float(rect.get("y_min", 0.0))
+		var y_max := float(rect.get("y_max", 0.0))
 		if not _point_in_rect(point, authored_x_min, authored_x_max, y_min, y_max):
 			continue
-		var lane := fitted_transition_lane(stair)
-		if lane.is_empty():
-			continue
-		var lane_min := float(lane.get("x_min", authored_x_min))
-		var lane_max := float(lane.get("x_max", authored_x_max))
+		var lane_min := float(rect.get("x_min", authored_x_min))
+		var lane_max := float(rect.get("x_max", authored_x_max))
 		if point.x < lane_min - SEGMENT_EPSILON or point.x > lane_max + SEGMENT_EPSILON:
 			return true
 	return false
