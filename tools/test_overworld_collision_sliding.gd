@@ -21,8 +21,8 @@ class RightBoundaryWorld:
 
 
 func _ready() -> void:
-	_assert_diagonal_navigation_slides_instead_of_sticking()
-	_assert_head_on_boundary_stops_without_sideways_drift()
+	await _assert_diagonal_navigation_slides_instead_of_sticking()
+	await _assert_head_on_boundary_stops_without_sideways_drift()
 	print("overworld collision sliding regression passed")
 
 
@@ -33,6 +33,12 @@ func _assert_diagonal_navigation_slides_instead_of_sticking() -> void:
 	var actor := ActorScript.new() as OverworldActor
 	actor.configure(null, false, controller, "south")
 	add_child(actor)
+
+	# CharacterBody2D motion is a physics operation. The production path invokes
+	# _try_move() from _physics_process(); wait for one physics tick here so the
+	# synthetic body and its runtime-created collision shape are registered in
+	# PhysicsServer2D before exercising the exact same movement path.
+	await get_tree().physics_frame
 	actor.global_position = Vector2.ZERO
 	actor.velocity = Vector2(180.0, 60.0)
 
@@ -42,19 +48,20 @@ func _assert_diagonal_navigation_slides_instead_of_sticking() -> void:
 	var actual_motion := actor.global_position
 	assert(
 		actual_motion.length() > 2.0,
-		"Overworld movement must keep progressing along a valid diagonal tangent instead of sticking when X/Y fallbacks are both blocked"
+		"Overworld movement must keep progressing along a valid diagonal tangent instead of sticking when X/Y fallbacks are both blocked; actual=%s" % str(actual_motion)
 	)
 	assert(
 		absf(actor.global_position.x - actor.global_position.y) <= 0.751,
-		"Navigation sliding must never leave the authored walkable corridor"
+		"Navigation sliding must never leave the authored walkable corridor; position=%s" % str(actor.global_position)
 	)
 	assert(
 		actual_motion.dot(requested_motion) > 0.0,
-		"Navigation sliding must preserve forward player intent"
+		"Navigation sliding must preserve forward player intent; actual=%s requested=%s" % [str(actual_motion), str(requested_motion)]
 	)
 
 	actor.queue_free()
 	controller.queue_free()
+	await get_tree().physics_frame
 
 
 func _assert_head_on_boundary_stops_without_sideways_drift() -> void:
@@ -64,6 +71,8 @@ func _assert_head_on_boundary_stops_without_sideways_drift() -> void:
 	var actor := ActorScript.new() as OverworldActor
 	actor.configure(null, false, controller, "east")
 	add_child(actor)
+
+	await get_tree().physics_frame
 	actor.global_position = Vector2(-0.2, 0.0)
 	actor.velocity = Vector2(180.0, 0.0)
 
@@ -71,15 +80,15 @@ func _assert_head_on_boundary_stops_without_sideways_drift() -> void:
 
 	assert(
 		actor.global_position.x <= 0.001,
-		"Collision sliding must never cross a hard authored map boundary"
+		"Collision sliding must never cross a hard authored map boundary; position=%s" % str(actor.global_position)
 	)
 	assert(
 		absf(actor.global_position.y) <= 0.001,
-		"A head-on collision must not invent arbitrary sideways movement"
+		"A head-on collision must not invent arbitrary sideways movement; position=%s" % str(actor.global_position)
 	)
 	assert(
 		actor.velocity.length_squared() <= 0.001,
-		"A fully blocked head-on movement must settle instead of keeping the walk velocity alive"
+		"A fully blocked head-on movement must settle instead of keeping the walk velocity alive; velocity=%s position=%s" % [str(actor.velocity), str(actor.global_position)]
 	)
 
 	actor.queue_free()
