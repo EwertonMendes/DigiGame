@@ -1,6 +1,24 @@
 extends Node
 
-const ActorScript := preload("res://src/world/runtime/OverworldActor.gd")
+
+class PhysicsProbeActor:
+	extends OverworldActor
+
+	var _queued_test_motion := Vector2.ZERO
+	var _test_motion_pending := false
+	var test_motion_finished := false
+
+	func queue_test_motion(motion: Vector2) -> void:
+		_queued_test_motion = motion
+		_test_motion_pending = true
+		test_motion_finished = false
+
+	func _physics_process(_delta: float) -> void:
+		if not _test_motion_pending:
+			return
+		_try_move(_queued_test_motion)
+		_test_motion_pending = false
+		test_motion_finished = true
 
 
 class DiagonalCorridorWorld:
@@ -30,7 +48,7 @@ func _assert_diagonal_navigation_slides_instead_of_sticking() -> void:
 	var controller := DiagonalCorridorWorld.new()
 	add_child(controller)
 
-	var actor := ActorScript.new() as OverworldActor
+	var actor := PhysicsProbeActor.new()
 	actor.configure(null, false, controller, "south")
 	# This regression isolates the authored-navigation resolver. The parent
 	# world-area suite is building Central City in the same World2D, so leaving
@@ -40,15 +58,12 @@ func _assert_diagonal_navigation_slides_instead_of_sticking() -> void:
 	actor.collision_mask = 0
 	add_child(actor)
 
-	# CharacterBody2D motion is a physics operation. The production path invokes
-	# _try_move() from _physics_process(); wait for one physics tick here so the
-	# runtime-created collision shape is registered before exercising that path.
 	await get_tree().physics_frame
 	actor.global_position = Vector2.ZERO
 	actor.velocity = Vector2(180.0, 60.0)
 
 	var requested_motion := Vector2(3.0, 1.0)
-	actor.call("_try_move", requested_motion)
+	await _run_test_motion(actor, requested_motion)
 
 	var actual_motion := actor.global_position
 	assert(
@@ -73,7 +88,7 @@ func _assert_head_on_boundary_stops_without_sideways_drift() -> void:
 	var controller := RightBoundaryWorld.new()
 	add_child(controller)
 
-	var actor := ActorScript.new() as OverworldActor
+	var actor := PhysicsProbeActor.new()
 	actor.configure(null, false, controller, "east")
 	actor.collision_layer = 0
 	actor.collision_mask = 0
@@ -83,7 +98,7 @@ func _assert_head_on_boundary_stops_without_sideways_drift() -> void:
 	actor.global_position = Vector2(-0.2, 0.0)
 	actor.velocity = Vector2(180.0, 0.0)
 
-	actor.call("_try_move", Vector2(3.0, 0.0))
+	await _run_test_motion(actor, Vector2(3.0, 0.0))
 
 	assert(
 		actor.global_position.x <= 0.001,
@@ -100,3 +115,15 @@ func _assert_head_on_boundary_stops_without_sideways_drift() -> void:
 
 	actor.queue_free()
 	controller.queue_free()
+
+
+func _run_test_motion(actor: PhysicsProbeActor, motion: Vector2) -> void:
+	actor.queue_test_motion(motion)
+	# SceneTree.physics_frame is emitted before _physics_process(). The first
+	# await enters the frame that executes the queued motion; the following
+	# signal observes its completed result.
+	for _frame in range(4):
+		await get_tree().physics_frame
+		if actor.test_motion_finished:
+			return
+	assert(false, "Synthetic OverworldActor did not execute queued motion inside _physics_process()")
