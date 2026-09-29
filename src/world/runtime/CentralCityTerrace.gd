@@ -238,14 +238,14 @@ static func build() -> Node2D:
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
 	root.set_meta("transition_surface_ownership", "exclusive_half_grid_cells")
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v10_cell_owned_transitions")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v11_terrain_cut_stairs")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
 	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v4_exact_mouth_edges")
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
-	root.set_meta("stair_understructure_mode", "stepped_wall_modules_with_below_ground_backplate")
+	root.set_meta("stair_understructure_mode", "terrain_cut_side_modules_with_below_ground_backplate")
 	root.set_meta("stair_material_mode", "exclusive_terrain_owned_treads")
 	root.set_meta("bridge_material_mode", "inherit_exact_mouth_context")
 	root.set_meta("transition_fit_mode", "painted_lane_half_grid_cell_bounds")
@@ -475,42 +475,47 @@ static func _append_staircase(
 			"color": step_color.lightened(0.16),
 		})
 
-		# Each side is a structural wall module for exactly one tread. Every module
-		# reaches the lower terrace plane, so the union is watertight while its top
-		# silhouette remains stepped. This replaces both the empty wedges and the
-		# old giant triangular cheek.
-		for side_index in range(2):
-			var side_x := x_min if side_index == 0 else x_max
-			var side_top_a := (
-				TOPOLOGY.grid_to_world(Vector2(side_x, y0))
-				+ Vector2(0.0, -tread_elevation)
-			)
-			var side_top_b := (
-				TOPOLOGY.grid_to_world(Vector2(side_x, y1))
-				+ Vector2(0.0, -tread_elevation)
-			)
-			var side_base_a := (
-				TOPOLOGY.grid_to_world(Vector2(side_x, y0))
-				+ Vector2(0.0, -to_elevation)
-			)
-			var side_base_b := (
-				TOPOLOGY.grid_to_world(Vector2(side_x, y1))
-				+ Vector2(0.0, -to_elevation)
-			)
-			var panel_color := (
-				CITY.CIVIC_WALL_PANEL_A
-				if (step + side_index) % 2 == 0
-				else CITY.CIVIC_WALL_PANEL_B
-			)
-			side_walls.append({
-				"points": PackedVector2Array([
-					side_top_a,
-					side_top_b,
-					side_base_b,
-					side_base_a,
-				]),
-				"color": panel_color,
-			})
+		# The staircase is a CUT through the two terrain planes, not a ramp sitting
+		# on top of one of them. Before the retaining threshold the visible cheek
+		# closes upward to the upper civic floor; after the threshold it closes
+		# downward to the south-terrace floor. This keeps every side module local
+		# to the actual terrain beside that step and avoids the giant gray wedge
+		# created by forcing every tread all the way to the lower plane.
+		var threshold := float(TOPOLOGY.level_break().get("lower_threshold_y", 19.5))
+		var segment_mid_y := (y0 + y1) * 0.5
+		var adjacent_elevation := from_elevation if segment_mid_y < threshold else to_elevation
+		if not is_equal_approx(adjacent_elevation, tread_elevation):
+			for side_index in range(2):
+				var side_x := x_min if side_index == 0 else x_max
+				var tread_a := (
+					TOPOLOGY.grid_to_world(Vector2(side_x, y0))
+					+ Vector2(0.0, -tread_elevation)
+				)
+				var tread_b := (
+					TOPOLOGY.grid_to_world(Vector2(side_x, y1))
+					+ Vector2(0.0, -tread_elevation)
+				)
+				var terrain_a := (
+					TOPOLOGY.grid_to_world(Vector2(side_x, y0))
+					+ Vector2(0.0, -adjacent_elevation)
+				)
+				var terrain_b := (
+					TOPOLOGY.grid_to_world(Vector2(side_x, y1))
+					+ Vector2(0.0, -adjacent_elevation)
+				)
+				var panel_color := (
+					CITY.CIVIC_WALL_PANEL_A
+					if (step + side_index) % 2 == 0
+					else CITY.CIVIC_WALL_PANEL_B
+				)
+				side_walls.append({
+					"points": (
+						PackedVector2Array([terrain_a, terrain_b, tread_b, tread_a])
+						if adjacent_elevation > tread_elevation
+						else PackedVector2Array([tread_a, tread_b, terrain_b, terrain_a])
+					),
+					"color": panel_color,
+				})
 
 	# The handrail starts on the exact first tread edge and ends on the exact last
 	# stair edge. No horizontal rail stub is drawn over either adjacent terrain.
