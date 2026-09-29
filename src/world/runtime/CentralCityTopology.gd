@@ -121,9 +121,59 @@ static func fitted_transition_lane(transition: Dictionary) -> Dictionary:
 			else:
 				resolved = upper if upper_width <= lower_width else lower
 
+	# A bridge that physically starts/ends at a stair mouth must inherit that
+	# stair's fitted lane exactly. Resolving both modules independently from paint
+	# can be numerically valid yet still leave them one cell/half-cell apart after
+	# authoring changes. Structural adjacency has stronger authority here: one
+	# corridor means one x interval from stair through bridge.
+	if transition.has("y_min") and transition.has("y_max"):
+		var connected_lane := _connected_stair_lane_for_bridge(transition)
+		if not connected_lane.is_empty():
+			resolved = connected_lane
+
 	if not resolved.is_empty():
 		_transition_lane_cache[cache_key] = resolved.duplicate(true)
 	return resolved.duplicate(true)
+
+
+static func _connected_stair_lane_for_bridge(bridge: Dictionary) -> Dictionary:
+	var bridge_x_min := minf(float(bridge.get("x_min", 0.0)), float(bridge.get("x_max", 0.0)))
+	var bridge_x_max := maxf(float(bridge.get("x_min", 0.0)), float(bridge.get("x_max", 0.0)))
+	var bridge_y_min := minf(float(bridge.get("y_min", 0.0)), float(bridge.get("y_max", 0.0)))
+	var bridge_y_max := maxf(float(bridge.get("y_min", 0.0)), float(bridge.get("y_max", 0.0)))
+	var best_lane: Dictionary = {}
+	var best_overlap := 0.0
+
+	var value = config().get("stairs", [])
+	if not value is Array:
+		return {}
+	for raw_stair in value as Array:
+		if not raw_stair is Dictionary:
+			continue
+		var stair := raw_stair as Dictionary
+		var stair_y_min := minf(float(stair.get("y_start", 0.0)), float(stair.get("y_end", 0.0)))
+		var stair_y_max := maxf(float(stair.get("y_start", 0.0)), float(stair.get("y_end", 0.0)))
+		var touches_mouth := (
+			absf(stair_y_max - bridge_y_min) <= 0.01
+			or absf(stair_y_min - bridge_y_max) <= 0.01
+		)
+		if not touches_mouth:
+			continue
+		var stair_x_min := minf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+		var stair_x_max := maxf(float(stair.get("x_min", 0.0)), float(stair.get("x_max", 0.0)))
+		var authored_overlap := maxf(
+			0.0,
+			minf(bridge_x_max, stair_x_max) - maxf(bridge_x_min, stair_x_min)
+		)
+		if authored_overlap <= best_overlap:
+			continue
+		var stair_lane := fitted_transition_lane(stair)
+		if stair_lane.is_empty():
+			continue
+		best_overlap = authored_overlap
+		best_lane = stair_lane.duplicate(true)
+
+	return best_lane
 
 
 static func fitted_transition_rect(transition: Dictionary) -> Dictionary:
