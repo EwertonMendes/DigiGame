@@ -345,7 +345,7 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v5_fitted_modules"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v6_seamless_modules"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
 		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "per_step_side_modules_with_backplate"
 		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_insertion_surface"
