@@ -40,7 +40,7 @@ const PAVER_GROUT_WIDTH := 0.055
 const CIVIC_WALL_MODULE_PX := 76.0
 const CIVIC_WALL_PILASTER_HALF_PX := 3.0
 const CIVIC_WALL_TOP_FASCIA_PX := 8.0
-const CIVIC_WALL_BASE_BAND_PX := 7.0
+const CIVIC_WALL_BASE_BAND_PX := 5.0
 const CIVIC_WALL_PANEL_TOP_PX := 11.0
 const CIVIC_WALL_PANEL_BOTTOM_PX := 9.0
 const CIVIC_WALL_SEAM_OVERLAP_PX := 2.0
@@ -49,7 +49,7 @@ const CIVIC_WALL_PANEL_A := Color(0.285, 0.315, 0.33, 1.0)
 const CIVIC_WALL_PANEL_B := Color(0.305, 0.335, 0.35, 1.0)
 const CIVIC_WALL_PILASTER := Color(0.47, 0.50, 0.50, 1.0)
 const CIVIC_WALL_FASCIA := Color(0.50, 0.525, 0.525, 1.0)
-const CIVIC_WALL_BASE := Color(0.235, 0.265, 0.28, 1.0)
+const CIVIC_WALL_BASE := Color(0.30, 0.33, 0.34, 1.0)
 const CIVIC_WALL_ACCENT := Color(0.16, 0.78, 0.88, 1.0)
 
 # Top-face coordinates measured from the 1024x1024 exports.
