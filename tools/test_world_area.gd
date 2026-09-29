@@ -108,6 +108,28 @@ func _ready() -> void:
 		"Stairs and bridges must fit the contiguous painted road lane at their insertion mouths instead of keeping stale authored widths"
 	)
 
+	var transition_rects := {}
+	for raw_transition in CITY_TOPOLOGY.stairs():
+		if raw_transition is Dictionary:
+			var transition := raw_transition as Dictionary
+			transition_rects[String(transition.get("id", ""))] = CITY_TOPOLOGY.fitted_transition_rect(transition)
+	for raw_transition in CITY_TOPOLOGY.bridges():
+		if raw_transition is Dictionary:
+			var transition := raw_transition as Dictionary
+			transition_rects[String(transition.get("id", ""))] = CITY_TOPOLOGY.fitted_transition_rect(transition)
+	var west_stair_rect := transition_rects.get("west_stairs", {}) as Dictionary
+	var central_stair_rect := transition_rects.get("central_stairs", {}) as Dictionary
+	var west_bridge_rect := transition_rects.get("west_bridge", {}) as Dictionary
+	assert(
+		is_equal_approx(float(west_stair_rect.get("y_min", 0.0)), 18.5)
+		and is_equal_approx(float(west_stair_rect.get("y_max", 0.0)), 21.5)
+		and is_equal_approx(float(central_stair_rect.get("y_min", 0.0)), 18.5)
+		and is_equal_approx(float(central_stair_rect.get("y_max", 0.0)), 21.5)
+		and is_equal_approx(float(west_bridge_rect.get("y_min", 0.0)), 21.5)
+		and is_equal_approx(float(west_bridge_rect.get("y_max", 0.0)), 25.5),
+		"Transition geometry must snap to half-grid cell boundaries so terrain and architectural modules share one exact edge instead of overlapping"
+	)
+
 	var bridge_surface_ids := {}
 	for raw_bridge in CITY_TOPOLOGY.bridges():
 		if not raw_bridge is Dictionary:
@@ -267,18 +289,23 @@ func _ready() -> void:
 		"Central City ground must stay globally batched by its curated surface palette"
 	)
 	assert(
-		area.get_ground_tile_count() == 4341,
-		"Central City ground batch must preserve authored paving beneath modular stair/water structures while keeping the runtime globally batched"
+		area.get_ground_tile_count() == 4288,
+		"Central City ground batch must omit cells exclusively owned by stairs/bridges while preserving basin underlay cells and global batching"
 	)
 	var west_basin_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-10, 23))
 	var west_bridge_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-5, 23))
+	var west_stair_ground_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(-5, 20))
 	assert(
 		bool(west_basin_ground_rule.get("render", false))
 		and not bool(west_basin_ground_rule.get("walkable", true))
 		and bool(west_basin_ground_rule.get("basin_underlay", false))
-		and bool(west_bridge_ground_rule.get("render", false))
-		and bool(west_bridge_ground_rule.get("walkable", false)),
-		"Water topology must preserve base-ground rendering as a precise basin underlay without making the canal walkable outside authored bridges"
+		and not bool(west_bridge_ground_rule.get("render", true))
+		and bool(west_bridge_ground_rule.get("walkable", false))
+		and bool(west_bridge_ground_rule.get("bridge_transition", false))
+		and not bool(west_stair_ground_rule.get("render", true))
+		and bool(west_stair_ground_rule.get("walkable", false))
+		and bool(west_stair_ground_rule.get("stair_transition", false)),
+		"Stairs and bridges must exclusively own their half-grid terrain cells while water basins alone preserve the hidden base-ground underlay"
 	)
 
 	var main_paving := area.get_node_or_null("CityGround/Surface_main") as MeshInstance2D
@@ -357,10 +384,10 @@ func _ready() -> void:
 		and south_terrace.get_node_or_null("RetainingWallFaces") is MeshInstance2D
 		and south_terrace.get_node_or_null("RetainingWallDetails") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairBackplates") is MeshInstance2D
-		and south_terrace.get_node_or_null("StairLandings") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairLandings") == null
 		and south_terrace.get_node_or_null("StairTreads") is MeshInstance2D
 		and south_terrace.get_node_or_null("StairRisers") is MeshInstance2D
-		and south_terrace.get_node_or_null("StairSideCaps") is MeshInstance2D
+		and south_terrace.get_node_or_null("StairSideCaps") == null
 		and south_terrace.get_node_or_null("StairNosingAndParapets") is MeshInstance2D
 		and south_terrace.get_node_or_null("WaterBasinFloor") is MeshInstance2D
 		and south_terrace.get_node_or_null("TrenchSubmergedWalls") is MeshInstance2D
@@ -390,13 +417,14 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v9_flush_stair_mouths"
-		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v3_shared_path"
+		and String(south_terrace.get_meta("transition_surface_ownership", "")) == "exclusive_half_grid_cells"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v10_cell_owned_transitions"
+		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v4_exact_mouth_edges"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
-		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "modular_step_cheeks_with_hidden_backplate"
-		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_upper_and_lower_terrain_mouths"
-		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_matching_mouth_or_local_terrain"
-		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_bounds"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "stepped_wall_modules_with_below_ground_backplate"
+		and String(south_terrace.get_meta("stair_material_mode", "")) == "exclusive_terrain_owned_treads"
+		and String(south_terrace.get_meta("bridge_material_mode", "")) == "painted_cells_or_main"
+		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_half_grid_cell_bounds"
 		and is_equal_approx(float(south_terrace.get_meta("terrace_boundary_grid_y", 0.0)), 19.5)
 		and is_equal_approx(float(south_terrace.get_meta("upper_elevation_px", 0.0)), 48.0)
 		and is_zero_approx(float(south_terrace.get_meta("lower_elevation_px", -1.0))),
