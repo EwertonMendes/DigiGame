@@ -390,10 +390,10 @@ func _ready() -> void:
 		and String(south_terrace.get_meta("near_side_overlay", "")) == "none"
 		and String(south_terrace.get_meta("near_shoreline_mode", "")) == "none"
 		and bool(south_terrace.get_meta("preserves_ground_underlay", false))
-		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v8_watertight_transitions"
-		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v2_landing_continuous"
+		and String(south_terrace.get_meta("terrace_facade_system", "")) == "procedural_modular_civic_v9_flush_stair_mouths"
+		and String(south_terrace.get_meta("stair_guard_system", "")) == "procedural_civic_guard_v3_shared_path"
 		and String(south_terrace.get_meta("retaining_backfill_mode", "")) == "continuous_under_stairs"
-		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "closed_step_profile_side_shells_with_backplate"
+		and String(south_terrace.get_meta("stair_understructure_mode", "")) == "modular_step_cheeks_with_hidden_backplate"
 		and String(south_terrace.get_meta("stair_material_mode", "")) == "inherit_upper_and_lower_terrain_mouths"
 		and String(south_terrace.get_meta("bridge_material_mode", "")) == "inherit_matching_mouth_or_local_terrain"
 		and String(south_terrace.get_meta("transition_fit_mode", "")) == "painted_lane_bounds"
