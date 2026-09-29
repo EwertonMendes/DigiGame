@@ -419,7 +419,7 @@ func _ready() -> void:
 		and bool(stair_underlay_rule.get("walkable", false))
 		and bool(stair_underlay_rule.get("inherit_surface", false))
 		and bool(stair_underlay_rule.get("stair_underlay", false))
-		and String(stair_authored_surface.get("surface", "")) == CITY.SURFACE_ROAD,
+		and String(stair_authored_surface.get("surface", "")) == "road",
 		"Stair openings must preserve the authored local road/paving beneath the modular stair instead of exposing backdrop or forcing a gray surface"
 	)
 	var boundary_surface_rule := CITY_TOPOLOGY.ground_rule_for_cell(Vector2i(0, 19))
