@@ -63,6 +63,7 @@ static func build() -> Node2D:
 	wall_details.append_array(wall_accents)
 	_add_color_batch(root, "RetainingWallDetails", wall_details, 2)
 
+	var stair_backplates: Array[Dictionary] = []
 	var stair_landings: Array[Dictionary] = []
 	var stair_treads: Array[Dictionary] = []
 	var stair_risers: Array[Dictionary] = []
@@ -73,6 +74,7 @@ static func build() -> Node2D:
 		if raw_stair is Dictionary:
 			_append_staircase(
 				raw_stair as Dictionary,
+				stair_backplates,
 				stair_landings,
 				stair_treads,
 				stair_risers,
@@ -80,6 +82,7 @@ static func build() -> Node2D:
 				stair_cheek_faces,
 				stair_rails
 			)
+	_add_color_batch(root, "StairBackplates", stair_backplates, 5)
 	_add_paver_batch(root, "StairLandings", stair_landings, 6)
 	_add_paver_batch(root, "StairTreads", stair_treads, 7)
 	stair_risers.append_array(stair_cheek_faces)
@@ -244,7 +247,7 @@ static func build() -> Node2D:
 	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v1")
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
-	root.set_meta("stair_understructure_mode", "closed_step_profile_shells")
+	root.set_meta("stair_understructure_mode", "closed_step_profile_shells_with_backplate")
 	root.set_meta("stair_material_mode", "inherit_authored_surface")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
@@ -357,6 +360,7 @@ static func _append_wall_segment(
 
 static func _append_staircase(
 	stair: Dictionary,
+	backplates: Array[Dictionary],
 	landings: Array[Dictionary],
 	treads: Array[Dictionary],
 	risers: Array[Dictionary],
@@ -385,6 +389,26 @@ static func _append_staircase(
 	# and a stair cut into plaza paving remains plaza paving.
 	var upper_color := _surface_color_at_grid(Vector2(center_x, y_start - 0.35))
 	var lower_color := _surface_color_at_grid(Vector2(center_x, y_end + 0.35))
+	var module_color := _surface_color_at_grid(Vector2(center_x, (y_start + y_end) * 0.5))
+	var module_overlap := 0.22
+	# Continuous projected backing plate: individual ground cells inside the
+	# transition live at different presentation elevations, so relying on them as
+	# an underlay can expose diagonal wedges between diamonds. This single module
+	# polygon overlaps the wall opening and both landings, making the staircase
+	# watertight before treads/risers/side shells are layered on top.
+	backplates.append({
+		"points": PackedVector2Array([
+			TOPOLOGY.grid_to_world(Vector2(x_min - module_overlap, y_start - 0.10))
+				+ Vector2(0.0, -from_elevation),
+			TOPOLOGY.grid_to_world(Vector2(x_max + module_overlap, y_start - 0.10))
+				+ Vector2(0.0, -from_elevation),
+			TOPOLOGY.grid_to_world(Vector2(x_max + module_overlap, y_end + 0.10))
+				+ Vector2(0.0, -to_elevation),
+			TOPOLOGY.grid_to_world(Vector2(x_min - module_overlap, y_end + 0.10))
+				+ Vector2(0.0, -to_elevation),
+		]),
+		"color": module_color.darkened(0.08),
+	})
 	_append_paver_spec(
 		landings,
 		PackedVector2Array([
