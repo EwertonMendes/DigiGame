@@ -240,15 +240,15 @@ static func build() -> Node2D:
 	root.set_meta("near_side_overlay", "none")
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v4_modular_stairs")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v5_fitted_modules")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
 	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v1")
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
-	root.set_meta("stair_understructure_mode", "closed_step_profile_shells_with_backplate")
-	root.set_meta("stair_material_mode", "inherit_authored_surface")
+	root.set_meta("stair_understructure_mode", "per_step_side_modules_with_backplate")
+	root.set_meta("stair_material_mode", "inherit_insertion_surface")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
@@ -319,6 +319,22 @@ static func _build_retaining_wall(
 			cursor, x_max, y, upper_level, upper_elevation
 		)
 
+	# Finish both ends as deliberate civic corner columns. The perimeter wall is
+	# built by the ground batch, while this retaining facade belongs to the
+	# terrace batch; without a shared end column their independent polygons can
+	# leave a dark vertical crack where the two systems meet.
+	var end_half_width := CITY.CIVIC_WALL_PILASTER_HALF_PX * 1.65
+	for endpoint in [top_a, top_b]:
+		pilasters.append({
+			"points": PackedVector2Array([
+				endpoint + Vector2(-end_half_width, -overlap),
+				endpoint + Vector2(end_half_width, -overlap),
+				endpoint + Vector2(end_half_width, upper_elevation + overlap),
+				endpoint + Vector2(-end_half_width, upper_elevation + overlap),
+			]),
+			"color": CITY.CIVIC_WALL_PILASTER,
+		})
+
 
 static func _append_wall_segment(
 	faces: Array[Dictionary],
@@ -387,10 +403,10 @@ static func _append_staircase(
 	# sampled from the authored ground paint at the insertion point instead of
 	# imposing a fixed gray palette, so a stair cut into a road remains a road
 	# and a stair cut into plaza paving remains plaza paving.
-	var upper_color := _surface_color_at_grid(Vector2(center_x, y_start - 0.35))
-	var lower_color := _surface_color_at_grid(Vector2(center_x, y_end + 0.35))
-	var module_color := _surface_color_at_grid(Vector2(center_x, (y_start + y_end) * 0.5))
-	var module_overlap := 0.22
+	var upper_color := _landing_surface_color(x_min, x_max, y_start - 0.40)
+	var lower_color := _landing_surface_color(x_min, x_max, y_end + 0.40)
+	var module_color := upper_color.lerp(lower_color, 0.5)
+	var module_overlap := 0.12
 	# Continuous projected backing plate: individual ground cells inside the
 	# transition live at different presentation elevations, so relying on them as
 	# an underlay can expose diagonal wedges between diamonds. This single module
@@ -437,7 +453,8 @@ static func _append_staircase(
 		var y1 := y0 + step_depth
 		var tread_elevation := from_elevation - float(step) * elevation_step
 		var next_elevation := from_elevation - float(step + 1) * elevation_step
-		var step_color := _surface_color_at_grid(Vector2(center_x, (y0 + y1) * 0.5))
+		var step_t := (float(step) + 0.5) / float(step_count)
+		var step_color := upper_color.lerp(lower_color, step_t)
 		var tread_grid := PackedVector2Array([
 			Vector2(x_min, y0),
 			Vector2(x_max, y0),
@@ -489,22 +506,35 @@ static func _append_staircase(
 				"color": step_color.darkened(0.08),
 			})
 
-	# One closed shell per side replaces the old collection of small cheek
-	# rectangles + a single triangle. The stepped upper profile is calculated
-	# from the exact same y/elevation sequence as the treads, and the lower edge
-	# closes back to the destination floor. There are therefore no geometric
-	# holes for the backdrop to show through at either wall/stair junction.
-	for side_x in [x_min, x_max]:
-		_append_stair_side_shell(
-			cheek_faces,
-			side_x,
-			y_start,
-			y_end,
-			step_count,
-			from_elevation,
-			to_elevation,
-			_surface_color_at_grid(Vector2(side_x, (y_start + y_end) * 0.5)).darkened(0.20)
-		)
+			var side_x := x_min if side == 0 else x_max
+			var side_top_start := (
+				TOPOLOGY.grid_to_world(Vector2(side_x, y0))
+				+ Vector2(0.0, -tread_elevation)
+			)
+			var side_top_end := (
+				TOPOLOGY.grid_to_world(Vector2(side_x, y1))
+				+ Vector2(0.0, -tread_elevation)
+			)
+			var side_bottom_end := (
+				TOPOLOGY.grid_to_world(Vector2(side_x, y1))
+				+ Vector2(0.0, -next_elevation)
+			)
+			var side_bottom_start := (
+				TOPOLOGY.grid_to_world(Vector2(side_x, y0))
+				+ Vector2(0.0, -next_elevation)
+			)
+			cheek_faces.append({
+				"points": PackedVector2Array([
+					side_top_start,
+					side_top_end,
+					side_bottom_end,
+					side_bottom_start,
+				]),
+				"color": step_color.darkened(0.20),
+			})
+
+	# The structural backing plate closes the volume behind these per-step side
+	# modules, while the visible sides stay compact and follow the stair rhythm.
 
 	for x in [x_min, x_max]:
 		_append_civic_guardrail(
@@ -515,47 +545,7 @@ static func _append_staircase(
 		)
 
 
-static func _append_stair_side_shell(
-	target: Array[Dictionary],
-	x: float,
-	y_start: float,
-	y_end: float,
-	step_count: int,
-	from_elevation: float,
-	to_elevation: float,
-	color: Color
-) -> void:
-	var step_depth := (y_end - y_start) / float(step_count)
-	var elevation_step := (from_elevation - to_elevation) / float(step_count)
-	var profile := PackedVector2Array()
-	profile.append(
-		TOPOLOGY.grid_to_world(Vector2(x, y_start))
-		+ Vector2(0.0, -from_elevation)
-	)
-	for step in range(step_count):
-		var y1 := y_start + float(step + 1) * step_depth
-		var tread_elevation := from_elevation - float(step) * elevation_step
-		var next_elevation := from_elevation - float(step + 1) * elevation_step
-		profile.append(
-			TOPOLOGY.grid_to_world(Vector2(x, y1))
-			+ Vector2(0.0, -tread_elevation)
-		)
-		profile.append(
-			TOPOLOGY.grid_to_world(Vector2(x, y1))
-			+ Vector2(0.0, -next_elevation)
-		)
-	profile.append(
-		TOPOLOGY.grid_to_world(Vector2(x, y_start))
-		+ Vector2(0.0, -to_elevation)
-	)
-	target.append({
-		"points": profile,
-		"color": color,
-	})
-
-
-static func _surface_color_at_grid(grid: Vector2) -> Color:
-	var authored := AUTHORING.ground_override_at(grid)
+static func _surface_color_from_override(authored: Dictionary) -> Color:
 	var surface := String(authored.get("surface", CITY.SURFACE_MAIN))
 	var base_value = authored.get("base_color", null)
 	var color := (
@@ -573,6 +563,40 @@ static func _surface_color_at_grid(grid: Vector2) -> Color:
 			color.a * tint.a
 		)
 	return color
+
+
+static func _surface_color_at_grid(grid: Vector2) -> Color:
+	return _surface_color_from_override(AUTHORING.ground_override_at(grid))
+
+
+static func _landing_surface_color(x_min: float, x_max: float, y: float) -> Color:
+	var center := Vector2((x_min + x_max) * 0.5, y)
+	var painted := AUTHORING.painted_cells()
+	var best_distance := INF
+	var best_override: Dictionary = {}
+
+	# Roads and other brush-painted materials are discrete gameplay cells. Search
+	# the whole stair mouth plus one neighboring row instead of trusting a single
+	# fractional sample; this makes the stair genuinely inherit the surface it is
+	# inserted into even when the transition itself occupies unpainted cells.
+	for gx in range(floori(x_min) - 1, ceili(x_max) + 2):
+		for gy in range(roundi(y) - 1, roundi(y) + 2):
+			var key := "%d,%d" % [gx, gy]
+			if not painted.has(key):
+				continue
+			var probe := Vector2(float(gx), float(gy))
+			var authored := AUTHORING.ground_override_at(probe)
+			var surface := String(authored.get("surface", ""))
+			if surface in ["", CITY.SURFACE_WATER, "void"]:
+				continue
+			var distance := probe.distance_squared_to(center)
+			if distance < best_distance:
+				best_distance = distance
+				best_override = authored
+
+	if not best_override.is_empty():
+		return _surface_color_from_override(best_override)
+	return _surface_color_at_grid(center)
 
 
 static func _append_void_frame(
