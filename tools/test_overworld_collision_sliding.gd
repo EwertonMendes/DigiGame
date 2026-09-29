@@ -32,12 +32,17 @@ func _assert_diagonal_navigation_slides_instead_of_sticking() -> void:
 
 	var actor := ActorScript.new() as OverworldActor
 	actor.configure(null, false, controller, "south")
+	# This regression isolates the authored-navigation resolver. The parent
+	# world-area suite is building Central City in the same World2D, so leaving
+	# the synthetic body on layer/mask 1 would let unrelated city colliders push
+	# it during PhysicsServer2D recovery and invalidate this controlled probe.
+	actor.collision_layer = 0
+	actor.collision_mask = 0
 	add_child(actor)
 
 	# CharacterBody2D motion is a physics operation. The production path invokes
 	# _try_move() from _physics_process(); wait for one physics tick here so the
-	# synthetic body and its runtime-created collision shape are registered in
-	# PhysicsServer2D before exercising the exact same movement path.
+	# runtime-created collision shape is registered before exercising that path.
 	await get_tree().physics_frame
 	actor.global_position = Vector2.ZERO
 	actor.velocity = Vector2(180.0, 60.0)
@@ -70,6 +75,8 @@ func _assert_head_on_boundary_stops_without_sideways_drift() -> void:
 
 	var actor := ActorScript.new() as OverworldActor
 	actor.configure(null, false, controller, "east")
+	actor.collision_layer = 0
+	actor.collision_mask = 0
 	add_child(actor)
 
 	await get_tree().physics_frame
