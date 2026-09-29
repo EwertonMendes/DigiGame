@@ -3,6 +3,7 @@ class_name CentralCityTerrace
 
 const CITY = preload("res://src/world/runtime/CentralCityArt.gd")
 const TOPOLOGY = preload("res://src/world/runtime/CentralCityTopology.gd")
+const AUTHORING = preload("res://src/world/authoring/CentralCityAuthoringData.gd")
 const WORLD_WATER = preload("res://src/world/runtime/WorldWater.gd")
 
 const ROOT_Z := -1164
@@ -15,11 +16,6 @@ const SHORE_BAND_GRID := 0.42
 const BRIDGE_BODY_DEPTH_PX := 8.0
 const BRIDGE_RAIL_GRID := 0.16
 
-const STAIR_TOP := Color(0.64, 0.655, 0.65, 1.0)
-const STAIR_RISER := Color(0.37, 0.40, 0.41, 1.0)
-const STAIR_SIDE := Color(0.31, 0.34, 0.35, 1.0)
-const STAIR_CHEEK := Color(0.285, 0.315, 0.33, 1.0)
-const STAIR_NOSING := Color(0.72, 0.735, 0.72, 1.0)
 const GUARD_PLINTH := Color(0.30, 0.34, 0.35, 1.0)
 const GUARD_POST := Color(0.39, 0.46, 0.48, 1.0)
 const GUARD_TOP := Color(0.56, 0.61, 0.61, 1.0)
@@ -241,14 +237,15 @@ static func build() -> Node2D:
 	root.set_meta("near_side_overlay", "none")
 	root.set_meta("near_shoreline_mode", "none")
 	root.set_meta("preserves_ground_underlay", true)
-	root.set_meta("terrace_facade_system", "procedural_modular_civic_v3_sealed")
+	root.set_meta("terrace_facade_system", "procedural_modular_civic_v4_modular_stairs")
 	root.set_meta(
 		"terrace_boundary_grid_y",
 		float(TOPOLOGY.level_break().get("lower_threshold_y", TOPOLOGY.level_break().get("grid_y", 19.0)))
 	)
 	root.set_meta("stair_guard_system", "procedural_civic_guard_v1")
 	root.set_meta("retaining_backfill_mode", "continuous_under_stairs")
-	root.set_meta("stair_understructure_mode", "closed_side_supports")
+	root.set_meta("stair_understructure_mode", "closed_step_profile_shells")
+	root.set_meta("stair_material_mode", "inherit_authored_surface")
 	root.set_meta("upper_elevation_px", TOPOLOGY.elevation_for_level("upper_civic"))
 	root.set_meta("lower_elevation_px", TOPOLOGY.elevation_for_level("south_terrace"))
 	return root
@@ -379,31 +376,36 @@ static func _append_staircase(
 	var span := y_end - y_start
 	var step_depth := span / float(step_count)
 	var elevation_step := (from_elevation - to_elevation) / float(step_count)
-	var side_width := minf(0.28, maxf(0.16, (x_max - x_min) * 0.07))
+	var side_width := minf(0.26, maxf(0.14, (x_max - x_min) * 0.065))
+	var center_x := (x_min + x_max) * 0.5
 
-	# Landings overlap the painted circulation by half a tile. The same paver
-	# material therefore flows from road to stair without a pasted-on asset seam.
+	# A staircase is a self-contained transition module. Its top material is
+	# sampled from the authored ground paint at the insertion point instead of
+	# imposing a fixed gray palette, so a stair cut into a road remains a road
+	# and a stair cut into plaza paving remains plaza paving.
+	var upper_color := _surface_color_at_grid(Vector2(center_x, y_start - 0.35))
+	var lower_color := _surface_color_at_grid(Vector2(center_x, y_end + 0.35))
 	_append_paver_spec(
 		landings,
 		PackedVector2Array([
-			Vector2(x_min - 0.08, y_start - 0.55),
-			Vector2(x_max + 0.08, y_start - 0.55),
-			Vector2(x_max + 0.08, y_start + 0.10),
-			Vector2(x_min - 0.08, y_start + 0.10),
+			Vector2(x_min - 0.16, y_start - 0.72),
+			Vector2(x_max + 0.16, y_start - 0.72),
+			Vector2(x_max + 0.16, y_start + 0.12),
+			Vector2(x_min - 0.16, y_start + 0.12),
 		]),
 		from_level,
-		STAIR_TOP
+		upper_color
 	)
 	_append_paver_spec(
 		landings,
 		PackedVector2Array([
-			Vector2(x_min - 0.08, y_end - 0.10),
-			Vector2(x_max + 0.08, y_end - 0.10),
-			Vector2(x_max + 0.08, y_end + 0.55),
-			Vector2(x_min - 0.08, y_end + 0.55),
+			Vector2(x_min - 0.16, y_end - 0.12),
+			Vector2(x_max + 0.16, y_end - 0.12),
+			Vector2(x_max + 0.16, y_end + 0.72),
+			Vector2(x_min - 0.16, y_end + 0.72),
 		]),
 		to_level,
-		STAIR_TOP
+		lower_color
 	)
 
 	for step in range(step_count):
@@ -411,6 +413,7 @@ static func _append_staircase(
 		var y1 := y0 + step_depth
 		var tread_elevation := from_elevation - float(step) * elevation_step
 		var next_elevation := from_elevation - float(step + 1) * elevation_step
+		var step_color := _surface_color_at_grid(Vector2(center_x, (y0 + y1) * 0.5))
 		var tread_grid := PackedVector2Array([
 			Vector2(x_min, y0),
 			Vector2(x_max, y0),
@@ -421,7 +424,7 @@ static func _append_staircase(
 		treads.append({
 			"points": _logical_at_elevation(logical_tread, tread_elevation),
 			"logical_points": logical_tread,
-			"color": STAIR_TOP.darkened(float(step) * 0.009),
+			"color": step_color,
 		})
 
 		var front_left_logical := TOPOLOGY.grid_to_world(Vector2(x_min, y1))
@@ -432,10 +435,10 @@ static func _append_staircase(
 		var bottom_right := front_right_logical + Vector2(0.0, -next_elevation)
 		risers.append({
 			"points": PackedVector2Array([top_left, top_right, bottom_right, bottom_left]),
-			"color": STAIR_RISER,
+			"color": step_color.darkened(0.24),
 		})
-		# A 2 px light nosing makes each step readable at gameplay zoom without
-		# needing a texture or anti-aliased vector asset.
+		# The nosing derives from the same local material instead of using a fixed
+		# white strip, preserving readable steps on both light paving and roads.
 		rails.append({
 			"points": PackedVector2Array([
 				top_left,
@@ -443,7 +446,7 @@ static func _append_staircase(
 				top_right + Vector2(0.0, 2.0),
 				top_left + Vector2(0.0, 2.0),
 			]),
-			"color": STAIR_NOSING,
+			"color": step_color.lightened(0.16),
 		})
 
 		for side in [0, 1]:
@@ -459,51 +462,25 @@ static func _append_staircase(
 			side_caps.append({
 				"points": _logical_at_elevation(logical_cap, tread_elevation - 1.5),
 				"logical_points": logical_cap,
-				"color": STAIR_SIDE,
+				"color": step_color.darkened(0.08),
 			})
 
-			# Close the visible outer thickness of every tread. The old staircase
-			# exposed background wedges along its diagonal sides, which is what made
-			# the level break read as a black void.
-			var side_x := x_min if side == 0 else x_max
-			var side_start := TOPOLOGY.grid_to_world(Vector2(side_x, y0)) + Vector2(0.0, -tread_elevation)
-			var side_end := TOPOLOGY.grid_to_world(Vector2(side_x, y1)) + Vector2(0.0, -tread_elevation)
-			var cheek_drop := Vector2(0.0, maxf(5.0, elevation_step + 3.0))
-			cheek_faces.append({
-				"points": PackedVector2Array([
-					side_start,
-					side_end,
-					side_end + cheek_drop,
-					side_start + cheek_drop,
-				]),
-				"color": STAIR_CHEEK.darkened(0.025) if side == 0 else STAIR_CHEEK,
-			})
-
-	# Close the volume beneath the staircase itself. The treads descend from the
-	# raised civic deck to the lower terrace, so without these two side support
-	# triangles the world backdrop remains visible as black wedges beside/under
-	# the stairs even when the retaining wall is continuous behind them.
+	# One closed shell per side replaces the old collection of small cheek
+	# rectangles + a single triangle. The stepped upper profile is calculated
+	# from the exact same y/elevation sequence as the treads, and the lower edge
+	# closes back to the destination floor. There are therefore no geometric
+	# holes for the backdrop to show through at either wall/stair junction.
 	for side_x in [x_min, x_max]:
-		var upper_top := (
-			TOPOLOGY.grid_to_world(Vector2(side_x, y_start))
-			+ Vector2(0.0, -from_elevation)
+		_append_stair_side_shell(
+			cheek_faces,
+			side_x,
+			y_start,
+			y_end,
+			step_count,
+			from_elevation,
+			to_elevation,
+			_surface_color_at_grid(Vector2(side_x, (y_start + y_end) * 0.5)).darkened(0.20)
 		)
-		var lower_top := (
-			TOPOLOGY.grid_to_world(Vector2(side_x, y_end))
-			+ Vector2(0.0, -to_elevation)
-		)
-		var upper_base := (
-			TOPOLOGY.grid_to_world(Vector2(side_x, y_start))
-			+ Vector2(0.0, -to_elevation)
-		)
-		cheek_faces.append({
-			"points": PackedVector2Array([
-				upper_top,
-				lower_top,
-				upper_base,
-			]),
-			"color": CITY.CIVIC_WALL_FACE.darkened(0.025),
-		})
 
 	for x in [x_min, x_max]:
 		_append_civic_guardrail(
@@ -512,6 +489,66 @@ static func _append_staircase(
 			TOPOLOGY.grid_to_display(Vector2(x, y_end), to_level),
 			true
 		)
+
+
+static func _append_stair_side_shell(
+	target: Array[Dictionary],
+	x: float,
+	y_start: float,
+	y_end: float,
+	step_count: int,
+	from_elevation: float,
+	to_elevation: float,
+	color: Color
+) -> void:
+	var step_depth := (y_end - y_start) / float(step_count)
+	var elevation_step := (from_elevation - to_elevation) / float(step_count)
+	var profile := PackedVector2Array()
+	profile.append(
+		TOPOLOGY.grid_to_world(Vector2(x, y_start))
+		+ Vector2(0.0, -from_elevation)
+	)
+	for step in range(step_count):
+		var y1 := y_start + float(step + 1) * step_depth
+		var tread_elevation := from_elevation - float(step) * elevation_step
+		var next_elevation := from_elevation - float(step + 1) * elevation_step
+		profile.append(
+			TOPOLOGY.grid_to_world(Vector2(x, y1))
+			+ Vector2(0.0, -tread_elevation)
+		)
+		profile.append(
+			TOPOLOGY.grid_to_world(Vector2(x, y1))
+			+ Vector2(0.0, -next_elevation)
+		)
+	profile.append(
+		TOPOLOGY.grid_to_world(Vector2(x, y_start))
+		+ Vector2(0.0, -to_elevation)
+	)
+	target.append({
+		"points": profile,
+		"color": color,
+	})
+
+
+static func _surface_color_at_grid(grid: Vector2) -> Color:
+	var authored := AUTHORING.ground_override_at(grid)
+	var surface := String(authored.get("surface", CITY.SURFACE_MAIN))
+	var base_value = authored.get("base_color", null)
+	var color := (
+		base_value as Color
+		if base_value is Color
+		else CITY.surface_base_color(surface)
+	)
+	var tint_value = authored.get("detail_tint", null)
+	if tint_value is Color:
+		var tint := tint_value as Color
+		color = Color(
+			color.r * tint.r,
+			color.g * tint.g,
+			color.b * tint.b,
+			color.a * tint.a
+		)
+	return color
 
 
 static func _append_void_frame(
