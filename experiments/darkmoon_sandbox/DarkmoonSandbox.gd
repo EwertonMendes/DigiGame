@@ -192,9 +192,9 @@ func _build_controls() -> void:
 		var ui_scale := _presentation_scale()
 		hud.scale = Vector2.ONE * ui_scale
 		var size := get_viewport_rect().size / ui_scale
-		panel.size.x = minf(size.x - 32, 730)
 		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		status.custom_minimum_size.x = minf(size.x - 64, 698)
+		panel.size.x = minf(size.x - 32, 730)
 		joystick.position = Vector2(20, size.y - 166)
 		joystick.size = Vector2(146, 146)
 		for index in range(3):
