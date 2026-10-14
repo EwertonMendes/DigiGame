@@ -63,7 +63,11 @@ try {
   if (position.y < 5 || position.y > 40) throw new Error(`Terminal collision failed: ${JSON.stringify(position)}`);
   await page.screenshot({ path: 'build/sandbox-terminal-collision.png' });
   await page.keyboard.press('r');
+  const map = page.waitForEvent('console', {
+    predicate: message => message.text().includes('[DarkmoonSandbox] MAP true'), timeout: 5000,
+  });
   await page.keyboard.press('Tab');
+  await map;
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'build/sandbox-map.png' });
   await page.keyboard.press('F3');

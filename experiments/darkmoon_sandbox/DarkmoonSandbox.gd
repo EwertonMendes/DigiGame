@@ -70,7 +70,7 @@ func _process(delta: float) -> void:
 	status.text = "NIGHT CIRCUIT  /  %s\nWASD / Arrows · Shift run · F3 collision · Tab map · R reset" % art_mode
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if Engine.is_editor_hint() or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	match event.keycode:
@@ -78,12 +78,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			debug_view.visible = not debug_view.visible
 		KEY_TAB:
 			overview = not overview
+			print("[DarkmoonSandbox] MAP %s" % overview)
 		KEY_R:
 			player.position = SPAWN
 			player.velocity = Vector2.ZERO
 		KEY_F4:
 			# Deterministic route uses the real actor's movement, not teleportation.
 			_run_route_check()
+		_:
+			return
+	get_viewport().set_input_as_handled()
 
 
 func _update_camera() -> void:
