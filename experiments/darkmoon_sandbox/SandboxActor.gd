@@ -9,5 +9,5 @@ func _try_move(offset: Vector2) -> void:
 
 
 func _update_depth() -> void:
-	# Buildings and the player share one Y-sorted parent and ground anchors.
-	z_index = 0
+	if _world_controller != null and _world_controller.has_method("resolve_actor_depth"):
+		z_index = int(_world_controller.call("resolve_actor_depth",self))

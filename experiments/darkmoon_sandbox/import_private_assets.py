@@ -39,20 +39,24 @@ def main():
         (PRIVATE / "atlas_info.json").write_bytes(info_bytes)
 
     atlas = Image.open(PRIVATE / "darkmoon_city/tiles_32x32.png").convert("RGBA")
-    palette = Image.new("RGBA", (256, 192))
+    fine_atlas = Image.open(PRIVATE / "darkmoon_city/tiles_8x8.png").convert("RGBA")
+    palette = Image.new("RGBA", (1024, 512))
     brushes = json.loads((Path(__file__).parent / "brushes.json").read_text())
     for brush in brushes.values():
         x, y, width, height = brush["rect"]
-        rows = brush["private_chunks"]
-        assert len(rows) * 32 == height and all(len(row) * 32 == width for row in rows)
+        fine = "private_cells" in brush
+        rows = brush["private_cells"] if fine else brush["private_chunks"]
+        cell_size = 8 if fine else 32
+        source = fine_atlas if fine else atlas
+        assert len(rows) * cell_size == height and all(len(row) * cell_size == width for row in rows)
         for row_index, row in enumerate(rows):
             for column_index, tile in enumerate(row):
                 if tile is None:
                     continue
-                assert 0 <= tile < 2058
-                sx, sy = tile % 32 * 32, tile // 32 * 32
-                palette.paste(atlas.crop((sx, sy, sx + 32, sy + 32)),
-                              (x + column_index * 32, y + row_index * 32))
+                assert 0 <= tile < (3825 if fine else 2058)
+                sx, sy = tile % 32 * cell_size, tile // 32 * cell_size
+                palette.paste(source.crop((sx, sy, sx + cell_size, sy + cell_size)),
+                              (x + column_index * cell_size, y + row_index * cell_size))
     palette.save(PRIVATE / "palette.png")
     print("Private city atlases verified. Native palette assembled without resampling.")
 

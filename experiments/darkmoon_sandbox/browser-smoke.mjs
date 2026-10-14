@@ -57,14 +57,14 @@ try {
   });
   await page.keyboard.press('F4');
   await route;
-  // Hold directly into the central terminal; neither frontal nor diagonal motion
+  // Hold directly into the fountain; neither frontal nor diagonal motion
   // may enter its base (the headless suite also probes full clearance and voids).
   await page.keyboard.down('ArrowUp');
   await page.waitForTimeout(1800);
   await page.keyboard.up('ArrowUp');
   await page.waitForTimeout(400);
-  if (position.y < 5 || position.y > 40) throw new Error(`Terminal collision failed: ${JSON.stringify(position)}`);
-  await page.screenshot({ path: 'build/sandbox-terminal-collision.png' });
+  if (position.y < 140 || position.y > 170) throw new Error(`Fountain collision failed: ${JSON.stringify(position)}`);
+  await page.screenshot({ path: 'build/sandbox-fountain-collision.png' });
   await page.keyboard.press('r');
   const map = page.waitForEvent('console', {
     predicate: message => message.text().includes('[DarkmoonSandbox] MAP true'), timeout: 5000,

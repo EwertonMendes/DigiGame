@@ -1,117 +1,114 @@
-# Night Circuit: isolated city sandbox
+# Moonrise Commons: local city sandbox
 
 Open `experiments/darkmoon_sandbox/DarkmoonSandbox.tscn` in the existing
-DigiGame project and press **F6**. F5 still opens the normal game. This scene
-does not change the main scene, menus, progression, autoloads, or save format.
-The game's existing autoloads still initialize normally.
+DigiGame project and press **F6**. F5 still opens the normal game. The experiment
+does not change the main scene, existing maps, progression, menus, or saves.
 
-## Play
+The authored city has a continuous isometric platform with a finished perimeter,
+a fountain plaza and connected blue walking loop, a western market with its
+counter and Koromon guide, a northern DigiLab facade, and an eastern data court
+with terminals and an interactive district display. All walking uses one plane.
+
+## Controls
 
 | Control | Action |
 | --- | --- |
-| WASD / arrow keys / joystick | Eight-direction movement |
+| WASD / arrows | Eight-direction movement |
 | Shift | Run |
-| F3 / Collision button | Show green walkable polygons, red bases, yellow actor clearance |
-| Tab / Map button | Toggle whole-city overview |
-| R / Reset button | Return to the plaza |
-| F4 | Run the actual actor around the complete loop and both courts |
+| E | Talk to Koromon, inspect a facade, or use the district display |
+| E / Esc | Close a conversation |
+| F3 | Show walkable surfaces, solid ground bases, and actor clearance |
+| Tab | Toggle the whole-city overview |
+| R | Return to the arrival plaza |
+| F4 | Test the full circuit through the actual actor |
 
-The scene has an arrival plaza, four connected diagonal avenues, two side
-courts, three market facades, terminals, lights, walls, and shallow decorative
-steps. All movement uses one ground plane. The four dark interior gaps and the
-outside of the city are deliberately unwalkable. It is an original arrangement;
-the source city's street layout is not included.
+Compact windows also show the existing touch joystick and scene-local buttons.
+The city guide is a separate NPC, not an owned roster entry. Facade interactions
+are local descriptions; they do not open the normal game's services.
 
-## Private local graphics
+## Fast local validation
 
-The supplied ZIP contains proprietary ROM-derived pixels with no redistribution
-license. They are **not** committed, downloaded in CI, or included in public
-artifacts. The public preview uses the original `palette.svg` instead, with the
-same geometry, actor, controls, and collision queries.
+Use the existing Godot 4.7 executable, without waiting for GitHub Actions:
 
-To enable the supplied graphics locally, install Pillow in your Python runtime
-and run from the repository root:
+```powershell
+./experiments/darkmoon_sandbox/validate_local.ps1
+./experiments/darkmoon_sandbox/validate_local.ps1 -Capture
+# Or point at another local executable:
+./experiments/darkmoon_sandbox/validate_local.ps1 -Godot "C:/Tools/Godot.exe"
+```
+
+The script defaults to the local executable under `.tmp/godot/`. Logic checks
+run headless. `-Capture` uses a hidden local rendering window to save actual
+GPU images; Godot's headless dummy renderer cannot produce visual screenshots.
+Logs, caches, and test user data stay in the ignored `.tmp/` directory.
+
+Tests cover valid spawn, eight directions, the full plaza/market/data-court
+circuit, frontal and diagonal collisions, long-step tunneling, obstacle contours,
+outer voids, roof clearance, angled-object depth, and NPC interaction pause/resume.
+No private screenshots are uploaded by local validation.
+
+## Private artwork
+
+The supplied `Darkmoon_City_Assets_Only.zip` contains proprietary ROM-derived
+pixels without redistribution permission. They stay local and ignored. Public
+builds use the original project-owned fallback atlas with identical brush regions,
+scene geometry, actors, collision, and interaction code.
 
 ```powershell
 python experiments/darkmoon_sandbox/import_private_assets.py "C:/Users/ewert/Documents/Dev/digimon-world-dusk-pc/.private/scenery/Darkmoon_City_Assets_Only.zip"
 ```
 
-The importer checks the supplied SHA-256 manifest and copies the three city
-atlases into `assets/local/darkmoon_sandbox/darkmoon_city/`. It assembles only
-the selected fragments into a private 256×192 palette without resizing,
-recoloring, or altering alpha. `brushes.json` records the selected 32-pixel
-chunk IDs. The actual scene paints those fragments on a **square 8×8 visual
-grid**, with zero margin/separation and nearest filtering at 2× scale.
-Private pixels are loaded with `Image.load_from_file` at runtime because
-`.gdignore` keeps their directory out of Godot's normal import/export scan.
-Keep both `.gdignore` and `.gitignore` in place.
+The importer requires Pillow, checks the supplied atlas SHA-256 manifest, and
+preserves native RGBA pixels. The curated 1024×512 palette is assembled from
+explicit **8×8 atlas cell IDs** in `brushes.json`, rather than treating arbitrary
+32×32 fragments as complete objects. The original three city atlases are retained
+under `assets/local/darkmoon_sandbox/` for further work. Keep its `.gitignore`
+and `.gdignore` files: raw private PNGs are loaded at runtime, outside normal
+Godot import/export scanning.
 
-`Use Private Art` on the root defaults to true, with automatic public fallback
-when the private palette is absent. Turn it off to compare the original art.
-The fragment brushes are experimental compositions, not a classified complete
-city tileset. More facades and precise edge variants can be curated from the
-remaining source atlas without importing the original map arrangement.
+The original map arrangements are not used. Complete facade and fixture modules
+were identified in local references and matched byte-for-byte to cells already in
+the supplied atlas; only those module cell IDs are retained. Floor and roof
+materials use unmodified solid source cells. The original city streets are absent.
 
-## Paint and edit
+## Editing the city
 
-* Select `Ground` or an `Art` TileMapLayer and use Godot's TileMap painting tools.
-  All layers are serialized in the scene; edits survive F6 and reopening.
-* The atlas regions are square 8×8, even though the art depicts isometric forms.
-  The visual grid and movement polygons are deliberately separate.
-* The ground repeats either the floor or paver brush. Object layers use complete
-  brush rectangles. `brushes.json` documents their positions in the palette.
-* Move buildings by moving their parent under `Depth`, preserving the shared
-  ground anchor between `Art` and `Footprint`. Objects and the actor use Y sorting.
-* `Art Offset` metadata places the brush above its ground anchor. Keep offsets
-  and painting on integer native pixels (layer scale is 2×).
-* `Rebuild Tiles` on the root regenerates painted layers from the current
-  walkable polygons and object metadata. **It replaces existing paint edits**;
-  save a scene copy before using it. It preserves footprints and object positions.
-* `bake_scene.gd` is the initial-layout generator. It replaces the entire scene,
-  so use it only when deliberately regenerating the original experiment.
+* Paint the serialized TileMapLayers using their square 8×8 TileSet. Layers use
+  integer 2× scale, nearest filtering, and zero atlas margins/separation.
+* `GroundMask`, `Courts/*`, and object `ArtMask` polygons clip tile layers to
+  smooth authored shapes. Visual clipping avoids stair-step tile-cell boundaries
+  and removes adjacent scenery accidentally included in a fixture's source cells.
+* Move objects by their parent under `Depth`. Their art, bases, and interaction
+  points move together. Building roofs are separate editable tile surfaces.
+* `Walkable/CityPlatform` defines the outer walking surface.
+  `Depth/<object>/Footprint` subtracts solid ground bases. Temporarily show these
+  hidden Polygon2D nodes to edit their vertices, then use F3 during play.
+* The same ground bases drive collision and front/back depth. Contact Y is
+  evaluated at the actor's X for angled facades and counters; roof height never
+  becomes a ground collision rectangle.
+* The root's `Rebuild Tiles` regenerates paint from surface and brush metadata.
+  **It replaces paint edits**; save a copy first. `bake_scene.gd` regenerates the
+  complete initial city, so do not run it over a hand-edited scene casually.
+* The editor shows the public palette. F6 substitutes the private palette at the
+  same cell coordinates when available. No private image data is serialized into
+  the tracked scene. Add new brush regions/cell IDs deliberately and rerun the
+  importer to extend the private palette.
 
-The editor shows the public palette. Runtime substitutes the private palette
-at identical cell coordinates. To paint additional private brushes, curate their
-chunk IDs in `brushes.json`, assign a matching rectangle in `palette.svg`, rerun
-the private importer, and regenerate the tiles. Preserve the palette dimensions
-or adjust the explicit size contract in `DarkmoonSandbox.gd`.
+The actor adapter reuses existing eight-direction input, animation, acceleration,
+and sliding. It checks movement segments every four pixels and applies capsule
+clearance. The existing world's loading, elevation traversal, followers, services,
+and persistence are not instantiated.
 
-## Edit collision
+## Web entry point
 
-`Walkable/*` are hidden Polygon2D nodes; enable their visibility temporarily
-when editing their vertices in Godot's 2D editor. Their union defines surfaces.
-`Depth/<object>/Footprint` polygons subtract solid ground bases from that union.
-They do not cover roof or facade height. Moving an object moves its base too.
-The same polygons drive both debug drawing and movement, with no extra physical
-obstacle bodies to drift out of sync.
+The regular export remains `index.html`. `create_preview.py` generates
+`sandbox.html` and a forked `sandbox.pck` whose only resource change is the
+exported main-scene setting. JavaScript/Wasm are shared and the source
+`project.godot` is untouched. This works with official templates that disable
+command-line scene overrides.
 
-The adapter reuses `OverworldActor` / `HubActor` for input, animation, acceleration,
-and axis sliding. It samples the complete movement segment every four pixels,
-with nine clearance samples matching the inherited 10-pixel-radius capsule.
-This follows `WorldRoot`'s surface/segment/clearance principle without reusing
-its city loading, traversal levels, services, or persistence behavior.
-Use F3 and walk around each changed corner. Make gaps wider than the capsule;
-painting a floor tile alone does not make an unwalkable polygon walkable.
-
-## Web preview and validation
-
-CI exports the ordinary game unchanged, then generates `sandbox.html` and a
-forked `sandbox.pck` whose exported main scene is the experiment. Every other
-packaged resource stays identical; both entry points share JavaScript and Wasm.
-The source `project.godot` and normal `index.pck` are never modified. This avoids
-the official template's disabled scene-path overrides.
-The PR preview is `/pr-N/sandbox.html`; `/pr-N/` still
-opens the normal game. CI runs the normal Web and browser suites plus the
-sandbox's actual actor route, collision checks, and responsive browser checks.
-
-```powershell
-godot --headless --path . --script experiments/darkmoon_sandbox/test_sandbox.gd
-godot --path . --script experiments/darkmoon_sandbox/test_sandbox.gd -- --private
-```
-
-The second command captures private desktop screenshots under ignored `.tmp/`.
-Public browser screenshots go to the normal CI screenshot artifact. Never upload
-private screenshots or the local palette. Tests cover eight directions, diagonal
-sliding, full-loop/court traversal, obstacle contouring, thin-obstacle tunneling,
-external edges, inner voids, and roof clearance. Manual play remains useful when
-editing source fragments or collision polygons.
+The PR's city entry point is `/pr-N/sandbox.html`; `/pr-N/` opens the normal
+game. Public packages are checked for private asset paths. Browser checks cover
+actual keyboard movement, the full circuit, fountain collision, map toggle,
+runtime errors, and four canvas sizes. Private Web testing preloads the ignored
+local palette only into a loopback-served copy; it is never a CI input.

@@ -4,10 +4,12 @@ extends Node2D
 const Actor = preload("res://experiments/darkmoon_sandbox/SandboxActor.gd")
 const DebugView = preload("res://experiments/darkmoon_sandbox/SandboxDebug.gd")
 const TouchJoystick = preload("res://src/ui/TouchJoystick.gd")
+const DepthRule = preload("res://src/world/runtime/WorldDepth.gd")
+const InputBootstrap = preload("res://src/input/GameInputBootstrap.gd")
 const PLAYER_TEXTURE = preload("res://assets/characters/world/player_blond.png")
 const PUBLIC_PALETTE = preload("res://experiments/darkmoon_sandbox/palette.svg")
 const PRIVATE_PALETTE := "res://assets/local/darkmoon_sandbox/palette.png"
-const SPAWN := Vector2(0, 112)
+const SPAWN := Vector2(0, 208)
 const BRUSHES_PATH := "res://experiments/darkmoon_sandbox/brushes.json"
 const SAMPLE_STEP := 4.0
 # The inherited capsule is radius 10, height 22, centered 11 pixels above feet.
@@ -30,13 +32,30 @@ var status: Label
 var art_mode := "Original preview art"
 var overview := false
 var _trace_elapsed := 0.0
+var dialogue: PanelContainer
+var dialogue_text: Label
+var _brush_cache: Dictionary = {}
+
+
+func _init() -> void:
+	InputBootstrap.configure_gamepad_actions()
 
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
+	# This standalone scene draws at the actual window size. Scaling a 1280-wide
+	# HUD down to a phone first rasterizes enlarged glyphs at the wrong size.
+	# Runtime window state stays local to F6/the sandbox Web entry point.
+	get_window().content_scale_size = Vector2i.ZERO
 	RenderingServer.set_default_clear_color(Color("14182a"))
 	_apply_runtime_palette()
+	for entity: Node2D in get_node("Depth").get_children():
+		var base := entity.get_node_or_null("Footprint") as Polygon2D
+		if base == null or not entity.has_meta("brush") or entity.z_index < 0:
+			continue
+		var span := DepthRule.span_for_local_polygon(base.global_position.y,base.polygon)
+		entity.z_index = roundi((span.x+span.y)*0.5)
 	player = Actor.new()
 	player.name = "SandboxPlayer"
 	player.configure(PLAYER_TEXTURE, true, self, "south")
@@ -67,7 +86,9 @@ func _process(delta: float) -> void:
 	if _trace_elapsed >= 0.25:
 		_trace_elapsed = 0.0
 		print("[DarkmoonSandbox] POSITION %.2f %.2f" % [player.position.x, player.position.y])
-	status.text = "NIGHT CIRCUIT  /  %s\nWASD / Arrows · Shift run · F3 collision · Tab map · R reset" % art_mode
+	var nearby := _nearest_interactable()
+	var hint := "E: %s" % nearby.get_meta("service_label") if nearby != null else "E interact"
+	status.text = "MOONRISE COMMONS\nWASD / Arrows · Shift run · %s · F3 debug · Tab map" % hint
 
 
 func _input(event: InputEvent) -> void:
@@ -80,8 +101,16 @@ func _input(event: InputEvent) -> void:
 			overview = not overview
 			print("[DarkmoonSandbox] MAP %s" % overview)
 		KEY_R:
+			if dialogue.visible:
+				_inspect_nearby()
 			player.position = SPAWN
 			player.velocity = Vector2.ZERO
+		KEY_E:
+			_inspect_nearby()
+		KEY_ESCAPE:
+			if not dialogue.visible:
+				return
+			_inspect_nearby()
 		KEY_F4:
 			# Deterministic route uses the real actor's movement, not teleportation.
 			_run_route_check()
@@ -92,11 +121,11 @@ func _input(event: InputEvent) -> void:
 
 func _update_camera() -> void:
 	if overview:
-		camera.position = Vector2(0, -20)
+		camera.position = Vector2(0, -48)
 		var size := get_viewport_rect().size
 		camera.zoom = Vector2.ONE * minf(size.x / 2350.0, size.y / 1600.0)
 	else:
-		camera.position = player.position.round()
+		camera.position = player.position.round() + Vector2(0,-96)
 		camera.zoom = Vector2.ONE * _presentation_scale()
 
 
@@ -128,6 +157,58 @@ func can_stand_at(point: Vector2) -> bool:
 	return true
 
 
+func resolve_actor_depth(actor: Node2D) -> int:
+	# Contact Y varies across an angled base. Correct collision alone cannot keep
+	# actors in front of a long counter when all its art uses one front anchor.
+	if _brush_cache.is_empty():
+		_brush_cache = JSON.parse_string(FileAccess.get_file_as_string(BRUSHES_PATH))
+	var sprite := actor.get_node_or_null("CharacterSprite") as Sprite2D
+	if sprite == null:
+		sprite = actor.get_node_or_null("Body") as Sprite2D
+	if sprite == null:
+		return DepthRule.z_for_ground_y(actor.global_position.y)
+	var body_bounds: Rect2 = sprite.global_transform * sprite.get_rect()
+	var lower := -4096
+	var upper := 4096
+	for entity: Node2D in get_node("Depth").get_children():
+		var base := entity.get_node_or_null("Footprint") as Polygon2D
+		if base == null or not entity.has_meta("brush") or entity.z_index < 0:
+			continue
+		var rect: Array = _brush_cache[String(entity.get_meta("brush"))].rect
+		var offset: Vector2 = entity.get_meta("art_offset",Vector2.ZERO)
+		var bounds: Rect2 = entity.global_transform * Rect2(offset,Vector2(rect[2],rect[3])*2)
+		var roof := entity.get_node_or_null("Roof") as Polygon2D
+		if roof != null:
+			for point: Vector2 in roof.polygon:
+				bounds = bounds.expand(roof.to_global(point))
+		if not body_bounds.intersects(bounds):
+			continue
+		var world_points := PackedVector2Array()
+		var min_x := INF
+		var max_x := -INF
+		for point: Vector2 in base.polygon:
+			var world := base.to_global(point)
+			world_points.append(world)
+			min_x = minf(min_x,world.x)
+			max_x = maxf(max_x,world.x)
+		var x := clampf(actor.global_position.x,min_x+0.01,max_x-0.01)
+		var near_y := -INF
+		var far_y := INF
+		for index in range(world_points.size()):
+			var a := world_points[index]
+			var b := world_points[(index+1)%world_points.size()]
+			if absf(a.x-b.x)<0.001 or x<minf(a.x,b.x) or x>maxf(a.x,b.x):
+				continue
+			var y := lerpf(a.y,b.y,(x-a.x)/(b.x-a.x))
+			near_y = maxf(near_y,y)
+			far_y = minf(far_y,y)
+		if actor.global_position.y > near_y:
+			lower = maxi(lower,entity.z_index+1)
+		elif actor.global_position.y < far_y:
+			upper = mini(upper,entity.z_index-1)
+	return clampi(DepthRule.z_for_ground_y(actor.global_position.y),lower,maxi(lower,upper))
+
+
 func can_actor_move_to(candidate: Vector2, actor: Node) -> bool:
 	if not actor is Node2D:
 		return can_stand_at(candidate)
@@ -143,11 +224,11 @@ func _apply_runtime_palette() -> void:
 	if not use_private_art or not FileAccess.file_exists(PRIVATE_PALETTE):
 		return
 	var native := Image.load_from_file(PRIVATE_PALETTE)
-	if native == null or native.get_size() != Vector2i(256, 192):
+	if native == null or native.get_size() != Vector2i(PUBLIC_PALETTE.get_width(), PUBLIC_PALETTE.get_height()):
 		push_warning("Invalid private palette; using original preview art")
 		return
 	var texture := ImageTexture.create_from_image(native)
-	var tiles := (get_node("Ground") as TileMapLayer).tile_set.duplicate(true) as TileSet
+	var tiles := (get_node("GroundMask/Ground") as TileMapLayer).tile_set.duplicate(true) as TileSet
 	(tiles.get_source(0) as TileSetAtlasSource).texture = texture
 	for layer: Node in find_children("*", "TileMapLayer", true, false):
 		(layer as TileMapLayer).tile_set = tiles
@@ -172,6 +253,7 @@ func _build_controls() -> void:
 	status = Label.new()
 	status.add_theme_font_size_override("font_size", 16)
 	status.add_theme_color_override("font_color", Color("d4e6e4"))
+	status.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	panel.add_child(status)
 	var joystick := TouchJoystick.new()
 	hud.add_child(joystick)
@@ -188,30 +270,89 @@ func _build_controls() -> void:
 	map_button.text = "Map"
 	hud.add_child(map_button)
 	map_button.pressed.connect(func(): overview = not overview)
+	var talk_button := Button.new()
+	talk_button.text = "Interact"
+	hud.add_child(talk_button)
+	talk_button.pressed.connect(_inspect_nearby)
+	for button: Button in [talk_button,reset,debug_button,map_button]:
+		button.focus_mode = Control.FOCUS_NONE
+		button.add_theme_font_size_override("font_size",14)
+		var button_style := style.duplicate() as StyleBoxFlat
+		button_style.set_corner_radius_all(4)
+		button_style.set_border_width_all(1)
+		button_style.border_color = Color("7f729e")
+		button.add_theme_stylebox_override("normal",button_style)
+	dialogue = PanelContainer.new()
+	dialogue.visible = false
+	dialogue.add_theme_stylebox_override("panel",style)
+	hud.add_child(dialogue)
+	dialogue_text = Label.new()
+	dialogue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dialogue_text.add_theme_font_size_override("font_size",18)
+	dialogue_text.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	dialogue.add_child(dialogue_text)
 	var layout := func():
 		var ui_scale := _presentation_scale()
 		hud.scale = Vector2.ONE * ui_scale
 		var size := get_viewport_rect().size / ui_scale
 		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		status.custom_minimum_size.x = minf(size.x - 64, 698)
-		panel.size.x = minf(size.x - 32, 730)
+		status.custom_minimum_size.x = minf(size.x - 64, 548)
+		panel.size.x = minf(size.x - 32, 580)
+		joystick.visible = get_window().size.x < 900
 		joystick.position = Vector2(20, size.y - 166)
 		joystick.size = Vector2(146, 146)
-		for index in range(3):
-			var button: Button = [reset, debug_button, map_button][index]
-			button.size = Vector2(96, 40)
-			button.position = Vector2(size.x - 116, size.y - 160 + index * 46)
+		for index in range(4):
+			var button: Button = [talk_button,map_button,debug_button,reset][index]
+			button.visible = joystick.visible
+			button.size = Vector2(96,36)
+			button.position = Vector2(size.x-116,size.y-198+index*44)
+		dialogue_text.custom_minimum_size.x = minf(size.x-64,548)
+		dialogue.size.x = minf(size.x-32,580)
+		dialogue.position = Vector2((size.x-dialogue.size.x)/2,size.y-250)
 	get_viewport().size_changed.connect(layout)
 	layout.call()
 
 
-func _run_route_check() -> bool:
-	var original_position := player.position
+func _nearest_interactable() -> Node2D:
+	var closest: Node2D = null
+	var best := 72.0
+	for entity: Node2D in get_node("Depth").get_children():
+		if not entity.has_meta("service_label"):
+			continue
+		var point: Vector2 = entity.position + entity.get_meta("service_point",Vector2.ZERO)
+		var distance := player.position.distance_to(point)
+		if distance < best:
+			closest = entity
+			best = distance
+	return closest
+
+
+func _inspect_nearby() -> void:
+	if dialogue.visible:
+		dialogue.visible = false
+		player.movement_enabled = true
+		return
+	var nearby := _nearest_interactable()
+	if nearby == null:
+		return
+	if bool(nearby.get_meta("map_link",false)):
+		overview = not overview
+		return
+	dialogue_text.text = "%s\n\n%s\n\nE / Esc to close" % [nearby.get_meta("service_label"),nearby.get_meta("service_text","")]
+	dialogue.visible = true
 	player.movement_enabled = false
 	player.velocity = Vector2.ZERO
-	var waypoints := [SPAWN, Vector2(200, 0), Vector2(750, 0),
-		Vector2(0, 410), Vector2(-750, 0), Vector2(0, -410),
-		Vector2(750, 0), Vector2(200, 0), SPAWN]
+	print("[DarkmoonSandbox] INTERACT %s" % nearby.get_meta("service_label"))
+
+
+func _run_route_check() -> bool:
+	var original_position := player.position
+	var was_enabled := bool(player.movement_enabled)
+	player.movement_enabled = false
+	player.velocity = Vector2.ZERO
+	var waypoints := [SPAWN,Vector2(400,224),Vector2(760,144),Vector2(860,48),Vector2(912,0),Vector2(240,-336),
+		Vector2(192,-392),Vector2(0,-472),Vector2(-192,-376),Vector2(-480,-200),
+		Vector2(-840,-64),Vector2(-840,88),Vector2(-768,176),Vector2(-560,176),Vector2(-400,240),SPAWN]
 	var passed := true
 	for target: Vector2 in waypoints:
 		var attempts := 0
@@ -224,7 +365,7 @@ func _run_route_check() -> bool:
 			passed = false
 			push_error("Sandbox route stalled at %s toward %s" % [player.position, target])
 	player.position = original_position
-	player.movement_enabled = true
+	player.movement_enabled = was_enabled
 	print("[DarkmoonSandbox] ROUTE %s" % ("PASS" if passed else "FAIL"))
 	return passed
 
@@ -250,47 +391,64 @@ func _make_tileset() -> TileSet:
 	return tiles
 
 
+func _paint_surface(mask: Polygon2D, brush: Dictionary, tiles: TileSet, layer_name: String) -> void:
+	var layer := TileMapLayer.new()
+	layer.name = layer_name
+	layer.tile_set = tiles
+	layer.scale = Vector2(2,2)
+	mask.add_child(layer)
+	mask.move_child(layer, 0)
+	layer.owner = self
+	var bounds := Rect2(mask.polygon[0], Vector2.ZERO)
+	for point: Vector2 in mask.polygon:
+		bounds = bounds.expand(point)
+	var rect: Array = brush.rect
+	for y in range(floori(bounds.position.y/16)-1,ceili(bounds.end.y/16)+1):
+		for x in range(floori(bounds.position.x/16)-1,ceili(bounds.end.x/16)+1):
+			var atlas := Vector2i(int(rect[0])/8+posmod(x,int(rect[2])/8),
+				int(rect[1])/8+posmod(y,int(rect[3])/8))
+			layer.set_cell(Vector2i(x,y),0,atlas)
+
+
 func bake_tiles() -> void:
 	var brushes: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BRUSHES_PATH))
 	var tiles := _make_tileset()
 	for existing: Node in find_children("*", "TileMapLayer", true, false):
 		existing.get_parent().remove_child(existing)
 		existing.queue_free()
-	var ground := TileMapLayer.new()
-	ground.name = "Ground"
-	ground.tile_set = tiles
-	ground.scale = Vector2(2, 2)
-	ground.z_index = -10
-	add_child(ground)
-	ground.owner = self
-	for y in range(-33, 33):
-		for x in range(-69, 69):
-			var point := Vector2(x * 16 + 8, y * 16 + 8)
-			var on_surface := false
-			for region: Polygon2D in get_node("Walkable").get_children():
-				if Geometry2D.is_point_in_polygon(region.to_local(point), region.polygon):
-					on_surface = true
-					break
-			if on_surface:
-				var brush := "paver" if absf(point.x) > 380 or absf(point.y) > 190 else "floor"
-				var rect: Array = brushes[brush].rect
-				var atlas := Vector2i(int(rect[0]) / 8 + posmod(x, 4), posmod(y, 4))
-				ground.set_cell(Vector2i(x, y), 0, atlas)
+	for mask: Polygon2D in find_children("*", "Polygon2D", true, false):
+		if mask.has_meta("surface_brush"):
+			_paint_surface(mask,brushes[String(mask.get_meta("surface_brush"))],tiles,
+				"Ground" if mask.name == "GroundMask" else "Tiles")
 	for entity: Node2D in get_node("Depth").get_children():
 		if not entity.has_meta("brush"):
 			continue
-		var brush := String(entity.get_meta("brush"))
-		var rect: Array = brushes[brush].rect
+		var rect: Array = brushes[String(entity.get_meta("brush"))].rect
+		var parent: Node2D = entity
+		var existing := entity.get_node_or_null("ArtMask")
+		if existing != null:
+			entity.remove_child(existing)
+			existing.queue_free()
+		if entity.has_meta("art_mask"):
+			var mask := Polygon2D.new()
+			mask.name = "ArtMask"
+			mask.polygon = entity.get_meta("art_mask")
+			mask.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+			entity.add_child(mask)
+			mask.owner = self
+			var roof := entity.get_node_or_null("Roof")
+			entity.move_child(mask, roof.get_index()+1 if roof != null else 0)
+			parent = mask
 		var layer := TileMapLayer.new()
 		layer.name = "Art"
 		layer.tile_set = tiles
-		layer.scale = Vector2(2, 2)
-		layer.position = entity.get_meta("art_offset", Vector2.ZERO)
-		entity.add_child(layer)
+		layer.scale = Vector2(2,2)
+		layer.position = entity.get_meta("art_offset",Vector2.ZERO)
+		parent.add_child(layer)
 		layer.owner = self
-		for y in range(int(rect[3]) / 8):
-			for x in range(int(rect[2]) / 8):
-				var atlas := Vector2i(int(rect[0]) / 8 + x, int(rect[1]) / 8 + y)
+		for y in range(int(rect[3])/8):
+			for x in range(int(rect[2])/8):
+				var atlas := Vector2i(int(rect[0])/8+x,int(rect[1])/8+y)
 				if (tiles.get_source(0) as TileSetAtlasSource).has_tile(atlas):
-					layer.set_cell(Vector2i(x, y), 0, atlas)
-	print("[DarkmoonSandbox] Editable 8x8 layers rebuilt")
+					layer.set_cell(Vector2i(x,y),0,atlas)
+	print("[DarkmoonSandbox] Curated editable 8x8 layers rebuilt")
