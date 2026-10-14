@@ -13,7 +13,10 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => {
     const text = message.text();
-    if (message.type() === 'error' || /SCRIPT ERROR|Parse Error|ROUTE FAIL/.test(text)) errors.push(text);
+    if (message.type() === 'error' || /SCRIPT ERROR|Parse Error|ROUTE FAIL/.test(text)) {
+      errors.push(text);
+      console.error(text);
+    }
     const match = text.match(/\[DarkmoonSandbox\] POSITION (-?[\d.]+) (-?[\d.]+)/);
     if (match) position = { x: Number(match[1]), y: Number(match[2]) };
     if (text.includes('[DarkmoonSandbox] READY')) mode = text;

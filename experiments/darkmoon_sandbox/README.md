@@ -95,9 +95,12 @@ painting a floor tile alone does not make an unwalkable polygon walkable.
 
 ## Web preview and validation
 
-CI exports the ordinary game unchanged, then generates `sandbox.html`, which
-passes the experiment scene to Godot's Web engine. Both entry points share the
-same exported resources. The PR preview is `/pr-N/sandbox.html`; `/pr-N/` still
+CI exports the ordinary game unchanged, then generates `sandbox.html` and a
+forked `sandbox.pck` whose exported main scene is the experiment. Every other
+packaged resource stays identical; both entry points share JavaScript and Wasm.
+The source `project.godot` and normal `index.pck` are never modified. This avoids
+the official template's disabled scene-path overrides.
+The PR preview is `/pr-N/sandbox.html`; `/pr-N/` still
 opens the normal game. CI runs the normal Web and browser suites plus the
 sandbox's actual actor route, collision checks, and responsive browser checks.
 

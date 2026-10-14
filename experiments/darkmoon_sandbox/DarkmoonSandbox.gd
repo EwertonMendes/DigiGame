@@ -97,7 +97,13 @@ func _update_camera() -> void:
 		camera.zoom = Vector2.ONE * minf(size.x / 2350.0, size.y / 1600.0)
 	else:
 		camera.position = player.position.round()
-		camera.zoom = Vector2.ONE
+		camera.zoom = Vector2.ONE * _presentation_scale()
+
+
+func _presentation_scale() -> float:
+	# The game's 1280-pixel logical width shrinks controls on portrait browsers.
+	# Compensate in this scene's camera/HUD, preserving the project's settings.
+	return maxf(1.0, get_viewport_rect().size.x / maxf(1.0, float(get_window().size.x)))
 
 
 func is_walkable_position(point: Vector2) -> bool:
@@ -183,7 +189,9 @@ func _build_controls() -> void:
 	hud.add_child(map_button)
 	map_button.pressed.connect(func(): overview = not overview)
 	var layout := func():
-		var size := get_viewport_rect().size
+		var ui_scale := _presentation_scale()
+		hud.scale = Vector2.ONE * ui_scale
+		var size := get_viewport_rect().size / ui_scale
 		panel.size.x = minf(size.x - 32, 730)
 		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		status.custom_minimum_size.x = minf(size.x - 64, 698)
