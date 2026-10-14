@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="192" viewBox="0 0 256 192">
+<!-- Original project art. Each brush occupies an integer 8-pixel grid. -->
+<path fill="#555272" d="M0 0h32v32H0z"/>
+<path fill="#555272" d="M32 0h32v32H32z"/>
+<path fill="none" stroke="#666381" stroke-width="1" d="M32 0l32 16M32 16l32 16M32 8l16-8M48 32l16-8"/>
+<path fill="#34334d" d="M64 0h96v32H64z"/>
+<path fill="#8adac9" d="M64 0h96v3H64z"/><path stroke="#575870" stroke-width="2" d="M64 14h96m-96 12h96"/>
+<path fill="#696581" d="M0 32h64v32H0z"/><path fill="none" stroke="#b4aac5" stroke-width="2" d="M0 37h64M0 45h64M0 53h64M0 61h64"/>
+<!-- Market pavilion; footprint anchor at (48,88). -->
+<g transform="translate(0 64)">
+<path fill="#302f48" d="M0 64L48 88 96 64 48 40z"/>
+<path fill="#4b496b" d="M8 26L48 46V80L8 60z"/><path fill="#353650" d="M48 46L88 26V60L48 80z"/>
+<path fill="#d79aac" d="M0 24L48 0 96 24 48 48z"/><path fill="#925d85" d="M0 24v8l48 24v-8z"/><path fill="#6c4169" d="M48 48v8l48-24v-8z"/>
+<path fill="none" stroke="#e4b8be" stroke-width="2" d="M8 24L48 4 88 24 48 44z"/>
+<path fill="#1f3141" d="M18 39l19 10v23L18 62zM59 47l15-8v21l-15 8z"/>
+<path fill="#8adac9" d="M18 39l19 10v3L18 42zM59 47l15-8v3l-15 8z"/>
+<path stroke="#6e698f" stroke-width="1" d="M9 57l30 15M56 70l29-15"/>
+</g>
+<!-- Data terminal; anchor at (32,58). -->
+<g transform="translate(96 64)">
+<path fill="#2c334b" d="M0 42L32 58 64 42 32 26z"/>
+<path fill="#526680" d="M8 16L32 28V50L8 38z"/><path fill="#34445e" d="M32 28L56 16V38L32 50z"/>
+<path fill="#96c4d1" d="M8 16L32 4 56 16 32 28z"/><path fill="#56bdb4" d="M14 16L32 7 50 16 32 25z"/>
+<path fill="#d5e3d6" d="M30 0h4v18h-4z"/><path fill="#f1d993" d="M26 0h12v6H26z"/>
+<path fill="#8adac9" d="M14 29l12 6v4l-12-6zM39 34l10-5v4l-10 5z"/>
+</g>
+<!-- Street light; anchor at (16,60). -->
+<g transform="translate(160 64)"><path fill="#333a53" d="M4 56L16 62 28 56 16 50z"/><path fill="#7a809b" d="M13 12h6v43h-6z"/><path fill="#95dac7" d="M5 6L16 0 27 6 16 12z"/><path fill="#f1d993" d="M5 6v7l11 6 11-6V6l-11 6z"/></g>
+<!-- Plaza medallion; anchor at (32,32). -->
+<g transform="translate(96 128)"><path fill="#77708d" d="M0 32L32 16 64 32 32 48z"/><path fill="#e5c18d" d="M7 32L32 20 57 32 32 44z"/><path fill="#7ec7c5" d="M16 32L32 24 48 32 32 40z"/><path fill="#dbe6d6" d="M26 30h12v4H26z"/></g>
+</svg>

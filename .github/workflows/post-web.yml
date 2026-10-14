@@ -99,6 +99,9 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node .github/scripts/browser-smoke.mjs
+          if [ "$SMOKE_SUITE" = desktop ]; then
+            node experiments/darkmoon_sandbox/browser-smoke.mjs
+          fi
 
       - name: Upload desktop visual snapshot
         if: matrix.suite == 'desktop'
@@ -112,6 +115,7 @@ jobs:
             build/web-smoke.png
             build/desktop-*.png
             build/hub-battle-dialog*.png
+            build/sandbox-*.png
           if-no-files-found: error
           retention-days: 7
 
@@ -246,6 +250,8 @@ jobs:
           ## 🎮 Playable PR preview
 
           **[Open DigiGame PR #${PR_NUMBER}](${PREVIEW_URL})**
+
+          **[Open the isolated city sandbox](${{ steps.pages.outputs.base_url }}/pr-${PR_NUMBER}/sandbox.html)** — original preview art; private ROM-derived graphics are excluded.
 
           Build: \`${SHORT_SHA}\` · produced from this PR commit and isolated from master.
 

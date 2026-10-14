@@ -1,0 +1,10 @@
+{
+  "floor": {"rect": [0, 0, 32, 32], "private_chunks": [[126]]},
+  "paver": {"rect": [32, 0, 32, 32], "private_chunks": [[54]]},
+  "wall": {"rect": [64, 0, 96, 32], "private_chunks": [[173, 174, 175]]},
+  "steps": {"rect": [0, 32, 64, 32], "private_chunks": [[105, 106]]},
+  "pavilion": {"rect": [0, 64, 96, 96], "private_chunks": [[259, 260, 261], [281, 282, 283], [307, 308, 285]]},
+  "terminal": {"rect": [96, 64, 64, 64], "private_chunks": [[411, 412], [446, 447]]},
+  "light": {"rect": [160, 64, 32, 64], "private_chunks": [[null], [1817]]},
+  "medallion": {"rect": [96, 128, 64, 64], "private_chunks": [[69, 70], [117, 118]]}
+}
