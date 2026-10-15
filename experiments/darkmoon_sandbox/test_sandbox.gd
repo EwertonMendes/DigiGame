@@ -42,6 +42,7 @@ func _run() -> void:
 						"A city piece altered native pixels")
 		# The editor save guard swaps only the palette, preserving editable cells.
 		sandbox.CityAtlas.set_palette(sandbox,sandbox.PUBLIC_PALETTE)
+		DirAccess.make_dir_recursive_absolute("res://.tmp")
 		var saved := PackedScene.new()
 		_check(saved.pack(sandbox) == OK,"Could not pack the edited city")
 		_check(ResourceSaver.save(saved,"res://.tmp/city-save-guard.tscn") == OK,"Could not save the edited city")
