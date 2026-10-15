@@ -119,7 +119,10 @@ func _structure(parent: Node) -> void:
 			var world_mask := PackedVector2Array()
 			for point: Vector2 in mask:
 				world_mask.append(point+at)
-			var clipped := Geometry2D.intersect_polygons(world_mask,envelope)
+			# Rear strips contain paving only. Allowing them into the wall envelope
+			# would leave a floating shelf across a recessed outside corner.
+			var clipped := Geometry2D.intersect_polygons(world_mask,
+				envelope if front else PackedVector2Array(OUTLINE))
 			for part in range(clipped.size()):
 				var local: Array = []
 				for point: Vector2 in clipped[part]:
