@@ -9,7 +9,7 @@ const InputBootstrap = preload("res://src/input/GameInputBootstrap.gd")
 const PLAYER_TEXTURE = preload("res://assets/characters/world/player_blond.png")
 const PUBLIC_PALETTE = preload("res://assets/scenery/darkmoon_city/pieces.png")
 const CityAtlas = preload("res://experiments/darkmoon_sandbox/CityAtlas.gd")
-const SPAWN := Vector2(0, 208)
+const SPAWN := Vector2(0, 288)
 const BRUSHES_PATH := "res://experiments/darkmoon_sandbox/brushes.json"
 const SAMPLE_STEP := 4.0
 # The inherited capsule is radius 10, height 22, centered 11 pixels above feet.
@@ -50,6 +50,9 @@ func _ready() -> void:
 	# HUD down to a phone first rasterizes enlarged glyphs at the wrong size.
 	# Runtime window state stays local to F6/the sandbox Web entry point.
 	get_window().content_scale_size = Vector2i.ZERO
+	# Present the complete authored district first on desktop. Compact windows
+	# start with the nearby view so the trainer remains legible.
+	overview = get_viewport_rect().size.x >= 1000
 	RenderingServer.set_default_clear_color(Color("14182a"))
 	_apply_runtime_palette()
 	for entity: Node2D in get_node("Depth").get_children():
@@ -137,11 +140,11 @@ func _input(event: InputEvent) -> void:
 
 func _update_camera() -> void:
 	if overview:
-		camera.position = Vector2(0, -48)
+		camera.position = Vector2(64, -80)
 		var size := get_viewport_rect().size
-		camera.zoom = Vector2.ONE * minf(size.x / 2350.0, size.y / 1600.0)
+		camera.zoom = Vector2.ONE * minf(size.x / 1820.0, size.y / 1210.0)
 	else:
-		camera.position = player.position.round() + Vector2(0,-96)
+		camera.position = player.position.round() + Vector2(0,-192)
 		camera.zoom = Vector2.ONE * _presentation_scale()
 
 
@@ -373,9 +376,11 @@ func _run_route_check() -> bool:
 	var was_enabled := bool(player.movement_enabled)
 	player.movement_enabled = false
 	player.velocity = Vector2.ZERO
-	var waypoints := [SPAWN,Vector2(400,224),Vector2(760,144),Vector2(860,48),Vector2(912,0),Vector2(240,-336),
-		Vector2(192,-392),Vector2(0,-472),Vector2(-192,-376),Vector2(-480,-200),
-		Vector2(-840,-64),Vector2(-840,88),Vector2(-768,176),Vector2(-560,176),Vector2(-400,240),SPAWN]
+	var waypoints := [SPAWN,Vector2(224,224),Vector2(384,160),Vector2(512,144),
+		Vector2(512,32),Vector2(576,-16),Vector2(544,-160),Vector2(480,-240),
+		Vector2(128,-416),Vector2(-64,-448),Vector2(-256,-352),Vector2(-512,-224),
+		Vector2(-640,-96),Vector2(-480,-32),Vector2(-352,64),Vector2(-432,112),
+		Vector2(-256,208),Vector2(-128,256),SPAWN]
 	var passed := true
 	for target: Vector2 in waypoints:
 		var attempts := 0

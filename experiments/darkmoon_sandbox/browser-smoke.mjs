@@ -59,9 +59,10 @@ try {
   await page.waitForTimeout(1800);
   await page.keyboard.up('ArrowUp');
   await page.waitForTimeout(400);
-  if (position.y < 140 || position.y > 170) throw new Error(`Fountain collision failed: ${JSON.stringify(position)}`);
+  if (position.y < 180 || position.y > 225) throw new Error(`Fountain collision failed: ${JSON.stringify(position)}`);
   await page.screenshot({ path: 'build/sandbox-fountain-collision.png' });
   await page.keyboard.press('r');
+  await page.keyboard.press('Tab'); // Desktop opens with the district overview.
   const map = page.waitForEvent('console', {
     predicate: message => message.text().includes('[DarkmoonSandbox] MAP true'), timeout: 5000,
   });

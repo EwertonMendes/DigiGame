@@ -27,6 +27,23 @@ already use integer 2× scale and Nearest. Normally snap to 16 pixels, with deli
 DataDisplay, Fountain and ArrivalPlaza scenes. Their complete art and ground bases
 remain editable. Platform-support columns are not used as freestanding lights.
 
+The current plaza uses native interlocking paving, structural edge strips and
+corner caps. There is no code-drawn paving grid or flat-color platform facade.
+The market, research station and eastern display share a continuous pedestrian
+space around the basin. The indoor counter remains in the module catalogue;
+the outdoor scene uses one cabinet attached to the platform edge instead.
+The fountain retains its native rim and two complete crossing landings. Water
+animation is intentionally deferred.
+
+`brushes.json` records source cell IDs rather than original map placements.
+`rebuild_palette.py` rebuilds `pieces.png` and its manifest hash using Pillow and
+only the committed source atlas. For platform changes, edit `OUTLINE` in
+`bake_scene.gd`; its edges use whole 128-by-64 world-pixel structural segments.
+The baker selects front/back faces and clips them to the platform's vertical
+extrusion so corners cannot leave floating fragments. Run it only on the base
+sandbox, then review an actual render. The 64-by-64 native paving module repeats
+at 128-by-128 world pixels, with native joints preserved across its seams.
+
 For a custom object, paint child TileMapLayers using `CityTiles.tres` at scale 2
 and add a hidden `Footprint` Polygon2D following its ground base. Collision uses
 that polygon, and depth uses the painted bounds. Roof pixels do not block walking.
@@ -36,8 +53,11 @@ paint/module arrangements; do not run them over a hand-authored scene casually.
 ## Play and validate locally
 
 WASD/arrows move, Shift runs, E interacts, E/Esc closes dialogue, Tab shows the
-map, F3 shows collision, R resets and F4 checks the complete circuit. Compact
+map/nearby camera, F3 shows collision, R resets and F4 checks the complete circuit. Compact
 windows have touch controls.
+
+Desktop starts with the full district visible; compact windows start near the
+trainer. Movement works in both camera modes.
 
 ```powershell
 ./experiments/darkmoon_sandbox/validate_local.ps1
