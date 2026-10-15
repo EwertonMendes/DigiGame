@@ -1,0 +1,29 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://experiments/darkmoon_sandbox/CityPiece.gd" id="1_ogtuc"]
+[ext_resource type="TileSet" path="res://experiments/darkmoon_sandbox/CityTiles.tres" id="2_bw72x"]
+
+[node name="DataTerminalA" type="Node2D" unique_id=1222622865]
+z_index = 972
+script = ExtResource("1_ogtuc")
+metadata/brush = "terminal"
+metadata/art_offset = Vector2(-64, -112)
+metadata/art_mask = PackedVector2Array(-64, -80, 0, -112, 64, -80, 64, -32, 0, 0, -64, -32)
+metadata/service_label = "Data console"
+metadata/service_text = "The console displays a directory of this district. This experimental console does not modify the owned roster."
+metadata/service_point = Vector2(0, 24)
+
+[node name="ArtMask" type="Polygon2D" parent="." unique_id=1945557789]
+clip_children = 1
+polygon = PackedVector2Array(-64, -80, 0, -112, 64, -80, 64, -32, 0, 0, -64, -32)
+
+[node name="Art" type="TileMapLayer" parent="ArtMask" unique_id=242330792]
+position = Vector2(-64, -112)
+scale = Vector2(2, 2)
+tile_map_data = PackedByteArray("AAAAAAAAAAAAAAQAAAABAAAAAAABAAQAAAACAAAAAAACAAQAAAADAAAAAAADAAQAAAAEAAAAAAAEAAQAAAAFAAAAAAAFAAQAAAAGAAAAAAAGAAQAAAAHAAAAAAAHAAQAAAAAAAEAAAAAAAUAAAABAAEAAAABAAUAAAACAAEAAAACAAUAAAADAAEAAAADAAUAAAAEAAEAAAAEAAUAAAAFAAEAAAAFAAUAAAAGAAEAAAAGAAUAAAAHAAEAAAAHAAUAAAAAAAIAAAAAAAYAAAABAAIAAAABAAYAAAACAAIAAAACAAYAAAADAAIAAAADAAYAAAAEAAIAAAAEAAYAAAAFAAIAAAAFAAYAAAAGAAIAAAAGAAYAAAAHAAIAAAAHAAYAAAAAAAMAAAAAAAcAAAABAAMAAAABAAcAAAACAAMAAAACAAcAAAADAAMAAAADAAcAAAAEAAMAAAAEAAcAAAAFAAMAAAAFAAcAAAAGAAMAAAAGAAcAAAAHAAMAAAAHAAcAAAAAAAQAAAAAAAgAAAABAAQAAAABAAgAAAACAAQAAAACAAgAAAADAAQAAAADAAgAAAAEAAQAAAAEAAgAAAAFAAQAAAAFAAgAAAAGAAQAAAAGAAgAAAAHAAQAAAAHAAgAAAAAAAUAAAAAAAkAAAABAAUAAAABAAkAAAACAAUAAAACAAkAAAADAAUAAAADAAkAAAAEAAUAAAAEAAkAAAAFAAUAAAAFAAkAAAAGAAUAAAAGAAkAAAAHAAUAAAAHAAkAAAAAAAYAAAAAAAoAAAABAAYAAAABAAoAAAACAAYAAAACAAoAAAADAAYAAAADAAoAAAAEAAYAAAAEAAoAAAAFAAYAAAAFAAoAAAAGAAYAAAAGAAoAAAAHAAYAAAAHAAoAAAA=")
+tile_set = ExtResource("2_bw72x")
+
+[node name="Footprint" type="Polygon2D" parent="." unique_id=1811092161]
+visible = false
+color = Color(0.9137255, 0.26666668, 0.44705883, 1)
+polygon = PackedVector2Array(-58, -28, 0, -57, 58, -28, 0, 0)

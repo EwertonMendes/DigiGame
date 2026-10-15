@@ -105,6 +105,15 @@ jobs:
           python3 tools/validate_early_rank_playables.py
           python3 tools/validate_all_ds_directional_facings.py
 
+      - name: Validate isolated city sandbox
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 experiments/darkmoon_sandbox/validate_privacy.py
+          godot --headless --path . --script experiments/darkmoon_sandbox/test_sandbox.gd 2>&1 | tee /tmp/sandbox-test.log
+          grep -F '[DarkmoonSandboxTest] PASS' /tmp/sandbox-test.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|ROUTE FAIL' /tmp/sandbox-test.log; then exit 1; fi
+
       - name: Export Web build
         shell: bash
         run: |
@@ -113,6 +122,7 @@ jobs:
           godot --headless --path . --export-release Web build/web/index.html 2>&1 | tee /tmp/godot-export.log
           if grep -E 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERR_FILE_CORRUPT|Error loading image:|Error importing ' /tmp/godot-export.log; then exit 1; fi
           test -s build/web/index.html && test -s build/web/index.wasm
+          python3 experiments/darkmoon_sandbox/create_preview.py build/web
 
       - name: Upload Web build once
         uses: actions/upload-artifact@v4
