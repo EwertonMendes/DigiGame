@@ -59,7 +59,7 @@ try {
   await page.waitForTimeout(1800);
   await page.keyboard.up('ArrowUp');
   await page.waitForTimeout(400);
-  if (position.y < 180 || position.y > 225) throw new Error(`Fountain collision failed: ${JSON.stringify(position)}`);
+  if (position.y < 155 || position.y > 190) throw new Error(`Fountain collision failed: ${JSON.stringify(position)}`);
   await page.screenshot({ path: 'build/sandbox-fountain-collision.png' });
   await page.keyboard.press('r');
   await page.keyboard.press('Tab'); // Desktop opens with the district overview.
@@ -83,6 +83,15 @@ try {
     }
     await page.screenshot({ path: `build/sandbox-${viewport.width}x${viewport.height}.png` });
   }
+  // Overview alone hides small facade offsets and floor/wall intersections.
+  // Review the nearby camera at integer 2x art scale as well as the full map.
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.keyboard.press('Tab');
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'build/sandbox-nearby.png' });
+  await page.screenshot({ path: 'build/sandbox-shopwalls.png', clip: { x: 380, y: 120, width: 1080, height: 300 } });
+  await page.screenshot({ path: 'build/sandbox-basin.png', clip: { x: 640, y: 340, width: 640, height: 330 } });
+  await page.screenshot({ path: 'build/sandbox-recess.png', clip: { x: 160, y: 380, width: 500, height: 240 } });
   if (errors.length) throw new Error(errors.join('\n'));
   console.log('Sandbox browser smoke PASS: keyboard, route, collision, responsive canvas');
 } finally {

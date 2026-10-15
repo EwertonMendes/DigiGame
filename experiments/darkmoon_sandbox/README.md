@@ -29,10 +29,12 @@ remain editable. Platform-support columns are not used as freestanding lights.
 
 The current plaza uses native interlocking paving, structural edge strips and
 corner caps. There is no code-drawn paving grid or flat-color platform facade.
-The market, research station and eastern display share a continuous pedestrian
+The market and research station share a continuous pedestrian
 space around the basin. The indoor counter remains in the module catalogue;
 the outdoor scene uses one cabinet attached to the platform edge instead.
-The fountain retains its native rim and two complete crossing landings. Water
+The fountain retains its native rim without bridge landings. The surrounding
+area uses the same continuous paving as the rest of the plaza. The floating
+district monitor and its collision are not instantiated. Water
 animation is intentionally deferred.
 
 `brushes.json` records source cell IDs rather than original map placements.
@@ -40,7 +42,9 @@ animation is intentionally deferred.
 only the committed source atlas. For platform changes, edit `OUTLINE` in
 `bake_scene.gd`; its edges use whole 128-by-64 world-pixel structural segments.
 The baker selects front/back faces and clips them to the platform's vertical
-extrusion so corners cannot leave floating fragments. Run it only on the base
+extrusion so corners cannot leave floating fragments. Front lips are clipped to
+the paving, while vertical faces exclude the paving entirely; walls therefore
+cannot cover the adjacent walking surface at a recessed corner. Run it only on the base
 sandbox, then review an actual render. The 64-by-64 native paving module repeats
 at 128-by-128 world pixels, with native joints preserved across its seams.
 

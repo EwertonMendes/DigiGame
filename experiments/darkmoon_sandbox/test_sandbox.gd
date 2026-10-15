@@ -29,6 +29,14 @@ func _run() -> void:
 		var source: Image = sandbox.CityAtlas.RAW_TEMPLATE.get_image()
 		_check(raw_cells.texture.get_image().get_data() == source.get_data(),"Raw authoring tiles changed the native atlas")
 		var palette: Image = sandbox.CityAtlas.assemble()
+		# The source reference's final facade section was displaced by 16 pixels.
+		# Every blue foundation column must follow the same isometric baseline.
+		for x in range(96,208,8):
+			var bottom := -1
+			for y in range(112):
+				if palette.get_pixel(x,128+y).is_equal_approx(Color8(82,156,181)):
+					bottom = y
+			_check(bottom == 102-(x-96)/2,"Shop foundation has a displaced side panel at column %d" % x)
 		var brushes: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(sandbox.BRUSHES_PATH))
 		for brush: Dictionary in brushes.values():
 			for y in range(brush.private_cells.size()):
@@ -58,6 +66,20 @@ func _run() -> void:
 		"City paving or structural rims were replaced by synthetic lines")
 	_check(not sandbox.can_stand_at(Vector2(-560,0)), "Western recessed edge must remain outside the platform")
 	_check(sandbox.can_stand_at(Vector2(-480,0)), "Market approach must remain connected to the central plaza")
+	_check(not sandbox.has_node("Depth/DataDisplay"),"Removed monitor is still instantiated")
+	_check(sandbox.can_stand_at(Vector2(608,48)),"Removed monitor left an invisible collision")
+	var platform: PackedVector2Array = sandbox.get_node("Walkable/CityPlatform").polygon
+	for entity: Node2D in sandbox.get_node("Depth").get_children():
+		if entity.get_meta("structure_face","") != "wall":
+			continue
+		var face := PackedVector2Array()
+		for point: Vector2 in entity.get_meta("art_mask"):
+			face.append(entity.position+point)
+		for overlap: PackedVector2Array in Geometry2D.intersect_polygons(face,platform):
+			var area := 0.0
+			for index in range(overlap.size()):
+				area += overlap[index].cross(overlap[(index+1)%overlap.size()])
+			_check(absf(area)<1.0,"A platform wall overlaps the walkable paving")
 	for direction: Vector2 in [Vector2.LEFT,Vector2.RIGHT,Vector2.UP,Vector2.DOWN,
 		Vector2(-1,-1),Vector2(1,-1),Vector2(-1,1),Vector2(1,1)]:
 		sandbox.player.position = sandbox.SPAWN

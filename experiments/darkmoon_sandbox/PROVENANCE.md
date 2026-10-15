@@ -25,3 +25,10 @@ come from 24a at (624, 320) and 23a at (560, 40). The arrival inlay uses
 These identify component cells only. None of those reference images or their
 map layouts is distributed. `rebuild_palette.py` reproduces the shipped palette
 directly from the committed atlas and the explicit cell matrices.
+
+The facade reference contains a 16-pixel displacement in its final 48-pixel
+side section. Those native cells are placed two rows lower to continue the blue
+foundation baseline. Native purple fascia cells from 24a at (656, 0) extend the
+upper wall under the roof. The basin's mask now excludes both blue bridge
+landings; no replacement floor is painted over them, so the shared paving
+continues beneath the cutout without additional seams.
