@@ -4,6 +4,26 @@
 
 Windows, Linux, macOS, and Android packages are built remotely with GitHub Actions. See [docs/releases.md](docs/releases.md) for versioning, repeatable builds, Android signing, and the official release process.
 
+## Web game and city sandbox
+
+The Web export has two entry points in the same Godot project:
+
+- `index.html` (or the site root) opens the normal game.
+- `sandbox.html` opens the isolated, playable city experiment directly. It uses
+  the bundled native city PNGs and does not request a ZIP file.
+
+For a pull request preview, `/pr-N/` opens the normal game and
+`/pr-N/sandbox.html` opens the city. On the production site, the corresponding
+entries are `/` and `/sandbox.html`. The sandbox preserves the normal main scene
+and menus; it has not been connected to the game's regular navigation.
+
+Locally, open `experiments/darkmoon_sandbox/DarkmoonSandbox.tscn` and press F6
+to run the city. F5 still starts the normal game. The city composition is original,
+and its 8×8 TileSet and reusable modules support authoring your own scenery
+without importing the original source-map layouts. See the
+[city asset kit guide](experiments/darkmoon_sandbox/README.md) for editing and
+local validation.
+
 ## Screenshot 20-09-2023
   ### Features:
   <ul>
