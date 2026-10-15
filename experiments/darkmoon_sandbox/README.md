@@ -1,114 +1,115 @@
-# Moonrise Commons: local city sandbox
+# Moonrise Commons: editable city assets
 
-Open `experiments/darkmoon_sandbox/DarkmoonSandbox.tscn` in the existing
-DigiGame project and press **F6**. F5 still opens the normal game. The experiment
-does not change the main scene, existing maps, progression, menus, or saves.
+Open `experiments/darkmoon_sandbox/DarkmoonSandbox.tscn` in DigiGame and press
+**F6**. The scene is an original arrangement of reusable city modules. Source
+maps were used only to identify matching component cells; their streets and map
+placements are not imported. The normal main scene, maps, progression and saves
+are unchanged.
 
-The authored city has a continuous isometric platform with a finished perimeter,
-a fountain plaza and connected blue walking loop, a western market with its
-counter and Koromon guide, a northern DigiLab facade, and an eastern data court
-with terminals and an interactive district display. All walking uses one plane.
+## Use the real artwork
 
-## Controls
+The Web entry point `/pr-N/sandbox.html` asks for
+**Darkmoon_City_Assets_Only.zip**. Choose the supplied ZIP from your computer.
+JavaScript reads only its pinned 8×8 atlas, checks SHA-256, and preloads it into
+the game's memory. It never uploads the ZIP or PNG. Reloading asks for the file
+again. An invalid ZIP remains on the selection screen; it cannot silently launch
+substitute city art.
 
-| Control | Action |
-| --- | --- |
-| WASD / arrows | Eight-direction movement |
-| Shift | Run |
-| E | Talk to Koromon, inspect a facade, or use the district display |
-| E / Esc | Close a conversation |
-| F3 | Show walkable surfaces, solid ground bases, and actor clearance |
-| Tab | Toggle the whole-city overview |
-| R | Return to the arrival plaza |
-| F4 | Test the full circuit through the actual actor |
-
-Compact windows also show the existing touch joystick and scene-local buttons.
-The city guide is a separate NPC, not an owned roster entry. Facade interactions
-are local descriptions; they do not open the normal game's services.
-
-## Fast local validation
-
-Use the existing Godot 4.7 executable, without waiting for GitHub Actions:
-
-```powershell
-./experiments/darkmoon_sandbox/validate_local.ps1
-./experiments/darkmoon_sandbox/validate_local.ps1 -Capture
-# Or point at another local executable:
-./experiments/darkmoon_sandbox/validate_local.ps1 -Godot "C:/Tools/Godot.exe"
-```
-
-The script defaults to the local executable under `.tmp/godot/`. Logic checks
-run headless. `-Capture` uses a hidden local rendering window to save actual
-GPU images; Godot's headless dummy renderer cannot produce visual screenshots.
-Logs, caches, and test user data stay in the ignored `.tmp/` directory.
-
-Tests cover valid spawn, eight directions, the full plaza/market/data-court
-circuit, frontal and diagonal collisions, long-step tunneling, obstacle contours,
-outer voids, roof clearance, angled-object depth, and NPC interaction pause/resume.
-No private screenshots are uploaded by local validation.
-
-## Private artwork
-
-The supplied `Darkmoon_City_Assets_Only.zip` contains proprietary ROM-derived
-pixels without redistribution permission. They stay local and ignored. Public
-builds use the original project-owned fallback atlas with identical brush regions,
-scene geometry, actors, collision, and interaction code.
+For the local editor, import the ZIP once:
 
 ```powershell
 python experiments/darkmoon_sandbox/import_private_assets.py "C:/Users/ewert/Documents/Dev/digimon-world-dusk-pc/.private/scenery/Darkmoon_City_Assets_Only.zip"
 ```
 
-The importer requires Pillow, checks the supplied atlas SHA-256 manifest, and
-preserves native RGBA pixels. The curated 1024×512 palette is assembled from
-explicit **8×8 atlas cell IDs** in `brushes.json`, rather than treating arbitrary
-32×32 fragments as complete objects. The original three city atlases are retained
-under `assets/local/darkmoon_sandbox/` for further work. Keep its `.gitignore`
-and `.gdignore` files: raw private PNGs are loaded at runtime, outside normal
-Godot import/export scanning.
+The importer requires Pillow and verifies the source manifest. All PNGs stay
+under ignored `assets/local/darkmoon_sandbox/`, with `.gdignore` excluding them
+from normal Godot imports and exports. Editor tools load these images directly.
+The editor and F6 display the real city artwork when that local atlas exists.
+Before an editor save, tools restore neutral texture references; after saving,
+they restore the live private preview. Painted cells are retained. Private image
+data is never embedded in saved scene resources.
 
-The original map arrangements are not used. Complete facade and fixture modules
-were identified in local references and matched byte-for-byte to cells already in
-the supplied atlas; only those module cell IDs are retained. Floor and roof
-materials use unmodified solid source cells. The original city streets are absent.
+`palette.svg` and `raw-atlas-layout.svg` are neutral layout textures for a clean
+checkout and automated geometry checks. They are not replacement city artwork.
+The normal browser entry point never starts with them. Public CI uses the explicit
+`?geometry=1` diagnostic mode after checking the asset-selection screen.
 
-## Editing the city
+## Create your own scenes
 
-* Paint the serialized TileMapLayers using their square 8×8 TileSet. Layers use
-  integer 2× scale, nearest filtering, and zero atlas margins/separation.
-* `GroundMask`, `Courts/*`, and object `ArtMask` polygons clip tile layers to
-  smooth authored shapes. Visual clipping avoids stair-step tile-cell boundaries
-  and removes adjacent scenery accidentally included in a fixture's source cells.
-* Move objects by their parent under `Depth`. Their art, bases, and interaction
-  points move together. Building roofs are separate editable tile surfaces.
-* `Walkable/CityPlatform` defines the outer walking surface.
-  `Depth/<object>/Footprint` subtracts solid ground bases. Temporarily show these
-  hidden Polygon2D nodes to edit their vertices, then use F3 during play.
-* The same ground bases drive collision and front/back depth. Contact Y is
-  evaluated at the actor's X for angled facades and counters; roof height never
-  becomes a ground collision rectangle.
-* The root's `Rebuild Tiles` regenerates paint from surface and brush metadata.
-  **It replaces paint edits**; save a copy first. `bake_scene.gd` regenerates the
-  complete initial city, so do not run it over a hand-edited scene casually.
-* The editor shows the public palette. F6 substitutes the private palette at the
-  same cell coordinates when available. No private image data is serialized into
-  the tracked scene. Add new brush regions/cell IDs deliberately and rerun the
-  importer to extend the private palette.
+Save a copy of the sandbox under a new scene name. Keep its `Walkable`,
+`GroundMask/Ground` and `Depth` node paths so the scene controller can query
+walking surfaces and solid bases. Change the platform outline, paint, place
+modules, and define new ground footprints for your own composition.
 
-The actor adapter reuses existing eight-direction input, animation, acceleration,
-and sliding. It checks movement segments every four pixels and applies capsule
-clearance. The existing world's loading, elevation traversal, followers, services,
-and persistence are not instantiated.
+The `pieces/` folder contains reusable scenes:
 
-## Web entry point
+| Scene | Contents |
+| --- | --- |
+| `DigiLab.tscn` | Blue roof, facade, base, service anchor |
+| `Market.tscn` | Orange roof, facade, base, service anchor |
+| `MarketCounter.tscn` | Complete counter and its angled base |
+| `DataTerminalA.tscn` | Complete console, base, interaction |
+| `DataDisplay.tscn` | Complete district display, base, map interaction |
+| `Fountain.tscn` | Basin, fountain, rim and solid base |
+| `ArrivalPlaza.tscn` | Clipped plaza floor ornament |
 
-The regular export remains `index.html`. `create_preview.py` generates
-`sandbox.html` and a forked `sandbox.pck` whose only resource change is the
-exported main-scene setting. JavaScript/Wasm are shared and the source
-`project.godot` is untouched. This works with official templates that disable
-command-line scene overrides.
+Place these directly under `Depth`, move the parent, and retain its children.
+Art, ground base and interaction anchors then move together. Keep parent scale
+at 1 and rotation at 0; the art layers already use integer 2× scale and Nearest.
+Use pixel snapping, normally 16 pixels; an intentional 8-pixel offset can align
+isometric half-cell anchors. Do not stretch or rotate native pixel art to force
+an incorrect module to fit.
 
-The PR's city entry point is `/pr-N/sandbox.html`; `/pr-N/` opens the normal
-game. Public packages are checked for private asset paths. Browser checks cover
-actual keyboard movement, the full circuit, fountain collision, map toggle,
-runtime errors, and four canvas sizes. Private Web testing preloads the ignored
-local palette only into a loopback-served copy; it is never a CI input.
+`CityTiles.tres` has a square **8×8** tile grid, zero margin and zero separation:
+
+* Source **0** contains complete curated modules and materials. Their cells can
+  be painted or rearranged individually.
+* Source **1**, **Native 8x8 source cells**, exposes all **3,825** valid cells from
+  the supplied city atlas. The empty tail is excluded. Use these for new walls,
+  borders, details and modules; larger atlas chunks are not complete objects.
+
+For a custom solid object, add a `Node2D` under `Depth`, paint child TileMapLayers
+using `CityTiles.tres` at scale 2, and add a hidden `Footprint` Polygon2D following
+its base on the ground. The controller queries that polygon for collision and
+uses the actual painted bounds for front/back depth. Roof pixels never define
+collision. Use F3 to check clearance and bases after each composition change.
+Foreign TileSets are left untouched by the private atlas preview tools.
+
+The narrow green-topped column cells are **platform supports**, not streetlights.
+They remain available in the raw catalogue but are not scattered through the
+plaza. The test city has two functional consoles in one court, a market counter,
+a fountain circuit, and a broad arrival area.
+
+`Rebuild Tiles` replaces hand-painted cells with brush metadata. Save a copy
+before using it. `bake_scene.gd` regenerates the initial city, catalogue modules
+and shared TileSet; it is not an operation to run over your authored scenes.
+
+## Controls and local validation
+
+WASD/arrows move, Shift runs, E interacts, E/Esc closes dialogue, Tab shows the
+district, F3 shows collision, R resets, and F4 tests the walking circuit. Compact
+windows show the scene-local touch controls. NPCs and facade interactions do not
+modify the normal roster or open its services.
+
+```powershell
+./experiments/darkmoon_sandbox/validate_local.ps1
+./experiments/darkmoon_sandbox/validate_local.ps1 -Capture
+# Or use another Godot 4.7 executable:
+./experiments/darkmoon_sandbox/validate_local.ps1 -Godot "C:/Tools/Godot.exe"
+```
+
+Logic checks run locally headless using the real atlas when present. `-Capture`
+uses a hidden local GPU window because the headless dummy renderer cannot
+produce screenshots. Logs, screenshots and test user data stay in ignored `.tmp/`.
+
+Checks cover native pixel equality, raw atlas coverage, safe scene serialization,
+eight directions, the full district route, frontal/diagonal collision, tunneling,
+outer edges, roof clearance, angled-object depth and NPC pause/resume. Local
+Chromium tests select the actual supplied ZIP through the published page's picker,
+reject invalid files, assert no outgoing asset upload, and check movement,
+collision and four canvas sizes. Private screenshots are never CI inputs.
+
+The regular Web export remains `index.html`. `create_preview.py` generates the
+sandbox entry point and forks only the exported package's main-scene setting.
+JavaScript/Wasm are shared; source `project.godot` is unchanged. Both desktop
+and browser use `CityAtlas.gd` and the same scene/controller code.

@@ -25,7 +25,7 @@ try {
     $env:LOCALAPPDATA = $sandboxCache
     $sandboxLog = Join-Path $sandboxOutput 'city-local-runtime.log'
     $sandboxTest = Join-Path $sandboxOutput 'city-local-test.log'
-    & $Godot --headless --path $sandboxRoot --script experiments/darkmoon_sandbox/test_sandbox.gd --quit-after 180 --log-file $sandboxLog *> $sandboxTest
+    & $Godot --headless --path $sandboxRoot --script experiments/darkmoon_sandbox/test_sandbox.gd --quit-after 180 --log-file $sandboxLog -- --private *> $sandboxTest
     $sandboxExit = $LASTEXITCODE
     $sandboxText = Get-Content -LiteralPath $sandboxTest -Raw
     if ($sandboxExit -ne 0 -or $sandboxText -match 'SCRIPT ERROR|Parse Error|ERROR:' -or $sandboxText -notmatch '\[DarkmoonSandboxTest\] PASS') {

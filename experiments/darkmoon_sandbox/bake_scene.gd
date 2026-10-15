@@ -2,6 +2,7 @@ extends SceneTree
 
 const Sandbox = preload("res://experiments/darkmoon_sandbox/DarkmoonSandbox.gd")
 const Guide = preload("res://experiments/darkmoon_sandbox/CityGuide.gd")
+const Piece = preload("res://experiments/darkmoon_sandbox/CityPiece.gd")
 const GUIDE_TEXTURE = preload("res://assets/characters/koromon/field.png")
 const OUTLINE := [Vector2(0,-576),Vector2(1152,0),Vector2(0,576),Vector2(-1152,0)]
 var scene: Node2D
@@ -72,10 +73,11 @@ func _building(parent: Node, node_name: String, at: Vector2, title: String) -> v
 		Vector2(224,-112),Vector2.ZERO,Vector2(-192,-96)]
 	var entity := _entity(parent, node_name, at, "facade", Vector2(-192,-208), base, face)
 	var roof_points := [Vector2(-192,-208),Vector2(32,-320),Vector2(224,-224),Vector2(0,-112)]
-	var roof := _surface(entity, "Roof", roof_points, "floor", 0)
-	_line(roof, "RidgeA", [Vector2(-80,-264),Vector2(112,-168)], Color("c46ab8"), 2)
-	_line(roof, "RidgeB", [Vector2(-96,-160),Vector2(128,-272)], Color("c46ab8"), 2)
-	_line(entity, "RoofTrim", roof_points + [roof_points[0]], Color("e2cd87"), 4)
+	var roof := _polygon(entity,"Roof",roof_points,Color.WHITE)
+	roof.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	var roof_piece := _entity(roof,"RoofPieces",Vector2.ZERO,
+		"roof_blue" if title == "DIGILAB" else "roof_orange",Vector2(-192,-328),[])
+	roof_piece.z_index = 0
 	var sign := Label.new()
 	sign.text = title
 	sign.position = Vector2(-146,-154)
@@ -160,29 +162,36 @@ func _bake() -> void:
 	var terminal_mask := [Vector2(-64,-80),Vector2(0,-112),Vector2(64,-80),
 		Vector2(64,-32),Vector2.ZERO,Vector2(-64,-32)]
 	for item in [
-		["DataTerminalA",Vector2(496,56)], ["DataTerminalB",Vector2(672,56)],
-		["DataTerminalC",Vector2(584,152)], ["SouthTerminalA",Vector2(-288,320)],
-		["SouthTerminalB",Vector2(288,320)]]:
-		_entity(depth, item[0], item[1], "terminal", Vector2(-64,-112), terminal_shape, terminal_mask)
+		["DataTerminalA",Vector2(536,72)], ["DataTerminalB",Vector2(672,128)]]:
+		var terminal := _entity(depth, item[0], item[1], "terminal", Vector2(-64,-112), terminal_shape, terminal_mask)
+		terminal.set_meta("service_label","Data console")
+		terminal.set_meta("service_text","The console displays a directory of this district. This experimental console does not modify the owned roster.")
+		terminal.set_meta("service_point",Vector2(0,24))
 	var billboard_mask := [Vector2(-64,-116),Vector2(64,-176),Vector2(64,-56),Vector2(-64,4)]
 	var display := _entity(depth, "DataDisplay", Vector2(600,-88), "billboard", Vector2(-72,-176),
 		[Vector2(-44,-12),Vector2(44,-12),Vector2(44,4),Vector2(-44,4)], billboard_mask)
 	display.set_meta("service_label", "District display")
 	display.set_meta("map_link", true)
-	var light_mask := [Vector2(-24,-96),Vector2(0,-112),Vector2(24,-96),
-		Vector2(18,-16),Vector2(0,0),Vector2(-18,-16)]
-	var light_base := [Vector2(-12,-8),Vector2(0,-16),Vector2(12,-8),Vector2.ZERO]
-	for item in [
-		["LightNW",Vector2(-320,-232)], ["LightNE",Vector2(352,-232)],
-		["LightW",Vector2(-816,64)], ["LightE",Vector2(816,64)],
-		["LightSW",Vector2(-400,352)], ["LightSE",Vector2(400,352)],
-		["PlazaLightW",Vector2(-288,152)], ["PlazaLightE",Vector2(288,152)]]:
-		_entity(depth, item[0], item[1], "light", Vector2(-32,-112), light_base, light_mask)
-	var plaza_mask := [Vector2(-192,0),Vector2(0,-96),Vector2(192,0),Vector2(0,96)]
+	# The narrow column modules are platform supports, not freestanding lights.
+	# Keep them in the piece catalogue until an authored edge uses their full base.
+	var plaza_mask := [Vector2(-128,0),Vector2(0,-64),Vector2(128,0),Vector2(0,64)]
 	_entity(depth, "ArrivalPlaza", Vector2(0,240), "plaza", Vector2(-192,-96), [], plaza_mask)
-	_entity(depth, "WestSteps", Vector2(-336,128), "steps", Vector2(-32,-16), [])
-	_entity(depth, "EastSteps", Vector2(336,128), "steps", Vector2(-32,-16), [])
 	scene.bake_tiles()
+	# Reusable modules contain their complete art, ground base and interaction
+	# anchors. Original map placements are never part of these pieces.
+	DirAccess.make_dir_recursive_absolute("res://experiments/darkmoon_sandbox/pieces")
+	for piece_name in ["DigiLab","Market","MarketCounter","DataTerminalA","DataDisplay","Fountain","ArrivalPlaza"]:
+		var piece := depth.get_node(piece_name).duplicate() as Node2D
+		piece.position = Vector2.ZERO
+		piece.set_script(Piece)
+		if piece.z_index >= 0:
+			piece.z_index -= roundi(depth.get_node(piece_name).position.y)
+		for child: Node in piece.find_children("*","",true,false):
+			child.owner = piece
+		var module := PackedScene.new()
+		assert(module.pack(piece) == OK)
+		assert(ResourceSaver.save(module,"res://experiments/darkmoon_sandbox/pieces/%s.tscn" % piece_name) == OK)
+		piece.free()
 	var packed := PackedScene.new()
 	assert(packed.pack(scene) == OK)
 	assert(ResourceSaver.save(packed, "res://experiments/darkmoon_sandbox/DarkmoonSandbox.tscn") == OK)

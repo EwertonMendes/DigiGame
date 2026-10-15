@@ -21,6 +21,34 @@ func _run() -> void:
 	sandbox.use_private_art = "--private" in OS.get_cmdline_user_args()
 	root.add_child(sandbox)
 	await physics_frame
+	var raw_cells := sandbox.get_node("GroundMask/Ground").tile_set.get_source(1) as TileSetAtlasSource
+	_check(raw_cells.get_tiles_count() == 3825 and not raw_cells.has_tile(Vector2i(17,119)),
+		"Raw source catalogue includes missing cells or the unused atlas tail")
+	if sandbox.use_private_art and FileAccess.file_exists(sandbox.CityAtlas.SOURCE):
+		_check(sandbox.art_mode == "Private local atlas","Native city atlas was not loaded")
+		var source := Image.load_from_file(sandbox.CityAtlas.SOURCE)
+		_check(raw_cells.texture.get_image().get_data() == source.get_data(),"Raw authoring tiles changed the native atlas")
+		var palette: Image = sandbox.CityAtlas.assemble()
+		var brushes: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(sandbox.BRUSHES_PATH))
+		for brush: Dictionary in brushes.values():
+			for y in range(brush.private_cells.size()):
+				for x in range(brush.private_cells[y].size()):
+					var cell: Variant = brush.private_cells[y][x]
+					if cell == null:
+						continue
+					var index := int(cell)
+					_check(palette.get_region(Rect2i(int(brush.rect[0])+x*8,int(brush.rect[1])+y*8,8,8)).get_data() ==
+						source.get_region(Rect2i((index%32)*8,(index/32)*8,8,8)).get_data(),
+						"A city piece altered native pixels")
+		# The editor save guard swaps only the palette, preserving editable cells.
+		sandbox.CityAtlas.set_palette(sandbox,sandbox.PUBLIC_PALETTE)
+		var saved := PackedScene.new()
+		_check(saved.pack(sandbox) == OK,"Could not pack the edited city")
+		_check(ResourceSaver.save(saved,"res://.tmp/city-save-guard.tscn") == OK,"Could not save the edited city")
+		var serialized := FileAccess.get_file_as_string("res://.tmp/city-save-guard.tscn")
+		_check(not serialized.contains("ImageTexture") and not serialized.contains("assets/local/"),
+			"Editor preview leaked private pixels into a saved scene")
+		sandbox.CityAtlas.set_palette(sandbox,ImageTexture.create_from_image(palette),ImageTexture.create_from_image(source))
 	sandbox.player.movement_enabled = false
 	_check(sandbox.can_stand_at(sandbox.SPAWN), "Invalid spawn clearance")
 	for direction: Vector2 in [Vector2.LEFT,Vector2.RIGHT,Vector2.UP,Vector2.DOWN,

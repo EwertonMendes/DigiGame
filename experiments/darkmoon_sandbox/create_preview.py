@@ -9,6 +9,7 @@ from pathlib import Path
 import argparse
 import hashlib
 import struct
+import shutil
 
 SCENE = "res://experiments/darkmoon_sandbox/DarkmoonSandbox.tscn"
 
@@ -90,19 +91,34 @@ def fork_package(source, target):
     return len(data)
 
 
+def create_entry_point(web_dir):
+    pack_size = fork_package(web_dir / "index.pck", web_dir / "sandbox.pck")
+    fingerprint = hashlib.sha256((web_dir / "sandbox.pck").read_bytes()).hexdigest()[:12]
+    pack_name = f"sandbox-{fingerprint}.pck"
+    (web_dir / "sandbox.pck").replace(web_dir / pack_name)
+    html = (web_dir / "index.html").read_text(encoding="utf-8")
+    original = "engine.startGame({"
+    if html.count(original) != 1:
+        raise ValueError("Expected one Godot Web startGame call")
+    html = html.replace(original, original + f'\n\t\t\tmainPack: "{pack_name}",'
+                        + f'\n\t\t\tfileSizes: {{...GODOT_CONFIG.fileSizes, "{pack_name}": {pack_size}}},', 1)
+    reader = Path(__file__).with_name("local-assets.js")
+    reader_version = hashlib.sha256(reader.read_bytes()).hexdigest()[:12]
+    html = html.replace('</head>', f'<script src="local-assets.js?v={reader_version}"></script>\n</head>', 1)
+    html = html.replace(original, 'window.selectSandboxAssets(engine).then(() => ' + original, 1)
+    html = html.replace("}).then(() => {\n\t\t\tsetStatusMode('hidden');", "})).then(() => {\n\t\t\tsetStatusMode('hidden');", 1)
+    if "})).then(() =>" not in html:
+        raise ValueError("Expected the official template's startup promise")
+    (web_dir / "sandbox.html").write_text(html, encoding="utf-8")
+    shutil.copy2(reader, web_dir / "local-assets.js")
+    print("Created sandbox.html and a versioned sandbox pack; original game export preserved")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("web_dir", type=Path)
     args = parser.parse_args()
-    pack_size = fork_package(args.web_dir / "index.pck", args.web_dir / "sandbox.pck")
-    html = (args.web_dir / "index.html").read_text(encoding="utf-8")
-    original = "engine.startGame({"
-    if html.count(original) != 1:
-        raise ValueError("Expected one Godot Web startGame call")
-    html = html.replace(original, original + '\n\t\t\tmainPack: "sandbox.pck",'
-                        + f'\n\t\t\tfileSizes: {{...GODOT_CONFIG.fileSizes, "sandbox.pck": {pack_size}}},', 1)
-    (args.web_dir / "sandbox.html").write_text(html, encoding="utf-8")
-    print("Created sandbox.html and sandbox.pck; original game export preserved")
+    create_entry_point(args.web_dir)
 
 
 if __name__ == "__main__":

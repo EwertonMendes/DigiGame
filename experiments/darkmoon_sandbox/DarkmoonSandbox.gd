@@ -8,6 +8,7 @@ const DepthRule = preload("res://src/world/runtime/WorldDepth.gd")
 const InputBootstrap = preload("res://src/input/GameInputBootstrap.gd")
 const PLAYER_TEXTURE = preload("res://assets/characters/world/player_blond.png")
 const PUBLIC_PALETTE = preload("res://experiments/darkmoon_sandbox/palette.svg")
+const CityAtlas = preload("res://experiments/darkmoon_sandbox/CityAtlas.gd")
 const PRIVATE_PALETTE := "res://assets/local/darkmoon_sandbox/palette.png"
 const SPAWN := Vector2(0, 208)
 const BRUSHES_PATH := "res://experiments/darkmoon_sandbox/brushes.json"
@@ -29,7 +30,7 @@ var player: CharacterBody2D
 var camera: Camera2D
 var debug_view: Node2D
 var status: Label
-var art_mode := "Original preview art"
+var art_mode := "Geometry check only"
 var overview := false
 var _trace_elapsed := 0.0
 var dialogue: PanelContainer
@@ -43,6 +44,8 @@ func _init() -> void:
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
+		if use_private_art:
+			CityAtlas.preview_in_editor(self)
 		return
 	# This standalone scene draws at the actual window size. Scaling a 1280-wide
 	# HUD down to a phone first rasterizes enlarged glyphs at the wrong size.
@@ -52,10 +55,15 @@ func _ready() -> void:
 	_apply_runtime_palette()
 	for entity: Node2D in get_node("Depth").get_children():
 		var base := entity.get_node_or_null("Footprint") as Polygon2D
-		if base == null or not entity.has_meta("brush") or entity.z_index < 0:
+		if base == null or entity.z_index < 0:
 			continue
-		var span := DepthRule.span_for_local_polygon(base.global_position.y,base.polygon)
-		entity.z_index = roundi((span.x+span.y)*0.5)
+		var minimum := INF
+		var maximum := -INF
+		for point: Vector2 in base.polygon:
+			var ground_y := base.to_global(point).y
+			minimum = minf(minimum,ground_y)
+			maximum = maxf(maximum,ground_y)
+		entity.z_index = DepthRule.z_for_ground_y((minimum+maximum)*0.5)
 	player = Actor.new()
 	player.name = "SandboxPlayer"
 	player.configure(PLAYER_TEXTURE, true, self, "south")
@@ -74,6 +82,15 @@ func _ready() -> void:
 	assert(can_stand_at(SPAWN), "Sandbox spawn must have full capsule clearance")
 	print("[DarkmoonSandbox] READY art=%s" % art_mode)
 	_update_camera()
+
+
+func _notification(what: int) -> void:
+	if not Engine.is_editor_hint():
+		return
+	if what == NOTIFICATION_EDITOR_PRE_SAVE:
+		CityAtlas.set_palette(self,PUBLIC_PALETTE)
+	elif what == NOTIFICATION_EDITOR_POST_SAVE and use_private_art:
+		CityAtlas.preview_in_editor(self)
 
 
 func _process(delta: float) -> void:
@@ -172,11 +189,9 @@ func resolve_actor_depth(actor: Node2D) -> int:
 	var upper := 4096
 	for entity: Node2D in get_node("Depth").get_children():
 		var base := entity.get_node_or_null("Footprint") as Polygon2D
-		if base == null or not entity.has_meta("brush") or entity.z_index < 0:
+		if base == null or entity == actor or entity.z_index < 0:
 			continue
-		var rect: Array = _brush_cache[String(entity.get_meta("brush"))].rect
-		var offset: Vector2 = entity.get_meta("art_offset",Vector2.ZERO)
-		var bounds: Rect2 = entity.global_transform * Rect2(offset,Vector2(rect[2],rect[3])*2)
+		var bounds := _piece_art_bounds(entity)
 		var roof := entity.get_node_or_null("Roof") as Polygon2D
 		if roof != null:
 			for point: Vector2 in roof.polygon:
@@ -209,6 +224,26 @@ func resolve_actor_depth(actor: Node2D) -> int:
 	return clampi(DepthRule.z_for_ground_y(actor.global_position.y),lower,maxi(lower,upper))
 
 
+func _piece_art_bounds(entity: Node2D) -> Rect2:
+	if entity.has_meta("brush"):
+		var rect: Array = _brush_cache[String(entity.get_meta("brush"))].rect
+		return entity.global_transform * Rect2(entity.get_meta("art_offset",Vector2.ZERO),Vector2(rect[2],rect[3])*2)
+	# Custom authored modules may paint raw source cells instead of a catalogue
+	# brush. Their used tile cells still provide correct front/back occlusion.
+	var result := Rect2()
+	for layer: TileMapLayer in entity.find_children("*","TileMapLayer",true,false):
+		var cells := layer.get_used_rect()
+		if cells.size == Vector2i.ZERO:
+			continue
+		var tile_size := layer.tile_set.tile_size
+		var bounds: Rect2 = layer.global_transform * Rect2(cells.position*tile_size,cells.size*tile_size)
+		result = bounds if result.size == Vector2.ZERO else result.merge(bounds)
+	for body: Sprite2D in entity.find_children("*","Sprite2D",true,false):
+		var bounds: Rect2 = body.global_transform * body.get_rect()
+		result = bounds if result.size == Vector2.ZERO else result.merge(bounds)
+	return result
+
+
 func can_actor_move_to(candidate: Vector2, actor: Node) -> bool:
 	if not actor is Node2D:
 		return can_stand_at(candidate)
@@ -221,17 +256,22 @@ func can_actor_move_to(candidate: Vector2, actor: Node) -> bool:
 
 
 func _apply_runtime_palette() -> void:
-	if not use_private_art or not FileAccess.file_exists(PRIVATE_PALETTE):
+	if not use_private_art:
 		return
-	var native := Image.load_from_file(PRIVATE_PALETTE)
+	var native: Image = null
+	if FileAccess.file_exists(CityAtlas.SOURCE):
+		native = CityAtlas.assemble()
+	elif FileAccess.file_exists(PRIVATE_PALETTE):
+		native = Image.load_from_file(PRIVATE_PALETTE)
+	else:
+		return
 	if native == null or native.get_size() != Vector2i(PUBLIC_PALETTE.get_width(), PUBLIC_PALETTE.get_height()):
 		push_warning("Invalid private palette; using original preview art")
 		return
-	var texture := ImageTexture.create_from_image(native)
-	var tiles := (get_node("GroundMask/Ground") as TileMapLayer).tile_set.duplicate(true) as TileSet
-	(tiles.get_source(0) as TileSetAtlasSource).texture = texture
-	for layer: Node in find_children("*", "TileMapLayer", true, false):
-		(layer as TileMapLayer).tile_set = tiles
+	var raw := CityAtlas.RAW_TEMPLATE as Texture2D
+	if FileAccess.file_exists(CityAtlas.SOURCE):
+		raw = ImageTexture.create_from_image(Image.load_from_file(CityAtlas.SOURCE))
+	CityAtlas.set_palette(self,ImageTexture.create_from_image(native),raw)
 	art_mode = "Private local atlas"
 
 
@@ -374,6 +414,7 @@ func _make_tileset() -> TileSet:
 	var tiles := TileSet.new()
 	tiles.tile_size = Vector2i(8, 8)
 	var source := TileSetAtlasSource.new()
+	source.resource_name = "Assembled city pieces"
 	source.texture = PUBLIC_PALETTE
 	source.texture_region_size = Vector2i(8, 8)
 	source.margins = Vector2i.ZERO
@@ -388,6 +429,13 @@ func _make_tileset() -> TileSet:
 				if not source.has_tile(Vector2i(x, y)):
 					source.create_tile(Vector2i(x, y))
 	tiles.add_source(source, 0)
+	var raw := TileSetAtlasSource.new()
+	raw.resource_name = "Native 8x8 source cells"
+	raw.texture = CityAtlas.RAW_TEMPLATE
+	raw.texture_region_size = Vector2i(8,8)
+	for index in range(3825):
+		raw.create_tile(Vector2i(index%32,index/32))
+	tiles.add_source(raw,1)
 	return tiles
 
 
@@ -413,6 +461,8 @@ func _paint_surface(mask: Polygon2D, brush: Dictionary, tiles: TileSet, layer_na
 func bake_tiles() -> void:
 	var brushes: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BRUSHES_PATH))
 	var tiles := _make_tileset()
+	assert(ResourceSaver.save(tiles,"res://experiments/darkmoon_sandbox/CityTiles.tres",ResourceSaver.FLAG_CHANGE_PATH) == OK)
+	tiles.take_over_path("res://experiments/darkmoon_sandbox/CityTiles.tres")
 	for existing: Node in find_children("*", "TileMapLayer", true, false):
 		existing.get_parent().remove_child(existing)
 		existing.queue_free()
@@ -420,7 +470,7 @@ func bake_tiles() -> void:
 		if mask.has_meta("surface_brush"):
 			_paint_surface(mask,brushes[String(mask.get_meta("surface_brush"))],tiles,
 				"Ground" if mask.name == "GroundMask" else "Tiles")
-	for entity: Node2D in get_node("Depth").get_children():
+	for entity: Node2D in get_node("Depth").find_children("*","Node2D",true,false):
 		if not entity.has_meta("brush"):
 			continue
 		var rect: Array = brushes[String(entity.get_meta("brush"))].rect
