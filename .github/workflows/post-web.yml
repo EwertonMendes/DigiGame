@@ -251,7 +251,7 @@ jobs:
 
           **[Open DigiGame PR #${PR_NUMBER}](${PREVIEW_URL})**
 
-          **[Open the city asset sandbox](${{ steps.pages.outputs.base_url }}/pr-${PR_NUMBER}/sandbox.html)** — choose your local Darkmoon_City_Assets_Only.zip to use its pixel art; the file is never uploaded.
+          **[Open the city sandbox](${{ steps.pages.outputs.base_url }}/pr-${PR_NUMBER}/sandbox.html)** — native city PNGs are included; starts directly.
 
           Build: \`${SHORT_SHA}\` · produced from this PR commit and isolated from master.
 

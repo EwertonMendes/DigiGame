@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ck7j5rvjbi7on"
-path="res://.godot/imported/raw-atlas-layout.svg-161717c64c3c9070d61c2a18379b2e80.ctex"
+uid="uid://tdoe3k18ww85"
+path="res://.godot/imported/pieces.png-2689ddf8705222c0e583a12622188a33.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://experiments/darkmoon_sandbox/raw-atlas-layout.svg"
-dest_files=["res://.godot/imported/raw-atlas-layout.svg-161717c64c3c9070d61c2a18379b2e80.ctex"]
+source_file="res://assets/scenery/darkmoon_city/pieces.png"
+dest_files=["res://.godot/imported/pieces.png-2689ddf8705222c0e583a12622188a33.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

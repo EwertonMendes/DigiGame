@@ -24,9 +24,9 @@ func _run() -> void:
 	var raw_cells := sandbox.get_node("GroundMask/Ground").tile_set.get_source(1) as TileSetAtlasSource
 	_check(raw_cells.get_tiles_count() == 3825 and not raw_cells.has_tile(Vector2i(17,119)),
 		"Raw source catalogue includes missing cells or the unused atlas tail")
-	if sandbox.use_private_art and FileAccess.file_exists(sandbox.CityAtlas.SOURCE):
-		_check(sandbox.art_mode == "Private local atlas","Native city atlas was not loaded")
-		var source := Image.load_from_file(sandbox.CityAtlas.SOURCE)
+	if true:
+		_check(sandbox.art_mode == "Bundled city atlas","Native city atlas was not loaded")
+		var source: Image = sandbox.CityAtlas.RAW_TEMPLATE.get_image()
 		_check(raw_cells.texture.get_image().get_data() == source.get_data(),"Raw authoring tiles changed the native atlas")
 		var palette: Image = sandbox.CityAtlas.assemble()
 		var brushes: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(sandbox.BRUSHES_PATH))

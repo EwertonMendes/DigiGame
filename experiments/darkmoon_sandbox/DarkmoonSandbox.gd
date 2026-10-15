@@ -7,9 +7,8 @@ const TouchJoystick = preload("res://src/ui/TouchJoystick.gd")
 const DepthRule = preload("res://src/world/runtime/WorldDepth.gd")
 const InputBootstrap = preload("res://src/input/GameInputBootstrap.gd")
 const PLAYER_TEXTURE = preload("res://assets/characters/world/player_blond.png")
-const PUBLIC_PALETTE = preload("res://experiments/darkmoon_sandbox/palette.svg")
+const PUBLIC_PALETTE = preload("res://assets/scenery/darkmoon_city/pieces.png")
 const CityAtlas = preload("res://experiments/darkmoon_sandbox/CityAtlas.gd")
-const PRIVATE_PALETTE := "res://assets/local/darkmoon_sandbox/palette.png"
 const SPAWN := Vector2(0, 208)
 const BRUSHES_PATH := "res://experiments/darkmoon_sandbox/brushes.json"
 const SAMPLE_STEP := 4.0
@@ -30,7 +29,7 @@ var player: CharacterBody2D
 var camera: Camera2D
 var debug_view: Node2D
 var status: Label
-var art_mode := "Geometry check only"
+var art_mode := "Bundled city atlas"
 var overview := false
 var _trace_elapsed := 0.0
 var dialogue: PanelContainer
@@ -256,23 +255,7 @@ func can_actor_move_to(candidate: Vector2, actor: Node) -> bool:
 
 
 func _apply_runtime_palette() -> void:
-	if not use_private_art:
-		return
-	var native: Image = null
-	if FileAccess.file_exists(CityAtlas.SOURCE):
-		native = CityAtlas.assemble()
-	elif FileAccess.file_exists(PRIVATE_PALETTE):
-		native = Image.load_from_file(PRIVATE_PALETTE)
-	else:
-		return
-	if native == null or native.get_size() != Vector2i(PUBLIC_PALETTE.get_width(), PUBLIC_PALETTE.get_height()):
-		push_warning("Invalid private palette; using original preview art")
-		return
-	var raw := CityAtlas.RAW_TEMPLATE as Texture2D
-	if FileAccess.file_exists(CityAtlas.SOURCE):
-		raw = ImageTexture.create_from_image(Image.load_from_file(CityAtlas.SOURCE))
-	CityAtlas.set_palette(self,ImageTexture.create_from_image(native),raw)
-	art_mode = "Private local atlas"
+	CityAtlas.set_palette(self,PUBLIC_PALETTE,CityAtlas.RAW_TEMPLATE)
 
 
 func _build_controls() -> void:

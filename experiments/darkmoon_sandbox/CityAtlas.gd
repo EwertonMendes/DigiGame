@@ -1,22 +1,13 @@
 @tool
 extends RefCounted
 
-const SOURCE := "res://assets/local/darkmoon_sandbox/darkmoon_city/tiles_8x8.png"
+const SOURCE := "res://assets/scenery/darkmoon_city/tiles_8x8.png"
 const SHA256 := "a9abb47ff5433abdcdc82632b6e6e748bb4389f1919e2e452e3f92e493a1226a"
-const RAW_TEMPLATE = preload("res://experiments/darkmoon_sandbox/raw-atlas-layout.svg")
+const RAW_TEMPLATE = preload("res://assets/scenery/darkmoon_city/tiles_8x8.png")
 
 
 static func assemble() -> Image:
-	var bytes := FileAccess.get_file_as_bytes(SOURCE)
-	var hash := HashingContext.new()
-	hash.start(HashingContext.HASH_SHA256)
-	hash.update(bytes)
-	if hash.finish().hex_encode() != SHA256:
-		push_warning("City atlas integrity check failed")
-		return null
-	var source := Image.new()
-	if source.load_png_from_buffer(bytes) != OK or source.get_size() != Vector2i(256,960):
-		return null
+	var source := RAW_TEMPLATE.get_image()
 	source.convert(Image.FORMAT_RGBA8)
 	var palette := Image.create(1024,512,false,Image.FORMAT_RGBA8)
 	var brushes: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://experiments/darkmoon_sandbox/brushes.json"))
@@ -53,8 +44,4 @@ static func set_palette(host: Node, texture: Texture2D, raw_texture: Texture2D =
 
 
 static func preview_in_editor(host: Node) -> void:
-	if not FileAccess.file_exists(SOURCE):
-		return
-	var palette := assemble()
-	if palette != null:
-		set_palette(host,ImageTexture.create_from_image(palette),ImageTexture.create_from_image(Image.load_from_file(SOURCE)))
+	set_palette(host,preload("res://assets/scenery/darkmoon_city/pieces.png"),RAW_TEMPLATE)

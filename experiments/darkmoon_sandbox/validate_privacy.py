@@ -1,14 +1,12 @@
-"""Reject private pixels in Git and enforce Godot's local import exclusion."""
+"""Validate the native city graphics deliberately included in the game."""
 from pathlib import Path
-import subprocess
-
-ROOT = Path(__file__).resolve().parents[2]
-PRIVATE = ROOT / "assets/local/darkmoon_sandbox"
-allowed = {"assets/local/darkmoon_sandbox/.gitignore", "assets/local/darkmoon_sandbox/.gdignore"}
-tracked = subprocess.check_output(
-    ["git", "ls-files", "--", "assets/local/darkmoon_sandbox"], cwd=ROOT, text=True
-).splitlines()
-assert set(tracked) <= allowed, "Private source graphics must never be tracked"
-assert (PRIVATE / ".gdignore").is_file(), "Godot must exclude the private directory"
-assert (PRIVATE / ".gitignore").read_text().splitlines() == ["*", "!.gitignore", "!.gdignore"]
-print("Private assets excluded from Git and Godot's resource export")
+import hashlib,json
+root=Path(__file__).resolve().parents[2]
+folder=root/'assets/scenery/darkmoon_city'
+manifest=json.loads((folder/'manifest.json').read_text())
+assert set(manifest['files'])=={'tiles_8x8.png','pieces.png'}
+for name,digest in manifest['files'].items():
+ assert hashlib.sha256((folder/name).read_bytes()).hexdigest()==digest, f'City asset integrity failed: {name}'
+assert manifest['files']['tiles_8x8.png']=='a9abb47ff5433abdcdc82632b6e6e748bb4389f1919e2e452e3f92e493a1226a'
+assert manifest['valid_cells']==3825 and manifest['tile_size']==[8,8]
+print('Bundled native city assets verified: source atlas and assembled modules')

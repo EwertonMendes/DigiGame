@@ -9,7 +9,6 @@ from pathlib import Path
 import argparse
 import hashlib
 import struct
-import shutil
 
 SCENE = "res://experiments/darkmoon_sandbox/DarkmoonSandbox.tscn"
 
@@ -102,15 +101,7 @@ def create_entry_point(web_dir):
         raise ValueError("Expected one Godot Web startGame call")
     html = html.replace(original, original + f'\n\t\t\tmainPack: "{pack_name}",'
                         + f'\n\t\t\tfileSizes: {{...GODOT_CONFIG.fileSizes, "{pack_name}": {pack_size}}},', 1)
-    reader = Path(__file__).with_name("local-assets.js")
-    reader_version = hashlib.sha256(reader.read_bytes()).hexdigest()[:12]
-    html = html.replace('</head>', f'<script src="local-assets.js?v={reader_version}"></script>\n</head>', 1)
-    html = html.replace(original, 'window.selectSandboxAssets(engine).then(() => ' + original, 1)
-    html = html.replace("}).then(() => {\n\t\t\tsetStatusMode('hidden');", "})).then(() => {\n\t\t\tsetStatusMode('hidden');", 1)
-    if "})).then(() =>" not in html:
-        raise ValueError("Expected the official template's startup promise")
     (web_dir / "sandbox.html").write_text(html, encoding="utf-8")
-    shutil.copy2(reader, web_dir / "local-assets.js")
     print("Created sandbox.html and a versioned sandbox pack; original game export preserved")
 
 

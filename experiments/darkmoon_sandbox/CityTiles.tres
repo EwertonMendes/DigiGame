@@ -1,7 +1,7 @@
 [gd_resource type="TileSet" format=3]
 
-[ext_resource type="Texture2D" path="res://experiments/darkmoon_sandbox/palette.svg" id="1_7mxsn"]
-[ext_resource type="Texture2D" path="res://experiments/darkmoon_sandbox/raw-atlas-layout.svg" id="2_1i2mm"]
+[ext_resource type="Texture2D" path="res://assets/scenery/darkmoon_city/pieces.png" id="1_7mxsn"]
+[ext_resource type="Texture2D" path="res://assets/scenery/darkmoon_city/tiles_8x8.png" id="2_1i2mm"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5hc3f"]
 resource_name = "Assembled city pieces"

@@ -2,7 +2,7 @@
 extends Node2D
 
 const CityAtlas = preload("res://experiments/darkmoon_sandbox/CityAtlas.gd")
-const TEMPLATE = preload("res://experiments/darkmoon_sandbox/palette.svg")
+const TEMPLATE = preload("res://assets/scenery/darkmoon_city/pieces.png")
 
 
 func _ready() -> void:

@@ -10,11 +10,6 @@ try {
   const page = await browser.newPage({ viewport: { width: 1365, height: 768 } });
   let position = null;
   let mode = null;
-  page.on('request', request => {
-    if (process.env.LOCAL_ASSET_ZIP && (request.method() !== 'GET' || request.url().endsWith('.zip'))) {
-      errors.push('Selected city assets must not become an outgoing network request');
-    }
-  });
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => {
     const text = message.text();
@@ -30,27 +25,11 @@ try {
     predicate: message => message.text().includes('[DarkmoonSandbox] READY'), timeout: 90000,
   });
   await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await page.locator('#city-zip').waitFor();
-  await page.screenshot({ path: 'build/sandbox-asset-picker.png' });
-  if (await page.locator('canvas').isVisible()) throw new Error('The public entry point must wait for the real city assets');
-  await page.locator('#city-zip').setInputFiles({name:'wrong.zip',mimeType:'application/zip',buffer:Buffer.from('not a ZIP')});
-  await page.getByRole('status').filter({hasText:'not a supported city asset ZIP'}).waitFor();
-  if (process.env.LOCAL_ASSET_ZIP) {
-    await page.locator('#city-zip').setInputFiles(process.env.LOCAL_ASSET_ZIP);
-  } else {
-    const diagnostic = new URL(url);
-    diagnostic.searchParams.set('geometry','1');
-    await page.goto(diagnostic.href,{waitUntil:'domcontentloaded'});
-  }
+  if (await page.locator('input[type=file]').count()) throw new Error('City must start without a ZIP picker');
   await ready;
   await page.waitForTimeout(500);
   if (!position) throw new Error('Missing actor position telemetry');
-  if (process.env.EXPECT_PRIVATE !== '1' && !mode.includes('Geometry check only')) {
-    throw new Error(`Public export unexpectedly contains private art: ${mode}`);
-  }
-  if (process.env.EXPECT_PRIVATE === '1' && !mode.includes('Private local atlas')) {
-    throw new Error('Local Web test did not load private palette');
-  }
+  if (!mode.includes('Bundled city atlas')) throw new Error('Bundled native city assets were not loaded');
   await page.screenshot({ path: 'build/sandbox-desktop.png' });
   // Real browser keyboard input, eight directions; R returns to valid spawn.
   for (const keys of [['ArrowLeft'], ['ArrowRight'], ['ArrowUp'], ['ArrowDown'],

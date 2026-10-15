@@ -1,0 +1,14 @@
+{
+  "source": "User-supplied Darkmoon_City_Assets_Only.zip",
+  "authorization": "User explicitly requested these graphics to be committed and included in the game on 2026-10-14.",
+  "tile_size": [
+    8,
+    8
+  ],
+  "columns": 32,
+  "valid_cells": 3825,
+  "files": {
+    "tiles_8x8.png": "a9abb47ff5433abdcdc82632b6e6e748bb4389f1919e2e452e3f92e493a1226a",
+    "pieces.png": "57d0eaca459998f233f3c7e0956b679fd1b83b601d10c366495b0816e9a84461"
+  }
+}

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bhbwaulc8y8pn"
-path="res://.godot/imported/palette.svg-97363dc80b9b48aebcf02ded90047e40.ctex"
+uid="uid://dv3ldsqv2lyls"
+path="res://.godot/imported/tiles_8x8.png-d1b5cf12738128c50ebf99b28c32286a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://experiments/darkmoon_sandbox/palette.svg"
-dest_files=["res://.godot/imported/palette.svg-97363dc80b9b48aebcf02ded90047e40.ctex"]
+source_file="res://assets/scenery/darkmoon_city/tiles_8x8.png"
+dest_files=["res://.godot/imported/tiles_8x8.png-d1b5cf12738128c50ebf99b28c32286a.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

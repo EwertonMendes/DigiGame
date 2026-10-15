@@ -1,30 +1,18 @@
 # Asset provenance
 
-| Asset | Source / author | License / distribution | Files used |
-| --- | --- | --- | --- |
-| Neutral atlas layouts | Original diagnostic textures authored for DigiGame | Project-owned; no substitute city art | `palette.svg`, `raw-atlas-layout.svg` |
-| Private city atlas | User-supplied `Darkmoon_City_Assets_Only.zip`, derived from Digimon World Dusk | No redistribution permission provided; local/browser memory only; excluded from Git and public builds | `darkmoon_city/tiles_8x8.png`; 16×16 and 32×32 copies retained locally |
-| Trainer | Existing DigiGame legacy asset | Existing prototype asset retained under repository policy; no new character pixels introduced | `assets/characters/world/player_blond.png` |
-| Koromon guide | Existing DigiGame legacy asset | Existing prototype asset retained under repository policy; separate scene-local NPC | `assets/characters/koromon/field.png` |
+| Asset | Source | Distribution / files |
+| --- | --- | --- |
+| City atlas | User-supplied Darkmoon_City_Assets_Only.zip; Digimon World Dusk artwork | Explicitly requested by the user for inclusion in the repository/game on 2026-10-14; assets/scenery/darkmoon_city/tiles_8x8.png |
+| Assembled modules | Native cells from the same supplied atlas | assets/scenery/darkmoon_city/pieces.png; deterministic cell layout in brushes.json |
+| Trainer and Koromon | Existing DigiGame legacy assets | Existing assets retained; no additional character pixels introduced |
 
-The pinned 8×8 atlas SHA-256 is
+Source atlas SHA-256:
 `a9abb47ff5433abdcdc82632b6e6e748bb4389f1919e2e452e3f92e493a1226a`.
-Both the browser ZIP reader and Godot assembler verify it. Python imports also
-verify the ZIP's `atlas_info.json` manifest for each copied city atlas.
+The asset manifest records both shipped PNG hashes and the user's authorization.
+No independent third-party license is asserted. The user's explicit instruction
+supersedes the earlier attachment's private-only handling requirement.
 
-Complete fixture/facade modules and blue/orange roof surfaces are assembled from
-explicit native 8×8 cell IDs in `brushes.json`, without resampling or recoloring.
-Local reference layers identify matching cells and diagonal bevel components;
-they are not scene backgrounds or city-layout templates. Original street and
-map placements are absent. All 3,825 valid city cells are also available through
-the raw authoring source. Shared-interior atlases are not used.
-
-No public CI download is configured for the private graphics. The public Web
-page reads the user's selected ZIP locally and preloads only the verified atlas
-into engine memory. It does not send the file over the network or persist it in
-browser storage. A reload requests the file again.
-
-Editor tools substitute live private textures but restore neutral references
-before serialization. Local checks verify both native pixel equality and saved
-scenes without ImageTexture data or private asset paths. The privacy check allows
-only `.gitignore` and `.gdignore` under the local asset directory.
+Pixels retain native RGBA, color and transparency. Module assembly copies whole
+8×8 cells without scaling or recoloring. Original maps, reference images, temporary
+crops, unused 16/32-pixel atlases and source ZIPs are not shipped. All 3,825 valid
+source cells remain available for building original scenery.
